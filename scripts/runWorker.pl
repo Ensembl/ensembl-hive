@@ -49,6 +49,7 @@ GetOptions('help'           => \$help,
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
            'no_cleanup'     => \$self->{'no_global_cleanup'},
+           'analysis_stats' => \$self->{'show_analysis_stats'},
            'debug=i'        => \$self->{'debug'},
           );
 
@@ -171,6 +172,12 @@ if($@) {
 	$queen->register_worker_death($worker);
 }
 
+if($self->{'show_analysis_stats'}) {
+  $queen->print_analysis_status;
+  $queen->get_num_needed_workers();
+}
+
+
 printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 print("total jobs completes : ", $worker->work_done, "\n");
 
@@ -204,6 +211,7 @@ sub usage {
   print "  -input_id <string>     : test input_id on specified analysis\n";
   print "  -job_id <id>           : run specific job defined by analysis_job_id\n";
   print "  -debug <level>         : turn on debug messages at <level> \n";
+  print "  -analysis_stats        : show status of each analysis in hive\n";
   print "  -no_cleanup            : don't perform global_cleanup when worker exits\n";
   print "runWorker.pl v1.4\n";
   
