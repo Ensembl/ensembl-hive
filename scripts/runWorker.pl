@@ -109,7 +109,7 @@ if($self->{'job_id'}) {
   $self->{'analysis_job'} = $queen->db->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'job_id'});
   $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
   
-  $queen->db->get_AnalysisJobAdaptor->reset_job($self->{'analysis_job'});
+  $queen->db->get_AnalysisJobAdaptor->reset_job_by_dbID($self->{'analysis_job'}->dbID);
 }
 
 my $worker = $queen->create_new_worker(
