@@ -306,7 +306,7 @@ sub run_autonomously {
     }  
 
     $queen->print_hive_status()  if($self->{'show_analysis_stats'});
-    $queen->print_worker_status()  if($self->{'show_worker_stats'});
+    $queen->print_running_worker_status()  if($self->{'show_worker_stats'});
 
     $count = $worker_limit if($count>$worker_limit);    
     
