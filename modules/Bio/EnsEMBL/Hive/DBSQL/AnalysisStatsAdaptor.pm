@@ -203,12 +203,22 @@ sub decrement_needed_workers
   my $self = shift;
   my $analysis_id = shift;
 
-  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers-1 ";
-  $sql .= " WHERE analysis_id='$analysis_id' ";
+  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers-1 ".
+            "WHERE analysis_id='$analysis_id' ";
 
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+  $self->dbc->do($sql);
+}
+
+
+sub increment_needed_workers
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers+1 ".
+            "WHERE analysis_id='$analysis_id' ";
+
+  $self->dbc->do($sql);
 }
 
 

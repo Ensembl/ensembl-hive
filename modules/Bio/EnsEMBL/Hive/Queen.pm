@@ -174,8 +174,13 @@ sub register_worker_death {
     $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
   
-  # re-sync the analysis_stats when a worker dies
-  $self->synchronize_AnalysisStats($worker->analysis->stats);
+  # re-sync the analysis_stats when a worker dies as part of dynamic sync system
+  if($self->synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
+    # since I'm dying I should make sure there is someone to take my place after I'm gone ...
+    # above synch still sees me as a 'living worker' so I need to compensate for that
+    $self->db->get_AnalysisStatsAdaptor->increment_needed_workers($worker->analysis->dbID);
+  }
+
 }
 
 
@@ -256,7 +261,7 @@ sub synchronize_AnalysisStats {
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
   return $analysisStats if(($analysisStats->status eq 'WORKING') and 
-			   ($analysisStats->seconds_since_last_update < 5*60));
+			   ($analysisStats->seconds_since_last_update < 3*60));
   
   return $analysisStats if(($analysisStats->status eq 'SYNCHING') and 
 			   ($analysisStats->seconds_since_last_update < 10*60));
