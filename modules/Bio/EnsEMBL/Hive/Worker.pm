@@ -228,7 +228,7 @@ sub print_worker {
   print("WORKER: hive_id=",$self->hive_id,
      " analysis_id=(",$self->analysis->dbID,")",$self->analysis->logic_name,
      " host=",$self->host,
-     " ppid=",$self->process_id,
+     " pid=",$self->process_id,
      "\n");
   print("  batch_size = ", $self->batch_size,"\n");
   print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
@@ -279,6 +279,7 @@ sub run
     open STDOUT, ">&WORKER_STDOUT";
     open STDERR, ">&WORKER_STDERR";
   }
+  $self->print_worker();
 
   $self->db->disconnect_when_inactive(1);
 
