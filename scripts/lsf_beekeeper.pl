@@ -74,8 +74,8 @@ my $queen = $DBA->get_Queen;
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
 
-if($loopit) {
-  run_autonomously($self, $queen);
+if($loopit) { 
+  run_autonomously($self, $queen); 
 } else {
   if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
 
@@ -85,8 +85,11 @@ if($loopit) {
 
   $queen->get_num_needed_workers();
 
-  run_next_worker_clutch($self, $queen);
+  run_next_worker_clutch($self, $queen) if($self->{'run'});
+  
+  show_overdue_workers($self, $queen);
 }
+
 
 Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
@@ -177,12 +180,13 @@ sub check_for_dead_workers {
   my $self = shift;
   my $queen = shift;
 
+  print("===== check for dead workers\n");
   my $overdueWorkers = $queen->fetch_overdue_workers(75*60);  #overdue by 75 minutes
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
     if($worker->beekeeper eq 'LSF') {
-      printf("%10d %20s    analysis_id=%d : ", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-      my $cmd = "ssh -x ". $worker->host . " ps -p ". $worker->process_id . "|grep -v PID";
+      printf("%10d %35s %15s  %20s(%d) : ", $worker->hive_id,$worker->host,$worker->process_id, $worker->analysis->logic_name, $worker->analysis->dbID);
+      my $cmd = "bjobs ". $worker->process_id . " 2>&1 | grep -v 'not found' | grep -v JOBID";
       #print("  check worker with : $cmd\n");
       my $check = qx/$cmd/;
 
@@ -209,6 +213,18 @@ sub register_all_workers_dead {
 }
 
 
+sub show_overdue_workers {
+  my $self = shift;
+  my $queen = shift;
+
+  print("===== overdue workers\n");
+  my $overdueWorkers = $queen->fetch_overdue_workers(75*60);
+  foreach my $worker (@{$overdueWorkers}) {
+    printf("%10d %35s %15s  %20s(%d)\n", $worker->hive_id,$worker->host,$worker->process_id, $worker->analysis->logic_name, $worker->analysis->dbID);
+  }
+}
+
+
 sub run_autonomously {
   my $self = shift;
   my $queen = shift;
@@ -217,6 +233,7 @@ sub run_autonomously {
   my $loopCount=1; 
   while($loopit) {
     print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
+
     check_for_dead_workers($self, $queen);
 
     $queen->update_analysis_stats();
