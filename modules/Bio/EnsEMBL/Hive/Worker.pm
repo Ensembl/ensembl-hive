@@ -24,9 +24,9 @@
   into the Hive, creates a RunnableDB instance of the Analysis->module,
   gets $runnable->batch_size() jobs from the analysis_job table, does its
   work, creates the next layer of analysis_job entries by interfacing to
-  the DataflowRuleAdaptor to determine the analyses it needs to pass it's
-  output data to and creates jobs on the next analysis's database.
-  It repeats this cycle until it's lived it's lifetime or until there are no
+  the DataflowRuleAdaptor to determine the analyses it needs to pass it is
+  output data to and creates jobs on the next analysis\'s database.
+  It repeats this cycle until it is lived it is lifetime or until there are no
   more jobs left.
   The lifetime limit is just a safety limit to prevent these from 'infecting'
   a system.
@@ -37,7 +37,7 @@
   over the work.
 
   The Beekeeper is in charge of interfacing between the Queen and a compute resource
-  or 'compute farm'.  It's job is to query Queens if they need any workers and to
+  or 'compute farm'.  It is job is to query Queens if they need any workers and to
   send the requested number of workers to open machines via the runWorker.pl script.
   It is also responsible for interfacing with the Queen to identify worker which died
   unexpectantly.
@@ -340,7 +340,7 @@ sub run_module_with_job
   $job->status('WRITE_OUTPUT');
   my $branch_code = $runObj->write_output;
 
-  #runnableDB is allowed to alter it's input_id on output
+  #runnableDB is allowed to alter it is input_id on output
   #This modified input_id is passed as input to the next jobs in the graph
   $job->input_id($runObj->input_id);
   $job->branch_code($branch_code);
