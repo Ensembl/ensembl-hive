@@ -21,6 +21,8 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 $self->{'max_loops'} = 0; #unlimited
 
+$| = 1;
+
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 my ($job_limit, $batch_size);
@@ -288,7 +290,7 @@ sub run_autonomously {
 
     $DBA->dbc->disconnect_if_idle;
     
-    print("sleep $sleep_time minutes\n");
+    print("sleep $sleep_time minutes. Next loop at ",scalar localtime(time+$sleep_time*60),".\n");
     sleep($sleep_time*60);  
     $loopCount++;
   }
