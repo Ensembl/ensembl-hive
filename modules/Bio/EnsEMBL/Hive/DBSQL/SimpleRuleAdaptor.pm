@@ -268,9 +268,8 @@ sub _objs_from_sth {
        -goal_analysis       => $goal_analysis);
     push @rules, $rule;
     print("  simple_rule dbID=".$rule->dbID.
-	  "  condition_id=".$rule->conditionAnalysis->dbID .
-          "  goal_id=".$rule->goalAnalysis->dbID .
-          "  goal_type=".$rule->goalAnalysis->input_id_type . "\n");
+          "  condition_id=".$rule->conditionAnalysis->dbID .
+          "  goal_id=".$rule->goalAnalysis->dbID . "\n");
   }
 
   return \@rules;
