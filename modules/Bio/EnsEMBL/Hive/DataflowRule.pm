@@ -55,7 +55,7 @@ use Bio::EnsEMBL::Hive::URLFactory;
   Title   : new
   Usage   : ...DataflowRule->new($analysis);
   Function: Constructor for DataflowRule object
-  Returns : Bio::EnsEMBL::Pipeline::DataflowRule
+  Returns : Bio::EnsEMBL::Hive::DataflowRule
   Args    : A Bio::EnsEMBL::Analysis object. Conditions are added later,
             adaptor and dbid only used from the adaptor.
             

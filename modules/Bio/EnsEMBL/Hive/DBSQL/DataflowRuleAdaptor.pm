@@ -86,7 +86,7 @@ sub fetch_from_analysis_job
   Function: Stores a rule in db
             Sets adaptor and dbID in DataflowRule
   Returns : -
-  Args    : Bio::EnsEMBL::Pipeline::DataflowRule
+  Args    : Bio::EnsEMBL::Hive::DataflowRule
 
 =cut
 
@@ -130,7 +130,7 @@ sub store {
   Usage   : $self->remove( $rule );
   Function: removes given object from database.
   Returns : -
-  Args    : Bio::EnsEMBL::Pipeline::DataflowRule which must be persistent with a valid dbID
+  Args    : Bio::EnsEMBL::Hive::DataflowRule which must be persistent with a valid dbID
             
 =cut
 
