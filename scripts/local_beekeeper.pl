@@ -74,6 +74,7 @@ if($url) {
 
 my $queen = $DBA->get_Queen;
 
+if($self->{'all_dead'}) { check_for_dead_workers($self, $queen); }
 
 $queen->update_analysis_stats();
 $queen->check_blocking_control_rules;
@@ -81,7 +82,6 @@ $queen->print_hive_status;
 
 run_next_worker_clutch($self, $queen);
 
-if($self->{'all_dead'}) { check_for_dead_workers($self, $queen); }
 
 
 Bio::EnsEMBL::Hive::URLFactory->cleanup;
