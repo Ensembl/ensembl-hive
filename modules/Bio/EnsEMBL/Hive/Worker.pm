@@ -402,12 +402,12 @@ sub close_and_update_job_output
   open STDERR, ">&WORKER_STDERR";
 
   if(-z $job->stdout_file) {
-    print("unlink zero size ", $job->stdout_file, "\n");
+    #print("unlink zero size ", $job->stdout_file, "\n");
     unlink $job->stdout_file;
     $job->stdout_file('');
   }
   if(-z $job->stderr_file) {
-    print("unlink zero size ", $job->stderr_file, "\n");
+    #print("unlink zero size ", $job->stderr_file, "\n");
     unlink $job->stderr_file;
     $job->stderr_file('');
   }
