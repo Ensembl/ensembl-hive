@@ -24,8 +24,7 @@ Bio::EnsEMBL::Hive::DBSQL::DBAdaptor
 
 
 =head1 DESCRIPTION
-
-This object represents the handle for a comparative DNA alignment database
+  This object represents the handle for a Hive system enabled database
 
 =head1 CONTACT
 
@@ -46,24 +45,6 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 @ISA = qw( Bio::EnsEMBL::DBSQL::DBAdaptor );
-
-
-sub new {
-  my ($class, @args) = @_;
-
-  #call superclass constructor; this may actually return a container
-  my $container = $class->SUPER::new(@args);
-
-  my $self;
-  if($container->isa('Bio::EnsEMBL::Container')) {
-    $self = $container->_obj;
-  } else {
-    $self = $container;
-  }
-
-  #we want to return the container not the contained object
-  return $container;
-}
 
 
 sub get_AnalysisAdaptor {
