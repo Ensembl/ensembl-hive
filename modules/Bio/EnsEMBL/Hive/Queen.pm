@@ -131,7 +131,7 @@ sub create_new_worker {
   $beekeeper = '' unless($beekeeper);
 
   my $sql = "INSERT INTO hive SET born=now(), last_check_in=now(), " .
-	    "process_id=?, analysis_id=?, beekeeper=?, host=?";
+            "process_id=?, analysis_id=?, beekeeper=?, host=?";
 
   my $sth = $self->prepare($sql);
   $sth->execute($pid, $analysisStats->analysis_id, $beekeeper, $host);
@@ -255,69 +255,69 @@ sub synchronize_hive {
 
 sub synchronize_AnalysisStats {
   my $self = shift;
-	my $analysisStats = shift;
+  my $analysisStats = shift;
 
   return $analysisStats unless($analysisStats);
-	return $analysisStats unless($analysisStats->analysis_id);
-	return $analysisStats if($analysisStats->status eq 'BLOCKED');
-	return $analysisStats if($analysisStats->status eq 'SYNCHING');
+  return $analysisStats unless($analysisStats->analysis_id);
+  return $analysisStats if($analysisStats->status eq 'BLOCKED');
+  return $analysisStats if($analysisStats->status eq 'SYNCHING');
   
   $analysisStats->update_status('SYNCHING');
   
-	$analysisStats->total_job_count(0);
-	$analysisStats->unclaimed_job_count(0);
-	$analysisStats->done_job_count(0);
-	$analysisStats->failed_job_count(0);
-	$analysisStats->num_required_workers(0);
+  $analysisStats->total_job_count(0);
+  $analysisStats->unclaimed_job_count(0);
+  $analysisStats->done_job_count(0);
+  $analysisStats->failed_job_count(0);
+  $analysisStats->num_required_workers(0);
 
-	my $sql = "SELECT status, count(*) FROM analysis_job ".
-						"WHERE analysis_id=? GROUP BY status";
-	my $sth = $self->prepare($sql);
-	$sth->execute($analysisStats->analysis_id);
- 
-	while (my ($status, $count)=$sth->fetchrow_array()) {
+  my $sql = "SELECT status, count(*) FROM analysis_job ".
+            "WHERE analysis_id=? GROUP BY status";
+  my $sth = $self->prepare($sql);
+  $sth->execute($analysisStats->analysis_id);
 
-		my $total = $analysisStats->total_job_count();
-		$analysisStats->total_job_count($total + $count);
+  while (my ($status, $count)=$sth->fetchrow_array()) {
 
-		if($status eq 'READY') {
-			$analysisStats->unclaimed_job_count($count);
-			my $numWorkers = $count/$analysisStats->batch_size;
-			$numWorkers=1 if($numWorkers<1);
-			if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
-				$numWorkers=$analysisStats->hive_capacity;
-			}
-			$analysisStats->num_required_workers($numWorkers);
-		}
-		if($status eq 'DONE') { $analysisStats->done_job_count($count); }
-		if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
-	}
-	$sth->finish;
- 	$analysisStats->determine_status();
-	
+    my $total = $analysisStats->total_job_count();
+    $analysisStats->total_job_count($total + $count);
+
+    if($status eq 'READY') {
+      $analysisStats->unclaimed_job_count($count);
+      my $numWorkers = $count/$analysisStats->batch_size;
+      $numWorkers=1 if($numWorkers<1);
+      if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
+        $numWorkers=$analysisStats->hive_capacity;
+      }
+      $analysisStats->num_required_workers($numWorkers);
+    }
+    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
+    if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
+  }
+  $sth->finish;
+  $analysisStats->determine_status();
+
   #
   # adjust_stats_for_living_workers
   #
   
-	if($analysisStats->hive_capacity > 0) {
-		my $sql = "SELECT count(*) FROM hive WHERE cause_of_death='' and analysis_id=?";
-		$sth = $self->prepare($sql);
-		$sth->execute($analysisStats->analysis_id);
-		my($liveCount)=$sth->fetchrow_array();
-		$sth->finish;
-	
-		my $numWorkers = $analysisStats->num_required_workers;
+  if($analysisStats->hive_capacity > 0) {
+    my $sql = "SELECT count(*) FROM hive WHERE cause_of_death='' and analysis_id=?";
+    $sth = $self->prepare($sql);
+    $sth->execute($analysisStats->analysis_id);
+    my($liveCount)=$sth->fetchrow_array();
+    $sth->finish;
 
-		my $capacityAdjust = ($numWorkers + $liveCount) - $analysisStats->hive_capacity;
-		$numWorkers -= $capacityAdjust if($capacityAdjust > 0);
-		$numWorkers=0 if($numWorkers<0);
+    my $numWorkers = $analysisStats->num_required_workers;
 
-		$analysisStats->num_required_workers($numWorkers);
+    my $capacityAdjust = ($numWorkers + $liveCount) - $analysisStats->hive_capacity;
+    $numWorkers -= $capacityAdjust if($capacityAdjust > 0);
+    $numWorkers=0 if($numWorkers<0);
+
+    $analysisStats->num_required_workers($numWorkers);
   }
   
   $analysisStats->update;
   
-	return $analysisStats;
+  return $analysisStats;
 }
 
 
