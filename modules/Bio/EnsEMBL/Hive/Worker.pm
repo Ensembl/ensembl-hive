@@ -372,7 +372,7 @@ sub run
 
     my $jobs = [];
     if($specific_job) {
-      $specific_job->hive_id($self->hive_id);
+      $self->queen->worker_reclaim_job($self,$specific_job);
       push @$jobs, $specific_job;
     } else {
       $jobs = $self->queen->worker_grab_jobs($self);

@@ -227,38 +227,47 @@ sub worker_grab_jobs {
   return $jobs;
 }
 
-
-=head2 grab_job_by_dbID
+=head2 reset_and_fetch_job_by_dbID
 
   Arg [1]: int $analysis_job_id
   Example: 
-    my $job = $queen->grab_job_by_dbID($analysis_job_id);
+    my $job = $queen->reset_and_fetch_job_by_dbID($analysis_job_id);
   Description: 
     For the specified analysis_job_id it will fetch just that job, 
-    reclaim it and return it.  Specifying a specific job bypasses 
-    the safety checks, thus multiple workers could be running the 
+    reset it completely as if it has never run, and return it.  
+    Specifying a specific job bypasses the safety checks, 
+    thus multiple workers could be running the 
     same job simultaneously (use only for debugging).
   Returntype : 
-    Bio::EnsEMBL::Hive::AnalysisJob objects
+    Bio::EnsEMBL::Hive::AnalysisJob object
   Exceptions :
-  Caller     :
+  Caller     : beekeepers, runWorker.pl scripts
 
 =cut
 
-sub grab_job_by_dbID {
-  my $self            = shift;
+sub reset_and_fetch_job_by_dbID {
+  my $self = shift;
   my $analysis_job_id = shift;
-
-  return undef unless($analysis_job_id);
-    
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  printf("fetching job for id ", $analysis_job_id, "\n");
-  my $job = $jobDBA->fetch_by_dbID($analysis_job_id);
-  return undef unless($job);
   
-  $job->hive_id(0);
-  $jobDBA->reclaim_job($job);
-  $self->db->get_AnalysisStatsAdaptor->update_status($job->analysis_id, 'LOADING');
+  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
+  $jobDBA->reset_job_by_dbID($analysis_job_id); 
+
+  my $job = $jobDBA->fetch_by_dbID($analysis_job_id); 
+  my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
+  $self->synchronize_AnalysisStats($stats);
+  
+  return $job;
+}
+
+
+sub worker_reclaim_job {
+  my $self   = shift;
+  my $worker = shift;
+  my $job    = shift;
+
+  return undef unless($job and $worker);
+  $job->hive_id($worker->hive_id);
+  $self->db->get_AnalysisJobAdaptor->reclaim_job($job);
   return $job;
 }
 
@@ -300,6 +309,12 @@ sub fetch_overdue_workers {
 
   my $constraint = "h.cause_of_death='' ".
                    "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(h.last_check_in))>$overdue_secs";
+  return $self->_generic_fetch($constraint);
+}
+
+sub fetch_failed_workers {
+  my $self = shift;
+  my $constraint = "h.cause_of_death='FATALITY' ";
   return $self->_generic_fetch($constraint);
 }
 
