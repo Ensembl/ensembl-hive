@@ -42,6 +42,7 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use strict;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
 use Data::UUID;
@@ -62,22 +63,28 @@ sub CreateNewJob {
 
   return undef unless(scalar @args);
 
-  my ($input_id, $analysis, $input_analysis_job_id, $blocked) =
+  my ($input_id, $analysis, $prev_analysis_job_id, $blocked) =
      rearrange([qw(INPUT_ID ANALYSIS input_job_id BLOCK )], @args);
 
-  $input_analysis_job_id=0 unless($input_analysis_job_id);
+  $prev_analysis_job_id=0 unless($prev_analysis_job_id);
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
   throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
     unless($analysis->isa('Bio::EnsEMBL::Analysis'));
+  throw("analysis must have adaptor connected to database")
+    unless($analysis->adaptor and $analysis->adaptor->db);
 
+  my $dbc = $analysis->adaptor->db->dbc;
+
+  my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($dbc);
+  my $input_analysis_data_id = $dataDBA->store($input_id);
+    
   my $sql = "INSERT ignore into analysis_job ".
-            " SET input_id=\"$input_id\" ".
-            " ,input_analysis_job_id='$input_analysis_job_id' ".
+            " SET input_analysis_data_id=\"$input_analysis_data_id\" ".
+            " ,prev_analysis_job_id='$prev_analysis_job_id' ".
             " ,analysis_id='".$analysis->dbID ."' ";
   $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
 
-  my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
   $sth->execute();
   my $dbID = $sth->{'mysql_insertid'};
@@ -239,9 +246,10 @@ sub _columns {
   my $self = shift;
 
   return qw (a.analysis_job_id  
-             a.input_analysis_job_id
+             a.prev_analysis_job_id
              a.analysis_id	      
-             a.input_id 
+             a.input_analysis_data_id
+             a.output_analysis_data_id
              a.job_claim  
              a.hive_id	      
              a.status 
@@ -265,7 +273,6 @@ sub _objs_from_sth {
 
     $job->dbID($column{'analysis_job_id'});
     $job->analysis_id($column{'analysis_id'});
-    $job->input_id($column{'input_id'});
     $job->job_claim($column{'job_claim'});
     $job->hive_id($column{'hive_id'});
     $job->status($column{'status'});
@@ -273,6 +280,10 @@ sub _objs_from_sth {
     $job->completed($column{'completed'});
     $job->branch_code($column{'branch_code'});
     $job->adaptor($self);
+
+    my $input_id = $self->db->get_AnalysisDataAdaptor->
+                    fetch_by_dbID($column{'input_analysis_data_id'});
+    $job->input_id($input_id);
 
     push @jobs, $job;    
   }
