@@ -63,7 +63,7 @@ sub fetch_by_ctrled_analysis_id{
 
   my $constraint = "r.ctrled_analysis_id = $id";
 
-  return $self->_generic_fetch();
+  return $self->_generic_fetch($constraint);
 }
 
 
