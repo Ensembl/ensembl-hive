@@ -179,7 +179,7 @@ sub print_rule {
   my $self = shift;
   print("AnalysisCtrlRule ",
         "  ctrled_analysis_id=", $self->ctrled_analysis_id,
-        "  condition_analysis_url=", $self->condition_analysis->url,
+        "  condition_analysis_url=", $self->condition_analysis_url,
         "\n");
 }
 
