@@ -70,6 +70,8 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
+$DBA->dbc->disconnect_when_inactive(0);
+
 my $queen = $DBA->get_Queen;
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
@@ -240,10 +242,13 @@ sub run_autonomously {
     
     my $load  = $queen->get_hive_current_load();
     my $count = $queen->get_num_needed_workers();
+    my $pend_count = $self->get_pending_count();
+
+    $count = $count - $pend_count;
 
     #return if($load==0 and $count==0); #nothing running and nothing todo => done
     
-    if($count) {
+    if($count>0) {
       print("need $count workers\n");
       $worker_cmd = "runWorker.pl -bk LSF -url $url";
       $worker_cmd .= " -limit $limit" if(defined $limit);
@@ -260,4 +265,16 @@ sub run_autonomously {
   }
 }
 
+
+sub get_pending_count {
+  my $self = shift;
+
+  my $cmd = "bjobs | grep -c PEND";
+  my $pend_count = qx/$cmd/;
+  chomp($pend_count);
+
+  print("$pend_count workers queued but not running\n");
+
+  return $pend_count;
+}
 
