@@ -19,6 +19,7 @@ my $self = bless {};
 $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
+$self->{'max_loops'} = 0; #unlimited
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
@@ -46,6 +47,11 @@ GetOptions('help'           => \$help,
 if ($help) { usage(); }
 
 parse_conf($self, $conf_file);
+
+if($self->{'run'}) {
+  $loopit = 1;
+  $self->{'max_loops'} = 1;
+}
 
 my $DBA;
 
@@ -113,6 +119,7 @@ sub usage {
   print "  -jlimit <num>          : #jobs to run before worker can die naturally\n";
   print "  -dead                  : clean overdue jobs for resubmission\n";
   print "  -alldead               : all outstanding workers\n";
+  print "  -run                   : run 1 iteration of automation loop\n";
   print "  -loop                  : run autonomously, loops every 5 minutes\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
   print "lsf_beekeeper.pl v1.1\n";
@@ -184,7 +191,7 @@ sub check_for_dead_workers {
   foreach my $worker (@{$overdueWorkers}) {
     if($worker->beekeeper eq 'LSF') {
       printf("%10d %35s %15s  %20s(%d) : ", $worker->hive_id,$worker->host,$worker->process_id, $worker->analysis->logic_name, $worker->analysis->dbID);
-      my $cmd = "bjobs ". $worker->process_id . " 2>&1 | grep -v 'not found' | grep -v JOBID";
+      my $cmd = "bjobs ". $worker->process_id . " 2>&1 | grep -v 'not found' | grep -v JOBID | grep -v EXIT";
       #print("  check worker with : $cmd\n");
       my $check = qx/$cmd/;
 
@@ -259,6 +266,9 @@ sub run_autonomously {
       print("$cmd\n");
       system($cmd);
     }
+
+    last if($self->{'max_loops'}>0 and ($loopCount >= $self->{'max_loops'}));
+
     print("sleep 5 minutes\n");
     sleep(5*60);  #sleep 5 minutes before repeating    
     $loopCount++;
