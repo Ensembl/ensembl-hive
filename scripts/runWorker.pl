@@ -75,6 +75,7 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
   $url = $DBA->url();
 }
+#$DBA->dbc->disconnect_when_inactive(1);
 
 my $queen = $DBA->get_Queen();
 
@@ -133,22 +134,25 @@ if($self->{'lifespan'}) {
 
 $worker->print_worker();
 if($self->{'input_id'}) {
+  $worker->output_dir('');
   my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
   $job->input_id($self->{'input_id'});
   $job->hive_id($worker->hive_id);
-  $worker->run_module_with_job($job);
-  exit(0);
+  eval { $worker->run_module_with_job($job); };
+  print("\n$@") if($@);
+  $queen->register_worker_death($worker);
+}
+else {
+  eval { $worker->run(); };
 }
 
-eval {
-  $worker->run();
-};
 if($@) {
   #worker threw an exception so it had a problem
   print("\n$@");
 	$queen->register_worker_death($worker);
 }
 
+printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 print("total jobs completes : ", $worker->work_done, "\n");
 
 exit(0);
