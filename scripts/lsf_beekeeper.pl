@@ -59,6 +59,7 @@ GetOptions('help'           => \$help,
            'failed_jobs'    => \$self->{'show_failed_jobs'},
            'reset_job_id=i' => \$self->{'reset_job_id'},
            'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
+	   'm=s'            => \$self->{'lsf_machine_option'},
           );
 
 if ($help) { usage(); }
@@ -159,6 +160,7 @@ sub usage {
   print "  -alldead               : all outstanding workers\n";
   print "  -run                   : run 1 iteration of automation loop\n";
   print "  -loop                  : run autonomously, loops and sleeps\n";
+  print "  -m <string>            : passes <string> to LSF bsub -m option\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 5)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
   print "  -analysis_stats        : show status of each analysis\n";
@@ -290,6 +292,8 @@ sub run_autonomously {
     print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
 
     check_for_dead_workers($self, $queen);
+
+    $queen->print_running_worker_status;
     
     my $runCount = $queen->get_num_running_workers();
     my $load     = $queen->get_hive_current_load();
@@ -316,14 +320,18 @@ sub run_autonomously {
       $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
 
-      if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\] $worker_cmd";}
-      else { $cmd = "bsub -JHL$loopCount $worker_cmd";}
+      if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\]";}
+      else { $cmd = "bsub -JHL$loopCount";}
+      $cmd .= " -m " . $self->{'lsf_machine_option'} if($self->{'lsf_machine_option'});
+      $cmd .= " ".$worker_cmd;
       print("$cmd\n");
       system($cmd);
     }
 
-    last if($self->{'max_loops'}>0 and ($loopCount >= $self->{'max_loops'}));
+    $queen->get_hive_progress();
 
+    last if($self->{'max_loops'}>0 and ($loopCount >= $self->{'max_loops'}));
+  
     $DBA->dbc->disconnect_if_idle;
     
     print("sleep $sleep_time minutes. Next loop at ",scalar localtime(time+$sleep_time*60),".\n");
