@@ -277,6 +277,33 @@ sub next_clutch {
 }
 
 
+sub check_blocking_control_rules
+{
+  my $self = shift;
+
+  my $analysisStatsList = $self->db->get_AnalysisStatsAdaptor->fetch_by_status('BLOCKED');
+  foreach my $stats (@{$analysisStatsList}) {
+    #print("BLOCKED analysis ");  $stats->print_stats;
+    my $ctrlRules = $self->db->get_AnalysisCtrlRuleAdaptor->
+                    fetch_by_ctrled_analysis_id($stats->analysis_id);
+    my $allRulesDone = 1;                    
+    foreach my $ctrlrule (@{$ctrlRules}) {
+      #use this method because the condition_analysis objects can be
+      #network distributed to a different database so use it's adaptor to get
+      #the AnalysisStats object
+      my $condStats = $ctrlrule->condition_analysis->stats;
+      $allRulesDone = 0 unless($condStats->status eq 'DONE');
+      #print("  "); $condStats->print_stats;
+    }
+
+    if($allRulesDone and @{$ctrlRules}) {
+      #print("  UNBLOCK analysis : all conditions met\n");
+      $stats->adaptor->update_status($stats->analysis_id, 'READY');
+    }
+    
+  }
+}
+
 
 
 
