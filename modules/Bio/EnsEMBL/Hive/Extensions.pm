@@ -177,9 +177,8 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
   return $self->{'_branch_code'};
 }
 
-sub Bio::EnsEMBL::Pipeline::RunnableDB::encode_hash
+sub main::encode_hash
 {
-  my $self = shift;
   my $hash_ref = shift;
 
   return "" unless($hash_ref);
