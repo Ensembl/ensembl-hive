@@ -53,5 +53,19 @@ sub get_Queen {
   return $self->get_QueenAdaptor();
 }
 
+sub get_available_adaptors{
+ 
+  my %pairs =  (
+		"MetaContainer"    => 'Bio::EnsEMBL::DBSQL::MetaContainer',
+		"Analysis"         => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
+		"Queen"            => "Bio::EnsEMBL::Hive::Queen",
+		"AnalysisJob"      => "Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor",
+		"AnalysisStats"    => "Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor",
+		"AnalysisCtrlRule" => "Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor",
+		"DataflowRule"     => "Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor",
+		"SimpleRule"       => "Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor");
+  return (%pairs);
+}
+ 
 1;
 
