@@ -3,11 +3,12 @@
 use strict;
 use DBI;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Sys::Hostname;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -63,10 +64,17 @@ if($url) {
   }
 
   # connect to database specified
-  $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+  $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 print("$DBA\n");
-$self->{'queen'} = new Bio::EnsEMBL::Hive::Queen($DBA);
+my $queen = $DBA->get_Queen;
+$self->{'queen'} = $queen;
+
+my $rules = $queen->db->get_AnalysisCtrlRuleAdaptor->fetch_all();
+foreach my $rule (@{$rules}) {
+  $rule->print_rule;
+}
+
 
 check_for_dead_workers($self, $self->{'queen'});
 

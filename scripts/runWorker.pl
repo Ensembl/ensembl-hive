@@ -3,7 +3,7 @@
 use strict;
 use DBI;
 use Getopt::Long;
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 
@@ -20,6 +20,7 @@ $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
 $self->{'outdir'}      = undef;
+$self->{'beekeeper'}   = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
@@ -35,6 +36,7 @@ GetOptions('help'           => \$help,
            'analysis_id=i'  => \$self->{'analysis_id'},
            'limit=i'        => \$self->{'job_limit'},
            'outdir=s'       => \$self->{'outdir'},
+           'bk=s'           => \$self->{'beekeeper'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -67,13 +69,13 @@ if($url) {
   }
 
   # connect to database specified
-  $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+  $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
 
 my $queen = $DBA->get_Queen();
 
-my $worker = $queen->create_new_worker($self->{'analysis_id'});
+my $worker = $queen->create_new_worker($self->{'analysis_id'}, $self->{'beekeeper'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
 if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
@@ -122,7 +124,8 @@ sub usage {
   print "  -analysis_id <id>      : analysis_id in db\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
-  print "runWorker.pl v1.0\n";
+  print "  -bk <string>           : beekeeper identifier\n";
+  print "runWorker.pl v1.1\n";
   
   exit(1);  
 }
