@@ -19,7 +19,7 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
-$self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
+$self->{'outdir'}      = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
@@ -71,6 +71,13 @@ my $worker = $queen->create_new_worker($self->{'analysis_id'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
 if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
+else {
+  my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output' );
+  if( @$arrRef ) {
+    $worker->output_dir($arrRef->[0]);
+  } 
+}
+
 if($self->{'job_limit'}) {
   $worker->job_limit($self->{'job_limit'});
   $worker->life_span(0);
