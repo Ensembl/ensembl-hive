@@ -109,7 +109,7 @@ if($self->{'logic_name'}) {
 
 if($self->{'job_id'}) {
   printf("fetching job for id ", $self->{'job_id'}, "\n");
-  $self->{'analysis_job'} = $queen->grab_job_by_dbID($self->{'job_id'});
+  $self->{'analysis_job'} = $queen->reset_and_fetch_job_by_dbID($self->{'job_id'});
   $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
 }
 
