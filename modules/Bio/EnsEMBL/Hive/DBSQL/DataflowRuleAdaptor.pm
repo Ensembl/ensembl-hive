@@ -47,6 +47,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 =head2 fetch_from_analysis_job
+
   Args       : Bio::EnsEMBL::Hive::AnalysisJob
   Example    : my @rules = @{$ruleAdaptor->fetch_from_analysis_job($job)};
   Description: searches database for rules with given 'from' analysis
@@ -54,7 +55,9 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Returntype : reference to list of Bio::EnsEMBL::Hive::DataflowRule objects
   Exceptions : none
   Caller     : ?
+
 =cut
+
 sub fetch_from_analysis_job
 {
   my $self = shift;
@@ -73,13 +76,15 @@ sub fetch_from_analysis_job
 
 
 =head2 store
-  Title   : store
+
   Usage   : $self->store( $rule );
   Function: Stores a rule in db
             Sets adaptor and dbID in DataflowRule
   Returns : -
   Args    : Bio::EnsEMBL::Pipeline::DataflowRule
+
 =cut
+
 sub store {
   my ( $self, $rule ) = @_;
 
@@ -87,7 +92,7 @@ sub store {
   my $dataflow_rule_id;
   
   my $sth = $self->prepare( q{INSERT ignore INTO dataflow_rule
-       SET from_analysis_id = ?, to_analysis_url = ?, branch_code=? } );
+       (from_analysis_id, to_analysis_url, branch_code) VALUES (?,?,?) } );
   if($sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code)) {
     $dataflow_rule_id = $sth->{'mysql_insertid'};
     $sth->finish();
@@ -116,9 +121,10 @@ sub store {
   Usage   : $self->remove( $rule );
   Function: removes given object from database.
   Returns : -
-  Args    : Bio::EnsEMBL::Pipeline::DataflowRule which must be persistent.
-            ( dbID set )
+  Args    : Bio::EnsEMBL::Pipeline::DataflowRule which must be persistent with a valid dbID
+            
 =cut
+
 sub remove {
   my ( $self, $rule ) = @_;
 
@@ -211,6 +217,7 @@ sub _final_clause {
 ###############################################################################
 
 =head2 fetch_by_dbID
+  
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
@@ -219,7 +226,9 @@ sub _final_clause {
   Returntype : Bio::EnsEMBL::Hive::DataflowRule
   Exceptions : thrown if $id is not defined
   Caller     : general
+  
 =cut
+
 sub fetch_by_dbID{
   my ($self,$id) = @_;
 
@@ -241,31 +250,22 @@ sub fetch_by_dbID{
 
 
 =head2 fetch_all
+
   Arg        : None
   Example    :
   Description:
   Returntype :
   Exceptions :
   Caller     :
+
 =cut
+
 sub fetch_all {
   my $self = shift;
   return $self->_generic_fetch();
 }
 
 
-=head2 _generic_fetch
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-=cut
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
 
