@@ -42,6 +42,7 @@ use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::Root);
 
@@ -166,7 +167,7 @@ sub _get_db_connection
   return ($dbc,$path) if($dbc);
   
   #print("CONNECT via  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n");
-  $dbc = new Bio::EnsEMBL::DBSQL::DBAdaptor(
+  $dbc = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
           -disconnect_when_inactive => 1,
           -driver => 'mysql',
           -user   => $user,
