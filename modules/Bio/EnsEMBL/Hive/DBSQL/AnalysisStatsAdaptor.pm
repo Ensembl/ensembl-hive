@@ -83,9 +83,9 @@ sub fetch_by_needed_workers {
   my $limit = shift;
   my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
   if($limit) {
-    $self->_final_clause("ORDER BY hive_capacity DESC, analysis_id LIMIT $limit");
+    $self->_final_clause("ORDER BY num_required_workers DESC, hive_capacity DESC, analysis_id LIMIT $limit");
   } else {
-    $self->_final_clause("ORDER BY hive_capacity DESC, analysis_id");
+    $self->_final_clause("ORDER BY num_required_workers DESC, hive_capacity DESC, analysis_id");
   }
   my $results = $self->_generic_fetch($constraint);
   $self->_final_clause(""); #reset final clause for other fetches
