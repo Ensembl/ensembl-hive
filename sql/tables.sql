@@ -150,8 +150,8 @@ CREATE TABLE analysis_job (
   analysis_job_id           int(10) NOT NULL auto_increment,
   prev_analysis_job_id      int(10) NOT NULL,  #analysis_job which created this from rules
   analysis_id               int(10) NOT NULL,
-  input_id                  varchar(255) not null,
-  job_claim                 varchar(40) NOT NULL default '', #UUID
+  input_id                  char(255) not null,
+  job_claim                 char(40) NOT NULL default '', #UUID
   hive_id                   int(10) NOT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
@@ -228,7 +228,7 @@ CREATE TABLE analysis_data (
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
+  status                enum('BLOCKED', 'SYNCHING', 'LOADING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
   hive_capacity         int(10) default 1 NOT NULL,
