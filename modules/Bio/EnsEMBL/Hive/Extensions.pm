@@ -31,6 +31,7 @@ use strict;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
+use Bio::EnsEMBL::Pipeline::RunnableDB;
 
 
 =head2 runnableDB
@@ -145,6 +146,19 @@ sub Bio::EnsEMBL::Analysis::stats
     $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
   };
   return $stats;
+}
+
+
+sub Bio::EnsEMBL::Pipeline::RunnableDB::reset_job
+{
+  my $self = shift;
+  return 1;
+}
+
+sub Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
+{
+  my $self = shift;
+  return 1;
 }
 
 1;

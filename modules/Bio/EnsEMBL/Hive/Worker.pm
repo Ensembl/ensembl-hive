@@ -310,6 +310,8 @@ sub run
     }
     if($self->cause_of_death) { $alive=undef; }
   }
+  #have runnable cleanup any global/process files/data it may have created
+  $self->analysis->runnableDB->global_cleanup();
 
   $self->queen->register_worker_death($self);
 
@@ -345,7 +347,7 @@ sub run_module_with_job
   $job->status('WRITE_OUTPUT');
   my $branch_code = $runObj->write_output;
 
-  #runnableDB is allowed to alter it is input_id on output
+  #runnableDB is allowed to alter its input_id on output
   #This modified input_id is passed as input to the next jobs in the graph
   $job->input_id($runObj->input_id);
   $job->branch_code($branch_code);
