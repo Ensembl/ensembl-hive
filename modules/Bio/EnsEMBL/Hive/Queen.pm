@@ -437,8 +437,15 @@ sub synchronize_AnalysisStats {
 
     if($status eq 'READY') {
       $analysisStats->unclaimed_job_count($count);
-      my $numWorkers = POSIX::ceil($count * $analysisStats->avg_msec_per_job / 300000); 
-        # guess num needed workers by total jobs / (num jobs a worker could do in 5 minutes)
+      my $numWorkers;
+      if($analysisStats->batch_size > 0) {
+        $numWorkers = POSIX::ceil($count / $analysisStats->batch_size);
+      } else {
+        my $job_msec = $analysisStats->avg_msec_per_job;
+        $job_msec = 100 if($job_msec>0 and $job_msec<100);
+        $numWorkers = POSIX::ceil(($count * $job_msec) / (3*60*1000)); 
+        # guess num needed workers by total jobs / (num jobs a worker could do in 3 minutes)
+      }
       $numWorkers=$count if($numWorkers==0);
       if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
         $numWorkers=$analysisStats->hive_capacity;
