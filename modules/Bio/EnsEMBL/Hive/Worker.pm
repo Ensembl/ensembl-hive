@@ -22,25 +22,30 @@
 
   Each worker is linked to an analysis_id, registers its self on creation
   into the Hive, creates a RunnableDB instance of the Analysis->module,
-  gets $runnable->batch_size() jobs from the analysis_job table, does its
+  gets relevant configuration information from the database, does its
   work, creates the next layer of analysis_job entries by interfacing to
-  the DataflowRuleAdaptor to determine the analyses it needs to pass it is
-  output data to and creates jobs on the next analysis\'s database.
-  It repeats this cycle until it is lived it is lifetime or until there are no
-  more jobs left.
-  The lifetime limit is just a safety limit to prevent these from 'infecting'
-  a system.
+  the DataflowRuleAdaptor to determine the analyses it needs to pass its
+  output data to and creates jobs on the database of the next analysis.
+  It repeats this cycle until it has lived its lifetime or until there are no
+  more jobs left to process.
+  The lifetime limit is a safety limit to prevent these from 'infecting'
+  a system and sitting on a compute node for longer than is socially exceptable.
+  This is primarily needed on compute resources like an LSF system where jobs
+  are not preempted and run until they are done.
 
-  The Queens job is to simply birth Workers of the correct analysis_id to get the
-  work down.  The only other thing the Queen does is free up jobs that were
-  claimed by Workers that died unexpectantly so that other workers can take
-  over the work.
+  The Queen's primary job is to create Workers to get the work down.
+  As part of this, she is also responsible for summarizing the status of the
+  analyses by querying the analysis_jobs, summarizing, and updating the
+  analysis_stats table.  From this she is also responsible for monitoring and
+  'unblocking' analyses via the analysis_ctrl_rules.
+  The Queen is also responsible for freeing up jobs that were claimed by Workers
+  that died unexpectantly so that other workers can take over the work.  
 
   The Beekeeper is in charge of interfacing between the Queen and a compute resource
-  or 'compute farm'.  It is job is to query Queens if they need any workers and to
+  or 'compute farm'.  Its job is to query Queens if they need any workers and to
   send the requested number of workers to open machines via the runWorker.pl script.
-  It is also responsible for interfacing with the Queen to identify worker which died
-  unexpectantly.
+  It is also responsible for interfacing with the Queen to identify workers which died
+  unexpectantly so that she can free the dead workers unfinished jobs.
 
 
 =head1 CONTACT
