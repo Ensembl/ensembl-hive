@@ -194,6 +194,26 @@ sub fetch_all {
   return $self->_generic_fetch();
 }
 
+=head2 fetch_all_failed_jobs
+
+  Arg [1]    : (optional) int $analysis_id
+  Example    : $failed_jobs = $adaptor->fetch_all_failed_jobs;
+               $failed_jobs = $adaptor->fetch_all_failed_jobs($analysis->dbID);
+  Description: Returns a list of all jobs with status 'FAILED'.  If an $analysis_id 
+               is specified it will limit the search accordingly.
+  Returntype : reference to list of Bio::EnsEMBL::Hive::AnalysisJob objects
+  Exceptions : none
+  Caller     : user processes
+
+=cut
+
+sub fetch_all_failed_jobs {
+  my ($self,$analysis_id) = @_;
+
+  my $constraint = "a.status='FAILED'";
+  $constraint .= " AND a.analysis_id=$analysis_id" if($analysis_id);
+  return $self->_generic_fetch($constraint);
+}
 
 
 #
@@ -350,7 +370,7 @@ sub update_status {
 
 =head2 store_out_files
 
-  Arg [1]    : Bio::EnsEMBL::Compar::Hive::AnalysisJob $job
+  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisJob $job
   Example    :
   Description: if files are non-zero size, will update DB with location
   Returntype : 
@@ -402,6 +422,20 @@ sub claim_jobs_for_worker {
   return $claim;
 }
 
+=head2 reset_dead_jobs_for_worker
+
+  Arg [1]    : Bio::EnsEMBL::Hive::Worker object
+  Example    :
+  Description: If a worker has died some of its jobs need to be reset back to 'READY'
+               so they can be rerun.
+               Jobs in state CLAIMED as simply reset back to READY.
+               If jobs was in a 'working' state (GET_INPUT, RUN, WRITE_OUTPUT)) 
+               the retry_count is incremented and the status set back to READY.
+               If the retry_count >=7 the job is set to 'FAILED' and not rerun again.
+  Exceptions : $worker must be defined
+  Caller     : Bio::EnsEMBL::Hive::Queen
+
+=cut
 
 sub reset_dead_jobs_for_worker {
   my $self = shift;
@@ -426,7 +460,7 @@ sub reset_dead_jobs_for_worker {
   $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-	 " AND retry_count<5".
+	 " AND retry_count<7".
          " AND hive_id='" . $worker->hive_id ."'";
   #print("$sql\n");
   $sth = $self->prepare($sql);
@@ -436,7 +470,7 @@ sub reset_dead_jobs_for_worker {
   $sql = "UPDATE analysis_job SET status='FAILED'".
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-	 " AND retry_count>=5".
+	 " AND retry_count>=7".
          " AND hive_id='" . $worker->hive_id ."'";
   #print("$sql\n");
   $sth = $self->prepare($sql);
@@ -446,19 +480,60 @@ sub reset_dead_jobs_for_worker {
   #print(" done update BROKEN jobs\n");
 }
 
+=head2 reset_job_by_dbID
 
-sub reset_job {
+  Arg [1]    : int $analysis_job_id
+  Example    :
+  Description: Forces a job to be reset to 'READY' so it can be run again.
+               Will also reset a previously 'BLOCKED' jobs to READY.
+  Exceptions : $job must be defined
+  Caller     : user process
+
+=cut
+
+sub reset_job_by_dbID {
   my $self = shift;
-  my $job   = shift;
-  throw("must define job") unless($job);
+  my $analysis_job_id   = shift;
+  throw("must define job") unless($analysis_job_id);
 
   my ($sql, $sth);
   #first just reset the claimed jobs, these don't need a retry_count index increment
   $sql = "UPDATE analysis_job SET job_claim='', status='READY' WHERE analysis_job_id=?";
   $sth = $self->prepare($sql);
-  $sth->execute($job->dbID);
+  $sth->execute($analysis_job_id);
   $sth->finish;
   #print("  done update CLAIMED\n");
+}
+
+
+=head2 reset_all_jobs_for_analysis_id
+
+  Arg [1]    : int $analysis_id
+  Example    :
+  Description: Resets all not BLOCKED jobs back to READY so they can be rerun.
+               Needed if an analysis/runnableDB modifies the dataflow rules as the
+              system runs.  The jobs that are flowed 'from'  will need to be reset so
+              that the output data can be flowed through the new rule.  
+              If one is designing a system based on a need to change rules mid-process
+              it is best to make sure such 'from' analyses that need to be reset are 'Dummy'
+              types so that they can 'hold' the output from the previous step and not require
+              the system to actually redo processing.
+  Exceptions : $analysis_id must be defined
+  Caller     : user RunnableDB subclasses which build dataflow rules on the fly
+
+=cut
+
+sub reset_all_jobs_for_analysis_id {
+  my $self        = shift;
+  my $analysis_id = shift;
+
+  throw("must define analysis_id") unless($analysis_id);
+
+  my ($sql, $sth);
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY' WHERE status!='BLOCKED' and analysis_id=?";
+  $sth = $self->prepare($sql);
+  $sth->execute($analysis_id);
+  $sth->finish;
 }
 
 
