@@ -366,43 +366,42 @@ sub run
 
   $self->db->dbc->disconnect_when_inactive(0);
 
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-
   my $alive=1;  
   while($alive) {
+    my $batch_start = time() * 1000;    
+
     my $jobs = [];
     if($specific_job) {
       $specific_job->hive_id($self->hive_id);
-      $jobDBA->reclaim_job($specific_job);
       push @$jobs, $specific_job;
     } else {
-      my $claim = $jobDBA->claim_jobs_for_worker($self);
-      $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
+      $jobs = $self->queen->worker_grab_jobs($self);
     }
 
-    $self->queen->worker_check_in($self); #will sync analysis_stats if >60sec overdue
+    $self->queen->worker_check_in($self); #will sync analysis_stats if needed
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
-    $self->analysis->stats->print_stats if($self->debug);
-    print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n") if($self->debug);
+    if($self->debug) {
+      $self->analysis->stats->print_stats;
+      print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
+    }
     
-    my $batch_start = time() * 1000;    
     foreach my $job (@{$jobs}) {
+    
       $self->redirect_job_output($job);
       $self->run_module_with_job($job);
-      $self->create_next_jobs($job);
-      $job->status('DONE');
-      $self->close_and_update_job_output($job);
+      $self->close_and_update_job_output($job);      
+            
+      $self->queen->worker_register_job_done($self, $job);
+
       $self->{'_work_done'}++;
     }
     my $batch_end = time() * 1000;
     #printf("batch start:%f end:%f\n", $batch_start, $batch_end);
-    $statsDBA->interval_update_work_done($self->analysis->dbID, 
-                                         scalar(@$jobs), 
-                                         ($batch_end - $batch_start));
-
+    $self->db->get_AnalysisStatsAdaptor->
+       interval_update_work_done($self->analysis->dbID, scalar(@$jobs), $batch_end-$batch_start);
+    
     $self->cause_of_death('JOB_LIMIT') if($specific_job);
 
     if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
@@ -450,18 +449,24 @@ sub run_module_with_job
   return 0 unless($runObj);
   return 0 unless($job and ($job->hive_id eq $self->hive_id));
   
+  my $start_time = time() * 1000;
+  $self->queen->dbc->query_count(0);
+
   #pass the input_id from the job into the runnableDB object
   $runObj->input_id($job->input_id);
   $runObj->analysis_job_id($job->dbID);
   $runObj->debug($self->debug);
   
-  $job->status('GET_INPUT');
+  $job->update_status('GET_INPUT');
+  print("GET_INPUT\n") if($self->debug); 
   $runObj->fetch_input;
 
-  $job->status('RUN');
+  $job->update_status('RUN');
+  print("RUN\n") if($self->debug); 
   $runObj->run;
 
-  $job->status('WRITE_OUTPUT');
+  $job->update_status('WRITE_OUTPUT');
+  print("WRITE_OUTPUT\n") if($self->debug); 
   $runObj->write_output;
 
   #runnableDB is allowed to alter its input_id on output
@@ -469,26 +474,10 @@ sub run_module_with_job
   $job->input_id($runObj->input_id);
   $job->branch_code($runObj->branch_code);
 
+  $job->query_count($self->queen->dbc->query_count);
+  $job->runtime_msec(time()*1000 - $start_time);
+
   return 1;
-}
-
-
-sub create_next_jobs
-{
-  my $self = shift;
-  my $job  = shift;
-
-  return unless($self->db);
-
-  my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
-
-  foreach my $rule (@{$rules}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => $job->input_id,
-        -analysis       => $rule->to_analysis,
-        -input_job_id   => $job->dbID,
-    );
-  }
 }
 
 

@@ -109,10 +109,8 @@ if($self->{'logic_name'}) {
 
 if($self->{'job_id'}) {
   printf("fetching job for id ", $self->{'job_id'}, "\n");
-  $self->{'analysis_job'} = $queen->db->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'job_id'});
+  $self->{'analysis_job'} = $queen->grab_job_by_dbID($self->{'job_id'});
   $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
-  
-  $queen->db->get_AnalysisJobAdaptor->reset_job_by_dbID($self->{'analysis_job'}->dbID);
 }
 
 my $worker = $queen->create_new_worker(
@@ -159,7 +157,7 @@ if($self->{'input_id'}) {
   eval { $worker->run($job); };
 }
 elsif($self->{'analysis_job'}) {
-  my $job = $self->{'analysis_job'};
+  my $job = $self->{'analysis_job'};  
   print("running job_id=", $job->dbID," input_id:", $job->input_id,"\n");
   eval { $worker->run($job); };
 }

@@ -74,10 +74,11 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+############################
 #
-# PUBLIC METHODS
+# PUBLIC API for Workers
 #
-################
+############################
 
 =head2 create_new_worker
 
@@ -175,7 +176,7 @@ sub register_worker_death {
   }
   
   # re-sync the analysis_stats when a worker dies as part of dynamic sync system
-  if($self->synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
+  if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
     # since I'm dying I should make sure there is someone to take my place after I'm gone ...
     # above synch still sees me as a 'living worker' so I need to compensate for that
     $self->db->get_AnalysisStatsAdaptor->increment_needed_workers($worker->analysis->dbID);
@@ -196,9 +197,101 @@ sub worker_check_in {
   $sth->execute();
   $sth->finish;
   
-  $self->synchronize_AnalysisStats($worker->analysis->stats);
+  $self->safe_synchronize_AnalysisStats($worker->analysis->stats);
 }
 
+
+=head2 worker_grab_jobs
+
+  Arg [1]           : Bio::EnsEMBL::Hive::Worker object $worker
+  Example: 
+    my $jobs  = $queen->worker_grab_jobs();
+  Description: 
+    For the specified worker, it will search available jobs, 
+    and using the workers requested batch_size, claim/fetch that
+    number of jobs, and then return them.
+  Returntype : 
+    reference to array of Bio::EnsEMBL::Hive::AnalysisJob objects
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub worker_grab_jobs {
+  my $self            = shift;
+  my $worker          = shift;
+  
+  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
+  my $claim = $jobDBA->claim_jobs_for_worker($worker);
+  my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $worker->analysis->dbID);
+  return $jobs;
+}
+
+
+=head2 grab_job_by_dbID
+
+  Arg [1]: int $analysis_job_id
+  Example: 
+    my $job = $queen->grab_job_by_dbID($analysis_job_id);
+  Description: 
+    For the specified analysis_job_id it will fetch just that job, 
+    reclaim it and return it.  Specifying a specific job bypasses 
+    the safety checks, thus multiple workers could be running the 
+    same job simultaneously (use only for debugging).
+  Returntype : 
+    Bio::EnsEMBL::Hive::AnalysisJob objects
+  Exceptions :
+  Caller     :
+
+=cut
+
+sub grab_job_by_dbID {
+  my $self            = shift;
+  my $analysis_job_id = shift;
+
+  return undef unless($analysis_job_id);
+    
+  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
+  printf("fetching job for id ", $analysis_job_id, "\n");
+  my $job = $jobDBA->fetch_by_dbID($analysis_job_id);
+  return undef unless($job);
+  
+  $job->hive_id(0);
+  $jobDBA->reclaim_job($job);
+  $self->db->get_AnalysisStatsAdaptor->update_status($job->analysis_id, 'LOADING');
+  return $job;
+}
+
+
+sub worker_register_job_done {
+  my $self = shift;
+  my $worker = shift;
+  my $job = shift;
+  
+  return unless($job);
+  return unless($job->dbID and $job->adaptor and $job->hive_id);
+  return unless($worker and $worker->analysis and $worker->analysis->dbID);
+  
+  # create_next_jobs
+  my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
+  foreach my $rule (@{$rules}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+        -input_id       => $job->input_id,
+        -analysis       => $rule->to_analysis,
+        -input_job_id   => $job->dbID,
+    );
+  }
+ 
+  $job->update_status('DONE');
+
+}
+
+
+######################################
+#
+# Public API interface for beekeeper
+#
+######################################
 
 sub fetch_overdue_workers {
   my ($self,$overdue_secs) = @_;
@@ -241,6 +334,45 @@ sub synchronize_hive {
 }
 
 
+=head2 safe_synchronize_AnalysisStats
+
+  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
+  Example    : $self->synchronize($analysisStats);
+  Description: Prewrapper around synchronize_AnalysisStats that does
+               checks and grabs sync_lock before proceeding with sync.
+               Used by distributed worker sync system to avoid contention.
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub safe_synchronize_AnalysisStats {
+  my $self = shift;
+  my $stats = shift;
+
+  return $stats unless($stats);
+  return $stats unless($stats->analysis_id);
+  return $stats if($stats->status eq 'SYNCHING');
+  return $stats if($stats->status eq 'DONE');
+  return $stats if($stats->sync_lock);
+  return $stats if(($stats->status eq 'WORKING') and
+                   ($stats->seconds_since_last_update < 5*60));
+
+  # OK try to claim the sync_lock
+  my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
+            "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
+  print("$sql\n");
+  my $row_count = $self->dbc->do($sql);  
+  return $stats unless($row_count == 1);
+  printf("got sync_lock on analysis_stats(%d)\n", $stats->analysis_id);
+  
+  #OK have the lock, go and do the sync
+  $self->synchronize_AnalysisStats($stats);
+  
+  return $stats;
+}
+
+
 =head2 synchronize_AnalysisStats
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
@@ -260,13 +392,6 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
-  return $analysisStats if(($analysisStats->status eq 'WORKING') and 
-			   ($analysisStats->seconds_since_last_update < 3*60));
-  
-  return $analysisStats if(($analysisStats->status eq 'SYNCHING') and 
-			   ($analysisStats->seconds_since_last_update < 10*60));
-
-  $analysisStats->update_status('SYNCHING');
   
   $analysisStats->total_job_count(0);
   $analysisStats->unclaimed_job_count(0);
@@ -298,9 +423,8 @@ sub synchronize_AnalysisStats {
     if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
   }
   $sth->finish;
-  if($analysisStats->status ne 'BLOCKED') {
-    $analysisStats->determine_status();
-  }
+
+  $analysisStats->determine_status();
 
   #
   # adjust_stats_for_living_workers
@@ -323,6 +447,8 @@ sub synchronize_AnalysisStats {
   }
   
   $analysisStats->update;
+  
+  $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
   
   return $analysisStats;
 }
@@ -398,10 +524,8 @@ sub get_num_running_workers {
   Description: Runs through the analyses in the system which are waiting
                for workers to be created for them.  Calculates the maximum
                number of workers needed to fill the current needs of the system
-               
-  
   Exceptions : none
-  Caller     : general
+  Caller     : beekeepers and other external processes
 
 =cut
 
@@ -534,7 +658,7 @@ sub _pick_best_analysis_for_new_worker {
   my $stats_list = $statsDBA->fetch_by_status('LOADING', 'BLOCKED');
   foreach $stats (@$stats_list) {
     #$stats->print_stats();
-    $self->synchronize_AnalysisStats($stats);
+    $self->safe_synchronize_AnalysisStats($stats);
     $self->check_blocking_control_rules_for_AnalysisStats($stats);   
     #$stats->print_stats();
 
@@ -561,7 +685,7 @@ sub _pick_best_analysis_for_new_worker {
 
 =cut
 
-sub _fetch_by_hive_id{
+sub _fetch_by_hive_id {
   my ($self,$id) = @_;
 
   unless(defined $id) {

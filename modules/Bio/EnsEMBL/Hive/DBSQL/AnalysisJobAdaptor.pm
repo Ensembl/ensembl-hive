@@ -300,6 +300,8 @@ sub _columns {
              a.retry_count          
              a.completed
              a.branch_code
+             a.runtime_msec
+             a.query_count
             );
 }
 
@@ -335,6 +337,8 @@ sub _objs_from_sth {
     $job->retry_count($column{'retry_count'});
     $job->completed($column{'completed'});
     $job->branch_code($column{'branch_code'});
+    $job->runtime_msec($column{'runtime_msec'});
+    $job->query_count($column{'query_count'});
     $job->adaptor($self);
     
     if($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/) {
@@ -370,7 +374,11 @@ sub update_status {
   my ($self,$job) = @_;
 
   my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
-  $sql .= " ,completed=now(),branch_code=".$job->branch_code if($job->status eq 'DONE');
+  if($job->status eq 'DONE') {
+    $sql .= ",completed=now(),branch_code=".$job->branch_code;
+    $sql .= ",runtime_msec=".$job->runtime_msec;
+    $sql .= ",query_count=".$job->query_count;
+  }
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
   my $sth = $self->prepare($sql);

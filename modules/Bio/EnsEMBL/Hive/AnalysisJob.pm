@@ -78,12 +78,15 @@ sub job_claim {
 
 sub status {
   my( $self, $value ) = @_;
-
-  if($value) {
-    $self->{'_status'} = $value;
-    $self->adaptor->update_status($self) if($self->adaptor);
-  }
+  $self->{'_status'} = $value if($value);
   return $self->{'_status'};
+}
+
+sub update_status {
+  my ($self, $status ) = @_;
+  return unless($self->adaptor);
+  $self->status($status);
+  $self->adaptor->update_status($self);
 }
 
 sub retry_count {
@@ -96,6 +99,20 @@ sub completed {
   my( $self, $value ) = @_;
   $self->{'_completed'} = $value if($value);
   return $self->{'_completed'};
+}
+
+sub runtime_msec {
+  my( $self, $value ) = @_;
+  $self->{'_runtime_msec'} = $value if($value);
+  $self->{'_runtime_msec'} = 0 unless(defined($self->{'_runtime_msec'}));
+  return $self->{'_runtime_msec'};
+}
+
+sub query_count {
+  my( $self, $value ) = @_;
+  $self->{'_query_count'} = $value if($value);
+  $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
+  return $self->{'_query_count'};
 }
 
 sub branch_code {

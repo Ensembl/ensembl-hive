@@ -147,6 +147,12 @@ sub seconds_since_last_update {
   return time() - $self->{'_last_update'};
 }
 
+sub sync_lock {
+  my $self = shift;
+  $self->{'_sync_lock'} = shift if(@_);
+  return $self->{'_sync_lock'};
+}
+
 sub determine_status {
   my $self = shift;
   

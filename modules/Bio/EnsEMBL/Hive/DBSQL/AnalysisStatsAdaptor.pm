@@ -149,6 +149,7 @@ sub update {
   $sql .= ",failed_job_count=" . $stats->failed_job_count();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=NOW()";
+  $sql .= ",sync_lock=''";
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -315,6 +316,7 @@ sub _columns {
                     ast.failed_job_count
                     ast.num_required_workers
                     ast.last_update
+                    ast.sync_lock
                    );
   push @columns , "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
   return @columns;            
@@ -333,6 +335,7 @@ sub _objs_from_sth {
 
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
+    $analStats->sync_lock($column{'sync_lock'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->hive_capacity($column{'hive_capacity'});
