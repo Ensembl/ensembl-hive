@@ -208,6 +208,12 @@ sub input_id {
   return $self->input_job->input_id;
 }
 
+sub parameters {
+  my $self = shift;
+  return '' unless($self->analysis);
+  return $self->analysis->parameters;
+}
+
 
 ##########################################
 #
