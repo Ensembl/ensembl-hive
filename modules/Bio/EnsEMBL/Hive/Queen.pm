@@ -114,7 +114,6 @@ sub create_new_worker {
   }
   
   return undef unless($analysisStats);
-  $self->synchronize_AnalysisStats($analysisStats);
   $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
   $analysisStats->print_stats;
   
@@ -261,6 +260,9 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
+  
+  return $analysisStats if($analysisStats->status eq 'SYNCHING');
+  $analysisStats->update_status('SYNCHING');
   
   $analysisStats->total_job_count(0);
   $analysisStats->unclaimed_job_count(0);
@@ -433,14 +435,14 @@ sub get_num_needed_workers {
     if(($analysis_stats->hive_capacity<=0) or ($thisLoad < $availableLoad)) {
       $numWorkers += $analysis_stats->num_required_workers;
       $availableLoad -= $thisLoad;
-      printf("%5d (%1.3f) ", $numWorkers, $availableLoad);
       $analysis_stats->print_stats();
+      printf("  %5d workers (%1.3f remaining-hive-load)\n", $numWorkers, $availableLoad);
     } else {
       my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity);
       $numWorkers += $workerCount;
       $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
-      printf("%5d (%1.3f) use only %3d ", $numWorkers, $availableLoad, $workerCount);
       $analysis_stats->print_stats();
+      printf("  %5d workers (%1.3f remaining-hive-load) use only %3d workers\n", $numWorkers, $availableLoad, $workerCount);
       last;
     }
     last if($availableLoad <= 0.0);
