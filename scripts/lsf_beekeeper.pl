@@ -279,8 +279,13 @@ sub run_autonomously {
   my $self = shift;
   my $queen = shift;
 
+  unless(`runWorker.pl`) {
+    print("can't find runWorker.pl script.  Please make sure it's in your path\n");
+    exit(1);
+  }
+
   my ($cmd, $worker_cmd);
-  my $loopCount=1; 
+  my $loopCount=1;
   while($loopit) {
     print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
 
