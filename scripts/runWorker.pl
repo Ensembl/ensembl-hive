@@ -35,6 +35,7 @@ GetOptions('help'           => \$help,
            'dbname=s'       => \$dbname,
            'analysis_id=i'  => \$self->{'analysis_id'},
            'limit=i'        => \$self->{'job_limit'},
+           'lifespan=i'     => \$self->{'lifespan'},
            'outdir=s'       => \$self->{'outdir'},
            'bk=s'           => \$self->{'beekeeper'},
           );
@@ -90,6 +91,9 @@ if($self->{'job_limit'}) {
   $worker->job_limit($self->{'job_limit'});
   $worker->life_span(0);
 }
+if($self->{'lifespan'}) {
+  $worker->life_span($self->{'lifespan'} * 60);
+}
 
 $worker->print_worker();
 eval {
@@ -123,6 +127,7 @@ sub usage {
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -analysis_id <id>      : analysis_id in db\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
+  print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
   print "  -bk <string>           : beekeeper identifier\n";
   print "runWorker.pl v1.1\n";
