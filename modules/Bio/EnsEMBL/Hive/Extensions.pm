@@ -104,7 +104,7 @@ sub Bio::EnsEMBL::Analysis::url
 
   return undef unless($self->adaptor);
   $url = $self->adaptor->url;
-  $url .= "/analysis?logic_name='" . $self->logic_name ."'";
+  $url .= "/analysis?logic_name=" . $self->logic_name;
   return $url;  
 }
 
