@@ -134,7 +134,8 @@ sub determine_status {
 sub print_stats {
   my $self = shift;
 
-  printf("STATS %20s(%3d) %12s jobs(t=%d,r=%d,d=%d) batch=%d capacity=%d clutchSize=%d (age %d secs)\n",
+  #printf("STATS %20s(%3d) %11s  jobs(%7d:t,%7d:q,%7d:d) %5d:batchsize %5d:hiveCapacity %5d:neededWorkers (synched %d secs ago)\n",
+  printf("STATS %20s(%3d) %12s jobs(t=%d,q=%d,d=%d) batchsize=%d hiveCapacity=%d neededWorkers=%d (synched %d secs ago)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
