@@ -40,6 +40,8 @@ use strict;
 use Carp;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Hive::DataflowRule;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -60,8 +62,8 @@ sub fetch_from_analysis_job
   my $rule;
   my @rules;
   
-  $self->throw("arg is required\n") unless($fromAnalysisJob);
-  $self->throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisJob] not a $fromAnalysisJob")
+  throw("arg is required\n") unless($fromAnalysisJob);
+  throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisJob] not a $fromAnalysisJob")
     unless ($fromAnalysisJob->isa('Bio::EnsEMBL::Hive::AnalysisJob'));
 
   my $constraint = "r.from_analysis_id = '".$fromAnalysisJob->analysis_id."'"
@@ -123,7 +125,7 @@ sub remove {
 
   my $dbID = $rule->dbID;
   if( !defined $dbID ) {
-    $self->throw( "DataflowRuleAdaptor->remove called with non persistent DataflowRule" );
+    throw( "DataflowRuleAdaptor->remove called with non persistent DataflowRule" );
   }
 
   my $sth = $self->prepare("DELETE FROM dataflow_rule WHERE dataflow_rule_id = $dbID");
@@ -223,7 +225,7 @@ sub fetch_by_dbID{
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    throw("fetch_by_dbID must have an id");
   }
 
   my @tabs = $self->_tables;

@@ -40,13 +40,11 @@
 
 package Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
-use vars qw(@ISA);
-use Bio::EnsEMBL::Root;
+use strict;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::Extensions;
-use strict;
-
-@ISA = qw( Bio::EnsEMBL::Root );
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 =head2 Constructor
 
@@ -59,8 +57,8 @@ use strict;
 
 sub new {
   my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
-
+  my $self = bless {}, $class;
+  
   return $self;
 }
 
@@ -118,7 +116,7 @@ sub ctrled_analysis {
   # setter mode
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "ctrled_analysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }
@@ -150,7 +148,7 @@ sub condition_analysis {
 
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "condition_analysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }

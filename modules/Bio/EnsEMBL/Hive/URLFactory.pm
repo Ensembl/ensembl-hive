@@ -38,19 +38,20 @@ my $_URLFactory_global_instance;
 package Bio::EnsEMBL::Hive::URLFactory;
 
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
+
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-our @ISA = qw(Bio::EnsEMBL::Root);
-
 sub new
 {
   my ($class, @args) = @_;
   unless($_URLFactory_global_instance) {
-    $_URLFactory_global_instance = $class->SUPER::new(@args);
+    $_URLFactory_global_instance = bless {}, $class;
   }
   return $_URLFactory_global_instance;
 }

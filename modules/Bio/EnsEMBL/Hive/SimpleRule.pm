@@ -36,11 +36,10 @@
 
 package Bio::EnsEMBL::Hive::SimpleRule;
 
-use vars qw(@ISA);
-use Bio::EnsEMBL::Root;
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
-@ISA = qw( Bio::EnsEMBL::Root );
 
 =head2 Constructor
 
@@ -55,10 +54,10 @@ use strict;
 
 sub new {
   my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = bless {}, $class;
 
   my ( $goal, $adaptor, $dbID, $condition ) =
-    $self->_rearrange( [ qw (GOAL_ANALYSIS ADAPTOR DBID CONDITION_ANALYSIS) ], @args );
+    rearrange( [ qw (GOAL_ANALYSIS ADAPTOR DBID CONDITION_ANALYSIS) ], @args );
     
   $self->dbID( $dbID );
   $self->conditionAnalysis( $condition );
@@ -83,7 +82,7 @@ sub conditionAnalysis {
 
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "conditionAnalysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }
@@ -108,7 +107,7 @@ sub goalAnalysis {
 
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "goalAnalysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }

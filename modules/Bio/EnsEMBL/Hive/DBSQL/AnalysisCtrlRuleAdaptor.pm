@@ -40,6 +40,8 @@ use strict;
 use Carp;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -58,7 +60,7 @@ sub fetch_by_ctrled_analysis_id{
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_ctrled_analysis_id must have an id");
+    throw("fetch_by_ctrled_analysis_id must have an id");
   }
 
   my $constraint = "r.ctrled_analysis_id = $id";
@@ -116,7 +118,7 @@ sub remove {
 
   my $dbID = $rule->dbID;
   if( !defined $dbID ) {
-    $self->throw( "AnalysisCtrlRuleAdaptor->remove called with non persistent AnalysisCtrlRule" );
+    throw( "AnalysisCtrlRuleAdaptor->remove called with non persistent AnalysisCtrlRule" );
   }
 
   my $sth = $self->prepare("DELETE FROM analysis_ctrl_rule WHERE ctrled_analysis_id = ?, condition_analysis_url = '?'");

@@ -61,20 +61,22 @@
 package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-
 use Bio::EnsEMBL::Hive::Extensions;
 
-use vars qw(@ISA);
-@ISA = qw(Bio::EnsEMBL::Root);
-
+sub new {
+  my ($class,@args) = @_;
+  my $self = bless {}, $class;
+  return $self;
+}
 
 sub init {
   my $self = shift;
@@ -113,7 +115,7 @@ sub analysis {
   my $analysis = shift;
 
   if(defined($analysis)) {
-    $self->throw("analysis arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]")
+    throw("analysis arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]")
        unless($analysis->isa('Bio::EnsEMBL::Analysis'));
     $self->{'_analysis'} = $analysis;
   }

@@ -38,6 +38,8 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use strict;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -57,7 +59,7 @@ sub fetch_by_analysis_id {
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_analysis_id must have an id");
+    throw("fetch_by_analysis_id must have an id");
   }
 
   my $constraint = "ast.analysis_id = $id";

@@ -40,12 +40,11 @@
 
 package Bio::EnsEMBL::Hive::DataflowRule;
 
-use vars qw(@ISA);
-use Bio::EnsEMBL::Root;
-use Bio::EnsEMBL::Hive::URLFactory;
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::URLFactory;
 
-@ISA = qw( Bio::EnsEMBL::Root );
 
 =head2 Constructor
 
@@ -60,10 +59,10 @@ use strict;
 
 sub new {
   my ($class,@args) = @_;
-  my $self = $class->SUPER::new(@args);
+  my $self = bless {}, $class;
 
   my ( $dbID, $adaptor, $fromAnalysis, %fromID, $toAnalysis, $toURL ) =
-    $self->_rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS FROM_ID TO_ANALYSIS TO_URL) ], @args );
+    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS FROM_ID TO_ANALYSIS TO_URL) ], @args );
     
   $self->dbID($dbID) if(defined($dbID));
   $self->adaptor($adaptor) if(defined($adaptor));
@@ -149,7 +148,7 @@ sub from_analysis {
   # setter mode
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "from_analysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }
@@ -181,7 +180,7 @@ sub to_analysis {
 
   if( defined $analysis ) {
     unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      $self->throw(
+      throw(
         "to_analysis arg must be a [Bio::EnsEMBL::Analysis]".
         "not a [$analysis]");
     }

@@ -46,8 +46,8 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
 use Data::UUID;
 
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -106,7 +106,7 @@ sub fetch_by_dbID {
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    throw("fetch_by_dbID must have an id");
   }
 
   my @tabs = $self->_tables;
@@ -134,8 +134,8 @@ sub fetch_by_dbID {
 sub fetch_by_claim_analysis {
   my ($self,$claim,$analysis_id) = @_;
 
-  $self->throw("fetch_by_claim_analysis must have claim ID") unless($claim);
-  $self->throw("fetch_by_claim_analysis must have analysis_id") unless($analysis_id);
+  throw("fetch_by_claim_analysis must have claim ID") unless($claim);
+  throw("fetch_by_claim_analysis must have analysis_id") unless($analysis_id);
   my $constraint = "a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
   return $self->_generic_fetch($constraint);
 }

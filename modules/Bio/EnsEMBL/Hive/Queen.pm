@@ -57,15 +57,15 @@
 package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
-use strict;
 use POSIX;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
+
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -396,7 +396,7 @@ sub _fetch_by_hive_id{
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    throw("fetch_by_dbID must have an id");
   }
 
   my @tabs = $self->_tables;

@@ -25,15 +25,15 @@ package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
 
-use Bio::EnsEMBL::Root;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 
-use vars qw(@ISA);
-
-@ISA = qw(Bio::EnsEMBL::Root);
-
+sub new {
+  my ($class,@args) = @_;
+  my $self = bless {}, $class;
+  return $self;
+}
 
 sub adaptor {
   my $self = shift;

@@ -66,11 +66,11 @@ sub fetch_by_condition_analysis
   my $rule;
   my @rules;
   
-  $self->throw("arg is required\n")
+  throw("arg is required\n")
     unless($conditionAnalysis);
-  $self->throw("arg must be a [Bio::EnsEMBL::Analysis] not a $conditionAnalysis")
+  throw("arg must be a [Bio::EnsEMBL::Analysis] not a $conditionAnalysis")
     unless ($conditionAnalysis->isa('Bio::EnsEMBL::Analysis'));
-  $self->throw("analysis arg must be presistent\n")
+  throw("analysis arg must be presistent\n")
     unless($conditionAnalysis->dbID);
 
   my $constraint = "r.condition_analysis_id = '".$conditionAnalysis->dbID."'";
@@ -97,11 +97,11 @@ sub fetch_by_goal_analysis
   my $rule;
   my @rules;
   
-  $self->throw("arg is required\n")
+  throw("arg is required\n")
     unless($goalAnalysis);
-  $self->throw("arg must be a [Bio::EnsEMBL::Analysis] not a $goalAnalysis")
+  throw("arg must be a [Bio::EnsEMBL::Analysis] not a $goalAnalysis")
     unless ($goalAnalysis->isa('Bio::EnsEMBL::Analysis'));
-  $self->throw("analysis arg must be presistent\n")
+  throw("analysis arg must be presistent\n")
     unless($goalAnalysis->dbID);
 
   my $constraint = "r.goal_analysis_id = '".$goalAnalysis->dbID."'";
@@ -129,11 +129,11 @@ sub fetch_by_condition_and_goal
   my $rule;
   my @rules;
 
-  $self->throw("arg is required\n")
+  throw("arg is required\n")
     unless($goalAnalysis);
-  $self->throw("arg must be a [Bio::EnsEMBL::Analysis] not a $goalAnalysis")
+  throw("arg must be a [Bio::EnsEMBL::Analysis] not a $goalAnalysis")
     unless ($goalAnalysis->isa('Bio::EnsEMBL::Analysis'));
-  $self->throw("analysis arg must be presistent\n")
+  throw("analysis arg must be presistent\n")
     unless($goalAnalysis->dbID);
 
   my $constraint = "r.condition_analysis_id = '".$conditionAnalysis->dbID."'";
@@ -213,7 +213,7 @@ sub remove {
 
   my $dbID = $rule->dbID;
   if( !defined $dbID ) {
-    $self->throw( "SimpleRuleAdaptor->remove called with non persistent SimpleRule" );
+    throw( "SimpleRuleAdaptor->remove called with non persistent SimpleRule" );
   }
 
   my $sth = $self->prepare("DELETE FROM simple_rule WHERE simple_rule_id = $dbID");
@@ -343,7 +343,7 @@ sub fetch_by_dbID{
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    throw("fetch_by_dbID must have an id");
   }
 
   my @tabs = $self->_tables;
@@ -374,10 +374,10 @@ sub fetch_by_source_stable_id {
   my ($self,$source_name, $stable_id) = @_;
 
   unless(defined $source_name) {
-    $self->throw("fetch_by_source_stable_id must have an source_name");
+    throw("fetch_by_source_stable_id must have an source_name");
   }
   unless(defined $stable_id) {
-    $self->throw("fetch_by_source_stable_id must have an stable_id");
+    throw("fetch_by_source_stable_id must have an stable_id");
   }
 
   my @tabs = $self->_tables;
