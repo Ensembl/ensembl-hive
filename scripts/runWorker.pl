@@ -107,7 +107,6 @@ my $worker = $queen->create_new_worker(
      -process_id     => $self->{'process_id'}
      );
 unless($worker) {
-  Bio::EnsEMBL::Hive::URLFactory->cleanup;
   print("couldn't create worker\n");
   exit(0);
 }
@@ -141,7 +140,6 @@ if($@) {
 
 print("total jobs completes : ", $worker->work_done, "\n");
 
-Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
 
 

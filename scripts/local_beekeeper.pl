@@ -82,9 +82,6 @@ $queen->print_hive_status;
 
 run_next_worker_clutch($self, $queen);
 
-
-
-Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
 
 

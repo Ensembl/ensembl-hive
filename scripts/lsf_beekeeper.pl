@@ -90,8 +90,6 @@ if($loopit) {
   show_overdue_workers($self, $queen);
 }
 
-
-Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
 
 
