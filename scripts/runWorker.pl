@@ -22,9 +22,10 @@ $self->{'analysis_id'} = undef;
 $self->{'outdir'}      = undef;
 
 my $conf_file;
-my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 
 GetOptions('help'           => \$help,
+           'url=s'          => \$url,
            'conf=s'         => \$conf_file,
            'dbhost=s'       => \$host,
            'dbport=i'       => \$port,
@@ -42,28 +43,33 @@ if ($help) { usage(); }
 
 parse_conf($self, $conf_file);
 
-if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
-if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
-if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
-if($user)   { $self->{'db_conf'}->{'-user'}   = $user; }
-if($pass)   { $self->{'db_conf'}->{'-pass'}   = $pass; }
+my $DBA;
+if($url) {
+  $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
+} else {
+  if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
+  if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
+  if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
+  if($user)   { $self->{'db_conf'}->{'-user'}   = $user; }
+  if($pass)   { $self->{'db_conf'}->{'-pass'}   = $pass; }
 
+  unless(defined($self->{'db_conf'}->{'-host'})
+         and defined($self->{'db_conf'}->{'-user'})
+         and defined($self->{'db_conf'}->{'-dbname'}))
+  {
+    print "\nERROR : must specify host, user, and database to connect\n\n";
+    usage();
+  }
 
-unless(defined($self->{'db_conf'}->{'-host'})
-       and defined($self->{'db_conf'}->{'-user'})
-       and defined($self->{'db_conf'}->{'-dbname'}))
-{
-  print "\nERROR : must specify host, user, and database to connect\n\n";
-  usage(); 
+  unless(defined($self->{'analysis_id'})) {
+    print "\nERROR : must specify analysis_id of worker\n\n";
+    usage();
+  }
+
+  # connect to database specified
+  $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
-unless(defined($self->{'analysis_id'})) {
-  print "\nERROR : must specify analysis_id of worker\n\n";
-  usage();
-}
-
-# connect to database specified
-my $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 
 my $queen = $DBA->get_Queen();
 
@@ -93,6 +99,7 @@ if($@) {
 
 print("total jobs completes : ", $worker->work_done, "\n");
 
+Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
 
 
