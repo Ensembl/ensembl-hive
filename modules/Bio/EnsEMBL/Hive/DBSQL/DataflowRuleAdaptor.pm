@@ -90,16 +90,19 @@ sub store {
 
   #print("\nDataflowRuleAdaptor->store()\n");
   my $dataflow_rule_id;
+  my $newly_inserted_rule = 0;
   
   my $sth = $self->prepare( q{INSERT ignore INTO dataflow_rule
        (from_analysis_id, to_analysis_url, branch_code) VALUES (?,?,?) } );
-  if($sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code)) {
+  my $rtnCode = $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code);
+  if($rtnCode and $rtnCode != 0E0) {
     $dataflow_rule_id = $sth->{'mysql_insertid'};
     $sth->finish();
     $rule->dbID($dataflow_rule_id);
+    $newly_inserted_rule = 1;
     #print("  stored with dbID = $dataflow_rule_id\n");
   } else {
-    #print("  failed to execute -> already inserted -> need to get dbID\n");
+    #print("  already inserted -> need to get dbID\n");
     $sth->finish();
     $sth = $self->prepare(q{SELECT dataflow_rule_id FROM dataflow_rule WHERE
          from_analysis_id = ? AND to_analysis_url = ? } );
@@ -112,6 +115,7 @@ sub store {
   }
   #print("  dataflow_rule_id = '".$rule->dbID."'\n");
   $rule->adaptor( $self );
+  return $newly_inserted_rule;
 }
 
 
@@ -148,7 +152,7 @@ sub create_rule {
   $rule->to_analysis($toAnalysis);
   $rule->branch_code($branchCode) if(defined($branchCode));
   
-  $self->store($rule);
+  return $self->store($rule);
 }
 
 ############################
