@@ -44,6 +44,7 @@ GetOptions('help'           => \$help,
            'outdir=s'       => \$self->{'outdir'},
            'bk=s'           => \$self->{'beekeeper'},
            'pid=s'          => \$self->{'process_id'},
+           'input_id=s'     => \$self->{'input_id'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -131,6 +132,14 @@ if($self->{'lifespan'}) {
 }
 
 $worker->print_worker();
+if($self->{'input_id'}) {
+  my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
+  $job->input_id($self->{'input_id'});
+  $job->hive_id($worker->hive_id);
+  $worker->run_module_with_job($job);
+  exit(0);
+}
+
 eval {
   $worker->run();
 };
@@ -160,13 +169,15 @@ sub usage {
   print "  -dbuser <name>         : mysql connection user <name>\n";
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -analysis_id <id>      : analysis_id in db\n";
+  print "  -logic_name <string>   : logic_name of analysis to make this worker\n";
   print "  -batchsize <num>       : #jobs to claim at a time\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
   print "  -bk <string>           : beekeeper identifier\n";
   print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
-  print "runWorker.pl v1.1\n";
+  print "  -input_id <string>     : test input_id on specified analysis\n";
+  print "runWorker.pl v1.2\n";
   
   exit(1);  
 }
