@@ -360,7 +360,7 @@ sub claim_jobs_for_worker {
   my $sql = "UPDATE analysis_job SET job_claim='$claim'".
             " , hive_id='". $worker->hive_id ."'".
             " , status='CLAIMED'".
-            " WHERE job_claim='' ".
+            " WHERE job_claim='' and status='READY'".
             " AND analysis_id='" .$worker->analysis->dbID. "'".
             " LIMIT " . $worker->batch_size;
 
