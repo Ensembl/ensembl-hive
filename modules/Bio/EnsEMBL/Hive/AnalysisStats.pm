@@ -34,23 +34,6 @@ use vars qw(@ISA);
 
 @ISA = qw(Bio::EnsEMBL::Root);
 
-=head3
-CREATE TABLE analysis_stats (
-  analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
-                          DEFAULT 'READY' NOT NULL,
-  batch_size            int(10) NOT NULL,
-  hive_capacity         int(10) NOT NULL,
-  total_job_count       int(10) NOT NULL,
-  unclaimed_job_count   int(10) NOT NULL,
-  done_job_count        int(10) NOT NULL,
-  num_required_workers  int(10) NOT NULL,
-  last_update           datetime NOT NULL,
-
-  UNIQUE KEY   (analysis_id)
-);
-=cut
-
 
 sub adaptor {
   my $self = shift;
@@ -117,7 +100,7 @@ sub num_required_workers {
 
 sub seconds_since_last_update {
   my( $self, $value ) = @_;
-  $self->{'_last_update'} = time() + $value if(defined($value));
+  $self->{'_last_update'} = time() - $value if(defined($value));
   return time() - $self->{'_last_update'};
 }
 
@@ -142,15 +125,14 @@ sub determine_status {
   
 sub print_stats {
   my $self = shift;
-  print("ANALYSIS_STATS: analysis_id=",$self->analysis_id,"\n"
-       ," status=",$self->status,"\n"
-       ," batch_size=",$self->batch_size,"\n"
-       ," hive_capacity=" . $self->hive_capacity(),"\n"
-       ,",total_job_count=" . $self->total_job_count(),"\n"
-       ,",unclaimed_job_count=" . $self->unclaimed_job_count(),"\n"
-       ,",done_job_count=" . $self->done_job_count(),"\n"
-       ,",num_required_workers=" . $self->num_required_workers(),"\n"
-       ,",last_update==", $self->{'_last_update'},"\n");
+
+  printf("ANALYSIS_STATS (%d) %s batch=%d capacity=%d jobs(%d,%d,%d) clutchSize=%d (age %d secs)\n",
+        $self->analysis_id,
+        $self->status,
+        $self->batch_size,$self->hive_capacity(),
+        $self->total_job_count,$self->unclaimed_job_count,$self->done_job_count,
+        $self->num_required_workers,
+        $self->seconds_since_last_update);
 }
 
 1;
