@@ -120,7 +120,8 @@ my $worker = $queen->create_new_worker(
      -process_id     => $self->{'process_id'}
      );
 unless($worker) {
-  print("couldn't create worker\n");
+  $queen->print_analysis_status if($self->{'show_analysis_stats'});
+  print("\n=== COULDN'T CREATE WORKER ===\n");
   exit(0);
 }
 
