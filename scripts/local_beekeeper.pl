@@ -179,7 +179,7 @@ sub check_for_dead_workers {
 
   my $host = hostname;
 
-  my $overdueWorkers = $queen->fetch_overdue_workers(5*60);  #overdue by 5 minutes
+  my $overdueWorkers = $queen->fetch_overdue_workers(0);  #0 minutes means check all outstanding workers
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
     printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
