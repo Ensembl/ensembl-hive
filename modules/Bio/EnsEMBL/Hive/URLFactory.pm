@@ -32,8 +32,8 @@
 
 # Let the code begin...
 
-# global variable to cache connection to limit the number of open DB connections
-my $_URLFactory_connections = {};
+# global instance to cache connection to limit the number of open DB connections
+my $_URLFactory_global_instance;
 
 package Bio::EnsEMBL::Hive::URLFactory;
 
@@ -46,6 +46,22 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::Root);
 
+sub new
+{
+  my ($class, @args) = @_;
+  unless($_URLFactory_global_instance) {
+    $_URLFactory_global_instance = $class->SUPER::new(@args);
+  }
+  return $_URLFactory_global_instance;
+}
+
+sub DESTROY {
+  my ($obj) = @_;
+  #print("Bio::EnsEMBL::Hive::URLFactory::DESTROY - cleanup connections\n");
+  foreach my $key (keys(%{$_URLFactory_global_instance})) {
+    $_URLFactory_global_instance->{$key} = undef;
+  }
+}
 
 =head2 fetch
   Arg[1]     : string
@@ -64,17 +80,19 @@ sub fetch
   
   return undef unless($url);
 
-  my ($dbc, $path) = $class->_get_db_connection($url);
+  new Bio::EnsEMBL::Hive::URLFactory;  #make sure global instance is created
 
-  return $dbc unless($path);
+  my ($dba, $path) = $class->_get_db_connection($url);  
+
+  return $dba unless($path);
   
   if((my $p=index($path, "?")) != -1) {
     my $table = substr($path,0, $p);
     my $query = substr($path,$p+1,length($path));
 
     if($table eq 'analysis') {
-      #my $adaptor = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($dbc);
-      my $adaptor = $dbc->get_AnalysisAdaptor;
+      #my $adaptor = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($dba);
+      my $adaptor = $dba->get_AnalysisAdaptor;
       return $adaptor->fetch_by_url_query($query);
     }
   }
@@ -96,13 +114,6 @@ sub store {
 }
 
 
-sub cleanup {
-  my $class = shift;
-  foreach my $key (keys(%{$_URLFactory_connections})) {
-    $_URLFactory_connections->{$key} = undef;
-  }
-}
-
 ############################
 #
 # Internals
@@ -111,6 +122,9 @@ sub cleanup {
 
 sub _get_db_connection
 {
+  #e.g. mysql://ensadmin:<pass>@ecs2:3362/compara_hive_23c
+  #e.g. mysql://ensadmin:<pass>@ecs2:3362/ensembl_compara_22_1;type=compara
+  #e.g. mysql://ensadmin:<pass>@ecs2:3362/ensembl_core_homo_sapiens_22_34;type=core
   my $class = shift;
   my $url = shift;
 
@@ -121,7 +135,9 @@ sub _get_db_connection
   my $host = '';
   my $port = 3306;
   my $dbname = undef;
-  my $path = undef;
+  my $path = '';
+  my $module = "Bio::EnsEMBL::Hive::DBSQL::DBAdaptor";
+  my $type   = 'hive';
   my ($p, $p2, $p3);
 
   #print("FETCH $url\n");
@@ -132,8 +148,11 @@ sub _get_db_connection
 
   my $conn   = substr($url, 0, $p);
   $dbname    = substr($url, $p+1, length($url));
-  $p2        = index($dbname, "/");
-  if($p2 != -1) {
+  if(($p2=rindex($dbname, ";type=")) != -1) {
+    $type   = substr($dbname, $p2+6, length($dbname));
+    $dbname = substr($dbname, 0, $p2);
+  }
+  if(($p2=index($dbname, "/")) != -1) {
     $path   = substr($dbname, $p2+1, length($dbname));
     $dbname = substr($dbname, 0, $p2);
   }
@@ -160,14 +179,18 @@ sub _get_db_connection
 
   return undef unless($host and $dbname);
 
-  my $connectionKey = "$user:$pass\@$host:$port/$dbname";
-  my $dbc;
-  #print("key=$connectionKey\n");
-  $dbc = $_URLFactory_connections->{$connectionKey};
-  return ($dbc,$path) if($dbc);
+  my $connectionKey = "$user:$pass\@$host:$port/$dbname;$type";
+  my $dba;
+  print("key=$connectionKey\n");
+  $dba = $_URLFactory_global_instance->{$connectionKey};
+  return ($dba,$path) if($dba);
   
-  #print("CONNECT via  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n");
-  $dbc = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(
+  print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n");
+  $module = "Bio::EnsEMBL::DBSQL::DBAdaptor" if($type eq 'core');
+  $module = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor" if($type eq 'compara');
+  $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor" if($type eq 'pipeline');
+   
+  $dba = "$module"->new (
           -disconnect_when_inactive => 1,
           -driver => 'mysql',
           -user   => $user,
@@ -176,8 +199,8 @@ sub _get_db_connection
           -port   => $port,
           -dbname => $dbname);
 
-  $_URLFactory_connections->{$connectionKey} = $dbc;
-  return ($dbc,$path);
+  $_URLFactory_global_instance->{$connectionKey} = $dba;
+  return ($dba,$path);
 
 }
 
