@@ -34,6 +34,7 @@ GetOptions('help'           => \$help,
            'dbuser=s'       => \$user,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
+	   'dead'           => \$self->{'all_dead'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -76,7 +77,7 @@ foreach my $rule (@{$rules}) {
 }
 
 
-check_for_dead_workers($self, $self->{'queen'});
+if($self->{'all_dead'}) { check_for_dead_workers($self, $self->{'queen'}); }
 
 run_beekeeper($self);
 
@@ -91,7 +92,7 @@ exit(0);
 #######################
 
 sub usage {
-  print "runWorker.pl [options]\n";
+  print "local_beekeeper.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -url <url string>      : url defining where hive database is located\n";
   print "  -conf <path>           : config file describing db connection\n";
@@ -103,7 +104,7 @@ sub usage {
   print "  -analysis_id <id>      : analysis_id in db\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
-  print "runWorker.pl v1.0\n";
+  print "local_beekeeper.pl v1.0\n";
   
   exit(1);  
 }
@@ -139,6 +140,10 @@ sub run_beekeeper
     #my $cmd = "./runWorker.pl -conf $conf_file -analysis_id $analysis_id";
     my $cmd = "bsub -JW$analysis_id\[1-$count\] ./runWorker.pl -url $url -analysis_id $analysis_id";
     print("$cmd\n");
+
+    # return of bsub looks like this
+    #Job <6392054> is submitted to default queue <normal>.
+
   }
 }
 
@@ -149,20 +154,18 @@ sub check_for_dead_workers {
 
   my $host = hostname;
 
-  my $overdueWorkers = $queen->fetch_overdue_workers(3600);  #overdue by 1hr
+  my $overdueWorkers = $queen->fetch_overdue_workers(5*60);  #overdue by 1hr
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
-    if(($worker->beekeeper eq 'local') and ($worker->host eq $host)) {
+    printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
+    if(($worker->beekeeper eq '') and ($worker->host eq $host)) {
+      print("  is one of mine\n");
       my $cmd = "ps -p ". $worker->process_id;
       my $check = qx/$cmd/;
 
-      print("check : $check\n");
-      
-      printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-      #$queen->register_worker_death($worker);
+      $queen->register_worker_death($worker);
     }
   }
-
 }
 
 
