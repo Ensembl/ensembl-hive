@@ -145,6 +145,10 @@ sub Bio::EnsEMBL::Analysis::stats
   eval {
     $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
   };
+  if(!defined($stats)) {
+    $stats = new Bio::EnsEMBL::Hive::AnalysisStats;
+    $stats->analysis_id($self->dbID);
+  }
   return $stats;
 }
 
