@@ -79,15 +79,18 @@ CREATE TABLE simple_rule (
 --   databases, with the default being the database the analysis is on
 --
 -- semantics:
+--   dataflow_rule_id     - internal ID
 --   from_analysis_id     - foreign key to analysis table analysis_id
 --   to_analysis_url      - foreign key to net distributed analysis logic_name reference
 --   branch_code          - joined to analysis_job.branch_code to allow branching
 
 CREATE TABLE dataflow_rule (
+  dataflow_rule_id    int(10) unsigned default '0' not null auto_increment,
   from_analysis_id    int(10) unsigned NOT NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
 
+  PRIMARY KEY (dataflow_rule_id),
   UNIQUE (from_analysis_id, to_analysis_url)
 );
 
@@ -203,8 +206,8 @@ CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
   status                enum('BLOCKED', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
                           DEFAULT 'READY' NOT NULL,
-  batch_size            int(10) NOT NULL,
-  hive_capacity         int(10) NOT NULL,
+  batch_size            int(10) default 1 NOT NULL,
+  hive_capacity         int(10) default 1 NOT NULL,
   total_job_count       int(10) NOT NULL,
   unclaimed_job_count   int(10) NOT NULL,
   done_job_count        int(10) NOT NULL,
