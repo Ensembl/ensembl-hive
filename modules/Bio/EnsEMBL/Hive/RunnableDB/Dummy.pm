@@ -50,8 +50,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Hive::RunnableDB::Dummy;
 
 use strict;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 
+use Bio::EnsEMBL::Pipeline::RunnableDB;
 our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 
@@ -64,6 +64,7 @@ our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 sub fetch_input {
   my $self = shift;
+  $self->db->dbc->disconnect_when_inactive(0);
   return 1;
 }
 
