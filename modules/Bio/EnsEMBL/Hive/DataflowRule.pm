@@ -186,7 +186,11 @@ sub to_analysis {
         "not a [$analysis]");
     }
     $self->{'_to_analysis'} = $analysis;
-    $self->{'_to_analysis_url'} = $analysis->url;
+    if($self->from_analysis and ($self->from_analysis->adaptor == $analysis->adaptor)) {
+      $self->{'_to_analysis_url'} = $analysis->logic_name;
+    } else {
+      $self->{'_to_analysis_url'} = $analysis->url;
+    }
   }
   # lazy load the analysis object if I can
   if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
