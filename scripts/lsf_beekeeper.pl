@@ -154,7 +154,7 @@ sub run_next_worker_clutch
     my $hive_capacity = $analysis_stats->hive_capacity;
 
     my $cmd;
-    my $worker_cmd = "./runWorker.pl -bk LSF -logic_name " . $analysis->logic_name;
+    my $worker_cmd = "runWorker.pl -bk LSF -logic_name " . $analysis->logic_name;
 
     $worker_cmd .= " -conf $conf_file" if($conf_file);
     $worker_cmd .= " -url $url" if($url);
@@ -230,7 +230,7 @@ sub run_autonomously {
     
     if($count) {
       print("need $count workers\n");
-      $worker_cmd = "./runWorker.pl -bk LSF -url $url";
+      $worker_cmd = "runWorker.pl -bk LSF -url $url";
       $worker_cmd .= " -limit $limit" if(defined $limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
 
