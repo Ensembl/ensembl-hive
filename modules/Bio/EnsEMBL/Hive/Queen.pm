@@ -428,8 +428,8 @@ sub _objs_from_sth {
     $worker->queen($self);
     $worker->db($self->db);
 
-    if($column{'analysis_id'} and $self->_analysisAdaptor) {
-      $worker->analysis($self->_analysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
+    if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
+      $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
     }
 
     push @workers, $worker;
