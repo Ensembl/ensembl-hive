@@ -174,7 +174,7 @@ sub register_worker_death {
     $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
   
-  # always re-sync the analysis_stats when a worker dies
+  # re-sync the analysis_stats when a worker dies
   $self->synchronize_AnalysisStats($worker->analysis->stats);
 }
 
@@ -191,12 +191,7 @@ sub worker_check_in {
   $sth->execute();
   $sth->finish;
   
-  # if analysis_stats for this worker's analysis is more than a minutes
-  # out of date, then re-synchronize it
-  my $stats = $worker->analysis->stats;
-  if($stats->seconds_since_last_update >= 60) {
-    $self->synchronize_AnalysisStats($stats);
-  }
+  $self->synchronize_AnalysisStats($worker->analysis->stats);
 }
 
 
@@ -260,6 +255,7 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
+  return $analysisStats if($analysisStats->seconds_since_last_update < 5*60);
   
   return $analysisStats if($analysisStats->status eq 'SYNCHING');
   $analysisStats->update_status('SYNCHING');
@@ -491,6 +487,7 @@ sub print_running_worker_status
 {
   my $self = shift;
 
+  my $total = 0;
   print("HIVE LIVE WORKERS====\n");
   my $sql = "select logic_name, count(*) from hive, analysis ".
             "where hive.analysis_id=analysis.analysis_id and hive.cause_of_death='' ".
@@ -499,7 +496,9 @@ sub print_running_worker_status
   $sth->execute();
   while((my $logic_name, my $count)=$sth->fetchrow_array()) {
     printf("%20s : %d workers\n", $logic_name, $count);
+    $total += $count;
   }
+  printf("  %d total workers\n", $total);
   print("=====================\n");
   $sth->finish;
 }
