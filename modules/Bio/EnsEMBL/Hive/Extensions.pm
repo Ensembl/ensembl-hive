@@ -233,7 +233,7 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
 {
   my $self = shift;
   $self->{'_branch_code'} = shift if(@_);
-  $self->{'_branch_code'}=1 unless($self->{'_batch_size'});
+  $self->{'_branch_code'}=1 unless($self->{'_branch_code'});
   return $self->{'_branch_code'};
 }
 
@@ -258,7 +258,7 @@ sub Bio::EnsEMBL::Analysis::RunnableDB::branch_code
 {
   my $self = shift;
   $self->{'_branch_code'} = shift if(@_);
-  $self->{'_branch_code'}=1 unless($self->{'_batch_size'});
+  $self->{'_branch_code'}=1 unless($self->{'_branch_code'});
   return $self->{'_branch_code'};
 }
 
