@@ -23,6 +23,7 @@ $self->{'logic_name'}  = undef;
 $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
+$self->{'job_id'}      = undef;
 
 
 my $conf_file;
@@ -36,6 +37,7 @@ GetOptions('help'           => \$help,
            'dbuser=s'       => \$user,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
+           'job_id=i'       => \$self->{'job_id'},
            'analysis_id=i'  => \$self->{'analysis_id'},
            'logic_name=s'   => \$self->{'logic_name'},
            'batchsize=i'    => \$self->{'batch_size'},
@@ -102,6 +104,12 @@ if($self->{'logic_name'}) {
   $self->{'analysis_id'} = $analysis->dbID if($analysis);
 }
 
+if($self->{'job_id'}) {
+  printf("fetching job for id ", $self->{'job_id'}, "\n");
+  $self->{'analysis_job'} = $queen->db->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'job_id'});
+  $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
+}
+
 my $worker = $queen->create_new_worker(
      -analysis_id    => $self->{'analysis_id'},
      -beekeeper      => $self->{'beekeeper'},
@@ -132,14 +140,18 @@ if($self->{'lifespan'}) {
 }
 
 $worker->print_worker();
+
 if($self->{'input_id'}) {
   $worker->output_dir('');
   my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
   $job->input_id($self->{'input_id'});
-  $job->hive_id($worker->hive_id);
-  eval { $worker->run_module_with_job($job); };
-  print("\n$@") if($@);
-  $queen->register_worker_death($worker);
+  $job->analysis_id(0); #don't link into hive, ie prevents using dataflow rules
+  eval { $worker->run($job); };
+}
+elsif($self->{'analysis_job'}) {
+  my $job = $self->{'analysis_job'};
+  print("running job_id=", $job->dbID," input_id:", $job->input_id,"\n");
+  eval { $worker->run($job); };
 }
 else {
   eval { $worker->run(); };
@@ -182,7 +194,8 @@ sub usage {
   print "  -bk <string>           : beekeeper identifier\n";
   print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
   print "  -input_id <string>     : test input_id on specified analysis\n";
-  print "runWorker.pl v1.2\n";
+  print "  -job_id <id>           : run specific job defined by analysis_job_id\n";
+  print "runWorker.pl v1.3\n";
   
   exit(1);  
 }
