@@ -110,10 +110,11 @@ sub create_new_worker {
   if($analysis_id) {
     $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
   } else {
-    ($analysisStats) = @{$analStatsDBA->fetch_by_needed_workers(1)};
+    $analysisStats = $self->_pick_best_analysis_for_new_worker;
   }
   
   return undef unless($analysisStats);
+  $self->synchronize_AnalysisStats($analysisStats);
   $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
   $analysisStats->print_stats;
   
@@ -259,10 +260,6 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
-  return $analysisStats if($analysisStats->status eq 'BLOCKED');
-  return $analysisStats if($analysisStats->status eq 'SYNCHING');
-  
-  $analysisStats->update_status('SYNCHING');
   
   $analysisStats->total_job_count(0);
   $analysisStats->unclaimed_job_count(0);
@@ -293,7 +290,9 @@ sub synchronize_AnalysisStats {
     if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
   }
   $sth->finish;
-  $analysisStats->determine_status();
+  if($analysisStats->status ne 'BLOCKED') {
+    $analysisStats->determine_status();
+  }
 
   #
   # adjust_stats_for_living_workers
@@ -373,10 +372,27 @@ sub get_hive_current_load {
 }
 
 
+=head2 get_num_needed_workers
+
+  Example    : $count = $queen->get_num_needed_workers();
+  Description: Runs through the analyses in the system which are waiting
+               for workers to be created for them.  Calculates the maximum
+               number of workers needed to fill the current needs of the system
+               
+  
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub get_num_needed_workers {
   my $self = shift;
 
-  my $neededAnals = $self->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
+  my $neededAnals = $statsDBA->fetch_by_needed_workers();
+  my $deeper_stats_list = $statsDBA->fetch_by_status('LOADING', 'BLOCKED');
+  push @$neededAnals, @$deeper_stats_list;
+
   return 0 unless($neededAnals);
 
   my $availableLoad = 1.0 - $self->get_hive_current_load();
@@ -386,6 +402,15 @@ sub get_num_needed_workers {
   foreach my $analysis_stats (@{$neededAnals}) {
     #$analysis_stats->print_stats();
 
+    #digging deeper under the surface so need to sync
+    if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED')) {
+      $self->synchronize_AnalysisStats($analysis_stats);
+      $self->check_blocking_control_rules_for_AnalysisStats($analysis_stats);
+    }
+
+    next if($analysis_stats->status eq 'BLOCKED');
+    next if($analysis_stats->num_required_workers == 0);
+
     my $thisLoad = 0.0;
     if($analysis_stats->hive_capacity>0) {
       $thisLoad = $analysis_stats->num_required_workers * (1/$analysis_stats->hive_capacity);
@@ -394,13 +419,13 @@ sub get_num_needed_workers {
     if(($analysis_stats->hive_capacity<=0) or ($thisLoad < $availableLoad)) {
       $numWorkers += $analysis_stats->num_required_workers;
       $availableLoad -= $thisLoad;
-      printf("  %d (%1.9f) ", $numWorkers, $availableLoad);
+      printf("%5d (%1.3f) ", $numWorkers, $availableLoad);
       $analysis_stats->print_stats();
     } else {
       my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity                     );
       $numWorkers += $workerCount;
       $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
-      printf("  %d (%1.9f) use only %d ", $numWorkers, $availableLoad, $workerCount);
+      printf("%5d (%1.3f) use only %3d ", $numWorkers, $availableLoad, $workerCount);
       $analysis_stats->print_stats();
       last;
     }
@@ -441,6 +466,37 @@ sub print_hive_status
 # INTERNAL METHODS
 #
 ###################
+
+sub _pick_best_analysis_for_new_worker {
+  my $self = shift;
+
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
+  return undef unless($statsDBA);
+
+  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1)};
+  return $stats if($stats);
+
+  # ok so no analyses 'need' workers.
+  # see if anything needs an update, in case there are
+  # hidden jobs that haven't made it into the summary stats
+
+  print("QUEEN: no obvious needed workers, need to dig deeper\n");
+  my $stats_list = $statsDBA->fetch_by_status('LOADING', 'BLOCKED');
+  foreach $stats (@$stats_list) {
+    #$stats->print_stats();
+    $self->synchronize_AnalysisStats($stats);
+    $self->check_blocking_control_rules_for_AnalysisStats($stats);   
+    #$stats->print_stats();
+
+    return $stats if(($stats->status eq 'READY') and ($stats->num_required_workers > 0));
+  }
+
+  ($stats) = @{$statsDBA->fetch_by_needed_workers(1)};
+  return $stats if($stats);
+
+  return undef;
+}
+
 
 =head2 _fetch_by_hive_id
 
