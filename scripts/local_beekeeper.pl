@@ -25,6 +25,7 @@ $self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
+my ($limit, $batch_size);
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -36,6 +37,8 @@ GetOptions('help'           => \$help,
            'dbname=s'       => \$dbname,
            'dead'           => \$self->{'all_dead'},
 	   'run'            => \$self->{'run'},
+           'limit=i'        => \$limit,
+           'batch_size=i'   => \$batch_size
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -101,9 +104,10 @@ sub usage {
   print "  -dbname <name>         : mysql database <name>\n";
   print "  -dbuser <name>         : mysql connection user <name>\n";
   print "  -dbpass <pass>         : mysql connection password\n";
-  print "  -analysis_id <id>      : analysis_id in db\n";
+  print "  -batch_size <num>      : #jobs a worker can claim at once\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
-  print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
+  print "  -run                   : show and run the needed jobs\n";
+  print "  -dead                  : clean overdue jobs for resubmission\n";
   print "local_beekeeper.pl v1.0\n";
   
   exit(1);  
@@ -144,14 +148,18 @@ sub run_next_worker_clutch
     my $count = $analysis_stats->num_required_workers;
     my $analysis = $analysis_stats->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id);
     my $hive_capacity = $analysis_stats->hive_capacity;
-    my $batch_size = $analysis_stats->batch_size;
 
     my $cmd;
     my $worker_cmd = "./runWorker.pl -logic_name " . $analysis->logic_name;
 
     $worker_cmd .= " -conf $conf_file" if($conf_file);
     $worker_cmd .= " -url $url" if($url);
-    $worker_cmd .= " -limit $batch_size" if($hive_capacity < 0);
+    if (defined $limit) {
+      $worker_cmd .= " -limit $limit";
+    } elsif ($hive_capacity < 0) {
+      $worker_cmd .= " -limit " . $analysis_stats->batch_size;
+    }
+    $worker_cmd .= " -batch_size $batch_size" if (defined $batch_size);
 
     if($count>1) { $cmd = "bsub -JW$analysis_id\[1-$count\] $worker_cmd";}
     else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
