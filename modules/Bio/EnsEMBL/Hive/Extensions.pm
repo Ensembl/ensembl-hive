@@ -237,6 +237,21 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
   return $self->{'_branch_code'};
 }
 
+sub Bio::EnsEMBL::Pipeline::RunnableDB::analysis_job_id
+{
+  my $self = shift;
+  $self->{'_analysis_job_id'} = shift if(@_);
+  $self->{'_analysis_job_id'}=0 unless($self->{'_analysis_job_id'});
+  return $self->{'_analysis_job_id'};
+}
+
+sub Bio::EnsEMBL::Pipeline::RunnableDB::debug {
+  my $self = shift;
+  $self->{'_debug'} = shift if(@_);
+  $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
+  return $self->{'_debug'};
+}
+
 #######################################
 # extensions to
 # Bio::EnsEMBL::Analysis::RunnableDB
@@ -260,6 +275,21 @@ sub Bio::EnsEMBL::Analysis::RunnableDB::branch_code
   $self->{'_branch_code'} = shift if(@_);
   $self->{'_branch_code'}=1 unless($self->{'_branch_code'});
   return $self->{'_branch_code'};
+}
+
+sub Bio::EnsEMBL::Analysis::RunnableDB::analysis_job_id
+{
+  my $self = shift;
+  $self->{'_analysis_job_id'} = shift if(@_);
+  $self->{'_analysis_job_id'}=0 unless($self->{'_analysis_job_id'});
+  return $self->{'_analysis_job_id'};
+}
+
+sub Bio::EnsEMBL::Analysis::RunnableDB::debug {
+  my $self = shift;
+  $self->{'_debug'} = shift if(@_);
+  $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
+  return $self->{'_debug'};
 }
 
 #######################################
