@@ -212,7 +212,7 @@ CREATE TABLE analysis_data (
   data              longtext,
 
   PRIMARY KEY (analysis_data_id),
-  KEY data (data(7))
+  KEY data (data(100))
 );
 
 
