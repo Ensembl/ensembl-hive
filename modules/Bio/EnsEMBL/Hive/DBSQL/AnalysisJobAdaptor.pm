@@ -77,7 +77,7 @@ sub CreateNewJob {
             " ,analysis_id='".$analysis->dbID ."' ";
   $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
 
-  my $dbc = $analysis->adaptor->db;
+  my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
   $sth->execute();
   my $dbID = $sth->{'mysql_insertid'};
