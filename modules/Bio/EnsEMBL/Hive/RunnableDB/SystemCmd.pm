@@ -48,6 +48,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 
 use strict;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
@@ -62,13 +63,27 @@ our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 sub fetch_input {
   my $self = shift;
+
+  print("input_id\n  ", $self->input_id,"\n");
+  $self->{'cmd'} = $self->input_id;
+
+  if($self->input_id =~ /^{/) {
+    my $input_hash = eval($self->input_id);
+    if($input_hash) {
+      $self->{'cmd'} = $input_hash->{'cmd'} if($input_hash->{'cmd'});
+      if($input_hash->{'did'}) {
+        $self->{'cmd'} = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($input_hash->{'did'});
+      }
+    }
+  }
+  print("cmd\n  ", $self->{'cmd'},"\n");
   return 1;
 }
 
 sub run
 {
   my $self = shift;
-  system($self->input_id);
+  system($self->{'cmd'});
   return 1;
 }
 
