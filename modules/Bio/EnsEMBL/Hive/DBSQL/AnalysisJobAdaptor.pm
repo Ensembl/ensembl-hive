@@ -378,6 +378,23 @@ sub update_status {
   $sth->finish;
 }
 
+sub reclaim_job {
+  my $self   = shift;
+  my $job    = shift;
+
+  my $ug    = new Data::UUID;
+  my $uuid  = $ug->create();
+  $job->job_claim($ug->to_string( $uuid ));
+
+  my $sql = "UPDATE analysis_job SET status='CLAIMED', job_claim=?, hive_id=? WHERE analysis_job_id=?";
+
+  #print("$sql\n");            
+  my $sth = $self->prepare($sql);
+  $sth->execute($job->job_claim, $job->hive_id, $job->dbID);
+  $sth->finish;
+}
+
+
 =head2 store_out_files
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisJob $job
@@ -431,6 +448,7 @@ sub claim_jobs_for_worker {
 
   return $claim;
 }
+
 
 =head2 reset_dead_jobs_for_worker
 
