@@ -88,8 +88,8 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($analysis_id, $beekeeper) =
-     rearrange([qw(analysis_id beekeeper )], @args);
+  my ($analysis_id, $beekeeper ,$pid) =
+     rearrange([qw(analysis_id beekeeper process_id) ], @args);
 
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
@@ -115,11 +115,11 @@ sub create_new_worker {
   }
 
   my $host = hostname;
-  my $ppid = getppid;
+  $pid = getppid unless($pid);
   $beekeeper = '' unless($beekeeper);
 
   my $sql = "INSERT INTO hive SET born=now(), last_check_in=now()".
-            ",process_id='$ppid' ".
+            ",process_id='$pid' ".
             ",analysis_id='$analysis_id' ".
             ",beekeeper='$beekeeper' ".
             ",host='$host'";
@@ -313,7 +313,7 @@ sub get_num_needed_workers {
     last if($availableLoad <= 0.0);
   }
 
-  print("need $numWorkers workers ($availableLoad load left)\n");
+  printf("need $numWorkers workers (availLoad=%1.5f)\n", $availableLoad);
   return $numWorkers;
 }
 
