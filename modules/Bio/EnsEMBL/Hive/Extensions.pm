@@ -142,6 +142,10 @@ sub Bio::EnsEMBL::Analysis::stats
 {
   my $self = shift;
   my $stats = undef;
+
+  #not cached internally since I want it to always be in sync with the database
+  #otherwise the user application would need to be aware of the sync state and send
+  #explicit 'sync' calls.
   eval {
     $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
   };
