@@ -80,6 +80,9 @@ $worker->print_worker();
 eval {
   $worker->run();
 };
+if($@) {
+  print("\n$@");
+}
 
 print("total jobs completes : ", $worker->work_done, "\n");
 
