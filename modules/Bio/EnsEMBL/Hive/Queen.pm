@@ -86,7 +86,7 @@ sub create_new_worker {
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
   
-  my $analysisStats = $analStatsDBA->fetch_by_dbID($analysis_id);
+  my $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
   return undef unless($analysisStats);
   $analysisStats->print_stats;
   
@@ -116,7 +116,7 @@ sub create_new_worker {
   $worker=undef unless($worker and $worker->analysis);
 
   if($worker and $analysisStats) {
-    $analysisStats->status('WORKING');
+    $analStatsDBA->update_status($analysis_id, 'WORKING');
   }
   return $worker;
 }
@@ -171,6 +171,60 @@ sub fetch_overdue_workers {
                    "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(h.last_check_in))>$overdue_secs";
   return $self->_generic_fetch($constraint);
 }
+
+
+sub update_analysis_stats {
+  my $self = shift;
+
+  my $sql = "SELECT analysis.analysis_id, status, count(*) ".
+            "FROM analysis_job, analysis ".
+            "WHERE analysis_job.analysis_id=analysis.analysis_id ".
+            "GROUP BY analysis_job.analysis_id, status";
+
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
+  my $analysisStats = undef;
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  while (my ($analysis_id, $status, $count)=$sth->fetchrow_array()) {
+    unless(defined($analysisStats) and $analysisStats->analysis_id==$analysis_id) {
+      if($analysisStats and ($analysisStats->status ne 'BLOCKED')) {
+        if($analysisStats->total_job_count == $analysisStats->done_job_count) {
+          $analysisStats->status('DONE');
+        }
+        if($analysisStats->total_job_count == $analysisStats->unclaimed_job_count) {
+          $analysisStats->status('READY');
+        }
+        if($analysisStats->unclaimed_job_count>0 and
+           $analysisStats->total_job_count > $analysisStats->unclaimed_job_count) {
+          $analysisStats->status('WORKING');
+        }
+        $statsDBA->update($analysisStats);
+      }
+
+      $analysisStats = $statsDBA->fetch_by_analysis_id($analysis_id);
+      $analysisStats->total_job_count(0);
+      $analysisStats->unclaimed_job_count(0);
+      $analysisStats->done_job_count(0);
+      $analysisStats->num_required_workers(0);
+    }
+
+    my $total = $analysisStats->total_job_count();
+    $analysisStats->total_job_count($total + $count);
+    
+    if($status eq 'READY') {
+      $analysisStats->unclaimed_job_count($count);
+      my $numWorkers = $count/$analysisStats->batch_size;
+      if($numWorkers > $analysisStats->hive_capacity) {
+        $numWorkers=$analysisStats->hive_capacity;
+      }
+      $analysisStats->num_required_workers($numWorkers);
+    }
+    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
+  }
+  $sth->finish;
+}
+
 
 
 #
