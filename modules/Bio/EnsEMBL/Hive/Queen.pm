@@ -131,8 +131,9 @@ sub create_new_worker {
   $pid = getppid unless($pid);
   $beekeeper = '' unless($beekeeper);
 
-  my $sql = "INSERT INTO hive SET born=now(), last_check_in=now(), " .
-            "process_id=?, analysis_id=?, beekeeper=?, host=?";
+  my $sql = q{INSERT INTO hive 
+              (born, last_check_in, process_id, analysis_id, beekeeper, host)
+              VALUES (NOW(), NOW(), ?,?,?,?)};
 
   my $sth = $self->prepare($sql);
   $sth->execute($pid, $analysisStats->analysis_id, $beekeeper, $host);
@@ -434,7 +435,7 @@ sub get_num_needed_workers {
       printf("%5d (%1.3f) ", $numWorkers, $availableLoad);
       $analysis_stats->print_stats();
     } else {
-      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity                     );
+      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity);
       $numWorkers += $workerCount;
       $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
       printf("%5d (%1.3f) use only %3d ", $numWorkers, $availableLoad, $workerCount);
