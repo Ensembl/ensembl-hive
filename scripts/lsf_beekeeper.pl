@@ -109,6 +109,7 @@ if($loopit) {
   $queen->synchronize_hive() if($sync);
   $queen->print_hive_status if($self->{'showStatus'});
   show_running_workers($self, $queen);
+  $queen->get_num_running_workers();
   $queen->get_num_needed_workers();
 #  show_overdue_workers($self, $queen);
 }
@@ -222,7 +223,7 @@ sub show_running_workers {
   print("===== running workers\n");
   my $worker_list = $queen->fetch_overdue_workers(0);
   foreach my $worker (@{$worker_list}) {
-    printf("%10d %30s(%5d) %5s:%15s %15s (%s)\n", 
+    printf("%10d %35s(%5d) %5s:%15s %15s (%s)\n", 
        $worker->hive_id,
        $worker->analysis->logic_name,
        $worker->analysis->dbID,
@@ -245,13 +246,14 @@ sub run_autonomously {
 
     check_for_dead_workers($self, $queen);
     
-    my $load  = $queen->get_hive_current_load();
-    my $count = $queen->get_num_needed_workers();
+    my $runCount = $queen->get_num_running_workers();
+    my $load     = $queen->get_hive_current_load();
+    my $count    = $queen->get_num_needed_workers();
 
     #my $pend_count = $self->get_pending_count();
     #$count = $count - $pend_count;
 
-    if($load==0 and $count==0) {
+    if($load==0 and $count==0 and $runCount==0) {
       #nothing running and nothing todo => do hard resync
       print("*** nothing is happening => do a hard resync\n");
       $queen->synchronize_hive();
