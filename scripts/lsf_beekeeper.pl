@@ -29,7 +29,8 @@ my $worker_limit = 50;
 my $sleep_time = 5;
 my $sync=0;
 $self->{'overdue_limit'} = 75; #minutes
-$self->{'showStatus'} = undef;
+$self->{'show_analysis_stats'} = undef;
+$self->{'show_worker_stats'} = undef;
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -48,7 +49,8 @@ GetOptions('help'           => \$help,
            'batch_size=i'   => \$batch_size,
            'loop'           => \$loopit,
 	   'sync'           => \$sync,
-	   'status'         => \$self->{'showStatus'},
+	   'analysis_stats' => \$self->{'show_analysis_stats'},
+	   'worker_stats'   => \$self->{'show_worker_stats'},
 	   'sleep=i'        => \$sleep_time,
 	   'logic_name=s'   => \$self->{'logic_name'},
           );
@@ -104,17 +106,21 @@ if($loopit) {
   }
   $stats->print_stats;
   $queen->get_num_needed_workers();
-} else {
-  #sync and show stats
+} else { 
   $queen->synchronize_hive() if($sync);
-  $queen->print_hive_status if($self->{'showStatus'});
-  show_running_workers($self, $queen);
-  $queen->get_num_running_workers();
-  $queen->get_num_needed_workers();
-#  show_overdue_workers($self, $queen);
-}
 
-printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
+  $queen->print_analysis_status if($self->{'show_analysis_stats'});
+
+  $queen->print_running_worker_status;
+
+  show_running_workers($self, $queen) if($self->{'show_worker_stats'});
+
+  $queen->get_num_running_workers();
+
+  $queen->get_num_needed_workers();
+
+  $queen->get_hive_progress();
+}
 
 exit(0);
 
@@ -143,7 +149,8 @@ sub usage {
   print "  -loop                  : run autonomously, loops and sleeps\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 5)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
-  print "  -status                : show hive status\n";
+  print "  -analysis_stats        : show status of each analysis\n";
+  print "  -worker_stats          : show status of each running worker\n";
   print "lsf_beekeeper.pl v1.3\n";
   
   exit(1);  
@@ -250,8 +257,8 @@ sub run_autonomously {
     my $load     = $queen->get_hive_current_load();
     my $count    = $queen->get_num_needed_workers();
 
-    #my $pend_count = $self->get_pending_count();
-    #$count = $count - $pend_count;
+    my $pend_count = $self->get_pending_count();
+    $count = $count - $pend_count;
 
     if($load==0 and $count==0 and $runCount==0) {
       #nothing running and nothing todo => do hard resync
@@ -260,7 +267,8 @@ sub run_autonomously {
       $count = $queen->get_num_needed_workers();
     }  
 
-    $queen->print_hive_status()  if($self->{'showStatus'});
+    $queen->print_hive_status()  if($self->{'show_analysis_stats'});
+    $queen->print_worker_status()  if($self->{'show_worker_stats'});
 
     $count = $worker_limit if($count>$worker_limit);    
     
@@ -284,6 +292,7 @@ sub run_autonomously {
     sleep($sleep_time*60);  
     $loopCount++;
   }
+  printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 }
 
 
