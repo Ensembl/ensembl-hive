@@ -22,8 +22,9 @@ $self->{'db_conf'}->{'-port'} = 3306;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
-my ($limit, $batch_size);
+my ($job_limit, $batch_size);
 my $loopit=0;
+my $worker_limit = 50;
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -36,7 +37,8 @@ GetOptions('help'           => \$help,
            'dead'           => \$self->{'check_for_dead'},
            'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
-           'limit=i'        => \$limit,
+           'jlimit=i'       => \$job_limit,
+           'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
            'loop'           => \$loopit
           );
@@ -75,20 +77,16 @@ $DBA->dbc->disconnect_when_inactive(0);
 my $queen = $DBA->get_Queen;
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
+if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
 
 if($loopit) { 
-  run_autonomously($self, $queen); 
+  run_autonomously($self, $queen);
 } else {
-  if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
-
+  #sync and show stats
   $queen->update_analysis_stats();
   $queen->check_blocking_control_rules;
   $queen->print_hive_status;
-
   $queen->get_num_needed_workers();
-
-  run_next_worker_clutch($self, $queen) if($self->{'run'});
-  
   show_overdue_workers($self, $queen);
 }
 
@@ -112,12 +110,12 @@ sub usage {
   print "  -dbuser <name>         : mysql connection user <name>\n";
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -batch_size <num>      : #jobs a worker can claim at once\n";
-  print "  -limit <num>           : #jobs to run before worker can die naturally\n";
-  print "  -run                   : show and run the needed jobs\n";
+  print "  -jlimit <num>          : #jobs to run before worker can die naturally\n";
   print "  -dead                  : clean overdue jobs for resubmission\n";
   print "  -alldead               : all outstanding workers\n";
-  print "  -loop                  : run autonomously\n";
-  print "lsf_beekeeper.pl v1.0\n";
+  print "  -loop                  : run autonomously, loops every 5 minutes\n";
+  print "  -wlimit <num>          : max # workers to create per loop\n";
+  print "lsf_beekeeper.pl v1.1\n";
   
   exit(1);  
 }
@@ -161,8 +159,8 @@ sub run_next_worker_clutch
 
     $worker_cmd .= " -conf $conf_file" if($conf_file);
     $worker_cmd .= " -url $url" if($url);
-    if (defined $limit) {
-      $worker_cmd .= " -limit $limit";
+    if (defined $job_limit) {
+      $worker_cmd .= " -limit $job_limit";
     } elsif ($hive_capacity < 0) {
       $worker_cmd .= " -limit " . $analysis_stats->batch_size;
     }
@@ -246,12 +244,14 @@ sub run_autonomously {
 
     $count = $count - $pend_count;
 
+    $count = $worker_limit if($count>$worker_limit);
+    
     #return if($load==0 and $count==0); #nothing running and nothing todo => done
     
     if($count>0) {
       print("need $count workers\n");
       $worker_cmd = "runWorker.pl -bk LSF -url $url";
-      $worker_cmd .= " -limit $limit" if(defined $limit);
+      $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
 
       if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\] $worker_cmd";}
