@@ -78,7 +78,7 @@ my $queen = $DBA->get_Queen();
 my $worker = $queen->create_new_worker($self->{'analysis_id'}, $self->{'beekeeper'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
 
-if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
+if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
 else {
   my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
   if( @$arrRef ) {
