@@ -338,7 +338,7 @@ sub _objs_from_sth {
     $job->adaptor($self);
     
     if($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/) {
-      print("input_id was too big so stored in analysis_data table as dbID $1 -- fetching now\n");
+      #print("input_id was too big so stored in analysis_data table as dbID $1 -- fetching now\n");
       $job->input_id($self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1));
     }
 
