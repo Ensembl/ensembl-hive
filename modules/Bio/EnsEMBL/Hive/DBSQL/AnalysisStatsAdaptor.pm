@@ -107,8 +107,12 @@ sub fetch_by_status {
     $addComma = 1;
   }
   $constraint .= ")";
-  
-  return $self->_generic_fetch($constraint);
+
+  $self->_final_clause("ORDER BY last_update");
+  my $results = $self->_generic_fetch($constraint);
+  $self->_final_clause(""); #reset final clause for other fetches
+
+  return $results;
 }
 
 #
