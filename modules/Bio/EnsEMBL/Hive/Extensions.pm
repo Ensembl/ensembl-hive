@@ -303,7 +303,7 @@ sub main::encode_hash
   return "" unless($hash_ref);
 
   my $hash_string = "{";
-  my @keys = keys %{$hash_ref};
+  my @keys = sort(keys %{$hash_ref});
   foreach my $key (@keys) {
     $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
   }
