@@ -412,7 +412,7 @@ sub run_module_with_job
   #pass the input_id from the job into the runnableDB object
   $runObj->input_id($job->input_id);
   
-  #$job->status('GET_INPUT');
+  $job->status('GET_INPUT');
   $runObj->fetch_input;
 
   $job->status('RUN');
