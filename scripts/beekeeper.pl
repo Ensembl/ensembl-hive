@@ -36,6 +36,7 @@ my $local=undef;
 $self->{'overdue_limit'} = 75; #minutes
 $self->{'show_analysis_stats'} = undef;
 $self->{'show_worker_stats'} = undef;
+$self->{'lsf_options'} = "";
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -45,9 +46,10 @@ GetOptions('help'           => \$help,
            'dbuser=s'       => \$user,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
-	   'local'          => \$local,
+           'local'          => \$local,
+           'lsf'            => \$self->{'lsf_mode'},
            'dead'           => \$self->{'check_for_dead'},
-	   'killworker=i'   => \$self->{'kill_worker_id'},
+           'killworker=i'   => \$self->{'kill_worker_id'},
            'overdue'        => \$self->{'overdue_limit'},
            'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
@@ -64,7 +66,7 @@ GetOptions('help'           => \$help,
            'failed_jobs'    => \$self->{'show_failed_jobs'},
            'reset_job_id=i' => \$self->{'reset_job_id'},
            'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
-	   'm=s'            => \$self->{'lsf_machine_option'},
+           'lsf_options=s'  => \$self->{'lsf_options'},
           );
 
 if ($help) { usage(); }
@@ -170,8 +172,8 @@ sub usage {
   print "  -loop                  : run autonomously, loops and sleeps\n";
   print "  -local                 : run jobs on local CPU (fork)\n";
   print "  -lsf                   : run jobs on LSF compute resource (bsub)\n";
+  print "  -lsf_options <string>  : passes <string> to LSF bsub command as <options>\n";
   print "  -no_pend               : don't adjust needed workers by pending workers\n";
-  print "  -m <string>            : passes <string> to LSF bsub -m option\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 3min)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
   print "  -analysis_stats        : show status of each analysis\n";
@@ -412,12 +414,12 @@ sub run_autonomously {
       if($self->{'beekeeper_type'} eq 'LSF') {
         if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\]";}
         else { $cmd = "bsub -JHL$loopCount";}
-        $cmd .= " -m '" . $self->{'lsf_machine_option'} ."'" if($self->{'lsf_machine_option'});
+        $cmd .= " " . $self->{'lsf_options'} if($self->{'lsf_options'});
         $cmd .= " ".$worker_cmd;
       } elsif(($self->{'beekeeper_type'} eq 'LOCAL') and
               ($self->get_local_running_count() < $self->{'local_cpus'}))
       {
-	$cmd = "$worker_cmd &";
+        $cmd = "$worker_cmd &";
       }
 
       if($cmd) {
