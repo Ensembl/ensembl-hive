@@ -354,17 +354,6 @@ sub get_pending_count {
   return $pend_count;
 }
 
-sub reset_job {
-  my $self = shift;
-  
-  $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_dbID($self->{'reset_job_id'}); 
-
-  my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'reset_job_id'}); 
-  my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID($job->analysis_id);
-  
-  $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
-}
-
 
 sub reset_all_jobs_for_analysis_id {
   my $self = shift;
