@@ -80,10 +80,15 @@ sub Bio::EnsEMBL::Analysis::runnableDB
 sub Bio::EnsEMBL::DBSQL::DBConnection::url
 {
   my $self = shift;
-  return undef unless($self->host and $self->username and $self->password and $self->dbname);
-  
-  return "mysql:://". $self->username .":". $self->password
-         ."@". $self->host .":". $self->port ."/" . $self->dbname;
+  return undef unless($self->host and $self->port and $self->dbname);
+  my $url = "mysql://";
+  if($self->username) {
+    $url .= $self->username;
+    $url .= ":".$self->password if($self->password);
+    $url .= "@";
+  }
+  $url .= $self->host .":". $self->port ."/" . $self->dbname;
+  return $url;
 }
 
 
