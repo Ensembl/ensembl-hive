@@ -111,11 +111,11 @@ CREATE TABLE dataflow_rule (
 --   condition_analysis_url  - foreign key to net distributed analysis reference
 --   ctrled_analysis_id      - foreign key to analysis table analysis_id
 
-CREATE TABLE dataflow_rule (
+CREATE TABLE analysis_ctrl_rule (
   condition_analysis_url     varchar(255) default '' NOT NULL,
   ctrled_analysis_id         int(10) unsigned NOT NULL,
 
-  UNIQUE (from_analysis_id, to_analysis_url)
+  UNIQUE (condition_analysis_url, ctrled_analysis_id)
 );
 
 
@@ -156,7 +156,7 @@ CREATE TABLE analysis_job (
 
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX job_claim_analysis     (job_claim, analysis_id)
+  INDEX job_claim_analysis     (job_claim, analysis_id),
   INDEX job_status_analysis    (status, analysis_id)
 );
 
@@ -205,11 +205,11 @@ CREATE TABLE analysis_stats (
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) NOT NULL,
   hive_capacity         int(10) NOT NULL,
-  num_jobs              int(10) NOT NULL,
-  num_unclaimed         int(10) NOT NULL,
-  num_done              int(10) NOT NULL,
+  total_job_count       int(10) NOT NULL,
+  unclaimed_job_count   int(10) NOT NULL,
+  done_job_count        int(10) NOT NULL,
   num_required_workers  int(10) NOT NULL,
-  last_update           datetime NOT NULL,
+  last_update           timestamp NOT NULL,
   
   UNIQUE KEY   (analysis_id)
 );

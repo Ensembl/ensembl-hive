@@ -1,4 +1,43 @@
-package Bio::EnsEMBL::Hive::AnalysisJobAdaptor;
+# Perl module for Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor
+#
+# Date of creation: 22.03.2004
+# Original Creator : Jessica Severin <jessica@ebi.ac.uk>
+#
+# Copyright EMBL-EBI 2004
+#
+# You may distribute this module under the same terms as perl itself
+
+# POD documentation - main docs before the code
+
+=head1 NAME
+
+Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor
+
+=head1 SYNOPSIS
+
+  $analysisJobAdaptor = $db_adaptor->get_AnalysisJobAdaptor;
+  $analysisJobAdaptor = $analysisJob->adaptor;
+
+=head1 DESCRIPTION
+
+  Module to encapsulate all db access for persistent class AnalysisJob.
+  There should be just one per application and database connection.
+
+=head1 CONTACT
+
+    Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+    Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
+
+
+# Let the code begin...
+
+package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
 use Bio::EnsEMBL::Hive::Worker;

@@ -112,6 +112,19 @@ sub analysis {
   return $self->{'_analysis'};
 }
 
+sub analysis_stats {
+  my $self = shift;
+  my $analysisStats = shift;
+
+  if(defined($analysisStats)) {
+    $self->throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisStats] not a [$analysisStats]")
+       unless($analysisStats->isa('Bio::EnsEMBL::Hive::AnalysisStats'));
+    $self->{'_analysis_stats'} = $analysisStats;
+  }
+
+  return $self->{'_analysis_stats'};
+}
+
 
 =head2 life_span
   Arg [1] : (optional) integer $value (in seconds)

@@ -3,8 +3,9 @@
 use strict;
 use DBI;
 use Getopt::Long;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Hive::Queen;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -35,7 +36,7 @@ GetOptions('help'           => \$help,
            'outdir=s'       => \$self->{'outdir'},
           );
 
-$self->{'analysis_id'} = shift;
+$self->{'analysis_id'} = shift if(@_);
 
 if ($help) { usage(); }
 
@@ -61,9 +62,10 @@ unless(defined($self->{'analysis_id'})) {
   usage();
 }
 
-my $DBA = new Bio::EnsEMBL::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
-my $queen = new Bio::EnsEMBL::Hive::Queen($DBA);
-$DBA->add_db_adaptor('Queen', $queen);
+# connect to database specified
+my $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+
+my $queen = $DBA->get_Queen();
 
 my $worker = $queen->create_new_worker($self->{'analysis_id'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);

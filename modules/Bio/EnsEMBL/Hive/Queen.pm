@@ -62,17 +62,20 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self,$analysis_id) = @_;
 
-  if($self->db->get_AnalysisAdaptor) {
-    my $status = $self->db->get_AnalysisAdaptor->get_status($analysis_id);
-    return undef unless($status);
-    if($status eq 'BLOCKED') {
-      print("Analysis is BLOCKED, can't create workers\n");
-      return undef;
-    }
-    if($status eq 'DONE') {
-      print("Analysis is DONE, don't need to create workers\n");
-      return undef;
-    }
+  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
+  return undef unless($analStatsDBA);
+  
+  my $analysisStats = $analStatsDBA->fetch_by_dbID($analysis_id);
+  return undef unless($analysisStats);
+  $analysisStats->print_stats;
+  
+  if($analysisStats->status eq 'BLOCKED') {
+    print("Analysis is BLOCKED, can't create workers\n");
+    return undef;
+  }
+  if($analysisStats->status eq 'DONE') {
+    print("Analysis is DONE, don't need to create workers\n");
+    return undef;
   }
 
   my $host = hostname;
@@ -91,8 +94,8 @@ sub create_new_worker {
   my $worker = $self->_fetch_by_hive_id($hive_id);
   $worker=undef unless($worker and $worker->analysis);
 
-  if($worker) {
-    $worker->analysis->status('WORKING');
+  if($worker and $analysisStats) {
+    $analysisStats->status('WORKING');
   }
   return $worker;
 }
@@ -110,6 +113,10 @@ sub register_worker_death {
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
+
+  if($worker->cause_of_death eq "NO_WORK") {
+    $worker->analysis_stats->status("ALL_CLAIMED");
+  }
 }
 
 
@@ -275,6 +282,7 @@ sub _objs_from_sth {
 
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
       $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
+      $worker->analysis_stats($self->db->get_AnalysisStatsAdaptor->fetch_by_dbID($column{'analysis_id'}));
     }
 
     push @workers, $worker;
