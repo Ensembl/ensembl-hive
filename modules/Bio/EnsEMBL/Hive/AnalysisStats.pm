@@ -151,7 +151,7 @@ sub print_stats {
 
   return unless($self->get_analysis);
   #printf("STATS %20s(%3d) %11s  jobs(%7d:t,%7d:q,%7d:d) %5d:batchsize %5d:hiveCapacity %5d:neededWorkers (synched %d secs ago)\n",
-  printf("STATS %20s(%3d) %12s jobs(t=%d,q=%d,d=%d,f=%d) batchsize=%d hiveCapacity=%d neededWorkers=%d (synched %d secs ago)\n",
+  printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
