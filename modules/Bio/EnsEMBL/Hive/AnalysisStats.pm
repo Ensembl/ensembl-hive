@@ -84,6 +84,18 @@ sub batch_size {
   return $self->{'_batch_size'};
 }
 
+sub avg_msec_per_job {
+  my $self = shift;
+  $self->{'_avg_msec_per_job'} = shift if(@_);
+  $self->{'_avg_msec_per_job'}=0 unless($self->{'_avg_msec_per_job'});
+  return $self->{'_avg_msec_per_job'};
+}
+
+sub cpu_minutes_remaining {
+  my $self = shift;
+  return ($self->avg_msec_per_job * $self->unclaimed_job_count / 60000);
+}
+
 sub hive_capacity {
   my $self = shift;
   $self->{'_hive_capacity'} = shift if(@_);
@@ -113,6 +125,14 @@ sub failed_job_count {
   $self->{'_failed_job_count'} = shift if(@_);
   $self->{'_failed_job_count'} = 0 unless(defined($self->{'_failed_job_count'}));
   return $self->{'_failed_job_count'};
+}
+
+sub running_job_count {
+  my $self = shift;
+  return $self->total_job_count
+         - $self->done_job_count
+         - $self->unclaimed_job_count
+         - $self->failed_job_count;
 }
 
 sub num_required_workers {
@@ -150,14 +170,16 @@ sub print_stats {
   my $self = shift;
 
   return unless($self->get_analysis);
-  #printf("STATS %20s(%3d) %11s  jobs(%7d:t,%7d:q,%7d:d) %5d:batchsize %5d:hiveCapacity %5d:neededWorkers (synched %d secs ago)\n",
-  printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
+  printf("%30s(%3d) %11s %d:job_msec %d:cpu_min (%d:q %d:r %d:d %d:f %d:t) [%d/%d workers] (%d secs synched)\n",
+ #printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
-        $self->total_job_count,$self->unclaimed_job_count,$self->done_job_count,$self->failed_job_count,
-        $self->batch_size,$self->hive_capacity(),$self->num_required_workers,
-        $self->seconds_since_last_update);
+        $self->avg_msec_per_job,$self->cpu_minutes_remaining,
+        $self->unclaimed_job_count,$self->running_job_count,$self->done_job_count,$self->failed_job_count,$self->total_job_count,
+        $self->num_required_workers, $self->hive_capacity,
+        $self->seconds_since_last_update,
+        );
 }
 
 1;

@@ -126,12 +126,14 @@ sub fetch_by_status {
 ################
 
 =head2 update
+
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
   Example    :
   Description:
   Returntype : Bio::EnsEMBL::Hive::Worker
   Exceptions :
   Caller     :
+  
 =cut
 
 sub update {
@@ -139,6 +141,7 @@ sub update {
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
   $sql .= ",batch_size=" . $stats->batch_size();
+  $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
   $sql .= ",total_job_count=" . $stats->total_job_count();
   $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
@@ -165,6 +168,33 @@ sub update_status
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
+}
+
+
+=head2 interval_update_work_done
+
+  Arg [1]     : int $analysis_id
+  Arg [2]     : int $jobs_done_in_interval
+  Arg [3]     : int $interval_msec
+  Example     : $statsDBA->incremental_update_work_done($analysis_id, $jobs_done, $interval_msecs);
+  Description : does a database update to recalculate the avg_msec_per_job and done_job_count
+                does an interval equation by multiplying out the previous done_job_count with the
+                previous avg_msec_per_job and then expanding by new interval values to give a better average.
+  Caller      : Bio::EnsEMBL::Hive::Worker
+
+=cut
+
+sub interval_update_work_done
+{
+  my ($self, $analysis_id, $job_count, $interval) = @_;
+
+  my $sql = "UPDATE analysis_stats SET ".
+            "unclaimed_job_count = unclaimed_job_count - $job_count, ".
+            "avg_msec_per_job = (((done_job_count*avg_msec_per_job/3) + $interval) / (done_job_count/3 + $job_count)), ".
+            "done_job_count = done_job_count + $job_count ".
+            "WHERE analysis_id= $analysis_id";
+            
+  $self->dbc->do($sql);
 }
 
 
@@ -267,6 +297,7 @@ sub _columns {
   my @columns = qw (ast.analysis_id
                     ast.status
                     ast.batch_size
+                    ast.avg_msec_per_job
                     ast.hive_capacity
                     ast.total_job_count
                     ast.unclaimed_job_count
@@ -293,6 +324,7 @@ sub _objs_from_sth {
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
     $analStats->batch_size($column{'batch_size'});
+    $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->hive_capacity($column{'hive_capacity'});
     $analStats->total_job_count($column{'total_job_count'});
     $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
