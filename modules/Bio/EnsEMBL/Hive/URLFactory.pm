@@ -77,12 +77,13 @@ sub fetch
 {
   my $class = shift;
   my $url = shift;
+  my $type = shift;
   
   return undef unless($url);
 
   new Bio::EnsEMBL::Hive::URLFactory;  #make sure global instance is created
 
-  my ($dba, $path) = $class->_get_db_connection($url);  
+  my ($dba, $path) = $class->_get_db_connection($url, $type);  
 
   return $dba unless($path);
   
@@ -127,6 +128,7 @@ sub _get_db_connection
   #e.g. mysql://ensadmin:<pass>@ecs2:3362/ensembl_core_homo_sapiens_22_34;type=core
   my $class = shift;
   my $url = shift;
+  my $type = shift;
 
   return undef unless($url);
 
@@ -137,7 +139,7 @@ sub _get_db_connection
   my $dbname = undef;
   my $path = '';
   my $module = "Bio::EnsEMBL::Hive::DBSQL::DBAdaptor";
-  my $type   = 'hive';
+  $type   = 'hive' unless($type);
   my ($p, $p2, $p3);
 
   #print("FETCH $url\n");
