@@ -108,7 +108,8 @@ my $worker = $queen->create_new_worker(
      );
 unless($worker) {
   Bio::EnsEMBL::Hive::URLFactory->cleanup;
-  die("couldn't create worker\n");
+  print("couldn't create worker\n");
+  exit(0);
 }
 
 if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
