@@ -108,6 +108,7 @@ if($loopit) {
   #sync and show stats
   $queen->synchronize_hive() if($sync);
   $queen->print_hive_status if($self->{'showStatus'});
+  show_running_workers($self, $queen);
   $queen->get_num_needed_workers();
 #  show_overdue_workers($self, $queen);
 }
@@ -208,9 +209,27 @@ sub show_overdue_workers {
   my $queen = shift;
 
   print("===== overdue workers\n");
-  my $overdueWorkers = $queen->fetch_overdue_workers(75*60);
+  my $overdueWorkers = $queen->fetch_overdue_workers($self->{'overdue_limit'}*60);
   foreach my $worker (@{$overdueWorkers}) {
     printf("%10d %35s %15s  %20s(%d)\n", $worker->hive_id,$worker->host,$worker->process_id, $worker->analysis->logic_name, $worker->analysis->dbID);
+  }
+}
+
+sub show_running_workers {
+  my $self = shift;
+  my $queen = shift;
+
+  print("===== running workers\n");
+  my $worker_list = $queen->fetch_overdue_workers(0);
+  foreach my $worker (@{$worker_list}) {
+    printf("%10d %30s(%5d) %5s:%15s %15s (%s)\n", 
+       $worker->hive_id,
+       $worker->analysis->logic_name,
+       $worker->analysis->dbID,
+       $worker->beekeeper,
+       $worker->process_id, 
+       $worker->host,
+       $worker->last_check_in);
   }
 }
 
