@@ -6,28 +6,38 @@
 =pod 
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::Extensions
+
 =cut
 
 =head1 SYNOPSIS
+
   Object categories to extend the functionality of existing classes
+
 =cut
 
 =head1 DESCRIPTION
+
 =cut
 
 =head1 CONTACT
+
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
 =cut
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods. 
   Internal methods are usually preceded with a _
+
 =cut
 
 use strict;
 
+use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
@@ -35,14 +45,17 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 #use Bio::EnsEMBL::Analysis::RunnableDB;
 
 
-=head2 runnableDB
+=head2 Bio::EnsEMBL::Analysis::runnableDB
+
   Arg [1]    : none
   Example    : $runnable_db = $analysis->runnableDB;
   Description: from the $analysis->module construct a runnableDB object
   Returntype : Bio::EnsEMBL::Pipeline::RunnableDB
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub Bio::EnsEMBL::Analysis::runnableDB
 {
   my $self = shift;  #self is an Analysis object
@@ -58,6 +71,12 @@ sub Bio::EnsEMBL::Analysis::runnableDB
   require "$file.pm";
   print STDERR "creating runnable ".$file."\n" if($self->{'verbose'});
 
+  #make copy of analysis ($self) to pass into the runnableDB
+  #to insulate the infrastructure from any modification the runnableDB may
+  #do to the analysis object
+  my $copy_self = new Bio::EnsEMBL::Analysis;
+  %$copy_self = %$self;
+  
   $runnable =~ s/\//::/g;
   my $runobj = "$runnable"->new(-db       => $self->adaptor->db,
                                 -input_id => '1',
@@ -69,7 +88,8 @@ sub Bio::EnsEMBL::Analysis::runnableDB
 }
 
 
-=head2 url
+=head2 Bio::EnsEMBL::DBSQL::DBConnection::url
+
   Arg [1]    : none
   Example    : $url = $dbc->url;
   Description: Constructs a URL string for this database connection. Follows
@@ -78,7 +98,9 @@ sub Bio::EnsEMBL::Analysis::runnableDB
   Returntype : string of format  mysql://<user>:<pass>@<host>:<port>/<dbname>'
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub Bio::EnsEMBL::DBSQL::DBConnection::url
 {
   my $self = shift;
@@ -94,16 +116,19 @@ sub Bio::EnsEMBL::DBSQL::DBConnection::url
 }
 
 
-=head2 url
+=head2 Bio::EnsEMBL::Analysis::url
+
   Arg [1]    : none
-  Example    : $url = $dbc->URL;
+  Example    : $url = $dbc->url;
   Description: Constructs a URL string for this database connection
                Follows the general URL rules.
   Returntype : string of format
                mysql://<user>:<pass>@<host>:<port>/<dbname>/analysis?logic_name=<name>'
   Exceptions : none
   Caller     : general
+
 =cut
+
 sub Bio::EnsEMBL::Analysis::url
 {
   my $self = shift;
@@ -139,6 +164,19 @@ sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query
 }
 
 
+=head2 Bio::EnsEMBL::Analysis::stats
+
+  Arg [1]    : none
+  Example    : $stats = $analysis->stats;
+  Description: returns the AnalysisStats object associated with this Analysis
+               object.  Does not cache, but pull from database by using the
+               Analysis objects adaptor->db.
+  Returntype : Bio::EnsEMBL::Hive::AnalysisStats object
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub Bio::EnsEMBL::Analysis::stats
 {
   my $self = shift;
@@ -147,13 +185,7 @@ sub Bio::EnsEMBL::Analysis::stats
   #not cached internally since I want it to always be in sync with the database
   #otherwise the user application would need to be aware of the sync state and send
   #explicit 'sync' calls.
-  eval {
-    $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
-  };
-  if(!defined($stats)) {
-    $stats = new Bio::EnsEMBL::Hive::AnalysisStats;
-    $stats->analysis_id($self->dbID);
-  }
+  $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
   return $stats;
 }
 
@@ -168,11 +200,34 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::reset_job
   return 1;
 }
 
+=head2 Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
+
+  Arg [1]    : none
+  Description: method which user RunnableDB can override if it needs to clean up
+               any 'global within worker run time' files or data.
+  Returntype : 1
+  Exceptions : none
+  Caller     : Bio::EnsEMBL::Hive::Worker
+
+=cut
+
 sub Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
 {
   my $self = shift;
   return 1;
 }
+
+=head2 Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
+
+  Arg [1]       : none
+  Description   : method which user RunnableDB can override if it needs to return
+                  a specific branch code.  Used by the dataflow rules to determine which
+                  job to create/run next
+  Returntype    : int (default 1)
+  Exceptions    : none
+  Caller        : Bio::EnsEMBL::Hive::Worker
+
+=cut
 
 sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
 {
