@@ -166,7 +166,7 @@ sub condition_analysis {
   }
   # lazy load the analysis object if I can
   if(!defined($self->{'_condition_analysis'}) and defined($self->condition_analysis_url)) {
-    my $analyis =  Bio::EnsEMBL::Hive::URLFactory->fetch($self->condition_analysis_url);
+    $analysis =  Bio::EnsEMBL::Hive::URLFactory->fetch($self->condition_analysis_url);
     unless($analysis) {
       $analysis =
         $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name($self->condition_analysis_url);
