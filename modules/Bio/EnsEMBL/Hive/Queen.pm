@@ -347,7 +347,7 @@ sub check_blocking_control_rules_for_AnalysisStats
     if($allRulesDone) {
       if($stats->status eq 'BLOCKED') {
         #print("  UNBLOCK analysis : all conditions met\n");
-        $stats->update_status('READY');
+        $stats->update_status('LOADING'); #trigger sync
       }
     } else {
       #print("  RE-BLOCK analysis : some conditions failed\n");
