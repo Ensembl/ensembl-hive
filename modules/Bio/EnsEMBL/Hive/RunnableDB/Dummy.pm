@@ -54,27 +54,6 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 
 our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
-=head2 batch_size
-  Title   :   batch_size
-  Usage   :   $value = $self->batch_size;
-  Description: Defines the number of jobs the RunnableDB subclasses should run in batch
-               before querying the database for the next job batch.  Used by the
-               Hive system to manage the number of workers needed to complete a
-               particular job type.
-  Returntype : integer scalar
-=cut
-sub batch_size { return 7000; }
-
-=head2 carrying_capacity
-  Title   :   carrying_capacity
-  Usage   :   $value = $self->carrying_capacity;
-  Description: Defines the total number of Workers of this RunnableDB for a particular
-               analysis_id that can be created in the hive.  Used by Queen to manage
-               creation of Workers.
-  Returntype : integer scalar
-=cut
-sub carrying_capacity { return 1; }
-
 
 ##############################################################
 #
