@@ -425,6 +425,8 @@ sub run
 
   $self->queen->register_worker_death($self);
 
+  $self->analysis->stats->print_stats if($self->debug);
+
   printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
   print("total jobs completes : ", $self->work_done, "\n");
   
