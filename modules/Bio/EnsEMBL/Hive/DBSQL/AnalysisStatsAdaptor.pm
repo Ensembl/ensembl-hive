@@ -98,6 +98,19 @@ sub fetch_by_needed_workers {
 }
 
 
+sub fetch_by_status {
+  my $self = shift;
+
+  my $constraint = "ast.status in (";
+  while(@_) {
+    my $status = shift;
+    $constraint .= "'$status' ";
+  }
+  $constraint .= ")";
+    
+  return $self->_generic_fetch($constraint);
+}
+
 #
 # INTERNAL METHODS
 #
