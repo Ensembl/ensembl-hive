@@ -447,6 +447,21 @@ sub reset_dead_jobs_for_worker {
 }
 
 
+sub reset_job {
+  my $self = shift;
+  my $job   = shift;
+  throw("must define job") unless($job);
+
+  my ($sql, $sth);
+  #first just reset the claimed jobs, these don't need a retry_count index increment
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY' WHERE analysis_job_id=?";
+  $sth = $self->prepare($sql);
+  $sth->execute($job->dbID);
+  $sth->finish;
+  #print("  done update CLAIMED\n");
+}
+
+
 1;
 
 
