@@ -73,6 +73,7 @@ sub status {
 sub batch_size {
   my $self = shift;
   $self->{'_batch_size'} = shift if(@_);
+  $self->{'_batch_size'}=1 unless($self->{'_batch_size'});
   return $self->{'_batch_size'};
 }
 

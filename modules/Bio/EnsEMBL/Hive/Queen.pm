@@ -136,7 +136,6 @@ sub create_new_worker {
 
   if($worker and $analysisStats) {
     $analStatsDBA->update_status($analysis_id, 'WORKING');
-    $worker->batch_size($analysisStats->batch_size);
   }
   return $worker;
 }

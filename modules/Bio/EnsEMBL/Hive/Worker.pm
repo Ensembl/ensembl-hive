@@ -63,6 +63,7 @@ package Bio::EnsEMBL::Hive::Worker;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Sys::Hostname;
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
@@ -258,9 +259,14 @@ sub print_worker {
 
 sub batch_size {
   my $self = shift;
-  if(@_) { $self->{'_batch_size'} = shift; }
-  $self->{'_batch_size'}=1 unless($self->{'_batch_size'});
-  return $self->{'_batch_size'};
+  
+  if(@_) {
+    my $batch_size = shift;
+    my $stats = $self->analysis->stats;
+    $stats->batch_size($batch_size);
+    $stats->update;
+  }
+  return $self->analysis->stats->batch_size;
 }
 
 
@@ -308,6 +314,9 @@ sub run
       printf("life_span exhausted (alive for %d secs)\n", (time() - $self->{'start_time'}));
       $self->cause_of_death('LIFESPAN'); 
     }
+    #unless($self->check_system_load()) {
+    #  $self->cause_of_death('SYS_OVERLOAD');
+    #}
     if($self->cause_of_death) { $alive=undef; }
   }
   #have runnable cleanup any global/process files/data it may have created
@@ -315,6 +324,9 @@ sub run
 
   $self->queen->register_worker_death($self);
 
+  printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
+  print("total jobs completes : ", $self->work_done, "\n");
+  
   if($self->output_dir()) {
     close STDOUT;
     close STDERR;
@@ -420,6 +432,17 @@ sub close_and_update_job_output
   }
 
   $job->adaptor->store_out_files($job) if($job->adaptor);
+}
+
+
+sub check_system_load {
+  my $self = shift;
+
+  my $host = hostname;
+  my $numCpus = `grep -c '^process' /proc/cpuinfo`;
+  print("host: $host  cpus:$numCpus\n");
+
+  return 1;  #everything ok
 }
 
 
