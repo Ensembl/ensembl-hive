@@ -382,15 +382,15 @@ sub safe_synchronize_AnalysisStats {
   return $stats if($stats->status eq 'DONE');
   return $stats if($stats->sync_lock);
   return $stats if(($stats->status eq 'WORKING') and
-                   ($stats->seconds_since_last_update < 5*60));
+                   ($stats->seconds_since_last_update < 3*60));
 
   # OK try to claim the sync_lock
   my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
             "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
-  print("$sql\n");
+  #print("$sql\n");
   my $row_count = $self->dbc->do($sql);  
   return $stats unless($row_count == 1);
-  printf("got sync_lock on analysis_stats(%d)\n", $stats->analysis_id);
+  #printf("got sync_lock on analysis_stats(%d)\n", $stats->analysis_id);
   
   #OK have the lock, go and do the sync
   $self->synchronize_AnalysisStats($stats);
