@@ -22,9 +22,10 @@ $self->{'analysis_id'} = undef;
 $self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
 
 my $conf_file;
-my ($help, $host, $user, $pass, $dbname, $port, $adaptor);
+my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 
 GetOptions('help'           => \$help,
+           'url=s'          => \$url,
            'conf=s'         => \$conf_file,
            'dbhost=s'       => \$host,
            'dbport=i'       => \$port,
@@ -39,37 +40,35 @@ if ($help) { usage(); }
 
 parse_conf($self, $conf_file);
 
-if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
-if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
-if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
-if($user)   { $self->{'db_conf'}->{'-user'}   = $user; }
-if($pass)   { $self->{'db_conf'}->{'-pass'}   = $pass; }
+my $DBA;
+
+if($url) {
+  $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
+} else {
+  if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
+  if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
+  if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
+  if($user)   { $self->{'db_conf'}->{'-user'}   = $user; }
+  if($pass)   { $self->{'db_conf'}->{'-pass'}   = $pass; }
 
 
-unless(defined($self->{'db_conf'}->{'-host'})
-       and defined($self->{'db_conf'}->{'-user'})
-       and defined($self->{'db_conf'}->{'-dbname'}))
-{
-  print "\nERROR : must specify host, user, and database to connect\n\n";
-  usage(); 
+  unless(defined($self->{'db_conf'}->{'-host'})
+         and defined($self->{'db_conf'}->{'-user'})
+         and defined($self->{'db_conf'}->{'-dbname'}))
+  {
+    print "\nERROR : must specify host, user, and database to connect\n\n";
+    usage();
+  }
+
+  # connect to database specified
+  $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
+$self->{'queen'} = new Bio::EnsEMBL::Hive::Queen($DBA);
 
+run_beekeeper($self);
 
-# connect to database specified
-my $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
-
-my $queen = $DBA->get_Queen();
-
-my $overdueWorkers = $queen->fetch_overdue_workers(3600);  #overdue by 1hr
-print(scalar(@{$overdueWorkers}), " overdue workers\n");
-foreach my $worker (@{$overdueWorkers}) {
-  printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-  $queen->register_worker_death($worker);
-}
-
-$queen->update_analysis_stats();
-
+Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
 
 
@@ -82,7 +81,7 @@ exit(0);
 sub usage {
   print "runWorker.pl [options]\n";
   print "  -help                  : print this help\n";
-  print "  -url <url string>      : url defining where database is located\n";
+  print "  -url <url string>      : url defining where hive database is located\n";
   print "  -conf <path>           : config file describing db connection\n";
   print "  -dbhost <machine>      : mysql database host <machine>\n";
   print "  -dbport <port#>        : mysql port number\n";
@@ -114,4 +113,28 @@ sub parse_conf {
     }
   }
 }
+
+
+sub run_beekeeper
+{
+  my $self = shift;
+  my $queen = $self->{'queen'};
+  
+  my $overdueWorkers = $queen->fetch_overdue_workers(3600);  #overdue by 1hr
+  print(scalar(@{$overdueWorkers}), " overdue workers\n");
+  foreach my $worker (@{$overdueWorkers}) {
+    printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
+    $queen->register_worker_death($worker);
+  }
+
+  $queen->update_analysis_stats();
+  my($analysis_id, $count) = $queen->next_clutch();
+  if($count>0) {
+    #my $cmd = "./runWorker.pl -conf $conf_file -analysis_id $analysis_id";
+    my $cmd = "bsub -JW$analysis_id\[1-$count\] ./runWorker.pl -url $url -analysis_id $analysis_id";
+    print("$cmd\n");
+  }
+}
+
+
 
