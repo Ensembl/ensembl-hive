@@ -6,54 +6,50 @@
 =pod 
 
 =head1 NAME
-
-Bio::EnsEMBL::Hive::Worker
-
-=cut
-
-=head1 SYNOPSIS
-
-Object which encapsulates the details of how to find jobs, how to run those
-jobs, and then checked the rules to create the next jobs in the chain.
-Essentially knows where to find data, how to process data, and where to
-put it when it's done (put in next person's INBOX) so the next Worker
-in the chain can find data to work on.
-
-Hive based processing is a concept based on a more controlled version
-of an autonomous agent type system.  Each worker is not told what to do
-(like a centralized control system - like the current pipeline system)
-but rather queries a central database for jobs (give me jobs).
-
-Each worker is linked to an analysis_id, registers its self on creation
-into the Hive, creates a RunnableDB instance of the Analysis->module,
-gets $runnable->batch_size() jobs from the analysis_job table, does its
-work, creates the next layer of analysis_job entries by querying simple_rule
-table where condition_analysis_id = $self->analysis_id.  It repeats
-this cycle until it's lived it's lifetime or until there are no more jobs left.
-The lifetime limit is just a safety limit to prevent these from 'infecting'
-a system.
-
-The Queens job is to simply birth Workers of the correct analysis_id to get the
-work down.  The only other thing the Queen does is free up jobs that were
-claimed by Workers that died unexpectantly so that other workers can take
-over the work.
-
-=cut
+  Bio::EnsEMBL::Hive::Worker
 
 =head1 DESCRIPTION
+  Object which encapsulates the details of how to find jobs, how to run those
+  jobs, and then check the rules to create the next jobs in the chain.
+  Essentially knows where to find data, how to process data, and where to
+  put it when it's done (put in next person's INBOX) so the next Worker
+  in the chain can find data to work on.
 
-=cut
+  Hive based processing is a concept based on a more controlled version
+  of an autonomous agent type system.  Each worker is not told what to do
+  (like a centralized control system - like the current pipeline system)
+  but rather queries a central database for jobs (give me jobs).
+
+  Each worker is linked to an analysis_id, registers its self on creation
+  into the Hive, creates a RunnableDB instance of the Analysis->module,
+  gets $runnable->batch_size() jobs from the analysis_job table, does its
+  work, creates the next layer of analysis_job entries by interfacing to
+  the DataflowRuleAdaptor to determine the analyses it needs to pass it's
+  output data to and creates jobs on the next analysis's database.
+  It repeats this cycle until it's lived it's lifetime or until there are no
+  more jobs left.
+  The lifetime limit is just a safety limit to prevent these from 'infecting'
+  a system.
+
+  The Queens job is to simply birth Workers of the correct analysis_id to get the
+  work down.  The only other thing the Queen does is free up jobs that were
+  claimed by Workers that died unexpectantly so that other workers can take
+  over the work.
+
+  The Beekeeper is in charge of interfacing between the Queen and a compute resource
+  or 'compute farm'.  It's job is to query Queens if they need any workers and to
+  send the requested number of workers to open machines via the runWorker.pl script.
+  It is also responsible for interfacing with the Queen to identify worker which died
+  unexpectantly.
+
 
 =head1 CONTACT
-
-Jessica Severin, jessica@ebi.ac.uk
-
-=cut
+  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
+  The rest of the documentation details each of the object methods.
+  Internal methods are usually preceded with a _
 
 =cut
 
@@ -67,6 +63,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use Bio::EnsEMBL::Hive::Extensions;
 
@@ -352,23 +349,16 @@ sub create_next_jobs
   my $job  = shift;
 
   return unless($self->db);
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  
-  my $sql = "SELECT goal_analysis_id " .
-            "FROM simple_rule " .
-            "WHERE condition_analysis_id=".$self->analysis->dbID;
-  my $sth = $self->db->prepare( $sql );
-  $sth->execute();
-  my $goal_analysis_id;
-  $sth->bind_columns( \$goal_analysis_id );
-  while( $sth->fetch() ) {
-    $jobDBA->create_new_job (
+
+  my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
+
+  foreach my $rule (@{$rules}) {
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $job->input_id,
-        -analysis_id    => $goal_analysis_id,
+        -analysis       => $rule->to_analysis,
         -input_job_id   => $job->dbID,
     );
   }
-  $sth->finish();
 }
 
 

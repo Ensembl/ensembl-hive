@@ -10,28 +10,23 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
-
-Bio::EnsEMBL::Hive::SimpleRule
+  Bio::EnsEMBL::Hive::SimpleRule
 
 =head1 SYNOPSIS
 
-
 =head1 DESCRIPTION
-
   Needed a robust and simpler rule table
   where Analyses in the pipeline can robustly define
   new analyses and rules.  New design has a single table where a 'rule'
   is a simple link from one analysis (condition) to another (goal).
 
 =head1 CONTACT
-
-    Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-    Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
+  The rest of the documentation details each of the object methods.
+  Internal methods are usually preceded with a _
 
 =cut
 

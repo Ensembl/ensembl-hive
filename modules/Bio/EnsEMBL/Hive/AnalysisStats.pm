@@ -6,55 +6,19 @@
 =pod 
 
 =head1 NAME
-
-Bio::EnsEMBL::Hive::AnalysisStats
-
-=cut
+  Bio::EnsEMBL::Hive::AnalysisStats
 
 =head1 SYNOPSIS
 
-Object which encapsulates the overall statistics on an analysis and
-all the jobs associated with it in the hive.  Used as a cache of the
-stats at a given moment in time (last_update_time).  The Queen is
-responsible for monitoring the Hive and updating most stats.  Certain
-status states(ALL_CLAIMED) and batch_size are updated by the workers.
-
-Hive based processing is a concept based on a more controlled version
-of an autonomous agent type system.  Each worker is not told what to do
-(like a centralized control system - like the current pipeline system)
-but rather queries a central database for jobs (give me jobs).
-
-Each worker is linked to an analysis_id, registers its self on creation
-into the Hive, creates a RunnableDB instance of the Analysis->module,
-gets $runnable->batch_size() jobs from the analysis_job table, does its
-work, creates the next layer of analysis_job entries by querying simple_rule
-table where condition_analysis_id = $self->analysis_id.  It repeats
-this cycle until it's lived it's lifetime or until there are no more jobs left.
-The lifetime limit is just a safety limit to prevent these from 'infecting'
-a system.
-
-The Queens job is to simply birth Workers of the correct analysis_id to get the
-work down.  The only other thing the Queen does is free up jobs that were
-claimed by Workers that died unexpectantly so that other workers can take
-over the work.
-
-=cut
-
 =head1 DESCRIPTION
 
-=cut
-
 =head1 CONTACT
-
-Jessica Severin, jessica@ebi.ac.uk
-
-=cut
+  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
+  The rest of the documentation details each of the object methods.
+  Internal methods are usually preceded with a _
 =cut
 
 package Bio::EnsEMBL::Hive::AnalysisStats;

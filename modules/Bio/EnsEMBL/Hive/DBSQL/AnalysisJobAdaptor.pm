@@ -46,11 +46,53 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
 use Data::UUID;
 
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
+###############################################################################
+#
+#  CLASS methods
+#
+###############################################################################
+
+sub CreateNewJob {
+  my ($class, @args) = @_;
+
+  return undef unless(scalar @args);
+
+  my ($input_id, $analysis, $input_analysis_job_id, $blocked) =
+     rearrange([qw(INPUT_ID ANALYSIS input_job_id BLOCK )], @args);
+
+  $input_analysis_job_id=0 unless($input_analysis_job_id);
+  throw("must define input_id") unless($input_id);
+  throw("must define analysis") unless($analysis);
+  throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
+    unless($analysis->isa('Bio::EnsEMBL::Analysis'));
+
+  my $sql = "INSERT ignore into analysis_job ".
+            " SET input_id=\"$input_id\" ".
+            " ,input_analysis_job_id='$input_analysis_job_id' ".
+            " ,analysis_id='".$analysis->dbID ."' ";
+  $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
+
+  my $dbc = $analysis->adaptor->db;
+  my $sth = $dbc->prepare($sql);
+  $sth->execute();
+  my $dbID = $sth->{'mysql_insertid'};
+  $sth->finish;
+
+  return $dbID;
+}
+
+###############################################################################
+#
+#  INSTANCE methods
+#
+###############################################################################
 
 =head2 fetch_by_dbID
-
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
@@ -59,9 +101,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Returntype : Bio::EnsEMBL::Hive::AnalysisJob
   Exceptions : thrown if $id is not defined
   Caller     : general
-
 =cut
-
 sub fetch_by_dbID {
   my ($self,$id) = @_;
 
@@ -81,6 +121,7 @@ sub fetch_by_dbID {
   return $obj;
 }
 
+
 =head2 fetch_by_claim_analysis
   Arg [1]    : string job_claim (the UUID used to claim jobs)
   Arg [2]    : int analysis_id  
@@ -90,7 +131,6 @@ sub fetch_by_dbID {
   Exceptions : thrown if claim_id or analysis_id is not defined
   Caller     : general
 =cut
-
 sub fetch_by_claim_analysis {
   my ($self,$claim,$analysis_id) = @_;
 
@@ -102,16 +142,13 @@ sub fetch_by_claim_analysis {
 
 
 =head2 fetch_all
-
   Arg        : None
   Example    : 
   Description: 
   Returntype : 
   Exceptions : 
   Caller     : 
-
 =cut
-
 sub fetch_all {
   my $self = shift;
 
@@ -126,7 +163,6 @@ sub fetch_all {
 ###################
 
 =head2 _generic_fetch
-
   Arg [1]    : (optional) string $constraint
                An SQL query constraint (i.e. part of the WHERE clause)
   Arg [2]    : (optional) string $logic_name
@@ -137,9 +173,7 @@ sub fetch_all {
   Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
   Exceptions : none
   Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
 =cut
-  
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
   
@@ -193,11 +227,13 @@ sub _generic_fetch {
   return $self->_objs_from_sth($sth);
 }
 
+
 sub _tables {
   my $self = shift;
 
   return (['analysis_job', 'a']);
 }
+
 
 sub _columns {
   my $self = shift;
@@ -214,6 +250,7 @@ sub _columns {
              a.branch_code
             );
 }
+
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
@@ -244,10 +281,12 @@ sub _objs_from_sth {
   return \@jobs
 }
 
+
 sub _default_where_clause {
   my $self = shift;
   return '';
 }
+
 
 sub _final_clause {
   my $self = shift;
@@ -261,16 +300,13 @@ sub _final_clause {
 ################
 
 =head2 update_status
-
   Arg [1]    : $analysis_id
   Example    :
   Description:
   Returntype : Bio::EnsEMBL::Hive::Worker
   Exceptions :
   Caller     :
-
 =cut
-
 sub update_status {
   my ($self,$job) = @_;
 
@@ -307,33 +343,6 @@ sub store_out_files {
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
-}
-
-
-sub create_new_job {
-  my ($self, @args) = @_;
-
-  return undef unless(scalar @args);
-  
-  my ($input_id, $analysis_id, $input_analysis_job_id, $blocked) =
-     $self->_rearrange([qw(INPUT_ID ANALYSIS_ID input_job_id BLOCK )], @args);
- 
-  $input_analysis_job_id=0 unless($input_analysis_job_id);
-  throw("must define input_id") unless($input_id);
-  throw("must define analysis_id") unless($analysis_id);
-  
-  my $sql = "INSERT ignore into analysis_job ".
-            " SET input_id=\"$input_id\" ".
-            " ,input_analysis_job_id='$input_analysis_job_id' ".
-            " ,analysis_id='$analysis_id' ";
-  $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
-
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  my $dbID = $sth->{'mysql_insertid'};
-  $sth->finish;
-
-  return $dbID;
 }
 
 
