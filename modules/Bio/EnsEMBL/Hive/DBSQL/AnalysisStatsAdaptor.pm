@@ -327,7 +327,7 @@ sub _create_new_for_analysis_id {
 
   my $sql;
 
-  $sql = "INSERT ignore INTO analysis_stats SET analysis_id='$analysis_id' ";
+  $sql = "INSERT ignore INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
   #print("$sql\n");
   my $sth = $self->prepare($sql);
   $sth->execute();
