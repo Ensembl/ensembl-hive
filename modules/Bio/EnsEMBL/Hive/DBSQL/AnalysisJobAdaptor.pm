@@ -395,7 +395,7 @@ sub reset_dead_jobs_for_worker {
 
   foreach my $job_id (@jobIDS) {
     my $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
-              " retry_count=retry_count+1".
+              " ,retry_count=retry_count+1".
               " WHERE analysis_job_id=$job_id";
     my $sth = $self->prepare($sql);
     $sth->execute();
