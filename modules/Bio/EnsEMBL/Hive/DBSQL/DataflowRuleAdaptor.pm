@@ -59,13 +59,12 @@ sub fetch_from_analysis_job
 {
   my $self = shift;
   my $fromAnalysisJob = shift;
-  my $rule;
-  my @rules;
   
   throw("arg is required\n") unless($fromAnalysisJob);
   throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisJob] not a $fromAnalysisJob")
     unless ($fromAnalysisJob->isa('Bio::EnsEMBL::Hive::AnalysisJob'));
-
+  return [] unless($fromAnalysisJob->analysis_id);
+      
   my $constraint = "r.from_analysis_id = '".$fromAnalysisJob->analysis_id."'"
                   ." AND r.branch_code=". $fromAnalysisJob->branch_code;
 
