@@ -383,7 +383,7 @@ sub reset_dead_jobs_for_worker {
 
   my ($sql, $sth);
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " WHERE status='CLAIMED'".
          " AND hive_id='" . $worker->hive_id ."'";
   $sth = $self->prepare($sql);
@@ -394,7 +394,7 @@ sub reset_dead_jobs_for_worker {
   # an update with select on status and hive_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
-  $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
 	 " AND retry_count<5".
