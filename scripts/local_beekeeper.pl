@@ -170,7 +170,7 @@ sub check_for_dead_workers {
   foreach my $worker (@{$overdueWorkers}) {
     printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
     #if(($worker->beekeeper eq '') and ($worker->host eq $host)) {
-      print("  is one of mine\n");
+      #print("  is one of mine\n");
       my $cmd = "ps -p ". $worker->process_id;
       my $check = qx/$cmd/;
 
