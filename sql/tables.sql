@@ -192,6 +192,28 @@ CREATE TABLE analysis_job_file (
 
 ------------------------------------------------------------------------------------
 --
+-- Table structure for table 'analysis_data'
+--
+-- overview:
+--   Table which holds LONGTEXT data for use by the analysis system.
+--   This data is general purpose and it's up to each analysis to
+--   determine how to use it
+--
+-- semantics:
+--   analysis_data_id   - primary id
+--   data               - text blob which holds the data
+
+CREATE TABLE analysis_data (
+  analysis_data_id  int(10) NOT NULL auto_increment,
+  data              longtext,
+
+  PRIMARY KEY (analysis_data_id),
+  KEY data (data(7))
+);
+
+
+------------------------------------------------------------------------------------
+--
 -- Table structure for table 'analysis_stats'
 --
 -- overview:
@@ -219,5 +241,4 @@ CREATE TABLE analysis_stats (
   
   UNIQUE KEY   (analysis_id)
 );
-
 
