@@ -138,10 +138,7 @@ CREATE TABLE analysis_ctrl_rule (
 --   analysis_job_id         - autoincrement id
 --   prev_analysis_job_id    - previous analysis_job which created this one (and passed input_id)
 --   analysis_id             - the analysis_id needed to accomplish this job.
---   input_analysis_data_id  - input data passed into Analysis:RunnableDB to control the work
---                             foreign key join to analysis_data table
---   output_analysis_data_id - ouput data passed from Analysis:RunnableDB to be passed to next job
---                             foreign key join to analysis_data table
+--   input_id                - input data passed into Analysis:RunnableDB to control the work
 --   job_claim               - UUID set by workers as the fight over jobs
 --   hive_id                 - link to hive table to define which worker claimed this job
 --   status                  - state the job is in
@@ -153,8 +150,7 @@ CREATE TABLE analysis_job (
   analysis_job_id           int(10) NOT NULL auto_increment,
   prev_analysis_job_id      int(10) NOT NULL,  #analysis_job which created this from rules
   analysis_id               int(10) NOT NULL,
-  input_analysis_data_id    int(10) NOT NULL,
-  output_analysis_data_id   int(10) default 0 NOT NULL,
+  input_id                  varchar(255) not null,
   job_claim                 varchar(40) NOT NULL default '', #UUID
   hive_id                   int(10) NOT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
@@ -163,7 +159,7 @@ CREATE TABLE analysis_job (
   branch_code               int(10) default 1 NOT NULL,
 
   PRIMARY KEY                  (analysis_job_id),
-  UNIQUE KEY input_id_analysis (input_analysis_data_id, analysis_id),
+  UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX claim_analysis_status  (job_claim, analysis_id, status),
   INDEX analysis_status        (analysis_id, status),
   INDEX hive_id                (hive_id)
