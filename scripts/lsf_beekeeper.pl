@@ -133,9 +133,10 @@ sub usage {
   print "  -dead                  : clean overdue jobs for resubmission\n";
   print "  -alldead               : all outstanding workers\n";
   print "  -run                   : run 1 iteration of automation loop\n";
-  print "  -loop                  : run autonomously, loops every 5 minutes\n";
+  print "  -loop                  : run autonomously, loops and sleeps\n";
+  print "  -sleep <num>           : when looping, sleep <num> minutes (default 5)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
-  print "lsf_beekeeper.pl v1.1\n";
+  print "lsf_beekeeper.pl v1.2\n";
   
   exit(1);  
 }
