@@ -108,6 +108,8 @@ if($self->{'job_id'}) {
   printf("fetching job for id ", $self->{'job_id'}, "\n");
   $self->{'analysis_job'} = $queen->db->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'job_id'});
   $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
+  
+  $queen->db->get_AnalysisJobAdaptor->reset_job($self->{'analysis_job'});
 }
 
 my $worker = $queen->create_new_worker(
