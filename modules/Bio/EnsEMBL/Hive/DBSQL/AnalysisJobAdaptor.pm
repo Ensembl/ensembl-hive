@@ -547,7 +547,7 @@ sub reset_job_by_dbID {
   Arg [1]    : int $analysis_id
   Example    :
   Description: Resets all not BLOCKED jobs back to READY so they can be rerun.
-               Needed if an analysis/runnableDB modifies the dataflow rules as the
+               Needed if an analysis/process modifies the dataflow rules as the
               system runs.  The jobs that are flowed 'from'  will need to be reset so
               that the output data can be flowed through the new rule.  
               If one is designing a system based on a need to change rules mid-process
