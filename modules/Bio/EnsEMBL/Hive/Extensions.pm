@@ -108,7 +108,7 @@ sub Bio::EnsEMBL::Analysis::url
   my $url;
 
   return undef unless($self->adaptor);
-  $url = $self->adaptor->db->url;
+  $url = $self->adaptor->db->dbc->url;
   $url .= "/analysis?logic_name=" . $self->logic_name;
   return $url;  
 }
