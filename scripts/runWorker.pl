@@ -75,7 +75,6 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
   $url = $DBA->url();
 }
-#$DBA->dbc->disconnect_when_inactive(1);
 
 my $queen = $DBA->get_Queen();
 
