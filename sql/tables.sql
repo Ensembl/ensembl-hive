@@ -16,7 +16,7 @@ CREATE TABLE hive (
   analysis_id      int(10) NOT NULL,
   beekeeper        varchar(80) DEFAULT '' NOT NULL,
   host	           varchar(40) DEFAULT '' NOT NULL,
-  process_id       int(10) NOT NULL,
+  process_id       varchar(40) DEFAULT '' NOT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE analysis_job (
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX job_claim_analysis     (job_claim, analysis_id),
-  INDEX job_status_analysis    (status, analysis_id),
+  INDEX job_analysis_status    (analysis_id, status),
   INDEX hive_id                (hive_id)
 );
 
