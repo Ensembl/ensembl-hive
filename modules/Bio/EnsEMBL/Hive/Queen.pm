@@ -110,11 +110,14 @@ sub create_new_worker {
   my $analysisStats;
   if($analysis_id) {
     $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
+    $self->safe_synchronize_AnalysisStats($analysisStats);
+    return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
   } else {
     $analysisStats = $self->_pick_best_analysis_for_new_worker;
   }
-  
   return undef unless($analysisStats);
+
+  
   $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
   $analysisStats->print_stats;
   
@@ -391,7 +394,7 @@ sub safe_synchronize_AnalysisStats {
   
   #OK have the lock, go and do the sync
   $self->synchronize_AnalysisStats($stats);
-  
+
   return $stats;
 }
 
@@ -447,7 +450,11 @@ sub synchronize_AnalysisStats {
   }
   $sth->finish;
 
-  $analysisStats->determine_status();
+  $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
+  
+  if($analysisStats->status ne 'BLOCKED') {
+    $analysisStats->determine_status();
+  }
 
   #
   # adjust_stats_for_living_workers
@@ -469,10 +476,8 @@ sub synchronize_AnalysisStats {
     $analysisStats->num_required_workers($numWorkers);
   }
   
-  $analysisStats->update;
-  
-  $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
-  
+  $analysisStats->update;  #update and release sync_lock
+    
   return $analysisStats;
 }
 
@@ -572,7 +577,6 @@ sub get_num_needed_workers {
     #digging deeper under the surface so need to sync
     if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED')) {
       $self->synchronize_AnalysisStats($analysis_stats);
-      $self->check_blocking_control_rules_for_AnalysisStats($analysis_stats);
     }
 
     next if($analysis_stats->status eq 'BLOCKED');
@@ -674,7 +678,11 @@ sub _pick_best_analysis_for_new_worker {
   return undef unless($statsDBA);
 
   my ($stats) = @{$statsDBA->fetch_by_needed_workers(1)};
-  return $stats if($stats);
+  if($stats) {
+    #synchronize and double check that it can be run
+    $self->safe_synchronize_AnalysisStats($stats);
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0));
+  }
 
   # ok so no analyses 'need' workers.
   # see if anything needs an update, in case there are
@@ -685,10 +693,9 @@ sub _pick_best_analysis_for_new_worker {
   foreach $stats (@$stats_list) {
     #$stats->print_stats();
     $self->safe_synchronize_AnalysisStats($stats);
-    $self->check_blocking_control_rules_for_AnalysisStats($stats);   
     #$stats->print_stats();
 
-    return $stats if(($stats->status eq 'READY') and ($stats->num_required_workers > 0));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0));
   }
 
   ($stats) = @{$statsDBA->fetch_by_needed_workers(1)};
