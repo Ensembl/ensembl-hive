@@ -452,12 +452,26 @@ sub get_num_needed_workers {
 sub print_hive_status
 {
   my $self = shift;
+  $self->print_analysis_status;
+  $self->print_running_worker_status;
+}
+
+
+sub print_analysis_status
+{
+  my $self = shift;
 
   my $allStats = $self->db->get_AnalysisStatsAdaptor->fetch_all();
  
   foreach my $analysis_stats (@{$allStats}) {
     $analysis_stats->print_stats;
   }
+}
+
+
+sub print_running_worker_status
+{
+  my $self = shift;
 
   print("HIVE LIVE WORKERS====\n");
   my $sql = "select logic_name, count(*) from hive, analysis ".
@@ -469,9 +483,8 @@ sub print_hive_status
     printf("%20s : %d workers\n", $logic_name, $count);
   }
   print("=====================\n");
-  $sth->finish;  
+  $sth->finish;
 }
-
 
 
 #
