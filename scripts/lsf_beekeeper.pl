@@ -20,9 +20,6 @@ $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
-$self->{'analysis_id'} = undef;
-$self->{'outdir'}      = "/ecs4/work2/ensembl/jessica/data/hive-output";
-
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 my ($limit, $batch_size);
@@ -35,13 +32,11 @@ GetOptions('help'           => \$help,
            'dbuser=s'       => \$user,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
-           'dead'           => \$self->{'all_dead'},
-	   'run'            => \$self->{'run'},
+           'dead'           => \$self->{'check_for_dead'},
+           'run'            => \$self->{'run'},
            'limit=i'        => \$limit,
            'batch_size=i'   => \$batch_size
           );
-
-$self->{'analysis_id'} = shift if(@_);
 
 if ($help) { usage(); }
 
@@ -74,7 +69,9 @@ if($url) {
 
 my $queen = $DBA->get_Queen;
 
-if($self->{'all_dead'}) { check_for_dead_workers($self, $queen); }
+if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
+
+$queen->get_hive_current_load();
 
 $queen->update_analysis_stats();
 $queen->check_blocking_control_rules;
@@ -95,7 +92,7 @@ exit(0);
 #######################
 
 sub usage {
-  print "local_beekeeper.pl [options]\n";
+  print "lsf_beekeeper.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -url <url string>      : url defining where hive database is located\n";
   print "  -conf <path>           : config file describing db connection\n";
@@ -108,7 +105,7 @@ sub usage {
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -run                   : show and run the needed jobs\n";
   print "  -dead                  : clean overdue jobs for resubmission\n";
-  print "local_beekeeper.pl v1.0\n";
+  print "lsf_beekeeper.pl v1.0\n";
   
   exit(1);  
 }
@@ -165,10 +162,6 @@ sub run_next_worker_clutch
     else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
     print("$cmd\n");
     system($cmd) if($self->{'run'});
-
-    # return of bsub looks like this
-    #Job <6392054> is submitted to default queue <normal>.
-
   }
 }
 
@@ -191,7 +184,7 @@ sub check_for_dead_workers {
         $queen->register_worker_death($worker);
       }
       else {
-	print("ALIVE and running\n");
+        print("ALIVE and running\n");
       }
     }
   }
