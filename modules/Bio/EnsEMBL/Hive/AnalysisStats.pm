@@ -47,6 +47,12 @@ sub update {
   $self->adaptor->update($self);
 }
 
+sub update_status {
+  my ($self, $status ) = @_;
+  return unless($self->adaptor);
+  $self->adaptor->update_status($self->analysis_id, $status);
+}
+
 sub analysis_id {
   my $self = shift;
   $self->{'_analysis_id'} = shift if(@_);
