@@ -228,7 +228,7 @@ CREATE TABLE analysis_data (
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
+  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
   avg_msec_per_job      int(10) default 0 NOT NULL,                          
