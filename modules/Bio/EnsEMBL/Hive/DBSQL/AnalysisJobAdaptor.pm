@@ -222,7 +222,7 @@ sub _generic_fetch {
   my $sth = $self->prepare($sql);
   $sth->execute;  
 
-  print STDOUT $sql,"\n";
+  #print STDOUT $sql,"\n";
 
   return $self->_objs_from_sth($sth);
 }
@@ -338,7 +338,7 @@ sub store_out_files {
   $sql .= " (" . $job->dbID. ", 'STDOUT', '". $job->stdout_file."')"  if($job->stdout_file);
   $sql .= "," if($job->stdout_file and $job->stderr_file);
   $sql .= " (" . $job->dbID. ", 'STDERR', '". $job->stderr_file."')"  if($job->stderr_file);
-  print("$sql\n");
+  #print("$sql\n");
   
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -355,7 +355,7 @@ sub claim_jobs_for_worker {
   my $ug    = new Data::UUID;
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
-  print("claiming jobs with uuid $claim\n");
+  print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
 
   my $sql = "UPDATE analysis_job SET job_claim='$claim'".
             " , hive_id='". $worker->hive_id ."'".
@@ -364,7 +364,7 @@ sub claim_jobs_for_worker {
             " AND analysis_id='" .$worker->analysis->dbID. "'".
             " LIMIT " . $worker->batch_size;
 
-  print("$sql\n");            
+  #print("$sql\n");            
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
