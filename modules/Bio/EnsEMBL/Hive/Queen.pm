@@ -255,9 +255,12 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
-  return $analysisStats if($analysisStats->seconds_since_last_update < 5*60);
+  return $analysisStats if(($analysisStats->status eq 'WORKING') and 
+			   ($analysisStats->seconds_since_last_update < 5*60));
   
-  return $analysisStats if($analysisStats->status eq 'SYNCHING');
+  return $analysisStats if(($analysisStats->status eq 'SYNCHING') and 
+			   ($analysisStats->seconds_since_last_update < 10*60));
+
   $analysisStats->update_status('SYNCHING');
   
   $analysisStats->total_job_count(0);
