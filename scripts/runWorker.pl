@@ -144,7 +144,9 @@ eval {
   $worker->run();
 };
 if($@) {
+  #worker threw an exception so it had a problem
   print("\n$@");
+	$queen->register_worker_death($worker);
 }
 
 print("total jobs completes : ", $worker->work_done, "\n");
