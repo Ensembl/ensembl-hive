@@ -66,6 +66,8 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
+
 use Bio::EnsEMBL::Hive::Extensions;
 
 use vars qw(@ISA);
@@ -110,19 +112,6 @@ sub analysis {
   }
 
   return $self->{'_analysis'};
-}
-
-sub analysis_stats {
-  my $self = shift;
-  my $analysisStats = shift;
-
-  if(defined($analysisStats)) {
-    $self->throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisStats] not a [$analysisStats]")
-       unless($analysisStats->isa('Bio::EnsEMBL::Hive::AnalysisStats'));
-    $self->{'_analysis_stats'} = $analysisStats;
-  }
-
-  return $self->{'_analysis_stats'};
 }
 
 
@@ -292,7 +281,7 @@ sub run
     my $claim = $jobDBA->claim_jobs_for_worker($self);
     my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
 
-    $self->adaptor->check_in($self);
+    $self->adaptor->worker_check_in($self);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 

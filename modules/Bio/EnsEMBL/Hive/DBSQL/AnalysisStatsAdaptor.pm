@@ -283,6 +283,19 @@ sub update {
 }
 
 
+sub update_status
+{
+  my ($self, $analysis_id, $status) = @_;
+
+  my $sql = "UPDATE analysis_stats SET status='$status' ";
+  $sql .= " WHERE analysis_id='$analysis_id' ";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+}
+
+
 sub _create_new_for_analysis_id {
   my ($self, $analysis_id) = @_;
 

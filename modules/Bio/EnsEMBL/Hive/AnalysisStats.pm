@@ -105,7 +105,7 @@ sub status {
 
   if(defined $value) {
     $self->{'_status'} = $value;
-    $self->adaptor->update($self) if($self->adaptor);
+    $self->adaptor->update_status($self->dbID, $value) if($self->adaptor);
   }
   return $self->{'_status'};
 }

@@ -105,6 +105,10 @@ sub register_worker_death {
   my ($self, $worker) = @_;
 
   return unless($worker);
+
+  # if called without a defined cause_of_death, assume catastrophic failure
+  $worker->cause_of_death('FATALITY') unless(defined($worker->cause_of_death));
+  
   my $sql = "UPDATE hive SET died=now(), last_check_in=now()";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " ,cause_of_death='". $worker->cause_of_death ."'";
@@ -115,12 +119,16 @@ sub register_worker_death {
   $sth->finish;
 
   if($worker->cause_of_death eq "NO_WORK") {
-    $worker->analysis_stats->status("ALL_CLAIMED");
+    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
+  }
+  if($worker->cause_of_death eq "FATALITY") {
+    #print("FATAL DEATH Arrrrgggghhhhhhhh (hive_id=",$worker->hive_id,")\n");
+    $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
 }
 
 
-sub check_in {
+sub worker_check_in {
   my ($self, $worker) = @_;
 
   return unless($worker);
@@ -132,6 +140,16 @@ sub check_in {
   $sth->finish;
 }
 
+
+sub fetch_overdue_workers {
+  my ($self,$overdue_secs) = @_;
+
+  $overdue_secs = 3600 unless(defined($overdue_secs));
+
+  my $constraint = "h.cause_of_death='' ".
+                   "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(h.last_check_in))>$overdue_secs";
+  return $self->_generic_fetch($constraint);
+}
 
 
 #
@@ -282,7 +300,6 @@ sub _objs_from_sth {
 
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
       $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
-      $worker->analysis_stats($self->db->get_AnalysisStatsAdaptor->fetch_by_dbID($column{'analysis_id'}));
     }
 
     push @workers, $worker;
