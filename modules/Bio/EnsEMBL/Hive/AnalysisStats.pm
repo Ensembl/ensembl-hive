@@ -168,18 +168,42 @@ sub determine_status {
   
 sub print_stats {
   my $self = shift;
+  my $mode = shift;
 
   return unless($self->get_analysis);
-  printf("%30s(%3d) %11s %d:job_msec %d:cpu_min (%d:q %d:r %d:d %d:f %d:t) [%d/%d workers] (%d secs synched)\n",
- #printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
-        $self->get_analysis->logic_name,
-        $self->analysis_id,
+
+  $mode=1 unless($mode);
+
+  my $name = sprintf("%s(%d)", $self->get_analysis->logic_name, $self->analysis_id);
+  while(length($name) < 27) { $name.=' ';}
+
+  if($mode == 1) {
+    # printf("%s(%d) %s %d:ms %d:cpu (%d:q %d:r %d:d %d:f %d:t) [%d/%d workers] (%d secs synched)\n",
+    #printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
+    printf("$name %11s %d:cpum job(%d/%d r:%d f:%d %dms) worker[%d/%d] (sync %d)\n",
         $self->status,
-        $self->avg_msec_per_job,$self->cpu_minutes_remaining,
-        $self->unclaimed_job_count,$self->running_job_count,$self->done_job_count,$self->failed_job_count,$self->total_job_count,
+	$self->cpu_minutes_remaining,
+        $self->done_job_count,$self->total_job_count,$self->running_job_count,$self->failed_job_count,
+        $self->avg_msec_per_job,
         $self->num_required_workers, $self->hive_capacity,
         $self->seconds_since_last_update,
         );
+  } elsif ($mode == 2) {
+    printf("$name %11s [%d/%d workers] (%d secs synched)\n",
+        $self->status,
+        $self->num_required_workers, $self->hive_capacity,
+        $self->seconds_since_last_update);
+
+    printf("   msec_per_job   : %d\n", $self->avg_msec_per_job);
+    printf("   cpu_min_total  : %d\n", $self->cpu_minutes_remaining);
+    printf("   batch_size     : %d\n", $self->batch_size);
+    printf("   total_jobs     : %d\n", $self->total_job_count);
+    printf("   unclaimed jobs : %d\n", $self->unclaimed_job_count);
+    printf("   running jobs   : %d\n", $self->running_job_count);
+    printf("   done jobs      : %d\n", $self->done_job_count);
+    printf("   failed jobs    : %d\n", $self->failed_job_count);
+  }
+
 }
 
 1;
