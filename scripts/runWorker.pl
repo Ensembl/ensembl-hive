@@ -24,6 +24,7 @@ $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
 $self->{'job_id'}      = undef;
+$self->{'debug'}       = undef;
 
 
 my $conf_file;
@@ -47,6 +48,8 @@ GetOptions('help'           => \$help,
            'bk=s'           => \$self->{'beekeeper'},
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
+           'no_cleanup'     => \$self->{'no_global_cleanup'},
+           'debug=i'        => \$self->{'debug'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -122,6 +125,8 @@ unless($worker) {
   exit(0);
 }
 
+$worker->debug($self->{'debug'}) if($self->{'debug'});
+
 if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
 else {
   my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
@@ -139,6 +144,9 @@ if($self->{'job_limit'}) {
 }
 if($self->{'lifespan'}) {
   $worker->life_span($self->{'lifespan'} * 60);
+}
+if($self->{'no_global_cleanup'}) { 
+  $worker->perform_global_cleanup(0); 
 }
 
 $worker->print_worker();
@@ -197,7 +205,9 @@ sub usage {
   print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
   print "  -input_id <string>     : test input_id on specified analysis\n";
   print "  -job_id <id>           : run specific job defined by analysis_job_id\n";
-  print "runWorker.pl v1.3\n";
+  print "  -debug <level>         : turn on debug messages at <level> \n";
+  print "  -no_cleanup            : don't perform global_cleanup when worker exits\n";
+  print "runWorker.pl v1.4\n";
   
   exit(1);  
 }
