@@ -128,7 +128,7 @@ sub create_new_worker {
   }
 
   my $host = hostname;
-  $pid = getppid unless($pid);
+  $pid = $$ unless($pid);
   $beekeeper = '' unless($beekeeper);
 
   my $sql = q{INSERT INTO hive 
@@ -280,8 +280,9 @@ sub synchronize_AnalysisStats {
 
     if($status eq 'READY') {
       $analysisStats->unclaimed_job_count($count);
-      my $numWorkers = POSIX::ceil($count/$analysisStats->batch_size);
-      $numWorkers=1 if($numWorkers<1);
+      my $numWorkers = POSIX::ceil($count * $analysisStats->avg_msec_per_job / 300000); 
+        # guess num needed workers by total jobs / (num jobs a worker could do in 5 minutes)
+      $numWorkers=$count if($numWorkers==0);
       if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
         $numWorkers=$analysisStats->hive_capacity;
       }
