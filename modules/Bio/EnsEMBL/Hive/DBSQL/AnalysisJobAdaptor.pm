@@ -290,7 +290,7 @@ sub _default_where_clause {
 
 sub _final_clause {
   my $self = shift;
-  return '';
+  return 'ORDER BY retry_count';
 }
 
 
@@ -378,29 +378,30 @@ sub reset_dead_jobs_for_worker {
   my $worker = shift;
   throw("must define worker") unless($worker);
 
+  #added hive_id index to analysis_job table which made this operation much faster
+
+  my ($sql, $sth);
+  #first just reset the claimed jobs, these don't need a retry_count index increment
+  $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
+         " WHERE status='CLAIMED'".
+         " AND hive_id='" . $worker->hive_id ."'";
+  $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+  #print("  done update CLAIMED\n");
+
   # an update with select on status and hive_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
-  my $sql = "select analysis_job_id from analysis_job ".
-            " WHERE status in ('CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT')".
-            " AND hive_id='" . $worker->hive_id ."'";
-
+  $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
+         " ,retry_count=retry_count+1".
+         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
+         " AND hive_id='" . $worker->hive_id ."'";
   #print("$sql\n");
-  my $sth = $self->prepare($sql);
+  $sth = $self->prepare($sql);
   $sth->execute();
-  my @jobIDS;
-  while (my ($job_id)=$sth->fetchrow_array()) { push @jobIDS, $job_id; }
   $sth->finish;
-  #print("reset ", scalar(@jobIDS), " jobs\n");
-
-  foreach my $job_id (@jobIDS) {
-    my $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
-              " ,retry_count=retry_count+1".
-              " WHERE analysis_job_id=$job_id";
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    $sth->finish;
-  }          
+  #print(" done update BROKEN jobs\n");
 }
 
 

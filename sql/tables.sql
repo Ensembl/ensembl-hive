@@ -161,7 +161,8 @@ CREATE TABLE analysis_job (
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX job_claim_analysis     (job_claim, analysis_id),
-  INDEX job_status_analysis    (status, analysis_id)
+  INDEX job_status_analysis    (status, analysis_id),
+  INDEX hive_id                (hive_id)
 );
 
 
