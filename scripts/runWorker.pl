@@ -22,6 +22,8 @@ $self->{'analysis_id'} = undef;
 $self->{'logic_name'}  = undef;
 $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
+$self->{'process_id'}  = undef;
+
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
@@ -41,6 +43,7 @@ GetOptions('help'           => \$help,
            'lifespan=i'     => \$self->{'lifespan'},
            'outdir=s'       => \$self->{'outdir'},
            'bk=s'           => \$self->{'beekeeper'},
+           'pid=s'          => \$self->{'process_id'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -67,13 +70,9 @@ if($url) {
     usage();
   }
 
-  unless(defined($self->{'analysis_id'})) {
-    print "\nERROR : must specify analysis_id of worker\n\n";
-    usage();
-  }
-
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+  $url = $DBA->url();
 }
 
 my $queen = $DBA->get_Queen();
@@ -83,8 +82,14 @@ if($self->{'logic_name'}) {
   $self->{'analysis_id'} = $analysis->dbID if($analysis);
 }
 
-my $worker = $queen->create_new_worker($self->{'analysis_id'}, $self->{'beekeeper'});
-die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
+my $worker = $queen->create_new_worker(
+     -analysis_id    => $self->{'analysis_id'},
+     -beekeeper      => $self->{'beekeeper'}
+     );
+unless($worker) {
+  Bio::EnsEMBL::Hive::URLFactory->cleanup;
+  die("couldn't create worker\n");
+}
 
 if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
 else {

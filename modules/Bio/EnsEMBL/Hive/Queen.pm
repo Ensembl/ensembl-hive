@@ -63,6 +63,9 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 #
@@ -82,12 +85,20 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 =cut
 
 sub create_new_worker {
-  my $self        = shift;
-  my $analysis_id = shift;
-  my $beekeeper   = shift;
+  my ($self, @args) = @_;
+
+  my ($analysis_id, $beekeeper) =
+     rearrange([qw(analysis_id beekeeper )], @args);
 
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
+
+  unless($analysis_id) {
+    my ($anal_stats) = @{$analStatsDBA->fetch_by_needed_workers(1)};
+    return undef unless($anal_stats);
+    $analysis_id = $anal_stats->analysis_id;
+    $analStatsDBA->decrement_needed_workers($analysis_id);
+  }
   
   my $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
   return undef unless($analysisStats);
@@ -252,6 +263,20 @@ sub adjust_stats_for_living_workers {
 }
 
 
+sub get_hive_current_load {
+  my $self = shift;
+  my $sql = "SELECT sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
+            "WHERE hive.analysis_id=analysis_stats.analysis_id and cause_of_death =''";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  (my $load)=$sth->fetchrow_array();
+  $sth->finish;
+  $load=0 unless($load);
+  print("current hive load = $load\n");
+  return $load;
+}
+
+
 sub next_clutch {
   my $self = shift;
 
@@ -310,7 +335,7 @@ sub print_hive_status
   my $self = shift;
 
   my $allStats = $self->db->get_AnalysisStatsAdaptor->fetch_all();
-
+ 
   foreach my $analysis_stats (@{$allStats}) {
     $analysis_stats->print_stats;
   }
