@@ -51,6 +51,7 @@ GetOptions('help'           => \$help,
            'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
            'loop'           => \$loopit,
+           'no_pend'        => \$self->{'no_pend_adjust'},
            'sync'           => \$sync,
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'worker_stats'   => \$self->{'show_worker_stats'},
@@ -98,7 +99,7 @@ if($url) {
 $self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
 
-if($self->{'reset_job_id'}) { reset_job($self); };
+if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
 
 if($self->{'reset_all_jobs_for_analysis_id'}) { reset_all_jobs_for_analysis_id($self); }
 
@@ -116,17 +117,13 @@ if($loopit) {
     $queen->check_blocking_control_rules_for_AnalysisStats($stats);
   }
   $stats->print_stats;
-  $queen->get_num_needed_workers();
 } else { 
   $queen->synchronize_hive() if($sync);
-
   $queen->print_analysis_status if($self->{'show_analysis_stats'});
 
   $queen->print_running_worker_status;
 
   show_running_workers($self) if($self->{'show_worker_stats'});
-
-  $queen->get_num_running_workers();
 
   $queen->get_num_needed_workers();
 
@@ -161,6 +158,7 @@ sub usage {
   print "  -alldead               : all outstanding workers\n";
   print "  -run                   : run 1 iteration of automation loop\n";
   print "  -loop                  : run autonomously, loops and sleeps\n";
+  print "  -no_pend               : don't adjust needed workers by pending workers\n";
   print "  -m <string>            : passes <string> to LSF bsub -m option\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 5)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
@@ -170,7 +168,7 @@ sub usage {
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
   print "  -reset_all_jobs_for_analysis_id <num>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
-  print "lsf_beekeeper.pl v1.4\n";
+  print "lsf_beekeeper.pl v1.5\n";
   
   exit(1);  
 }
@@ -344,6 +342,8 @@ sub run_autonomously {
 
 sub get_pending_count {
   my $self = shift;
+
+  return 0 if($self->{'no_pend_adjust'});
 
   my $cmd = "bjobs | grep -c PEND";
   my $pend_count = qx/$cmd/;
