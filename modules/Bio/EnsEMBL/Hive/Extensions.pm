@@ -32,6 +32,7 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::Pipeline::RunnableDB;
+#use Bio::EnsEMBL::Analysis::RunnableDB;
 
 
 =head2 runnableDB
@@ -156,6 +157,10 @@ sub Bio::EnsEMBL::Analysis::stats
   return $stats;
 }
 
+#######################################
+# extensions to
+# Bio::EnsEMBL::Pipeline::RunnableDB
+#######################################
 
 sub Bio::EnsEMBL::Pipeline::RunnableDB::reset_job
 {
@@ -176,6 +181,35 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
   $self->{'_branch_code'}=1 unless($self->{'_batch_size'});
   return $self->{'_branch_code'};
 }
+
+#######################################
+# extensions to
+# Bio::EnsEMBL::Analysis::RunnableDB
+#######################################
+
+sub Bio::EnsEMBL::Analysis::RunnableDB::reset_job
+{
+  my $self = shift;
+  return 1;
+}
+
+sub Bio::EnsEMBL::Analysis::RunnableDB::global_cleanup
+{
+  my $self = shift;
+  return 1;
+}
+
+sub Bio::EnsEMBL::Analysis::RunnableDB::branch_code
+{
+  my $self = shift;
+  $self->{'_branch_code'} = shift if(@_);
+  $self->{'_branch_code'}=1 unless($self->{'_batch_size'});
+  return $self->{'_branch_code'};
+}
+
+#######################################
+# top level functions
+#######################################
 
 sub main::encode_hash
 {
