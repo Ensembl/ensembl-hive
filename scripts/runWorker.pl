@@ -78,7 +78,7 @@ die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unles
 
 if($self->{'outdir'}) { $worker->output_dir($self->{'outdir'}); }
 else {
-  my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output' );
+  my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
   if( @$arrRef ) {
     $worker->output_dir($arrRef->[0]);
   } 
