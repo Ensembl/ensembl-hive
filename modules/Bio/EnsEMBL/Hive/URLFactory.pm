@@ -183,11 +183,11 @@ sub _get_db_connection
 
   my $connectionKey = "$user:$pass\@$host:$port/$dbname;$type";
   my $dba;
-  print("key=$connectionKey\n");
+  #print("key=$connectionKey\n");
   $dba = $_URLFactory_global_instance->{$connectionKey};
   return ($dba,$path) if($dba);
   
-  print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n");
+  #print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n");
   $module = "Bio::EnsEMBL::DBSQL::DBAdaptor" if($type eq 'core');
   $module = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor" if($type eq 'compara');
   $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor" if($type eq 'pipeline');
