@@ -145,7 +145,7 @@ sub fetch_by_claim_analysis {
 
   throw("fetch_by_claim_analysis must have claim ID") unless($claim);
   throw("fetch_by_claim_analysis must have analysis_id") unless($analysis_id);
-  my $constraint = "a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
+  my $constraint = "a.status='CLAIMED' AND a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
   return $self->_generic_fetch($constraint);
 }
 
@@ -240,7 +240,7 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['analysis_job', 'a']);
+  return (['analysis_job', 'a'],['analysis_data', 'ad']);
 }
 
 
@@ -258,7 +258,19 @@ sub _columns {
              a.retry_count          
              a.completed
              a.branch_code
+             ad.data
             );
+}
+
+sub _default_where_clause {
+  my $self = shift;
+  return 'ad.analysis_data_id=a.input_analysis_data_id';
+}
+
+
+sub _final_clause {
+  my $self = shift;
+  return 'ORDER BY retry_count';
 }
 
 
@@ -269,7 +281,7 @@ sub _objs_from_sth {
   $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
 
   my @jobs = ();
-
+    
   while ($sth->fetch()) {
     my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
 
@@ -281,29 +293,14 @@ sub _objs_from_sth {
     $job->retry_count($column{'retry_count'});
     $job->completed($column{'completed'});
     $job->branch_code($column{'branch_code'});
+    $job->input_id($column{'data'});
     $job->adaptor($self);
-
-    my $input_id = $self->db->get_AnalysisDataAdaptor->
-                    fetch_by_dbID($column{'input_analysis_data_id'});
-    $job->input_id($input_id);
 
     push @jobs, $job;    
   }
   $sth->finish;
   
   return \@jobs
-}
-
-
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
-
-
-sub _final_clause {
-  my $self = shift;
-  return 'ORDER BY retry_count';
 }
 
 
