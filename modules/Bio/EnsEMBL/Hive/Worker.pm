@@ -275,7 +275,11 @@ sub print_worker {
   print("  batch_size = ", $self->batch_size,"\n");
   print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
   print("  life_span  = ", $self->life_span,"\n") if(defined($self->life_span));
-  print("  output_dir = ", $self->output_dir, "\n") if($self->output_dir);
+  if($self->output_dir) {
+    print("  output_dir = ", $self->output_dir, "\n") if($self->output_dir);
+  } else {
+    print("  output_dir = STDOUT/STDERR\n")
+  }
 }
 
 ###############################
@@ -311,7 +315,7 @@ sub batch_size {
   }  
   
   if(($batch_size == 0) and ($stats->avg_msec_per_job)) {
-    $batch_size = int(15000 / $stats->avg_msec_per_job); # num jobs in 15 secs
+    $batch_size = int(120000 / $stats->avg_msec_per_job); # num jobs in 120 secs
   }
   $batch_size = 1 if($batch_size < 1); # make sure we grab at least one job
   
