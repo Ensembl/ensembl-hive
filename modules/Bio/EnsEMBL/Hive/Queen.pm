@@ -94,7 +94,7 @@ sub create_new_worker {
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
 
-  return undef if($self->get_hive_current_load() >= 1.0);
+  return undef if($self->get_hive_current_load() >= 1.5);
   
   unless($analysis_id) {
     my ($anal_stats) = @{$analStatsDBA->fetch_by_needed_workers(1)};
@@ -229,7 +229,10 @@ sub update_analysis_stats {
       }
       $analysisStats->num_required_workers($numWorkers);
     }
-    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
+    if(($status eq 'DONE') or ($status eq 'FAILED')) { 
+      $count += $analysisStats->done_job_count(); 
+      $analysisStats->done_job_count($count); 
+    }
   }
   $analysisStats->determine_status()->update() if($analysisStats);
   $sth->finish;

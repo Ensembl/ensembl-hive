@@ -396,11 +396,23 @@ sub reset_dead_jobs_for_worker {
   $sql = "UPDATE analysis_job SET job_claim='', hive_id=0, status='READY'".
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
+	 " AND retry_count<5".
          " AND hive_id='" . $worker->hive_id ."'";
   #print("$sql\n");
   $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
+
+  $sql = "UPDATE analysis_job SET status='FAILED'".
+         " ,retry_count=retry_count+1".
+         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
+	 " AND retry_count>=5".
+         " AND hive_id='" . $worker->hive_id ."'";
+  #print("$sql\n");
+  $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+
   #print(" done update BROKEN jobs\n");
 }
 
