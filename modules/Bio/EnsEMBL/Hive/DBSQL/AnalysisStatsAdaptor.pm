@@ -91,6 +91,12 @@ sub fetch_all {
 }
 
 
+sub fetch_by_needed_workers {
+  my $self = shift;
+  my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
+  return $self->_generic_fetch($constraint);
+}
+
 
 #
 # INTERNAL METHODS
@@ -173,22 +179,7 @@ sub _tables {
 
 sub _columns {
   my $self = shift;
-=head3
-CREATE TABLE analysis_stats (
-  analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
-                          DEFAULT 'READY' NOT NULL,
-  batch_size            int(10) NOT NULL,
-  hive_capacity         int(10) NOT NULL,
-  total_job_count       int(10) NOT NULL,
-  unclaimed_job_count   int(10) NOT NULL,
-  done_job_count        int(10) NOT NULL,
-  num_required_workers  int(10) NOT NULL,
-  last_update           datetime NOT NULL,
 
-  UNIQUE KEY   (analysis_id)
-);
-=cut
   my @columns = qw (ast.analysis_id
                     ast.status
                     ast.batch_size
@@ -199,7 +190,7 @@ CREATE TABLE analysis_stats (
                     ast.num_required_workers
                     ast.last_update
                    );
-  push @columns , "NOW()-ast.last_update seconds_since_last_update";
+  push @columns , "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
   return @columns;            
 }
 
