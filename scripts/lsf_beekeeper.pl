@@ -29,6 +29,7 @@ my $worker_limit = 50;
 my $sleep_time = 5;
 my $sync=0;
 $self->{'overdue_limit'} = 75; #minutes
+$self->{'showStatus'} = undef;
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -47,6 +48,7 @@ GetOptions('help'           => \$help,
            'batch_size=i'   => \$batch_size,
            'loop'           => \$loopit,
 	   'sync'           => \$sync,
+	   'status'         => \$self->{'showStatus'},
 	   'sleep=i'        => \$sleep_time,
 	   'logic_name=s'   => \$self->{'logic_name'},
           );
@@ -96,13 +98,16 @@ if($loopit) {
   run_autonomously($self, $queen);
 } elsif($analysis) {
   my $stats = $analysis->stats;
-  $queen->synchronize_hive() if($sync);
+  if($sync) {
+    $queen->synchronize_AnalysisStats($stats);
+    $queen->check_blocking_control_rules_for_AnalysisStats($stats);
+  }
   $stats->print_stats;
   $queen->get_num_needed_workers();
 } else {
   #sync and show stats
   $queen->synchronize_hive() if($sync);
-  $queen->print_hive_status;
+  $queen->print_hive_status if($self->{'showStatus'});
   $queen->get_num_needed_workers();
 #  show_overdue_workers($self, $queen);
 }
@@ -136,7 +141,8 @@ sub usage {
   print "  -loop                  : run autonomously, loops and sleeps\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 5)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
-  print "lsf_beekeeper.pl v1.2\n";
+  print "  -status                : show hive status\n";
+  print "lsf_beekeeper.pl v1.3\n";
   
   exit(1);  
 }
@@ -219,19 +225,23 @@ sub run_autonomously {
     print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
 
     check_for_dead_workers($self, $queen);
-
-    $queen->synchronize_hive();
-    $queen->print_hive_status();
     
     my $load  = $queen->get_hive_current_load();
     my $count = $queen->get_num_needed_workers();
-    my $pend_count = $self->get_pending_count();
 
-    $count = $count - $pend_count;
+    #my $pend_count = $self->get_pending_count();
+    #$count = $count - $pend_count;
 
-    $count = $worker_limit if($count>$worker_limit);
-    
-    #return if($load==0 and $count==0); #nothing running and nothing todo => done
+    if($load==0 and $count==0) {
+      #nothing running and nothing todo => do hard resync
+      print("*** nothing is happening => do a hard resync\n");
+      $queen->synchronize_hive();
+      $count = $queen->get_num_needed_workers();
+    }  
+
+    $queen->print_hive_status()  if($self->{'showStatus'});
+
+    $count = $worker_limit if($count>$worker_limit);    
     
     if($count>0) {
       print("need $count workers\n");
