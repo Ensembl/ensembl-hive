@@ -95,6 +95,13 @@ sub store {
 }
 
 
+sub cleanup {
+  my $class = shift;
+  foreach my $key (keys(%{$_URLFactory_connections})) {
+    $_URLFactory_connections->{$key} = undef;
+  }
+}
+
 ############################
 #
 # Internals
