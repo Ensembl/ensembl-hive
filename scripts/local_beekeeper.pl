@@ -35,6 +35,7 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'dead'           => \$self->{'all_dead'},
+	   'run'            => \$self->{'run'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -76,7 +77,7 @@ $queen->check_blocking_control_rules;
 
 run_next_worker_clutch($self, $queen);
 
-if($self->{'all_dead'}) { check_for_dead_workers($self, $self->{'queen'}); }
+if($self->{'all_dead'}) { check_for_dead_workers($self, $queen); }
 
 
 Bio::EnsEMBL::Hive::URLFactory->cleanup;
@@ -132,11 +133,28 @@ sub run_next_worker_clutch
   my $queen = shift;  
 
   $queen->update_analysis_stats();
-  my($analysis_id, $count) = $queen->next_clutch();
-  if($count>0) {
-    #my $cmd = "./runWorker.pl -conf $conf_file -analysis_id $analysis_id";
-    my $cmd = "bsub -JW$analysis_id\[1-$count\] ./runWorker.pl -url $url -analysis_id $analysis_id";
+
+  my $clutches = $queen->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
+
+  foreach my $analysis_stats (@{$clutches}) {
+    $analysis_stats->print_stats;
+  }
+
+  foreach my $analysis_stats (@{$clutches}) {
+    ##my($analysis_id, $count) = $queen->next_clutch();
+    #if($count>0) {
+
+    my $analysis_id = $analysis_stats->analysis_id;
+    my $count = $analysis_stats->num_required_workers;
+
+    my ($worker_cmd, $cmd);
+    if($conf_file) { $worker_cmd = "./runWorker.pl -analysis_id $analysis_id -conf $conf_file";}
+    if($url)       { $worker_cmd = "./runWorker.pl -analysis_id $analysis_id -url $url";}
+
+    if($count>1) { $cmd = "bsub -JW$analysis_id\[1-$count\] $worker_cmd";}
+    else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
     print("$cmd\n");
+    system($cmd) if($self->{'run'});
 
     # return of bsub looks like this
     #Job <6392054> is submitted to default queue <normal>.
@@ -151,17 +169,17 @@ sub check_for_dead_workers {
 
   my $host = hostname;
 
-  my $overdueWorkers = $queen->fetch_overdue_workers(5*60);  #overdue by 1hr
+  my $overdueWorkers = $queen->fetch_overdue_workers(5*60);  #overdue by 5 minutes
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
     printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-    if(($worker->beekeeper eq '') and ($worker->host eq $host)) {
+    #if(($worker->beekeeper eq '') and ($worker->host eq $host)) {
       print("  is one of mine\n");
       my $cmd = "ps -p ". $worker->process_id;
       my $check = qx/$cmd/;
 
       $queen->register_worker_death($worker);
-    }
+    #}
   }
 }
 
