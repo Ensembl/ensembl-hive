@@ -305,7 +305,9 @@ sub main::encode_hash
   my $hash_string = "{";
   my @keys = sort(keys %{$hash_ref});
   foreach my $key (@keys) {
-    $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
+    if(defined($hash_ref->{$key})) {
+      $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
+    }
   }
   $hash_string .= "}";
 
