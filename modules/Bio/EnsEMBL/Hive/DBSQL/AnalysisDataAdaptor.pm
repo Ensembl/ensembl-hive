@@ -35,7 +35,7 @@
 # Let the code begin...
 
 
-package Bio::EnsEMBL::Compara::DBSQL::AnalysisDataAdaptor;
+package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use strict;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
@@ -47,13 +47,13 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub fetch_by_dbID {
   my ($self, $data_id) = @_;
 
-  my $sql = "SELECT data FROM analysis_datae WHERE analysis_data_id = ?";
+  my $sql = "SELECT data FROM analysis_data WHERE analysis_data_id = ?";
   my $sth = $self->prepare($sql);
-  $sth->execute($sequence_id);
+  $sth->execute($data_id);
 
-  my ($sequence) = $sth->fetchrow_array();
+  my ($data) = $sth->fetchrow_array();
   $sth->finish();
-  return $sequence;
+  return $data;
 }
 
 
@@ -70,11 +70,11 @@ sub store {
 
   my $sth = $self->prepare("SELECT analysis_data_id FROM analysis_data WHERE data = ?");
   $sth->execute($data);
-  ($seqID) = $sth->fetchrow_array();
+  ($data_id) = $sth->fetchrow_array();
   $sth->finish;
 
   if($data_id) {
-    # print("sequence already stored as id $seqID\n");
+    # print("data already stored as id $data_id\n");
     return $data_id;
   }
 
