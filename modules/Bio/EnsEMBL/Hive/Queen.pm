@@ -347,8 +347,10 @@ sub check_blocking_control_rules
       }
 
       if($allRulesDone) {
-        #print("  UNBLOCK analysis : all conditions met\n");
-        $stats->adaptor->update_status($stats->analysis_id, 'READY');
+        if($stats->status eq 'BLOCKED') {
+          #print("  UNBLOCK analysis : all conditions met\n");
+          $stats->adaptor->update_status($stats->analysis_id, 'READY');
+        }
       } else {
         #print("  RE-BLOCK analysis : all conditions met\n");
         $stats->adaptor->update_status($stats->analysis_id, 'BLOCKED');
