@@ -248,15 +248,22 @@ sub last_check_in {
 
 =cut
 
+use Digest::MD5 qw(md5_hex);
+
 sub output_dir {
-  my( $self, $outdir ) = @_;
-  if($outdir and (-d $outdir)) {
-    $outdir .= "/worker_" . $self->hive_id ."/";
-    mkdir($outdir);
-    $self->{'_output_dir'} = $outdir 
+  my ($self, $outdir) = @_;
+  if ($outdir and (-d $outdir)) {
+    my $hive_id = $self->hive_id;
+    my (@hex) = md5_hex($hive_id) =~ m/\G(..)/g;
+    # If you want more than one level of directories, change $hex[0]
+    # below into an array slice.  e.g @hex[0..1] for two levels.
+    $outdir = join('/', $outdir, $hex[0], 'hive_id_' . $hive_id);
+    system("mkdir -p $outdir") && die "Could not create $outdir\n";
+    $self->{'_output_dir'} = $outdir;
   }
   return $self->{'_output_dir'};
 }
+
 
 sub perform_global_cleanup {
   my $self = shift;
@@ -355,8 +362,8 @@ sub run
   if($self->output_dir()) {
     open OLDOUT, ">&STDOUT";
     open OLDERR, ">&STDERR";
-    open WORKER_STDOUT, ">".$self->output_dir()."worker.out";
-    open WORKER_STDERR, ">".$self->output_dir()."worker.err";
+    open WORKER_STDOUT, ">".$self->output_dir()."/worker.out";
+    open WORKER_STDERR, ">".$self->output_dir()."/worker.err";
     close STDOUT;
     close STDERR;
     open STDOUT, ">&WORKER_STDOUT";
@@ -490,14 +497,16 @@ sub redirect_job_output
   return unless($outdir);
   return unless($job);
 
-  $job->stdout_file($outdir . "job_".$job->dbID.".out");
-  $job->stderr_file($outdir . "job_".$job->dbID.".err");
+  $job->stdout_file($outdir . "/job_".$job->dbID.".out");
+  $job->stderr_file($outdir . "/job_".$job->dbID.".err");
 
   close STDOUT;
   open STDOUT, ">".$job->stdout_file;
 
   close STDERR;
   open STDERR, ">".$job->stderr_file;
+
+  $job->adaptor->store_out_files($job) if($job->adaptor);
 }
 
 
@@ -508,11 +517,6 @@ sub close_and_update_job_output
 
   return unless($job);
   return unless($self->output_dir);
-
-  close STDOUT;
-  close STDERR;
-  open STDOUT, ">&WORKER_STDOUT";
-  open STDERR, ">&WORKER_STDERR";
 
   if(-z $job->stdout_file) {
     #print("unlink zero size ", $job->stdout_file, "\n");
@@ -526,6 +530,11 @@ sub close_and_update_job_output
   }
 
   $job->adaptor->store_out_files($job) if($job->adaptor);
+
+  close STDOUT;
+  close STDERR;
+  open STDOUT, ">&WORKER_STDOUT";
+  open STDERR, ">&WORKER_STDERR";
 }
 
 
