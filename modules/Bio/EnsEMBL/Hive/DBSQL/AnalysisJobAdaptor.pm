@@ -534,6 +534,8 @@ sub reset_all_jobs_for_analysis_id {
   $sth = $self->prepare($sql);
   $sth->execute($analysis_id);
   $sth->finish;
+
+  $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
 }
 
 
