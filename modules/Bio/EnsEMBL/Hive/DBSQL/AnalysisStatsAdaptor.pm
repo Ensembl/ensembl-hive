@@ -70,6 +70,11 @@ sub fetch_by_analysis_id {
     $self->_create_new_for_analysis_id($id);
     ($obj) = @{$self->_generic_fetch($constraint)};  
   }
+
+  if(!defined($obj)) {
+    throw("unable to fetch analysis_stats for analysis_id = $id\n");
+  }
+  
   return $obj;
 }
 
