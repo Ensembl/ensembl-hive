@@ -10,11 +10,13 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::DataflowRule
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
+
   Needed a robust and simpler rule table
   where Analyses in the pipeline can robustly define
   new analyses and rules.  New design has a single table where a 'rule'
@@ -25,10 +27,12 @@
 
 
 =head1 CONTACT
+
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
 
@@ -54,6 +58,7 @@ use Bio::EnsEMBL::Hive::URLFactory;
   Returns : Bio::EnsEMBL::Pipeline::DataflowRule
   Args    : A Bio::EnsEMBL::Analysis object. Conditions are added later,
             adaptor and dbid only used from the adaptor.
+            
 =cut
 
 
@@ -86,12 +91,15 @@ sub adaptor {
 
 
 =head2 branch_code
+
   Title   : branch_code
   Arg[1]  : (optional) int $code
   Usage   : $self->branch_code($code);
   Function: Get/set method for rules branch_code.
   Returns : integer
+  
 =cut
+
 sub branch_code {
   #default branch_code = 1
   my( $self, $value ) = @_;
@@ -102,12 +110,15 @@ sub branch_code {
 
 
 =head2 from_analysis_id
+
   Title   : from_analysis_id
   Arg[1]  : (optional) int $dbID
   Usage   : $self->from_analysis_id($dbID);
   Function: Get/set method for the 'from' analysis objects dbID of this rule.
   Returns : integer
+  
 =cut
+
 sub from_analysis_id {
   my ($self,$analysis_id) = @_;
   if($analysis_id) {
@@ -119,12 +130,15 @@ sub from_analysis_id {
 
 
 =head2 to_analysis_url
+
   Title   : to_analysis_url
   Arg[1]  : (optional) string $url
   Usage   : $self->to_analysis_url($url);
   Function: Get/set method for the 'to' analysis objects URL for this rule
   Returns : string
+  
 =cut
+
 sub to_analysis_url {
   my ($self,$url) = @_;
   if($url) {
@@ -136,12 +150,15 @@ sub to_analysis_url {
 
 
 =head2 from_analysis
+
   Title   : from_analysis
   Usage   : $self->from_analysis($anal);
   Function: Get/set method for the condition analysis object of this rule.
   Returns : Bio::EnsEMBL::Analysis
   Args    : Bio::EnsEMBL::Analysis
+  
 =cut
+
 sub from_analysis {
   my ($self,$analysis) = @_;
 
@@ -169,12 +186,15 @@ sub from_analysis {
 
 
 =head2 to_analysis
+
   Title   : to_analysis
   Usage   : $self->to_analysis($anal);
   Function: Get/set method for the goal analysis object of this rule.
   Returns : Bio::EnsEMBL::Analysis
   Args    : Bio::EnsEMBL::Analysis
+  
 =cut
+
 sub to_analysis {
   my ($self,$analysis) = @_;
 

@@ -10,21 +10,26 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor 
 
 =head1 SYNOPSIS
+
   $dataflowRuleAdaptor = $db_adaptor->get_DataflowRuleAdaptor;
   $dataflowRuleAdaptor = $dataflowRuleObj->adaptor;
 
 =head1 DESCRIPTION
+
   Module to encapsulate all db access for persistent class DataflowRule.
   There should be just one per application and database connection.
 
 =head1 CONTACT
+
   Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
   
