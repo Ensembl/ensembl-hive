@@ -177,7 +177,7 @@ sub check_for_dead_workers {
   my $self = shift;
   my $queen = shift;
 
-  my $overdueWorkers = $queen->fetch_overdue_workers(15*60);  #overdue by 15 minutes
+  my $overdueWorkers = $queen->fetch_overdue_workers(75*60);  #overdue by 75 minutes
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
     if($worker->beekeeper eq 'LSF') {
@@ -214,8 +214,9 @@ sub run_autonomously {
   my $queen = shift;
 
   my ($cmd, $worker_cmd);
-  
+  my $loopCount=1; 
   while($loopit) {
+    print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
     check_for_dead_workers($self, $queen);
 
     $queen->update_analysis_stats();
@@ -225,19 +226,22 @@ sub run_autonomously {
     my $load  = $queen->get_hive_current_load();
     my $count = $queen->get_num_needed_workers();
 
-    return if($load==0 and $count=0); #nothing running and nothing todo => done
+    #return if($load==0 and $count==0); #nothing running and nothing todo => done
     
     if($count) {
+      print("need $count workers\n");
       $worker_cmd = "./runWorker.pl -bk LSF -url $url";
       $worker_cmd .= " -limit $limit" if(defined $limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
 
-      if($count>1) { $cmd = "bsub -JW\[1-$count\] $worker_cmd";}
-      else { $cmd = "bsub -JW $worker_cmd";}
+      if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\] $worker_cmd";}
+      else { $cmd = "bsub -JHL$loopCount $worker_cmd";}
       print("$cmd\n");
       system($cmd);
     }
-    sleep(15*60);  #sleep 15 minutes before repeating    
+    print("sleep 5 minutes\n");
+    sleep(5*60);  #sleep 5 minutes before repeating    
+    $loopCount++;
   }
 }
 
