@@ -10,21 +10,26 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor 
 
 =head1 SYNOPSIS
+
   $AnalysisCtrlRuleAdaptor = $db_adaptor->get_AnalysisCtrlRuleAdaptor;
   $analysisCtrlRuleAdaptor = $analysisCtrlRuleObj->adaptor;
 
 =head1 DESCRIPTION
+
   Module to encapsulate all db access for persistent class AnalysisCtrlRule.
   There should be just one per application and database connection.
 
 =head1 CONTACT
+
   Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
   
@@ -47,15 +52,18 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 =head2 fetch_by_ctrled_analysis_id
+
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the Member created from the database defined by the
-               the id $id.
-  Returntype : listref of Bio::EnsEMBL::Hive::AnalysisCtrlRule
+  Example    : $ctrlRuleArray = $adaptor->fetch_by_ctrled_analysis_id($ctrled_analysis->dbID);
+  Description: Returns an array reference of all the AnalysisCtrlRule objects 
+               for the specified controled analysis.
+  Returntype : listref of Bio::EnsEMBL::Hive::AnalysisCtrlRule objects
   Exceptions : thrown if $id is not defined
   Caller     : general
+  
 =cut
+
 sub fetch_by_ctrled_analysis_id{
   my ($self,$id) = @_;
 
@@ -70,33 +78,38 @@ sub fetch_by_ctrled_analysis_id{
 
 
 =head2 fetch_all
+
   Arg        : None
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
+  Example    : my $all_rules = $ctrlRuleDBA->fetch_all();
+  Description: fetches all AnalysisCtrlRule objects from database
+  Returntype : array reference of Bio::EnsEMBL::Hive::AnalysisCtrlRule objects
+  Exceptions : none
+  Caller     : general
+  
 =cut
+
 sub fetch_all {
   my $self = shift;
   return $self->_generic_fetch();
 }
 
 =head2 store
-  Title   : store
-  Usage   : $self->store( $rule );
-  Function: Stores a rule in db
-            Sets adaptor and dbID in AnalysisCtrlRule
-  Returns : -
-  Args    : Bio::EnsEMBL::Hive::AnalysisCtrlRule
+
+  Arg[1]     : Bio::EnsEMBL::Hive::AnalysisCtrlRule object
+  Usage      : $self->store( $rule );
+  Function   : Stores a rule in db
+               Sets adaptor and dbID in AnalysisCtrlRule object
+  Returntype : none
+
 =cut
+
 sub store {
   my ( $self, $rule ) = @_;
 
   #print("\nAnalysisCtrlRuleAdaptor->store()\n");
  
-  my $sth = $self->prepare( q{INSERT ignore INTO analysis_ctrl_rule
-       SET ctrled_analysis_id = ?, condition_analysis_url = ? } );
+  my $sth = $self->prepare(q{INSERT ignore INTO analysis_ctrl_rule 
+        (ctrled_analysis_id, condition_analysis_url) VALUES(?,?) });
   if($sth->execute($rule->ctrled_analysis_id, $rule->condition_analysis_url)) {
     $sth->finish();
   }
@@ -106,13 +119,14 @@ sub store {
 
 =head2 remove
 
-  Title   : remove
+  Arg[1]  : Bio::EnsEMBL::Hive::AnalysisCtrlRule which must be persistent
+            with a valid dbID.
   Usage   : $self->remove( $rule );
   Function: removes given object from database.
   Returns : -
-  Args    : Bio::EnsEMBL::Hive::AnalysisCtrlRule which must be persistent.
-            ( dbID set )
+  
 =cut
+
 sub remove {
   my ( $self, $rule ) = @_;
 
@@ -124,6 +138,21 @@ sub remove {
   my $sth = $self->prepare("DELETE FROM analysis_ctrl_rule WHERE ctrled_analysis_id = ?, condition_analysis_url = '?'");
   $sth->execute($rule->ctrled_analysis_id, $rule->condition_analysis_url);
 }
+
+=head2 create_rule
+
+  Arg[1]      : condition analysis object (Bio::EnsEMBL::Analysis object)
+  Arg[2]      : controled analysis object (Bio::EnsEMBL::Analysis object)
+  Example     : $dba->get_AnalysisCtrlRuleAdaptor->create_rule($conditionAnalysis, $ctrledAnalysis);
+  Description : Creates an AnalysisCtrlRule where the condition analysis must be completely DONE with
+                all jobs in order for the controlled analysis to be unblocked and allowed to proceed.
+                If an analysis requires multiple conditions, simply create multiple rules and controlled
+                analysis will only unblock if ALL conditions are satisified.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  
+=cut
 
 
 sub create_rule {
@@ -200,17 +229,6 @@ sub _final_clause {
 #
 ###############################################################################
 
-=head2 _generic_fetch
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::Hive::AnalysisCtrlRule
-  Exceptions : none
-=cut
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
 
