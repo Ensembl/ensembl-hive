@@ -457,7 +457,9 @@ sub get_hive_progress
   $sth->execute();
   my ($done, $total) = $sth->fetchrow_array();
   $sth->finish;
-  printf("hive %1.2f%% complete (%d done / %d total)\n", ($done/$total * 100), $done, $total);
+  my $completed = 0.0;
+  $completed = ($done/$total * 100) if($total>0);
+  printf("hive %1.2f%% complete (%d done / %d total)\n", $completed, $done, $total);
   return $done, $total;
 }
 
