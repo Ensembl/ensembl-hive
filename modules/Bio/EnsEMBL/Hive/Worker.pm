@@ -174,12 +174,7 @@ sub life_span {
 
 sub job_limit {
   my $self=shift;
-  if(@_) {
-    $self->{'_job_limit'}=shift;
-    if($self->{'_job_limit'} < $self->batch_size) {
-      $self->batch_size($self->{'_job_limit'});
-    }
-  }
+  $self->{'_job_limit'}=shift if(@_);
   return $self->{'_job_limit'};
 }
 
@@ -298,7 +293,11 @@ sub batch_size {
     $stats->batch_size($batch_size);
     $stats->update;
   }
-  return $self->analysis->stats->batch_size;
+  my $batch_size = $self->analysis->stats->batch_size;
+  if($self->job_limit < $batch_size) {
+    $batch_size = $self->job_limit;
+  }
+  return $batch_size;
 }
 
 
