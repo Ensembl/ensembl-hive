@@ -23,6 +23,7 @@ $self->{'db_conf'}->{'-port'} = 3306;
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 my ($limit, $batch_size);
+my $loopit=0;
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -33,9 +34,11 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'dead'           => \$self->{'check_for_dead'},
+           'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
            'limit=i'        => \$limit,
-           'batch_size=i'   => \$batch_size
+           'batch_size=i'   => \$batch_size,
+           'loop'           => \$loopit
           );
 
 if ($help) { usage(); }
@@ -69,17 +72,21 @@ if($url) {
 
 my $queen = $DBA->get_Queen;
 
-if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
+if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
 
-$queen->get_hive_current_load();
+if($loopit) {
+  run_autonomously($self, $queen);
+} else {
+  if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
 
-$queen->update_analysis_stats();
-$queen->check_blocking_control_rules;
-$queen->print_hive_status;
+  $queen->update_analysis_stats();
+  $queen->check_blocking_control_rules;
+  $queen->print_hive_status;
 
-run_next_worker_clutch($self, $queen);
+  $queen->get_num_needed_workers();
 
-
+  run_next_worker_clutch($self, $queen);
+}
 
 Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
@@ -105,6 +112,8 @@ sub usage {
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -run                   : show and run the needed jobs\n";
   print "  -dead                  : clean overdue jobs for resubmission\n";
+  print "  -alldead               : all outstanding workers\n";
+  print "  -loop                  : run autonomously\n";
   print "lsf_beekeeper.pl v1.0\n";
   
   exit(1);  
@@ -138,8 +147,6 @@ sub run_next_worker_clutch
 
   print("\n");
   foreach my $analysis_stats (@{$clutches}) {
-    ##my($analysis_id, $count) = $queen->next_clutch();
-    #if($count>0) {
 
     my $analysis_id = $analysis_stats->analysis_id;
     my $count = $analysis_stats->num_required_workers;
@@ -187,6 +194,49 @@ sub check_for_dead_workers {
         print("ALIVE and running\n");
       }
     }
+  }
+}
+
+
+sub register_all_workers_dead {
+  my $self = shift;
+  my $queen = shift;
+
+  my $overdueWorkers = $queen->fetch_overdue_workers(0);
+  foreach my $worker (@{$overdueWorkers}) {
+    $queen->register_worker_death($worker);
+  }
+}
+
+
+sub run_autonomously {
+  my $self = shift;
+  my $queen = shift;
+
+  my ($cmd, $worker_cmd);
+  
+  while($loopit) {
+    check_for_dead_workers($self, $queen);
+
+    $queen->update_analysis_stats();
+    $queen->check_blocking_control_rules;
+
+    my $load  = $queen->get_hive_current_load();
+    my $count = $queen->get_num_needed_workers();
+
+    return if($load==0 and $count=0); #nothing running and nothing todo => done
+    
+    if($count) {
+      $worker_cmd = "./runWorker.pl -bk LSF -url $url";
+      $worker_cmd .= " -limit $limit" if(defined $limit);
+      $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
+
+      if($count>1) { $cmd = "bsub -JW\[1-$count\] $worker_cmd";}
+      else { $cmd = "bsub -JW $worker_cmd";}
+      print("$cmd\n");
+      system($cmd);
+    }
+    sleep(15*60);  #sleep 15 minutes before repeating    
   }
 }
 
