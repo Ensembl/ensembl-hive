@@ -52,6 +52,7 @@ sub new
   my ($class, @args) = @_;
   unless($_URLFactory_global_instance) {
     $_URLFactory_global_instance = bless {}, $class;
+    $_URLFactory_global_instance->_load_aliases;
   }
   return $_URLFactory_global_instance;
 }
@@ -65,6 +66,7 @@ sub DESTROY {
 }
 
 =head2 fetch
+
   Arg[1]     : string
   Example    : my $object = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
   Description: parses URL, connects to appropriate DBConnection, determines
@@ -73,7 +75,9 @@ sub DESTROY {
                Bio::EnsEMBL::DBSQL::DBConnection if simple URL
   Exceptions : none
   Caller     : ?
+
 =cut
+
 sub fetch
 {
   my $class = shift;
@@ -181,6 +185,8 @@ sub _get_db_connection
   } else { $host=$hostPort; }
 
   return undef unless($host and $dbname);
+  
+  ($host,$port) = $_URLFactory_global_instance->_check_alias($host,$port);
 
   my $connectionKey = "$user:$pass\@$host:$port/$dbname;$type";
   my $dba;
@@ -206,5 +212,39 @@ sub _get_db_connection
   return ($dba,$path);
 
 }
+
+sub _load_aliases {
+  my $self = shift;
+
+  $self->{'_aliases'} = {};
+
+  my $alias_file = $ENV{'HOME'} . "/.hive_url_alias";
+  return unless(-e $alias_file);
+  #print("found ALIAS file $alias_file\n");
+  
+  open (ALIASFP,$alias_file) || return;
+  while(<ALIASFP>) {
+    chomp;
+    my($from, $to) = split(/\s+/);
+    $self->{'_aliases'}->{$from} = $to;
+  }
+  close(ALIASFP);
+}
+
+
+sub _check_alias {
+  my $self = shift;
+  my $host = shift;
+  my $port = shift;
+
+  my $key = "$host:$port";
+  my $alias = $self->{'_aliases'}->{$key};
+  return ($host,$port) unless($alias);
+  
+  ($host,$port) = split(/:/, $alias);
+  #print("translate alias $key into $host : $port\n");
+  return ($host,$port);
+}
+
 
 1;
