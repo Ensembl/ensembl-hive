@@ -95,7 +95,7 @@ sub Bio::EnsEMBL::Analysis::runnableDB
   Description: Constructs a URL string for this database connection. Follows
                the format defined for FTP urls and adopted by
                
-  Returntype : string of format  mysql://<user>:<pass>@<host>:<port>/<dbname>'
+  Returntype : string of format  mysql://<user>:<pass>@<host>:<port>/<dbname>
   Exceptions : none
   Caller     : general
 
@@ -123,7 +123,7 @@ sub Bio::EnsEMBL::DBSQL::DBConnection::url
   Description: Constructs a URL string for this database connection
                Follows the general URL rules.
   Returntype : string of format
-               mysql://<user>:<pass>@<host>:<port>/<dbname>/analysis?logic_name=<name>'
+               mysql://<user>:<pass>@<host>:<port>/<dbname>/analysis?logic_name=<name>
   Exceptions : none
   Caller     : general
 
