@@ -34,7 +34,7 @@ GetOptions('help'           => \$help,
            'dbuser=s'       => \$user,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
-	   'dead'           => \$self->{'all_dead'},
+           'dead'           => \$self->{'all_dead'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -67,19 +67,17 @@ if($url) {
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
-print("$DBA\n");
+
 my $queen = $DBA->get_Queen;
-$self->{'queen'} = $queen;
 
-my $rules = $queen->db->get_AnalysisCtrlRuleAdaptor->fetch_all();
-foreach my $rule (@{$rules}) {
-  $rule->print_rule;
-}
 
+$queen->update_analysis_stats();
+$queen->check_blocking_control_rules;
+
+run_next_worker_clutch($self, $queen);
 
 if($self->{'all_dead'}) { check_for_dead_workers($self, $self->{'queen'}); }
 
-run_beekeeper($self);
 
 Bio::EnsEMBL::Hive::URLFactory->cleanup;
 exit(0);
@@ -128,11 +126,10 @@ sub parse_conf {
 }
 
 
-sub run_beekeeper
+sub run_next_worker_clutch
 {
   my $self = shift;
-  my $queen = $self->{'queen'};
-  
+  my $queen = shift;  
 
   $queen->update_analysis_stats();
   my($analysis_id, $count) = $queen->next_clutch();
