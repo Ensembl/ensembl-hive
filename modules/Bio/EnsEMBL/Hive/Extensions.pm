@@ -134,7 +134,17 @@ sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query
     }
   }
   return undef;
+}
 
+
+sub Bio::EnsEMBL::Analysis::stats
+{
+  my $self = shift;
+  my $stats = undef;
+  eval {
+    $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
+  };
+  return $stats;
 }
 
 1;
