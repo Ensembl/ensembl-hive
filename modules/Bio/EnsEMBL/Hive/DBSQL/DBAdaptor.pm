@@ -64,7 +64,7 @@ sub get_available_adaptors{
 		"AnalysisCtrlRule" => "Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor",
 		"DataflowRule"     => "Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor",
 		"SimpleRule"       => "Bio::EnsEMBL::Hive::DBSQL::SimpleRuleAdaptor");
-  return (%pairs);
+  return (\%pairs);
 }
  
 1;
