@@ -143,10 +143,15 @@ sub run_next_worker_clutch
     my $analysis_id = $analysis_stats->analysis_id;
     my $count = $analysis_stats->num_required_workers;
     my $analysis = $analysis_stats->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id);
+    my $hive_capacity = $analysis_stats->hive_capacity;
+    my $batch_size = $analysis_stats->batch_size;
 
-    my ($worker_cmd, $cmd);
-    if($conf_file) { $worker_cmd = "./runWorker.pl -conf $conf_file -logic_name " . $analysis->logic_name;}
-    if($url)       { $worker_cmd = "./runWorker.pl -url $url -logic_name " . $analysis->logic_name;}
+    my $cmd;
+    my $worker_cmd = "./runWorker.pl -logic_name " . $analysis->logic_name;
+
+    $worker_cmd .= " -conf $conf_file" if($conf_file);
+    $worker_cmd .= " -url $url" if($url);
+    $worker_cmd .= " -limit $batch_size" if($hive_capacity < 0);
 
     if($count>1) { $cmd = "bsub -JW$analysis_id\[1-$count\] $worker_cmd";}
     else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
