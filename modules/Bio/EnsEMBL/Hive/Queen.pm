@@ -58,6 +58,7 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use strict;
+use POSIX;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
@@ -277,29 +278,38 @@ sub get_hive_current_load {
 }
 
 
-sub next_clutch {
+sub get_num_needed_workers {
   my $self = shift;
 
-  my $clutches = $self->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
-  return (0, 0) unless($clutches);
+  my $neededAnals = $self->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
+  return 0 unless($neededAnals);
 
-  my $smallestClutch = undef;
-  
-  # keep simple : return the clutch with the smallest number of workers first
-  #print("\nCheck for CLUTCH!!\n");
-  foreach my $analysis_stats (@{$clutches}) {
+  my $availableLoad = 1.0 - $self->get_hive_current_load();
+  return 0 if($availableLoad <0.0);
+
+  my $numWorkers = 0;
+  foreach my $analysis_stats (@{$neededAnals}) {
     #$analysis_stats->print_stats();
 
-    $smallestClutch = $analysis_stats unless($smallestClutch);
-    if($analysis_stats->num_required_workers < $smallestClutch->num_required_workers) {
-      $smallestClutch = $analysis_stats;
+    my $thisLoad = $analysis_stats->num_required_workers * (1/$analysis_stats->hive_capacity);
+    if($thisLoad < $availableLoad) {
+      $numWorkers += $analysis_stats->num_required_workers;
+      $availableLoad -= $thisLoad;
+      printf("  %d (%1.9f) ", $numWorkers, $availableLoad);
+      $analysis_stats->print_stats();
+    } else {
+      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity);
+      $numWorkers += $workerCount;
+      $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
+      printf("  %d (%1.9f) use only %d ", $numWorkers, $availableLoad, $workerCount);
+      $analysis_stats->print_stats();
+      last;
     }
+    last if($availableLoad <= 0.0);
   }
-  
-  if($smallestClutch) {
-    return ($smallestClutch->analysis_id, $smallestClutch->num_required_workers);
-  }
-  return (0,0);
+
+  print("need $numWorkers workers ($availableLoad load left)\n");
+  return $numWorkers;
 }
 
 
