@@ -11,7 +11,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor
 
 =head1 SYNOPSIS
 
@@ -25,12 +25,13 @@ Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor
 
 =head1 CONTACT
 
-    Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-    Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+  The rest of the documentation details each of the object methods.
+  Internal methods are preceded with a _
 
 =cut
 
@@ -56,6 +57,27 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 #  CLASS methods
 #
 ###############################################################################
+
+=head2 CreateNewJob
+
+  Args       : -input_id => string of input_id which will be passed to run the job
+               -analysis => Bio::EnsEMBL::Analysis object from a database
+               -block        => int(0,1) set blocking state of job (default = 0)
+               -input_job_id => (optional) analysis_job_id of job that is creating this
+                                job.  Used purely for book keeping.
+  Example    : $analysis_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+                                    -input_id => 'my input data',
+                                    -analysis => $myAnalysis);
+  Description: uses the db connection from the analysis object's adaptor to store a new
+               job in a hive.  This is a class level method since it doesn't have any state.
+               Also updates this analysis's analysis_stats by incrementing total_job_count,
+               unclaimed_job_count and flagging the incremental update by changing the status
+               to 'LAODING' (but only if the analysis is not blocked).
+  Returntype : int analysis_job_id on database analysis is from.
+  Exceptions : thrown if either -input_id or -analysis are not properly defined
+  Caller     : general
+
+=cut
 
 sub CreateNewJob {
   my ($class, @args) = @_;
@@ -101,15 +123,17 @@ sub CreateNewJob {
 ###############################################################################
 
 =head2 fetch_by_dbID
+
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id.
+  Description: Returns the AnalysisJob defined by the analysis_job_id $id.
   Returntype : Bio::EnsEMBL::Hive::AnalysisJob
   Exceptions : thrown if $id is not defined
   Caller     : general
+
 =cut
+
 sub fetch_by_dbID {
   my ($self,$id) = @_;
 
@@ -131,6 +155,7 @@ sub fetch_by_dbID {
 
 
 =head2 fetch_by_claim_analysis
+
   Arg [1]    : string job_claim (the UUID used to claim jobs)
   Arg [2]    : int analysis_id  
   Example    : $jobs = $adaptor->fetch_by_claim_analysis('c6658fde-64ab-4088-8526-2e960bd5dd60',208);
@@ -138,7 +163,9 @@ sub fetch_by_dbID {
   Returntype : Bio::EnsEMBL::Hive::AnalysisJob
   Exceptions : thrown if claim_id or analysis_id is not defined
   Caller     : general
+
 =cut
+
 sub fetch_by_claim_analysis {
   my ($self,$claim,$analysis_id) = @_;
 
@@ -150,13 +177,16 @@ sub fetch_by_claim_analysis {
 
 
 =head2 fetch_all
+
   Arg        : None
   Example    : 
-  Description: 
+  Description: fetches all jobs from database
   Returntype : 
   Exceptions : 
   Caller     : 
+
 =cut
+
 sub fetch_all {
   my $self = shift;
 
@@ -170,18 +200,6 @@ sub fetch_all {
 #
 ###################
 
-=head2 _generic_fetch
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-=cut
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
   
@@ -307,13 +325,16 @@ sub _objs_from_sth {
 ################
 
 =head2 update_status
+
   Arg [1]    : $analysis_id
   Example    :
-  Description:
-  Returntype : Bio::EnsEMBL::Hive::Worker
+  Description: updates the analysis_job.status in the database
+  Returntype : 
   Exceptions :
-  Caller     :
+  Caller     : general
+
 =cut
+
 sub update_status {
   my ($self,$job) = @_;
 
@@ -328,12 +349,14 @@ sub update_status {
 }
 
 =head2 store_out_files
+
   Arg [1]    : Bio::EnsEMBL::Compar::Hive::AnalysisJob $job
   Example    :
-  Description: if files are non-zero size, will update DB
+  Description: if files are non-zero size, will update DB with it's location
   Returntype : 
   Exceptions :
-  Caller     :
+  Caller     : Bio::EnsEMBL::Hive::Worker
+
 =cut
 
 sub store_out_files {
