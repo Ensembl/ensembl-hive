@@ -86,15 +86,15 @@ sub store {
   my $dataflow_rule_id;
   
   my $sth = $self->prepare( q{INSERT ignore INTO dataflow_rule
-       SET from_analysis_id = ?, to_analysis_url = ? } );
-  if($sth->execute($rule->from_analysis_id, $rule->to_analysis_url)) {
+       SET from_analysis_id = ?, to_analysis_url = ?, branch_code=? } );
+  if($sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code)) {
     $dataflow_rule_id = $sth->{'mysql_insertid'};
     $sth->finish();
     $rule->dbID($dataflow_rule_id);
     #print("  stored with dbID = $dataflow_rule_id\n");
   } else {
     #print("  failed to execute -> already inserted -> need to get dbID\n");
-    $sth->finish();   
+    $sth->finish();
     $sth = $self->prepare(q{SELECT dataflow_rule_id FROM dataflow_rule WHERE
          from_analysis_id = ? AND to_analysis_url = ? } );
     $sth->execute($rule->from_analysis_id, $rule->to_analysis_url);
@@ -128,6 +128,20 @@ sub remove {
 
   my $sth = $self->prepare("DELETE FROM dataflow_rule WHERE dataflow_rule_id = $dbID");
   $sth->execute;
+}
+
+
+sub create_rule {
+  my ($self, $fromAnalysis, $toAnalysis, $branchCode) = @_;
+
+  return unless($fromAnalysis and $toAnalysis);
+  
+  my $rule = Bio::EnsEMBL::Hive::DataflowRule->new();
+  $rule->from_analysis($fromAnalysis);
+  $rule->to_analysis($toAnalysis);
+  $rule->branch_code($branchCode) if(defined($branchCode));
+  
+  $self->store($rule);
 }
 
 ############################
