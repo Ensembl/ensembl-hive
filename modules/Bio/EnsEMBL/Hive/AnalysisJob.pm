@@ -6,25 +6,24 @@
 =pod 
 
 =head1 NAME
-  Bio::EnsEMBL::Hive::AnalysisJob
-=cut
 
-=head1 SYNOPSIS
-=cut
+  Bio::EnsEMBL::Hive::AnalysisJob
 
 =head1 DESCRIPTION
+
   An AnalysisJob is the link between the input_id control data, the analysis and
-  the rule system.  It also tracks the state the state of the job as it's processed
-=cut
+  the rule system.  It also tracks the state of the job as it is processed
 
 =head1 CONTACT
+
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-=cut
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
+
 =cut
 
 package Bio::EnsEMBL::Hive::AnalysisJob;
