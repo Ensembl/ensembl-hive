@@ -65,7 +65,7 @@ use Sys::Hostname;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 #
-# STORE METHODS
+# PUBLIC METHODS
 #
 ################
 
@@ -83,7 +83,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self,$analysis_id) = @_;
 
-  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
+  my $analStatsDBA = $self->_analysisStatsAdaptor;
   return undef unless($analStatsDBA);
   
   my $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
@@ -140,11 +140,11 @@ sub register_worker_death {
   $sth->finish;
 
   if($worker->cause_of_death eq "NO_WORK") {
-    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
+    $self->_analysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
   }
   if($worker->cause_of_death eq "FATALITY") {
     #print("FATAL DEATH Arrrrgggghhhhhhhh (hive_id=",$worker->hive_id,")\n");
-    $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
+    $self->_analysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
 }
 
@@ -181,14 +181,14 @@ sub update_analysis_stats {
             "WHERE analysis_job.analysis_id=analysis.analysis_id ".
             "GROUP BY analysis_job.analysis_id, status";
 
-  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
+  my $statsDBA = $self->_analysisStatsAdaptor;
   my $analysisStats = undef;
 
   my $sth = $self->prepare($sql);
   $sth->execute();
   while (my ($analysis_id, $status, $count)=$sth->fetchrow_array()) {
     unless(defined($analysisStats) and $analysisStats->analysis_id==$analysis_id) {
-      $analysisStats->determine_status->update() if($analysisStats);
+      $analysisStats->determine_status()->update() if($analysisStats);
 
       $analysisStats = $statsDBA->fetch_by_analysis_id($analysis_id);
       $analysisStats->total_job_count(0);
@@ -211,9 +211,64 @@ sub update_analysis_stats {
     }
     if($status eq 'DONE') { $analysisStats->done_job_count($count); }
   }
-  $analysisStats->determine_status->update() if($analysisStats);
-
+  $analysisStats->determine_status()->update() if($analysisStats);
   $sth->finish;
+
+  $self->adjust_stats_for_living_workers();
+}
+
+
+sub adjust_stats_for_living_workers {
+  my $self = shift;
+
+  my $statsDBA = $self->_analysisStatsAdaptor;
+  
+  my $sql = "SELECT analysis_id, count(*) FROM hive ".
+            "WHERE cause_of_death='' GROUP BY analysis_id";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  while (my ($analysis_id, $liveCount)=$sth->fetchrow_array()) {
+
+    my $analysis_stats = $statsDBA->fetch_by_analysis_id($analysis_id);
+
+    if($analysis_stats->hive_capacity > 0) {
+      my $numWorkers = $analysis_stats->num_required_workers;
+
+      my $capacityAdjust = ($numWorkers + $liveCount) - $analysis_stats->hive_capacity;
+      $numWorkers -= $capacityAdjust if($capacityAdjust > 0);
+      $numWorkers=0 if($numWorkers<0);
+
+      $analysis_stats->num_required_workers($numWorkers);
+      $analysis_stats->update;
+    }
+  }
+  $sth->finish;
+}
+
+
+sub next_clutch {
+  my $self = shift;
+
+  my $clutches = $self->_analysisStatsAdaptor->fetch_by_needed_workers();
+  return (0, 0) unless($clutches);
+
+  my $smallestClutch = undef;
+  
+  # keep simple : return the clutch with the smallest number of workers first
+  #print("\nCheck for CLUTCH!!\n");
+  foreach my $analysis_stats (@{$clutches}) {
+    #$analysis_stats->print_stats();
+
+    $smallestClutch = $analysis_stats unless($smallestClutch);
+    if($analysis_stats->num_required_workers < $smallestClutch->num_required_workers) {
+      $smallestClutch = $analysis_stats;
+    }
+  }
+  
+  if($smallestClutch) {
+    return ($smallestClutch->analysis_id, $smallestClutch->num_required_workers);
+  }
+  return (0,0);
 }
 
 
@@ -223,11 +278,35 @@ sub update_analysis_stats {
 #
 ###################
 
+sub _analysisStatsAdaptor {
+  my $self = shift;
+  unless($self->{'analysisStatsDBA'}) {
+    $self->{'analysisStatsDBA'} = new Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor($self->db);
+  }
+  return $self->{'analysisStatsDBA'};
+}
+
+sub _analysisJobAdaptor {
+  my $self = shift;
+  unless($self->{'analysisJobDBA'}) {
+    $self->{'analysisJobDBA'} = new Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor($self->db);
+  }
+  return $self->{'analysisJobDBA'};
+}
+
+sub _analysisAdaptor {
+  my $self = shift;
+  unless($self->{'analysisDBA'}) {
+    $self->{'analysisDBA'} = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($self->db);
+  }
+  return $self->{'analysisDBA'};
+}
+
 =head2 _fetch_by_hive_id
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
+  Example    : $feat = $queen->fetch_by_dbID(1234);
   Description: Returns the feature created from the database defined by the
                the id $id.
   Returntype : Bio::EnsEMBL::Hive::Worker
@@ -361,11 +440,11 @@ sub _objs_from_sth {
     $worker->last_check_in($column{'last_check_in'});
     $worker->died($column{'died'});
     $worker->cause_of_death($column{'cause_of_death'});
-    $worker->adaptor($self);
+    $worker->queen($self);
     $worker->db($self->db);
 
-    if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
-      $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
+    if($column{'analysis_id'} and $self->_analysisAdaptor) {
+      $worker->analysis($self->_analysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
     }
 
     push @workers, $worker;
