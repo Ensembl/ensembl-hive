@@ -220,7 +220,8 @@ sub run_autonomously {
 
     $queen->update_analysis_stats();
     $queen->check_blocking_control_rules;
-
+    $queen->print_hive_status();
+    
     my $load  = $queen->get_hive_current_load();
     my $count = $queen->get_num_needed_workers();
 

@@ -354,6 +354,18 @@ sub print_hive_status
   foreach my $analysis_stats (@{$allStats}) {
     $analysis_stats->print_stats;
   }
+
+  print("HIVE LIVE WORKERS====\n");
+  my $sql = "select logic_name, count(*) from hive, analysis ".
+            "where hive.analysis_id=analysis.analysis_id and hive.cause_of_death='' ".
+            "group by hive.analysis_id";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  while((my $logic_name, my $count)=$sth->fetchrow_array()) {
+    printf("%20s : %d workers\n", $logic_name, $count);
+  }
+  print("=====================\n");
+  $sth->finish;  
 }
 
 
