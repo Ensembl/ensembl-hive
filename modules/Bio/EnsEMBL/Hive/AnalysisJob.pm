@@ -53,8 +53,8 @@ sub dbID {
 }
 
 sub input_id {
-  my( $self, $value ) = @_;
-  $self->{'_input_id'} = $value if($value);
+  my $self = shift;
+  $self->{'_input_id'} = shift if(@_);
   return $self->{'_input_id'};
 }
 
@@ -65,20 +65,20 @@ sub hive_id {
 }
 
 sub analysis_id {
-  my( $self, $value ) = @_;
-  $self->{'_analysis_id'} = $value if($value);
+  my $self = shift;
+  $self->{'_analysis_id'} = shift if(@_);
   return $self->{'_analysis_id'};
 }
 
 sub job_claim {
-  my( $self, $value ) = @_;
-  $self->{'_job_claim'} = $value if($value);
+  my $self = shift;
+  $self->{'_job_claim'} = shift if(@_);
   return $self->{'_job_claim'};
 }
 
 sub status {
-  my( $self, $value ) = @_;
-  $self->{'_status'} = $value if($value);
+  my $self = shift;
+  $self->{'_status'} = shift if(@_);
   return $self->{'_status'};
 }
 
@@ -90,47 +90,47 @@ sub update_status {
 }
 
 sub retry_count {
-  my( $self, $value ) = @_;
-  $self->{'_retry_count'} = $value if($value);
+  my $self = shift;
+  $self->{'_retry_count'} = shift if(@_);
   return $self->{'_retry_count'};
 }
 
 sub completed {
-  my( $self, $value ) = @_;
-  $self->{'_completed'} = $value if($value);
+  my $self = shift;
+  $self->{'_completed'} = shift if(@_);
   return $self->{'_completed'};
 }
 
 sub runtime_msec {
-  my( $self, $value ) = @_;
-  $self->{'_runtime_msec'} = $value if($value);
+  my $self = shift;
+  $self->{'_runtime_msec'} = shift if(@_);
   $self->{'_runtime_msec'} = 0 unless(defined($self->{'_runtime_msec'}));
   return $self->{'_runtime_msec'};
 }
 
 sub query_count {
-  my( $self, $value ) = @_;
-  $self->{'_query_count'} = $value if($value);
+  my $self = shift;
+  $self->{'_query_count'} = shift if(@_);
   $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
   return $self->{'_query_count'};
 }
 
 sub branch_code {
-  my( $self, $value ) = @_;
-  $self->{'_branch_code'} = $value if(defined($value));
+  my $self = shift;
+  $self->{'_branch_code'} = shift if(@_);
   $self->{'_branch_code'} = 1 unless(defined($self->{'_branch_code'}));
   return $self->{'_branch_code'};
 }
 
 sub stdout_file {
-  my( $self, $value ) = @_;
-  $self->{'_stdout_file'} = $value if(defined($value));
+  my $self = shift;
+  $self->{'_stdout_file'} = shift if(@_);
   return $self->{'_stdout_file'};
 }
 
 sub stderr_file {
-  my( $self, $value ) = @_;
-  $self->{'_stderr_file'} = $value if(defined($value));
+  my $self = shift;
+  $self->{'_stderr_file'} = shift if(@_);
   return $self->{'_stderr_file'};
 }
 
