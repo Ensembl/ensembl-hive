@@ -99,12 +99,15 @@ sub fetch_by_status {
   my $self = shift;
 
   my $constraint = "ast.status in (";
+  my $addComma;
   while(@_) {
     my $status = shift;
+    $constraint .= ',' if($addComma);
     $constraint .= "'$status' ";
+    $addComma = 1;
   }
   $constraint .= ")";
-    
+  
   return $self->_generic_fetch($constraint);
 }
 
