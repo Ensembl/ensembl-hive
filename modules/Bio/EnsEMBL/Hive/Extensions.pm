@@ -169,5 +169,13 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
   return 1;
 }
 
+sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
+{
+  my $self = shift;
+  $self->{'_branch_code'} = shift if(@_);
+  $self->{'_branch_code'}=1 unless($self->{'_batch_size'});
+  return $self->{'_branch_code'};
+}
+
 1;
 

@@ -357,12 +357,12 @@ sub run_module_with_job
   $runObj->run;
 
   $job->status('WRITE_OUTPUT');
-  my $branch_code = $runObj->write_output;
+  $runObj->write_output;
 
   #runnableDB is allowed to alter its input_id on output
   #This modified input_id is passed as input to the next jobs in the graph
   $job->input_id($runObj->input_id);
-  $job->branch_code($branch_code);
+  $job->branch_code($runObj->branch_code);
 
   return 1;
 }
