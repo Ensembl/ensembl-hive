@@ -186,6 +186,9 @@ sub to_analysis {
         "not a [$analysis]");
     }
     $self->{'_to_analysis'} = $analysis;
+
+    #if the 'from' and 'to' share the same adaptor, then use a simple logic_name
+    #for the URL rather than a full network distributed URL
     if($self->from_analysis and ($self->from_analysis->adaptor == $analysis->adaptor)) {
       $self->{'_to_analysis_url'} = $analysis->logic_name;
     } else {
