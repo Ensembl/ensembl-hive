@@ -77,11 +77,11 @@ use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
+use Bio::EnsEMBL::Hive::Process;
 
 sub new {
   my ($class,@args) = @_;
@@ -298,7 +298,7 @@ sub print_worker {
                before querying the database for the next job batch.  Used by the
                Hive system to manage the number of workers needed to complete a
                particular job type.
-  DefaultValue : batch_size of runnableDB in analysis
+  DefaultValue : batch_size of analysis
   Returntype : integer scalar
 
 =cut
@@ -335,8 +335,8 @@ sub batch_size {
     First all STDOUT/STDERR is rediected, then looping commences.
     Looping consists of 
       1) claiming jobs,
-      2) processing those jobs through the module(runnableDB) of 
-         the analysis asigned to this worker,
+      2) processing those jobs through an instance of the 'module class' of 
+         the analysis asigned to this worker,  
       3) updating the analysis_job, analysis_stats, and hive tables to track the 
          progress of the job, the analysis and this worker.
     Looping stops when any one of these are met:
@@ -419,7 +419,7 @@ sub run
   
   if($self->perform_global_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
-    $self->analysis->runnableDB->global_cleanup();
+    $self->analysis->process->global_cleanup();
   }
 
   $self->queen->register_worker_death($self);
@@ -445,16 +445,21 @@ sub run_module_with_job
   my $self = shift;
   my $job  = shift;
 
-  my $runObj = $self->analysis->runnableDB;
+  my $runObj = $self->analysis->process;
   return 0 unless($runObj);
   return 0 unless($job and ($job->hive_id eq $self->hive_id));
   
   my $start_time = time() * 1000;
   $self->queen->dbc->query_count(0);
 
-  #pass the input_id from the job into the runnableDB object
-  $runObj->input_id($job->input_id);
-  $runObj->analysis_job_id($job->dbID);
+  #pass the input_id from the job into the Process object
+  if($runObj->isa("Bio::EnsEMBL::Hive::Process")) { 
+    $runObj->input_job($job);
+    $runObj->queen($self->queen);
+  } else {
+    $runObj->input_id($job->input_id);
+    $runObj->db($self->db);
+  }
   $runObj->debug($self->debug);
   
   $job->update_status('GET_INPUT');
@@ -468,11 +473,6 @@ sub run_module_with_job
   $job->update_status('WRITE_OUTPUT');
   print("WRITE_OUTPUT\n") if($self->debug); 
   $runObj->write_output;
-
-  #runnableDB is allowed to alter its input_id on output
-  #This modified input_id is passed as input to the next jobs in the graph
-  $job->input_id($runObj->input_id);
-  $job->branch_code($runObj->branch_code);
 
   $job->query_count($self->queen->dbc->query_count);
   $job->runtime_msec(time()*1000 - $start_time);

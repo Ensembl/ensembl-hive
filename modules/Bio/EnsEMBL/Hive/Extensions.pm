@@ -45,18 +45,18 @@ use Bio::EnsEMBL::Pipeline::RunnableDB;
 #use Bio::EnsEMBL::Analysis::RunnableDB;
 
 
-=head2 Bio::EnsEMBL::Analysis::runnableDB
+=head2 Bio::EnsEMBL::Analysis::process
 
   Arg [1]    : none
-  Example    : $runnable_db = $analysis->runnableDB;
-  Description: from the $analysis->module construct a runnableDB object
-  Returntype : Bio::EnsEMBL::Pipeline::RunnableDB
+  Example    : $process = $analysis->process;
+  Description: from the $analysis->module construct a Process object
+  Returntype : Bio::EnsEMBL::Hive::Process subclass 
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub Bio::EnsEMBL::Analysis::runnableDB
+sub Bio::EnsEMBL::Analysis::process
 {
   my $self = shift;  #self is an Analysis object
 
@@ -64,25 +64,26 @@ sub Bio::EnsEMBL::Analysis::runnableDB
   die("self must be a [Bio::EnsEMBL::Analysis] not a [$self]")
     unless($self->isa('Bio::EnsEMBL::Analysis'));
 
-  my $runnable;
-  if($self->module =~ "Bio::") { $runnable = $self->module; }
-  else { $runnable = "Bio::EnsEMBL::Pipeline::RunnableDB::".$self->module; }
-  (my $file = $runnable) =~ s/::/\//g;
+  my $process_class;
+  if($self->module =~ /::/) { $process_class = $self->module; }
+  else { $process_class = "Bio::EnsEMBL::Pipeline::RunnableDB::".$self->module; }
+  (my $file = $process_class) =~ s/::/\//g;
   require "$file.pm";
   print STDERR "creating runnable ".$file."\n" if($self->{'verbose'});
 
-  #make copy of analysis ($self) to pass into the runnableDB
-  #to insulate the infrastructure from any modification the runnableDB may
+  #make copy of analysis ($self) to pass into the Process
+  #to insulate the infrastructure from any modification the Process may
   #do to the analysis object
   my $copy_self = new Bio::EnsEMBL::Analysis;
   %$copy_self = %$self;
   
-  $runnable =~ s/\//::/g;
-  my $runobj = "$runnable"->new(-db       => $self->adaptor->db,
+  $process_class =~ s/\//::/g;
+  my $runobj = "$process_class"->new(
+                                -db       => $self->adaptor->db,
                                 -input_id => '1',
                                 -analysis => $self,
                                 );
-  print STDERR "Instantiated ".$runnable." runnabledb\n" if($self->{'verbose'});
+  print STDERR "Instantiated ". $process_class. " runnabledb\n" if($self->{'verbose'});
 
   return $runobj
 }
@@ -194,12 +195,6 @@ sub Bio::EnsEMBL::Analysis::stats
 # Bio::EnsEMBL::Pipeline::RunnableDB
 #######################################
 
-sub Bio::EnsEMBL::Pipeline::RunnableDB::reset_job
-{
-  my $self = shift;
-  return 1;
-}
-
 =head2 Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
 
   Arg [1]    : none
@@ -217,34 +212,6 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
   return 1;
 }
 
-=head2 Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
-
-  Arg [1]       : none
-  Description   : method which user RunnableDB can override if it needs to return
-                  a specific branch code.  Used by the dataflow rules to determine which
-                  job to create/run next
-  Returntype    : int (default 1)
-  Exceptions    : none
-  Caller        : Bio::EnsEMBL::Hive::Worker
-
-=cut
-
-sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
-{
-  my $self = shift;
-  $self->{'_branch_code'} = shift if(@_);
-  $self->{'_branch_code'}=1 unless($self->{'_branch_code'});
-  return $self->{'_branch_code'};
-}
-
-sub Bio::EnsEMBL::Pipeline::RunnableDB::analysis_job_id
-{
-  my $self = shift;
-  $self->{'_analysis_job_id'} = shift if(@_);
-  $self->{'_analysis_job_id'}=0 unless($self->{'_analysis_job_id'});
-  return $self->{'_analysis_job_id'};
-}
-
 sub Bio::EnsEMBL::Pipeline::RunnableDB::debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);
@@ -257,32 +224,10 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::debug {
 # Bio::EnsEMBL::Analysis::RunnableDB
 #######################################
 
-sub Bio::EnsEMBL::Analysis::RunnableDB::reset_job
-{
-  my $self = shift;
-  return 1;
-}
-
 sub Bio::EnsEMBL::Analysis::RunnableDB::global_cleanup
 {
   my $self = shift;
   return 1;
-}
-
-sub Bio::EnsEMBL::Analysis::RunnableDB::branch_code
-{
-  my $self = shift;
-  $self->{'_branch_code'} = shift if(@_);
-  $self->{'_branch_code'}=1 unless($self->{'_branch_code'});
-  return $self->{'_branch_code'};
-}
-
-sub Bio::EnsEMBL::Analysis::RunnableDB::analysis_job_id
-{
-  my $self = shift;
-  $self->{'_analysis_job_id'} = shift if(@_);
-  $self->{'_analysis_job_id'}=0 unless($self->{'_analysis_job_id'});
-  return $self->{'_analysis_job_id'};
 }
 
 sub Bio::EnsEMBL::Analysis::RunnableDB::debug {

@@ -51,8 +51,8 @@ package Bio::EnsEMBL::Hive::RunnableDB::Dummy;
 
 use strict;
 
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
+use Bio::EnsEMBL::Hive::Process;
+our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 
 ##############################################################
