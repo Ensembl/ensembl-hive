@@ -197,45 +197,44 @@ sub fetch_overdue_workers {
 sub update_analysis_stats {
   my $self = shift;
 
-  my $sql = "SELECT analysis.analysis_id, status, count(*) ".
-            "FROM analysis_job, analysis ".
-            "WHERE analysis_job.analysis_id=analysis.analysis_id ".
-            "GROUP BY analysis_job.analysis_id, status";
+  my $allAnalysis = $self->db->get_AnalysisAdaptor->fetch_all;
 
-  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $analysisStats = undef;
+  foreach my $analysis (@$allAnalysis) {
 
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  while (my ($analysis_id, $status, $count)=$sth->fetchrow_array()) {
-    unless(defined($analysisStats) and $analysisStats->analysis_id==$analysis_id) {
-      $analysisStats->determine_status()->update() if($analysisStats);
+    my $analysisStats = $analysis->stats;
+    $analysisStats->total_job_count(0);
+    $analysisStats->unclaimed_job_count(0);
+    $analysisStats->done_job_count(0);
+    $analysisStats->failed_job_count(0);
+    $analysisStats->num_required_workers(0);
 
-      $analysisStats = $statsDBA->fetch_by_analysis_id($analysis_id);
-      $analysisStats->total_job_count(0);
-      $analysisStats->unclaimed_job_count(0);
-      $analysisStats->done_job_count(0);
-      $analysisStats->failed_job_count(0);
-      $analysisStats->num_required_workers(0);
-    }
-
-    my $total = $analysisStats->total_job_count();
-    $analysisStats->total_job_count($total + $count);
+    my $sql = "SELECT status, count(*) FROM analysis_job ".
+              "WHERE analysis_id=? GROUP BY status";
     
-    if($status eq 'READY') {
-      $analysisStats->unclaimed_job_count($count);
-      my $numWorkers = $count/$analysisStats->batch_size;
-      $numWorkers=1 if($numWorkers<1);
-      if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
-        $numWorkers=$analysisStats->hive_capacity;
+    my $sth = $self->prepare($sql);
+    $sth->execute($analysis->dbID);
+   
+    while (my ($status, $count)=$sth->fetchrow_array()) {
+
+      my $total = $analysisStats->total_job_count();
+      $analysisStats->total_job_count($total + $count);
+
+      if($status eq 'READY') {
+        $analysisStats->unclaimed_job_count($count);
+        my $numWorkers = $count/$analysisStats->batch_size;
+        $numWorkers=1 if($numWorkers<1);
+        if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
+          $numWorkers=$analysisStats->hive_capacity;
+        }
+        $analysisStats->num_required_workers($numWorkers);
       }
-      $analysisStats->num_required_workers($numWorkers);
+      if($status eq 'DONE') { $analysisStats->done_job_count($count); }
+      if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
     }
-    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
-    if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
+    $analysisStats->determine_status()->update() if($analysisStats);
+    $sth->finish;
+
   }
-  $analysisStats->determine_status()->update() if($analysisStats);
-  $sth->finish;
 
   $self->adjust_stats_for_living_workers();
 }
