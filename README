@@ -1,0 +1,26 @@
+# Bio::EnsEMBL::Hive project
+#
+# Copyright Team Ensembl
+# You may distribute this package under the same terms as perl itself
+
+Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+Summary:
+  This is a distributed processing system based on 'autonomous agents' and
+  Hive behavioural structure of Honey Bees .  It implements all functionality of both
+  data-flow graphs and block-branch diagrams which should allow it to codify
+  any program, algorithm, or parallel processing job control system.  It is
+  not bound to any processing 'farm' system and can be adapted to any GRID.
+  It builds on the design of the Ensembl Pipeline and presently uses 
+  Bio::EnsEMBL::Pipeline::RunnableDB perl wrapper objects as nodes/blocks in 
+  the graphs but could be adapted more generally.
+
+
+7 June, 2004 : Jessica Severin
+  This project is under active development and should be classified as per-alpha
+  Most of the design has been settled and I'm in the process of implementing the details
+  but entire objects could disappear or drastically change as I approach the end.
+  Watch this space for further developments
+
+
