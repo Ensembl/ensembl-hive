@@ -94,7 +94,7 @@ sub store {
   #print("\nAnalysisCtrlRuleAdaptor->store()\n");
  
   my $sth = $self->prepare( q{INSERT ignore INTO analysis_ctrl_rule
-       SET ctrled_analysis_id = ?, condition_analysis_url = '?' } );
+       SET ctrled_analysis_id = ?, condition_analysis_url = ? } );
   if($sth->execute($rule->ctrled_analysis_id, $rule->condition_analysis_url)) {
     $sth->finish();
   }
