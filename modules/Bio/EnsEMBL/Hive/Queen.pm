@@ -174,6 +174,7 @@ sub worker_check_in {
 
   return unless($worker);
   my $sql = "UPDATE hive SET last_check_in=now()";
+  $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " WHERE hive_id='" . $worker->hive_id ."'";
 
   my $sth = $self->prepare($sql);
