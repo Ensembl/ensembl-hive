@@ -584,16 +584,17 @@ sub get_num_needed_workers {
 sub get_hive_progress
 {
   my $self = shift;
-  my $sql = "SELECT sum(done_job_count ), sum(total_job_count) FROM analysis_stats";
+  my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count) FROM analysis_stats";
   my $sth = $self->prepare($sql);
   $sth->execute();
-  my ($done, $total) = $sth->fetchrow_array();
+  my ($done, $failed, $total) = $sth->fetchrow_array();
   $sth->finish;
   $done=0 unless($done);
+  $failed=0 unless($failed);
   $total=0 unless($total);
   my $completed=0.0;
-  $completed = ((100.0 * $done)/$total)  if($total>0);
-  printf("hive %1.3f%% complete (%d done / %d total)\n", $completed, $done, $total);
+  $completed = ((100.0 * ($done+$failed))/$total)  if($total>0);
+  printf("hive %1.3f%% complete (%d done + %d failed / %d total)\n", $completed, $done, $failed, $total);
   return $done, $total;
 }
 
