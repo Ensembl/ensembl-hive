@@ -43,7 +43,6 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 =head2 fetch_by_analysis_id
-
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_analysis_id(1234);
@@ -52,7 +51,6 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Returntype : Bio::EnsEMBL::Hive::AnalysisStats
   Exceptions : thrown if $id is not defined
   Caller     : general
-
 =cut
 
 sub fetch_by_analysis_id {
@@ -73,28 +71,25 @@ sub fetch_by_analysis_id {
   return $obj;
 }
 
-=head2 fetch_all
-
-  Arg        : None
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
 
 sub fetch_all {
   my $self = shift;
-
   return $self->_generic_fetch();
 }
 
 
 sub fetch_by_needed_workers {
   my $self = shift;
+  my $limit = shift;
   my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
-  return $self->_generic_fetch($constraint);
+  if($limit) {
+    $self->_final_clause("ORDER BY analysis_id LIMIT $limit");
+  } else {
+    $self->_final_clause("ORDER BY analysis_id");
+  }
+  my $results = $self->_generic_fetch($constraint);
+  $self->_final_clause(""); #reset final clause for other fetches
+  return $results;
 }
 
 
@@ -110,6 +105,67 @@ sub fetch_by_status {
     
   return $self->_generic_fetch($constraint);
 }
+
+#
+# STORE / UPDATE METHODS
+#
+################
+
+=head2 update
+  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
+  Example    :
+  Description:
+  Returntype : Bio::EnsEMBL::Hive::Worker
+  Exceptions :
+  Caller     :
+=cut
+
+sub update {
+  my ($self, $stats) = @_;
+
+  my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
+  $sql .= ",batch_size=" . $stats->batch_size();
+  $sql .= ",hive_capacity=" . $stats->hive_capacity();
+  $sql .= ",total_job_count=" . $stats->total_job_count();
+  $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
+  $sql .= ",done_job_count=" . $stats->done_job_count();
+  $sql .= ",num_required_workers=" . $stats->num_required_workers();
+  $sql .= ",last_update=NOW()";
+  $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+  $stats->seconds_since_last_update(0); #not exact but good enough :)
+}
+
+
+sub update_status
+{
+  my ($self, $analysis_id, $status) = @_;
+
+  my $sql = "UPDATE analysis_stats SET status='$status' ";
+  $sql .= " WHERE analysis_id='$analysis_id' ";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+}
+
+
+sub decrement_needed_workers
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers-1 ";
+  $sql .= " WHERE analysis_id='$analysis_id' ";
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  $sth->finish;
+}
+
 
 #
 # INTERNAL METHODS
@@ -243,56 +299,9 @@ sub _default_where_clause {
 
 sub _final_clause {
   my $self = shift;
-  return '';
-}
-
-
-#
-# STORE / UPDATE METHODS
-#
-################
-
-=head2 update
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Example    :
-  Description:
-  Returntype : Bio::EnsEMBL::Hive::Worker
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub update {
-  my ($self, $stats) = @_;
- 
-  my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
-  $sql .= ",batch_size=" . $stats->batch_size();
-  $sql .= ",hive_capacity=" . $stats->hive_capacity();
-  $sql .= ",total_job_count=" . $stats->total_job_count();
-  $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
-  $sql .= ",done_job_count=" . $stats->done_job_count();
-  $sql .= ",num_required_workers=" . $stats->num_required_workers(); 
-  $sql .= ",last_update=NOW()";
-  $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
-  
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
-  $stats->seconds_since_last_update(0); #not exact but good enough :)
-}
-
-
-sub update_status
-{
-  my ($self, $analysis_id, $status) = @_;
-
-  my $sql = "UPDATE analysis_stats SET status='$status' ";
-  $sql .= " WHERE analysis_id='$analysis_id' ";
-
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+  $self->{'_final_clause'} = shift if(@_);
+  $self->{'_final_clause'} = "" unless($self->{'_final_clause'});
+  return $self->{'_final_clause'};
 }
 
 
