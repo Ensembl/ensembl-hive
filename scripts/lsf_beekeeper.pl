@@ -150,7 +150,7 @@ sub run_next_worker_clutch
     my $hive_capacity = $analysis_stats->hive_capacity;
 
     my $cmd;
-    my $worker_cmd = "./runWorker.pl -logic_name " . $analysis->logic_name;
+    my $worker_cmd = "./runWorker.pl -bk LSF -logic_name " . $analysis->logic_name;
 
     $worker_cmd .= " -conf $conf_file" if($conf_file);
     $worker_cmd .= " -url $url" if($url);
@@ -177,19 +177,23 @@ sub check_for_dead_workers {
   my $self = shift;
   my $queen = shift;
 
-  my $host = hostname;
-
-  my $overdueWorkers = $queen->fetch_overdue_workers(5*60);  #overdue by 5 minutes
+  my $overdueWorkers = $queen->fetch_overdue_workers(15*60);  #overdue by 15 minutes
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
-    printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-    #if(($worker->beekeeper eq '') and ($worker->host eq $host)) {
-      #print("  is one of mine\n");
-      my $cmd = "ps -p ". $worker->process_id;
+    if($worker->beekeeper eq 'LSF') {
+      printf("%10d %20s    analysis_id=%d : ", $worker->hive_id,$worker->host, $worker->analysis->dbID);
+      my $cmd = "ssh -x ". $worker->host . " ps -p ". $worker->process_id . "|grep -v PID";
+      #print("  check worker with : $cmd\n");
       my $check = qx/$cmd/;
 
-      $queen->register_worker_death($worker);
-    #}
+      unless($check) {
+        print("worker is missing => it DIED!!\n");
+        $queen->register_worker_death($worker);
+      }
+      else {
+	print("ALIVE and running\n");
+      }
+    }
   }
 }
 
