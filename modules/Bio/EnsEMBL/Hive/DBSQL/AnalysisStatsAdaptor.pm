@@ -10,27 +10,23 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
-
-Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor
+  Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor
 
 =head1 SYNOPSIS
-
   $analysisStatsAdaptor = $db_adaptor->get_AnalysisStatsAdaptor;
   $analysisStatsAdaptor = $analysisStats->adaptor;
 
 =head1 DESCRIPTION
-
   Module to encapsulate all db access for persistent class AnalysisStats.
   There should be just one per application and database connection.
 
 =head1 CONTACT
-
-    Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-    Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
+  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+  The rest of the documentation details each of the object methods.
+  Internal methods are usually preceded with a _
 
 =cut
 
@@ -46,11 +42,11 @@ use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
-=head2 fetch_by_dbID
+=head2 fetch_by_analysis_id
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
+  Example    : $feat = $adaptor->fetch_by_analysis_id(1234);
   Description: Returns the feature created from the database defined by the
                the id $id.
   Returntype : Bio::EnsEMBL::Hive::AnalysisStats
@@ -59,11 +55,11 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =cut
 
-sub fetch_by_dbID {
+sub fetch_by_analysis_id {
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    $self->throw("fetch_by_dbID must have an id");
+    $self->throw("fetch_by_analysis_id must have an id");
   }
 
   my $constraint = "ast.analysis_id = $id";
@@ -218,7 +214,7 @@ sub _objs_from_sth {
   while ($sth->fetch()) {
     my $analStats = new Bio::EnsEMBL::Hive::AnalysisStats;
 
-    $analStats->dbID($column{'analysis_id'});
+    $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->hive_capacity($column{'hive_capacity'});
@@ -274,7 +270,7 @@ sub update {
   $sql .= ",done_job_count=" . $stats->done_job_count();
   $sql .= ",num_required_workers=" . $stats->num_required_workers(); 
   $sql .= ",last_update=NOW()";
-  $sql .= " WHERE analysis_id='".$stats->dbID."' ";
+  $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
   
   my $sth = $self->prepare($sql);
   $sth->execute();

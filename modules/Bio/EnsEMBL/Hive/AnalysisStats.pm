@@ -58,10 +58,10 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
-sub dbID {
+sub analysis_id {
   my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
+  $self->{'_analysis_id'} = shift if(@_);
+  return $self->{'_analysis_id'};
 }
 
 sub status {
@@ -69,7 +69,7 @@ sub status {
 
   if(defined $value) {
     $self->{'_status'} = $value;
-    $self->adaptor->update_status($self->dbID, $value) if($self->adaptor);
+    $self->adaptor->update_status($self->analysis_id, $value) if($self->adaptor);
   }
   return $self->{'_status'};
 }
@@ -118,7 +118,7 @@ sub seconds_since_last_update {
 
 sub print_stats {
   my $self = shift;
-  print("ANALYSIS_STATS: analysis_id=",$self->dbID,"\n"
+  print("ANALYSIS_STATS: analysis_id=",$self->analysis_id,"\n"
        ," status=",$self->status,"\n"
        ," batch_size=",$self->batch_size,"\n"
        ," hive_capacity=" . $self->hive_capacity(),"\n"
