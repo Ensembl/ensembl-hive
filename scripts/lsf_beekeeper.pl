@@ -20,6 +20,7 @@ $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 $self->{'max_loops'} = 0; #unlimited
+$self->{'beekeeper_type'} = 'LSF';
 
 $| = 1;
 
@@ -50,11 +51,14 @@ GetOptions('help'           => \$help,
            'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
            'loop'           => \$loopit,
-	   'sync'           => \$sync,
-	   'analysis_stats' => \$self->{'show_analysis_stats'},
-	   'worker_stats'   => \$self->{'show_worker_stats'},
-	   'sleep=i'        => \$sleep_time,
-	   'logic_name=s'   => \$self->{'logic_name'},
+           'sync'           => \$sync,
+           'analysis_stats' => \$self->{'show_analysis_stats'},
+           'worker_stats'   => \$self->{'show_worker_stats'},
+           'sleep=i'        => \$sleep_time,
+           'logic_name=s'   => \$self->{'logic_name'},
+           'failed_jobs'    => \$self->{'show_failed_jobs'},
+           'reset_job_id=i' => \$self->{'reset_job_id'},
+           'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
           );
 
 if ($help) { usage(); }
@@ -90,8 +94,12 @@ if($url) {
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
-
+$self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
+
+if($self->{'reset_job_id'}) { reset_job($self); };
+
+if($self->{'reset_all_jobs_for_analysis_id'}) { reset_all_jobs_for_analysis_id($self); }
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
 if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
@@ -115,13 +123,15 @@ if($loopit) {
 
   $queen->print_running_worker_status;
 
-  show_running_workers($self, $queen) if($self->{'show_worker_stats'});
+  show_running_workers($self) if($self->{'show_worker_stats'});
 
   $queen->get_num_running_workers();
 
   $queen->get_num_needed_workers();
 
   $queen->get_hive_progress();
+  
+  show_failed_jobs($self) if($self->{'show_failed_jobs'});
 }
 
 exit(0);
@@ -153,7 +163,11 @@ sub usage {
   print "  -wlimit <num>          : max # workers to create per loop\n";
   print "  -analysis_stats        : show status of each analysis\n";
   print "  -worker_stats          : show status of each running worker\n";
-  print "lsf_beekeeper.pl v1.3\n";
+  print "  -failed_jobs           : show all failed jobs\n";
+  print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
+  print "  -reset_all_jobs_for_analysis_id <num>\n";
+  print "                         : reset jobs back to READY so it can be rerun\n";  
+  print "lsf_beekeeper.pl v1.4\n";
   
   exit(1);  
 }
@@ -227,7 +241,7 @@ sub show_overdue_workers {
 
 sub show_running_workers {
   my $self = shift;
-  my $queen = shift;
+  my $queen = $self->{'dba'}->get_Queen;
 
   print("===== running workers\n");
   my $worker_list = $queen->fetch_overdue_workers(0);
@@ -242,6 +256,23 @@ sub show_running_workers {
        $worker->last_check_in);
   }
 }
+
+sub show_failed_jobs {
+  my $self = shift;
+
+  print("===== failed jobs\n");
+  my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_failed_jobs;
+
+  foreach my $job (@{$failed_job_list}) {
+    my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID($job->analysis_id);
+    printf("job_id=%d %35s(%5d) input_id='%s'\n", 
+       $job->dbID,
+       $analysis->logic_name,
+       $analysis->dbID,
+       $job->input_id);
+  }
+}
+
 
 
 sub run_autonomously {
@@ -310,3 +341,25 @@ sub get_pending_count {
   return $pend_count;
 }
 
+sub reset_job {
+  my $self = shift;
+  
+  $self->{'dba'}->get_AnalysisJobAdaptor->reset_job_by_dbID($self->{'reset_job_id'}); 
+
+  my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'reset_job_id'}); 
+  my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID($job->analysis_id);
+  
+  $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
+}
+
+
+sub reset_all_jobs_for_analysis_id {
+  my $self = shift;
+  
+  my $analysis = $self->{'dba'}->get_AnalysisAdaptor->
+                   fetch_by_dbID($self->{'reset_all_jobs_for_analysis_id'}); 
+  
+  $self->{'dba'}->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($analysis->dbID); 
+
+  $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
+}
