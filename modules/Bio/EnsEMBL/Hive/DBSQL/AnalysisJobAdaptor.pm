@@ -63,11 +63,11 @@ sub CreateNewJob {
 
   return undef unless(scalar @args);
 
-  my ($input_id, $analysis, $prev_analysis_job_id, $blocked) =
-     rearrange([qw(INPUT_ID ANALYSIS input_job_id BLOCK )], @args);
+  my ($input_id, $input_analysis_data_id, $analysis, $prev_analysis_job_id, $blocked) =
+     rearrange([qw(INPUT_ID INPUT_ANALYSIS_DATA_ID ANALYSIS input_job_id BLOCK )], @args);
 
   $prev_analysis_job_id=0 unless($prev_analysis_job_id);
-  throw("must define input_id") unless($input_id);
+  throw("must define input_id or input_analysis_data_id") unless($input_id or $input_analysis_data_id);
   throw("must define analysis") unless($analysis);
   throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
     unless($analysis->isa('Bio::EnsEMBL::Analysis'));
@@ -76,8 +76,10 @@ sub CreateNewJob {
 
   my $dbc = $analysis->adaptor->db->dbc;
 
-  my $dataDBA = new Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor($dbc);
-  my $input_analysis_data_id = $dataDBA->store($input_id);
+  unless(defined($input_analysis_data_id)) {
+    my $dataDBA = $analysis->adaptor->db->get_AnalysisDataAdaptor;
+    $input_analysis_data_id = $dataDBA->store($input_id);
+  }
     
   my $sql = "INSERT ignore into analysis_job ".
             " SET input_analysis_data_id=\"$input_analysis_data_id\" ".

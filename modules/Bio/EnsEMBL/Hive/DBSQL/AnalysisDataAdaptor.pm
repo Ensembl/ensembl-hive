@@ -56,7 +56,6 @@ sub fetch_by_dbID {
   return $data;
 }
 
-
 #
 # STORE METHODS
 #
@@ -66,6 +65,21 @@ sub store {
   my ($self, $data) = @_;
   my $data_id;
   
+  return 0 unless($data);
+  
+  my $sth2 = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
+  $sth2->execute($data);
+  $data_id = $sth2->{'mysql_insertid'};
+  $sth2->finish;
+
+  return $data_id;
+}
+
+
+sub store_if_needed {
+  my ($self, $data) = @_;
+  my $data_id;
+
   return 0 unless($data);
 
   my $sth = $self->prepare("SELECT analysis_data_id FROM analysis_data WHERE data = ?");
@@ -78,14 +92,8 @@ sub store {
     return $data_id;
   }
 
-  my $sth2 = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
-  $sth2->execute($data);
-  $data_id = $sth2->{'mysql_insertid'};
-  $sth2->finish;
-
-  return $data_id;
+  return $self->store($data);
 }
-
 
 1;
 
