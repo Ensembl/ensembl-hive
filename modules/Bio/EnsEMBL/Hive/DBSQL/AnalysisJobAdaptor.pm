@@ -405,7 +405,7 @@ sub claim_jobs_for_worker {
   my $ug    = new Data::UUID;
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
-  print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
+  #print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
 
   my $sql = "UPDATE analysis_job SET job_claim='$claim'".
             " , hive_id='". $worker->hive_id ."'".
