@@ -534,7 +534,7 @@ sub reset_job_by_dbID {
 
   my ($sql, $sth);
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY' WHERE analysis_job_id=?";
+  $sql = "UPDATE analysis_job SET hive_id=0, retry_count=0, job_claim='', status='READY' WHERE analysis_job_id=?";
   $sth = $self->prepare($sql);
   $sth->execute($analysis_job_id);
   $sth->finish;
