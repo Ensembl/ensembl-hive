@@ -94,6 +94,8 @@ sub create_new_worker {
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
 
+  return undef if($self->get_hive_current_load() >= 1.0);
+  
   unless($analysis_id) {
     my ($anal_stats) = @{$analStatsDBA->fetch_by_needed_workers(1)};
     return undef unless($anal_stats);
