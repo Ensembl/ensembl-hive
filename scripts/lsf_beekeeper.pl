@@ -159,41 +159,6 @@ sub parse_conf {
 }
 
 
-sub run_next_worker_clutch
-{
-  my $self = shift;
-  my $queen = shift;  
-
-  my $clutches = $queen->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
-
-  print("\n");
-  foreach my $analysis_stats (@{$clutches}) {
-
-    my $analysis_id = $analysis_stats->analysis_id;
-    my $count = $analysis_stats->num_required_workers;
-    my $analysis = $analysis_stats->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id);
-    my $hive_capacity = $analysis_stats->hive_capacity;
-
-    my $cmd;
-    my $worker_cmd = "runWorker.pl -bk LSF -logic_name " . $analysis->logic_name;
-
-    $worker_cmd .= " -conf $conf_file" if($conf_file);
-    $worker_cmd .= " -url $url" if($url);
-    if (defined $job_limit) {
-      $worker_cmd .= " -limit $job_limit";
-    } elsif ($hive_capacity < 0) {
-      $worker_cmd .= " -limit " . $analysis_stats->batch_size;
-    }
-    $worker_cmd .= " -batch_size $batch_size" if (defined $batch_size);
-
-    if($count>1) { $cmd = "bsub -JW$analysis_id\[1-$count\] $worker_cmd";}
-    else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
-    print("$cmd\n");
-    system($cmd) if($self->{'run'});
-  }
-}
-
-
 sub check_for_dead_workers {
   my $self = shift;
   my $queen = shift;
@@ -281,6 +246,8 @@ sub run_autonomously {
 
     last if($self->{'max_loops'}>0 and ($loopCount >= $self->{'max_loops'}));
 
+    $DBA->dbc->disconnect_if_idle;
+    
     print("sleep $sleep_time minutes\n");
     sleep($sleep_time*60);  
     $loopCount++;
