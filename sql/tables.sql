@@ -14,7 +14,7 @@
 CREATE TABLE hive (
   hive_id          int(10) NOT NULL auto_increment,
   analysis_id      int(10) NOT NULL,
-  beekeeper        varchar(80) DEAFULT '' NOT NULL,
+  beekeeper        varchar(80) DEFAULT '' NOT NULL,
   host	           varchar(40) DEFAULT '' NOT NULL,
   process_id       int(10) NOT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
