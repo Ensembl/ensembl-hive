@@ -372,6 +372,18 @@ sub get_hive_current_load {
 }
 
 
+sub get_num_running_workers {
+  my $self = shift;
+  my $sql = "SELECT count(*) FROM hive WHERE cause_of_death =''";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  (my $runningCount)=$sth->fetchrow_array();
+  $sth->finish;
+  $runningCount=0 unless($runningCount);
+  print("current hive num_running_workers = $runningCount\n");
+  return $runningCount;
+}
+
 =head2 get_num_needed_workers
 
   Example    : $count = $queen->get_num_needed_workers();
