@@ -280,8 +280,10 @@ sub worker_register_job_done {
   return unless($job);
   return unless($job->dbID and $job->adaptor and $job->hive_id);
   return unless($worker and $worker->analysis and $worker->analysis->dbID);
-   
+  
   $job->update_status('DONE');
+
+  $self->flow_output_job($job);
 }
 
 
