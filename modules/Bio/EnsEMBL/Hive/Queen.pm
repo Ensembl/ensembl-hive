@@ -449,6 +449,18 @@ sub get_num_needed_workers {
 }
 
 
+sub get_hive_progress
+{
+  my $self = shift;
+  my $sql = "SELECT sum(done_job_count ), sum(total_job_count) FROM analysis_stats";
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my ($done, $total) = $sth->fetchrow_array();
+  $sth->finish;
+  printf("hive %1.2f%% complete (%d done / %d total)\n", ($done/$total * 100), $done, $total);
+  return $done, $total;
+}
+
 sub print_hive_status
 {
   my $self = shift;
