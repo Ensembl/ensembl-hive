@@ -214,6 +214,7 @@ sub update_analysis_stats {
       $analysisStats->total_job_count(0);
       $analysisStats->unclaimed_job_count(0);
       $analysisStats->done_job_count(0);
+      $analysisStats->failed_job_count(0);
       $analysisStats->num_required_workers(0);
     }
 
@@ -229,10 +230,8 @@ sub update_analysis_stats {
       }
       $analysisStats->num_required_workers($numWorkers);
     }
-    if(($status eq 'DONE') or ($status eq 'FAILED')) { 
-      $count += $analysisStats->done_job_count(); 
-      $analysisStats->done_job_count($count); 
-    }
+    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
+    if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
   }
   $analysisStats->determine_status()->update() if($analysisStats);
   $sth->finish;

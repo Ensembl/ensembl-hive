@@ -213,6 +213,7 @@ CREATE TABLE analysis_stats (
   total_job_count       int(10) NOT NULL,
   unclaimed_job_count   int(10) NOT NULL,
   done_job_count        int(10) NOT NULL,
+  failed_job_count      int(10) NOT NULL,
   num_required_workers  int(10) NOT NULL,
   last_update           timestamp NOT NULL,
   

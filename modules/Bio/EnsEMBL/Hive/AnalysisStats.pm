@@ -100,6 +100,13 @@ sub done_job_count {
   return $self->{'_done_job_count'};
 }
 
+sub failed_job_count {
+  my $self = shift;
+  $self->{'_failed_job_count'} = shift if(@_);
+  $self->{'_failed_job_count'} = 0 unless(defined($self->{'_failed_job_count'}));
+  return $self->{'_failed_job_count'};
+}
+
 sub num_required_workers {
   my $self = shift;
   $self->{'_num_required_workers'} = shift if(@_);
@@ -117,7 +124,7 @@ sub determine_status {
   
   if($self->status ne 'BLOCKED') {
     if($self->done_job_count>0 and
-       $self->total_job_count == $self->done_job_count) {
+       $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
       $self->status('DONE');
     }
     if($self->total_job_count == $self->unclaimed_job_count) {
@@ -135,11 +142,11 @@ sub print_stats {
   my $self = shift;
 
   #printf("STATS %20s(%3d) %11s  jobs(%7d:t,%7d:q,%7d:d) %5d:batchsize %5d:hiveCapacity %5d:neededWorkers (synched %d secs ago)\n",
-  printf("STATS %20s(%3d) %12s jobs(t=%d,q=%d,d=%d) batchsize=%d hiveCapacity=%d neededWorkers=%d (synched %d secs ago)\n",
+  printf("STATS %20s(%3d) %12s jobs(t=%d,q=%d,d=%d,f=%d) batchsize=%d hiveCapacity=%d neededWorkers=%d (synched %d secs ago)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
-        $self->total_job_count,$self->unclaimed_job_count,$self->done_job_count,
+        $self->total_job_count,$self->unclaimed_job_count,$self->done_job_count,$self->failed_job_count,
         $self->batch_size,$self->hive_capacity(),$self->num_required_workers,
         $self->seconds_since_last_update);
 }
