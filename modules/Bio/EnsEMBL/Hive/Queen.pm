@@ -81,7 +81,9 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 =cut
 
 sub create_new_worker {
-  my ($self,$analysis_id) = @_;
+  my $self        = shift;
+  my $analysis_id = shift;
+  my $beekeeper   = shift;
 
   my $analStatsDBA = $self->_analysisStatsAdaptor;
   return undef unless($analStatsDBA);
@@ -101,10 +103,12 @@ sub create_new_worker {
 
   my $host = hostname;
   my $ppid = getppid;
+  $beekeeper = '' unless($beekeeper);
 
   my $sql = "INSERT INTO hive SET born=now(), last_check_in=now()".
             ",process_id='$ppid' ".
             ",analysis_id='$analysis_id' ".
+            ",beekeeper='$beekeeper' ".
             ",host='$host'";
 
   my $sth = $self->prepare($sql);
@@ -410,6 +414,7 @@ sub _columns {
 
   return qw (h.hive_id
              h.analysis_id
+             h.beekeeper
              h.host
              h.process_id
              h.work_done
@@ -433,6 +438,7 @@ sub _objs_from_sth {
     $worker->init;
 
     $worker->hive_id($column{'hive_id'});
+    $worker->beekeeper($column{'beekeeper'});
     $worker->host($column{'host'});
     $worker->process_id($column{'process_id'});
     $worker->work_done($column{'work_done'});

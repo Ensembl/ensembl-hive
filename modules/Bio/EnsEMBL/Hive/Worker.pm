@@ -87,6 +87,11 @@ sub db {
   $self->{'_db'} = shift if(@_);
   return $self->{'_db'};
 }
+sub beekeeper {
+  my $self = shift;
+  $self->{'_beekeeper'} = shift if(@_);
+  return $self->{'_beekeeper'};
+}
 
 =head2 analysis
   Arg [1] : (optional) Bio::EnsEMBL::Analysis $value

@@ -7,6 +7,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Sys::Hostname;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -44,6 +45,7 @@ my $DBA;
 
 if($url) {
   $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
+  die("Unable to connect to $url\n") unless($DBA);
 } else {
   if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
   if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
@@ -63,8 +65,10 @@ if($url) {
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
-
+print("$DBA\n");
 $self->{'queen'} = new Bio::EnsEMBL::Hive::Queen($DBA);
+
+check_for_dead_workers($self, $self->{'queen'});
 
 run_beekeeper($self);
 
@@ -120,12 +124,6 @@ sub run_beekeeper
   my $self = shift;
   my $queen = $self->{'queen'};
   
-  my $overdueWorkers = $queen->fetch_overdue_workers(3600);  #overdue by 1hr
-  print(scalar(@{$overdueWorkers}), " overdue workers\n");
-  foreach my $worker (@{$overdueWorkers}) {
-    printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
-    $queen->register_worker_death($worker);
-  }
 
   $queen->update_analysis_stats();
   my($analysis_id, $count) = $queen->next_clutch();
@@ -136,5 +134,27 @@ sub run_beekeeper
   }
 }
 
+
+sub check_for_dead_workers {
+  my $self = shift;
+  my $queen = shift;
+
+  my $host = hostname;
+
+  my $overdueWorkers = $queen->fetch_overdue_workers(3600);  #overdue by 1hr
+  print(scalar(@{$overdueWorkers}), " overdue workers\n");
+  foreach my $worker (@{$overdueWorkers}) {
+    if(($worker->beekeeper eq 'local') and ($worker->host eq $host)) {
+      my $cmd = "ps -p ". $worker->process_id;
+      my $check = qx/$cmd/;
+
+      print("check : $check\n");
+      
+      printf("%10d %20s    analysis_id=%d\n", $worker->hive_id,$worker->host, $worker->analysis->dbID);
+      #$queen->register_worker_death($worker);
+    }
+  }
+
+}
 
 
