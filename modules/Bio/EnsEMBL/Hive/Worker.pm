@@ -251,9 +251,8 @@ sub last_check_in {
 sub output_dir {
   my( $self, $outdir ) = @_;
   if($outdir and (-d $outdir)) {
-    my $str = join("/", split(//, $self->hive_id));
-    $outdir .= "/$str/hive_id_" . $self->hive_id ."/";
-    system("mkdir -p $outdir");
+    $outdir .= "/worker_" . $self->hive_id ."/";
+    mkdir($outdir);
     $self->{'_output_dir'} = $outdir 
   }
   return $self->{'_output_dir'};
