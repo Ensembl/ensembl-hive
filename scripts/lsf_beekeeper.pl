@@ -26,6 +26,9 @@ my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 my ($job_limit, $batch_size);
 my $loopit=0;
 my $worker_limit = 50;
+my $sleep_time = 5;
+my $sync=0;
+$self->{'overdue_limit'} = 75; #minutes
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -36,12 +39,16 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'dead'           => \$self->{'check_for_dead'},
+           'overdue'        => \$self->{'overdue_limit'},
            'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
            'jlimit=i'       => \$job_limit,
            'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
-           'loop'           => \$loopit
+           'loop'           => \$loopit,
+	   'sync'           => \$sync,
+	   'sleep=i'        => \$sleep_time,
+	   'logic_name=s'   => \$self->{'logic_name'},
           );
 
 if ($help) { usage(); }
@@ -78,23 +85,29 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
-$DBA->dbc->disconnect_when_inactive(0);
-
 my $queen = $DBA->get_Queen;
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
 if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
 
+my $analysis = $DBA->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+
 if($loopit) { 
   run_autonomously($self, $queen);
+} elsif($analysis) {
+  my $stats = $analysis->stats;
+  $queen->synchronize_hive() if($sync);
+  $stats->print_stats;
+  $queen->get_num_needed_workers();
 } else {
   #sync and show stats
-  $queen->update_analysis_stats();
-  $queen->check_blocking_control_rules;
+  $queen->synchronize_hive() if($sync);
   $queen->print_hive_status;
   $queen->get_num_needed_workers();
-  show_overdue_workers($self, $queen);
+#  show_overdue_workers($self, $queen);
 }
+
+printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 
 exit(0);
 
@@ -186,7 +199,7 @@ sub check_for_dead_workers {
   my $queen = shift;
 
   print("===== check for dead workers\n");
-  my $overdueWorkers = $queen->fetch_overdue_workers(75*60);  #overdue by 75 minutes
+  my $overdueWorkers = $queen->fetch_overdue_workers($self->{'overdue_limit'}*60);
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
   foreach my $worker (@{$overdueWorkers}) {
     if($worker->beekeeper eq 'LSF') {
@@ -241,8 +254,7 @@ sub run_autonomously {
 
     check_for_dead_workers($self, $queen);
 
-    $queen->update_analysis_stats();
-    $queen->check_blocking_control_rules;
+    $queen->synchronize_hive();
     $queen->print_hive_status();
     
     my $load  = $queen->get_hive_current_load();
@@ -269,8 +281,8 @@ sub run_autonomously {
 
     last if($self->{'max_loops'}>0 and ($loopCount >= $self->{'max_loops'}));
 
-    print("sleep 5 minutes\n");
-    sleep(5*60);  #sleep 5 minutes before repeating    
+    print("sleep $sleep_time minutes\n");
+    sleep($sleep_time*60);  
     $loopCount++;
   }
 }
