@@ -16,6 +16,11 @@ Summary:
   Bio::EnsEMBL::Pipeline::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+11 March, 2005 : Jessica Severin
+  Project is reaching a very stable state.  New 'node' object Bio::EnsEMBL::Hive::Process
+  allows for imdependence from Ensembl Pipeline and provides extended process functionality
+  to manipulate hive job objects, branch, modify hive grpahs, create jobs, and other hive
+  process specific tasks.  Some of this extended 'Process' API may still evolve.
 
 7 June, 2004 : Jessica Severin
   This project is under active development and should be classified as per-alpha
@@ -23,4 +28,4 @@ Summary:
   but entire objects could disappear or drastically change as I approach the end.
   Watch this space for further developments
 
-
+11 March, 2005 : Jessica Severin
