@@ -231,13 +231,14 @@ CREATE TABLE analysis_stats (
   status                enum('BLOCKED', 'LOADING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
+  avg_msec_per_job      int(10) default 0 NOT NULL,                          
   hive_capacity         int(10) default 1 NOT NULL,
   total_job_count       int(10) NOT NULL,
   unclaimed_job_count   int(10) NOT NULL,
   done_job_count        int(10) NOT NULL,
   failed_job_count      int(10) NOT NULL,
   num_required_workers  int(10) NOT NULL,
-  last_update           timestamp NOT NULL,
+  last_update           datetime NOT NULL,
   
   UNIQUE KEY   (analysis_id)
 );
