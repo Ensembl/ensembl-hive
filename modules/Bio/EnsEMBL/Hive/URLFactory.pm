@@ -74,7 +74,7 @@ sub fetch
 
     if($table eq 'analysis') {
       #my $adaptor = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($dbc);
-      my $adaptor = $dbc->get_analysisAdaptor;
+      my $adaptor = $dbc->get_AnalysisAdaptor;
       return $adaptor->fetch_by_url_query($query);
     }
   }
