@@ -267,7 +267,8 @@ sub adjust_stats_for_living_workers {
 sub get_hive_current_load {
   my $self = shift;
   my $sql = "SELECT sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
-            "WHERE hive.analysis_id=analysis_stats.analysis_id and cause_of_death =''";
+            "WHERE hive.analysis_id=analysis_stats.analysis_id and cause_of_death ='' ".
+            "AND analysis_stats.hive_capacity>0";
   my $sth = $self->prepare($sql);
   $sth->execute();
   (my $load)=$sth->fetchrow_array();
@@ -291,14 +292,18 @@ sub get_num_needed_workers {
   foreach my $analysis_stats (@{$neededAnals}) {
     #$analysis_stats->print_stats();
 
-    my $thisLoad = $analysis_stats->num_required_workers * (1/$analysis_stats->hive_capacity);
-    if($thisLoad < $availableLoad) {
+    my $thisLoad = 0.0;
+    if($analysis_stats->hive_capacity>0) {
+      $thisLoad = $analysis_stats->num_required_workers * (1/$analysis_stats->hive_capacity);
+    }
+
+    if(($analysis_stats->hive_capacity<=0) or ($thisLoad < $availableLoad)) {
       $numWorkers += $analysis_stats->num_required_workers;
       $availableLoad -= $thisLoad;
       printf("  %d (%1.9f) ", $numWorkers, $availableLoad);
       $analysis_stats->print_stats();
     } else {
-      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity);
+      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity                     );
       $numWorkers += $workerCount;
       $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
       printf("  %d (%1.9f) use only %d ", $numWorkers, $availableLoad, $workerCount);
