@@ -142,10 +142,11 @@ sub run_next_worker_clutch
 
     my $analysis_id = $analysis_stats->analysis_id;
     my $count = $analysis_stats->num_required_workers;
+    my $analysis = $analysis_stats->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id);
 
     my ($worker_cmd, $cmd);
-    if($conf_file) { $worker_cmd = "./runWorker.pl -analysis_id $analysis_id -conf $conf_file";}
-    if($url)       { $worker_cmd = "./runWorker.pl -analysis_id $analysis_id -url $url";}
+    if($conf_file) { $worker_cmd = "./runWorker.pl -conf $conf_file -logic_name " . $analysis->logic_name;}
+    if($url)       { $worker_cmd = "./runWorker.pl -url $url -logic_name " . $analysis->logic_name;}
 
     if($count>1) { $cmd = "bsub -JW$analysis_id\[1-$count\] $worker_cmd";}
     else { $cmd = "bsub -JW$analysis_id $worker_cmd";}
