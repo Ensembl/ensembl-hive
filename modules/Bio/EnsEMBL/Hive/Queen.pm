@@ -61,6 +61,7 @@ use strict;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Sys::Hostname;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
@@ -85,7 +86,7 @@ sub create_new_worker {
   my $analysis_id = shift;
   my $beekeeper   = shift;
 
-  my $analStatsDBA = $self->_analysisStatsAdaptor;
+  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
   
   my $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
@@ -144,11 +145,11 @@ sub register_worker_death {
   $sth->finish;
 
   if($worker->cause_of_death eq "NO_WORK") {
-    $self->_analysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
+    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
   }
   if($worker->cause_of_death eq "FATALITY") {
     #print("FATAL DEATH Arrrrgggghhhhhhhh (hive_id=",$worker->hive_id,")\n");
-    $self->_analysisJobAdaptor->reset_dead_jobs_for_worker($worker);
+    $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
 }
 
@@ -185,7 +186,7 @@ sub update_analysis_stats {
             "WHERE analysis_job.analysis_id=analysis.analysis_id ".
             "GROUP BY analysis_job.analysis_id, status";
 
-  my $statsDBA = $self->_analysisStatsAdaptor;
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   my $analysisStats = undef;
 
   my $sth = $self->prepare($sql);
@@ -225,7 +226,7 @@ sub update_analysis_stats {
 sub adjust_stats_for_living_workers {
   my $self = shift;
 
-  my $statsDBA = $self->_analysisStatsAdaptor;
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   
   my $sql = "SELECT analysis_id, count(*) FROM hive ".
             "WHERE cause_of_death='' GROUP BY analysis_id";
@@ -253,7 +254,7 @@ sub adjust_stats_for_living_workers {
 sub next_clutch {
   my $self = shift;
 
-  my $clutches = $self->_analysisStatsAdaptor->fetch_by_needed_workers();
+  my $clutches = $self->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
   return (0, 0) unless($clutches);
 
   my $smallestClutch = undef;
@@ -277,34 +278,12 @@ sub next_clutch {
 
 
 
+
+
 #
 # INTERNAL METHODS
 #
 ###################
-
-sub _analysisStatsAdaptor {
-  my $self = shift;
-  unless($self->{'analysisStatsDBA'}) {
-    $self->{'analysisStatsDBA'} = new Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor($self->db);
-  }
-  return $self->{'analysisStatsDBA'};
-}
-
-sub _analysisJobAdaptor {
-  my $self = shift;
-  unless($self->{'analysisJobDBA'}) {
-    $self->{'analysisJobDBA'} = new Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor($self->db);
-  }
-  return $self->{'analysisJobDBA'};
-}
-
-sub _analysisAdaptor {
-  my $self = shift;
-  unless($self->{'analysisDBA'}) {
-    $self->{'analysisDBA'} = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($self->db);
-  }
-  return $self->{'analysisDBA'};
-}
 
 =head2 _fetch_by_hive_id
 
