@@ -34,6 +34,7 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'analysis_id=i'  => \$self->{'analysis_id'},
+           'batchsize=i'    => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
            'outdir=s'       => \$self->{'outdir'},
@@ -87,6 +88,9 @@ else {
   } 
 }
 
+if($self->{'batch_size'}) {
+  $worker->batch_size($self->{'batch_size'});
+}
 if($self->{'job_limit'}) {
   $worker->job_limit($self->{'job_limit'});
   $worker->life_span(0);
@@ -126,6 +130,7 @@ sub usage {
   print "  -dbuser <name>         : mysql connection user <name>\n";
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -analysis_id <id>      : analysis_id in db\n";
+  print "  -batchsize <num>       : #jobs to claim at a time\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
