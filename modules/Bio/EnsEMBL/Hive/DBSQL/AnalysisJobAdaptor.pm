@@ -85,6 +85,12 @@ sub CreateNewJob {
   my $dbID = $sth->{'mysql_insertid'};
   $sth->finish;
 
+  $dbc->do("UPDATE analysis_stats SET ".
+           "total_job_count=total_job_count+1 ".
+           ",unclaimed_job_count=unclaimed_job_count+1 ".
+           ",status='LOADING' ".
+           "WHERE status!='BLOCKED' and analysis_id='".$analysis->dbID ."'");
+
   return $dbID;
 }
 
