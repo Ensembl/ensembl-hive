@@ -79,7 +79,13 @@ my $queen = $DBA->get_Queen();
 
 my $lsb_jobid    = $ENV{'LSB_JOBID'};
 my $lsb_jobindex = $ENV{'LSB_JOBINDEX'};
-$self->{'process_id'} = "$lsb_jobid\[$lsb_jobindex\]" if(defined($lsb_jobid) and defined($lsb_jobindex));
+if(defined($lsb_jobid) and defined($lsb_jobindex)) {
+  if($lsb_jobindex>0) {
+    $self->{'process_id'} = "$lsb_jobid\[$lsb_jobindex\]";
+  } else {
+    $self->{'process_id'} = "$lsb_jobid";
+  }
+}
 print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
 
 if($self->{'logic_name'}) {
