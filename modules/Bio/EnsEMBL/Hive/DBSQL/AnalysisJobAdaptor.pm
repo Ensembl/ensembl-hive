@@ -299,10 +299,11 @@ sub store_out_files {
   return unless($job and ($job->stdout_file or $job->stderr_file));
 
   my $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, type, path) VALUES ";
-  $sql .= " (" . $job->dbID. ", STDOUT, ". $job->stdout_file.")"  if($job->stdout_file);
+  $sql .= " (" . $job->dbID. ", 'STDOUT', '". $job->stdout_file."')"  if($job->stdout_file);
   $sql .= "," if($job->stdout_file and $job->stderr_file);
-  $sql .= " (" . $job->dbID. ", STDERR, ". $job->stderr_file.")"  if($job->stderr_file);
-
+  $sql .= " (" . $job->dbID. ", 'STDERR', '". $job->stderr_file."')"  if($job->stderr_file);
+  print("$sql\n");
+  
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
