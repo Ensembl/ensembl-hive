@@ -77,15 +77,23 @@ if($url) {
 
 my $queen = $DBA->get_Queen();
 
+################################
+# LSF submit system dependency
+# no nice way to move this outside, so inside here.
+# environment variables LSB_JOBID and LSB_JOBINDEX are set for process started 
+# by LSF deamon.  Also know that the beekeeper is 'LSF'
+#
 my $lsb_jobid    = $ENV{'LSB_JOBID'};
 my $lsb_jobindex = $ENV{'LSB_JOBINDEX'};
 if(defined($lsb_jobid) and defined($lsb_jobindex)) {
+  $self->{'beekeeper'}='LSF' unless($self->{'beekeeper'});
   if($lsb_jobindex>0) {
     $self->{'process_id'} = "$lsb_jobid\[$lsb_jobindex\]";
   } else {
     $self->{'process_id'} = "$lsb_jobid";
   }
 }
+################################
 print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
 
 if($self->{'logic_name'}) {
