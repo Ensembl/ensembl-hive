@@ -300,6 +300,7 @@ sub run
       $self->cause_of_death('JOB_LIMIT'); 
     }
     if(($self->life_span()>0) and ((time() - $self->{'start_time'}) > $self->life_span())) {
+      printf("life_span exhausted (alive for %d secs)\n", (time() - $self->{'start_time'}));
       $self->cause_of_death('LIFESPAN'); 
     }
     if($self->cause_of_death) { $alive=undef; }

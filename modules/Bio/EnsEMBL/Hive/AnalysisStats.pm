@@ -53,6 +53,14 @@ sub analysis_id {
   return $self->{'_analysis_id'};
 }
 
+sub get_analysis {
+  my $self = shift;
+  unless($self->{'_analysis'}) {
+    $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id);
+  }
+  return $self->{'_analysis'};
+}
+
 sub status {
   my ($self, $value ) = @_;
 
@@ -126,12 +134,12 @@ sub determine_status {
 sub print_stats {
   my $self = shift;
 
-  printf("ANALYSIS_STATS (%d) %s batch=%d capacity=%d jobs(%d,%d,%d) clutchSize=%d (age %d secs)\n",
+  printf("STATS %20s(%3d) %12s jobs(t=%d,r=%d,d=%d) batch=%d capacity=%d clutchSize=%d (age %d secs)\n",
+        $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
-        $self->batch_size,$self->hive_capacity(),
         $self->total_job_count,$self->unclaimed_job_count,$self->done_job_count,
-        $self->num_required_workers,
+        $self->batch_size,$self->hive_capacity(),$self->num_required_workers,
         $self->seconds_since_last_update);
 }
 

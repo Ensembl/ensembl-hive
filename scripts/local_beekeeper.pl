@@ -74,6 +74,7 @@ my $queen = $DBA->get_Queen;
 
 $queen->update_analysis_stats();
 $queen->check_blocking_control_rules;
+$queen->print_hive_status;
 
 run_next_worker_clutch($self, $queen);
 
@@ -132,14 +133,9 @@ sub run_next_worker_clutch
   my $self = shift;
   my $queen = shift;  
 
-  $queen->update_analysis_stats();
-
   my $clutches = $queen->db->get_AnalysisStatsAdaptor->fetch_by_needed_workers();
 
-  foreach my $analysis_stats (@{$clutches}) {
-    $analysis_stats->print_stats;
-  }
-
+  print("\n");
   foreach my $analysis_stats (@{$clutches}) {
     ##my($analysis_id, $count) = $queen->next_clutch();
     #if($count>0) {

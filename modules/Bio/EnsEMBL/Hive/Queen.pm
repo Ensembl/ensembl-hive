@@ -304,6 +304,16 @@ sub check_blocking_control_rules
   }
 }
 
+sub print_hive_status
+{
+  my $self = shift;
+
+  my $allStats = $self->db->get_AnalysisStatsAdaptor->fetch_all();
+
+  foreach my $analysis_stats (@{$allStats}) {
+    $analysis_stats->print_stats;
+  }
+}
 
 
 
