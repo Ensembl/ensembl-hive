@@ -417,17 +417,25 @@ sub reclaim_job {
 sub store_out_files {
   my ($self,$job) = @_;
 
-  return unless($job and ($job->stdout_file or $job->stderr_file));
+  return unless($job);
 
-  my $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, type, path) VALUES ";
-  $sql .= " (" . $job->dbID. ", 'STDOUT', '". $job->stdout_file."')"  if($job->stdout_file);
+  my $sql = sprintf("DELETE from analysis_job_file WHERE hive_id=%d and analysis_job_id=%d",
+                   $job->hive_id, $job->dbID);
+  $self->dbc->do($sql);
+  return unless($job->stdout_file or $job->stderr_file);
+
+  $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, hive_id, retry, type, path) VALUES ";
+  if($job->stdout_file) {
+    $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->hive_id, 
+		    $job->retry_count, $job->stdout_file); 
+  }
   $sql .= "," if($job->stdout_file and $job->stderr_file);
-  $sql .= " (" . $job->dbID. ", 'STDERR', '". $job->stderr_file."')"  if($job->stderr_file);
-  #print("$sql\n");
-  
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+  if($job->stderr_file) {
+    $sql .= sprintf("(%d,%d,%d,'STDERR','%s')", $job->dbID, $job->hive_id, 
+		    $job->retry_count, $job->stderr_file); 
+  }
+ 
+  $self->dbc->do($sql);
 }
 
 

@@ -147,15 +147,19 @@ CREATE TABLE analysis_job (
 --
 -- semantics:
 --   analysis_job_id    - foreign key
+--   hive_id            - link to hive table to define which worker claimed this job
+--   retry              - copy of retry_count of job as it was run
 --   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
 --   path               - path to file or directory
 
 CREATE TABLE analysis_job_file (
   analysis_job_id         int(10) NOT NULL,
+  hive_id                 int(10) NOT NULL,
+  retry                   int(10) NOT NULL,
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
   
-  UNIQUE KEY   (analysis_job_id, type)
+  UNIQUE KEY job_hive_type  (analysis_job_id, hive_id, type)
 );
 
 
