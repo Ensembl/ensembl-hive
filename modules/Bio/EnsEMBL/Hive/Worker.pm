@@ -259,10 +259,7 @@ sub print_worker {
 sub batch_size {
   my $self = shift;
   if(@_) { $self->{'_batch_size'} = shift; }
-  do {
-    my $runObj = $self->analysis->runnableDB;
-    $self->{'_batch_size'} = $runObj->batch_size if($runObj);
-  } unless($self->{'_batch_size'});
+  $self->{'_batch_size'}=1 unless($self->{'_batch_size'});
   return $self->{'_batch_size'};
 }
 
