@@ -325,6 +325,7 @@ sub batch_size {
 sub run
 {
   my $self = shift;
+  my $specific_job = shift;
 
   if($self->output_dir()) {
     open OLDOUT, ">&STDOUT";
@@ -343,8 +344,14 @@ sub run
   my $jobDBA = $self->db->get_AnalysisJobAdaptor;
   my $alive=1;  
   while($alive) {
-    my $claim = $jobDBA->claim_jobs_for_worker($self);
-    my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
+    my $jobs = [];
+    if($specific_job) {
+      $specific_job->hive_id($self->hive_id);
+      push @$jobs, $specific_job;
+    } else {
+      my $claim = $jobDBA->claim_jobs_for_worker($self);
+      $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
+    }
 
     $self->queen->worker_check_in($self);
 
@@ -359,6 +366,9 @@ sub run
       $self->close_and_update_job_output($job);
       $self->{'_work_done'}++;
     }
+
+    $self->cause_of_death('JOB_LIMIT') if($specific_job);
+
     if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
       $self->cause_of_death('JOB_LIMIT'); 
     }
