@@ -6,13 +6,17 @@
 =pod 
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::Worker
 
+=cut
+
 =head1 DESCRIPTION
+
   Object which encapsulates the details of how to find jobs, how to run those
   jobs, and then check the rules to create the next jobs in the chain.
   Essentially knows where to find data, how to process data, and where to
-  put it when it's done (put in next person's INBOX) so the next Worker
+  put it when it is done (put in next persons INBOX) so the next Worker
   in the chain can find data to work on.
 
   Hive based processing is a concept based on a more controlled version
@@ -33,7 +37,7 @@
   This is primarily needed on compute resources like an LSF system where jobs
   are not preempted and run until they are done.
 
-  The Queen's primary job is to create Workers to get the work down.
+  The Queens primary job is to create Workers to get the work down.
   As part of this, she is also responsible for summarizing the status of the
   analyses by querying the analysis_jobs, summarizing, and updating the
   analysis_stats table.  From this she is also responsible for monitoring and
@@ -47,12 +51,17 @@
   It is also responsible for interfacing with the Queen to identify workers which died
   unexpectantly so that she can free the dead workers unfinished jobs.
 
+=cut
 
 =head1 CONTACT
+ 
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
+=cut
+
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
 
@@ -102,6 +111,7 @@ sub beekeeper {
 }
 
 =head2 analysis
+
   Arg [1] : (optional) Bio::EnsEMBL::Analysis $value
   Title   :   analysis
   Usage   :   $value = $self->analysis;
@@ -109,6 +119,7 @@ sub beekeeper {
   Description: Get/Set analysis object of this Worker
   DefaultValue : undef
   Returntype : Bio::EnsEMBL::Analysis object
+
 =cut
 
 sub analysis {
@@ -126,6 +137,7 @@ sub analysis {
 
 
 =head2 life_span
+
   Arg [1] : (optional) integer $value (in seconds)
   Title   :   life_span
   Usage   :   $value = $self->life_span;
@@ -135,6 +147,7 @@ sub analysis {
                do multiple rounds of work is limited by their life_span
   DefaultValue : 3600 (60 minutes)
   Returntype : integer scalar
+
 =cut
 
 sub life_span {
@@ -143,6 +156,31 @@ sub life_span {
   $self->{'_life_span'} = 60*60 unless(defined($self->{'_life_span'}));
   $self->{'_life_span'} = $value if(defined($value));
   return $self->{'_life_span'};
+}
+
+=head2 job_limit
+
+  Title   :   job_limit
+  Arg [1] :   (optional) integer $value
+  Usage   :   $value = $self->job_limit;
+              $self->job_limit($new_value);
+  Description: Defines the maximum number of jobs a worker can process 
+               before it needs to die. A worker 'dies' when either the 
+               'life_span' or 'job_limit' is exceeded.
+  DefaultValue : undef (relies on life_span to limit life of worker)
+  Returntype : integer scalar
+
+=cut
+
+sub job_limit {
+  my $self=shift;
+  if(@_) {
+    $self->{'_job_limit'}=shift;
+    if($self->{'_job_limit'} < $self->batch_size) {
+      $self->batch_size($self->{'_job_limit'});
+    }
+  }
+  return $self->{'_job_limit'};
 }
 
 sub hive_id {
@@ -195,6 +233,7 @@ sub last_check_in {
 }
 
 =head2 output_dir
+
   Arg [1] : (optional) string directory path
   Title   :   output_dir
   Usage   :   $value = $self->output_dir;
@@ -203,6 +242,7 @@ sub last_check_in {
 	       redirected to. Each worker will create a subdirectory
 	       where each analysis_job will get a .out and .err file
   Returntype : string
+
 =cut
 
 sub output_dir {
@@ -213,17 +253,6 @@ sub output_dir {
     $self->{'_output_dir'} = $outdir 
   }
   return $self->{'_output_dir'};
-}
-
-sub job_limit {
-  my $self=shift;
-  if(@_) {
-    $self->{'_job_limit'}=shift;
-    if($self->{'_job_limit'} < $self->batch_size) {
-      $self->batch_size($self->{'_job_limit'});
-    }
-  }
-  return $self->{'_job_limit'};
 }
 
 sub print_worker {
@@ -244,7 +273,9 @@ sub print_worker {
 # WORK section
 #
 ###############################
+
 =head2 batch_size
+
   Arg [1] : (optional) string $value
   Title   :   batch_size
   Usage   :   $value = $self->batch_size;
@@ -255,6 +286,7 @@ sub print_worker {
                particular job type.
   DefaultValue : batch_size of runnableDB in analysis
   Returntype : integer scalar
+
 =cut
 
 sub batch_size {
@@ -269,6 +301,27 @@ sub batch_size {
   return $self->analysis->stats->batch_size;
 }
 
+
+=head2 run
+
+  Title   :   run
+  Usage   :   $worker->run;
+  Description: 
+    This is a self looping autonomous function to process jobs.
+    First all STDOUT/STDERR is rediected, then looping commences.
+    Looping consists of 
+      1) claiming jobs,
+      2) processing those jobs through the module(runnableDB) of 
+         the analysis asigned to this worker,
+      3) updating the analysis_job, analysis_stats, and hive tables to track the 
+         progress of the job, the analysis and this worker.
+    Looping stops when any one of these are met:
+      1) there is no more jobs to process 
+      2) job_limit is reached
+      3) life_span has been reached.
+  Returntype : none
+
+=cut
 
 sub run
 {
