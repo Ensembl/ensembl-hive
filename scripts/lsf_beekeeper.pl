@@ -157,6 +157,7 @@ sub usage {
   print "  -batch_size <num>      : #jobs a worker can claim at once\n";
   print "  -jlimit <num>          : #jobs to run before worker can die naturally\n";
   print "  -dead                  : clean overdue jobs for resubmission\n";
+  print "  -overdue <min>         : worker overdue minutes checking if dead\n";
   print "  -alldead               : all outstanding workers\n";
   print "  -run                   : run 1 iteration of automation loop\n";
   print "  -loop                  : run autonomously, loops and sleeps\n";
@@ -293,6 +294,8 @@ sub run_autonomously {
 
     check_for_dead_workers($self, $queen);
 
+    $queen->print_analysis_status if($self->{'show_analysis_stats'});
+
     $queen->print_running_worker_status;
     
     my $runCount = $queen->get_num_running_workers();
@@ -309,9 +312,6 @@ sub run_autonomously {
       $count = $queen->get_num_needed_workers();
     }  
 
-    $queen->print_hive_status()  if($self->{'show_analysis_stats'});
-    $queen->print_running_worker_status()  if($self->{'show_worker_stats'});
-
     $count = $worker_limit if($count>$worker_limit);    
     
     if($count>0) {
@@ -322,7 +322,7 @@ sub run_autonomously {
 
       if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\]";}
       else { $cmd = "bsub -JHL$loopCount";}
-      $cmd .= " -m " . $self->{'lsf_machine_option'} if($self->{'lsf_machine_option'});
+      $cmd .= " -m '" . $self->{'lsf_machine_option'} ."'" if($self->{'lsf_machine_option'});
       $cmd .= " ".$worker_cmd;
       print("$cmd\n");
       system($cmd);
