@@ -10,25 +10,29 @@
 # POD documentation - main docs before the code
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::AnalysisCtrlRule
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
-  Needed a robust and simpler rule table
-  where Analyses in the pipeline can robustly define
-  new analyses and rules.  New design has a single table where a 'rule'
-  is a simple link from one analysis to another.
-  Extended from design of SimpleRule concept to allow the 'to' analysis to
-  be specified with a network savy URL like
+
+  An 'analysis control rule' is a high level blocking control structure where there is
+  a 'ctrled_analysis' which is 'BLOCKED' from running until all of its 'condition_analysis' are 'DONE'.
+  If a ctrled_analysis requires multiple analysis to be DONE before it can run, a separate
+  AnalysisCtrlRule must be created/stored for each condtion analysis.
+  
+  Allows the 'condition' analysis to be specified with a network savy URL like
   mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
 
 
 =head1 CONTACT
+
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
 
@@ -53,6 +57,7 @@ use Bio::EnsEMBL::Utils::Exception;
   Function: Constructor for empty AnalysisCtrlRule object
   Returns : Bio::EnsEMBL::Hive::AnalysisCtrlRule
   Args    : none
+  
 =cut
 
 sub new {
@@ -70,12 +75,15 @@ sub adaptor {
 
 
 =head2 ctrled_analysis_id
-  Title   : ctrled_analysis_id
+
   Arg[1]  : (optional) int $dbID
   Usage   : $self->ctrled_analysis_id($dbID);
-  Function: Get/set method for the 'controlled' analysis objects dbID of this rule.
+  Function: Get/set method for the analysis which will be BLOCKED until all
+            of its condition analyses are 'DONE'. Specified as a dbID.
   Returns : integer
+  
 =cut
+
 sub ctrled_analysis_id {
   my ($self,$analysis_id) = @_;
   if($analysis_id) {
@@ -87,12 +95,15 @@ sub ctrled_analysis_id {
 
 
 =head2 condition_analysis_url
-  Title   : condition_analysis_url
+
   Arg[1]  : (optional) string $url
   Usage   : $self->condition_analysis_url($url);
-  Function: Get/set method for the 'to' analysis objects URL for this rule
+  Function: Get/set method for the analysis which must be 'DONE' in order for
+            the controlled analysis to be un-BLOCKED. Specified as a URL.
   Returns : string
+  
 =cut
+
 sub condition_analysis_url {
   my ($self,$url) = @_;
   if($url) {
@@ -104,12 +115,15 @@ sub condition_analysis_url {
 
 
 =head2 ctrled_analysis
-  Title   : ctrled_analysis
+
+  Arg[1]  : (optional) Bio::EnsEMBL::Analysis object
   Usage   : $self->ctrled_analysis($anal);
-  Function: Get/set method for the condition analysis object of this rule.
+  Function: Get/set method for the analysis which will be BLOCKED until all
+            of its condition analyses are 'DONE'
   Returns : Bio::EnsEMBL::Analysis
-  Args    : Bio::EnsEMBL::Analysis
+  
 =cut
+
 sub ctrled_analysis {
   my ($self,$analysis) = @_;
 
@@ -137,12 +151,15 @@ sub ctrled_analysis {
 
 
 =head2 condition_analysis
-  Title   : condition_analysis
+
+  Arg[1]  : (optional) Bio::EnsEMBL::Analysis object
   Usage   : $self->condition_analysis($anal);
-  Function: Get/set method for the goal analysis object of this rule.
+  Function: Get/set method for the analysis which must be 'DONE' in order for
+            the controlled analysis to be un-BLOCKED
   Returns : Bio::EnsEMBL::Analysis
-  Args    : Bio::EnsEMBL::Analysis
+  
 =cut
+
 sub condition_analysis {
   my ($self,$analysis) = @_;
 
@@ -174,6 +191,14 @@ sub condition_analysis {
   }
   return $self->{'_condition_analysis'};
 }
+
+
+=head2 print_rule
+
+  Usage   : $ctrlRule->print_rule;
+  Function: Prints a description of the rule for use in debugging.
+  
+=cut
 
 sub print_rule {
   my $self = shift;
