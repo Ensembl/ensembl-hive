@@ -188,19 +188,7 @@ sub update_analysis_stats {
   $sth->execute();
   while (my ($analysis_id, $status, $count)=$sth->fetchrow_array()) {
     unless(defined($analysisStats) and $analysisStats->analysis_id==$analysis_id) {
-      if($analysisStats and ($analysisStats->status ne 'BLOCKED')) {
-        if($analysisStats->total_job_count == $analysisStats->done_job_count) {
-          $analysisStats->status('DONE');
-        }
-        if($analysisStats->total_job_count == $analysisStats->unclaimed_job_count) {
-          $analysisStats->status('READY');
-        }
-        if($analysisStats->unclaimed_job_count>0 and
-           $analysisStats->total_job_count > $analysisStats->unclaimed_job_count) {
-          $analysisStats->status('WORKING');
-        }
-        $statsDBA->update($analysisStats);
-      }
+      $analysisStats->determine_status->update() if($analysisStats);
 
       $analysisStats = $statsDBA->fetch_by_analysis_id($analysis_id);
       $analysisStats->total_job_count(0);
@@ -215,13 +203,15 @@ sub update_analysis_stats {
     if($status eq 'READY') {
       $analysisStats->unclaimed_job_count($count);
       my $numWorkers = $count/$analysisStats->batch_size;
-      if($numWorkers > $analysisStats->hive_capacity) {
+      if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
         $numWorkers=$analysisStats->hive_capacity;
       }
       $analysisStats->num_required_workers($numWorkers);
     }
     if($status eq 'DONE') { $analysisStats->done_job_count($count); }
   }
+  $analysisStats->determine_status->update() if($analysisStats);
+
   $sth->finish;
 }
 

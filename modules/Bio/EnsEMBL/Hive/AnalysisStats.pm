@@ -58,6 +58,12 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
+sub update {
+  my $self = shift;
+  return unless($self->adaptor);
+  $self->adaptor->update($self);
+}
+
 sub analysis_id {
   my $self = shift;
   $self->{'_analysis_id'} = shift if(@_);
@@ -115,6 +121,25 @@ sub seconds_since_last_update {
   return time() - $self->{'_last_update'};
 }
 
+sub determine_status {
+  my $self = shift;
+  
+  if($self->status ne 'BLOCKED') {
+    if($self->done_job_count>0 and
+       $self->total_job_count == $self->done_job_count) {
+      $self->status('DONE');
+    }
+    if($self->total_job_count == $self->unclaimed_job_count) {
+      $self->status('READY');
+    }
+    if($self->unclaimed_job_count>0 and
+       $self->total_job_count > $self->unclaimed_job_count) {
+      $self->status('WORKING');
+    }
+  }
+  return $self;
+}
+  
 sub print_stats {
   my $self = shift;
   print("ANALYSIS_STATS: analysis_id=",$self->analysis_id,"\n"

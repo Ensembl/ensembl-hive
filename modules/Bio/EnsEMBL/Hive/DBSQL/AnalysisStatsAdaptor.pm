@@ -261,7 +261,7 @@ sub _final_clause {
 
 sub update {
   my ($self, $stats) = @_;
-
+ 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
   $sql .= ",batch_size=" . $stats->batch_size();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
