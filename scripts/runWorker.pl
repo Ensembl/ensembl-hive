@@ -19,6 +19,7 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
+$self->{'logic_name'}  = undef;
 $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
 
@@ -34,6 +35,7 @@ GetOptions('help'           => \$help,
            'dbpass=s'       => \$pass,
            'dbname=s'       => \$dbname,
            'analysis_id=i'  => \$self->{'analysis_id'},
+           'logic_name=s'   => \$self->{'logic_name'},
            'batchsize=i'    => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
@@ -74,8 +76,12 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
-
 my $queen = $DBA->get_Queen();
+
+if($self->{'logic_name'}) {
+  my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+  $self->{'analysis_id'} = $analysis->dbID if($analysis);
+}
 
 my $worker = $queen->create_new_worker($self->{'analysis_id'}, $self->{'beekeeper'});
 die("couldn't create worker for analysis_id ".$self->{'analysis_id'}."\n") unless($worker);
