@@ -294,7 +294,7 @@ sub batch_size {
     $stats->update;
   }
   my $batch_size = $self->analysis->stats->batch_size;
-  if($self->job_limit < $batch_size) {
+  if($self->job_limit and ($self->job_limit < $batch_size)) {
     $batch_size = $self->job_limit;
   }
   return $batch_size;
