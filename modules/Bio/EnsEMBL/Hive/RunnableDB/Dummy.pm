@@ -64,15 +64,13 @@ our @ISA = qw(Bio::EnsEMBL::Pipeline::RunnableDB);
 
 sub fetch_input {
   my $self = shift;
-  $self->db->dbc->disconnect_when_inactive(0);
   return 1;
 }
 
 sub run
 {
   my $self = shift;
-  #call superclasses run method
-  return $self->SUPER::run();
+  return 1;
 }
 
 sub write_output {

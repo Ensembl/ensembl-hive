@@ -194,7 +194,7 @@ sub _get_db_connection
   $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor" if($type eq 'pipeline');
    
   $dba = "$module"->new (
-          -disconnect_when_inactive => 1,
+          -disconnect_when_inactive => 0,
           -driver => 'mysql',
           -user   => $user,
           -pass   => $pass,
