@@ -370,6 +370,7 @@ sub run
     my $jobs = [];
     if($specific_job) {
       $specific_job->hive_id($self->hive_id);
+      $jobDBA->reclaim_job($specific_job);
       push @$jobs, $specific_job;
     } else {
       my $claim = $jobDBA->claim_jobs_for_worker($self);
