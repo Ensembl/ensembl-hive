@@ -51,6 +51,7 @@ sub update_status {
   my ($self, $status ) = @_;
   return unless($self->adaptor);
   $self->adaptor->update_status($self->analysis_id, $status);
+  $self->status($status);
 }
 
 sub analysis_id {
