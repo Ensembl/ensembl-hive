@@ -95,6 +95,11 @@ sub CreateNewJob {
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
 
+  if(length($input_id) >= 255) {
+    my $input_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
+    $input_id = "_ext_input_analysis_data_id $input_data_id";
+  }
+
   my $sql = q{INSERT ignore into analysis_job 
               (input_id, prev_analysis_job_id,analysis_id,status)
               VALUES (?,?,?,?)};
@@ -331,6 +336,11 @@ sub _objs_from_sth {
     $job->completed($column{'completed'});
     $job->branch_code($column{'branch_code'});
     $job->adaptor($self);
+    
+    if($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/) {
+      print("input_id was too big so stored in analysis_data table as dbID $1 -- fetching now\n");
+      $job->input_id($self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1));
+    }
 
     push @jobs, $job;    
   }
