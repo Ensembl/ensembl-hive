@@ -69,7 +69,6 @@ sub status {
 
   if(defined $value) {
     $self->{'_status'} = $value;
-    $self->adaptor->update_status($self->analysis_id, $value) if($self->adaptor);
   }
   return $self->{'_status'};
 }
