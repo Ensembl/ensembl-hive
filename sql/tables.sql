@@ -153,7 +153,7 @@ CREATE TABLE analysis_job (
   input_id               varchar(100) not null,
   job_claim              varchar(40) NOT NULL default '', #UUID
   hive_id                int(10) NOT NULL,
-  status                 enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE') DEFAULT 'READY' NOT NULL,
+  status                 enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count            int(10) default 0 not NULL,
   completed              datetime NOT NULL,
   branch_code            int(10) default 1 NOT NULL,
