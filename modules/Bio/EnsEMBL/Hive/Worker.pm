@@ -77,10 +77,10 @@ sub init {
   return $self;
 }
 
-sub adaptor {
+sub queen {
   my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
+  $self->{'_queen'} = shift if(@_);
+  return $self->{'_queen'};
 }
 sub db {
   my $self = shift;
@@ -278,7 +278,7 @@ sub run
     my $claim = $jobDBA->claim_jobs_for_worker($self);
     my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $self->analysis->dbID);
 
-    $self->adaptor->worker_check_in($self);
+    $self->queen->worker_check_in($self);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
@@ -300,7 +300,7 @@ sub run
     if($self->cause_of_death) { $alive=undef; }
   }
 
-  $self->adaptor->register_worker_death($self);
+  $self->queen->register_worker_death($self);
 
   if($self->output_dir()) {
     close STDOUT;
