@@ -177,5 +177,22 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::branch_code
   return $self->{'_branch_code'};
 }
 
+sub Bio::EnsEMBL::Pipeline::RunnableDB::encode_hash
+{
+  my $self = shift;
+  my $hash_ref = shift;
+
+  return "" unless($hash_ref);
+
+  my $hash_string = "{";
+  my @keys = keys %{$hash_ref};
+  foreach my $key (@keys) {
+    $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
+  }
+  $hash_string .= "}";
+
+  return $hash_string;
+}
+
 1;
 
