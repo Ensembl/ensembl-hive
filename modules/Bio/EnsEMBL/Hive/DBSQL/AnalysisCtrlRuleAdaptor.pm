@@ -132,8 +132,9 @@ sub create_rule {
   return unless($conditionAnalysis and $ctrledAnalysis);
   
   my $rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new();
-  $rule->condition_analysis($conditionAnalysis);
+  #must set ctrled_analysis first in order for internal logic to abreviate 'to_url'
   $rule->ctrled_analysis($ctrledAnalysis);
+  $rule->condition_analysis($conditionAnalysis);
   
   $self->store($rule);
 }
