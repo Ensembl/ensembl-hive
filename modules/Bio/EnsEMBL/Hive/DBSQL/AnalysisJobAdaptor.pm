@@ -68,11 +68,11 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Example    : $analysis_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                                     -input_id => 'my input data',
                                     -analysis => $myAnalysis);
-  Description: uses the db connection from the analysis object's adaptor to store a new
-               job in a hive.  This is a class level method since it doesn't have any state.
-               Also updates this analysis's analysis_stats by incrementing total_job_count,
+  Description: uses the analysis object to get the db connection from the adaptor to store a new
+               job in a hive.  This is a class level method since it does not have any state.
+               Also updates corresponding analysis_stats by incrementing total_job_count,
                unclaimed_job_count and flagging the incremental update by changing the status
-               to 'LAODING' (but only if the analysis is not blocked).
+               to 'LOADING' (but only if the analysis is not blocked).
   Returntype : int analysis_job_id on database analysis is from.
   Exceptions : thrown if either -input_id or -analysis are not properly defined
   Caller     : general
@@ -95,15 +95,16 @@ sub CreateNewJob {
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
 
-  my $sql = "INSERT ignore into analysis_job ".
-            " SET input_id=\"$input_id\" ".
-            " ,prev_analysis_job_id='$prev_analysis_job_id' ".
-            " ,analysis_id='".$analysis->dbID ."' ";
-  $sql .= " ,status='BLOCKED', job_claim='BLOCKED'" if($blocked);
+  my $sql = q{INSERT ignore into analysis_job 
+              (input_id, prev_analysis_job_id,analysis_id,status)
+              VALUES (?,?,?,?)};
+ 
+  my $status ='READY';
+  $status = 'BLOCKED' if($blocked);
 
   my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
-  $sth->execute();
+  $sth->execute($input_id, $prev_analysis_job_id, $analysis->dbID, $status);
   my $dbID = $sth->{'mysql_insertid'};
   $sth->finish;
 
@@ -338,8 +339,7 @@ sub _objs_from_sth {
 sub update_status {
   my ($self,$job) = @_;
 
-  my $sql = "UPDATE analysis_job ".
-            " SET status='".$job->status."' ";
+  my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
   $sql .= " ,completed=now(),branch_code=".$job->branch_code if($job->status eq 'DONE');
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
@@ -352,7 +352,7 @@ sub update_status {
 
   Arg [1]    : Bio::EnsEMBL::Compar::Hive::AnalysisJob $job
   Example    :
-  Description: if files are non-zero size, will update DB with it's location
+  Description: if files are non-zero size, will update DB with location
   Returntype : 
   Exceptions :
   Caller     : Bio::EnsEMBL::Hive::Worker
