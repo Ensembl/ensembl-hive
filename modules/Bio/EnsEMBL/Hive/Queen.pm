@@ -279,7 +279,7 @@ sub synchronize_AnalysisStats {
 
     if($status eq 'READY') {
       $analysisStats->unclaimed_job_count($count);
-      my $numWorkers = $count/$analysisStats->batch_size;
+      my $numWorkers = POSIX::ceil($count/$analysisStats->batch_size);
       $numWorkers=1 if($numWorkers<1);
       if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
         $numWorkers=$analysisStats->hive_capacity;
