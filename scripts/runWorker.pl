@@ -77,6 +77,11 @@ if($url) {
 
 my $queen = $DBA->get_Queen();
 
+my $lsb_jobid    = $ENV{'LSB_JOBID'};
+my $lsb_jobindex = $ENV{'LSB_JOBINDEX'};
+$self->{'process_id'} = "$lsb_jobid\[$lsb_jobindex\]" if(defined($lsb_jobid) and defined($lsb_jobindex));
+print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
+
 if($self->{'logic_name'}) {
   my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
   $self->{'analysis_id'} = $analysis->dbID if($analysis);
@@ -84,7 +89,8 @@ if($self->{'logic_name'}) {
 
 my $worker = $queen->create_new_worker(
      -analysis_id    => $self->{'analysis_id'},
-     -beekeeper      => $self->{'beekeeper'}
+     -beekeeper      => $self->{'beekeeper'},
+     -process_id     => $self->{'process_id'}
      );
 unless($worker) {
   Bio::EnsEMBL::Hive::URLFactory->cleanup;
@@ -146,6 +152,7 @@ sub usage {
   print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
   print "  -bk <string>           : beekeeper identifier\n";
+  print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
   print "runWorker.pl v1.1\n";
   
   exit(1);  
