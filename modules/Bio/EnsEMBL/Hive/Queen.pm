@@ -280,8 +280,17 @@ sub worker_register_job_done {
   return unless($job);
   return unless($job->dbID and $job->adaptor and $job->hive_id);
   return unless($worker and $worker->analysis and $worker->analysis->dbID);
+   
+  $job->update_status('DONE');
+}
+
+
+sub flow_output_job {
+  my $self = shift;
+  my $job = shift;
   
-  # create_next_jobs
+  return unless($job);
+  
   my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
   foreach my $rule (@{$rules}) {
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
@@ -290,9 +299,6 @@ sub worker_register_job_done {
         -input_job_id   => $job->dbID,
     );
   }
- 
-  $job->update_status('DONE');
-
 }
 
 
