@@ -22,7 +22,7 @@ CREATE TABLE hive (
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
-  PRIMARY KEY (hive_id),
+  PRIMARY KEY (hive_id)
 );
 
 
@@ -49,7 +49,7 @@ CREATE TABLE hive (
 --   branch_code              - joined to analysis_job.branch_code to allow branching
 
 CREATE TABLE simple_rule (
-  simple_rule_id           int(10) unsigned default '0' not null auto_increment,
+  simple_rule_id           int(10) unsigned not null auto_increment,
   condition_analysis_id    int(10) unsigned NOT NULL,
   goal_analysis_id         int(10) unsigned NOT NULL,
   branch_code              int(10) default 1 NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE simple_rule (
 --   branch_code          - joined to analysis_job.branch_code to allow branching
 
 CREATE TABLE dataflow_rule (
-  dataflow_rule_id    int(10) unsigned default '0' not null auto_increment,
+  dataflow_rule_id    int(10) unsigned not null auto_increment,
   from_analysis_id    int(10) unsigned NOT NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
