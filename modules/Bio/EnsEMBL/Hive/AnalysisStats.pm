@@ -157,7 +157,7 @@ sub determine_status {
   my $self = shift;
   
   if($self->status ne 'BLOCKED') {
-    if($self->done_job_count>0 and
+    if($self->done_job_count>0 and $self->unclaimed_job_count == 0 and
        $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
       $self->status('DONE');
     }
