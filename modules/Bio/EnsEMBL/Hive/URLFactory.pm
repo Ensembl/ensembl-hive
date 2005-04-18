@@ -38,6 +38,7 @@ my $_URLFactory_global_instance;
 package Bio::EnsEMBL::Hive::URLFactory;
 
 use strict;
+use Switch;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -195,10 +196,15 @@ sub _get_db_connection
   return ($dba,$path) if($dba);
   
   #print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n");
-  $module = "Bio::EnsEMBL::DBSQL::DBAdaptor" if($type eq 'core');
-  $module = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor" if($type eq 'compara');
-  $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor" if($type eq 'pipeline');
-   
+  switch ($type) {
+    case 'core' { $module = "Bio::EnsEMBL::DBSQL::DBAdaptor"; }
+    case 'pipeline' { $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor"; }
+    case 'compara' {
+      use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+      $module = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"; 
+    }
+  }
+
   $dba = "$module"->new (
           -disconnect_when_inactive => 0,
           -driver => 'mysql',
@@ -206,7 +212,9 @@ sub _get_db_connection
           -pass   => $pass,
           -host   => $host,
           -port   => $port,
-          -dbname => $dbname);
+          -dbname => $dbname,
+          -species => $dbname
+	  );
 
   $_URLFactory_global_instance->{$connectionKey} = $dba;
   return ($dba,$path);
