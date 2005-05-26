@@ -136,10 +136,14 @@ sub stderr_file {
 
 sub print_job {
   my $self = shift;
-  print("WORKER: hive_id=",$self->hive_id,
-     " host=",$self->host,
-     " ppid=",$self->process_id,
-     "\n");  
+  my $logic_name ='';
+  $logic_name = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id)->logic_name if($self->adaptor);
+  printf("job_id=%d %s(%d) retry=%d input_id='%s'\n", 
+       $self->dbID,
+       $logic_name,
+       $self->analysis_id,
+       $self->retry_count,
+       $self->input_id);
 }
 
 1;
