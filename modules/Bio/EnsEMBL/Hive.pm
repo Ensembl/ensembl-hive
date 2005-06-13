@@ -66,7 +66,6 @@ use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
