@@ -195,23 +195,6 @@ sub Bio::EnsEMBL::Analysis::stats
 # Bio::EnsEMBL::Pipeline::RunnableDB
 #######################################
 
-=head2 Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
-
-  Arg [1]    : none
-  Description: method which user RunnableDB can override if it needs to clean up
-               any 'global within worker run time' files or data.
-  Returntype : 1
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Hive::Worker
-
-=cut
-
-sub Bio::EnsEMBL::Pipeline::RunnableDB::global_cleanup
-{
-  my $self = shift;
-  return 1;
-}
-
 sub Bio::EnsEMBL::Pipeline::RunnableDB::debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);
@@ -223,12 +206,6 @@ sub Bio::EnsEMBL::Pipeline::RunnableDB::debug {
 # extensions to
 # Bio::EnsEMBL::Analysis::RunnableDB
 #######################################
-
-sub Bio::EnsEMBL::Analysis::RunnableDB::global_cleanup
-{
-  my $self = shift;
-  return 1;
-}
 
 sub Bio::EnsEMBL::Analysis::RunnableDB::debug {
   my $self = shift;
