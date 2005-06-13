@@ -69,6 +69,12 @@ sub queen {
   return $self->{'_queen'};
 }
 
+sub worker {
+  my $self = shift;
+  $self->{'_worker'} = shift if(@_);
+  return $self->{'_worker'};
+}
+
 =head2 db
 
     Title   :   db
@@ -131,6 +137,13 @@ sub input_job {
   return $self->{'_input_job'};
 }
 
+sub autoflow_inputjob {
+  my $self = shift;
+  $self->{'_autoflow_inputjob'} = shift if(@_);
+  $self->{'_autoflow_inputjob'}=1 unless(defined($self->{'_autoflow_inputjob'}));  
+  return $self->{'_autoflow_inputjob'};
+}
+
 =head2 dataflow_output_id
 
     Title        :  dataflow_output_id
@@ -152,10 +165,15 @@ sub dataflow_output_id {
   return unless($output_id);
   return unless($self->analysis);
 
+  $branch_code=1 unless(defined($branch_code));
+
   my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
   $job->input_id($output_id);
   $job->analysis_id($self->analysis->dbID);
-  $job->branch_code($branch_code) if(defined($branch_code));
+  $job->branch_code($branch_code);
+  
+  #if process uses branch_code 1 explicitly, turn off automatic dataflow
+  $self->autoflow_inputjob(0) if($branch_code==1);
 
   $self->queen->flow_output_job($job);  
 }
@@ -188,12 +206,9 @@ sub encode_hash {
 
 
 sub worker_temp_directory {
-  unless(defined($g_hive_process_workdir) and (-e $g_hive_process_workdir)) {
-    #create temp directory to hold fasta databases
-    $g_hive_process_workdir = "/tmp/worker.$$/";
-    mkdir($g_hive_process_workdir, 0777);
-  }
-  return $g_hive_process_workdir;
+  my $self = shift;
+  return undef unless($self->worker);
+  return $self->worker->worker_process_temp_directory;
 }
 
 #################################################
@@ -238,13 +253,6 @@ sub write_output {
   return 1;
 }
 
-sub global_cleanup {
-  if($g_hive_process_workdir) {
-    unlink(<$g_hive_process_workdir/*>);
-    rmdir($g_hive_process_workdir);
-  }
-  return 1;
-}
 
 1;
 

@@ -99,7 +99,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($analysis_id, $beekeeper ,$pid) =
+  my ($analysis_id, $beekeeper ,$pid, $job) =
      rearrange([qw(analysis_id beekeeper process_id) ], @args);
 
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
@@ -111,7 +111,7 @@ sub create_new_worker {
   if($analysis_id) {
     $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
     $self->safe_synchronize_AnalysisStats($analysisStats);
-    return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
+    #return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
   } else {
     $analysisStats = $self->_pick_best_analysis_for_new_worker;
   }
@@ -285,8 +285,6 @@ sub worker_register_job_done {
   return unless($worker and $worker->analysis and $worker->analysis->dbID);
   
   $job->update_status('DONE');
-
-  $self->flow_output_job($job);
 }
 
 
@@ -618,18 +616,22 @@ sub get_num_needed_workers {
 sub get_hive_progress
 {
   my $self = shift;
-  my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count) FROM analysis_stats";
+  my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
+            "sum(unclaimed_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
+            "FROM analysis_stats";
   my $sth = $self->prepare($sql);
   $sth->execute();
-  my ($done, $failed, $total) = $sth->fetchrow_array();
+  my ($done, $failed, $total, $cpuhrs) = $sth->fetchrow_array();
   $sth->finish;
   $done=0 unless($done);
   $failed=0 unless($failed);
   $total=0 unless($total);
   my $completed=0.0;
   $completed = ((100.0 * ($done+$failed))/$total)  if($total>0);
-  printf("hive %1.3f%% complete (%d done + %d failed / %d total)\n", $completed, $done, $failed, $total);
-  return $done, $total;
+  my $remaining = $total - $done - $failed;
+  printf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n", 
+          $completed, $cpuhrs, $remaining, $done, $failed, $total);
+  return $done, $total, $cpuhrs;
 }
 
 sub print_hive_status

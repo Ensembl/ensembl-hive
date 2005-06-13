@@ -67,6 +67,7 @@
 
 =cut
 
+
 package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
@@ -289,6 +290,28 @@ sub print_worker {
   }
 }
 
+
+sub worker_process_temp_directory {
+  my $self = shift;
+  
+  unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
+    #create temp directory to hold fasta databases
+    $self->{'_tmp_dir'} = "/tmp/worker.$$/";
+    mkdir($self->{'_tmp_dir'}, 0777);
+    throw("unable to create ".$self->{'_tmp_dir'}) unless(-e $self->{'_tmp_dir'});
+  }
+  return $self->{'_tmp_dir'};
+}
+
+
+sub cleanup_worker_process_temp_directory {
+  my $self = shift;
+  if($self->{'_tmp_dir'}) {
+    my $cmd = "rm -r ". $self->{'_tmp_dir'};
+    system($cmd);
+  }
+}
+
 ###############################
 #
 # WORK section
@@ -426,7 +449,7 @@ sub run
   
   if($self->perform_global_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
-    $self->analysis->process->global_cleanup();
+    $self->cleanup_worker_process_temp_directory;
   }
 
   $self->queen->register_worker_death($self);
@@ -463,11 +486,12 @@ sub run_module_with_job
   if($runObj->isa("Bio::EnsEMBL::Hive::Process")) { 
     $runObj->input_job($job);
     $runObj->queen($self->queen);
+    $runObj->worker($self);
+    $runObj->debug($self->debug);
   } else {
     $runObj->input_id($job->input_id);
     $runObj->db($self->db);
   }
-  $runObj->debug($self->debug);
   
   $job->update_status('GET_INPUT');
   print("GET_INPUT\n") if($self->debug); 
@@ -480,9 +504,15 @@ sub run_module_with_job
   $job->update_status('WRITE_OUTPUT');
   print("WRITE_OUTPUT\n") if($self->debug); 
   $runObj->write_output;
-
+  
   $job->query_count($self->queen->dbc->query_count);
   $job->runtime_msec(time()*1000 - $start_time);
+  
+  unless($runObj->isa("Bio::EnsEMBL::Hive::Process") and
+         !($runObj->autoflow_inputjob)) {
+    printf("AUTOFLOW input->output\n") if($self->debug);
+    $self->queen->flow_output_job($job);
+  }
 
   return 1;
 }
