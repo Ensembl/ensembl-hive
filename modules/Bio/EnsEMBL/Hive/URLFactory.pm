@@ -146,6 +146,7 @@ sub _get_db_connection
   my $path = '';
   my $module = "Bio::EnsEMBL::Hive::DBSQL::DBAdaptor";
   $type   = 'hive' unless($type);
+  my $discon = 0;
   my ($p, $p2, $p3);
 
   #print("FETCH $url\n");
@@ -156,13 +157,27 @@ sub _get_db_connection
 
   my $conn   = substr($url, 0, $p);
   $dbname    = substr($url, $p+1, length($url));
-  if(($p2=rindex($dbname, ";type=")) != -1) {
-    $type   = substr($dbname, $p2+6, length($dbname));
+  my $params = undef;
+  if(($p2=index($dbname, ";")) != -1) {
+    $params = substr($dbname, $p2+1, length($dbname));
     $dbname = substr($dbname, 0, $p2);
   }
   if(($p2=index($dbname, "/")) != -1) {
     $path   = substr($dbname, $p2+1, length($dbname));
     $dbname = substr($dbname, 0, $p2);
+  }
+  while($params) {
+    my $token = $params;
+    if(($p2=rindex($params, ";")) != -1) {
+      $token  = substr($params, 0, $p2);
+      $params = substr($params, $p2+1, length($params));
+    } else { $params= undef; }
+    if($token =~ /type=(.*)/) {
+      $type = $1;
+    }
+    if($token =~ /discon=(.*)/) {
+      $discon = $1;
+    }
   }
 
   #print("  conn=$conn\n  dbname=$dbname\n  path=$path\n");
@@ -195,7 +210,7 @@ sub _get_db_connection
   $dba = $_URLFactory_global_instance->{$connectionKey};
   return ($dba,$path) if($dba);
   
-  #print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n");
+  #print("CONNECT via\n  user=$user\n  pass=$pass\n  host=$host\n  port=$port\n  dbname=$dbname\n  path=$path\n  type=$type\n  discon=$discon\n");
   switch ($type) {
     case 'core' { $module = "Bio::EnsEMBL::DBSQL::DBAdaptor"; }
     case 'pipeline' { $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor"; }
@@ -206,7 +221,7 @@ sub _get_db_connection
   }
 
   $dba = "$module"->new (
-          -disconnect_when_inactive => 0,
+          -disconnect_when_inactive => $discon,
           -driver => 'mysql',
           -user   => $user,
           -pass   => $pass,
