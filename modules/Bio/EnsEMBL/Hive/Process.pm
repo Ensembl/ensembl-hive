@@ -167,10 +167,16 @@ sub dataflow_output_id {
 
   $branch_code=1 unless(defined($branch_code));
 
+  # Dataflow works by doing a transform from this process to the next.
+  # The job starts out 'attached' to this process hence the analysis_id, branch_code, and dbID
+  # are all relative to the starting point.  The dataflow process transforms the job to a 
+  # different analysis_id, and moves the dbID to the previous_analysis_job_id
+  
   my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
   $job->input_id($output_id);
   $job->analysis_id($self->analysis->dbID);
   $job->branch_code($branch_code);
+  $job->dbID($self->input_job->dbID);  
   
   #if process uses branch_code 1 explicitly, turn off automatic dataflow
   $self->autoflow_inputjob(0) if($branch_code==1);
