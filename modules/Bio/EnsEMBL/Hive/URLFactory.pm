@@ -215,7 +215,7 @@ sub _get_db_connection
     case 'core' { $module = "Bio::EnsEMBL::DBSQL::DBAdaptor"; }
     case 'pipeline' { $module = "Bio::EnsEMBL::Pipeline::DBSQL::DBAdaptor"; }
     case 'compara' {
-      use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+      eval "require Bio::EnsEMBL::Compara::DBSQL::DBAdaptor";
       $module = "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"; 
     }
   }
