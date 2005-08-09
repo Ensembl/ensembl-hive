@@ -529,6 +529,44 @@ sub reset_dead_jobs_for_worker {
   #print(" done update BROKEN jobs\n");
 }
 
+
+sub reset_dead_job_by_dbID {
+  my $self = shift;
+  my $job_id = shift;
+
+  #added hive_id index to analysis_job table which made this operation much faster
+
+  my $sql;
+  #first just reset the claimed jobs, these don't need a retry_count index increment
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
+         " WHERE status='CLAIMED'".
+         " AND analysis_job_id=$job_id";
+  $self->dbc->do($sql);
+  #print("  done update CLAIMED\n");
+
+  # an update with select on status and hive_id took 4seconds per worker to complete,
+  # while doing a select followed by update on analysis_job_id returned almost instantly
+  
+  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
+         " ,retry_count=retry_count+1".
+         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
+         " AND retry_count<7".
+         " AND analysis_job_id=$job_id";
+  #print("$sql\n");
+  $self->dbc->do($sql);
+
+  $sql = "UPDATE analysis_job SET status='FAILED'".
+         " ,retry_count=retry_count+1".
+         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
+         " AND retry_count>=7".
+         " AND analysis_job_id=$job_id";
+  #print("$sql\n");
+  $self->dbc->do($sql);
+
+  #print(" done update BROKEN jobs\n");
+}
+
+
 =head2 reset_job_by_dbID
 
   Arg [1]    : int $analysis_job_id
@@ -547,7 +585,7 @@ sub reset_job_by_dbID {
 
   my ($sql, $sth);
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET hive_id=0, retry_count=0, job_claim='', status='READY' WHERE analysis_job_id=?";
+  $sql = "UPDATE analysis_job SET hive_id=0, job_claim='', status='READY' WHERE analysis_job_id=?";
   $sth = $self->prepare($sql);
   $sth->execute($analysis_job_id);
   $sth->finish;
