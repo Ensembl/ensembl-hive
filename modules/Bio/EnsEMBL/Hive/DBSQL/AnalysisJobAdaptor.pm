@@ -454,7 +454,8 @@ sub claim_jobs_for_worker {
                  " , hive_id='". $worker->hive_id ."'".
                  " , status='CLAIMED'".
                  " WHERE job_claim='' and status='READY'". 
-                 " AND analysis_id='" .$worker->analysis->dbID. "'";
+                 " AND analysis_id='" .$worker->analysis->dbID. "'" .
+                 " AND hive_id != " . $worker->hive_id;
 
   my $sql_virgin = $sql_base .  
                    " AND retry_count=0".
