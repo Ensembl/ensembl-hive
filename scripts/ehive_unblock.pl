@@ -12,9 +12,13 @@ GetOptions('help'           => \$help,
           );
 
 if ($help) { usage(); }
+unless($url) { printf("must specifiy -url\n\n"); usage(); }
 
 my $job = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
-die("Unable to fecth job via url $url\n") unless($job);
+unless($job and $job->isa('Bio::EnsEMBL::Hive::AnalysisJob')) {
+  printf("Unable to fetch job via url: $url\n\n");
+  usage();
+}
 
 $job->print_job;
 $job->update_status('READY');
