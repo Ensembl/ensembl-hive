@@ -160,7 +160,7 @@ sub autoflow_inputjob {
 =cut
 
 sub dataflow_output_id {
-  my ($self, $output_id, $branch_code) = @_;
+  my ($self, $output_id, $branch_code, $blocked) = @_;
 
   return unless($output_id);
   return unless($self->analysis);
@@ -176,12 +176,13 @@ sub dataflow_output_id {
   $job->input_id($output_id);
   $job->analysis_id($self->analysis->dbID);
   $job->branch_code($branch_code);
-  $job->dbID($self->input_job->dbID);  
+  $job->dbID($self->input_job->dbID);
+  $job->status('BLOCKED') if(defined($blocked) and ($blocked eq 'BLOCKED'));
   
   #if process uses branch_code 1 explicitly, turn off automatic dataflow
   $self->autoflow_inputjob(0) if($branch_code==1);
 
-  $self->queen->flow_output_job($job);  
+  return $self->queen->flow_output_job($job);  
 }
 
 sub debug {

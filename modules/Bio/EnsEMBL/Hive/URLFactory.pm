@@ -102,6 +102,11 @@ sub fetch
       my $adaptor = $dba->get_AnalysisAdaptor;
       return $adaptor->fetch_by_url_query($query);
     }
+    if($table eq 'analysis_job') {
+      #my $adaptor = new Bio::EnsEMBL::DBSQL::AnalysisAdaptor($dba);
+      my $adaptor = $dba->get_AnalysisJobAdaptor;
+      return $adaptor->fetch_by_url_query($query);
+    }
   }
 
   return undef;

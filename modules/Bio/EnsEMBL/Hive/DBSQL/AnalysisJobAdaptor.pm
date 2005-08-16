@@ -221,6 +221,25 @@ sub fetch_all_failed_jobs {
 }
 
 
+sub fetch_by_url_query
+{
+  my $self = shift;
+  my $query = shift;
+
+  return undef unless($query);
+  #print("Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query : $query\n");
+
+  if((my $p=index($query, "=")) != -1) {
+    my $type = substr($query,0, $p);
+    my $value = substr($query,$p+1,length($query));
+
+    if($type eq 'dbID') {
+      return $self->fetch_by_dbID($value);
+    }
+  }
+  return undef;
+}
+
 #
 # INTERNAL METHODS
 #

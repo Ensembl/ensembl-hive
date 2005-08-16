@@ -293,15 +293,23 @@ sub flow_output_job {
   my $job = shift;
   
   return unless($job);
+  my $create_blocked_job = 0;
+  $create_blocked_job = 1 if($job->status eq 'BLOCKED');
   
+  my @output_jobs;
   my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
   foreach my $rule (@{$rules}) {
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
+    my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => $job->input_id,
         -analysis       => $rule->to_analysis,
         -input_job_id   => $job->dbID,
+        -block          => $create_blocked_job
     );
+    my $job_url =  $rule->to_analysis->adaptor->db->dbc->url;
+    $job_url .= "/analysis_job?dbID=" . $job_id;
+    push @output_jobs, $job_url;
   }
+  return \@output_jobs;
 }
 
 
