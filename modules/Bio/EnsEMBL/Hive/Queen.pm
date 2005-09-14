@@ -294,7 +294,7 @@ sub flow_output_job {
   
   return unless($job);
   my $create_blocked_job = 0;
-  $create_blocked_job = 1 if($job->status eq 'BLOCKED');
+  $create_blocked_job = 1 if($job->status and ($job->status eq 'BLOCKED'));
   
   my @output_jobs;
   my $rules = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_job($job);
