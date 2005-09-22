@@ -418,21 +418,15 @@ sub run
     }
     
     foreach my $job (@{$jobs}) {
-      eval {
-        $self->redirect_job_output($job);
-        $self->run_module_with_job($job);
-        $self->close_and_update_job_output($job);      
-              
-        $self->queen->worker_register_job_done($self, $job);
-        $self->work_done($self->work_done + 1);
-      };
-      if($@) {
-        #job threw an exception so it had a problem
-        printf("job %d failed with exception: $@\n", $job->dbID);
-        $self->queen->db->get_AnalysisJobAdaptor->reset_dead_job_by_dbID($job->dbID);
-      }
-    }
     
+      $self->redirect_job_output($job);
+      $self->run_module_with_job($job);
+      $self->close_and_update_job_output($job);      
+            
+      $self->queen->worker_register_job_done($self, $job);
+
+      $self->{'_work_done'}++;
+    }
     my $batch_end = time() * 1000;
     #printf("batch start:%f end:%f\n", $batch_start, $batch_end);
     $self->db->get_AnalysisStatsAdaptor->
