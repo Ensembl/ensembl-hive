@@ -90,6 +90,15 @@ sub db {
   return $self->queen->db;
 }
 
+=head2 dbc
+
+    Title   :   dbc
+    Usage   :   my $hiveDBConnection = $self->dbc;
+    Function:   returns DBConnection to Hive database
+    Returns :   Bio::EnsEMBL::DBSQL::DBConnection
+
+=cut
+
 sub dbc {
   my $self = shift;
   return undef unless($self->queen);
@@ -122,8 +131,9 @@ sub analysis {
 
     Title   :  input_job
     Function:  Gets or sets the AnalysisJob to be run by this process
-               Set by Worker, available to get by the process.               
-    Returns :  Bio::EnsEMBL::Analysis object
+               Set by Worker, available to get by the process.
+               Subclasses should treat this as a read_only object.          
+    Returns :  Bio::EnsEMBL::Hive::AnalysisJob object
 
 =cut
 
@@ -136,6 +146,17 @@ sub input_job {
   }
   return $self->{'_input_job'};
 }
+
+=head2 autoflow_inputjob
+
+    Title   :  autoflow_inputjob
+    Function:  Gets/sets flag for whether the input_job should
+               be automatically dataflowed on branch code 1 when the
+               job completes.  If the subclass manually sends a job along
+               branch 1 with dataflow_output_id, the autoflow will be turned off.
+    Returns :  boolean (1/0/undef)
+
+=cut
 
 sub autoflow_inputjob {
   my $self = shift;
@@ -153,9 +174,9 @@ sub autoflow_inputjob {
     Function:  
       If Process needs to create jobs, this allows it to have 'extra' jobs 
       created and flowed through the dataflow rules of the analysis graph.
-      The 'output_id' becomes the 'input_id' of the newly created job and
+      This 'output_id' becomes the 'input_id' of the newly created job at
       the ends of the dataflow pipes.  The optional 'branch_code' determines
-      which pipe(s) to flow the job through.      
+      which dataflow pipe(s) to flow the job through.      
 
 =cut
 
@@ -186,6 +207,15 @@ sub dataflow_output_id {
   return $self->queen->flow_output_job($job);  
 }
 
+=head2 debug
+
+    Title   :  debug
+    Function:  Gets/sets flag for debug level. Set through Worker/runWorker.pl
+               Subclasses should treat as a read_only variable.
+    Returns :  integer
+
+=cut
+
 sub debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);
@@ -193,6 +223,20 @@ sub debug {
   return $self->{'_debug'};
 }
 
+
+=head2 encode_hash
+
+    Title   :  encode_hash
+    Arg[1]  :  <reference to perl hash> $hash_ref 
+    Function:  Simple convenience method which take a reference to a perl hash and
+               returns a string which is perl code which can be converted back into
+               the hash with an eval statement.  Treats all values in hash as strings
+               so it will not properly encode complex data into perl.
+    Usage   :  $hash_string = $self->encode_hash($has_ref);
+               $hash_ref2 = eval($hash_string);
+    Returns :  <string> perl code
+
+=cut
 
 sub encode_hash {
   my $self = shift;
@@ -212,6 +256,24 @@ sub encode_hash {
   return $hash_string;
 }
 
+=head2 worker_temp_directory
+
+    Title   :  worker_temp_directory
+    Function:  Returns a path to a directory on the local /tmp disk 
+               which the subclass can use as temporary file space.
+               This directory is made the first time the function is called.
+               It presists for as long as the worker is alive.  This allows
+               multiple jobs run by the worker to potentially share data.
+               For example the worker (which is a single Analysis) might need
+               to dump a datafile file which is needed by all jobs run through 
+               this analysis.  The process can first check the worker_temp_directory
+               for the file and dump it if it is missing.  This way the first job
+               run by the worker will do the dump, but subsequent jobs can reuse the 
+               file.
+    Usage   :  $tmp_dir = $self->worker_temp_directory;
+    Returns :  <string> path to a local (/tmp) directory 
+
+=cut
 
 sub worker_temp_directory {
   my $self = shift;
@@ -245,16 +307,36 @@ sub parameters {
 #
 ##########################################
 
+=head2 fetch_input
+
+    Title   :  fetch_input
+    Function:  sublcass should implement function related to data fetching.
+
+=cut
 
 sub fetch_input {
   my $self = shift;
   return 1;
 }
 
+=head2 run
+
+    Title   :  run
+    Function:  sublcass should implement function related to process execution.
+
+=cut
+
 sub run {
   my $self = shift;
   return 1;
 }
+
+=head2 write_output
+
+    Title   :  write_output
+    Function:  sublcass should implement function related to storing results.
+    
+=cut
 
 sub write_output {
   my $self = shift;
