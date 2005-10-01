@@ -92,6 +92,7 @@ sub update_status {
 sub retry_count {
   my $self = shift;
   $self->{'_retry_count'} = shift if(@_);
+  $self->{'_retry_count'} = 0 unless(defined($self->{'_retry_count'}));
   return $self->{'_retry_count'};
 }
 
