@@ -6,6 +6,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
+use Bio::EnsEMBL::Registry;
 
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -25,10 +26,13 @@ $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
 $self->{'job_id'}      = undef;
 $self->{'debug'}       = undef;
-
+$self->{'analysis_job'} = undef;
+$self->{'no_write'}     = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
+my $reg_conf  = undef;
+my $reg_alias = 'hive';
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -51,6 +55,9 @@ GetOptions('help'           => \$help,
            'no_cleanup'     => \$self->{'no_global_cleanup'},
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'debug=i'        => \$self->{'debug'},
+           'no_write'       => \$self->{'no_write'},
+           'reg_file=s'     => \$reg_conf,
+           'reg_alias=s'    => \$reg_alias,
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -60,9 +67,14 @@ if ($help) { usage(); }
 parse_conf($self, $conf_file);
 
 my $DBA;
-if($url) {
+if($reg_conf) {
+  Bio::EnsEMBL::Registry->load_all($reg_conf);
+  $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
+} 
+elsif($url) {
   $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
-} else {
+} 
+else {
   if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
   if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
   if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
@@ -79,7 +91,11 @@ if($url) {
 
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
-  $url = $DBA->url();
+}
+
+unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
+  print("ERROR : no database connection\n\n");
+  usage();
 }
 
 my $queen = $DBA->get_Queen();
@@ -105,7 +121,22 @@ print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
 
 if($self->{'logic_name'}) {
   my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
-  $self->{'analysis_id'} = $analysis->dbID if($analysis);
+  unless($analysis) {
+    printf("logic_name:'%s' does not exist in database\n\n", $self->{'logic_name'});
+    usage();
+  }
+  $self->{'analysis_id'} = $analysis->dbID;
+}
+
+if($self->{'analysis_id'} and $self->{'input_id'}) {
+  $self->{'analysis_job'} = new Bio::EnsEMBL::Hive::AnalysisJob;
+  $self->{'analysis_job'}->input_id($self->{'input_id'});
+  $self->{'analysis_job'}->analysis_id($self->{'analysis_id'}); 
+  $self->{'analysis_job'}->dbID(-1); 
+  printf("creating job outside database\n   ");
+  $self->{'analysis_job'}->print_job;
+  $self->{'debug'}=1 unless(defined($self->{'debug'}));
+  $self->{'outdir'}='' unless(defined($self->{'outdir'}));
 }
 
 if($self->{'job_id'}) {
@@ -117,7 +148,9 @@ if($self->{'job_id'}) {
 my $worker = $queen->create_new_worker(
      -analysis_id    => $self->{'analysis_id'},
      -beekeeper      => $self->{'beekeeper'},
-     -process_id     => $self->{'process_id'}
+     -process_id     => $self->{'process_id'},
+     -job            => $self->{'analysis_job'},
+     -no_write       => $self->{'no_write'},
      );
 unless($worker) {
   $queen->print_analysis_status if($self->{'show_analysis_stats'});
@@ -140,6 +173,7 @@ if($self->{'batch_size'}) {
 }
 if($self->{'job_limit'}) {
   $worker->job_limit($self->{'job_limit'});
+  $worker->batch_size($self->{'job_limit'});
   $worker->life_span(0);
 }
 if($self->{'lifespan'}) {
@@ -151,21 +185,7 @@ if($self->{'no_global_cleanup'}) {
 
 $worker->print_worker();
 
-if($self->{'input_id'}) {
-  $worker->output_dir('');
-  my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
-  $job->input_id($self->{'input_id'});
-  $job->analysis_id(0); #don't link into hive, ie prevents using dataflow rules
-  eval { $worker->run($job); };
-}
-elsif($self->{'analysis_job'}) {
-  my $job = $self->{'analysis_job'};  
-  print("running job_id=", $job->dbID," input_id:", $job->input_id,"\n");
-  eval { $worker->run($job); };
-}
-else {
-  eval { $worker->run(); };
-}
+eval { $worker->run(); };
 
 if($@) {
   #worker threw an exception so it had a problem
@@ -209,12 +229,13 @@ sub usage {
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
   print "  -bk <string>           : beekeeper identifier\n";
   print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
-  print "  -input_id <string>     : test input_id on specified analysis\n";
+  print "  -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)\n";
   print "  -job_id <id>           : run specific job defined by analysis_job_id\n";
   print "  -debug <level>         : turn on debug messages at <level> \n";
   print "  -analysis_stats        : show status of each analysis in hive\n";
   print "  -no_cleanup            : don't perform global_cleanup when worker exits\n";
-  print "runWorker.pl v1.4\n";
+  print "  -no_write              : don't write_output or auto_dataflow input_job\n";
+  print "runWorker.pl v1.5\n";
   
   exit(1);  
 }
