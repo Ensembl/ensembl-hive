@@ -61,12 +61,13 @@ GetOptions('help'           => \$help,
            'sync'           => \$sync,
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'worker_stats'   => \$self->{'show_worker_stats'},
-           'sleep=i'        => \$sleep_time,
+           'sleep=f'        => \$sleep_time,
            'logic_name=s'   => \$self->{'logic_name'},
            'failed_jobs'    => \$self->{'show_failed_jobs'},
            'reset_job_id=i' => \$self->{'reset_job_id'},
            'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
            'lsf_options=s'  => \$self->{'lsf_options'},
+           'job_output=i'   => \$self->{'show_job_output'},
           );
 
 if ($help) { usage(); }
@@ -110,6 +111,7 @@ $self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
 
 if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
+if($self->{'show_job_output'}) { print_job_output($self); }
 
 if($self->{'reset_all_jobs_for_analysis_id'}) { reset_all_jobs_for_analysis_id($self); }
 
@@ -179,10 +181,11 @@ sub usage {
   print "  -analysis_stats        : show status of each analysis\n";
   print "  -worker_stats          : show status of each running worker\n";
   print "  -failed_jobs           : show all failed jobs\n";
+  #print "  -job_output <job_id>   : print stdout/stderr from job_id\n";
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
   print "  -reset_all_jobs_for_analysis_id <num>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
-  print "beekeeper.pl v1.6\n";
+  print "beekeeper.pl v1.7\n";
   
   exit(1);  
 }
@@ -328,6 +331,7 @@ sub show_running_workers {
   }
 }
 
+
 sub show_failed_jobs {
   my $self = shift;
 
@@ -343,6 +347,22 @@ sub show_failed_jobs {
        $job->input_id);
   }
 }
+
+
+sub print_job_output {
+  my $self = shift;
+
+  printf("===== job output\n");
+  my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($self->{'show_job_output'});
+
+  my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID($job->analysis_id);
+  printf("job_id=%d %35s(%5d) input_id='%s'\n", 
+     $job->dbID,
+     $analysis->logic_name,
+     $analysis->dbID,
+     $job->input_id);
+}
+
 
 sub show_failed_workers {
   my $self = shift;
@@ -361,8 +381,6 @@ sub show_failed_workers {
        $worker->last_check_in);
   }
 }
-
-
 
 sub run_autonomously {
   my $self = shift;
@@ -398,6 +416,10 @@ sub run_autonomously {
       print("*** nothing is happening => do a hard resync\n");
       $queen->synchronize_hive();
       $count = $queen->get_num_needed_workers();
+      if($count==0) {
+        printf("Nothing left to do. DONE!!\n\n");
+        $loopit=0;
+      }
     }  
 
     $count = $worker_limit if($count>$worker_limit);    
@@ -434,9 +456,11 @@ sub run_autonomously {
   
     $DBA->dbc->disconnect_if_idle;
     
-    print("sleep $sleep_time minutes. Next loop at ",scalar localtime(time+$sleep_time*60),".\n");
-    sleep($sleep_time*60);  
-    $loopCount++;
+    if($loopit) {
+      printf("sleep %1.2f minutes. Next loop at %s\n", $sleep_time, scalar localtime(time+$sleep_time*60));
+      sleep($sleep_time*60);  
+      $loopCount++;
+    }
   }
   printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 }
