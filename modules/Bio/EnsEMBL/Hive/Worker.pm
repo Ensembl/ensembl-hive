@@ -118,6 +118,12 @@ sub debug {
   $self->{'_debug'}=0 unless(defined($self->{'_debug'}));
   return $self->{'_debug'};
 }
+sub execute_writes {
+  my $self = shift;
+  $self->{'_execute_writes'} = shift if(@_);
+  $self->{'_execute_writes'}=1 unless(defined($self->{'_execute_writes'}));
+  return $self->{'_execute_writes'};
+}
 
 =head2 analysis
 
@@ -380,7 +386,7 @@ sub batch_size {
 sub run
 {
   my $self = shift;
-  my $specific_job = shift;
+  my $specific_job = $self->_specific_job;
 
   if($self->output_dir()) {
     open OLDOUT, ">&STDOUT";
@@ -392,7 +398,6 @@ sub run
     open STDOUT, ">&WORKER_STDOUT";
     open STDERR, ">&WORKER_STDERR";
   }
-  $self->print_worker();
 
   $self->db->dbc->disconnect_when_inactive(0);
 
@@ -404,6 +409,7 @@ sub run
     if($specific_job) {
       $self->queen->worker_reclaim_job($self,$specific_job);
       push @$jobs, $specific_job;
+      $alive=undef;
     } else {
       $jobs = $self->queen->worker_grab_jobs($self);
     }
@@ -494,22 +500,26 @@ sub run_module_with_job
   }
   
   $job->update_status('GET_INPUT');
-  print("GET_INPUT\n") if($self->debug); 
+  print("\nGET_INPUT\n") if($self->debug); 
   $runObj->fetch_input;
 
   $job->update_status('RUN');
-  print("RUN\n") if($self->debug); 
+  print("\nRUN\n") if($self->debug); 
   $runObj->run;
 
-  $job->update_status('WRITE_OUTPUT');
-  print("WRITE_OUTPUT\n") if($self->debug); 
-  $runObj->write_output;
+  if($self->execute_writes) {
+    $job->update_status('WRITE_OUTPUT');
+    print("\nWRITE_OUTPUT\n") if($self->debug); 
+    $runObj->write_output;
+  } else {
+    print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
+  }
   
   $job->query_count($self->queen->dbc->query_count);
   $job->runtime_msec(time()*1000 - $start_time);
   
-  unless($runObj->isa("Bio::EnsEMBL::Hive::Process") and
-         !($runObj->autoflow_inputjob)) {
+  unless(($runObj->isa("Bio::EnsEMBL::Hive::Process") and !($runObj->autoflow_inputjob)) 
+      or !($self->execute_writes)) {
     printf("AUTOFLOW input->output\n") if($self->debug);
     $self->queen->flow_output_job($job);
   }
@@ -526,6 +536,7 @@ sub redirect_job_output
   my $outdir = $self->output_dir();
   return unless($outdir);
   return unless($job);
+  return unless($job->adaptor);
 
   $job->stdout_file($outdir . "/job_".$job->dbID.".out");
   $job->stderr_file($outdir . "/job_".$job->dbID.".err");
@@ -547,6 +558,7 @@ sub close_and_update_job_output
 
   return unless($job);
   return unless($self->output_dir);
+  return unless($job->adaptor);
 
   if(-z $job->stdout_file) {
     #print("unlink zero size ", $job->stdout_file, "\n");
@@ -578,5 +590,10 @@ sub check_system_load {
   return 1;  #everything ok
 }
 
+sub _specific_job {
+  my $self = shift;
+  $self->{'_specific_job'} = shift if(@_);
+  return $self->{'_specific_job'};
+}
 
 1;

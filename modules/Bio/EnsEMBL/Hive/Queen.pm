@@ -99,13 +99,13 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($analysis_id, $beekeeper ,$pid, $job) =
-     rearrange([qw(analysis_id beekeeper process_id) ], @args);
+  my ($analysis_id, $beekeeper ,$pid, $job, $no_write) =
+     rearrange([qw(analysis_id beekeeper process_id job no_write) ], @args);
 
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
 
-  return undef if($self->get_hive_current_load() >= 1.5);
+  $analysis_id = $job->analysis_id if(defined($job));
   
   my $analysisStats;
   if($analysis_id) {
@@ -117,19 +117,23 @@ sub create_new_worker {
   }
   return undef unless($analysisStats);
 
-  
-  $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
-  $analysisStats->print_stats;
-  
-  if($analysisStats->status eq 'BLOCKED') {
-    print("Analysis is BLOCKED, can't create workers\n");
-    return undef;
+  unless($job) {
+    #go into autonomous mode
+    return undef if($self->get_hive_current_load() >= 1.5);
+    
+    $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
+    $analysisStats->print_stats;
+    
+    if($analysisStats->status eq 'BLOCKED') {
+      print("Analysis is BLOCKED, can't create workers\n");
+      return undef;
+    }
+    if($analysisStats->status eq 'DONE') {
+      print("Analysis is DONE, don't need to create workers\n");
+      return undef;
+    }
   }
-  if($analysisStats->status eq 'DONE') {
-    print("Analysis is DONE, don't need to create workers\n");
-    return undef;
-  }
-
+  
   my $host = hostname;
   $pid = $$ unless($pid);
   $beekeeper = '' unless($beekeeper);
@@ -149,6 +153,10 @@ sub create_new_worker {
   if($worker and $analysisStats) {
     $analysisStats->update_status('WORKING');
   }
+  
+  $worker->_specific_job($job) if(defined($job));
+  $worker->execute_writes(0) if($no_write);
+  
   return $worker;
 }
 
