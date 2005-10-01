@@ -1,6 +1,4 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+# You may distribute this module under the same terms as perl itself #
 # POD documentation - main docs before the code
 
 =pod 
@@ -13,11 +11,67 @@
 
 =head1 SYNOPSIS
 
-  Object categories to extend the functionality of existing classes
-
-=cut
-
-=head1 DESCRIPTION
+  Abstract superclass.  Each Process makes up the individual building blocks 
+  of the system.  Instances of these processes are created in a hive workflow 
+  graph of Analysis entries that are linked together with dataflow and 
+  AnalysisCtrl rules.
+  
+  Instances of these Processes are created by the system as work is done.
+  The newly created Process will have preset $self->queen, $self->dbc, 
+  $self->input_id, $self->analysis and several other variables. 
+  From this input and configuration data, each Process can then proceed to 
+  do something.  The flow of execution within a Process is:
+    fetch_input();
+    run();
+    write_output();
+    DESTROY
+  The developer can implement their own versions of fetch_input, run, 
+  write_output, and DESTROY to do what they need.  
+  
+  The entire system is based around the concept of a workflow graph which
+  can split and loop back on itself.  This is accomplished by dataflow
+  rules (or pipes) that connect one Process (or analysis) to others.
+  Where a unix commandline program can send output on STDOUT STDERR pipes, 
+  a hive Process has access to unlimited pipes referenced by numerical 
+  branch_codes. This is accomplished within the Process via 
+  $self->dataflow_output_id(...);  
+  
+  The design philosophy is that each Process does it's work and creates output, 
+  but it doesn't worry about where the input came from, or where it's output 
+  goes. If the system has dataflow pipes connected, then the output jobs 
+  have purpose, if not the output work is thrown away.  The workflow graph 
+  'controls' the behaviour of the system, not the processes.  The processes just 
+  need to do their job.  The design of the workflow graph is based on the knowledge 
+  of what each Process does so that the graph can be correctly constructed.
+  The workflow graph can be constructed a priori or can be constructed and 
+  modified by intelligent Processes as the system runs.
+  
+  
+  The Hive is based on AI concepts and modeled on the social structure and 
+  behaviour of a honey bee hive. So where a worker honey bee's purpose is
+  (go find pollen, bring back to hive, drop off pollen, repeat), an ensembl-hive 
+  worker's purpose is (find a job, create a Process for that job, run it,
+  drop off output job(s), repeat).  While most workflow systems are based 
+  on 'smart' central controllers and external control of 'dumb' processes, 
+  the Hive is based on 'dumb' workflow graphs and job kiosk, and 'smart' workers 
+  (autonomous agents) who are self configuring and figure out for themselves what 
+  needs to be done, and then do it.  The workers are based around a set of 
+  emergent behaviour rules which allow a predictible system behaviour to emerge 
+  from what otherwise might appear at first glance to be a chaotic system. There 
+  is an inherent asynchronous disconnect between one worker and the next.  
+  Work (or jobs) are simply 'posted' on a blackboard or kiosk within the hive 
+  database where other workers can find them.  
+  The emergent behaviour rules of a worker are:
+     1) If a job is posted, someone needs to do it.
+     2) Don't grab something that someone else is working on
+     3) Don't grab more than you can handle
+     4) If you grab a job, it needs to be finished correctly
+     5) Keep busy doing work
+     6) If you fail, do the best you can to report back
+  For further reading on the AI principles employed in this design see:
+     http://en.wikipedia.org/wiki/Autonomous_Agent
+     http://en.wikipedia.org/wiki/Emergence
+  
 
 =cut
 
@@ -54,11 +108,87 @@ sub new {
   return $self;
 }
 
+
+##########################################
+#
+# methods subclasses should override 
+# in order to give this process function
+#
+##########################################
+
+=head2 fetch_input
+
+    Title   :  fetch_input
+    Function:  sublcass can implement functions related to data fetching.
+               Typical acivities would be to parse $self->input_id and read
+               configuration information from $self->analysis.  Subclasses
+               may also want to fetch data from databases or from files 
+               within this function.
+
+=cut
+
+sub fetch_input {
+  my $self = shift;
+  return 1;
+}
+
+=head2 run
+
+    Title   :  run
+    Function:  sublcass can implement functions related to process execution.
+               Typical activities include running external programs or running
+               algorithms by calling perl methods.  Process may also choose to
+               parse results into memory if an external program was used.
+
+=cut
+
+sub run {
+  my $self = shift;
+  return 1;
+}
+
+=head2 write_output
+
+    Title   :  write_output
+    Function:  sublcass can implement functions related to storing results.
+               Typical activities including writing results into database tables
+               or into files on a shared filesystem.
+               
+=cut
+
+sub write_output {
+  my $self = shift;
+  return 1;
+}
+
+=head2 DESTROY
+
+    Title   :  DESTROY
+    Function:  sublcass can implement functions related to cleanup and release.
+               Typical activities includes freeing datastructures or 
+	       closing files. 
+
+=cut
+
+sub DESTROY {
+  my $self = shift;
+  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+}
+
+
+######################################################
+#
+# methods that subclasses can use to get access
+# to hive infrastructure
+#
+######################################################
+
+
 =head2 queen
 
     Title   :   queen
-    Usage   :   my $hiveDBA = $self->db;
-    Function:   getter/setter for 'Queen' this Process was created by
+    Usage   :   my $hiveDBA = $self->queen;
+    Function:   returns the 'Queen' this Process was created by
     Returns :   Bio::EnsEMBL::Hive::Queen
 
 =cut
@@ -109,10 +239,9 @@ sub dbc {
 
     Title   :  analysis
     Usage   :  $self->analysis;
-    Function:  Gets or sets the stored Analysis object
-               Set by Worker, available to get by the process.               
+    Function:  Returns the Analysis object associated with this
+               instance of the Process.
     Returns :  Bio::EnsEMBL::Analysis object
-    Args    :  Bio::EnsEMBL::Analysis object
 
 =cut
 
@@ -130,8 +259,7 @@ sub analysis {
 =head2 input_job
 
     Title   :  input_job
-    Function:  Gets or sets the AnalysisJob to be run by this process
-               Set by Worker, available to get by the process.
+    Function:  Returns the AnalysisJob to be run by this process
                Subclasses should treat this as a read_only object.          
     Returns :  Bio::EnsEMBL::Hive::AnalysisJob object
 
@@ -172,8 +300,8 @@ sub autoflow_inputjob {
     Arg[2](opt)  :  <int> $branch_code (optional, defaults to 1)
     Usage        :  $self->dataflow_output_id($output_id, $branch_code);
     Function:  
-      If Process needs to create jobs, this allows it to have 'extra' jobs 
-      created and flowed through the dataflow rules of the analysis graph.
+      If Process needs to create jobs, this allows it to have jobs 
+      created and flowed through the dataflow rules of the workflow graph.
       This 'output_id' becomes the 'input_id' of the newly created job at
       the ends of the dataflow pipes.  The optional 'branch_code' determines
       which dataflow pipe(s) to flow the job through.      
@@ -262,8 +390,8 @@ sub encode_hash {
     Function:  Returns a path to a directory on the local /tmp disk 
                which the subclass can use as temporary file space.
                This directory is made the first time the function is called.
-               It presists for as long as the worker is alive.  This allows
-               multiple jobs run by the worker to potentially share data.
+               It persists for as long as the worker is alive.  This allows
+               multiple jobs run by the worker to potentially share temp data.
                For example the worker (which is a single Analysis) might need
                to dump a datafile file which is needed by all jobs run through 
                this analysis.  The process can first check the worker_temp_directory
@@ -300,48 +428,6 @@ sub parameters {
 }
 
 
-##########################################
-#
-# methods subclasses should override 
-# in order to give this process function
-#
-##########################################
-
-=head2 fetch_input
-
-    Title   :  fetch_input
-    Function:  sublcass should implement function related to data fetching.
-
-=cut
-
-sub fetch_input {
-  my $self = shift;
-  return 1;
-}
-
-=head2 run
-
-    Title   :  run
-    Function:  sublcass should implement function related to process execution.
-
-=cut
-
-sub run {
-  my $self = shift;
-  return 1;
-}
-
-=head2 write_output
-
-    Title   :  write_output
-    Function:  sublcass should implement function related to storing results.
-    
-=cut
-
-sub write_output {
-  my $self = shift;
-  return 1;
-}
 
 
 1;
