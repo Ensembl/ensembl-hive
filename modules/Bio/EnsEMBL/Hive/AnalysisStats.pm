@@ -135,6 +135,13 @@ sub running_job_count {
          - $self->failed_job_count;
 }
 
+sub remaining_job_count {
+  my $self = shift;
+  return $self->total_job_count
+         - $self->done_job_count
+         - $self->failed_job_count;
+}
+
 sub num_required_workers {
   my $self = shift;
   $self->{'_num_required_workers'} = shift if(@_);
@@ -186,10 +193,13 @@ sub print_stats {
   if($mode == 1) {
     # printf("%s(%d) %s %d:ms %d:cpu (%d:q %d:r %d:d %d:f %d:t) [%d/%d workers] (%d secs synched)\n",
     #printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
-    printf("$name %11s %d:cpum job(%d/%d r:%d f:%d %dms) worker[%d/%d] (sync %d)\n",
+    printf("$name %11s %d:cpum job(%d/%d run:%d fail:%d %dms) worker[%d/%d] (sync %d)\n",
         $self->status,
 	$self->cpu_minutes_remaining,
-        $self->done_job_count,$self->total_job_count,$self->running_job_count,$self->failed_job_count,
+        $self->remaining_job_count,
+        $self->total_job_count,
+        $self->running_job_count,
+        $self->failed_job_count,
         $self->avg_msec_per_job,
         $self->num_required_workers, $self->hive_capacity,
         $self->seconds_since_last_update,
