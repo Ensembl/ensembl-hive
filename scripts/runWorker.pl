@@ -56,8 +56,9 @@ GetOptions('help'           => \$help,
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'debug=i'        => \$self->{'debug'},
            'no_write'       => \$self->{'no_write'},
-           'reg_file=s'     => \$reg_conf,
-           'reg_alias=s'    => \$reg_alias,
+           'nowrite'        => \$self->{'no_write'},
+           'regfile=s'      => \$reg_conf,
+           'regname=s'      => \$reg_alias,
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -214,6 +215,8 @@ exit(0);
 sub usage {
   print "runWorker.pl [options]\n";
   print "  -help                  : print this help\n";
+  print "  -regfile <path>        : path to a Registry configuration file\n";
+  print "  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
   print "  -url <url string>      : url defining where database is located\n";
   print "  -conf <path>           : config file describing db connection\n";
   print "  -dbhost <machine>      : mysql database host <machine>\n";
@@ -235,7 +238,7 @@ sub usage {
   print "  -analysis_stats        : show status of each analysis in hive\n";
   print "  -no_cleanup            : don't perform global_cleanup when worker exits\n";
   print "  -no_write              : don't write_output or auto_dataflow input_job\n";
-  print "runWorker.pl v1.5\n";
+  print "runWorker.pl v1.6\n";
   
   exit(1);  
 }

@@ -30,13 +30,15 @@ my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 my ($job_limit, $batch_size);
 my $loopit=0;
 my $worker_limit = 50;
-my $sleep_time = 3;
+my $sleep_time = 2;
 my $sync=0;
 my $local=undef;
-$self->{'overdue_limit'} = 75; #minutes
+$self->{'overdue_limit'} = 60; #minutes
 $self->{'show_analysis_stats'} = undef;
 $self->{'show_worker_stats'} = undef;
 $self->{'lsf_options'} = "";
+my $regfile  = undef;
+my $reg_alias = 'hive';
 
 GetOptions('help'           => \$help,
            'url=s'          => \$url,
@@ -68,6 +70,8 @@ GetOptions('help'           => \$help,
            'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
            'lsf_options=s'  => \$self->{'lsf_options'},
            'job_output=i'   => \$self->{'show_job_output'},
+           'regfile=s'      => \$regfile,
+           'regname=s'      => \$reg_alias,
           );
 
 if ($help) { usage(); }
@@ -84,8 +88,11 @@ if($self->{'run'}) {
 }
 
 my $DBA;
-
-if($url) {
+if($regfile) {
+  Bio::EnsEMBL::Registry->load_all($regfile);
+  $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
+} 
+elsif($url) {
   $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
   die("Unable to connect to $url\n") unless($DBA);
 } else {
@@ -106,6 +113,7 @@ if($url) {
 
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+  $url = $DBA->dbc->url;
 }
 $self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
@@ -158,6 +166,8 @@ exit(0);
 sub usage {
   print "beekeeper.pl [options]\n";
   print "  -help                  : print this help\n";
+  print "  -regfile <path>        : path to a Registry configuration file\n";
+  print "  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
   print "  -url <url string>      : url defining where hive database is located\n";
   print "  -conf <path>           : config file describing db connection\n";
   print "  -dbhost <machine>      : mysql database host <machine>\n";
@@ -185,7 +195,7 @@ sub usage {
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
   print "  -reset_all_jobs_for_analysis_id <num>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
-  print "beekeeper.pl v1.7\n";
+  print "beekeeper.pl v1.8\n";
   
   exit(1);  
 }
@@ -427,11 +437,15 @@ sub run_autonomously {
     
     if($count>0) {
       print("need $count workers\n");
-      $worker_cmd = "runWorker.pl -url $url -bk ". $self->{'beekeeper_type'};
+      $worker_cmd = "runWorker.pl -bk ". $self->{'beekeeper_type'};
+      
+      
       $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
       $worker_cmd .= " -logic_name $logic_name" if(defined $logic_name);
-
+      if($regfile) { $worker_cmd .= " -regfile $regfile -regname $reg_alias"; }
+      else { $worker_cmd .= " -url $url"; }
+      
       $cmd = undef;
       if($self->{'beekeeper_type'} eq 'LSF') {
         if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\]";}
