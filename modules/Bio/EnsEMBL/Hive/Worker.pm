@@ -350,7 +350,7 @@ sub batch_size {
     $stats->update;
   }  
   
-  if(($batch_size == 0) and ($stats->avg_msec_per_job)) {
+  if(($batch_size <= 0) and ($stats->avg_msec_per_job)) {
     $batch_size = int(120000 / $stats->avg_msec_per_job); # num jobs in 120 secs
   }
   $batch_size = 1 if($batch_size < 1); # make sure we grab at least one job
