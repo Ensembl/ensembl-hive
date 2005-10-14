@@ -119,7 +119,7 @@ sub create_new_worker {
 
   unless($job) {
     #go into autonomous mode
-    return undef if($self->get_hive_current_load() >= 1.5);
+    return undef if($self->get_hive_current_load() >= 1.1);
     
     $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
     $analysisStats->print_stats;
