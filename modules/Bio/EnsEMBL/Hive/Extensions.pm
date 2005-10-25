@@ -64,6 +64,9 @@ sub Bio::EnsEMBL::Analysis::process
   die("self must be a [Bio::EnsEMBL::Analysis] not a [$self]")
     unless($self->isa('Bio::EnsEMBL::Analysis'));
 
+  throw("analysis ". $self->logic_name . " has an undefined analysis.module")
+    unless($self->module);
+
   my $process_class;
   if($self->module =~ /::/) { $process_class = $self->module; }
   else { $process_class = "Bio::EnsEMBL::Pipeline::RunnableDB::".$self->module; }
