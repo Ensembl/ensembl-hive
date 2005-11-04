@@ -36,7 +36,7 @@ my $sleep_time = 2;
 my $sync=0;
 my $local=undef;
 $self->{'overdue_limit'} = 60; #minutes
-$self->{'show_analysis_stats'} = undef;
+$self->{'no_analysis_stats'} = undef;
 $self->{'show_worker_stats'} = undef;
 $self->{'lsf_options'} = "";
 my $regfile  = undef;
@@ -63,7 +63,7 @@ GetOptions('help'           => \$help,
            'loop'           => \$loopit,
            'no_pend'        => \$self->{'no_pend_adjust'},
            'sync'           => \$sync,
-           'analysis_stats' => \$self->{'show_analysis_stats'},
+           'no_analysis_stats' => \$self->{'no_analysis_stats'},
            'worker_stats'   => \$self->{'show_worker_stats'},
            'sleep=f'        => \$sleep_time,
            'logic_name=s'   => \$self->{'logic_name'},
@@ -141,7 +141,7 @@ if($loopit) {
   $stats->print_stats;
 } else { 
   $queen->synchronize_hive() if($sync);
-  $queen->print_analysis_status if($self->{'show_analysis_stats'});
+  $queen->print_analysis_status unless($self->{'no_analysis_stats'});
 
   $queen->print_running_worker_status;
 
@@ -190,14 +190,14 @@ sub usage {
   print "  -no_pend               : don't adjust needed workers by pending workers\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 3min)\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
-  print "  -analysis_stats        : show status of each analysis\n";
+  print "  -no_analysis_stats     : don't show status of each analysis\n";
   print "  -worker_stats          : show status of each running worker\n";
   print "  -failed_jobs           : show all failed jobs\n";
   #print "  -job_output <job_id>   : print stdout/stderr from job_id\n";
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
   print "  -reset_all_jobs_for_analysis_id <num>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
-  print "beekeeper.pl v1.8\n";
+  print "beekeeper.pl v1.9\n";
   
   exit(1);  
 }
@@ -410,7 +410,7 @@ sub run_autonomously {
 
     check_for_dead_workers($self, $queen);
 
-    $queen->print_analysis_status if($self->{'show_analysis_stats'});
+    $queen->print_analysis_status unless($self->{'no_analysis_stats'});
 
     $queen->print_running_worker_status;
     #show_failed_workers($self);
