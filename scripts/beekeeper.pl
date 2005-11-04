@@ -69,7 +69,7 @@ GetOptions('help'           => \$help,
            'logic_name=s'   => \$self->{'logic_name'},
            'failed_jobs'    => \$self->{'show_failed_jobs'},
            'reset_job_id=i' => \$self->{'reset_job_id'},
-           'reset_all_jobs_for_analysis_id=i' => \$self->{'reset_all_jobs_for_analysis_id'},
+           'reset_all_jobs_for_analysis=s' => \$self->{'reset_all_jobs_for_analysis'},
            'lsf_options=s'  => \$self->{'lsf_options'},
            'job_output=i'   => \$self->{'show_job_output'},
            'regfile=s'      => \$regfile,
@@ -123,7 +123,7 @@ my $queen = $DBA->get_Queen;
 if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
 if($self->{'show_job_output'}) { print_job_output($self); }
 
-if($self->{'reset_all_jobs_for_analysis_id'}) { reset_all_jobs_for_analysis_id($self); }
+if($self->{'reset_all_jobs_for_analysis'}) { reset_all_jobs_for_analysis($self); }
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
 if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
@@ -195,7 +195,7 @@ sub usage {
   print "  -failed_jobs           : show all failed jobs\n";
   #print "  -job_output <job_id>   : print stdout/stderr from job_id\n";
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
-  print "  -reset_all_jobs_for_analysis_id <num>\n";
+  print "  -reset_all_jobs_for_analysis <logic_name>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
   print "beekeeper.pl v1.9\n";
   
@@ -508,11 +508,11 @@ sub get_local_running_count {
 }
 
 
-sub reset_all_jobs_for_analysis_id {
+sub reset_all_jobs_for_analysis {
   my $self = shift;
   
   my $analysis = $self->{'dba'}->get_AnalysisAdaptor->
-                   fetch_by_dbID($self->{'reset_all_jobs_for_analysis_id'}); 
+                   fetch_by_logic_name($self->{'reset_all_jobs_for_analysis'}); 
   
   $self->{'dba'}->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($analysis->dbID); 
 
