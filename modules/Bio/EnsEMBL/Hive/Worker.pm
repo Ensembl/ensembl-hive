@@ -398,6 +398,7 @@ sub run
     open STDOUT, ">&WORKER_STDOUT";
     open STDERR, ">&WORKER_STDERR";
   }
+  $self->print_worker();
 
   $self->db->dbc->disconnect_when_inactive(0);
 
@@ -424,7 +425,8 @@ sub run
     }
     
     foreach my $job (@{$jobs}) {
-    
+      $job->print_job if($self->debug); 
+
       $self->redirect_job_output($job);
       $self->run_module_with_job($job);
       $self->close_and_update_job_output($job);      
