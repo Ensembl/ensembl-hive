@@ -159,7 +159,8 @@ CREATE TABLE analysis_job_file (
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
   
-  UNIQUE KEY job_hive_type  (analysis_job_id, hive_id, type)
+  UNIQUE KEY job_hive_type  (analysis_job_id, hive_id, type),
+  INDEX hive_id             (hive_id)
 );
 
 
