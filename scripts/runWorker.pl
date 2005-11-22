@@ -171,11 +171,10 @@ else {
 }
 
 if($self->{'batch_size'}) {
-  $worker->batch_size($self->{'batch_size'});
+  $worker->set_worker_batch_size($self->{'batch_size'});
 }
 if($self->{'job_limit'}) {
   $worker->job_limit($self->{'job_limit'});
-  $worker->batch_size($self->{'job_limit'});
   $worker->life_span(0);
 }
 if($self->{'lifespan'}) {

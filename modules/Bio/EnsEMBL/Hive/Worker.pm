@@ -339,17 +339,23 @@ sub cleanup_worker_process_temp_directory {
 
 =cut
 
+sub set_worker_batch_size {
+  my $self = shift;
+  my $batch_size = shift;
+  if(defined($batch_size)) {
+    $self->{'_batch_size'} = $batch_size;
+  }
+}
+
 sub batch_size {
   my $self = shift;
-  
+
   my $stats = $self->analysis->stats;
   my $batch_size = $stats->batch_size;
-  if(@_) {
-    $batch_size = shift;
-    $stats->batch_size($batch_size);
-    $stats->update;
-  }  
-  
+  if(defined($self->{'_batch_size'})) {
+    $batch_size = $self->{'_batch_size'};
+  } 
+    
   if(($batch_size <= 0) and ($stats->avg_msec_per_job)) {
     $batch_size = int(120000 / $stats->avg_msec_per_job); # num jobs in 120 secs
   }
