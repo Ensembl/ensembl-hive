@@ -119,6 +119,7 @@ elsif($url) {
 }
 $self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
+$self->{name} = $DBA->get_MetaContainer->list_value_by_key("name")->[0];
 
 if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
 if($self->{'show_job_output'}) { print_job_output($self); }
@@ -130,16 +131,21 @@ if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
 
 my $analysis = $DBA->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
-if($loopit) { 
+if ($loopit) {
+
   run_autonomously($self, $queen);
-} elsif($analysis) {
+
+} elsif ($analysis) {
+
   my $stats = $analysis->stats;
   if($sync) {
     $queen->synchronize_AnalysisStats($stats);
     $queen->check_blocking_control_rules_for_AnalysisStats($stats);
   }
   $stats->print_stats;
+
 } else { 
+
   $queen->synchronize_hive() if($sync);
   $queen->print_analysis_status unless($self->{'no_analysis_stats'});
 
@@ -154,6 +160,7 @@ if($loopit) {
   $queen->get_hive_progress();
   
   show_failed_jobs($self) if($self->{'show_failed_jobs'});
+
 }
 
 exit(0);
@@ -419,7 +426,7 @@ sub run_autonomously {
     my $load     = $queen->get_hive_current_load();
     my $count    = $queen->get_num_needed_workers();
 
-    if($self->{'beekeeper_type'} eq 'LSF') {
+   if($self->{'beekeeper_type'} eq 'LSF') {
       $count = $count - $self->get_lsf_pending_count();
     }
 
@@ -437,26 +444,36 @@ sub run_autonomously {
     $count = $worker_limit if($count>$worker_limit);    
     my $logic_name = $self->{'logic_name'};
     
-    if($count>0) {
+    if ($count>0) {
       print("need $count workers\n");
       $worker_cmd = "runWorker.pl -bk ". $self->{'beekeeper_type'};
-      
-      
       $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
       $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
       $worker_cmd .= " -logic_name $logic_name" if(defined $logic_name);
-      if($regfile) { $worker_cmd .= " -regfile $regfile -regname $reg_alias"; }
-      else { $worker_cmd .= " -url $url"; }
+
+      if ($regfile) {
+        $worker_cmd .= " -regfile $regfile -regname $reg_alias";
+      } else {
+        $worker_cmd .= " -url $url";
+      }
       
       $cmd = undef;
-      if($self->{'beekeeper_type'} eq 'LSF') {
-        if($count>1) { $cmd = "bsub -JHL$loopCount\[1-$count\]";}
-        else { $cmd = "bsub -JHL$loopCount";}
-        $cmd .= " " . $self->{'lsf_options'} if($self->{'lsf_options'});
+      if ($self->{'beekeeper_type'} eq 'LSF') {
+        my $lsf_job_name = "";
+        if ($self->{name}) {
+          $lsf_job_name = $self->{name}. "-";
+        }
+        if ($count>1) {
+          $lsf_job_name .= "HL$loopCount\[1-$count\]";
+        } else {
+          $lsf_job_name .= "HL$loopCount";
+        }
+        $cmd = "bsub -J\"$lsf_job_name\"";
+        $cmd .= " " . $self->{'lsf_options'} if ($self->{'lsf_options'});
         $cmd .= " ".$worker_cmd;
-      } elsif(($self->{'beekeeper_type'} eq 'LOCAL') and
-              ($self->get_local_running_count() < $self->{'local_cpus'}))
-      {
+
+      } elsif (($self->{'beekeeper_type'} eq 'LOCAL')
+          and ($self->get_local_running_count() < $self->{'local_cpus'})) {
         $cmd = "$worker_cmd &";
       }
 
@@ -487,7 +504,12 @@ sub get_lsf_pending_count {
 
   return 0 if($self->{'no_pend_adjust'});
 
-  my $cmd = "bjobs | grep -c PEND";
+  my $cmd;
+  if ($self->{name}) {
+    $cmd = "bjobs -w | grep '".$self->{name}."-HL' | grep -c PEND";
+  } else {
+    $cmd = "bjobs -w | grep -c PEND";
+  }
   my $pend_count = qx/$cmd/;
   chomp($pend_count);
 
