@@ -569,10 +569,12 @@ sub get_num_running_workers {
 
 =head2 get_num_needed_workers
 
+  Arg[1]     : Bio::EnsEMBL::Analysis object (optional)
   Example    : $count = $queen->get_num_needed_workers();
   Description: Runs through the analyses in the system which are waiting
                for workers to be created for them.  Calculates the maximum
                number of workers needed to fill the current needs of the system
+               If Arg[1] is defined, does it only for the given analysis.
   Exceptions : none
   Caller     : beekeepers and other external processes
 
@@ -580,6 +582,7 @@ sub get_num_running_workers {
 
 sub get_num_needed_workers {
   my $self = shift;
+  my $analysis = shift;
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   my $neededAnals = $statsDBA->fetch_by_needed_workers();
@@ -593,6 +596,8 @@ sub get_num_needed_workers {
 
   my $numWorkers = 0;
   foreach my $analysis_stats (@{$neededAnals}) {
+    next if (defined $analysis && $analysis->dbID != $analysis_stats->analysis_id);
+
     #$analysis_stats->print_stats();
 
     #digging deeper under the surface so need to sync
