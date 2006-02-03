@@ -133,7 +133,7 @@ my $analysis = $DBA->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_nam
 
 if ($loopit) {
 
-  run_autonomously($self, $queen);
+  run_autonomously($self, $queen, $analysis);
 
 } elsif ($analysis) {
 
@@ -143,6 +143,9 @@ if ($loopit) {
     $queen->check_blocking_control_rules_for_AnalysisStats($stats);
   }
   $stats->print_stats;
+  $queen->print_running_worker_status;
+  $queen->get_num_needed_workers($analysis);
+  $queen->get_hive_progress();
 
 } else { 
 
@@ -196,6 +199,7 @@ sub usage {
   print "  -lsf_options <string>  : passes <string> to LSF bsub command as <options>\n";
   print "  -no_pend               : don't adjust needed workers by pending workers\n";
   print "  -sleep <num>           : when looping, sleep <num> minutes (default 3min)\n";
+  print "  -logic_name <string>   : restrict the pipeline stat/runs to this analysis logic_name\n";
   print "  -wlimit <num>          : max # workers to create per loop\n";
   print "  -no_analysis_stats     : don't show status of each analysis\n";
   print "  -worker_stats          : show status of each running worker\n";
@@ -404,6 +408,7 @@ sub show_failed_workers {
 sub run_autonomously {
   my $self = shift;
   my $queen = shift;
+  my $analysis = shift;
 
   unless(`runWorker.pl`) {
     print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -424,17 +429,23 @@ sub run_autonomously {
     
     my $runCount = $queen->get_num_running_workers();
     my $load     = $queen->get_hive_current_load();
-    my $count    = $queen->get_num_needed_workers();
+    my $count    = $queen->get_num_needed_workers($analysis);
 
-   if($self->{'beekeeper_type'} eq 'LSF') {
+    if($self->{'beekeeper_type'} eq 'LSF') {
       $count = $count - $self->get_lsf_pending_count();
     }
 
     if($load==0 and $count==0 and $runCount==0) {
       #nothing running and nothing todo => do hard resync
       print("*** nothing is happening => do a hard resync\n");
-      $queen->synchronize_hive();
-      $count = $queen->get_num_needed_workers();
+      if($analysis) {
+        my $stats = $analysis->stats;
+        $queen->synchronize_AnalysisStats($stats);
+        $queen->check_blocking_control_rules_for_AnalysisStats($stats);
+      } else {
+        $queen->synchronize_hive();
+      }
+      $count = $queen->get_num_needed_workers($analysis);
       if($count==0) {
         printf("Nothing left to do. DONE!!\n\n");
         $loopit=0;
