@@ -568,8 +568,10 @@ sub close_and_update_job_output
   return unless($self->output_dir);
   return unless($job->adaptor);
 
-  close STDOUT;
-  close STDERR;
+
+  # the following flushes $job->stderr_file and $job->stdout_file
+  open STDOUT, ">&WORKER_STDOUT";
+  open STDERR, ">&WORKER_STDERR";
 
   if(-z $job->stdout_file) {
     #print("unlink zero size ", $job->stdout_file, "\n");
@@ -584,8 +586,6 @@ sub close_and_update_job_output
 
   $job->adaptor->store_out_files($job) if($job->adaptor);
 
-  open STDOUT, ">&WORKER_STDOUT";
-  open STDERR, ">&WORKER_STDERR";
 }
 
 
