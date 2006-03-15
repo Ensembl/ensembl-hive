@@ -147,6 +147,18 @@ sub remove {
 }
 
 
+=head2 create_rule
+
+  Title   : create_rule
+  Usage   : $self->create_rule( $from_analysis, $to_analysis );
+  Function: Creates and stores a new rule in the DB.
+  Returns : Bio::EnsEMBL::Hive::DataflowRule
+  Args[1] : Bio::EnsEMBL::Analysis $from_analysis
+  Args[1] : Bio::EnsEMBL::Analysis $to_analysis
+  Args[1] : (optional) int $branch_code
+
+=cut
+
 sub create_rule {
   my ($self, $fromAnalysis, $toAnalysis, $branchCode) = @_;
 
