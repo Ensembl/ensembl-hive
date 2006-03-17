@@ -430,12 +430,14 @@ sub run_autonomously {
     my $runCount = $queen->get_num_running_workers();
     my $load     = $queen->get_hive_current_load();
     my $count    = $queen->get_num_needed_workers($analysis);
+    my $lsf_pending_count = 0;
 
     if($self->{'beekeeper_type'} eq 'LSF') {
-      $count = $count - $self->get_lsf_pending_count();
+      $lsf_pending_count = $self->get_lsf_pending_count();
+      $count = $count - $lsf_pending_count;
     }
 
-    if($load==0 and $count==0 and $runCount==0) {
+    if($load==0 and $count==0 and $runCount==0 and $lsf_pending_count==0) {
       #nothing running and nothing todo => do hard resync
       print("*** nothing is happening => do a hard resync\n");
       if($analysis) {
@@ -446,7 +448,10 @@ sub run_autonomously {
         $queen->synchronize_hive();
       }
       $count = $queen->get_num_needed_workers($analysis);
-      if($count==0) {
+      if($count==0 && $analysis) {
+        printf("Nothing left to do for analysis ".$analysis->logic_name.". DONE!!\n\n");
+        $loopit=0;
+      } elsif ($count == 0) {
         printf("Nothing left to do. DONE!!\n\n");
         $loopit=0;
       }
