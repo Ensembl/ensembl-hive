@@ -57,6 +57,7 @@ GetOptions('help'           => \$help,
            'overdue'        => \$self->{'overdue_limit'},
            'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
+           'run_job_id=i'   => \$self->{'run_job_id'},
            'jlimit=i'       => \$job_limit,
            'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
@@ -84,7 +85,7 @@ if($local) {
 
 parse_conf($self, $conf_file);
 
-if($self->{'run'}) {
+if($self->{'run'} or $self->{'run_job_id'}) {
   $loopit = 1;
   $self->{'max_loops'} = 1;
 }
@@ -193,6 +194,7 @@ sub usage {
   print "  -overdue <min>         : worker overdue minutes checking if dead\n";
   print "  -alldead               : all outstanding workers\n";
   print "  -run                   : run 1 iteration of automation loop\n";
+  print "  -run_job_id <job_id>   : run 1 iteration for this job_id\n";
   print "  -loop                  : run autonomously, loops and sleeps\n";
   print "  -local                 : run jobs on local CPU (fork)\n";
   print "  -lsf                   : run jobs on LSF compute resource (bsub)\n";
@@ -460,12 +462,17 @@ sub run_autonomously {
     $count = $worker_limit if($count>$worker_limit);    
     my $logic_name = $self->{'logic_name'};
     
-    if ($count>0) {
+    if ($count>0 or $self->{'run_job_id'}) {
       print("need $count workers\n");
       $worker_cmd = "runWorker.pl -bk ". $self->{'beekeeper_type'};
-      $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
-      $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
-      $worker_cmd .= " -logic_name $logic_name" if(defined $logic_name);
+      if ($self->{'run_job_id'}) {
+        $worker_cmd .= " -job_id ".$self->{'run_job_id'};
+        $count = 1; # Avoid to run more than 1 worker! 
+      } else {
+        $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
+        $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
+        $worker_cmd .= " -logic_name $logic_name" if(defined $logic_name);
+      }
 
       if ($regfile) {
         $worker_cmd .= " -regfile $regfile -regname $reg_alias";
