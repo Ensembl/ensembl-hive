@@ -427,10 +427,6 @@ sub parameters {
   return $self->analysis->parameters;
 }
 
-
-#FIXME kfb 11.01.2006 added runnable method from Pipeline/RunnableDB. Required by 
-#PairAligner. 
-
 =head2 runnable
 
     Title   :   runnable
@@ -445,30 +441,20 @@ sub parameters {
 sub runnable {
   my ($self,$arg) = @_;
 
-  if (!defined($self->{'_runnables'})) {
-      $self->{'_runnables'} = [];
+  if (!defined($self->{'runnable'})) {
+      $self->{'runnable'} = [];
   }
   
   if (defined($arg)) {
-#FIXME kfb 11.01.2006 use Analysis/Runnable object rather than Pipeline/RunnableI
-#      if ($arg->isa("Bio::EnsEMBL::Pipeline::RunnableI")) {
-#	  push(@{$self->{'_runnables'}},$arg);
-#      } else {
-#	  &throw("[$arg] is not a Bio::EnsEMBL::Pipeline::RunnableI");
-#      }
-
-      if ($arg->isa("Bio::EnsEMBL::Analysis::Runnable")) {
-	  push(@{$self->{'_runnables'}},$arg);
-      } else {
-	  &throw("[$arg] is not a Bio::EnsEMBL::Analysis::Runnable");
-      }
+    if ($arg->isa("Bio::EnsEMBL::Analysis::Runnable")) {
+      push(@{$self->{'runnable'}},$arg);
+    } else {
+      &throw("[$arg] is not a Bio::EnsEMBL::Analysis::Runnable");
     }
-  
-  return @{$self->{'_runnables'}};  
+  }
+  return @{$self->{'runnable'}};  
 }
 
-#FIXME kfb 11.01.2006 added output method from Pipeline/RunnableDB. Required by 
-#PairAligner. 
 =head2 output
 
     Title   :   output
@@ -478,32 +464,19 @@ sub runnable {
     Args    :   None
 
 =cut
+
 sub output {
-    my ($self) = @_;
-   
-    $self->{'_output'} = [];
-    
-    my @r = $self->runnable;
+  my ($self) = @_;
 
-
-    if(@r && scalar(@r)){
-      foreach my $r ($self->runnable){
-
-	  #FIXME debug
-	  print STDERR "Process output " . scalar(@{$r->output}) . "\n";
-
-	  #FIXME kfb 12.01.2006 
-        #push(@{$self->{'_output'}}, $r->output);
-        push(@{$self->{'_output'}}, @{$r->output});
-      }
+  unless (defined $self->{'output'}) {
+    $self->{'output'} = [];
+    foreach my $r (@{$self->runnable}){
+      push(@{$self->{'output'}}, @{$r->output});
     }
+  }
 
-
-    #FIXME debug
-    print STDERR "_output " . scalar(@{$self->{'_output'}}) . "\n";
-    return @{$self->{'_output'}};
+  return @{$self->{'output'}};
 }
-
 
 1;
 
