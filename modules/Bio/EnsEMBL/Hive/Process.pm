@@ -432,7 +432,7 @@ sub parameters {
     Title   :   runnable
     Usage   :   $self->runnable($arg)
     Function:   Sets a runnable for this RunnableDB
-    Returns :   Bio::EnsEMBL::Analysis::Runnable
+    Returns :   arrayref of Bio::EnsEMBL::Analysis::Runnable
     Args    :   Bio::EnsEMBL::Analysis::Runnable
 
 =cut
@@ -452,7 +452,7 @@ sub runnable {
       &throw("[$arg] is not a Bio::EnsEMBL::Analysis::Runnable");
     }
   }
-  return @{$self->{'runnable'}};  
+  return $self->{'runnable'};  
 }
 
 =head2 output
