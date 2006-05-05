@@ -148,6 +148,10 @@ if ($loopit) {
   $queen->get_num_needed_workers($analysis);
   $queen->get_hive_progress();
 
+} elsif ($self->{'kill_worker_id'}) {
+
+  kill_worker($self, $queen);
+
 } else { 
 
   $queen->synchronize_hive() if($sync);
