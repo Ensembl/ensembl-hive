@@ -1,5 +1,6 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
+use warnings;
 use strict;
 use DBI;
 use Getopt::Long;
@@ -190,6 +191,10 @@ eval { $worker->run(); };
 
 if($@) {
   #worker threw an exception so it had a problem
+  if($worker->perform_global_cleanup) {
+    #have runnable cleanup any global/process files/data it may have created
+    $worker->cleanup_worker_process_temp_directory;
+  }
   print("\n$@");
 	$queen->register_worker_death($worker);
 }
