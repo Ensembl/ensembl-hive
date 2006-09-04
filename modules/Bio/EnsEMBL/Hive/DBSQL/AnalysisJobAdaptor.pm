@@ -647,6 +647,34 @@ sub reset_all_jobs_for_analysis_id {
   $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
 }
 
+=head2 remove_analysis_id
+
+  Arg [1]    : int $analysis_id
+  Example    :
+  Description: Remove the analysis from the database.
+               Jobs should have been killed before.
+  Exceptions : $analysis_id must be defined
+  Caller     :
+
+=cut
+
+sub remove_analysis_id {
+  my $self        = shift;
+  my $analysis_id = shift;
+
+  throw("must define analysis_id") unless($analysis_id);
+
+  my $sql;
+  #first just reset the claimed jobs, these don't need a retry_count index increment
+  $sql = "DELETE FROM analysis WHERE analysis_id=$analysis_id";
+  $self->dbc->do($sql);
+  $sql = "DELETE FROM analysis_stats WHERE analysis_id=$analysis_id";
+  $self->dbc->do($sql);
+  $sql = "DELETE FROM analysis_job WHERE analysis_id=$analysis_id";
+  $self->dbc->do($sql);
+
+}
+
 
 1;
 
