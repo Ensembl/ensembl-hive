@@ -670,7 +670,7 @@ sub print_analysis_status
   my $allStats = $self->db->get_AnalysisStatsAdaptor->fetch_all();
  
   foreach my $analysis_stats (@{$allStats}) {
-    $analysis_stats->print_stats;
+    $analysis_stats->print_stats($self->{'verbose_stats'});
   }
 }
 

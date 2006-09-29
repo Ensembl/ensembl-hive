@@ -38,6 +38,7 @@ my $local=undef;
 $self->{'overdue_limit'} = 60; #minutes
 $self->{'no_analysis_stats'} = undef;
 $self->{'show_worker_stats'} = undef;
+$self->{'verbose_stats'} = 1;
 $self->{'lsf_options'} = "";
 my $regfile  = undef;
 my $reg_alias = 'hive';
@@ -65,6 +66,7 @@ GetOptions('help'           => \$help,
            'no_pend'        => \$self->{'no_pend_adjust'},
            'sync'           => \$sync,
            'no_analysis_stats' => \$self->{'no_analysis_stats'},
+           'verbose_stats=i'   => \$self->{'verbose_stats'},
            'worker_stats'   => \$self->{'show_worker_stats'},
            'sleep=f'        => \$sleep_time,
            'logic_name=s'   => \$self->{'logic_name'},
@@ -146,7 +148,7 @@ if ($loopit) {
     $queen->synchronize_AnalysisStats($stats);
     $queen->check_blocking_control_rules_for_AnalysisStats($stats);
   }
-  $stats->print_stats;
+  $stats->print_stats($self->{'verbose_stats'});
   $queen->print_running_worker_status;
   $queen->get_num_needed_workers($analysis);
   $queen->get_hive_progress();
@@ -431,6 +433,7 @@ sub run_autonomously {
 
     check_for_dead_workers($self, $queen);
 
+    $queen->{'verbose_stats'} = $self->{'verbose_stats'};
     $queen->print_analysis_status unless($self->{'no_analysis_stats'});
 
     $queen->print_running_worker_status;
