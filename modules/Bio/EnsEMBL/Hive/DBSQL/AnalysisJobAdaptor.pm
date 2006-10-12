@@ -666,8 +666,6 @@ sub remove_analysis_id {
 
   my $sql;
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "DELETE FROM analysis WHERE analysis_id=$analysis_id";
-  $self->dbc->do($sql);
   $sql = "DELETE FROM analysis_stats WHERE analysis_id=$analysis_id";
   $self->dbc->do($sql);
   $sql = "DELETE FROM analysis_job WHERE analysis_id=$analysis_id";
