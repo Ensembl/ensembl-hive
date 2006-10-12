@@ -73,7 +73,7 @@ GetOptions('help'           => \$help,
            'failed_jobs'    => \$self->{'show_failed_jobs'},
            'reset_job_id=i' => \$self->{'reset_job_id'},
            'reset_all|reset_all_jobs_for_analysis=s' => \$self->{'reset_all_jobs_for_analysis'},
-           'remove|remove_analysis_id=s' => \$self->{'remove_analysis_id'},
+           'delete|remove=s' => \$self->{'remove_analysis_id'}, # careful
            'lsf_options=s'  => \$self->{'lsf_options'},
            'job_output=i'   => \$self->{'show_job_output'},
            'regfile=s'      => \$regfile,
@@ -215,7 +215,6 @@ sub usage {
   print "  -no_analysis_stats     : don't show status of each analysis\n";
   print "  -worker_stats          : show status of each running worker\n";
   print "  -failed_jobs           : show all failed jobs\n";
-  #print "  -job_output <job_id>   : print stdout/stderr from job_id\n";
   print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
   print "  -reset_all_jobs_for_analysis <logic_name>\n";
   print "                         : reset jobs back to READY so it can be rerun\n";  
@@ -362,6 +361,7 @@ sub show_running_workers {
        $worker->process_id, 
        $worker->host,
        $worker->last_check_in);
+    printf("%s\n", $worker->output_dir) if ($self->{'verbose_stats'});
   }
 }
 
@@ -577,8 +577,11 @@ sub reset_all_jobs_for_analysis {
 sub remove_analysis_id {
   my $self = shift;
   
+  require Bio::EnsEMBL::DBSQL::AnalysisAdaptor or die "$!";
+
   my $analysis = $self->{'dba'}->get_AnalysisAdaptor->
                    fetch_by_dbID($self->{'remove_analysis_id'}); 
   
   $self->{'dba'}->get_AnalysisJobAdaptor->remove_analysis_id($analysis->dbID); 
+  $self->{'dba'}->get_AnalysisAdaptor->remove($analysis); 
 }
