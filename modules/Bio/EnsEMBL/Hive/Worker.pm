@@ -526,8 +526,8 @@ sub run_module_with_job
   $job->query_count($self->queen->dbc->query_count);
   $job->runtime_msec(time()*1000 - $start_time);
   
-  unless(($runObj->isa("Bio::EnsEMBL::Hive::Process") and !($runObj->autoflow_inputjob)) 
-      or !($self->execute_writes)) {
+  if ($runObj->isa("Bio::EnsEMBL::Hive::Process") and $runObj->autoflow_inputjob
+      and $self->execute_writes) {
     printf("AUTOFLOW input->output\n") if($self->debug);
     $self->queen->flow_output_job($job);
   }
