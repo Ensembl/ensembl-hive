@@ -695,6 +695,35 @@ sub print_running_worker_status
   $sth->finish;
 }
 
+=head2 monitor
+
+  Arg[1]     : --none--
+  Example    : $queen->monitor();
+  Description: Monitors current throughput and store the result in the monitor
+               table
+  Exceptions : none
+  Caller     : beekeepers and other external processes
+
+=cut
+
+sub monitor
+{
+  my $self = shift;
+  my $sql = qq{
+      INSERT INTO monitor
+      SELECT
+          now(),
+          count(*),
+          sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born))),
+          sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born)))/count(*),
+          group_concat(DISTINCT logic_name)
+      FROM hive left join analysis USING (analysis_id)
+      WHERE cause_of_death = ""};
+      
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+}
+
 
 #
 # INTERNAL METHODS

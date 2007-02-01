@@ -1,5 +1,6 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
+use warnings;
 use strict;
 use DBI;
 use Getopt::Long;
@@ -40,6 +41,7 @@ $self->{'no_analysis_stats'} = undef;
 $self->{'show_worker_stats'} = undef;
 $self->{'verbose_stats'} = 1;
 $self->{'lsf_options'} = "";
+$self->{'monitor'} = undef;
 my $regfile  = undef;
 my $reg_alias = 'hive';
 
@@ -78,6 +80,7 @@ GetOptions('help'           => \$help,
            'job_output=i'   => \$self->{'show_job_output'},
            'regfile=s'      => \$regfile,
            'regname=s'      => \$reg_alias,
+           'monitor!'       => \$self->{'monitor'},
           );
 
 if ($help) { usage(); }
@@ -91,6 +94,8 @@ parse_conf($self, $conf_file);
 if($self->{'run'} or $self->{'run_job_id'}) {
   $loopit = 1;
   $self->{'max_loops'} = 1;
+} elsif ($loopit) {
+  $self->{'monitor'} = 1 if (!defined($self->{'monitor'}));
 }
 
 my $DBA;
@@ -128,7 +133,9 @@ $self->{name} = $DBA->get_MetaContainer->list_value_by_key("name")->[0];
 if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
 if($self->{'show_job_output'}) { print_job_output($self); }
 
-if($self->{'reset_all_jobs_for_analysis'}) { reset_all_jobs_for_analysis($self); }
+if($self->{'reset_all_jobs_for_analysis'}) {
+  reset_all_jobs_for_analysis($self, $self->{'reset_all_jobs_for_analysis'})
+}
 
 if($self->{'remove_analysis_id'}) { remove_analysis_id($self); }
 
@@ -174,6 +181,10 @@ if ($loopit) {
   
   show_failed_jobs($self) if($self->{'show_failed_jobs'});
 
+}
+
+if ($self->{'monitor'}) {
+  $queen->monitor();
 }
 
 exit(0);
@@ -445,7 +456,7 @@ sub run_autonomously {
     my $lsf_pending_count = 0;
 
     if($self->{'beekeeper_type'} eq 'LSF') {
-      $lsf_pending_count = $self->get_lsf_pending_count();
+      $lsf_pending_count = $self->get_lsf_pending_count($self->{name});
       $count = $count - $lsf_pending_count;
     }
 
@@ -467,7 +478,7 @@ sub run_autonomously {
         printf("Nothing left to do. DONE!!\n\n");
         $loopit=0;
       }
-    }  
+    }
 
     $count = $worker_limit if($count>$worker_limit);    
     my $logic_name = $self->{'logic_name'};
@@ -523,6 +534,7 @@ sub run_autonomously {
     $DBA->dbc->disconnect_if_idle;
     
     if($loopit) {
+      $queen->monitor();
       printf("sleep %1.2f minutes. Next loop at %s\n", $sleep_time, scalar localtime(time+$sleep_time*60));
       sleep($sleep_time*60);  
       $loopCount++;
@@ -533,13 +545,13 @@ sub run_autonomously {
 
 
 sub get_lsf_pending_count {
-  my $self = shift;
+  my ($self, $name) = @_;
 
   return 0 if($self->{'no_pend_adjust'});
 
   my $cmd;
-  if ($self->{name}) {
-    $cmd = "bjobs -w | grep '".$self->{name}."-HL' | grep -c PEND";
+  if ($name) {
+    $cmd = "bjobs -w | grep '$name-HL' | grep -c PEND";
   } else {
     $cmd = "bjobs -w | grep -c PEND";
   }
@@ -564,10 +576,10 @@ sub get_local_running_count {
 
 
 sub reset_all_jobs_for_analysis {
-  my $self = shift;
+  my ($self, $logic_name) = @_;
   
   my $analysis = $self->{'dba'}->get_AnalysisAdaptor->
-                   fetch_by_logic_name($self->{'reset_all_jobs_for_analysis'}); 
+                   fetch_by_logic_name($logic_name); 
   
   $self->{'dba'}->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($analysis->dbID); 
 

@@ -218,3 +218,27 @@ CREATE TABLE analysis_stats (
   UNIQUE KEY   (analysis_id)
 );
 
+------------------------------------------------------------------------------------
+--
+-- Table structure for table 'monitor'
+--
+-- overview:
+--   This table stores information about hive performance.
+--
+-- semantics:
+--   time           - timestamp
+--   workers        - number of running workers
+--   throughput     - average numb of completed jobs per sec. of the hive
+--                    (this number is calculated using running workers only)
+--   per_worker     - average numb of completed jobs per sec. per worker
+--                    (this number is calculated using running workers only)
+--   analyses       - analyses running at that time
+
+CREATE TABLE monitor (
+  time                  datetime NOT NULL default '0000-00-00 00:00:00',
+  workers               int(10) NOT NULL default '0',
+  throughput            float default NULL,
+  per_worker            float default NULL,
+  analyses              varchar(255) default NULL
+);
+
