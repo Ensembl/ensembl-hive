@@ -232,13 +232,13 @@ CREATE TABLE analysis_stats (
 --                    (this number is calculated using running workers only)
 --   per_worker     - average numb of completed jobs per sec. per worker
 --                    (this number is calculated using running workers only)
---   analyses       - analyses running at that time
+--   analysis       - analysis(es) running at that time
 
 CREATE TABLE monitor (
   time                  datetime NOT NULL default '0000-00-00 00:00:00',
   workers               int(10) NOT NULL default '0',
   throughput            float default NULL,
   per_worker            float default NULL,
-  analyses              varchar(255) default NULL
+  analysis              varchar(255) default NULL
 );
 
