@@ -478,5 +478,35 @@ sub output {
   return @{$self->{'output'}};
 }
 
+=head2 check_if_exit_cleanly
+
+    Title   :   check_if_exit_cleanly
+    Usage   :   $self->check_if_exit_cleanly()
+    Function:   Check if we want to exit or kill it cleanly at the
+                runnable level
+    Returns :   None
+    Args    :   None
+
+=cut
+
+sub check_if_exit_cleanly {
+  my $self = shift;
+
+  my $id = $self->input_job->dbID;
+  my $honeycomb_dir = $self->{'honeycomb_dir'};
+  $honeycomb_dir =~ s/\/$//;
+  my $not_allowed = $honeycomb_dir . "/" . "relegate." . $id;
+  my $exit_cleanly = $honeycomb_dir . "/" . "relegate.all";
+  if (-e $not_allowed) {
+    $self->update_status('FAILED');
+    throw("This job has been relegated to be killed - $id\n");
+  } elsif (-e $exit_cleanly) {
+    $self->update_status('READY');
+    throw("This job has been relegated to be exited - $id\n");
+  }
+  return undef;
+}
+
 1;
+
 
