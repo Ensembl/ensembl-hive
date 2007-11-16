@@ -471,11 +471,16 @@ sub run_autonomously {
         $queen->synchronize_hive();
       }
       $count = $queen->get_num_needed_workers($analysis);
-      if($count==0 && $analysis) {
-        printf("Nothing left to do for analysis ".$analysis->logic_name.". DONE!!\n\n");
+      my $num_failed_analyses = $queen->get_num_failed_analyses($analysis);
+      if ($count==0 && $analysis) {
+        if (!$num_failed_analyses) {
+          printf("Nothing left to do for analysis ".$analysis->logic_name.". DONE!!\n\n");
+        }
         $loopit=0;
       } elsif ($count == 0) {
-        printf("Nothing left to do. DONE!!\n\n");
+        if (!$num_failed_analyses) {
+          print "Nothing left to do. DONE!!\n\n";
+        }
         $loopit=0;
       }
     }

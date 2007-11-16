@@ -197,12 +197,13 @@ CREATE TABLE analysis_data (
 --   when to unblock other analyses.  Also provides
 --
 -- semantics:
---   analysis_id    - foreign key to analysis table
---   status         - overview status of the analysis_jobs (cached state)
+--   analysis_id          - foreign key to analysis table
+--   status               - overview status of the analysis_jobs (cached state)
+--   failed_job_tolerance - % of tolerated failed jobs
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE')
+  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
   avg_msec_per_job      int(10) default 0 NOT NULL,                          
@@ -210,7 +211,9 @@ CREATE TABLE analysis_stats (
   total_job_count       int(10) NOT NULL,
   unclaimed_job_count   int(10) NOT NULL,
   done_job_count        int(10) NOT NULL,
+  max_retry_count       int(10) default 3 NOT NULL,
   failed_job_count      int(10) NOT NULL,
+  failed_job_tolerance  int(10) default 0 NOT NULL,
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,

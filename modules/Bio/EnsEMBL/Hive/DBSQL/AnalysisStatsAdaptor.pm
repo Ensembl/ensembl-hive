@@ -146,7 +146,9 @@ sub update {
   $sql .= ",total_job_count=" . $stats->total_job_count();
   $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
   $sql .= ",done_job_count=" . $stats->done_job_count();
+  $sql .= ",max_retry_count=" . $stats->max_retry_count();
   $sql .= ",failed_job_count=" . $stats->failed_job_count();
+  $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=NOW()";
   $sql .= ",sync_lock=''";
@@ -313,7 +315,9 @@ sub _columns {
                     ast.total_job_count
                     ast.unclaimed_job_count
                     ast.done_job_count
+                    ast.max_retry_count
                     ast.failed_job_count
+                    ast.failed_job_tolerance
                     ast.num_required_workers
                     ast.last_update
                     ast.sync_lock
@@ -342,7 +346,9 @@ sub _objs_from_sth {
     $analStats->total_job_count($column{'total_job_count'});
     $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
     $analStats->done_job_count($column{'done_job_count'});
+    $analStats->max_retry_count($column{'max_retry_count'});
     $analStats->failed_job_count($column{'failed_job_count'});
+    $analStats->failed_job_tolerance($column{'failed_job_tolerance'});
     $analStats->num_required_workers($column{'num_required_workers'});
     $analStats->seconds_since_last_update($column{'seconds_since_last_update'});
     $analStats->adaptor($self);

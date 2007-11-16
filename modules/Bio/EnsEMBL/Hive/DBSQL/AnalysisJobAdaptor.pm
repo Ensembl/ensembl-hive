@@ -52,7 +52,7 @@ use Bio::EnsEMBL::Utils::Exception;
 
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
-our $max_retry_count = 7;
+# our $max_retry_count = 7;
 
 ###############################################################################
 #
@@ -501,8 +501,8 @@ sub claim_jobs_for_worker {
                Jobs in state CLAIMED as simply reset back to READY.
                If jobs was in a 'working' state (GET_INPUT, RUN, WRITE_OUTPUT)) 
                the retry_count is incremented and the status set back to READY.
-               If the retry_count >= $max_retry_count (7) the job is set to 'FAILED'
-               and not rerun again.
+               If the retry_count >= $max_retry_count (3 by default) the job is set
+               to 'FAILED' and not rerun again.
   Exceptions : $worker must be defined
   Caller     : Bio::EnsEMBL::Hive::Queen
 
@@ -516,6 +516,7 @@ sub reset_dead_jobs_for_worker {
   #added hive_id index to analysis_job table which made this operation much faster
 
   my ($sql, $sth);
+  my $max_retry_count = $worker->analysis->stats->max_retry_count();
   #first just reset the claimed jobs, these don't need a retry_count index increment
   $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " WHERE status='CLAIMED'".
@@ -569,19 +570,25 @@ sub reset_dead_job_by_dbID {
   # an update with select on status and hive_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
-         " ,retry_count=retry_count+1".
-         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-         " AND retry_count<$max_retry_count".
-         " AND analysis_job_id=$job_id";
+  $sql = "
+    UPDATE analysis_job, analysis_stats
+    SET job_claim='', analysis_job.status='READY', retry_count=retry_count+1
+    WHERE
+      analysis_job.status in ('GET_INPUT','RUN','WRITE_OUTPUT')
+      AND analysis_job.analysis_id = analysis_stats.analysis_id
+      AND retry_count < max_retry_count
+      AND analysis_job_id=$job_id";
   #print("$sql\n");
   $self->dbc->do($sql);
 
-  $sql = "UPDATE analysis_job SET status='FAILED'".
-         " ,retry_count=retry_count+1".
-         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-         " AND retry_count>=$max_retry_count".
-         " AND analysis_job_id=$job_id";
+  $sql = "
+    UPDATE analysis_job, analysis_stats
+    SET job_claim='', analysis_job.status='FAILED', retry_count=retry_count+1
+    WHERE
+      analysis_job.status in ('GET_INPUT','RUN','WRITE_OUTPUT')
+      AND analysis_job.analysis_id = analysis_stats.analysis_id
+      AND retry_count >= max_retry_count
+      AND analysis_job_id=$job_id";
   #print("$sql\n");
   $self->dbc->do($sql);
 

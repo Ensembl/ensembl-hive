@@ -127,6 +127,20 @@ sub failed_job_count {
   return $self->{'_failed_job_count'};
 }
 
+sub max_retry_count {
+  my $self = shift;
+  $self->{'_max_retry_count'} = shift if(@_);
+  $self->{'_max_retry_count'} = 3 unless(defined($self->{'_max_retry_count'}));
+  return $self->{'_max_retry_count'};
+}
+
+sub failed_job_tolerance {
+  my $self = shift;
+  $self->{'_failed_job_tolerance'} = shift if(@_);
+  $self->{'_failed_job_tolerance'} = 0 unless(defined($self->{'_failed_job_tolerance'}));
+  return $self->{'_failed_job_tolerance'};
+}
+
 sub running_job_count {
   my $self = shift;
   return $self->total_job_count
@@ -164,9 +178,30 @@ sub determine_status {
   my $self = shift;
   
   if($self->status ne 'BLOCKED') {
-    if($self->unclaimed_job_count == 0 and
-       $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
-      $self->status('DONE');
+    if ($self->unclaimed_job_count == 0 and
+        $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
+      my $failure_percentage = 0;
+      if ($self->total_job_count) {
+        $failure_percentage = $self->failed_job_count * 100 / $self->total_job_count;
+      }
+      if ($failure_percentage > $self->failed_job_tolerance) {
+        $self->status('FAILED');
+        print
+            "\n",
+            "##################################################\n",
+            "##################################################\n",
+            "##                                              ##\n";
+        printf
+            "##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!";
+        printf
+            "##          %4.1f%% jobs failed (tolerance: %3d%%) ##\n", $failure_percentage, $self->failed_job_tolerance;
+        print
+            "##                                              ##\n",
+            "##################################################\n",
+            "##################################################\n\n";
+      } else {
+        $self->status('DONE');
+      }
     }
     if($self->total_job_count == $self->unclaimed_job_count) {
       $self->status('READY');

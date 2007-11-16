@@ -540,6 +540,35 @@ sub check_blocking_control_rules_for_AnalysisStats
 }
 
 
+sub get_num_failed_analyses
+{
+  my $self = shift;
+  my $analysis = shift;
+
+  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
+  my $failed_analyses = $statsDBA->fetch_by_status('FAILED');
+  if ($analysis) {
+    foreach my $this_failed_analysis (@$failed_analyses) {
+      if ($this_failed_analysis->analysis_id == $analysis->dbID) {
+        print "#########################################################\n",
+            " Too many jobs failed for analysis ".$analysis->logic_name.". FAIL!!\n",
+            "#########################################################\n\n";
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  if (@$failed_analyses) {
+    print "##################################################\n",
+        " Too many failed jobs. FAIL!!\n",
+        "##################################################\n";
+  }
+
+  return scalar(@$failed_analyses);
+}
+
+
 sub get_hive_current_load {
   my $self = shift;
   my $sql = "SELECT sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
@@ -744,6 +773,9 @@ sub _pick_best_analysis_for_new_worker {
   }
 
   # ok so no analyses 'need' workers.
+  if ($self->get_num_failed_analyses()) {
+    return undef;
+  }
   # see if anything needs an update, in case there are
   # hidden jobs that haven't made it into the summary stats
 
