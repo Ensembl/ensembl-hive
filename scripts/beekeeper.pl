@@ -517,7 +517,7 @@ sub run_autonomously {
         } else {
           $lsf_job_name .= "HL$loopCount";
         }
-        $cmd = "bsub -J\"$lsf_job_name\"";
+        $cmd = "bsub -o /dev/null -J\"$lsf_job_name\"";
         $cmd .= " " . $self->{'lsf_options'} if ($self->{'lsf_options'});
         $cmd .= " ".$worker_cmd;
 
