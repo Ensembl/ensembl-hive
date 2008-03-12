@@ -117,27 +117,22 @@ sub store {
 }
 
 
-=head2 remove
+=head2 remove_by_condition_analysis_url
 
-  Arg[1]  : Bio::EnsEMBL::Hive::AnalysisCtrlRule which must be persistent
-            with a valid dbID.
-  Usage   : $self->remove( $rule );
-  Function: removes given object from database.
+  Arg[1]  : string condition_analysis_url
+  Usage   : $self->remove_by_condition_analysis_url("ThisAnalysisLogicName");
+  Function: removes all the control rules for this condition analysis URL
   Returns : -
-  
+
 =cut
 
-sub remove {
-  my ( $self, $rule ) = @_;
+sub remove_by_condition_analysis_url {
+  my ( $self, $condition_analysis_url ) = @_;
 
-  my $dbID = $rule->dbID;
-  if( !defined $dbID ) {
-    throw( "AnalysisCtrlRuleAdaptor->remove called with non persistent AnalysisCtrlRule" );
-  }
-
-  my $sth = $self->prepare("DELETE FROM analysis_ctrl_rule WHERE ctrled_analysis_id = ?, condition_analysis_url = '?'");
-  $sth->execute($rule->ctrled_analysis_id, $rule->condition_analysis_url);
+  my $sth = $self->prepare("DELETE FROM analysis_ctrl_rule WHERE condition_analysis_url =?");
+  $sth->execute($condition_analysis_url);
 }
+
 
 =head2 create_rule
 
@@ -284,4 +279,3 @@ sub _generic_fetch {
 
 
 1;
-
