@@ -83,7 +83,7 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
-  system($self->{'cmd'});
+  system($self->{'cmd'}) == 0 or die "system ".$self->{'cmd'}." failed: $?";
   return 1;
 }
 
