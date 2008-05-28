@@ -41,6 +41,12 @@ sub adaptor {
   return $self->{'_adaptor'};
 }
 
+sub refresh {
+  my $self = shift;
+  return unless($self->adaptor);
+  $self->adaptor->refresh($self);
+}
+
 sub update {
   my $self = shift;
   return unless($self->adaptor);
@@ -52,6 +58,24 @@ sub update_status {
   return unless($self->adaptor);
   $self->adaptor->update_status($self->analysis_id, $status);
   $self->status($status);
+}
+
+sub decrease_hive_capacity {
+  my ($self) = @_;
+  return unless ($self->adaptor);
+  $self->adaptor->decrease_hive_capacity($self->analysis_id);
+}
+
+sub increase_hive_capacity {
+  my ($self) = @_;
+  return unless ($self->adaptor);
+  $self->adaptor->increase_hive_capacity($self->analysis_id);
+}
+
+sub get_running_worker_count {
+  my $self = shift;
+  return unless ($self->adaptor);
+  return $self->adaptor->get_running_worker_count($self);
 }
 
 sub analysis_id {
@@ -91,6 +115,27 @@ sub avg_msec_per_job {
   return $self->{'_avg_msec_per_job'};
 }
 
+sub avg_input_msec_per_job {
+  my $self = shift;
+  $self->{'_avg_input_msec_per_job'} = shift if(@_);
+  $self->{'_avg_input_msec_per_job'}=0 unless($self->{'_avg_input_msec_per_job'});
+  return $self->{'_avg_input_msec_per_job'};
+}
+
+sub avg_run_msec_per_job {
+  my $self = shift;
+  $self->{'_avg_run_msec_per_job'} = shift if(@_);
+  $self->{'_avg_run_msec_per_job'}=0 unless($self->{'_avg_run_msec_per_job'});
+  return $self->{'_avg_run_msec_per_job'};
+}
+
+sub avg_output_msec_per_job {
+  my $self = shift;
+  $self->{'_avg_output_msec_per_job'} = shift if(@_);
+  $self->{'_avg_output_msec_per_job'}=0 unless($self->{'_avg_output_msec_per_job'});
+  return $self->{'_avg_output_msec_per_job'};
+}
+
 sub cpu_minutes_remaining {
   my $self = shift;
   return ($self->avg_msec_per_job * $self->unclaimed_job_count / 60000);
@@ -100,6 +145,24 @@ sub hive_capacity {
   my $self = shift;
   $self->{'_hive_capacity'} = shift if(@_);
   return $self->{'_hive_capacity'};
+}
+
+sub behaviour {
+  my $self = shift;
+  $self->{'_behaviour'} = shift if(@_);
+  return $self->{'_behaviour'};
+}
+
+sub input_capacity {
+  my $self = shift;
+  $self->{'_input_capacity'} = shift if(@_);
+  return $self->{'_input_capacity'};
+}
+
+sub output_capacity {
+  my $self = shift;
+  $self->{'_output_capacity'} = shift if(@_);
+  return $self->{'_output_capacity'};
 }
 
 sub total_job_count {
@@ -154,6 +217,12 @@ sub remaining_job_count {
   return $self->total_job_count
          - $self->done_job_count
          - $self->failed_job_count;
+}
+
+sub num_running_workers {
+  my $self = shift;
+  $self->{'_num_running_workers'} = shift if(@_);
+  return $self->{'_num_running_workers'};
 }
 
 sub num_required_workers {

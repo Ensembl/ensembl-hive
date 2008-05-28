@@ -66,8 +66,20 @@ our @ISA = qw(Bio::EnsEMBL::Hive::Process);
 
 sub fetch_input {
   my $self = shift;
+
+  # Initialise values
+  $self->divisor(2);
+  $self->value(1);
+  $self->time_fetching(0);
+  $self->time_running(0);
+  $self->time_writting(0);
+
+  # Read parameters and input
   $self->get_params($self->parameters);
   $self->get_params($self->input_id);
+
+  # Sleep as required
+  sleep($self->time_fetching);
 
   return 1;
 }
@@ -82,6 +94,11 @@ sub fetch_input {
 sub run
 {
   my $self = shift;
+
+  # Sleep as required
+  sleep($self->time_running);
+
+  # Fail if modulus of $value and $divisor is 0
   my $divisor = $self->divisor();
   my $value = $self->value();
   if (!$divisor or !defined($value)) {
@@ -89,6 +106,7 @@ sub run
   } elsif ($value % $divisor == 0) {
     die "$value % $divisor is 0 => die!\n";
   }
+
   return 1;
 }
 
@@ -101,6 +119,10 @@ sub run
 
 sub write_output {
   my $self = shift;
+
+  # Sleep as required
+  sleep($self->time_writting);
+
   return 1;
 }
 
@@ -149,6 +171,72 @@ sub value {
 }
 
 
+=head2 time_fetching
+
+  Arg [1]     : (optional) $time_fetching
+  Example     : $object->time_fetching($time_fetching);
+  Example     : $time_fetching = $object->time_fetching();
+  Description : Getter/setter for the time_fetching attribute
+  Returntype  : 
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub time_fetching {
+  my $self = shift;
+  if (@_) {
+    $self->{_time_fetching} = shift;
+  }
+  return $self->{_time_fetching};
+}
+
+
+=head2 time_running
+
+  Arg [1]     : (optional) $time_running
+  Example     : $object->time_running($time_running);
+  Example     : $time_running = $object->time_running();
+  Description : Getter/setter for the time_running attribute
+  Returntype  : 
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub time_running {
+  my $self = shift;
+  if (@_) {
+    $self->{_time_running} = shift;
+  }
+  return $self->{_time_running};
+}
+
+
+=head2 time_writting
+
+  Arg [1]     : (optional) $time_writting
+  Example     : $object->time_writting($time_writting);
+  Example     : $time_writting = $object->time_writting();
+  Description : Getter/setter for the time_writting attribute
+  Returntype  : 
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub time_writting {
+  my $self = shift;
+  if (@_) {
+    $self->{_time_writting} = shift;
+  }
+  return $self->{_time_writting};
+}
+
+
 =head2 get_params
 
 =cut
@@ -158,7 +246,7 @@ sub get_params {
   my $param_string = shift;
 
   return unless($param_string);
-  print("parsing parameter string : ",$param_string,"\n");
+#   print("parsing parameter string : ",$param_string,"\n");
 
   my $params = eval($param_string);
   return unless($params);
@@ -168,6 +256,15 @@ sub get_params {
   }
   if(defined($params->{'value'})) {
     $self->value($params->{'value'});
+  }
+  if(defined($params->{'time_fetching'})) {
+    $self->time_fetching($params->{'time_fetching'});
+  }
+  if(defined($params->{'time_running'})) {
+    $self->time_running($params->{'time_running'});
+  }
+  if(defined($params->{'time_writting'})) {
+    $self->time_writting($params->{'time_writting'});
   }
 }
 

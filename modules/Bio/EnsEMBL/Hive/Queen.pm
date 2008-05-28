@@ -121,7 +121,8 @@ sub create_new_worker {
     #go into autonomous mode
     return undef if($self->get_hive_current_load() >= 1.1);
     
-    $analStatsDBA->decrement_needed_workers($analysisStats->analysis_id);
+    $analStatsDBA->decrease_needed_workers($analysisStats->analysis_id);
+    $analStatsDBA->increase_running_workers($analysisStats->analysis_id);
     $analysisStats->print_stats;
     
     if($analysisStats->status eq 'BLOCKED') {
@@ -168,8 +169,13 @@ sub register_worker_death {
 
   # if called without a defined cause_of_death, assume catastrophic failure
   $worker->cause_of_death('FATALITY') unless(defined($worker->cause_of_death));
-  
+  unless ($worker->cause_of_death() eq "HIVE_OVERLOAD") {
+    ## HIVE_OVERLOAD occurs after a successful update of the analysis_stats teble. (c.f. Worker.pm)
+    $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
+  }
+
   my $sql = "UPDATE hive SET died=now(), last_check_in=now()";
+  $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " ,cause_of_death='". $worker->cause_of_death ."'";
   $sql .= " WHERE hive_id='" . $worker->hive_id ."'";
@@ -190,7 +196,7 @@ sub register_worker_death {
   if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
     # since I'm dying I should make sure there is someone to take my place after I'm gone ...
     # above synch still sees me as a 'living worker' so I need to compensate for that
-    $self->db->get_AnalysisStatsAdaptor->increment_needed_workers($worker->analysis->dbID);
+    $self->db->get_AnalysisStatsAdaptor->increase_needed_workers($worker->analysis->dbID);
   }
 
 }
@@ -433,6 +439,7 @@ sub synchronize_AnalysisStats {
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
   
+  $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
   $analysisStats->total_job_count(0);
   $analysisStats->unclaimed_job_count(0);
   $analysisStats->done_job_count(0);
@@ -444,7 +451,10 @@ sub synchronize_AnalysisStats {
   my $sth = $self->prepare($sql);
   $sth->execute($analysisStats->analysis_id);
 
+  my $hive_capacity = $analysisStats->hive_capacity;
+
   while (my ($status, $count)=$sth->fetchrow_array()) {
+# print STDERR "$status - $count\n";
 
     my $total = $analysisStats->total_job_count();
     $analysisStats->total_job_count($total + $count);
@@ -466,13 +476,13 @@ sub synchronize_AnalysisStats {
       }
       $analysisStats->num_required_workers($numWorkers);
     }
-    if($status eq 'DONE') { $analysisStats->done_job_count($count); }
-    if($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
+    if ($status eq 'DONE') { $analysisStats->done_job_count($count); }
+    if ($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
   }
   $sth->finish;
 
   $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
-  
+
   if($analysisStats->status ne 'BLOCKED') {
     $analysisStats->determine_status();
   }
@@ -482,11 +492,7 @@ sub synchronize_AnalysisStats {
   #
   
   if($analysisStats->hive_capacity > 0) {
-    my $sql = "SELECT count(*) FROM hive WHERE cause_of_death='' and analysis_id=?";
-    $sth = $self->prepare($sql);
-    $sth->execute($analysisStats->analysis_id);
-    my($liveCount)=$sth->fetchrow_array();
-    $sth->finish;
+    my $liveCount = $analysisStats->get_running_worker_count();
 
     my $numWorkers = $analysisStats->num_required_workers;
 
@@ -496,9 +502,9 @@ sub synchronize_AnalysisStats {
 
     $analysisStats->num_required_workers($numWorkers);
   }
-  
+
   $analysisStats->update;  #update and release sync_lock
-    
+
   return $analysisStats;
 }
 
@@ -594,6 +600,12 @@ sub get_num_running_workers {
   $runningCount=0 unless($runningCount);
   print("current hive num_running_workers = $runningCount\n");
   return $runningCount;
+}
+
+sub enter_status {
+  my ($self, $worker, $status) = @_;
+
+  $self->dbc->do("UPDATE hive SET status = '$status' WHERE hive_id = ".$worker->hive_id);
 }
 
 =head2 get_num_needed_workers
@@ -908,6 +920,7 @@ sub _columns {
              h.host
              h.process_id
              h.work_done
+             h.status
              h.born
              h.last_check_in
              h.died
@@ -932,6 +945,7 @@ sub _objs_from_sth {
     $worker->host($column{'host'});
     $worker->process_id($column{'process_id'});
     $worker->work_done($column{'work_done'});
+    $worker->status($column{'status'});
     $worker->born($column{'born'});
     $worker->last_check_in($column{'last_check_in'});
     $worker->died($column{'died'});

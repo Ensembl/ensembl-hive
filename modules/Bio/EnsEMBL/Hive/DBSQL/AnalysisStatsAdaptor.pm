@@ -120,6 +120,32 @@ sub fetch_by_status {
   return $results;
 }
 
+
+sub refresh {
+  my ($self, $stats) = @_;
+
+  my $constraint = "ast.analysis_id = " . $stats->analysis_id;
+
+  #return first element of _generic_fetch list
+  $stats = @{$self->_generic_fetch($constraint)};
+
+  return $stats;
+}
+
+
+sub get_running_worker_count {
+  my ($self, $stats) = @_;
+
+  my $sql = "SELECT count(*) FROM hive WHERE cause_of_death='' and analysis_id=?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($stats->analysis_id);
+  my ($liveCount) = $sth->fetchrow_array();
+  $sth->finish;
+
+  return $liveCount;
+}
+
+
 #
 # STORE / UPDATE METHODS
 #
@@ -139,9 +165,38 @@ sub fetch_by_status {
 sub update {
   my ($self, $stats) = @_;
 
+  my $running_worker_count = $self->get_running_worker_count($stats);
+  $stats->num_running_workers($running_worker_count);
+  my $hive_capacity = $stats->hive_capacity;
+
+  if ($stats->behaviour eq "DYNAMIC") {
+    my $max_hive_capacity = $hive_capacity;
+    if ($stats->avg_input_msec_per_job) {
+      $max_hive_capacity = int($stats->input_capacity * $stats->avg_msec_per_job / $stats->avg_input_msec_per_job);
+    }
+    if ($stats->avg_output_msec_per_job) {
+      my $max_hive_capacity2 = int($stats->output_capacity * $stats->avg_msec_per_job / $stats->avg_output_msec_per_job);
+      if ($max_hive_capacity2 < $max_hive_capacity) {
+        $max_hive_capacity = $max_hive_capacity2;
+      }
+    }
+    if (($hive_capacity > $max_hive_capacity) or ($hive_capacity < $max_hive_capacity )) {
+      if (abs($hive_capacity - $max_hive_capacity) > 2) {
+        $stats->hive_capacity(($hive_capacity + $max_hive_capacity) / 2);
+      } elsif ($hive_capacity > $max_hive_capacity) {
+        $stats->hive_capacity($hive_capacity - 1);
+      } elsif ($hive_capacity < $max_hive_capacity) {
+        $stats->hive_capacity($hive_capacity + 1);
+      }
+    }
+  }
+
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
   $sql .= ",batch_size=" . $stats->batch_size();
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
+  $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
+  $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
+  $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
   $sql .= ",total_job_count=" . $stats->total_job_count();
   $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
@@ -149,6 +204,7 @@ sub update {
   $sql .= ",max_retry_count=" . $stats->max_retry_count();
   $sql .= ",failed_job_count=" . $stats->failed_job_count();
   $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
+  $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=NOW()";
   $sql .= ",sync_lock=''";
@@ -157,7 +213,11 @@ sub update {
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
+  $sth = $self->prepare("INSERT INTO analysis_stats_monitor SELECT now(), analysis_stats.* from analysis_stats WHERE analysis_id = ".$stats->analysis_id);
+  $sth->execute();
+  $sth->finish;
   $stats->seconds_since_last_update(0); #not exact but good enough :)
+
 }
 
 
@@ -189,19 +249,78 @@ sub update_status
 
 sub interval_update_work_done
 {
-  my ($self, $analysis_id, $job_count, $interval) = @_;
+  my ($self, $analysis_id, $job_count, $interval, $worker) = @_;
 
   my $sql = "UPDATE analysis_stats SET ".
             "unclaimed_job_count = unclaimed_job_count - $job_count, ".
-            "avg_msec_per_job = (((done_job_count*avg_msec_per_job/3) + $interval) / (done_job_count/3 + $job_count)), ".
+            "avg_msec_per_job = (((done_job_count*avg_msec_per_job)/3 + $interval) / (done_job_count/3 + $job_count)), ".
+            "avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/3 + ".
+                ($worker->{fetch_time}).") / (done_job_count/3 + $job_count)), ".
+            "avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/3 + ".
+                ($worker->{run_time}).") / (done_job_count/3 + $job_count)), ".
+            "avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/3 + ".
+                ($worker->{write_time}).") / (done_job_count/3 + $job_count)), ".
             "done_job_count = done_job_count + $job_count ".
-            "WHERE analysis_id= $analysis_id";
-            
+            " WHERE analysis_id= $analysis_id";
+
   $self->dbc->do($sql);
 }
 
 
-sub decrement_needed_workers
+
+
+sub decrease_hive_capacity
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats ".
+      " SET hive_capacity = hive_capacity - 1, ".
+      " num_required_workers = IF(num_required_workers > 0, num_required_workers - 1, 0) ".
+      " WHERE analysis_id='$analysis_id' and hive_capacity > 1";
+
+  $self->dbc->do($sql);
+}
+
+
+sub increase_hive_capacity
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats ".
+      " SET hive_capacity = hive_capacity + 1, num_required_workers = 1".
+      " WHERE analysis_id='$analysis_id' and hive_capacity <= 500 and num_required_workers = 0";
+
+  $self->dbc->do($sql);
+}
+
+
+sub increase_running_workers
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers + 1 ".
+      " WHERE analysis_id='$analysis_id'";
+
+  $self->dbc->do($sql);
+}
+
+
+sub decrease_running_workers
+{
+  my $self = shift;
+  my $analysis_id = shift;
+
+  my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
+      " WHERE analysis_id='$analysis_id'";
+
+  $self->dbc->do($sql);
+}
+
+
+sub decrease_needed_workers
 {
   my $self = shift;
   my $analysis_id = shift;
@@ -213,7 +332,7 @@ sub decrement_needed_workers
 }
 
 
-sub increment_needed_workers
+sub increase_needed_workers
 {
   my $self = shift;
   my $analysis_id = shift;
@@ -311,13 +430,20 @@ sub _columns {
                     ast.status
                     ast.batch_size
                     ast.avg_msec_per_job
+                    ast.avg_input_msec_per_job
+                    ast.avg_run_msec_per_job
+                    ast.avg_output_msec_per_job
                     ast.hive_capacity
+                    ast.behaviour
+                    ast.input_capacity
+                    ast.output_capacity
                     ast.total_job_count
                     ast.unclaimed_job_count
                     ast.done_job_count
                     ast.max_retry_count
                     ast.failed_job_count
                     ast.failed_job_tolerance
+                    ast.num_running_workers
                     ast.num_required_workers
                     ast.last_update
                     ast.sync_lock
@@ -342,21 +468,28 @@ sub _objs_from_sth {
     $analStats->sync_lock($column{'sync_lock'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
+    $analStats->avg_input_msec_per_job($column{'avg_input_msec_per_job'});
+    $analStats->avg_run_msec_per_job($column{'avg_run_msec_per_job'});
+    $analStats->avg_output_msec_per_job($column{'avg_output_msec_per_job'});
     $analStats->hive_capacity($column{'hive_capacity'});
+    $analStats->behaviour($column{'behaviour'});
+    $analStats->input_capacity($column{'input_capacity'});
+    $analStats->output_capacity($column{'output_capacity'});
     $analStats->total_job_count($column{'total_job_count'});
     $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
     $analStats->done_job_count($column{'done_job_count'});
     $analStats->max_retry_count($column{'max_retry_count'});
     $analStats->failed_job_count($column{'failed_job_count'});
     $analStats->failed_job_tolerance($column{'failed_job_tolerance'});
+    $analStats->num_running_workers($column{'num_running_workers'});
     $analStats->num_required_workers($column{'num_required_workers'});
     $analStats->seconds_since_last_update($column{'seconds_since_last_update'});
     $analStats->adaptor($self);
 
-    push @statsArray, $analStats;    
+    push @statsArray, $analStats;
   }
   $sth->finish;
-  
+
   return \@statsArray
 }
 

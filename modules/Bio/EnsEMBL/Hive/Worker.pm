@@ -75,6 +75,7 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Sys::Hostname;
 use Time::HiRes qw(time);
+use POSIX;
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
@@ -83,6 +84,11 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Process;
+
+## Minimum amount of time in msec that a worker should run before reporting
+## back to the hive. This is used when setting the batch_size automatically.
+## 120000 msec = 2 minutes
+my $MIN_BATCH_TIME = 120000;
 
 sub new {
   my ($class,@args) = @_;
@@ -224,6 +230,12 @@ sub cause_of_death {
   return $self->{'_cause_of_death'};
 }
 
+sub status {
+  my( $self, $value ) = @_;
+  $self->{'_status'} = $value if($value);
+  return $self->{'_status'};
+}
+
 sub born {
   my( $self, $value ) = @_;
   $self->{'_born'} = $value if($value);
@@ -357,7 +369,7 @@ sub batch_size {
   } 
     
   if(($batch_size <= 0) and ($stats->avg_msec_per_job)) {
-    $batch_size = int(120000 / $stats->avg_msec_per_job); # num jobs in 120 secs
+    $batch_size = POSIX::ceil($MIN_BATCH_TIME / $stats->avg_msec_per_job); # num jobs in $MIN_BATCH_TIME msecs
   }
   $batch_size = 1 if($batch_size < 1); # make sure we grab at least one job
   
@@ -408,44 +420,53 @@ sub run
 
   $self->db->dbc->disconnect_when_inactive(0);
 
-  my $alive=1;  
-  while($alive) {
+  my $alive = 1;
+  while ($alive) {
     my $batch_start = time() * 1000;    
-
+    my $batch_end = $batch_start;
+    my $job_counter = 0;
     my $jobs = [];
-    if($specific_job) {
-      $self->queen->worker_reclaim_job($self,$specific_job);
-      push @$jobs, $specific_job;
-      $alive=undef;
-    } else {
-      $jobs = $self->queen->worker_grab_jobs($self);
-    }
+    $self->{fetch_time} = 0;
+    $self->{run_time} = 0;
+    $self->{write_time} = 0;
 
-    $self->queen->worker_check_in($self); #will sync analysis_stats if needed
+    do {
+      if($specific_job) {
+        $self->queen->worker_reclaim_job($self,$specific_job);
+        push @$jobs, $specific_job;
+        $alive=undef;
+      } else {
+        $jobs = $self->queen->worker_grab_jobs($self);
+      }
 
-    $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
+      $self->queen->worker_check_in($self); #will sync analysis_stats if needed
 
-    if($self->debug) {
-      $self->analysis->stats->print_stats;
-      print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
-    }
-    
-    foreach my $job (@{$jobs}) {
-      $job->print_job if($self->debug); 
+      $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
-      $self->redirect_job_output($job);
-      $self->run_module_with_job($job);
-      $self->close_and_update_job_output($job);      
-            
-      $self->queen->worker_register_job_done($self, $job);
+      if($self->debug) {
+        $self->analysis->stats->print_stats;
+        print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
+      }
 
-      $self->{'_work_done'}++;
-    }
-    my $batch_end = time() * 1000;
+      foreach my $job (@{$jobs}) {
+        $job->print_job if($self->debug); 
+
+        $self->redirect_job_output($job);
+        $self->run_module_with_job($job);
+        $self->close_and_update_job_output($job);
+
+        $self->queen->worker_register_job_done($self, $job);
+
+        $self->{'_work_done'}++;
+      }
+      $batch_end = time() * 1000;
+      $job_counter += scalar(@$jobs);
+    } while (scalar(@$jobs) and $batch_end-$batch_start < $MIN_BATCH_TIME); ## Run for $MIN_BATCH_TIME at least
+
     #printf("batch start:%f end:%f\n", $batch_start, $batch_end);
-    $self->db->get_AnalysisStatsAdaptor->
-       interval_update_work_done($self->analysis->dbID, scalar(@$jobs), $batch_end-$batch_start);
-    
+    $self->db->get_AnalysisStatsAdaptor->interval_update_work_done($self->analysis->dbID,
+        $job_counter, $batch_end-$batch_start, $self);
+
     $self->cause_of_death('JOB_LIMIT') if($specific_job);
 
     if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
@@ -455,11 +476,18 @@ sub run
       printf("life_span exhausted (alive for %d secs)\n", (time() - $self->{'start_time'}));
       $self->cause_of_death('LIFESPAN'); 
     }
-    #unless($self->check_system_load()) {
-    #  $self->cause_of_death('SYS_OVERLOAD');
-    #}
+
+    if (!$self->cause_of_death and $self->analysis->stats->num_running_workers > $self->analysis->stats->hive_capacity) {
+      my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
+                "WHERE num_running_workers > hive_capacity AND analysis_id = " . $self->analysis->stats->analysis_id;
+      my $row_count = $self->queen->dbc->do($sql);
+      if ($row_count == 1) {
+        $self->cause_of_death('HIVE_OVERLOAD');
+      }
+    }
     if($self->cause_of_death) { $alive=undef; }
   }
+  $self->queen->dbc->do("UPDATE hive SET status = 'DEAD' WHERE hive_id = ".$self->hive_id);
   
   if($self->perform_global_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
@@ -489,11 +517,13 @@ sub run_module_with_job
   my $self = shift;
   my $job  = shift;
 
+  my ($start_time, $end_time);
+
   my $runObj = $self->analysis->process;
   return 0 unless($runObj);
   return 0 unless($job and ($job->hive_id eq $self->hive_id));
   
-  my $start_time = time() * 1000;
+  my $init_time = time() * 1000;
   $self->queen->dbc->query_count(0);
 
   #pass the input_id from the job into the Process object
@@ -506,26 +536,44 @@ sub run_module_with_job
     $runObj->input_id($job->input_id);
     $runObj->db($self->db);
   }
-  
+
+  my $analysis_stats = $self->analysis->stats;
+
+  $self->enter_status("GET_INPUT");
   $job->update_status('GET_INPUT');
   print("\nGET_INPUT\n") if($self->debug); 
-  $runObj->fetch_input;
 
+  $start_time = time() * 1000;
+  $runObj->fetch_input;
+  $end_time = time() * 1000;
+  $self->{fetch_time} += $end_time - $start_time;
+
+  $self->enter_status("RUN");
   $job->update_status('RUN');
   print("\nRUN\n") if($self->debug); 
+
+  $start_time = time() * 1000;
   $runObj->run;
+  $end_time = time() * 1000;
+  $self->{run_time} += $end_time - $start_time;
 
   if($self->execute_writes) {
+    $self->enter_status("WRITE_OUTPUT");
     $job->update_status('WRITE_OUTPUT');
     print("\nWRITE_OUTPUT\n") if($self->debug); 
+
+    $start_time = time() * 1000;
     $runObj->write_output;
+    $end_time = time() * 1000;
+    $self->{write_time} += $end_time - $start_time;
   } else {
     print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
   }
-  
+  $self->enter_status("READY");
+
   $job->query_count($self->queen->dbc->query_count);
-  $job->runtime_msec(time()*1000 - $start_time);
-  
+  $job->runtime_msec(time()*1000 - $init_time);
+
   if ($runObj->isa("Bio::EnsEMBL::Hive::Process") and $runObj->autoflow_inputjob
       and $self->execute_writes) {
     printf("AUTOFLOW input->output\n") if($self->debug);
@@ -535,6 +583,10 @@ sub run_module_with_job
   return 1;
 }
 
+sub enter_status {
+  my ($self, $status) = @_;
+  return $self->queen->enter_status($self, $status);
+}
 
 sub redirect_job_output
 {

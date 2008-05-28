@@ -500,7 +500,7 @@ sub claim_jobs_for_worker {
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
                If jobs was in a 'working' state (GET_INPUT, RUN, WRITE_OUTPUT)) 
-               the retry_count is incremented and the status set back to READY.
+               the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
   Exceptions : $worker must be defined

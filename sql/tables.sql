@@ -18,11 +18,13 @@ CREATE TABLE hive (
   host	           varchar(40) DEFAULT '' NOT NULL,
   process_id       varchar(40) DEFAULT '' NOT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
+  status           enum('READY','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL,
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
-  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
-  PRIMARY KEY (hive_id)
+  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
+  PRIMARY KEY (hive_id),
+  INDEX analysis_status (analysis_id, status),
 );
 
 
@@ -206,19 +208,52 @@ CREATE TABLE analysis_stats (
   status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
-  avg_msec_per_job      int(10) default 0 NOT NULL,                          
+  avg_msec_per_job      int(10) default 0 NOT NULL,
+  avg_input_msec_per_job      int(10) default 0 NOT NULL,
+  avg_run_msec_per_job      int(10) default 0 NOT NULL,
+  avg_output_msec_per_job      int(10) default 0 NOT NULL,
   hive_capacity         int(10) default 1 NOT NULL,
+  behaviour             enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
+  input_capacity        int(10) default 4 NOT NULL,
+  output_capacity       int(10) default 4 NOT NULL,
   total_job_count       int(10) NOT NULL,
   unclaimed_job_count   int(10) NOT NULL,
   done_job_count        int(10) NOT NULL,
   max_retry_count       int(10) default 3 NOT NULL,
   failed_job_count      int(10) NOT NULL,
   failed_job_tolerance  int(10) default 0 NOT NULL,
+  num_running_workers   int(10) default 0 NOT NULL,
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
   
   UNIQUE KEY   (analysis_id)
+);
+
+CREATE TABLE analysis_stats_monitor (
+  time                  datetime NOT NULL default '0000-00-00 00:00:00',
+  analysis_id           int(10) NOT NULL,
+  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
+                          DEFAULT 'READY' NOT NULL,
+  batch_size            int(10) default 1 NOT NULL,
+  avg_msec_per_job      int(10) default 0 NOT NULL,
+  avg_input_msec_per_job      int(10) default 0 NOT NULL,
+  avg_run_msec_per_job      int(10) default 0 NOT NULL,
+  avg_output_msec_per_job      int(10) default 0 NOT NULL,
+  hive_capacity         int(10) default 1 NOT NULL,
+  behaviour             enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
+  input_capacity        int(10) default 4 NOT NULL,
+  output_capacity       int(10) default 4 NOT NULL,
+  total_job_count       int(10) NOT NULL,
+  unclaimed_job_count   int(10) NOT NULL,
+  done_job_count        int(10) NOT NULL,
+  max_retry_count       int(10) default 3 NOT NULL,
+  failed_job_count      int(10) NOT NULL,
+  failed_job_tolerance  int(10) default 0 NOT NULL,
+  num_running_workers   int(10) default 0 NOT NULL,
+  num_required_workers  int(10) NOT NULL,
+  last_update           datetime NOT NULL,
+  sync_lock             int(10) default 0 NOT NULL
 );
 
 ------------------------------------------------------------------------------------
