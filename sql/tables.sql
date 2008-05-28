@@ -24,7 +24,7 @@ CREATE TABLE hive (
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
   PRIMARY KEY (hive_id),
-  INDEX analysis_status (analysis_id, status),
+  INDEX analysis_status (analysis_id, status)
 );
 
 
