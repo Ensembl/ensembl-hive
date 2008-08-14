@@ -461,7 +461,7 @@ sub run
       }
       $batch_end = time() * 1000;
       $job_counter += scalar(@$jobs);
-    } while (scalar(@$jobs) and $batch_end-$batch_start < $MIN_BATCH_TIME); ## Run for $MIN_BATCH_TIME at least
+    } while (!$specific_job and scalar(@$jobs) and $batch_end-$batch_start < $MIN_BATCH_TIME); ## Run for $MIN_BATCH_TIME at least
 
     #printf("batch start:%f end:%f\n", $batch_start, $batch_end);
     $self->db->get_AnalysisStatsAdaptor->interval_update_work_done($self->analysis->dbID,
