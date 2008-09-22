@@ -41,8 +41,8 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
-use Bio::EnsEMBL::Pipeline::RunnableDB;
-#use Bio::EnsEMBL::Analysis::RunnableDB;
+#use Bio::EnsEMBL::Pipeline::RunnableDB;
+use Bio::EnsEMBL::Analysis::RunnableDB;
 
 
 =head2 Bio::EnsEMBL::Analysis::process
