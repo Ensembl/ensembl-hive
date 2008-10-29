@@ -81,16 +81,27 @@ in bash
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    a) Create one analysis for the SystemCmd module
-     mysql -h HOST -u USER -pSECRET hive_test1 \
-         -e "INSERT INTO analysis(logic_name, module) VALUES ('SysmtemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd')"
+     mysql -h HOST -u USER -pSECRET hive_test1
+     mysql> INSERT INTO analysis(logic_name, module)
+            VALUES ('SysmtemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
    b) Add as many jobs as needed
-     mysql -h HOST -u USER -pSECRET hive_test1 \
-         -e "INSERT INTO analysis_job (analysis_id, input_id) VALUES ('1', 'echo 1')"
+     mysql> INSERT INTO analysis_job (analysis_id, input_id)
+            SELECT analysis_id, 'echo 6' FROM analysis WHERE logic_name = 'SystemCmd';
+     mysql> quit
+
+   c) Synchronise the eHive database
+     beekeeper.pl -url mysql://USER:SECRET@HOST/hive_test1 --sync
+
+   d) Change the number of concurrent workers
+     mysql -h HOST -u USER -pSECRET hive_test1
+     mysql> UPDATE analysis, analysis_stats SET hive_capacity = 100
+            WHERE analysis.analysis_id = analysis_stats.analysis_id AND logic_name = 'SystemCmd';
+     mysql> quit
 
 
 5) Run hive (queen and workers) through a beekeeper
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   eg: lsf_beekeeper.pl -url mysql://USER:SECRET@HOST/hive_test1 -loop
+     beekeeper.pl -url mysql://USER:SECRET@HOST/hive_test1 -loop
 
