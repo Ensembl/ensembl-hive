@@ -280,3 +280,93 @@ CREATE TABLE monitor (
   analysis              varchar(255) default NULL
 );
 
+
+-- The last 3 tables are from the ensembl core schema: meta, analysis and analysis_description.
+-- We create them with the 'IF NOT EXISTS' option in case they already exist in the DB.
+
+################################################################################
+#
+# Table structure for table 'meta' (FROM THE CORE SCHEMA)
+#
+
+CREATE TABLE IF NOT EXISTS meta (
+
+  meta_id                     INT NOT NULL AUTO_INCREMENT,
+  species_id                  INT UNSIGNED DEFAULT 1,
+  meta_key                    VARCHAR(40) NOT NULL,
+  meta_value                  VARCHAR(255) BINARY NOT NULL,
+
+  PRIMARY   KEY (meta_id),
+  UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value),
+            KEY species_value_idx (species_id, meta_value)
+
+) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+
+
+################################################################################
+#
+# Table structure for table 'analysis' (FROM THE CORE SCHEMA)
+#
+# semantics:
+#
+# analysis_id - internal id
+# created
+#   - date to distinguish newer and older versions off the same analysis. Not
+#     well maintained so far.
+# logic_name - string to identify the analysis. Used mainly inside pipeline.
+# db, db_version, db_file
+#  - db should be a database name, db version the version of that db
+#    db_file the file system location of that database,
+#    probably wiser to generate from just db and configurations
+# program, program_version,program_file
+#  - The binary used to create a feature. Similar semantic to above
+# module, module_version
+#  - Perl module names (RunnableDBS usually) executing this analysis.
+# parameters - a paramter string which is processed by the perl module
+# gff_source, gff_feature
+#  - how to make a gff dump from features with this analysis
+
+
+CREATE TABLE IF NOT EXISTS analysis (
+
+  analysis_id                 SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
+  logic_name                  VARCHAR(40) NOT NULL,
+  db                          VARCHAR(120),
+  db_version                  VARCHAR(40),
+  db_file                     VARCHAR(120),
+  program                     VARCHAR(80),
+  program_version             VARCHAR(40),
+  program_file                VARCHAR(80),
+  parameters                  VARCHAR(255),
+  module                      VARCHAR(80),
+  module_version              VARCHAR(40),
+  gff_source                  VARCHAR(40),
+  gff_feature                 VARCHAR(40),
+
+  PRIMARY KEY (analysis_id),
+  KEY logic_name_idx (logic_name),
+  UNIQUE (logic_name)
+
+) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+
+
+################################################################################
+#
+# Table structure for table 'analysis_description' (FROM THE CORE SCHEMA)
+#
+
+CREATE TABLE IF NOT EXISTS analysis_description (
+
+  analysis_id                  SMALLINT UNSIGNED NOT NULL,
+  description                  TEXT,
+  display_label                VARCHAR(255),
+  displayable                  BOOLEAN NOT NULL DEFAULT 1,
+  web_data                     TEXT,
+
+  UNIQUE KEY analysis_idx (analysis_id)
+
+) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+
+
+
