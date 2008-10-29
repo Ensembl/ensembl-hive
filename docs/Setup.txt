@@ -4,6 +4,8 @@
   perl DBI
   Data::UUID (from CPAN.org)
   ensembl
+  ensembl-analysis
+  ensembl-compara
   ensembl-pipeline
 
 1.2 Code checkout
@@ -16,9 +18,9 @@
 
       cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
 
-    ensembl-pipeline code (for Runnables)
+    ensembl-analysis, ensembl-pipeline, ensembl-compara code (OPTIONAL, for using e! Runnables)
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline
+      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co  ensembl-pipeline ensembl-compara ensembl-analysis
 
     ensembl-hive code
 
@@ -26,32 +28,45 @@
 
 in tcsh
     setenv BASEDIR   /some/path/to/modules
-    setenv PERL5LIB  ${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl/modules
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl-hive/modules
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl-analysis/modules (OPTIONAL)
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl-compara/modules (OPTIONAL)
+    setenv PERL5LIB  ${PERL5LIB}:${BASEDIR}/ensembl-pipeline/modules (OPTIONAL)
 
 in bash
     BASEDIR=/some/path/to/modules
-    PERL5LIB=${BASEDIR}/ensembl/modules:${BASEDIR}/ensembl-pipeline/modules:${BASEDIR}/ensembl-genepair/modules:${BASEDIR}/bioperl-live
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl/modules
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl-hive/modules
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl-compara/modules (OPTIONAL)
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl-analysis/modules (OPTIONAL)
+    PERL5LIB=${PERL5LIB}:${BASEDIR}/ensembl-pipeline/modules (OPTIONAL)
+    export PERL5LIB
 
 
-2- Configure database
+2- Setup a eHive database
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   Pick a mysql instance and create a database
 
-mysqladmin -h ecs2 -P3361 -uensadmin -pxxxx -e "create database hive-test1"
+    mysql -h HOST -u USER -pSECRET -e "create database hive_test1"
 
-cd ~/src/ensembl_main/ensembl-hive/sql
-mysql -h ecs2 -P3361 -uensadmin -pxxxx jessica_hive_test1 < tables.sql
+    cd ${BASEDIR}/ensembl-hive/sql
+    mysql -h HOST -u USER -pSECRET hive_test1 < tables.sql
 
-3- Create location where worker and job STDOUT/STDERR is redirected to
+
+3- (OPTIONAL) Create location where worker and job STDOUT/STDERR is redirected to
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
    a) create a working directory with enough disk space to hold hive worker output
-     mkdir /nfs/ecs4/work2/ensembl/jessica/data/hive_output/jessica_hive_test1/
+     mkdir /scratch/hive_test1/
    b) insert into meta table
-	$outdir = '/nfs/ecs4/work2/ensembl/jessica/data/hive_output/jessica_hive_test1/'
-        $dba->get_MetaContainer->store_key_value('hive_output_dir', $outdir);
-   
-4- Create pipeline graph
+     $outdir = '/scratch/hive_test1/'
+     mysql -h HOST -u USER -pSECRET hive_test1 \
+         -e "INSERT INTO meta(meta_key, meta_value) VALUES ('hive_output_dir', '$outdir')"
+
+
+4a- Create pipeline graph
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
    a) write RunnableDB modules to process data
@@ -61,7 +76,21 @@ mysql -h ecs2 -P3361 -uensadmin -pxxxx jessica_hive_test1 < tables.sql
       done before another part of pipeline needs to 'unblock' 
    e) insert starting job(s) into analysis_job table to kick off pipeline
 
+
+4b- To use the eHive as a simple batch job throttlingmanager
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   a) Create one analysis for the SystemCmd module
+     mysql -h HOST -u USER -pSECRET hive_test1 \
+         -e "INSERT INTO analysis(logic_name, module) VALUES ('SysmtemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd')"
+
+   b) Add as many jobs as needed
+     mysql -h HOST -u USER -pSECRET hive_test1 \
+         -e "INSERT INTO analysis_job (analysis_id, input_id) VALUES ('1', 'echo 1')"
+
+
 5) Run hive (queen and workers) through a beekeeper
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   eg: lsf_beekeeper.pl -url mysql://ensadmin:xxxx@ecs2:3361/jessica_hive_test1 -loop
+
+   eg: lsf_beekeeper.pl -url mysql://USER:SECRET@HOST/hive_test1 -loop
 
