@@ -85,9 +85,9 @@ in bash
      mysql> INSERT INTO analysis(logic_name, module)
             VALUES ('SysmtemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
-   b) Add as many jobs as needed
+   b) Add as many jobs as needed (in this case, the command line is "echo 1")
      mysql> INSERT INTO analysis_job (analysis_id, input_id)
-            SELECT analysis_id, 'echo 6' FROM analysis WHERE logic_name = 'SystemCmd';
+            SELECT analysis_id, 'echo 1' FROM analysis WHERE logic_name = 'SystemCmd';
      mysql> quit
 
    c) Synchronise the eHive database
