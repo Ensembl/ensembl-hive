@@ -83,7 +83,7 @@ in bash
    a) Create one analysis for the SystemCmd module
      mysql -h HOST -u USER -pSECRET hive_test1
      mysql> INSERT INTO analysis(logic_name, module)
-            VALUES ('SysmtemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
+            VALUES ('SystemCmd', 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
    b) Add as many jobs as needed (in this case, the command line is "echo 1")
      mysql> INSERT INTO analysis_job (analysis_id, input_id)
