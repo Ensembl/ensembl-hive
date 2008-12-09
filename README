@@ -12,9 +12,12 @@ Summary:
   data-flow graphs and block-branch diagrams which should allow it to codify
   any program, algorithm, or parallel processing job control system.  It is
   not bound to any processing 'farm' system and can be adapted to any GRID.
-  It builds on the design of the Ensembl Pipeline and presently uses 
-  Bio::EnsEMBL::Pipeline::RunnableDB perl wrapper objects as nodes/blocks in 
+  It builds on the design of the Ensembl Pipeline/Analysis and presently uses 
+  Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
+
+23 July, 2008 : Will Spooner
+  Removed remaining ensembl-pipeline dependencies.
 
 11 March, 2005 : Jessica Severin
   Project is reaching a very stable state.  New 'node' object Bio::EnsEMBL::Hive::Process
