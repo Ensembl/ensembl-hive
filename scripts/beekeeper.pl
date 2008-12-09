@@ -584,7 +584,8 @@ sub reset_all_jobs_for_analysis {
   my ($self, $logic_name) = @_;
   
   my $analysis = $self->{'dba'}->get_AnalysisAdaptor->
-                   fetch_by_logic_name($logic_name); 
+      fetch_by_logic_name($logic_name)
+      || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($logic_name)"); 
   
   $self->{'dba'}->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($analysis->dbID); 
 
