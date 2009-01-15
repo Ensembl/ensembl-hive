@@ -136,14 +136,14 @@ if($self->{'analysis_id'} and $self->{'input_id'}) {
   $self->{'analysis_job'}->input_id($self->{'input_id'});
   $self->{'analysis_job'}->analysis_id($self->{'analysis_id'}); 
   $self->{'analysis_job'}->dbID(-1); 
-  printf("creating job outside database\n   ");
+  print("creating job outside database\n");
   $self->{'analysis_job'}->print_job;
   $self->{'debug'}=1 unless(defined($self->{'debug'}));
   $self->{'outdir'}='' unless(defined($self->{'outdir'}));
 }
 
 if($self->{'job_id'}) {
-  printf("fetching job for id ", $self->{'job_id'}, "\n");
+  printf("fetching job for id %i\n", $self->{'job_id'});
   $self->{'analysis_job'} = $queen->reset_and_fetch_job_by_dbID($self->{'job_id'});
   $self->{'analysis_id'} = $self->{'analysis_job'}->analysis_id if($self->{'analysis_job'}); 
 }
