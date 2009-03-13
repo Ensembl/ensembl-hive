@@ -193,6 +193,35 @@ sub Bio::EnsEMBL::Analysis::stats
   return $stats;
 }
 
+=head2 Bio::EnsEMBL::Analysis::data
+
+  Arg [1]    : none
+  Example    : $stats = $analysis->data;
+  Description: returns the analysis data associated with this Analysis
+               object. The data is stored in the analysis_data table. 
+               Does not cache, but pull from database by using the
+               Analysis objects adaptor->db.
+  Returntype : String 
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub Bio::EnsEMBL::Analysis::data
+{
+  my $self = shift;
+  my $data = "";
+
+  my $analysis_data_id = eval($self->parameters)->{'analysis_data_id'};  
+  unless ( $analysis_data_id) {  
+    warning( " analysis_data_id undefined for analysis " .$self->logic_name. " in analysis_data table.") ; 
+  }else {  
+    $data  = $self->adaptor->db->get_AnalysisDataAdaptor->fetch_by_dbID($analysis_data_id) ; 
+  }
+  return $data;
+}
+
+
 #######################################
 # extensions to
 # Bio::EnsEMBL::Pipeline::RunnableDB
