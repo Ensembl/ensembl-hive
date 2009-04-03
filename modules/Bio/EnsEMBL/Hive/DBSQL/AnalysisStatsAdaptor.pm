@@ -45,6 +45,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
 =head2 fetch_by_analysis_id
+
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_analysis_id(1234);
@@ -53,6 +54,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
   Returntype : Bio::EnsEMBL::Hive::AnalysisStats
   Exceptions : thrown if $id is not defined
   Caller     : general
+
 =cut
 
 sub fetch_by_analysis_id {
@@ -88,11 +90,20 @@ sub fetch_all {
 sub fetch_by_needed_workers {
   my $self = shift;
   my $limit = shift;
+  my $maximise_concurrency = shift;
+
   my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
-  if($limit) {
-    $self->_final_clause("ORDER BY num_required_workers DESC, hive_capacity DESC, analysis_id LIMIT $limit");
+  my $first_order_by;
+  if ($maximise_concurrency) {
+    $first_order_by = 'ORDER BY num_running_workers';
+    # print STDERR "###> Maximising concurrency\n";
   } else {
-    $self->_final_clause("ORDER BY num_required_workers DESC, hive_capacity DESC, analysis_id");
+    $first_order_by = 'ORDER BY num_required_workers DESC';
+  }
+  if($limit) {
+    $self->_final_clause("$first_order_by, hive_capacity DESC, analysis_id LIMIT $limit");
+  } else {
+    $self->_final_clause("$first_order_by, hive_capacity DESC, analysis_id");
   }
   my $results = $self->_generic_fetch($constraint);
   $self->_final_clause(""); #reset final clause for other fetches
@@ -159,7 +170,7 @@ sub get_running_worker_count {
   Returntype : Bio::EnsEMBL::Hive::Worker
   Exceptions :
   Caller     :
-  
+
 =cut
 
 sub update {
