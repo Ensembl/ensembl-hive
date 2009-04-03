@@ -258,15 +258,11 @@ sub determine_status {
         print
             "\n",
             "##################################################\n",
-            "##################################################\n",
-            "##                                              ##\n";
         printf
             "##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!";
         printf
             "##          %4.1f%% jobs failed (tolerance: %3d%%) ##\n", $failure_percentage, $self->failed_job_tolerance;
         print
-            "##                                              ##\n",
-            "##################################################\n",
             "##################################################\n\n";
       } else {
         $self->status('DONE');
