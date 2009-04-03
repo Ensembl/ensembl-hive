@@ -30,11 +30,13 @@ $| = 1;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
-my ($job_limit, $batch_size);
+my ($job_limit, $lifespan, $batch_size);
+my $maximise_concurrency = 0;
 my $loopit=0;
 my $worker_limit = 50;
 my $sleep_time = 2;
 my $sync=0;
+my $highmem=undef;
 my $local=undef;
 $self->{'overdue_limit'} = 60; #minutes
 $self->{'no_analysis_stats'} = undef;
@@ -61,6 +63,9 @@ GetOptions('help'           => \$help,
            'alldead'        => \$self->{'all_dead'},
            'run'            => \$self->{'run'},
            'run_job_id=i'   => \$self->{'run_job_id'},
+           'lifespan=i'       => \$lifespan,
+           'maximise_concurrency=i'       => \$maximise_concurrency,
+           'highmem'          => \$highmem,
            'jlimit=i'       => \$job_limit,
            'wlimit=i'       => \$worker_limit,
            'batch_size=i'   => \$batch_size,
@@ -69,7 +74,7 @@ GetOptions('help'           => \$help,
            'sync'           => \$sync,
            'no_analysis_stats' => \$self->{'no_analysis_stats'},
            'verbose_stats=i'   => \$self->{'verbose_stats'},
-           'worker_stats'   => \$self->{'show_worker_stats'},
+           'worker_stats=i'   => \$self->{'show_worker_stats'},
            'sleep=f'        => \$sleep_time,
            'logic_name=s'   => \$self->{'logic_name'},
            'failed_jobs'    => \$self->{'show_failed_jobs'},
@@ -128,6 +133,8 @@ elsif($url) {
 }
 $self->{'dba'} = $DBA;
 my $queen = $DBA->get_Queen;
+$queen->{maximise_concurrency} = 1 if ($maximise_concurrency);
+$queen->{HIGHMEM} = 1 if ($highmem);
 $self->{name} = $DBA->get_MetaContainer->list_value_by_key("name")->[0];
 
 if($self->{'reset_job_id'}) { $queen->reset_and_fetch_job_by_dbID($self->{'reset_job_id'}); };
@@ -140,7 +147,7 @@ if($self->{'reset_all_jobs_for_analysis'}) {
 if($self->{'remove_analysis_id'}) { remove_analysis_id($self); }
 
 if($self->{'all_dead'}) { register_all_workers_dead($self, $queen); }
-if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen); }
+if($self->{'check_for_dead'}) { check_for_dead_workers($self, $queen) unless (-1 == $self->{'verbose_stats'}); }
 
 my $analysis = $DBA->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
@@ -289,27 +296,38 @@ sub check_for_dead_workers {
   print("===== check for dead workers\n");
   my $overdueWorkers = $queen->fetch_overdue_workers($self->{'overdue_limit'}*60);
   print(scalar(@{$overdueWorkers}), " overdue workers\n");
+  # FIXME - honeycomb is spread around here, dirty
+  my $honeycomb;
   foreach my $worker (@{$overdueWorkers}) {
     next unless($worker->beekeeper eq $self->{'beekeeper_type'});
     next if(($self->{'beekeeper_type'} eq 'LOCAL') and
 	    ($worker->host ne hostname));
 
-    printf("%10d %35s %15s  %20s(%d) : ", 
-	   $worker->hive_id, $worker->host, $worker->process_id, 
-	   $worker->analysis->logic_name, $worker->analysis->dbID);
+    printf("%10d %35s %15s %20s(%d) : ", 
+	   $worker->hive_id, $worker->host, $worker->process_id,
+	   $worker->analysis->logic_name, $worker->analysis->dbID) if (0 != $self->{'verbose_stats'});
 
+    $honeycomb .= "#" . $worker->analysis->logic_name . "\n". "bkill " . $worker->process_id . "\n";
+
+    my $jobDBA = $self->{'dba'}->get_AnalysisJobAdaptor;
     my $is_alive;
     $is_alive = $self->lsf_check_worker($worker) if($self->{'beekeeper_type'} eq 'LSF');
     $is_alive = $self->local_check_worker($worker) if($self->{'beekeeper_type'} eq 'LOCAL');
 
     if($is_alive) {
-      print("ALIVE and running\n");
+      print("ALIVE and running\n") if (0 != $self->{'verbose_stats'});
     } else {
       print("worker is missing => it DIED!!\n");
       $queen->register_worker_death($worker);
     }
-
+    my $jobs = $jobDBA->fetch_by_run_analysis($worker->hive_id, $worker->analysis->dbID);
+    foreach my $job (@$jobs) {
+      printf("%10s %35s %15s %20s(%d) : %36s\n", 
+             $job->hive_id, $job->retry_count, $job->dbID, $worker->analysis->logic_name, $job->analysis_id, $job->job_claim) if (0 != $self->{'verbose_stats'});
+      $honeycomb = "#" . $worker->analysis->logic_name . "\n" . "touch relegate.". $job->dbID. "\n" . $honeycomb;
+    }
   }
+  print $honeycomb if (defined($honeycomb) && (0 != $self->{'verbose_stats'}));
 }
 
 
@@ -442,12 +460,12 @@ sub run_autonomously {
   while($loopit) {
     print("\n=======lsf_beekeeper loop ** $loopCount **==========\n");
 
-    check_for_dead_workers($self, $queen);
+    check_for_dead_workers($self, $queen) unless (-1 == $self->{'verbose_stats'});
 
     $queen->{'verbose_stats'} = $self->{'verbose_stats'};
     $queen->print_analysis_status unless($self->{'no_analysis_stats'});
 
-    $queen->print_running_worker_status;
+    $queen->print_running_worker_status if($self->{'show_worker_stats'});
     #show_failed_workers($self);
     
     my $runCount = $queen->get_num_running_workers();
@@ -495,6 +513,9 @@ sub run_autonomously {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
         $count = 1; # Avoid to run more than 1 worker! 
       } else {
+        $worker_cmd .= " -lifespan $lifespan" if(defined $lifespan);
+        $worker_cmd .= " -maximise_concurrency $maximise_concurrency" if(defined $maximise_concurrency);
+        $worker_cmd .= " -highmem 1" if(defined $highmem);
         $worker_cmd .= " -limit $job_limit" if(defined $job_limit);
         $worker_cmd .= " -batch_size $batch_size" if(defined $batch_size);
         $worker_cmd .= " -logic_name $logic_name" if(defined $logic_name);
@@ -557,6 +578,7 @@ sub get_lsf_pending_count {
   my $cmd;
   if ($name) {
     $cmd = "bjobs -w | grep '$name-HL' | grep -c PEND";
+    print "[$name-HL] ";
   } else {
     $cmd = "bjobs -w | grep -c PEND";
   }
