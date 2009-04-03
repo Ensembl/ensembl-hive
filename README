@@ -16,6 +16,47 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+3 April, 2009 : Albert Vilella
+
+  Added a new maximise_concurrency 1/0 option. When set to 1, it will
+  fetch jobs that need to be run in the adequate order as to maximise
+  the different number of analyses being run. This is useful for cases
+  where different analyses hit different tables and the overall sql
+  load can be kept higher without breaking the server, instead of
+  having lots of jobs for the same analysis trying to hit the same
+  tables.
+
+  Added quick HIGHMEM option. This option is useful when a small
+  percent of jobs are too big and fail in normal conditions. The
+  runnable can check if it's the second time it's trying to run the
+  job, if it's because it contains big data (e.g. gene_count > 200)
+  and if it isn't already in HIGHMEM mode. Then, it will call
+  reset_highmem_job_by_dbID and quit:
+
+  if ($self->input_job->retry_count == 1) {
+    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200 && !defined($self->worker->{HIGHMEM})) {
+      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+      $self->DESTROY;
+      throw("Alignment job too big: send to highmem and quit");
+    }
+  }
+
+  Assuming there is a
+
+   beekeeper.pl -url <blah> -highmem -lsf_options "<lots of mem>"
+
+   running, or a 
+   
+   runWorker.pl <blah> -highmem 1
+
+   with lots of mem running, it will fetch the HIGHMEM jobs as if they
+   were "READY but needs HIGHMEM".
+
+   Also added a modification to Queen that will not synchronize as
+   often when more than 450 jobs are running and the load is above
+   0.9, so that the queries to analysis tables are not hitting the sql
+   server too much.
+
 23 July, 2008 : Will Spooner
   Removed remaining ensembl-pipeline dependencies.
 
