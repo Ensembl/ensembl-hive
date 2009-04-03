@@ -183,6 +183,15 @@ sub fetch_by_claim_analysis {
   return $self->_generic_fetch($constraint);
 }
 
+sub fetch_by_run_analysis {
+  my ($self,$hive_id,$analysis_id) = @_;
+
+  throw("fetch_by_run_analysis must have hive_id") unless($hive_id);
+  throw("fetch_by_run_analysis must have analysis_id") unless($analysis_id);
+  my $constraint = "a.status='RUN' AND a.hive_id=$hive_id AND a.analysis_id='$analysis_id'";
+  return $self->_generic_fetch($constraint);
+}
+
 
 =head2 fetch_all
 
@@ -400,6 +409,9 @@ sub update_status {
     $sql .= ",runtime_msec=".$job->runtime_msec;
     $sql .= ",query_count=".$job->query_count;
   }
+  if($job->status eq 'READY') {
+    $sql .= ",job_claim=''";
+  }
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
   my $sth = $self->prepare($sql);
@@ -470,11 +482,12 @@ sub claim_jobs_for_worker {
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
   #print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
-
+  my $status = 'READY';
+  $status = 'HIGHMEM' if (defined($worker->{HIGHMEM}));
   my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
                  " , hive_id='". $worker->hive_id ."'".
                  " , status='CLAIMED'".
-                 " WHERE job_claim='' and status='READY'". 
+                 " WHERE job_claim='' and status='" . $status . "'". 
                  " AND analysis_id='" .$worker->analysis->dbID. "'"; 
 
   my $sql_virgin = $sql_base .  
@@ -595,6 +608,20 @@ sub reset_dead_job_by_dbID {
   #print(" done update BROKEN jobs\n");
 }
 
+sub reset_highmem_job_by_dbID {
+  my $self = shift;
+  my $job_id = shift;
+
+  #added hive_id index to analysis_job table which made this operation much faster
+
+  my $sql;
+  #first just reset the claimed jobs, these don't need a retry_count index increment
+  $sql = "UPDATE analysis_job SET job_claim='', status='HIGHMEM'".
+         " WHERE analysis_job_id=$job_id";
+  $self->dbc->do($sql);
+  #print("  done update CLAIMED\n");
+}
+
 
 =head2 reset_job_by_dbID
 
@@ -675,7 +702,15 @@ sub remove_analysis_id {
   #first just reset the claimed jobs, these don't need a retry_count index increment
   $sql = "DELETE FROM analysis_stats WHERE analysis_id=$analysis_id";
   $self->dbc->do($sql);
+  $sql = "ANALYZE TABLE analysis_stats";
+  $self->dbc->do($sql);
   $sql = "DELETE FROM analysis_job WHERE analysis_id=$analysis_id";
+  $self->dbc->do($sql);
+  $sql = "ANALYZE TABLE analysis_job";
+  $self->dbc->do($sql);
+  $sql = "DELETE FROM hive WHERE analysis_id=$analysis_id";
+  $self->dbc->do($sql);
+  $sql = "ANALYZE TABLE hive";
   $self->dbc->do($sql);
 
 }
