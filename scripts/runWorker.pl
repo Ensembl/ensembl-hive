@@ -50,6 +50,8 @@ GetOptions('help'           => \$help,
            'batchsize=i'    => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
+           'maximise_concurrency=i'     => \$self->{'maximise_concurrency'},
+           'highmem=i'     => \$self->{'highmem'},
            'outdir=s'       => \$self->{'outdir'},
            'bk=s'           => \$self->{'beekeeper'},
            'pid=s'          => \$self->{'process_id'},
@@ -102,6 +104,8 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 }
 
 my $queen = $DBA->get_Queen();
+$queen->{maximise_concurrency} = 1 if ($self->{maximise_concurrency});
+$queen->{highmem} = $self->{highmem} if ($self->{highmem});
 
 ################################
 # LSF submit system dependency
@@ -130,7 +134,6 @@ if($self->{'logic_name'}) {
   }
   $self->{'analysis_id'} = $analysis->dbID;
 }
-
 if($self->{'analysis_id'} and $self->{'input_id'}) {
   $self->{'analysis_job'} = new Bio::EnsEMBL::Hive::AnalysisJob;
   $self->{'analysis_job'}->input_id($self->{'input_id'});
@@ -161,6 +164,7 @@ unless($worker) {
   exit(0);
 }
 
+$worker->{HIGHMEM} = $self->{highmem} if($self->{highmem});
 $worker->debug($self->{'debug'}) if($self->{'debug'});
 
 if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
