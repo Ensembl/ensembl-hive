@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl -w
+
 # cmd_hive.pl
 #
 # Cared for by Albert Vilella <>
@@ -78,7 +79,9 @@ $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
 $self->{'analysis_id'} = undef;
-$self->{'logic_name'}  = undef;
+$self->{'logic_name'}  = 'cmd_hive_analysis';
+$self->{'module'}      = 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd';
+$self->{'parameters'}  = '{}';
 $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
@@ -96,13 +99,15 @@ GetOptions('help'            => \$help,
            'dbname=s'        => \$dbname,
            'analysis_id=i'   => \$self->{'analysis_id'},
            'logic_name=s'    => \$self->{'logic_name'},
+           'module=s'        => \$self->{'module'},
            'limit=i'         => \$self->{'job_limit'},
            'lifespan=i'      => \$self->{'lifespan'},
            'outdir=s'        => \$self->{'outdir'},
            'bk=s'            => \$self->{'beekeeper'},
            'pid=s'           => \$self->{'process_id'},
            'input_id=s'      => \$self->{'input_id'},
-           'inputfile=s'      => \$self->{'inputfile'},
+           'parameters=s'    => \$self->{'parameters'},
+           'inputfile=s'     => \$self->{'inputfile'},
            'suffix_a=s'      => \$self->{'suffix_a'},
            'suffix_b=s'      => \$self->{'suffix_b'},
            'hashed_a=s'      => \$self->{'hashed_a'},
@@ -156,27 +161,30 @@ sub usage {
   print "cmd_hive.pl [options]\n";
   print "  -help                  : print this help\n";
   print "  -url <url string>      : url defining where hive database is located\n";
-  print "  -input_id <cmd string> : command to be executed\n";
+  print "  -input_id <cmd string> : command to be executed (or param. hash to be passed to analysis module)\n";
   print "  -suffix_a <tag>        : suffix from here\n";
   print "  -suffix_b <tag>        : suffix to here\n";
   print "  -suffix_bn <tag>       : end for suffix in multiple levels\n";
   print "  -tag <tag>             : fixed tag in the command line\n"; 
-  print "cmd_hive.pl v1.0\n";
+  print "  -logic_name <analysis name>  : logic_name of the analysis\n";
+  print "  -module <module name>  : name of the module to be run\n";
   exit(1);
 }
 
 sub job_creation {
   my $self = shift;
 
-  my $logic_name = $self->{'logic_name'} || "cmd_hive_analysis";
-  print("creating analysis '$logic_name'\n");
+  my $logic_name = $self->{'logic_name'};
+  my $module     = $self->{'module'};
+  my $parameters = $self->{'parameters'};
+  print("creating analysis '$logic_name' to be computed using module '$module' with parameters '$parameters'\n");
   $self->{_analysis} = Bio::EnsEMBL::Analysis->new (
       -db              => '',
       -db_file         => '',
       -db_version      => '1',
-      -parameters      => "",
+      -parameters      => $parameters,
       -logic_name      => $logic_name,
-      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+      -module          => $module,
     );
   $DBA->get_AnalysisAdaptor()->store($self->{_analysis});
 
@@ -217,7 +225,9 @@ sub job_creation {
       $self->{resolved_input_id} =~ s/\$suffix/$suffix/g;
       $self->{resolved_input_id} =~ s/\$tag/$tag/g;
 
-      print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n"; # if(++$count % 50 == 0);
+      if(++$count % 100 == 0) {
+          print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n";
+      }
       $self->create_resolved_input_id_job();
     }
   }
