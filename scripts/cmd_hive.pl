@@ -18,17 +18,32 @@ cmd_hive.pl - DESCRIPTION
 
 perl \
 /nfs/acari/avilella/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl \
--url mysql://user:password@mysqldb:port/name_of_hive_db -logic_name \
-example1 -input_id 'echo I.have.$suffix.$tag.and.I.am.baking.one.right.now' \
--suffix_a apple01 -suffix_b apple05 -tag pies\
+    -url mysql://user:password@mysqldb:port/name_of_hive_db
+    -logic_name example1 -input_id 'echo I.have.$suffix.$tag.and.I.am.baking.one.right.now' \
+    -suffix_a apple01 -suffix_b apple05 -tag pies\
+
+cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54
+    -input_id \ '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' \
+    -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab" }' \
+    -suffix_a 1 -suffix_b 100 -step 9 -hive_capacity 200 -logic_name family_blast_54a \
+    -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
 
 =head1 DESCRIPTION
 
-Simple SystemCmd call through Bio::EnsEMBL::Hive with $suffix ranging
-from suffix_a and suffix_b, looping in a ($alfa..$beta) fashion. $tag is for
-fixed elements.
+This script is to help load a batch of jobs all belonging to the same analysis,
+whose parameters have to be varied over a range of values.
 
-Always use single quotes for input_id.
+It was initially intended to run jobs wrapped into a script via
+Bio::EnsEMBL::Hive::RunnableDB::SystemCmd module,
+but is now extended to run any RunnableDB module jobs.
+
+There are three ways of providing the range for the mutable parameter:
+    - perl built-in .. range operator (by setting -suffix_a 1234 and -suffix_b 5678 values)
+        ** you can create mini-batches by providing the -step value, which will percolate as $suffixn
+    - values provided in a file (by setting -inputfile filename)
+    - hashed mode
+
+Always use single quotes to protect the values of -input_id and -parameters.
 
 Be careful of using things that don't expand, like apple_01 apple_05
 instead of apple01 apple05
@@ -42,16 +57,9 @@ If using hashed, call with something like:
 [-hashed_a 00:00:00]
 [-hashed_b 01:61:67]
 
-
 =head1 AUTHOR - Albert Vilella
 
-Email 
-
-Describe contact details here
-
-=head1 CONTRIBUTORS
-
-Additional contributors names and emails here
+=head2 CONTRIBUTOR - Leo Gordon
 
 =cut
 
@@ -63,9 +71,8 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
-use Bio::EnsEMBL::Hive::Queen;
+#use Bio::EnsEMBL::Hive::Queen;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 #use Data::UUID;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -110,6 +117,7 @@ GetOptions('help'            => \$help,
            'inputfile=s'     => \$self->{'inputfile'},
            'suffix_a=s'      => \$self->{'suffix_a'},
            'suffix_b=s'      => \$self->{'suffix_b'},
+           'step=i'          => \$self->{'step'},
            'hashed_a=s'      => \$self->{'hashed_a'},
            'hashed_b=s'      => \$self->{'hashed_b'},
            'tag=s'           => \$self->{'tag'},
@@ -142,11 +150,11 @@ if($url) {
 
   # connect to database specified
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
-  $url = $DBA->url();
+  #$url = $DBA->url();
 }
 #$DBA->dbc->disconnect_when_inactive(1);
 
-my $queen = $DBA->get_Queen();
+#my $queen = $DBA->get_Queen();
 job_creation($self);
 exit(0);
 
@@ -164,7 +172,6 @@ sub usage {
   print "  -input_id <cmd string> : command to be executed (or param. hash to be passed to analysis module)\n";
   print "  -suffix_a <tag>        : suffix from here\n";
   print "  -suffix_b <tag>        : suffix to here\n";
-  print "  -suffix_bn <tag>       : end for suffix in multiple levels\n";
   print "  -tag <tag>             : fixed tag in the command line\n"; 
   print "  -logic_name <analysis name>  : logic_name of the analysis\n";
   print "  -module <module name>  : name of the module to be run\n";
@@ -218,17 +225,26 @@ sub job_creation {
     }
     close FILE;
   } elsif(defined($self->{'suffix_a'}) and defined($self->{'suffix_b'})) {
-    my $tag = $self->{'tag'};
-    for my $suffix ( $self->{'suffix_a'}..$self->{'suffix_b'} ) {
-          # expanding tags here:
-      $self->{resolved_input_id} = $self->{'input_id'};
-      $self->{resolved_input_id} =~ s/\$suffix/$suffix/g;
-      $self->{resolved_input_id} =~ s/\$tag/$tag/g;
+    my $tag  = $self->{'tag'};
+    my $step = $self->{'step'} || 1;
+    my @full_list = $self->{'suffix_a'}..$self->{'suffix_b'};
+    while(@full_list) {
+        my ($from, $to);
+        my $batch_cnt = 1;
+        for($from = $to = shift @full_list; $batch_cnt<$step && @full_list; $batch_cnt++) {
+            $to = shift @full_list;
+        }
+            # expanding tags here (now you can substitute $suffix, $suffix2, $suffixn and if you really need it, $tag):
+        $self->{resolved_input_id} = $self->{'input_id'};
+        $self->{resolved_input_id} =~ s/\$suffixn/$batch_cnt/g; # the order of substitutions is important!
+        $self->{resolved_input_id} =~ s/\$suffix2/$to/g;
+        $self->{resolved_input_id} =~ s/\$suffix/$from/g;
+        $self->{resolved_input_id} =~ s/\$tag/$tag/g;
 
-      if(++$count % 100 == 0) {
-          print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n";
-      }
-      $self->create_resolved_input_id_job();
+        if(++$count % 100 == 0) {
+            print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n";
+        }
+        $self->create_resolved_input_id_job();
     }
   }
   my $total_time = (time()-$starttime);
@@ -307,6 +323,5 @@ sub resolve_suffix {
   }
   return $hashed_input_id;
 }
-
 
 1;
