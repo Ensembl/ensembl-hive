@@ -137,9 +137,11 @@ sub stderr_file {
 
 sub print_job {
   my $self = shift;
-  my $logic_name ='';
-  $logic_name = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id)->logic_name if($self->adaptor);
-  printf("job_id=%d %s(%d) retry=%d input_id='%s'\n", 
+  my $logic_name = $self->adaptor()
+      ? $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id)->logic_name()
+      : '';
+
+  printf("job_id=%d %35s(%5d) retry=%d input_id='%s'\n", 
        $self->dbID,
        $logic_name,
        $self->analysis_id,
