@@ -108,7 +108,6 @@ sub create_new_worker {
   $analysis_id = $job->analysis_id if(defined($job));
   
   my $analysisStats;
-
   if($analysis_id) {
     $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
     $self->safe_synchronize_AnalysisStats($analysisStats);
@@ -167,6 +166,7 @@ sub register_worker_death {
   my ($self, $worker) = @_;
 
   return unless($worker);
+
   # if called without a defined cause_of_death, assume catastrophic failure
   $worker->cause_of_death('FATALITY') unless(defined($worker->cause_of_death));
   unless ($worker->cause_of_death() eq "HIVE_OVERLOAD") {
@@ -352,6 +352,7 @@ sub fetch_failed_workers {
 
 =head2 synchronize_hive
 
+  Arg [1]    : $this_analysis (optional)
   Example    : $queen->synchronize_hive();
   Description: Runs through all analyses in the system and synchronizes
               the analysis_stats summary with the states in the analysis_job 
@@ -363,19 +364,22 @@ sub fetch_failed_workers {
 =cut
 
 sub synchronize_hive {
-  my $self = shift;
+  my $self          = shift;
+  my $this_analysis = shift; # optional parameter
 
   my $start_time = time();
 
-  my $allAnalysis = $self->db->get_AnalysisAdaptor->fetch_all;
-  print("analyze ", scalar(@$allAnalysis), "\n");
-  foreach my $analysis (@$allAnalysis) {
-    my $stats = $analysis->stats;
-    $self->synchronize_AnalysisStats($stats);
+  my $list_of_analyses = $this_analysis ? [$this_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+
+  print "Synchronizing the hive (".scalar(@$list_of_analyses)." analyses this time) \n";
+  foreach my $analysis (@$list_of_analyses) {
+    $self->synchronize_AnalysisStats($analysis->stats);
   }
-  foreach my $analysis (@$allAnalysis) {
+
+  foreach my $analysis (@$list_of_analyses) {
     $self->check_blocking_control_rules_for_AnalysisStats($analysis->stats);
   }
+
   print((time() - $start_time), " secs to synchronize_hive\n");
 }
 
@@ -436,13 +440,6 @@ sub synchronize_AnalysisStats {
   my $self = shift;
   my $analysisStats = shift;
 
-  # Trying to make hive not synchronize if there is a high load in the
-  # server, e.g. during blasts (max 450 workers). The best thing I
-  # could find is the combination of these two numbers
-  if (($self->get_hive_current_load("silent") > 0.9) && $self->get_num_running_workers("silent") > 400) {
-    return $analysisStats;
-  }
-
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
   
@@ -453,12 +450,8 @@ sub synchronize_AnalysisStats {
   $analysisStats->failed_job_count(0);
   $analysisStats->num_required_workers(0);
 
-#   my $sql = "SELECT status, count(*) FROM analysis_job ".
-#             "WHERE analysis_id=? GROUP BY status";
-# This should be better in terms of performance 
-# http://www.mysqlperformanceblog.com/2007/08/16/how-much-overhead-is-caused-by-on-disk-temporary-tables/
-  my $sql = "SELECT status, count(status) FROM analysis_job ".
-            "WHERE analysis_id=? GROUP BY status ORDER BY NULL LIMIT 10";
+  my $sql = "SELECT status, count(*) FROM analysis_job ".
+            "WHERE analysis_id=? GROUP BY status";
   my $sth = $self->prepare($sql);
   $sth->execute($analysisStats->analysis_id);
 
@@ -588,8 +581,7 @@ sub get_num_failed_analyses
 
 sub get_hive_current_load {
   my $self = shift;
-  my $silent = shift;
-  my $sql = "SELECT /*! SQL_BUFFER_RESULT */ sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
+  my $sql = "SELECT sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
             "WHERE hive.analysis_id=analysis_stats.analysis_id and cause_of_death ='' ".
             "AND analysis_stats.hive_capacity>0";
   my $sth = $self->prepare($sql);
@@ -597,22 +589,20 @@ sub get_hive_current_load {
   (my $load)=$sth->fetchrow_array();
   $sth->finish;
   $load=0 unless($load);
-  print("current hive load = $load\n") unless (defined($silent));
-  print("*") if ($silent eq 'silent');
+  print("current hive load = $load\n");
   return $load;
 }
 
 
 sub get_num_running_workers {
   my $self = shift;
-  my $silent = shift;
   my $sql = "SELECT count(*) FROM hive WHERE cause_of_death =''";
   my $sth = $self->prepare($sql);
   $sth->execute();
   (my $runningCount)=$sth->fetchrow_array();
   $sth->finish;
   $runningCount=0 unless($runningCount);
-  print("current hive num_running_workers = $runningCount\n") unless (defined($silent));
+  print("current hive num_running_workers = $runningCount\n");
   return $runningCount;
 }
 
@@ -688,11 +678,36 @@ sub get_num_needed_workers {
   return $numWorkers;
 }
 
+sub get_needed_workers_failed_analyses_resync_if_necessary {
+    my ($self, $this_analysis) = @_;
+
+    my $runCount        = $self->get_num_running_workers();
+    my $load            = $self->get_hive_current_load();
+    my $worker_count    = $self->get_num_needed_workers($this_analysis);
+    my $failed_analyses = $self->get_num_failed_analyses($this_analysis);
+
+    if($load==0 and $worker_count==0 and $runCount==0) {
+        print "*** nothing is running and nothing to do => perform a hard resync\n" ;
+
+        $self->synchronize_hive($this_analysis);
+
+        $worker_count = $self->get_num_needed_workers($this_analysis);
+        $failed_analyses = $self->get_num_failed_analyses($this_analysis);
+        if($worker_count==0) {
+            if($failed_analyses==0) {
+                print "Nothing left to do".($this_analysis ? (' for analysis '.$this_analysis->logic_name) : '').". DONE!!\n\n";
+            }
+        }
+    }
+
+    return ($worker_count, $failed_analyses);
+}
+
 
 sub get_hive_progress
 {
   my $self = shift;
-  my $sql = "SELECT /*! SQL_BUFFER_RESULT */ sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
+  my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
             "sum(unclaimed_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
             "FROM analysis_stats";
   my $sth = $self->prepare($sql);
@@ -707,26 +722,24 @@ sub get_hive_progress
   my $remaining = $total - $done - $failed;
   printf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n", 
           $completed, $cpuhrs, $remaining, $done, $failed, $total);
-  return $done, $total, $cpuhrs;
+  return $remaining;
 }
 
-sub print_hive_status
-{
-  my $self = shift;
-  $self->print_analysis_status;
-  $self->print_running_worker_status;
+sub print_hive_status {
+    my ($self, $this_analysis) = @_;
+
+    $self->print_analysis_status($this_analysis);
+    $self->print_running_worker_status;
 }
 
 
-sub print_analysis_status
-{
-  my $self = shift;
+sub print_analysis_status {
+    my ($self, $this_analysis) = @_;
 
-  my $allStats = $self->db->get_AnalysisStatsAdaptor->fetch_all();
- 
-  foreach my $analysis_stats (@{$allStats}) {
-    $analysis_stats->print_stats($self->{'verbose_stats'});
-  }
+    my $list_of_analyses = $this_analysis ? [$this_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+    foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
+        $analysis->stats->print_stats($self->{'verbose_stats'});
+    }
 }
 
 
@@ -777,6 +790,24 @@ sub monitor
       
   my $sth = $self->prepare($sql);
   $sth->execute();
+}
+
+=head2 register_all_workers_dead
+
+  Example    : $queen->register_all_workers_dead();
+  Description: Registers all workers dead
+  Exceptions : none
+  Caller     : beekeepers and other external processes
+
+=cut
+
+sub register_all_workers_dead {
+    my $self = shift;
+
+    my $overdueWorkers = $self->fetch_overdue_workers(0);
+    foreach my $worker (@{$overdueWorkers}) {
+        $self->register_worker_death($worker);
+    }
 }
 
 

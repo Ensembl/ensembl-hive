@@ -93,20 +93,21 @@ sub fetch_by_needed_workers {
   my $maximise_concurrency = shift;
 
   my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
-  my $first_order_by;
+
+  my $order_by;
   if ($maximise_concurrency) {
-    $first_order_by = 'ORDER BY num_running_workers';
-    # print STDERR "###> Maximising concurrency\n";
+    $order_by = 'ORDER BY num_running_workers';
   } else {
-    $first_order_by = 'ORDER BY num_required_workers DESC';
+    $order_by = 'ORDER BY num_required_workers DESC';
   }
+  $order_by .= ', hive_capacity DESC, analysis_id';
   if($limit) {
-    $self->_final_clause("$first_order_by, hive_capacity DESC, analysis_id LIMIT $limit");
-  } else {
-    $self->_final_clause("$first_order_by, hive_capacity DESC, analysis_id");
+    $order_by .= " LIMIT $limit";
   }
+  $self->_final_clause($order_by);
+
   my $results = $self->_generic_fetch($constraint);
-  $self->_final_clause(""); #reset final clause for other fetches
+  $self->_final_clause(''); #reset final clause for other fetches
   return $results;
 }
 
@@ -218,7 +219,7 @@ sub update {
   $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=NOW()";
-  $sql .= ",sync_lock=''";
+  $sql .= ",sync_lock='0'";
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);

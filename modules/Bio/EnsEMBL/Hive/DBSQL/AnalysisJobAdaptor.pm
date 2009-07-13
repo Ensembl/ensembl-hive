@@ -482,12 +482,11 @@ sub claim_jobs_for_worker {
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
   #print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
-  my $status = 'READY';
-  $status = 'HIGHMEM' if (defined($worker->{HIGHMEM}));
+
   my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
                  " , hive_id='". $worker->hive_id ."'".
                  " , status='CLAIMED'".
-                 " WHERE job_claim='' and status='" . $status . "'". 
+                 " WHERE job_claim='' and status='READY'". 
                  " AND analysis_id='" .$worker->analysis->dbID. "'"; 
 
   my $sql_virgin = $sql_base .  
@@ -606,20 +605,6 @@ sub reset_dead_job_by_dbID {
   $self->dbc->do($sql);
 
   #print(" done update BROKEN jobs\n");
-}
-
-sub reset_highmem_job_by_dbID {
-  my $self = shift;
-  my $job_id = shift;
-
-  #added hive_id index to analysis_job table which made this operation much faster
-
-  my $sql;
-  #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET job_claim='', status='HIGHMEM'".
-         " WHERE analysis_job_id=$job_id";
-  $self->dbc->do($sql);
-  #print("  done update CLAIMED\n");
 }
 
 

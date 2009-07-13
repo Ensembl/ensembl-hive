@@ -16,6 +16,23 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+
+13 July, 2009 : Leo Gordon
+
+Merging the "Meadow" code from this March' development branch.
+Because it separates LSF-specific code from higher level, it will be easier to update.
+
+-------------------------------------------------------------------------------------------------------
+Albert, sorry - in the process of merging into the development branch I had to remove your HIGHMEM code.
+I hope it is a temporary measure and we will be having hive-wide queue control soon.
+If not - you can restore the pre-merger state by updating with the following command:
+
+    cvs update -r lg4_pre_merger_20090713
+
+('maximise_concurrency' option was carried over)
+-------------------------------------------------------------------------------------------------------
+
+
 3 April, 2009 : Albert Vilella
 
   Added a new maximise_concurrency 1/0 option. When set to 1, it will

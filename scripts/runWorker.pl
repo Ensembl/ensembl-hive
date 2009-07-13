@@ -30,6 +30,7 @@ $self->{'job_id'}      = undef;
 $self->{'debug'}       = undef;
 $self->{'analysis_job'} = undef;
 $self->{'no_write'}     = undef;
+$self->{'maximise_concurrency'} = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
@@ -47,11 +48,9 @@ GetOptions('help'           => \$help,
            'job_id=i'       => \$self->{'job_id'},
            'analysis_id=i'  => \$self->{'analysis_id'},
            'logic_name=s'   => \$self->{'logic_name'},
-           'batchsize=i'    => \$self->{'batch_size'},
+           'batch_size=i'   => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
-           'maximise_concurrency=i'     => \$self->{'maximise_concurrency'},
-           'highmem=i'     => \$self->{'highmem'},
            'outdir=s'       => \$self->{'outdir'},
            'bk=s'           => \$self->{'beekeeper'},
            'pid=s'          => \$self->{'process_id'},
@@ -63,6 +62,7 @@ GetOptions('help'           => \$help,
            'nowrite'        => \$self->{'no_write'},
            'regfile=s'      => \$reg_conf,
            'regname=s'      => \$reg_alias,
+           'maximise_concurrency' => \$self->{'maximise_concurrency'},
           );
 
 $self->{'analysis_id'} = shift if(@_);
@@ -105,7 +105,6 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 
 my $queen = $DBA->get_Queen();
 $queen->{maximise_concurrency} = 1 if ($self->{maximise_concurrency});
-$queen->{highmem} = $self->{highmem} if ($self->{highmem});
 
 ################################
 # LSF submit system dependency
@@ -134,6 +133,7 @@ if($self->{'logic_name'}) {
   }
   $self->{'analysis_id'} = $analysis->dbID;
 }
+
 if($self->{'analysis_id'} and $self->{'input_id'}) {
   $self->{'analysis_job'} = new Bio::EnsEMBL::Hive::AnalysisJob;
   $self->{'analysis_job'}->input_id($self->{'input_id'});
@@ -164,7 +164,6 @@ unless($worker) {
   exit(0);
 }
 
-$worker->{HIGHMEM} = $self->{highmem} if($self->{highmem});
 $worker->debug($self->{'debug'}) if($self->{'debug'});
 
 if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
@@ -235,7 +234,7 @@ sub usage {
   print "  -dbpass <pass>         : mysql connection password\n";
   print "  -analysis_id <id>      : analysis_id in db\n";
   print "  -logic_name <string>   : logic_name of analysis to make this worker\n";
-  print "  -batchsize <num>       : #jobs to claim at a time\n";
+  print "  -batch_size <num>      : #jobs to claim at a time\n";
   print "  -limit <num>           : #jobs to run before worker can die naturally\n";
   print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
   print "  -outdir <path>         : directory where stdout/stderr is redirected\n";

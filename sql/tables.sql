@@ -19,7 +19,7 @@ CREATE TABLE hive (
   host	           varchar(40) DEFAULT '' NOT NULL,
   process_id       varchar(40) DEFAULT '' NOT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
-  status           enum('READY','GET_INPUT','RUN','WRITE_OUTPUT','DEAD','HIGHMEM') DEFAULT 'READY' NOT NULL,
+  status           enum('READY','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL,
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
@@ -123,7 +123,7 @@ CREATE TABLE analysis_job (
   input_id                  char(255) not null,
   job_claim                 char(40) NOT NULL default '', #UUID
   hive_id                   int(10) NOT NULL,
-  status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','HIGHMEM') DEFAULT 'READY' NOT NULL,
+  status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
   branch_code               int(10) default 1 NOT NULL,
@@ -206,7 +206,7 @@ CREATE TABLE analysis_data (
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED','HIGHMEM')
+  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
   avg_msec_per_job      int(10) default 0 NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE analysis_stats (
 CREATE TABLE analysis_stats_monitor (
   time                  datetime NOT NULL default '0000-00-00 00:00:00',
   analysis_id           int(10) NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED','HIGHMEM')
+  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
   avg_msec_per_job      int(10) default 0 NOT NULL,
