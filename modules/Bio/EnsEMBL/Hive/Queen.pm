@@ -345,10 +345,20 @@ sub fetch_overdue_workers {
 
 sub fetch_failed_workers {
   my $self = shift;
+
   my $constraint = "h.cause_of_death='FATALITY' ";
   return $self->_generic_fetch($constraint);
 }
 
+sub fetch_dead_workers_with_jobs {
+  my $self = shift;
+
+  # select h.hive_id from hive h, analysis_job WHERE h.hive_id=analysis_job.hive_id AND h.cause_of_death AND analysis_job.status not in ('DONE', 'READY','FAILED') group by h.hive_id
+
+  my $constraint = "h.cause_of_death ";
+  my $join = [[['analysis_job', 'j'], " h.hive_id=j.hive_id AND j.status NOT IN ('DONE', 'READY', 'FAILED') GROUP BY h.hive_id"]];
+  return $self->_generic_fetch($constraint, $join);
+}
 
 =head2 synchronize_hive
 
@@ -371,16 +381,21 @@ sub synchronize_hive {
 
   my $list_of_analyses = $this_analysis ? [$this_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
 
-  print "Synchronizing the hive (".scalar(@$list_of_analyses)." analyses this time) \n";
+  print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
   foreach my $analysis (@$list_of_analyses) {
     $self->synchronize_AnalysisStats($analysis->stats);
+    print STDERR '.';
   }
+  print STDERR "\n";
 
+  print STDERR "Checking blocking control rules:\n";
   foreach my $analysis (@$list_of_analyses) {
     $self->check_blocking_control_rules_for_AnalysisStats($analysis->stats);
+    print STDERR '.';
   }
+  print STDERR "\n";
 
-  print((time() - $start_time), " secs to synchronize_hive\n");
+  print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
 
 
@@ -743,15 +758,15 @@ sub print_analysis_status {
 }
 
 
-sub print_running_worker_status
-{
+sub print_running_worker_status {
   my $self = shift;
 
-  my $total = 0;
-  print("HIVE LIVE WORKERS====\n");
+  print "====== Live workers according to Queen:\n";
   my $sql = "select logic_name, count(*) from hive, analysis ".
             "where hive.analysis_id=analysis.analysis_id and hive.cause_of_death='' ".
             "group by hive.analysis_id";
+
+  my $total = 0;
   my $sth = $self->prepare($sql);
   $sth->execute();
   while((my $logic_name, my $count)=$sth->fetchrow_array()) {
@@ -759,7 +774,7 @@ sub print_running_worker_status
     $total += $count;
   }
   printf("  %d total workers\n", $total);
-  print("=====================\n");
+  print "===========================\n";
   $sth->finish;
 }
 

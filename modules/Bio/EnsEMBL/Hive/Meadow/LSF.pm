@@ -7,18 +7,34 @@ use strict;
 use base 'Bio::EnsEMBL::Hive::Meadow';
 
 sub count_pending_workers {
-    my ($self, $name) = @_;
+    my ($self) = @_;
 
-    my $cmd;
-    if ($name) {
-        $cmd = "bjobs -w | grep '$name-HL' | grep -c PEND";
-    } else {
-        $cmd = "bjobs -w | grep -c PEND";
+    my $cmd = "bjobs -w ";
+    if(my $pipeline_name = $self->pipeline_name()) {
+        $cmd .= " | grep '${pipeline_name}-HL'";
     }
+    $cmd .= " | grep -c PEND";
+
     my $pend_count = qx/$cmd/;
     chomp($pend_count);
 
     return $pend_count;
+}
+
+sub status_of_all_my_workers { # returns a hashref
+    my ($self) = @_;
+
+    my $cmd = 'bjobs -w 2>&1 | grep -v "No unfinished job found" | grep -v JOBID | grep -v DONE | grep -v EXIT';
+    if(my $pipeline_name = $self->pipeline_name()) {
+        $cmd .= " | grep '${pipeline_name}-HL'";
+    }
+
+    my %status_hash = ();
+    foreach my $line (`$cmd`) {
+        my ($worker_pid, $user, $status, $queue) = split(/\s+/, $line);
+        $status_hash{$worker_pid} = $status;
+    }
+    return \%status_hash;
 }
 
 sub check_worker_is_alive {
@@ -50,14 +66,12 @@ sub lsf_options {
 }
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $jobname) = @_;
+    my ($self, $worker_cmd, $worker_count, $iteration) = @_;
 
-    if($worker_count>1) {
-        $jobname .= "[1-${worker_count}]";
-    }
-
+    my $job_name    = $self->generate_job_name($worker_count, $iteration);
     my $lsf_options = $self->lsf_options();
-    my $cmd = "bsub -o /dev/null -J\"${jobname}\" $lsf_options $worker_cmd";
+
+    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $lsf_options $worker_cmd";
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd);

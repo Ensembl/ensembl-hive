@@ -16,10 +16,33 @@ sub type { # should return 'LOCAL' or 'LSF'
     return (reverse split(/::/, ref(shift @_)))[0];
 }
 
+sub pipeline_name { # if set, provides a filter for job-related queries
+    my $self = shift @_;
+
+    if(scalar(@_)) { # new value is being set (which can be undef)
+        $self->{'_pipeline_name'} = shift @_;
+    }
+    return $self->{'_pipeline_name'};
+}
+
+sub generate_job_name {
+    my ($self, $worker_count, $iteration) = @_;
+
+    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '').'HL'.$iteration
+         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
+}
+
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
     return $worker->beekeeper() eq $self->type();
+}
+
+sub status_of_all_my_workers {  # Returns undef if it is not implemented in the derived class (which returns a hashref).
+                                # You should check the return value and use other means if it is not defined.
+    my ($self) = @_;
+
+    return undef;
 }
 
 sub check_worker_is_alive {
@@ -66,10 +89,10 @@ sub submitted_workers_limit { # if set, provides a cut-off on the number of work
 }
 
 sub limit_workers {
-    my ($self, $worker_count, $hive_name) = @_;
+    my ($self, $worker_count) = @_;
 
     if($self->can('count_pending_workers') and $self->pending_adjust()) {
-        my $pending_count = $self->count_pending_workers($hive_name);
+        my $pending_count = $self->count_pending_workers();
 
         $worker_count -= $pending_count;
     }
