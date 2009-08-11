@@ -31,7 +31,13 @@ sub status_of_all_my_workers { # returns a hashref
 
     my %status_hash = ();
     foreach my $line (`$cmd`) {
-        my ($worker_pid, $user, $status, $queue) = split(/\s+/, $line);
+        my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
+
+        my $worker_pid = $group_pid;
+        if($job_name=~/(\[\d+\])/) {
+            $worker_pid .= $1;
+        }
+            
         $status_hash{$worker_pid} = $status;
     }
     return \%status_hash;
