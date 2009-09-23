@@ -218,10 +218,18 @@ sub process_id {
 }
 
 sub work_done {
-  my( $self, $value ) = @_;
-  $self->{'_work_done'} = 0 unless($self->{'_work_done'});
-  $self->{'_work_done'} = $value if($value);
-  return $self->{'_work_done'};
+  my $self = shift @_;
+
+  if(@_) {
+    $self->{'work_done'} = shift @_;
+  }
+  return $self->{'work_done'} || 0;
+}
+
+sub more_work_done {
+  my $self = shift @_;
+
+  $self->{'work_done'}++;
 }
 
 sub cause_of_death {
@@ -420,11 +428,10 @@ sub run
 
   $self->db->dbc->disconnect_when_inactive(0);
 
-  my $alive = 1;
-  while ($alive) {
+  do { # EXTERNAL_do_loop ends when the cause of death is set
     my $batch_start = time() * 1000;    
     my $batch_end = $batch_start;
-    my $job_counter = 0;
+    my $work_done_this_interval = 0;
     my $jobs = [];
     $self->{fetch_time} = 0;
     $self->{run_time} = 0;
@@ -434,7 +441,6 @@ sub run
       if($specific_job) {
         $self->queen->worker_reclaim_job($self,$specific_job);
         push @$jobs, $specific_job;
-        $alive=undef;
       } else {
         $jobs = $self->queen->worker_grab_jobs($self);
       }
@@ -457,21 +463,21 @@ sub run
 
         $self->queen->worker_register_job_done($self, $job);
 
-        $self->{'_work_done'}++;
+        $self->more_work_done;
       }
       $batch_end = time() * 1000;
-      $job_counter += scalar(@$jobs);
-    } while (!$specific_job and scalar(@$jobs) and $batch_end-$batch_start < $MIN_BATCH_TIME); ## Run for $MIN_BATCH_TIME at least
+      $work_done_this_interval += scalar(@$jobs);
+
+      if( $specific_job or
+         ($self->job_limit and $self->work_done >= $self->job_limit)) { 
+          $self->cause_of_death('JOB_LIMIT'); 
+      }
+    } while (!$self->cause_of_death and $batch_end-$batch_start < $MIN_BATCH_TIME); ## Run for $MIN_BATCH_TIME at least, but accept and honour own death
 
     #printf("batch start:%f end:%f\n", $batch_start, $batch_end);
     $self->db->get_AnalysisStatsAdaptor->interval_update_work_done($self->analysis->dbID,
-        $job_counter, $batch_end-$batch_start, $self);
+        $work_done_this_interval, $batch_end-$batch_start, $self);
 
-    $self->cause_of_death('JOB_LIMIT') if($specific_job);
-
-    if($self->job_limit and ($self->{'_work_done'} >= $self->job_limit)) { 
-      $self->cause_of_death('JOB_LIMIT'); 
-    }
     if(($self->life_span()>0) and ((time() - $self->{'start_time'}) > $self->life_span())) {
       printf("life_span exhausted (alive for %d secs)\n", (time() - $self->{'start_time'}));
       $self->cause_of_death('LIFESPAN'); 
@@ -485,8 +491,8 @@ sub run
         $self->cause_of_death('HIVE_OVERLOAD');
       }
     }
-    if($self->cause_of_death) { $alive=undef; }
-  }
+  } while (!$self->cause_of_death); # /EXTERNAL_do_loop
+
   $self->queen->dbc->do("UPDATE hive SET status = 'DEAD' WHERE hive_id = ".$self->hive_id);
   
   if($self->perform_global_cleanup) {
