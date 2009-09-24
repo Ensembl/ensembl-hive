@@ -261,17 +261,19 @@ sub update_status
 
 sub interval_update_work_done
 {
-  my ($self, $analysis_id, $job_count, $interval, $worker) = @_;
+  my ($self, $analysis_id, $job_count, $interval, $worker, $weight_factor) = @_;
+
+  $weight_factor ||= 3; # makes it more sensitive to the dynamics of the farm
 
   my $sql = "UPDATE analysis_stats SET ".
             "unclaimed_job_count = unclaimed_job_count - $job_count, ".
-            "avg_msec_per_job = (((done_job_count*avg_msec_per_job)/3 + $interval) / (done_job_count/3 + $job_count)), ".
-            "avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/3 + ".
-                ($worker->{fetch_time}).") / (done_job_count/3 + $job_count)), ".
-            "avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/3 + ".
-                ($worker->{run_time}).") / (done_job_count/3 + $job_count)), ".
-            "avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/3 + ".
-                ($worker->{write_time}).") / (done_job_count/3 + $job_count)), ".
+            "avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval) / (done_job_count/$weight_factor + $job_count)), ".
+            "avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + ".
+                ($worker->{fetch_time}).") / (done_job_count/$weight_factor + $job_count)), ".
+            "avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + ".
+                ($worker->{run_time}).") / (done_job_count/$weight_factor + $job_count)), ".
+            "avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + ".
+                ($worker->{write_time}).") / (done_job_count/$weight_factor + $job_count)), ".
             "done_job_count = done_job_count + $job_count ".
             " WHERE analysis_id= $analysis_id";
 
