@@ -221,26 +221,26 @@ sub job_limit {
   return $self->{'_job_limit'};
 }
 
-sub jobs_done {
+sub work_done {
   my $self = shift @_;
 
   if(@_) {
-    $self->{'jobs_done'} = shift @_;
+    $self->{'work_done'} = shift @_;
   }
-  return $self->{'jobs_done'} || 0;
+  return $self->{'work_done'} || 0;
 }
 
-sub more_jobs_done {
+sub more_work_done {
   my $self = shift @_;
 
-  $self->{'jobs_done'}++;
+  $self->{'work_done'}++;
 }
 
 sub job_limit_reached {
     my $self = shift @_;
 
-    if($self->job_limit and $self->jobs_done >= $self->job_limit) { 
-        return $self->jobs_done;
+    if($self->job_limit and $self->work_done >= $self->job_limit) { 
+        return $self->work_done;
     }
     return 0;
 }
@@ -494,7 +494,7 @@ sub run
 
         $self->queen->worker_register_job_done($self, $job);
 
-        $self->more_jobs_done;
+        $self->more_work_done;
       }
       $batches_end = time() * 1000;
       $jobs_done_by_batches_loop += scalar(@$jobs);
@@ -540,7 +540,7 @@ sub run
   $self->analysis->stats->print_stats if($self->debug);
 
   printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
-  print("total jobs completed : ", $self->jobs_done, "\n");
+  print("total jobs completed : ", $self->work_done, "\n");
   
   if($self->output_dir()) {
     close STDOUT;
