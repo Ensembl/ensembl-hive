@@ -26,7 +26,7 @@ CREATE TABLE hive (
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
   PRIMARY KEY (hive_id),
   INDEX analysis_status (analysis_id, status)
-);
+) ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -135,7 +135,7 @@ CREATE TABLE analysis_job (
   INDEX claim_analysis_status  (job_claim, analysis_id, status),
   INDEX analysis_status        (analysis_id, status),
   INDEX hive_id                (hive_id)
-);
+) ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ CREATE TABLE analysis_job_file (
   
   UNIQUE KEY job_hive_type  (analysis_job_id, hive_id, type),
   INDEX hive_id             (hive_id)
-);
+) ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ CREATE TABLE analysis_stats (
   sync_lock             int(10) default 0 NOT NULL,
   
   UNIQUE KEY   (analysis_id)
-);
+) ENGINE=InnoDB;
 
 CREATE TABLE analysis_stats_monitor (
   time                  datetime NOT NULL default '0000-00-00 00:00:00',
@@ -255,7 +255,7 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL
-);
+) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------------
 --
@@ -279,7 +279,7 @@ CREATE TABLE monitor (
   throughput            float default NULL,
   per_worker            float default NULL,
   analysis              varchar(255) default NULL
-);
+) ENGINE=InnoDB;
 
 
 -- The last 3 tables are from the ensembl core schema: meta, analysis and analysis_description.
@@ -301,7 +301,7 @@ CREATE TABLE IF NOT EXISTS meta (
   UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value),
             KEY species_value_idx (species_id, meta_value)
 
-) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 ################################################################################
@@ -349,7 +349,7 @@ CREATE TABLE IF NOT EXISTS analysis (
   KEY logic_name_idx (logic_name),
   UNIQUE (logic_name)
 
-) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 ################################################################################
@@ -367,7 +367,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
   UNIQUE KEY analysis_idx (analysis_id)
 
-) COLLATE=latin1_swedish_ci TYPE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 
