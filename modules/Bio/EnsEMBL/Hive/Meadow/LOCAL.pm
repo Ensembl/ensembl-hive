@@ -23,6 +23,30 @@ sub responsible_for_worker {
     return ($worker->beekeeper() eq $self->type()) and ($worker->host eq hostname());
 }
 
+sub status_of_all_my_workers { # returns a hashref
+    my ($self) = @_;
+
+    my $cmd = 'ps -o state,pid,cmd -w -w --no-header x | grep runWorker.pl';
+
+        # FIXME: if we want to incorporate Meadow->pipeline_name() filtering here,
+        #        a dummy parameter to the runWorker.pl should probably be introduced
+        #        for 'ps' to be able to externally differentiate between local workers
+        #        working for different hives
+        #        (but at the moment such a feature is unlikely to be be in demand).
+
+    my %status_hash = ();
+    foreach my $line (`$cmd`) {
+        my ($pre_status, $worker_pid, $job_name) = split(/\s+/, $line);
+
+        my $status = { 'R' => 'RUN', 'S' => 'RUN', 'D' => 'RUN', 'T' => 'SSUSP' }->{$pre_status};
+
+        # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
+
+        $status_hash{$worker_pid} = $status;
+    }
+    return \%status_hash;
+}
+
 sub check_worker_is_alive {
     my ($self, $worker) = @_;
 

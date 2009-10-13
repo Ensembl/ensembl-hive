@@ -333,6 +333,9 @@ sub flow_output_job {
 #
 ######################################
 
+    # Note: asking for Queen->fetch_overdue_workers(0) essentially means
+    #       "fetch all workers known to the Queen not to be officially dead"
+    #
 sub fetch_overdue_workers {
   my ($self,$overdue_secs) = @_;
 
@@ -693,34 +696,7 @@ sub get_num_needed_workers {
   return $numWorkers;
 }
 
-sub get_needed_workers_failed_analyses_resync_if_necessary {
-    my ($self, $this_analysis) = @_;
-
-    my $runCount        = $self->get_num_running_workers();
-    my $load            = $self->get_hive_current_load();
-    my $worker_count    = $self->get_num_needed_workers($this_analysis);
-    my $failed_analyses = $self->get_num_failed_analyses($this_analysis);
-
-    if($load==0 and $worker_count==0 and $runCount==0) {
-        print "*** nothing is running and nothing to do => perform a hard resync\n" ;
-
-        $self->synchronize_hive($this_analysis);
-
-        $worker_count = $self->get_num_needed_workers($this_analysis);
-        $failed_analyses = $self->get_num_failed_analyses($this_analysis);
-        if($worker_count==0) {
-            if($failed_analyses==0) {
-                print "Nothing left to do".($this_analysis ? (' for analysis '.$this_analysis->logic_name) : '').". DONE!!\n\n";
-            }
-        }
-    }
-
-    return ($worker_count, $failed_analyses);
-}
-
-
-sub get_hive_progress
-{
+sub get_hive_progress {
   my $self = shift;
   my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
             "sum(unclaimed_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
@@ -729,11 +705,13 @@ sub get_hive_progress
   $sth->execute();
   my ($done, $failed, $total, $cpuhrs) = $sth->fetchrow_array();
   $sth->finish;
-  $done=0 unless($done);
-  $failed=0 unless($failed);
-  $total=0 unless($total);
-  my $completed=0.0;
-  $completed = ((100.0 * ($done+$failed))/$total)  if($total>0);
+
+  $done   ||= 0;
+  $failed ||= 0;
+  $total  ||= 0;
+  my $completed = $total
+    ? ((100.0 * ($done+$failed))/$total)
+    : 0.0;
   my $remaining = $total - $done - $failed;
   printf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n", 
           $completed, $cpuhrs, $remaining, $done, $failed, $total);

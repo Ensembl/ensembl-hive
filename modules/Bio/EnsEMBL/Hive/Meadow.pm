@@ -38,13 +38,6 @@ sub responsible_for_worker {
     return $worker->beekeeper() eq $self->type();
 }
 
-sub status_of_all_my_workers {  # Returns undef if it is not implemented in the derived class (which returns a hashref).
-                                # You should check the return value and use other means if it is not defined.
-    my ($self) = @_;
-
-    return undef;
-}
-
 sub check_worker_is_alive {
     my ($self, $worker) = @_;
 

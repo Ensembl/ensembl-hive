@@ -56,7 +56,7 @@ sub main {
     my $reset_all_jobs_for_analysis = 0;
 
     $self->{'sleep_minutes'}        = 2;
-    $self->{'overdue_minutes'}      = 60;   # which means one hour
+#    $self->{'overdue_minutes'}      = 60;   # which means one hour
     $self->{'verbose_stats'}        = 1;
     $self->{'reg_name'}             = 'hive';
     $self->{'maximise_concurrency'} = 0;
@@ -99,7 +99,7 @@ sub main {
                'sync'              => \$sync,
                'dead'              => \$check_for_dead,
                'killworker=i'      => \$kill_worker_id,
-               'overdue'           => \$self->{'overdue_minutes'},
+#               'overdue'           => \$self->{'overdue_minutes'},
                'alldead'           => \$all_dead,
                'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'verbose_stats=i'   => \$self->{'verbose_stats'},
@@ -270,8 +270,8 @@ sub usage {
     print "  -maximise_concurrency 1 : try to run more different analyses at the same time\n";
 
     print "\n===============[other commands/options]==================\n";
-    print "  -dead                  : clean overdue jobs for resubmission\n";
-    print "  -overdue <min>         : worker overdue minutes checking if dead\n";
+    print "  -dead                  : clean dead jobs for resubmission\n";
+#    print "  -overdue <min>         : worker overdue minutes checking if dead\n";
     print "  -alldead               : all outstanding workers\n";
     print "  -no_analysis_stats     : don't show status of each analysis\n";
     print "  -worker_stats          : show status of each running worker\n";
@@ -302,10 +302,6 @@ sub parse_conf {
 sub check_for_dead_workers {
     my ($self, $queen, $check_buried_in_haste) = @_;
 
-    unless($self->{'meadow'}->can('status_of_all_my_workers')) {
-        return check_for_dead_workers_slow($queen);
-    }
-
     my $worker_status_hash    = $self->{'meadow'}->status_of_all_my_workers();
     my %worker_status_summary = ();
     my $queen_worker_list     = $queen->fetch_overdue_workers(0);
@@ -313,6 +309,8 @@ sub check_for_dead_workers {
     print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
 
     foreach my $worker (@$queen_worker_list) {
+        next unless($self->{'meadow'}->responsible_for_worker($worker));
+
         my $worker_pid = $worker->process_id();
         if(my $status = $worker_status_hash->{$worker_pid}) { # can be RUN|PEND|xSUSP
             $worker_status_summary{$status}++;
@@ -340,31 +338,6 @@ sub check_for_dead_workers {
     }
 }
 
-sub check_for_dead_workers_slow {
-    my ($self, $queen) = @_;
-
-    my $overdue_minutes = $self->{'overdue_minutes'};
-
-    print("===== check for dead workers\n");
-    my $overdueWorkers = $queen->fetch_overdue_workers($overdue_minutes*60);
-    print(scalar(@{$overdueWorkers}), " overdue workers\n");
-    foreach my $worker (@{$overdueWorkers}) {
-        next unless($self->{'meadow'}->responsible_for_worker($worker));
-
-        printf("%10d %35s %15s  %20s(%d) : ", 
-        $worker->hive_id, $worker->host, $worker->process_id, 
-        $worker->analysis->logic_name, $worker->analysis->dbID);
-
-        if( $self->{'meadow'}->check_worker_is_alive($worker) ) {
-            print("ALIVE and running\n");
-        } else {
-            print("worker is missing => it DIED!!\n");
-            $queen->register_worker_death($worker);
-        }
-    }
-}
-
-
 # --------------[worker reports]--------------------
 
 sub show_given_workers {
@@ -388,13 +361,6 @@ sub show_running_workers {
 
     print("===== running workers\n");
     show_given_workers($self, $queen->fetch_overdue_workers(0), $queen->{'verbose_stats'});
-}
-
-sub show_overdue_workers {  # does not seem to be used
-    my ($self, $queen, $overdue_minutes) = @_;
-
-    print("===== overdue workers\n");
-    show_given_workers($self, $queen->fetch_overdue_workers($overdue_minutes*60), $queen->{'verbose_stats'});
 }
 
 sub show_failed_workers {  # does not seem to be used
@@ -427,6 +393,34 @@ sub generate_worker_cmd {
     return $worker_cmd;
 }
 
+sub get_needed_workers_failed_analyses_resync_if_necessary {
+    my ($self, $queen, $this_analysis) = @_;
+
+    my $runCount        = $queen->get_num_running_workers();
+    my $load            = $queen->get_hive_current_load();
+    my $worker_count    = $queen->get_num_needed_workers($this_analysis);
+    my $failed_analyses = $queen->get_num_failed_analyses($this_analysis);
+
+    if($load==0 and $worker_count==0 and $runCount==0) {
+        print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
+
+        $queen->synchronize_hive($this_analysis);
+
+        check_for_dead_workers($self, $queen, 1);
+
+        $worker_count    = $queen->get_num_needed_workers($this_analysis);
+        $failed_analyses = $queen->get_num_failed_analyses($this_analysis);
+        if($worker_count==0) {
+            if($failed_analyses==0) {
+                print "Nothing left to do".($this_analysis ? (' for analysis '.$this_analysis->logic_name) : '').". DONE!!\n\n";
+            }
+        }
+    }
+
+    return ($worker_count, $failed_analyses);
+}
+
+
 sub run_autonomously {
     my ($self, $max_loops, $queen, $this_analysis) = @_;
 
@@ -457,7 +451,7 @@ sub run_autonomously {
         #show_failed_workers($self, $queen);
 
         my $worker_count;
-        ($worker_count, $failed_analyses) = $queen->get_needed_workers_failed_analyses_resync_if_necessary($this_analysis);
+        ($worker_count, $failed_analyses) = get_needed_workers_failed_analyses_resync_if_necessary($self, $queen, $this_analysis);
 
         if($self->{'run_job_id'}) { # If it's just one job, we don't require more than one worker
                                     # (and we probably do not care about the limits)
