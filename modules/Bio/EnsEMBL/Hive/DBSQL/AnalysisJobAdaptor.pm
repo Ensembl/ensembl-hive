@@ -483,16 +483,23 @@ sub claim_jobs_for_worker {
   my $claim = $ug->to_string( $uuid );
   #print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
 
-  my $sql      = "UPDATE analysis_job SET job_claim='$claim'".
+  my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
                  " , hive_id='". $worker->hive_id ."'".
                  " , status='CLAIMED'".
                  " WHERE job_claim='' and status='READY'". 
-                 " AND analysis_id=" .$worker->analysis->dbID.
-                 " ORDER BY retry_count ".
-                 " LIMIT ". $worker->batch_size;
+                 " AND analysis_id='" .$worker->analysis->dbID. "'"; 
 
-  my $claim_count = $self->dbc->do($sql); # $claim_count currently unused
+  my $sql_virgin = $sql_base .  
+                   " AND retry_count=0".
+                   " LIMIT " . $worker->batch_size;
+
+  my $sql_any = $sql_base .  
+                " LIMIT " . $worker->batch_size;
   
+  my $claim_count = $self->dbc->do($sql_virgin);
+  if($claim_count == 0) {
+    $claim_count = $self->dbc->do($sql_any);
+  }
   return $claim;
 }
 
