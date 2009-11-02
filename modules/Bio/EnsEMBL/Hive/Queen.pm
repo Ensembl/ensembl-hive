@@ -356,9 +356,9 @@ sub fetch_failed_workers {
 sub fetch_dead_workers_with_jobs {
   my $self = shift;
 
-  # select h.hive_id from hive h, analysis_job WHERE h.hive_id=analysis_job.hive_id AND h.cause_of_death AND analysis_job.status not in ('DONE', 'READY','FAILED') group by h.hive_id
+  # select h.hive_id from hive h, analysis_job WHERE h.hive_id=analysis_job.hive_id AND h.cause_of_death!='' AND analysis_job.status not in ('DONE', 'READY','FAILED') group by h.hive_id
 
-  my $constraint = "h.cause_of_death ";
+  my $constraint = "h.cause_of_death!='' ";
   my $join = [[['analysis_job', 'j'], " h.hive_id=j.hive_id AND j.status NOT IN ('DONE', 'READY', 'FAILED') GROUP BY h.hive_id"]];
   return $self->_generic_fetch($constraint, $join);
 }
