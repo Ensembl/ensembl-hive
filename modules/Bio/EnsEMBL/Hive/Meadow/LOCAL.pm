@@ -20,7 +20,7 @@ sub count_running_workers {
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
-    return ($worker->beekeeper() eq $self->type()) and ($worker->host eq hostname());
+    return ($worker->beekeeper() eq $self->type()) && ($worker->host eq hostname());
 }
 
 sub status_of_all_my_workers { # returns a hashref
