@@ -205,11 +205,11 @@ sub job_creation {
   my $starttime = time();
   my $count = 0;
   if (defined($self->{'hashed_a'}) and defined($self->{'hashed_b'})) {
-    while ($self->{resolved_input_id} = $self->resolve_suffix()) {
-      print STDERR "  ", $self->{resolved_input_id}, "\n" if ($self->{debug});
-      $self->create_resolved_input_id_job() unless ($self->{debug});
+    while (my $resolved_input_id = $self->resolve_suffix()) {
+      print STDERR "  $resolved_input_id\n" if ($self->{debug});
+      $self->create_resolved_input_id_job($resolved_input_id) unless ($self->{debug});
       if(++$count % 100 == 0) {
-        print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n";
+        print "$resolved_input_id at ",(time()-$starttime)," secs\n";
       }
     }
   } elsif (defined($self->{'inputfile'})) {
@@ -217,10 +217,9 @@ sub job_creation {
     while (<FILE>) {
       chomp $_;
       my $id = $_;
-      my $input_id = $self->{'input_id'};
-      $input_id =~ s/\$inputfile/$id/;
-      $self->{resolved_input_id} = $input_id;
-      $self->create_resolved_input_id_job();
+      my $resolved_input_id = $self->{'input_id'};
+      $resolved_input_id =~ s/\$inputfile/$id/;
+      $self->create_resolved_input_id_job($resolved_input_id);
       print "Job ", $count, " at ",(time()-$starttime)," secs\n" if(++$count % 50 == 0);
     }
     close FILE;
@@ -235,16 +234,16 @@ sub job_creation {
             $to = shift @full_list;
         }
             # expanding tags here (now you can substitute $suffix, $suffix2, $suffixn and if you really need it, $tag):
-        $self->{resolved_input_id} = $self->{'input_id'};
-        $self->{resolved_input_id} =~ s/\$suffixn/$batch_cnt/g; # the order of substitutions is important!
-        $self->{resolved_input_id} =~ s/\$suffix2/$to/g;
-        $self->{resolved_input_id} =~ s/\$suffix/$from/g;
-        $self->{resolved_input_id} =~ s/\$tag/$tag/g;
+        my $resolved_input_id = $self->{'input_id'};
+        $resolved_input_id =~ s/\$suffixn/$batch_cnt/g; # the order of substitutions is important!
+        $resolved_input_id =~ s/\$suffix2/$to/g;
+        $resolved_input_id =~ s/\$suffix/$from/g;
+        $resolved_input_id =~ s/\$tag/$tag/g;
 
         if(++$count % 100 == 0) {
-            print "", $self->{resolved_input_id}, " at ",(time()-$starttime)," secs\n";
+            print "$resolved_input_id at ",(time()-$starttime)," secs\n";
         }
-        $self->create_resolved_input_id_job();
+        $self->create_resolved_input_id_job($resolved_input_id);
     }
   }
   my $total_time = (time()-$starttime);
@@ -253,10 +252,11 @@ sub job_creation {
 }
 
 sub create_resolved_input_id_job {
-  my $self = shift;
+  my ($self, $resolved_input_id) = @_;
+
   Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob 
       (
-       -input_id       => $self->{resolved_input_id},
+       -input_id       => $resolved_input_id,
        -analysis       => $self->{_analysis},
        -input_job_id   => 0,
       ) unless ($self->{'debug'});
