@@ -10,7 +10,7 @@ use base 'Bio::EnsEMBL::Hive::Meadow';
 sub count_running_workers {
     my $self = shift @_;
 
-    my $cmd = 'ps -a | grep runWorker.pl | grep -v grep | wc -l';
+    my $cmd = 'ps x | grep runWorker.pl | grep -v "grep runWorker.pl" | wc -l';
     my $run_count = qx/$cmd/;
     chomp($run_count);
 
@@ -26,7 +26,7 @@ sub responsible_for_worker {
 sub status_of_all_my_workers { # returns a hashref
     my ($self) = @_;
 
-    my $cmd = 'ps -o state,pid,cmd -w -w --no-header x | grep runWorker.pl';
+    my $cmd = 'ps -o state,pid,cmd -w -w --no-header x | grep runWorker.pl | grep -v "grep runWorker.pl" ';
 
         # FIXME: if we want to incorporate Meadow->pipeline_name() filtering here,
         #        a dummy parameter to the runWorker.pl should probably be introduced
