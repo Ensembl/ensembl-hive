@@ -85,13 +85,9 @@ $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
-$self->{'analysis_id'} = undef;
 $self->{'logic_name'}  = 'cmd_hive_analysis';
 $self->{'module'}      = 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd';
 $self->{'parameters'}  = '{}';
-$self->{'outdir'}      = undef;
-$self->{'beekeeper'}   = undef;
-$self->{'process_id'}  = undef;
 
 my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
@@ -104,14 +100,8 @@ GetOptions('help'            => \$help,
            'dbuser=s'        => \$user,
            'dbpass=s'        => \$pass,
            'dbname=s'        => \$dbname,
-           'analysis_id=i'   => \$self->{'analysis_id'},
            'logic_name=s'    => \$self->{'logic_name'},
            'module=s'        => \$self->{'module'},
-           'limit=i'         => \$self->{'job_limit'},
-           'lifespan=i'      => \$self->{'lifespan'},
-           'outdir=s'        => \$self->{'outdir'},
-           'bk=s'            => \$self->{'beekeeper'},
-           'pid=s'           => \$self->{'process_id'},
            'input_id=s'      => \$self->{'input_id'},
            'parameters=s'    => \$self->{'parameters'},
            'inputfile=s'     => \$self->{'inputfile'},
@@ -125,8 +115,6 @@ GetOptions('help'            => \$help,
            'batch_size=s'    => \$self->{'batch_size'},
            'debug=s'         => \$self->{'debug'},
           );
-
-$self->{'analysis_id'} = shift if(@_);
 
 if ($help) { usage(); }
 
