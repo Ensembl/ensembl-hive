@@ -71,9 +71,7 @@ use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
-#use Bio::EnsEMBL::Hive::Queen;
 use Time::HiRes qw(time gettimeofday tv_interval);
-#use Data::UUID;
 
 # ok this is a hack, but I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
@@ -140,9 +138,7 @@ if($url) {
   $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
   #$url = $DBA->url();
 }
-#$DBA->dbc->disconnect_when_inactive(1);
 
-#my $queen = $DBA->get_Queen();
 job_creation($self);
 exit(0);
 
