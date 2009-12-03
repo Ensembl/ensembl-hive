@@ -71,7 +71,7 @@ sub main {
                'host|dbhost=s'     => \$self->{'db_conf'}->{'-host'},
                'port|dbport=i'     => \$self->{'db_conf'}->{'-port'},
                'user|dbuser=s'     => \$self->{'db_conf'}->{'-user'},
-               'pass|dbpass=s'     => \$self->{'db_conf'}->{'-pass'},
+               'password|dbpass=s'     => \$self->{'db_conf'}->{'-pass'},
                'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control

@@ -18,10 +18,6 @@
 
 # 0. Cache MySQL connection parameters in a variable (they will work as eHive connection parameters as well) :
 export MYCONN="--host=hostname --port=port_number --user=username --password=secret"
-#
-# or, if you have parameters defined using group-suffixes:
-export MYCONN="--defaults-group-suffix=_compara1"
-
 
 # 1. Create an empty database:
 mysql $MYCONN -e 'DROP DATABASE IF EXISTS long_mult_test'
