@@ -16,37 +16,44 @@
 #
 ############################################################################################################################
 
+# 0. Cache MySQL connection parameters in a variable (they will work as eHive connection parameters as well) :
+export MYCONN="--host=hostname --port=port_number --user=username --password=secret"
+#
+# or, if you have parameters defined using group-suffixes:
+export MYCONN="--defaults-group-suffix=_compara1"
+
+
 # 1. Create an empty database:
-mysql --defaults-group-suffix=_compara1 -e 'DROP DATABASE IF EXISTS long_mult_test'
-mysql --defaults-group-suffix=_compara1 -e 'CREATE DATABASE long_mult_test'
+mysql $MYCONN -e 'DROP DATABASE IF EXISTS long_mult_test'
+mysql $MYCONN -e 'CREATE DATABASE long_mult_test'
 
 # 2. Create eHive infrastructure:
-mysql --defaults-group-suffix=_compara1 long_mult_test <~lg4/work/ensembl-hive/sql/tables.sql
+mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/tables.sql
 
 # 3. Create analyses/control_rules/dataflow_rules of the LongMult pipeline:
-mysql --defaults-group-suffix=_compara1 long_mult_test <~lg4/work/ensembl-hive/sql/create_long_mult.sql
+mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/create_long_mult.sql
 
 # 4. "Load" the pipeline with a multiplication task:
-mysql --defaults-group-suffix=_compara1 long_mult_test <~lg4/work/ensembl-hive/sql/load_long_mult.sql
+mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/load_long_mult.sql
 #
 # or you can add your own task(s). Several tasks can be added at once:
-mysql --defaults-group-suffix=_compara1 long_mult_test <<EoF
+mysql $MYCONN long_mult_test <<EoF
 INSERT INTO analysis_job (analysis_id, input_id) VALUES ( 1, "{ 'a_multiplier' => '9750516269', 'b_multiplier' => '327358788' }");
 INSERT INTO analysis_job (analysis_id, input_id) VALUES ( 1, "{ 'a_multiplier' => '327358788', 'b_multiplier' => '9750516269' }");
 EoF
 
 # 5. Initialize the newly created eHive for the first time:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara1/long_mult_test -sync
+beekeeper.pl $MYCONN --database=long_mult_test -sync
 
 # 6. You can either execute three individual workers (each picking one analysis of the pipeline):
-runWorker.pl -url mysql://ensadmin:ensembl@compara1/long_mult_test
+runWorker.pl $MYCONN --database=long_mult_test
 #
 #
 # ... or run an automatic loop that will run workers for you:
-beekeeper.pl -url mysql://ensadmin:ensembl@compara1/long_mult_test -loop
+beekeeper.pl $MYCONN --database=long_mult_test -loop
 
 # 7. The results of the computations are to be found in 'final_result' table:
-mysql --defaults-group-suffix=_compara1 long_mult_test -e 'SELECT * FROM final_result'
+mysql $MYCONN long_mult_test -e 'SELECT * FROM final_result'
 
 # 8. You can add more multiplication tasks by repeating from step 4.
 
