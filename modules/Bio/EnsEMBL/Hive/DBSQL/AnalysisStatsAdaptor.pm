@@ -7,31 +7,34 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
+=pod
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor
 
 =head1 SYNOPSIS
+
   $analysisStatsAdaptor = $db_adaptor->get_AnalysisStatsAdaptor;
   $analysisStatsAdaptor = $analysisStats->adaptor;
 
 =head1 DESCRIPTION
+
   Module to encapsulate all db access for persistent class AnalysisStats.
   There should be just one per application and database connection.
 
 =head1 CONTACT
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
 
 =cut
 
 
-# Let the code begin...
 
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 

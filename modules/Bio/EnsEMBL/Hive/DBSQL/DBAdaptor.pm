@@ -7,7 +7,7 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
+=pod
 
 =head1 NAME
 
@@ -22,18 +22,15 @@ Bio::EnsEMBL::Hive::DBSQL::DBAdaptor
         -driver => 'mysql',
         );
 
-
 =head1 DESCRIPTION
+
   This object represents the handle for a Hive system enabled database
 
 =head1 CONTACT
 
-Post questions the the EnsEMBL developer list: <ensembl-dev@ebi.ac.uk>
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
-
-
-# Let the code begin...
 
 
 package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;

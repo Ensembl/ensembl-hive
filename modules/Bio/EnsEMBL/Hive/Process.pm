@@ -1,13 +1,10 @@
 # You may distribute this module under the same terms as perl itself #
-# POD documentation - main docs before the code
 
 =pod 
 
 =head1 NAME
 
   Bio::EnsEMBL::Hive::Process
-
-=cut
 
 =head1 SYNOPSIS
 
@@ -73,14 +70,9 @@
      http://en.wikipedia.org/wiki/Emergence
   
 
-=cut
-
 =head1 CONTACT
 
-  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
@@ -88,6 +80,8 @@
   Internal methods are usually preceded with a _
 
 =cut
+
+
 
 my $g_hive_process_workdir;  # a global directory location for the process using this module
 

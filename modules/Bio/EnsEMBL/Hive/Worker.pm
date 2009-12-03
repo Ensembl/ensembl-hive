@@ -9,8 +9,6 @@
 
   Bio::EnsEMBL::Hive::Worker
 
-=cut
-
 =head1 DESCRIPTION
 
   Object which encapsulates the details of how to find jobs, how to run those
@@ -51,14 +49,9 @@
   It is also responsible for interfacing with the Queen to identify workers which died
   unexpectantly so that she can free the dead workers unfinished jobs.
 
-=cut
-
 =head1 CONTACT
- 
-  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 

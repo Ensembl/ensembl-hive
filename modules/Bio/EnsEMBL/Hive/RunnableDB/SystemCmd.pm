@@ -9,8 +9,6 @@
 
 Bio::EnsEMBL::Hive::RunnableDB::SystemCmd
 
-=cut
-
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
@@ -23,20 +21,14 @@ $runDB->run();
 $runDB->output();
 $runDB->write_output(); #writes to DB
 
-=cut
-
 =head1 DESCRIPTION
 
 This object is a very simple module.  It takes the input_id
 and runs it as a system command.
 
-=cut
-
 =head1 CONTACT
 
-jessica@ebi.ac.uk
-
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
@@ -44,6 +36,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 

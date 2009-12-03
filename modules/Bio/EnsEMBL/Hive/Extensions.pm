@@ -9,24 +9,15 @@
 
   Bio::EnsEMBL::Hive::Extensions
 
-=cut
-
 =head1 SYNOPSIS
 
   Object categories to extend the functionality of existing classes
 
-=cut
-
 =head1 DESCRIPTION
-
-=cut
 
 =head1 CONTACT
 
-  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
-
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
@@ -34,6 +25,7 @@
   Internal methods are usually preceded with a _
 
 =cut
+
 
 use strict;
 

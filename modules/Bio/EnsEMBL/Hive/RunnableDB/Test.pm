@@ -9,8 +9,6 @@
 
 Bio::EnsEMBL::Hive::RunnableDB::Test
 
-=cut
-
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
@@ -23,8 +21,6 @@ $repmask->run();
 $repmask->output();
 $repmask->write_output(); #writes to DB
 
-=cut
-
 =head1 DESCRIPTION
 
 This object is used to test failure of jobs in the hive system.
@@ -35,13 +31,9 @@ It parses the analysis.parameters and analysis_job.input_id as
 (string representing) hasrefs and extracts the divisor and the value.
 If the modulo (value % divisor) is 0, the job will fail.
 
-=cut
-
 =head1 CONTACT
 
-ensembl-dev@ebi.ac.uk
-
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
@@ -49,6 +41,8 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
+
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::Test;
 

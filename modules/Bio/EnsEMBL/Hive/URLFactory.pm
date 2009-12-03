@@ -7,30 +7,33 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
+=pod 
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::URLFactory
 
 =head1 SYNOPSIS
+
   $someObj = Bio::EnsEMBL::Hive::URLFactory->fetch($url_string);
   Bio::EnsEMBL::Hive::URLFactory->store($object);
 
 =head1 DESCRIPTION  
+
   Module to parse URL strings and return EnsEMBL objects be them
   DBConnections, DBAdaptors, or specifics like Analysis, Member, Gene, ....
 
 =head1 CONTACT
-  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
+
 =cut
 
-
-# Let the code begin...
 
 # global instance to cache connection to limit the number of open DB connections
 my $_URLFactory_global_instance;

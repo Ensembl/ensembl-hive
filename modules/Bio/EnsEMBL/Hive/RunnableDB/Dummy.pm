@@ -9,8 +9,6 @@
 
 Bio::EnsEMBL::Hive::RunnableDB::Dummy
 
-=cut
-
 =head1 SYNOPSIS
 
 my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
@@ -23,8 +21,6 @@ $repmask->run();
 $repmask->output();
 $repmask->write_output(); #writes to DB
 
-=cut
-
 =head1 DESCRIPTION
 
 This object is used as a place holder in the hive system.
@@ -32,13 +28,9 @@ It does nothing, but is needed so that a Worker can grab
 a job, pass the input through to output, and create the
 next layer of jobs in the system.
 
-=cut
-
 =head1 CONTACT
 
-jessica@ebi.ac.uk
-
-=cut
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 

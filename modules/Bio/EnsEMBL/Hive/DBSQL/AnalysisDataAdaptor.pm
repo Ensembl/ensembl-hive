@@ -7,32 +7,34 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
+=pod
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor
 
 =head1 SYNOPSIS
+
   $dataDBA = $db_adaptor->get_AnalysisDataAdaptor;
 
 =head1 DESCRIPTION
+
    analysis_data table holds LONGTEXT data for use by the analysis system.
    This data is general purpose and it's up to each analysis to
    determine how to use it.
    This Adaptor module is used to access/store this data.
 
 =head1 CONTACT
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are preceded with a _
 
 =cut
 
-
-# Let the code begin...
 
 
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;

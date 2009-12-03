@@ -7,7 +7,7 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
+=pod
 
 =head1 NAME
 
@@ -25,11 +25,9 @@
   be specified with a network savy URL like
   mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
 
-
 =head1 CONTACT
 
-  Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
@@ -37,9 +35,6 @@
   Internal methods are usually preceded with a _
 
 =cut
-
-
-# Let the code begin...
 
 
 package Bio::EnsEMBL::Hive::DataflowRule;
