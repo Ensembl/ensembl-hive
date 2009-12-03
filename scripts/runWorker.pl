@@ -67,7 +67,7 @@ GetOptions('help'           => \$help,
 
 $self->{'analysis_id'} = shift if(@_);
 
-if ($help) { usage(); }
+if ($help) { usage(0); }
 
 parse_conf($self, $conf_file);
 
@@ -91,7 +91,7 @@ else {
          and defined($self->{'db_conf'}->{'-dbname'}))
   {
     print "\nERROR : must specify host, user, and database to connect\n\n";
-    usage();
+    usage(1);
   }
 
   # connect to database specified
@@ -100,7 +100,7 @@ else {
 
 unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
   print("ERROR : no database connection\n\n");
-  usage();
+  usage(1);
 }
 
 my $queen = $DBA->get_Queen();
@@ -129,7 +129,7 @@ if($self->{'logic_name'}) {
   my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
   unless($analysis) {
     printf("logic_name:'%s' does not exist in database\n\n", $self->{'logic_name'});
-    usage();
+    usage(1);
   }
   $self->{'analysis_id'} = $analysis->dbID;
 }
@@ -221,36 +221,20 @@ exit(0);
 #######################
 
 sub usage {
-  print "runWorker.pl [options]\n";
-  print "  -help                  : print this help\n";
-  print "  -regfile <path>        : path to a Registry configuration file\n";
-  print "  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
-  print "  -url <url string>      : url defining where database is located\n";
-  print "  -conf <path>           : config file describing db connection\n";
-  print "  -dbhost <machine>      : mysql database host <machine>\n";
-  print "  -dbport <port#>        : mysql port number\n";
-  print "  -dbname <name>         : mysql database <name>\n";
-  print "  -dbuser <name>         : mysql connection user <name>\n";
-  print "  -dbpass <pass>         : mysql connection password\n";
-  print "  -analysis_id <id>      : analysis_id in db\n";
-  print "  -logic_name <string>   : logic_name of analysis to make this worker\n";
-  print "  -batch_size <num>      : #jobs to claim at a time\n";
-  print "  -limit <num>           : #jobs to run before worker can die naturally\n";
-  print "  -lifespan <num>        : number of minutes this worker is allowed to run\n";
-  print "  -outdir <path>         : directory where stdout/stderr is redirected\n";
-  print "  -bk <string>           : beekeeper identifier\n";
-  print "  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
-  print "  -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)\n";
-  print "  -job_id <id>           : run specific job defined by analysis_job_id\n";
-  print "  -debug <level>         : turn on debug messages at <level> \n";
-  print "  -analysis_stats        : show status of each analysis in hive\n";
-  print "  -no_cleanup            : don't perform global_cleanup when worker exits\n";
-  print "  -no_write              : don't write_output or auto_dataflow input_job\n";
-  print "runWorker.pl v1.6\n";
-  
-  exit(1);  
-}
+    my $retvalue = shift @_;
 
+    if(`which perldoc`) {
+        system('perldoc', $0);
+    } else {
+        foreach my $line (<DATA>) {
+            if($line!~s/\=\w+\s?//) {
+                $line = "\t$line";
+            }
+            print $line;
+        }
+    }
+    exit($retvalue);
+}
 
 sub parse_conf {
   my $self      = shift;
@@ -268,4 +252,50 @@ sub parse_conf {
     }
   }
 }
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+runWorker.pl
+
+=head1 DESCRIPTION
+
+ runWorker.pl is an eHive script that does the work of a single Worker -
+ specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
+
+=head1 USAGE
+
+runWorker.pl [options]
+
+=head1 OPTIONS
+
+  -help                  : print this help\n";
+  -regfile <path>        : path to a Registry configuration file\n";
+  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
+  -url <url string>      : url defining where database is located\n";
+  -conf <path>           : config file describing db connection\n";
+  -dbhost <machine>      : mysql database host <machine>\n";
+  -dbport <port#>        : mysql port number\n";
+  -dbname <name>         : mysql database <name>\n";
+  -dbuser <name>         : mysql connection user <name>\n";
+  -dbpass <pass>         : mysql connection password\n";
+  -analysis_id <id>      : analysis_id in db\n";
+  -logic_name <string>   : logic_name of analysis to make this worker\n";
+  -batch_size <num>      : #jobs to claim at a time\n";
+  -limit <num>           : #jobs to run before worker can die naturally\n";
+  -lifespan <num>        : number of minutes this worker is allowed to run\n";
+  -outdir <path>         : directory where stdout/stderr is redirected\n";
+  -bk <string>           : beekeeper identifier\n";
+  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
+  -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)\n";
+  -job_id <id>           : run specific job defined by analysis_job_id\n";
+  -debug <level>         : turn on debug messages at <level> \n";
+  -analysis_stats        : show status of each analysis in hive\n";
+  -no_cleanup            : don't perform global_cleanup when worker exits\n";
+  -no_write              : don't write_output or auto_dataflow input_job\n";
+
+=cut
 

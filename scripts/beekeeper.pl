@@ -71,7 +71,7 @@ sub main {
                'host|dbhost=s'     => \$self->{'db_conf'}->{'-host'},
                'port|dbport=i'     => \$self->{'db_conf'}->{'-port'},
                'user|dbuser=s'     => \$self->{'db_conf'}->{'-user'},
-               'password|dbpass=s'     => \$self->{'db_conf'}->{'-pass'},
+               'password|dbpass=s' => \$self->{'db_conf'}->{'-pass'},
                'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control
@@ -112,7 +112,7 @@ sub main {
                'monitor!'          => \$self->{'monitor'},
     );
 
-    if ($help) { usage(); }
+    if ($help) { usage(0); }
 
     parse_conf($self, $conf_file);
 
@@ -139,7 +139,7 @@ sub main {
                     $self->{'url'} = $self->{'dba'}->dbc->url;
     } else {
         print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
-        usage();
+        usage(1);
     }
 
     my $queen = $self->{'dba'}->get_Queen;
@@ -234,53 +234,19 @@ sub main {
 #######################
 
 sub usage {
-    print "beekeeper.pl [options]\n";
-    print "  -help                  : print this help\n";
+    my $retvalue = shift @_;
 
-    print "\n===============[connection parameters]==================\n";
-    print "  -conf <path>           : config file describing db connection\n";
-    print "  -regfile <path>        : path to a Registry configuration file\n";
-    print "  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
-    print "  -url <url string>      : url defining where hive database is located\n";
-    print "  -dbhost <machine>      : mysql database host <machine>\n";
-    print "  -dbport <port#>        : mysql port number\n";
-    print "  -dbuser <name>         : mysql connection user <name>\n";
-    print "  -dbpass <pass>         : mysql connection password\n";
-    print "  -dbname <name>         : mysql database <name>\n";
-
-    print "\n===============[loop control]============================\n";
-    print "  -loop                  : run autonomously, loops and sleeps\n";
-    print "  -max_loops <num>       : perform max this # of loops in autonomous mode\n";
-    print "  -run                   : run 1 iteration of automation loop\n";
-    print "  -run_job_id <job_id>   : run 1 iteration for this job_id\n";
-    print "  -sleep <num>           : when looping, sleep <num> minutes (default 3min)\n";
-
-    print "\n===============[meadow control]==========================\n";
-    print "  -local                 : run jobs on local CPU (fork)\n";
-    print "  -local_cpus <num>      : max # workers to be running locally\n";
-    print "  -wlimit <num>          : max # workers to create per loop\n";
-    print "  -no_pend               : don't adjust needed workers by pending workers\n";
-    print "  -lsf_options <string>  : passes <string> to LSF bsub command as <options>\n";
-
-    print "\n===============[worker control]==========================\n";
-    print "  -jlimit <num>           : #jobs to run before worker can die naturally\n";
-    print "  -batch_size <num>       : #jobs a worker can claim at once\n";
-    print "  -lifespan <num>         : lifespan limit for each worker\n";
-    print "  -logic_name <string>    : restrict the pipeline stat/runs to this analysis logic_name\n";
-    print "  -maximise_concurrency 1 : try to run more different analyses at the same time\n";
-
-    print "\n===============[other commands/options]==================\n";
-    print "  -dead                  : clean dead jobs for resubmission\n";
-#    print "  -overdue <min>         : worker overdue minutes checking if dead\n";
-    print "  -alldead               : all outstanding workers\n";
-    print "  -no_analysis_stats     : don't show status of each analysis\n";
-    print "  -worker_stats          : show status of each running worker\n";
-    print "  -failed_jobs           : show all failed jobs\n";
-    print "  -reset_job_id <num>    : reset a job back to READY so it can be rerun\n";
-    print "  -reset_all_jobs_for_analysis <logic_name>\n";
-    print "                         : reset jobs back to READY so it can be rerun\n";  
-
-    exit(1);  
+    if(`which perldoc`) {
+        system('perldoc', $0);
+    } else {
+        foreach my $line (<DATA>) {
+            if($line!~s/\=\w+\s?//) {
+                $line = "\t$line";
+            }
+            print $line;
+        }
+    }
+    exit($retvalue);
 }
 
 sub parse_conf {
@@ -496,4 +462,92 @@ sub remove_analysis_id {
     $self->{'dba'}->get_AnalysisJobAdaptor->remove_analysis_id($analysis->dbID); 
     $self->{'dba'}->get_AnalysisAdaptor->remove($analysis); 
 }
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+    beekeeper.pl
+
+=head1 DESCRIPTION
+
+beekeeper.pl is the Perl script used to initialize and control the execution of eHive pipelines
+ and perform some maintenance tasks on the undelying eHive database.
+
+=head1 USAGE EXAMPLES
+
+    # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
+beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname -sync
+
+    # An alternative way of doing the same thing
+beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
+
+    # Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
+beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop
+
+    # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
+beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
+
+    # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
+beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
+
+    # Reset all 'buggy_analysis' jobs to 'READY' state, so that they can be run again
+beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_all_jobs_for_analysis buggy_analysis
+
+    # Do a cleanup: find and bury dead workers, reclaim their jobs
+beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
+
+=head1 OPTIONS
+
+=head2 Connection parameters
+
+  -conf <path>           : config file describing db connection
+  -regfile <path>        : path to a Registry configuration file
+  -regname <string>      : species/alias name for the Hive DBAdaptor
+  -url <url string>      : url defining where hive database is located
+  -host <machine>        : mysql database host <machine>
+  -port <port#>          : mysql port number
+  -user <name>           : mysql connection user <name>
+  -password <pass>       : mysql connection password <pass>
+  -database <name>       : mysql database <name>
+
+=head2 Looping control
+
+  -loop                  : run autonomously, loops and sleeps
+  -max_loops <num>       : perform max this # of loops in autonomous mode
+  -run                   : run 1 iteration of automation loop
+  -run_job_id <job_id>   : run 1 iteration for this job_id
+  -sleep <num>           : when looping, sleep <num> minutes (default 2min)
+
+=head2 Meadow control
+
+  -local                 : run jobs on local CPU (fork)
+  -local_cpus <num>      : max # workers to be running locally
+  -wlimit <num>          : max # workers to create per loop
+  -no_pend               : don't adjust needed workers by pending workers
+  -lsf_options <string>  : passes <string> to LSF bsub command as <options>
+
+=head2 Worker control
+
+  -jlimit <num>           : #jobs to run before worker can die naturally
+  -batch_size <num>       : #jobs a worker can claim at once
+  -lifespan <num>         : lifespan limit for each worker
+  -logic_name <string>    : restrict the pipeline stat/runs to this analysis logic_name
+  -maximise_concurrency 1 : try to run more different analyses at the same time
+
+=head2 Other commands/options
+
+  -help                  : print this help
+  -dead                  : clean dead jobs for resubmission
+  -alldead               : all outstanding workers
+  -no_analysis_stats     : don't show status of each analysis
+  -worker_stats          : show status of each running worker
+  -failed_jobs           : show all failed jobs
+  -reset_job_id <num>    : reset a job back to READY so it can be rerun
+  -reset_all_jobs_for_analysis <logic_name>
+                         : reset jobs back to READY so it can be rerun
+
+=cut
 

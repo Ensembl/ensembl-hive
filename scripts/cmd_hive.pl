@@ -8,64 +8,6 @@
 #
 # You may distribute this module under the same terms as perl itself
 
-# POD documentation - main docs before the code
-
-=head1 NAME
-
-cmd_hive.pl - DESCRIPTION 
-
-=head1 SYNOPSIS
-
-perl \
-/nfs/acari/avilella/src/ensembl_main/ensembl-personal/avilella/hive/cmd_hive.pl \
-    -url mysql://user:password@mysqldb:port/name_of_hive_db
-    -logic_name example1 -input_id 'echo I.have.$suffix.$tag.and.I.am.baking.one.right.now' \
-    -suffix_a apple01 -suffix_b apple05 -tag pies\
-
-cmd_hive.pl -url mysql://ensadmin:ensembl@compara2:5316/avilella_compara_homology_54
-    -input_id \ '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' \
-    -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab" }' \
-    -suffix_a 1 -suffix_b 100 -step 9 -hive_capacity 200 -logic_name family_blast_54a \
-    -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
-
-=head1 DESCRIPTION
-
-This script is to help load a batch of jobs all belonging to the same analysis,
-whose parameters have to be varied over a range of values.
-
-It was initially intended to run jobs wrapped into a script via
-Bio::EnsEMBL::Hive::RunnableDB::SystemCmd module,
-but is now extended to run any RunnableDB module jobs.
-
-There are three ways of providing the range for the mutable parameter:
-    - perl built-in .. range operator (by setting -suffix_a 1234 and -suffix_b 5678 values)
-        ** you can create mini-batches by providing the -step value, which will percolate as $suffixn
-    - values provided in a file (by setting -inputfile filename)
-    - hashed mode
-
-Always use single quotes to protect the values of -input_id and -parameters.
-
-Be careful of using things that don't expand, like apple_01 apple_05
-instead of apple01 apple05
-
-Also don't use suffix_a and suffix_b in the reverse order apple05
-to apple01 because they expand in things like:
-apple54,applf04,applf54,applg04,applg54,applh04,applh54...
-
-If using hashed, call with something like:
-
-[-hashed_a 00:00:00]
-[-hashed_b 01:61:67]
-
-=head1 AUTHOR - Albert Vilella
-
-=head2 CONTRIBUTOR - Leo Gordon
-
-=cut
-
-
-# Let the code begin...
-
 use strict;
 use DBI;
 use Getopt::Long;
@@ -87,34 +29,39 @@ $self->{'logic_name'}  = 'cmd_hive_analysis';
 $self->{'module'}      = 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd';
 $self->{'parameters'}  = '{}';
 
-my $conf_file;
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 
-GetOptions('help'            => \$help,
-           'url=s'           => \$url,
-           'conf=s'          => \$conf_file,
-           'dbhost=s'        => \$host,
-           'dbport=i'        => \$port,
-           'dbuser=s'        => \$user,
-           'dbpass=s'        => \$pass,
-           'dbname=s'        => \$dbname,
-           'logic_name=s'    => \$self->{'logic_name'},
-           'module=s'        => \$self->{'module'},
-           'input_id=s'      => \$self->{'input_id'},
-           'parameters=s'    => \$self->{'parameters'},
-           'inputfile=s'     => \$self->{'inputfile'},
-           'suffix_a=s'      => \$self->{'suffix_a'},
-           'suffix_b=s'      => \$self->{'suffix_b'},
-           'step=i'          => \$self->{'step'},
-           'hashed_a=s'      => \$self->{'hashed_a'},
-           'hashed_b=s'      => \$self->{'hashed_b'},
-           'tag=s'           => \$self->{'tag'},
-           'hive_capacity=s' => \$self->{'hive_capacity'},
-           'batch_size=s'    => \$self->{'batch_size'},
-           'debug=s'         => \$self->{'debug'},
-          );
+GetOptions(
+# connection parameters:
+           'url=s'             => \$url,
+           'host|dbhost=s'     => \$host,
+           'port|dbport=i'     => \$port,
+           'user|dbuser=s'     => \$user,
+           'password|dbpass=s' => \$pass,
+           'database|dbname=s' => \$dbname,
 
-if ($help) { usage(); }
+# analysis parameters:
+           'logic_name=s'      => \$self->{'logic_name'},
+           'module=s'          => \$self->{'module'},
+           'hive_capacity=s'   => \$self->{'hive_capacity'},
+           'batch_size=s'      => \$self->{'batch_size'},
+           'input_id=s'        => \$self->{'input_id'},
+           'parameters=s'      => \$self->{'parameters'},
+
+# range parameters:
+           'inputfile=s'       => \$self->{'inputfile'},
+           'suffix_a=s'        => \$self->{'suffix_a'},
+           'suffix_b=s'        => \$self->{'suffix_b'},
+           'step=i'            => \$self->{'step'},
+           'hashed_a=s'        => \$self->{'hashed_a'},
+           'hashed_b=s'        => \$self->{'hashed_b'},
+
+# other options:
+           'help'              => \$help,
+           'debug=s'           => \$self->{'debug'},
+);
+
+if ($help) { usage(0); }
 
 my $DBA;
 if($url) {
@@ -131,7 +78,7 @@ if($url) {
          and defined($self->{'db_conf'}->{'-dbname'}))
   {
     print "\nERROR : must specify host, user, and database to connect\n\n";
-    usage();
+    usage(1);
   }
 
   # connect to database specified
@@ -148,19 +95,6 @@ exit(0);
 # subroutines
 #
 #######################
-
-sub usage {
-  print "cmd_hive.pl [options]\n";
-  print "  -help                  : print this help\n";
-  print "  -url <url string>      : url defining where hive database is located\n";
-  print "  -input_id <cmd string> : command to be executed (or param. hash to be passed to analysis module)\n";
-  print "  -suffix_a <tag>        : suffix from here\n";
-  print "  -suffix_b <tag>        : suffix to here\n";
-  print "  -tag <tag>             : fixed tag in the command line\n"; 
-  print "  -logic_name <analysis name>  : logic_name of the analysis\n";
-  print "  -module <module name>  : name of the module to be run\n";
-  exit(1);
-}
 
 sub job_creation {
   my $self = shift;
@@ -208,7 +142,6 @@ sub job_creation {
     }
     close FILE;
   } elsif(defined($self->{'suffix_a'}) and defined($self->{'suffix_b'})) {
-    my $tag  = $self->{'tag'};
     my $step = $self->{'step'} || 1;
     my @full_list = $self->{'suffix_a'}..$self->{'suffix_b'};
     while(@full_list) {
@@ -217,12 +150,11 @@ sub job_creation {
         for($from = $to = shift @full_list; $batch_cnt<$step && @full_list; $batch_cnt++) {
             $to = shift @full_list;
         }
-            # expanding tags here (now you can substitute $suffix, $suffix2, $suffixn and if you really need it, $tag):
+            # expanding tags here (now you can substitute $suffix, $suffix2, $suffixn):
         my $resolved_input_id = $self->{'input_id'};
         $resolved_input_id =~ s/\$suffixn/$batch_cnt/g; # the order of substitutions is important!
         $resolved_input_id =~ s/\$suffix2/$to/g;
         $resolved_input_id =~ s/\$suffix/$from/g;
-        $resolved_input_id =~ s/\$tag/$tag/g;
 
         if(++$count % 100 == 0) {
             print "$resolved_input_id at ",(time()-$starttime)," secs\n";
@@ -308,4 +240,115 @@ sub resolve_suffix {
   return $hashed_input_id;
 }
 
-1;
+sub usage {
+    my $retvalue = shift @_;
+
+    if(`which perldoc`) {
+        system('perldoc', $0);
+    } else {
+        foreach my $line (<DATA>) {
+            if($line!~s/\=\w+\s?//) {
+                $line = "\t$line";
+            }
+            print $line;
+        }
+    }
+    exit($retvalue);
+}
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+cmd_hive.pl
+
+=head1 USAGE
+
+cmd_hive.pl -url mysql://user:password@host:port/name_of_hive_db \
+    -logic_name example1 -input_id 'echo I.have.$suffix.and.I.am.baking.one.right.now' \
+    -suffix_a apple01 -suffix_b apple05
+
+cmd_hive.pl -url mysql://user:password@host:port/avilella_compara_homology_54 \
+    -input_id  '{ "sequence_id" => "$suffix", "minibatch" => "$suffixn" }' \
+    -parameters '{ "fastadb" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.pep", "tabfile" => "/data/blastdb/Ensembl/family_54/fasta/metazoa_54.tab" }' \
+    -suffix_a 1 -suffix_b 100 -step 9 -hive_capacity 200 -logic_name family_blast_54a \
+    -module Bio::EnsEMBL::Compara::RunnableDB::FamilyBlast
+
+=head1 DESCRIPTION
+
+ This script helps to load a batch of jobs all belonging to the same analysis,
+ whose parameters are given by a range of values.
+
+ By default it will use the 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd'
+ to run a script wrapped into eHive jobs, but it will run any RunnableDB module that you specify instead.
+
+ There are three ways of providing the range for the mutable parameter(s):
+    - values provided in a file (by setting -inputfile filename)
+    - perl built-in .. range operator (by setting -suffix_a 1234 and -suffix_b 5678 values)
+        ** you can create mini-batches by providing the -step value, which will percolate as $suffixn
+    - hashed mode
+
+=head1 OPTIONS
+
+=head2 Connection parameters
+
+  -url <url string>              : url defining where hive database is located
+  -host <machine>                : mysql database host <machine>
+  -port <port#>                  : mysql port number
+  -user <name>                   : mysql connection user <name>
+  -password <pass>               : mysql connection password <pass>
+  -database <name>               : mysql database <name>
+
+=head2 Analysis parameters
+
+  -logic_name <analysis_name>    : logic_name of the analysis
+  -module <module_name>          : name of the module to be run
+  -hive_capacity <hive_capacity> : top limit on the number of jobs of this analysis run at the same time
+  -batch_size <batch_size>       : how many jobs can be claimed by a worker at once
+  -parameters <parameters_hash>  : hash containing analysis-wide parameters for the module
+  -input_id <inputid_hash>       : hash containing job-specific parameters for the module
+
+Always use single quotes to protect the values of -input_id and -parameters.
+
+=head2 Range parameters (file mode)
+
+  -inputfile <filename>          : filename to take the values from (one per line)
+
+  Contents of each line will be substituted for '$inputfile' pattern in the input_id.
+
+=head2 Range parameters (simple range mode)
+
+  -suffix_a <tag>                : bottom boundary of the range
+  -suffix_b <tag>                : top boundary of the range
+  -step <step_size>              : desired size of the subrange, may be smaller for last subrange (1 by default)
+
+  The result of range expansion will get chunked into subranges of <step_size> (or 1 if not specified).
+  Start of the subrange will be substituted for '$suffix',
+  end of the subrange will be substituted for '$suffix2'
+  and size of the subrange will be substituted for '$suffixn' pattern in the input_id.
+
+  Be careful of using things that don't expand, like apple_01 apple_05 instead of apple01 apple05
+
+  Also don't use suffix_a and suffix_b in the reverse order apple05 to apple01 because they expand in things like:
+  apple54,applf04,applf54,applg04,applg54,applh04,applh54...
+
+=head2 Range parameters (hashed mode)
+
+  -hashed_a <tag_a>              : for example, -hashed_a 00:00:00
+  -hashed_b <tag_b>              : for example, -hashed_b 01:61:67
+
+  Please ask Albert about this mode or to provide documentation for it :)
+
+=head2 Other options
+
+  -help                          : print this help
+
+=head1 AUTHORS
+
+ Albert Vilella
+ Leo Gordon
+
+=cut
+
