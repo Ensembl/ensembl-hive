@@ -68,11 +68,11 @@ sub main {
                'regfile=s'         => \$self->{'reg_file'},
                'regname=s'         => \$self->{'reg_name'},
                'url=s'             => \$self->{'url'},
-               'dbhost=s'          => \$self->{'db_conf'}->{'-host'},
-               'dbport=i'          => \$self->{'db_conf'}->{'-port'},
-               'dbuser=s'          => \$self->{'db_conf'}->{'-user'},
-               'dbpass=s'          => \$self->{'db_conf'}->{'-pass'},
-               'dbname=s'          => \$self->{'db_conf'}->{'-dbname'},
+               'host|dbhost=s'     => \$self->{'db_conf'}->{'-host'},
+               'port|dbport=i'     => \$self->{'db_conf'}->{'-port'},
+               'user|dbuser=s'     => \$self->{'db_conf'}->{'-user'},
+               'pass|dbpass=s'     => \$self->{'db_conf'}->{'-pass'},
+               'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control
                'loop'              => \$loopit,
