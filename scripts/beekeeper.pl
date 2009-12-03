@@ -473,8 +473,12 @@ __DATA__
 
 =head1 DESCRIPTION
 
-beekeeper.pl is the Perl script used to initialize and control the execution of eHive pipelines
- and perform some maintenance tasks on the undelying eHive database.
+The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
+Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
+and to send the requested number of workers to open machines via the runWorker.pl script.
+
+It is also responsible for interfacing with the Queen to identify workers which died
+unexpectantly so that she can free the dead workers and reclaim unfinished jobs.
 
 =head1 USAGE EXAMPLES
 
@@ -483,6 +487,9 @@ beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --dat
 
     # An alternative way of doing the same thing
 beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
+
+    # Do not run any additional Workers, just check for the current status of the pipeline:
+beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
     # Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
 beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop
