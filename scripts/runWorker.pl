@@ -281,36 +281,36 @@ runWorker.pl [options]
 
 =head2 Connection parameters
 
-  -conf <path>           : config file describing db connection\n";
-  -regfile <path>        : path to a Registry configuration file\n";
-  -regname <string>      : species/alias name for the Hive DBAdaptor\n";
-  -url <url string>      : url defining where database is located\n";
-  -host <machine>        : mysql database host <machine>\n";
-  -port <port#>          : mysql port number\n";
-  -user <name>           : mysql connection user <name>\n";
-  -password <pass>       : mysql connection password\n";
-  -database <name>       : mysql database <name>\n";
+  -conf <path>           : config file describing db connection
+  -regfile <path>        : path to a Registry configuration file
+  -regname <string>      : species/alias name for the Hive DBAdaptor
+  -url <url string>      : url defining where database is located
+  -host <machine>        : mysql database host <machine>
+  -port <port#>          : mysql port number
+  -user <name>           : mysql connection user <name>
+  -password <pass>       : mysql connection password
+  -database <name>       : mysql database <name>
 
 =head2 Job/Analysis control parameters:
 
-  -analysis_id <id>      : analysis_id in db\n";
-  -logic_name <string>   : logic_name of analysis to make this worker\n";
-  -batch_size <num>      : #jobs to claim at a time\n";
-  -limit <num>           : #jobs to run before worker can die naturally\n";
-  -lifespan <num>        : number of minutes this worker is allowed to run\n";
-  -outdir <path>         : directory where stdout/stderr is redirected\n";
-  -bk <string>           : beekeeper identifier\n";
-  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)\n";
-  -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)\n";
-  -job_id <id>           : run specific job defined by analysis_job_id\n";
-  -analysis_stats        : show status of each analysis in hive\n";
-  -no_cleanup            : don't perform global_cleanup when worker exits\n";
-  -no_write              : don't write_output or auto_dataflow input_job\n";
+  -analysis_id <id>      : analysis_id in db
+  -logic_name <string>   : logic_name of analysis to make this worker
+  -batch_size <num>      : #jobs to claim at a time
+  -limit <num>           : #jobs to run before worker can die naturally
+  -lifespan <num>        : number of minutes this worker is allowed to run
+  -outdir <path>         : directory where stdout/stderr is redirected
+  -bk <string>           : beekeeper identifier
+  -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)
+  -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)
+  -job_id <id>           : run specific job defined by analysis_job_id
+  -analysis_stats        : show status of each analysis in hive
+  -no_cleanup            : don't perform global_cleanup when worker exits
+  -no_write              : don't write_output or auto_dataflow input_job
 
 =head2 Other options:
 
-  -help                  : print this help\n";
-  -debug <level>         : turn on debug messages at <level> \n";
+  -help                  : print this help
+  -debug <level>         : turn on debug messages at <level>
 
 =cut
 
