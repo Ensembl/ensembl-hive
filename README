@@ -3,8 +3,8 @@
 # Copyright Team Ensembl
 # You may distribute this package under the same terms as perl itself
 
-Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Contact:
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 Summary:
   This is a distributed processing system based on 'autonomous agents' and
@@ -15,6 +15,29 @@ Summary:
   It builds on the design of the Ensembl Pipeline/Analysis and presently uses 
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
+
+3 Decemted, 2009 : Leo Gordon
+
+beekeeper.pl, runWorker.pl and cmd_hive.pl
+got new built-in documentation accessible via perldoc or directly.
+
+
+2 December, 2009 : Leo Gordon
+
+Bio::EnsEMBL::Hive::RunnableDB::LongMult example toy pipeline has been created
+to show how to do various things "adult pipelines" perform
+(job creation, data flow, control blocking rules, usage of intermediate tables, etc).
+
+Read Bio::EnsEMBL::Hive::RunnableDB::LongMult for a step-by-step instruction
+on how to create and run this pipeline.
+
+
+30 November, 2009 : Leo Gordon
+
+Bio::EnsEMBL::Hive::RunnableDB::JobFactory module has been added.
+It is a generic way of creating batches of jobs with the parameters
+given by a file or a range of ids.
+Entries in the file can also be randomly shuffled.
 
 
 13 July, 2009 : Leo Gordon
