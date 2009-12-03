@@ -1,14 +1,14 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl
 
 # cmd_hive.pl
 #
 # Cared for by Albert Vilella <>
-#
 # Copyright Albert Vilella
 #
 # You may distribute this module under the same terms as perl itself
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -57,7 +57,7 @@ GetOptions(
            'hashed_b=s'        => \$self->{'hashed_b'},
 
 # other options:
-           'help'              => \$help,
+           'h|help'            => \$help,
            'debug=s'           => \$self->{'debug'},
 );
 
@@ -345,10 +345,9 @@ Always use single quotes to protect the values of -input_id and -parameters.
 
   -help                          : print this help
 
-=head1 AUTHORS
+=head1 CONTACT
 
- Albert Vilella
- Leo Gordon
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

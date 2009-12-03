@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
-use warnings;
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -68,7 +68,7 @@ GetOptions(
            'maximise_concurrency' => \$self->{'maximise_concurrency'},
 
 # Other commands
-           'help'           => \$help,
+           'h|help'         => \$help,
            'debug=i'        => \$self->{'debug'},
           );
 
@@ -270,12 +270,25 @@ runWorker.pl
 
 =head1 DESCRIPTION
 
- runWorker.pl is an eHive script that does the work of a single Worker -
+ runWorker.pl is an eHive component script that does the work of a single Worker -
  specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
 
-=head1 USAGE
+ Most of the functionality of the eHive is accessible via beekeeper.pl script,
+ but feel free to run the runWorker.pl if you think you know what you are doing :)
 
-runWorker.pl [options]
+=head1 USAGE EXAMPLES
+
+    # Run one local worker process in ehive_dbname and let the system pick up the analysis
+runWorker.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname
+
+    # Run one local worker process in ehive_dbname and let the system pick up the analysis (another connection syntax)
+runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
+
+    # Run one local worker process in ehive_dbname and specify the logic_name
+runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast
+
+    # Create a job outside the eHive to test the specified input_id
+runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast -input_id '{ "foo" => 1500 }'
 
 =head1 OPTIONS
 
@@ -311,6 +324,10 @@ runWorker.pl [options]
 
   -help                  : print this help
   -debug <level>         : turn on debug messages at <level>
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

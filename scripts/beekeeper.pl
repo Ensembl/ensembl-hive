@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
-use warnings;
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 
@@ -61,8 +61,7 @@ sub main {
     $self->{'reg_name'}             = 'hive';
     $self->{'maximise_concurrency'} = 0;
 
-    GetOptions('help'              => \$help,
-
+    GetOptions(
                     # connection parameters
                'conf=s'            => \$conf_file,
                'regfile=s'         => \$self->{'reg_file'},
@@ -96,6 +95,7 @@ sub main {
                'maximise_concurrency' => \$self->{'maximise_concurrency'},
 
                     # other commands/options
+               'h|help'            => \$help,
                'sync'              => \$sync,
                'dead'              => \$check_for_dead,
                'killworker=i'      => \$kill_worker_id,
@@ -548,6 +548,10 @@ beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
   -reset_job_id <num>    : reset a job back to READY so it can be rerun
   -reset_all_jobs_for_analysis <logic_name>
                          : reset jobs back to READY so it can be rerun
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 
