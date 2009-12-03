@@ -6,9 +6,11 @@
 =pod 
 
 =head1 NAME
+
   Bio::EnsEMBL::Hive
 
 =head1 DESCRIPTION
+
   Object which encapsulates the details of how to find jobs, how to run those
   jobs, and then check the rules to create the next jobs in the chain.
   Essentially knows where to find data, how to process data, and where to
@@ -49,10 +51,12 @@
 
 
 =head1 CONTACT
+
   Contact Jessica Severin on EnsEMBL::Hive implemetation/design detail: jessica@ebi.ac.uk
   Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
 
 =head1 APPENDIX
+
   The rest of the documentation details each of the object methods.
   Internal methods are usually preceded with a _
 
