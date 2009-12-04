@@ -18,19 +18,22 @@
 
 # 0. Cache MySQL connection parameters in a variable (they will work as eHive connection parameters as well) :
 export MYCONN="--host=hostname --port=port_number --user=username --password=secret"
+#
+# also, set the ENS_CODE_ROOT to the directory where ensembl packages are installed:
+export ENS_CODE_ROOT="$HOME/ensembl_main"
 
 # 1. Create an empty database:
 mysql $MYCONN -e 'DROP DATABASE IF EXISTS long_mult_test'
 mysql $MYCONN -e 'CREATE DATABASE long_mult_test'
 
 # 2. Create eHive infrastructure:
-mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/tables.sql
+mysql $MYCONN long_mult_test <$ENS_CODE_ROOT/ensembl-hive/sql/tables.sql
 
 # 3. Create analyses/control_rules/dataflow_rules of the LongMult pipeline:
-mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/create_long_mult.sql
+mysql $MYCONN long_mult_test <$ENS_CODE_ROOT/ensembl-hive/sql/create_long_mult.sql
 
 # 4. "Load" the pipeline with a multiplication task:
-mysql $MYCONN long_mult_test <~lg4/work/ensembl-hive/sql/load_long_mult.sql
+mysql $MYCONN long_mult_test <$ENS_CODE_ROOT/ensembl-hive/sql/load_long_mult.sql
 #
 # or you can add your own task(s). Several tasks can be added at once:
 mysql $MYCONN long_mult_test <<EoF

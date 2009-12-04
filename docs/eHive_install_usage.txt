@@ -49,7 +49,7 @@ It will be convenient to set a variable pointing at this directory for future us
 
 2.2. Change into your ensembl codebase directory:
 
-	$ cd $END_CODE_ROOT
+	$ cd $ENS_CODE_ROOT
 
 2.3. Log into the BioPerl CVS server (using "cvs" for password):
 
