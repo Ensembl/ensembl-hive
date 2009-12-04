@@ -139,7 +139,7 @@ Now the structure of a particular pipeline has to be defined:
 The task of loading all the components of pipelines is usually automated by a configuration script
 (or sometimes two, the first for loading "pipeline definition" (A-D) and the second for loading jobs (E) )
 
-Please familiarize yourself with the file $ENS_CODE_ROOT/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/Readme.txt
+Please familiarize yourself with the file $ENS_CODE_ROOT/ensembl-hive/docs/long_mult_example_pipeline.txt
 that gives step-by-step instruction of how to load and run our toy pipeline for distributed multiplication of long numbers.
 Although it is a toy pipeline, it gives a good example on how to address each of the points (A)..(E) listed above.
 

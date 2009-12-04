@@ -1,0 +1,9 @@
+############################################################################################################################
+#
+#   Bio::EnsEMBL::Hive::RunnableDB::LongMult is an example eHive pipeline.
+#
+#   Please refer to the file   ensembl-hive/docs/long_mult_example_pipeline.txt
+#   for the full description of the pipeline and instructions on how to load and run it.
+#
+############################################################################################################################
+
