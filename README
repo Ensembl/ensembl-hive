@@ -16,7 +16,7 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
-3 Decemted, 2009 : Leo Gordon
+3 December, 2009 : Leo Gordon
 
 beekeeper.pl, runWorker.pl and cmd_hive.pl
 got new built-in documentation accessible via perldoc or directly.
