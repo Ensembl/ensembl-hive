@@ -675,6 +675,8 @@ sub close_and_update_job_output
 }
 
 
+# Does not seem to be used anywhere?
+#
 sub check_system_load {
   my $self = shift;
 
