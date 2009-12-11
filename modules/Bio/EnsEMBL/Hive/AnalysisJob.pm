@@ -56,10 +56,10 @@ sub input_id {
   return $self->{'_input_id'};
 }
 
-sub hive_id {
+sub worker_id {
   my $self = shift;
-  $self->{'_hive_id'} = shift if(@_);
-  return $self->{'_hive_id'};
+  $self->{'_worker_id'} = shift if(@_);
+  return $self->{'_worker_id'};
 }
 
 sub analysis_id {

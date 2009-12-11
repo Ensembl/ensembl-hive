@@ -143,10 +143,10 @@ sub create_new_worker {
 
   my $sth = $self->prepare($sql);
   $sth->execute($pid, $analysisStats->analysis_id, $beekeeper, $host);
-  my $hive_id = $sth->{'mysql_insertid'};
+  my $worker_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
-  my $worker = $self->_fetch_by_hive_id($hive_id);
+  my $worker = $self->fetch_by_worker_id($worker_id);
   $worker=undef unless($worker and $worker->analysis);
 
   if($worker and $analysisStats) {
@@ -176,7 +176,7 @@ sub register_worker_death {
   $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " ,cause_of_death='". $worker->cause_of_death ."'";
-  $sql .= " WHERE hive_id='" . $worker->hive_id ."'";
+  $sql .= " WHERE worker_id='" . $worker->worker_id ."'";
 
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -186,7 +186,7 @@ sub register_worker_death {
     $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
   }
   if($worker->cause_of_death eq "FATALITY") {
-    #print("FATAL DEATH Arrrrgggghhhhhhhh (hive_id=",$worker->hive_id,")\n");
+    #print("FATAL DEATH Arrrrgggghhhhhhhh (worker_id=",$worker->worker_id,")\n");
     $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
   
@@ -206,7 +206,7 @@ sub worker_check_in {
   return unless($worker);
   my $sql = "UPDATE hive SET last_check_in=now()";
   $sql .= " ,work_done='" . $worker->work_done . "'";
-  $sql .= " WHERE hive_id='" . $worker->hive_id ."'";
+  $sql .= " WHERE worker_id='" . $worker->worker_id ."'";
 
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -281,7 +281,7 @@ sub worker_reclaim_job {
   my $job    = shift;
 
   return undef unless($job and $worker);
-  $job->hive_id($worker->hive_id);
+  $job->worker_id($worker->worker_id);
   $self->db->get_AnalysisJobAdaptor->reclaim_job($job);
   return $job;
 }
@@ -293,7 +293,7 @@ sub worker_register_job_done {
   my $job = shift;
   
   return unless($job);
-  return unless($job->dbID and $job->adaptor and $job->hive_id);
+  return unless($job->dbID and $job->adaptor and $job->worker_id);
   return unless($worker and $worker->analysis and $worker->analysis->dbID);
   
   $job->update_status('DONE');
@@ -354,10 +354,10 @@ sub fetch_failed_workers {
 sub fetch_dead_workers_with_jobs {
   my $self = shift;
 
-  # select h.hive_id from hive h, analysis_job WHERE h.hive_id=analysis_job.hive_id AND h.cause_of_death!='' AND analysis_job.status not in ('DONE', 'READY','FAILED') group by h.hive_id
+  # select h.worker_id from hive h, analysis_job WHERE h.worker_id=analysis_job.worker_id AND h.cause_of_death!='' AND analysis_job.status not in ('DONE', 'READY','FAILED') group by h.worker_id
 
   my $constraint = "h.cause_of_death!='' ";
-  my $join = [[['analysis_job', 'j'], " h.hive_id=j.hive_id AND j.status NOT IN ('DONE', 'READY', 'FAILED') GROUP BY h.hive_id"]];
+  my $join = [[['analysis_job', 'j'], " h.worker_id=j.worker_id AND j.status NOT IN ('DONE', 'READY', 'FAILED') GROUP BY h.worker_id"]];
   return $self->_generic_fetch($constraint, $join);
 }
 
@@ -625,7 +625,7 @@ sub get_num_running_workers {
 sub enter_status {
   my ($self, $worker, $status) = @_;
 
-  $self->dbc->do("UPDATE hive SET status = '$status' WHERE hive_id = ".$worker->hive_id);
+  $self->dbc->do("UPDATE hive SET status = '$status' WHERE worker_id = ".$worker->worker_id);
 }
 
 =head2 get_num_needed_workers
@@ -844,7 +844,7 @@ sub _pick_best_analysis_for_new_worker {
 }
 
 
-=head2 _fetch_by_hive_id
+=head2 fetch_by_worker_id
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
@@ -857,7 +857,7 @@ sub _pick_best_analysis_for_new_worker {
 
 =cut
 
-sub _fetch_by_hive_id {
+sub fetch_by_worker_id {
   my ($self,$id) = @_;
 
   unless(defined $id) {
@@ -866,7 +866,7 @@ sub _fetch_by_hive_id {
 
   my @tabs = $self->_tables;
 
-  my $constraint = "h.hive_id = $id";
+  my $constraint = "h.worker_id = $id";
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
@@ -950,7 +950,7 @@ sub _tables {
 sub _columns {
   my $self = shift;
 
-  return qw (h.hive_id
+  return qw (h.worker_id
              h.analysis_id
              h.beekeeper
              h.host
@@ -976,7 +976,7 @@ sub _objs_from_sth {
     my $worker = new Bio::EnsEMBL::Hive::Worker;
     $worker->init;
 
-    $worker->hive_id($column{'hive_id'});
+    $worker->worker_id($column{'worker_id'});
     $worker->beekeeper($column{'beekeeper'});
     $worker->host($column{'host'});
     $worker->process_id($column{'process_id'});

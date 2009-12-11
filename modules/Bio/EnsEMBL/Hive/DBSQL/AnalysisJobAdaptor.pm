@@ -182,11 +182,11 @@ sub fetch_by_claim_analysis {
 }
 
 sub fetch_by_run_analysis {
-  my ($self,$hive_id,$analysis_id) = @_;
+  my ($self,$worker_id,$analysis_id) = @_;
 
-  throw("fetch_by_run_analysis must have hive_id") unless($hive_id);
+  throw("fetch_by_run_analysis must have worker_id") unless($worker_id);
   throw("fetch_by_run_analysis must have analysis_id") unless($analysis_id);
-  my $constraint = "a.status='RUN' AND a.hive_id=$hive_id AND a.analysis_id='$analysis_id'";
+  my $constraint = "a.status='RUN' AND a.worker_id=$worker_id AND a.analysis_id='$analysis_id'";
   return $self->_generic_fetch($constraint);
 }
 
@@ -323,7 +323,7 @@ sub _columns {
              a.analysis_id	      
              a.input_id 
              a.job_claim  
-             a.hive_id	      
+             a.worker_id	      
              a.status 
              a.retry_count          
              a.completed
@@ -360,7 +360,7 @@ sub _objs_from_sth {
     $job->analysis_id($column{'analysis_id'});
     $job->input_id($column{'input_id'});
     $job->job_claim($column{'job_claim'});
-    $job->hive_id($column{'hive_id'});
+    $job->worker_id($column{'worker_id'});
     $job->status($column{'status'});
     $job->retry_count($column{'retry_count'});
     $job->completed($column{'completed'});
@@ -425,11 +425,11 @@ sub reclaim_job {
   my $uuid  = $ug->create();
   $job->job_claim($ug->to_string( $uuid ));
 
-  my $sql = "UPDATE analysis_job SET status='CLAIMED', job_claim=?, hive_id=? WHERE analysis_job_id=?";
+  my $sql = "UPDATE analysis_job SET status='CLAIMED', job_claim=?, worker_id=? WHERE analysis_job_id=?";
 
   #print("$sql\n");            
   my $sth = $self->prepare($sql);
-  $sth->execute($job->job_claim, $job->hive_id, $job->dbID);
+  $sth->execute($job->job_claim, $job->worker_id, $job->dbID);
   $sth->finish;
 }
 
@@ -450,19 +450,19 @@ sub store_out_files {
 
   return unless($job);
 
-  my $sql = sprintf("DELETE from analysis_job_file WHERE hive_id=%d and analysis_job_id=%d",
-                   $job->hive_id, $job->dbID);
+  my $sql = sprintf("DELETE from analysis_job_file WHERE worker_id=%d and analysis_job_id=%d",
+                   $job->worker_id, $job->dbID);
   $self->dbc->do($sql);
   return unless($job->stdout_file or $job->stderr_file);
 
-  $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, hive_id, retry, type, path) VALUES ";
+  $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, worker_id, retry, type, path) VALUES ";
   if($job->stdout_file) {
-    $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->hive_id, 
+    $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->worker_id, 
 		    $job->retry_count, $job->stdout_file); 
   }
   $sql .= "," if($job->stdout_file and $job->stderr_file);
   if($job->stderr_file) {
-    $sql .= sprintf("(%d,%d,%d,'STDERR','%s')", $job->dbID, $job->hive_id, 
+    $sql .= sprintf("(%d,%d,%d,'STDERR','%s')", $job->dbID, $job->worker_id, 
 		    $job->retry_count, $job->stderr_file); 
   }
  
@@ -479,10 +479,10 @@ sub claim_jobs_for_worker {
   my $ug    = new Data::UUID;
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
-  #print("claiming jobs for hive_id=", $worker->hive_id, " with uuid $claim\n");
+  #print("claiming jobs for worker_id=", $worker->worker_id, " with uuid $claim\n");
 
   my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
-                 " , hive_id='". $worker->hive_id ."'".
+                 " , worker_id='". $worker->worker_id ."'".
                  " , status='CLAIMED'".
                  " WHERE job_claim='' and status='READY'". 
                  " AND analysis_id='" .$worker->analysis->dbID. "'"; 
@@ -523,27 +523,27 @@ sub reset_dead_jobs_for_worker {
   my $worker = shift;
   throw("must define worker") unless($worker);
 
-  #added hive_id index to analysis_job table which made this operation much faster
+  #added worker_id index to analysis_job table which made this operation much faster
 
   my ($sql, $sth);
   my $max_retry_count = $worker->analysis->stats->max_retry_count();
   #first just reset the claimed jobs, these don't need a retry_count index increment
   $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " WHERE status='CLAIMED'".
-         " AND hive_id='" . $worker->hive_id ."'";
+         " AND worker_id='" . $worker->worker_id ."'";
   $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
   #print("  done update CLAIMED\n");
 
-  # an update with select on status and hive_id took 4seconds per worker to complete,
+  # an update with select on status and worker_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
   $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
 	 " AND retry_count<$max_retry_count".
-         " AND hive_id='" . $worker->hive_id ."'";
+         " AND worker_id='" . $worker->worker_id ."'";
   #print("$sql\n");
   $sth = $self->prepare($sql);
   $sth->execute();
@@ -553,7 +553,7 @@ sub reset_dead_jobs_for_worker {
          " ,retry_count=retry_count+1".
          " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
 	 " AND retry_count>=$max_retry_count".
-         " AND hive_id='" . $worker->hive_id ."'";
+         " AND worker_id='" . $worker->worker_id ."'";
   #print("$sql\n");
   $sth = $self->prepare($sql);
   $sth->execute();
@@ -567,7 +567,7 @@ sub reset_dead_job_by_dbID {
   my $self = shift;
   my $job_id = shift;
 
-  #added hive_id index to analysis_job table which made this operation much faster
+  #added worker_id index to analysis_job table which made this operation much faster
 
   my $sql;
   #first just reset the claimed jobs, these don't need a retry_count index increment
@@ -577,7 +577,7 @@ sub reset_dead_job_by_dbID {
   $self->dbc->do($sql);
   #print("  done update CLAIMED\n");
 
-  # an update with select on status and hive_id took 4seconds per worker to complete,
+  # an update with select on status and worker_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
   $sql = "
@@ -624,7 +624,7 @@ sub reset_job_by_dbID {
 
   my ($sql, $sth);
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET hive_id=0, job_claim='', status='READY', retry_count=0 WHERE analysis_job_id=?";
+  $sql = "UPDATE analysis_job SET worker_id=0, job_claim='', status='READY', retry_count=0 WHERE analysis_job_id=?";
   $sth = $self->prepare($sql);
   $sth->execute($analysis_job_id);
   $sth->finish;

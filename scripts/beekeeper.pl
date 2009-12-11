@@ -176,12 +176,12 @@ sub main {
     if($check_for_dead)     { check_for_dead_workers($self, $queen, 1); }
 
     if ($kill_worker_id) {
-        my $worker = $queen->_fetch_by_hive_id($kill_worker_id);
+        my $worker = $queen->fetch_by_worker_id($kill_worker_id);
         if( $self->{'meadow'}->responsible_for_worker($worker)
         and not defined($worker->cause_of_death())) {
 
             printf("KILL: %10d %35s %15s  %20s(%d) : ", 
-                $worker->hive_id, $worker->host, $worker->process_id, 
+                $worker->worker_id, $worker->host, $worker->process_id, 
                 $worker->analysis->logic_name, $worker->analysis->dbID);
 
             $self->{'meadow'}->kill_worker($worker);
@@ -311,7 +311,7 @@ sub show_given_workers {
 
     foreach my $worker (@{$worker_list}) {
         printf("%10d %35s(%5d) %5s:%15s %15s (%s)\n", 
-            $worker->hive_id,
+            $worker->worker_id,
             $worker->analysis->logic_name,
             $worker->analysis->dbID,
             $worker->beekeeper,

@@ -13,7 +13,7 @@
 --
 
 CREATE TABLE hive (
-  hive_id          int(10) NOT NULL auto_increment,
+  worker_id        int(10) NOT NULL auto_increment,
   analysis_id      int(10) NOT NULL,
   beekeeper        varchar(80) DEFAULT '' NOT NULL,
   host	           varchar(40) DEFAULT '' NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE hive (
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
-  PRIMARY KEY (hive_id),
+  PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)
 ) ENGINE=InnoDB;
 
@@ -110,7 +110,7 @@ CREATE TABLE analysis_ctrl_rule (
 --   analysis_id             - the analysis_id needed to accomplish this job.
 --   input_id                - input data passed into Analysis:RunnableDB to control the work
 --   job_claim               - UUID set by workers as the fight over jobs
---   hive_id                 - link to hive table to define which worker claimed this job
+--   worker_id               - link to hive table to define which worker claimed this job
 --   status                  - state the job is in
 --   retry_count             - number times job had to be reset when worker failed to run it
 --   completed               - timestamp when job was completed
@@ -122,7 +122,7 @@ CREATE TABLE analysis_job (
   analysis_id               int(10) NOT NULL,
   input_id                  char(255) not null,
   job_claim                 char(40) NOT NULL default '', #UUID
-  hive_id                   int(10) NOT NULL,
+  worker_id                 int(10) NOT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
@@ -134,7 +134,7 @@ CREATE TABLE analysis_job (
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX claim_analysis_status  (job_claim, analysis_id, status),
   INDEX analysis_status        (analysis_id, status),
-  INDEX hive_id                (hive_id)
+  INDEX worker_id              (worker_id)
 ) ENGINE=InnoDB;
 
 
@@ -150,20 +150,20 @@ CREATE TABLE analysis_job (
 --
 -- semantics:
 --   analysis_job_id    - foreign key
---   hive_id            - link to hive table to define which worker claimed this job
+--   worker_id          - link to hive table to define which worker claimed this job
 --   retry              - copy of retry_count of job as it was run
 --   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
 --   path               - path to file or directory
 
 CREATE TABLE analysis_job_file (
   analysis_job_id         int(10) NOT NULL,
-  hive_id                 int(10) NOT NULL,
+  worker_id               int(10) NOT NULL,
   retry                   int(10) NOT NULL,
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
   
-  UNIQUE KEY job_hive_type  (analysis_job_id, hive_id, type),
-  INDEX hive_id             (hive_id)
+  UNIQUE KEY job_hive_type  (analysis_job_id, worker_id, type),
+  INDEX worker_id           (worker_id)
 ) ENGINE=InnoDB;
 
 

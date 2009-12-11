@@ -240,10 +240,10 @@ sub job_limit_reached {
 
 
 
-sub hive_id {
+sub worker_id {
   my( $self, $value ) = @_;
-  $self->{'_hive_id'} = $value if($value);
-  return $self->{'_hive_id'};
+  $self->{'_worker_id'} = $value if($value);
+  return $self->{'_worker_id'};
 }
 
 sub host {
@@ -306,11 +306,11 @@ use Digest::MD5 qw(md5_hex);
 sub output_dir {
   my ($self, $outdir) = @_;
   if ($outdir and (-d $outdir)) {
-    my $hive_id = $self->hive_id;
-    my (@hex) = md5_hex($hive_id) =~ m/\G(..)/g;
+    my $worker_id = $self->worker_id;
+    my (@hex) = md5_hex($worker_id) =~ m/\G(..)/g;
     # If you want more than one level of directories, change $hex[0]
     # below into an array slice.  e.g @hex[0..1] for two levels.
-    $outdir = join('/', $outdir, $hex[0], 'hive_id_' . $hive_id);
+    $outdir = join('/', $outdir, $hex[0], 'worker_id' . $worker_id);
     system("mkdir -p $outdir") && die "Could not create $outdir\n";
     $self->{'_output_dir'} = $outdir;
   }
@@ -327,7 +327,7 @@ sub perform_global_cleanup {
 
 sub print_worker {
   my $self = shift;
-  print("WORKER: hive_id=",$self->hive_id,
+  print("WORKER: worker_id=",$self->worker_id,
      " analysis_id=(",$self->analysis->dbID,")",$self->analysis->logic_name,
      " host=",$self->host,
      " pid=",$self->process_id,
@@ -521,7 +521,7 @@ sub run
     }
   } while (!$self->cause_of_death); # /Worker's lifespan loop
 
-  $self->queen->dbc->do("UPDATE hive SET status = 'DEAD' WHERE hive_id = ".$self->hive_id);
+  $self->queen->dbc->do("UPDATE hive SET status = 'DEAD' WHERE worker_id = ".$self->worker_id);
   
   if($self->perform_global_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
@@ -555,7 +555,7 @@ sub run_module_with_job
 
   my $runObj = $self->analysis->process;
   return 0 unless($runObj);
-  return 0 unless($job and ($job->hive_id eq $self->hive_id));
+  return 0 unless($job and ($job->worker_id eq $self->worker_id));
   
   my $init_time = time() * 1000;
   $self->queen->dbc->query_count(0);
