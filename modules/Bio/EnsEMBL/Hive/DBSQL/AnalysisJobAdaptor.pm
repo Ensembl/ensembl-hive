@@ -84,8 +84,8 @@ sub CreateNewJob {
 
   return undef unless(scalar @args);
 
-  my ($input_id, $analysis, $prev_analysis_job_id, $blocked) =
-     rearrange([qw(INPUT_ID ANALYSIS input_job_id BLOCK )], @args);
+  my ($input_id, $analysis, $prev_analysis_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
+     rearrange([qw(INPUT_ID ANALYSIS INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
 
   $prev_analysis_job_id=0 unless($prev_analysis_job_id);
   throw("must define input_id") unless($input_id);
@@ -101,16 +101,15 @@ sub CreateNewJob {
   }
 
   my $sql = q{INSERT ignore into analysis_job 
-              (input_id, prev_analysis_job_id,analysis_id,status)
-              VALUES (?,?,?,?)};
+              (input_id, prev_analysis_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
+              VALUES (?,?,?,?,?,?)};
  
-  my $status ='READY';
-  $status = 'BLOCKED' if($blocked);
+  my $status = $blocked ? 'BLOCKED' : 'READY';
 
   my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
-  $sth->execute($input_id, $prev_analysis_job_id, $analysis->dbID, $status);
-  my $dbID = $sth->{'mysql_insertid'};
+  $sth->execute($input_id, $prev_analysis_job_id, $analysis->dbID, $status, $semaphore_count, $semaphored_job_id);
+  my $job_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
   $dbc->do("UPDATE analysis_stats SET ".
@@ -119,7 +118,7 @@ sub CreateNewJob {
            ",status='LOADING' ".
            "WHERE status!='BLOCKED' and analysis_id='".$analysis->dbID ."'");
 
-  return $dbID;
+  return $job_id;
 }
 
 ###############################################################################
@@ -330,6 +329,8 @@ sub _columns {
              a.branch_code
              a.runtime_msec
              a.query_count
+             a.semaphore_count
+             a.semaphored_job_id
             );
 }
 
@@ -367,6 +368,8 @@ sub _objs_from_sth {
     $job->branch_code($column{'branch_code'});
     $job->runtime_msec($column{'runtime_msec'});
     $job->query_count($column{'query_count'});
+    $job->semaphore_count($column{'semaphore_count'});
+    $job->semaphored_job_id($column{'semaphored_job_id'});
     $job->adaptor($self);
     
     if($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/) {
@@ -386,6 +389,19 @@ sub _objs_from_sth {
 # STORE / UPDATE METHODS
 #
 ################
+
+sub decrease_semaphore_count_for_jobid {
+    my $self  = shift @_;
+    my $jobid = shift @_;
+    my $dec   = shift @_ || 1;
+
+    my $sql = "UPDATE analysis_job SET semaphore_count=semaphore_count-? WHERE analysis_job_id=?";
+    
+    my $sth = $self->prepare($sql);
+    $sth->execute($dec, $jobid);
+    $sth->finish;
+}
+
 
 =head2 update_status
 
@@ -484,7 +500,7 @@ sub claim_jobs_for_worker {
   my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
                  " , worker_id='". $worker->worker_id ."'".
                  " , status='CLAIMED'".
-                 " WHERE job_claim='' and status='READY'". 
+                 " WHERE job_claim='' AND status='READY' AND semaphore_count<=0 ". 
                  " AND analysis_id='" .$worker->analysis->dbID. "'"; 
 
   my $sql_virgin = $sql_base .  
@@ -698,7 +714,5 @@ sub remove_analysis_id {
 
 }
 
-
 1;
-
 

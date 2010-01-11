@@ -487,6 +487,10 @@ sub run
 
         $self->queen->worker_register_job_done($self, $job);
 
+        if(my $semaphored_job_id = $job->semaphored_job_id) {
+            $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );
+        }
+
         $self->more_work_done;
       }
       $batches_end = time() * 1000;
@@ -546,10 +550,8 @@ sub run
 }
 
 
-sub run_module_with_job
-{
-  my $self = shift;
-  my $job  = shift;
+sub run_module_with_job {
+  my ($self, $job) = @_;
 
   my ($start_time, $end_time);
 

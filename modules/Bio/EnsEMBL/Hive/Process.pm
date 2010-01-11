@@ -320,8 +320,7 @@ sub dataflow_output_id {
   $job->analysis_id($self->analysis->dbID);
   $job->branch_code($branch_code);
   $job->dbID($self->input_job->dbID);
-  $job->status('READY');
-  $job->status('BLOCKED') if(defined($blocked) and ($blocked eq 'BLOCKED'));
+  $job->status( $blocked ? 'BLOCKED' : 'READY' );
   
   #if process uses branch_code 1 explicitly, turn off automatic dataflow
   $self->autoflow_inputjob(0) if($branch_code==1);

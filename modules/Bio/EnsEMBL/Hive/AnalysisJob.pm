@@ -121,6 +121,19 @@ sub branch_code {
   return $self->{'_branch_code'};
 }
 
+sub semaphore_count {
+  my $self = shift;
+  $self->{'_semaphore_count'} = shift if(@_);
+  $self->{'_semaphore_count'} = 0 unless(defined($self->{'_semaphore_count'}));
+  return $self->{'_semaphore_count'};
+}
+
+sub semaphored_job_id {
+  my $self = shift;
+  $self->{'_semaphored_job_id'} = shift if(@_);
+  return $self->{'_semaphored_job_id'};
+}
+
 sub stdout_file {
   my $self = shift;
   $self->{'_stdout_file'} = shift if(@_);
