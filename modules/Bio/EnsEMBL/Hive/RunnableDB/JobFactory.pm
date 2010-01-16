@@ -29,11 +29,11 @@ mysql --defaults-group-suffix=_compara1 job_factory_test
 
 INSERT INTO analysis (created, logic_name, module, parameters)
 VALUES (NOW(), 'analysis_factory', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'parameters' => { 'divisor' => 4 }, 'input_id' => { 'value' => '$RangeStart', 'time_running' => '$RangeCount*2'} }");
+ "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'eval' => 1, 'parameters' => { 'divisor' => 4 }, 'input_id' => { 'value' => '$RangeStart', 'time_running' => '$RangeCount*2'} }");
 
 INSERT INTO analysis (created, logic_name, module, parameters)
 VALUES (NOW(), 'factory_from_file', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'parameters' => { 'divisor' => 13 }, 'input_id' => { 'value' => '$InputLine', 'time_running' => 2} }");
+ "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'eval' => 1, 'parameters' => { 'divisor' => 13 }, 'input_id' => { 'value' => '$InputLine', 'time_running' => 2} }");
 
 
 INSERT INTO analysis_job (analysis_id, input_id) VALUES (1, '{ start => 10, end => 47, step => 5, logic_name => "alpha_analysis", hive_capacity => 3}');
@@ -80,15 +80,17 @@ sub run {
     my $batch_size    = $self->param('batch_size')    || undef;
     my $hive_capacity = $self->param('hive_capacity') || undef;
 
-    my $analysis   = $self->create_analysis_object($logic_name, $module, $parameters, $batch_size, $hive_capacity);
+    my $analysis   = $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name)
+                    || $self->create_analysis_object($logic_name, $module, $parameters, $batch_size, $hive_capacity);
     my $input_hash = $self->param('input_id')         || die "'input_id' is an obligatory parameter";
+    my $eval       = $self->param('eval')             || 0;
     my $randomize  = $self->param('randomize')        || 0;
 
     if(my $inputfile = $self->param('inputfile')) {
-        $self->create_jobs_from_file($analysis, $input_hash, $inputfile, $randomize);
+        $self->create_jobs_from_file($analysis, $input_hash, $eval, $inputfile, $randomize);
     } elsif(defined(my $start = $self->param('start')) and defined(my $end = $self->param('end'))) {
         my $step = $self->param('step') || 1;
-        $self->create_jobs_from_range($analysis, $input_hash, $start, $end, $step);
+        $self->create_jobs_from_range($analysis, $input_hash, $eval, $start, $end, $step);
     }
 }
 
@@ -131,7 +133,7 @@ sub create_analysis_object {
 }
 
 sub create_jobs_from_file {
-    my ($self, $analysis, $input_hash, $inputfile, $randomize) = @_;
+    my ($self, $analysis, $input_hash, $eval, $inputfile, $randomize) = @_;
 
     open(FILE, $inputfile) or die $!;
     my @lines = <FILE>;
@@ -143,15 +145,20 @@ sub create_jobs_from_file {
     }
 
     foreach my $line (@lines) {
+
         my %resolved_hash = (); # has to be a fresh hash every time
         while( my ($key,$value) = each %$input_hash) {
 
                 # evaluate Perl-expressions after substitutions:
             if($key=~s/\$InputLine/$line/g) {
-                $key = eval($key);
+                if($eval) {
+                    $key = eval($key);
+                }
             }
             if($value=~s/\$InputLine/$line/g) {
-                $value = eval($value);
+                if($eval) {
+                    $value = eval($value);
+                }
             }
 
             $resolved_hash{$key} = $value;
@@ -161,7 +168,7 @@ sub create_jobs_from_file {
 }
 
 sub create_jobs_from_range {
-    my ($self, $analysis, $input_hash, $start, $end, $step) = @_;
+    my ($self, $analysis, $input_hash, $eval, $start, $end, $step) = @_;
 
     my @full_list = $start..$end;
     while(@full_list) {
@@ -180,14 +187,18 @@ sub create_jobs_from_range {
                 $key=~s/\$RangeEnd/$to/g;
                 $key=~s/\$RangeCount/$batch_cnt/g;
 
-                $key = eval($key);
+                if($eval) {
+                    $key = eval($key);
+                }
             }
             if($value=~/\$Range/) {
                 $value=~s/\$RangeStart/$from/g; 
                 $value=~s/\$RangeEnd/$to/g; 
                 $value=~s/\$RangeCount/$batch_cnt/g; 
 
-                $value = eval($value);
+                if($eval) {
+                    $value = eval($value);
+                }
             }
 
             $resolved_hash{$key} = $value;
