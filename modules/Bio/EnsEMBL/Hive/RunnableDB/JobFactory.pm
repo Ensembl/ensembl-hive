@@ -55,6 +55,9 @@ mysql --defaults-group-suffix=_compara1 job_factory_test -e 'SELECT * FROM analy
 
 mysql --defaults-group-suffix=_compara1 job_factory_test -e 'SELECT * FROM analysis_job'
 
+
+NB: NB: NB: The documentation needs refreshing. There are now four modes (inputlist, inputfile, inputquery and inputrange) instead of two.
+
 =cut
 
 package Bio::EnsEMBL::Hive::RunnableDB::JobFactory;
@@ -86,9 +89,20 @@ sub run {
     my $eval       = $self->param('eval')             || 0;
     my $randomize  = $self->param('randomize')        || 0;
 
-    if(my $inputfile = $self->param('inputfile')) {
-        $self->create_jobs_from_file($analysis, $input_hash, $eval, $inputfile, $randomize);
+    if(my $inputlist = $self->param('inputlist')) {
+
+        $self->create_jobs_from_list( $inputlist , $randomize, $analysis, $input_hash, $eval);
+
+    } elsif(my $inputfile = $self->param('inputfile')) {
+
+        $self->create_jobs_from_list( $self->make_list_from_file($inputfile) , $randomize, $analysis, $input_hash, $eval);
+
+    } elsif(my $inputquery = $self->param('inputquery')) {
+
+        $self->create_jobs_from_list( $self->make_list_from_query($inputquery) , $randomize, $analysis, $input_hash, $eval);
+
     } elsif(defined(my $start = $self->param('start')) and defined(my $end = $self->param('end'))) {
+
         my $step = $self->param('step') || 1;
         $self->create_jobs_from_range($analysis, $input_hash, $eval, $start, $end, $step);
     }
@@ -132,19 +146,40 @@ sub create_analysis_object {
     return $analysis;
 }
 
-sub create_jobs_from_file {
-    my ($self, $analysis, $input_hash, $eval, $inputfile, $randomize) = @_;
+sub make_list_from_file {
+    my ($self, $inputfile) = @_;
 
     open(FILE, $inputfile) or die $!;
     my @lines = <FILE>;
     chomp @lines;
     close(FILE);
 
+    return \@lines;
+}
+
+sub make_list_from_query {
+    my ($self, $inputquery) = @_;
+
+    my @ids = ();
+
+    my $sth = $self->db->dbc()->prepare($inputquery);
+    $sth->execute();
+    while (my ($id)=$sth->fetchrow_array()) {
+        push @ids, $id;
+    }
+    $sth->finish();
+
+    return \@ids;
+}
+
+sub create_jobs_from_list {
+    my ($self, $list, $randomize, $analysis, $input_hash, $eval) = @_;
+
     if($randomize) {
-        fisher_yates_shuffle_in_place(\@lines);
+        fisher_yates_shuffle_in_place($list);
     }
 
-    foreach my $line (@lines) {
+    foreach my $line (@$list) {
 
         my %resolved_hash = (); # has to be a fresh hash every time
         while( my ($key,$value) = each %$input_hash) {
