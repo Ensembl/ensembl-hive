@@ -29,6 +29,7 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
     while (my ($digit, $result)=$sth->fetchrow_array()) {
         $product_pair{$digit} = $result;
     }
+    $sth->finish();
     $product_pair{1} = $a_multiplier;
     $product_pair{0} = 0;
 
@@ -56,6 +57,7 @@ sub write_output {  # store the final result
         $self->param('b_multiplier'),
         $self->param('result')
     );
+    $sth->finish();
 
     return 1;
 }
