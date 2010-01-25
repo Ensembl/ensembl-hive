@@ -7,24 +7,24 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::SystemCmd
+Bio::EnsEMBL::Hive::RunnableDB::SqlCmd
 
 =head1 DESCRIPTION
 
-This RunnableDB module acts as a wrapper for shell-level command lines.
+This RunnableDB module acts as a wrapper for an (My)SQL command run on the hive database
 
 It supports three different modes:
 
-1) Command line is stored in the 'input_id' field of the analysis_job table.
-    (only works with command lines shorter than 255 bytes).
+1) Sql command is stored in the 'input_id' field of the analysis_job table.
+    (only works with sql commands shorter than 255 bytes).
     Most people tend to use it not realizing there are other possiblities.
 
-2) Command line is stored in the input_id() or parameters() as the value corresponding to the 'cmd' key.
+2) Sql command is stored in the input_id() or parameters() as the value corresponding to the 'sql' key.
     A better way as it also allows other parameters to be passed in.
 
-3) A numeric key to the analysis_data table (where the actual command line is stored)
+3) A numeric key to the analysis_data table (where the actual sql command is stored)
     is kept in the input_id() or parameters() as the value corresponding to the 'did' key. This allows to overcome the 255 byte limit.
-    Well, if you REALLY couldn't fit your command line into 250~ish bytes, are you sure you can manage big pipelines?
+    Well, if you REALLY couldn't fit your sql command into 250~ish bytes, are you sure you can manage big pipelines?
     Just joking :)
 
 =head1 CONTACT
@@ -34,7 +34,7 @@ It supports three different modes:
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
+package Bio::EnsEMBL::Hive::RunnableDB::SqlCmd;
 
 use strict;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
@@ -48,31 +48,32 @@ sub strict_hash_format {    # we must allow non-strict hash format
 sub fetch_input {
     my $self = shift;
 
-        # First, FIND the command line
+        # First, FIND the sql command
         #
-    my $cmd = ($self->input_id()!~/^\{.*\}$/)
-            ? $self->input_id()                 # assume the command line is given in input_id
-            : $self->param('cmd')               # or defined as a hash value (in input_id or parameters)
+    my $sql = ($self->input_id()!~/^\{.*\}$/)
+            ? $self->input_id()                 # assume the sql command is given in input_id
+            : $self->param('sql')               # or defined as a hash value (in input_id or parameters)
     or $self->param('did')                      # or referred to the analysis_data table where longer strings can be stored
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
-            : die "Could not find the command defined in input_id(), param('cmd') or param('did')";
+            : die "Could not find the command defined in input_id(), param('sql') or param('did')";
 
 
         # Then, run all parameter substitutions:
         #
-    $cmd=~s/(?:#(\w+?)#)/$self->param($1)/eg;
+    $sql=~s/(?:#(\w+?)#)/$self->param($1)/eg;
 
         # Finally, store the value with substitutions for the actual execution:
         #
-    $self->param('cmd', $cmd);  # store it in one place
+    $self->param('sql', $sql);  # store it in one place
 }
 
 sub run {
     my $self = shift;
 
-    my $cmd = $self->param('cmd');
+    my $sql = $self->param('sql');
 
-    system($cmd) == 0 or die "system( $cmd ) failed: $?";
+        # What would be a generic way of indicating an error in (My)SQL statement, that percolates through PerlDBI?
+    $self->db->dbc->do( $sql );
 
     return 1;
 }
