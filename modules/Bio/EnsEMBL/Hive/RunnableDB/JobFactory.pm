@@ -29,18 +29,18 @@ mysql --defaults-group-suffix=_compara1 job_factory_test
 
 INSERT INTO analysis (created, logic_name, module, parameters)
 VALUES (NOW(), 'analysis_factory', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'eval' => 1, 'parameters' => { 'divisor' => 4 }, 'input_id' => { 'value' => '$RangeStart', 'time_running' => '$RangeCount*2'} }");
+ "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'numeric' => 1, 'parameters' => { 'divisor' => 4 }, 'input_id' => { 'value' => '$RangeStart', 'time_running' => '$RangeCount*2'} }");
 
 INSERT INTO analysis (created, logic_name, module, parameters)
 VALUES (NOW(), 'factory_from_file', 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
- "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'eval' => 1, 'parameters' => { 'divisor' => 13 }, 'input_id' => { 'value' => '$InputLine', 'time_running' => 2} }");
+ "{ 'module' => 'Bio::EnsEMBL::Hive::RunnableDB::Test', 'numeric' => 1, 'parameters' => { 'divisor' => 13 }, 'input_id' => { 'value' => '$RangeStart', 'time_running' => 2} }");
 
 
-INSERT INTO analysis_job (analysis_id, input_id) VALUES (1, '{ start => 10, end => 47, step => 5, logic_name => "alpha_analysis", hive_capacity => 3}');
+INSERT INTO analysis_job (analysis_id, input_id) VALUES (1, "{ 'inputlist' => [10..47], 'step' => 5, 'logic_name' => 'alpha_analysis', 'hive_capacity' => 3 }");
 
-INSERT INTO analysis_job (analysis_id, input_id) VALUES (1, '{ start => 2, end => 7, logic_name => "beta_analysis", batch_size => 2}');
+INSERT INTO analysis_job (analysis_id, input_id) VALUES (1, "{ 'inputlist' => [2..7], 'logic_name' => 'beta_analysis', 'batch_size' => 2 }");
 
-INSERT INTO analysis_job (analysis_id, input_id) VALUES (2, '{ inputfile => "/tmp/jf_test.txt", logic_name => "gamma_file", randomize =>1 }');
+INSERT INTO analysis_job (analysis_id, input_id) VALUES (2, "{ 'inputfile' => '/tmp/jf_test.txt', 'logic_name' => 'gamma_file', 'randomize' => 1 }");
 
 SELECT * FROM analysis; SELECT * FROM analysis_stats; SELECT * FROM analysis_job;
 
@@ -56,7 +56,7 @@ mysql --defaults-group-suffix=_compara1 job_factory_test -e 'SELECT * FROM analy
 mysql --defaults-group-suffix=_compara1 job_factory_test -e 'SELECT * FROM analysis_job'
 
 
-NB: NB: NB: The documentation needs refreshing. There are now four modes (inputlist, inputfile, inputquery and inputrange) instead of two.
+NB: NB: NB: The documentation needs refreshing. There are now three modes of operation (inputlist, inputfile, inputquery).
 
 =cut
 
@@ -83,29 +83,29 @@ sub run {
     my $batch_size    = $self->param('batch_size')    || undef;
     my $hive_capacity = $self->param('hive_capacity') || undef;
 
-    my $analysis   = $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name)
+    my $analysis      = $self->db->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name)
                     || $self->create_analysis_object($logic_name, $module, $parameters, $batch_size, $hive_capacity);
-    my $input_hash = $self->param('input_id')         || die "'input_id' is an obligatory parameter";
-    my $eval       = $self->param('eval')             || 0;
-    my $randomize  = $self->param('randomize')        || 0;
+    my $input_hash    = $self->param('input_id')      || die "'input_id' is an obligatory parameter";
+    my $numeric       = $self->param('numeric')       || 0;
+    my $step          = $self->param('step')          || 1;
 
-    if(my $inputlist = $self->param('inputlist')) {
+    my $randomize     = $self->param('randomize')     || 0;
 
-        $self->create_jobs_from_list( $inputlist , $randomize, $analysis, $input_hash, $eval);
 
-    } elsif(my $inputfile = $self->param('inputfile')) {
+    my $inputlist     = $self->param('inputlist');
+    my $inputfile     = $self->param('inputfile');
+    my $inputquery    = $self->param('inputquery');
 
-        $self->create_jobs_from_list( $self->make_list_from_file($inputfile) , $randomize, $analysis, $input_hash, $eval);
+    my $list = $inputlist
+        || ($inputfile  && $self->make_list_from_file($inputfile))
+        || ($inputquery && $self->make_list_from_query($inputquery))
+        || die "range of values should be defined by setting 'inputlist', 'inputfile' or 'inputquery'";
 
-    } elsif(my $inputquery = $self->param('inputquery')) {
-
-        $self->create_jobs_from_list( $self->make_list_from_query($inputquery) , $randomize, $analysis, $input_hash, $eval);
-
-    } elsif(defined(my $start = $self->param('start')) and defined(my $end = $self->param('end'))) {
-
-        my $step = $self->param('step') || 1;
-        $self->create_jobs_from_range($analysis, $input_hash, $eval, $start, $end, $step);
+    if($randomize) {
+        fisher_yates_shuffle_in_place($list);
     }
+
+    $self->split_list_into_ranges($analysis, $input_hash, $numeric, $list, $step);
 }
 
 sub write_output {  # and we have nothing to write out
@@ -172,84 +172,53 @@ sub make_list_from_query {
     return \@ids;
 }
 
-sub create_jobs_from_list {
-    my ($self, $list, $randomize, $analysis, $input_hash, $eval) = @_;
+sub split_list_into_ranges {
+    my ($self, $analysis, $input_hash, $numeric, $list, $step) = @_;
 
-    if($randomize) {
-        fisher_yates_shuffle_in_place($list);
-    }
-
-    foreach my $line (@$list) {
-
-        my %resolved_hash = (); # has to be a fresh hash every time
-        while( my ($key,$value) = each %$input_hash) {
-
-                # evaluate Perl-expressions after substitutions:
-            if($key=~s/\$InputLine/$line/g) {
-                if($eval) {
-                    $key = eval($key);
-                }
+    while(@$list) {
+        my $range_start = shift @$list;
+        my $range_end   = $range_start;
+        my $range_count = 1;
+        while($range_count<$step && @$list) {
+            my $next_value     = shift @$list;
+            my $predicted_next = $range_end;
+            if(++$predicted_next eq $next_value) {
+                $range_end = $next_value;
+                $range_count++;
+            } else {
+                unshift @$list, $next_value;
+                last;
             }
-            if($value=~s/\$InputLine/$line/g) {
-                if($eval) {
-                    $value = eval($value);
-                }
-            }
-
-            $resolved_hash{$key} = $value;
         }
-        $self->create_one_job($analysis, \%resolved_hash);
+
+        $self->create_one_range_job($analysis, $input_hash, $numeric, $range_start, $range_end, $range_count);
     }
 }
 
-sub create_jobs_from_range {
-    my ($self, $analysis, $input_hash, $eval, $start, $end, $step) = @_;
+sub create_one_range_job {
+    my ($self, $analysis, $input_hash, $numeric, $range_start, $range_end, $range_count) = @_;
 
-    my @full_list = $start..$end;
-    while(@full_list) {
-        my ($from, $to);
-        my $batch_cnt = 1;
-        for($from = $to = shift @full_list; $batch_cnt<$step && @full_list; $batch_cnt++) {
-            $to = shift @full_list;
-        }
+    my %resolved_hash = (); # has to be a fresh hash every time
+    while( my ($key,$value) = each %$input_hash) {
 
-        my %resolved_hash = (); # has to be a fresh hash every time
-        while( my ($key,$value) = each %$input_hash) {
+            # evaluate Perl-expressions after substitutions:
+        if($value=~/\$Range/) {
+            $value=~s/\$RangeStart/$range_start/g; 
+            $value=~s/\$RangeEnd/$range_end/g; 
+            $value=~s/\$RangeCount/$range_count/g; 
 
-                # evaluate Perl-expressions after substitutions:
-            if($key=~/\$Range/) {
-                $key=~s/\$RangeStart/$from/g;
-                $key=~s/\$RangeEnd/$to/g;
-                $key=~s/\$RangeCount/$batch_cnt/g;
-
-                if($eval) {
-                    $key = eval($key);
-                }
+            if($numeric) {
+                $value = eval($value);
             }
-            if($value=~/\$Range/) {
-                $value=~s/\$RangeStart/$from/g; 
-                $value=~s/\$RangeEnd/$to/g; 
-                $value=~s/\$RangeCount/$batch_cnt/g; 
-
-                if($eval) {
-                    $value = eval($value);
-                }
-            }
-
-            $resolved_hash{$key} = $value;
         }
-        $self->create_one_job($analysis, \%resolved_hash);
+        $resolved_hash{$key} = $value;
     }
-}
-
-sub create_one_job {
-    my ($self, $analysis, $resolved_hash) = @_;
 
     $Data::Dumper::Indent = 0;  # we want everything on one line
     $Data::Dumper::Terse = 1;   # and we want it without dummy variable names
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-        -input_id       => Dumper($resolved_hash),
+        -input_id       => Dumper(\%resolved_hash),
         -analysis       => $analysis,
         -input_job_id   => $self->input_job->dbID(),
     );
@@ -264,6 +233,5 @@ sub fisher_yates_shuffle_in_place {
         @$array[$lower,$upper] = @$array[$upper,$lower];
     }
 }
-
 
 1;
