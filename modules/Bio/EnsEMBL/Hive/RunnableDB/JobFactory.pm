@@ -78,7 +78,7 @@ sub run {
     my $self = shift @_;
 
     my $logic_name    = $self->param('logic_name')    || die "'logic_name' is an obligatory parameter";
-    my $module        = $self->param('module')        || die "'module' is an obligatory parameter";
+    my $module        = $self->param('module')        || '';    # will only become obligatory if $logic_name does not exist
     my $parameters    = $self->param('parameters')    || {};
     my $batch_size    = $self->param('batch_size')    || undef;
     my $hive_capacity = $self->param('hive_capacity') || undef;
@@ -118,6 +118,10 @@ sub write_output {  # and we have nothing to write out
 
 sub create_analysis_object {
     my ($self, $logic_name, $module, $parameters, $batch_size, $hive_capacity) = @_;
+
+    unless($module) {
+        die "Since '$logic_name' didn't exist, 'module' becomes an obligatory parameter";
+    }
 
     my $dba = $self->db;
 
