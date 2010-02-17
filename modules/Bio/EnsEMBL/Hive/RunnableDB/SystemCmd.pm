@@ -57,14 +57,9 @@ sub fetch_input {
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
             : die "Could not find the command defined in input_id(), param('cmd') or param('did')";
 
-
-        # Then, run all parameter substitutions:
+        # Store the value with parameter substitutions for the actual execution:
         #
-    $cmd=~s/(?:#(\w+?)#)/$self->param($1)/eg;
-
-        # Finally, store the value with substitutions for the actual execution:
-        #
-    $self->param('cmd', $cmd);  # store it in one place
+    $self->param('cmd', $self->param_substitute($cmd));
 }
 
 sub run {

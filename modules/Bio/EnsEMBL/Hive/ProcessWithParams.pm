@@ -68,6 +68,14 @@ sub param {
     return $self->{'_param_hash'}{$param_name};
 }
 
+sub param_substitute {
+    my ($self, $string) = @_;
+
+    $string=~s/(?:#(\w+?)#)/$self->param($1)/eg;
+
+    return $string;
+}
+
 #--------------------------------------------[private methods]----------------------------------------------
 
 sub _parse_string {
