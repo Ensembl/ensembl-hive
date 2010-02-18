@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS analysis (
   program                     VARCHAR(80),
   program_version             VARCHAR(40),
   program_file                VARCHAR(80),
-  parameters                  VARCHAR(255),
+  parameters                  TEXT,
   module                      VARCHAR(80),
   module_version              VARCHAR(40),
   gff_source                  VARCHAR(40),
