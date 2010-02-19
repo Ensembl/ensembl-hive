@@ -23,7 +23,7 @@ DELIMITER ;
 
 DROP PROCEDURE IF EXISTS show_progress;
 CREATE PROCEDURE show_progress()
-    SELECT a.logic_name, j.status, j.retry_count, count(*)
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')'), j.status, j.retry_count, count(*)
     FROM analysis_job j, analysis a
     WHERE a.analysis_id=j.analysis_id
     GROUP BY a.analysis_id, j.status, j.retry_count
@@ -33,7 +33,7 @@ CREATE PROCEDURE show_progress()
 
 DROP PROCEDURE IF EXISTS show_progress_analysis;
 CREATE PROCEDURE show_progress_analysis(IN param_logic_name char(64))
-    SELECT a.logic_name, j.status, j.retry_count, count(*)
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')'), j.status, j.retry_count, count(*)
     FROM analysis_job j, analysis a
     WHERE a.analysis_id=j.analysis_id
     AND   a.logic_name=param_logic_name
