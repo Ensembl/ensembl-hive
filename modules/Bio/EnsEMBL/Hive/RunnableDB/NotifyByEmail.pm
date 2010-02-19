@@ -44,7 +44,7 @@ sub run {
     #
     $text = $self->param_substitute($text);
 
-    open(SENDMAIL, "|sendmail");
+    open(SENDMAIL, "|sendmail $email");
     print SENDMAIL "Subject: $subject\n";
     print SENDMAIL "\n";
     print SENDMAIL "$text\n";
