@@ -6,6 +6,23 @@ use strict;
 
 use base 'Bio::EnsEMBL::Hive::Meadow';
 
+sub get_current_worker_process_id {
+    my ($self) = @_;
+
+    my $lsb_jobid    = $ENV{'LSB_JOBID'};
+    my $lsb_jobindex = $ENV{'LSB_JOBINDEX'};
+
+    if(defined($lsb_jobid) and defined($lsb_jobindex)) {
+        if($lsb_jobindex>0) {
+            return "$lsb_jobid\[$lsb_jobindex\]";
+        } else {
+            return $lsb_jobid;
+        }
+    } else {
+        die "Could not establish the process_id";
+    }
+}
+
 sub count_pending_workers {
     my ($self) = @_;
 

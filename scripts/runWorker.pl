@@ -9,6 +9,9 @@ use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Registry;
 
+use Bio::EnsEMBL::Hive::Meadow::LSF;
+use Bio::EnsEMBL::Hive::Meadow::LOCAL;
+
 Bio::EnsEMBL::Registry->no_version_check(1);
 
 # ok this is a hack, but I'm going to pretend I've got an object here
@@ -58,7 +61,7 @@ GetOptions(
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
            'outdir=s'       => \$self->{'outdir'},
-           'bk=s'           => \$self->{'beekeeper'},
+           'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
            'no_cleanup'     => \$self->{'no_global_cleanup'},
@@ -113,29 +116,24 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 my $queen = $DBA->get_Queen();
 $queen->{maximise_concurrency} = 1 if ($self->{maximise_concurrency});
 
-################################
-# LSF submit system dependency
-# no nice way to move this outside, so inside here.
-# environment variables LSB_JOBID and LSB_JOBINDEX are set for process started 
-# by LSF deamon.  Also know that the beekeeper is 'LSF'
-#
-my $lsb_jobid    = $ENV{'LSB_JOBID'};
-my $lsb_jobindex = $ENV{'LSB_JOBINDEX'};
-if(defined($lsb_jobid) and defined($lsb_jobindex)) {
-  $self->{'beekeeper'}='LSF' unless($self->{'beekeeper'});
-  if($lsb_jobindex>0) {
-    $self->{'process_id'} = "$lsb_jobid\[$lsb_jobindex\]";
-  } else {
-    $self->{'process_id'} = "$lsb_jobid";
-  }
+unless($self->{'process_id'}) {     # do we really need this confusing feature - to be able to set the process_id externally?
+    eval {
+        $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LSF->get_current_worker_process_id();
+    };
+    if($@) {
+        $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->get_current_worker_process_id();
+        $self->{'beekeeper'}  = 'LOCAL';
+    } else {
+        $self->{'beekeeper'}  = 'LSF';
+    }
 }
-################################
+
 print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
 
 if($self->{'logic_name'}) {
   my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
   unless($analysis) {
-    printf("logic_name:'%s' does not exist in database\n\n", $self->{'logic_name'});
+    printf("logic_name: '%s' does not exist in database\n\n", $self->{'logic_name'});
     usage(1);
   }
   $self->{'analysis_id'} = $analysis->dbID;
@@ -168,7 +166,7 @@ my $worker = $queen->create_new_worker(
 unless($worker) {
   $queen->print_analysis_status if($self->{'show_analysis_stats'});
   print("\n=== COULDN'T CREATE WORKER ===\n");
-  exit(0);
+  exit(1);
 }
 
 $worker->debug($self->{'debug'}) if($self->{'debug'});
@@ -197,28 +195,31 @@ if($self->{'no_global_cleanup'}) {
 
 $worker->print_worker();
 
+my $return_value = 0;
 eval { $worker->run(); };
 
 if($@) {
-  #worker threw an exception so it had a problem
-  if($worker->perform_global_cleanup) {
-    #have runnable cleanup any global/process files/data it may have created
-    $worker->cleanup_worker_process_temp_directory;
-  }
-  print("\n$@");
-	$queen->register_worker_death($worker);
+        # try to capture it ASAP:
+    $return_value = ($! || $?>>8 || 1);
+
+        #worker threw an exception so it had a problem:
+    if($worker->perform_global_cleanup) {
+            #have runnable cleanup any global/process files/data it may have created
+        $worker->cleanup_worker_process_temp_directory;
+    }
+    print("\n$@");
+    $queen->register_worker_death($worker);
 }
 
 if($self->{'show_analysis_stats'}) {
-  $queen->print_analysis_status;
-  $queen->get_num_needed_workers();
+      $queen->print_analysis_status;
+      $queen->get_num_needed_workers();
 }
-
 
 printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
 print("total jobs completes : ", $worker->work_done, "\n");
 
-exit(0);
+exit($return_value);
 
 
 #######################
@@ -312,7 +313,7 @@ runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name
   -limit <num>           : #jobs to run before worker can die naturally
   -lifespan <num>        : number of minutes this worker is allowed to run
   -outdir <path>         : directory where stdout/stderr is redirected
-  -bk <string>           : beekeeper identifier
+  -bk <string>           : beekeeper identifier (deprecated and ignored)
   -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)
   -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)
   -job_id <id>           : run specific job defined by analysis_job_id

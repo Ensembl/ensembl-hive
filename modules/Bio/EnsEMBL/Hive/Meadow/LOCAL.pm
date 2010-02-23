@@ -7,6 +7,12 @@ use Sys::Hostname;
 
 use base 'Bio::EnsEMBL::Hive::Meadow';
 
+sub get_current_worker_process_id {
+    my ($self) = @_;
+
+    return $$;
+}
+
 sub count_running_workers {
     my $self = shift @_;
 
@@ -20,7 +26,7 @@ sub count_running_workers {
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
-    return ($worker->beekeeper() eq $self->type()) && ($worker->host eq hostname());
+    return ( $self->SUPER::responsible_for_worker($worker) && ($worker->host eq hostname()) );
 }
 
 sub status_of_all_my_workers { # returns a hashref
