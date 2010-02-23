@@ -67,7 +67,10 @@ sub run {
 
     my $cmd = $self->param('cmd');
 
-    system($cmd) == 0 or die "system( $cmd ) failed: $?";
+    if(my $return_value = system($cmd)) {
+        $return_value >>= 8;
+        die "system( $cmd ) failed: $return_value";
+    }
 
     return 1;
 }

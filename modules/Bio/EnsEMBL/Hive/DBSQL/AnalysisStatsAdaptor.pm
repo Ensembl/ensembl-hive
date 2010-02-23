@@ -91,27 +91,20 @@ sub fetch_all {
 
 
 sub fetch_by_needed_workers {
-  my $self = shift;
-  my $limit = shift;
-  my $maximise_concurrency = shift;
+    my ($self, $limit, $maximise_concurrency) = @_;
 
-  my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
+    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
 
-  my $order_by;
-  if ($maximise_concurrency) {
-    $order_by = 'ORDER BY num_running_workers';
-  } else {
-    $order_by = 'ORDER BY num_required_workers DESC';
-  }
-  $order_by .= ', hive_capacity DESC, analysis_id';
-  if($limit) {
-    $order_by .= " LIMIT $limit";
-  }
-  $self->_final_clause($order_by);
+    my $final_clause = 'ORDER BY num_running_workers'
+                        .($maximise_concurrency ? '' : ' DESC')
+                        .', hive_capacity DESC, analysis_id'
+                        .($limit ? " LIMIT $limit" : '');
 
-  my $results = $self->_generic_fetch($constraint);
-  $self->_final_clause(''); #reset final clause for other fetches
-  return $results;
+    $self->_final_clause($final_clause);
+    my $results = $self->_generic_fetch($constraint);
+    $self->_final_clause(''); # reset final clause for other fetches
+
+    return $results;
 }
 
 
