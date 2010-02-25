@@ -91,9 +91,10 @@ sub fetch_all {
 
 
 sub fetch_by_needed_workers {
-    my ($self, $limit, $maximise_concurrency) = @_;
+    my ($self, $limit, $maximise_concurrency, $rc_id) = @_;
 
-    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
+    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')"
+                    .(defined($rc_id) ? " AND ast.rc_id = $rc_id" : '');
 
     my $final_clause = 'ORDER BY num_running_workers'
                         .($maximise_concurrency ? '' : ' DESC')
@@ -108,22 +109,15 @@ sub fetch_by_needed_workers {
 }
 
 
-sub fetch_by_status {
-  my $self = shift;
+sub fetch_by_statuses {
+  my ($self, $statuses, $rc_id) = @_;
 
-  my $constraint = "ast.status in (";
-  my $addComma;
-  while(@_) {
-    my $status = shift;
-    $constraint .= ',' if($addComma);
-    $constraint .= "'$status' ";
-    $addComma = 1;
-  }
-  $constraint .= ")";
+  my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')'
+                   .(defined($rc_id) ? " AND ast.rc_id = $rc_id" : '');
 
-  $self->_final_clause("ORDER BY last_update");
+  $self->_final_clause('ORDER BY last_update');
   my $results = $self->_generic_fetch($constraint);
-  $self->_final_clause(""); #reset final clause for other fetches
+  $self->_final_clause(''); #reset final clause for other fetches
 
   return $results;
 }
@@ -216,6 +210,7 @@ sub update {
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=NOW()";
   $sql .= ",sync_lock='0'";
+  $sql .= ",rc_id=". $stats->rc_id();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -457,6 +452,7 @@ sub _columns {
                     ast.num_required_workers
                     ast.last_update
                     ast.sync_lock
+                    ast.rc_id
                    );
   push @columns , "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
   return @columns;            
@@ -476,6 +472,7 @@ sub _objs_from_sth {
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
     $analStats->sync_lock($column{'sync_lock'});
+    $analStats->rc_id($column{'rc_id'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->avg_input_msec_per_job($column{'avg_input_msec_per_job'});
@@ -529,5 +526,4 @@ sub _create_new_for_analysis_id {
 }
 
 1;
-
 

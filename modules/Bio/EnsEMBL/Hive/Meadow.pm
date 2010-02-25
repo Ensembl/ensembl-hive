@@ -26,10 +26,12 @@ sub pipeline_name { # if set, provides a filter for job-related queries
 }
 
 sub generate_job_name {
-    my ($self, $worker_count, $iteration) = @_;
+    my ($self, $worker_count, $iteration, $rc_id) = @_;
+    $rc_id ||= 0;
 
-    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '').'HL'.$iteration
-         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
+    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '')
+        ."HL${iteration}_${rc_id}"
+        . (($worker_count > 1) ? "[1-${worker_count}]" : '');
 }
 
 sub responsible_for_worker {

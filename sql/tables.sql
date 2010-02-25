@@ -211,6 +211,7 @@ CREATE TABLE analysis_data (
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the analysis_jobs (cached state)
 --   failed_job_tolerance - % of tolerated failed jobs
+--   rc_id                - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) NOT NULL,
@@ -235,8 +236,17 @@ CREATE TABLE analysis_stats (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
+  rc_id                 int(10) unsigned default 0 NOT NULL,
   
   UNIQUE KEY   (analysis_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE resource_description (
+    rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
+    meadow_type           enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL,
+    parameters            varchar(255) DEFAULT '' NOT NULL,
+    description           varchar(255),
+    PRIMARY KEY(rc_id, meadow_type)
 ) ENGINE=InnoDB;
 
 CREATE TABLE analysis_stats_monitor (
@@ -262,7 +272,8 @@ CREATE TABLE analysis_stats_monitor (
   num_running_workers   int(10) default 0 NOT NULL,
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
-  sync_lock             int(10) default 0 NOT NULL
+  sync_lock             int(10) default 0 NOT NULL,
+  rc_id                 int(10) unsigned default 0 NOT NULL
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------------

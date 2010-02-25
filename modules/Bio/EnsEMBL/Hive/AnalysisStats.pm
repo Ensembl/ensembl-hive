@@ -245,6 +245,13 @@ sub sync_lock {
   return $self->{'_sync_lock'};
 }
 
+sub rc_id {
+    my $self = shift;
+
+    $self->{'_rc_id'} = shift if(@_);
+    return $self->{'_rc_id'};
+}
+
 sub determine_status {
   my $self = shift;
   

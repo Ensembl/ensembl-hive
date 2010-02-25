@@ -77,9 +77,9 @@ sub kill_worker {
 }
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $iteration) = @_;
+    my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
 
-    my $cmd = "$worker_cmd &";
+    my $cmd = "$worker_cmd -rc_id $rc_id &";    # $rc_parameters are ignored for the time being
 
     foreach (1..$worker_count) {
         print "SUBMITTING_CMD:\t\t$cmd\n";

@@ -55,7 +55,7 @@ sub main {
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;
 
-    $self->{'sleep_minutes'}        = 2;
+    $self->{'sleep_minutes'}        = 1;
 #    $self->{'overdue_minutes'}      = 60;   # which means one hour
     $self->{'verbose_stats'}        = 1;
     $self->{'reg_name'}             = 'hive';
@@ -173,7 +173,7 @@ sub main {
 
     if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { check_for_dead_workers($self, $queen, 1); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($self->{'meadow'}, 1); }
 
     if ($kill_worker_id) {
         my $worker = $queen->fetch_by_worker_id($kill_worker_id);
@@ -208,7 +208,7 @@ sub main {
         #show_failed_workers($self, $queen);
 
         $queen->get_num_needed_workers($analysis); # apparently run not for the return value, but for the side-effects
-        $queen->get_hive_progress();
+        $queen->get_remaining_jobs_show_hive_progress();
 
         if($show_failed_jobs) {
             print("===== failed jobs\n");
@@ -265,44 +265,6 @@ sub parse_conf {
   }
 }
 
-sub check_for_dead_workers {
-    my ($self, $queen, $check_buried_in_haste) = @_;
-
-    my $worker_status_hash    = $self->{'meadow'}->status_of_all_my_workers();
-    my %worker_status_summary = ();
-    my $queen_worker_list     = $queen->fetch_overdue_workers(0);
-
-    print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
-
-    foreach my $worker (@$queen_worker_list) {
-        next unless($self->{'meadow'}->responsible_for_worker($worker));
-
-        my $worker_pid = $worker->process_id();
-        if(my $status = $worker_status_hash->{$worker_pid}) { # can be RUN|PEND|xSUSP
-            $worker_status_summary{$status}++;
-        } else {
-            $worker_status_summary{'AWOL'}++;
-            $queen->register_worker_death($worker);
-        }
-    }
-    print "\t".join(', ', map { "$_:$worker_status_summary{$_}" } keys %worker_status_summary)."\n\n";
-
-    if($check_buried_in_haste) {
-        print "====== Checking for workers buried in haste... ";
-        my $buried_in_haste_list = $queen->fetch_dead_workers_with_jobs();
-        if(my $bih_number = scalar(@$buried_in_haste_list)) {
-            print "$bih_number, reclaiming jobs.\n\n";
-            if($bih_number) {
-                my $job_adaptor = $queen->db->get_AnalysisJobAdaptor();
-                foreach my $worker (@$buried_in_haste_list) {
-                    $job_adaptor->reset_dead_jobs_for_worker($worker);
-                }
-            }
-        } else {
-            print "none\n";
-        }
-    }
-}
 
 # --------------[worker reports]--------------------
 
@@ -337,9 +299,9 @@ sub show_failed_workers {  # does not seem to be used
 }
 
 sub generate_worker_cmd {
-    my $self = shift @_;
+    my ($self) = @_;
 
-    my $worker_cmd = 'runWorker.pl -bk '. $self->{'meadow'}->type();
+    my $worker_cmd = 'runWorker.pl';   # -bk '. $self->{'meadow'}->type();
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
@@ -359,34 +321,6 @@ sub generate_worker_cmd {
     return $worker_cmd;
 }
 
-sub get_needed_workers_failed_analyses_resync_if_necessary {
-    my ($self, $queen, $this_analysis) = @_;
-
-    my $runCount        = $queen->get_num_running_workers();
-    my $load            = $queen->get_hive_current_load();
-    my $worker_count    = $queen->get_num_needed_workers($this_analysis);
-    my $failed_analyses = $queen->get_num_failed_analyses($this_analysis);
-
-    if($load==0 and $worker_count==0 and $runCount==0) {
-        print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
-
-        $queen->synchronize_hive($this_analysis);
-
-        check_for_dead_workers($self, $queen, 1);
-
-        $worker_count    = $queen->get_num_needed_workers($this_analysis);
-        $failed_analyses = $queen->get_num_failed_analyses($this_analysis);
-        if($worker_count==0) {
-            if($failed_analyses==0) {
-                print "Nothing left to do".($this_analysis ? (' for analysis '.$this_analysis->logic_name) : '').". DONE!!\n\n";
-            }
-        }
-    }
-
-    return ($worker_count, $failed_analyses);
-}
-
-
 sub run_autonomously {
     my ($self, $max_loops, $queen, $this_analysis) = @_;
 
@@ -396,6 +330,10 @@ sub run_autonomously {
     }
 
     my $worker_cmd = generate_worker_cmd($self);
+
+        # pre-hash the resource_class xparams for future use:
+    my %rc_xparams = map { ($_->rc_id => $_->parameters) }
+        @{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all_by_meadowtype($self->{'meadow'}->type()) };
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -410,14 +348,14 @@ sub run_autonomously {
 
         print("\n======= beekeeper loop ** $iteration **==========\n");
 
-        check_for_dead_workers($self, $queen, 0);
+        $queen->check_for_dead_workers($self->{'meadow'}, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
         #show_failed_workers($self, $queen);
 
-        my $worker_count;
-        ($worker_count, $failed_analyses) = get_needed_workers_failed_analyses_resync_if_necessary($self, $queen, $this_analysis);
+        my ($worker_count, $rc_hash);
+        ($worker_count, $failed_analyses, $rc_hash) = $queen->get_needed_workers_failed_analyses_resync_if_necessary($self->{'meadow'}, $this_analysis);
 
         if($self->{'run_job_id'}) { # If it's just one job, we don't require more than one worker
                                     # (and we probably do not care about the limits)
@@ -427,15 +365,17 @@ sub run_autonomously {
         }
 
         if($worker_count) {
-            print "Submitting $worker_count '".$self->{'meadow'}->type()."' workers\n";
+            foreach my $rc_id (keys %$rc_hash) {
+                my $this_rc_worker_count = $rc_hash->{$rc_id};
+                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$self->{'meadow'}->type()."\n";
 
-            $self->{'meadow'}->submit_workers($worker_cmd, $worker_count, $iteration);
+                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams{$rc_id});
+            }
         } else {
             print "Not submitting any workers this iteration\n";
         }
 
-        # This method prints the progress and returns the number of pending jobs
-        $num_of_remaining_jobs = $queen->get_hive_progress();
+        $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress();
 
     } while(!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops);
 

@@ -50,18 +50,20 @@ sub get_Queen {
   return $self->get_QueenAdaptor();
 }
 
-sub get_available_adaptors{
+sub get_available_adaptors {
  
-  my %pairs =  (
-    "MetaContainer"    => 'Bio::EnsEMBL::DBSQL::MetaContainer',
-    "Analysis"         => "Bio::EnsEMBL::DBSQL::AnalysisAdaptor",
-    "Queen"            => "Bio::EnsEMBL::Hive::Queen",
-    "AnalysisJob"      => "Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor",
-    "AnalysisData"     => "Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor",
-    "AnalysisStats"    => "Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor",
-    "AnalysisCtrlRule" => "Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor",
-    "DataflowRule"     => "Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor");
-  return (\%pairs);
+    my %pairs =  (
+        'MetaContainer'       => 'Bio::EnsEMBL::DBSQL::MetaContainer',
+        'Analysis'            => 'Bio::EnsEMBL::DBSQL::AnalysisAdaptor',
+        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
+        'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
+        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
+        'AnalysisStats'       => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+        'AnalysisCtrlRule'    => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
+        'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
+        'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
+    );
+    return (\%pairs);
 }
  
 1;

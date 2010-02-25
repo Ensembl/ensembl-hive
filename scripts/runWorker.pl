@@ -24,14 +24,15 @@ $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
-$self->{'analysis_id'} = undef;
-$self->{'logic_name'}  = undef;
+$self->{'job_id'}      = undef;     # most  specific specialization
+$self->{'analysis_id'} = undef;     # less  specific specialization
+$self->{'logic_name'}  = undef;     # (---------,,---------------)
+$self->{'rc_id'}       = undef;     # least specific specialization
+
 $self->{'outdir'}      = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
-$self->{'job_id'}      = undef;
 $self->{'debug'}       = undef;
-$self->{'analysis_job'} = undef;
 $self->{'no_write'}     = undef;
 $self->{'maximise_concurrency'} = undef;
 
@@ -56,6 +57,7 @@ GetOptions(
 # Job/Analysis control parameters:
            'job_id=i'       => \$self->{'job_id'},
            'analysis_id=i'  => \$self->{'analysis_id'},
+           'rc_id=i'        => \$self->{'rc_id'},
            'logic_name=s'   => \$self->{'logic_name'},
            'batch_size=i'   => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
@@ -139,6 +141,8 @@ if($self->{'logic_name'}) {
   $self->{'analysis_id'} = $analysis->dbID;
 }
 
+$self->{'analysis_job'} = undef;
+
 if($self->{'analysis_id'} and $self->{'input_id'}) {
   $self->{'analysis_job'} = new Bio::EnsEMBL::Hive::AnalysisJob;
   $self->{'analysis_job'}->input_id($self->{'input_id'});
@@ -157,6 +161,7 @@ if($self->{'job_id'}) {
 }
 
 my $worker = $queen->create_new_worker(
+     -rc_id          => $self->{'rc_id'},
      -analysis_id    => $self->{'analysis_id'},
      -beekeeper      => $self->{'beekeeper'},
      -process_id     => $self->{'process_id'},
@@ -212,8 +217,8 @@ if($@) {
 }
 
 if($self->{'show_analysis_stats'}) {
-      $queen->print_analysis_status;
-      $queen->get_num_needed_workers();
+    $queen->print_analysis_status;
+    $queen->get_num_needed_workers(); # apparently run not for the return value, but for the side-effects
 }
 
 printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);

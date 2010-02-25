@@ -89,12 +89,12 @@ sub lsf_options {
 }
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $iteration) = @_;
+    my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
 
-    my $job_name    = $self->generate_job_name($worker_count, $iteration);
+    my $job_name    = $self->generate_job_name($worker_count, $iteration, $rc_id);
     my $lsf_options = $self->lsf_options();
 
-    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $lsf_options $worker_cmd";
+    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $rc_parameters $lsf_options $worker_cmd -rc_id $rc_id";
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd);

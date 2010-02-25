@@ -5,7 +5,8 @@
 use strict;
 use DBI;
 use Getopt::Long;
-use Data::Dumper;  # NB: this one is not for testing but for actual data structure stringification
+use Data::Dumper;                   # NB: in this case it is not for testing but for actual data structure stringification
+use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
@@ -21,7 +22,7 @@ sub main {
 
     unless($config_file and (-f $config_file)) {
         warn "Please supply a valid pipeline configuration file using '-conf' option\n";
-        warn "Usage example:\n\t$0 -conf ~lg4/work/ensembl-compara/scripts/family/family_pipeline.conf\n";
+        warn "Usage example:\n\ttime $0 -conf ~lg4/work/ensembl-compara/scripts/family/family_pipeline.conf\n";
         exit(1);
     }
 
@@ -38,17 +39,34 @@ sub main {
         }
     }
 
-    my $hive_dba              = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{-pipeline_db}});
-    my $analysis_adaptor      = $hive_dba->get_AnalysisAdaptor;
+    my $hive_dba                     = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{-pipeline_db}});
+    my $resource_description_adaptor = $hive_dba->get_ResourceDescriptionAdaptor;
+    
+    warn "Loading the ResourceDescriptions ...\n";
+
+        # pre-load the resource_description table with the values that we'll need:
+    while( my($rc_id, $mt2param) = each %{$self->{-resource_classes}} ) {
+        my $description = delete $mt2param->{-desc};
+        while( my($meadow_type, $xparams) = each %$mt2param ) {
+            $resource_description_adaptor->create_new(
+                -RC_ID       => $rc_id,
+                -MEADOW_TYPE => $meadow_type,
+                -PARAMETERS  => $xparams,
+                -DESCRIPTION => $description,
+            );
+        }
+    }
+    warn "Done.\n\n";
+
+    my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
         # tune Data::Dumper module to produce the output we want:
     $Data::Dumper::Indent     = 0;  # we want everything on one line
     $Data::Dumper::Terse      = 1;  # and we want it without dummy variable names
 
     foreach my $aha (@{$self->{-pipeline_analyses}}) {
-        my ($logic_name, $module, $parameters, $input_ids, $blocked, $batch_size, $hive_capacity) =
-            ($aha->{-logic_name}, $aha->{-module}, $aha->{-parameters}, $aha->{-input_ids},
-             $aha->{-blocked}, $aha->{-batch_size}, $aha->{-hive_capacity});
+        my ($logic_name, $module, $parameters, $input_ids, $blocked, $batch_size, $hive_capacity, $rc_id) =
+             rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity rc_id)], %$aha);
 
         if($topup_flag and $analysis_adaptor->fetch_by_logic_name($logic_name)) {
             warn "Skipping already existing analysis '$logic_name'\n";
@@ -71,9 +89,11 @@ sub main {
         my $stats = $analysis->stats();
         $stats->batch_size( $batch_size )       if(defined($batch_size));
 
-# ToDo: hive_capacity for some analyses is set to '-1'.
-# Do we want this behaviour by default?
+# ToDo: hive_capacity for some analyses is set to '-1' (i.e. "not limited")
+# Do we want this behaviour BY DEFAULT?
         $stats->hive_capacity( $hive_capacity ) if(defined($hive_capacity));
+
+        $stats->rc_id( $rc_id ) if(defined($rc_id));
 
             # some analyses will be waiting for human intervention in blocked state:
         $stats->status($blocked ? 'BLOCKED' : 'READY');
@@ -92,11 +112,12 @@ sub main {
 
         # Now, run separately through the already created analyses and link them together:
         #
-    my $ctrl_rule_adaptor     = $hive_dba->get_AnalysisCtrlRuleAdaptor;
-    my $dataflow_rule_adaptor = $hive_dba->get_DataflowRuleAdaptor;
+    my $ctrl_rule_adaptor            = $hive_dba->get_AnalysisCtrlRuleAdaptor;
+    my $dataflow_rule_adaptor        = $hive_dba->get_DataflowRuleAdaptor;
 
     foreach my $aha (@{$self->{-pipeline_analyses}}) {
-        my ($logic_name, $wait_for, $flow_into) = ($aha->{-logic_name}, $aha->{-wait_for}, $aha->{-flow_into});
+        my ($logic_name, $wait_for, $flow_into) =
+             rearrange([qw(logic_name wait_for flow_into)], %$aha);
 
         my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
 

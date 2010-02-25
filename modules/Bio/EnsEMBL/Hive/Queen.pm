@@ -97,8 +97,8 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($analysis_id, $beekeeper ,$pid, $job, $no_write) =
-     rearrange([qw(analysis_id beekeeper process_id job no_write) ], @args);
+  my ($rc_id, $analysis_id, $beekeeper ,$pid, $job, $no_write) =
+     rearrange([qw(rc_id analysis_id beekeeper process_id job no_write) ], @args);
 
   my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($analStatsDBA);
@@ -111,7 +111,7 @@ sub create_new_worker {
     $self->safe_synchronize_AnalysisStats($analysisStats);
     #return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
   } else {
-    $analysisStats = $self->_pick_best_analysis_for_new_worker;
+    $analysisStats = $self->_pick_best_analysis_for_new_worker($rc_id);
   }
   return undef unless($analysisStats);
 
@@ -159,7 +159,6 @@ sub create_new_worker {
   return $worker;
 }
 
-
 sub register_worker_death {
   my ($self, $worker) = @_;
 
@@ -199,6 +198,44 @@ sub register_worker_death {
 
 }
 
+sub check_for_dead_workers {
+    my ($self, $meadow, $check_buried_in_haste) = @_;
+
+    my $worker_status_hash    = $meadow->status_of_all_my_workers();
+    my %worker_status_summary = ();
+    my $queen_worker_list     = $self->fetch_overdue_workers(0);
+
+    print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
+
+    foreach my $worker (@$queen_worker_list) {
+        next unless($meadow->responsible_for_worker($worker));
+
+        my $worker_pid = $worker->process_id();
+        if(my $status = $worker_status_hash->{$worker_pid}) { # can be RUN|PEND|xSUSP
+            $worker_status_summary{$status}++;
+        } else {
+            $worker_status_summary{'AWOL'}++;
+            $self->register_worker_death($worker);
+        }
+    }
+    print "\t".join(', ', map { "$_:$worker_status_summary{$_}" } keys %worker_status_summary)."\n\n";
+
+    if($check_buried_in_haste) {
+        print "====== Checking for workers buried in haste... ";
+        my $buried_in_haste_list = $self->fetch_dead_workers_with_jobs();
+        if(my $bih_number = scalar(@$buried_in_haste_list)) {
+            print "$bih_number, reclaiming jobs.\n\n";
+            if($bih_number) {
+                my $job_adaptor = $self->db->get_AnalysisJobAdaptor();
+                foreach my $worker (@$buried_in_haste_list) {
+                    $job_adaptor->reset_dead_jobs_for_worker($worker);
+                }
+            }
+        } else {
+            print "none\n";
+        }
+    }
+}
 
 sub worker_check_in {
   my ($self, $worker) = @_;
@@ -363,7 +400,7 @@ sub fetch_dead_workers_with_jobs {
 
 =head2 synchronize_hive
 
-  Arg [1]    : $this_analysis (optional)
+  Arg [1]    : $filter_analysis (optional)
   Example    : $queen->synchronize_hive();
   Description: Runs through all analyses in the system and synchronizes
               the analysis_stats summary with the states in the analysis_job 
@@ -376,11 +413,11 @@ sub fetch_dead_workers_with_jobs {
 
 sub synchronize_hive {
   my $self          = shift;
-  my $this_analysis = shift; # optional parameter
+  my $filter_analysis = shift; # optional parameter
 
   my $start_time = time();
 
-  my $list_of_analyses = $this_analysis ? [$this_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+  my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
 
   print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
   foreach my $analysis (@$list_of_analyses) {
@@ -566,13 +603,11 @@ sub check_blocking_control_rules_for_AnalysisStats
 }
 
 
-sub get_num_failed_analyses
-{
-  my $self = shift;
-  my $analysis = shift;
+sub get_num_failed_analyses {
+  my ($self, $analysis) = @_;
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $failed_analyses = $statsDBA->fetch_by_status('FAILED');
+  my $failed_analyses = $statsDBA->fetch_by_statuses(['FAILED']);
   if ($analysis) {
     foreach my $this_failed_analysis (@$failed_analyses) {
       if ($this_failed_analysis->analysis_id == $analysis->dbID) {
@@ -642,26 +677,25 @@ sub enter_status {
 =cut
 
 sub get_num_needed_workers {
-  my $self = shift;
-  my $analysis = shift;
+  my ($self, $filter_analysis) = @_;
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $neededAnals = $statsDBA->fetch_by_needed_workers(undef,$self->{maximise_concurrency});
-  my $deeper_stats_list = $statsDBA->fetch_by_status('LOADING', 'BLOCKED');
-  push @$neededAnals, @$deeper_stats_list;
+  my $clearly_needed_analyses     = $statsDBA->fetch_by_needed_workers(undef,$self->{maximise_concurrency});
+  my $potentially_needed_analyses = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED']);
+  my @all_analyses = (@$clearly_needed_analyses, @$potentially_needed_analyses);
 
-  return 0 unless($neededAnals);
+  return 0 unless(@all_analyses);
 
-  my $availableLoad = 1.0 - $self->get_hive_current_load();
-  return 0 if($availableLoad <0.0);
+  my $available_load = 1.0 - $self->get_hive_current_load();
+  return 0 if($available_load <=0.0);
 
-  my $numWorkers = 0;
-  foreach my $analysis_stats (@{$neededAnals}) {
-    next if (defined $analysis && $analysis->dbID != $analysis_stats->analysis_id);
+  my $total_workers = 0;
+  my %rc2workers = ();
 
-    #$analysis_stats->print_stats();
+  foreach my $analysis_stats (@all_analyses) {
+    next if (defined $filter_analysis && $filter_analysis->dbID != $analysis_stats->analysis_id);
 
-    #digging deeper under the surface so need to sync
+        #digging deeper under the surface so need to sync
     if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED')) {
       $self->synchronize_AnalysisStats($analysis_stats);
     }
@@ -669,32 +703,56 @@ sub get_num_needed_workers {
     next if($analysis_stats->status eq 'BLOCKED');
     next if($analysis_stats->num_required_workers == 0);
 
-    my $thisLoad = 0.0;
-    if($analysis_stats->hive_capacity>0) {
-      $thisLoad = $analysis_stats->num_required_workers * (1/$analysis_stats->hive_capacity);
-    }
+    my $workers_this_analysis = $analysis_stats->num_required_workers;
 
-    if(($analysis_stats->hive_capacity<=0) or ($thisLoad < $availableLoad)) {
-      $numWorkers += $analysis_stats->num_required_workers;
-      $availableLoad -= $thisLoad;
-      $analysis_stats->print_stats();
-      printf("  %5d workers (%1.3f remaining-hive-load)\n", $numWorkers, $availableLoad);
-    } else {
-      my $workerCount = POSIX::ceil($availableLoad * $analysis_stats->hive_capacity);
-      $numWorkers += $workerCount;
-      $availableLoad -=  $workerCount * (1/$analysis_stats->hive_capacity);
-      $analysis_stats->print_stats();
-      printf("  %5d workers (%1.3f remaining-hive-load) use only %3d workers\n", $numWorkers, $availableLoad, $workerCount);
-      last;
+    if($analysis_stats->hive_capacity > 0) {   # if there is a limit, use it for cut-off
+        my $limit_workers_this_analysis = int($available_load * $analysis_stats->hive_capacity);
+
+        if($workers_this_analysis > $limit_workers_this_analysis) {
+            $workers_this_analysis = $limit_workers_this_analysis;
+        }
+
+        $available_load -= 1.0*$workers_this_analysis/$analysis_stats->hive_capacity;
     }
-    last if($availableLoad <= 0.0);
+    $total_workers += $workers_this_analysis;
+    $rc2workers{$analysis_stats->rc_id} += $workers_this_analysis;
+    $analysis_stats->print_stats();
+    printf("  (%1.3f remaining-hive-load) use %3d workers of analysis_id=%d\n", $available_load, $workers_this_analysis, $analysis_stats->analysis_id);
+
+    last if($available_load <= 0.0);
   }
 
-  printf("need $numWorkers workers (availLoad=%1.5f)\n", $availableLoad);
-  return $numWorkers;
+  printf("need a total of $total_workers workers (availLoad=%1.5f)\n", $available_load);
+  return ($total_workers, \%rc2workers);
 }
 
-sub get_hive_progress {
+sub get_needed_workers_failed_analyses_resync_if_necessary {
+    my ($self, $meadow, $analysis) = @_;
+
+    my $load                     = $self->get_hive_current_load();
+    my $running_count            = $self->get_num_running_workers();
+    my ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
+
+    if($load==0 and $needed_count==0 and $running_count==0) {
+        print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
+
+        $self->synchronize_hive($analysis);
+        $self->check_for_dead_workers($meadow, 1);
+
+        ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
+    }
+
+    my $failed_analyses = $self->get_num_failed_analyses($analysis);
+    if($needed_count==0) {
+        if($failed_analyses==0) {
+            print "Nothing left to do".($analysis ? (' for analysis '.$analysis->logic_name) : '').". DONE!!\n\n";
+        }
+    }
+
+    return ($needed_count, $failed_analyses, $rc_hash);
+}
+
+sub get_remaining_jobs_show_hive_progress {
   my $self = shift;
   my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
             "sum(unclaimed_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
@@ -717,17 +775,17 @@ sub get_hive_progress {
 }
 
 sub print_hive_status {
-    my ($self, $this_analysis) = @_;
+    my ($self, $filter_analysis) = @_;
 
-    $self->print_analysis_status($this_analysis);
+    $self->print_analysis_status($filter_analysis);
     $self->print_running_worker_status;
 }
 
 
 sub print_analysis_status {
-    my ($self, $this_analysis) = @_;
+    my ($self, $filter_analysis) = @_;
 
-    my $list_of_analyses = $this_analysis ? [$this_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         $analysis->stats->print_stats($self->{'verbose_stats'});
     }
@@ -808,12 +866,13 @@ sub register_all_workers_dead {
 ###################
 
 sub _pick_best_analysis_for_new_worker {
-  my $self = shift;
+  my $self  = shift;
+  my $rc_id = shift;    # this parameter will need to percolate very deep
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($statsDBA);
 
-  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency})};
+  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
   if($stats) {
     #synchronize and double check that it can be run
     $self->safe_synchronize_AnalysisStats($stats);
@@ -828,16 +887,14 @@ sub _pick_best_analysis_for_new_worker {
   # hidden jobs that haven't made it into the summary stats
 
   print("QUEEN: no obvious needed workers, need to dig deeper\n");
-  my $stats_list = $statsDBA->fetch_by_status('LOADING', 'BLOCKED');
+  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED']);
   foreach $stats (@$stats_list) {
-    #$stats->print_stats();
     $self->safe_synchronize_AnalysisStats($stats);
-    #$stats->print_stats();
 
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id = $rc_id)));
   }
 
-  ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency})};
+  ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
   return $stats if($stats);
 
   return undef;
