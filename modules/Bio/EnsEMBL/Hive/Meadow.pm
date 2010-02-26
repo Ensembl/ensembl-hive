@@ -30,7 +30,7 @@ sub generate_job_name {
     $rc_id ||= 0;
 
     return ($self->pipeline_name() ? $self->pipeline_name().'-' : '')
-        ."HL${iteration}_${rc_id}"
+        ."Hive${rc_id}_${iteration}"
         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
 }
 

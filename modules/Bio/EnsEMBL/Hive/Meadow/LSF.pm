@@ -28,7 +28,9 @@ sub count_pending_workers {
 
     my $cmd = "bjobs -w ";
     if(my $pipeline_name = $self->pipeline_name()) {
-        $cmd .= " | grep '${pipeline_name}-HL'";
+        $cmd .= " | grep '${pipeline_name}-Hive'";
+    } else {
+        $cmd .= " | grep Hive";
     }
     $cmd .= " | grep -c PEND";
 
@@ -43,7 +45,9 @@ sub status_of_all_my_workers { # returns a hashref
 
     my $cmd = 'bjobs -w 2>&1 | grep -v "No unfinished job found" | grep -v JOBID | grep -v DONE | grep -v EXIT';
     if(my $pipeline_name = $self->pipeline_name()) {
-        $cmd .= " | grep '${pipeline_name}-HL'";
+        $cmd .= " | grep '${pipeline_name}-Hive'";
+    } else {
+        $cmd .= " | grep Hive";
     }
 
     my %status_hash = ();
