@@ -22,7 +22,7 @@ sub main {
 
     unless($config_file and (-f $config_file)) {
         warn "Please supply a valid pipeline configuration file using '-conf' option\n";
-        warn "Usage example:\n\ttime $0 -conf ~lg4/work/ensembl-compara/scripts/family/family_pipeline.conf\n";
+        warn "Usage example:\n\t$0 -conf ../docs/long_mult_pipeline.conf\n";
         exit(1);
     }
 
