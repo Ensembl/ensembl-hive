@@ -42,21 +42,25 @@ sub main {
     my $hive_dba                     = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{-pipeline_db}});
     my $resource_description_adaptor = $hive_dba->get_ResourceDescriptionAdaptor;
     
-    warn "Loading the ResourceDescriptions ...\n";
 
-        # pre-load the resource_description table with the values that we'll need:
-    while( my($rc_id, $mt2param) = each %{$self->{-resource_classes}} ) {
-        my $description = delete $mt2param->{-desc};
-        while( my($meadow_type, $xparams) = each %$mt2param ) {
-            $resource_description_adaptor->create_new(
-                -RC_ID       => $rc_id,
-                -MEADOW_TYPE => $meadow_type,
-                -PARAMETERS  => $xparams,
-                -DESCRIPTION => $description,
-            );
+        # pre-load the resource_description table
+    if($self->{-resource_classes}) {
+        warn "Loading the ResourceDescriptions ...\n";
+
+        while( my($rc_id, $mt2param) = each %{$self->{-resource_classes}} ) {
+            my $description = delete $mt2param->{-desc};
+            while( my($meadow_type, $xparams) = each %$mt2param ) {
+                $resource_description_adaptor->create_new(
+                    -RC_ID       => $rc_id,
+                    -MEADOW_TYPE => $meadow_type,
+                    -PARAMETERS  => $xparams,
+                    -DESCRIPTION => $description,
+                );
+            }
         }
+
+        warn "Done.\n\n";
     }
-    warn "Done.\n\n";
 
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 

@@ -369,7 +369,7 @@ sub run_autonomously {
                 my $this_rc_worker_count = $rc_hash->{$rc_id};
                 print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$self->{'meadow'}->type()."\n";
 
-                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams{$rc_id});
+                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams{$rc_id} || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
