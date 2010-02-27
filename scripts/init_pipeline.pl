@@ -1,8 +1,9 @@
-#!/usr/local/ensembl/bin/perl -w
+#!/usr/bin/env perl
 
 # A generic loader of hive pipelines
 
 use strict;
+use warnings;
 use DBI;
 use Getopt::Long;
 use Data::Dumper;                   # NB: in this case it is not for testing but for actual data structure stringification
