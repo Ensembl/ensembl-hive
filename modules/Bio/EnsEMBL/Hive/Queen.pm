@@ -726,7 +726,7 @@ sub get_num_needed_workers {
   return ($total_workers, \%rc2workers);
 }
 
-sub get_needed_workers_failed_analyses_resync_if_necessary {
+sub get_needed_workers_resync_if_necessary {
     my ($self, $meadow, $analysis) = @_;
 
     my $load                     = $self->get_hive_current_load();
@@ -742,14 +742,7 @@ sub get_needed_workers_failed_analyses_resync_if_necessary {
         ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
     }
 
-    my $failed_analyses = $self->get_num_failed_analyses($analysis);
-    if($needed_count==0) {
-        if($failed_analyses==0) {
-            print "Nothing left to do".($analysis ? (' for analysis '.$analysis->logic_name) : '').". DONE!!\n\n";
-        }
-    }
-
-    return ($needed_count, $failed_analyses, $rc_hash);
+    return ($needed_count, $rc_hash);
 }
 
 sub get_remaining_jobs_show_hive_progress {

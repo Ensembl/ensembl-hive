@@ -156,6 +156,10 @@ sub main {
         $self->{'meadow'} -> lsf_options($lsf_options);
     }
     $self->{'meadow'} -> pending_adjust(not $no_pend_adjust);
+
+    if($self->{'run_job_id'}) {
+        $worker_limit = 1;
+    }
     $self->{'meadow'} -> submitted_workers_limit($worker_limit);
     $self->{'meadow'} -> pipeline_name($pipeline_name);
 
@@ -191,7 +195,7 @@ sub main {
 
     my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
-    if ($max_loops) {
+    if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
         run_autonomously($self, $max_loops, $queen, $analysis);
 
@@ -338,6 +342,7 @@ sub run_autonomously {
     my $iteration=0;
     my $num_of_remaining_jobs=0;
     my $failed_analyses=0;
+    my $order = $self->{'maximise_concurrency'}*2-1;
     do {
         if($iteration++) {
             $queen->monitor();
@@ -354,30 +359,37 @@ sub run_autonomously {
         $queen->print_running_worker_status;
         #show_failed_workers($self, $queen);
 
-        my ($worker_count, $rc_hash);
-        ($worker_count, $failed_analyses, $rc_hash) = $queen->get_needed_workers_failed_analyses_resync_if_necessary($self->{'meadow'}, $this_analysis);
+        my ($worker_count, $rc_hash) = $queen->get_needed_workers_resync_if_necessary($self->{'meadow'}, $this_analysis);
 
-        if($self->{'run_job_id'}) { # If it's just one job, we don't require more than one worker
-                                    # (and we probably do not care about the limits)
-            $worker_count = 1;
-        } else { # apply different technical and self-imposed limits:
-            $worker_count = $self->{'meadow'}->limit_workers($worker_count);
-        }
+            # apply various technical and self-imposed limits:
+        my $worker_quota = $self->{'meadow'}->limit_workers($worker_count);
 
-        if($worker_count) {
-            foreach my $rc_id (keys %$rc_hash) {
-                my $this_rc_worker_count = $rc_hash->{$rc_id};
+        if($worker_quota) {
+            foreach my $rc_id (sort {$order*($rc_hash->{$a}<=>$rc_hash->{$b})} keys %$rc_hash) {
+                my $this_rc_worker_count = ($worker_quota < $rc_hash->{$rc_id})
+                    ? $worker_quota
+                    : $rc_hash->{$rc_id};
+
                 print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$self->{'meadow'}->type()."\n";
 
                 $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams{$rc_id} || '');
+
+                $worker_quota -= $this_rc_worker_count;
             }
         } else {
             print "Not submitting any workers this iteration\n";
         }
 
+        $failed_analyses       = $queen->get_num_failed_analyses($this_analysis);
         $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress();
 
     } while(!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops);
+
+    print "The Beekeeper has stopped because ".(
+          $failed_analyses ? "there were $failed_analyses failed analyses"
+        : !$num_of_remaining_jobs ? "there is nothing left to do"
+        : "the number of loops was limited by $max_loops and this limit expired"
+    )."\n";
 
     printf("dbc %d disconnect cycles\n", $self->{'dba'}->dbc->disconnect_count);
 }
