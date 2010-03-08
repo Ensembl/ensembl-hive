@@ -11,6 +11,12 @@ use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
+sub dbconn_2_url {
+    my $db_conn = shift @_;
+
+    return "mysql://$db_conn->{-user}:$db_conn->{-pass}\@$db_conn->{-host}:$db_conn->{-port}/$db_conn->{-dbname}";
+}
+
 sub main {
 
     my $topup_flag  = 0;  # do not run initial scripts and only add new analyses+jobs (ignore the fetchable analyses)
@@ -162,9 +168,11 @@ sub main {
         }
     }
 
+    my $url = dbconn_2_url($self->{-pipeline_db});
+
     print "\n\n\tPlease run the following commands:\n\n";
-    print "  beekeeper.pl -url ".dbconn_2_url($self->{-pipeline_db})." -sync\n";
-    print "  beekeeper.pl -url ".dbconn_2_url($self->{-pipeline_db})." -loop\n";
+    print "  beekeeper.pl -url $url -sync\n";
+    print "  beekeeper.pl -url $url -loop\n";
 }
 
 main();
