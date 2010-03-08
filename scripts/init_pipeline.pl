@@ -41,11 +41,26 @@ sub main {
     }
 
     my $hive_dba                     = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{-pipeline_db}});
-    my $resource_description_adaptor = $hive_dba->get_ResourceDescriptionAdaptor;
     
+    if($self->{-pipeline_wide_parameters}) {
+        my $meta_container = $hive_dba->get_MetaContainer;
+
+        warn "Loading pipeline-wide parameters ...\n";
+
+        while( my($meta_key, $meta_value) = each %{$self->{-pipeline_wide_parameters}} ) {
+            if($topup_flag) {
+                $meta_container->delete_key($meta_key);
+            }
+            $meta_container->store_key_value($meta_key, $meta_value);
+        }
+
+        warn "Done.\n\n";
+    }
 
         # pre-load the resource_description table
     if($self->{-resource_classes}) {
+        my $resource_description_adaptor = $hive_dba->get_ResourceDescriptionAdaptor;
+
         warn "Loading the ResourceDescriptions ...\n";
 
         while( my($rc_id, $mt2param) = each %{$self->{-resource_classes}} ) {
