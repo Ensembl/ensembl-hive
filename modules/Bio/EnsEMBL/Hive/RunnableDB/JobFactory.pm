@@ -125,8 +125,9 @@ sub create_analysis_object {
 
     my $dba = $self->db;
 
-    $Data::Dumper::Indent = 0;  # we want everything on one line
-    $Data::Dumper::Terse = 1;   # and we want it without dummy variable names
+    $Data::Dumper::Indent   = 0;  # we want everything on one line
+    $Data::Dumper::Terse    = 1;  # and we want it without dummy variable names
+    $Data::Dumper::Sortkeys = 1;  # make stringification more deterministic
 
     my $analysis = Bio::EnsEMBL::Analysis->new (
         -db              => '',
@@ -218,8 +219,9 @@ sub create_one_range_job {
         $resolved_hash{$key} = $value;
     }
 
-    $Data::Dumper::Indent = 0;  # we want everything on one line
-    $Data::Dumper::Terse = 1;   # and we want it without dummy variable names
+    $Data::Dumper::Indent   = 0;  # we want everything on one line
+    $Data::Dumper::Terse    = 1;  # and we want it without dummy variable names
+    $Data::Dumper::Sortkeys = 1;  # make stringification more deterministic
 
     Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
         -input_id       => Dumper(\%resolved_hash),

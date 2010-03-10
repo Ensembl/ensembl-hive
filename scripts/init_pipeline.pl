@@ -35,7 +35,7 @@ sub main {
 
     my $self = bless { do $config_file };
 
-    unless($topup_flag) {
+    if(!$topup_flag && $self->{-pipeline_create_commands}) {
         foreach my $cmd (@{$self->{-pipeline_create_commands}}) {
             warn "Running the command:\n\t$cmd\n";
             if(my $retval = system($cmd)) {
@@ -89,6 +89,7 @@ sub main {
         # tune Data::Dumper module to produce the output we want:
     $Data::Dumper::Indent     = 0;  # we want everything on one line
     $Data::Dumper::Terse      = 1;  # and we want it without dummy variable names
+    $Data::Dumper::Sortkeys   = 1;  # make stringification more deterministic
 
     foreach my $aha (@{$self->{-pipeline_analyses}}) {
         my ($logic_name, $module, $parameters, $input_ids, $blocked, $batch_size, $hive_capacity, $rc_id) =
