@@ -43,7 +43,7 @@ sub main {
     my $no_pend_adjust              = 0;
     my $worker_limit                = 50;
     my $local_cpus                  = 2;
-    my $lsf_options                 = '';
+    my $meadow_options              = '';
     my $max_loops                   = 0; # not running by default
     my $run                         = 0;
     my $check_for_dead              = 0;
@@ -85,7 +85,7 @@ sub main {
                'local_cpus=i'      => \$local_cpus,
                'wlimit=i'          => \$worker_limit,
                'no_pend'           => \$no_pend_adjust,
-               'lsf_options=s'     => \$lsf_options,
+               'meadow_options|lsf_options=s'  => \$meadow_options, # 'lsf_options' is deprecated (please investigate the resource requirements, they may suit your needs way better)
 
                     # worker control
                'jlimit=i'          => \$self->{'job_limit'},
@@ -153,7 +153,7 @@ sub main {
         $self->{'meadow'} -> total_running_workers_limit($local_cpus);
     } else {
         $self->{'meadow'} = Bio::EnsEMBL::Hive::Meadow::LSF->new();
-        $self->{'meadow'} -> lsf_options($lsf_options);
+        $self->{'meadow'} -> meadow_options($meadow_options);
     }
     $self->{'meadow'} -> pending_adjust(not $no_pend_adjust);
 
@@ -482,11 +482,11 @@ beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
 
 =head2 Meadow control
 
-  -local                 : run jobs on local CPU (fork)
-  -local_cpus <num>      : max # workers to be running locally
-  -wlimit <num>          : max # workers to create per loop
-  -no_pend               : don't adjust needed workers by pending workers
-  -lsf_options <string>  : passes <string> to LSF bsub command as <options>
+  -local                    : run jobs on local CPU (fork)
+  -local_cpus <num>         : max # workers to be running locally
+  -wlimit <num>             : max # workers to create per loop
+  -no_pend                  : don't adjust needed workers by pending workers
+  -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
 

@@ -83,7 +83,7 @@ If not - you can restore the pre-merger state by updating with the following com
 
   Assuming there is a
 
-   beekeeper.pl -url <blah> -highmem -lsf_options "<lots of mem>"
+   beekeeper.pl -url <blah> -highmem -meadow_options "<lots of mem>"
 
    running, or a 
    

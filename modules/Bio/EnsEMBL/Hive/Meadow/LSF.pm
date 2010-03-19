@@ -83,22 +83,13 @@ sub kill_worker {
     }
 }
 
-sub lsf_options {
-    my $self = shift @_;
-
-    if(scalar(@_)) {
-        $self->{'_lsf_options'} = shift @_;
-    }
-    return $self->{'_lsf_options'} || '';
-}
-
 sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
 
-    my $job_name    = $self->generate_job_name($worker_count, $iteration, $rc_id);
-    my $lsf_options = $self->lsf_options();
+    my $job_name       = $self->generate_job_name($worker_count, $iteration, $rc_id);
+    my $meadow_options = $self->meadow_options();
 
-    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $rc_parameters $lsf_options $worker_cmd -rc_id $rc_id";
+    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $rc_parameters $meadow_options $worker_cmd -rc_id $rc_id";
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd);

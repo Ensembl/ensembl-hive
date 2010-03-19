@@ -25,6 +25,15 @@ sub pipeline_name { # if set, provides a filter for job-related queries
     return $self->{'_pipeline_name'};
 }
 
+sub meadow_options {    # general options that different Meadows can plug into the submission command
+    my $self = shift @_;
+
+    if(scalar(@_)) {
+        $self->{'_meadow_options'} = shift @_;
+    }
+    return $self->{'_meadow_options'} || '';
+}
+
 sub generate_job_name {
     my ($self, $worker_count, $iteration, $rc_id) = @_;
     $rc_id ||= 0;
