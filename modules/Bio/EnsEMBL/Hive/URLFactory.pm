@@ -191,7 +191,7 @@ sub _get_db_connection
   #print("  conn=$conn\n  dbname=$dbname\n  path=$path\n");
 
   my($hostPort, $userPass);
-  if(($p=index($conn, "@")) != -1) {
+  if(($p=rindex($conn, "@")) != -1) {
     $userPass = substr($conn,0, $p);
     $hostPort = substr($conn,$p+1,length($conn));
 
