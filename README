@@ -16,6 +16,33 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+22 March, 2010 : Leo Gordon
+
+* Bio::EnsEMBL::Hive::ProcessWithParams is the preferred way of parsing/passing around the parameters.
+    Module-wide, pipeline-wide, analysis-wide and job-wide parameters and their precedence.
+
+* A new init_pipeline.pl script to create and populate pipelines from a perl hash structure.
+    Tested with long_mult_pipeline.conf and family_pipeline.conf . It works.
+
+* Bio::EnsEMBL::Hive::RunnableDB::SystemCmd now supports parameter substitution via #param_name# patterns.
+    See usage examples in the family_pipeline.conf
+
+* There is a new Bio::EnsEMBL::Hive::RunnableDB::SqlCmd that does that it says,
+    and also supports parameter substitution via #param_name# patterns.
+    See usage examples in the family_pipeline.conf
+
+* Bio::EnsEMBL::Hive::RunnableDB::JobFactory has 3 modes of operation: inputlist, inputfile, inputquery.
+    See usage examples in the family_pipeline.conf
+
+* some rewrite of the Queen/Adaptors code to give us more developmental flexibility
+
+* support for semaphores (job-level control rules) in SQL schema and API
+    - partially tested, has some quirks, waiting for a more serious test by Albert
+
+* support for resource requirements in SQL schema, API and on init_pipeline config file level
+    Tested in the family_pipeline.conf . It works.
+
+
 3 December, 2009 : Leo Gordon
 
 beekeeper.pl, runWorker.pl and cmd_hive.pl
