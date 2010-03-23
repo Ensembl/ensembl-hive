@@ -33,7 +33,7 @@ sub main {
         exit(1);
     }
 
-    my $self = bless { do $config_file };
+    my $self = bless ( do $config_file );
 
     if(!$topup_flag && $self->{-pipeline_create_commands}) {
         foreach my $cmd (@{$self->{-pipeline_create_commands}}) {
@@ -158,11 +158,11 @@ sub main {
             }
         }
         foreach my $heir (@$flow_into) {
-            my ($heir_logic_name, $branch) = (ref($heir) eq 'ARRAY') ? (@$heir, 1) : ($heir, 1);
+            my ($heir_logic_name, $branch_code) = (ref($heir) eq 'ARRAY') ? (@$heir, 1) : ($heir, 1);
 
             if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
-                $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch);
-                warn "Created DataFlow rule: $logic_name -> $heir_logic_name (branch=$branch)\n";
+                $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
+                warn "Created DataFlow rule: $logic_name -> $heir_logic_name (branch_code=$branch_code)\n";
             } else {
                 die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
             }
