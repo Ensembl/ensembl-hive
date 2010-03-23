@@ -157,14 +157,30 @@ sub main {
                 die "Could not fetch analysis '$condition_logic_name' to create a control rule";
             }
         }
-        foreach my $heir (@$flow_into) {
-            my ($heir_logic_name, $branch_code) = (ref($heir) eq 'ARRAY') ? (@$heir, 1) : ($heir, 1);
 
-            if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
-                $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
-                warn "Created DataFlow rule: $logic_name -> $heir_logic_name (branch_code=$branch_code)\n";
-            } else {
-                die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
+        if(req($flow_into) eq 'HASH') { # branched format:
+            foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
+                foreach my $heir_logic_name (@{$flow_into->{$branch_code}}) {
+
+                    if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
+                        $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
+                        warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name\n";
+                    } else {
+                        die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
+                    }
+                }
+            }
+        } elsif(ref($flow_into) eq 'ARRAY') {   # array format (deprecated)
+
+            foreach my $heir (@$flow_into) {
+                my ($heir_logic_name, $branch_code) = (ref($heir) eq 'ARRAY') ? (@$heir, 1) : ($heir, 1);
+
+                if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
+                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
+                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name\n";
+                } else {
+                    die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
+                }
             }
         }
     }
