@@ -22,17 +22,17 @@ Summary:
     Module-wide, pipeline-wide, analysis-wide and job-wide parameters and their precedence.
 
 * A new init_pipeline.pl script to create and populate pipelines from a perl hash structure.
-    Tested with long_mult_pipeline.conf and family_pipeline.conf . It works.
+    Tested with ensembl-hive/docs/long_mult_pipeline.conf and ensembl-compara/scripts/family/family_pipeline.conf . It works.
 
 * Bio::EnsEMBL::Hive::RunnableDB::SystemCmd now supports parameter substitution via #param_name# patterns.
-    See usage examples in the family_pipeline.conf
+    See usage examples in the ensembl-compara/scripts/family/family_pipeline.conf
 
 * There is a new Bio::EnsEMBL::Hive::RunnableDB::SqlCmd that does that it says,
     and also supports parameter substitution via #param_name# patterns.
-    See usage examples in the family_pipeline.conf
+    See usage examples in the ensembl-compara/scripts/family/family_pipeline.conf
 
 * Bio::EnsEMBL::Hive::RunnableDB::JobFactory has 3 modes of operation: inputlist, inputfile, inputquery.
-    See usage examples in the family_pipeline.conf
+    See usage examples in the ensembl-compara/scripts/family/family_pipeline.conf
 
 * some rewrite of the Queen/Adaptors code to give us more developmental flexibility
 
@@ -40,7 +40,7 @@ Summary:
     - partially tested, has some quirks, waiting for a more serious test by Albert
 
 * support for resource requirements in SQL schema, API and on init_pipeline config file level
-    Tested in the family_pipeline.conf . It works.
+    Tested in the ensembl-compara/scripts/family/family_pipeline.conf . It works.
 
 
 3 December, 2009 : Leo Gordon
