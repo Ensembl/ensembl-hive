@@ -41,41 +41,23 @@ sub run {   # following the 'divide and conquer' principle, out job is to create
         $digit_hash{$digit}++;
     }
 
-    my $analysis_adaptor = $self->db->get_AnalysisAdaptor();
-    my $job_adaptor      = $self->db->get_AnalysisJobAdaptor();
+        # output_ids of partial multiplications to be computed:
+    my @output_ids = map { { 'a_multiplier' => $a_multiplier, 'digit' => $_ } } keys %digit_hash;
 
-    my $pm_analysis    = $analysis_adaptor->fetch_by_logic_name('part_multiply');
-    my $at_analysis    = $analysis_adaptor->fetch_by_logic_name('add_together');
-    my $current_job_id = $self->input_job->dbID();
-
-        # First, create the "sink" job and pre-block it with counting semaphore
-    my $at_job_id = $job_adaptor->CreateNewJob (
-            -input_id        => "{ 'a_multiplier' => '$a_multiplier', 'b_multiplier' => '$b_multiplier' }",
-            -analysis        => $at_analysis,
-            -input_job_id    => $current_job_id,
-            -semaphore_count => scalar (keys %digit_hash),  # AT MOST that many individual blocks
-    );
-
-        # Then, create the array of intermediate jobs that will be gradually unblocking the "sink" job upon successful completion:
-    foreach my $digit (keys %digit_hash) {
-        my $pm_job_id = $job_adaptor->CreateNewJob (
-            -input_id          => "{ 'a_multiplier' => '$a_multiplier', 'digit' => '$digit' }",
-            -analysis          => $pm_analysis,
-            -input_job_id      => $current_job_id,
-            -semaphored_job_id => $at_job_id,
-        );
-
-            # if this job has already been created in the past
-            # (and presumably the result has been already computed),
-            # we want to adjust the semaphore_count manually :
-        unless($pm_job_id) {
-            $job_adaptor->decrease_semaphore_count_for_jobid($at_job_id);
-        }
-    }
+        # store them for future use:
+    $self->param('output_ids', \@output_ids);
 }
 
-sub write_output {  # and we have nothing to write out
+sub write_output {  # nothing to write out, but some dataflow to perform:
     my $self = shift @_;
+
+    my $output_ids = $self->param('output_ids');
+
+        # first we flow the branch-1 into the (semaphored) funnel job:
+    my ($funnel_job_id) = @{ $self->dataflow_output_id($self->input_id, 1, { -semaphore_count => scalar(@$output_ids) })  };
+
+        # then we fan out into branch-2, and pass the $funnel_job_id to all of them
+    my $fan_job_ids = $self->dataflow_output_id($output_ids, 2, { -semaphored_job_id => $funnel_job_id } );
 
     return 1;
 }

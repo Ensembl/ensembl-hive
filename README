@@ -16,6 +16,45 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+
+26 March, 2010 : Leo Gordon
+
+* branch_code column in analysis_job table is unnecessary and was removed
+
+    Branching using branch_codes is a very important and powerful mechanism,
+    but it is completely defined in dataflow_rule table.
+
+    branch_code() WAS at some point a getter/setter method in AnalysisJob,
+    but it was only used to pass parameters around in the code (now obsolete),
+    and this information was never reflected in the database,
+    so analysis_job.branch_code was always 1 no matter what.
+
+* stringification using Data::Dumper with parameters was moved out of init_pipelines and JobFactory.pm
+    and is now in a separate Hive::Utils.pm module (Hive::Utils::stringify can be imported, inherited or just called).
+    It is transparently called by AnalysisJobAdaptor when creating jobs which allows
+    to pass input_ids as hashrefs and not strings. Magic happens on the adaptor level.
+
+* Queen->flow_output_job() method has been made obsolete and removed from the Queen.pm
+    Dataflow is now completely handled by Process->dataflow_output_id() method,
+    which now handles arrays/fans of jobs and semaphores (later on this).
+    Please always use dataflow_output_id() if you need to create a new job or fan of jobs,
+    as this is the top level method for doing exactly this.
+    Only call the naked adaptor's method if you know what you're doing.
+
+* JobFactory module has been upgraded (simplified) to work through dataflow mechanism.
+    It no longer can create analyses, but that's not necessary as it should be init_pipeline's job.
+    Family pipeline has been patched to work with the new JobFactory module.
+
+* branched dataflow was going to meet semaphores at some point, the time is near.
+    dataflow_output_id() is now semaphore aware, and can propagate semaphores through the control graph.
+    A new fan is hooked on its own semaphore; when the semaphored_job is not specified we do semaphore propagation.
+    Inability to create a job in the fan is tracked and the corresponding semaphore_count decreased
+    (so users do not have to worry about it).
+
+* LongMult examples have been patched to work with the new dataflow_output_id() method.
+
+
+
 22 March, 2010 : Leo Gordon
 
 * Bio::EnsEMBL::Hive::ProcessWithParams is the preferred way of parsing/passing around the parameters.

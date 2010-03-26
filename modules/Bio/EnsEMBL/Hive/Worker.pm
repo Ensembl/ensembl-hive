@@ -488,7 +488,7 @@ sub run
         $self->queen->worker_register_job_done($self, $job);
 
         if(my $semaphored_job_id = $job->semaphored_job_id) {
-            $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );
+            $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore after job is (successfully) done
         }
 
         $self->more_work_done;
@@ -612,8 +612,8 @@ sub run_module_with_job {
 
   if ($runObj->isa("Bio::EnsEMBL::Hive::Process") and $runObj->autoflow_inputjob
       and $self->execute_writes) {
-    printf("AUTOFLOW input->output\n") if($self->debug);
-    $self->queen->flow_output_job($job);
+            printf("AUTOFLOW input->output\n") if($self->debug);
+            $runObj->dataflow_output_id();
   }
 
   return 1;

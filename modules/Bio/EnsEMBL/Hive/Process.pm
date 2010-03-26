@@ -82,9 +82,6 @@
 =cut
 
 
-
-my $g_hive_process_workdir;  # a global directory location for the process using this module
-
 package Bio::EnsEMBL::Hive::Process;
 
 use strict;
@@ -292,6 +289,7 @@ sub autoflow_inputjob {
     Title        :  dataflow_output_id
     Arg[1](req)  :  <string> $output_id 
     Arg[2](opt)  :  <int> $branch_code (optional, defaults to 1)
+    Arg[3](opt)  :  <hashref> $create_job_options (optional, defaults to {}, options added to the CreateNewJob method)
     Usage        :  $self->dataflow_output_id($output_id, $branch_code);
     Function:  
       If Process needs to create jobs, this allows it to have jobs 
@@ -303,30 +301,51 @@ sub autoflow_inputjob {
 =cut
 
 sub dataflow_output_id {
-  my ($self, $output_id, $branch_code, $blocked) = @_;
+    my ($self, $output_ids, $branch_code, $create_job_options) = @_;
 
-  return unless($output_id);
-  return unless($self->analysis);
+    return unless($self->analysis);
+    return unless($self->input_job);
 
-  $branch_code=1 unless(defined($branch_code));
+    $output_ids  ||= [ $self->input_id() ];                                 # replicate the input_id in the branch_code's output by default
+    $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
 
-  # Dataflow works by doing a transform from this process to the next.
-  # The job starts out 'attached' to this process hence the analysis_id, branch_code, and dbID
-  # are all relative to the starting point.  The dataflow process transforms the job to a 
-  # different analysis_id, and moves the dbID to the previous_analysis_job_id
-  
-  my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
-  $job->input_id($output_id);
-  $job->analysis_id($self->analysis->dbID);
-  $job->branch_code($branch_code);
-  $job->dbID($self->input_job->dbID);
-  $job->status( $blocked ? 'BLOCKED' : 'READY' );
-  
-  #if process uses branch_code 1 explicitly, turn off automatic dataflow
-  $self->autoflow_inputjob(0) if($branch_code==1);
+    $branch_code        ||=  1;     # default branch_code is 1
+    $create_job_options ||= {};     # { -block => 1 } or { -semaphore_cout => scalar(@fan_job_ids) } or { -semaphored_job_id => $funnel_job_id }
 
-  return $self->queen->flow_output_job($job);  
+        # this tricky code is responsible for correct propagation of semaphores down the dataflow pipes:
+    my $propagate_semaphore = not exists ($create_job_options->{'-semaphored_job_id'});     # CONVENTION: if zero is explicitly supplied, it is a request not to propagate
+
+        # However nothing is supplied, semaphored_job_id will be propagated from the parent job:
+    my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->input_job->semaphored_job_id();
+
+        # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
+    $self->autoflow_inputjob(0) if($branch_code==1);
+
+    my @output_job_ids = ();
+    my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+    my $rules       = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis->dbID, $branch_code);
+    foreach my $rule (@{$rules}) {
+        foreach my $output_id (@$output_ids) {
+            if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+                -input_id       => $output_id,
+                -analysis       => $rule->to_analysis,
+                -input_job_id   => $self->input_job->dbID,  # creator_job's id
+                %$create_job_options
+            )) {
+                if($semaphored_job_id and $propagate_semaphore) {
+                    $job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id ); # propagate the semaphore
+                }
+                    # only add the ones that were indeed created:
+                push @output_job_ids, $job_id;
+
+            } elsif($semaphored_job_id and !$propagate_semaphore) {
+                $job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );     # if we didn't succeed in creating the job, fix the semaphore
+            }
+        }
+    }
+    return \@output_job_ids;
 }
+
 
 =head2 debug
 

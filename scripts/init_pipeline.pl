@@ -6,8 +6,8 @@ use strict;
 use warnings;
 use DBI;
 use Getopt::Long;
-use Data::Dumper;                   # NB: in this case it is not for testing but for actual data structure stringification
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+use Bio::EnsEMBL::Utils::Argument;          # import 'rearrange()'
+use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
@@ -86,13 +86,8 @@ sub main {
 
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
-        # tune Data::Dumper module to produce the output we want:
-    $Data::Dumper::Indent     = 0;  # we want everything on one line
-    $Data::Dumper::Terse      = 1;  # and we want it without dummy variable names
-    $Data::Dumper::Sortkeys   = 1;  # make stringification more deterministic
-
     foreach my $aha (@{$self->{-pipeline_analyses}}) {
-        my ($logic_name, $module, $parameters, $input_ids, $blocked, $batch_size, $hive_capacity, $rc_id) =
+        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $rc_id) =
              rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity rc_id)], %$aha);
 
         if($topup_flag and $analysis_adaptor->fetch_by_logic_name($logic_name)) {
@@ -108,7 +103,7 @@ sub main {
             -db_version      => '1',
             -logic_name      => $logic_name,
             -module          => $module,
-            -parameters      => Dumper($parameters),
+            -parameters      => stringify($parameters_hash),    # have to stringify it here, because Analysis code is external wrt Hive code
         );
 
         $analysis_adaptor->store($analysis);
@@ -127,10 +122,10 @@ sub main {
         $stats->update();
 
             # now create the corresponding jobs (if there are any):
-        foreach my $input_id (@$input_ids) {
+        foreach my $input_id_hash (@$input_ids) {
 
             Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                -input_id       => Dumper($input_id),
+                -input_id       => $input_id_hash,  # input_ids are now centrally stringified in the AnalysisJobAdaptor
                 -analysis       => $analysis,
                 -input_job_id   => 0, # because these jobs are created by the initialization script, not by another job
             );
@@ -158,7 +153,7 @@ sub main {
             }
         }
 
-        if(req($flow_into) eq 'HASH') { # branched format:
+        if(ref($flow_into) eq 'HASH') { # branched format:
             foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
                 foreach my $heir_logic_name (@{$flow_into->{$branch_code}}) {
 

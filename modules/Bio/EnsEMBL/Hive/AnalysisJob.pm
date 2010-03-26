@@ -114,13 +114,6 @@ sub query_count {
   return $self->{'_query_count'};
 }
 
-sub branch_code {
-  my $self = shift;
-  $self->{'_branch_code'} = shift if(@_);
-  $self->{'_branch_code'} = 1 unless(defined($self->{'_branch_code'}));
-  return $self->{'_branch_code'};
-}
-
 sub semaphore_count {
   my $self = shift;
   $self->{'_semaphore_count'} = shift if(@_);

@@ -114,7 +114,6 @@ CREATE TABLE analysis_ctrl_rule (
 --   status                  - state the job is in
 --   retry_count             - number times job had to be reset when worker failed to run it
 --   completed               - timestamp when job was completed
---   branch_code             - switch-like branching control, default=1 (ie true)
 --
 --   semaphore_count         - if this count is >0, the job is conditionally blocked (until this count drops to 0 or below).
 --                              Default=0 means "nothing is blocking me by default".
@@ -131,7 +130,6 @@ CREATE TABLE analysis_job (
   status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
-  branch_code               int(10) default 1 NOT NULL,
   runtime_msec              int(10) default 0 NOT NULL, 
   query_count               int(10) default 0 NOT NULL, 
 

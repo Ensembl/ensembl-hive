@@ -39,16 +39,16 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Hive::Worker;
-use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Sys::Hostname;
 use Data::UUID;
-
+use Sys::Hostname;
+use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 # our $max_retry_count = 7;
 
@@ -60,7 +60,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =head2 CreateNewJob
 
-  Args       : -input_id => string of input_id which will be passed to run the job
+  Args       : -input_id => string of input_id which will be passed to run the job (or a Perl hash that will be automagically stringified)
                -analysis => Bio::EnsEMBL::Analysis object from a database
                -block        => int(0,1) set blocking state of job (default = 0)
                -input_job_id => (optional) analysis_job_id of job that is creating this
@@ -87,13 +87,18 @@ sub CreateNewJob {
   my ($input_id, $analysis, $prev_analysis_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
      rearrange([qw(INPUT_ID ANALYSIS INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
 
-  $prev_analysis_job_id=0 unless($prev_analysis_job_id);
+  $prev_analysis_job_id ||=0;
+
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
   throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
     unless($analysis->isa('Bio::EnsEMBL::Analysis'));
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
+
+  if(ref($input_id)) {  # let's do the Perl hash stringification centrally rather than in many places:
+    $input_id = stringify($input_id);
+  }
 
   if(length($input_id) >= 255) {
     my $input_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
@@ -326,7 +331,6 @@ sub _columns {
              a.status 
              a.retry_count          
              a.completed
-             a.branch_code
              a.runtime_msec
              a.query_count
              a.semaphore_count
@@ -365,7 +369,6 @@ sub _objs_from_sth {
     $job->status($column{'status'});
     $job->retry_count($column{'retry_count'});
     $job->completed($column{'completed'});
-    $job->branch_code($column{'branch_code'});
     $job->runtime_msec($column{'runtime_msec'});
     $job->query_count($column{'query_count'});
     $job->semaphore_count($column{'semaphore_count'});
@@ -390,7 +393,7 @@ sub _objs_from_sth {
 #
 ################
 
-sub decrease_semaphore_count_for_jobid {
+sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or unsuccessful creation
     my $self  = shift @_;
     my $jobid = shift @_;
     my $dec   = shift @_ || 1;
@@ -399,6 +402,18 @@ sub decrease_semaphore_count_for_jobid {
     
     my $sth = $self->prepare($sql);
     $sth->execute($dec, $jobid);
+    $sth->finish;
+}
+
+sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
+    my $self  = shift @_;
+    my $jobid = shift @_;
+    my $inc   = shift @_ || 1;
+
+    my $sql = "UPDATE analysis_job SET semaphore_count=semaphore_count+? WHERE analysis_job_id=?";
+    
+    my $sth = $self->prepare($sql);
+    $sth->execute($inc, $jobid);
     $sth->finish;
 }
 
@@ -419,7 +434,7 @@ sub update_status {
 
   my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
   if($job->status eq 'DONE') {
-    $sql .= ",completed=now(),branch_code=".$job->branch_code;
+    $sql .= ",completed=now()";
     $sql .= ",runtime_msec=".$job->runtime_msec;
     $sql .= ",query_count=".$job->query_count;
   }

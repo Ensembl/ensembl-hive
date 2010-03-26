@@ -40,22 +40,23 @@ sub run {   # following the 'divide and conquer' principle, out job is to create
         $digit_hash{$digit}++;
     }
 
-    my $pm_analysis    = $self->db->get_AnalysisAdaptor()->fetch_by_logic_name('part_multiply');
-    my $current_job_id = $self->input_job->dbID();
+        # output_ids of partial multiplications to be computed:
+    my @output_ids = map { { 'a_multiplier' => $a_multiplier, 'digit' => $_ } } keys %digit_hash;
 
-    foreach my $digit (keys %digit_hash) {
-        Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob (
-            -input_id       => "{ 'a_multiplier' => '$a_multiplier', 'digit' => '$digit' }",
-            -analysis       => $pm_analysis,
-            -input_job_id   => $current_job_id,
-        );
-    }
+        # store them for future use:
+    $self->param('output_ids', \@output_ids);
 }
 
-sub write_output {  # and we have nothing to write out
+sub write_output {  # nothing to write out, but some dataflow to perform:
     my $self = shift @_;
 
-    $self->dataflow_output_id($self->input_id); # flow into an 'add_together' job
+    my $output_ids = $self->param('output_ids');
+
+        # "fan out" into branch-2 first
+    $self->dataflow_output_id($output_ids, 2);
+
+        # then flow into the branch-1 funnel; input_id would flow into branch_1 by default anyway, but we request it here explicitly:
+    $self->dataflow_output_id($self->input_id, 1);
 
     return 1;
 }

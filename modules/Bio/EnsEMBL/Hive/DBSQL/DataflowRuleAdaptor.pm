@@ -47,32 +47,27 @@ use Bio::EnsEMBL::Utils::Exception;
 our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 
-=head2 fetch_from_analysis_job
+=head2 fetch_from_analysis_id_branch_code
 
-  Args       : Bio::EnsEMBL::Hive::AnalysisJob
-  Example    : my @rules = @{$ruleAdaptor->fetch_from_analysis_job($job)};
-  Description: searches database for rules with given 'from' analysis
-               returns all such rules in a list (by reference)
+  Args       : unsigned int $analysis_id, unsigned int $branch_code
+  Example    : my @rules = @{$ruleAdaptor->fetch_from_analysis_id_branch_code($analysis_id, $branch_code)};
+  Description: searches database for rules with given from_analysis_id and branch_code
+               and returns all such rules in a list (by reference)
   Returntype : reference to list of Bio::EnsEMBL::Hive::DataflowRule objects
   Exceptions : none
-  Caller     : ?
+  Caller     : Bio::EnsEMBL::Hive::Queen::flow_output_job
 
 =cut
 
-sub fetch_from_analysis_job
-{
-  my $self = shift;
-  my $fromAnalysisJob = shift;
-  
-  throw("arg is required\n") unless($fromAnalysisJob);
-  throw("arg must be a [Bio::EnsEMBL::Hive::AnalysisJob] not a $fromAnalysisJob")
-    unless ($fromAnalysisJob->isa('Bio::EnsEMBL::Hive::AnalysisJob'));
-  return [] unless($fromAnalysisJob->analysis_id);
-      
-  my $constraint = "r.from_analysis_id = '".$fromAnalysisJob->analysis_id."'"
-                  ." AND r.branch_code=". $fromAnalysisJob->branch_code;
+sub fetch_from_analysis_id_branch_code {
+    my ($self, $analysis_id, $branch_code) = @_;
 
-  return $self->_generic_fetch($constraint);
+    return [] unless($analysis_id);
+    $branch_code ||= 1;
+
+    my $constraint = "r.from_analysis_id=${analysis_id} AND r.branch_code=${branch_code}";
+
+    return $self->_generic_fetch($constraint);
 }
 
 
@@ -156,14 +151,14 @@ sub remove {
 =cut
 
 sub create_rule {
-  my ($self, $fromAnalysis, $toAnalysis, $branchCode) = @_;
+  my ($self, $from_analysis, $to_analysis, $branch_code) = @_;
 
-  return unless($fromAnalysis and $toAnalysis);
+  return unless($from_analysis and $to_analysis);
   
   my $rule = Bio::EnsEMBL::Hive::DataflowRule->new();
-  $rule->from_analysis($fromAnalysis);
-  $rule->to_analysis($toAnalysis);
-  $rule->branch_code($branchCode) if(defined($branchCode));
+  $rule->from_analysis($from_analysis);
+  $rule->to_analysis($to_analysis);
+  $rule->branch_code($branch_code) if(defined($branch_code));
   
   return $self->store($rule);
 }
