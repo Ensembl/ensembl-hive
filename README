@@ -53,6 +53,7 @@ Summary:
 
 * LongMult examples have been patched to work with the new dataflow_output_id() method.
 
+* init_pipeline.pl is now more flexible and can understand simplified syntax for dataflow/control rules
 
 
 22 March, 2010 : Leo Gordon

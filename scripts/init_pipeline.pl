@@ -143,6 +143,9 @@ sub main {
 
         my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
 
+        $wait_for ||= [];
+        $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
+
             # create control rules:
         foreach my $condition_logic_name (@$wait_for) {
             if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_logic_name)) {
@@ -153,23 +156,14 @@ sub main {
             }
         }
 
-        if(ref($flow_into) eq 'HASH') { # branched format:
-            foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
-                foreach my $heir_logic_name (@{$flow_into->{$branch_code}}) {
+        $flow_into ||= {};
+        $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
-                    if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
-                        $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
-                        warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name\n";
-                    } else {
-                        die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
-                    }
-                }
-            }
-        } elsif(ref($flow_into) eq 'ARRAY') {   # array format (deprecated)
+        foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
+            my $heir_logic_names = $flow_into->{$branch_code};
+            $heir_logic_names    = [ $heir_logic_names ] unless(ref($heir_logic_names) eq 'ARRAY'); # force scalar into an arrayref
 
-            foreach my $heir (@$flow_into) {
-                my ($heir_logic_name, $branch_code) = (ref($heir) eq 'ARRAY') ? (@$heir, 1) : ($heir, 1);
-
+            foreach my $heir_logic_name (@$heir_logic_names) {
                 if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
                     $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
                     warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name\n";
