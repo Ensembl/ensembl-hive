@@ -478,20 +478,20 @@ sub synchronize_AnalysisStats {
   $analysisStats->failed_job_count(0);
   $analysisStats->num_required_workers(0);
 
-  my $sql = "SELECT status, count(*), semaphore_count>0 semaphored FROM analysis_job ".
-            "WHERE analysis_id=? GROUP BY status, semaphored";
+  my $sql = "SELECT status, count(*), semaphore_count FROM analysis_job ".
+            "WHERE analysis_id=? GROUP BY status, semaphore_count";
   my $sth = $self->prepare($sql);
   $sth->execute($analysisStats->analysis_id);
 
   my $hive_capacity = $analysisStats->hive_capacity;
 
-  while (my ($status, $count, $semaphored)=$sth->fetchrow_array()) {
+  while (my ($status, $count, $semaphore_count)=$sth->fetchrow_array()) {
 # print STDERR "$status - $count\n";
 
     my $total = $analysisStats->total_job_count();
     $analysisStats->total_job_count($total + $count);
 
-    if(($status eq 'READY') and !$semaphored) {
+    if(($status eq 'READY') and ($semaphore_count<=0)) {
       $analysisStats->unclaimed_job_count($count);
       my $numWorkers;
       if($analysisStats->batch_size > 0) {
