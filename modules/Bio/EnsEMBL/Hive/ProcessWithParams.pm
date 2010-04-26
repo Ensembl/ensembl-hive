@@ -109,6 +109,13 @@ sub _parse_meta {
     my $sth = $self->db->dbc()->prepare("SELECT meta_key, meta_value FROM meta ORDER BY meta_id");
     $sth->execute();
     while (my ($meta_key, $meta_value)=$sth->fetchrow_array()) {
+        if($meta_value=~/^'.*'$/
+        or $meta_value=~/^".*"$/
+        or $meta_value=~/^{.*}$/
+        or $meta_value=~/^[.*]$/) {
+
+            $meta_value = eval($meta_value);
+        }
         $meta_params_hash{$meta_key} = $meta_value;
     }
     $sth->finish();

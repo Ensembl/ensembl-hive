@@ -17,6 +17,14 @@ sub dbconn_2_url {
     return "mysql://$db_conn->{-user}:$db_conn->{-pass}\@$db_conn->{-host}:$db_conn->{-port}/$db_conn->{-dbname}";
 }
 
+sub dbconn_2_mysql {    # used by pipeline configuration files themselves
+    my ($db_conn, $with_db) = @_;
+
+    return "--host=$db_conn->{-host} --port=$db_conn->{-port} "
+          ."--user=$db_conn->{-user} --pass=$db_conn->{-pass} "
+          .($with_db ? "--database=$db_conn->{-dbname} " : '');
+}
+
 sub main {
 
     my $topup_flag  = 0;  # do not run initial scripts and only add new analyses+jobs (ignore the fetchable analyses)
@@ -57,7 +65,7 @@ sub main {
             if($topup_flag) {
                 $meta_container->delete_key($meta_key);
             }
-            $meta_container->store_key_value($meta_key, $meta_value);
+            $meta_container->store_key_value($meta_key, stringify($meta_value));
         }
 
         warn "Done.\n\n";
