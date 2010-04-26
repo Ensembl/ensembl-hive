@@ -50,9 +50,11 @@ our @EXPORT_OK = qw( stringify );
 sub stringify {
     my $structure = pop @_;
 
-    local $Data::Dumper::Indent   = 0;  # we want everything on one line
-    local $Data::Dumper::Terse    = 1;  # and we want it without dummy variable names
-    local $Data::Dumper::Sortkeys = 1;  # make stringification more deterministic
+    local $Data::Dumper::Indent    = 0;  # we want everything on one line
+    local $Data::Dumper::Terse     = 1;  # and we want it without dummy variable names
+    local $Data::Dumper::Sortkeys  = 1;  # make stringification more deterministic
+    local $Data::Dumper::Quotekeys = 1;  # conserve some space
+    local $Data::Dumper::Useqq     = 1;  # escape the \n and \t correctly
 
     return Dumper($structure);
 }
