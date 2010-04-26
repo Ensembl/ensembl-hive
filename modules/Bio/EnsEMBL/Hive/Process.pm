@@ -315,7 +315,7 @@ sub dataflow_output_id {
         # this tricky code is responsible for correct propagation of semaphores down the dataflow pipes:
     my $propagate_semaphore = not exists ($create_job_options->{'-semaphored_job_id'});     # CONVENTION: if zero is explicitly supplied, it is a request not to propagate
 
-        # However nothing is supplied, semaphored_job_id will be propagated from the parent job:
+        # However if nothing is supplied, semaphored_job_id will be propagated from the parent job:
     my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->input_job->semaphored_job_id();
 
         # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
