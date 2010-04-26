@@ -58,9 +58,16 @@ sub fetch_input {
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
             : die "Could not find the command defined in input_id(), param('sql') or param('did')";
 
-        #   Store the value with parameter substitutions for the actual execution:
+        # Perform parameter substitution:
         #
-    $self->param('sql', $self->param_substitute($sql));  
+    my @substituted_sqls = ();
+    foreach my $unsubst ((ref($sql) eq 'ARRAY') ? @$sql : ($sql) ) {
+        push @substituted_sqls, $self->param_substitute($unsubst);
+    }
+        
+        #   Store the substituted sql command array
+        #
+    $self->param('sqls', \@substituted_sqls);  
 
         # Use connection parameters to another database if supplied, otherwise use the current database as default:
         #
@@ -75,11 +82,13 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $dbc = $self->param('dbc');
-    my $sql = $self->param('sql');
+    my $dbc  = $self->param('dbc');
+    my $sqls = $self->param('sqls');
 
         # What would be a generic way of indicating an error in (My)SQL statement, that percolates through PerlDBI?
-    $dbc->do( $sql );
+    foreach my $sql (@$sqls) {
+        $dbc->do( $sql );
+    }
 
     return 1;
 }
