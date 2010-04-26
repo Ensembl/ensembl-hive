@@ -37,6 +37,7 @@ It supports three different modes:
 package Bio::EnsEMBL::Hive::RunnableDB::SqlCmd;
 
 use strict;
+use DBI;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
@@ -57,18 +58,28 @@ sub fetch_input {
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
             : die "Could not find the command defined in input_id(), param('sql') or param('did')";
 
-    #   Store the value with parameter substitutions for the actual execution:
-    #
+        #   Store the value with parameter substitutions for the actual execution:
+        #
     $self->param('sql', $self->param_substitute($sql));  
+
+        # Use connection parameters to another database if supplied, otherwise use the current database as default:
+        #
+    if(my $db_conn = $self->param('db_conn')) {
+
+        $self->param('dbc', DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
+    } else {
+        $self->param('dbc', $self->db->dbc );
+    }
 }
 
 sub run {
     my $self = shift;
 
+    my $dbc = $self->param('dbc');
     my $sql = $self->param('sql');
 
         # What would be a generic way of indicating an error in (My)SQL statement, that percolates through PerlDBI?
-    $self->db->dbc->do( $sql );
+    $dbc->do( $sql );
 
     return 1;
 }
