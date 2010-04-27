@@ -859,7 +859,7 @@ sub _pick_best_analysis_for_new_worker {
   foreach $stats (@$stats_list) {
     $self->safe_synchronize_AnalysisStats($stats);
 
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id = $rc_id)));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id == $rc_id)));
   }
 
   ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
