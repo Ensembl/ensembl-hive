@@ -4,10 +4,16 @@ INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'start',      
 INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'part_multiply',  'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply');
 INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'add_together',   'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether');
 
-    # link the analyses with control- and dataflow-rules:
-INSERT INTO analysis_ctrl_rule (condition_analysis_url, ctrled_analysis_id) VALUES ('start', (SELECT analysis_id FROM analysis WHERE logic_name='add_together'));
+# link the analyses with control- and dataflow-rules:
+
+    # 'all_together' waits for 'part_multiply':
 INSERT INTO analysis_ctrl_rule (condition_analysis_url, ctrled_analysis_id) VALUES ('part_multiply', (SELECT analysis_id FROM analysis WHERE logic_name='add_together'));
-INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url) VALUES ((SELECT analysis_id FROM analysis WHERE logic_name='start'), 'add_together');
+
+    # 'start' flows into a fan:
+INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code) VALUES ((SELECT analysis_id FROM analysis WHERE logic_name='start'), 'part_multiply', 2);
+
+    # 'start' flows into a funnel:
+INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code) VALUES ((SELECT analysis_id FROM analysis WHERE logic_name='start'), 'add_together', 1);
 
     # create a table for holding intermediate results (written by 'part_multiply' and read by 'add_together')
 CREATE TABLE intermediate_result (
