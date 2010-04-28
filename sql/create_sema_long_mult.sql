@@ -4,7 +4,14 @@ INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'start',      
 INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'part_multiply',  'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply');
 INSERT INTO analysis (created, logic_name, module) VALUES (NOW(), 'add_together',   'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether');
 
-# (no control- or dataflow rules anymore, pipeline is controlled via semaphores)
+# (no control rules anymore, jobs are controlled via semaphores)
+
+    # 'start' flows into a fan:
+INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code) VALUES ((SELECT analysis_id FROM analysis WHERE logic_name='start'), 'part_multiply', 2);
+
+    # 'start' flows into a funnel:
+INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code) VALUES ((SELECT analysis_id FROM analysis WHERE logic_name='start'), 'add_together', 1);
+
 
     # create a table for holding intermediate results (written by 'part_multiply' and read by 'add_together')
 CREATE TABLE intermediate_result (
