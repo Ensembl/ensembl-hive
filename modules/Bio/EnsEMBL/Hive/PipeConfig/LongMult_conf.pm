@@ -1,4 +1,4 @@
-## Configuration file for the long multiplication pipeline example (ver 2.0)
+## Configuration file for the long multiplication pipeline example
 
 package Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
 
@@ -25,11 +25,7 @@ sub default_options {
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db','-dbname')."'",
-
-            # standard eHive tables and procedures:
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sql',
+        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive table creation
 
             # additional tables needed for long multiplication pipeline's operation:
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'",
