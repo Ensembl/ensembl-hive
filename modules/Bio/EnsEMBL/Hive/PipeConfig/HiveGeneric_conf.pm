@@ -329,7 +329,12 @@ sub merge_into_options {
     while(my($key, $value) = each %$hash_from) {
         if(exists($hash_to->{$key})) {  # simply ignore the unused options
             if(ref($value) eq 'HASH') {
-                $subst_counter += $self->merge_into_options($hash_from->{$key}, $hash_to->{$key});
+                if(ref($hash_to->{$key}) eq 'HASH') {
+                    $subst_counter += $self->merge_into_options($hash_from->{$key}, $hash_to->{$key});
+                } else {
+                    $hash_to->{$key} = { %$value };
+                    $subst_counter += scalar(keys %$value);
+                }
             } elsif(completely_defined($value) and !completely_defined($hash_to->{$key})) {
                 $hash_to->{$key} = $value;
                 $subst_counter++;
