@@ -17,7 +17,7 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'generic_hive',
+        'pipeline_name' => 'hive_generic',
 
         'pipeline_db'   => {
             -host   => 'compara3',
