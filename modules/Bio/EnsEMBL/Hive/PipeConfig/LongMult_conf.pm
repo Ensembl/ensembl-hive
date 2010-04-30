@@ -11,14 +11,15 @@ sub default_options {
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
+        'pipeline_name' => 'long_mult',
+
         'pipeline_db' => {
             -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
-            -dbname => $ENV{USER}.'_long_mult_pipeline',
+            -pass   => $self->o('password'),
+            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
         },
-
-        'pipeline_name' => 'lmult',
     };
 }
 
