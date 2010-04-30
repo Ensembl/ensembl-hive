@@ -45,7 +45,7 @@ use warnings;
 use Data::Dumper;
 
 use Exporter 'import';
-our @EXPORT_OK = qw( stringify );
+our @EXPORT_OK = qw( stringify destringify );
 
 sub stringify {
     my $structure = pop @_;
@@ -57,6 +57,22 @@ sub stringify {
     local $Data::Dumper::Useqq     = 1;  # escape the \n and \t correctly
 
     return Dumper($structure);
+}
+
+sub destringify {       # eval if it seems to be a perl hash/array/string and leave intact otherwise
+    my $value = pop @_;
+
+    if($value) {
+        if($value=~/^'.*'$/
+        or $value=~/^".*"$/
+        or $value=~/^{.*}$/
+        or $value=~/^[.*]$/) {
+
+            $value = eval($value);
+        }
+    }
+
+    return $value;
 }
 
 1;

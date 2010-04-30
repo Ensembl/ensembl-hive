@@ -5,6 +5,7 @@ use warnings;
 use DBI;
 use Getopt::Long;
 
+use Bio::EnsEMBL::Hive::Utils 'destringify';
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
@@ -146,7 +147,10 @@ sub main {
     $queen->{'maximise_concurrency'} = 1 if ($self->{'maximise_concurrency'});
     $queen->{'verbose_stats'} = $self->{'verbose_stats'};
 
-    my $pipeline_name = $self->{'dba'}->get_MetaContainer->list_value_by_key("name")->[0];
+    my $pipeline_name = destringify(
+            $self->{'dba'}->get_MetaContainer->list_value_by_key("pipeline_name")->[0]
+         || $self->{'dba'}->get_MetaContainer->list_value_by_key("name")->[0]
+    );
 
     if($local) {
         $self->{'meadow'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->new();
