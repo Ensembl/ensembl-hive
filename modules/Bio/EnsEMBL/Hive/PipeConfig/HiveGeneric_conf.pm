@@ -295,8 +295,10 @@ sub run {
     my $url = $self->dbconn_2_url('pipeline_db');
 
     print "\n\n\tPlease run the following commands:\n\n";
-    print "  beekeeper.pl -url $url -sync\n";
-    print "  beekeeper.pl -url $url -loop\n";
+    print "  beekeeper.pl -url $url -sync\t\t# (synchronize the Hive - should always be done before [re]starting a pipeline)\n\n";
+    print "  beekeeper.pl -url $url -loop\t\t# (run the pipeline in automatic mode)\n";
+    print "(OR)\n";
+    print "  beekeeper.pl -url $url -run\t\t# (run one step of the pipeline - useful for debugging/learning)\n";
 }
 
 
