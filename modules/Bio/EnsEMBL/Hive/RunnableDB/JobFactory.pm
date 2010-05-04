@@ -31,7 +31,7 @@ whose count is automatically set to the number of fan jobs that it will be waiti
 package Bio::EnsEMBL::Hive::RunnableDB::JobFactory;
 
 use strict;
-
+use DBI;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
@@ -106,9 +106,15 @@ sub make_list_from_file {
 sub make_list_from_query {
     my ($self, $inputquery) = @_;
 
-    my @ids = ();
+    my $dbc;
+    if(my $db_conn = $self->param('db_conn')) {
+        $dbc = DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 });
+    } else {
+        $dbc = $self->db->dbc;
+    }
 
-    my $sth = $self->db->dbc()->prepare($inputquery);
+    my @ids = ();
+    my $sth = $dbc->prepare($inputquery);
     $sth->execute();
     while (my ($id)=$sth->fetchrow_array()) {
         push @ids, $id;
