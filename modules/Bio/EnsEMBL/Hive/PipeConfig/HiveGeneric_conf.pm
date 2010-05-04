@@ -80,7 +80,10 @@ sub o {                 # descends the option hash structure (vivifying all enco
     my $value = $self->{_pipe_option} ||= {};
 
     while(defined(my $option_syll = shift @_)) {
-        if(exists($value->{$option_syll})) {
+
+        if(exists($value->{$option_syll})
+        and ((ref($value->{$option_syll}) eq 'HASH') or completely_defined($value->{$option_syll}))
+        ) {
             $value = $value->{$option_syll};            # just descend one level
         } elsif(@_) {
             $value = $value->{$option_syll} = {};       # force intermediate level vivification
