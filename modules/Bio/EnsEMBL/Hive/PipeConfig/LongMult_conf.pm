@@ -4,29 +4,32 @@ package Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
     my ($self) = @_;
     return {
         'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
 
-        'pipeline_name' => 'long_mult',
+        'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_db' => {
+        'pipeline_db' => {                                  # connection parameters
             -host   => 'compara3',
             -port   => 3306,
             -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
+            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
+            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
+
+        'first_mult'    => '9650516169',                    # the actual numbers that will be multiplied must also be possible to specify from the command line
+        'second_mult'   =>  '327358788',
     };
 }
 
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive table creation
+        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
             # additional tables needed for long multiplication pipeline's operation:
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'",
@@ -41,8 +44,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start',
             -parameters => {},
             -input_ids => [
-                { 'a_multiplier' => '9650516169', 'b_multiplier' => '327358788' },
-                { 'a_multiplier' => '327358788', 'b_multiplier' => '9650516169' },
+                { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
+                { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
             ],
             -flow_into => {
                 2 => [ 'part_multiply' ],   # will create a fan of jobs
