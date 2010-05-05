@@ -208,8 +208,8 @@ sub run {
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $rc_id) =
-             rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity rc_id)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $rc_id) =
+             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance rc_id)], %$aha);
 
         if($topup_flag and $analysis_adaptor->fetch_by_logic_name($logic_name)) {
             warn "Skipping already existing analysis '$logic_name'\n";
@@ -225,21 +225,17 @@ sub run {
             -logic_name      => $logic_name,
             -module          => $module,
             -parameters      => stringify($parameters_hash),    # have to stringify it here, because Analysis code is external wrt Hive code
+            -program_file    => $program_file,
         );
 
         $analysis_adaptor->store($analysis);
 
         my $stats = $analysis->stats();
-        $stats->batch_size( $batch_size )       if(defined($batch_size));
-
-# ToDo: hive_capacity for some analyses is set to '-1' (i.e. "not limited")
-# Do we want this behaviour BY DEFAULT?
-        $stats->hive_capacity( $hive_capacity ) if(defined($hive_capacity));
-
-        $stats->rc_id( $rc_id ) if(defined($rc_id));
-
-            # some analyses will be waiting for human intervention in blocked state:
-        $stats->status($blocked ? 'BLOCKED' : 'READY');
+        $stats->batch_size( $batch_size )                       if(defined($batch_size));
+        $stats->hive_capacity( $hive_capacity )                 if(defined($hive_capacity));
+        $stats->failed_job_tolerance( $failed_job_tolerance )   if(defined($failed_job_tolerance));
+        $stats->rc_id( $rc_id )                                 if(defined($rc_id));
+        $stats->status($blocked ? 'BLOCKED' : 'READY');         #   (some analyses will be waiting for human intervention in blocked state)
         $stats->update();
 
             # now create the corresponding jobs (if there are any):
