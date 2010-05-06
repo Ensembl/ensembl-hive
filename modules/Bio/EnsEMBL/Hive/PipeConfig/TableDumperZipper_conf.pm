@@ -3,13 +3,13 @@
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::PipeConfig::DumpAndZipTables_conf
+  Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::DumpAndZipTables_conf -password <your_password> -source_dbname ncbi_taxonomy
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf -password <your_password> -source_dbname ncbi_taxonomy
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::DumpAndZipTables_conf -password <your_password> -source_dbname avilella_compara_homology_58 -only_tables 'protein_tree%' -with_schema 0
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf -password <your_password> -source_dbname avilella_compara_homology_58 -only_tables 'protein_tree%' -with_schema 0
 
 =head1 DESCRIPTION  
 
@@ -27,7 +27,7 @@
 
 =cut
 
-package Bio::EnsEMBL::Hive::PipeConfig::DumpAndZipTables_conf;
+package Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf;
 
 use strict;
 use warnings;

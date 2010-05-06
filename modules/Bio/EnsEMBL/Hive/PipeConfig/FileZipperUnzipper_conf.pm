@@ -3,13 +3,13 @@
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::PipeConfig::ZipUnzipFilesInDir_conf
+  Bio::EnsEMBL::Hive::PipeConfig::FileZipperUnzipper_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::ZipUnzipFilesInDir_conf -password <your_password> -directory $HOME/ncbi_taxonomy -unzip 1
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::FileZipperUnzipper_conf -password <your_password> -directory $HOME/ncbi_taxonomy -unzip 1
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::ZipUnzipFilesInDir_conf -password <your_password> -directory directory_with_huge_dumps -only_files '*.sql'
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::FileZipperUnzipper_conf -password <your_password> -directory directory_with_huge_dumps -only_files '*.sql'
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@
 
 =cut
 
-package Bio::EnsEMBL::Hive::PipeConfig::ZipUnzipFilesInDir_conf;
+package Bio::EnsEMBL::Hive::PipeConfig::FileZipperUnzipper_conf;
 
 use strict;
 use warnings;
