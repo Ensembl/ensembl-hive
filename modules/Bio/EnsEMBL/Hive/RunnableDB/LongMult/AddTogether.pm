@@ -1,13 +1,19 @@
+
 =pod 
 
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether
 
+=head1 SYNOPSIS
+
+Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
+to understand how this particular example pipeline is configured and ran.
+
 =head1 DESCRIPTION
 
 'LongMult::AddTogether' is the final step of the pipeline that, naturally, adds the products together
-and stores the result in 'final_result' database table;
+and stores the result in 'final_result' database table.
 
 =cut
 
@@ -16,6 +22,17 @@ package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
 use strict;
 
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+
+=head2 fetch_input
+
+    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
+                  Here all relevant partial products are fetched from the 'intermediate_result' table and stored in a hash for future use.
+
+    param('a_multiplier'):  The first long number (a string of digits - doesn't have to fit a register).
+
+    param('b_multiplier'):  The second long number (also a string of digits).
+
+=cut
 
 sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
@@ -34,9 +51,14 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
     $product_pair{0} = 0;
 
     $self->param('product_pair', \%product_pair);
-
-    return 1;
 }
+
+=head2 run
+
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
+                  The only thing we do here is make a call to the function that will add together the intermediate results.
+
+=cut
 
 sub run {   # call the function that will compute the stuff
     my $self = shift @_;
@@ -44,8 +66,17 @@ sub run {   # call the function that will compute the stuff
     my $b_multiplier = $self->param('b_multiplier') || die "'b_multiplier' is an obligatory parameter";
     my $product_pair = $self->param('product_pair');
 
-    $self->param('result', add_together($b_multiplier, $product_pair));
+    $self->param('result', _add_together($b_multiplier, $product_pair));
 }
+
+=head2 write_output
+
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
+                  Here we first store the result in the 'final_result' table,
+                  and then also dataflow both original multipliers and the result down the branch-1 (in case further analyses will have to deal with the result).
+
+=cut
+
 
 sub write_output {  # store and dataflow
     my $self = shift @_;
@@ -67,13 +98,15 @@ sub write_output {  # store and dataflow
         'b_multiplier' => $b_multiplier,
         'result'       => $result,
     }, 1);
-
-    return 1;
 }
 
-######################### do the maths ###############
+=head2 _add_together
 
-sub add_together {
+    Description: this is a private function (not a method) that adds all the products with a shift
+
+=cut
+
+sub _add_together {
     my ($b_multiplier, $product_pair) = @_;
 
     my @accu  = ();

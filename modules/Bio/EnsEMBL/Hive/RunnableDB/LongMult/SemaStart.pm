@@ -1,8 +1,14 @@
+
 =pod 
 
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::LongMult::SemaStart
+
+=head1 SYNOPSIS
+
+Please refer to Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf pipeline configuration file
+to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
 
@@ -23,13 +29,18 @@ use strict;
 
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
-sub fetch_input {   # this time we have nothing to fetch
-    my $self = shift @_;
+=head2 fetch_input
 
-    return 1;
-}
+    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
+                  Here the task of fetch_input() is to read in the two multipliers, split the second one into digits and create a set of input_ids that will be used later.
 
-sub run {   # following the 'divide and conquer' principle, out job is to create jobs:
+    param('a_multiplier'):  The first long number (a string of digits - doesn't have to fit a register).
+
+    param('b_multiplier'):  The second long number (also a string of digits).
+
+=cut
+
+sub fetch_input {
     my $self = shift @_;
 
     my $a_multiplier    = $self->param('a_multiplier')  || die "'a_multiplier' is an obligatory parameter";
@@ -48,6 +59,24 @@ sub run {   # following the 'divide and conquer' principle, out job is to create
     $self->param('output_ids', \@output_ids);
 }
 
+=head2 run
+
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
+                  Here we don't have any real work to do, just input and output, so run() remains empty.
+
+=cut
+
+sub run {
+}
+
+=head2 write_output
+
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
+                  Here we first dataflow the original task down branch-1 (create the semaphored "funnel job") - this yields $funnel_job_id,
+                  then "fan out" the partial multiplication tasks into branch-2, and pass the $funnel_job_id to all of them.
+
+=cut
+
 sub write_output {  # nothing to write out, but some dataflow to perform:
     my $self = shift @_;
 
@@ -58,8 +87,6 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
         # then we fan out into branch-2, and pass the $funnel_job_id to all of them
     my $fan_job_ids = $self->dataflow_output_id($output_ids, 2, { -semaphored_job_id => $funnel_job_id } );
-
-    return 1;
 }
 
 1;

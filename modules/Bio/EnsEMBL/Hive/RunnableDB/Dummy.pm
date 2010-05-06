@@ -37,8 +37,8 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 fetch_input
 
-    Title:    fetch_input
-    Function: Overrides the standard fetch_input() interface method so that nothing is done
+    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
+                  Here we simply override this method so that nothing is done.
 
 =cut
 
@@ -49,8 +49,8 @@ sub fetch_input {
 
 =head2 run
 
-    Title:    run
-    Function: Overrides the standard run() interface method so that nothing is done
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
+                  Here we simply override this method so that nothing is done.
 
 =cut
 
@@ -59,8 +59,8 @@ sub run {
 
 =head2 write_output
 
-    Title:    write_output
-    Function: Overrides the standard write_output() interface method so that nothing is done
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
+                  Here we simply override this method so that nothing is done.
 
 =cut
 
