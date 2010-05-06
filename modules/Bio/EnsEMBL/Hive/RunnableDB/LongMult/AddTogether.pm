@@ -47,17 +47,26 @@ sub run {   # call the function that will compute the stuff
     $self->param('result', add_together($b_multiplier, $product_pair));
 }
 
-sub write_output {  # store the final result
+sub write_output {  # store and dataflow
     my $self = shift @_;
 
+    my $a_multiplier = $self->param('a_multiplier');
+    my $b_multiplier = $self->param('b_multiplier');
+    my $result       = $self->param('result');
+
+        # store the result:
     my $sql = "REPLACE INTO final_result (a_multiplier, b_multiplier, result) VALUES (?, ?, ?) ";
     my $sth = $self->db->dbc->prepare($sql);
-    $sth->execute(
-        $self->param('a_multiplier'),
-        $self->param('b_multiplier'),
-        $self->param('result')
-    );
+    $sth->execute( $a_multiplier, $b_multiplier, $result );
     $sth->finish();
+
+        # In order to make it possible to extend the pipeline,
+        #   dataflow the multipliers together with the result:
+    $self->dataflow_output_id({
+        'a_multiplier' => $a_multiplier,
+        'b_multiplier' => $b_multiplier,
+        'result'       => $result,
+    }, 1);
 
     return 1;
 }
