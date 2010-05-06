@@ -1,7 +1,3 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
 
 =pod 
 
@@ -11,64 +7,64 @@ Bio::EnsEMBL::Hive::RunnableDB::Dummy
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Hive::RunnableDB::Dummy->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+and is ran by Workers during the execution of eHive pipelines.
+It is not generally supposed to be instantiated and used outside of this framework.
+
+Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+
+Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-This object is used as a place holder in the hive system.
-It does nothing, but is needed so that a Worker can grab
-a job, pass the input through to output, and create the
-next layer of jobs in the system.
+A job of 'Bio::EnsEMBL::Hive::RunnableDB::Dummy' analysis does not do any work by itself,
+but it benefits from the side-effects that are associated with having an analysis.
+
+For example, if a dataflow rule is linked to the analysis then
+every job that is created or flown into this analysis will be dataflown further according to this rule.
 
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
 =cut
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::Dummy;
 
 use strict;
+use base ('Bio::EnsEMBL::Hive::Process');
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
+=head2 fetch_input
 
+    Title:    fetch_input
+    Function: Overrides the standard fetch_input() interface method so that nothing is done
 
-##############################################################
-#
-# override inherited fetch_input, run, write_output methods
-# so that nothing is done
-#
-##############################################################
+=cut
 
 sub fetch_input {
   my $self = shift;
   $self->db->dbc->disconnect_when_inactive(0);
-  return 1;
 }
 
-sub run
-{
-  my $self = shift;
-  return 1;
+=head2 run
+
+    Title:    run
+    Function: Overrides the standard run() interface method so that nothing is done
+
+=cut
+
+sub run {
 }
+
+=head2 write_output
+
+    Title:    write_output
+    Function: Overrides the standard write_output() interface method so that nothing is done
+
+=cut
 
 sub write_output {
-  my $self = shift;
-  return 1;
 }
 
 1;
