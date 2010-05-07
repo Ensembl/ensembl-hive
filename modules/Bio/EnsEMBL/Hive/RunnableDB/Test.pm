@@ -1,7 +1,3 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
-# POD documentation - main docs before the code
 
 =pod 
 
@@ -11,255 +7,106 @@ Bio::EnsEMBL::Hive::RunnableDB::Test
 
 =head1 SYNOPSIS
 
-my $db      = Bio::EnsEMBL::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Hive::RunnableDB::Dummy->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->output();
-$repmask->write_output(); #writes to DB
+This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+and is ran by Workers during the execution of eHive pipelines.
+It is not generally supposed to be instantiated and used outside of this framework.
+
+Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+
+Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-This object is used to test failure of jobs in the hive system.
+This RunnableDB module is used to test failure of jobs in the hive system.
 
-It is intended for development purposes only!!
+It is intended for development/training purposes only.
 
-It parses the analysis.parameters and analysis_job.input_id as
-(string representing) hasrefs and extracts the divisor and the value.
-If the modulo (value % divisor) is 0, the job will fail.
+Available parameters:
+
+    param('value'):         is essentially your job's number.
+                            If you are intending to create 100 jobs, let the param('value') take consecutive values from 1 to 100.
+
+    param('divisor'):       defines the failure rate for this particular analysis. If the modulo (value % divisor) is 0, the job will fail.
+                            For example, if param('divisor')==5, jobs with 5, 10, 15, 20, 25,... param('value') will fail.
+
+    param('time_fetching'): is time in seconds that the job will spend sleeping in FETCH_INPUT state.
+
+    param('time_running'):  is time in seconds that the job will spend sleeping in RUN state.
+
+    param('time_writing'):  is time in seconds that the job will spend sleeping in WRITE_OUTPUT state.
 
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. 
-Internal methods are usually preceded with a _
-
 =cut
-
 
 
 package Bio::EnsEMBL::Hive::RunnableDB::Test;
 
 use strict;
 
-use Bio::EnsEMBL::Hive::Process;
-our @ISA = qw(Bio::EnsEMBL::Hive::Process);
-
+use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 =head2 fetch_input
 
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
+    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
+                  Here it only sets default values of parameters and sleeps for param('time_fetching').
 
 =cut
 
 sub fetch_input {
-  my $self = shift;
+    my $self = shift @_;
 
-  # Initialise values
-  $self->divisor(2);
-  $self->value(1);
-  $self->time_fetching(0);
-  $self->time_running(0);
-  $self->time_writting(0);
+    $self->param_init(
+        'value'         => 1,   # normally you generate a batch of jobs with different values of param('value')
+        'divisor'       => 2,   # but the same param('divisor') and see how every param('divisor')'s job will crash
 
-  # Read parameters and input
-  $self->get_params($self->parameters);
-  $self->get_params($self->input_id);
+        'time_fetching' => 0,   # how much time fetch_input()  will spend in sleeping state
+        'time_running'  => 0,   # how much time run()          will spend in sleeping state
+        'time_writing'  => 0,   # how much time write_output() will spend in sleeping state
+    );
 
-  # Sleep as required
-  sleep($self->time_fetching);
-
-  return 1;
+        # Sleep as required:
+    sleep($self->param('time_fetching'));
 }
-
 
 =head2 run
 
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
+                  Here it sleeps for param('time_running') and then decides whether to fail or succeed depending on param('value') and param('divisor').
 
 =cut
 
-sub run
-{
-  my $self = shift;
+sub run {
+    my $self = shift @_;
 
-  # Sleep as required
-  sleep($self->time_running);
+    my $value   = $self->param('value');
+    my $divisor = $self->param('divisor');
 
-  # Fail if modulus of $value and $divisor is 0
-  my $divisor = $self->divisor();
-  my $value = $self->value();
-  if (!$divisor or !defined($value)) {
-    die "Wrong parameters: divisor = $divisor and value = $value\n";
-  } elsif ($value % $divisor == 0) {
-    die "$value % $divisor is 0 => die!\n";
-  }
+        # Sleep as required:
+    sleep($self->param('time_running'));
 
-  return 1;
+    if(!$divisor or !$value) {
+        die "Wrong parameters: divisor = $divisor and value = $value\n";
+    } elsif ($value % $divisor == 0) {
+        die "$value % $divisor is 0 => die!\n";
+    }
 }
-
 
 =head2 write_output
 
-  Implementation of the Bio::EnsEMBL::Hive::Process interface
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
+                  Here it only sleeps for param('time_writing').
 
 =cut
 
 sub write_output {
-  my $self = shift;
+    my $self = shift @_;
 
-  # Sleep as required
-  sleep($self->time_writting);
-
-  return 1;
-}
-
-
-=head2 divisor
-
-  Arg [1]     : (optional) $divisor
-  Example     : $object->divisor($divisor);
-  Example     : $divisor = $object->divisor();
-  Description : Getter/setter for the divisor attribute
-  Returntype  : 
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub divisor {
-  my $self = shift;
-  if (@_) {
-    $self->{_divisor} = shift;
-  }
-  return $self->{_divisor};
-}
-
-
-=head2 value
-
-  Arg [1]     : (optional) $value
-  Example     : $object->value($value);
-  Example     : $value = $object->value();
-  Description : Getter/setter for the value attribute
-  Returntype  : 
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub value {
-  my $self = shift;
-  if (@_) {
-    $self->{_value} = shift;
-  }
-  return $self->{_value};
-}
-
-
-=head2 time_fetching
-
-  Arg [1]     : (optional) $time_fetching
-  Example     : $object->time_fetching($time_fetching);
-  Example     : $time_fetching = $object->time_fetching();
-  Description : Getter/setter for the time_fetching attribute
-  Returntype  : 
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub time_fetching {
-  my $self = shift;
-  if (@_) {
-    $self->{_time_fetching} = shift;
-  }
-  return $self->{_time_fetching};
-}
-
-
-=head2 time_running
-
-  Arg [1]     : (optional) $time_running
-  Example     : $object->time_running($time_running);
-  Example     : $time_running = $object->time_running();
-  Description : Getter/setter for the time_running attribute
-  Returntype  : 
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub time_running {
-  my $self = shift;
-  if (@_) {
-    $self->{_time_running} = shift;
-  }
-  return $self->{_time_running};
-}
-
-
-=head2 time_writting
-
-  Arg [1]     : (optional) $time_writting
-  Example     : $object->time_writting($time_writting);
-  Example     : $time_writting = $object->time_writting();
-  Description : Getter/setter for the time_writting attribute
-  Returntype  : 
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub time_writting {
-  my $self = shift;
-  if (@_) {
-    $self->{_time_writting} = shift;
-  }
-  return $self->{_time_writting};
-}
-
-
-=head2 get_params
-
-=cut
-
-sub get_params {
-  my $self         = shift;
-  my $param_string = shift;
-
-  return unless($param_string);
-#   print("parsing parameter string : ",$param_string,"\n");
-
-  my $params = eval($param_string);
-  return unless($params);
-
-  if(defined($params->{'divisor'})) {
-    $self->divisor($params->{'divisor'});
-  }
-  if(defined($params->{'value'})) {
-    $self->value($params->{'value'});
-  }
-  if(defined($params->{'time_fetching'})) {
-    $self->time_fetching($params->{'time_fetching'});
-  }
-  if(defined($params->{'time_running'})) {
-    $self->time_running($params->{'time_running'});
-  }
-  if(defined($params->{'time_writting'})) {
-    $self->time_writting($params->{'time_writting'});
-  }
+        # Sleep as required:
+    sleep($self->param('time_writing'));
 }
 
 1;
+
