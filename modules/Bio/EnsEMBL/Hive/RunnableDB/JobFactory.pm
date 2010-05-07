@@ -1,3 +1,4 @@
+
 =pod 
 
 =head1 NAME
@@ -88,10 +89,10 @@ sub run {
     my $inputquery      = $self->param('inputquery');
     my $inputcmd        = $self->param('inputcmd');
 
-    my $list = $inputlist
-        || ($inputfile  && $self->_make_list_from_file($inputfile))
-        || ($inputquery && $self->_make_list_from_query($inputquery))
-        || ($inputcmd   && $self->_make_list_from_cmd($inputcmd))
+    my $list = $self->param_substitute( $inputlist )
+        || ($inputfile  && $self->_make_list_from_file(  $self->param_substitute( $inputfile  ) ))
+        || ($inputquery && $self->_make_list_from_query( $self->param_substitute( $inputquery ) ))
+        || ($inputcmd   && $self->_make_list_from_cmd(   $self->param_substitute( $inputcmd   ) ))
         || die "range of values should be defined by setting 'inputlist', 'inputfile' or 'inputquery'";
 
     if($randomize) {
