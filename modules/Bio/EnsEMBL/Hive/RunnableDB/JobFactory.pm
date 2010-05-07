@@ -37,7 +37,6 @@ package Bio::EnsEMBL::Hive::RunnableDB::JobFactory;
 
 use strict;
 use DBI;
-use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 =head2 fetch_input
