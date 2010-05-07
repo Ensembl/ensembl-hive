@@ -120,7 +120,6 @@ sub new {
 
 sub fetch_input {
   my $self = shift;
-  return 1;
 }
 
 =head2 run
@@ -135,7 +134,6 @@ sub fetch_input {
 
 sub run {
   my $self = shift;
-  return 1;
 }
 
 =head2 write_output
@@ -149,7 +147,6 @@ sub run {
 
 sub write_output {
   my $self = shift;
-  return 1;
 }
 
 =head2 DESTROY
