@@ -77,8 +77,6 @@ sub run {
     print SENDMAIL "\n";
     print SENDMAIL "$text\n";
     close SENDMAIL;
-
-    return 1;
 }
 
 =head2 write_output
