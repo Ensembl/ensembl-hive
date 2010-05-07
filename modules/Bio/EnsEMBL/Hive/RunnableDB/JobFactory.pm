@@ -4,6 +4,8 @@
 
 Bio::EnsEMBL::Hive::RunnableDB::JobFactory
 
+=head1 SYNOPSIS
+
 This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
 and is ran by Workers during the execution of eHive pipelines.
 It is not generally supposed to be instantiated and used outside of this framework.
