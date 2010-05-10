@@ -99,8 +99,8 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 
     return '--host='.$self->o($db_conn,'-host').' '
           .'--port='.$self->o($db_conn,'-port').' '
-          .'--user='.$self->o($db_conn,'-user').' '
-          .'--pass='.$self->o($db_conn,'-pass').' '
+          .'--user="'.$self->o($db_conn,'-user').'" '
+          .'--pass="'.$self->o($db_conn,'-pass').'" '
           .($with_db ? ('--database='.$self->o($db_conn,'-dbname').' ') : '');
 }
 

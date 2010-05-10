@@ -79,10 +79,9 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'    => $self->o('source_db'),
                 'inputquery' => 'SHOW TABLES LIKE "'.$self->o('only_tables').'"',
-                'numeric'    => 0,
             },
             -input_ids => [
-                { 'input_id' => { 'table_name' => '$RangeStart' }, },
+                { 'input_id' => { 'table_name' => '#_range_start#' }, },
             ],
             -flow_into => {
                 2 => [ 'dumper_zipper' ],   # will create a fan of jobs

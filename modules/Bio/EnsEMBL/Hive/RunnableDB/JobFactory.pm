@@ -58,8 +58,6 @@ sub fetch_input {
 
     param('input_id'):  The template that will become the input_id of newly created jobs (Note: this is something entirely different from $self->input_id of the current JobFactory job).
 
-    param('numeric'):   A bit flag that indicates whether the expressions with '$RangeStart', '$RangeEnd' and '$RangeCount' are expected to be numeric/evaluatable or not.
-
     param('step'):      The requested size of the minibatch (1 by default). The real size may be smaller.
 
     param('randomize'): Shuffles the ids before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
@@ -80,7 +78,6 @@ sub run {
     my $self = shift @_;
 
     my $template_hash   = $self->param('input_id')      || die "'input_id' is an obligatory parameter";
-    my $numeric         = $self->param('numeric')       || 0;
     my $step            = $self->param('step')          || 1;
     my $randomize       = $self->param('randomize')     || 0;
 
@@ -99,7 +96,7 @@ sub run {
         _fisher_yates_shuffle_in_place($list);
     }
 
-    my $output_ids = $self->_split_list_into_ranges($template_hash, $numeric, $list, $step);
+    my $output_ids = $self->_split_list_into_ranges($template_hash, $list, $step);
     $self->param('output_ids', $output_ids);
 }
 
@@ -206,7 +203,7 @@ sub _make_list_from_cmd {
 =cut
 
 sub _split_list_into_ranges {
-    my ($self, $template_hash, $numeric, $list, $step) = @_;
+    my ($self, $template_hash, $list, $step) = @_;
 
     my @ranges = ();
 
@@ -226,37 +223,14 @@ sub _split_list_into_ranges {
             }
         }
 
-        push @ranges, $self->_create_one_range_hash($template_hash, $numeric, $range_start, $range_end, $range_count);
+            # pseudo-parameters that will be substituted in the template hash:
+        $self->param('_range_start', $range_start);
+        $self->param('_range_end',   $range_end);
+        $self->param('_range_count', $range_count);
+
+        push @ranges, $self->param_substitute($template_hash);
     }
     return \@ranges;
-}
-
-=head2 _create_one_range_hash
-    
-    Description: this is a private method that transforms one range into an input_id hash using the param('input_id') template
-
-=cut
-
-sub _create_one_range_hash {
-    my ($self, $template_hash, $numeric, $range_start, $range_end, $range_count) = @_;
-
-    my %range_hash = (); # has to be a fresh hash every time
-
-    while( my ($key,$value) = each %$template_hash) {
-
-            # evaluate Perl-expressions after substitutions:
-        if($value=~/\$Range/) {
-            $value=~s/\$RangeStart/$range_start/g; 
-            $value=~s/\$RangeEnd/$range_end/g; 
-            $value=~s/\$RangeCount/$range_count/g; 
-
-            if($numeric) {
-                $value = eval($value);
-            }
-        }
-        $range_hash{$key} = $value;
-    }
-    return \%range_hash;
 }
 
 =head2 _fisher_yates_shuffle_in_place

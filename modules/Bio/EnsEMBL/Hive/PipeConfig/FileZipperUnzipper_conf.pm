@@ -67,10 +67,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputcmd' => 'find '.$self->o('directory').' -type f -name "'.$self->o('only_files').'"',
-                'numeric'    => 0,
             },
             -input_ids => [
-                { 'input_id' => { 'filename' => '$RangeStart' }, },
+                { 'input_id' => { 'filename' => '#_range_start#' }, },
             ],
             -flow_into => {
                 2 => [ 'zipper_unzipper' ],   # will create a fan of jobs

@@ -132,20 +132,37 @@ sub param {
 
 =head2 param_substitute
 
-    Arg [1]    : string $string_with_templates
+    Arg [1]    : Perl structure $string_with_templates
 
     Description: Performs parameter substitution on strings that contain templates like " #param_name# followed by #another_param_name# " .
 
-    Returntype : string
+    Returntype : *another* Perl structure with matching topology (may be more complex as a result of substituting a substructure for a term)
 
 =cut
 
 sub param_substitute {
-    my ($self, $string) = @_;
+    my ($self, $structure) = @_;
 
-    $string=~s/(?:#(\w+?)#)/$self->param($1)/eg;
+    my $type = ref($structure);
 
-    return $string;
+    if(!$type) {
+         $structure=~s/(?:#(\w+?)#)/$self->param($1)/eg;
+        return $structure;
+    } elsif($type eq 'ARRAY') {
+        my @substituted_array = ();
+        foreach my $element (@$structure) {
+            push @substituted_array, $self->param_substitute($element);
+        }
+        return \@substituted_array;
+    } elsif($type eq 'HASH') {
+        my %substituted_hash = ();
+        while(my($key,$value) = each %$structure) {
+            $substituted_hash{$self->param_substitute($key)} = $self->param_substitute($value);
+        }
+        return \%substituted_hash;
+    } else {
+        die "Could not substitute parameters in $structure";
+    }
 }
 
 #--------------------------------------------[private methods]----------------------------------------------
