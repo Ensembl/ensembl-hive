@@ -17,6 +17,52 @@ Summary:
   the graphs but could be adapted more generally.
 
 
+11 May, 2010 : Leo Gordon
+
+* We finally have a universal framework for commandline-configurable pipelines' setup/initialization.
+    Each pipeline is defined by a Bio::EnsEMBL::Hive::PipeConfig module
+    that derives from Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf .
+    Compara pipelines derive from Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf .
+    These configuration modules are driven by ensembl-hive/scripts/init_pipeline.pl script.
+
+    Having set up what is an 'option' in your config file, you can then supply values for it
+    from the command line. Option interdependency rules are also supported to a certain extent,
+    so you can supply *some* options, and rely on the rules to compute the rest.
+
+* Several example PipeConfig files have been written to show how to build pipelines both 'standard blocks'
+    (SystemCmd, SqlCmd, JobFactory, Dummy, etc) and from RunnableDBs written specifically for the task
+    (components of LongMult pipeline).
+
+* Both eHive RunnableDB::* and PipeConfig::* modules have been POD-documented.
+
+* A new 'input_id_template' feature has been added to the dataflow mechanism to allow for more flexibility
+    when integrating external scripts or unsupported software into eHive pipelines.
+    You can now dataflow from pretty much anything, even if the Runnable did not support dataflow natively.
+    The corresponding schema patch is in ensembl-hive/sql
+
+* pipeline-wide parameters (kept in 'meta' table) no longer have to be scalar.
+    Feel free to use arrays or hashes if you need them. init_pipeline.pl also supports multilevel options.
+
+* SqlCmd now has a concept of 'sessions': you can supply several queries in a list that will be executed
+    one after another. If a query creates a temporary table, all the following ones down the list
+    will be able to use it.
+
+* SqlCmd can run queries against any database - not necessarily the eHive one. You have to supply a hashref
+    of connection parameters via $self->param('db_conn') to make it work. It still runs against the eHive
+    database by default.
+
+* JobFactory now supports 4 sources: inputlist, inputfile, inputquery and inputcmd.
+    *All* of them now support deep param_substitution. Enjoy.
+
+* NB! JobFactory's substituted parameter syntax changed:
+    it no longer understands '$RangeStart', '$RangeEnd' and '$RangeCount'.
+    But it understands '#_range_start#', '#_range_end#' and '#_range_count#' - should be pretty easy to fix.
+
+* several smaller bug fixes and optimizations of the code have also been done.
+    A couple of utility methods have moved places, but it looks like they were mostly used internally. 
+    Shout if you have lost anything and we'll try to find it together.
+
+
 26 March, 2010 : Leo Gordon
 
 * branch_code column in analysis_job table is unnecessary and was removed
