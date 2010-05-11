@@ -1,4 +1,45 @@
-## Generic configuration module for all Hive pipelines with loader functionality (all other Hive pipeline config modules should inherit from it)
+
+=pod 
+
+=head1 NAME
+
+package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
+
+=head1 SYNOPSIS
+
+    # Example 1: specifying only the mandatory option:
+init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <mypass>
+
+    # Example 2: specifying the mandatory options as well as overriding some defaults:
+init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -ensembl_cvs_root_dir ~/ensembl_main -pipeline_db -host <myhost> -pipeline_db -dbname <mydbname> -password <mypass>
+
+=head1 DESCRIPTION
+
+Generic configuration module for all Hive pipelines with loader functionality.
+All other Hive PipeConfig modules should inherit from this module and will probably need to redefine some or all of the following interface methods:
+
+    * default_options:              returns a hash of (possibly multilevel) defaults for the options on which depend the rest of the configuration
+
+    * pipeline_create_commands:     returns a list of strings that will be executed as system commands needed to create and set up the pipeline database
+
+    * pipeline_wide_parameters:     returns a hash of pipeline-wide parameter names and their values
+
+    * resource_classes:             returns a hash of resource class definitions
+
+    * pipeline_analyses:            returns a list of hash structures that define analysis objects bundled with definitions of corresponding jobs, rules and resources
+
+When defining anything except the keys of default_options() a call to $self->o('myoption') can be used.
+This call means "substitute this call for the value of 'myoption' at the time of configuring the pipeline".
+All option names mentioned in $self->o() calls within the five interface methods above can be given non-default values from the command line.
+
+Please make sure you have studied the pipeline configuraton examples in Bio::EnsEMBL::Hive::PipeConfig before creating your own PipeConfig modules.
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
+
 
 package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
@@ -11,6 +52,13 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
+
+=head2 default_options
+
+    Description : Interface method that should return a hash of option_name->default_option_value pairs.
+                  Please see existing PipeConfig modules for examples.
+
+=cut
 
 sub default_options {
     my ($self) = @_;
@@ -29,6 +77,13 @@ sub default_options {
     };
 }
 
+=head2 pipeline_create_commands
+
+    Description : Interface method that should return a list of command lines to be run in order to create and set up the pipeline database.
+                  Please see existing PipeConfig modules for examples.
+
+=cut
+
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
@@ -40,12 +95,27 @@ sub pipeline_create_commands {
     ];
 }
 
+=head2 pipeline_wide_parameters
+
+    Description : Interface method that should return a hash of pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
+                  The value doesn't have to be a scalar, can be any Perl structure now (will be stringified and de-stringified automagically).
+                  Please see existing PipeConfig modules for examples.
+
+=cut
+
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
         'pipeline_name'  => $self->o('pipeline_name'),       # name the pipeline to differentiate the submitted processes
     };
 }
+
+=head2 resource_classes
+
+    Description : Interface method that should return a hash of resource_description_id->resource_description_hash.
+                  Please see existing PipeConfig modules for examples.
+
+=cut
 
 sub resource_classes {
     my ($self) = @_;
@@ -54,6 +124,13 @@ sub resource_classes {
         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
     };
 }
+
+=head2 pipeline_analyses
+
+    Description : Interface method that should return a list of hashes that define analysis bundled with corresponding jobs, dataflow and analysis_ctrl rules and resource_id.
+                  Please see existing PipeConfig modules for examples.
+
+=cut
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -66,6 +143,13 @@ sub pipeline_analyses {
 
 my $undef_const = '-=[UnDeFiNeD_VaLuE]=-';  # we don't use undef, as it cannot be detected as a part of a string
 
+=head2 new
+
+    Description : Just a trivial constructor for this type of objects.
+    Caller      : init_pipeline.pl or any other script that will drive this module.
+
+=cut
+
 sub new {
     my ($class) = @_;
 
@@ -73,6 +157,13 @@ sub new {
 
     return $self;
 }
+
+=head2 o
+
+    Description : This is the method you call in the interface methods when you need to substitute an option: $self->o('password') .
+                  To reach down several levels of a multilevel option (such as $self->('pipeline_db') ) just list the keys down the desired path: $self->o('pipeline', '-user') .
+
+=cut
 
 sub o {                 # descends the option hash structure (vivifying all encountered nodes) and returns the value if found
     my $self = shift @_;
@@ -82,7 +173,7 @@ sub o {                 # descends the option hash structure (vivifying all enco
     while(defined(my $option_syll = shift @_)) {
 
         if(exists($value->{$option_syll})
-        and ((ref($value->{$option_syll}) eq 'HASH') or completely_defined($value->{$option_syll}))
+        and ((ref($value->{$option_syll}) eq 'HASH') or _completely_defined($value->{$option_syll}))
         ) {
             $value = $value->{$option_syll};            # just descend one level
         } elsif(@_) {
@@ -94,6 +185,12 @@ sub o {                 # descends the option hash structure (vivifying all enco
     return $value;
 }
 
+=head2 dbconn_2_mysql
+
+    Description : A convenience method used to stringify a connection-parameters hash into a parameter string that both mysql and beekeeper.pl can understand
+
+=cut
+
 sub dbconn_2_mysql {    # will save you a lot of typing
     my ($self, $db_conn, $with_db) = @_;
 
@@ -104,11 +201,30 @@ sub dbconn_2_mysql {    # will save you a lot of typing
           .($with_db ? ('--database='.$self->o($db_conn,'-dbname').' ') : '');
 }
 
+=head2 dbconn_2_url
+
+    Description :  A convenience method used to stringify a connection-parameters hash into a 'url' that beekeeper.pl will undestand
+
+=cut
+
 sub dbconn_2_url {
     my ($self, $db_conn) = @_;
 
     return 'mysql://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
 }
+
+=head2 process_options
+
+    Description : The method that does all the parameter parsing magic.
+                  It is two-pass through the interface methods: first pass collects the options, second is intelligent substitution.
+
+    Caller      : init_pipeline.pl or any other script that will drive this module.
+
+    Note        : You can override parsing the command line bit by providing a hash as the argument to this method.
+                  This hash should contain definitions of all the parameters you would otherwise be providing from the command line.
+                  Useful if you are creating batches of hive pipelines using a script.
+
+=cut
 
 sub process_options {
     my $self            = shift @_;
@@ -117,20 +233,21 @@ sub process_options {
     $self->default_options();
     $self->pipeline_create_commands();
     $self->pipeline_wide_parameters();
+    $self->resource_classes();
     $self->pipeline_analyses();
 
         # you can override parsing of commandline options if creating pipelines by a script - just provide the overriding hash
-    my $cmdline_options = $self->{_cmdline_options} = shift @_ || $self->load_cmdline_options();
+    my $cmdline_options = $self->{_cmdline_options} = shift @_ || $self->_load_cmdline_options();
 
     print "\nPipeline: ".ref($self)."\n";
 
     if($cmdline_options->{'help'}) {
 
-        my $all_needed_options = $self->hash_undefs();
+        my $all_needed_options = $self->_hash_undefs();
 
-        $self->saturated_merge_defaults_into_options();
+        $self->_saturated_merge_defaults_into_options();
 
-        my $mandatory_options = $self->hash_undefs();
+        my $mandatory_options = $self->_hash_undefs();
 
         print "Available options:\n\n";
         foreach my $key (sort keys %$all_needed_options) {
@@ -141,11 +258,11 @@ sub process_options {
 
     } else {
 
-        $self->merge_into_options($cmdline_options);
+        $self->_merge_into_options($cmdline_options);
 
-        $self->saturated_merge_defaults_into_options();
+        $self->_saturated_merge_defaults_into_options();
 
-        my $undefined_options = $self->hash_undefs();
+        my $undefined_options = $self->_hash_undefs();
 
         if(scalar(keys(%$undefined_options))) {
             print "Undefined options:\n\n";
@@ -157,6 +274,14 @@ sub process_options {
     }
     # by this point we have either exited or options are good
 }
+
+=head2 run
+
+    Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.
+
+    Caller      : init_pipeline.pl or any other script that will drive this module.
+
+=cut
 
 sub run {
     my $self       = shift @_;
@@ -303,11 +428,23 @@ sub run {
 
 # -------------------------------[the rest are dirty implementation details]-------------------------------------
 
-sub completely_defined {    # NB: not a method
+=head2 _completely_defined
+
+    Description : a private function (not a method) that checks whether a certain string is clean from undefined options
+
+=cut
+
+sub _completely_defined {
     return (index(shift @_, $undef_const) == ($[-1) );  # i.e. $undef_const is not a substring
 }
 
-sub load_cmdline_options {
+=head2 _load_cmdline_options
+
+    Description : a private method that deals with parsing of the command line (currently it drives GetOptions that has some limitations)
+
+=cut
+
+sub _load_cmdline_options {
     my $self      = shift @_;
 
     my %cmdline_options = ();
@@ -320,7 +457,13 @@ sub load_cmdline_options {
     return \%cmdline_options;
 }
 
-sub merge_into_options {
+=head2 _merge_into_options
+
+    Description : a private method to merge one options-containing structure into another
+
+=cut
+
+sub _merge_into_options {
     my $self      = shift @_;
     my $hash_from = shift @_;
     my $hash_to   = shift @_ || $self->o;
@@ -331,12 +474,12 @@ sub merge_into_options {
         if(exists($hash_to->{$key})) {  # simply ignore the unused options
             if(ref($value) eq 'HASH') {
                 if(ref($hash_to->{$key}) eq 'HASH') {
-                    $subst_counter += $self->merge_into_options($hash_from->{$key}, $hash_to->{$key});
+                    $subst_counter += $self->_merge_into_options($hash_from->{$key}, $hash_to->{$key});
                 } else {
                     $hash_to->{$key} = { %$value };
                     $subst_counter += scalar(keys %$value);
                 }
-            } elsif(completely_defined($value) and !completely_defined($hash_to->{$key})) {
+            } elsif(_completely_defined($value) and !_completely_defined($hash_to->{$key})) {
                 $hash_to->{$key} = $value;
                 $subst_counter++;
             }
@@ -345,14 +488,28 @@ sub merge_into_options {
     return $subst_counter;
 }
 
-sub saturated_merge_defaults_into_options {
+=head2 _saturated_merge_defaults_into_options
+
+    Description : a private method to merge defaults into options as many times as required to resolve the dependencies.
+                  Use with caution, as it doesn't check for loops!
+
+=cut
+
+sub _saturated_merge_defaults_into_options {
     my $self      = shift @_;
 
         # Note: every time the $self->default_options() has to be called afresh, do not cache!
-    while(my $res = $self->merge_into_options($self->default_options)) { }
+    while(my $res = $self->_merge_into_options($self->default_options)) { }
 }
 
-sub hash_undefs {
+=head2 _hash_undefs
+
+    Description : a private method that collects all the options that are undefined at the moment
+                  (used at different stages to find 'all_options', 'mandatory_options' and 'undefined_options').
+
+=cut
+
+sub _hash_undefs {
     my $self      = shift @_;
     my $hash_to   = shift @_ || {};
     my $hash_from = shift @_ || $self->o;
@@ -362,8 +519,8 @@ sub hash_undefs {
         my $new_prefix = $prefix ? $prefix.' -> '.$key : $key;
 
         if(ref($value) eq 'HASH') { # go deeper
-            $self->hash_undefs($hash_to, $value, $new_prefix);
-        } elsif(!completely_defined($value)) {
+            $self->_hash_undefs($hash_to, $value, $new_prefix);
+        } elsif(!_completely_defined($value)) {
             $hash_to->{$new_prefix} = 1;
         }
     }

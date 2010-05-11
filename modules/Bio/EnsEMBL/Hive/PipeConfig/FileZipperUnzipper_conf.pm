@@ -17,7 +17,7 @@
 
     Analysis_1: JobFactory.pm is used to turn the list of files in a given directory into jobs
 
-    these jobs are sent down the branch #2 into the second analysis
+        these jobs are sent down the branch #2 into the second analysis
 
     Analysis_2: SystemCmd.pm is used to run these compression/decompression jobs in parallel.
 
@@ -31,7 +31,22 @@ package Bio::EnsEMBL::Hive::PipeConfig::FileZipperUnzipper_conf;
 
 use strict;
 use warnings;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+
+=head2 default_options
+
+    Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
+                  In addition to the standard things it defines three options:
+                    o('unzip')              controls whether the files will be zipped or unzipper (zipped by default)
+                    o('only_files')         defines which files in the directory will be (un)zipped
+                    o('zipping_capacicy')   defines how many files can be zipped in parallel
+                
+                  There are rules dependent on two options that do not have defaults (this makes them mandatory):
+                    o('password')           your read-write password for creation and maintenance of the hive database
+                    o('directory')          name of the directory where the files are to be (un)zipped
+
+=cut
 
 sub default_options {
     my ($self) = @_;
@@ -48,10 +63,18 @@ sub default_options {
             -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
-        'unzip'         => 0,                                       # set to '1' to switch to decompression
-        'only_files'    => '*',                                     # use '*.sql*' to only (un)zip these files
+        'unzip'             => 0,                                   # set to '1' to switch to decompression
+        'only_files'        => '*',                                 # use '*.sql*' to only (un)zip these files
+        'zipping_capacity'  => 10,                                  # how many files can be (un)zipped in parallel
     };
 }
+
+=head2 pipeline_create_commands
+
+    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
+                  It is just the standard stuff, so we could have as well omitted this method altogether.
+
+=cut
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -59,6 +82,18 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
     ];
 }
+
+=head2 pipeline_analyses
+
+    Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
+                  Here it defines two analyses:
+
+                    * 'get_files'  generates a list of files whose names match the pattern o('only_files')
+                      Each job of this analysis will dataflow (create jobs) via branch #2 into 'zipper_unzipper' analysis.
+
+                    * 'zipper_unzipper'   actually performs the (un)zipping of the files in parallel
+
+=cut
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -81,7 +116,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'cmd'       => 'gzip '.($self->o('unzip')?'-d ':'').'#filename#',
             },
-            -hive_capacity => 10,       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => $self->o('zipping_capacity'),   # allow several workers to perform identical tasks in parallel
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'get_tables' jobs above)
             ],
