@@ -39,12 +39,12 @@ package Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use strict;
 use Carp;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 =head2 fetch_from_analysis_id_branch_code
@@ -55,7 +55,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
                and returns all such rules in a list (by reference)
   Returntype : reference to list of Bio::EnsEMBL::Hive::DataflowRule objects
   Exceptions : none
-  Caller     : Bio::EnsEMBL::Hive::Queen::flow_output_job
+  Caller     : Bio::EnsEMBL::Hive::Process::dataflow_output_id
 
 =cut
 
@@ -84,32 +84,30 @@ sub fetch_from_analysis_id_branch_code {
 sub store {
   my ( $self, $rule ) = @_;
 
-  #print("\nDataflowRuleAdaptor->store()\n");
   my $dataflow_rule_id;
   my $newly_inserted_rule = 0;
   
-  my $sth = $self->prepare( q{INSERT ignore INTO dataflow_rule
-       (from_analysis_id, to_analysis_url, branch_code) VALUES (?,?,?) } );
-  my $rtnCode = $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code);
+  my $sth = $self->prepare( q{INSERT IGNORE INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code, input_id_template) VALUES (?,?,?,?) } );
+
+  my $template = ref($rule->input_id_template) ? stringify($rule->input_id_template) : $rule->input_id_template;
+
+  my $rtnCode = $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code, $template);
   if($rtnCode and $rtnCode != 0E0) {
     $dataflow_rule_id = $sth->{'mysql_insertid'};
     $sth->finish();
     $rule->dbID($dataflow_rule_id);
     $newly_inserted_rule = 1;
-    #print("  stored with dbID = $dataflow_rule_id\n");
   } else {
-    #print("  already inserted -> need to get dbID\n");
     $sth->finish();
     $sth = $self->prepare(q{SELECT dataflow_rule_id FROM dataflow_rule WHERE
-         from_analysis_id = ? AND to_analysis_url = ? } );
-    $sth->execute($rule->from_analysis_id, $rule->to_analysis_url);
+         from_analysis_id = ? AND to_analysis_url = ? AND branch_code = ?} );
+    $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code);
     $sth->bind_columns(\$dataflow_rule_id);
     if($sth->fetch()) {
       $rule->dbID($dataflow_rule_id);
     }
     $sth->finish;
   }
-  #print("  dataflow_rule_id = '".$rule->dbID."'\n");
   $rule->adaptor( $self );
   return $newly_inserted_rule;
 }
@@ -141,26 +139,29 @@ sub remove {
 =head2 create_rule
 
   Title   : create_rule
-  Usage   : $self->create_rule( $from_analysis, $to_analysis );
+  Usage   : $self->create_rule( $from_analysis, $to_analysis, $branch_code );
   Function: Creates and stores a new rule in the DB.
   Returns : Bio::EnsEMBL::Hive::DataflowRule
   Args[1] : Bio::EnsEMBL::Analysis $from_analysis
-  Args[1] : Bio::EnsEMBL::Analysis $to_analysis
-  Args[1] : (optional) int $branch_code
+  Args[2] : Bio::EnsEMBL::Analysis $to_analysis
+  Args[3] : (optional) int $branch_code
+  Args[4] : (optional) (Perl structure or string) $input_id_template
 
 =cut
 
 sub create_rule {
-  my ($self, $from_analysis, $to_analysis, $branch_code) = @_;
+    my ($self, $from_analysis, $to_analysis, $branch_code, $input_id_template) = @_;
 
-  return unless($from_analysis and $to_analysis);
-  
-  my $rule = Bio::EnsEMBL::Hive::DataflowRule->new();
-  $rule->from_analysis($from_analysis);
-  $rule->to_analysis($to_analysis);
-  $rule->branch_code($branch_code) if(defined($branch_code));
-  
-  return $self->store($rule);
+    return unless($from_analysis and $to_analysis);
+
+    my $rule = Bio::EnsEMBL::Hive::DataflowRule->new(
+        -from_analysis      =>  $from_analysis,
+        -to_analysis        =>  $to_analysis,
+        -branch_code        =>  $branch_code,
+        -input_id_template  =>  $input_id_template,
+    );
+
+    return $self->store($rule);
 }
 
 ############################
@@ -186,6 +187,7 @@ sub _columns {
              r.from_analysis_id
              r.to_analysis_url
              r.branch_code
+             r.input_id_template
             );
 }
 
@@ -194,27 +196,28 @@ sub _objs_from_sth {
   my ($self, $sth) = @_;
   my @rules = ();
 
-  my ($dataflow_rule_id, $from_analysis_id, $to_analysis_url, $branch_code);
-  $sth->bind_columns(\$dataflow_rule_id, \$from_analysis_id, \$to_analysis_url, \$branch_code);
+  my ($dataflow_rule_id, $from_analysis_id, $to_analysis_url, $branch_code, $input_id_template);
+  $sth->bind_columns(\$dataflow_rule_id, \$from_analysis_id, \$to_analysis_url, \$branch_code, \$input_id_template);
 
   while ($sth->fetch()) {
-    my $rule = Bio::EnsEMBL::Hive::DataflowRule->new;
-    $rule->adaptor($self);
-    $rule->dbID($dataflow_rule_id);
-    $rule->from_analysis_id($from_analysis_id);
-    $rule->to_analysis_url($to_analysis_url);
-    $rule->branch_code($branch_code);
+    my $rule = Bio::EnsEMBL::Hive::DataflowRule->new(
+        -dbID               =>  $dataflow_rule_id,
+        -adaptor            =>  $self,
+
+        -from_analysis_id   =>  $from_analysis_id,
+        -to_analysis_url    =>  $to_analysis_url,
+        -branch_code        =>  $branch_code,
+        -input_id_template  =>  $input_id_template,
+    );
     push @rules, $rule;
   }
   return \@rules;
 }
 
-
 sub _default_where_clause {
   my $self = shift;
   return '';
 }
-
 
 sub _final_clause {
   my $self = shift;
@@ -241,7 +244,7 @@ sub _final_clause {
   
 =cut
 
-sub fetch_by_dbID{
+sub fetch_by_dbID {
   my ($self,$id) = @_;
 
   unless(defined $id) {
@@ -276,7 +279,6 @@ sub fetch_all {
   my $self = shift;
   return $self->_generic_fetch();
 }
-
 
 sub _generic_fetch {
   my ($self, $constraint, $join) = @_;
@@ -330,7 +332,6 @@ sub _generic_fetch {
 
   return $self->_objs_from_sth($sth);
 }
-
 
 1;
 

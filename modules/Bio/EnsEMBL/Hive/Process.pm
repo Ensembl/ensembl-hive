@@ -323,8 +323,22 @@ sub dataflow_output_id {
     my $rules       = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis->dbID, $branch_code);
     foreach my $rule (@{$rules}) {
         foreach my $output_id (@$output_ids) {
+
+            my $this_output_id;
+            my $template = $rule->input_id_template();
+
+            if(defined($template)) {
+                if($self->can('param_substitute')) {
+                    $this_output_id = $self->param_substitute($template);
+                } else {
+                    die "In order to use input_id_template your RunnableDB has to be derived from Bio::EnsEMBL::Hive::ProcessWithParams\n";
+                }
+            } else {
+                $this_output_id = $output_id;
+            }
+
             if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                -input_id       => $output_id,
+                -input_id       => $this_output_id,
                 -analysis       => $rule->to_analysis,
                 -input_job_id   => $self->input_job->dbID,  # creator_job's id
                 %$create_job_options

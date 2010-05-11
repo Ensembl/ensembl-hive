@@ -402,13 +402,17 @@ sub run {
         $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
         foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
-            my $heir_logic_names = $flow_into->{$branch_code};
-            $heir_logic_names    = [ $heir_logic_names ] unless(ref($heir_logic_names) eq 'ARRAY'); # force scalar into an arrayref
+            my $heirs = $flow_into->{$branch_code};
 
-            foreach my $heir_logic_name (@$heir_logic_names) {
+            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
+
+            $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
+
+            while(my ($heir_logic_name, $input_id_template) = each %$heirs) {
                 if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
-                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code);
-                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name\n";
+                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code, $input_id_template);
+                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name"
+                        .($input_id_template ? " WITH TEMPLATE: $input_id_template" : '')."\n";
                 } else {
                     die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
                 }

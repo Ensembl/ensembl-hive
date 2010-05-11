@@ -54,15 +54,17 @@ CREATE TABLE hive (
 --   from_analysis_id     - foreign key to analysis table analysis_id
 --   to_analysis_url      - foreign key to net distributed analysis logic_name reference
 --   branch_code          - joined to analysis_job.branch_code to allow branching
+--   input_id_template    - a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 
 CREATE TABLE dataflow_rule (
   dataflow_rule_id    int(10) unsigned not null auto_increment,
   from_analysis_id    int(10) unsigned NOT NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
+  input_id_template   TEXT DEFAULT NULL,
 
   PRIMARY KEY (dataflow_rule_id),
-  UNIQUE (from_analysis_id, to_analysis_url)
+  UNIQUE KEY (from_analysis_id, to_analysis_url, branch_code)
 );
 
 
@@ -388,5 +390,5 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
-INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "57");
+INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "58");
 

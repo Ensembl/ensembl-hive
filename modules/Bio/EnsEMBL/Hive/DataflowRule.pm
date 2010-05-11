@@ -11,28 +11,37 @@
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::DataflowRule
+    Bio::EnsEMBL::Hive::DataflowRule
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
-  Needed a robust and simpler rule table
-  where Analyses in the pipeline can robustly define
-  new analyses and rules.  New design has a single table where a 'rule'
-  is a simple link from one analysis to another.
-  Extended from design of SimpleRule concept to allow the 'to' analysis to
-  be specified with a network savy URL like
-  mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
+    A data container object (methods are intelligent getters/setters) that corresponds to a row stored in 'dataflow_rule' table:
+
+    CREATE TABLE dataflow_rule (
+        dataflow_rule_id    int(10) unsigned not null auto_increment,
+        from_analysis_id    int(10) unsigned NOT NULL,
+        to_analysis_url     varchar(255) default '' NOT NULL,
+        branch_code         int(10) default 1 NOT NULL,
+        input_id_template   TEXT DEFAULT NULL,
+
+        PRIMARY KEY (dataflow_rule_id),
+        UNIQUE (from_analysis_id, to_analysis_url)
+    );
+
+    A dataflow rule is activated when a Bio::EnsEMBL::Hive::Process::dataflow_output_id is called at any moment during a RunnableDB's execution.
+    The current RunnableDB's analysis ($from_analysis) and the requested $branch_code (1 by default) define the entry conditions,
+    and whatever rules match these conditions will generate new jobs with input_ids specified in the dataflow_output_id() call.
+    If input_id_template happens to contain a non-NULL value, it will be used to generate the corresponding intput_id instead.
+
+    Jessica's original remark on the structure of to_analysis_url:
+        Extended from design of SimpleRule concept to allow the 'to' analysis to be specified with a network savy URL like
+        mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
 
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
-
-=head1 APPENDIX
-
-  The rest of the documentation details each of the object methods.
-  Internal methods are usually preceded with a _
 
 =cut
 
@@ -40,73 +49,105 @@
 package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::URLFactory;
 
+=head2 new
 
-=head2 Constructor
-
-  Title   : new
-  Usage   : ...DataflowRule->new($analysis);
+  Usage   : Bio::EnsEMBL::Hive::DataflowRule->new(-from_analysis => $fromAnalysis, -to_analysis => $toAnalysis, -branch_code => $branch_code);
   Function: Constructor for DataflowRule object
   Returns : Bio::EnsEMBL::Hive::DataflowRule
-  Args    : A Bio::EnsEMBL::Analysis object. Conditions are added later,
-            adaptor and dbid only used from the adaptor.
+  Args    : a rearrange-compatible hash
             
 =cut
 
-
 sub new {
-  my ($class,@args) = @_;
-  my $self = bless {}, $class;
+    my $class = shift @_;
+    my $self = bless {}, $class;
 
-  my ( $dbID, $adaptor, $fromAnalysis, %fromID, $toAnalysis, $toURL ) =
-    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS FROM_ID TO_ANALYSIS TO_URL) ], @args );
-    
-  $self->dbID($dbID) if(defined($dbID));
-  $self->adaptor($adaptor) if(defined($adaptor));
-  $self->from_analysis($fromAnalysis) if(defined($fromAnalysis));
-  $self->to_analysis($toAnalysis ) if(defined($toAnalysis));
+    my ( $dbID, $adaptor, $fromAnalysis, $toAnalysis, $from_analysis_id, $to_analysis_url, $branch_code, $input_id_template ) =
+    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS TO_ANALYSIS FROM_ANALYSIS_ID TO_ANALYSIS_URL BRANCH_CODE INPUT_ID_TEMPLATE) ], @_ );
 
-  return $self;
+        # database persistence:
+    $self->dbID( $dbID )                            if(defined($dbID));
+    $self->adaptor( $adaptor )                      if(defined($adaptor));
+
+        # from objects:
+    $self->from_analysis( $fromAnalysis )           if(defined($fromAnalysis));
+    $self->to_analysis( $toAnalysis )               if(defined($toAnalysis));
+
+        # simple scalars:
+    $self->from_analysis_id( $from_analysis_id )    if(defined($from_analysis_id));
+    $self->to_analysis_url( $to_analysis_url )      if(defined($to_analysis_url));
+    $self->branch_code( $branch_code )              if(defined($branch_code));
+    $self->input_id_template($input_id_template)    if(defined($input_id_template));
+
+    return $self;
 }
+
+=head2 dbID
+
+    Function: getter/setter method for the dbID of the dataflow rule
+
+=cut
 
 sub dbID {
-  my ( $self, $dbID ) = @_;
-  $self->{'_dbID'} = $dbID if defined $dbID;
-  return $self->{'_dbID'};
+    my $self = shift @_;
+
+    if(@_) { # setter mode
+        $self->{'_dbID'} = shift @_;
+    }
+    return $self->{'_dbID'};
 }
+
+=head2 adaptor
+
+    Function: getter/setter method for the adaptor of the dataflow rule
+
+=cut
 
 sub adaptor {
-  my ( $self, $adaptor ) = @_;
-  $self->{'_adaptor'} = $adaptor if defined $adaptor;
-  return $self->{'_adaptor'};
-}
+    my $self = shift @_;
 
+    if(@_) { # setter mode
+        $self->{'_adaptor'} = shift @_;
+    }
+    return $self->{'_adaptor'};
+}
 
 =head2 branch_code
 
-  Title   : branch_code
-  Arg[1]  : (optional) int $code
-  Usage   : $self->branch_code($code);
-  Function: Get/set method for rules branch_code.
-  Returns : integer
-  
+    Function: getter/setter method for the branch_code of the dataflow rule
+
 =cut
 
 sub branch_code {
-  #default branch_code = 1
-  my( $self, $value ) = @_;
-  $self->{'_branch_code'} = 1 unless(defined($self->{'_branch_code'}));
-  $self->{'_branch_code'} = $value if(defined($value));
-  return $self->{'_branch_code'};
+    my $self = shift @_;
+
+    if(@_) { # setter mode
+        $self->{'_branch_code'} = shift @_;
+    }
+    return ($self->{'_branch_code'} ||= 1);
 }
 
+=head2 input_id_template
+
+    Function: getter/setter method for the input_id_template of the dataflow rule
+
+=cut
+
+sub input_id_template {
+    my $self = shift @_;
+
+    if(@_) { # setter mode
+        $self->{'_input_id_template'} = shift @_;
+    }
+    return $self->{'_input_id_template'};
+}
 
 =head2 from_analysis_id
 
-  Title   : from_analysis_id
   Arg[1]  : (optional) int $dbID
   Usage   : $self->from_analysis_id($dbID);
   Function: Get/set method for the 'from' analysis objects dbID of this rule.
@@ -126,7 +167,6 @@ sub from_analysis_id {
 
 =head2 to_analysis_url
 
-  Title   : to_analysis_url
   Arg[1]  : (optional) string $url
   Usage   : $self->to_analysis_url($url);
   Function: Get/set method for the 'to' analysis objects URL for this rule
@@ -146,8 +186,7 @@ sub to_analysis_url {
 
 =head2 from_analysis
 
-  Title   : from_analysis
-  Usage   : $self->from_analysis($anal);
+  Usage   : $self->from_analysis($analysis);
   Function: Get/set method for the condition analysis object of this rule.
   Returns : Bio::EnsEMBL::Analysis
   Args    : Bio::EnsEMBL::Analysis
@@ -182,8 +221,7 @@ sub from_analysis {
 
 =head2 to_analysis
 
-  Title   : to_analysis
-  Usage   : $self->to_analysis($anal);
+  Usage   : $self->to_analysis($analysis);
   Function: Get/set method for the goal analysis object of this rule.
   Returns : Bio::EnsEMBL::Analysis
   Args    : Bio::EnsEMBL::Analysis
@@ -232,6 +270,4 @@ sub print_rule {
 }
 
 1;
-
-
 
