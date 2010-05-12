@@ -81,7 +81,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl <config_module_or_filename> [-help | [ [-topup] <options_for_this_particular_pipeline>]
+    init_pipeline.pl <config_module_or_filename> [-help | [ [-analysis_topup | -job_topup] <options_for_this_particular_pipeline>]
 
 =head1 DESCRIPTION
 
@@ -105,10 +105,12 @@ __DATA__
 
 =head1 OPTIONS
 
-    -help   :   get automatically generated list of options that can be set/changed when initializing a particular pipeline
+    -help           :   get automatically generated list of options that can be set/changed when initializing a particular pipeline
 
-    -topup  :   a special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
-                This mode is only useful in the process of putting together a new pipeline.
+    -analysis_topup :   a special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
+                        This mode is only useful in the process of putting together a new pipeline.
+
+    -job_topup      :   another special initialization mode when only jobs are created - no other structural changes to the pipeline are acted upon.
 
 =head1 CONTACT
 
