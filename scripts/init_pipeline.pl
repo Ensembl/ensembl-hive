@@ -85,23 +85,23 @@ __DATA__
 
 =head1 DESCRIPTION
 
-init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
+    init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
 
 =head1 USAGE EXAMPLES
 
-    # get this help message:
-init_pipeline.pl
+        # get this help message:
+    init_pipeline.pl
 
-    # initialize a generic eHive pipeline:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <yourpassword>
+        # initialize a generic eHive pipeline:
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <yourpassword>
 
-    # see what command line options are available when initializing long multiplication example pipeline
-    #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive) :
-init_pipeline.pl PipeConfig/LongMult_conf -help
+        # see what command line options are available when initializing long multiplication example pipeline
+        #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive) :
+    init_pipeline.pl PipeConfig/LongMult_conf -help
 
-    # initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
-    #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :
-init_pipeline.pl LongMult_conf -password <yourpassword> -first_mult 375857335 -second_mult 1111333355556666 
+        # initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
+        #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :
+    init_pipeline.pl LongMult_conf -password <yourpassword> -first_mult 375857335 -second_mult 1111333355556666 
 
 =head1 OPTIONS
 

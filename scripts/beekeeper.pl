@@ -429,92 +429,92 @@ __DATA__
 
 =head1 DESCRIPTION
 
-The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
-Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
-and to send the requested number of workers to open machines via the runWorker.pl script.
+    The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
+    Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
+    and to send the requested number of workers to open machines via the runWorker.pl script.
 
-It is also responsible for interfacing with the Queen to identify workers which died
-unexpectantly so that she can free the dead workers and reclaim unfinished jobs.
+    It is also responsible for interfacing with the Queen to identify workers which died
+    unexpectantly so that she can free the dead workers and reclaim unfinished jobs.
 
 =head1 USAGE EXAMPLES
 
-    # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
-beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname -sync
+        # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
+    beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname -sync
 
-    # An alternative way of doing the same thing
-beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
+        # An alternative way of doing the same thing
+    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
 
-    # Do not run any additional Workers, just check for the current status of the pipeline:
-beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
+        # Do not run any additional Workers, just check for the current status of the pipeline:
+    beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-    # Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
-beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop
+        # Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop
 
-    # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
-beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
+        # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
 
-    # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
-beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
+        # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
 
-    # Reset all 'buggy_analysis' jobs to 'READY' state, so that they can be run again
-beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_all_jobs_for_analysis buggy_analysis
+        # Reset all 'buggy_analysis' jobs to 'READY' state, so that they can be run again
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_all_jobs_for_analysis buggy_analysis
 
-    # Do a cleanup: find and bury dead workers, reclaim their jobs
-beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
+        # Do a cleanup: find and bury dead workers, reclaim their jobs
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
 
 =head1 OPTIONS
 
 =head2 Connection parameters
 
-  -conf <path>           : config file describing db connection
-  -regfile <path>        : path to a Registry configuration file
-  -regname <string>      : species/alias name for the Hive DBAdaptor
-  -url <url string>      : url defining where hive database is located
-  -host <machine>        : mysql database host <machine>
-  -port <port#>          : mysql port number
-  -user <name>           : mysql connection user <name>
-  -password <pass>       : mysql connection password <pass>
-  -database <name>       : mysql database <name>
+    -conf <path>           : config file describing db connection
+    -regfile <path>        : path to a Registry configuration file
+    -regname <string>      : species/alias name for the Hive DBAdaptor
+    -url <url string>      : url defining where hive database is located
+    -host <machine>        : mysql database host <machine>
+    -port <port#>          : mysql port number
+    -user <name>           : mysql connection user <name>
+    -password <pass>       : mysql connection password <pass>
+    -database <name>       : mysql database <name>
 
 =head2 Looping control
 
-  -loop                  : run autonomously, loops and sleeps
-  -max_loops <num>       : perform max this # of loops in autonomous mode
-  -run                   : run 1 iteration of automation loop
-  -run_job_id <job_id>   : run 1 iteration for this job_id
-  -sleep <num>           : when looping, sleep <num> minutes (default 2min)
+    -loop                  : run autonomously, loops and sleeps
+    -max_loops <num>       : perform max this # of loops in autonomous mode
+    -run                   : run 1 iteration of automation loop
+    -run_job_id <job_id>   : run 1 iteration for this job_id
+    -sleep <num>           : when looping, sleep <num> minutes (default 2min)
 
 =head2 Meadow control
 
-  -local                    : run jobs on local CPU (fork)
-  -local_cpus <num>         : max # workers to be running locally
-  -wlimit <num>             : max # workers to create per loop
-  -no_pend                  : don't adjust needed workers by pending workers
-  -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
+    -local                    : run jobs on local CPU (fork)
+    -local_cpus <num>         : max # workers to be running locally
+    -wlimit <num>             : max # workers to create per loop
+    -no_pend                  : don't adjust needed workers by pending workers
+    -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
 
-  -jlimit <num>           : #jobs to run before worker can die naturally
-  -batch_size <num>       : #jobs a worker can claim at once
-  -lifespan <num>         : lifespan limit for each worker
-  -logic_name <string>    : restrict the pipeline stat/runs to this analysis logic_name
-  -maximise_concurrency 1 : try to run more different analyses at the same time
+    -jlimit <num>           : #jobs to run before worker can die naturally
+    -batch_size <num>       : #jobs a worker can claim at once
+    -lifespan <num>         : lifespan limit for each worker
+    -logic_name <string>    : restrict the pipeline stat/runs to this analysis logic_name
+    -maximise_concurrency 1 : try to run more different analyses at the same time
 
 =head2 Other commands/options
 
-  -help                  : print this help
-  -dead                  : clean dead jobs for resubmission
-  -alldead               : all outstanding workers
-  -no_analysis_stats     : don't show status of each analysis
-  -worker_stats          : show status of each running worker
-  -failed_jobs           : show all failed jobs
-  -reset_job_id <num>    : reset a job back to READY so it can be rerun
-  -reset_all_jobs_for_analysis <logic_name>
-                         : reset jobs back to READY so it can be rerun
+    -help                  : print this help
+    -dead                  : clean dead jobs for resubmission
+    -alldead               : all outstanding workers
+    -no_analysis_stats     : don't show status of each analysis
+    -worker_stats          : show status of each running worker
+    -failed_jobs           : show all failed jobs
+    -reset_job_id <num>    : reset a job back to READY so it can be rerun
+    -reset_all_jobs_for_analysis <logic_name>
+                           : reset jobs back to READY so they can be rerun
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 
