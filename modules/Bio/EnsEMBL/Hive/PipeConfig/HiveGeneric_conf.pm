@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
+Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
 
 =head1 SYNOPSIS
 
@@ -239,7 +239,7 @@ sub process_options {
         # you can override parsing of commandline options if creating pipelines by a script - just provide the overriding hash
     my $cmdline_options = $self->{_cmdline_options} = shift @_ || $self->_load_cmdline_options();
 
-    print "\nPipeline: ".ref($self)."\n";
+    print "\nPipeline:\n\t".ref($self)."\n\n";
 
     if($cmdline_options->{'help'}) {
 
