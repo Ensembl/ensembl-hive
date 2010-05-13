@@ -443,6 +443,9 @@ sub run {
     print "  beekeeper.pl -url $url -loop\t\t# (run the pipeline in automatic mode)\n";
     print "(OR)\n";
     print "  beekeeper.pl -url $url -run\t\t# (run one step of the pipeline - useful for debugging/learning)\n";
+
+    print "\n\n\tTo connect to your pipeline database use the following line:\n\n";
+    print "  mysql ".$self->dbconn_2_mysql('pipeline_db',1)."\n\n";
 }
 
 
