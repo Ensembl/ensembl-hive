@@ -3,47 +3,49 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
+    Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
 
 =head1 SYNOPSIS
 
-   # Example 1: specifying only the mandatory option:
+   # Example 1: specifying only the mandatory option (numbers to be multiplied are taken from defaults)
 init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
 
-   # Example 2: specifying the mandatory options as well as overriding some defaults:
+   # Example 2: specifying the mandatory options as well as overriding the default numbers to be multiplied:
 init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass> -first_mult 2344556 -second_mult 777666555
 
+   # Example 3: do not re-create the database, just load another multiplicaton task into an existing one:
+init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -job_topup -password <mypass> -first_mult 1111222233334444 -second_mult 38578377835
 
 
 =head1 DESCRIPTION
 
-This is the PipeConfig file for the long multiplication pipeline example.
-The main point of this pipeline is to provide an example of how to write Hive Runnables and link them together into a pipeline.
+    This is the PipeConfig file for the long multiplication pipeline example.
+    The main point of this pipeline is to provide an example of how to write Hive Runnables and link them together into a pipeline.
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
 
-The setting. Let's assume we are given two loooooong numbers to multiply. Reeeeally long.
-So long that they do not fit into registers of the CPU and should be multiplied digit-by-digit.
-For the purposes of this example we also assume this task is very computationally intensive and has to be done in parallel.
+    The setting. Let's assume we are given two loooooong numbers to multiply. Reeeeally long.
+    So long that they do not fit into registers of the CPU and should be multiplied digit-by-digit.
+    For the purposes of this example we also assume this task is very computationally intensive and has to be done in parallel.
 
-The long multiplication pipeline consists of three "analyses" (types of tasks):  'start', 'part_multiply' and 'add_together'
-that we will be using to examplify various features of the Hive.
+    The long multiplication pipeline consists of three "analyses" (types of tasks):  'start', 'part_multiply' and 'add_together'
+    that we will be using to examplify various features of the Hive.
 
-    * A 'start' job takes in two string parameters, 'a_multiplier' and 'b_multiplier',
-      takes the second one apart into digits, finds what _different_ digits are there,
-      creates several jobs of the 'part_multiply' analysis and one job of 'add_together' analysis.
+        * A 'start' job takes in two string parameters, 'a_multiplier' and 'b_multiplier',
+          takes the second one apart into digits, finds what _different_ digits are there,
+          creates several jobs of the 'part_multiply' analysis and one job of 'add_together' analysis.
 
-    * A 'part_multiply' job takes in 'a_multiplier' and 'digit', multiplies them and records the result in 'intermediate_result' table.
+        * A 'part_multiply' job takes in 'a_multiplier' and 'digit', multiplies them and records the result in 'intermediate_result' table.
 
-    * An 'add_together' job waits for the first two analyses to complete,
-      takes in 'a_multiplier', 'b_multiplier' and 'intermediate_result' table and produces the final result in 'final_result' table.
+        * An 'add_together' job waits for the first two analyses to complete,
+          takes in 'a_multiplier', 'b_multiplier' and 'intermediate_result' table and produces the final result in 'final_result' table.
 
-Please see the implementation details in the Runnable modules themselves.
+    Please see the implementation details in Runnable modules themselves.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

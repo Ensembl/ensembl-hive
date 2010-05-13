@@ -3,26 +3,26 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf;
+    Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf;
 
 =head1 SYNOPSIS
 
-   # Example 1: specifying only the mandatory option:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf -password <mypass>
+       # Example 1: specifying only the mandatory option:
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf -password <mypass>
 
-   # Example 2: specifying the mandatory options as well as overriding some defaults:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf -password <mypass> -first_mult 2344556 -second_mult 777666555
+       # Example 2: specifying the mandatory options as well as overriding some defaults:
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::SemaLongMult_conf -password <mypass> -first_mult 2344556 -second_mult 777666555
 
 =head1 DESCRIPTION
 
-This is the PipeConfig file for the *semaphored* long multiplication pipeline example.
-The main point of this pipeline is to provide an example of how to set up job-level semaphored control instead of using analysis-level control rules.
+    This is the PipeConfig file for the *semaphored* long multiplication pipeline example.
+    The main point of this pipeline is to provide an example of how to set up job-level semaphored control instead of using analysis-level control rules.
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf to understand how long multiplication pipeline works in its original form.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf to understand how long multiplication pipeline works in its original form.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 
@@ -117,7 +117,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -parameters    => {},
             -input_ids     => [
-                # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
+                # (jobs for this analysis will be flown_into via branch-2 from 'sema_start' jobs above)
             ],
         },
         
@@ -125,7 +125,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
             -parameters => {},
             -input_ids => [
-                # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
+                # (jobs for this analysis will be flown_into via branch-1 from 'sema_start' jobs above)
             ],
             # jobs in this analyses are semaphored, so no need to '-wait_for'
         },
