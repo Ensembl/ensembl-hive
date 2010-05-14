@@ -16,6 +16,15 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+12 May, 2010 : Leo Gordon
+
+* init_pipeline.pl can be given a PipeConfig file name instead of full module name.
+
+* init_pipeline.pl has its own help that displays pod documentation (same mechanism as other eHive scripts)
+
+* 3 pipeline initialization modes supported:
+    full (default), -analysis_topup (pipeline development mode) and -job_topup (add more data to work with)
+
 
 11 May, 2010 : Leo Gordon
 

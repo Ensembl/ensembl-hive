@@ -9,7 +9,7 @@
 #   and
 #       ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/SemaLongMult_conf.pm
 #
-#   which are used to load the Long Multiplicaton pipeline in "analysis control" and "semaphore job control" modes respectively.
+#   which are used to load the Long Multiplication pipeline in "analysis control" and "semaphore job control" modes respectively.
 #
 #
 #   Create these pipelines using init_pipeline.pl and run them using beekeeper.pl in step-by-step mode (use -run instead of -loop option).
