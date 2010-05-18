@@ -89,7 +89,7 @@ sub submit_workers {
     my $job_name       = $self->generate_job_name($worker_count, $iteration, $rc_id);
     my $meadow_options = $self->meadow_options();
 
-    my $cmd = "bsub -o /dev/null -J\"${job_name}\" $rc_parameters $meadow_options $worker_cmd -rc_id $rc_id";
+    my $cmd = qq{bsub -o /dev/null -J "${job_name}" $rc_parameters $meadow_options $worker_cmd -rc_id $rc_id};
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
