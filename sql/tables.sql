@@ -64,7 +64,7 @@ CREATE TABLE dataflow_rule (
   input_id_template   TEXT DEFAULT NULL,
 
   PRIMARY KEY (dataflow_rule_id),
-  UNIQUE KEY (from_analysis_id, to_analysis_url, branch_code)
+  UNIQUE KEY (from_analysis_id, to_analysis_url, branch_code, input_id_template(512))
 );
 
 
