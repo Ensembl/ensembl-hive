@@ -340,6 +340,9 @@ sub run {
         my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $rc_id) =
              rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance rc_id)], %$aha);
 
+        $parameters_hash ||= {};
+        $input_ids       ||= [];
+
         if($analysis_topup and $analysis_adaptor->fetch_by_logic_name($logic_name)) {
             warn "Skipping already existing analysis '$logic_name'\n";
             next;
