@@ -16,6 +16,22 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+3 June, 2010 : Leo Gordon
+
+* one important workaround for LSF command line parsing bug
+    (the LSF was unable to create job arrays where pipeline name started from certain letters)
+
+* lots of new documentation added and old docs removed (POD documentation in modules as well as eHive initialization/running manuals).
+    Everyone is encouraged to use the new init_pipeline.pl and PipeConfig-style configuration files.
+
+* a schema change that makes it possible to have multiple input_id_templates per dataflow branch
+    (this feature is already accessible via API, but not yet implemented in init_pipeline.pl)
+
+* JobFactory now understands multi-column input and intput_id templates can be written to refer to individual columns.
+    The 'inputquery' mode has been tested and it works.
+    Both 'inputfile' and 'inputcmd' should be able to split their input on param('delmiter'), but this has not yet been tested.
+
+
 12 May, 2010 : Leo Gordon
 
 * init_pipeline.pl can be given a PipeConfig file name instead of full module name.
