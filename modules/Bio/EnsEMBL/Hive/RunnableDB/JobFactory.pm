@@ -62,6 +62,11 @@ sub fetch_input {
 
     param('randomize'): Shuffles the ids before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
 
+    param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the template input_id hash.
+
+    param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
+                         this is the way to say which column is undergoing 'ranging'
+
         # The following 4 parameters are mutually exclusive and define the source of ids for the jobs:
 
     param('inputlist');  The list is explicitly given in the parameters, can be abbreviated: 'inputlist' => ['a'..'z']
@@ -81,22 +86,25 @@ sub run {
     my $step            = $self->param('step')          || 1;
     my $randomize       = $self->param('randomize')     || 0;
 
+    my $key_column      = $self->param('key_column')    || 0;
+    my $delimiter       = $self->param('delimiter');
+
     my $inputlist       = $self->param('inputlist');
     my $inputfile       = $self->param('inputfile');
     my $inputquery      = $self->param('inputquery');
     my $inputcmd        = $self->param('inputcmd');
 
     my $list = $self->param_substitute( $inputlist )
-        || ($inputfile  && $self->_make_list_from_file(  $self->param_substitute( $inputfile  ) ))
         || ($inputquery && $self->_make_list_from_query( $self->param_substitute( $inputquery ) ))
-        || ($inputcmd   && $self->_make_list_from_cmd(   $self->param_substitute( $inputcmd   ) ))
+        || ($inputfile  && $self->_make_list_from_open(  $self->param_substitute( $inputfile  ),      $delimiter ))
+        || ($inputcmd   && $self->_make_list_from_open(  $self->param_substitute( $inputcmd   ).' |', $delimiter ))
         || die "range of values should be defined by setting 'inputlist', 'inputfile' or 'inputquery'";
 
     if($randomize) {
         _fisher_yates_shuffle_in_place($list);
     }
 
-    my $output_ids = $self->_split_list_into_ranges($template_hash, $list, $step);
+    my $output_ids = $self->_split_list_into_ranges($template_hash, $list, $step, $key_column);
     $self->param('output_ids', $output_ids);
 }
 
@@ -135,23 +143,6 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
 ################################### main functionality starts here ###################
 
-=head2 _make_list_from_file
-    
-    Description: this is a private method that loads ids from a given file
-
-=cut
-
-sub _make_list_from_file {
-    my ($self, $inputfile) = @_;
-
-    open(FILE, $inputfile) or die $!;
-    my @lines = <FILE>;
-    chomp @lines;
-    close(FILE);
-
-    return \@lines;
-}
-
 =head2 _make_list_from_query
     
     Description: this is a private method that loads ids from a given sql query
@@ -170,30 +161,36 @@ sub _make_list_from_query {
         $dbc = $self->db->dbc;
     }
 
-    my @ids = ();
+    my @list = ();
     my $sth = $dbc->prepare($inputquery);
     $sth->execute();
-    while (my ($id)=$sth->fetchrow_array()) {
-        push @ids, $id;
+    while (my @cols = $sth->fetchrow_array()) {
+        push @list, scalar(@cols)==1 ? $cols[0] : \@cols;
     }
     $sth->finish();
 
-    return \@ids;
+    return \@list;
 }
 
-=head2 _make_list_from_cmd
+=head2 _make_list_from_open
     
-    Description: this is a private method that loads ids from a given command line
+    Description: this is a private method that loads ids from a given file or command pipe
 
 =cut
 
-sub _make_list_from_cmd {
-    my ($self, $inputcmd) = @_;
+sub _make_list_from_open {
+    my ($self, $input_file_or_pipe, $delimiter) = @_;
 
-    my @lines = `$inputcmd`;
-    chomp @lines;
+    my @list = ();
+    open(FILE, $input_file_or_pipe) or die "Could not open '$input_file_or_pipe' because: $!";
+    while(my $line = <FILE>) {
+        chomp $line;
 
-    return \@lines;
+        push @list, defined($delimiter) ? [ split(/$delimiter/, $line) ] : $line;
+    }
+    close FILE;
+
+    return \@list;
 }
 
 =head2 _split_list_into_ranges
@@ -203,22 +200,27 @@ sub _make_list_from_cmd {
 =cut
 
 sub _split_list_into_ranges {
-    my ($self, $template_hash, $list, $step) = @_;
+    my ($self, $template_hash, $list, $step, $key_column) = @_;
 
     my @ranges = ();
 
     while(@$list) {
-        my $range_start = shift @$list;
+        my $start_line  = shift @$list;
+        my $range_start = (ref($start_line) eq 'ARRAY') ? $start_line->[$key_column] : $start_line;
+
         my $range_end   = $range_start;
         my $range_count = 1;
+        my $next_line   = $start_line; # safety, in case next while doesn't execute even once
         while($range_count<$step && @$list) {
-            my $next_value     = shift @$list;
+               $next_line   = shift @$list;
+            my $next_value  = (ref($next_line) eq 'ARRAY') ? $next_line->[$key_column] : $next_line;
+
             my $predicted_next = $range_end;
             if(++$predicted_next eq $next_value) {
                 $range_end = $next_value;
                 $range_count++;
             } else {
-                unshift @$list, $next_value;
+                unshift @$list, $next_line;
                 last;
             }
         }
@@ -227,6 +229,13 @@ sub _split_list_into_ranges {
         $self->param('_range_start', $range_start);
         $self->param('_range_end',   $range_end);
         $self->param('_range_count', $range_count);
+
+        if(ref($start_line) eq 'ARRAY') {
+            foreach my $i (0..scalar(@$start_line)-1) {
+                $self->param("_start_$i", $start_line->[$i]);
+                $self->param("_end_$i",   $next_line->[$i]);
+            }
+        }
 
         push @ranges, $self->param_substitute($template_hash);
     }
