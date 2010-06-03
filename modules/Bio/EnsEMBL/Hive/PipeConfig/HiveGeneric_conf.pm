@@ -430,7 +430,7 @@ sub run {
                     if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
                         $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code, $input_id_template);
                         warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name"
-                            .($input_id_template ? " WITH TEMPLATE: $input_id_template" : '')."\n";
+                            .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                     } else {
                         die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
                     }
