@@ -7,6 +7,7 @@ use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
+use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
 use Bio::EnsEMBL::Registry;
 
 use Bio::EnsEMBL::Hive::Meadow::LSF;
@@ -180,7 +181,7 @@ if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
 else {
   my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
   if( @$arrRef ) {
-    $worker->output_dir($arrRef->[0]);
+    $worker->output_dir( destringify($arrRef->[0]) );
   } 
 }
 
