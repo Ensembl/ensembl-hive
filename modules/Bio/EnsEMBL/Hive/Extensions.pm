@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
+use Bio::EnsEMBL::Hive::URLFactory;
 #use Bio::EnsEMBL::Pipeline::RunnableDB;
 #use Bio::EnsEMBL::Analysis::RunnableDB;
 
@@ -136,27 +137,35 @@ sub Bio::EnsEMBL::Analysis::url
   return $url;  
 }
 
+sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_logic_name_or_url {
+    my $self                = shift @_;
+    my $logic_name_or_url   = shift @_;
 
-sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query
-{
-  my $self = shift;
-  my $query = shift;
-
-  return undef unless($query);
-  #print("Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query : $query\n");
-
-  if((my $p=index($query, "=")) != -1) {
-    my $type = substr($query,0, $p);
-    my $value = substr($query,$p+1,length($query));
-
-    if($type eq 'logic_name') {
-      return $self->fetch_by_logic_name($value);
+    if($logic_name_or_url =~ /^\w+$/) {
+        return $self->fetch_by_logic_name($logic_name_or_url);
+    } elsif($logic_name_or_url =~ /^mysql:/) {
+        return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, $self->db);
+    } else {
+        return 0;
     }
-    if($type eq 'dbID') {
-      return $self->fetch_by_dbID($value);
+}
+
+sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query {
+    my ($self, $field_name, $field_value) = @_;
+
+    if(!$field_name or !$field_value) {
+
+        return;
+
+    } elsif($field_name eq 'logic_name') {
+
+        return $self->fetch_by_logic_name($field_value);
+
+    } elsif($field_name eq 'dbID') {
+
+        return $self->fetch_by_dbID($field_value);
+
     }
-  }
-  return undef;
 }
 
 

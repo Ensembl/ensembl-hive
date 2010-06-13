@@ -62,6 +62,7 @@ sub get_available_adaptors {
         'AnalysisCtrlRule'    => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
         'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
         'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
+        'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
     );
     return (\%pairs);
 }

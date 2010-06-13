@@ -35,9 +35,9 @@
     and whatever rules match these conditions will generate new jobs with input_ids specified in the dataflow_output_id() call.
     If input_id_template happens to contain a non-NULL value, it will be used to generate the corresponding intput_id instead.
 
-    Jessica's original remark on the structure of to_analysis_url:
+    Jessica's remark on the structure of to_analysis_url:
         Extended from design of SimpleRule concept to allow the 'to' analysis to be specified with a network savy URL like
-        mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
+        mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test/analysis?logic_name='blast_NCBI34'
 
 =head1 CONTACT
 
@@ -51,7 +51,7 @@ package Bio::EnsEMBL::Hive::DataflowRule;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Hive::URLFactory;
+#use Bio::EnsEMBL::Hive::URLFactory;
 
 =head2 new
 
@@ -229,33 +229,30 @@ sub from_analysis {
 =cut
 
 sub to_analysis {
-  my ($self,$analysis) = @_;
+  my ($self, $analysis_or_nt) = @_;
 
-  if( defined $analysis ) {
-    unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
-      throw(
-        "to_analysis arg must be a [Bio::EnsEMBL::Analysis]".
-        "not a [$analysis]");
+  if( defined $analysis_or_nt ) {
+    unless ($analysis_or_nt->can('url')) {
+      throw( "to_analysis arg must support 'url' method, '$analysis_or_nt' does not know how to do it");
     }
-    $self->{'_to_analysis'} = $analysis;
+    $self->{'_to_analysis'} = $analysis_or_nt;
 
     #if the 'from' and 'to' share the same adaptor, then use a simple logic_name
     #for the URL rather than a full network distributed URL
-    if($self->from_analysis and ($self->from_analysis->adaptor == $analysis->adaptor)) {
-      $self->{'_to_analysis_url'} = $analysis->logic_name;
+
+    my $ref_rule_adaptor = $self->from_analysis->adaptor;
+
+    if($analysis_or_nt->can('logic_name') and $self->from_analysis and ($ref_rule_adaptor == $analysis_or_nt->adaptor)) {
+      $self->{'_to_analysis_url'} = $analysis_or_nt->logic_name;
     } else {
-      $self->{'_to_analysis_url'} = $analysis->url;
+      $self->{'_to_analysis_url'} = $analysis_or_nt->url($ref_rule_adaptor->db);
     }
   }
   # lazy load the analysis object if I can
   if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
-    my $analyis =  Bio::EnsEMBL::Hive::URLFactory->fetch($self->to_analysis_url);
-    unless($analysis) {
-      $analysis =
-        $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name($self->to_analysis_url);
-    }
-    $self->{'_to_analysis'} = $analysis;
-      
+
+    $self->{'_to_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($self->to_analysis_url);
+
   }
   return $self->{'_to_analysis'};
 }

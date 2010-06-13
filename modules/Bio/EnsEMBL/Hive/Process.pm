@@ -322,35 +322,40 @@ sub dataflow_output_id {
     my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
     my $rules       = $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis->dbID, $branch_code);
     foreach my $rule (@{$rules}) {
-        foreach my $output_id (@$output_ids) {
 
-            my $this_output_id;
-            my $template = $rule->input_id_template();
-
-            if(defined($template)) {
-                if($self->can('param_substitute')) {
-                    $this_output_id = $self->param_substitute($template);
-                } else {
-                    die "In order to use input_id_template your RunnableDB has to be derived from Bio::EnsEMBL::Hive::ProcessWithParams\n";
-                }
+        my $substituted_template;
+        if(my $template = $rule->input_id_template()) {
+            if($self->can('param_substitute')) {
+                $substituted_template = $self->param_substitute($template);
             } else {
-                $this_output_id = $output_id;
+                die "In order to use input_id_template your RunnableDB has to be derived from Bio::EnsEMBL::Hive::ProcessWithParams\n";
             }
+        }
 
-            if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                -input_id       => $this_output_id,
-                -analysis       => $rule->to_analysis,
-                -input_job_id   => $self->input_job->dbID,  # creator_job's id
-                %$create_job_options
-            )) {
-                if($semaphored_job_id and $propagate_semaphore) {
-                    $job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id ); # propagate the semaphore
+        my $target_analysis_or_table = $rule->to_analysis();
+
+        foreach my $output_id ($substituted_template ? ($substituted_template) : @$output_ids) {
+
+            if($target_analysis_or_table->can('dataflow')) {
+
+                my $insert_id = $target_analysis_or_table->dataflow( $output_id );
+
+            } else {
+                if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+                    -input_id       => $output_id,
+                    -analysis       => $rule->to_analysis,
+                    -input_job_id   => $self->input_job->dbID,  # creator_job's id
+                    %$create_job_options
+                )) {
+                    if($semaphored_job_id and $propagate_semaphore) {
+                        $job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id ); # propagate the semaphore
+                    }
+                        # only add the ones that were indeed created:
+                    push @output_job_ids, $job_id;
+
+                } elsif($semaphored_job_id and !$propagate_semaphore) {
+                    $job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );     # if we didn't succeed in creating the job, fix the semaphore
                 }
-                    # only add the ones that were indeed created:
-                push @output_job_ids, $job_id;
-
-            } elsif($semaphored_job_id and !$propagate_semaphore) {
-                $job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );     # if we didn't succeed in creating the job, fix the semaphore
             }
         }
     }

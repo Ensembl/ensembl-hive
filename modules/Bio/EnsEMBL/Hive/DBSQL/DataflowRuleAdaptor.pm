@@ -143,20 +143,24 @@ sub remove {
   Function: Creates and stores a new rule in the DB.
   Returns : Bio::EnsEMBL::Hive::DataflowRule
   Args[1] : Bio::EnsEMBL::Analysis $from_analysis
-  Args[2] : Bio::EnsEMBL::Analysis $to_analysis
+  Args[2] : Bio::EnsEMBL::Analysis OR a hive-style URL  $to_analysis_or_url
   Args[3] : (optional) int $branch_code
   Args[4] : (optional) (Perl structure or string) $input_id_template
 
 =cut
 
 sub create_rule {
-    my ($self, $from_analysis, $to_analysis, $branch_code, $input_id_template) = @_;
+    my ($self, $from_analysis, $to_analysis_or_url, $branch_code, $input_id_template) = @_;
 
-    return unless($from_analysis and $to_analysis);
+    return unless($from_analysis and $to_analysis_or_url);
 
     my $rule = Bio::EnsEMBL::Hive::DataflowRule->new(
         -from_analysis      =>  $from_analysis,
-        -to_analysis        =>  $to_analysis,
+
+        ref($to_analysis_or_url)
+            ? ( -to_analysis     => $to_analysis_or_url )
+            : ( -to_analysis_url => $to_analysis_or_url ),
+
         -branch_code        =>  $branch_code,
         -input_id_template  =>  $input_id_template,
     );

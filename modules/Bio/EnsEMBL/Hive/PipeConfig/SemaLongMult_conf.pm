@@ -119,6 +119,10 @@ sub pipeline_analyses {
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'sema_start' jobs above)
             ],
+            -flow_into => {
+                1 => [ 'mysql:////intermediate_result' ],
+            },
+
         },
         
         {   -logic_name => 'add_together',
@@ -128,6 +132,9 @@ sub pipeline_analyses {
                 # (jobs for this analysis will be flown_into via branch-1 from 'sema_start' jobs above)
             ],
             # jobs in this analyses are semaphored, so no need to '-wait_for'
+            -flow_into => {
+                1 => [ 'mysql:////final_result' ],
+            },
         },
     ];
 }

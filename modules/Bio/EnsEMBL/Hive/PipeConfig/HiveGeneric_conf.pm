@@ -407,12 +407,12 @@ sub run {
             $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
 
                 # create control rules:
-            foreach my $condition_logic_name (@$wait_for) {
-                if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_logic_name)) {
+            foreach my $condition_url (@$wait_for) {
+                if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($condition_url)) {
                     $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
-                    warn "Created Control rule: $condition_logic_name -| $logic_name\n";
+                    warn "Created Control rule: $condition_url -| $logic_name\n";
                 } else {
-                    die "Could not fetch analysis '$condition_logic_name' to create a control rule";
+                    die "Could not fetch analysis '$condition_url' to create a control rule";
                 }
             }
 
@@ -426,14 +426,14 @@ sub run {
 
                 $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
-                while(my ($heir_logic_name, $input_id_template) = each %$heirs) {
-                    if(my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_logic_name)) {
-                        $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis, $branch_code, $input_id_template);
-                        warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_logic_name"
-                            .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
-                    } else {
-                        die "Could not fetch analysis '$heir_logic_name' to create a dataflow rule";
-                    }
+                while(my ($heir_url, $input_id_template) = each %$heirs) {
+
+                    my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
+
+                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_code, $input_id_template);
+
+                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_url (". ($heir_analysis ? 'checked' : 'UNCHECKED') .')'
+                        .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }
         }

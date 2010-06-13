@@ -72,8 +72,7 @@ sub run {   # call the function that will compute the stuff
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Here we first store the result in the 'final_result' table,
-                  and then also dataflow both original multipliers and the result down the branch-1 (in case further analyses will have to deal with the result).
+                  Dataflows both original multipliers and the final result down branch-1, which will be routed into 'final_result' table.
 
 =cut
 
@@ -81,22 +80,10 @@ sub run {   # call the function that will compute the stuff
 sub write_output {  # store and dataflow
     my $self = shift @_;
 
-    my $a_multiplier = $self->param('a_multiplier');
-    my $b_multiplier = $self->param('b_multiplier');
-    my $result       = $self->param('result');
-
-        # store the result:
-    my $sql = "REPLACE INTO final_result (a_multiplier, b_multiplier, result) VALUES (?, ?, ?) ";
-    my $sth = $self->db->dbc->prepare($sql);
-    $sth->execute( $a_multiplier, $b_multiplier, $result );
-    $sth->finish();
-
-        # In order to make it possible to extend the pipeline,
-        #   dataflow the multipliers together with the result:
     $self->dataflow_output_id({
-        'a_multiplier' => $a_multiplier,
-        'b_multiplier' => $b_multiplier,
-        'result'       => $result,
+        'a_multiplier' => $self->param('a_multiplier'),
+        'b_multiplier' => $self->param('b_multiplier'),
+        'result'       => $self->param('result'),
     }, 1);
 }
 

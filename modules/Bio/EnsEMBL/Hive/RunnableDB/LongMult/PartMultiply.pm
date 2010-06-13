@@ -56,20 +56,18 @@ sub run {   # call the recursive function that will compute the stuff
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Here we store the product in 'intermediate_result' table.
+                  Dataflows the intermediate results down branch 1, which will be routed into 'intermediate_result' table.
 
 =cut
 
 sub write_output {  # but this time we have something to store
     my $self = shift @_;
 
-    my $sql = "REPLACE INTO intermediate_result (a_multiplier, digit, result) VALUES (?, ?, ?) ";
-    my $sth = $self->db->dbc->prepare($sql);
-    $sth->execute(
-        $self->param('a_multiplier'),
-        $self->param('digit'),
-        $self->param('result')
-    );
+    $self->dataflow_output_id( {
+        'a_multiplier'  => $self->param('a_multiplier'),
+        'digit'         => $self->param('digit'),
+        'result'        => $self->param('result')
+    }, 1);
 }
 
 =head2 _rec_multiply

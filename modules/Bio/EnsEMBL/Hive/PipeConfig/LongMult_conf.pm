@@ -72,7 +72,7 @@ sub default_options {
         'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara3',
+            -host   => 'compara1',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -139,6 +139,9 @@ sub pipeline_analyses {
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
             ],
+            -flow_into => {
+                1 => [ 'mysql:////intermediate_result' ],
+            },
         },
         
         {   -logic_name => 'add_together',
@@ -148,6 +151,9 @@ sub pipeline_analyses {
                 # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
             ],
             -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
+            -flow_into => {
+                1 => [ 'mysql:////final_result' ],
+            },
         },
     ];
 }

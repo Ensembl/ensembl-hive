@@ -16,6 +16,10 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+13 June, 2010 : Leo Gordon
+
+* Added support for dataflow-into-tables, see LongMult example.
+
 10 June, 2010 : Leo Gordon
 
 * A bug preventing users from setting hive_output_dir via pipeline_wide_parameters has been fixed.
