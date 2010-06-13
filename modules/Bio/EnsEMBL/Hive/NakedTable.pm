@@ -61,7 +61,7 @@ sub insertion_method {
     if(@_) {
         $self->{'_insertion_method'} = shift @_;
     }
-    return $self->{'_insertion_method'} || 'INSERT';
+    return $self->{'_insertion_method'} || 'INSERT_IGNORE';
 }
 
 sub url {

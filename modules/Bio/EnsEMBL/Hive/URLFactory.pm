@@ -107,7 +107,7 @@ sub fetch {
 
         } else {
 
-            return $dba->get_NakedTableAdaptor->create_new(-table_name => $table_name, -insertion_method => $tparam_value || 'INSERT IGNORE');
+            return $dba->get_NakedTableAdaptor->create_new(-table_name => $table_name, $tparam_value ? (-insertion_method => $tparam_value) : () );
         }
     }
     return;

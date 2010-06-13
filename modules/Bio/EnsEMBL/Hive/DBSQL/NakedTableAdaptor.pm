@@ -47,7 +47,7 @@ sub dataflow {
     my $table_name = $naked_table->table_name();
 
     my $insertion_method = uc( $naked_table->insertion_method() );  # INSERT, INSERT_IGNORE or REPLACE
-    $insertion_method =~ s/\s+/_/g;
+    $insertion_method =~ s/_/ /g;
 
         # By using question marks you can insert true NULLs by setting corresponding values to undefs:
     my $sql = "$insertion_method INTO $table_name (".join(', ', keys %$data_hash).') VALUES ('.join(',', (('?') x scalar(keys %$data_hash))).')';
