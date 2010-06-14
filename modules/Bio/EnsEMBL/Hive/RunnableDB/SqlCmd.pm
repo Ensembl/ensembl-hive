@@ -91,16 +91,9 @@ sub fetch_input {
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
             : die "Could not find the command defined in input_id(), param('sql') or param('did')";
 
-        # Perform parameter substitution:
+        #   Store the sql command array:
         #
-    my @substituted_sqls = ();
-    foreach my $unsubst ((ref($sql) eq 'ARRAY') ? @$sql : ($sql) ) {
-        push @substituted_sqls, $self->param_substitute($unsubst);
-    }
-        
-        #   Store the substituted sql command array
-        #
-    $self->param('sqls', \@substituted_sqls);  
+    $self->param('sqls', (ref($sql) eq 'ARRAY') ? $sql : [$sql] );  
 
         # Use connection parameters to another database if supplied, otherwise use the current database as default:
         #
@@ -126,20 +119,37 @@ sub run {
     my $dbc  = $self->param('dbc');
     my $sqls = $self->param('sqls');
 
+    my %output_id;
+
         # What would be a generic way of indicating an error in (My)SQL statement, that percolates through PerlDBI?
-    foreach my $sql (@$sqls) {
+    my $counter = 0;
+    foreach my $unsubst_sql (@$sqls) {
+
+            # Perform parameter substitution:
+        my $sql = $self->param_substitute($unsubst_sql);
+
         $dbc->do( $sql );
+
+        my $insert_id_name  = '_insert_id_'.$counter++;
+        my $insert_id_value = $dbc->db_handle->{'mysql_insertid'};
+        $output_id{$insert_id_name} = $insert_id_value;
+        $self->param($insert_id_name, $insert_id_value); # for templates
     }
+
+    $self->param('output_id', \%output_id);
 }
 
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Here we have nothing to do, as the wrapper is very generic.
+                  Here we only flow out the insert_ids.
 
 =cut
 
 sub write_output {
+    my $self = shift;
+
+    $self->dataflow_output_id( $self->param('output_id'), 2);
 }
 
 1;
