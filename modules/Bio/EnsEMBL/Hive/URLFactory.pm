@@ -87,7 +87,7 @@ sub fetch {
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
     if( my ($conn, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, %conn_param) =
-        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?(;(\w+)=(\w+))*$} ) {
+        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?(;(\w+)=(\w+))*$} ) {
 
 # warn "URLPARSER: conn='$conn', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
 

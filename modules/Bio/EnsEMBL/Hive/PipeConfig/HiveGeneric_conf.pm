@@ -432,7 +432,7 @@ sub run {
 
                     $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_code, $input_id_template);
 
-                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_url (". ($heir_analysis ? 'checked' : 'UNCHECKED') .')'
+                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_url"
                         .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }
