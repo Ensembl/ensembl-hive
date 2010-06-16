@@ -343,7 +343,7 @@ sub dataflow_output_id {
             } else {
                 if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                     -input_id       => $output_id,
-                    -analysis       => $rule->to_analysis,
+                    -analysis       => $target_analysis_or_table,
                     -input_job_id   => $self->input_job->dbID,  # creator_job's id
                     %$create_job_options
                 )) {

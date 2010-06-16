@@ -141,12 +141,10 @@ sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_logic_name_or_url {
     my $self                = shift @_;
     my $logic_name_or_url   = shift @_;
 
-    if($logic_name_or_url =~ /^\w+$/) {
-        return $self->fetch_by_logic_name($logic_name_or_url);
-    } elsif($logic_name_or_url =~ /^mysql:/) {
+    if($logic_name_or_url =~ m{^\w+://}) {
         return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, $self->db);
     } else {
-        return 0;
+        return $self->fetch_by_logic_name($logic_name_or_url);
     }
 }
 
