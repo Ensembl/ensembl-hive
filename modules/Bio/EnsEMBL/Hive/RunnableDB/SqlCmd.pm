@@ -21,7 +21,7 @@ This RunnableDB module acts as a wrapper for a (My)SQL command
 run against either the current hive database (default) or against one specified by connection parameters.
 If you behave you may also use parameter substitution.
 
-The SQL command(s) can be given using three different syntaxes:
+The SQL command(s) can be given using two different syntaxes:
 
 1) Sql command is stored in the input_id() or parameters() as the value corresponding to the 'sql' key.
     THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
@@ -29,11 +29,6 @@ The SQL command(s) can be given using three different syntaxes:
 2) Sql command is stored in the 'input_id' field of the analysis_job table.
     (only works with sql commands shorter than 255 bytes).
     This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
-
-3) A numeric key to the analysis_data table (where the actual sql command is stored)
-    is kept in the input_id() or parameters() as the value corresponding to the 'did' key. This allows to overcome the 255 byte limit.
-    Well, if you REALLY couldn't fit your sql command into 250~ish bytes, are you sure you can manage big pipelines?
-    Just joking :)
 
 =head1 CONTACT
 
@@ -46,7 +41,6 @@ package Bio::EnsEMBL::Hive::RunnableDB::SqlCmd;
 
 use strict;
 use DBI;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
@@ -69,10 +63,6 @@ sub strict_hash_format {
 
     param('sql'): The recommended way of passing in the sql command(s).
 
-    param('did'): Alternative way of passing in a long sql command that is stored in analysis_data table.
-                  Try to avoid long sql commands at all costs, as it makes debugging a nightmare.
-                  Keep in mind that parameter substitution mechanism can be used to compose longer strings from shorter ones.
-
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the sql command(s) will have to be run.
 
     param('*'):   Any other parameters can be freely used for parameter substitution.
@@ -87,9 +77,7 @@ sub fetch_input {
     my $sql = ($self->input_id()!~/^\{.*\}$/)
             ? $self->input_id()                 # assume the sql command is given in input_id
             : $self->param('sql')               # or defined as a hash value (in input_id or parameters)
-    or $self->param('did')                      # or referred to the analysis_data table where longer strings can be stored
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
-            : die "Could not find the command defined in input_id(), param('sql') or param('did')";
+    or die "Could not find the command defined in param('sql') or input_id()";
 
         #   Store the sql command array:
         #

@@ -19,7 +19,7 @@ Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files t
 
 This RunnableDB module acts as a wrapper for shell-level command lines. If you behave you may also use parameter substitution.
 
-The command can be given using three different syntaxes:
+The command can be given using two different syntaxes:
 
 1) Command line is stored in the input_id() or parameters() as the value corresponding to the 'cmd' key.
     THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
@@ -27,11 +27,6 @@ The command can be given using three different syntaxes:
 2) Command line is stored in the 'input_id' field of the analysis_job table.
     (only works with command lines shorter than 255 bytes).
     This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
-
-3) A numeric key to the analysis_data table (where the actual command line is stored)
-    is kept in the input_id() or parameters() as the value corresponding to the 'did' key. This allows to overcome the 255 byte limit.
-    Well, if you REALLY couldn't fit your command line into 250~ish bytes, are you sure you can manage big pipelines?
-    Just joking :)
 
 =head1 CONTACT
 
@@ -43,7 +38,6 @@ The command can be given using three different syntaxes:
 package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 =head2 strict_hash_format
@@ -64,10 +58,6 @@ sub strict_hash_format {
 
     param('cmd'): The recommended way of passing in the command line.
 
-    param('did'): Alternative way of passing in a long command line that is stored in analysis_data table.
-                  Try to avoid long command lines at all costs, as it makes debugging a nightmare.
-                  Keep in mind that parameter substitution mechanism can be used to compose longer strings from shorter ones.
-
     param('*'):   Any other parameters can be freely used for parameter substitution.
 
 =cut
@@ -80,9 +70,7 @@ sub fetch_input {
     my $cmd = ($self->input_id()!~/^\{.*\}$/)
             ? $self->input_id()                 # assume the command line is given in input_id
             : $self->param('cmd')               # or defined as a hash value (in input_id or parameters)
-    or $self->param('did')                      # or referred to the analysis_data table where longer strings can be stored
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID( $self->param('did') )
-            : die "Could not find the command defined in input_id(), param('cmd') or param('did')";
+    or die "Could not find the command defined in param('cmd') or input_id()";
 
         # Store the value with parameter substitutions for the actual execution:
         #
