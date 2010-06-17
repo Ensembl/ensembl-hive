@@ -140,7 +140,7 @@ CREATE TABLE analysis_job (
 
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX claim_analysis_status  (job_claim, analysis_id, status),
+  INDEX claim_analysis_status  (job_claim, analysis_id, status, semaphore_count),
   INDEX analysis_status        (analysis_id, status, semaphore_count),
   INDEX worker_id              (worker_id)
 ) ENGINE=InnoDB;
