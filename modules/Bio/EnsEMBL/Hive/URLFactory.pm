@@ -49,6 +49,8 @@ use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
+#use Data::Dumper;
+
 sub new {
     my $class = shift @_;
 
@@ -87,9 +89,10 @@ sub fetch {
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
     if( my ($conn, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, %conn_param) =
-        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?(;(\w+)=(\w+))*$} ) {
+        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?(?:;(\w+)=(\w+))*$} ) {
 
-# warn "URLPARSER: conn='$conn', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
+#warn "URLPARSER: conn='$conn', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
+#warn "CONN_PARAMS: ".Dumper(\%conn_param);
 
         my $dba = ($conn eq 'mysql:///') ? $default_dba : $class->create_cached_dba($user, $pass, $host, $port, $dbname, %conn_param);
 
