@@ -58,7 +58,7 @@ sub default_options {
         'pipeline_name' => 'zip_tables',                    # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
@@ -66,7 +66,7 @@ sub default_options {
         },
 
         'source_db' => {
-            -host   => 'compara3',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -75,6 +75,7 @@ sub default_options {
         
         'with_schema'       => 1,                                           # include table creation statement before inserting the data
         'only_tables'       => '%',                                         # use 'protein_tree%' or 'analysis%' to only dump those tables
+        'invert_selection'  => 0,                                           # use 'NOT LIKE' instead of 'LIKE'
         'target_dir'        => $ENV{'HOME'}.'/'.$self->o('source_dbname'),  # where we want the compressed files to appear
         'dumping_capacity'  => 10,                                          # how many tables can be dumped in parallel
     };
@@ -115,7 +116,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'    => $self->o('source_db'),
-                'inputquery' => 'SHOW TABLES LIKE "'.$self->o('only_tables').'"',
+#                'inputquery' => 'SHOW TABLES LIKE "'.$self->o('only_tables').'"',  # to support negative patterns in MySQL 5.1 we need a trick
+                'inputquery' => 'SELECT table_name FROM information_schema.tables WHERE table_schema = "'.$self->o('source_dbname').'" AND table_name '
+                    .($self->o('invert_selection')?'NOT LIKE':'LIKE').' "'.$self->o('only_tables').'"',
             },
             -input_ids => [
                 { 'input_id' => { 'table_name' => '#_range_start#' }, },
