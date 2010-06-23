@@ -236,6 +236,7 @@ sub process_options {
     $self->pipeline_wide_parameters();
     $self->resource_classes();
     $self->pipeline_analyses();
+    $self->dbconn_2_url('pipeline_db'); # force vivification of the whole 'pipeline_db' structure (used in run() )
 
         # you can override parsing of commandline options if creating pipelines by a script - just provide the overriding hash
     my $cmdline_options = $self->{_cmdline_options} = shift @_ || $self->_load_cmdline_options();
