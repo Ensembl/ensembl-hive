@@ -30,7 +30,7 @@ $self->{'analysis_id'} = undef;     # less  specific specialization
 $self->{'logic_name'}  = undef;     # (---------,,---------------)
 $self->{'rc_id'}       = undef;     # least specific specialization
 
-$self->{'outdir'}      = undef;
+$self->{'output_dir'}  = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
 $self->{'debug'}       = undef;
@@ -63,7 +63,7 @@ GetOptions(
            'batch_size=i'   => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
-           'outdir=s'       => \$self->{'outdir'},
+           'output_dir|outdir=s'   => \$self->{'output_dir'}, # keep compatibility with the old name
            'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
@@ -152,7 +152,7 @@ if($self->{'analysis_id'} and $self->{'input_id'}) {
   print("creating job outside database\n");
   $self->{'analysis_job'}->print_job;
   $self->{'debug'}=1 unless(defined($self->{'debug'}));
-  $self->{'outdir'}='' unless(defined($self->{'outdir'}));
+  $self->{'output_dir'}='' unless(defined($self->{'output_dir'}));
 }
 
 if($self->{'job_id'}) {
@@ -177,13 +177,13 @@ unless($worker) {
 
 $worker->debug($self->{'debug'}) if($self->{'debug'});
 
-if(defined($self->{'outdir'})) { $worker->output_dir($self->{'outdir'}); }
-else {
-  my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
-  if( @$arrRef ) {
-    $worker->output_dir( destringify($arrRef->[0]) );
-  } 
+unless(defined($self->{'output_dir'})) {
+    my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
+    if( @$arrRef ) {
+        $self->{'output_dir'} = destringify($arrRef->[0]);
+    } 
 }
+$worker->output_dir($self->{'output_dir'});
 
 if($self->{'batch_size'}) {
   $worker->set_worker_batch_size($self->{'batch_size'});
@@ -318,7 +318,7 @@ __DATA__
     -batch_size <num>      : #jobs to claim at a time
     -limit <num>           : #jobs to run before worker can die naturally
     -lifespan <num>        : number of minutes this worker is allowed to run
-    -outdir <path>         : directory where stdout/stderr is redirected
+    -output_dir <path>     : directory where stdout/stderr is redirected
     -bk <string>           : beekeeper identifier (deprecated and ignored)
     -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)
     -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)

@@ -78,7 +78,7 @@ sub main {
                'loop'              => \$loopit,
                'max_loops=i'       => \$max_loops,
                'run'               => \$run,
-               'run_job_id=i'      => \$self->{'run_job_id'},
+               'job_id|run_job_id=i'  => \$self->{'run_job_id'},
                'sleep=f'           => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -481,7 +481,7 @@ __DATA__
     -loop                  : run autonomously, loops and sleeps
     -max_loops <num>       : perform max this # of loops in autonomous mode
     -run                   : run 1 iteration of automation loop
-    -run_job_id <job_id>   : run 1 iteration for this job_id
+    -job_id <job_id>       : run 1 iteration for this job_id
     -sleep <num>           : when looping, sleep <num> minutes (default 2min)
 
 =head2 Meadow control
