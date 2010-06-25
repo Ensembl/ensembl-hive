@@ -304,15 +304,15 @@ sub last_check_in {
 use Digest::MD5 qw(md5_hex);
 
 sub output_dir {
-  my ($self, $outdir) = @_;
-  if ($outdir and (-d $outdir)) {
+  my ($self, $output_dir) = @_;
+  if ($output_dir and (-d $output_dir)) {
     my $worker_id = $self->worker_id;
     my (@hex) = md5_hex($worker_id) =~ m/\G(..)/g;
     # If you want more than one level of directories, change $hex[0]
     # below into an array slice.  e.g @hex[0..1] for two levels.
-    $outdir = join('/', $outdir, $hex[0], 'worker_id' . $worker_id);
-    system("mkdir -p $outdir") && die "Could not create $outdir\n";
-    $self->{'_output_dir'} = $outdir;
+    $output_dir = join('/', $output_dir, $hex[0], "worker_id_${worker_id}" );
+    system("mkdir -p $output_dir") && die "Could not create $output_dir\n";
+    $self->{'_output_dir'} = $output_dir;
   }
   return $self->{'_output_dir'};
 }
@@ -629,13 +629,13 @@ sub redirect_job_output
   my $self = shift;
   my $job  = shift;
 
-  my $outdir = $self->output_dir();
-  return unless($outdir);
+  my $output_dir = $self->output_dir();
+  return unless($output_dir);
   return unless($job);
   return unless($job->adaptor);
 
-  $job->stdout_file($outdir . "/job_".$job->dbID.".out");
-  $job->stderr_file($outdir . "/job_".$job->dbID.".err");
+  $job->stdout_file($output_dir . "/job_id_".$job->dbID.".out");
+  $job->stderr_file($output_dir . "/job_id_".$job->dbID.".err");
 
   close STDOUT;
   open STDOUT, ">".$job->stdout_file;
