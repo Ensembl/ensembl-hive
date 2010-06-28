@@ -111,6 +111,9 @@ sub main {
                'delete|remove=s'   => \$remove_analysis_id, # careful
                'job_output=i'      => \$job_id_for_output,
                'monitor!'          => \$self->{'monitor'},
+
+                    # loose arguments interpreted as database name (for compatibility with mysql[dump])
+               '<>', sub { $self->{'db_conf'}->{'-dbname'} = shift @_; },
     );
 
     if ($help) { usage(0); }
@@ -439,7 +442,7 @@ __DATA__
 =head1 USAGE EXAMPLES
 
         # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
-    beekeeper.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname -sync
+    beekeeper.pl --host=hostname --port=3306 --user=username --password=secret ehive_dbname -sync
 
         # An alternative way of doing the same thing
     beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
@@ -474,7 +477,7 @@ __DATA__
     -port <port#>          : mysql port number
     -user <name>           : mysql connection user <name>
     -password <pass>       : mysql connection password <pass>
-    -database <name>       : mysql database <name>
+    [-database] <name>     : mysql database <name>
 
 =head2 Looping control
 

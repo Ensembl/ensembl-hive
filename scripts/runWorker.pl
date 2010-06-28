@@ -21,9 +21,13 @@ Bio::EnsEMBL::Registry->no_version_check(1);
 # the globals into a nice '$self' package
 my $self = bless {};
 
-$self->{'db_conf'} = {};
-$self->{'db_conf'}->{'-user'} = 'ensro';
-$self->{'db_conf'}->{'-port'} = 3306;
+$self->{'db_conf'} = {
+    -host   => '',
+    -port   => 3306,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => '',
+};
 
 $self->{'job_id'}      = undef;     # most  specific specialization
 $self->{'analysis_id'} = undef;     # less  specific specialization
@@ -38,22 +42,22 @@ $self->{'no_write'}     = undef;
 $self->{'maximise_concurrency'} = undef;
 
 my $conf_file;
-my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
+my ($help, $adaptor, $url);
 my $reg_conf  = undef;
 my $reg_alias = 'hive';
 
 GetOptions(
 
 # Connection parameters:
-           'conf=s'         => \$conf_file,
-           'regfile=s'      => \$reg_conf,
-           'regname=s'      => \$reg_alias,
-           'url=s'          => \$url,
-           'host|dbhost=s'  => \$host,
-           'port|dbport=i'  => \$port,
-           'user|dbuser=s'  => \$user,
-           'password|dbpass=s'  => \$pass,
-           'database|dbname=s'  => \$dbname,
+           'conf=s'            => \$conf_file,
+           'regfile=s'         => \$reg_conf,
+           'regname=s'         => \$reg_alias,
+           'url=s'             => \$url,
+           'host|dbhost=s'     => \$self->{'db_conf'}->{'-host'},
+           'port|dbport=i'     => \$self->{'db_conf'}->{'-port'},
+           'user|dbuser=s'     => \$self->{'db_conf'}->{'-user'},
+           'password|dbpass=s' => \$self->{'db_conf'}->{'-pass'},
+           'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
 
 # Job/Analysis control parameters:
            'job_id=i'       => \$self->{'job_id'},
@@ -76,7 +80,10 @@ GetOptions(
 # Other commands
            'h|help'         => \$help,
            'debug=i'        => \$self->{'debug'},
-          );
+
+# loose arguments interpreted as database name (for compatibility with mysql[dump])
+            '<>', sub { $self->{'db_conf'}->{'-dbname'} = shift @_; },
+);
 
 $self->{'analysis_id'} = shift if(@_);
 
@@ -86,29 +93,15 @@ parse_conf($self, $conf_file);
 
 my $DBA;
 if($reg_conf) {
-  Bio::EnsEMBL::Registry->load_all($reg_conf);
-  $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
-} 
-elsif($url) {
-  $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
-} 
-else {
-  if($host)   { $self->{'db_conf'}->{'-host'}   = $host; }
-  if($port)   { $self->{'db_conf'}->{'-port'}   = $port; }
-  if($dbname) { $self->{'db_conf'}->{'-dbname'} = $dbname; }
-  if($user)   { $self->{'db_conf'}->{'-user'}   = $user; }
-  if($pass)   { $self->{'db_conf'}->{'-pass'}   = $pass; }
-
-  unless(defined($self->{'db_conf'}->{'-host'})
-         and defined($self->{'db_conf'}->{'-user'})
-         and defined($self->{'db_conf'}->{'-dbname'}))
-  {
-    print "\nERROR : must specify host, user, and database to connect\n\n";
+    Bio::EnsEMBL::Registry->load_all($reg_conf);
+    $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
+} elsif($url) {
+    $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
+} elsif ($self->{'db_conf'}->{'-host'} and $self->{'db_conf'}->{'-user'} and $self->{'db_conf'}->{'-dbname'}) {
+    $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+} else {
+    print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
     usage(1);
-  }
-
-  # connect to database specified
-  $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
 }
 
 unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
@@ -286,7 +279,7 @@ __DATA__
 =head1 USAGE EXAMPLES
 
         # Run one local worker process in ehive_dbname and let the system pick up the analysis
-    runWorker.pl --host=hostname --port=3306 --user=username --password=secret --database=ehive_dbname
+    runWorker.pl --host=hostname --port=3306 --user=username --password=secret ehive_dbname
 
         # Run one local worker process in ehive_dbname and let the system pick up the analysis (another connection syntax)
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
@@ -309,7 +302,7 @@ __DATA__
     -port <port#>          : mysql port number
     -user <name>           : mysql connection user <name>
     -password <pass>       : mysql connection password
-    -database <name>       : mysql database <name>
+    [-database] <name>     : mysql database <name>
 
 =head2 Job/Analysis control parameters:
 
