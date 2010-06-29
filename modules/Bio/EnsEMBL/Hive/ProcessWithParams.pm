@@ -146,7 +146,8 @@ sub param_substitute {
     my $type = ref($structure);
 
     if(!$type) {
-         $structure=~s/(?:#(\w+?)#)/$self->param($1)/eg;
+        $structure=~s/(?:#(\w+)\:(\w+)#)/$self->$1($self->param($2))/eg;
+        $structure=~s/(?:#(\w+)#)/$self->param($1)/eg;
         return $structure;
     } elsif($type eq 'ARRAY') {
         my @substituted_array = ();
@@ -163,6 +164,12 @@ sub param_substitute {
     } else {
         die "Could not substitute parameters in $structure";
     }
+}
+
+sub mysql_conn { # an example stringification formatter (others can be defined here, in a descendent of ProcessWithParams, or in the Runnable)
+    my ($self, $db_conn) = @_;
+
+    return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
 }
 
 #--------------------------------------------[private methods]----------------------------------------------
