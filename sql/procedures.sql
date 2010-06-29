@@ -49,3 +49,9 @@ CREATE PROCEDURE reset_failed_jobs_for_analysis(IN param_logic_name char(64))
     AND   a.analysis_id=j.analysis_id
     AND   j.status='FAILED';
 
+############## drop hive tables ###########################################################
+
+DROP PROCEDURE IF EXISTS drop_hive_tables;
+CREATE PROCEDURE drop_hive_tables()
+    DROP TABLE hive, dataflow_rule, analysis_ctrl_rule, analysis_job, analysis_job_file, analysis_data, analysis_stats, resource_description, analysis_stats_monitor, monitor;
+
