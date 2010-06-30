@@ -87,9 +87,9 @@ sub fetch_input {
         #
     if(my $db_conn = $self->param('db_conn')) {
 
-        $self->param('dbc', DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
+        $self->param('dbh', DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
     } else {
-        $self->param('dbc', $self->db->dbc );
+        $self->param('dbh', $self->db->dbc->db_handle );
     }
 }
 
@@ -104,7 +104,7 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $dbc  = $self->param('dbc');
+    my $dbh  = $self->param('dbh');
     my $sqls = $self->param('sqls');
 
     my %output_id;
@@ -116,10 +116,10 @@ sub run {
             # Perform parameter substitution:
         my $sql = $self->param_substitute($unsubst_sql);
 
-        $dbc->do( $sql );
+        $dbh->do( $sql );
 
         my $insert_id_name  = '_insert_id_'.$counter++;
-        my $insert_id_value = $dbc->db_handle->{'mysql_insertid'};
+        my $insert_id_value = $dbh->{'mysql_insertid'};
         $output_id{$insert_id_name} = $insert_id_value;
         $self->param($insert_id_name, $insert_id_value); # for templates
     }
