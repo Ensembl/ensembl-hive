@@ -296,15 +296,12 @@ sub print_stats {
 
   $mode=1 unless($mode);
 
-  my $name = sprintf("%s(%d)", $self->get_analysis->logic_name, $self->analysis_id);
-  while(length($name) < 27) { $name.=' ';}
-
   if($mode == 1) {
-    # printf("%s(%d) %s %d:ms %d:cpu (%d:q %d:r %d:d %d:f %d:t) [%d/%d workers] (%d secs synched)\n",
-    #printf("%30s(%3d) %12s jobs(t:%d,q:%d,d:%d,f:%d) b:%d M:%d w:%d (%d secs old)\n",
-    printf("$name %11s %d:cpum job(%d/%d run:%d fail:%d %dms) worker[%d/%d] (sync %d)\n",
+    printf("%-27s(%2d) %11s %d:cpum job(%d/%d run:%d fail:%d %dms) worker[%d/%d] (sync'd %d sec ago)\n",
+        $self->get_analysis->logic_name,
+        $self->analysis_id,
         $self->status,
-	$self->cpu_minutes_remaining,
+        $self->cpu_minutes_remaining,
         $self->remaining_job_count,
         $self->total_job_count,
         $self->running_job_count,
@@ -314,7 +311,9 @@ sub print_stats {
         $self->seconds_since_last_update,
         );
   } elsif ($mode == 2) {
-    printf("$name %11s [%d/%d workers] (%d secs synched)\n",
+    printf("%-27s(%2d) %11s [%d/%d workers] (sync'd %d sec ago)\n",
+        $self->get_analysis->logic_name,
+        $self->analysis_id,
         $self->status,
         $self->num_required_workers, $self->hive_capacity,
         $self->seconds_since_last_update);
