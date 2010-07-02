@@ -172,6 +172,18 @@ sub mysql_conn { # an example stringification formatter (others can be defined h
     return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
 }
 
+sub mysql_dbname { # another example stringification formatter
+    my ($self, $db_conn) = @_;
+
+    return $db_conn->{-dbname};
+}
+
+sub csvq { # another example stringification formatter
+    my ($self, $list) = @_;
+
+    return join(',', map { "'$_'" } @$list);
+}
+
 #--------------------------------------------[private methods]----------------------------------------------
 
 =head2 _parse_string
