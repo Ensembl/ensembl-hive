@@ -16,6 +16,37 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+
+2 July, 2010 : Leo Gordon
+
+* [Bugfix] Process::dataflow_output_id() is simplified and generalized
+
+* [Feature/experimental] ProcessWithParams::param_substitute() can now understand #stringifier:param_name# syntax,
+    several stringifiers added (the syntax is not final, and the stringifiers will probably move out of the module)
+
+* [Feature] TableDumperZipper_conf can now understand negative patterns:
+    it is an example how to emulate the inexistent in MySQL 5.1 syntax "SHOW TABLES NOT LIKE "%abc%"
+    my using queries from information_schema.tables
+
+* [Cleanup] the 'did' parameter was finally removed from SystemCmd and SqlCmd to avoid confusion
+    (the same functionality is already incapsulated into AnalysisJobAdaptor)
+
+* [Feature] SqlCmd can now produce mysql_insert_ids and pass them on as params.
+    This allows us to grab auto-incremented values on PipeConfig level (see Compara/PipeConfig for examples)
+
+* [Convenience] beekeeper.pl and runWorker.pl can take dbname as a "naked" command line option
+    (which makes the option's syntax even closer to that of mysql/mysqldump)
+
+* [Convenience] -job_id is now the standard option name understood by beekeeper.pl and runWorker.pl
+    (older syntax is kept for compatibility)
+
+* [Cleanup] Some unused scripts have been removed from sql/ directory,
+    drop_hive_tables() added to procedures.sql
+
+* [Bugfix] claim_analysis_status index on analysis_job table has been fixed in tables.sql
+    and a corresponding patch file added
+
+
 13 June, 2010 : Leo Gordon
 
 * Added support for dataflow-into-tables, see LongMult example.
