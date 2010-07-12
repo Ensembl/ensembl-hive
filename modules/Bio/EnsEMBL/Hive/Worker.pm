@@ -288,33 +288,56 @@ sub last_check_in {
   return $self->{'_last_check_in'};
 }
 
-=head2 output_dir
+=head2 hive_output_dir
 
   Arg [1] : (optional) string directory path
-  Title   :   output_dir
-  Usage   :   $value = $self->output_dir;
-              $self->output_dir($new_value);
-  Description: sets the directory where STDOUT and STRERR will be
-	       redirected to. Each worker will create a subdirectory
-	       where each analysis_job will get a .out and .err file
+  Title   :   hive_output_dir
+  Usage   :   $hive_output_dir = $self->hive_output_dir;
+              $self->hive_output_dir($hive_output_dir);
+  Description: getter/setter for the directory where STDOUT and STRERR of the hive will be redirected to.
+          If it is "true", each worker will create its own subdirectory in it
+          where each analysis_job will have its own .out and .err files.
   Returntype : string
 
 =cut
 
-use Digest::MD5 qw(md5_hex);
+sub hive_output_dir {
+    my $self = shift @_;
 
-sub output_dir {
-  my ($self, $output_dir) = @_;
-  if ($output_dir and (-d $output_dir)) {
-    my $worker_id = $self->worker_id;
-    my (@hex) = md5_hex($worker_id) =~ m/\G(..)/g;
-    # If you want more than one level of directories, change $hex[0]
-    # below into an array slice.  e.g @hex[0..1] for two levels.
-    $output_dir = join('/', $output_dir, $hex[0], "worker_id_${worker_id}" );
-    system("mkdir -p $output_dir") && die "Could not create $output_dir\n";
-    $self->{'_output_dir'} = $output_dir;
-  }
-  return $self->{'_output_dir'};
+    $self->{'_hive_output_dir'} = shift @_ if(@_);
+    return $self->{'_hive_output_dir'};
+}
+
+sub worker_output_dir {
+    my $self = shift @_;
+
+    if((my $worker_output_dir = $self->{'_worker_output_dir'}) and not @_) { # no need to set, just return:
+
+        return $worker_output_dir;
+
+    } else { # let's try to set first:
+    
+        if(@_) { # setter mode ignores hive_output_dir
+
+            $worker_output_dir = shift @_;
+
+        } elsif( my $hive_output_dir = $self->hive_output_dir ) {
+
+            my $worker_id = $self->worker_id();
+            my @dirs = ( $hive_output_dir, reverse(split(//, $worker_id)) );
+            pop @dirs;  # do not use the first digit for hashing
+            push @dirs, "worker_id_${worker_id}";
+
+            $worker_output_dir = join('/', @dirs);
+        }
+
+        if($worker_output_dir) { # will not attempt to create if set to false
+            system("mkdir -p $worker_output_dir") && die "Could not create '$worker_output_dir' because: $!";
+        }
+
+        $self->{'_worker_output_dir'} = $worker_output_dir;
+    }
+    return $self->{'_worker_output_dir'};
 }
 
 
@@ -335,10 +358,10 @@ sub print_worker {
   print("  batch_size = ", $self->batch_size,"\n");
   print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
   print("  life_span  = ", $self->life_span,"\n") if(defined($self->life_span));
-  if($self->output_dir) {
-    print("  output_dir = ", $self->output_dir, "\n") if($self->output_dir);
+  if(my $worker_output_dir = $self->worker_output_dir) {
+    print("  worker_output_dir = $worker_output_dir\n");
   } else {
-    print("  output_dir = STDOUT/STDERR\n")
+    print("  worker_output_dir = STDOUT/STDERR\n");
   }
 }
 
@@ -440,11 +463,11 @@ sub run
   my $self = shift;
   my $specific_job = $self->_specific_job;
 
-  if($self->output_dir()) {
+  if( my $worker_output_dir = $self->worker_output_dir ) {
     open OLDOUT, ">&STDOUT";
     open OLDERR, ">&STDERR";
-    open WORKER_STDOUT, ">".$self->output_dir()."/worker.out";
-    open WORKER_STDERR, ">".$self->output_dir()."/worker.err";
+    open WORKER_STDOUT, ">${worker_output_dir}/worker.out";
+    open WORKER_STDERR, ">${worker_output_dir}/worker.err";
     close STDOUT;
     close STDERR;
     open STDOUT, ">&WORKER_STDOUT";
@@ -539,7 +562,7 @@ sub run
   printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
   print("total jobs completed : ", $self->work_done, "\n");
   
-  if($self->output_dir()) {
+  if( $self->worker_output_dir() ) {
     close STDOUT;
     close STDERR;
     close WORKER_STDOUT;
@@ -624,56 +647,51 @@ sub enter_status {
   return $self->queen->enter_status($self, $status);
 }
 
-sub redirect_job_output
-{
-  my $self = shift;
-  my $job  = shift;
+sub redirect_job_output {
+    my $self = shift;
+    my $job  = shift or return;
 
-  my $output_dir = $self->output_dir();
-  return unless($output_dir);
-  return unless($job);
-  return unless($job->adaptor);
+    my $job_adaptor = $job->adaptor or return;
 
-  $job->stdout_file($output_dir . "/job_id_".$job->dbID.".out");
-  $job->stderr_file($output_dir . "/job_id_".$job->dbID.".err");
+    if( my $worker_output_dir = $self->worker_output_dir ) {
 
-  close STDOUT;
-  open STDOUT, ">".$job->stdout_file;
+        $job->stdout_file( $worker_output_dir . '/job_id_' . $job->dbID . '.out' );
+        $job->stderr_file( $worker_output_dir . '/job_id_' . $job->dbID . '.err' );
 
-  close STDERR;
-  open STDERR, ">".$job->stderr_file;
+        close STDOUT;
+        open STDOUT, ">".$job->stdout_file;
 
-  $job->adaptor->store_out_files($job) if($job->adaptor);
+        close STDERR;
+        open STDERR, ">".$job->stderr_file;
+
+        $job_adaptor->store_out_files($job);
+    }
 }
 
 
-sub close_and_update_job_output
-{
-  my $self = shift;
-  my $job  = shift;
+sub close_and_update_job_output {
+    my $self = shift;
+    my $job  = shift or return;
 
-  return unless($job);
-  return unless($self->output_dir);
-  return unless($job->adaptor);
+    my $job_adaptor = $job->adaptor or return;
 
+    if( $self->worker_output_dir ) {
 
-  # the following flushes $job->stderr_file and $job->stdout_file
-  open STDOUT, ">&WORKER_STDOUT";
-  open STDERR, ">&WORKER_STDERR";
+        # the following flushes $job->stderr_file and $job->stdout_file
+        open STDOUT, ">&WORKER_STDOUT";
+        open STDERR, ">&WORKER_STDERR";
 
-  if(-z $job->stdout_file) {
-    #print("unlink zero size ", $job->stdout_file, "\n");
-    unlink $job->stdout_file;
-    $job->stdout_file('');
-  }
-  if(-z $job->stderr_file) {
-    #print("unlink zero size ", $job->stderr_file, "\n");
-    unlink $job->stderr_file;
-    $job->stderr_file('');
-  }
+        if(-z $job->stdout_file) {
+            unlink $job->stdout_file;
+            $job->stdout_file('');
+        }
+        if(-z $job->stderr_file) {
+            unlink $job->stderr_file;
+            $job->stderr_file('');
+        }
 
-  $job->adaptor->store_out_files($job) if($job->adaptor);
-
+        $job_adaptor->store_out_files($job);
+    }
 }
 
 
