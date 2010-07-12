@@ -662,10 +662,13 @@ sub get_num_needed_workers {
   return 0 unless(@all_analyses);
 
   my $available_load = 1.0 - $self->get_hive_current_load();
+
   return 0 if($available_load <=0.0);
 
   my $total_workers = 0;
   my %rc2workers = ();
+
+# FIXME: I have a feeling sometimes this method returns an incorrect value. Please doublecheck.
 
   foreach my $analysis_stats (@all_analyses) {
     next if (defined $filter_analysis && $filter_analysis->dbID != $analysis_stats->analysis_id);
@@ -742,12 +745,14 @@ sub get_remaining_jobs_show_hive_progress {
   return $remaining;
 }
 
-sub print_hive_status {
-    my ($self, $filter_analysis) = @_;
-
-    $self->print_analysis_status($filter_analysis);
-    $self->print_running_worker_status;
-}
+## Can't see where this method is used.
+#
+#sub print_hive_status {
+#    my ($self, $filter_analysis) = @_;
+#
+#    $self->print_analysis_status($filter_analysis);
+#    $self->print_running_worker_status;
+#}
 
 
 sub print_analysis_status {

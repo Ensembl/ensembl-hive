@@ -291,7 +291,7 @@ sub show_given_workers {
             $worker->process_id, 
             $worker->host,
             $worker->last_check_in);
-        printf("%s\n", $worker->output_dir) if ($verbose_stats);
+        printf("%s\n", $worker->worker_output_dir) if ($verbose_stats);
     }
 }
 

@@ -34,7 +34,7 @@ $self->{'analysis_id'} = undef;     # less  specific specialization
 $self->{'logic_name'}  = undef;     # (---------,,---------------)
 $self->{'rc_id'}       = undef;     # least specific specialization
 
-$self->{'output_dir'}  = undef;
+$self->{'hive_output_dir'}  = undef;
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
 $self->{'debug'}       = undef;
@@ -67,7 +67,7 @@ GetOptions(
            'batch_size=i'   => \$self->{'batch_size'},
            'limit=i'        => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
-           'output_dir|outdir=s'   => \$self->{'output_dir'}, # keep compatibility with the old name
+           'hive_output_dir|outdir=s'   => \$self->{'hive_output_dir'}, # keep compatibility with the old name
            'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
@@ -145,7 +145,7 @@ if($self->{'analysis_id'} and $self->{'input_id'}) {
   print("creating job outside database\n");
   $self->{'analysis_job'}->print_job;
   $self->{'debug'}=1 unless(defined($self->{'debug'}));
-  $self->{'output_dir'}='' unless(defined($self->{'output_dir'}));
+  $self->{'hive_output_dir'}='' unless(defined($self->{'hive_output_dir'})); # make it defined but empty/false
 }
 
 if($self->{'job_id'}) {
@@ -170,13 +170,13 @@ unless($worker) {
 
 $worker->debug($self->{'debug'}) if($self->{'debug'});
 
-unless(defined($self->{'output_dir'})) {
+unless(defined($self->{'hive_output_dir'})) {
     my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
     if( @$arrRef ) {
-        $self->{'output_dir'} = destringify($arrRef->[0]);
+        $self->{'hive_output_dir'} = destringify($arrRef->[0]);
     } 
 }
-$worker->output_dir($self->{'output_dir'});
+$worker->hive_output_dir($self->{'hive_output_dir'});
 
 if($self->{'batch_size'}) {
   $worker->set_worker_batch_size($self->{'batch_size'});
@@ -294,36 +294,36 @@ __DATA__
 
 =head2 Connection parameters
 
-    -conf <path>           : config file describing db connection
-    -regfile <path>        : path to a Registry configuration file
-    -regname <string>      : species/alias name for the Hive DBAdaptor
-    -url <url string>      : url defining where database is located
-    -host <machine>        : mysql database host <machine>
-    -port <port#>          : mysql port number
-    -user <name>           : mysql connection user <name>
-    -password <pass>       : mysql connection password
-    [-database] <name>     : mysql database <name>
+    -conf <path>            : config file describing db connection
+    -regfile <path>         : path to a Registry configuration file
+    -regname <string>       : species/alias name for the Hive DBAdaptor
+    -url <url string>       : url defining where database is located
+    -host <machine>         : mysql database host <machine>
+    -port <port#>           : mysql port number
+    -user <name>            : mysql connection user <name>
+    -password <pass>        : mysql connection password
+    [-database] <name>      : mysql database <name>
 
 =head2 Job/Analysis control parameters:
 
-    -analysis_id <id>      : analysis_id in db
-    -logic_name <string>   : logic_name of analysis to make this worker
-    -batch_size <num>      : #jobs to claim at a time
-    -limit <num>           : #jobs to run before worker can die naturally
-    -lifespan <num>        : number of minutes this worker is allowed to run
-    -output_dir <path>     : directory where stdout/stderr is redirected
-    -bk <string>           : beekeeper identifier (deprecated and ignored)
-    -pid <string>          : externally set process_id descriptor (e.g. lsf job_id, array_id)
-    -input_id <string>     : test input_id on specified analysis (analysis_id or logic_name)
-    -job_id <id>           : run specific job defined by analysis_job_id
-    -analysis_stats        : show status of each analysis in hive
-    -no_cleanup            : don't perform global_cleanup when worker exits
-    -no_write              : don't write_output or auto_dataflow input_job
+    -analysis_id <id>       : analysis_id in db
+    -logic_name <string>    : logic_name of analysis to make this worker
+    -batch_size <num>       : #jobs to claim at a time
+    -limit <num>            : #jobs to run before worker can die naturally
+    -lifespan <num>         : number of minutes this worker is allowed to run
+    -hive_output_dir <path> : directory where stdout/stderr of the hive is redirected
+    -bk <string>            : beekeeper identifier (deprecated and ignored)
+    -pid <string>           : externally set process_id descriptor (e.g. lsf job_id, array_id)
+    -input_id <string>      : test input_id on specified analysis (analysis_id or logic_name)
+    -job_id <id>            : run specific job defined by analysis_job_id
+    -analysis_stats         : show status of each analysis in hive
+    -no_cleanup             : don't perform global_cleanup when worker exits
+    -no_write               : don't write_output or auto_dataflow input_job
 
 =head2 Other options:
 
-    -help                  : print this help
-    -debug <level>         : turn on debug messages at <level>
+    -help                   : print this help
+    -debug <level>          : turn on debug messages at <level>
 
 =head1 CONTACT
 
