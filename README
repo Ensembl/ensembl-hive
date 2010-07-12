@@ -16,6 +16,13 @@ Summary:
   Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
   the graphs but could be adapted more generally.
 
+12 July, 2010 : Leo Gordon
+
+* added the slides of my HiveTalk_12Jul2010 into docs/
+
+* changed the ambiguous 'output_dir' getter/setter into two methods:
+    worker_output_dir (if you set it - it will output directly into the given directory) and
+    hive_output_dir (if you set it, it will perform *reverse_decimal* hashing of the worker_id and create a directory for that particular worker)
 
 2 July, 2010 : Leo Gordon
 
