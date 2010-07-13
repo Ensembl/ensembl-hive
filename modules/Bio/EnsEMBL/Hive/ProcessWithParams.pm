@@ -53,7 +53,7 @@ accorting to the following parameter precedence rules:
 package Bio::EnsEMBL::Hive::ProcessWithParams;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');  # import both functions
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -146,8 +146,9 @@ sub param_substitute {
     my $type = ref($structure);
 
     if(!$type) {
-        $structure=~s/(?:#(\w+)\:(\w+)#)/$self->$1($self->param($2))/eg;
-        $structure=~s/(?:#(\w+)#)/$self->param($1)/eg;
+        $structure=~s/(?:#expr\((.+?)\)expr#)/$self->expr_subst_and_eval($1)/eg;    # substitute and evaluate complex expressions
+        $structure=~s/(?:#(\w+)\:(\w+)#)/$self->$1($self->param($2))/eg;            # call a stringification formatter
+        $structure=~s/(?:#(\w+)#)/$self->param($1)/eg;                              # just do a simple param substitution
         return $structure;
     } elsif($type eq 'ARRAY') {
         my @substituted_array = ();
@@ -164,6 +165,13 @@ sub param_substitute {
     } else {
         die "Could not substitute parameters in $structure";
     }
+}
+
+sub expr_subst_and_eval {
+    my ($self, $expression) = @_;
+
+    $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
+    return eval($expression);
 }
 
 sub mysql_conn { # an example stringification formatter (others can be defined here, in a descendent of ProcessWithParams, or in the Runnable)
