@@ -146,10 +146,17 @@ sub param_substitute {
     my $type = ref($structure);
 
     if(!$type) {
-        $structure=~s/(?:#expr\((.+?)\)expr#)/$self->expr_subst_and_eval($1)/eg;    # substitute and evaluate complex expressions
-        $structure=~s/(?:#(\w+)\:(\w+)#)/$self->$1($self->param($2))/eg;            # call a stringification formatter
-        $structure=~s/(?:#(\w+)#)/$self->param($1)/eg;                              # just do a simple param substitution
-        return $structure;
+
+        if($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
+
+            return $self->subst_one_hashpair($1);
+
+        } else {
+
+            $structure=~s/(?:#(.+?)#)/$self->subst_one_hashpair($1)/eg;
+            return $structure;
+        }
+
     } elsif($type eq 'ARRAY') {
         my @substituted_array = ();
         foreach my $element (@$structure) {
@@ -167,12 +174,26 @@ sub param_substitute {
     }
 }
 
-sub expr_subst_and_eval {
-    my ($self, $expression) = @_;
+sub subst_one_hashpair {
+    my ($self, $inside_hashes) = @_;
 
-    $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
-    return eval($expression);
+    if($inside_hashes=~/^\w+$/) {
+
+        return $self->param($inside_hashes);
+
+    } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
+
+        return $self->$1($self->param($2));
+
+    } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
+
+        my $expression = $1;
+        $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
+
+        return eval($expression);
+    }
 }
+
 
 sub mysql_conn { # an example stringification formatter (others can be defined here, in a descendent of ProcessWithParams, or in the Runnable)
     my ($self, $db_conn) = @_;
