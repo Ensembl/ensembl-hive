@@ -71,7 +71,7 @@ sub DESTROY {
 =head2 fetch
 
   Arg[1]     : string $url
-  Example    :  $url = 'mysql://user:pass@host:port/dbname/table_name?tparam_name=tparam_value;type=compara;discon=1'
+  Example    :  $url = 'mysql://user:pass@host:3306/dbname/table_name?tparam_name=tparam_value;type=compara;discon=1'
                 my $object = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
   Description: parses the URL, connects to appropriate DBAdaptor,
                determines appropriate object_adaptor, fetches the object
@@ -88,8 +88,10 @@ sub fetch {
 
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
-    if( my ($conn, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, %conn_param) =
-        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?(?:;(\w+)=(\w+))*$} ) {
+    if( my ($conn, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
+        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]+))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
+
+        my %conn_param = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
 
 #warn "URLPARSER: conn='$conn', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
 #warn "CONN_PARAMS: ".Dumper(\%conn_param);
@@ -125,8 +127,8 @@ sub create_cached_dba {
     my $dbname  = shift @_;
     my %conn_param = @_;
 
-    my $type   = $conn_param{'type'}   || 'hive';
-    my $discon = $conn_param{'discon'} || 0;
+    my $type   = $conn_param{'type'};
+    my $discon = $conn_param{'discon'};
 
     my $connectionKey = "$user:$pass\@$host:$port/$dbname;$type";
     my $dba = $_URLFactory_global_instance->{$connectionKey};
