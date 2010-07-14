@@ -72,17 +72,18 @@ sub default_options {
         'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
+            -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
             -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
-        'first_mult'    => '9650516169',                    # the actual numbers that will be multiplied must also be possible to specify from the command line
+        'first_mult'    => '9650156169',                    # the actual numbers that will be multiplied must also be possible to specify from the command line
         'second_mult'   =>  '327358788',
     };
 }
+
 
 =head2 pipeline_create_commands
 
@@ -101,6 +102,7 @@ sub pipeline_create_commands {
         'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'",
     ];
 }
+
 
 =head2 pipeline_analyses
 
@@ -136,6 +138,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'part_multiply',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -parameters    => {},
+            -hive_capacity => 8,
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
             ],
