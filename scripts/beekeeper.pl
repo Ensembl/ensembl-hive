@@ -320,7 +320,7 @@ sub generate_worker_cmd {
                     .  ((defined $self->{'batch_size'}) ? (' -batch_size '.$self->{'batch_size'}) : '')
                     .  ((defined $self->{'lifespan'})   ? (' -lifespan '.$self->{'lifespan'}) : '')
                     .  ((defined $self->{'logic_name'}) ? (' -logic_name '.$self->{'logic_name'}) : '')
-                    .  ((defined $self->{'maximise_concurrency'}) ? ' -maximise_concurrency 1' : '');
+                    .  ($self->{'maximise_concurrency'} ? ' -maximise_concurrency 1' : '');
     }
 
     if ($self->{'reg_file'}) {
