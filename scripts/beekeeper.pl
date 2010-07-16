@@ -61,6 +61,7 @@ sub main {
     $self->{'verbose_stats'}        = 1;
     $self->{'reg_name'}             = 'hive';
     $self->{'maximise_concurrency'} = 0;
+    $self->{'hive_output_dir'} = undef;
 
     GetOptions(
                     # connection parameters
@@ -94,6 +95,7 @@ sub main {
                'lifespan=i'        => \$self->{'lifespan'},
                'logic_name=s'      => \$self->{'logic_name'},
                'maximise_concurrency' => \$self->{'maximise_concurrency'},
+               'hive_output_dir=s' => \$self->{'hive_output_dir'},
 
                     # other commands/options
                'h|help'            => \$help,
@@ -320,7 +322,8 @@ sub generate_worker_cmd {
                     .  ((defined $self->{'batch_size'}) ? (' -batch_size '.$self->{'batch_size'}) : '')
                     .  ((defined $self->{'lifespan'})   ? (' -lifespan '.$self->{'lifespan'}) : '')
                     .  ((defined $self->{'logic_name'}) ? (' -logic_name '.$self->{'logic_name'}) : '')
-                    .  ($self->{'maximise_concurrency'} ? ' -maximise_concurrency 1' : '');
+                    .  ($self->{'maximise_concurrency'} ? ' -maximise_concurrency 1' : '')
+                    .  ($self->{'hive_output_dir'}      ? " -hive_output_dir $self->{'hive_output_dir'}" : '');
     }
 
     if ($self->{'reg_file'}) {
@@ -502,6 +505,7 @@ __DATA__
     -lifespan <num>         : lifespan limit for each worker
     -logic_name <string>    : restrict the pipeline stat/runs to this analysis logic_name
     -maximise_concurrency 1 : try to run more different analyses at the same time
+    -hive_output_dir <path> : directory where stdout/stderr of the hive is redirected
 
 =head2 Other commands/options
 
