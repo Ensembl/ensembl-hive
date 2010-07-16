@@ -40,6 +40,8 @@ package Bio::EnsEMBL::Hive::RunnableDB::JobFactory;
 
 use strict;
 use DBI;
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
+
 use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
 
 =head2 fetch_input
@@ -67,6 +69,9 @@ sub fetch_input {
     param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
                          this is the way to say which column is undergoing 'ranging'
 
+    param('hashed_column_number'): if defined, turns 'hashed_column_number' into a dir_revhash and appends it to the list of fields.
+
+
         # The following 4 parameters are mutually exclusive and define the source of ids for the jobs:
 
     param('inputlist');  The list is explicitly given in the parameters, can be abbreviated: 'inputlist' => ['a'..'z']
@@ -89,6 +94,8 @@ sub run {
     my $key_column      = $self->param('key_column')    || 0;
     my $delimiter       = $self->param('delimiter');
 
+    my $hashed_column_number   = $self->param('hashed_column_number');   # skip this step if undefined
+
     my $inputlist       = $self->param('inputlist');
     my $inputfile       = $self->param('inputfile');
     my $inputquery      = $self->param('inputquery');
@@ -102,6 +109,17 @@ sub run {
 
     if($randomize) {
         _fisher_yates_shuffle_in_place($list);
+    }
+
+    if(defined($hashed_column_number) and scalar(@$list)) {
+
+        if(!ref($list->[0])) {
+            $list = [ map { [$_] } @$list ];    # create the second dimension if it was missing
+        }
+
+        foreach my $row (@$list) {
+            push @$row, dir_revhash($row->[$hashed_column_number]);
+        }
     }
 
     my $output_ids = $self->_split_list_into_ranges($template_hash, $list, $step, $key_column);

@@ -44,7 +44,7 @@ use warnings;
 use Data::Dumper;
 
 use Exporter 'import';
-our @EXPORT_OK = qw( stringify destringify );
+our @EXPORT_OK = qw( stringify destringify dir_revhash );
 
 
 =head2 stringify
@@ -94,6 +94,25 @@ sub destringify {
     }
 
     return $value;
+}
+
+=head2 dir_revhash
+
+    Description: This function takes in a string (which is usually a numeric id) and turns its reverse into a multilevel directory hash.
+                 Please note that no directory is created at this step - it is purely a string conversion function.
+
+    Callers    : Bio::EnsEMBL::Hive::Worker                 # hashing of the worker output directories
+                 Bio::EnsEMBL::Hive::RunnableDB::JobFactory # hashing of an arbitrary id
+
+=cut
+
+sub dir_revhash {
+    my $id = pop @_;
+
+    my @dirs = reverse(split(//, $id));
+    pop @dirs;  # do not use the first digit for hashing
+
+    return join('/', @dirs);
 }
 
 1;

@@ -78,6 +78,8 @@ use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Process;
 
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
+
 ## Minimum amount of time in msec that a worker should run before reporting
 ## back to the hive. This is used when setting the batch_size automatically.
 ## 120000 msec = 2 minutes
@@ -324,11 +326,8 @@ sub worker_output_dir {
         } elsif( my $hive_output_dir = $self->hive_output_dir ) {
 
             my $worker_id = $self->worker_id();
-            my @dirs = ( $hive_output_dir, reverse(split(//, $worker_id)) );
-            pop @dirs;  # do not use the first digit for hashing
-            push @dirs, "worker_id_${worker_id}";
 
-            $worker_output_dir = join('/', @dirs);
+            $worker_output_dir = join('/', $hive_output_dir, dir_revhash($worker_id), 'worker_id_'.$worker_id );
         }
 
         if($worker_output_dir) { # will not attempt to create if set to false
