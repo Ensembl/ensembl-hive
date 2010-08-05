@@ -12,9 +12,17 @@ Summary:
   data-flow graphs and block-branch diagrams which should allow it to codify
   any program, algorithm, or parallel processing job control system.  It is
   not bound to any processing 'farm' system and can be adapted to any GRID.
-  It builds on the design of the Ensembl Pipeline/Analysis and presently uses 
-  Bio::EnsEMBL::Analysis::RunnableDB perl wrapper objects as nodes/blocks in 
-  the graphs but could be adapted more generally.
+
+
+16 July, 2010 : Leo Gordon
+
+* added -hive_output_dir to beekeeper.pl so that it could be set/overridden from the command line
+
+* dir_revhash is now an importable Util subroutine that is used by both Worker and JobFactory
+
+14 July, 2010 : Leo Gordon
+
+* fixed Meadow::LOCAL so that MacOS's ps would also be supported. eHive now runs locally on Macs :)
 
 12 July, 2010 : Leo Gordon
 
