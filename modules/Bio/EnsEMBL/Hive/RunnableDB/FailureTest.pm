@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::Test
+Bio::EnsEMBL::Hive::RunnableDB::FailureTest
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ Available parameters:
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::Test;
+package Bio::EnsEMBL::Hive::RunnableDB::FailureTest;
 
 use strict;
 
