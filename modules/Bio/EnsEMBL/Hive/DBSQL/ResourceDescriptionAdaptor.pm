@@ -25,7 +25,6 @@
 package Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::ResourceDescription;
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');

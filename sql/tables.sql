@@ -19,11 +19,11 @@ CREATE TABLE hive (
   host	           varchar(40) DEFAULT '' NOT NULL,
   process_id       varchar(40) DEFAULT '' NOT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
-  status           enum('READY','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL,
+  status           enum('READY','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL,
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
-  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'FATALITY') DEFAULT '' NOT NULL,
+  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'FATALITY') DEFAULT '' NOT NULL,
   PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)
 ) ENGINE=InnoDB;
@@ -100,7 +100,7 @@ CREATE TABLE analysis_ctrl_rule (
 -- Table structure for table 'analysis_job'
 --
 -- overview:
---   The analysis_job is the heart of this sytem.  It is the kiosk or blackboard
+--   The analysis_job is the heart of this system.  It is the kiosk or blackboard
 --   where workers find things to do and then post work for other works to do.
 --   The job_claim is a UUID set with an UPDATE LIMIT by worker as they fight
 --   over the work.  These jobs are created prior to work being done, are claimed
@@ -129,7 +129,7 @@ CREATE TABLE analysis_job (
   input_id                  char(255) not null,
   job_claim                 char(40) NOT NULL DEFAULT '', #UUID
   worker_id                 int(10) NOT NULL,
-  status                    enum('READY','BLOCKED','CLAIMED','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
+  status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
   runtime_msec              int(10) default 0 NOT NULL, 
@@ -143,6 +143,35 @@ CREATE TABLE analysis_job (
   INDEX claim_analysis_status  (job_claim, analysis_id, status, semaphore_count),
   INDEX analysis_status        (analysis_id, status, semaphore_count),
   INDEX worker_id              (worker_id)
+) ENGINE=InnoDB;
+
+
+-- ---------------------------------------------------------------------------------
+--
+-- Table structure for table 'job_error'
+--
+-- overview:
+--      This table holds dying error message for each job that exited via 'die'.
+--
+-- semantics:
+--      analysis_job_id     - the id of the job that died
+--            worker_id     - the worker in charge of the job at the moment
+--                 died     - when death happened
+--          retry_count     - of the job when it died
+--               status     - in which the job was when it died
+--            error_msg     - string that contains the message
+
+CREATE TABLE job_error (
+  analysis_job_id           int(10) NOT NULL,
+  worker_id                 int(10) NOT NULL,
+  died                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  retry_count               int(10) DEFAULT 0 NOT NULL,
+  status                    enum('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT'),
+  error_msg                 text,
+
+  PRIMARY KEY               (analysis_job_id, worker_id, died),
+  INDEX worker_id           (worker_id),
+  INDEX analysis_job_id     (analysis_job_id)
 ) ENGINE=InnoDB;
 
 
@@ -390,5 +419,5 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
-INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "58");
+INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, "schema_version", "59");
 

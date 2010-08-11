@@ -324,19 +324,6 @@ sub worker_reclaim_job {
 }
 
 
-sub worker_register_job_done {
-  my $self = shift;
-  my $worker = shift;
-  my $job = shift;
-  
-  return unless($job);
-  return unless($job->dbID and $job->adaptor and $job->worker_id);
-  return unless($worker and $worker->analysis and $worker->analysis->dbID);
-  
-  $job->update_status('DONE');
-}
-
-
 ######################################
 #
 # Public API interface for beekeeper

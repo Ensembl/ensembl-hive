@@ -479,13 +479,13 @@ sub run
   do { # Worker's lifespan loop (ends only when the worker dies)
     my $batches_start = time() * 1000;
     my $batches_end = $batches_start;
-    my $jobs_done_by_batches_loop = 0; # by all iterations of internal loop
     $self->{fetch_time} = 0;
     $self->{run_time} = 0;
     $self->{write_time} = 0;
 
+    BATCHES: {  # note: in order to label a do{} loop you have to enclose it in an extra block
     do {    # Worker's "batches loop" exists to prevent logging the status too frequently.
-            # If a batch took less than $MIN_BATCH_TIME to run, the Worker keeps taking&running more batches.
+                     # If a batch took less than $MIN_BATCH_TIME to run, the Worker keeps taking&running more batches.
 
       my $jobs = $specific_job
         ? [ $self->queen->worker_reclaim_job($self,$specific_job) ]
@@ -503,20 +503,33 @@ sub run
       foreach my $job (@{$jobs}) {
         $job->print_job if($self->debug); 
 
-        $self->redirect_job_output($job);
-        $self->run_module_with_job($job);
-        $self->close_and_update_job_output($job);
+        $self->start_job_output_redirection($job);
+        eval {  # capture any death event
+            $self->run_module_with_job($job);
+        };
+        my $error_msg = $@;
+        $self->stop_job_output_redirection($job);
 
-        $self->queen->worker_register_job_done($self, $job);
+        if($error_msg) {
+            my $job_id               = $job->dbID();
+            my $job_status_when_died = $job->status();
+            warn "Job with id=$job_id died in status '$job_status_when_died' for the following reason: $error_msg\n";
+            $self->db()->get_JobErrorAdaptor()->register_error($job_id, $error_msg);
+            $job->update_status('FAILED');
 
-        if(my $semaphored_job_id = $job->semaphored_job_id) {
-            $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore after job is (successfully) done
+            if($job->lethal) {    # either a compilation error or other job-sanctioned contamination
+                warn "Job's error has contaminated the Worker, so the Worker will now die\n";
+                $self->cause_of_death('CONTAMINATED');
+                last BATCHES;
+            }
+        } else {
+            if(my $semaphored_job_id = $job->semaphored_job_id) {
+                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore after job is (successfully) done
+            }
+            $self->more_work_done;
         }
-
-        $self->more_work_done;
       }
       $batches_end = time() * 1000;
-      $jobs_done_by_batches_loop += scalar(@$jobs);
 
       if( $specific_job ) {
             $self->cause_of_death('JOB_LIMIT'); 
@@ -528,12 +541,13 @@ sub run
             $self->cause_of_death('LIFESPAN'); 
       }
     } while (!$self->cause_of_death and $batches_end-$batches_start < $MIN_BATCH_TIME);
+    } # this is the extra block enclosing a labelled do{} loop
 
         # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
         # so they are not allowed to happen too frequently (not before $MIN_BATCH_TIME of work has been done)
         #
     $self->db->get_AnalysisStatsAdaptor->interval_update_work_done($self->analysis->dbID,
-        $jobs_done_by_batches_loop, $batches_end-$batches_start, $self);
+        $self->work_done, $batches_end-$batches_start, $self);
 
     if (!$self->cause_of_death
     and $self->analysis->stats->hive_capacity >= 0
@@ -577,15 +591,19 @@ sub run_module_with_job {
 
   my ($start_time, $end_time);
 
-  my $runObj = $self->analysis->process;
-  return 0 unless($runObj);
-  return 0 unless($job and ($job->worker_id eq $self->worker_id));
+  $self->enter_status('COMPILATION');
+  $job->update_status('COMPILATION');
+  $job->lethal(1);  # if it dies in this state, it will kill the Worker
+  my $runObj = $self->analysis->process or die "Unknown compilation error";
+  $job->lethal(0);  # not dangerous anymore
+
+  my $native_hive_process = $runObj->isa("Bio::EnsEMBL::Hive::Process");
   
   my $init_time = time() * 1000;
   $self->queen->dbc->query_count(0);
 
   #pass the input_id from the job into the Process object
-  if($runObj->isa("Bio::EnsEMBL::Hive::Process")) { 
+  if($native_hive_process) {
     $runObj->input_job($job);
     $runObj->queen($self->queen);
     $runObj->worker($self);
@@ -597,7 +615,7 @@ sub run_module_with_job {
 
   my $analysis_stats = $self->analysis->stats;
 
-  $self->enter_status("GET_INPUT");
+  $self->enter_status('GET_INPUT');
   $job->update_status('GET_INPUT');
   print("\nGET_INPUT\n") if($self->debug); 
 
@@ -606,7 +624,7 @@ sub run_module_with_job {
   $end_time = time() * 1000;
   $self->{fetch_time} += $end_time - $start_time;
 
-  $self->enter_status("RUN");
+  $self->enter_status('RUN');
   $job->update_status('RUN');
   print("\nRUN\n") if($self->debug); 
 
@@ -616,7 +634,7 @@ sub run_module_with_job {
   $self->{run_time} += $end_time - $start_time;
 
   if($self->execute_writes) {
-    $self->enter_status("WRITE_OUTPUT");
+    $self->enter_status('WRITE_OUTPUT');
     $job->update_status('WRITE_OUTPUT');
     print("\nWRITE_OUTPUT\n") if($self->debug); 
 
@@ -624,21 +642,20 @@ sub run_module_with_job {
     $runObj->write_output;
     $end_time = time() * 1000;
     $self->{write_time} += $end_time - $start_time;
+
+    if( $native_hive_process and $runObj->autoflow_inputjob ) {
+            printf("AUTOFLOW input->output\n") if($self->debug);
+            $runObj->dataflow_output_id();
+    }
   } else {
     print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
   }
-  $self->enter_status("READY");
 
   $job->query_count($self->queen->dbc->query_count);
   $job->runtime_msec(time()*1000 - $init_time);
 
-  if ($runObj->isa("Bio::EnsEMBL::Hive::Process") and $runObj->autoflow_inputjob
-      and $self->execute_writes) {
-            printf("AUTOFLOW input->output\n") if($self->debug);
-            $runObj->dataflow_output_id();
-  }
-
-  return 1;
+  $job->update_status('DONE');
+  $self->enter_status('READY');
 }
 
 sub enter_status {
@@ -646,7 +663,7 @@ sub enter_status {
   return $self->queen->enter_status($self, $status);
 }
 
-sub redirect_job_output {
+sub start_job_output_redirection {
     my $self = shift;
     my $job  = shift or return;
 
@@ -668,7 +685,7 @@ sub redirect_job_output {
 }
 
 
-sub close_and_update_job_output {
+sub stop_job_output_redirection {
     my $self = shift;
     my $job  = shift or return;
 

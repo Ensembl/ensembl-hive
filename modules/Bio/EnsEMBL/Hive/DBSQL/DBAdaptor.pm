@@ -63,6 +63,7 @@ sub get_available_adaptors {
         'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
         'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
         'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
+        'JobError'            => 'Bio::EnsEMBL::Hive::DBSQL::JobErrorAdaptor',
     );
     return (\%pairs);
 }

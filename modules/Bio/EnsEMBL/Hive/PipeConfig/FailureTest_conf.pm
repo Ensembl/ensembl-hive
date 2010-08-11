@@ -61,8 +61,9 @@ sub default_options {
             -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
         },
 
-        'job_count'         => 50,                                  # controls the total number of FailureTest jobs
-        'failure_rate'      =>  2,                                  # controls the rate of jobs that are programmed to fail
+        'job_count'         => 20,                                  # controls the total number of FailureTest jobs
+        'failure_rate'      =>  3,                                  # controls the rate of jobs that are programmed to fail
+        'state'             => 'RUN',                               # controls in which state the jobs are programmed to fail
     };
 }
 
@@ -83,13 +84,14 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => '#expr([1..$job_count])expr#',    # this expression will evaluate into a listref
+                'inputlist'    => '#expr([0..$job_count-1])expr#',    # this expression will evaluate into a listref
             },
             -input_ids => [
                 {
                     'job_count'    => $self->o('job_count'),            # turn this option into a passable parameter
                     'failure_rate' => $self->o('failure_rate'),         # turn the other option into a passable parameter as well
-                    'input_id' => { 'value' => '#_range_start#', 'divisor' => '#failure_rate#' },
+                    'state'        => $self->o('state'),                # turn the third option into a passable parameter too
+                    'input_id' => { 'value' => '#_range_start#', 'divisor' => '#failure_rate#', 'state' => '#state#' },
                 },
             ],
             -flow_into => {

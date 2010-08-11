@@ -49,9 +49,8 @@ use Bio::EnsEMBL::Hive::URLFactory;
 
 =cut
 
-sub Bio::EnsEMBL::Analysis::process
-{
-  my $self = shift;  #self is an Analysis object
+sub Bio::EnsEMBL::Analysis::process {
+    my $self = shift;  #self is an Analysis object
 
   return undef unless($self);
   die("self must be a [Bio::EnsEMBL::Analysis] not a [$self]")
@@ -67,12 +66,6 @@ sub Bio::EnsEMBL::Analysis::process
   require "$file.pm";
   print STDERR "creating runnable ".$file."\n" if($self->{'verbose'});
 
-  #make copy of analysis ($self) to pass into the Process
-  #to insulate the infrastructure from any modification the Process may
-  #do to the analysis object
-  my $copy_self = new Bio::EnsEMBL::Analysis;
-  %$copy_self = %$self;
-  
   $process_class =~ s/\//::/g;
   my $runobj = "$process_class"->new(
                                 -db       => $self->adaptor->db,

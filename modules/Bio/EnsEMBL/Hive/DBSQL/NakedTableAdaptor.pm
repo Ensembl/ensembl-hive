@@ -26,7 +26,6 @@
 package Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::NakedTable;
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
