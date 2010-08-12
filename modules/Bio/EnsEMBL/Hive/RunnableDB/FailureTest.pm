@@ -124,7 +124,7 @@ sub dangerous_math {
 
     if($value % $divisor == 0) {
         if($value>10) { # take the Worker with us into the grave
-            $self->input_job->lethal(1);
+            $self->input_job->lethal_for_worker(1);
         }
 
         die "Preprogrammed death since $value is a multiple of $divisor";

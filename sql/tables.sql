@@ -166,7 +166,7 @@ CREATE TABLE job_error (
   worker_id                 int(10) NOT NULL,
   died                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry_count               int(10) DEFAULT 0 NOT NULL,
-  status                    enum('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT'),
+  status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
   error_msg                 text,
 
   PRIMARY KEY               (analysis_job_id, worker_id, died),

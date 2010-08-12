@@ -517,7 +517,7 @@ sub run
             $self->db()->get_JobErrorAdaptor()->register_error($job_id, $error_msg);
             $job->update_status('FAILED');
 
-            if($job->lethal) {    # either a compilation error or other job-sanctioned contamination
+            if($job->lethal_for_worker) {    # either a compilation error or other job-sanctioned contamination
                 warn "Job's error has contaminated the Worker, so the Worker will now die\n";
                 $self->cause_of_death('CONTAMINATED');
                 last BATCHES;
@@ -593,9 +593,9 @@ sub run_module_with_job {
 
   $self->enter_status('COMPILATION');
   $job->update_status('COMPILATION');
-  $job->lethal(1);  # if it dies in this state, it will kill the Worker
+  $job->lethal_for_worker(1);  # if it dies in this state, it will kill the Worker
   my $runObj = $self->analysis->process or die "Unknown compilation error";
-  $job->lethal(0);  # not dangerous anymore
+  $job->lethal_for_worker(0);  # not dangerous anymore
 
   my $native_hive_process = $runObj->isa("Bio::EnsEMBL::Hive::Process");
   
