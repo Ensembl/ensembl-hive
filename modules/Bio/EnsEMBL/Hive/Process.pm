@@ -119,7 +119,9 @@ sub new {
 =cut
 
 sub fetch_input {
-  my $self = shift;
+    my $self = shift;
+
+    return 1;
 }
 
 =head2 run
@@ -133,7 +135,9 @@ sub fetch_input {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift;
+
+    return 1;
 }
 
 =head2 write_output
@@ -146,7 +150,9 @@ sub run {
 =cut
 
 sub write_output {
-  my $self = shift;
+    my $self = shift;
+
+    return 1;
 }
 
 =head2 DESTROY
@@ -159,8 +165,9 @@ sub write_output {
 =cut
 
 sub DESTROY {
-  my $self = shift;
-  $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
+    my $self = shift;
+
+    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
 }
 
 

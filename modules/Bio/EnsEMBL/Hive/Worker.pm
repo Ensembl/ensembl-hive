@@ -613,49 +613,55 @@ sub run_module_with_job {
     $runObj->db($self->db);
   }
 
-  my $analysis_stats = $self->analysis->stats;
+    CARRY_ON: {
+        my $carry_on = 1;
 
-  $self->enter_status('GET_INPUT');
-  $job->update_status('GET_INPUT');
-  print("\nGET_INPUT\n") if($self->debug); 
+        $self->enter_status('GET_INPUT');
+        $job->update_status('GET_INPUT');
+        print("\nGET_INPUT\n") if($self->debug); 
 
-  $start_time = time() * 1000;
-  $runObj->fetch_input;
-  $end_time = time() * 1000;
-  $self->{fetch_time} += $end_time - $start_time;
+        $start_time = time() * 1000;
+        $carry_on = $runObj->fetch_input;
+        $end_time = time() * 1000;
+        $self->{fetch_time} += $end_time - $start_time;
 
-  $self->enter_status('RUN');
-  $job->update_status('RUN');
-  print("\nRUN\n") if($self->debug); 
+        last CARRY_ON if(defined($carry_on) and $carry_on==0);   # if 0 is returned, leave early
 
-  $start_time = time() * 1000;
-  $runObj->run;
-  $end_time = time() * 1000;
-  $self->{run_time} += $end_time - $start_time;
+        $self->enter_status('RUN');
+        $job->update_status('RUN');
+        print("\nRUN\n") if($self->debug); 
 
-  if($self->execute_writes) {
-    $self->enter_status('WRITE_OUTPUT');
-    $job->update_status('WRITE_OUTPUT');
-    print("\nWRITE_OUTPUT\n") if($self->debug); 
+        $start_time = time() * 1000;
+        $carry_on = $runObj->run;
+        $end_time = time() * 1000;
+        $self->{run_time} += $end_time - $start_time;
 
-    $start_time = time() * 1000;
-    $runObj->write_output;
-    $end_time = time() * 1000;
-    $self->{write_time} += $end_time - $start_time;
+        last CARRY_ON if(defined($carry_on) and $carry_on==0);   # if 0 is returned, leave early
 
-    if( $native_hive_process and $runObj->autoflow_inputjob ) {
-            printf("AUTOFLOW input->output\n") if($self->debug);
-            $runObj->dataflow_output_id();
+        if($self->execute_writes) {
+            $self->enter_status('WRITE_OUTPUT');
+            $job->update_status('WRITE_OUTPUT');
+            print("\nWRITE_OUTPUT\n") if($self->debug); 
+
+            $start_time = time() * 1000;
+            $runObj->write_output;
+            $end_time = time() * 1000;
+            $self->{write_time} += $end_time - $start_time;
+
+            if( $native_hive_process and $runObj->autoflow_inputjob ) {
+                printf("AUTOFLOW input->output\n") if($self->debug);
+                $runObj->dataflow_output_id();
+            }
+        } else {
+            print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
+        }
     }
-  } else {
-    print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
-  }
 
-  $job->query_count($self->queen->dbc->query_count);
-  $job->runtime_msec(time()*1000 - $init_time);
+    $job->query_count($self->queen->dbc->query_count);
+    $job->runtime_msec(time()*1000 - $init_time);
 
-  $job->update_status('DONE');
-  $self->enter_status('READY');
+    $job->update_status('DONE');
+    $self->enter_status('READY');
 }
 
 sub enter_status {
@@ -708,19 +714,6 @@ sub stop_job_output_redirection {
 
         $job_adaptor->store_out_files($job);
     }
-}
-
-
-# Does not seem to be used anywhere?
-#
-sub check_system_load {
-  my $self = shift;
-
-  my $host = hostname;
-  my $numCpus = `grep -c '^process' /proc/cpuinfo`;
-  print("host: $host  cpus:$numCpus\n");
-
-  return 1;  #everything ok
 }
 
 sub _specific_job {
