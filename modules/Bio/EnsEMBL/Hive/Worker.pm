@@ -290,6 +290,14 @@ sub last_check_in {
   return $self->{'_last_check_in'};
 }
 
+# this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
+
+sub retry_throwing_jobs {
+  my( $self, $value ) = @_;
+  $self->{'_retry_throwing_jobs'} = $value if($value);
+  return $self->{'_retry_throwing_jobs'} || 0;
+}
+
 =head2 hive_output_dir
 
   Arg [1] : (optional) string directory path
@@ -515,7 +523,12 @@ sub run
             my $job_status_when_died = $job->status();
             warn "Job with id=$job_id died in status '$job_status_when_died' for the following reason: $error_msg\n";
             $self->db()->get_JobErrorAdaptor()->register_error($job_id, $error_msg);
-            if($job->transient_error) {
+
+                # If the job specifically said what to do next, respect that last wish.
+                # Otherwise follow the default behaviour set by the beekeeper in $worker:
+                #
+            my $attempt_to_retry_this_job = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
+            if($attempt_to_retry_this_job) {
                 $job->adaptor->reset_dead_job_by_dbID($job_id);
             } else {
                 $job->update_status('FAILED');

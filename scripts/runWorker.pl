@@ -40,6 +40,7 @@ $self->{'process_id'}  = undef;
 $self->{'debug'}       = undef;
 $self->{'no_write'}     = undef;
 $self->{'maximise_concurrency'} = undef;
+$self->{'retry_throwing_jobs'}  = undef;
 
 my $conf_file;
 my ($help, $adaptor, $url);
@@ -75,7 +76,8 @@ GetOptions(
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'no_write'       => \$self->{'no_write'},
            'nowrite'        => \$self->{'no_write'},
-           'maximise_concurrency' => \$self->{'maximise_concurrency'},
+           'maximise_concurrency=i'=> \$self->{'maximise_concurrency'},
+           'retry_throwing_jobs=i' => \$self->{'retry_throwing_jobs'},
 
 # Other commands
            'h|help'         => \$help,
@@ -190,6 +192,9 @@ if($self->{'lifespan'}) {
 }
 if($self->{'no_global_cleanup'}) { 
   $worker->perform_global_cleanup(0); 
+}
+if(defined $self->{'retry_throwing_jobs'}) {
+    $worker->retry_throwing_jobs($self->{'retry_throwing_jobs'});
 }
 
 $worker->print_worker();
@@ -306,19 +311,20 @@ __DATA__
 
 =head2 Job/Analysis control parameters:
 
-    -analysis_id <id>       : analysis_id in db
-    -logic_name <string>    : logic_name of analysis to make this worker
-    -batch_size <num>       : #jobs to claim at a time
-    -limit <num>            : #jobs to run before worker can die naturally
-    -lifespan <num>         : number of minutes this worker is allowed to run
-    -hive_output_dir <path> : directory where stdout/stderr of the hive is redirected
-    -bk <string>            : beekeeper identifier (deprecated and ignored)
-    -pid <string>           : externally set process_id descriptor (e.g. lsf job_id, array_id)
-    -input_id <string>      : test input_id on specified analysis (analysis_id or logic_name)
-    -job_id <id>            : run specific job defined by analysis_job_id
-    -analysis_stats         : show status of each analysis in hive
-    -no_cleanup             : don't perform global_cleanup when worker exits
-    -no_write               : don't write_output or auto_dataflow input_job
+    -analysis_id <id>           : analysis_id in db
+    -logic_name <string>        : logic_name of analysis to make this worker
+    -batch_size <num>           : #jobs to claim at a time
+    -limit <num>                : #jobs to run before worker can die naturally
+    -lifespan <num>             : number of minutes this worker is allowed to run
+    -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
+    -bk <string>                : beekeeper identifier (deprecated and ignored)
+    -pid <string>               : externally set process_id descriptor (e.g. lsf job_id, array_id)
+    -input_id <string>          : test input_id on specified analysis (analysis_id or logic_name)
+    -job_id <id>                : run specific job defined by analysis_job_id
+    -analysis_stats             : show status of each analysis in hive
+    -no_cleanup                 : don't perform global_cleanup when worker exits
+    -no_write                   : don't write_output or auto_dataflow input_job
+    -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
 
 =head2 Other options:
 
