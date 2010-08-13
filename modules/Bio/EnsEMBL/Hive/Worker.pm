@@ -515,7 +515,11 @@ sub run
             my $job_status_when_died = $job->status();
             warn "Job with id=$job_id died in status '$job_status_when_died' for the following reason: $error_msg\n";
             $self->db()->get_JobErrorAdaptor()->register_error($job_id, $error_msg);
-            $job->update_status('FAILED');
+            if($job->transient_error) {
+                $job->adaptor->reset_dead_job_by_dbID($job_id);
+            } else {
+                $job->update_status('FAILED');
+            }
 
             if($job->lethal_for_worker) {    # either a compilation error or other job-sanctioned contamination
                 warn "Job's error has contaminated the Worker, so the Worker will now die\n";

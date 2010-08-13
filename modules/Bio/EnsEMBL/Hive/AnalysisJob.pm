@@ -139,6 +139,8 @@ sub stderr_file {
   return $self->{'_stderr_file'};
 }
 
+##-----------------[indicators to the Worker]--------------------------------
+
 sub lethal_for_worker {     # Job should set this to 1 prior to dying (or before running code that might cause death - such as RunnableDB's compilation)
                             # if it believes that the state of things will not allow the Worker to continue normally.
                             # The Worker will check the flag and commit suicide if it is set to true.
@@ -146,6 +148,18 @@ sub lethal_for_worker {     # Job should set this to 1 prior to dying (or before
   $self->{'_lethal_for_worker'} = shift if(@_);
   return $self->{'_lethal_for_worker'};
 }
+
+sub transient_error {       # Job should set this to 1 prior to dying (or before running code that might cause death)
+                            # if it believes that it makes sense to retry the same job without any changes.
+                            # It may also set it to 0 prior to dying (or before running code that might cause death)
+                            # if it believes that there is no point in re-trying (say, if the parameters are wrong).
+                            # The Worker will check the flag and make necessary adjustments to the database state.
+  my $self = shift;
+  $self->{'_transient_error'} = shift if(@_);
+  return $self->{'_transient_error'};
+}
+
+##-----------------[/indicators to the Worker]-------------------------------
 
 sub print_job {
   my $self = shift;
