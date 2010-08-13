@@ -75,6 +75,8 @@ sub fetch_input {
         # Store the value with parameter substitutions for the actual execution:
         #
     $self->param('cmd', $self->param_substitute($cmd));
+
+    return 1; # success
 }
 
 =head2 run
@@ -86,13 +88,14 @@ sub fetch_input {
 
 sub run {
     my $self = shift;
-
+ 
     my $cmd = $self->param('cmd');
-
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
+
+    return 1; # success
 }
 
 =head2 write_output
