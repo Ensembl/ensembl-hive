@@ -2,9 +2,9 @@
 
 # cmd_hive.pl
 #
-# Cared for by Albert Vilella <>
-# Copyright Albert Vilella
-#
+# Copyright (c) 1999-2010 The European Bioinformatics Institute and
+# Genome Research Limited.  All rights reserved.
+# 
 # You may distribute this module under the same terms as perl itself
 
 use strict;
@@ -25,9 +25,12 @@ $self->{'db_conf'} = {};
 $self->{'db_conf'}->{'-user'} = 'ensro';
 $self->{'db_conf'}->{'-port'} = 3306;
 
-$self->{'logic_name'}  = 'cmd_hive_analysis';
-$self->{'module'}      = 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd';
-$self->{'parameters'}  = '{}';
+# DEFAULT VALUES FOR NEW ANALYSES
+my $DEFAULT_LOGIC_NAME    = 'cmd_hive_analysis';
+my $DEFAULT_MODULE        = 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd';
+my $DEFAULT_PARAMETERS    = '{}';
+my $DEFAULT_HIVE_CAPACITY = 20;
+my $DEFAULT_BATCH_SIZE    = 1;
 
 my ($help, $host, $user, $pass, $dbname, $port, $adaptor, $url);
 
@@ -99,25 +102,7 @@ exit(0);
 sub job_creation {
   my $self = shift;
 
-  my $logic_name = $self->{'logic_name'};
-  my $module     = $self->{'module'};
-  my $parameters = $self->{'parameters'};
-  print("creating analysis '$logic_name' to be computed using module '$module' with parameters '$parameters'\n");
-  $self->{_analysis} = Bio::EnsEMBL::Analysis->new (
-      -db              => '',
-      -db_file         => '',
-      -db_version      => '1',
-      -parameters      => $parameters,
-      -logic_name      => $logic_name,
-      -module          => $module,
-    );
-  $DBA->get_AnalysisAdaptor()->store($self->{_analysis});
-
-  my $stats = $self->{_analysis}->stats;
-  $stats->batch_size( $self->{'batch_size'} || 1 );
-  $stats->hive_capacity( $self->{'hive_capacity'} || 20 );
-  $stats->status('READY');
-  $stats->update();
+  $self->create_analysis;
 
   print("$0 -- inserting jobs\n");
   my $starttime = time();
@@ -161,11 +146,67 @@ sub job_creation {
         }
         $self->create_resolved_input_id_job($resolved_input_id);
     }
+  } else {
+    $self->create_resolved_input_id_job($self->{input_id});
+    $count++;
   }
   my $total_time = (time()-$starttime);
   print "$count jobs created in $total_time secs\n";
   print("speed : ",($count / $total_time), " jobs/sec\n");
 }
+
+
+sub create_analysis {
+  my ($self) = @_;
+
+  my $logic_name = ( $self->{'logic_name'} || $DEFAULT_LOGIC_NAME );
+  my $module     = ( $self->{'module'} || $DEFAULT_MODULE );
+  my $parameters = ( $self->{'parameters'} || $DEFAULT_PARAMETERS );
+  my $hive_capacity;
+  my $batch_size;
+
+  # Try to get the analysis from the DB in case we are simply adding jobs to this analysis
+  $self->{_analysis} = $DBA->get_AnalysisAdaptor()->fetch_by_logic_name($logic_name);
+
+  if (!$self->{_analysis}) {
+    # No existing analysis with this logic_name. Create a new one.
+    print("creating analysis '$logic_name' to be computed using module '$module' with parameters '$parameters'\n");
+
+    $self->{_analysis} = Bio::EnsEMBL::Analysis->new (
+        -db              => '',
+        -db_file         => '',
+        -db_version      => '1',
+        -parameters      => $parameters,
+        -logic_name      => $logic_name,
+        -module          => $module,
+      );
+    $DBA->get_AnalysisAdaptor()->store($self->{_analysis});
+
+    $hive_capacity = ( $self->{'hive_capacity'} || $DEFAULT_HIVE_CAPACITY );
+    $batch_size = ( $self->{'batch_size'} || $DEFAULT_BATCH_SIZE );
+  } else {
+    # We have found an analysis with the same logic_name.
+    # Check that the analysis module is the same
+    if ($self->{'module'} and $module ne $self->{_analysis}->module) {
+      die "Analysis <$logic_name> exists already and uses module '".$self->{_analysis}->module."'\n";
+    }
+    # Check that the analysis parameters are the same
+    if ($self->{'parameters'} and $parameters ne $self->{_analysis}->parameters) {
+      die "Analysis <$logic_name> exists already with parameters '".$self->{_analysis}->parameters."'\n";
+    }
+    # Set hive_capacity and batch_size if set through the command line only.
+    # Keep the current value otherwise
+    $hive_capacity = $self->{'hive_capacity'};
+    $batch_size = $self->{'batch_size'};
+  }
+
+  my $stats = $self->{_analysis}->stats;
+  $stats->batch_size( $batch_size ) if (defined($batch_size));
+  $stats->hive_capacity( $hive_capacity ) if (defined($hive_capacity));
+  $stats->status('READY');
+  $stats->update();
+}
+
 
 sub create_resolved_input_id_job {
   my ($self, $resolved_input_id) = @_;
