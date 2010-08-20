@@ -155,7 +155,7 @@ CREATE TABLE analysis_job (
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---      analysis_job_id     - the id of the job that died
+--      analysis_job_id     - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
 --               moment     - when the message was thrown
 --          retry_count     - of the job when the message was thrown
@@ -172,7 +172,7 @@ CREATE TABLE job_message (
   msg                       text,
   is_error                  boolean,
 
-  PRIMARY KEY               (analysis_job_id, worker_id, died),
+  PRIMARY KEY               (analysis_job_id, worker_id, moment),
   INDEX worker_id           (worker_id),
   INDEX analysis_job_id     (analysis_job_id)
 ) ENGINE=InnoDB;

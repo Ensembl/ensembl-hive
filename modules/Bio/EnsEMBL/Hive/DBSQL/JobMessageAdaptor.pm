@@ -32,7 +32,7 @@ sub register_message {
 
         # (the timestamp 'moment' column will be set automatically)
     my $sql = qq{
-        REPLACE INTO job_error (analysis_job_id, worker_id, retry_count, status, msg, is_error)
+        REPLACE INTO job_message (analysis_job_id, worker_id, retry_count, status, msg, is_error)
                          SELECT analysis_job_id, worker_id, retry_count, status, ?, ?
                            FROM analysis_job WHERE analysis_job_id=?
     };
