@@ -43,8 +43,9 @@ use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 =head2 fetch_by_analysis_id
@@ -242,7 +243,11 @@ sub update_status
   Arg [1]     : int $analysis_id
   Arg [2]     : int $jobs_done_in_interval
   Arg [3]     : int $interval_msec
-  Example     : $statsDBA->incremental_update_work_done($analysis_id, $jobs_done, $interval_msecs);
+  Arg [4]     : int $fetching_msec
+  Arg [5]     : int $running_msec
+  Arg [6]     : int $writing_msec
+  Arg [7]     : real $weight_factor [optional]
+  Example     : $statsDBA->interval_update_work_done($analysis_id, $jobs_done, $interval_msec, $fetching_msec, $running_msec, $writing_msec);
   Description : does a database update to recalculate the avg_msec_per_job and done_job_count
                 does an interval equation by multiplying out the previous done_job_count with the
                 previous avg_msec_per_job and then expanding by new interval values to give a better average.
@@ -250,23 +255,21 @@ sub update_status
 
 =cut
 
-sub interval_update_work_done
-{
-  my ($self, $analysis_id, $job_count, $interval, $worker, $weight_factor) = @_;
+sub interval_update_work_done {
+  my ($self, $analysis_id, $job_count, $interval_msec, $fetching_msec, $running_msec, $writing_msec, $weight_factor) = @_;
 
   $weight_factor ||= 3; # makes it more sensitive to the dynamics of the farm
 
-  my $sql = "UPDATE analysis_stats SET ".
-            "unclaimed_job_count = unclaimed_job_count - $job_count, ".
-            "avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval) / (done_job_count/$weight_factor + $job_count)), ".
-            "avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + ".
-                ($worker->{fetch_time}).") / (done_job_count/$weight_factor + $job_count)), ".
-            "avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + ".
-                ($worker->{run_time}).") / (done_job_count/$weight_factor + $job_count)), ".
-            "avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + ".
-                ($worker->{write_time}).") / (done_job_count/$weight_factor + $job_count)), ".
-            "done_job_count = done_job_count + $job_count ".
-            " WHERE analysis_id= $analysis_id";
+  my $sql = qq{
+    UPDATE analysis_stats SET
+        unclaimed_job_count = unclaimed_job_count - $job_count, 
+        avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)), 
+        done_job_count = done_job_count + $job_count ".
+    WHERE analysis_id= $analysis_id
+  };
 
   $self->dbc->do($sql);
 }
@@ -324,6 +327,16 @@ sub decrease_running_workers
   $self->dbc->do($sql);
 }
 
+sub decrease_running_workers_on_hive_overload {
+    my $self        = shift;
+    my $analysis_id = shift;
+
+    my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
+              "WHERE num_running_workers > hive_capacity AND analysis_id = $analysis_id ";
+
+    my $row_count = $self->dbc->do($sql);
+    return $row_count;
+}
 
 sub decrease_needed_workers
 {

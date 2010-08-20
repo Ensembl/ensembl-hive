@@ -148,26 +148,29 @@ CREATE TABLE analysis_job (
 
 -- ---------------------------------------------------------------------------------
 --
--- Table structure for table 'job_error'
+-- Table structure for table 'job_message'
 --
 -- overview:
---      This table holds dying error message for each job that exited via 'die'.
+--      In case a job throws a message (via die/throw), this message is registered in this table.
+--      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
 --      analysis_job_id     - the id of the job that died
 --            worker_id     - the worker in charge of the job at the moment
---                 died     - when death happened
---          retry_count     - of the job when it died
---               status     - in which the job was when it died
---            error_msg     - string that contains the message
+--               moment     - when the message was thrown
+--          retry_count     - of the job when the message was thrown
+--               status     - of the job when the message was thrown
+--                  msg     - string that contains the message
+--             is_error     - binary flag
 
-CREATE TABLE job_error (
+CREATE TABLE job_message (
   analysis_job_id           int(10) NOT NULL,
   worker_id                 int(10) NOT NULL,
-  died                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  moment                    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry_count               int(10) DEFAULT 0 NOT NULL,
   status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
-  error_msg                 text,
+  msg                       text,
+  is_error                  boolean,
 
   PRIMARY KEY               (analysis_job_id, worker_id, died),
   INDEX worker_id           (worker_id),
