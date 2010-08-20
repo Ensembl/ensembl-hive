@@ -646,6 +646,7 @@ sub run_module_with_job {
   my $native_hive_process = $runObj->isa("Bio::EnsEMBL::Hive::Process");
   
   my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
+
   $self->queen->dbc->query_count(0);
 
   #pass the input_id from the job into the Process object

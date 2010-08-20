@@ -85,6 +85,7 @@ sub restart {
 
     $self->accumulated(0);
     $self->continue;
+    return $self;
 }
 
 sub get_elapsed {       # peek without stopping (in case it was running)
