@@ -31,6 +31,8 @@ Available parameters:
 
     param('state'):         defines the state in which the jobs of this analysis may be failing.
 
+    param('lethal_after'):  makes jobs' failures lethal when 'value' is greater than this parameter
+
     param('time_GET_INPUT'):    time in seconds that the job will spend sleeping in GET_INPUT state.
 
     param('time_RUN'):          time in seconds that the job will spend sleeping in RUN state.
@@ -68,6 +70,7 @@ sub fetch_input {
         'value'         => 1,       # normally you generate a batch of jobs with different values of param('value')
         'divisor'       => 2,       # but the same param('divisor') and see how every param('divisor')'s job will crash
         'state'         => 'RUN',   # the state in which the process may commit apoptosis
+        'lethal_after'  => 0,       # If value is above this (nonzero) threshold, job's death becomes lethal to the worker.
 
         'time_GET_INPUT'    => 0,   # how much time fetch_input()  will spend in sleeping state
         'time_RUN'          => 1,   # how much time run()          will spend in sleeping state
@@ -123,8 +126,11 @@ sub dangerous_math {
     my $divisor = $self->param('divisor') or die "param('divisor') has to be a nonzero integer";
 
     if($value % $divisor == 0) {
-        if($value>10) { # take the Worker with us into the grave
-            $self->input_job->lethal_for_worker(1);
+
+        if(my $lethal_after = $self->param('lethal_after')) {
+            if($value>$lethal_after) { # take the Worker with us into the grave
+                $self->input_job->lethal_for_worker(1);
+            }
         }
 
         die "Preprogrammed death since $value is a multiple of $divisor";

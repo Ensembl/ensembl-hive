@@ -40,6 +40,8 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
                   In addition to the standard things it defines three options:
                     o('job_count')          controls the total number of FailureTest jobs
                     o('failure_rate')       controls the rate of jobs that are programmed to fail
+                    o('state')              controls the state in which the jobs will be failing
+                    o('lethal_after')       when job_number is above this (nonzero) threshold, job's death becomes lethal to the Worker
 
                   There is a rule dependent on one option that does not have a default (this makes it mandatory):
                     o('password')           your read-write password for creation and maintenance of the hive database
@@ -64,6 +66,7 @@ sub default_options {
         'job_count'         => 20,                                  # controls the total number of FailureTest jobs
         'failure_rate'      =>  3,                                  # controls the rate of jobs that are programmed to fail
         'state'             => 'RUN',                               # controls in which state the jobs are programmed to fail
+        'lethal_after'      => 0,
     };
 }
 
@@ -91,7 +94,8 @@ sub pipeline_analyses {
                     'job_count'    => $self->o('job_count'),            # turn this option into a passable parameter
                     'failure_rate' => $self->o('failure_rate'),         # turn the other option into a passable parameter as well
                     'state'        => $self->o('state'),                # turn the third option into a passable parameter too
-                    'input_id' => { 'value' => '#_range_start#', 'divisor' => '#failure_rate#', 'state' => '#state#' },
+                    'lethal_after' => $self->o('lethal_after'),
+                    'input_id' => { 'value' => '#_range_start#', 'divisor' => '#failure_rate#', 'state' => '#state#', 'lethal_after' => '#lethal_after#' },
                 },
             ],
             -flow_into => {

@@ -558,7 +558,10 @@ sub run
             if( ($job->status eq 'COMPILATION')     # if it failed to compile, there is no point in continuing as the code WILL be broken
             or $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
             or $job->lethal_for_worker ) {          # trust the job's expert knowledge
-                warn "Job's error has contaminated the Worker, so the Worker will now die\n";
+                my $reason = ($job->status eq 'COMPILATION') ? 'compilation error'
+                           : $self->prev_job_error           ? 'two failed jobs in a row'
+                           :                                   'suggested by job itself';
+                warn "Job's error has contaminated the Worker ($reason), so the Worker will now die\n";
                 $self->cause_of_death('CONTAMINATED');
                 last BATCHES;
             }
