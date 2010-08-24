@@ -29,7 +29,7 @@ sub responsible_for_worker {
     return ( $self->SUPER::responsible_for_worker($worker) && ($worker->host eq hostname()) );
 }
 
-sub status_of_all_my_workers { # returns a hashref
+sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 
     my $cmd = 'ps x -o state,pid,command -w -w | grep runWorker.pl | grep -v "grep runWorker.pl" ';
@@ -53,19 +53,21 @@ sub status_of_all_my_workers { # returns a hashref
     return \%status_hash;
 }
 
-sub check_worker_is_alive {
+sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
-    my $cmd = 'ps '. $worker->process_id . ' 2>&1 | grep ' . $worker->process_id;
-    my $is_alive = qx/$cmd/;
-    return $is_alive;
+    my $wpid = $worker->process_id();
+    my $cmd = qq{ps x | grep $wpid | grep -v 'grep $wpid'};
+    my $is_alive_and_mine = qx/$cmd/;
+
+    return $is_alive_and_mine;
 }
 
 sub kill_worker {
     my ($self, $worker) = @_;
 
     if( $self->responsible_for_worker($worker) ) {
-        if($self->check_worker_is_alive($worker)) {
+        if($self->check_worker_is_alive_and_mine($worker)) {
             my $cmd = 'kill -9 '.$worker->process_id();
             system($cmd);
         } else {

@@ -34,12 +34,18 @@ sub meadow_options {    # general options that different Meadows can plug into t
     return $self->{'_meadow_options'} || '';
 }
 
+sub job_name_prefix {
+    my $self = shift @_;
+
+    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '') . 'Hive';
+}
+
 sub generate_job_name {
     my ($self, $worker_count, $iteration, $rc_id) = @_;
     $rc_id ||= 0;
 
-    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '')
-        ."Hive${rc_id}_${iteration}"
+    return $self->job_name_prefix()
+        ."${rc_id}_${iteration}"
         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
 }
 
@@ -49,7 +55,7 @@ sub responsible_for_worker {
     return $worker->beekeeper() eq $self->type();
 }
 
-sub check_worker_is_alive {
+sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
     die "Please use a derived method";

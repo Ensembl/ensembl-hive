@@ -26,13 +26,8 @@ sub get_current_worker_process_id {
 sub count_pending_workers {
     my ($self) = @_;
 
-    my $cmd = "bjobs -w ";
-    if(my $pipeline_name = $self->pipeline_name()) {
-        $cmd .= " | grep '${pipeline_name}-Hive'";
-    } else {
-        $cmd .= " | grep Hive";
-    }
-    $cmd .= " | grep -c PEND";
+    my $jnp = $self->job_name_prefix();
+    my $cmd = qq{bjobs -w -J '${jnp}*' -u all | grep -c PEND};
 
     my $pend_count = qx/$cmd/;
     chomp($pend_count);
@@ -40,15 +35,11 @@ sub count_pending_workers {
     return $pend_count;
 }
 
-sub status_of_all_my_workers { # returns a hashref
+sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 
-    my $cmd = 'bjobs -w 2>&1 | grep -v "No unfinished job found" | grep -v JOBID | grep -v DONE | grep -v EXIT';
-    if(my $pipeline_name = $self->pipeline_name()) {
-        $cmd .= " | grep '${pipeline_name}-Hive'";
-    } else {
-        $cmd .= " | grep Hive";
-    }
+    my $jnp = $self->job_name_prefix();
+    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>&1 | grep -v 'No unfinished job found' | grep -v JOBID | grep -v DONE | grep -v EXIT};
 
     my %status_hash = ();
     foreach my $line (`$cmd`) {
@@ -64,18 +55,21 @@ sub status_of_all_my_workers { # returns a hashref
     return \%status_hash;
 }
 
-sub check_worker_is_alive {
+sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
-    my $cmd = 'bjobs '. $worker->process_id . ' 2>&1 | grep -v "not found" | grep -v JOBID | grep -v EXIT';
-    my $is_alive = qx/$cmd/;
-    return $is_alive;
+    my $wpid = $worker->process_id();
+    my $this_user = $ENV{'USER'};
+    my $cmd = qq{bjobs $wpid -u $this_user 2>&1 | grep -v 'not found' | grep -v JOBID | grep -v EXIT};
+
+    my $is_alive_and_mine = qx/$cmd/;
+    return $is_alive_and_mine;
 }
 
 sub kill_worker {
     my ($self, $worker) = @_;
 
-    if($self->check_worker_is_alive($worker)) {
+    if($self->check_worker_is_alive_and_mine($worker)) {
         my $cmd = 'bkill '.$worker->process_id();
         system($cmd);
     } else {

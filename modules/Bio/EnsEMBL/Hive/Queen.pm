@@ -201,7 +201,7 @@ sub register_worker_death {
 sub check_for_dead_workers {
     my ($self, $meadow, $check_buried_in_haste) = @_;
 
-    my $worker_status_hash    = $meadow->status_of_all_my_workers();
+    my $worker_status_hash    = $meadow->status_of_all_our_workers();
     my %worker_status_summary = ();
     my $queen_worker_list     = $self->fetch_overdue_workers(0);
 
