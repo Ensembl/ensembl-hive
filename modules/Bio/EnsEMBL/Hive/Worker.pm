@@ -612,8 +612,6 @@ sub run
     }
   } while (!$self->cause_of_death); # /Worker's lifespan loop
 
-  $self->queen->dbc->do("UPDATE hive SET status = 'DEAD' WHERE worker_id = ".$self->worker_id);
-  
   if($self->perform_global_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
     $self->cleanup_worker_process_temp_directory;

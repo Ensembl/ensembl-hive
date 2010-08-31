@@ -23,7 +23,7 @@ CREATE TABLE hive (
   born	           datetime NOT NULL,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
-  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'FATALITY') DEFAULT '' NOT NULL,
+  cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'FATALITY') DEFAULT '' NOT NULL,
   PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)
 ) ENGINE=InnoDB;

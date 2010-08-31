@@ -200,7 +200,9 @@ sub main {
                 $worker->analysis->logic_name, $worker->analysis->dbID);
 
             $self->{'meadow'}->kill_worker($worker);
+            $worker->cause_of_death('KILLED_BY_USER');
             $queen->register_worker_death($worker);
+                # what about clean-up? Should we do it here or not?
         }
     }
 

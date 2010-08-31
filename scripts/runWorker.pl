@@ -198,33 +198,14 @@ if(defined $self->{'retry_throwing_jobs'}) {
 }
 
 $worker->print_worker();
-
-my $return_value = 0;
-eval { $worker->run(); };
-
-if($@) {
-        # try to capture it ASAP:
-    $return_value = ($! || $?>>8 || 1);
-
-        #worker threw an exception so it had a problem:
-    if($worker->perform_global_cleanup) {
-            #have runnable cleanup any global/process files/data it may have created
-        $worker->cleanup_worker_process_temp_directory;
-    }
-    print("\n$@");
-    $queen->register_worker_death($worker);
-}
+$worker->run();
 
 if($self->{'show_analysis_stats'}) {
     $queen->print_analysis_status;
     $queen->get_num_needed_workers(); # apparently run not for the return value, but for the side-effects
 }
 
-printf("dbc %d disconnect cycles\n", $DBA->dbc->disconnect_count);
-print("total jobs completes : ", $worker->work_done, "\n");
-
-exit($return_value);
-
+exit 0;
 
 #######################
 #

@@ -164,9 +164,7 @@ sub register_worker_death {
 
   return unless($worker);
 
-  # if called without a defined cause_of_death, assume catastrophic failure
-  $worker->cause_of_death('FATALITY') unless(defined($worker->cause_of_death));
-  unless ($worker->cause_of_death() eq "HIVE_OVERLOAD") {
+  unless ($worker->cause_of_death() eq 'HIVE_OVERLOAD') {
     ## HIVE_OVERLOAD occurs after a successful update of the analysis_stats teble. (c.f. Worker.pm)
     $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
   }
@@ -181,11 +179,10 @@ sub register_worker_death {
   $sth->execute();
   $sth->finish;
 
-  if($worker->cause_of_death eq "NO_WORK") {
-    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, "ALL_CLAIMED");
+  if($worker->cause_of_death eq 'NO_WORK') {
+    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, 'ALL_CLAIMED');
   }
-  if($worker->cause_of_death eq "FATALITY") {
-    #print("FATAL DEATH Arrrrgggghhhhhhhh (worker_id=",$worker->worker_id,")\n");
+  if($worker->cause_of_death eq 'FATALITY') {
     $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
   
@@ -215,6 +212,7 @@ sub check_for_dead_workers {
             $worker_status_summary{$status}++;
         } else {
             $worker_status_summary{'AWOL'}++;
+            $worker->cause_of_death('FATALITY');
             $self->register_worker_death($worker);
         }
     }
