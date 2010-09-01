@@ -212,7 +212,9 @@ sub check_for_dead_workers {
             $worker_status_summary{$status}++;
         } else {
             $worker_status_summary{'AWOL'}++;
-            $worker->cause_of_death('FATALITY');
+
+            my $cause = $meadow->find_out_cause($worker_pid) || 'FATALITY';
+            $worker->cause_of_death( $cause );
             $self->register_worker_death($worker);
         }
     }

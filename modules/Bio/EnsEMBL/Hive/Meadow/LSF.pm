@@ -77,6 +77,22 @@ sub kill_worker {
     }
 }
 
+sub find_out_cause {
+    my ($self, $worker_pid) = @_;
+
+    my $diagnostic_output = `bacct -l $worker_pid`;
+    if($diagnostic_output=~/TERM_MEMLIMIT: job killed/i) {
+        return 'MEMLIMIT';
+    } elsif($diagnostic_output=~/TERM_RUNLIMIT: job killed/i) {
+        return 'RUNLIMIT';
+    } elsif($diagnostic_output=~/TERM_OWNER: job killed/i) {
+        return 'KILLED_BY_USER';
+    }
+
+    return;
+}
+
+
 sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
 

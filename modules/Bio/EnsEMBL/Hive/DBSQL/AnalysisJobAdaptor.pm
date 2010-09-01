@@ -535,7 +535,7 @@ sub claim_jobs_for_worker {
   Description: If a worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
-               If jobs was in a 'working' state (GET_INPUT, RUN, WRITE_OUTPUT)) 
+               If jobs was in a 'working' state (COMPILATION, GET_INPUT, RUN, WRITE_OUTPUT) 
                the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
@@ -545,47 +545,36 @@ sub claim_jobs_for_worker {
 =cut
 
 sub reset_dead_jobs_for_worker {
-  my $self = shift;
-  my $worker = shift;
-  throw("must define worker") unless($worker);
+    my ($self, $worker) = @_;
 
   #added worker_id index to analysis_job table which made this operation much faster
 
-  my ($sql, $sth);
   my $max_retry_count = $worker->analysis->stats->max_retry_count();
+  my $worker_id       = $worker->worker_id();
+
   #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
-         " WHERE status='CLAIMED'".
-         " AND worker_id='" . $worker->worker_id ."'";
-  $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
-  #print("  done update CLAIMED\n");
+  $self->dbc->do( qq{
+        UPDATE analysis_job
+           SET job_claim='', status='READY'
+         WHERE status='CLAIMED'
+           AND worker_id='$worker_id'
+  } );
 
   # an update with select on status and worker_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
-  
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
-         " ,retry_count=retry_count+1".
-         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-	 " AND retry_count<$max_retry_count".
-         " AND worker_id='" . $worker->worker_id ."'";
-  #print("$sql\n");
-  $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+  $self->dbc->do( qq{
+        UPDATE analysis_job SET job_claim='', status='READY', retry_count=retry_count+1
+         WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+           AND retry_count<$max_retry_count
+           AND worker_id='$worker_id'
+  } );
 
-  $sql = "UPDATE analysis_job SET status='FAILED'".
-         " ,retry_count=retry_count+1".
-         " WHERE status in ('GET_INPUT','RUN','WRITE_OUTPUT')".
-	 " AND retry_count>=$max_retry_count".
-         " AND worker_id='" . $worker->worker_id ."'";
-  #print("$sql\n");
-  $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
-
-  #print(" done update BROKEN jobs\n");
+  $self->dbc->do( qq{
+        UPDATE analysis_job SET status='FAILED', retry_count=retry_count+1
+         WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+           AND retry_count>=$max_retry_count
+           AND worker_id='$worker_id'
+  } );
 }
 
 
