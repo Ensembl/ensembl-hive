@@ -39,7 +39,7 @@ sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>&1 | grep -v 'No unfinished job found' | grep -v JOBID | grep -v DONE | grep -v EXIT};
+    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep -v JOBID | grep -v DONE | grep -v EXIT};
 
     my %status_hash = ();
     foreach my $line (`$cmd`) {
