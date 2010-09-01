@@ -80,7 +80,7 @@ sub kill_worker {
 sub find_out_cause {
     my ($self, $worker_pid) = @_;
 
-    my $diagnostic_output = `bacct -l $worker_pid`;
+    my $diagnostic_output = `bacct -l '$worker_pid'`;
     if($diagnostic_output=~/TERM_MEMLIMIT: job killed/i) {
         return 'MEMLIMIT';
     } elsif($diagnostic_output=~/TERM_RUNLIMIT: job killed/i) {
