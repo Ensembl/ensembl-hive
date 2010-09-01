@@ -164,7 +164,9 @@ sub register_worker_death {
 
   return unless($worker);
 
-  unless ($worker->cause_of_death() eq 'HIVE_OVERLOAD') {
+  my $cod = $worker->cause_of_death();
+
+  unless ($cod eq 'HIVE_OVERLOAD') {
     ## HIVE_OVERLOAD occurs after a successful update of the analysis_stats teble. (c.f. Worker.pm)
     $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
   }
@@ -172,17 +174,18 @@ sub register_worker_death {
   my $sql = "UPDATE hive SET died=now(), last_check_in=now()";
   $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
-  $sql .= " ,cause_of_death='". $worker->cause_of_death ."'";
+  $sql .= " ,cause_of_death='$cod'";
   $sql .= " WHERE worker_id='" . $worker->worker_id ."'";
 
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+  $self->dbc->do( $sql );
 
-  if($worker->cause_of_death eq 'NO_WORK') {
+  if($cod eq 'NO_WORK') {
     $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, 'ALL_CLAIMED');
   }
-  if($worker->cause_of_death eq 'FATALITY') {
+  if($cod eq 'FATALITY'
+  or $cod eq 'MEMLIMIT'
+  or $cod eq 'RUNLIMIT'
+  or $cod eq 'KILLED_BY_USER') {
     $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
   }
   
@@ -213,8 +216,8 @@ sub check_for_dead_workers {
         } else {
             $worker_status_summary{'AWOL'}++;
 
-            my $cause = $meadow->find_out_cause($worker_pid) || 'FATALITY';
-            $worker->cause_of_death( $cause );
+            my $cod = $meadow->find_out_cause($worker_pid) || 'FATALITY';
+            $worker->cause_of_death( $cod );
             $self->register_worker_death($worker);
         }
     }
