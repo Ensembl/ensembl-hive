@@ -185,15 +185,6 @@ sub fetch_by_claim_analysis {
   return $self->_generic_fetch($constraint);
 }
 
-sub fetch_by_run_analysis {
-  my ($self,$worker_id,$analysis_id) = @_;
-
-  throw("fetch_by_run_analysis must have worker_id") unless($worker_id);
-  throw("fetch_by_run_analysis must have analysis_id") unless($analysis_id);
-  my $constraint = "a.status='RUN' AND a.worker_id=$worker_id AND a.analysis_id='$analysis_id'";
-  return $self->_generic_fetch($constraint);
-}
-
 
 =head2 fetch_all
 
@@ -560,21 +551,44 @@ sub reset_dead_jobs_for_worker {
            AND worker_id='$worker_id'
   } );
 
-  # an update with select on status and worker_id took 4seconds per worker to complete,
-  # while doing a select followed by update on analysis_job_id returned almost instantly
-  $self->dbc->do( qq{
-        UPDATE analysis_job SET job_claim='', status='READY', retry_count=retry_count+1
-         WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
-           AND retry_count<$max_retry_count
-           AND worker_id='$worker_id'
-  } );
+    if(0) {
+      # an update with select on status and worker_id took 4seconds per worker to complete,
+      # while doing a select followed by update on analysis_job_id returned almost instantly
+      $self->dbc->do( qq{
+            UPDATE analysis_job SET job_claim='', status='READY', retry_count=retry_count+1
+             WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+               AND retry_count<$max_retry_count
+               AND worker_id='$worker_id'
+      } );
 
-  $self->dbc->do( qq{
-        UPDATE analysis_job SET status='FAILED', retry_count=retry_count+1
-         WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
-           AND retry_count>=$max_retry_count
-           AND worker_id='$worker_id'
-  } );
+      $self->dbc->do( qq{
+            UPDATE analysis_job SET status='FAILED', retry_count=retry_count+1
+             WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+               AND retry_count>=$max_retry_count
+               AND worker_id='$worker_id'
+      } );
+    }
+
+    my $sql = qq{
+        SELECT analysis_job_id
+          FROM analysis_job
+         WHERE worker_id='$worker_id'
+           AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+    };
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+
+    if(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
+        my $cod = $worker->cause_of_death();
+        $self->db()->get_JobMessageAdaptor()->register_message($job_id, "GarbageCollected. The worker died because of $cod", 1 );
+
+        if($cod eq 'MEMLIMIT'
+        or $cod eq 'RUNLIMIT') {
+            $self->dbc->do( qq{ UPDATE analysis_job SET status='FAILED' WHERE analysis_job_id=$job_id } );
+        } else {
+            $self->reset_dead_job_by_dbID($job_id);
+        }
+    }
 }
 
 
@@ -582,24 +596,14 @@ sub reset_dead_job_by_dbID {
   my $self = shift;
   my $job_id = shift;
 
-  #added worker_id index to analysis_job table which made this operation much faster
-
-  my $sql;
-  #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY'".
-         " WHERE status='CLAIMED'".
-         " AND analysis_job_id=$job_id";
-  $self->dbc->do($sql);
-  #print("  done update CLAIMED\n");
-
   # an update with select on status and worker_id took 4seconds per worker to complete,
   # while doing a select followed by update on analysis_job_id returned almost instantly
   
-  $sql = "
+  my $sql = "
     UPDATE analysis_job, analysis_stats
     SET job_claim='', analysis_job.status='READY', retry_count=retry_count+1
     WHERE
-      analysis_job.status in ('GET_INPUT','RUN','WRITE_OUTPUT')
+      analysis_job.status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
       AND analysis_job.analysis_id = analysis_stats.analysis_id
       AND retry_count < max_retry_count
       AND analysis_job_id=$job_id";
@@ -610,14 +614,12 @@ sub reset_dead_job_by_dbID {
     UPDATE analysis_job, analysis_stats
     SET job_claim='', analysis_job.status='FAILED', retry_count=retry_count+1
     WHERE
-      analysis_job.status in ('GET_INPUT','RUN','WRITE_OUTPUT')
+      analysis_job.status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
       AND analysis_job.analysis_id = analysis_stats.analysis_id
       AND retry_count >= max_retry_count
       AND analysis_job_id=$job_id";
   #print("$sql\n");
   $self->dbc->do($sql);
-
-  #print(" done update BROKEN jobs\n");
 }
 
 
