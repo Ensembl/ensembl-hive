@@ -576,6 +576,7 @@ sub release_undone_jobs_from_worker {
 
 sub release_and_age_job {
     my ($self, $job_id, $max_retry_count, $may_retry) = @_;
+    $may_retry ||= 0;
 
         # NB: The order of updates IS important. Here we first find out the new status and then increment the retry_count:
     $self->dbc->do( qq{
