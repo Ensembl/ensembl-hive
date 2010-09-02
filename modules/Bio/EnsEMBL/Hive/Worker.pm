@@ -484,8 +484,7 @@ sub batch_size {
 
 =cut
 
-sub run
-{
+sub run {
   my $self = shift;
   my $specific_job = $self->_specific_job;
 
@@ -502,6 +501,8 @@ sub run
   $self->print_worker();
 
   $self->db->dbc->disconnect_when_inactive(0);
+
+  my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
   do { # Worker's lifespan loop (ends only when the worker dies)
     my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
@@ -548,17 +549,14 @@ sub run
                 # If the job specifically said what to do next, respect that last wish.
                 # Otherwise follow the default behaviour set by the beekeeper in $worker:
                 #
-            my $attempt_to_retry_this_job = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
-            if($attempt_to_retry_this_job) {
-                $job->adaptor->reset_dead_job_by_dbID($job->dbID);
-            } else {
-                $job->update_status('FAILED');
-            }
+            my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
 
-            if( ($job->status eq 'COMPILATION')     # if it failed to compile, there is no point in continuing as the code WILL be broken
+            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry );
+
+            if($self->status eq 'COMPILATION'       # if it failed to compile, there is no point in continuing as the code WILL be broken
             or $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
             or $job->lethal_for_worker ) {          # trust the job's expert knowledge
-                my $reason = ($job->status eq 'COMPILATION') ? 'compilation error'
+                my $reason = ($self->status eq 'COMPILATION') ? 'compilation error'
                            : $self->prev_job_error           ? 'two failed jobs in a row'
                            :                                   'suggested by job itself';
                 warn "Job's error has contaminated the Worker ($reason), so the Worker will now die\n";

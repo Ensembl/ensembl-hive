@@ -186,7 +186,7 @@ sub register_worker_death {
   or $cod eq 'MEMLIMIT'
   or $cod eq 'RUNLIMIT'
   or $cod eq 'KILLED_BY_USER') {
-    $self->db->get_AnalysisJobAdaptor->reset_dead_jobs_for_worker($worker);
+    $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
   }
   
   # re-sync the analysis_stats when a worker dies as part of dynamic sync system
@@ -231,7 +231,7 @@ sub check_for_dead_workers {
             if($bih_number) {
                 my $job_adaptor = $self->db->get_AnalysisJobAdaptor();
                 foreach my $worker (@$buried_in_haste_list) {
-                    $job_adaptor->reset_dead_jobs_for_worker($worker);
+                    $job_adaptor->release_undone_jobs_from_worker($worker);
                 }
             }
         } else {
