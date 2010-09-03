@@ -157,6 +157,7 @@ CREATE TABLE analysis_job (
 -- semantics:
 --      analysis_job_id     - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
+--          analysis_id     - analysis_id of both the job and the worker (it is indeed redundant, but very convenient)
 --               moment     - when the message was thrown
 --          retry_count     - of the job when the message was thrown
 --               status     - of the job when the message was thrown
@@ -166,6 +167,7 @@ CREATE TABLE analysis_job (
 CREATE TABLE job_message (
   analysis_job_id           int(10) NOT NULL,
   worker_id                 int(10) NOT NULL,
+  analysis_id               int(10) NOT NULL,
   moment                    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry_count               int(10) DEFAULT 0 NOT NULL,
   status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
