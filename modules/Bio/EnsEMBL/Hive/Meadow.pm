@@ -67,12 +67,6 @@ sub kill_worker {
     die "Please use a derived method";
 }
 
-sub find_out_cause {    # parent assumes agnostic stance
-    my ($self, $worker_pid) = @_;
-
-    return;
-}
-
 # --------------[(combinable) means of adjusting the number of submitted workers]----------------------
 
 sub total_running_workers_limit { # if set and ->can('count_running_workers'),

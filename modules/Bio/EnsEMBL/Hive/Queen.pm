@@ -207,6 +207,8 @@ sub check_for_dead_workers {
 
     print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
 
+    my %gc_wpid_to_worker = ();
+
     foreach my $worker (@$queen_worker_list) {
         next unless($meadow->responsible_for_worker($worker));
 
@@ -216,12 +218,27 @@ sub check_for_dead_workers {
         } else {
             $worker_status_summary{'AWOL'}++;
 
-            my $cod = $meadow->find_out_cause($worker_pid) || 'FATALITY';
-            $worker->cause_of_death( $cod );
-            $self->register_worker_death($worker);
+            $gc_wpid_to_worker{$worker_pid} = $worker;
         }
     }
     print "\t".join(', ', map { "$_:$worker_status_summary{$_}" } keys %worker_status_summary)."\n\n";
+
+    if(my $total_lost = scalar(keys %gc_wpid_to_worker)) {
+        warn "GarbageCollector: Discovered $total_lost lost workers\n";
+
+        my $wpid_to_cod = {};
+        if(UNIVERSAL::can($meadow, 'find_out_causes')) {
+            $wpid_to_cod = $meadow->find_out_causes( keys %gc_wpid_to_worker );
+            my $lost_with_known_cod = scalar(keys %$wpid_to_cod);
+            warn "GarbageCollector: Found why $lost_with_known_cod of them died\n";
+        }
+
+        warn "GarbageCollector: Releasing the jobs\n";
+        while(my ($worker_pid, $worker) = each %gc_wpid_to_worker) {
+            $worker->cause_of_death( $wpid_to_cod->{$worker_pid} || 'FATALITY');
+            $self->register_worker_death($worker);
+        }
+    }
 
     if($check_buried_in_haste) {
         print "====== Checking for workers buried in haste... ";

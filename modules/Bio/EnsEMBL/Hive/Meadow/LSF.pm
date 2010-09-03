@@ -77,21 +77,28 @@ sub kill_worker {
     }
 }
 
-sub find_out_cause {
-    my ($self, $worker_pid) = @_;
+sub find_out_causes {
+    my $self = shift @_;
 
-    my $diagnostic_output = `bacct -l '$worker_pid'`;
-    if($diagnostic_output=~/TERM_MEMLIMIT: job killed/i) {
-        return 'MEMLIMIT';
-    } elsif($diagnostic_output=~/TERM_RUNLIMIT: job killed/i) {
-        return 'RUNLIMIT';
-    } elsif($diagnostic_output=~/TERM_OWNER: job killed/i) {
-        return 'KILLED_BY_USER';
+    my %lsf_2_hive = (
+        'TERM_MEMLIMIT' => 'MEMLIMIT',
+        'TERM_RUNLIMIT' => 'RUNLIMIT',
+        'TERM_OWNER'    => 'KILLED_BY_USER',
+    );
+
+    my %cod = ();
+
+    my $pid_batch = join(' ', @_);  # FIXME: it should be done in several batches
+    my $ba_out = `bacct -l $pid_batch`;
+
+    foreach my $section (split(/\-{10,}\s+/, $ba_out)) {
+        if($section=~/^Job <(\d+(?:\[\d+\]))>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
+            $cod{$1} = $lsf_2_hive{$2};
+        }
     }
 
-    return;
+    return \%cod;
 }
-
 
 sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
