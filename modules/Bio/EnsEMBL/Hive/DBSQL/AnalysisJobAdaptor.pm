@@ -558,19 +558,15 @@ sub release_undone_jobs_from_worker {
     $sth->execute();
 
     my $cod = $worker->cause_of_death();
-    my $msg = "GarbageCollector: The worker (worker_id=$worker_id) died because of $cod";
-    my $counter = 0;
+    my $msg = "GarbageCollector: The worker died because of $cod";
     while(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
         $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg, 1 );
 
         my $may_retry = ($cod ne 'MEMLIMIT' and $cod ne 'RUNLIMIT');
 
         $self->release_and_age_job( $job_id, $max_retry_count, $may_retry );
-        $counter++;
     }
     $sth->finish();
-
-    warn "$msg, released $counter job(s)\n";
 }
 
 
