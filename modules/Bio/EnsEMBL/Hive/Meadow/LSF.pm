@@ -4,7 +4,7 @@ package Bio::EnsEMBL::Hive::Meadow::LSF;
 
 use strict;
 
-use base 'Bio::EnsEMBL::Hive::Meadow';
+use base ('Bio::EnsEMBL::Hive::Meadow');
 
 sub get_current_worker_process_id {
     my ($self) = @_;

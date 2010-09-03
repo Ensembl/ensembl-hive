@@ -61,16 +61,15 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use POSIX;
+use Sys::Hostname;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Worker;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
-use Sys::Hostname;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 ############################
 #

@@ -40,12 +40,11 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 use strict;
 use Carp;
-use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
 =head2 fetch_by_ctrled_analysis_id
