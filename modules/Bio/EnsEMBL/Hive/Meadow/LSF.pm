@@ -88,12 +88,13 @@ sub find_out_causes {
 
     my %cod = ();
 
-    my $pid_batch = join(' ', @_);  # FIXME: it should be done in several batches
-    my $ba_out = `bacct -l $pid_batch`;
+    while (my $pid_batch = join(' ', splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
+        my $bacct_output = `bacct -l $pid_batch`;
 
-    foreach my $section (split(/\-{10,}\s+/, $ba_out)) {
-        if($section=~/^Job <(\d+(?:\[\d+\]))>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
-            $cod{$1} = $lsf_2_hive{$2};
+        foreach my $section (split(/\-{10,}\s+/, $bacct_output)) {
+            if($section=~/^Job <(\d+(?:\[\d+\]))>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
+                $cod{$1} = $lsf_2_hive{$2};
+            }
         }
     }
 
