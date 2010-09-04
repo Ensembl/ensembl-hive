@@ -272,32 +272,6 @@ sub worker_check_in {
 }
 
 
-=head2 worker_grab_jobs
-
-  Arg [1]           : Bio::EnsEMBL::Hive::Worker object $worker
-  Example: 
-    my $jobs  = $queen->worker_grab_jobs();
-  Description: 
-    For the specified worker, it will search available jobs, 
-    and using the workers requested batch_size, claim/fetch that
-    number of jobs, and then return them.
-  Returntype : 
-    reference to array of Bio::EnsEMBL::Hive::AnalysisJob objects
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub worker_grab_jobs {
-  my $self            = shift;
-  my $worker          = shift;
-  
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  my $claim = $jobDBA->claim_jobs_for_worker($worker);
-  my $jobs = $jobDBA->fetch_by_claim_analysis($claim, $worker->analysis->dbID);
-  return $jobs;
-}
-
 =head2 reset_and_fetch_job_by_dbID
 
   Arg [1]: int $analysis_job_id

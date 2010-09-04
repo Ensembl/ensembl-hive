@@ -517,7 +517,7 @@ sub run {
 
       my $jobs = $specific_job
         ? [ $self->queen->worker_reclaim_job($self,$specific_job) ]
-        : $self->queen->worker_grab_jobs($self);
+        : $self->db->get_AnalysisJobAdaptor->grab_jobs_for_worker( $self );
 
       $self->queen->worker_check_in($self); #will sync analysis_stats if needed
 

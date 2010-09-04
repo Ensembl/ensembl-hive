@@ -164,28 +164,6 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_by_claim_analysis
-
-  Arg [1]    : string job_claim (the UUID used to claim jobs)
-  Arg [2]    : int analysis_id  
-  Example    : $jobs = $adaptor->fetch_by_claim_analysis('c6658fde-64ab-4088-8526-2e960bd5dd60',208);
-  Description: Returns a list of jobs for a claim id
-  Returntype : Bio::EnsEMBL::Hive::AnalysisJob
-  Exceptions : thrown if claim_id or analysis_id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_claim_analysis {
-  my ($self,$claim,$analysis_id) = @_;
-
-  throw("fetch_by_claim_analysis must have claim ID") unless($claim);
-  throw("fetch_by_claim_analysis must have analysis_id") unless($analysis_id);
-  my $constraint = "a.status='CLAIMED' AND a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
-  return $self->_generic_fetch($constraint);
-}
-
-
 =head2 fetch_all
 
   Arg        : None
@@ -487,22 +465,34 @@ sub store_out_files {
 }
 
 
-sub claim_jobs_for_worker {
-  my $self     = shift;
-  my $worker   = shift;
+=head2 grab_jobs_for_worker
 
-  throw("must define worker") unless($worker);
+  Arg [1]           : Bio::EnsEMBL::Hive::Worker object $worker
+  Example: 
+    my $jobs  = $job_adaptor->grab_jobs_for_worker( $worker );
+  Description: 
+    For the specified worker, it will search available jobs, 
+    and using the workers requested batch_size, claim/fetch that
+    number of jobs, and then return them.
+  Returntype : 
+    reference to array of Bio::EnsEMBL::Hive::AnalysisJob objects
+  Caller     : Bio::EnsEMBL::Hive::Worker::run
 
+=cut
+
+sub grab_jobs_for_worker {
+    my ($self, $worker) = @_;
+  
   my $ug    = new Data::UUID;
   my $uuid  = $ug->create();
   my $claim = $ug->to_string( $uuid );
-  #print("claiming jobs for worker_id=", $worker->worker_id, " with uuid $claim\n");
+  my $analysis_id = $worker->analysis->dbID();
 
   my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
                  " , worker_id='". $worker->worker_id ."'".
                  " , status='CLAIMED'".
                  " WHERE job_claim='' AND status='READY' AND semaphore_count<=0 ". 
-                 " AND analysis_id='" .$worker->analysis->dbID. "'"; 
+                 " AND analysis_id='$analysis_id'"; 
 
   my $sql_virgin = $sql_base .  
                    " AND retry_count=0".
@@ -515,7 +505,9 @@ sub claim_jobs_for_worker {
   if($claim_count == 0) {
     $claim_count = $self->dbc->do($sql_any);
   }
-  return $claim;
+
+  my $constraint = "a.status='CLAIMED' AND a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
+  return $self->_generic_fetch($constraint);
 }
 
 
