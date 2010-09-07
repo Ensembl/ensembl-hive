@@ -27,7 +27,7 @@ sub count_pending_workers {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = qq{bjobs -w -J '${jnp}*' -u all | grep -c PEND};
+    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep -c PEND};
 
     my $pend_count = qx/$cmd/;
     chomp($pend_count);
