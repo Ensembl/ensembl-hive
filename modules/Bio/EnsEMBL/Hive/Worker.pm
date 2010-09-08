@@ -397,9 +397,11 @@ sub worker_process_temp_directory {
   
   unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
     #create temp directory to hold fasta databases
-    $self->{'_tmp_dir'} = "/tmp/worker_$ENV{'USER'}.$$/";
+    my $username = $ENV{'USER'};
+    my $worker_id = $self->worker_id();
+    $self->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}";
     mkdir($self->{'_tmp_dir'}, 0777);
-    throw("unable to create ".$self->{'_tmp_dir'}) unless(-e $self->{'_tmp_dir'});
+    throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
   }
   return $self->{'_tmp_dir'};
 }
