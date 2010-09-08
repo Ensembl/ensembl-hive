@@ -314,7 +314,7 @@ sub dataflow_output_id {
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
 
     $branch_code        ||=  1;     # default branch_code is 1
-    $create_job_options ||= {};     # { -block => 1 } or { -semaphore_cout => scalar(@fan_job_ids) } or { -semaphored_job_id => $funnel_job_id }
+    $create_job_options ||= {};     # { -block => 1 } or { -semaphore_count => scalar(@fan_job_ids) } or { -semaphored_job_id => $funnel_job_id }
 
         # this tricky code is responsible for correct propagation of semaphores down the dataflow pipes:
     my $propagate_semaphore = not exists ($create_job_options->{'-semaphored_job_id'});     # CONVENTION: if zero is explicitly supplied, it is a request not to propagate
