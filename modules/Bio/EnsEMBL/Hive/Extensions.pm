@@ -32,7 +32,6 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::Hive::URLFactory;
 #use Bio::EnsEMBL::Pipeline::RunnableDB;
 #use Bio::EnsEMBL::Analysis::RunnableDB;
@@ -128,35 +127,6 @@ sub Bio::EnsEMBL::Analysis::url
   $url = $self->adaptor->db->dbc->url;
   $url .= "/analysis?logic_name=" . $self->logic_name;
   return $url;  
-}
-
-sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_logic_name_or_url {
-    my $self                = shift @_;
-    my $logic_name_or_url   = shift @_;
-
-    if($logic_name_or_url =~ m{^\w+://}) {
-        return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, $self->db);
-    } else {
-        return $self->fetch_by_logic_name($logic_name_or_url);
-    }
-}
-
-sub Bio::EnsEMBL::DBSQL::AnalysisAdaptor::fetch_by_url_query {
-    my ($self, $field_name, $field_value) = @_;
-
-    if(!$field_name or !$field_value) {
-
-        return;
-
-    } elsif($field_name eq 'logic_name') {
-
-        return $self->fetch_by_logic_name($field_value);
-
-    } elsif($field_name eq 'dbID') {
-
-        return $self->fetch_by_dbID($field_value);
-
-    }
 }
 
 

@@ -41,17 +41,19 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
 
-sub get_Queen {
-  my $self = shift;
-
-  return $self->get_QueenAdaptor();
-}
+#sub get_Queen {
+#  my $self = shift;
+#
+#  return $self->get_QueenAdaptor();
+#}
 
 sub get_available_adaptors {
  
     my %pairs =  (
-        'MetaContainer'       => 'Bio::EnsEMBL::DBSQL::MetaContainer',
-        'Analysis'            => 'Bio::EnsEMBL::DBSQL::AnalysisAdaptor',
+            # Core adaptors extended with Hive stuff:
+        'MetaContainer'       => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
+        'Analysis'            => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
+            # Hive adaptors:
         'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
         'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
         'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
@@ -66,4 +68,3 @@ sub get_available_adaptors {
 }
  
 1;
-

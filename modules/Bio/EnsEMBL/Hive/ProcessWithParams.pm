@@ -54,6 +54,7 @@ package Bio::EnsEMBL::Hive::ProcessWithParams;
 
 use strict;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');  # import both functions
+
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -91,11 +92,11 @@ sub param_init {    # normally will run automatically on the first execution of 
 
         my $defaults_hash    = scalar(@_) ? { @_ } : {};            # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
 
-        my $meta_params_hash = $self->_parse_meta();                # then come the pipeline-wide parameters from the 'meta' table (define things common to all modules in this pipeline)
+        my $meta_params_hash = $self->db->get_MetaContainer->get_param_hash(); # then come the pipeline-wide parameters from the 'meta' table (define things common to all modules in this pipeline)
 
-        my $parameters_hash  = $self->_parse_string('parameters');  # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
+        my $parameters_hash  = $self->_parse_string( $self->parameters() );  # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
 
-        my $input_id_hash    = $self->_parse_string('input_id');    # job-specific 'input_id' parameters have the highest precedence
+        my $input_id_hash    = $self->_parse_string( $self->input_id() );    # job-specific 'input_id' parameters have the highest precedence
 
         $self->{'_param_hash'} = { %$defaults_hash, %$meta_params_hash, %$parameters_hash, %$input_id_hash };
     }
@@ -222,46 +223,19 @@ sub csvq { # another example stringification formatter
 =cut
 
 sub _parse_string {
-    my ($self, $method) = @_;
-
-    my $string = $self->$method();
+    my ($self, $string) = @_;
 
     if($self->strict_hash_format() or $string=~/^\{.*\}$/) {
         my $param_hash = eval($string) || {};
         if($@ or (ref($param_hash) ne 'HASH')) {
             die "The module '".ref($self)."' for analysis '".$self->analysis->logic_name()
-                ."' assumes analysis.$method should evaluate into a {'param'=>'value'} hashref."
+                ."' assumes both analysis.parameters and analysis_job.input_id should evaluate into a {'param'=>'value'} hashref."
                 ." The current value is '$string'\n";
         }
         return $param_hash;
     } else {
         return {};
     }
-}
-
-=head2 _parse_meta
-    
-    Description: this is a private method that deals with parsing of parameters out of 'meta' table.
-
-=cut
-
-sub _parse_meta {            # Unfortunately, MetaContainer is useless for us, as we need to load all the parameters in one go
-    my $self = shift @_;
-
-    my %meta_params_hash = ();
-
-        # Here we are assuming that meta_keys are unique.
-        # If they are not, you'll be getting the value with the highest meta_id.
-        #
-    my $sth = $self->db->dbc()->prepare("SELECT meta_key, meta_value FROM meta ORDER BY meta_id");
-    $sth->execute();
-    while (my ($meta_key, $meta_value)=$sth->fetchrow_array()) {
-
-        $meta_params_hash{$meta_key} = destringify($meta_value);
-    }
-    $sth->finish();
-
-    return \%meta_params_hash;
 }
 
 1;
