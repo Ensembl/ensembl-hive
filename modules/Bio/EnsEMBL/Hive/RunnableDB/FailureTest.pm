@@ -56,17 +56,15 @@ BEGIN {
 #    die "Could not compile this nonsense!";
 }
 
-=head2 fetch_input
+=head2 param_defaults
 
-    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-                  Here it sets default values of parameters and calls dangerous_math() subroutine.
+    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::ProcessWithParams that defines module defaults for parameters.
 
 =cut
 
-sub fetch_input {
-    my $self = shift @_;
+sub param_defaults {
 
-    $self->param_init(
+    return {
         'value'         => 1,       # normally you generate a batch of jobs with different values of param('value')
         'divisor'       => 2,       # but the same param('divisor') and see how every param('divisor')'s job will crash
         'state'         => 'RUN',   # the state in which the process may commit apoptosis
@@ -75,7 +73,18 @@ sub fetch_input {
         'time_GET_INPUT'    => 0,   # how much time fetch_input()  will spend in sleeping state
         'time_RUN'          => 1,   # how much time run()          will spend in sleeping state
         'time_WRITE_OUTPUT' => 0,   # how much time write_output() will spend in sleeping state
-    );
+    };
+}
+
+=head2 fetch_input
+
+    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
+                  Here it only calls dangerous_math() subroutine.
+
+=cut
+
+sub fetch_input {
+    my $self = shift @_;
 
     $self->dangerous_math('GET_INPUT');
 }

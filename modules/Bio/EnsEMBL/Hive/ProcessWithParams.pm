@@ -53,7 +53,7 @@ accorting to the following parameter precedence rules:
 package Bio::EnsEMBL::Hive::ProcessWithParams;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');  # import both functions
+use Bio::EnsEMBL::Hive::Utils ('stringify');  # import stringify()
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -62,8 +62,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     Description: This public virtual method should either return 1 or 0, depending on whether it is expected that input_id() and parameters() contain a hashref or not
 
-    Callers    : Bio::EnsEMBL::Hive::RunnableDB::SystemCmd
-                 and Bio::EnsEMBL::Hive::RunnableDB::SqlCmd
+    Callers    : Bio::EnsEMBL::Hive::RunnableDB::ProcessWithParams
 
 =cut
 
@@ -72,35 +71,45 @@ sub strict_hash_format {    # This public virtual must be redefined to "return 0
     return 1;
 }
 
-=head2 param_init
 
-    Args       : (optional) a hash that defines Module_Defaults
+=head2 param_defaults
 
-    Example    : $self->param_init('taxon_id' => 10090, 'source' => 'UniProt');
+    Description: This public virtual method should return a hash of param defaults of the RunnableDB
 
-    Description: Parses the parameters from all sources in the correct precedence order.
-                 Can be invoked explicitly with defaults, or will run implicitly before a call to param().
+    Callers    : Bio::EnsEMBL::Hive::RunnableDB::ProcessWithParams
 
 =cut
 
-sub param_init {    # normally will run automatically on the first execution of $self->param(),
-                    # but you can enforce it by running explicitly, optionally supplying the default values
+sub param_defaults {
+
+    return {};
+}
+
+
+=head2 param_init
+
+    Description: Parses the parameters from all sources in the correct precedence order.
+
+=cut
+
+sub param_init {    # will run automatically on the first execution of $self->param()
                     
     my $self     = shift @_;
 
-    if( !$self->{'_param_hash'} or scalar(@_) ) {
+    if( !$self->{'_param_hash'} ) {
 
-        my $defaults_hash    = scalar(@_) ? { @_ } : {};            # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
+        my $defaults_hash    = $self->param_defaults();                         # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
 
-        my $meta_params_hash = $self->db->get_MetaContainer->get_param_hash(); # then come the pipeline-wide parameters from the 'meta' table (define things common to all modules in this pipeline)
+        my $meta_params_hash = $self->db->get_MetaContainer->get_param_hash();  # then come the pipeline-wide parameters from the 'meta' table (define things common to all modules in this pipeline)
 
-        my $parameters_hash  = $self->_parse_string( $self->parameters() );  # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
+        my $parameters_hash  = $self->_parse_string( $self->parameters() );     # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
 
-        my $input_id_hash    = $self->_parse_string( $self->input_id() );    # job-specific 'input_id' parameters have the highest precedence
+        my $input_id_hash    = $self->_parse_string( $self->input_id() );       # job-specific 'input_id' parameters have the highest precedence
 
         $self->{'_param_hash'} = { %$defaults_hash, %$meta_params_hash, %$parameters_hash, %$input_id_hash };
     }
 }
+
 
 =head2 param
 
@@ -150,11 +159,11 @@ sub param_substitute {
 
         if($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
 
-            return $self->subst_one_hashpair($1);
+            return $self->_subst_one_hashpair($1);
 
         } else {
 
-            $structure=~s/(?:#(.+?)#)/$self->subst_one_hashpair($1)/eg;
+            $structure=~s/(?:#(.+?)#)/$self->_subst_one_hashpair($1)/eg;
             return $structure;
         }
 
@@ -172,26 +181,6 @@ sub param_substitute {
         return \%substituted_hash;
     } else {
         die "Could not substitute parameters in $structure";
-    }
-}
-
-sub subst_one_hashpair {
-    my ($self, $inside_hashes) = @_;
-
-    if($inside_hashes=~/^\w+$/) {
-
-        return $self->param($inside_hashes);
-
-    } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
-
-        return $self->$1($self->param($2));
-
-    } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
-
-        my $expression = $1;
-        $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
-
-        return eval($expression);
     }
 }
 
@@ -215,6 +204,33 @@ sub csvq { # another example stringification formatter
 }
 
 #--------------------------------------------[private methods]----------------------------------------------
+
+=head2 _subst_one_hashpair
+    
+    Description: this is a private method that performs one substitution. Called by param_substitute().
+
+=cut
+
+sub _subst_one_hashpair {
+    my ($self, $inside_hashes) = @_;
+
+    if($inside_hashes=~/^\w+$/) {
+
+        return $self->param($inside_hashes);
+
+    } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
+
+        return $self->$1($self->param($2));
+
+    } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
+
+        my $expression = $1;
+        $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
+
+        return eval($expression);
+    }
+}
+
 
 =head2 _parse_string
     
