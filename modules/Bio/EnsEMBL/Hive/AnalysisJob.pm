@@ -139,6 +139,28 @@ sub stderr_file {
   return $self->{'_stderr_file'};
 }
 
+
+=head2 autoflow
+
+    Title   :  autoflow
+    Function:  Gets/sets flag for whether the job should
+               be automatically dataflowed on branch 1 when the job completes.
+               If the subclass manually sends a job along branch 1 with dataflow_output_id,
+               the autoflow will turn itself off.
+    Returns :  boolean (1=default|0)
+
+=cut
+
+sub autoflow {
+  my $self = shift;
+
+  $self->{'_autoflow'} = shift if(@_);
+  $self->{'_autoflow'} = 1 unless(defined($self->{'_autoflow'}));  
+
+  return $self->{'_autoflow'};
+}
+
+
 ##-----------------[indicators to the Worker]--------------------------------
 
 

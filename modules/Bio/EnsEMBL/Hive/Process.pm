@@ -270,24 +270,6 @@ sub input_job {
   return $self->{'_input_job'};
 }
 
-=head2 autoflow_inputjob
-
-    Title   :  autoflow_inputjob
-    Function:  Gets/sets flag for whether the input_job should
-               be automatically dataflowed on branch code 1 when the
-               job completes.  If the subclass manually sends a job along
-               branch 1 with dataflow_output_id, the autoflow will be turned off.
-    Returns :  boolean (1/0/undef)
-
-=cut
-
-sub autoflow_inputjob {
-  my $self = shift;
-  $self->{'_autoflow_inputjob'} = shift if(@_);
-  $self->{'_autoflow_inputjob'}=1 unless(defined($self->{'_autoflow_inputjob'}));  
-  return $self->{'_autoflow_inputjob'};
-}
-
 =head2 dataflow_output_id
 
     Title        :  dataflow_output_id
@@ -323,7 +305,7 @@ sub dataflow_output_id {
     my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->input_job->semaphored_job_id();
 
         # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
-    $self->autoflow_inputjob(0) if($branch_code==1);
+    $self->input_job->autoflow(0) if($branch_code==1);
 
     my @output_job_ids = ();
     my $job_adaptor = $self->db->get_AnalysisJobAdaptor;

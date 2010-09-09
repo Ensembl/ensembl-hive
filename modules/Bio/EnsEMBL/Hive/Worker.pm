@@ -656,7 +656,7 @@ sub run_module_with_job {
     $runObj->queen($self->queen);
     $runObj->worker($self);
     $runObj->debug($self->debug);
-    $runObj->autoflow_inputjob(1);
+    $job->autoflow(1);
   } else {
     $runObj->input_id($job->input_id);
     $runObj->db($self->db);
@@ -687,7 +687,7 @@ sub run_module_with_job {
         $runObj->write_output;
         $self->{'writing_stopwatch'}->pause();
 
-        if( $native_hive_process and $runObj->autoflow_inputjob ) {
+        if( $native_hive_process and $job->autoflow ) {
             printf("AUTOFLOW input->output\n") if($self->debug);
             $runObj->dataflow_output_id();
         }
