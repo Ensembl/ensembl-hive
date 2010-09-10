@@ -9,12 +9,10 @@ Bio::EnsEMBL::Hive::ProcessWithParams
 
 This module extends Bio::EnsEMBL::Hive::Process by implementing the following capabilities:
 
-    1) parsing of parameters in the right order of precedence (including built-in defaults, if supplied)
-            #
-            # $self->param_init('taxon_id' => 10090, 'source' => 'UniProt');
-            #
-        Note: you should only be running the parser $self->param_init(...) manually
-              if you want to supply built-in defaults, otherwise it will run by itself - no need to worry.
+    1) parsing of parameters in the right order of precedence (including built-in defaults, if supplied).
+        This parsing happens automatically and in most cases you should not need to activate it.
+        However you may want to provide built-in defaults for your RunnableDB
+        by defining your own param_defaults() method that returns a hashref.
 
     2) reading a parameter's value
             #
