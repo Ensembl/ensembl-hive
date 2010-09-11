@@ -197,12 +197,12 @@ sub register_worker_death {
 
 }
 
-sub check_for_dead_workers {
+sub check_for_dead_workers {    # a bit counter-intuitively only looks for current meadow's workers, not all of the dead workers.
     my ($self, $meadow, $check_buried_in_haste) = @_;
 
     my $worker_status_hash    = $meadow->status_of_all_our_workers();
     my %worker_status_summary = ();
-    my $queen_worker_list     = $self->fetch_overdue_workers(0);
+    my $queen_worker_list     = $self->fetch_overdue_workers(0);    # maybe it should return a {meadow->worker_count} hash instead?
 
     print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
 
@@ -808,6 +808,7 @@ sub register_all_workers_dead {
 
     my $overdueWorkers = $self->fetch_overdue_workers(0);
     foreach my $worker (@{$overdueWorkers}) {
+        $worker->cause_of_death( 'FATALITY' );  # well, maybe we could have investigated further...
         $self->register_worker_death($worker);
     }
 }
