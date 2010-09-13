@@ -639,29 +639,29 @@ sub run_module_with_job {
   my ($self, $job) = @_;
 
   $job->incomplete(1);
+  $job->autoflow(1);
 
   $self->enter_status('COMPILATION');
   $job->update_status('COMPILATION');
   my $runObj = $self->analysis->process or die "Unknown compilation error";
-
-  my $native_hive_process = $runObj->isa("Bio::EnsEMBL::Hive::Process");
   
   my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
   $self->queen->dbc->query_count(0);
 
   #pass the input_id from the job into the Process object
-  if($native_hive_process) {
+  if( $runObj->isa('Bio::EnsEMBL::Hive::Process') ) {
     $runObj->input_job($job);
     $runObj->queen($self->queen);
     $runObj->worker($self);
     $runObj->debug($self->debug);
 
-    $job->autoflow(1);
     $job->param_init( $runObj->strict_hash_format(), $runObj->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
 
   } else {
     $runObj->input_id($job->input_id);
     $runObj->db($self->db);
+
+    $job->param_init( 0, $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() ); # Well, why not?
   }
 
     $self->enter_status('GET_INPUT');
@@ -689,9 +689,9 @@ sub run_module_with_job {
         $runObj->write_output;
         $self->{'writing_stopwatch'}->pause();
 
-        if( $native_hive_process and $job->autoflow ) {
+        if( $job->autoflow ) {
             printf("AUTOFLOW input->output\n") if($self->debug);
-            $runObj->dataflow_output_id();
+            $job->dataflow_output_id();
         }
     } else {
         print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
