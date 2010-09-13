@@ -42,7 +42,7 @@ use strict;
 use DBI;
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 fetch_input
 

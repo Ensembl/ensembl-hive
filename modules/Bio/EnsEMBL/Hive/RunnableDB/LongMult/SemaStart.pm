@@ -27,7 +27,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::LongMult::SemaStart;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 fetch_input
 

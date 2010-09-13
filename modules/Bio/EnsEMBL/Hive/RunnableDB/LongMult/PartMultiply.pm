@@ -21,7 +21,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 fetch_input
 

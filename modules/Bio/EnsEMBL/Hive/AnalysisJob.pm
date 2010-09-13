@@ -28,9 +28,11 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
 
-use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Worker;
+#use Bio::EnsEMBL::Analysis;
+#use Bio::EnsEMBL::DBSQL::DBAdaptor;
+#use Bio::EnsEMBL::Hive::Worker;
+
+use base ('Bio::EnsEMBL::Hive::Params');
 
 sub new {
   my ($class,@args) = @_;
@@ -190,6 +192,81 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
 }
 
 ##-----------------[/indicators to the Worker]-------------------------------
+
+
+=head2 dataflow_output_id
+
+    Title        :  dataflow_output_id
+    Arg[1](req)  :  <string> $output_id 
+    Arg[2](opt)  :  <int> $branch_code (optional, defaults to 1)
+    Arg[3](opt)  :  <hashref> $create_job_options (optional, defaults to {}, options added to the CreateNewJob method)
+    Usage        :  $self->dataflow_output_id($output_id, $branch_code);
+    Function:  
+      If a RunnableDB(Process) needs to create jobs, this allows it to have jobs 
+      created and flowed through the dataflow rules of the workflow graph.
+      This 'output_id' becomes the 'input_id' of the newly created job at
+      the ends of the dataflow pipes.  The optional 'branch_code' determines
+      which dataflow pipe(s) to flow the job through.      
+
+=cut
+
+sub dataflow_output_id {
+    my ($self, $output_ids, $branch_code, $create_job_options) = @_;
+
+    $output_ids  ||= [ $self->input_id() ];                                 # replicate the input_id in the branch_code's output by default
+    $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
+
+    $branch_code        ||=  1;     # default branch_code is 1
+    $create_job_options ||= {};     # { -block => 1 } or { -semaphore_count => scalar(@fan_job_ids) } or { -semaphored_job_id => $funnel_job_id }
+
+        # this tricky code is responsible for correct propagation of semaphores down the dataflow pipes:
+    my $propagate_semaphore = not exists ($create_job_options->{'-semaphored_job_id'});     # CONVENTION: if zero is explicitly supplied, it is a request not to propagate
+
+        # However if nothing is supplied, semaphored_job_id will be propagated from the parent job:
+    my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->semaphored_job_id();
+
+        # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
+    $self->autoflow(0) if($branch_code==1);
+
+    my @output_job_ids = ();
+    my $rules       = $self->adaptor->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis_id, $branch_code);
+    foreach my $rule (@{$rules}) {
+
+        my $substituted_template;
+        if(my $template = $rule->input_id_template()) {
+            $substituted_template = $self->param_substitute($template);
+        }
+
+        my $target_analysis_or_table = $rule->to_analysis();
+
+        foreach my $output_id ($substituted_template ? ($substituted_template) : @$output_ids) {
+
+            if($target_analysis_or_table->can('dataflow')) {
+
+                my $insert_id = $target_analysis_or_table->dataflow( $output_id );
+
+            } else {
+                if(my $job_id = $self->adaptor->CreateNewJob(
+                    -input_id       => $output_id,
+                    -analysis       => $target_analysis_or_table,
+                    -input_job_id   => $self->dbID,  # creator_job's id
+                    %$create_job_options
+                )) {
+                    if($semaphored_job_id and $propagate_semaphore) {
+                        $self->adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id ); # propagate the semaphore
+                    }
+                        # only add the ones that were indeed created:
+                    push @output_job_ids, $job_id;
+
+                } elsif($semaphored_job_id and !$propagate_semaphore) {
+                    $self->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );     # if we didn't succeed in creating the job, fix the semaphore
+                }
+            }
+        }
+    }
+    return \@output_job_ids;
+}
+
 
 sub print_job {
   my $self = shift;

@@ -40,7 +40,6 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
 use Data::UUID;
-use Sys::Hostname;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -49,8 +48,6 @@ use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
-
-# our $max_retry_count = 7;
 
 ###############################################################################
 #

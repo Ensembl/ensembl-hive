@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::FailureTest;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Hive::ProcessWithParams');
+use base ('Bio::EnsEMBL::Hive::Process');
 
 BEGIN {
 #    die "Could not compile this nonsense!";
@@ -58,7 +58,7 @@ BEGIN {
 
 =head2 param_defaults
 
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::ProcessWithParams that defines module defaults for parameters.
+    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters.
 
 =cut
 
