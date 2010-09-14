@@ -35,6 +35,10 @@ package Bio::EnsEMBL::Hive::RunnableDB::Dummy;
 use strict;
 use base ('Bio::EnsEMBL::Hive::Process');
 
+sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
+    return 0;
+}
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
