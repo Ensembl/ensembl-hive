@@ -72,7 +72,7 @@ GetOptions(
            'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
-           'no_cleanup'     => \$self->{'no_global_cleanup'},
+           'no_cleanup'     => \$self->{'no_cleanup'},
            'analysis_stats' => \$self->{'show_analysis_stats'},
            'no_write'       => \$self->{'no_write'},
            'nowrite'        => \$self->{'no_write'},
@@ -190,8 +190,8 @@ if($self->{'job_limit'}) {
 if($self->{'lifespan'}) {
   $worker->life_span($self->{'lifespan'} * 60);
 }
-if($self->{'no_global_cleanup'}) { 
-  $worker->perform_global_cleanup(0); 
+if($self->{'no_cleanup'}) { 
+  $worker->perform_cleanup(0); 
 }
 if(defined $self->{'retry_throwing_jobs'}) {
     $worker->retry_throwing_jobs($self->{'retry_throwing_jobs'});
@@ -303,7 +303,7 @@ __DATA__
     -input_id <string>          : test input_id on specified analysis (analysis_id or logic_name)
     -job_id <id>                : run specific job defined by analysis_job_id
     -analysis_stats             : show status of each analysis in hive
-    -no_cleanup                 : don't perform global_cleanup when worker exits
+    -no_cleanup                 : don't perform temp directory cleanup when worker exits
     -no_write                   : don't write_output or auto_dataflow input_job
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
 

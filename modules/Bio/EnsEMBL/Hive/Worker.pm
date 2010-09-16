@@ -367,11 +367,11 @@ sub worker_output_dir {
 }
 
 
-sub perform_global_cleanup {
+sub perform_cleanup {
   my $self = shift;
-  $self->{'_perform_global_cleanup'} = shift if(@_);
-  $self->{'_perform_global_cleanup'} = 1 unless(defined($self->{'_perform_global_cleanup'}));
-  return $self->{'_perform_global_cleanup'};
+  $self->{'_perform_cleanup'} = shift if(@_);
+  $self->{'_perform_cleanup'} = 1 unless(defined($self->{'_perform_cleanup'}));
+  return $self->{'_perform_cleanup'};
 }
 
 sub print_worker {
@@ -612,7 +612,7 @@ sub run {
     }
   } while (!$self->cause_of_death); # /Worker's lifespan loop
 
-  if($self->perform_global_cleanup) {
+  if($self->perform_cleanup) {
     #have runnable cleanup any global/process files/data it may have created
     $self->cleanup_worker_process_temp_directory;
   }
