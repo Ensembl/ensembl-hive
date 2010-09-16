@@ -312,9 +312,10 @@ sub last_check_in {
 # this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
 
 sub retry_throwing_jobs {
-  my( $self, $value ) = @_;
-  $self->{'_retry_throwing_jobs'} = $value if($value);
-  return $self->{'_retry_throwing_jobs'} || 0;
+    my $self = shift @_;
+
+    $self->{'_retry_throwing_jobs'} = shift @_ if(@_);
+    return defined($self->{'_retry_throwing_jobs'}) ? $self->{'_retry_throwing_jobs'} : 1;
 }
 
 =head2 hive_output_dir
