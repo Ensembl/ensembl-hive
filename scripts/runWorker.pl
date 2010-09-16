@@ -66,7 +66,7 @@ GetOptions(
            'rc_id=i'        => \$self->{'rc_id'},
            'logic_name=s'   => \$self->{'logic_name'},
            'batch_size=i'   => \$self->{'batch_size'},
-           'limit=i'        => \$self->{'job_limit'},
+           'job_limit|limit=i' => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
            'hive_output_dir|outdir=s'   => \$self->{'hive_output_dir'}, # keep compatibility with the old name
            'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
@@ -295,7 +295,7 @@ __DATA__
     -analysis_id <id>           : analysis_id in db
     -logic_name <string>        : logic_name of analysis to make this worker
     -batch_size <num>           : #jobs to claim at a time
-    -limit <num>                : #jobs to run before worker can die naturally
+    -job_limit <num>            : #jobs to run before worker can die naturally
     -lifespan <num>             : number of minutes this worker is allowed to run
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
     -bk <string>                : beekeeper identifier (deprecated and ignored)

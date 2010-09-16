@@ -91,7 +91,7 @@ sub main {
                'meadow_options|lsf_options=s'  => \$meadow_options, # 'lsf_options' is deprecated (please investigate the resource requirements, they may suit your needs way better)
 
                     # worker control
-               'jlimit=i'          => \$self->{'job_limit'},
+               'job_limit|jlimit=i'  => \$self->{'job_limit'},
                'batch_size=i'      => \$self->{'batch_size'},
                'lifespan=i'        => \$self->{'lifespan'},
                'logic_name=s'      => \$self->{'logic_name'},
@@ -322,13 +322,11 @@ sub generate_worker_cmd {
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
-        $worker_cmd .= (defined($self->{'job_limit'})   ? " -limit $self->{'job_limit'}"       : '')
-                    .  (defined($self->{'batch_size'})  ? " -batch_size $self->{'batch_size'}" : '')
-                    .  (defined($self->{'lifespan'})    ? " -lifespan $self->{'lifespan'}"     : '')
-                    .  (defined($self->{'logic_name'})  ? " -logic_name $self->{'logic_name'}" : '')
-                    .  ($self->{'maximise_concurrency'} ? ' -maximise_concurrency 1' : '')
-                    .  (defined($self->{'retry_throwing_jobs'}) ? " -retry_throwing_jobs $self->{'retry_throwing_jobs'}" : '')
-                    .  ($self->{'hive_output_dir'}      ? " -hive_output_dir $self->{'hive_output_dir'}" : '');
+        foreach my $worker_option ('batch_size', 'job_limit', 'lifespan', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
+            if(defined(my $value = $self->{$worker_option})) {
+                $worker_cmd .= " -${worker_option} $value";
+            }
+        }
     }
 
     if ($self->{'reg_file'}) {
@@ -505,7 +503,7 @@ __DATA__
 
 =head2 Worker control
 
-    -jlimit <num>               : #jobs to run before worker can die naturally
+    -job_limit <num>            : #jobs to run before worker can die naturally
     -batch_size <num>           : #jobs a worker can claim at once
     -lifespan <num>             : lifespan limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
