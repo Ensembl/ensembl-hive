@@ -394,14 +394,19 @@ sub update_status {
   my ($self,$job) = @_;
 
   my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
+
   if($job->status eq 'DONE') {
     $sql .= ",completed=now()";
     $sql .= ",runtime_msec=".$job->runtime_msec;
     $sql .= ",query_count=".$job->query_count;
-  }
-  if($job->status eq 'READY') {
+
+  } elsif($job->status eq 'READY') {
     $sql .= ",job_claim=''";
+
+  } elsif($job->status eq 'PASSED_ON') {
+    $sql .= ",job_claim='', completed=now()";
   }
+
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
   my $sth = $self->prepare($sql);
@@ -555,8 +560,14 @@ sub release_undone_jobs_from_worker {
 
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
-        if( $resource_overusage) {
-            $passed_on = $self->gc_dataflow( $job_id, $cod );
+        if( $resource_overusage ) {
+
+            my $branch_code = {
+                'MEMLIMIT' => '-1',
+                'RUNLIMIT' => '-2',
+            }->{$cod};
+
+            $passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, $branch_code );
         }
 
         unless($passed_on) {
@@ -580,22 +591,29 @@ sub release_and_age_job {
     } );
 }
 
-=head2 gc_dataflow (stub)
+=head2 gc_dataflow
 
-        0) check if there is a dataflow rule that corresponds to this $cod, return 0 if not
-
-        1) perform a 'limited responsibility' dataflow
-        2) set the given job's status to 'PASSED_ON'
-        3) record the fact of the dataflow in job_message table
-
-        4) return 1 if gc_dataflow succeeded, 0 otherwise
+    Description:    perform automatic dataflow from a dead job that overused resources if a corresponding dataflow rule was provided
+                    Should only be called once during garbage collection phase, when the job is definitely 'abandoned' and not being worked on.
 
 =cut
 
 sub gc_dataflow {
-    my ($self, $job_id, $cod) = @_;
+    my ($self, $analysis_id, $job_id, $branch_code) = @_;
 
-    return 0;
+    unless(@{ $self->adaptor->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($analysis_id, $branch_code) }) {
+        return 0;   # no corresponding gc_dataflow rule has been defined
+    }
+
+    my $job = $self->fetch_by_dbID($job_id);
+
+    $job->param_init( 0, $job->input_id() );    # input_id_templates still supported, however to a limited extent
+
+    $job->dataflow_output_id( $job->input_id() , $branch_code );
+
+    $job->update_status('PASSED_ON');
+    
+    return 1;
 }
 
 
