@@ -554,8 +554,6 @@ sub release_undone_jobs_from_worker {
     my $cod = $worker->cause_of_death();
     my $msg = "GarbageCollector: The worker died because of $cod";
     while(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
-        $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg, 1 );
-
         my $resource_overusage = ($cod eq 'MEMLIMIT') or ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
 
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
@@ -569,6 +567,11 @@ sub release_undone_jobs_from_worker {
 
             $passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, $branch_code );
         }
+
+        if($passed_on) {
+            $msg .= ', performing gc_dataflow';
+        }
+        $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg, not $passed_on );
 
         unless($passed_on) {
             $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
