@@ -30,7 +30,7 @@
         UNIQUE (from_analysis_id, to_analysis_url)
     );
 
-    A dataflow rule is activated when a Bio::EnsEMBL::Hive::Process::dataflow_output_id is called at any moment during a RunnableDB's execution.
+    A dataflow rule is activated when a Bio::EnsEMBL::Hive::AnalysisJob::dataflow_output_id is called at any moment during a RunnableDB's execution.
     The current RunnableDB's analysis ($from_analysis) and the requested $branch_code (1 by default) define the entry conditions,
     and whatever rules match these conditions will generate new jobs with input_ids specified in the dataflow_output_id() call.
     If input_id_template happens to contain a non-NULL value, it will be used to generate the corresponding intput_id instead.

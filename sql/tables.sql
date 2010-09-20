@@ -129,7 +129,7 @@ CREATE TABLE analysis_job (
   input_id                  char(255) not null,
   job_claim                 char(40) NOT NULL DEFAULT '', #UUID
   worker_id                 int(10) NOT NULL,
-  status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED') DEFAULT 'READY' NOT NULL,
+  status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
   runtime_msec              int(10) default 0 NOT NULL, 

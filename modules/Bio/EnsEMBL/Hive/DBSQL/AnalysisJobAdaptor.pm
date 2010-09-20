@@ -551,9 +551,17 @@ sub release_undone_jobs_from_worker {
     while(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
         $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg, 1 );
 
-        my $may_retry = ($cod ne 'MEMLIMIT' and $cod ne 'RUNLIMIT');
+        my $resource_overusage = ($cod eq 'MEMLIMIT') or ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
 
-        $self->release_and_age_job( $job_id, $max_retry_count, $may_retry );
+        my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
+
+        if( $resource_overusage) {
+            $passed_on = $self->gc_dataflow( $job_id, $cod );
+        }
+
+        unless($passed_on) {
+            $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
+        }
     }
     $sth->finish();
 }
@@ -563,13 +571,31 @@ sub release_and_age_job {
     my ($self, $job_id, $max_retry_count, $may_retry) = @_;
     $may_retry ||= 0;
 
-        # NB: The order of updates IS important. Here we first find out the new status and then increment the retry_count:
+        # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
     $self->dbc->do( qq{
         UPDATE analysis_job
            SET worker_id=0, job_claim='', status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
          WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
            AND analysis_job_id=$job_id
     } );
+}
+
+=head2 gc_dataflow (stub)
+
+        0) check if there is a dataflow rule that corresponds to this $cod, return 0 if not
+
+        1) perform a 'limited responsibility' dataflow
+        2) set the given job's status to 'PASSED_ON'
+        3) record the fact of the dataflow in job_message table
+
+        4) return 1 if gc_dataflow succeeded, 0 otherwise
+
+=cut
+
+sub gc_dataflow {
+    my ($self, $job_id, $cod) = @_;
+
+    return 0;
 }
 
 

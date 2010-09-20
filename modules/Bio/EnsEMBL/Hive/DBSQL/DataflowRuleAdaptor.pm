@@ -55,7 +55,7 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
                and returns all such rules in a list (by reference)
   Returntype : reference to list of Bio::EnsEMBL::Hive::DataflowRule objects
   Exceptions : none
-  Caller     : Bio::EnsEMBL::Hive::Process::dataflow_output_id
+  Caller     : Bio::EnsEMBL::Hive::AnalysisJob::dataflow_output_id
 
 =cut
 
