@@ -91,9 +91,9 @@ sub main {
                'meadow_options|lsf_options=s'  => \$meadow_options, # 'lsf_options' is deprecated (please investigate the resource requirements, they may suit your needs way better)
 
                     # worker control
-               'job_limit|jlimit=i'  => \$self->{'job_limit'},
-               'batch_size=i'      => \$self->{'batch_size'},
-               'lifespan=i'        => \$self->{'lifespan'},
+               'job_limit|jlimit=i'     => \$self->{'job_limit'},
+               'batch_size=i'           => \$self->{'batch_size'},
+               'life_span|lifespan=i'   => \$self->{'life_span'},
                'logic_name=s'      => \$self->{'logic_name'},
                'hive_output_dir=s' => \$self->{'hive_output_dir'},
                'maximise_concurrency=i' => \$self->{'maximise_concurrency'},
@@ -322,7 +322,7 @@ sub generate_worker_cmd {
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
-        foreach my $worker_option ('batch_size', 'job_limit', 'lifespan', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
+        foreach my $worker_option ('batch_size', 'job_limit', 'life_span', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
             if(defined(my $value = $self->{$worker_option})) {
                 $worker_cmd .= " -${worker_option} $value";
             }
@@ -505,7 +505,7 @@ __DATA__
 
     -job_limit <num>            : #jobs to run before worker can die naturally
     -batch_size <num>           : #jobs a worker can claim at once
-    -lifespan <num>             : lifespan limit for each worker
+    -life_span <num>            : life_span limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -maximise_concurrency 1     : try to run more different analyses at the same time
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?

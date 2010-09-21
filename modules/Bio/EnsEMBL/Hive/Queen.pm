@@ -65,6 +65,7 @@ use Sys::Hostname;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
@@ -96,11 +97,10 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($rc_id, $analysis_id, $beekeeper ,$pid, $job, $no_write) =
-     rearrange([qw(rc_id analysis_id beekeeper process_id job no_write) ], @args);
+  my ($rc_id, $analysis_id, $beekeeper ,$process_id, $job, $no_write, $debug, $worker_output_dir, $hive_output_dir, $batch_size, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
+     rearrange([qw(rc_id analysis_id beekeeper process_id job no_write debug worker_output_dir hive_output_dir batch_size job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
 
-  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor;
-  return undef unless($analStatsDBA);
+  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor or return undef;
 
   $analysis_id = $job->analysis_id if(defined($job));
   
@@ -133,7 +133,7 @@ sub create_new_worker {
   }
   
   my $host = hostname;
-  $pid = $$ unless($pid);
+  $process_id ||= $$;
   $beekeeper = '' unless($beekeeper);
 
   my $sql = q{INSERT INTO hive 
@@ -141,7 +141,7 @@ sub create_new_worker {
               VALUES (NOW(), NOW(), ?,?,?,?)};
 
   my $sth = $self->prepare($sql);
-  $sth->execute($pid, $analysisStats->analysis_id, $beekeeper, $host);
+  $sth->execute($process_id, $analysisStats->analysis_id, $beekeeper, $host);
   my $worker_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
@@ -152,9 +152,37 @@ sub create_new_worker {
     $analysisStats->update_status('WORKING');
   }
   
-  $worker->_specific_job($job) if(defined($job));
+  $worker->_specific_job($job) if($job);
   $worker->execute_writes(0) if($no_write);
-  
+
+    $worker->debug($debug) if($debug);
+    $worker->worker_output_dir($worker_output_dir) if(defined($worker_output_dir));
+
+    unless(defined($hive_output_dir)) {
+        my $arrRef = $self->db->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
+        if( @$arrRef ) {
+            $hive_output_dir = destringify($arrRef->[0]);
+        } 
+    }
+    $worker->hive_output_dir($hive_output_dir);
+
+    if($batch_size) {
+      $worker->set_worker_batch_size($batch_size);
+    }
+    if($job_limit) {
+      $worker->job_limit($job_limit);
+      $worker->life_span(0);
+    }
+    if($life_span) {
+      $worker->life_span($life_span * 60);
+    }
+    if($no_cleanup) { 
+      $worker->perform_cleanup(0); 
+    }
+    if(defined $retry_throwing_jobs) {
+        $worker->retry_throwing_jobs($retry_throwing_jobs);
+    }
+
   return $worker;
 }
 
@@ -211,13 +239,13 @@ sub check_for_dead_workers {    # a bit counter-intuitively only looks for curre
     foreach my $worker (@$queen_worker_list) {
         next unless($meadow->responsible_for_worker($worker));
 
-        my $worker_pid = $worker->process_id();
-        if(my $status = $worker_status_hash->{$worker_pid}) { # can be RUN|PEND|xSUSP
+        my $process_id = $worker->process_id();
+        if(my $status = $worker_status_hash->{$process_id}) { # can be RUN|PEND|xSUSP
             $worker_status_summary{$status}++;
         } else {
             $worker_status_summary{'AWOL'}++;
 
-            $gc_wpid_to_worker{$worker_pid} = $worker;
+            $gc_wpid_to_worker{$process_id} = $worker;
         }
     }
     print "\t".join(', ', map { "$_:$worker_status_summary{$_}" } keys %worker_status_summary)."\n\n";
@@ -233,8 +261,8 @@ sub check_for_dead_workers {    # a bit counter-intuitively only looks for curre
         }
 
         warn "GarbageCollector: Releasing the jobs\n";
-        while(my ($worker_pid, $worker) = each %gc_wpid_to_worker) {
-            $worker->cause_of_death( $wpid_to_cod->{$worker_pid} || 'FATALITY');
+        while(my ($process_id, $worker) = each %gc_wpid_to_worker) {
+            $worker->cause_of_death( $wpid_to_cod->{$process_id} || 'FATALITY');
             $self->register_worker_death($worker);
         }
     }

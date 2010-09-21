@@ -7,7 +7,6 @@ use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
-use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
 use Bio::EnsEMBL::Registry;
 
 use Bio::EnsEMBL::Hive::Meadow::LSF;
@@ -15,7 +14,7 @@ use Bio::EnsEMBL::Hive::Meadow::LOCAL;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-# ok this is a hack, but I'm going to pretend I've got an object here
+# I'm going to pretend I've got an object here
 # by creating a blessed hash ref and passing it around like an object
 # this is to avoid using global variables in functions, and to consolidate
 # the globals into a nice '$self' package
@@ -68,11 +67,9 @@ GetOptions(
            'logic_name=s'   => \$self->{'logic_name'},
            'batch_size=i'   => \$self->{'batch_size'},
            'job_limit|limit=i' => \$self->{'job_limit'},
-           'lifespan=i'     => \$self->{'lifespan'},
+           'life_span|lifespan=i' => \$self->{'life_span'},
            'hive_output_dir|outdir=s'   => \$self->{'hive_output_dir'},   # keep compatibility with the old name
            'worker_output_dir=s'        => \$self->{'worker_output_dir'}, # will take precedence over hive_output_dir if set
-           'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
-           'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
            'no_cleanup'     => \$self->{'no_cleanup'},
            'analysis_stats' => \$self->{'show_analysis_stats'},
@@ -116,19 +113,17 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 my $queen = $DBA->get_Queen();
 $queen->{maximise_concurrency} = 1 if ($self->{maximise_concurrency});
 
-unless($self->{'process_id'}) {     # do we really need this confusing feature - to be able to set the process_id externally?
-    eval {
-        $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LSF->get_current_worker_process_id();
-    };
-    if($@) {
-        $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->get_current_worker_process_id();
-        $self->{'beekeeper'}  = 'LOCAL';
-    } else {
-        $self->{'beekeeper'}  = 'LSF';
-    }
+eval {
+    $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LSF->get_current_worker_process_id();
+};
+if($@) {
+    $self->{'process_id'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->get_current_worker_process_id();
+    $self->{'beekeeper'}  = 'LOCAL';
+} else {
+    $self->{'beekeeper'}  = 'LSF';
 }
 
-print("pid = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
+print("process_id = ", $self->{'process_id'}, "\n") if($self->{'process_id'});
 
 if($self->{'logic_name'}) {
   my $analysis = $queen->db->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
@@ -159,48 +154,25 @@ if($self->{'job_id'}) {
 }
 
 my $worker = $queen->create_new_worker(
-     -rc_id          => $self->{'rc_id'},
-     -analysis_id    => $self->{'analysis_id'},
-     -beekeeper      => $self->{'beekeeper'},
-     -process_id     => $self->{'process_id'},
-     -job            => $self->{'analysis_job'},
-     -no_write       => $self->{'no_write'},
-     );
+     -rc_id         => $self->{'rc_id'},
+     -analysis_id   => $self->{'analysis_id'},
+     -beekeeper     => $self->{'beekeeper'},
+     -process_id    => $self->{'process_id'},
+     -job           => $self->{'analysis_job'},
+     -no_write      => $self->{'no_write'},
+     -debug         => $self->{'debug'},
+     -batch_size    => $self->{'batch_size'},
+     -job_limit     => $self->{'job_limit'},
+     -life_span     => $self->{'life_span'},
+     -no_cleanup    => $self->{'no_cleanup'},
+     -worker_output_dir     => $self->{'worker_output_dir'},
+     -hive_output_dir       => $self->{'hive_output_dir'},
+     -retry_throwing_jobs   => $self->{'retry_throwing_jobs'},
+);
 unless($worker) {
   $queen->print_analysis_status if($self->{'show_analysis_stats'});
   print("\n=== COULDN'T CREATE WORKER ===\n");
   exit(1);
-}
-
-$worker->debug($self->{'debug'}) if($self->{'debug'});
-
-if(defined($self->{'worker_output_dir'})) {
-    $worker->worker_output_dir($self->{'worker_output_dir'});
-}
-
-unless(defined($self->{'hive_output_dir'})) {
-    my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
-    if( @$arrRef ) {
-        $self->{'hive_output_dir'} = destringify($arrRef->[0]);
-    } 
-}
-$worker->hive_output_dir($self->{'hive_output_dir'});
-
-if($self->{'batch_size'}) {
-  $worker->set_worker_batch_size($self->{'batch_size'});
-}
-if($self->{'job_limit'}) {
-  $worker->job_limit($self->{'job_limit'});
-  $worker->life_span(0);
-}
-if($self->{'lifespan'}) {
-  $worker->life_span($self->{'lifespan'} * 60);
-}
-if($self->{'no_cleanup'}) { 
-  $worker->perform_cleanup(0); 
-}
-if(defined $self->{'retry_throwing_jobs'}) {
-    $worker->retry_throwing_jobs($self->{'retry_throwing_jobs'});
 }
 
 $worker->print_worker();
@@ -302,11 +274,9 @@ __DATA__
     -logic_name <string>        : logic_name of analysis to make this worker
     -batch_size <num>           : #jobs to claim at a time
     -job_limit <num>            : #jobs to run before worker can die naturally
-    -lifespan <num>             : number of minutes this worker is allowed to run
+    -life_span <num>            : number of minutes this worker is allowed to run
     -hive_output_dir <path>     : directory where stdout/stderr of the whole hive of workers is redirected
     -worker_output_dir <path>   : directory where stdout/stderr of this particular worker is redirected
-    -bk <string>                : beekeeper identifier (deprecated and ignored)
-    -pid <string>               : externally set process_id descriptor (e.g. lsf job_id, array_id)
     -input_id <string>          : test input_id on specified analysis (analysis_id or logic_name)
     -job_id <id>                : run specific job defined by analysis_job_id
     -analysis_stats             : show status of each analysis in hive
