@@ -34,7 +34,8 @@ $self->{'analysis_id'} = undef;     # less  specific specialization
 $self->{'logic_name'}  = undef;     # (---------,,---------------)
 $self->{'rc_id'}       = undef;     # least specific specialization
 
-$self->{'hive_output_dir'}  = undef;
+$self->{'hive_output_dir'}   = undef;
+$self->{'worker_output_dir'} = undef; # will take precedence over hive_output_dir if set
 $self->{'beekeeper'}   = undef;
 $self->{'process_id'}  = undef;
 $self->{'debug'}       = undef;
@@ -68,7 +69,8 @@ GetOptions(
            'batch_size=i'   => \$self->{'batch_size'},
            'job_limit|limit=i' => \$self->{'job_limit'},
            'lifespan=i'     => \$self->{'lifespan'},
-           'hive_output_dir|outdir=s'   => \$self->{'hive_output_dir'}, # keep compatibility with the old name
+           'hive_output_dir|outdir=s'   => \$self->{'hive_output_dir'},   # keep compatibility with the old name
+           'worker_output_dir=s'        => \$self->{'worker_output_dir'}, # will take precedence over hive_output_dir if set
            'bk=s'           => \$self->{'beekeeper'}, # deprecated and ignored
            'pid=s'          => \$self->{'process_id'},
            'input_id=s'     => \$self->{'input_id'},
@@ -171,6 +173,10 @@ unless($worker) {
 }
 
 $worker->debug($self->{'debug'}) if($self->{'debug'});
+
+if(defined($self->{'worker_output_dir'})) {
+    $worker->worker_output_dir($self->{'worker_output_dir'});
+}
 
 unless(defined($self->{'hive_output_dir'})) {
     my $arrRef = $DBA->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
@@ -297,7 +303,8 @@ __DATA__
     -batch_size <num>           : #jobs to claim at a time
     -job_limit <num>            : #jobs to run before worker can die naturally
     -lifespan <num>             : number of minutes this worker is allowed to run
-    -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
+    -hive_output_dir <path>     : directory where stdout/stderr of the whole hive of workers is redirected
+    -worker_output_dir <path>   : directory where stdout/stderr of this particular worker is redirected
     -bk <string>                : beekeeper identifier (deprecated and ignored)
     -pid <string>               : externally set process_id descriptor (e.g. lsf job_id, array_id)
     -input_id <string>          : test input_id on specified analysis (analysis_id or logic_name)
