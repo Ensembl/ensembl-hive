@@ -27,17 +27,33 @@
 package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
-
-#use Bio::EnsEMBL::Analysis;
-#use Bio::EnsEMBL::DBSQL::DBAdaptor;
-#use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 
 use base ('Bio::EnsEMBL::Hive::Params');
 
 sub new {
-  my ($class,@args) = @_;
-  my $self = bless {}, $class;
-  return $self;
+    my $class = shift @_;
+
+    my $self = bless {}, $class;
+
+    my($dbID, $analysis_id, $input_id, $job_claim, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id, $adaptor) =
+        rearrange([qw(dbID analysis_id input_id job_claim worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id adaptor) ], @_);
+
+    $self->dbID($dbID)                          if(defined($dbID));
+    $self->analysis_id($analysis_id)            if(defined($analysis_id));
+    $self->input_id($input_id)                  if(defined($input_id));
+    $self->job_claim($job_claim)                if(defined($job_claim));
+    $self->worker_id($worker_id)                if(defined($worker_id));
+    $self->status($status)                      if(defined($status));
+    $self->retry_count($retry_count)            if(defined($retry_count));
+    $self->completed($completed)                if(defined($completed));
+    $self->runtime_msec($runtime_msec)          if(defined($runtime_msec));
+    $self->query_count($query_count)            if(defined($query_count));
+    $self->semaphore_count($semaphore_count)    if(defined($semaphore_count));
+    $self->semaphored_job_id($semaphored_job_id) if(defined($semaphored_job_id));
+    $self->adaptor($adaptor)                    if(defined($adaptor));
+
+    return $self;
 }
 
 sub adaptor {
@@ -140,7 +156,6 @@ sub stderr_file {
   $self->{'_stderr_file'} = shift if(@_);
   return $self->{'_stderr_file'};
 }
-
 
 =head2 autoflow
 

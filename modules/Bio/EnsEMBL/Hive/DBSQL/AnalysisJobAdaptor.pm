@@ -320,26 +320,26 @@ sub _objs_from_sth {
   my @jobs = ();
     
   while ($sth->fetch()) {
-    my $job = new Bio::EnsEMBL::Hive::AnalysisJob;
 
-    $job->dbID($column{'analysis_job_id'});
-    $job->analysis_id($column{'analysis_id'});
-    $job->input_id($column{'input_id'});
-    $job->job_claim($column{'job_claim'});
-    $job->worker_id($column{'worker_id'});
-    $job->status($column{'status'});
-    $job->retry_count($column{'retry_count'});
-    $job->completed($column{'completed'});
-    $job->runtime_msec($column{'runtime_msec'});
-    $job->query_count($column{'query_count'});
-    $job->semaphore_count($column{'semaphore_count'});
-    $job->semaphored_job_id($column{'semaphored_job_id'});
-    $job->adaptor($self);
-    
-    if($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/) {
-      #print("input_id was too big so stored in analysis_data table as dbID $1 -- fetching now\n");
-      $job->input_id($self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1));
-    }
+    my $input_id = ($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            : $column{'input_id'};
+
+    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+        -DBID               => $column{'analysis_job_id'},
+        -ANALYSIS_ID        => $column{'analysis_id'},
+        -INPUT_ID           => $input_id,
+        -JOB_CLAIM          => $column{'job_claim'},
+        -WORKER_ID          => $column{'worker_id'},
+        -STATUS             => $column{'status'},
+        -RETRY_COUNT        => $column{'retry_count'},
+        -COMPLETED          => $column{'completed'},
+        -RUNTIME_MSEC       => $column{'runtime_msec'},
+        -QUERY_COUNT        => $column{'query_count'},
+        -SEMAPHORE_COUNT    => $column{'query_count'},
+        -SEMAPHORED_JOB_ID  => $column{'semaphored_job_id'},
+        -ADAPTOR            => $self,
+    );
 
     push @jobs, $job;    
   }

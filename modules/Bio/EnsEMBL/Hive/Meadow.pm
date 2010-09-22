@@ -4,12 +4,38 @@
 
 package Bio::EnsEMBL::Hive::Meadow;
 
+use Sys::Hostname;
+use Bio::EnsEMBL::Hive::Meadow::LSF;
+use Bio::EnsEMBL::Hive::Meadow::LOCAL;
+
 use strict;
 
 sub new {
     my $class = shift @_;
 
+    unless($class=~/::/) {
+        $class = 'Bio::EnsEMBL::Hive::Meadow'.$class;
+    }
+
     return bless { @_ }, $class;
+}
+
+sub guess_current_type_pid_exechost {
+    my $self = shift @_;
+
+    my ($type, $pid);
+    eval {
+        $pid  = Bio::EnsEMBL::Hive::Meadow::LSF->get_current_worker_process_id();
+        $type = 'LSF';
+    };
+    if($@) {
+        $pid  = Bio::EnsEMBL::Hive::Meadow::LOCAL->get_current_worker_process_id();
+        $type = 'LOCAL';
+    }
+
+    my $exechost = hostname();
+
+    return ($type, $pid, $exechost);
 }
 
 sub type { # should return 'LOCAL' or 'LSF'

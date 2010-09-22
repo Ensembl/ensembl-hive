@@ -61,11 +61,11 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use POSIX;
-use Sys::Hostname;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
+use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
@@ -97,16 +97,64 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my ($rc_id, $analysis_id, $beekeeper ,$process_id, $job, $no_write, $debug, $worker_output_dir, $hive_output_dir, $batch_size, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
-     rearrange([qw(rc_id analysis_id beekeeper process_id job no_write debug worker_output_dir hive_output_dir batch_size job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
+  my (  $meadow_type, $process_id, $exec_host,
+        $rc_id, $logic_name, $analysis_id, $input_id, $job_id,
+        $no_write, $debug, $worker_output_dir, $hive_output_dir, $batch_size, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
 
-  my $analStatsDBA = $self->db->get_AnalysisStatsAdaptor or return undef;
+ rearrange([qw(meadow_type process_id exec_host
+        rc_id logic_name analysis_id input_id job_id
+        no_write debug worker_output_dir hive_output_dir batch_size job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
 
-  $analysis_id = $job->analysis_id if(defined($job));
+    if($logic_name) {
+        if($analysis_id) {
+            die "You should either define -analysis_id or -logic_name, but not both\n";
+        }
+        if(my $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name)) {
+            $analysis_id = $analysis->dbID;
+        } else {
+            die "logic_name '$logic_name' could not be fetched from the database\n";
+        }
+    }
+
+    my $job;
+
+    if($input_id) {
+        if($job_id) {
+            die "You should either define -input_id or -job_id, but not both\n";
+
+        } elsif($analysis_id) {
+            $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+                -INPUT_ID       => $input_id,
+                -ANALYSIS_ID    => $analysis_id,
+                -DBID           => -1,
+            );
+            print "creating a job outside the database\n";
+            $job->print_job;
+            $debug=1 unless(defined($debug));
+            $hive_output_dir='' unless(defined($hive_output_dir)); # make it defined but empty/false
+        } else {
+            die "For creating a job outside the database either -analysis_id or -logic_name must also be defined\n";
+        }
+    }
+
+    if($job_id) {
+        if($analysis_id) {
+            die "When you specify -job_id, please omit both -logic_name and -analysis_id to avoid confusion\n";
+        } else {
+            print "fetching job for job_id '$job_id'\n";
+            if($job = $self->reset_and_fetch_job_by_dbID($job_id)) {
+                $analysis_id = $job->analysis_id;
+            } else {
+                die "job_id '$job_id' could not be fetched from the database\n";
+            }
+        }
+    }
+
   
+  my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor or return undef;
   my $analysisStats;
   if($analysis_id) {
-    $analysisStats = $analStatsDBA->fetch_by_analysis_id($analysis_id);
+    $analysisStats = $analysis_stats_adaptor->fetch_by_analysis_id($analysis_id);
     $self->safe_synchronize_AnalysisStats($analysisStats);
     #return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
   } else {
@@ -118,8 +166,8 @@ sub create_new_worker {
     #go into autonomous mode
     return undef if($self->get_hive_current_load() >= 1.1);
     
-    $analStatsDBA->decrease_needed_workers($analysisStats->analysis_id);
-    $analStatsDBA->increase_running_workers($analysisStats->analysis_id);
+    $analysis_stats_adaptor->decrease_needed_workers($analysisStats->analysis_id);
+    $analysis_stats_adaptor->increase_running_workers($analysisStats->analysis_id);
     $analysisStats->print_stats;
     
     if($analysisStats->status eq 'BLOCKED') {
@@ -132,16 +180,12 @@ sub create_new_worker {
     }
   }
   
-  my $host = hostname;
-  $process_id ||= $$;
-  $beekeeper = '' unless($beekeeper);
-
   my $sql = q{INSERT INTO hive 
-              (born, last_check_in, process_id, analysis_id, beekeeper, host)
+              (born, last_check_in, beekeeper, process_id, host, analysis_id)
               VALUES (NOW(), NOW(), ?,?,?,?)};
 
   my $sth = $self->prepare($sql);
-  $sth->execute($process_id, $analysisStats->analysis_id, $beekeeper, $host);
+  $sth->execute($meadow_type, $process_id, $exec_host, $analysisStats->analysis_id);
   my $worker_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
