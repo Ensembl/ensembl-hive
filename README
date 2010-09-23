@@ -14,6 +14,98 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+21-22 Sept, 2010 : Leo Gordon
+
+* a new switch -worker_output_dir allows a particular worker to send its stdout/stderr into the given directory
+    bypassing the -hive_output_dir if specified.
+
+* streamlining runWorker.pl-Queen.pm communication so that runWorker.pl is now a very lightweight script
+    (only manages the parameters and output, but no longer runs actual unique functionality)
+
+20 Sept, 2010 : Leo Gordon
+
+* big change: added gc_dataflow (jobs dying because of MEMLIMIT or RUNLIMIT can now be automatically sent
+    to another analysis with more memory or longer runtime limit. Schema change + multiple code changes.
+
+16 Sept, 2010 : Leo Gordon
+
+* code cleanup and unification of parameter names (older names still supported but not encouraged)
+
+13-14 Sept, 2010 : Leo Gordon
+
+* big change: creating a separate Params class, making it a base class for AnalysisJob,
+  and removing parameter parsing/reading/setting functionality from the Process. No need in ProcessWithParams now.
+  This is a big preparation for post-mortem dataflow for resource-overusing jobs.
+
+11 Sept, 2010 : Leo Gordon
+
+* schema change: we are producing release 60!
+
+* bugfix: -alldead did not set 'cause_of_death', now it always sets 'FATALITY' (should we invoke proper GarbageCollection?)
+
+7-9 Sept, 2010 : Leo Gordon
+
+* autoflow() should be a property of a job, not the process. Moved and optimized.
+
+* avoiding filename/pid collisions in Worker::worker_temp_directory, improved reliability.
+
+* removed some Extensions by creating proper hive adaptors (AnalysisAdaptor and MetaContainer)
+
+* changed the way a RunnableDB declares its module defaults. NB!
+
+2-3 Sept, 2010 : Leo Gordon
+
+* optimizing the reliability and the time spent on finding out why LSF killed the jobs
+
+* let MEMLIMIT jobs go into 'FAILED' state from the first attempt (don't waste time retrying)
+
+31 Aug - 1 Sept, 2010 : Leo Gordon
+
+* Added support for finding out WHY a worker is killed by the LSF (MEMLIMIT, RUNLIMIT, KILLED_BY_USER),
+  the schema is extended to allow this information to be recorded in the 'hive' table.
+
+24 Aug, 2010 : Leo Gordon
+
+* experimental: Queen, Meadow, Meadow::LOCAL and Meadow::LSF changed to make it possible to run several beekeepers
+  owned by different users over the same database.  They _should_not_ collide, but it has not been very thoroughly tested.
+
+23 Aug, 2010 : Leo Gordon
+
+* Worker now reports the reason why it decides to die + good working example (FailureTest framework)
+
+20 Aug, 2010 : Leo Gordon
+
+* Added a generic Stopwatch.pm module to allow for fine timing to be done in a cleaner way
+
+* Added the ability for Runnables to throw messages (which will be recorded in 'job_error' table)
+  not to be necessarily associated with the job's failure. This change involved schema change as well.
+
+* 'job_error' table is renamed to 'job_message' with the extra field (is_error=0|1) added
+
+13 Aug, 2010 : Javier Herrero
+
+* scripts/cmd_hive.pl: Better support for adding new jobs to an existing analysis. Also, supports adding one single job
+
+13 Aug, 2010 : Leo Gordon
+
+* AnalysisJob and Worker were changed to allow jobs to decide whether it makes any sense to restart them or not.
+
+* a command line switch -retry_throwing_jobs and a corresponding getter/setter method was added to
+    beekeeper.pl, runWorker.pl and Worker.pm to let the user decide whether to restart failing jobs or not.
+
+11-12 Aug, 2010 : Leo Gordon
+
+* A new table 'job_error' was added to keep track of jobs' termination messages (thrown via 'throw' or 'die'),
+  this involved schema change and lots of changes in the modules.
+
+* Another big new change is that the Workers no longer die when a Job dies. At least, not by default.
+  If a Worker managed to catch a dying Job, this fact is registered in the database, but the Worker keeps on taking other jobs.
+
+9-10 Aug, 2010 : Leo Gordon
+
+* RunnableDB::Test renamed into RunnableDB::FailureTest and extended, PipeConfig::FailureTest_conf added to drive this module.
+(this was testing ground preparation for job_error introduction)
+
 16 July, 2010 : Leo Gordon
 
 * added -hive_output_dir to beekeeper.pl so that it could be set/overridden from the command line
@@ -23,6 +115,10 @@ Summary:
 14 July, 2010 : Leo Gordon
 
 * fixed Meadow::LOCAL so that MacOS's ps would also be supported. eHive now runs locally on Macs :)
+
+13 July, 2010 : Leo Gordon
+
+* added ability to compute complex expressions while doing parameter substitution
 
 12 July, 2010 : Leo Gordon
 
