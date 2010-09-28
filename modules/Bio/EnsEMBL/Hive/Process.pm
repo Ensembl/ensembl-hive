@@ -86,8 +86,10 @@ package Bio::EnsEMBL::Hive::Process;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);   # provide these methods for deriving classes
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Hive::AnalysisJob;
+
+use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
 
 sub new {
   my ($class,@args) = @_;
@@ -431,7 +433,7 @@ sub runnable {
     if ($arg->isa("Bio::EnsEMBL::Analysis::Runnable")) {
       push(@{$self->{'runnable'}},$arg);
     } else {
-      &throw("[$arg] is not a Bio::EnsEMBL::Analysis::Runnable");
+      throw("[$arg] is not a Bio::EnsEMBL::Analysis::Runnable");
     }
   }
   return $self->{'runnable'};  
