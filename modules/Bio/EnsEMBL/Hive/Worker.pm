@@ -489,7 +489,6 @@ sub batch_size {
 
 sub run {
   my $self = shift;
-  my $specific_job = $self->_specific_job;
 
   if( my $worker_output_dir = $self->worker_output_dir ) {
     open OLDOUT, ">&STDOUT";
@@ -505,7 +504,7 @@ sub run {
 
   $self->db->dbc->disconnect_when_inactive(0);
 
-  my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+  my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
   do { # Worker's lifespan loop (ends only when the worker dies)
     my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
@@ -514,83 +513,28 @@ sub run {
     $self->{'writing_stopwatch'}    = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
     my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
 
-    BATCHES: {  # note: in order to label a do{} loop you have to enclose it in an extra block
-    do {    # Worker's "batches loop" exists to prevent logging the status too frequently.
-                     # If a batch took less than $MIN_BATCH_TIME to run, the Worker keeps taking&running more batches.
+    if( my $specific_job = $self->_specific_job() ) {
+        $jobs_done_by_batches_loop += $self->run_one_batch( [ $self->queen->worker_reclaim_job($self, $specific_job) ] );
+        $self->cause_of_death('JOB_LIMIT'); 
+    } else {    # a proper "BATCHES" loop
 
-      my $jobs = $specific_job
-        ? [ $self->queen->worker_reclaim_job($self,$specific_job) ]
-        : $self->db->get_AnalysisJobAdaptor->grab_jobs_for_worker( $self );
+        while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $MIN_BATCH_TIME) {
 
-      $self->queen->worker_check_in($self); #will sync analysis_stats if needed
+            if(my $incompleted_count = @{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->worker_id ) }) {
+                die "This worker is too greedy: not having completed $incompleted_count jobs it is trying to grab yet more jobs! Has it gone multithreaded?\n";
+            } else {
+                $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->grab_jobs_for_worker( $self ) );
 
-      $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
-
-      if($self->debug) {
-        $self->analysis->stats->print_stats;
-        print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
-      }
-
-      foreach my $job (@{$jobs}) {
-        $job->print_job if($self->debug); 
-
-        $self->start_job_output_redirection($job);
-        eval {  # capture any throw/die
-            $self->run_module_with_job($job);
-        };
-        my $msg_thrown = $@;
-        $self->stop_job_output_redirection($job);
-
-        if($msg_thrown) {   # record the message - whether it was a success or failure:
-            my $job_id                   = $job->dbID();
-            my $job_status_at_the_moment = $job->status();
-            warn "Job with id=$job_id died in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
-            $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
-        }
-
-        if($job->incomplete) {
-                # If the job specifically said what to do next, respect that last wish.
-                # Otherwise follow the default behaviour set by the beekeeper in $worker:
-                #
-            my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
-
-            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry );
-
-            if($self->status eq 'COMPILATION'       # if it failed to compile, there is no point in continuing as the code WILL be broken
-            or $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
-            or $job->lethal_for_worker ) {          # trust the job's expert knowledge
-                my $reason = ($self->status eq 'COMPILATION') ? 'compilation error'
-                           : $self->prev_job_error           ? 'two failed jobs in a row'
-                           :                                   'suggested by job itself';
-                warn "Job's error has contaminated the Worker ($reason), so the Worker will now die\n";
-                $self->cause_of_death('CONTAMINATED');
-                last BATCHES;
+                if( my $jobs_completed = $self->job_limit_reached()) {
+                    print "job_limit reached ($jobs_completed jobs completed)\n";
+                    $self->cause_of_death('JOB_LIMIT'); 
+                } elsif ( my $alive_for_secs = $self->life_span_limit_reached()) {
+                    print "life_span limit reached (alive for $alive_for_secs secs)\n";
+                    $self->cause_of_death('LIFESPAN'); 
+                }
             }
-        } else {    # job successfully completed:
-
-            if(my $semaphored_job_id = $job->semaphored_job_id) {
-                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
-            }
-            $self->more_work_done;
-            $jobs_done_by_batches_loop++;
-            $job->update_status('DONE');
         }
-
-        $self->prev_job_error( $job->incomplete );
-        $self->enter_status('READY');
-      }
-
-      if( $specific_job ) {
-            $self->cause_of_death('JOB_LIMIT'); 
-      } elsif( my $jobs_completed = $self->job_limit_reached()) {
-            print "job_limit reached (completed $jobs_completed jobs)\n";
-            $self->cause_of_death('JOB_LIMIT'); 
-      } elsif ( my $alive_for_secs = $self->life_span_limit_reached()) {
-            print "life_span limit reached (alive for $alive_for_secs secs)\n";
-            $self->cause_of_death('LIFESPAN'); 
-      }
-    } while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $MIN_BATCH_TIME);
-    } # this is the extra block enclosing a labelled do{} loop
+    }
 
         # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
         # so they are not allowed to happen too frequently (not before $MIN_BATCH_TIME of work has been done)
@@ -633,6 +577,74 @@ sub run {
     open STDOUT, ">&", \*OLDOUT;
     open STDERR, ">&", \*OLDERR;
   }
+}
+
+sub run_one_batch {
+    my ($self, $jobs) = @_;
+
+    my $jobs_done_here = 0;
+
+    my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+
+    $self->queen->worker_check_in($self); #will sync analysis_stats if needed
+
+    $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
+
+    if($self->debug) {
+        $self->analysis->stats->print_stats;
+        print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
+    }
+
+    foreach my $job (@{$jobs}) {
+        $job->print_job if($self->debug); 
+
+        $self->start_job_output_redirection($job);
+        eval {  # capture any throw/die
+            $self->run_module_with_job($job);
+        };
+        my $msg_thrown = $@;
+        $self->stop_job_output_redirection($job);
+
+        if($msg_thrown) {   # record the message - whether it was a success or failure:
+            my $job_id                   = $job->dbID();
+            my $job_status_at_the_moment = $job->status();
+            warn "Job with id=$job_id died in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
+            $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
+        }
+
+        if($job->incomplete) {
+                # If the job specifically said what to do next, respect that last wish.
+                # Otherwise follow the default behaviour set by the beekeeper in $worker:
+                #
+            my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
+
+            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry );
+
+            if($self->status eq 'COMPILATION'       # if it failed to compile, there is no point in continuing as the code WILL be broken
+            or $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
+            or $job->lethal_for_worker ) {          # trust the job's expert knowledge
+                my $reason = ($self->status eq 'COMPILATION') ? 'compilation error'
+                           : $self->prev_job_error           ? 'two failed jobs in a row'
+                           :                                   'suggested by job itself';
+                warn "Job's error has contaminated the Worker ($reason), so the Worker will now die\n";
+                $self->cause_of_death('CONTAMINATED');
+                return $jobs_done_here;
+            }
+        } else {    # job successfully completed:
+
+            if(my $semaphored_job_id = $job->semaphored_job_id) {
+                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+            }
+            $self->more_work_done;
+            $jobs_done_here++;
+            $job->update_status('DONE');
+        }
+
+        $self->prev_job_error( $job->incomplete );
+        $self->enter_status('READY');
+    }
+
+    return $jobs_done_here;
 }
 
 
