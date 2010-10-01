@@ -720,8 +720,6 @@ sub get_num_needed_workers {
   my $total_workers = 0;
   my %rc2workers = ();
 
-# FIXME: I have a feeling sometimes this method returns an incorrect value. Please doublecheck.
-
   foreach my $analysis_stats (@all_analyses) {
     next if (defined $filter_analysis && $filter_analysis->dbID != $analysis_stats->analysis_id);
 
@@ -733,6 +731,7 @@ sub get_num_needed_workers {
     next if($analysis_stats->status eq 'BLOCKED');
     next if($analysis_stats->num_required_workers == 0);
 
+        # FIXME: the following call sometimes returns a stale number greater than the number of workers actually needed for an analysis; resync fixes it
     my $workers_this_analysis = $analysis_stats->num_required_workers;
 
     if($analysis_stats->hive_capacity > 0) {   # if there is a limit, use it for cut-off
