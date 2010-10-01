@@ -137,7 +137,6 @@ unless($worker) {
     }
 }
 
-$worker->print_worker();
 $worker->run();
 
 if($show_analysis_stats) {

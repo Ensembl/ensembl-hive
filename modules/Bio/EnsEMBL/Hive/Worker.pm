@@ -490,6 +490,7 @@ sub batch_size {
 sub run {
   my $self = shift;
 
+  $self->print_worker();
   if( my $worker_output_dir = $self->worker_output_dir ) {
     open OLDOUT, ">&STDOUT";
     open OLDERR, ">&STDERR";
@@ -499,8 +500,8 @@ sub run {
     close STDERR;
     open STDOUT, ">&WORKER_STDOUT";
     open STDERR, ">&WORKER_STDERR";
+    $self->print_worker();
   }
-  $self->print_worker();
 
   $self->db->dbc->disconnect_when_inactive(0);
 
