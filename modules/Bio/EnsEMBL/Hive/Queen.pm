@@ -537,6 +537,8 @@ sub synchronize_AnalysisStats {
 
   my $hive_capacity = $analysisStats->hive_capacity;
 
+  my $done_here      = 0;
+  my $done_elsewhere = 0;
   while (my ($status, $count, $semaphore_count)=$sth->fetchrow_array()) {
 # print STDERR "$status - $count\n";
 
@@ -559,11 +561,17 @@ sub synchronize_AnalysisStats {
         $numWorkers=$analysisStats->hive_capacity;
       }
       $analysisStats->num_required_workers($numWorkers);
+    } elsif($status eq 'DONE' and $semaphore_count<=0) {
+        $done_here = $count;
+    } elsif($status eq 'PASSED_ON' and $semaphore_count<=0) {
+        $done_elsewhere = $count;
+    } elsif ($status eq 'FAILED') {
+        $analysisStats->failed_job_count($count);
     }
-    if ($status eq 'DONE') { $analysisStats->done_job_count($count); }
-    if ($status eq 'FAILED') { $analysisStats->failed_job_count($count); }
   }
   $sth->finish;
+
+  $analysisStats->done_job_count($done_here + $done_elsewhere);
 
   $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
 
