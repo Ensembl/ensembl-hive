@@ -609,7 +609,8 @@ sub run_one_batch {
         if($msg_thrown) {   # record the message - whether it was a success or failure:
             my $job_id                   = $job->dbID();
             my $job_status_at_the_moment = $job->status();
-            warn "Job with id=$job_id died in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
+            my $action = $job->incomplete ? 'died' : 'exited';
+            warn "Job with id=$job_id $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
             $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
         }
 
