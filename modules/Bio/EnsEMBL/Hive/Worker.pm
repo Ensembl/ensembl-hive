@@ -521,8 +521,11 @@ sub run {
 
         while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $MIN_BATCH_TIME) {
 
-            if(my $incompleted_count = @{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->worker_id ) }) {
-                die "This worker is too greedy: not having completed $incompleted_count jobs it is trying to grab yet more jobs! Has it gone multithreaded?\n";
+            if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->worker_id ) }) ) {
+                my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
+                warn "$msg";
+                $self->cause_of_death('CONTAMINATED'); 
+                $job_adaptor->release_undone_jobs_from_worker($self, $msg);
             } else {
                 $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->grab_jobs_for_worker( $self ) );
 

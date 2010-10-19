@@ -524,6 +524,7 @@ sub grab_jobs_for_worker {
 =head2 release_undone_jobs_from_worker
 
   Arg [1]    : Bio::EnsEMBL::Hive::Worker object
+  Arg [2]    : optional message to be recorded in 'job_message' table
   Example    :
   Description: If a worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
@@ -538,7 +539,7 @@ sub grab_jobs_for_worker {
 =cut
 
 sub release_undone_jobs_from_worker {
-    my ($self, $worker) = @_;
+    my ($self, $worker, $msg) = @_;
 
     my $max_retry_count = $worker->analysis->stats->max_retry_count();
     my $worker_id       = $worker->worker_id();
@@ -560,7 +561,8 @@ sub release_undone_jobs_from_worker {
     $sth->execute();
 
     my $cod = $worker->cause_of_death();
-    my $msg = "GarbageCollector: The worker died because of $cod";
+    $msg ||= "GarbageCollector: The worker died because of $cod";
+
     while(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
         my $resource_overusage = ($cod eq 'MEMLIMIT') || ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
 
