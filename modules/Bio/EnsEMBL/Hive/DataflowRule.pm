@@ -251,7 +251,8 @@ sub to_analysis {
   # lazy load the analysis object if I can
   if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
 
-    $self->{'_to_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($self->to_analysis_url);
+    $self->{'_to_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($self->to_analysis_url)
+        or die "Cannot fetch analysis from logic_name or url '".$self->to_analysis_url."' for dataflow rule with id='".$self->dbID."'\n";
 
   }
   return $self->{'_to_analysis'};
