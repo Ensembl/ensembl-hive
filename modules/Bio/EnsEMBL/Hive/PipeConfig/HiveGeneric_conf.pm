@@ -410,8 +410,11 @@ sub run {
                 # create control rules:
             foreach my $condition_url (@$wait_for) {
                 if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($condition_url)) {
-                    $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
-                    warn "Created Control rule: $condition_url -| $logic_name\n";
+
+                    my $new_cfr    = $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
+                    my $cfr_action = $new_cfr ? 'Created a new' : 'Found an existing';
+
+                    warn "$cfr_action Control rule: $condition_url -| $logic_name\n";
                 } else {
                     die "Could not fetch analysis '$condition_url' to create a control rule";
                 }
@@ -431,9 +434,10 @@ sub run {
 
                     my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_code, $input_id_template);
+                    my $new_dfr    = $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_code, $input_id_template);
+                    my $dfr_action = $new_dfr ? 'Created a new' : 'Found an existing';
 
-                    warn "Created DataFlow rule: [$branch_code] $logic_name -> $heir_url"
+                    warn "$dfr_action DataFlow rule: [$branch_code] $logic_name -> $heir_url"
                         .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }

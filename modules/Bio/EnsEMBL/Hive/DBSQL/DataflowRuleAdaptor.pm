@@ -70,6 +70,34 @@ sub fetch_from_analysis_id_branch_code {
     return $self->_generic_fetch($constraint);
 }
 
+sub check_rule_exists_in_db {
+    my ( $self, $rule ) = @_;
+
+    my $from_analysis_id  = $rule->from_analysis_id;
+    my $to_analysis_url   = $rule->to_analysis_url;
+    my $branch_code       = $rule->branch_code;
+    my $input_id_template = ref($rule->input_id_template) ? stringify($rule->input_id_template) : $rule->input_id_template;
+
+    my $sql = qq{
+        SELECT dataflow_rule_id
+          FROM dataflow_rule
+         WHERE from_analysis_id='$from_analysis_id'
+           AND to_analysis_url='$to_analysis_url'
+           AND branch_code='$branch_code'
+           AND input_id_template
+    } . ( defined($input_id_template) ? "='$input_id_template'" : "IS NULL" );
+
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+
+    if(my ($dataflow_rule_id) = $sth->fetchrow()) {
+        $sth->finish;
+        return $dataflow_rule_id;
+    } else {
+        $sth->finish;
+        return 0;
+    }
+}
 
 =head2 store
 
@@ -82,34 +110,37 @@ sub fetch_from_analysis_id_branch_code {
 =cut
 
 sub store {
-  my ( $self, $rule ) = @_;
+    my ( $self, $rule ) = @_;
 
-  my $dataflow_rule_id;
-  my $newly_inserted_rule = 0;
-  
-  my $sth = $self->prepare( q{INSERT IGNORE INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code, input_id_template) VALUES (?,?,?,?) } );
+    my $dataflow_rule_id;
 
-  my $template = ref($rule->input_id_template) ? stringify($rule->input_id_template) : $rule->input_id_template;
+    if($dataflow_rule_id = $self->check_rule_exists_in_db($rule)) {
 
-  my $rtnCode = $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code, $template);
-  if($rtnCode and $rtnCode != 0E0) {
-    $dataflow_rule_id = $sth->{'mysql_insertid'};
-    $sth->finish();
-    $rule->dbID($dataflow_rule_id);
-    $newly_inserted_rule = 1;
-  } else {
-    $sth->finish();
-    $sth = $self->prepare(q{SELECT dataflow_rule_id FROM dataflow_rule WHERE
-         from_analysis_id = ? AND to_analysis_url = ? AND branch_code = ?} );
-    $sth->execute($rule->from_analysis_id, $rule->to_analysis_url, $rule->branch_code);
-    $sth->bind_columns(\$dataflow_rule_id);
-    if($sth->fetch()) {
-      $rule->dbID($dataflow_rule_id);
+        $rule->dbID($dataflow_rule_id);
+        $rule->adaptor( $self );
+        return 0;
+
+    } else {
+        
+        my $from_analysis_id  = $rule->from_analysis_id;
+        my $to_analysis_url   = $rule->to_analysis_url;
+        my $branch_code       = $rule->branch_code;
+        my $input_id_template = ref($rule->input_id_template) ? stringify($rule->input_id_template) : $rule->input_id_template;
+
+        my $sth = $self->prepare("INSERT INTO dataflow_rule (from_analysis_id, to_analysis_url, branch_code, input_id_template) VALUES (?,?,?,?)");
+
+        my $rtnCode = $sth->execute($from_analysis_id, $to_analysis_url, $branch_code, $input_id_template);
+
+        if($rtnCode and ($rtnCode != 0E0)) {   # we managed to insert a new row (0E0 would indicate success when no rows were inserted)
+            $dataflow_rule_id = $sth->{'mysql_insertid'};
+            $sth->finish();
+            $rule->dbID($dataflow_rule_id);
+            $rule->adaptor( $self );
+            return 1;
+        } else {
+            die "Could not create a dataflow_rule('$from_analysis_id', '$to_analysis_url', '$branch_code', '$input_id_template')";
+        }
     }
-    $sth->finish;
-  }
-  $rule->adaptor( $self );
-  return $newly_inserted_rule;
 }
 
 

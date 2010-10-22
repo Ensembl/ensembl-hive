@@ -100,16 +100,24 @@ sub fetch_all {
 =cut
 
 sub store {
-  my ( $self, $rule ) = @_;
+    my ( $self, $rule ) = @_;
 
-  #print("\nAnalysisCtrlRuleAdaptor->store()\n");
- 
-  my $sth = $self->prepare(q{INSERT ignore INTO analysis_ctrl_rule 
-        (ctrled_analysis_id, condition_analysis_url) VALUES(?,?) });
-  if($sth->execute($rule->ctrled_analysis_id, $rule->condition_analysis_url)) {
-    $sth->finish();
-  }
-  $rule->adaptor( $self );
+    my $newly_inserted_rule = 0;
+
+    my $condition_analysis_url = $rule->condition_analysis_url;
+    my $ctrled_analysis_id     = $rule->ctrled_analysis_id;
+
+    my $sth = $self->prepare("INSERT IGNORE INTO analysis_ctrl_rule (condition_analysis_url, ctrled_analysis_id) VALUES(?,?)");
+
+    my $rtnCode = $sth->execute($condition_analysis_url, $ctrled_analysis_id);
+    if($rtnCode and ($rtnCode != 0E0)) {    # 0E0 is returned when the command succeeds, but 0 rows are updated (so in case of 'INSERT IGNORE' likely a key clash)
+        $newly_inserted_rule = 1;
+        $sth->finish();
+    } elsif(!$rtnCode) {
+        die "Could not create analysis_ctrl_rule('$condition_analysis_url', '$ctrled_analysis_id')";
+    }
+    $rule->adaptor( $self );
+    return $newly_inserted_rule;
 }
 
 
@@ -147,16 +155,16 @@ sub remove_by_condition_analysis_url {
 
 
 sub create_rule {
-  my ($self, $conditionAnalysis, $ctrledAnalysis) = @_;
+    my ($self, $conditionAnalysis, $ctrledAnalysis) = @_;
 
-  return unless($conditionAnalysis and $ctrledAnalysis);
-  
-  my $rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new();
-  #must set ctrled_analysis first in order for internal logic to abreviate 'to_url'
-  $rule->ctrled_analysis($ctrledAnalysis);
-  $rule->condition_analysis($conditionAnalysis);
-  
-  $self->store($rule);
+    return unless($conditionAnalysis and $ctrledAnalysis);
+
+    my $rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new();
+    # NB: ctrled_analysis must be set first in order for internal logic to abbreviate 'to_url'
+    $rule->ctrled_analysis($ctrledAnalysis);
+    $rule->condition_analysis($conditionAnalysis);
+
+    return $self->store($rule);
 }
 
 ############################
@@ -272,6 +280,5 @@ sub _generic_fetch {
 
   return $self->_objs_from_sth($sth);
 }
-
 
 1;
