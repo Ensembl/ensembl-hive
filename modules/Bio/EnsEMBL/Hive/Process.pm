@@ -301,9 +301,10 @@ sub input_job {
 # ##################### subroutines that link through to Job's methods #########################
 
 sub input_id {
-  my $self = shift;
-  return '' unless($self->input_job);
-  return $self->input_job->input_id;
+    my $self = shift;
+
+    return '' unless($self->input_job);
+    return $self->input_job->input_id(@_);
 }
 
 sub param {
