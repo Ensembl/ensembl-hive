@@ -48,11 +48,16 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
                   Here we have nothing to do.
+                  
+                  NB: This method is intentionally missing from JobFactory.pm .
+
+                  If JobFactory is subclassed (say, by a Compara RunnableDB) the child class's should use fetch_input()
+                  to set $self->param('inputlist') to whatever list of ids specific to that particular type of data (slices, members, etc).
+                  The rest functionality will be taken care for by the parent class code.
 
 =cut
 
-sub fetch_input {
-}
+
 
 =head2 run
 
