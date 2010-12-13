@@ -424,5 +424,5 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
-INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '60');
+INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '61');
 
