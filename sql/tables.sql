@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS meta (
 
 CREATE TABLE IF NOT EXISTS analysis (
 
-  analysis_id                 SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   logic_name                  VARCHAR(40) NOT NULL,
   db                          VARCHAR(120),
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS analysis (
   KEY logic_name_idx (logic_name),
   UNIQUE (logic_name)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 ################################################################################
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS analysis (
 
 CREATE TABLE IF NOT EXISTS analysis_description (
 
-  analysis_id                  SMALLINT UNSIGNED NOT NULL,
+  analysis_id                 int(10) unsigned NOT NULL,
   description                  TEXT,
   display_label                VARCHAR(255),
   displayable                  BOOLEAN NOT NULL DEFAULT 1,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
   UNIQUE KEY analysis_idx (analysis_id)
 
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 
@@ -107,8 +107,8 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 --
 
 CREATE TABLE hive (
-  worker_id        int(10) NOT NULL auto_increment,
-  analysis_id      int(10) NOT NULL,
+  worker_id        int(10) unsigned NOT NULL auto_increment,
+  analysis_id      int(10) unsigned NOT NULL,
   beekeeper        varchar(80) DEFAULT '' NOT NULL,
   host	           varchar(40) DEFAULT '' NOT NULL,
   process_id       varchar(40) DEFAULT '' NOT NULL,
@@ -123,7 +123,8 @@ CREATE TABLE hive (
 
   PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -164,7 +165,8 @@ CREATE TABLE dataflow_rule (
 
   PRIMARY KEY (dataflow_rule_id),
   UNIQUE KEY (from_analysis_id, to_analysis_url, branch_code, input_id_template(512))
-);
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -193,7 +195,8 @@ CREATE TABLE analysis_ctrl_rule (
   FOREIGN KEY (ctrled_analysis_id) REFERENCES analysis(analysis_id),
 
   UNIQUE (condition_analysis_url, ctrled_analysis_id)
-);
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -226,10 +229,10 @@ CREATE TABLE analysis_ctrl_rule (
 CREATE TABLE analysis_job (
   analysis_job_id           int(10) NOT NULL auto_increment,
   prev_analysis_job_id      int(10) NOT NULL,  #analysis_job which created this from rules
-  analysis_id               int(10) NOT NULL,
+  analysis_id               int(10) unsigned NOT NULL,
   input_id                  char(255) not null,
   job_claim                 char(40) NOT NULL DEFAULT '', #UUID
-  worker_id                 int(10) NOT NULL,
+  worker_id                 int(10) unsigned NOT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,
@@ -248,7 +251,8 @@ CREATE TABLE analysis_job (
   INDEX claim_analysis_status  (job_claim, analysis_id, status, semaphore_count),
   INDEX analysis_status        (analysis_id, status, semaphore_count),
   INDEX worker_id              (worker_id)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -271,8 +275,8 @@ CREATE TABLE analysis_job (
 
 CREATE TABLE job_message (
   analysis_job_id           int(10) NOT NULL,
-  worker_id                 int(10) NOT NULL,
-  analysis_id               int(10) NOT NULL,
+  worker_id                 int(10) unsigned NOT NULL,
+  analysis_id               int(10) unsigned NOT NULL,
   moment                    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry_count               int(10) DEFAULT 0 NOT NULL,
   status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
@@ -286,7 +290,8 @@ CREATE TABLE job_message (
   PRIMARY KEY               (analysis_job_id, worker_id, moment),
   INDEX worker_id           (worker_id),
   INDEX analysis_job_id     (analysis_job_id)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -308,7 +313,7 @@ CREATE TABLE job_message (
 
 CREATE TABLE analysis_job_file (
   analysis_job_id         int(10) NOT NULL,
-  worker_id               int(10) NOT NULL,
+  worker_id               int(10) unsigned NOT NULL,
   retry                   int(10) NOT NULL,
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
@@ -318,7 +323,8 @@ CREATE TABLE analysis_job_file (
   
   UNIQUE KEY job_hive_type  (analysis_job_id, worker_id, type),
   INDEX worker_id           (worker_id)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -349,7 +355,8 @@ CREATE TABLE resource_description (
     parameters            varchar(255) DEFAULT '' NOT NULL,
     description           varchar(255),
     PRIMARY KEY(rc_id, meadow_type)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
@@ -369,7 +376,7 @@ CREATE TABLE resource_description (
 --   rc_id                - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
-  analysis_id           int(10) NOT NULL,
+  analysis_id           int(10) unsigned NOT NULL,
   status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
@@ -397,12 +404,13 @@ CREATE TABLE analysis_stats (
   FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
 
   UNIQUE KEY   (analysis_id)
-) ENGINE=InnoDB;
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 CREATE TABLE analysis_stats_monitor (
   time                  datetime NOT NULL default '0000-00-00 00:00:00',
-  analysis_id           int(10) NOT NULL,
+  analysis_id           int(10) unsigned NOT NULL,
   status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
                           DEFAULT 'READY' NOT NULL,
   batch_size            int(10) default 1 NOT NULL,
@@ -424,12 +432,12 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
-  rc_id                 int(10) unsigned default 0 NOT NULL
+  rc_id                 int(10) unsigned default 0 NOT NULL,
 
   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
+  FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
 
-) ENGINE=InnoDB;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------------------
 --
@@ -452,11 +460,11 @@ CREATE TABLE monitor (
   workers               int(10) NOT NULL default '0',
   throughput            float default NULL,
   per_worker            float default NULL,
-  analysis              varchar(255) default NULL
+  analysis              varchar(255) default NULL,
 
-  FOREIGN KEY (analysis) REFERENCES analysis(logic_name),
+  FOREIGN KEY (analysis) REFERENCES analysis(logic_name)
 
-) ENGINE=InnoDB;
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
