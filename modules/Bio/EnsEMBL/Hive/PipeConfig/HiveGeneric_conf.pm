@@ -386,7 +386,7 @@ sub run {
             Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                 -input_id       => $input_id_hash,  # input_ids are now centrally stringified in the AnalysisJobAdaptor
                 -analysis       => $analysis,
-                -input_job_id   => 0, # because these jobs are created by the initialization script, not by another job
+                -input_job_id   => undef, # these jobs are created by the initialization script, not by another job
             );
         }
     }

@@ -228,11 +228,11 @@ CREATE TABLE analysis_ctrl_rule (
 
 CREATE TABLE analysis_job (
   analysis_job_id           int(10) NOT NULL auto_increment,
-  prev_analysis_job_id      int(10) NOT NULL,  #analysis_job which created this from rules
+  prev_analysis_job_id      int(10) DEFAULT NULL,  #analysis_job which created this from rules
   analysis_id               int(10) unsigned NOT NULL,
-  input_id                  char(255) not null,
+  input_id                  char(255) NOT NULL,
   job_claim                 char(40) NOT NULL DEFAULT '', #UUID
-  worker_id                 int(10) unsigned NOT NULL,
+  worker_id                 int(10) unsigned DEFAULT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
   completed                 datetime NOT NULL,

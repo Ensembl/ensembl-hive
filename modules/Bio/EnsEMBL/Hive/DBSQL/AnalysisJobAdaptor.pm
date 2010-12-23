@@ -84,8 +84,6 @@ sub CreateNewJob {
   my ($input_id, $analysis, $prev_analysis_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
      rearrange([qw(INPUT_ID ANALYSIS INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
 
-  $prev_analysis_job_id ||=0;
-
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
   throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
