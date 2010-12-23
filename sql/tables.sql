@@ -460,9 +460,7 @@ CREATE TABLE monitor (
   workers               int(10) NOT NULL default '0',
   throughput            float default NULL,
   per_worker            float default NULL,
-  analysis              varchar(255) default NULL,
-
-  FOREIGN KEY (analysis) REFERENCES analysis(logic_name)
+  analysis              varchar(255) default NULL,  # not just one, but a list of logic_names
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
