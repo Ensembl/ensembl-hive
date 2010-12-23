@@ -596,7 +596,7 @@ sub release_and_age_job {
         # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
     $self->dbc->do( qq{
         UPDATE analysis_job
-           SET worker_id=0, job_claim='', status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
+           SET worker_id=NULL, job_claim='', status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
          WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
            AND analysis_job_id=$job_id
     } );
@@ -645,7 +645,7 @@ sub reset_job_by_dbID {
 
     $self->dbc->do( qq{
         UPDATE analysis_job
-           SET worker_id=0, job_claim='', status='READY', retry_count=0
+           SET worker_id=NULL, job_claim='', status='READY', retry_count=0
          WHERE analysis_job_id=$job_id
     } );
 }
