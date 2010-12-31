@@ -206,16 +206,14 @@ CREATE TABLE analysis_ctrl_rule (
 -- overview:
 --   The analysis_job is the heart of this system.  It is the kiosk or blackboard
 --   where workers find things to do and then post work for other works to do.
---   The job_claim is a UUID set with an UPDATE LIMIT by worker as they fight
---   over the work.  These jobs are created prior to work being done, are claimed
---   by workers, are updated as the work is done, with a final update on completion.
+--   These jobs are created prior to work being done, are claimed by workers,
+--   are updated as the work is done, with a final update on completion.
 --
 -- semantics:
 --   analysis_job_id         - autoincrement id
 --   prev_analysis_job_id    - previous analysis_job which created this one (and passed input_id)
 --   analysis_id             - the analysis_id needed to accomplish this job.
 --   input_id                - input data passed into Analysis:RunnableDB to control the work
---   job_claim               - UUID set by workers as the fight over jobs
 --   worker_id               - link to hive table to define which worker claimed this job
 --   status                  - state the job is in
 --   retry_count             - number times job had to be reset when worker failed to run it
@@ -231,7 +229,6 @@ CREATE TABLE analysis_job (
   prev_analysis_job_id      int(10) DEFAULT NULL,  #analysis_job which created this from rules
   analysis_id               int(10) unsigned NOT NULL,
   input_id                  char(255) NOT NULL,
-  job_claim                 char(40) NOT NULL DEFAULT '', #UUID
   worker_id                 int(10) unsigned DEFAULT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 not NULL,
@@ -248,8 +245,7 @@ CREATE TABLE analysis_job (
 
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX claim_analysis_status  (job_claim, analysis_id, status, semaphore_count),
-  INDEX analysis_status        (analysis_id, status, semaphore_count),
+  INDEX analysis_status_sema   (analysis_id, status, semaphore_count),
   INDEX worker_id              (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -460,7 +456,7 @@ CREATE TABLE monitor (
   workers               int(10) NOT NULL default '0',
   throughput            float default NULL,
   per_worker            float default NULL,
-  analysis              varchar(255) default NULL,  # not just one, but a list of logic_names
+  analysis              varchar(255) default NULL  # not just one, but a list of logic_names
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 

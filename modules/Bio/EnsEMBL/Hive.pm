@@ -62,7 +62,6 @@
 
 use strict;
 use Sys::Hostname;
-use Data::UUID;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 

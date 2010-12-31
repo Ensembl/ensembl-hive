@@ -39,7 +39,6 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
-use Data::UUID;
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -293,7 +292,6 @@ sub _columns {
              a.prev_analysis_job_id
              a.analysis_id	      
              a.input_id 
-             a.job_claim  
              a.worker_id	      
              a.status 
              a.retry_count          
@@ -335,7 +333,6 @@ sub _objs_from_sth {
         -DBID               => $column{'analysis_job_id'},
         -ANALYSIS_ID        => $column{'analysis_id'},
         -INPUT_ID           => $input_id,
-        -JOB_CLAIM          => $column{'job_claim'},
         -WORKER_ID          => $column{'worker_id'},
         -STATUS             => $column{'status'},
         -RETRY_COUNT        => $column{'retry_count'},
@@ -405,34 +402,15 @@ sub update_status {
     $sql .= ",completed=now()";
     $sql .= ",runtime_msec=".$job->runtime_msec;
     $sql .= ",query_count=".$job->query_count;
-
-  } elsif($job->status eq 'READY') {
-    $sql .= ",job_claim=''";
-
   } elsif($job->status eq 'PASSED_ON') {
-    $sql .= ",job_claim='', completed=now()";
+    $sql .= ", completed=now()";
+  } elsif($job->status eq 'READY') {
   }
 
   $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
   
   my $sth = $self->prepare($sql);
   $sth->execute();
-  $sth->finish;
-}
-
-sub reclaim_job {
-  my $self   = shift;
-  my $job    = shift;
-
-  my $ug    = new Data::UUID;
-  my $uuid  = $ug->create();
-  $job->job_claim($ug->to_string( $uuid ));
-
-  my $sql = "UPDATE analysis_job SET status='CLAIMED', job_claim=?, worker_id=? WHERE analysis_job_id=?";
-
-  #print("$sql\n");            
-  my $sth = $self->prepare($sql);
-  $sth->execute($job->job_claim, $job->worker_id, $job->dbID);
   $sth->finish;
 }
 
@@ -491,16 +469,14 @@ sub store_out_files {
 sub grab_jobs_for_worker {
     my ($self, $worker) = @_;
   
-  my $ug    = new Data::UUID;
-  my $uuid  = $ug->create();
-  my $claim = $ug->to_string( $uuid );
   my $analysis_id = $worker->analysis->dbID();
+  my $worker_id   = $worker->worker_id();
 
-  my $sql_base = "UPDATE analysis_job SET job_claim='$claim'".
-                 " , worker_id='". $worker->worker_id ."'".
-                 " , status='CLAIMED'".
-                 " WHERE job_claim='' AND status='READY' AND semaphore_count<=0 ". 
-                 " AND analysis_id='$analysis_id'"; 
+  my $sql_base = qq{
+    UPDATE analysis_job
+    SET worker_id='$worker_id', status='CLAIMED'
+    WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0
+  };
 
   my $sql_virgin = $sql_base .  
                    " AND retry_count=0".
@@ -514,8 +490,27 @@ sub grab_jobs_for_worker {
     $claim_count = $self->dbc->do($sql_any);
   }
 
-  my $constraint = "a.status='CLAIMED' AND a.job_claim='$claim' AND a.analysis_id='$analysis_id'";
+  my $constraint = "a.analysis_id='$analysis_id' AND a.worker_id='$worker_id' AND a.status='CLAIMED'";
   return $self->_generic_fetch($constraint);
+}
+
+
+sub reclaim_job_for_worker {
+    my $self   = shift;
+    my $worker = shift or return;
+    my $job    = shift or return;
+
+    my $worker_id = $worker->worker_id();
+    my $job_id    = $job->dbID;
+
+    my $sql = "UPDATE analysis_job SET status='CLAIMED', worker_id=? WHERE analysis_job_id=? AND status='READY'";
+
+    my $sth = $self->prepare($sql);
+    $sth->execute($worker_id, $job_id);
+    $sth->finish;
+
+    my $constraint = "a.analysis_job_id='$job_id' AND a.worker_id='$worker_id' AND a.status='CLAIMED'";
+    return $self->_generic_fetch($constraint);
 }
 
 
@@ -543,9 +538,10 @@ sub release_undone_jobs_from_worker {
     my $worker_id       = $worker->worker_id();
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
+        # (previous worker_id does not matter, because that worker has never had a chance to run the job)
     $self->dbc->do( qq{
         UPDATE analysis_job
-           SET job_claim='', status='READY'
+           SET status='READY', worker_id=NULL
          WHERE status='CLAIMED'
            AND worker_id='$worker_id'
     } );
@@ -594,11 +590,14 @@ sub release_and_age_job {
     $may_retry ||= 0;
 
         # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
+        #
+        # FIXME: would it be possible to retain worker_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
+        #
     $self->dbc->do( qq{
         UPDATE analysis_job
-           SET worker_id=NULL, job_claim='', status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
-         WHERE status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
-           AND analysis_job_id=$job_id
+           SET status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
+         WHERE analysis_job_id=$job_id
+           AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
     } );
 }
 
@@ -645,7 +644,7 @@ sub reset_job_by_dbID {
 
     $self->dbc->do( qq{
         UPDATE analysis_job
-           SET worker_id=NULL, job_claim='', status='READY', retry_count=0
+           SET status='READY', retry_count=0
          WHERE analysis_job_id=$job_id
     } );
 }
@@ -675,7 +674,7 @@ sub reset_all_jobs_for_analysis_id {
   throw("must define analysis_id") unless($analysis_id);
 
   my ($sql, $sth);
-  $sql = "UPDATE analysis_job SET job_claim='', status='READY' WHERE status!='BLOCKED' and analysis_id=?";
+  $sql = "UPDATE analysis_job SET status='READY' WHERE status!='BLOCKED' and analysis_id=?";
   $sth = $self->prepare($sql);
   $sth->execute($analysis_id);
   $sth->finish;

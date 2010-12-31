@@ -44,7 +44,7 @@ CREATE PROCEDURE show_progress_analysis(IN param_logic_name char(64))
 DROP PROCEDURE IF EXISTS reset_failed_jobs_for_analysis;
 CREATE PROCEDURE reset_failed_jobs_for_analysis(IN param_logic_name char(64))
     UPDATE analysis_job j, analysis a
-    SET j.status='READY', j.retry_count=0, j.job_claim=''
+    SET j.status='READY', j.retry_count=0
     WHERE a.logic_name=param_logic_name
     AND   a.analysis_id=j.analysis_id
     AND   j.status='FAILED';

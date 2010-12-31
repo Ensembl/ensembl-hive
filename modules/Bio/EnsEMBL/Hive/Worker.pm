@@ -515,7 +515,7 @@ sub run {
     my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
 
     if( my $specific_job = $self->_specific_job() ) {
-        $jobs_done_by_batches_loop += $self->run_one_batch( [ $self->queen->worker_reclaim_job($self, $specific_job) ] );
+        $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->reclaim_job_for_worker($self, $specific_job) );
         $self->cause_of_death('JOB_LIMIT'); 
     } else {    # a proper "BATCHES" loop
 

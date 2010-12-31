@@ -377,18 +377,6 @@ sub reset_and_fetch_job_by_dbID {
 }
 
 
-sub worker_reclaim_job {
-  my $self   = shift;
-  my $worker = shift;
-  my $job    = shift;
-
-  return undef unless($job and $worker);
-  $job->worker_id($worker->worker_id);
-  $self->db->get_AnalysisJobAdaptor->reclaim_job($job);
-  return $job;
-}
-
-
 ######################################
 #
 # Public API interface for beekeeper

@@ -36,13 +36,12 @@ sub new {
 
     my $self = bless {}, $class;
 
-    my($dbID, $analysis_id, $input_id, $job_claim, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id, $adaptor) =
-        rearrange([qw(dbID analysis_id input_id job_claim worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id adaptor) ], @_);
+    my($dbID, $analysis_id, $input_id, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id, $adaptor) =
+        rearrange([qw(dbID analysis_id input_id worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id adaptor) ], @_);
 
     $self->dbID($dbID)                          if(defined($dbID));
     $self->analysis_id($analysis_id)            if(defined($analysis_id));
     $self->input_id($input_id)                  if(defined($input_id));
-    $self->job_claim($job_claim)                if(defined($job_claim));
     $self->worker_id($worker_id)                if(defined($worker_id));
     $self->status($status)                      if(defined($status));
     $self->retry_count($retry_count)            if(defined($retry_count));
@@ -84,12 +83,6 @@ sub analysis_id {
   my $self = shift;
   $self->{'_analysis_id'} = shift if(@_);
   return $self->{'_analysis_id'};
-}
-
-sub job_claim {
-  my $self = shift;
-  $self->{'_job_claim'} = shift if(@_);
-  return $self->{'_job_claim'};
 }
 
 sub status {
