@@ -397,7 +397,7 @@ CREATE TABLE analysis_stats (
   rc_id                 int(10) unsigned default 0 NOT NULL,
   
   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
+  # FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
 
   UNIQUE KEY   (analysis_id)
 
@@ -431,7 +431,7 @@ CREATE TABLE analysis_stats_monitor (
   rc_id                 int(10) unsigned default 0 NOT NULL,
 
   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
+  # FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
