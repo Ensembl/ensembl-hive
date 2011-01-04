@@ -396,10 +396,10 @@ CREATE TABLE analysis_stats (
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 int(10) unsigned default 0 NOT NULL,
   
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  # FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
+  UNIQUE KEY   (analysis_id),
 
-  UNIQUE KEY   (analysis_id)
+  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id)
+  # , FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
@@ -430,8 +430,8 @@ CREATE TABLE analysis_stats_monitor (
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 int(10) unsigned default 0 NOT NULL,
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  # FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
+  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id)
+  # , FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
