@@ -20,16 +20,11 @@
 
 	# see http://dbi.perl.org/
 
-1.4. Perl UUID API
-	eHive uses Universally Unique Identifiers (UUIDs) to identify workers internally.
-
-	# see http://search.cpan.org/dist/Data-UUID/
-
 
 2. Download and install essential and optional packages from BioPerl and EnsEMBL CVS
 
 2.1. It is advised to have a dedicated directory where EnsEMBL-related packages will be deployed.
-Unlike DBI or UUID modules that can be installed system-wide by the system administrator,
+Unlike DBI modules that can be installed system-wide by the system administrator,
 you will benefit from full (read+write) access to the EnsEMBL files/directories,
 so it is best to install them under your home directory. For example,
 	
