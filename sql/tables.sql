@@ -245,7 +245,7 @@ CREATE TABLE analysis_job (
 
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX analysis_status_sema   (analysis_id, status, semaphore_count),
+  INDEX analysis_status_sema_retry (analysis_id, status, semaphore_count, retry),
   INDEX worker_id              (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
