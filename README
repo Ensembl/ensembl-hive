@@ -14,6 +14,63 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+
+4-5.Jan, 2011 : Leo Gordon
+
+* fixed multiple issues that appeared after introduction of the foreign keys
+but only became visible after some testing (thanks to Gautier for extra testing!).
+
+31.Dec, 2010 : Leo Gordon
+
+* Inplemented the long-standing plan to remove the schema/code dependency on UUIDs.
+Removed the job_claim field from the schema and the code, changed the way jobs are claimed.
+
+28.Dec, 2010 : Leo Gordon
+
+* Updated schema drawings that contain newly added foreign keys
+
+21-23.Dec, 2010 : Leo Gordon
+
+* Added foreign key constraints, figured out that foreign keys ARE enforced in MySQL 5.1.47,
+so had to fix some code (and some ensembl-compara code as well, so keep yours up-to-date).
+
+14.Dec, 2010 : Leo Gordon
+
+* first attempt at creating schema drawings using MySQL Workbench. Drawings added to docs/ .
+A lot of foreign key constraints were missing, which influenced the drawing.
+If they are not enforced by MySQL anyway, why not add just them?
+
+26.Nov, 2010 : Leo Gordon
+
+* changed JobFactory so that parts of it can be re-used by subclassing. Examples in ensembl-compara.
+
+26.Oct, 2010 : Leo Gordon
+
+* fixed a long-standing bug: input_id was supposed to be able to set things (according to compara code)
+
+19-22.Oct, 2010 : Leo Gordon
+
+* Fixed both rule adaptors and the HiveGeneric_conf to prevent them from creating duplicated rules
+when a PipeConfig is re-run.
+
+8.Oct, 2010 : Leo Gordon
+
+A new MySQLTransfer.pm Hive Runnable to copy tables over (an amazingly popular task in our pipelines).
+Does an integrity check and fails if underlying mysqldump fails.
+
+1.Oct, 2010 : Leo Gordon
+
+* runWorker.pl only prints the worker once per stream.
+So if output is redirected to a file, both the file and the output will contain it.
+
+30.Sept-19.Oct, 2010 : Leo Gordon
+
+* detected a strange behaviour of a Worker that was running a RunnableDB
+with 'runaway next' statements. Since it was not possible to fix it (seems to be Perl language issue),
+the Worker's code does its best to detect this and exit. Please check that your RunnableDBs do not have runaway nexts.
+
+------------------------------------[previous 'stable' tag]----------------------------------
+
 21-22 Sept, 2010 : Leo Gordon
 
 * a new switch -worker_output_dir allows a particular worker to send its stdout/stderr into the given directory
