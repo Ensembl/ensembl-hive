@@ -52,6 +52,8 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
+use Data::Dumper;
+
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
 
 =head2 default_options
@@ -544,18 +546,26 @@ sub _saturated_merge_defaults_into_options {
 sub _hash_undefs {
     my $self      = shift @_;
     my $hash_to   = shift @_ || {};
-    my $hash_from = shift @_ || $self->o;
+    my $source    = shift @_; unless(defined($source)) { $source = $self->o; }
     my $prefix    = shift @_ || '';
 
-    while(my ($key, $value) = each %$hash_from) {
-        my $new_prefix = $prefix ? $prefix.' -> '.$key : $key;
+    if(ref($source) eq 'HASH') {
+        while(my ($key, $value) = each %$source) {
+            my $hash_element_prefix = ($prefix ? "$prefix->" : '') . "{'$key'}";
 
-        if(ref($value) eq 'HASH') { # go deeper
-            $self->_hash_undefs($hash_to, $value, $new_prefix);
-        } elsif(!_completely_defined($value)) {
-            $hash_to->{$new_prefix} = 1;
+            $self->_hash_undefs($hash_to, $value, $hash_element_prefix);
         }
+    } elsif(ref($source) eq 'ARRAY') {
+        foreach my $index (0..scalar(@$source)-1) {
+            my $element = $source->[$index];
+            my $array_element_prefix = ($prefix ? "$prefix->" : '') . "[$index]";
+
+            $self->_hash_undefs($hash_to, $element, $array_element_prefix);
+        }
+    } elsif(!_completely_defined($source)) {
+        $hash_to->{$prefix} = 1;
     }
+
     return $hash_to;
 }
 
