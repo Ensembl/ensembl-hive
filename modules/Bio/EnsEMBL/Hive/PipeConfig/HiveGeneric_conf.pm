@@ -52,8 +52,6 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
-use Data::Dumper;
-
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
 
 =head2 default_options
@@ -164,7 +162,7 @@ sub new {
 =head2 o
 
     Description : This is the method you call in the interface methods when you need to substitute an option: $self->o('password') .
-                  To reach down several levels of a multilevel option (such as $self->('pipeline_db') ) just list the keys down the desired path: $self->o('pipeline', '-user') .
+                  To reach down several levels of a multilevel option (such as $self->('pipeline_db') ) just list the keys down the desired path: $self->o('pipeline_db', '-user') .
 
 =cut
 
@@ -176,7 +174,7 @@ sub o {                 # descends the option hash structure (vivifying all enco
     while(defined(my $option_syll = shift @_)) {
 
         if(exists($value->{$option_syll})
-        and ((ref($value->{$option_syll}) eq 'HASH') or _completely_defined($value->{$option_syll}))
+        and ((ref($value->{$option_syll}) eq 'HASH') or _completely_defined_string($value->{$option_syll}))
         ) {
             $value = $value->{$option_syll};            # just descend one level
         } elsif(@_) {
@@ -253,11 +251,17 @@ sub process_options {
 
         my $mandatory_options = $self->_hash_undefs();
 
-        print "Available options:\n\n";
-        foreach my $key (sort keys %$all_needed_options) {
-            print "\t".$key.($mandatory_options->{$key} ? ' [mandatory]' : '')."\n";
+        print "Mandatory options:\n";
+        foreach my $key (sort keys %$mandatory_options) {
+            print "\t$key\n";
         }
-        print "\n";
+        print "Pre-defined options:\n";
+        foreach my $key (sort keys %$all_needed_options) {
+            unless($mandatory_options->{$key}) {
+                print "\t$key\n";
+            }
+        }
+
         exit(0);
 
     } else {
@@ -461,15 +465,42 @@ sub run {
 
 # -------------------------------[the rest are dirty implementation details]-------------------------------------
 
-=head2 _completely_defined
+
+=head2 _completely_defined_string
 
     Description : a private function (not a method) that checks whether a certain string is clean from undefined options
 
 =cut
 
-sub _completely_defined {
+sub _completely_defined_string {
     return (index(shift @_, $undef_const) == ($[-1) );  # i.e. $undef_const is not a substring
 }
+
+
+=head2 _completely_defined_structure
+
+    Description : a private function (not a method) that checks whether a certain structure is clean from undefined options
+
+=cut
+
+sub _completely_defined_structure {
+    my $structure = shift @_;
+
+    if(ref($structure) eq 'HASH') {
+        while(my ($key, $value) = each %$structure) {
+            return 0 unless(_completely_defined_structure($value));
+        }
+        return 1;
+    } elsif(ref($structure) eq 'ARRAY') {
+        foreach my $element (@$structure) {
+            return 0 unless(_completely_defined_structure($element));
+        }
+        return 1;
+    } else {
+        return _completely_defined_string($structure);
+    }
+}
+
 
 =head2 _load_cmdline_options
 
@@ -491,6 +522,7 @@ sub _load_cmdline_options {
     return \%cmdline_options;
 }
 
+
 =head2 _merge_into_options
 
     Description : a private method to merge one options-containing structure into another
@@ -504,17 +536,20 @@ sub _merge_into_options {
 
     my $subst_counter = 0;
 
-    while(my($key, $value) = each %$hash_from) {
-        if(exists($hash_to->{$key})) {  # simply ignore the unused options
-            if(ref($value) eq 'HASH') {
+    while(my($key, $from_value) = each %$hash_from) {
+        if( exists($hash_to->{$key})        # i.e. if there is interest. Only pay attention at options that are actually used in the PipeConfig
+        and !_completely_defined_structure($hash_to->{$key})
+        ) {
+            if(ref($from_value) eq 'HASH') {
                 if(ref($hash_to->{$key}) eq 'HASH') {
-                    $subst_counter += $self->_merge_into_options($hash_from->{$key}, $hash_to->{$key});
+                    my $rec_subst   = $self->_merge_into_options($from_value, $hash_to->{$key});
+                    $subst_counter += $rec_subst;
                 } else {
-                    $hash_to->{$key} = { %$value };
-                    $subst_counter += scalar(keys %$value);
+                    $hash_to->{$key} = { %$from_value };
+                    $subst_counter += scalar(keys %$from_value);
                 }
-            } elsif(_completely_defined($value) and !_completely_defined($hash_to->{$key})) {
-                $hash_to->{$key} = $value;
+            } elsif(_completely_defined_structure($from_value)) {
+                $hash_to->{$key} = $from_value;
                 $subst_counter++;
             }
         }
@@ -562,7 +597,7 @@ sub _hash_undefs {
 
             $self->_hash_undefs($hash_to, $element, $array_element_prefix);
         }
-    } elsif(!_completely_defined($source)) {
+    } elsif(!_completely_defined_string($source)) {
         $hash_to->{$prefix} = 1;
     }
 
