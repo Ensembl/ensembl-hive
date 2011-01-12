@@ -46,9 +46,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     param('mode'):          'overwrite' (default), 'topup' or 'insertignore'
 
-    param('where'):         filter for rows to be copied/merged
+    param('where'):         filter for rows to be copied/merged. [ param_substituted ]
 
-    param('table'):         table name to be copied/merged
+    param('table'):         table name to be copied/merged.      [ param_substituted ]
 
 =cut
 
@@ -66,6 +66,8 @@ sub fetch_input {
     }
     my $table = $self->param('table') or die "Please specify 'table' parameter\n";
     $self->input_job->transient_error(1);
+
+    $table = $self->param('table', $self->param_substitute($table) );
 
         # Use connection parameters to source database if supplied, otherwise use the current database as default:
         #
@@ -90,7 +92,11 @@ sub fetch_input {
 
     my $mode = $self->param('mode') || 'overwrite';
         $self->param('mode', $self->param('mode'));
-    my $where = $self->param('where') || '';
+
+    my $where = $self->param('where');
+    if(defined($where)) {
+        $where = $self->param( 'where', $self->param_substitute($where) );
+    }
 
     $self->param('src_before',  $self->get_row_count($src_dbh,  $table, $where) );
 
@@ -116,12 +122,12 @@ sub run {
 
     my $mode  = $self->param('mode')  || 'overwrite';
     my $table = $self->param('table');
-    my $where = $self->param('where') || '';
+    my $where = $self->param('where');
 
     my $cmd = 'mysqldump '
                 . { 'overwrite' => '', 'topup' => '--no-create-info ', 'insertignore' => '--no-create-info --insert-ignore ' }->{$mode}
                 . "$src_mysql_conn $table "
-                . ($where ? "--where '$where' " : '')
+                . (defined($where) ? "--where '$where' " : '')
                 . '| '
                 . ($filter_cmd ? "$filter_cmd | " : '')
                 . "mysql $dest_mysql_conn";
@@ -144,7 +150,7 @@ sub write_output {
 
     my $mode  = $self->param('mode');
     my $table = $self->param('table');
-    my $where = $self->param('where') || '';
+    my $where = $self->param('where');
 
     my $dest_dbh = $self->param('dest_dbh');
 
@@ -182,7 +188,7 @@ sub write_output {
 sub get_row_count {
     my ($self, $dbh, $table, $where) = @_;
 
-    my $sql = "SELECT count(*) FROM $table" . ($where ? "WHERE $where" : '');
+    my $sql = "SELECT count(*) FROM $table" . (defined($where) ? " WHERE $where" : '');
 
     my $sth = $dbh->prepare($sql);
     $sth->execute();

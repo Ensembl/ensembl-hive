@@ -61,7 +61,7 @@ sub strict_hash_format {
                   Here it deals with finding the sql command(s), doing parameter substitution, storing the result in a predefined place
                   and optionally connecting to another database (see param('db_conn')).
 
-    param('sql'): The recommended way of passing in the sql command(s).
+    param('sql'): The recommended way of passing in the sql command(s). [param_substituted]
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the sql command(s) will have to be run.
 
