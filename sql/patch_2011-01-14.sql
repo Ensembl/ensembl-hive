@@ -1,9 +1,9 @@
 # Extend several fields in analysis to 255 characters:
 
-ALTER TABLE analysis     MODIFY COLUMN module VARCHAR(255);
-ALTER TABLE db_file      MODIFY COLUMN module VARCHAR(255);
-ALTER TABLE program      MODIFY COLUMN module VARCHAR(255);
-ALTER TABLE program_file MODIFY COLUMN module VARCHAR(255);
+ALTER TABLE analysis MODIFY COLUMN module       VARCHAR(255);
+ALTER TABLE analysis MODIFY COLUMN db_file      VARCHAR(255);
+ALTER TABLE analysis MODIFY COLUMN program      VARCHAR(255);
+ALTER TABLE analysis MODIFY COLUMN program_file VARCHAR(255);
 
 ALTER TABLE meta DROP INDEX species_key_value_idx;
 ALTER TABLE meta DROP INDEX species_value_idx;
