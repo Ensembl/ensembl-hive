@@ -430,6 +430,7 @@ CREATE TABLE analysis_stats_monitor (
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 int(10) unsigned default 0 NOT NULL,
+  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
 
   FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id)
   # , FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
