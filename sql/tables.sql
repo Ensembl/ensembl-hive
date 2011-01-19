@@ -395,6 +395,7 @@ CREATE TABLE analysis_stats (
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 int(10) unsigned default 0 NOT NULL,
+  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   
   UNIQUE KEY   (analysis_id),
 

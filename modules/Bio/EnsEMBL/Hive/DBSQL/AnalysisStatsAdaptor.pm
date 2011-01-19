@@ -212,6 +212,7 @@ sub update {
   $sql .= ",last_update=NOW()";
   $sql .= ",sync_lock='0'";
   $sql .= ",rc_id=". $stats->rc_id();
+  $sql .= ",can_be_empty=". $stats->can_be_empty();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -466,6 +467,7 @@ sub _columns {
                     ast.last_update
                     ast.sync_lock
                     ast.rc_id
+                    ast.can_be_empty
                    );
   push @columns , "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
   return @columns;            
@@ -486,6 +488,7 @@ sub _objs_from_sth {
     $analStats->status($column{'status'});
     $analStats->sync_lock($column{'sync_lock'});
     $analStats->rc_id($column{'rc_id'});
+    $analStats->can_be_empty($column{'can_be_empty'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->avg_input_msec_per_job($column{'avg_input_msec_per_job'});

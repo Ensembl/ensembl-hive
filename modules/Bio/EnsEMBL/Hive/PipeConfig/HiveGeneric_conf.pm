@@ -344,8 +344,8 @@ sub run {
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $rc_id) =
-             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance rc_id)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $can_be_empty, $rc_id) =
+             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance can_be_empty rc_id)], %$aha);
 
         $parameters_hash ||= {};
         $input_ids       ||= [];
@@ -382,6 +382,7 @@ sub run {
             $stats->hive_capacity( $hive_capacity )                 if(defined($hive_capacity));
             $stats->failed_job_tolerance( $failed_job_tolerance )   if(defined($failed_job_tolerance));
             $stats->rc_id( $rc_id )                                 if(defined($rc_id));
+            $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
             $stats->status($blocked ? 'BLOCKED' : 'READY');         #   (some analyses will be waiting for human intervention in blocked state)
             $stats->update();
         }

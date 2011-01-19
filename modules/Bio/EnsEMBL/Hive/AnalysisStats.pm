@@ -252,41 +252,13 @@ sub rc_id {
     return $self->{'_rc_id'};
 }
 
-sub determine_status {
-  my $self = shift;
-  
-  if($self->status ne 'BLOCKED') {
-    if ($self->unclaimed_job_count == 0 and
-        $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
-      my $failure_percentage = 0;
-      if ($self->total_job_count) {
-        $failure_percentage = $self->failed_job_count * 100 / $self->total_job_count;
-      }
-      if ($failure_percentage > $self->failed_job_tolerance) {
-        $self->status('FAILED');
-        print
-            "\n",
-            "##################################################\n",
-        printf
-            "##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!";
-        printf
-            "##          %4.1f%% jobs failed (tolerance: %3d%%) ##\n", $failure_percentage, $self->failed_job_tolerance;
-        print
-            "##################################################\n\n";
-      } else {
-        $self->status('DONE');
-      }
-    }
-    if($self->total_job_count == $self->unclaimed_job_count) {
-      $self->status('READY');
-    }
-    if($self->unclaimed_job_count>0 and
-       $self->total_job_count > $self->unclaimed_job_count) {
-      $self->status('WORKING');
-    }
-  }
-  return $self;
+sub can_be_empty {
+    my $self = shift;
+
+    $self->{'_can_be_empty'} = shift if(@_);
+    return $self->{'_can_be_empty'};
 }
+
   
 sub print_stats {
   my $self = shift;
@@ -329,5 +301,80 @@ sub print_stats {
   }
 
 }
+
+
+sub determine_status {
+  my $self = shift;
+  
+  if($self->status ne 'BLOCKED') {
+    if ($self->unclaimed_job_count == 0 and
+        $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
+      my $failure_percentage = 0;
+      if ($self->total_job_count) {
+        $failure_percentage = $self->failed_job_count * 100 / $self->total_job_count;
+      }
+      if ($failure_percentage > $self->failed_job_tolerance) {
+        $self->status('FAILED');
+        print
+            "\n",
+            "##################################################\n",
+        printf
+            "##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!";
+        printf
+            "##          %4.1f%% jobs failed (tolerance: %3d%%) ##\n", $failure_percentage, $self->failed_job_tolerance;
+        print
+            "##################################################\n\n";
+      } else {
+        $self->status('DONE');
+      }
+    }
+    if($self->total_job_count == $self->unclaimed_job_count) {
+      $self->status('READY');
+    }
+    if($self->unclaimed_job_count>0 and
+       $self->total_job_count > $self->unclaimed_job_count) {
+      $self->status('WORKING');
+    }
+  }
+  return $self;
+}
+
+
+sub check_blocking_control_rules {
+    my $self = shift;
+  
+    my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_by_ctrled_analysis_id($self->analysis_id);
+
+    if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
+
+        my $all_ctrl_rules_done = 1;
+
+        foreach my $ctrl_rule (@$ctrl_rules) {
+                #use this method because the condition_analysis objects can be
+                #network distributed to a different database so use it's adaptor to get
+                #the AnalysisStats object
+            my $condition_analysis              = $ctrl_rule->condition_analysis;
+            my $condition_analysis_stats        = $condition_analysis && $condition_analysis->stats;
+            my $condition_analysis_stats_status = $condition_analysis_stats && $condition_analysis_stats->status;
+            my $condition_analysis_stats_cbe    = $condition_analysis_stats && $condition_analysis_stats->can_be_empty;
+
+            unless( ($condition_analysis_stats_status eq 'DONE')
+            or ($condition_analysis_stats_cbe and ($condition_analysis_stats_status eq 'READY'))
+            ) {
+                $all_ctrl_rules_done = 0;
+                last;
+            }
+        }
+
+        if($all_ctrl_rules_done) {
+            if($self->status eq 'BLOCKED') {    # unblock, since all conditions are met
+                $self->update_status('LOADING'); # trigger sync
+            }
+        } else {    # (re)block
+            $self->update_status('BLOCKED');
+        }
+    }
+}
+
 
 1;

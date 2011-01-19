@@ -443,7 +443,7 @@ sub synchronize_hive {
 
   print STDERR "Checking blocking control rules:\n";
   foreach my $analysis (@$list_of_analyses) {
-    $self->check_blocking_control_rules_for_AnalysisStats($analysis->stats);
+    $analysis->stats->check_blocking_control_rules();
     print STDERR '.';
   }
   print STDERR "\n";
@@ -561,7 +561,7 @@ sub synchronize_AnalysisStats {
 
   $analysisStats->done_job_count($done_here + $done_elsewhere);
 
-  $self->check_blocking_control_rules_for_AnalysisStats($analysisStats);
+  $analysisStats->check_blocking_control_rules();
 
   if($analysisStats->status ne 'BLOCKED') {
     $analysisStats->determine_status();
@@ -586,43 +586,6 @@ sub synchronize_AnalysisStats {
   $analysisStats->update;  #update and release sync_lock
 
   return $analysisStats;
-}
-
-
-sub check_blocking_control_rules_for_AnalysisStats
-{
-  my $self = shift;
-  my $stats = shift;
-  
-  return unless($stats);
-
-  #print("check ctrl on analysis ");  $stats->print_stats;
-  my $ctrlRules = $self->db->get_AnalysisCtrlRuleAdaptor->
-                  fetch_by_ctrled_analysis_id($stats->analysis_id);
-  my $allRulesDone = 1;
-  if(scalar @$ctrlRules > 0) {
-    #print("HAS blocking_ctrl_rules to check\n");
-    foreach my $ctrlrule (@{$ctrlRules}) {
-      #use this method because the condition_analysis objects can be
-      #network distributed to a different database so use it's adaptor to get
-      #the AnalysisStats object
-      #$ctrlrule->print_rule;
-      my $condAnalysis = $ctrlrule->condition_analysis;
-      my $condStats = $condAnalysis->stats if($condAnalysis);
-      $allRulesDone = 0 unless($condStats and $condStats->status eq 'DONE');
-      #print("  "); $condStats->print_stats;
-    }
-
-    if($allRulesDone) {
-      if($stats->status eq 'BLOCKED') {
-        #print("  UNBLOCK analysis : all conditions met\n");
-        $stats->update_status('LOADING'); #trigger sync
-      }
-    } else {
-      #print("  RE-BLOCK analysis : some conditions failed\n");
-      $stats->update_status('BLOCKED');
-    }
-  }
 }
 
 
@@ -791,15 +754,6 @@ sub get_remaining_jobs_show_hive_progress {
           $completed, $cpuhrs, $remaining, $done, $failed, $total);
   return $remaining;
 }
-
-## Can't see where this method is used.
-#
-#sub print_hive_status {
-#    my ($self, $filter_analysis) = @_;
-#
-#    $self->print_analysis_status($filter_analysis);
-#    $self->print_running_worker_status;
-#}
 
 
 sub print_analysis_status {
