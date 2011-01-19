@@ -936,13 +936,11 @@ sub _pick_best_analysis_for_new_worker {
 =cut
 
 sub fetch_by_worker_id {
-  my ($self,$id) = @_;
+  my ($self, $id) = @_;
 
   unless(defined $id) {
     throw("fetch_by_dbID must have an id");
   }
-
-  my @tabs = $self->_tables;
 
   my $constraint = "h.worker_id = $id";
 
