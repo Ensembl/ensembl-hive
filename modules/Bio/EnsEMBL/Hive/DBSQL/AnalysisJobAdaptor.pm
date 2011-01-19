@@ -394,24 +394,38 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 =cut
 
 sub update_status {
-  my ($self,$job) = @_;
+    my ($self, $job) = @_;
 
-  my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
+    my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
 
-  if($job->status eq 'DONE') {
-    $sql .= ",completed=now()";
-    $sql .= ",runtime_msec=".$job->runtime_msec;
-    $sql .= ",query_count=".$job->query_count;
-  } elsif($job->status eq 'PASSED_ON') {
-    $sql .= ", completed=now()";
-  } elsif($job->status eq 'READY') {
-  }
+    if($job->status eq 'DONE') {
+        $sql .= ",completed=now()";
+        $sql .= ",runtime_msec=".$job->runtime_msec;
+        $sql .= ",query_count=".$job->query_count;
+    } elsif($job->status eq 'PASSED_ON') {
+        $sql .= ", completed=now()";
+    } elsif($job->status eq 'READY') {
+    }
 
-  $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
-  
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+    $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
+
+        # This particular query is infamous for collisions and 'deadlock' situations; let's make them wait and retry.
+    foreach (0..3) {
+        eval {
+            my $sth = $self->prepare($sql);
+            $sth->execute();
+            $sth->finish;
+            1;
+        } or do {
+            if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
+                sleep 1;
+                next;
+            }
+            die $@;     # but definitely report other errors
+        };
+        last;
+    }
+    die "After 3 retries still in a deadlock: $@" if($@);
 }
 
 
