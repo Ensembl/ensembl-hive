@@ -443,8 +443,8 @@ sub synchronize_hive {
 
   print STDERR "Checking blocking control rules:\n";
   foreach my $analysis (@$list_of_analyses) {
-    $analysis->stats->check_blocking_control_rules();
-    print STDERR '.';
+    my $open = $analysis->stats->check_blocking_control_rules();
+    print STDERR ($open ? 'o' : 'x');
   }
   print STDERR "\n";
 

@@ -345,9 +345,9 @@ sub check_blocking_control_rules {
   
     my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_by_ctrled_analysis_id($self->analysis_id);
 
-    if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
+    my $all_ctrl_rules_done = 1;
 
-        my $all_ctrl_rules_done = 1;
+    if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
 
         foreach my $ctrl_rule (@$ctrl_rules) {
                 #use this method because the condition_analysis objects can be
@@ -358,11 +358,11 @@ sub check_blocking_control_rules {
             my $condition_analysis_stats_status = $condition_analysis_stats && $condition_analysis_stats->status;
             my $condition_analysis_stats_cbe    = $condition_analysis_stats && $condition_analysis_stats->can_be_empty;
 
-            unless( ($condition_analysis_stats_status eq 'DONE')
-            or ($condition_analysis_stats_cbe and ($condition_analysis_stats_status eq 'READY'))
-            ) {
+            my $unblocked_condition = ($condition_analysis_stats_status eq 'DONE')
+                        || ($condition_analysis_stats_cbe && ($condition_analysis_stats_status eq 'READY'));
+
+            unless( $unblocked_condition ) {
                 $all_ctrl_rules_done = 0;
-                last;
             }
         }
 
@@ -374,6 +374,8 @@ sub check_blocking_control_rules {
             $self->update_status('BLOCKED');
         }
     }
+
+    return $all_ctrl_rules_done;
 }
 
 
