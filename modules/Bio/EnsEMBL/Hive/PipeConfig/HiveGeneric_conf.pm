@@ -487,19 +487,21 @@ sub _completely_defined_string {
 sub _completely_defined_structure {
     my $structure = shift @_;
 
+    my $completely_defined = 1;
+
     if(ref($structure) eq 'HASH') {
         while(my ($key, $value) = each %$structure) {
-            return 0 unless(_completely_defined_structure($value));
+            $completely_defined &&= _completely_defined_structure($value);
         }
-        return 1;
+        return $completely_defined;
     } elsif(ref($structure) eq 'ARRAY') {
         foreach my $element (@$structure) {
-            return 0 unless(_completely_defined_structure($element));
+            $completely_defined &&= _completely_defined_structure($element);
         }
-        return 1;
     } else {
-        return _completely_defined_string($structure);
+        $completely_defined = _completely_defined_string($structure);
     }
+    return $completely_defined;
 }
 
 
