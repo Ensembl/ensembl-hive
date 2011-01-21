@@ -82,8 +82,6 @@ CREATE TABLE IF NOT EXISTS analysis_description (
   displayable                  BOOLEAN NOT NULL DEFAULT 1,
   web_data                     TEXT,
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-
   UNIQUE KEY analysis_idx (analysis_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -118,8 +116,6 @@ CREATE TABLE hive (
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'FATALITY') DEFAULT '' NOT NULL,
-
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
 
   PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)
@@ -161,8 +157,6 @@ CREATE TABLE dataflow_rule (
   branch_code         int(10) default 1 NOT NULL,
   input_id_template   TEXT DEFAULT NULL,
 
-  FOREIGN KEY (from_analysis_id) REFERENCES analysis(analysis_id),
-
   PRIMARY KEY (dataflow_rule_id),
   UNIQUE KEY (from_analysis_id, to_analysis_url, branch_code, input_id_template(512))
 
@@ -191,8 +185,6 @@ CREATE TABLE dataflow_rule (
 CREATE TABLE analysis_ctrl_rule (
   condition_analysis_url     varchar(255) default '' NOT NULL,
   ctrled_analysis_id         int(10) unsigned NOT NULL,
-
-  FOREIGN KEY (ctrled_analysis_id) REFERENCES analysis(analysis_id),
 
   UNIQUE (condition_analysis_url, ctrled_analysis_id)
 
@@ -239,10 +231,6 @@ CREATE TABLE analysis_job (
   semaphore_count           int(10) NOT NULL default 0,
   semaphored_job_id         int(10) DEFAULT NULL,
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY (worker_id)   REFERENCES hive(worker_id),
-  FOREIGN KEY (prev_analysis_job_id) REFERENCES analysis_job(analysis_job_id),
-
   PRIMARY KEY                  (analysis_job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX analysis_status_sema_retry (analysis_id, status, semaphore_count, retry_count),
@@ -279,10 +267,6 @@ CREATE TABLE job_message (
   msg                       text,
   is_error                  boolean,
 
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id),
-  FOREIGN KEY (analysis_job_id) REFERENCES analysis_job(analysis_job_id),
-  FOREIGN KEY (worker_id)   REFERENCES hive(worker_id),
-
   PRIMARY KEY               (analysis_job_id, worker_id, moment),
   INDEX worker_id           (worker_id),
   INDEX analysis_job_id     (analysis_job_id)
@@ -314,9 +298,6 @@ CREATE TABLE analysis_job_file (
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
 
-  FOREIGN KEY (worker_id)   REFERENCES hive(worker_id),
-  FOREIGN KEY (analysis_job_id) REFERENCES analysis_job(analysis_job_id),
-  
   UNIQUE KEY job_hive_type  (analysis_job_id, worker_id, type),
   INDEX worker_id           (worker_id)
 
@@ -397,10 +378,7 @@ CREATE TABLE analysis_stats (
   rc_id                 int(10) unsigned default 0 NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   
-  UNIQUE KEY   (analysis_id),
-
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id)
-  # , FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id),
+  UNIQUE KEY   (analysis_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
@@ -430,10 +408,7 @@ CREATE TABLE analysis_stats_monitor (
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 int(10) unsigned default 0 NOT NULL,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-
-  FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id)
-  # , FOREIGN KEY (rc_id) REFERENCES resource_description(rc_id)
+  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
