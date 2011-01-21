@@ -14,6 +14,7 @@ ALTER TABLE job_message             ADD FOREIGN KEY (worker_id)   REFERENCES hiv
 ALTER TABLE analysis_job_file       ADD FOREIGN KEY (worker_id)   REFERENCES hive(worker_id);
 
 ALTER TABLE analysis_job            ADD FOREIGN KEY (prev_analysis_job_id) REFERENCES analysis_job(analysis_job_id);
+ALTER TABLE analysis_job            ADD FOREIGN KEY (semaphored_job_id) REFERENCES analysis_job(analysis_job_id);
 ALTER TABLE job_message             ADD FOREIGN KEY (analysis_job_id) REFERENCES analysis_job(analysis_job_id);
 ALTER TABLE analysis_job_file       ADD FOREIGN KEY (analysis_job_id) REFERENCES analysis_job(analysis_job_id);
 
