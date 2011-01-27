@@ -159,6 +159,20 @@ sub main {
          || $self->{'dba'}->get_MetaContainer->list_value_by_key("name")->[0]
     );
 
+    unless($pipeline_name) {
+        print STDERR "+---------------------------------------------------------------------+\n";
+        print STDERR "!                                                                     !\n";
+        print STDERR "!                  WARNING:                                           !\n";
+        print STDERR "!                                                                     !\n";
+        print STDERR "! At the moment your pipeline doesn't have 'pipeline_name' defined.   !\n";
+        print STDERR "! This may seriously impair your beekeeping experience unless you are !\n";
+        print STDERR "! the only farm user. The name should be set in your PipeConfig file, !\n";
+        print STDERR "! or if you are running an old pipeline you can just set it by hand   !\n";
+        print STDERR "! in the 'meta' table.                                                !\n";
+        print STDERR "!                                                                     !\n";
+        print STDERR "+---------------------------------------------------------------------+\n";
+    }
+
     if($local) {
         $self->{'meadow'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->new();
         $self->{'meadow'} -> total_running_workers_limit($local_cpus);
