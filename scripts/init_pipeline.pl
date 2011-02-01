@@ -44,7 +44,7 @@ sub module_from_file {
 sub process_options_and_run_module {
     my $config_module = shift @_;
 
-    eval "require $config_module;";
+    require $config_module;
 
     my $self = $config_module->new();
 
