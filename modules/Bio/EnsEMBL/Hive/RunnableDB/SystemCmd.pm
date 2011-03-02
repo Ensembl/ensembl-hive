@@ -88,10 +88,15 @@ sub run {
     my $self = shift;
  
     my $cmd = $self->param('cmd');
+
+    $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
+
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
+
+    $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
 }
 
 =head2 write_output
