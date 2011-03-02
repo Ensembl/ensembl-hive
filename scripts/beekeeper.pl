@@ -45,8 +45,9 @@ sub main {
     my $worker_limit                = 50;
     my $local_cpus                  = 2;
     my $meadow_options              = '';
-    my $max_loops                   = 0; # not running by default
     my $run                         = 0;
+    my $max_loops                   = 0; # not running by default
+    my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $all_dead                    = 0;
     my $remove_analysis_id          = 0;
@@ -77,11 +78,12 @@ sub main {
                'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control
-               'loop'              => \$loopit,
-               'max_loops=i'       => \$max_loops,
-               'run'               => \$run,
+               'run'                => \$run,
+               'loop'               => \$loopit,
+               'max_loops=i'        => \$max_loops,
+               'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'  => \$self->{'run_job_id'},
-               'sleep=f'           => \$self->{'sleep_minutes'},
+               'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
                'local!'            => \$local,
@@ -126,7 +128,7 @@ sub main {
 
     if($run or $self->{'run_job_id'}) {
         $max_loops = 1;
-    } elsif ($loopit) {
+    } elsif ($loopit or $keep_alive) {
         unless($max_loops) {
             $max_loops = -1; # unlimited
         }
@@ -224,7 +226,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $queen, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $analysis);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -353,7 +355,7 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $queen, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $this_analysis) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -410,7 +412,8 @@ sub run_autonomously {
         $failed_analyses       = $queen->get_num_failed_analyses($this_analysis);
         $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress();
 
-    } while(!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops);
+    } while( $keep_alive
+            or (!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops) );
 
     print "The Beekeeper has stopped because ".(
           $failed_analyses ? "there were $failed_analyses failed analyses"
@@ -503,8 +506,9 @@ __DATA__
 
     -loop                  : run autonomously, loops and sleeps
     -max_loops <num>       : perform max this # of loops in autonomous mode
-    -run                   : run 1 iteration of automation loop
+    -keep_alive            : do not stop when there are no more jobs to do - carry on looping
     -job_id <job_id>       : run 1 iteration for this job_id
+    -run                   : run 1 iteration of automation loop
     -sleep <num>           : when looping, sleep <num> minutes (default 2min)
 
 =head2 Meadow control
