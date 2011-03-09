@@ -7,26 +7,42 @@ Bio::EnsEMBL::Hive::RunnableDB::SystemCmd
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
+    This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+    and is ran by Workers during the execution of eHive pipelines.
+    It is not generally supposed to be instantiated and used outside of this framework.
 
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+    Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-This RunnableDB module acts as a wrapper for shell-level command lines. If you behave you may also use parameter substitution.
+    This RunnableDB module acts as a wrapper for shell-level command lines. If you behave you may also use parameter substitution.
 
-The command can be given using two different syntaxes:
+    The command can be given using two different syntaxes:
 
-1) Command line is stored in the input_id() or parameters() as the value corresponding to the 'cmd' key.
-    THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
+    1) Command line is stored in the input_id() or parameters() as the value corresponding to the 'cmd' key.
+        THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
-2) Command line is stored in the 'input_id' field of the analysis_job table.
-    (only works with command lines shorter than 255 bytes).
-    This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
+    2) Command line is stored in the 'input_id' field of the analysis_job table.
+        (only works with command lines shorter than 255 bytes).
+        This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
+
+=head1 CONFIGURATION EXAMPLE
+
+    # The following example shows how to configure SystemCmd in a PipeConfig module
+    # to create a MySQL snapshot of the Hive database before executing a critical operation.
+    #
+    # It is a useful incantation when debugging pipelines, similar to setting a breakpoint/savepoint.
+    # You will be able to reset your pipeline to the saved point in by un-dumping this file.
+
+        {   -logic_name => 'db_snapshot_before_critical_A',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'       => 'mysqldump '.$self->dbconn_2_mysql('pipeline_db', 0).' '.$self->o('pipeline_db','-dbname').' >#filename#',
+                'filename'  => $ENV{'HOME'}.'/db_snapshot_before_critical_A',
+            },
+        },
 
 =head1 CONTACT
 
