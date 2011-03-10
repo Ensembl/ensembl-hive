@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 package Script;
 
 use strict;
@@ -240,7 +242,7 @@ $Author: ady $
 
 =head1 VERSION
 
-$Revision: 1.1 $
+$Revision: 1.2 $
 
 =head1 REQUIREMENTS
 
