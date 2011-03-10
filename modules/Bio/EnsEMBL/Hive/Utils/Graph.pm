@@ -26,11 +26,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: ady $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.1 $
+$Revision: 1.2 $
 
 =cut
 
@@ -156,7 +156,7 @@ sub _add_hive_details {
   my ($self) = @_;
   if($self->config()->{DisplayDetails}) {
     my $dbc = $self->dba()->dbc();
-    my $label = sprintf('%s@%s', $dbc->username, $dbc->dbname);
+    my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host);
     $self->graph()->add_node(
       'details',
       label => $label,
