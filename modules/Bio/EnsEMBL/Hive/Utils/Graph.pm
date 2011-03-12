@@ -26,11 +26,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: lg4 $
+$Author: ady $
 
 =head1 VERSION
 
-$Revision: 1.2 $
+$Revision: 1.3 $
 
 =cut
 
@@ -193,7 +193,7 @@ sub _add_colour {
   my $config = $self->config()->{Colours}->{Status};
   my $other = $config->{OTHER};
   my $colour = $config->{$a->stats()->status()} || $other;
-  $graph->add_node($a->dbID(), color => $colour);
+  $graph->add_node($a->dbID(), fillcolor => $colour);
   return;
 }
 
