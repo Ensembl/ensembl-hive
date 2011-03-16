@@ -1,66 +1,86 @@
 ##########################################################################################
 #
-# Some stored functions and procedures used in hive:
+# Some stored functions, views and procedures used in hive:
 #
 
-############ make it more convenient to convert logic_name into analysis_id: #############
 
-DROP FUNCTION IF EXISTS analysis_name2id;
-DELIMITER |
-CREATE FUNCTION analysis_name2id(param_logic_name CHAR(64))
-RETURNS INT
-DETERMINISTIC
-BEGIN
-    DECLARE var_analysis_id INT;
-    SELECT analysis_id INTO var_analysis_id FROM analysis WHERE logic_name=param_logic_name;
-    RETURN var_analysis_id;
-END |
-DELIMITER ;
+#### show hive progress for analyses (turned into a view to give extra flexibility #######
+#
+# Thanks to Greg Jordan for the idea and the original version
+#
+# Usage:
+#       select * from progress;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
+#       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
+#       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
-
-############## show hive progress for all analyses: #######################################
-
-DROP PROCEDURE IF EXISTS show_progress;
-CREATE PROCEDURE show_progress()
-    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*)
-    FROM analysis_job j, analysis a
-    WHERE a.analysis_id=j.analysis_id
+CREATE OR REPLACE VIEW progress AS
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*) cnt, analysis_job_id example_job_id
+    FROM analysis_job j JOIN analysis a USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
-############## show hive progress for a particular analysis (given by name) ###############
 
-DROP PROCEDURE IF EXISTS show_progress_analysis;
-CREATE PROCEDURE show_progress_analysis(IN param_logic_name char(64))
-    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*)
-    FROM analysis_job j, analysis a
-    WHERE a.analysis_id=j.analysis_id
-    AND   a.logic_name=param_logic_name
-    GROUP BY j.status, j.retry_count;
-
-#### time progress of an analysis or group of analyses (given by a name pattern) ##########
+#### time an analysis or group of analyses (given by a name pattern) ######################################
+# You'll get better precision when the analyses involved have been done or failed rather than still running.
+#
+# Usage:
+#       call time_analysis('%');                # time the whole pipeline
+#       call time_analysis('load_uniprot%');    # time the group of analyses dealing with loading Uniprot members
+#       call time_analysis('mcl');              # time one specific analysis
 
 DROP PROCEDURE IF EXISTS time_analysis;
-CREATE PROCEDURE time_analysis(IN param_logic_name char(64))
+CREATE PROCEDURE time_analysis(IN param_logic_name_pattern char(64))
+READS SQL DATA
     SELECT
-        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 measured_in_days,
-        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 measured_in_hours
-        FROM hive JOIN analysis USING (analysis_id)
-        WHERE logic_name like param_logic_name;
+        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 AS measured_in_hours,
+        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 AS measured_in_days
+        FROM hive h JOIN analysis a USING (analysis_id)
+        WHERE logic_name like param_logic_name_pattern;
+
+
+#### Searches for a given string in analysis_job.input_id or analysis_data.data, and returns the  matching jobs.                                                                                        
+#
+# Thanks to Greg Jordan for the idea and the original version
+#
+# Usage:
+#       call job_search('other_415');           # return all jobs whose input_id or analysis_data match the pattern
+
+DROP PROCEDURE IF EXISTS job_search;                                                                                                                                                                  
+CREATE PROCEDURE job_search(IN srch CHAR(40))                                                                                                                                                         
+READS SQL DATA                                                                                                                                                                                        
+  SELECT
+    a.analysis_id,
+    a.logic_name,
+    j.analysis_job_id AS job_id,
+    j.status,
+    j.retry_count,
+    IFNULL(d.data, j.input_id) input_id
+  FROM analysis_job j JOIN analysis a USING (analysis_id)
+    LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)                                                                                              
+  WHERE j.input_id LIKE concat('%',srch,'%') OR d.data LIKE concat('%',srch,'%');
+
 
 ############## reset failed jobs for analysis #############################################
+#
+# Usage:
+#       call reset_failed_jobs_for_analysis('load_uniprot');    # reset failed jobs of this particular analysis
 
 DROP PROCEDURE IF EXISTS reset_failed_jobs_for_analysis;
 CREATE PROCEDURE reset_failed_jobs_for_analysis(IN param_logic_name char(64))
-    UPDATE analysis_job j, analysis a
+MODIFIES SQL DATA
+    UPDATE analysis_job j JOIN analysis a USING (analysis_id)
     SET j.status='READY', j.retry_count=0
     WHERE a.logic_name=param_logic_name
-    AND   a.analysis_id=j.analysis_id
     AND   j.status='FAILED';
 
+
 ############## drop hive tables ###########################################################
+#
+# Usage:
+#       call drop_hive_tables;      # just drop them all
 
 DROP PROCEDURE IF EXISTS drop_hive_tables;
 CREATE PROCEDURE drop_hive_tables()
+MODIFIES SQL DATA
     DROP TABLE hive, dataflow_rule, analysis_ctrl_rule, analysis_job, analysis_job_file, analysis_data, analysis_stats, resource_description, analysis_stats_monitor, monitor;
 
