@@ -14,8 +14,7 @@ BEGIN
     DECLARE var_analysis_id INT;
     SELECT analysis_id INTO var_analysis_id FROM analysis WHERE logic_name=param_logic_name;
     RETURN var_analysis_id;
-END
-|
+END |
 DELIMITER ;
 
 
