@@ -39,6 +39,16 @@ CREATE PROCEDURE show_progress_analysis(IN param_logic_name char(64))
     AND   a.logic_name=param_logic_name
     GROUP BY j.status, j.retry_count;
 
+#### time progress of an analysis or group of analyses (given by a name pattern) ##########
+
+DROP PROCEDURE IF EXISTS time_analysis;
+CREATE PROCEDURE time_analysis(IN param_logic_name char(64))
+    SELECT
+        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 measured_in_days,
+        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 measured_in_hours
+        FROM hive JOIN analysis USING (analysis_id)
+        WHERE logic_name like param_logic_name;
+
 ############## reset failed jobs for analysis #############################################
 
 DROP PROCEDURE IF EXISTS reset_failed_jobs_for_analysis;
