@@ -14,8 +14,62 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+16.Mar, 2011 : Leo
 
-4-5.Jan, 2011 : Leo Gordon
+* Reviewed some procedures.sql adding a procedure for timing and several tricks suggested by Greg.
+
+10-12.Mar, 2011 : Andy
+
+* Introduced a new script for "off-line" creation of pipeline diagrams based on GraphViz.
+    You will have to refrain from direct creation of jobs/analyses/rules in your pipeline
+    and do dataflow instead to benefit from the drawing.
+
+9.Mar, 2011 : Leo
+
+* Tried a new debugging trick (dumping the Hive database at key steps in the pipeline)
+    and documented it in SystemCmd.pm module.
+
+2.Mar, 2011 : Leo
+
+* -keep_alive option added to the Beekeeper to allow it to loop even when all jobs are done.
+    Requested by Bethan for tracking Blast jobs submitted from the web.
+
+1.Feb, 2011 : Miguel 
+
+* fixed init_pipeline.pl that was not propagating an error message from importing a PipeConfig module
+
+27.Jan, 2011 : Leo
+
+* Beekeeper will warn if a pipeline doesn't have a name defined
+    (to avoid clashes with other unnamed pipelines on the farm).
+
+21.Jan, 2011 : Leo
+
+* Foreign key constraints have been moved into a separate .sql file,
+    to allow the user to switch them all off.
+
+19-20.Jan, 2011 : Leo
+
+* An analysis can now be empty for blocking purposes (blocks only while it contains undone jobs).
+    This allows creating more flexible pipelines (that have branches that may never execute, but will not block the rest).
+
+19.Jan, 2011 : Leo
+
+* AnalysisJobAdaptor now retries 3 times to avoid deadlock situations when claiming jobs (may need further attn)
+
+14.Jan, 2011 : Leo
+
+* several textual fields in the schema extended to take longer strings
+
+12.Jan, 2011 : Leo
+
+* MySQLTransfer can now param_substitute()
+
+10-21.Jan, 2011 : Leo
+
+* fixed an issue with $self->o() mechanism in lists (incomplete substitutions).
+
+4-5.Jan, 2011 : Leo
 
 * fixed multiple issues that appeared after introduction of the foreign keys
 but only became visible after some testing (thanks to Gautier for extra testing!).
