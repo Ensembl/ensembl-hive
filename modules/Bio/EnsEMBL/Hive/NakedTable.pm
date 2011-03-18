@@ -77,9 +77,9 @@ sub url {
 }
 
 sub dataflow {
-    my ( $self, $data_hash ) = @_;
+    my ( $self, $output_ids ) = @_;
 
-    return $self->adaptor->dataflow($self, $data_hash);
+    return $self->adaptor->dataflow($self, $output_ids);
 }
 
 

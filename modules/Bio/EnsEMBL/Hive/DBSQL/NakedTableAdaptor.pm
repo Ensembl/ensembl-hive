@@ -37,27 +37,33 @@ sub create_new {
 }
 
 sub dataflow {
-    my ( $self, $naked_table, $data_hash ) = @_;
+    my ( $self, $naked_table, $output_ids ) = @_;
 
-    if(not ref($data_hash)) {   # assume it was passed as a string
-        $data_hash = eval $data_hash;
-    }
+    return unless(@$output_ids);
 
     my $table_name = $naked_table->table_name();
 
     my $insertion_method = uc( $naked_table->insertion_method() );  # INSERT, INSERT_IGNORE or REPLACE
     $insertion_method =~ s/_/ /g;
 
-        # By using question marks you can insert true NULLs by setting corresponding values to undefs:
-    my $sql = "$insertion_method INTO $table_name (".join(', ', keys %$data_hash).') VALUES ('.join(',', (('?') x scalar(keys %$data_hash))).')';
-    my $sth = $self->prepare( $sql );
-    $sth->execute( values %$data_hash ); # Perl manual promises that the order of "keys" will be the same as the order of "values", so no need to sort.
+        # NB: here we assume all hashes will have the same keys (and also the same order):
+    my @column_names = keys %{$output_ids->[0]};
 
-    my $insert_id = $sth->{'mysql_insertid'}; # capture it just in case
+        # By using question marks you can insert true NULLs by setting corresponding values to undefs:
+    my $sql = "$insertion_method INTO $table_name (".join(', ', @column_names).') VALUES ('.join(',', (('?') x scalar(@column_names))).')';
+    my $sth = $self->prepare( $sql );
+
+    my @insert_ids = ();
+
+    foreach my $data_hash (@$output_ids) {
+        $sth->execute( values %$data_hash ); # Perl manual promises that the order of "keys" will be the same as the order of "values", so no need to sort.
+        push @insert_ids, $sth->{'mysql_insertid'}; # capture it just in case
+
+    }
 
     $sth->finish();
 
-    return $insert_id;
+    return \@insert_ids;
 }
 
 1;

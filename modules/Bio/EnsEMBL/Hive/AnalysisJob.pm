@@ -238,22 +238,25 @@ sub dataflow_output_id {
 
     my @output_job_ids = ();
     my $rules       = $self->adaptor->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis_id, $branch_code);
-    foreach my $rule (@{$rules}) {
+    foreach my $rule (@$rules) {
 
-        my $substituted_template;
+        my $output_ids_for_this_rule;
         if(my $template = $rule->input_id_template()) {
-            $substituted_template = $self->param_substitute($template);
+            $output_ids_for_this_rule = [ $self->param_substitute($template) ];
+        } else {
+            $output_ids_for_this_rule = $output_ids;
         }
 
         my $target_analysis_or_table = $rule->to_analysis();
 
-        foreach my $output_id ($substituted_template ? ($substituted_template) : @$output_ids) {
+        if($target_analysis_or_table->can('dataflow')) {
 
-            if($target_analysis_or_table->can('dataflow')) {
+            my $insert_ids = $target_analysis_or_table->dataflow( $output_ids_for_this_rule );
 
-                my $insert_id = $target_analysis_or_table->dataflow( $output_id );
+        } else {
 
-            } else {
+            foreach my $output_id ( @$output_ids_for_this_rule ) {
+
                 if(my $job_id = $self->adaptor->CreateNewJob(
                     -input_id       => $output_id,
                     -analysis       => $target_analysis_or_table,
