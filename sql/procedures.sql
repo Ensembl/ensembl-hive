@@ -32,6 +32,7 @@ DROP PROCEDURE IF EXISTS time_analysis;
 CREATE PROCEDURE time_analysis(IN param_logic_name_pattern char(64))
 READS SQL DATA
     SELECT
+        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/60 AS measured_in_minutes,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 AS measured_in_hours,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 AS measured_in_days
         FROM hive h JOIN analysis a USING (analysis_id)
