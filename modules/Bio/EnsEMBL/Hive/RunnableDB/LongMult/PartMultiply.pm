@@ -67,7 +67,7 @@ sub write_output {  # but this time we have something to store
         'a_multiplier'  => $self->param('a_multiplier'),
         'digit'         => $self->param('digit'),
         'result'        => $self->param('result')
-    }, 1);
+    }, 'MAIN');
 }
 
 =head2 _rec_multiply

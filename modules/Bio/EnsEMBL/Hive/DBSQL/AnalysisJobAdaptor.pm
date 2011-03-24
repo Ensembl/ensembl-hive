@@ -577,18 +577,16 @@ sub release_undone_jobs_from_worker {
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
         if( $resource_overusage ) {
-
-            my $branch_code = {
-                'MEMLIMIT' => '-1',
-                'RUNLIMIT' => '-2',
-            }->{$cod};
-
-            $passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, $branch_code );
+            if($passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, $cod )) {
+                $msg .= ', performing gc_dataflow';
+            }
+        }
+        unless($passed_on) {
+            if($passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, 'ANYFAILURE' )) {
+                $msg .= ", performing 'ANYFAILURE' gc_dataflow";
+            }
         }
 
-        if($passed_on) {
-            $msg .= ', performing gc_dataflow';
-        }
         $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg, not $passed_on );
 
         unless($passed_on) {
@@ -623,9 +621,9 @@ sub release_and_age_job {
 =cut
 
 sub gc_dataflow {
-    my ($self, $analysis_id, $job_id, $branch_code) = @_;
+    my ($self, $analysis_id, $job_id, $branch_name) = @_;
 
-    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($analysis_id, $branch_code) }) {
+    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($analysis_id, $branch_name) }) {
         return 0;   # no corresponding gc_dataflow rule has been defined
     }
 
@@ -633,7 +631,7 @@ sub gc_dataflow {
 
     $job->param_init( 0, $job->input_id() );    # input_id_templates still supported, however to a limited extent
 
-    $job->dataflow_output_id( $job->input_id() , $branch_code );
+    $job->dataflow_output_id( $job->input_id() , $branch_name );
 
     $job->update_status('PASSED_ON');
     

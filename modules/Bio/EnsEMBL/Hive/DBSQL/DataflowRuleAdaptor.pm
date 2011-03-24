@@ -46,6 +46,27 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
+=head2 branch_name_2_code
+
+Description: encodes a branch mnemonic name into numeric code
+
+=cut
+
+sub branch_name_2_code {
+    my $branch_name_or_code = pop @_;   # NB: we take the *last* arg, so it works both as a method and a subroutine
+
+    $branch_name_or_code=1 unless(defined($branch_name_or_code));
+
+    return ($branch_name_or_code=~/^\-?\d+$/)
+        ? $branch_name_or_code
+        : {
+            'MAIN'          =>  1,
+
+            'ANYFAILURE'    =>  0,
+            'MEMLIMIT'      => -1,
+            'RUNLIMIT'      => -2,
+        }->{$branch_name_or_code} || die "Could not map the branch_name '$branch_name_or_code' to the internal code";
+}
 
 =head2 fetch_from_analysis_id_branch_code
 
@@ -60,10 +81,11 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 =cut
 
 sub fetch_from_analysis_id_branch_code {
-    my ($self, $analysis_id, $branch_code) = @_;
+    my ($self, $analysis_id, $branch_name_or_code) = @_;
 
     return [] unless($analysis_id);
-    $branch_code ||= 1;
+
+    my $branch_code = $self->branch_name_2_code($branch_name_or_code);
 
     my $constraint = "r.from_analysis_id=${analysis_id} AND r.branch_code=${branch_code}";
 
@@ -181,7 +203,7 @@ sub remove {
 =cut
 
 sub create_rule {
-    my ($self, $from_analysis, $to_analysis_or_url, $branch_code, $input_id_template) = @_;
+    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template) = @_;
 
     return unless($from_analysis and $to_analysis_or_url);
 
@@ -192,7 +214,7 @@ sub create_rule {
             ? ( -to_analysis     => $to_analysis_or_url )
             : ( -to_analysis_url => $to_analysis_or_url ),
 
-        -branch_code        =>  $branch_code,
+        -branch_code        =>  $self->branch_name_2_code($branch_name_or_code),
         -input_id_template  =>  $input_id_template,
     );
 

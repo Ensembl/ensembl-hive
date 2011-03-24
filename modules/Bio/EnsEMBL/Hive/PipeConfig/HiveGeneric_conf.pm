@@ -431,8 +431,8 @@ sub run {
             $flow_into ||= {};
             $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
-            foreach my $branch_code (sort {$a <=> $b} keys %$flow_into) {
-                my $heirs = $flow_into->{$branch_code};
+            foreach my $branch_name_or_code (keys %$flow_into) {
+                my $heirs = $flow_into->{$branch_name_or_code};
 
                 $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
 
@@ -442,10 +442,10 @@ sub run {
 
                     my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                    my $new_dfr    = $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_code, $input_id_template);
+                    my $new_dfr    = $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template);
                     my $dfr_action = $new_dfr ? 'Created a new' : 'Found an existing';
 
-                    warn "$dfr_action DataFlow rule: [$branch_code] $logic_name -> $heir_url"
+                    warn "$dfr_action DataFlow rule: [$branch_name_or_code] $logic_name -> $heir_url"
                         .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }

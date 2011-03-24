@@ -128,7 +128,7 @@ sub branch_code {
     if(@_) { # setter mode
         $self->{'_branch_code'} = shift @_;
     }
-    return ($self->{'_branch_code'} ||= 1);
+    return $self->{'_branch_code'};
 }
 
 =head2 input_id_template

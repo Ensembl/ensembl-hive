@@ -82,10 +82,10 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
     my $output_ids = $self->param('output_ids');
 
-        # first we flow the branch-1 into the (semaphored) funnel job:
-    my ($funnel_job_id) = @{ $self->dataflow_output_id($self->input_id, 1, { -semaphore_count => scalar(@$output_ids) })  };
+        # first we flow the MAIN branch into the (semaphored) funnel job:
+    my ($funnel_job_id) = @{ $self->dataflow_output_id($self->input_id, 'MAIN', { -semaphore_count => scalar(@$output_ids) })  };
 
-        # then we fan out into branch-2, and pass the $funnel_job_id to all of them
+        # then we fan out into branch#2, and pass the $funnel_job_id to all of them
     my $fan_job_ids = $self->dataflow_output_id($output_ids, 2, { -semaphored_job_id => $funnel_job_id } );
 }
 

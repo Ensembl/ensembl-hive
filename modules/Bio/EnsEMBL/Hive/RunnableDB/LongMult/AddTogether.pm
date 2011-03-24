@@ -84,7 +84,7 @@ sub write_output {  # store and dataflow
         'a_multiplier' => $self->param('a_multiplier'),
         'b_multiplier' => $self->param('b_multiplier'),
         'result'       => $self->param('result'),
-    }, 1);
+    }, 'MAIN');
 }
 
 =head2 _add_together

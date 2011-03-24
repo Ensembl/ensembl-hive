@@ -201,30 +201,40 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
 
 ##-----------------[/indicators to the Worker]-------------------------------
 
+=head2 warning
+
+    Description:    records a non-error message in 'job_message' table linked to the current job
+
+=cut
+
+sub warning {
+    my ($self, $msg) = @_;
+
+    $self->adaptor->db->get_JobMessageAdaptor()->register_message($self->dbID, $msg, 0);
+}
 
 =head2 dataflow_output_id
 
     Title        :  dataflow_output_id
     Arg[1](req)  :  <string> $output_id 
-    Arg[2](opt)  :  <int> $branch_code (optional, defaults to 1)
+    Arg[2](opt)  :  <int> $branch_name_or_code (optional, defaults to 1)
     Arg[3](opt)  :  <hashref> $create_job_options (optional, defaults to {}, options added to the CreateNewJob method)
-    Usage        :  $self->dataflow_output_id($output_id, $branch_code);
+    Usage        :  $self->dataflow_output_id($output_id, $branch_name_or_code);
     Function:  
       If a RunnableDB(Process) needs to create jobs, this allows it to have jobs 
       created and flowed through the dataflow rules of the workflow graph.
       This 'output_id' becomes the 'input_id' of the newly created job at
-      the ends of the dataflow pipes.  The optional 'branch_code' determines
+      the ends of the dataflow pipes.  The optional 'branch_name_or_code' determines
       which dataflow pipe(s) to flow the job through.      
 
 =cut
 
 sub dataflow_output_id {
-    my ($self, $output_ids, $branch_code, $create_job_options) = @_;
+    my ($self, $output_ids, $branch_name_or_code, $create_job_options) = @_;
 
     $output_ids  ||= [ $self->input_id() ];                                 # replicate the input_id in the branch_code's output by default
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
 
-    $branch_code        ||=  1;     # default branch_code is 1
     $create_job_options ||= {};     # { -block => 1 } or { -semaphore_count => scalar(@fan_job_ids) } or { -semaphored_job_id => $funnel_job_id }
 
         # this tricky code is responsible for correct propagation of semaphores down the dataflow pipes:
@@ -233,11 +243,13 @@ sub dataflow_output_id {
         # However if nothing is supplied, semaphored_job_id will be propagated from the parent job:
     my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->semaphored_job_id();
 
+    my $dataflow_rule_adaptor = $self->adaptor->db->get_DataflowRuleAdaptor;
+
         # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
-    $self->autoflow(0) if($branch_code==1);
+    $self->autoflow(0) if($dataflow_rule_adaptor->branch_name_2_code($branch_name_or_code)==1);
 
     my @output_job_ids = ();
-    my $rules       = $self->adaptor->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($self->analysis_id, $branch_code);
+    my $rules       = $dataflow_rule_adaptor->fetch_from_analysis_id_branch_code($self->analysis_id, $branch_name_or_code);
     foreach my $rule (@$rules) {
 
         my $output_ids_for_this_rule;
@@ -275,6 +287,7 @@ sub dataflow_output_id {
             }
         }
     }
+
     return \@output_job_ids;
 }
 

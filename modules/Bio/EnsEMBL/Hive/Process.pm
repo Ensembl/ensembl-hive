@@ -319,6 +319,12 @@ sub param_substitute {
     return $self->input_job->param_substitute(@_);
 }
 
+sub warning {
+    my $self = shift @_;
+
+    return $self->input_job->warning(@_);
+}
+
 sub dataflow_output_id {
     my $self = shift @_;
 

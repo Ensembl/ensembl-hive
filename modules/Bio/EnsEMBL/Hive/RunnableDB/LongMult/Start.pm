@@ -81,11 +81,11 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
     my $output_ids = $self->param('output_ids');
 
-        # "fan out" into branch-2 first
+        # "fan out" into branch#2 first
     $self->dataflow_output_id($output_ids, 2);
 
-        # then flow into the branch-1 funnel; input_id would flow into branch_1 by default anyway, but we request it here explicitly:
-    $self->dataflow_output_id($self->input_id, 1);
+        # then flow into the MAIN branch funnel; input_id would flow into MAIN branch by default anyway, but we request it here explicitly:
+    $self->dataflow_output_id($self->input_id, 'MAIN');
 }
 
 1;
