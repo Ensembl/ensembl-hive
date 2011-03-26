@@ -47,11 +47,11 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
-=head2 fetch_by_ctrled_analysis_id
+=head2 fetch_all_by_ctrled_analysis_id
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
-  Example    : $ctrlRuleArray = $adaptor->fetch_by_ctrled_analysis_id($ctrled_analysis->dbID);
+  Example    : $ctrlRuleArray = $adaptor->fetch_all_by_ctrled_analysis_id($ctrled_analysis->dbID);
   Description: Returns an array reference of all the AnalysisCtrlRule objects 
                for the specified controled analysis.
   Returntype : listref of Bio::EnsEMBL::Hive::AnalysisCtrlRule objects
@@ -60,11 +60,11 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
   
 =cut
 
-sub fetch_by_ctrled_analysis_id{
+sub fetch_all_by_ctrled_analysis_id {
   my ($self,$id) = @_;
 
   unless(defined $id) {
-    throw("fetch_by_ctrled_analysis_id must have an id");
+    throw("fetch_all_by_ctrled_analysis_id must have an id");
   }
 
   my $constraint = "r.ctrled_analysis_id = $id";
@@ -127,6 +127,13 @@ sub store {
   Usage   : $self->remove_by_condition_analysis_url("ThisAnalysisLogicName");
   Function: removes all the control rules for this condition analysis URL
   Returns : -
+
+  NB: This method is not called by ensembl-hive code itself,
+  however it is used by two Compara pipeline modules,
+        Bio/EnsEMBL/Compara/Production/GenomicAlignBlock/CreateAlignmentChainsJobs.pm
+      and
+        Bio/EnsEMBL/Compara/Production/GenomicAlignBlock/CreateAlignmentNetsJobs.pm
+  in order to avoid blocking by an empty analysis. It should be re-written by using can_be_empty=1 analyses.
 
 =cut
 

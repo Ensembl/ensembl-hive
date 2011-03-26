@@ -343,7 +343,7 @@ sub determine_status {
 sub check_blocking_control_rules {
     my $self = shift;
   
-    my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_by_ctrled_analysis_id($self->analysis_id);
+    my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id($self->analysis_id);
 
     my $all_ctrl_rules_done = 1;
 
