@@ -160,8 +160,7 @@ sub write_output {
         my $dest_after      = $self->get_row_count($dest_dbh,  $table, $where);
 
         if($src_before == $dest_after) {
-            $self->input_job->incomplete(0);
-            die "Successfully copied $src_before '$table' rows\n";
+            $self->warning("Successfully copied $src_before '$table' rows");
         } else {
             die "Could not copy '$table' rows: $src_before rows from source copied into $dest_after rows in target\n";
         }
@@ -171,14 +170,12 @@ sub write_output {
 
         if($mode eq 'topup') {
             if($src_before == $dest_row_increase) {
-                $self->input_job->incomplete(0);
-                die "Successfully added $src_before '$table' rows\n";
+                $self->warning("Successfully added $src_before '$table' rows");
             } else {
                 die "Could not add rows: $src_before '$table' rows from source copied into $dest_row_increase rows in target\n";
             }
         } elsif($mode eq 'insertignore') {
-            $self->input_job->incomplete(0);
-            die "Cannot check success/failure in this mode, but the number of '$table' rows in target increased by $dest_row_increase\n";
+            $self->warning("Cannot check success/failure in this mode, but the number of '$table' rows in target increased by $dest_row_increase");
         }
     }
 }
