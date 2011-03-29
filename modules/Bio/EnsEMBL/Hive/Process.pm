@@ -86,7 +86,7 @@ package Bio::EnsEMBL::Hive::Process;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Hive::AnalysisJob;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes

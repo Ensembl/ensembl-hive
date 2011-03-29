@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
