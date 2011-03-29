@@ -254,7 +254,7 @@ sub dataflow_output_id {
 
         my $output_ids_for_this_rule;
         if(my $template = $rule->input_id_template()) {
-            $output_ids_for_this_rule = [ $self->param_substitute($template) ];
+            $output_ids_for_this_rule = [ eval $self->param_substitute($template) ];
         } else {
             $output_ids_for_this_rule = $output_ids;
         }
