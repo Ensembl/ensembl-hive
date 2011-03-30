@@ -57,7 +57,7 @@ sub branch_name_2_code {
 
     $branch_name_or_code=1 unless(defined($branch_name_or_code));
 
-    return ($branch_name_or_code=~/^\-?\d+$/)
+    my $branch_code = ($branch_name_or_code=~/^\-?\d+$/)
         ? $branch_name_or_code
         : {
             'MAIN'          =>  1,
@@ -65,7 +65,8 @@ sub branch_name_2_code {
             'ANYFAILURE'    =>  0,
             'MEMLIMIT'      => -1,
             'RUNLIMIT'      => -2,
-        }->{$branch_name_or_code} || die "Could not map the branch_name '$branch_name_or_code' to the internal code";
+        }->{$branch_name_or_code};
+    return defined($branch_code) ? $branch_code : die "Could not map the branch_name '$branch_name_or_code' to the internal code";
 }
 
 =head2 fetch_from_analysis_id_branch_code
