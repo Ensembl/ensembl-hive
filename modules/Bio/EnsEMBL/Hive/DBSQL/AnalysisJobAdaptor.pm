@@ -623,7 +623,7 @@ sub release_and_age_job {
 sub gc_dataflow {
     my ($self, $analysis_id, $job_id, $branch_name) = @_;
 
-    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_from_analysis_id_branch_code($analysis_id, $branch_name) }) {
+    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($analysis_id, $branch_name) }) {
         return 0;   # no corresponding gc_dataflow rule has been defined
     }
 

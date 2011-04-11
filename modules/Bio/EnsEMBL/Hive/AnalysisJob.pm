@@ -249,7 +249,7 @@ sub dataflow_output_id {
     $self->autoflow(0) if($dataflow_rule_adaptor->branch_name_2_code($branch_name_or_code)==1);
 
     my @output_job_ids = ();
-    my $rules       = $dataflow_rule_adaptor->fetch_from_analysis_id_branch_code($self->analysis_id, $branch_name_or_code);
+    my $rules       = $dataflow_rule_adaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_name_or_code);
     foreach my $rule (@$rules) {
 
         my $output_ids_for_this_rule;
