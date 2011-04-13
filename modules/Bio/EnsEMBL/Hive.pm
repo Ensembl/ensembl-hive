@@ -25,7 +25,7 @@
   Each worker is linked to an analysis_id, registers its self on creation
   into the Hive, creates a RunnableDB instance of the Analysis->module,
   gets relevant configuration information from the database, does its
-  work, creates the next layer of analysis_job entries by interfacing to
+  work, creates the next layer of job entries by interfacing to
   the DataflowRuleAdaptor to determine the analyses it needs to pass its
   output data to and creates jobs on the database of the next analysis.
   It repeats this cycle until it has lived its lifetime or until there are no
@@ -37,7 +37,7 @@
 
   The Queen's primary job is to create Workers to get the work down.
   As part of this, she is also responsible for summarizing the status of the
-  analyses by querying the analysis_jobs, summarizing, and updating the
+  analyses by querying the jobs, summarizing, and updating the
   analysis_stats table.  From this she is also responsible for monitoring and
   'unblocking' analyses via the analysis_ctrl_rules.
   The Queen is also responsible for freeing up jobs that were claimed by Workers

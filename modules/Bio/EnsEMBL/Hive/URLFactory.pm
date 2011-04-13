@@ -106,7 +106,7 @@ sub fetch {
 
             return $dba->get_AnalysisAdaptor->fetch_by_url_query($tparam_name, $tparam_value);
 
-        } elsif($table_name eq 'analysis_job') {
+        } elsif($table_name eq 'job') {
 
             return $dba->get_AnalysisJobAdaptor->fetch_by_url_query($tparam_name, $tparam_value);
 

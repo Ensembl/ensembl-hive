@@ -63,16 +63,16 @@
     or run it in step-by-step mode, initiating every step by separate executions of 'beekeeper.pl ... -run' command.
     We will use the step-by-step mode in order to see what is going on.
 
-5.4 Go to mysql window and check the contents of analysis_job table:
+5.4 Go to mysql window and check the contents of job table:
 
-        MySQL> SELECT * FROM analysis_job;
+        MySQL> SELECT * FROM job;
 
     It will only contain jobs that set up the multiplication tasks in 'READY' mode - meaning 'ready to be taken by workers and executed'.
 
     Go to the beekeeper window and run the 'beekeeper.pl ... -run' once.
     It will submit a worker to the farm that will at some point get the 'start' job(s).
 
-5.5 Go to mysql window again and check the contents of analysis_job table. Keep checking as the worker may spend some time in 'pending' state.
+5.5 Go to mysql window again and check the contents of job table. Keep checking as the worker may spend some time in 'pending' state.
 
     After the first worker is done you will see that 'start' jobs are now done and new 'part_multiply' and 'add_together' jobs have been created.
     Also check the contents of 'intermediate_result' table, it should be empty at that moment:
@@ -82,7 +82,7 @@
     Go back to the beekeeper window and run the 'beekeeper.pl ... -run' for the second time.
     It will submit another worker to the farm that will at some point get the 'part_multiply' jobs.
 
-5.6 Now check both 'analysis_job' and 'intermediate_result' tables again.
+5.6 Now check both 'job' and 'intermediate_result' tables again.
     At some moment 'part_multiply' jobs will have been completed and the results will go into 'intermediate_result' table;
     'add_together' jobs are still to be done.
     

@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 
 -- ----------------------------------------------------------------------------------
 --
--- Table structure for table 'hive'
+-- Table structure for table 'worker'
 --
 -- overview:
 --   Table which tracks the workers of a hive as they exist out in the world.
@@ -104,15 +104,15 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 -- semantics:
 --
 
-CREATE TABLE hive (
+CREATE TABLE worker (
   worker_id        int(10) unsigned NOT NULL auto_increment,
   analysis_id      int(10) unsigned NOT NULL,
-  beekeeper        varchar(80) DEFAULT '' NOT NULL,
-  host	           varchar(40) DEFAULT '' NOT NULL,
-  process_id       varchar(40) DEFAULT '' NOT NULL,
+  meadow_type      enum('LSF', 'LOCAL') NOT NULL,
+  host	           varchar(40) DEFAULT NULL,
+  process_id       varchar(40) DEFAULT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
   status           enum('READY','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL,
-  born	           datetime NOT NULL,
+  born	           timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'FATALITY') DEFAULT '' NOT NULL,
@@ -131,13 +131,13 @@ CREATE TABLE hive (
 --   Extension of simple_rule design except that goal(to) is now in extended URL format e.g.
 --   mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
 --   (full network address of an analysis).  The only requirement is that there are rows in 
---   the analysis_job, analysis, dataflow_rule, and hive tables so that the following join
+--   the job, analysis, dataflow_rule, and worker tables so that the following join
 --   works on the same database 
 --   WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
---   AND   analysis.analysis_id = analysis_job.analysis_id
---   AND   analysis.analysis_id = hive.analysis_id
+--   AND   analysis.analysis_id = job.analysis_id
+--   AND   analysis.analysis_id = worker.analysis_id
 --
---   These are the rules used to create entries in the analysis_job table where the
+--   These are the rules used to create entries in the job table where the
 --   input_id (control data) is passed from one analysis to the next to define work.
 --  
 --   The analysis table will be extended so that it can specify different read and write
@@ -147,11 +147,11 @@ CREATE TABLE hive (
 --   dataflow_rule_id     - internal ID
 --   from_analysis_id     - foreign key to analysis table analysis_id
 --   to_analysis_url      - foreign key to net distributed analysis logic_name reference
---   branch_code          - joined to analysis_job.branch_code to allow branching
+--   branch_code          - joined to job.branch_code to allow branching
 --   input_id_template    - a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 
 CREATE TABLE dataflow_rule (
-  dataflow_rule_id    int(10) unsigned not null auto_increment,
+  dataflow_rule_id    int(10) unsigned NOT NULL auto_increment,
   from_analysis_id    int(10) unsigned NOT NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
@@ -193,45 +193,45 @@ CREATE TABLE analysis_ctrl_rule (
 
 -- ---------------------------------------------------------------------------------
 --
--- Table structure for table 'analysis_job'
+-- Table structure for table 'job'
 --
 -- overview:
---   The analysis_job is the heart of this system.  It is the kiosk or blackboard
+--   The job is the heart of this system.  It is the kiosk or blackboard
 --   where workers find things to do and then post work for other works to do.
 --   These jobs are created prior to work being done, are claimed by workers,
 --   are updated as the work is done, with a final update on completion.
 --
 -- semantics:
---   analysis_job_id         - autoincrement id
---   prev_analysis_job_id    - previous analysis_job which created this one (and passed input_id)
+--   job_id                  - autoincrement id
+--   prev_job_id             - previous job which created this one (and passed input_id)
 --   analysis_id             - the analysis_id needed to accomplish this job.
 --   input_id                - input data passed into Analysis:RunnableDB to control the work
---   worker_id               - link to hive table to define which worker claimed this job
+--   worker_id               - link to worker table to define which worker claimed this job
 --   status                  - state the job is in
 --   retry_count             - number times job had to be reset when worker failed to run it
---   completed               - timestamp when job was completed
+--   completed               - datetime when job was completed
 --
 --   semaphore_count         - if this count is >0, the job is conditionally blocked (until this count drops to 0 or below).
 --                              Default=0 means "nothing is blocking me by default".
---   semaphored_job_id       - the analysis_job_id of job S that is waiting for this job to decrease S's semaphore_count.
+--   semaphored_job_id       - the job_id of job S that is waiting for this job to decrease S's semaphore_count.
 --                              Default=NULL means "I'm not blocking anything by default".
 
-CREATE TABLE analysis_job (
-  analysis_job_id           int(10) NOT NULL auto_increment,
-  prev_analysis_job_id      int(10) DEFAULT NULL,  #analysis_job which created this from rules
+CREATE TABLE job (
+  job_id                    int(10) NOT NULL auto_increment,
+  prev_job_id               int(10) DEFAULT NULL,  # the job that created this one using a dataflow rule
   analysis_id               int(10) unsigned NOT NULL,
   input_id                  char(255) NOT NULL,
   worker_id                 int(10) unsigned DEFAULT NULL,
   status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
-  retry_count               int(10) default 0 not NULL,
-  completed                 datetime NOT NULL,
-  runtime_msec              int(10) default 0 NOT NULL, 
-  query_count               int(10) default 0 NOT NULL, 
+  retry_count               int(10) default 0 NOT NULL,
+  completed                 datetime DEFAULT NULL,
+  runtime_msec              int(10) default NULL, 
+  query_count               int(10) default NULL, 
 
   semaphore_count           int(10) NOT NULL default 0,
   semaphored_job_id         int(10) DEFAULT NULL,
 
-  PRIMARY KEY                  (analysis_job_id),
+  PRIMARY KEY                  (job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
   INDEX analysis_status_sema_retry (analysis_id, status, semaphore_count, retry_count),
   INDEX worker_id              (worker_id)
@@ -248,7 +248,7 @@ CREATE TABLE analysis_job (
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---      analysis_job_id     - the id of the job that threw the message
+--      job_id              - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
 --          analysis_id     - analysis_id of both the job and the worker (it is indeed redundant, but very convenient)
 --               moment     - when the message was thrown
@@ -258,7 +258,7 @@ CREATE TABLE analysis_job (
 --             is_error     - binary flag
 
 CREATE TABLE job_message (
-  analysis_job_id           int(10) NOT NULL,
+  job_id                    int(10) NOT NULL,
   worker_id                 int(10) unsigned NOT NULL,
   analysis_id               int(10) unsigned NOT NULL,
   moment                    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -267,38 +267,38 @@ CREATE TABLE job_message (
   msg                       text,
   is_error                  boolean,
 
-  PRIMARY KEY               (analysis_job_id, worker_id, moment),
+  PRIMARY KEY               (job_id, worker_id, moment),
   INDEX worker_id           (worker_id),
-  INDEX analysis_job_id     (analysis_job_id)
+  INDEX job_id              (job_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 -- ---------------------------------------------------------------------------------
 --
--- Table structure for table 'analysis_job_file'
+-- Table structure for table 'job_file'
 --
 -- overview:
---   Table which holds paths to files created by an analysis_job
+--   Table which holds paths to files created by jobs
 --   e.g. STDOUT STDERR, temp directory
 --   or output data files created by the RunnableDB
---   There can only be one entry of a certain type for a given analysis_job
+--   There can only be one entry of a certain type for a given job
 --
 -- semantics:
---   analysis_job_id    - foreign key
---   worker_id          - link to hive table to define which worker claimed this job
+--   job_id             - foreign key
+--   worker_id          - link to worker table to define which worker claimed this job
 --   retry              - copy of retry_count of job as it was run
 --   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
 --   path               - path to file or directory
 
-CREATE TABLE analysis_job_file (
-  analysis_job_id         int(10) NOT NULL,
+CREATE TABLE job_file (
+  job_id                  int(10) NOT NULL,
   worker_id               int(10) unsigned NOT NULL,
   retry                   int(10) NOT NULL,
   type                    varchar(16) NOT NULL default '',
   path                    varchar(255) NOT NULL,
 
-  UNIQUE KEY job_hive_type  (analysis_job_id, worker_id, type),
+  UNIQUE KEY job_worker_type  (job_id, worker_id, type),
   INDEX worker_id           (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -348,7 +348,7 @@ CREATE TABLE resource_description (
 --
 -- semantics:
 --   analysis_id          - foreign key to analysis table
---   status               - overview status of the analysis_jobs (cached state)
+--   status               - overview status of the jobs (cached state)
 --   failed_job_tolerance - % of tolerated failed jobs
 --   rc_id                - resource class id (analyses are grouped into disjoint classes)
 
@@ -420,7 +420,7 @@ CREATE TABLE analysis_stats_monitor (
 --   This table stores information about hive performance.
 --
 -- semantics:
---   time           - timestamp
+--   time           - datetime
 --   workers        - number of running workers
 --   throughput     - average numb of completed jobs per sec. of the hive
 --                    (this number is calculated using running workers only)

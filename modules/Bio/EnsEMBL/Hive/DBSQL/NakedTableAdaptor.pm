@@ -12,7 +12,7 @@
 
 =head1 DESCRIPTION
 
-    This module together with its data container are used to enable dataflow into arbitrary tables (rather than just analysis_job).
+    This module together with its data container are used to enable dataflow into arbitrary tables (rather than just job).
 
     NakedTable objects know *where* to dataflow, and NakedTableAdaptor knows *how* to dataflow.
 

@@ -139,7 +139,7 @@ sub refresh {
 sub get_running_worker_count {
   my ($self, $stats) = @_;
 
-  my $sql = "SELECT count(*) FROM hive WHERE cause_of_death='' and analysis_id=?";
+  my $sql = "SELECT count(*) FROM worker WHERE cause_of_death='' and analysis_id=?";
   my $sth = $self->prepare($sql);
   $sth->execute($stats->analysis_id);
   my ($liveCount) = $sth->fetchrow_array();

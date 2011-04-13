@@ -37,11 +37,11 @@ By inheriting from this module you make your module able to deal with parameters
 =head1 DESCRIPTION
 
 Most of Compara RunnableDB methods work under assumption
-that both analysis.parameters and analysis_job.input_id fields contain a Perl-style parameter hashref as a string.
+that both analysis.parameters and job.input_id fields contain a Perl-style parameter hashref as a string.
 
 This module implements a generic param() method that allows to set parameters according to the following parameter precedence rules:
 
-    (1) Job-Specific parameters defined in analysis_job.input_id hash, they have the highest priority and override everything else.
+    (1) Job-Specific parameters defined in job.input_id hash, they have the highest priority and override everything else.
 
     (2) Analysis-Wide parameters defined in analysis.parameters hash. Can be overridden by (1).
 

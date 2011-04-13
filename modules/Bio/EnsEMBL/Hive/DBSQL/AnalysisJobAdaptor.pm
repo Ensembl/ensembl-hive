@@ -59,9 +59,9 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
   Args       : -input_id => string of input_id which will be passed to run the job (or a Perl hash that will be automagically stringified)
                -analysis => Bio::EnsEMBL::Analysis object from a database
                -block        => int(0,1) set blocking state of job (default = 0)
-               -input_job_id => (optional) analysis_job_id of job that is creating this
+               -input_job_id => (optional) job_id of job that is creating this
                                 job.  Used purely for book keeping.
-  Example    : $analysis_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+  Example    : $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                                     -input_id => 'my input data',
                                     -analysis => $myAnalysis);
   Description: uses the analysis object to get the db connection from the adaptor to store a new
@@ -69,7 +69,7 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
                Also updates corresponding analysis_stats by incrementing total_job_count,
                unclaimed_job_count and flagging the incremental update by changing the status
                to 'LOADING' (but only if the analysis is not blocked).
-  Returntype : int analysis_job_id on database analysis is from.
+  Returntype : int job_id on database analysis is from.
   Exceptions : thrown if either -input_id or -analysis are not properly defined
   Caller     : general
 
@@ -80,7 +80,7 @@ sub CreateNewJob {
 
   return undef unless(scalar @args);
 
-  my ($input_id, $analysis, $prev_analysis_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
+  my ($input_id, $analysis, $prev_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
      rearrange([qw(INPUT_ID ANALYSIS INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
 
   throw("must define input_id") unless($input_id);
@@ -99,15 +99,15 @@ sub CreateNewJob {
     $input_id = "_ext_input_analysis_data_id $input_data_id";
   }
 
-  my $sql = q{INSERT ignore into analysis_job 
-              (input_id, prev_analysis_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
+  my $sql = q{INSERT ignore into job 
+              (input_id, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
               VALUES (?,?,?,?,?,?)};
  
   my $status = $blocked ? 'BLOCKED' : 'READY';
 
   my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
-  $sth->execute($input_id, $prev_analysis_job_id, $analysis->dbID, $status, $semaphore_count, $semaphored_job_id);
+  $sth->execute($input_id, $prev_job_id, $analysis->dbID, $status, $semaphore_count, $semaphored_job_id);
   my $job_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
@@ -131,7 +131,7 @@ sub CreateNewJob {
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
   Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the AnalysisJob defined by the analysis_job_id $id.
+  Description: Returns the AnalysisJob defined by the job_id $id.
   Returntype : Bio::EnsEMBL::Hive::AnalysisJob
   Exceptions : thrown if $id is not defined
   Caller     : general
@@ -191,8 +191,8 @@ sub fetch_all {
 sub fetch_all_failed_jobs {
   my ($self,$analysis_id) = @_;
 
-  my $constraint = "a.status='FAILED'";
-  $constraint .= " AND a.analysis_id=$analysis_id" if($analysis_id);
+  my $constraint = "j.status='FAILED'";
+  $constraint .= " AND j.analysis_id=$analysis_id" if($analysis_id);
   return $self->_generic_fetch($constraint);
 }
 
@@ -200,7 +200,7 @@ sub fetch_all_failed_jobs {
 sub fetch_all_incomplete_jobs_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    my $constraint = "a.status IN ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT') AND a.worker_id='$worker_id'";
+    my $constraint = "j.status IN ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT') AND j.worker_id='$worker_id'";
     return $self->_generic_fetch($constraint);
 }
 
@@ -281,25 +281,25 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['analysis_job', 'a']);
+  return (['job', 'j']);
 }
 
 
 sub _columns {
   my $self = shift;
 
-  return qw (a.analysis_job_id  
-             a.prev_analysis_job_id
-             a.analysis_id	      
-             a.input_id 
-             a.worker_id	      
-             a.status 
-             a.retry_count          
-             a.completed
-             a.runtime_msec
-             a.query_count
-             a.semaphore_count
-             a.semaphored_job_id
+  return qw (j.job_id  
+             j.prev_job_id
+             j.analysis_id	      
+             j.input_id 
+             j.worker_id	      
+             j.status 
+             j.retry_count          
+             j.completed
+             j.runtime_msec
+             j.query_count
+             j.semaphore_count
+             j.semaphored_job_id
             );
 }
 
@@ -330,7 +330,7 @@ sub _objs_from_sth {
             : $column{'input_id'};
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        -DBID               => $column{'analysis_job_id'},
+        -DBID               => $column{'job_id'},
         -ANALYSIS_ID        => $column{'analysis_id'},
         -INPUT_ID           => $input_id,
         -WORKER_ID          => $column{'worker_id'},
@@ -362,7 +362,7 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
     my $jobid = shift @_;
     my $dec   = shift @_ || 1;
 
-    my $sql = "UPDATE analysis_job SET semaphore_count=semaphore_count-? WHERE analysis_job_id=?";
+    my $sql = "UPDATE job SET semaphore_count=semaphore_count-? WHERE job_id=?";
     
     my $sth = $self->prepare($sql);
     $sth->execute($dec, $jobid);
@@ -374,7 +374,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     my $jobid = shift @_;
     my $inc   = shift @_ || 1;
 
-    my $sql = "UPDATE analysis_job SET semaphore_count=semaphore_count+? WHERE analysis_job_id=?";
+    my $sql = "UPDATE job SET semaphore_count=semaphore_count+? WHERE job_id=?";
     
     my $sth = $self->prepare($sql);
     $sth->execute($inc, $jobid);
@@ -386,7 +386,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 
   Arg [1]    : $analysis_id
   Example    :
-  Description: updates the analysis_job.status in the database
+  Description: updates the job.status in the database
   Returntype : 
   Exceptions :
   Caller     : general
@@ -396,7 +396,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 sub update_status {
     my ($self, $job) = @_;
 
-    my $sql = "UPDATE analysis_job SET status='".$job->status."' ";
+    my $sql = "UPDATE job SET status='".$job->status."' ";
 
     if($job->status eq 'DONE') {
         $sql .= ",completed=now()";
@@ -407,7 +407,7 @@ sub update_status {
     } elsif($job->status eq 'READY') {
     }
 
-    $sql .= " WHERE analysis_job_id='".$job->dbID."' ";
+    $sql .= " WHERE job_id='".$job->dbID."' ";
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's make them wait and retry.
     foreach (0..3) {
@@ -445,12 +445,12 @@ sub store_out_files {
 
   return unless($job);
 
-  my $sql = sprintf("DELETE from analysis_job_file WHERE worker_id=%d and analysis_job_id=%d",
+  my $sql = sprintf("DELETE from job_file WHERE worker_id=%d and job_id=%d",
                    $job->worker_id, $job->dbID);
   $self->dbc->do($sql);
   return unless($job->stdout_file or $job->stderr_file);
 
-  $sql = "INSERT ignore INTO analysis_job_file (analysis_job_id, worker_id, retry, type, path) VALUES ";
+  $sql = "INSERT ignore INTO job_file (job_id, worker_id, retry, type, path) VALUES ";
   if($job->stdout_file) {
     $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->worker_id, 
 		    $job->retry_count, $job->stdout_file); 
@@ -484,10 +484,10 @@ sub grab_jobs_for_worker {
     my ($self, $worker) = @_;
   
   my $analysis_id = $worker->analysis->dbID();
-  my $worker_id   = $worker->worker_id();
+  my $worker_id   = $worker->dbID();
 
   my $sql_base = qq{
-    UPDATE analysis_job
+    UPDATE job
     SET worker_id='$worker_id', status='CLAIMED'
     WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0
   };
@@ -504,7 +504,7 @@ sub grab_jobs_for_worker {
     $claim_count = $self->dbc->do($sql_any);
   }
 
-  my $constraint = "a.analysis_id='$analysis_id' AND a.worker_id='$worker_id' AND a.status='CLAIMED'";
+  my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
   return $self->_generic_fetch($constraint);
 }
 
@@ -514,16 +514,16 @@ sub reclaim_job_for_worker {
     my $worker = shift or return;
     my $job    = shift or return;
 
-    my $worker_id = $worker->worker_id();
+    my $worker_id = $worker->dbID();
     my $job_id    = $job->dbID;
 
-    my $sql = "UPDATE analysis_job SET status='CLAIMED', worker_id=? WHERE analysis_job_id=? AND status='READY'";
+    my $sql = "UPDATE job SET status='CLAIMED', worker_id=? WHERE job_id=? AND status='READY'";
 
     my $sth = $self->prepare($sql);
     $sth->execute($worker_id, $job_id);
     $sth->finish;
 
-    my $constraint = "a.analysis_job_id='$job_id' AND a.worker_id='$worker_id' AND a.status='CLAIMED'";
+    my $constraint = "j.job_id='$job_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
     return $self->_generic_fetch($constraint);
 }
 
@@ -549,20 +549,20 @@ sub release_undone_jobs_from_worker {
     my ($self, $worker, $msg) = @_;
 
     my $max_retry_count = $worker->analysis->stats->max_retry_count();
-    my $worker_id       = $worker->worker_id();
+    my $worker_id       = $worker->dbID();
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
         # (previous worker_id does not matter, because that worker has never had a chance to run the job)
     $self->dbc->do( qq{
-        UPDATE analysis_job
+        UPDATE job
            SET status='READY', worker_id=NULL
          WHERE status='CLAIMED'
            AND worker_id='$worker_id'
     } );
 
     my $sth = $self->prepare( qq{
-        SELECT analysis_job_id
-          FROM analysis_job
+        SELECT job_id
+          FROM job
          WHERE worker_id='$worker_id'
            AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
     } );
@@ -606,9 +606,9 @@ sub release_and_age_job {
         # FIXME: would it be possible to retain worker_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
         #
     $self->dbc->do( qq{
-        UPDATE analysis_job
+        UPDATE job
            SET status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
-         WHERE analysis_job_id=$job_id
+         WHERE job_id=$job_id
            AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
     } );
 }
@@ -655,9 +655,9 @@ sub reset_job_by_dbID {
     my $job_id = shift or throw("job_id of the job to be reset is undefined");
 
     $self->dbc->do( qq{
-        UPDATE analysis_job
+        UPDATE job
            SET status='READY', retry_count=0
-         WHERE analysis_job_id=$job_id
+         WHERE job_id=$job_id
     } );
 }
 
@@ -686,7 +686,7 @@ sub reset_all_jobs_for_analysis_id {
   throw("must define analysis_id") unless($analysis_id);
 
   my ($sql, $sth);
-  $sql = "UPDATE analysis_job SET status='READY' WHERE status!='BLOCKED' and analysis_id=?";
+  $sql = "UPDATE job SET status='READY' WHERE status!='BLOCKED' and analysis_id=?";
   $sth = $self->prepare($sql);
   $sth->execute($analysis_id);
   $sth->finish;
@@ -717,13 +717,13 @@ sub remove_analysis_id {
   $self->dbc->do($sql);
   $sql = "ANALYZE TABLE analysis_stats";
   $self->dbc->do($sql);
-  $sql = "DELETE FROM analysis_job WHERE analysis_id=$analysis_id";
+  $sql = "DELETE FROM job WHERE analysis_id=$analysis_id";
   $self->dbc->do($sql);
-  $sql = "ANALYZE TABLE analysis_job";
+  $sql = "ANALYZE TABLE job";
   $self->dbc->do($sql);
-  $sql = "DELETE FROM hive WHERE analysis_id=$analysis_id";
+  $sql = "DELETE FROM worker WHERE analysis_id=$analysis_id";
   $self->dbc->do($sql);
-  $sql = "ANALYZE TABLE hive";
+  $sql = "ANALYZE TABLE worker";
   $self->dbc->do($sql);
 
 }

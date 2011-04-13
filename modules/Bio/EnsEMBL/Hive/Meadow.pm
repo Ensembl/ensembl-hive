@@ -78,7 +78,7 @@ sub generate_job_name {
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
-    return $worker->beekeeper() eq $self->type();
+    return $worker->meadow_type() eq $self->type();
 }
 
 sub check_worker_is_alive_and_mine {

@@ -25,7 +25,7 @@
   Each worker is linked to an analysis_id, registers its self on creation
   into the Hive, creates a RunnableDB instance of the Analysis->module,
   gets relevant configuration information from the database, does its
-  work, creates the next layer of analysis_job entries by interfacing to
+  work, creates the next layer of job entries by interfacing to
   the DataflowRuleAdaptor to determine the analyses it needs to pass its
   output data to and creates jobs on the database of the next analysis.
   It repeats this cycle until it has lived its lifetime or until there are no
@@ -37,7 +37,7 @@
 
   The Queens primary job is to create Workers to get the work down.
   As part of this, she is also responsible for summarizing the status of the
-  analyses by querying the analysis_jobs, summarizing, and updating the
+  analyses by querying the jobs, summarizing, and updating the
   analysis_stats table.  From this she is also responsible for monitoring and
   'unblocking' analyses via the analysis_ctrl_rules.
   The Queen is also responsible for freeing up jobs that were claimed by Workers
@@ -112,10 +112,10 @@ sub db {
   $self->{'_db'} = shift if(@_);
   return $self->{'_db'};
 }
-sub beekeeper {
+sub meadow_type {
   my $self = shift;
-  $self->{'_beekeeper'} = shift if(@_);
-  return $self->{'_beekeeper'};
+  $self->{'_meadow_type'} = shift if(@_);
+  return $self->{'_meadow_type'};
 }
 sub debug {
   my $self = shift;
@@ -261,7 +261,7 @@ sub prev_job_error {
 }
 
 
-sub worker_id {
+sub dbID {
   my( $self, $value ) = @_;
   $self->{'_worker_id'} = $value if($value);
   return $self->{'_worker_id'};
@@ -326,7 +326,7 @@ sub retry_throwing_jobs {
               $self->hive_output_dir($hive_output_dir);
   Description: getter/setter for the directory where STDOUT and STRERR of the hive will be redirected to.
           If it is "true", each worker will create its own subdirectory in it
-          where each analysis_job will have its own .out and .err files.
+          where each job will have its own .out and .err files.
   Returntype : string
 
 =cut
@@ -353,7 +353,7 @@ sub worker_output_dir {
 
         } elsif( my $hive_output_dir = $self->hive_output_dir ) {
 
-            my $worker_id = $self->worker_id();
+            my $worker_id = $self->dbID();
 
             $worker_output_dir = join('/', $hive_output_dir, dir_revhash($worker_id), 'worker_id_'.$worker_id );
         }
@@ -377,7 +377,7 @@ sub perform_cleanup {
 
 sub print_worker {
   my $self = shift;
-  print("WORKER: worker_id=",$self->worker_id,
+  print("WORKER: worker_id=",$self->dbID,
      " analysis_id=(",$self->analysis->dbID,")",$self->analysis->logic_name,
      " host=",$self->host,
      " pid=",$self->process_id,
@@ -399,7 +399,7 @@ sub worker_process_temp_directory {
   unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
     #create temp directory to hold fasta databases
     my $username = $ENV{'USER'};
-    my $worker_id = $self->worker_id();
+    my $worker_id = $self->dbID();
     $self->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}/";
     mkdir($self->{'_tmp_dir'}, 0777);
     throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
@@ -477,7 +477,7 @@ sub batch_size {
       1) claiming jobs,
       2) processing those jobs through an instance of the 'module class' of 
          the analysis asigned to this worker,  
-      3) updating the analysis_job, analysis_stats, and hive tables to track the 
+      3) updating the job, analysis_stats, and hive tables to track the 
          progress of the job, the analysis and this worker.
     Looping stops when any one of these are met:
       1) there is no more jobs to process 
@@ -521,7 +521,7 @@ sub run {
 
         while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $MIN_BATCH_TIME) {
 
-            if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->worker_id ) }) ) {
+            if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->dbID ) }) ) {
                 my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
                 warn "$msg";
                 $self->cause_of_death('CONTAMINATED'); 

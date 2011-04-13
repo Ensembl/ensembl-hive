@@ -36,16 +36,8 @@ Bio::EnsEMBL::Hive::DBSQL::DBAdaptor
 package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
-use Bio::EnsEMBL::DBSQL::DBConnection;
 
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
-
-
-#sub get_Queen {
-#  my $self = shift;
-#
-#  return $self->get_QueenAdaptor();
-#}
 
 sub get_available_adaptors {
  

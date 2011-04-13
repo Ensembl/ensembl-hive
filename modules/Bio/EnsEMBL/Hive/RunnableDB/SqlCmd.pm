@@ -26,7 +26,7 @@ The SQL command(s) can be given using two different syntaxes:
 1) Sql command is stored in the input_id() or parameters() as the value corresponding to the 'sql' key.
     THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
-2) Sql command is stored in the 'input_id' field of the analysis_job table.
+2) Sql command is stored in the 'input_id' field of the job table.
     (only works with sql commands shorter than 255 bytes).
     This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
 

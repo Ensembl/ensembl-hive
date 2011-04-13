@@ -212,7 +212,7 @@ sub main {
         and not defined($worker->cause_of_death())) {
 
             printf("KILL: %10d %35s %15s  %20s(%d) : ", 
-                $worker->worker_id, $worker->host, $worker->process_id, 
+                $worker->dbID, $worker->host, $worker->process_id, 
                 $worker->analysis->logic_name, $worker->analysis->dbID);
 
             $self->{'meadow'}->kill_worker($worker);
@@ -306,7 +306,7 @@ sub show_given_workers {
 
     foreach my $worker (@{$worker_list}) {
         printf("%10d %35s(%5d) %5s:%15s %15s (%s)\n", 
-            $worker->worker_id,
+            $worker->dbID,
             $worker->analysis->logic_name,
             $worker->analysis->dbID,
             $worker->beekeeper,

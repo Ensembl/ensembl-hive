@@ -25,8 +25,8 @@
 
   Each worker is linked to an analysis_id, registers its self on creation
   into the Hive, creates a RunnableDB instance of the Analysis->module,
-  gets $worker->batch_size() jobs from the analysis_job table, does its
-  work, creates the next layer of analysis_job entries by interfacing to
+  gets $worker->batch_size() jobs from the job table, does its
+  work, creates the next layer of job entries by interfacing to
   the DataflowRuleAdaptor to determine the analyses it needs to pass its
   output data to and creates jobs on the next analysis database.
   It repeats this cycle until it has lived its lifetime or until there are no
@@ -85,7 +85,7 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
   Description: If analysis_id is specified it will try to create a worker based
                on that analysis.  If not specified the queen will analyze the hive
                and pick the analysis that has the most amount of work to be done.
-               It creates an entry in the hive table, and returns a Worker object 
+               It creates an entry in the worker table, and returns a Worker object 
                based on that insert.  This guarantees that each worker registered
                in this queens hive is properly registered.
   Returntype : Bio::EnsEMBL::Hive::Worker
@@ -180,8 +180,8 @@ sub create_new_worker {
     }
   }
   
-  my $sql = q{INSERT INTO hive 
-              (born, last_check_in, beekeeper, process_id, host, analysis_id)
+  my $sql = q{INSERT INTO worker 
+              (born, last_check_in, meadow_type, process_id, host, analysis_id)
               VALUES (NOW(), NOW(), ?,?,?,?)};
 
   my $sth = $self->prepare($sql);
@@ -189,7 +189,7 @@ sub create_new_worker {
   my $worker_id = $sth->{'mysql_insertid'};
   $sth->finish;
 
-  my $worker = $self->fetch_by_worker_id($worker_id);
+  my $worker = $self->fetch_by_dbID($worker_id);
   $worker=undef unless($worker and $worker->analysis);
 
   if($worker and $analysisStats) {
@@ -242,11 +242,11 @@ sub register_worker_death {
     $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
   }
 
-  my $sql = "UPDATE hive SET died=now(), last_check_in=now()";
+  my $sql = "UPDATE worker SET died=now(), last_check_in=now()";
   $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " ,cause_of_death='$cod'";
-  $sql .= " WHERE worker_id='" . $worker->worker_id ."'";
+  $sql .= " WHERE worker_id='" . $worker->dbID ."'";
 
   $self->dbc->do( $sql );
 
@@ -332,9 +332,9 @@ sub worker_check_in {
   my ($self, $worker) = @_;
 
   return unless($worker);
-  my $sql = "UPDATE hive SET last_check_in=now()";
+  my $sql = "UPDATE worker SET last_check_in=now()";
   $sql .= " ,work_done='" . $worker->work_done . "'";
-  $sql .= " WHERE worker_id='" . $worker->worker_id ."'";
+  $sql .= " WHERE worker_id='" . $worker->dbID ."'";
 
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -346,11 +346,11 @@ sub worker_check_in {
 
 =head2 reset_and_fetch_job_by_dbID
 
-  Arg [1]: int $analysis_job_id
+  Arg [1]: int $job_id
   Example: 
-    my $job = $queen->reset_and_fetch_job_by_dbID($analysis_job_id);
+    my $job = $queen->reset_and_fetch_job_by_dbID($job_id);
   Description: 
-    For the specified analysis_job_id it will fetch just that job, 
+    For the specified job_id it will fetch just that job, 
     reset it completely as if it has never run, and return it.  
     Specifying a specific job bypasses the safety checks, 
     thus multiple workers could be running the 
@@ -364,12 +364,12 @@ sub worker_check_in {
 
 sub reset_and_fetch_job_by_dbID {
   my $self = shift;
-  my $analysis_job_id = shift;
+  my $job_id = shift;
   
   my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  $jobDBA->reset_job_by_dbID($analysis_job_id); 
+  $jobDBA->reset_job_by_dbID($job_id); 
 
-  my $job = $jobDBA->fetch_by_dbID($analysis_job_id); 
+  my $job = $jobDBA->fetch_by_dbID($job_id); 
   my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
   $self->synchronize_AnalysisStats($stats);
   
@@ -391,25 +391,25 @@ sub fetch_overdue_workers {
 
   $overdue_secs = 3600 unless(defined($overdue_secs));
 
-  my $constraint = "h.cause_of_death='' ".
-                   "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(h.last_check_in))>$overdue_secs";
+  my $constraint = "w.cause_of_death='' ".
+                   "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(w.last_check_in))>$overdue_secs";
   return $self->_generic_fetch($constraint);
 }
 
 sub fetch_failed_workers {
   my $self = shift;
 
-  my $constraint = "h.cause_of_death='FATALITY' ";
+  my $constraint = "w.cause_of_death='FATALITY' ";
   return $self->_generic_fetch($constraint);
 }
 
 sub fetch_dead_workers_with_jobs {
   my $self = shift;
 
-  # select h.worker_id from hive h, analysis_job WHERE h.worker_id=analysis_job.worker_id AND h.cause_of_death!='' AND analysis_job.status not in ('DONE', 'READY','FAILED', 'PASSED_ON') group by h.worker_id
+  # select w.worker_id from worker h, job WHERE w.worker_id=job.worker_id AND w.cause_of_death!='' AND job.status not in ('DONE', 'READY','FAILED', 'PASSED_ON') group by w.worker_id
 
-  my $constraint = "h.cause_of_death!='' ";
-  my $join = [[['analysis_job', 'j'], " h.worker_id=j.worker_id AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY h.worker_id"]];
+  my $constraint = "w.cause_of_death!='' ";
+  my $join = [[['job', 'j'], " w.worker_id=j.worker_id AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY w.worker_id"]];
   return $self->_generic_fetch($constraint, $join);
 }
 
@@ -418,8 +418,8 @@ sub fetch_dead_workers_with_jobs {
   Arg [1]    : $filter_analysis (optional)
   Example    : $queen->synchronize_hive();
   Description: Runs through all analyses in the system and synchronizes
-              the analysis_stats summary with the states in the analysis_job 
-              and hive tables.  Then follows by checking all the blocking rules
+              the analysis_stats summary with the states in the job 
+              and worker tables.  Then follows by checking all the blocking rules
               and blocks/unblocks analyses as needed.
   Exceptions : none
   Caller     : general
@@ -495,7 +495,7 @@ sub safe_synchronize_AnalysisStats {
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
   Example    : $self->synchronize($analysisStats);
-  Description: Queries the analysis_job and hive tables to get summary counts
+  Description: Queries the job and worker tables to get summary counts
                and rebuilds the AnalysisStats object.  Then updates the
                analysis_stats table with the new summary info
   Returntype : newly synced Bio::EnsEMBL::Hive::AnalysisStats object
@@ -518,7 +518,7 @@ sub synchronize_AnalysisStats {
   $analysisStats->failed_job_count(0);
   $analysisStats->num_required_workers(0);
 
-  my $sql = "SELECT status, count(*), semaphore_count FROM analysis_job ".
+  my $sql = "SELECT status, count(*), semaphore_count FROM job ".
             "WHERE analysis_id=? GROUP BY status, semaphore_count";
   my $sth = $self->prepare($sql);
   $sth->execute($analysisStats->analysis_id);
@@ -618,9 +618,9 @@ sub get_num_failed_analyses {
 
 sub get_hive_current_load {
   my $self = shift;
-  my $sql = "SELECT sum(1/analysis_stats.hive_capacity) FROM hive, analysis_stats ".
-            "WHERE hive.analysis_id=analysis_stats.analysis_id and cause_of_death ='' ".
-            "AND analysis_stats.hive_capacity>0";
+  my $sql = "SELECT sum(1/s.hive_capacity) FROM worker w, analysis_stats s ".
+            "WHERE w.analysis_id=s.analysis_id and w.cause_of_death ='' ".
+            "AND s.hive_capacity>0";
   my $sth = $self->prepare($sql);
   $sth->execute();
   (my $load)=$sth->fetchrow_array();
@@ -633,7 +633,7 @@ sub get_hive_current_load {
 
 sub get_num_running_workers {
   my $self = shift;
-  my $sql = "SELECT count(*) FROM hive WHERE cause_of_death =''";
+  my $sql = "SELECT count(*) FROM worker WHERE cause_of_death =''";
   my $sth = $self->prepare($sql);
   $sth->execute();
   (my $runningCount)=$sth->fetchrow_array();
@@ -646,7 +646,7 @@ sub get_num_running_workers {
 sub enter_status {
   my ($self, $worker, $status) = @_;
 
-  $self->dbc->do("UPDATE hive SET status = '$status' WHERE worker_id = ".$worker->worker_id);
+  $self->dbc->do("UPDATE worker SET status = '$status' WHERE worker_id = ".$worker->dbID);
 }
 
 =head2 get_num_needed_workers
@@ -770,9 +770,9 @@ sub print_running_worker_status {
   my $self = shift;
 
   print "====== Live workers according to Queen:\n";
-  my $sql = "select logic_name, count(*) from hive, analysis ".
-            "where hive.analysis_id=analysis.analysis_id and hive.cause_of_death='' ".
-            "group by hive.analysis_id";
+  my $sql = "select logic_name, count(*) from worker, analysis ".
+            "where worker.analysis_id=analysis.analysis_id and worker.cause_of_death='' ".
+            "group by worker.analysis_id";
 
   my $total = 0;
   my $sth = $self->prepare($sql);
@@ -808,7 +808,7 @@ sub monitor
           sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born))),
           sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born)))/count(*),
           group_concat(DISTINCT logic_name)
-      FROM hive left join analysis USING (analysis_id)
+      FROM worker left join analysis USING (analysis_id)
       WHERE cause_of_death = ""};
       
   my $sth = $self->prepare($sql);
@@ -876,7 +876,7 @@ sub _pick_best_analysis_for_new_worker {
 }
 
 
-=head2 fetch_by_worker_id
+=head2 fetch_by_dbID
 
   Arg [1]    : int $id
                the unique database identifier for the feature to be obtained
@@ -884,22 +884,19 @@ sub _pick_best_analysis_for_new_worker {
   Description: Returns the feature created from the database defined by the
                the id $id.
   Returntype : Bio::EnsEMBL::Hive::Worker
-  Exceptions : thrown if $id is not defined
+  Exceptions : thrown if $worker_id is not defined
   Caller     : general
 
 =cut
 
-sub fetch_by_worker_id {
-  my ($self, $id) = @_;
+sub fetch_by_dbID {
+  my ($self, $worker_id) = @_;
 
-  unless(defined $id) {
+  unless(defined $worker_id) {
     throw("fetch_by_dbID must have an id");
   }
 
-  my $constraint = "h.worker_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
+  my ($obj) = @{$self->_generic_fetch( "w.worker_id = $worker_id" ) };
   return $obj;
 }
 
@@ -974,23 +971,23 @@ sub _generic_fetch {
 sub _tables {
   my $self = shift;
 
-  return (['hive', 'h']);
+  return (['worker', 'w']);
 }
 
 sub _columns {
   my $self = shift;
 
-  return qw (h.worker_id
-             h.analysis_id
-             h.beekeeper
-             h.host
-             h.process_id
-             h.work_done
-             h.status
-             h.born
-             h.last_check_in
-             h.died
-             h.cause_of_death
+  return qw (w.worker_id
+             w.analysis_id
+             w.meadow_type
+             w.host
+             w.process_id
+             w.work_done
+             w.status
+             w.born
+             w.last_check_in
+             w.died
+             w.cause_of_death
             );
 }
 
@@ -1006,8 +1003,8 @@ sub _objs_from_sth {
     my $worker = new Bio::EnsEMBL::Hive::Worker;
     $worker->init;
 
-    $worker->worker_id($column{'worker_id'});
-    $worker->beekeeper($column{'beekeeper'});
+    $worker->dbID($column{'worker_id'});
+    $worker->meadow_type($column{'meadow_type'});
     $worker->host($column{'host'});
     $worker->process_id($column{'process_id'});
     $worker->work_done($column{'work_done'});

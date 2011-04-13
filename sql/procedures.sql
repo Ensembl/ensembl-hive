@@ -14,8 +14,8 @@
 #       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
 CREATE OR REPLACE VIEW progress AS
-    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*) cnt, analysis_job_id example_job_id
-    FROM analysis_job j JOIN analysis a USING (analysis_id)
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*) cnt, job_id example_job_id
+    FROM job j JOIN analysis a USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
@@ -35,11 +35,11 @@ READS SQL DATA
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/60 AS measured_in_minutes,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 AS measured_in_hours,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 AS measured_in_days
-        FROM hive h JOIN analysis a USING (analysis_id)
+        FROM worker JOIN analysis USING (analysis_id)
         WHERE logic_name like param_logic_name_pattern;
 
 
-#### Searches for a given string in analysis_job.input_id or analysis_data.data, and returns the  matching jobs.                                                                                        
+#### Searches for a given string in job.input_id or analysis_data.data, and returns the  matching jobs.                                                                                        
 #
 # Thanks to Greg Jordan for the idea and the original version
 #
@@ -52,11 +52,11 @@ READS SQL DATA
   SELECT
     a.analysis_id,
     a.logic_name,
-    j.analysis_job_id AS job_id,
+    j.job_id AS job_id,
     j.status,
     j.retry_count,
     IFNULL(d.data, j.input_id) input_id
-  FROM analysis_job j JOIN analysis a USING (analysis_id)
+  FROM job j JOIN analysis a USING (analysis_id)
     LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)                                                                                              
   WHERE j.input_id LIKE concat('%',srch,'%') OR d.data LIKE concat('%',srch,'%');
 
@@ -69,7 +69,7 @@ READS SQL DATA
 DROP PROCEDURE IF EXISTS reset_failed_jobs_for_analysis;
 CREATE PROCEDURE reset_failed_jobs_for_analysis(IN param_logic_name char(64))
 MODIFIES SQL DATA
-    UPDATE analysis_job j JOIN analysis a USING (analysis_id)
+    UPDATE job j JOIN analysis a USING (analysis_id)
     SET j.status='READY', j.retry_count=0
     WHERE a.logic_name=param_logic_name
     AND   j.status='FAILED';
@@ -83,5 +83,5 @@ MODIFIES SQL DATA
 DROP PROCEDURE IF EXISTS drop_hive_tables;
 CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
-    DROP TABLE hive, dataflow_rule, analysis_ctrl_rule, analysis_job, analysis_job_file, analysis_data, analysis_stats, resource_description, analysis_stats_monitor, monitor;
+    DROP TABLE worker, dataflow_rule, analysis_ctrl_rule, job, job_file, analysis_data, analysis_stats, resource_description, analysis_stats_monitor, monitor;
 
