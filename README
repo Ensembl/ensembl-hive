@@ -14,6 +14,32 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+30.Mar, 2011 : Leo
+
+* fixed a bug when checking for definedness of branch_name in DataflowRuleAdaptor.pm
+
+29.Mar, 2011 : Leo
+
+* fixed a bug in MySQLTransfer.pm where it never reached automatic dataflow on success
+* fixed Process.pm to not import warning() to avoid clashing with ensembl-core's warning
+
+26.Mar-11.Apr, 2011 : Leo
+
+* trying to enforce the 'fetch_by' and 'fetch_all_by' convention for adaptor calls
+
+24.Mar, 2011 : Leo
+
+* some branches can be named instead of numbered (-2, -1, 0, 1)
+    and 0 now stands for 'ANYFAILURE' (please use with extreme care!)
+
+23.Mar, 2011 : Leo
+
+* sql/procedures.sql gives timing in minutes as well
+
+18.Mar, 2011 : Leo
+
+* one PREPARE statement per dataflow-to-table call (so works for array of output_ids with identical structure)
+
 16.Mar, 2011 : Leo
 
 * Reviewed some procedures.sql adding a procedure for timing and several tricks suggested by Greg.
