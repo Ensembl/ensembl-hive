@@ -87,6 +87,8 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
         # then we fan out into branch#2, and pass the $funnel_job_id to all of them
     my $fan_job_ids = $self->dataflow_output_id($output_ids, 2, { -semaphored_job_id => $funnel_job_id } );
+
+    $self->warning(scalar(@$output_ids).' multiplication jobs have been created');     # warning messages get recorded into 'job_message' table
 }
 
 1;
