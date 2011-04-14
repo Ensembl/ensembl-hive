@@ -48,6 +48,7 @@ use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::NakedTable;
 
 #use Data::Dumper;
 
@@ -112,7 +113,11 @@ sub fetch {
 
         } else {
 
-            return $dba->get_NakedTableAdaptor->create_new(-table_name => $table_name, $tparam_value ? (-insertion_method => $tparam_value) : () );
+            return Bio::EnsEMBL::Hive::NakedTable->new(
+                -adaptor    => $dba->get_NakedTableAdaptor,
+                -table_name => $table_name,
+                $tparam_value ? (-insertion_method => $tparam_value) : ()
+            );
         }
     }
     return;

@@ -79,7 +79,14 @@ sub url {
 sub dataflow {
     my ( $self, $output_ids ) = @_;
 
-    return $self->adaptor->dataflow($self, $output_ids);
+        # we have to do this the ugly way
+        # because Registry code currently prevents us from passing arguments to adaptors' new() methods
+        # (and by caching guarantees there is only one instance of each adaptor per DBAdaptor)
+    my $adaptor = $self->adaptor();
+    $adaptor->table_name( $self->table_name() );
+    $adaptor->insertion_method( $self->insertion_method() );
+
+    $adaptor->store( $output_ids );
 }
 
 

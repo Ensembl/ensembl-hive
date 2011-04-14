@@ -45,18 +45,21 @@ sub get_available_adaptors {
             # Core adaptors extended with Hive stuff:
         'MetaContainer'       => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
         'Analysis'            => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
-            # Hive adaptors:
-        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
-        'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
-        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
-        'AnalysisStats'       => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+
+            # "new" Hive adaptors (sharing the same fetching/storing code inherited from the BaseAdaptor class) :
         'AnalysisCtrlRule'    => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
         'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
         'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
-        'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
         'JobMessage'          => 'Bio::EnsEMBL::Hive::DBSQL::JobMessageAdaptor',
+        'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
+
+            # "old" Hive adaptors (having their own fetching/storing code) :
+        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
+        'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
+        'AnalysisStats'       => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
     );
-    return (\%pairs);
+    return \%pairs;
 }
  
 1;

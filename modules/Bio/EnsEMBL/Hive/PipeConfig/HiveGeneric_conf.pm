@@ -345,8 +345,8 @@ sub run {
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $can_be_empty, $rc_id) =
-             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance can_be_empty rc_id)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id) =
+             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id)], %$aha);
 
         $parameters_hash ||= {};
         $input_ids       ||= [];
@@ -382,6 +382,7 @@ sub run {
             $stats->batch_size( $batch_size )                       if(defined($batch_size));
             $stats->hive_capacity( $hive_capacity )                 if(defined($hive_capacity));
             $stats->failed_job_tolerance( $failed_job_tolerance )   if(defined($failed_job_tolerance));
+            $stats->max_retry_count( $max_retry_count )             if(defined($max_retry_count));
             $stats->rc_id( $rc_id )                                 if(defined($rc_id));
             $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
             $stats->status($blocked ? 'BLOCKED' : 'READY');         #   (some analyses will be waiting for human intervention in blocked state)
@@ -419,10 +420,9 @@ sub run {
             foreach my $condition_url (@$wait_for) {
                 if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($condition_url)) {
 
-                    my $new_cfr    = $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
-                    my $cfr_action = $new_cfr ? 'Created a new' : 'Found an existing';
+                    $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
 
-                    warn "$cfr_action Control rule: $condition_url -| $logic_name\n";
+                    warn "Control rule: $condition_url -| $logic_name\n";
                 } else {
                     die "Could not fetch analysis '$condition_url' to create a control rule";
                 }
@@ -442,10 +442,9 @@ sub run {
 
                     my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                    my $new_dfr    = $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template);
-                    my $dfr_action = $new_dfr ? 'Created a new' : 'Found an existing';
+                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template);
 
-                    warn "$dfr_action DataFlow rule: [$branch_name_or_code] $logic_name -> $heir_url"
+                    warn "DataFlow rule: [$branch_name_or_code] $logic_name -> $heir_url"
                         .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }

@@ -366,7 +366,7 @@ sub run_autonomously {
 
         # pre-hash the resource_class xparams for future use:
     my %rc_xparams = map { ($_->rc_id => $_->parameters) }
-        @{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all_by_meadowtype($self->{'meadow'}->type()) };
+        @{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all_by_meadow_type($self->{'meadow'}->type()) };
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;

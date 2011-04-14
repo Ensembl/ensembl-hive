@@ -58,10 +58,21 @@ use Bio::EnsEMBL::Utils::Exception;
 =cut
 
 sub new {
-  my ($class,@args) = @_;
-  my $self = bless {}, $class;
+    my $class   = shift @_;
+    my $self    = bless {}, $class;
   
-  return $self;
+    my ( $dbID, $adaptor, $condition_analysis_url, $ctrled_analysis_id ) =
+    rearrange( [ qw (DBID ADAPTOR CONDITION_ANALYSIS_URL CTRLED_ANALYSIS_ID) ], @_ );
+
+        # database persistence:
+    $self->dbID( $dbID )                            if(defined($dbID));
+    $self->adaptor( $adaptor )                      if(defined($adaptor));
+
+        # simple scalars:
+    $self->condition_analysis_url( $condition_analysis_url )    if(defined($condition_analysis_url));
+    $self->ctrled_analysis_id( $ctrled_analysis_id )            if(defined($ctrled_analysis_id));
+
+    return $self;
 }
 
 sub adaptor {
