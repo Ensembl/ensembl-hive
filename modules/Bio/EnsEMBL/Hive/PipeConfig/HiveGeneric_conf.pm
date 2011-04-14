@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::Extensions;
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/work',     # some Compara developers might prefer $ENV{'HOME'}.'/ensembl_main'
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
 
         'pipeline_name' => 'hive_generic',
 
