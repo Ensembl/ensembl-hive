@@ -27,7 +27,7 @@ package Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor;
 use strict;
 use Bio::EnsEMBL::Hive::ResourceDescription;
 
-use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {

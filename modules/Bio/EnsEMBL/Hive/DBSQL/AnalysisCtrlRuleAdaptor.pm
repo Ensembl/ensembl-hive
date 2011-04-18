@@ -26,7 +26,7 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 use strict;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
-use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {

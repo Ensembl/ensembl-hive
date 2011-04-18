@@ -28,8 +28,27 @@ use Bio::EnsEMBL::Hive::NakedTable;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
 
-# No, you could not just use the Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor instead of NakedTableAdaptor
-# because AUTOLOAD will be creating class-specific methods and you don't want to clutter BaseAdaptor's namespace.
+
+sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
+    my ($self, $object, $fields) = @_;
+
+    return [ @$object{@$fields} ];
+}
+
+
+sub objectify {    # pretend the hashref becomes an object (if only we could inline in Perl!)
+    return pop @_;
+}
+
+
+sub mark_stored {
+    my ($self, $hashref, $dbID) = @_;
+
+    if(my $autoinc_id = $self->autoinc_id()) {
+        $hashref->{$autoinc_id} = $dbID;
+    }
+}
+
 
 1;
 

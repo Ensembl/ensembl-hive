@@ -23,7 +23,7 @@ package Bio::EnsEMBL::Hive::DBSQL::JobMessageAdaptor;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
 sub default_table_name {

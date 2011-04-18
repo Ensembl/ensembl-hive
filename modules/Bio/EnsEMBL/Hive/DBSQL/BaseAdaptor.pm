@@ -1,7 +1,6 @@
 package Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor;
 
 use strict;
-use Data::Dumper;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
@@ -22,6 +21,7 @@ sub table_name {
 
     if(@_) {    # setter
         $self->{_table_name} = shift @_;
+        $self->_table_info_loader();
     }
     return $self->{_table_name} || $self->default_table_name();
 }
@@ -34,16 +34,6 @@ sub insertion_method {
         $self->{_insertion_method} = shift @_;
     }
     return $self->{_insertion_method} || $self->default_insertion_method();
-}
-
-
-sub object_class {      # this one can stay undefined
-    my $self = shift @_;
-
-    if(@_) {    # setter
-        $self->{_object_class} = shift @_;
-    }
-    return $self->{_object_class};
 }
 
 
@@ -149,11 +139,10 @@ sub count_all {
 
 
 sub fetch_all {
-    my ($self, $constraint) = @_;
-
+    my ($self, $constraint, $one_per_key, $key_list, $value_column) = @_;
+    
     my $table_name      = $self->table_name();
     my $columns_csv     = join(', ', keys %{$self->column_set()});
-    my $object_class    = $self->object_class();
 
     my $sql = "SELECT $columns_csv FROM $table_name";
 
@@ -166,18 +155,33 @@ sub fetch_all {
     my $sth = $self->prepare($sql);
     $sth->execute;  
 
-    my @objects;
+    my $result_struct;  # will be autovivified to the correct data structure
 
     while(my $hashref = $sth->fetchrow_hashref) {
-        if($object_class) {
-            push @objects, $object_class->new( -adaptor => $self, map { ('-'.uc($_) => $hashref->{$_}) } keys %$hashref );
+        my $pptr = \$result_struct;
+        foreach my $syll (@$key_list) {
+            $pptr = \$$pptr->{$hashref->{$syll}};   # using pointer-to-pointer to enforce same-level vivification
+        }
+        my $object = $value_column
+            ? $hashref->{$value_column}
+            : $self->objectify($hashref);
+        if($one_per_key) {
+            $$pptr = $object;
         } else {
-            push @objects, $hashref;                            # faster, but only works for naked data types and lacks a link back to the adaptor
+            push @$$pptr, $object;
         }
     }
     $sth->finish;  
 
-    return \@objects;
+    unless(defined($result_struct)) {
+        if(scalar(@$key_list)) {
+            $result_struct = {};
+        } elsif(!$one_per_key) {
+            $result_struct = [];
+        }
+    }
+
+    return $result_struct;  # either listref or hashref is returned, depending on the call parameters
 }
 
 
@@ -199,18 +203,6 @@ sub fetch_by_dbID {
     my $self = shift @_;    # the rest in @_ should be primary_key column values
 
     return $self->fetch_all( $self->primary_key_constraint( @_ ) );
-}
-
-
-sub slicer {    # take a slice of the object (if only we could inline in Perl!)
-    my ($self, $object, $fields) = @_;
-
-    if( my $object_class = $self->object_class() ) {
-        return [ map { $object->$_() } @$fields ];
-    } else {
-        return [ @$object{@$fields} ];  # <--- slicing a hashref here
-    }
-    
 }
 
 
@@ -286,8 +278,6 @@ sub store {
     my $insertion_method    = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
     $insertion_method       =~ s/_/ /g;
 
-    my $object_class        = $self->object_class();
-
         # NB: here we assume all hashes will have the same keys:
     my $non_autoinc_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
 
@@ -297,33 +287,21 @@ sub store {
 
     foreach my $object (@$objects) {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
-            if($autoinc_id) {
-                if($object_class) {
-                    $object->dbID($present);
-                } else {
-                    $object->{$autoinc_id} = $present;
-                }
-            }
+            $self->mark_stored($object, $present);
         } else {
+            #print "STORE: $sql\n";
             $sth ||= $self->prepare( $sql );    # only prepare (once) if we get here
 
+            #print "NON_AUTOINC_COLUMNS: ".join(', ', @$non_autoinc_columns)."\n";
             my $non_autoinc_values = $self->slicer( $object, $non_autoinc_columns );
+            #print "NON_AUTOINC_VALUES: ".join(', ', @$non_autoinc_values)."\n";
 
             my $return_code = $sth->execute( @$non_autoinc_values )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$non_autoinc_values).')';
             if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
-                if($autoinc_id) {
-                    if($object_class) {
-                        $object->dbID( $sth->{'mysql_insertid'} );
-                    } else {
-                        $object->{$autoinc_id} = $sth->{'mysql_insertid'};
-                    }
-                }
+                $self->mark_stored($object, $sth->{'mysql_insertid'});
             }
-        }
-        if($object_class) {
-            $object->adaptor($self);
         }
     }
 
@@ -333,50 +311,46 @@ sub store {
 }
 
 
-sub create_new {
-    my $self = shift @_;
-
-    my $check_presence_in_db_first = (scalar(@_)%2)
-        ? pop @_    # extra 'odd' parameter that would disrupt the hash integrity anyway
-        : 0;        # do not check by default
-
-    my $object;
-
-    if( my $object_class = $self->object_class() ) {
-        $object = $object_class->new( -adaptor => $self, @_ );
-    } else {
-        $object = { @_ };
-    }
-
-    return $self->store( $object, $check_presence_in_db_first );
-}
-
-
 sub DESTROY { }   # to simplify AUTOLOAD
 
 sub AUTOLOAD {
     our $AUTOLOAD;
 
-    if($AUTOLOAD =~ /::fetch_(all_)?by_(\w+)$/) {
-        my $all         = $1;
-        my $filter_name = $2;
+    if($AUTOLOAD =~ /::fetch(_all)?(?:_by_(\w+?))?(?:_HASHED_FROM_(\w+?))?(?:_TO_(\w+?))?$/) {
+        my $all             = $1;
+        my $filter_string   = $2;
+        my $key_string      = $3;
+        my $value_column    = $4;
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        my @columns_to_fetch_by = split('_and_', $filter_name);
-        foreach my $column_name (@columns_to_fetch_by) {
+        my $filter_components = $filter_string && [ split('_and_', $filter_string) ];
+        foreach my $column_name ( @$filter_components ) {
             unless($column_set->{$column_name}) {
                 die "unknown column '$column_name'";
             }
         }
+        my $key_components = $key_string && [ split('_and_', $key_string) ];
+        foreach my $column_name ( @$key_components ) {
+            unless($column_set->{$column_name}) {
+                die "unknown column '$column_name'";
+            }
+        }
+        if($value_column && !$column_set->{$value_column}) {
+            die "unknown column '$value_column'";
+        }
 
         print "Setting up '$AUTOLOAD' method\n";
-        if($all) {
-            *$AUTOLOAD = sub { my $self = shift @_; return $self->fetch_all( join(' AND ', map { "$columns_to_fetch_by[$_]='$_[$_]'" } 0..scalar(@columns_to_fetch_by)-1) ); };
-        } else {
-            *$AUTOLOAD = sub { my $self = shift @_; my ($object) = @{ $self->fetch_all( join(' AND ', map { "$columns_to_fetch_by[$_]='$_[$_]'" } 0..scalar(@columns_to_fetch_by)-1) ) }; return $object; };
-        }
+        *$AUTOLOAD = sub {
+            my $self = shift @_;
+            return $self->fetch_all(
+                join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                !$all,
+                $key_components,
+                $value_column
+            );
+        };
         goto &$AUTOLOAD;    # restart the new method
     } elsif($AUTOLOAD =~ /::count_all_by_(\w+)$/) {
         my $filter_name = $1;

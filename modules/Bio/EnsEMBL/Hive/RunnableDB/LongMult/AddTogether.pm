@@ -20,6 +20,7 @@ and stores the result in 'final_result' database table.
 package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
 
 use strict;
+use Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor;   # to fetch data from 'intermediate_result' table
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -38,19 +39,15 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
 
     my $a_multiplier = $self->param('a_multiplier') || die "'a_multiplier' is an obligatory parameter";
-    my %product_pair = ();
 
-    my $sql = "SELECT digit, result FROM intermediate_result WHERE a_multiplier = ?";
-    my $sth = $self->db->dbc()->prepare($sql);
-    $sth->execute($a_multiplier);
-    while (my ($digit, $result)=$sth->fetchrow_array()) {
-        $product_pair{$digit} = $result;
-    }
-    $sth->finish();
-    $product_pair{1} = $a_multiplier;
-    $product_pair{0} = 0;
+    my $adaptor = $self->db->get_NakedTableAdaptor();
+    $adaptor->table_name( 'intermediate_result' );
+    my $product_pair = $adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_result( $a_multiplier );
 
-    $self->param('product_pair', \%product_pair);
+    $product_pair->{1} = $a_multiplier;
+    $product_pair->{0} = 0;
+
+    $self->param('product_pair', $product_pair);
 }
 
 =head2 run

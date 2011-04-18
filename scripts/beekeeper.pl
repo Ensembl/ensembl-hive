@@ -207,7 +207,7 @@ sub main {
     if($check_for_dead)     { $queen->check_for_dead_workers($self->{'meadow'}, 1); }
 
     if ($kill_worker_id) {
-        my $worker = $queen->fetch_by_worker_id($kill_worker_id);
+        my $worker = $queen->fetch_by_dbID($kill_worker_id);
         if( $self->{'meadow'}->responsible_for_worker($worker)
         and not defined($worker->cause_of_death())) {
 
@@ -365,8 +365,7 @@ sub run_autonomously {
     my $worker_cmd = generate_worker_cmd($self);
 
         # pre-hash the resource_class xparams for future use:
-    my %rc_xparams = map { ($_->rc_id => $_->parameters) }
-        @{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all_by_meadow_type($self->{'meadow'}->type()) };
+    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($self->{'meadow'}->type());
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -401,7 +400,7 @@ sub run_autonomously {
 
                 print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$self->{'meadow'}->type()."\n";
 
-                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams{$rc_id} || '');
+                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
 
                 $worker_quota -= $this_rc_worker_count;
             }

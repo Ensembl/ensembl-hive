@@ -27,7 +27,7 @@ use strict;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 
-use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
 sub default_table_name {
