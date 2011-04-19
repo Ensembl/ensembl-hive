@@ -250,9 +250,8 @@ CREATE TABLE job (
 -- semantics:
 --      job_id              - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
---          analysis_id     - analysis_id of both the job and the worker (it is indeed redundant, but very convenient)
---               moment     - when the message was thrown
---          retry_count     - of the job when the message was thrown
+--                 time     - when the message was thrown
+--                retry     - retry_count of the job when the message was thrown
 --               status     - of the job when the message was thrown
 --                  msg     - string that contains the message
 --             is_error     - binary flag
@@ -260,14 +259,13 @@ CREATE TABLE job (
 CREATE TABLE job_message (
   job_id                    int(10) NOT NULL,
   worker_id                 int(10) unsigned NOT NULL,
-  analysis_id               int(10) unsigned NOT NULL,
-  moment                    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  retry_count               int(10) DEFAULT 0 NOT NULL,
+  time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  retry                     int(10) DEFAULT 0 NOT NULL,
   status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
   msg                       text,
   is_error                  boolean,
 
-  PRIMARY KEY               (job_id, worker_id, moment),
+  PRIMARY KEY               (job_id, worker_id, time),
   INDEX worker_id           (worker_id),
   INDEX job_id              (job_id)
 

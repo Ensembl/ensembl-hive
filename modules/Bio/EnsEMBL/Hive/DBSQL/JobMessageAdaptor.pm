@@ -38,10 +38,10 @@ sub register_message {
 
     my $table_name = $self->table_name();
 
-        # (the timestamp 'moment' column will be set automatically)
+        # (the timestamp 'time' column will be set automatically)
     my $sql = qq{
-        REPLACE INTO $table_name (job_id, worker_id, analysis_id, retry_count, status, msg, is_error)
-                           SELECT job_id, worker_id, analysis_id, retry_count, status, ?, ?
+        REPLACE INTO $table_name (job_id, worker_id, retry, status, msg, is_error)
+                           SELECT job_id, worker_id, retry_count, status, ?, ?
                              FROM job WHERE job_id=?
     };
 

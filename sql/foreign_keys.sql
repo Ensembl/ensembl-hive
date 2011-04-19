@@ -5,7 +5,6 @@ ALTER TABLE worker                  ADD FOREIGN KEY (analysis_id) REFERENCES ana
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id) REFERENCES analysis(analysis_id);
 ALTER TABLE analysis_ctrl_rule      ADD FOREIGN KEY (ctrled_analysis_id) REFERENCES analysis(analysis_id);
 ALTER TABLE job                     ADD FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id);
-ALTER TABLE job_message             ADD FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id);
 ALTER TABLE analysis_stats          ADD FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id);
 ALTER TABLE analysis_stats_monitor  ADD FOREIGN KEY (analysis_id) REFERENCES analysis(analysis_id);
 

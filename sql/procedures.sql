@@ -1,10 +1,10 @@
-##########################################################################################
+#########################################################################################################
 #
 # Some stored functions, views and procedures used in hive:
 #
 
 
-#### show hive progress for analyses (turned into a view to give extra flexibility #######
+#### show hive progress for analyses (turned into a view to give extra flexibility) #####################
 #
 # Thanks to Greg Jordan for the idea and the original version
 #
@@ -18,6 +18,20 @@ CREATE OR REPLACE VIEW progress AS
     FROM job j JOIN analysis a USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
+
+
+#### a convenient view that also incorporates (otherwise redundant) analysis_id and logic_name ###########
+#
+# Usage:
+#       select * from msg;
+#       select * from msg where analysis_id=18;
+#       select * from msg where logic_name like 'family_blast%';
+
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM job_message m
+    JOIN job j USING (job_id)
+    JOIN analysis a USING (analysis_id);
 
 
 #### time an analysis or group of analyses (given by a name pattern) ######################################
@@ -39,16 +53,16 @@ READS SQL DATA
         WHERE logic_name like param_logic_name_pattern;
 
 
-#### Searches for a given string in job.input_id or analysis_data.data, and returns the  matching jobs.                                                                                        
+#### searches for a given string in job.input_id or analysis_data.data, and returns the  matching jobs.
 #
 # Thanks to Greg Jordan for the idea and the original version
 #
 # Usage:
 #       call job_search('other_415');           # return all jobs whose input_id or analysis_data match the pattern
 
-DROP PROCEDURE IF EXISTS job_search;                                                                                                                                                                  
-CREATE PROCEDURE job_search(IN srch CHAR(40))                                                                                                                                                         
-READS SQL DATA                                                                                                                                                                                        
+DROP PROCEDURE IF EXISTS job_search;
+CREATE PROCEDURE job_search(IN srch CHAR(40))
+READS SQL DATA
   SELECT
     a.analysis_id,
     a.logic_name,
@@ -57,7 +71,7 @@ READS SQL DATA
     j.retry_count,
     IFNULL(d.data, j.input_id) input_id
   FROM job j JOIN analysis a USING (analysis_id)
-    LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)                                                                                              
+    LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)
   WHERE j.input_id LIKE concat('%',srch,'%') OR d.data LIKE concat('%',srch,'%');
 
 
