@@ -313,7 +313,7 @@ sub check_for_dead_workers {    # a bit counter-intuitively only looks for curre
 
     if($check_buried_in_haste) {
         print "====== Checking for workers buried in haste... ";
-        my $buried_in_haste_list = $self->fetch_dead_workers_with_jobs();
+        my $buried_in_haste_list = $self->fetch_all_dead_workers_with_jobs();
         if(my $bih_number = scalar(@$buried_in_haste_list)) {
             print "$bih_number, reclaiming jobs.\n\n";
             if($bih_number) {
@@ -403,10 +403,10 @@ sub fetch_failed_workers {
   return $self->_generic_fetch($constraint);
 }
 
-sub fetch_dead_workers_with_jobs {
+sub fetch_all_dead_workers_with_jobs {
   my $self = shift;
 
-  # select w.worker_id from worker h, job WHERE w.worker_id=job.worker_id AND w.cause_of_death!='' AND job.status not in ('DONE', 'READY','FAILED', 'PASSED_ON') group by w.worker_id
+  # SELECT w.* FROM worker h, job j WHERE w.worker_id=j.worker_id AND w.cause_of_death!='' AND j.status NOT IN ('DONE', 'READY','FAILED', 'PASSED_ON') GROUP BY w.worker_id
 
   my $constraint = "w.cause_of_death!='' ";
   my $join = [[['job', 'j'], " w.worker_id=j.worker_id AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY w.worker_id"]];
@@ -770,9 +770,9 @@ sub print_running_worker_status {
   my $self = shift;
 
   print "====== Live workers according to Queen:\n";
-  my $sql = "select logic_name, count(*) from worker, analysis ".
-            "where worker.analysis_id=analysis.analysis_id and worker.cause_of_death='' ".
-            "group by worker.analysis_id";
+  my $sql = "SELECT logic_name, count(*) FROM worker, analysis ".
+            "WHERE worker.analysis_id=analysis.analysis_id AND worker.cause_of_death='' ".
+            "GROUP BY worker.analysis_id";
 
   my $total = 0;
   my $sth = $self->prepare($sql);
