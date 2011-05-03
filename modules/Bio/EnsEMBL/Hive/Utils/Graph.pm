@@ -30,7 +30,7 @@ $Author: ady $
 
 =head1 VERSION
 
-$Revision: 1.3 $
+$Revision: 1.4 $
 
 =cut
 
@@ -41,6 +41,8 @@ use GraphViz;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
+
+use Bio::EnsEMBL::Hive::Utils::Graph::Config;
 
 =pod
 
