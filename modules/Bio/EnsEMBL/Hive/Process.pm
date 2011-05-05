@@ -349,38 +349,6 @@ sub debug {
 }
 
 
-=head2 encode_hash
-
-    Title   :  encode_hash
-    Arg[1]  :  <reference to perl hash> $hash_ref 
-    Function:  Simple convenience method which take a reference to a perl hash and
-               returns a string which is perl code which can be converted back into
-               the hash with an eval statement.  Treats all values in hash as strings
-               so it will not properly encode complex data into perl.
-    Usage   :  $hash_string = $self->encode_hash($has_ref);
-               $hash_ref2 = eval($hash_string);
-    Returns :  <string> perl code
-
-=cut
-
-sub encode_hash {
-  my $self = shift;
-  my $hash_ref = shift;
-
-  return "" unless($hash_ref);
-
-  my $hash_string = "{";
-  my @keys = sort(keys %{$hash_ref});
-  foreach my $key (@keys) {
-    if(defined($hash_ref->{$key})) {
-      $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
-    }
-  }
-  $hash_string .= "}";
-
-  return $hash_string;
-}
-
 =head2 worker_temp_directory
 
     Title   :  worker_temp_directory

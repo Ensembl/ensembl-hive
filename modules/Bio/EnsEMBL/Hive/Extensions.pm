@@ -233,32 +233,5 @@ sub Bio::EnsEMBL::Analysis::RunnableDB::analyze_tables {
   }
 }
  
-
-
-
-
-
-#######################################
-# top level functions
-#######################################
-
-sub main::encode_hash
-{
-  my $hash_ref = shift;
-
-  return "" unless($hash_ref);
-
-  my $hash_string = "{";
-  my @keys = sort(keys %{$hash_ref});
-  foreach my $key (@keys) {
-    if(defined($hash_ref->{$key})) {
-      $hash_string .= "'$key'=>'" . $hash_ref->{$key} . "',";
-    }
-  }
-  $hash_string .= "}";
-
-  return $hash_string;
-}
-
 1;
 
