@@ -46,7 +46,7 @@
     You will probably need to specify the following:
 
         $ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf \
-            -ensembl_cvs_root_dir $ENS_CODE_ROOT \
+            -ensembl_cvs_root_dir $ENSEMBL_CVS_ROOT_DIR \
             -pipeline_db -host=<your_mysql_host> \
             -pipeline_db -user=<your_mysql_username> \
             -pipeline_db -user=<your_mysql_password> \

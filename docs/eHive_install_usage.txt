@@ -33,18 +33,18 @@ so it is best to install them under your home directory. For example,
 It will be convenient to set a variable pointing at this directory for future use:
 
 # using bash syntax:
-	$ export ENS_CODE_ROOT="$HOME/ensembl_main"
+	$ export ENSEMBL_CVS_ROOT_DIR="$HOME/ensembl_main"
 		#
 		# (for best results, append this line to your ~/.bashrc configuration file)
 
 # using [t]csh syntax:
-	$ setenv ENS_CODE_ROOT "$HOME/ensembl_main"
+	$ setenv ENSEMBL_CVS_ROOT_DIR "$HOME/ensembl_main"
 		#
 		# (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)
 
 2.2. Change into your ensembl codebase directory:
 
-	$ cd $ENS_CODE_ROOT
+	$ cd $ENSEMBL_CVS_ROOT_DIR
 
 2.3. Log into the BioPerl CVS server (using "cvs" for password):
 
@@ -75,18 +75,18 @@ It will be convenient to set a variable pointing at this directory for future us
 2.8. Add new packages to the PERL5LIB variable:
 
 # using bash syntax:
-	$ export PERL5LIB=${PERL5LIB}:${ENS_CODE_ROOT}/bioperl-live
-	$ export PERL5LIB=${PERL5LIB}:${ENS_CODE_ROOT}/ensembl/modules
-	$ export PERL5LIB=${PERL5LIB}:${ENS_CODE_ROOT}/ensembl-hive/modules
-	$ export PERL5LIB=${PERL5LIB}:${ENS_CODE_ROOT}/ensembl-compara/modules # optional but recommended, see 2.7.
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see 2.7.
 		#
 		# (for best results, append these lines to your ~/.bashrc configuration file)
 
 # using [t]csh syntax:
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENS_CODE_ROOT}/bioperl-live
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENS_CODE_ROOT}/ensembl/modules
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENS_CODE_ROOT}/ensembl-hive/modules
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENS_CODE_ROOT}/ensembl-compara/modules # optional but recommended, see 2.7.
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see 2.7.
 		#
 		# (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)
 
