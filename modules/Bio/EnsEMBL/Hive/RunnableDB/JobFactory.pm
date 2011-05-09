@@ -179,7 +179,9 @@ sub _make_list_from_query {
 
     my $dbc;
     if(my $db_conn = $self->param('db_conn')) {
-        $dbc = DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 });
+        $db_conn->{-driver} ||= 'mysql';
+
+        $dbc = DBI->connect("DBI:$db_conn->{-driver}:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 });
     } else {
         $dbc = $self->db->dbc;
     }

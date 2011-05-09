@@ -71,7 +71,7 @@ sub store {
   
   my $sth2 = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
   $sth2->execute($data);
-  $data_id = $sth2->{'mysql_insertid'};
+  $data_id = ($self->dbc->driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
   $sth2->finish;
 
   return $data_id;

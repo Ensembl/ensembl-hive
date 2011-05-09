@@ -86,8 +86,9 @@ sub fetch_input {
         # Use connection parameters to another database if supplied, otherwise use the current database as default:
         #
     if(my $db_conn = $self->param('db_conn')) {
+        $db_conn->{-driver} ||= 'mysql';
 
-        $self->param('dbh', DBI->connect("DBI:mysql:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
+        $self->param('dbh', DBI->connect("DBI:$db_conn->{-driver}:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
     } else {
         $self->param('dbh', $self->db->dbc->db_handle );
     }
@@ -119,7 +120,7 @@ sub run {
         $dbh->do( $sql );
 
         my $insert_id_name  = '_insert_id_'.$counter++;
-        my $insert_id_value = $dbh->{'mysql_insertid'};
+        my $insert_id_value = ($dbh->driver eq 'sqlite') ? $dbh->func('last_insert_rowid') : $dbh->{'mysql_insertid'};
         $output_id{$insert_id_name} = $insert_id_value;
         $self->param($insert_id_name, $insert_id_value); # for templates
     }

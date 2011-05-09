@@ -57,6 +57,11 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
+
+   # EXPERIMENTAL: choose either 'mysql' or 'sqlite' and do not forget to provide the correct connection parameters:
+$Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver = 'mysql';
+
+
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
@@ -72,6 +77,7 @@ sub default_options {
         'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
+            -driver => $Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver,
             -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',
@@ -98,8 +104,8 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
             # additional tables needed for long multiplication pipeline's operation:
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'",
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1)." -e 'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'",
+        $self->db_execute_command('pipeline_db', 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
+        $self->db_execute_command('pipeline_db', 'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
     ];
 }
 
@@ -143,7 +149,7 @@ sub pipeline_analyses {
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
             ],
             -flow_into => {
-                'MAIN' => [ 'mysql:////intermediate_result' ],
+                'MAIN' => [ ':////intermediate_result' ],
             },
         },
         
@@ -155,7 +161,7 @@ sub pipeline_analyses {
             ],
             -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
             -flow_into => {
-                'MAIN' => [ 'mysql:////final_result' ],
+                'MAIN' => [ ':////final_result' ],
             },
         },
     ];

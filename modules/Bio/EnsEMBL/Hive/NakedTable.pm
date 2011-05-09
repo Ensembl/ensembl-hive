@@ -69,7 +69,7 @@ sub url {
     my $ref_dba = shift @_;     # if reference dba is the same as 'our' dba, a shorter url can be generated
 
     if(my $adaptor = $self->adaptor) {
-        my $conn_prefix = ($adaptor->db == $ref_dba) ? 'mysql:///' : $adaptor->db->dbc->url();
+        my $conn_prefix = ($adaptor->db == $ref_dba) ? ':///' : $adaptor->db->dbc->url();
         return $conn_prefix .'/'. $self->table_name() . '?insertion_method=' . $self->insertion_method();
     } else {
         return;

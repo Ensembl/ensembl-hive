@@ -90,17 +90,26 @@ sub Bio::EnsEMBL::Analysis::process {
 
 =cut
 
-sub Bio::EnsEMBL::DBSQL::DBConnection::url
-{
+sub Bio::EnsEMBL::DBSQL::DBConnection::url {
   my $self = shift;
-  return undef unless($self->host and $self->port and $self->dbname);
-  my $url = "mysql://";
+
+  return undef unless($self->driver and $self->dbname);
+
+  my $url = $self->driver . '://';
+
   if($self->username) {
     $url .= $self->username;
     $url .= ":".$self->password if($self->password);
     $url .= "@";
   }
-  $url .= $self->host .":". $self->port ."/" . $self->dbname;
+  if($self->host) {
+    $url .= $self->host;
+    if($self->port) {
+        $url .= ':'.$self->port;
+    }
+  }
+  $url .= '/' . $self->dbname;
+
   return $url;
 }
 
@@ -118,15 +127,12 @@ sub Bio::EnsEMBL::DBSQL::DBConnection::url
 
 =cut
 
-sub Bio::EnsEMBL::Analysis::url
-{
+sub Bio::EnsEMBL::Analysis::url {
   my $self = shift;
-  my $url;
 
   return undef unless($self->adaptor);
-  $url = $self->adaptor->db->dbc->url;
-  $url .= "/analysis?logic_name=" . $self->logic_name;
-  return $url;  
+
+  return $self->adaptor->db->dbc->url . '/analysis?logic_name=' . $self->logic_name;
 }
 
 

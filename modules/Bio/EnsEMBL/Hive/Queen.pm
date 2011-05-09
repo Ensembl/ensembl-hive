@@ -182,11 +182,11 @@ sub create_new_worker {
   
   my $sql = q{INSERT INTO worker 
               (born, last_check_in, meadow_type, process_id, host, analysis_id)
-              VALUES (NOW(), NOW(), ?,?,?,?)};
+              VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?,?,?,?)};
 
   my $sth = $self->prepare($sql);
   $sth->execute($meadow_type, $process_id, $exec_host, $analysisStats->analysis_id);
-  my $worker_id = $sth->{'mysql_insertid'};
+  my $worker_id = ($self->dbc->driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
   $sth->finish;
 
   my $worker = $self->fetch_by_dbID($worker_id);
@@ -242,7 +242,7 @@ sub register_worker_death {
     $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
   }
 
-  my $sql = "UPDATE worker SET died=now(), last_check_in=now()";
+  my $sql = "UPDATE worker SET died=CURRENT_TIMESTAMP, last_check_in=CURRENT_TIMESTAMP";
   $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " ,cause_of_death='$cod'";
@@ -332,7 +332,7 @@ sub worker_check_in {
   my ($self, $worker) = @_;
 
   return unless($worker);
-  my $sql = "UPDATE worker SET last_check_in=now()";
+  my $sql = "UPDATE worker SET last_check_in=CURRENT_TIMESTAMP";
   $sql .= " ,work_done='" . $worker->work_done . "'";
   $sql .= " WHERE worker_id='" . $worker->dbID ."'";
 
@@ -391,8 +391,10 @@ sub fetch_overdue_workers {
 
   $overdue_secs = 3600 unless(defined($overdue_secs));
 
-  my $constraint = "w.cause_of_death='' ".
-                   "AND (UNIX_TIMESTAMP()-UNIX_TIMESTAMP(w.last_check_in))>$overdue_secs";
+  my $constraint = "w.cause_of_death='' AND ".
+                    ( ($self->dbc->driver eq 'sqlite')
+                        ? "(strftime('%s','now')-strftime('%s',w.last_check_in))>$overdue_secs"
+                        : "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(w.last_check_in))>$overdue_secs");
   return $self->_generic_fetch($constraint);
 }
 
@@ -803,10 +805,10 @@ sub monitor
   my $sql = qq{
       INSERT INTO monitor
       SELECT
-          now(),
+          CURRENT_TIMESTAMP,
           count(*),
-          sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born))),
-          sum(work_done/TIME_TO_SEC(TIMEDIFF(now(),born)))/count(*),
+          sum(work_done/TIME_TO_SEC(TIMEDIFF(CURRENT_TIMESTAMP,born))),
+          sum(work_done/TIME_TO_SEC(TIMEDIFF(CURRENT_TIMESTAMP,born)))/count(*),
           group_concat(DISTINCT logic_name)
       FROM worker left join analysis USING (analysis_id)
       WHERE cause_of_death = ""};

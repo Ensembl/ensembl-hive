@@ -89,15 +89,15 @@ sub fetch {
 
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
-    if( my ($conn, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
-        $url =~ m{^(mysql://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
+    if( my ($conn, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
+        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
 
         my %conn_param = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
 
-#warn "URLPARSER: conn='$conn', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
+#warn "URLPARSER: conn='$conn', driver='$driver', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
 #warn "CONN_PARAMS: ".Dumper(\%conn_param);
 
-        my $dba = ($conn eq 'mysql:///') ? $default_dba : $class->create_cached_dba($user, $pass, $host, $port, $dbname, %conn_param);
+        my $dba = ($conn =~ m{^\w*:///$} ) ? $default_dba : $class->create_cached_dba($driver, $user, $pass, $host, $port, $dbname, %conn_param);
 
         if(not $table_name) {
         
@@ -124,18 +124,19 @@ sub fetch {
 }
 
 sub create_cached_dba {
-    my $class   = shift @_;
-    my $user    = shift @_ || 'ensro';
-    my $pass    = shift @_ || '';
-    my $host    = shift @_ || '';
-    my $port    = shift @_ || 3306;
-    my $dbname  = shift @_;
-    my %conn_param = @_;
+    my ($class, $driver, $user, $pass, $host, $port, $dbname, %conn_param) = @_;
+
+    if($driver eq 'mysql') {
+        $user ||= 'ensro';
+        $pass ||= '';
+        $host ||= '';
+        $port ||= 3306;
+    }
 
     my $type   = $conn_param{'type'};
     my $discon = $conn_param{'discon'};
 
-    my $connectionKey = "$user:$pass\@$host:$port/$dbname;$type";
+    my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
     my $dba = $_URLFactory_global_instance->{$connectionKey};
 
     unless($dba) {
@@ -150,13 +151,14 @@ sub create_cached_dba {
         eval "require $module";
 
         $_URLFactory_global_instance->{$connectionKey} = $dba = $module->new (
-            -disconnect_when_inactive => $discon,
-            -user   => $user,
-            -pass   => $pass,
+            -driver => $driver,
             -host   => $host,
             -port   => $port,
+            -user   => $user,
+            -pass   => $pass,
             -dbname => $dbname,
             -species => $dbname,
+            -disconnect_when_inactive => $discon,
         );
     }
     return $dba;

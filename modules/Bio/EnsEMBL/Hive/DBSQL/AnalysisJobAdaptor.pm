@@ -99,16 +99,20 @@ sub CreateNewJob {
     $input_id = "_ext_input_analysis_data_id $input_data_id";
   }
 
-  my $sql = q{INSERT ignore into job 
+  my $dbc = $analysis->adaptor->db->dbc;
+  my $insertion_method = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+  $insertion_method = 'INSERT'; # we are expecting this to fire
+
+  my $status = $blocked ? 'BLOCKED' : 'READY';
+
+  my $sql = qq{$insertion_method INTO job 
               (input_id, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
               VALUES (?,?,?,?,?,?)};
  
-  my $status = $blocked ? 'BLOCKED' : 'READY';
-
-  my $dbc = $analysis->adaptor->db->dbc;
   my $sth = $dbc->prepare($sql);
-  $sth->execute($input_id, $prev_job_id, $analysis->dbID, $status, $semaphore_count, $semaphored_job_id);
-  my $job_id = $sth->{'mysql_insertid'};
+
+  $sth->execute($input_id, $prev_job_id, $analysis->dbID, $status, $semaphore_count || 0, $semaphored_job_id);
+  my $job_id = ($dbc->driver eq 'sqlite') ? $dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
   $sth->finish;
 
   $dbc->do("UPDATE analysis_stats SET ".
@@ -399,11 +403,11 @@ sub update_status {
     my $sql = "UPDATE job SET status='".$job->status."' ";
 
     if($job->status eq 'DONE') {
-        $sql .= ",completed=now()";
+        $sql .= ",completed=CURRENT_TIMESTAMP";
         $sql .= ",runtime_msec=".$job->runtime_msec;
         $sql .= ",query_count=".$job->query_count;
     } elsif($job->status eq 'PASSED_ON') {
-        $sql .= ", completed=now()";
+        $sql .= ", completed=CURRENT_TIMESTAMP";
     } elsif($job->status eq 'READY') {
     }
 
@@ -450,7 +454,9 @@ sub store_out_files {
   $self->dbc->do($sql);
   return unless($job->stdout_file or $job->stderr_file);
 
-  $sql = "INSERT ignore INTO job_file (job_id, worker_id, retry, type, path) VALUES ";
+  my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+
+  $sql = "$insertion_method INTO job_file (job_id, worker_id, retry, type, path) VALUES ";
   if($job->stdout_file) {
     $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->worker_id, 
 		    $job->retry_count, $job->stdout_file); 
@@ -485,23 +491,22 @@ sub grab_jobs_for_worker {
   
   my $analysis_id = $worker->analysis->dbID();
   my $worker_id   = $worker->dbID();
+  my $batch_size  = $worker->batch_size();
 
-  my $sql_base = qq{
-    UPDATE job
-    SET worker_id='$worker_id', status='CLAIMED'
-    WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0
-  };
+  my $update_sql            = "UPDATE job SET worker_id='$worker_id', status='CLAIMED'";
+  my $selection_start_sql   = " WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0";
 
-  my $sql_virgin = $sql_base .  
-                   " AND retry_count=0".
-                   " LIMIT " . $worker->batch_size;
+  my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $batch_size";
+  my $any_selection_sql     = $selection_start_sql . " LIMIT $batch_size";
 
-  my $sql_any = $sql_base .  
-                " LIMIT " . $worker->batch_size;
-  
-  my $claim_count = $self->dbc->do($sql_virgin);
-  if($claim_count == 0) {
-    $claim_count = $self->dbc->do($sql_any);
+  if($self->dbc->driver eq 'sqlite') {
+      unless(my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) {
+            $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
+      }
+  } else {
+      unless(my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) {
+            $claim_count = $self->dbc->do( $update_sql . $any_selection_sql );
+      }
   }
 
   my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
@@ -607,7 +612,7 @@ sub release_and_age_job {
         #
     $self->dbc->do( qq{
         UPDATE job
-           SET status=IF( $may_retry AND (retry_count<$max_retry_count), 'READY', 'FAILED'), retry_count=retry_count+1
+           SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END), retry_count=retry_count+1
          WHERE job_id=$job_id
            AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
     } );

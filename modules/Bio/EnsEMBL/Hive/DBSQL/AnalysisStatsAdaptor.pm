@@ -209,7 +209,7 @@ sub update {
   $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
   $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
-  $sql .= ",last_update=NOW()";
+  $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
   $sql .= ",rc_id=". $stats->rc_id();
   $sql .= ",can_be_empty=". $stats->can_be_empty();
@@ -218,7 +218,7 @@ sub update {
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
-  $sth = $self->prepare("INSERT INTO analysis_stats_monitor SELECT now(), analysis_stats.* from analysis_stats WHERE analysis_id = ".$stats->analysis_id);
+  $sth = $self->prepare("INSERT INTO analysis_stats_monitor SELECT CURRENT_TIMESTAMP, analysis_stats.* from analysis_stats WHERE analysis_id = ".$stats->analysis_id);
   $sth->execute();
   $sth->finish;
   $stats->seconds_since_last_update(0); #not exact but good enough :)
@@ -285,7 +285,7 @@ sub decrease_hive_capacity
 
   my $sql = "UPDATE analysis_stats ".
       " SET hive_capacity = hive_capacity - 1, ".
-      " num_required_workers = IF(num_required_workers > 0, num_required_workers - 1, 0) ".
+      " num_required_workers = (CASE WHEN num_required_workers > 0 THEN num_required_workers - 1 ELSE 0 END) ".
       " WHERE analysis_id='$analysis_id' and hive_capacity > 1";
 
   $self->dbc->do($sql);
@@ -469,7 +469,10 @@ sub _columns {
                     ast.rc_id
                     ast.can_be_empty
                    );
-  push @columns , "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
+
+  push @columns , ($self->dbc->driver eq 'sqlite')
+                    ? "strftime('%s','now')-strftime('%s',ast.last_update) seconds_since_last_update "
+                    : "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
   return @columns;            
 }
 
@@ -534,7 +537,9 @@ sub _create_new_for_analysis_id {
 
   my $sql;
 
-  $sql = "INSERT ignore INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
+  my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+
+  $sql = "$insertion_method INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
   #print("$sql\n");
   my $sth = $self->prepare($sql);
   $sth->execute();

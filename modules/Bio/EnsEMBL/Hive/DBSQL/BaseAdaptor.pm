@@ -90,25 +90,36 @@ sub _table_info_loader {
 
     my $dbc         = $self->dbc();
     my $dbname      = $dbc->dbname();
+    my $driver      = $dbc->driver();
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
     my @primary_key = ();
     my $autoinc_id  = '';
 
-    my $sql = "SELECT column_name,column_key,extra FROM information_schema.columns WHERE table_schema='$dbname' and table_name='$table_name'";
+    my $sql = {
+        'mysql' => "SELECT column_name AS name, column_key='PRI' AS pk, extra='auto_increment' AS ai FROM information_schema.columns WHERE table_schema='$dbname' and table_name='$table_name'",
+        'sqlite'=> "PRAGMA table_info('$table_name')",
+    }->{$driver} or die "could not find column info for driver='$driver'";
+
     my $sth = $self->prepare($sql);
-    $sth->execute;  
-    while(my ($column_name, $column_key, $extra) = $sth->fetchrow ) {
+    $sth->execute;
+    while(my $row = $sth->fetchrow_hashref ) {
+        my $column_name = $row->{'name'};
+
         $column_set{$column_name} = 1;
-        if($column_key eq 'PRI') {
+        if($row->{'pk'}) {
             push @primary_key, $column_name;
-            if($extra eq 'auto_increment') {
+            if($row->{'ai'}) {
                 $autoinc_id = $column_name;
             }
         }
     }
     $sth->finish;
+
+    if(($driver eq 'sqlite') and scalar(@primary_key)==1) {
+        $autoinc_id = $primary_key[0];
+    }
 
     $self->column_set(  \%column_set );
     $self->primary_key( \@primary_key );
@@ -275,8 +286,12 @@ sub store {
     my $table_name          = $self->table_name();
     my $column_set          = $self->column_set();
     my $autoinc_id          = $self->autoinc_id();
+    my $driver              = $self->dbc->driver();
     my $insertion_method    = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
     $insertion_method       =~ s/_/ /g;
+    if($driver eq 'sqlite') {
+        $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
+    }
 
         # NB: here we assume all hashes will have the same keys:
     my $non_autoinc_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
@@ -289,7 +304,7 @@ sub store {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
             $self->mark_stored($object, $present);
         } else {
-            #print "STORE: $sql\n";
+            # print "STORE: $sql\n";
             $sth ||= $self->prepare( $sql );    # only prepare (once) if we get here
 
             #print "NON_AUTOINC_COLUMNS: ".join(', ', @$non_autoinc_columns)."\n";
@@ -300,7 +315,7 @@ sub store {
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$non_autoinc_values).')';
             if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
-                $self->mark_stored($object, $sth->{'mysql_insertid'});
+                $self->mark_stored($object, ($driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'});
             }
         }
     }

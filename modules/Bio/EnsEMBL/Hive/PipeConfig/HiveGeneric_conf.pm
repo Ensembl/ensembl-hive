@@ -52,7 +52,11 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 
+our ($hive_default_driver) = 'mysql';
+
+
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
+
 
 =head2 default_options
 
@@ -74,9 +78,11 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
+            -driver => $hive_default_driver,
         },
     };
 }
+
 
 =head2 pipeline_create_commands
 
@@ -86,16 +92,23 @@ sub default_options {
 =cut
 
 sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
+    my $self = shift @_;
 
-            # standard eHive tables, foreign_keys and procedures:
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.sql',
-        'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sql',
-    ];
+    return ($hive_default_driver eq 'sqlite')
+        ? [
+                # standard eHive tables and unique/non-unique indices:
+            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
+        ]
+        : [
+            'mysql '.$self->dbconn_2_mysql('pipeline_db', 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
+
+                # standard eHive tables, foreign_keys and procedures:
+            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
+            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.sql',
+            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sql',
+        ];
 }
+
 
 =head2 pipeline_wide_parameters
 
@@ -112,6 +125,7 @@ sub pipeline_wide_parameters {
     };
 }
 
+
 =head2 resource_classes
 
     Description : Interface method that should return a hash of resource_description_id->resource_description_hash.
@@ -126,6 +140,7 @@ sub resource_classes {
         1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
     };
 }
+
 
 =head2 pipeline_analyses
 
@@ -160,6 +175,7 @@ sub new {
     return $self;
 }
 
+
 =head2 o
 
     Description : This is the method you call in the interface methods when you need to substitute an option: $self->o('password') .
@@ -187,6 +203,7 @@ sub o {                 # descends the option hash structure (vivifying all enco
     return $value;
 }
 
+
 =head2 dbconn_2_mysql
 
     Description : A convenience method used to stringify a connection-parameters hash into a parameter string that both mysql and beekeeper.pl can understand
@@ -203,6 +220,37 @@ sub dbconn_2_mysql {    # will save you a lot of typing
           .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
 }
 
+
+=head2 db_connect_command
+
+    Description : A convenience method used to stringify a command to connect to the db OR pipe an sql file into it.
+
+=cut
+
+sub db_connect_command {
+    my ($self, $db_conn) = @_;
+
+    return ($hive_default_driver eq 'sqlite')
+        ? 'sqlite3 '.$self->o($db_conn, '-dbname')
+        : 'mysql '.$self->dbconn_2_mysql($db_conn, 1);
+}
+
+
+=head2 db_execute_command
+
+    Description : A convenience method used to stringify a command to connect to the db OR pipe an sql file into it.
+
+=cut
+
+sub db_execute_command {
+    my ($self, $db_conn, $sql_command) = @_;
+
+    return ($hive_default_driver eq 'sqlite')
+        ? 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'"
+        : 'mysql '.$self->dbconn_2_mysql($db_conn, 1)." -e '$sql_command'";
+}
+
+
 =head2 dbconn_2_url
 
     Description :  A convenience method used to stringify a connection-parameters hash into a 'url' that beekeeper.pl will undestand
@@ -212,8 +260,11 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 sub dbconn_2_url {
     my ($self, $db_conn) = @_;
 
-    return 'mysql://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
+    return ($hive_default_driver eq 'sqlite')
+        ? $self->o($db_conn, '-driver').':///'.$self->o($db_conn,'-dbname')
+        : $self->o($db_conn, '-driver').'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
 }
+
 
 =head2 process_options
 
@@ -460,7 +511,7 @@ sub run {
     print "  beekeeper.pl -url $url -run\t\t# (run one step of the pipeline - useful for debugging/learning)\n";
 
     print "\n\n\tTo connect to your pipeline database use the following line:\n\n";
-    print "  mysql ".$self->dbconn_2_mysql('pipeline_db',1)."\n\n";
+    print "  ".$self->db_connect_command('pipeline_db')."\n\n";
 }
 
 
