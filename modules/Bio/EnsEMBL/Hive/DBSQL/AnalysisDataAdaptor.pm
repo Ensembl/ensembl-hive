@@ -69,10 +69,10 @@ sub store {
   
   return 0 unless($data);
   
-  my $sth2 = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
-  $sth2->execute($data);
+  my $sth = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
+  $sth->execute($data);
   $data_id = ($self->dbc->driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
-  $sth2->finish;
+  $sth->finish;
 
   return $data_id;
 }
