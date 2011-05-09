@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use DBI;
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;

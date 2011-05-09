@@ -1,8 +1,8 @@
 #!/usr/local/ensembl/bin/perl -w
 
 use strict;
-use DBI;
 use Getopt::Long;
+
 use Bio::EnsEMBL::Hive;
 
 my ($help, $url);

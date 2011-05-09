@@ -9,10 +9,9 @@
 
 use strict;
 use warnings;
-use DBI;
 use Getopt::Long;
+
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Worker;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 # ok this is a hack, but I'm going to pretend I've got an object here

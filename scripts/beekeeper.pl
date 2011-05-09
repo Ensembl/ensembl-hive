@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use DBI;
 use Getopt::Long;
 
 use Bio::EnsEMBL::Hive::Utils 'destringify';
