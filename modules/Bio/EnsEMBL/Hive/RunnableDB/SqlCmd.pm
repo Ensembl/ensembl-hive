@@ -120,7 +120,8 @@ sub run {
         $dbh->do( $sql );
 
         my $insert_id_name  = '_insert_id_'.$counter++;
-        my $insert_id_value = ($dbh->driver eq 'sqlite') ? $dbh->func('last_insert_rowid') : $dbh->{'mysql_insertid'};
+        #my $insert_id_value = ($dbh->driver eq 'sqlite') ? $dbh->func('last_insert_rowid') : $dbh->{'mysql_insertid'};  # <---- this approach worked
+        my $insert_id_value = $dbh->last_insert_rowid();    # <---- this one should work, but watch out
         $output_id{$insert_id_name} = $insert_id_value;
         $self->param($insert_id_name, $insert_id_value); # for templates
     }

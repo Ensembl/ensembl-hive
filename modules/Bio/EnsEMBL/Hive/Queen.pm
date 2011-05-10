@@ -186,7 +186,7 @@ sub create_new_worker {
 
   my $sth = $self->prepare($sql);
   $sth->execute($meadow_type, $process_id, $exec_host, $analysisStats->analysis_id);
-  my $worker_id = ($self->dbc->driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
+  my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id');
   $sth->finish;
 
   my $worker = $self->fetch_by_dbID($worker_id);

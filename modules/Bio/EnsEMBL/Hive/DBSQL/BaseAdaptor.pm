@@ -315,7 +315,7 @@ sub store {
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$non_autoinc_values).')';
             if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
-                $self->mark_stored($object, ($driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'});
+                $self->mark_stored($object, $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id) );
             }
         }
     }

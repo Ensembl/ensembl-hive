@@ -112,7 +112,7 @@ sub CreateNewJob {
   my $sth = $dbc->prepare($sql);
 
   $sth->execute($input_id, $prev_job_id, $analysis->dbID, $status, $semaphore_count || 0, $semaphored_job_id);
-  my $job_id = ($dbc->driver eq 'sqlite') ? $dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
+  my $job_id = $dbc->db_handle->last_insert_id(undef, undef, 'job', 'job_id');
   $sth->finish;
 
   $dbc->do("UPDATE analysis_stats SET ".

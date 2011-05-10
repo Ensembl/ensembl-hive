@@ -65,13 +65,12 @@ sub fetch_by_dbID {
 
 sub store {
   my ($self, $data) = @_;
-  my $data_id;
   
   return 0 unless($data);
   
   my $sth = $self->prepare("INSERT INTO analysis_data (data) VALUES (?)");
   $sth->execute($data);
-  $data_id = ($self->dbc->driver eq 'sqlite') ? $self->dbc->db_handle->func('last_insert_rowid') : $sth->{'mysql_insertid'};
+  my $data_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'analysis_data', 'analysis_data_id');
   $sth->finish;
 
   return $data_id;
