@@ -211,7 +211,7 @@ sub _make_list_from_open {
     while(my $line = <FILE>) {
         chomp $line;
 
-        push @list, defined($delimiter) ? [ split(/\Q$delimiter\E/, $line) ] : $line;
+        push @list, defined($delimiter) ? [ split(/$delimiter/, $line) ] : $line;
     }
     close FILE;
 
