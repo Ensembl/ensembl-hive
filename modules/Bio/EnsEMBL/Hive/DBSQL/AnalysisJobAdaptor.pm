@@ -101,7 +101,6 @@ sub CreateNewJob {
 
   my $dbc = $analysis->adaptor->db->dbc;
   my $insertion_method = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-  $insertion_method = 'INSERT'; # we are expecting this to fire
 
   my $status = $blocked ? 'BLOCKED' : 'READY';
 
