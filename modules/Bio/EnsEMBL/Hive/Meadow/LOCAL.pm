@@ -44,7 +44,17 @@ sub status_of_all_our_workers { # returns a hashref
     foreach my $line (`$cmd`) {
         my ($pre_status, $worker_pid, $job_name) = split(/\s+/, $line);
 
-        my $status = { 'R' => 'RUN', 'S' => 'RUN', 'D' => 'RUN', 'T' => 'SSUSP' }->{$pre_status};
+        my $status = {
+            'R' => 'RUN',   # running
+
+            'S' => 'RUN',   # sleeping (sleeping for less than 20 sec on a Mac)
+            'I' => 'RUN',   # Mac: idle (sleeping for more than 20 sec)
+
+            'D' => 'RUN',   # Linux: uninterruptible sleep, usually IO
+            'U' => 'RUN',   # Mac: uninterruptible wait
+
+            'T' => 'SSUSP'  # stopped process
+        }->{ substr($pre_status,0,1) }; # only take the first character because of Mac's additional modifiers
 
         # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
 
