@@ -95,7 +95,12 @@ MODIFIES SQL DATA
 #       call drop_hive_tables;      # just drop them all
 
 DROP PROCEDURE IF EXISTS drop_hive_tables;
+DELIMITER //
 CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
-    DROP TABLE worker, dataflow_rule, analysis_ctrl_rule, job, job_file, analysis_data, analysis_stats, resource_description, analysis_stats_monitor, monitor;
+BEGIN
+    DROP VIEW IF EXISTS msg, progress;
+    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, job_message, job, worker;
+END; //
+DELIMITER ;
 
