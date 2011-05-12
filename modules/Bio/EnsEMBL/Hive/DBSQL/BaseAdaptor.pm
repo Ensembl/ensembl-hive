@@ -89,35 +89,30 @@ sub _table_info_loader {
     my $self = shift @_;
 
     my $dbc         = $self->dbc();
-    my $dbname      = $dbc->dbname();
+    my $dbh         = $dbc->db_handle();
     my $driver      = $dbc->driver();
+    my $dbname      = $dbc->dbname();
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
-    my @primary_key = ();
+    my %name2type   = ();
     my $autoinc_id  = '';
+    my @primary_key = $dbh->primary_key(undef, undef, $table_name);
 
-    my $sql = {
-        'mysql' => "SELECT column_name AS name, column_key='PRI' AS pk, extra='auto_increment' AS ai FROM information_schema.columns WHERE table_schema='$dbname' and table_name='$table_name'",
-        'sqlite'=> "PRAGMA table_info('$table_name')",
-    }->{$driver} or die "could not find column info for driver='$driver'";
+    my $sth = $dbh->column_info(undef, undef, $table_name, '%');
+    $sth->execute();
+    while (my $row = $sth->fetchrow_hashref()) {
+        my ($position, $name, $type, $is_ai) = @$row{'ORDINAL_POSITION','COLUMN_NAME', 'TYPE_NAME', 'mysql_is_auto_increment'};
 
-    my $sth = $self->prepare($sql);
-    $sth->execute;
-    while(my $row = $sth->fetchrow_hashref ) {
-        my $column_name = $row->{'name'};
-
-        $column_set{$column_name} = 1;
-        if($row->{'pk'}) {
-            push @primary_key, $column_name;
-            if($row->{'ai'}) {
-                $autoinc_id = $column_name;
-            }
+        $column_set{$name}  = 1;
+        $name2type{$name}   = $type;
+        if($is_ai) {
+            $autoinc_id = $name;
         }
     }
     $sth->finish;
 
-    if(($driver eq 'sqlite') and scalar(@primary_key)==1) {
+    if(($driver eq 'sqlite') and scalar(@primary_key)==1 and (uc($name2type{$primary_key[0]}) eq 'INTEGER') ) {
         $autoinc_id = $primary_key[0];
     }
 
