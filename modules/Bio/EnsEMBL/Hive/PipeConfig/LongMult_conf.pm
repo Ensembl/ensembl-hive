@@ -58,10 +58,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
-   # EXPERIMENTAL: choose either 'mysql' or 'sqlite' and do not forget to provide the correct connection parameters:
-$Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver = 'mysql';
-
-
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
@@ -77,7 +73,6 @@ sub default_options {
         'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {                                  # connection parameters
-            -driver => $Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::hive_default_driver,
             -host   => 'compara2',
             -port   => 3306,
             -user   => 'ensadmin',

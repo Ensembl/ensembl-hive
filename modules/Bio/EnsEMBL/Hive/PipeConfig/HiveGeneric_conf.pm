@@ -45,14 +45,12 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use strict;
 use warnings;
-use Getopt::Long;
+use Getopt::Long qw(:config pass_through);
 use Bio::EnsEMBL::Utils::Argument;          # import 'rearrange()'
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
-
-our ($hive_default_driver) = 'mysql';
 
 
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
@@ -78,7 +76,6 @@ sub default_options {
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
             -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
-            -driver => $hive_default_driver,
         },
     };
 }
@@ -92,20 +89,21 @@ sub default_options {
 =cut
 
 sub pipeline_create_commands {
-    my $self = shift @_;
+    my $self    = shift @_;
+    my $db_conn = shift @_ || 'pipeline_db';
 
-    return ($hive_default_driver eq 'sqlite')
+    return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? [
                 # standard eHive tables and unique/non-unique indices:
-            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
+            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
         ]
         : [
-            'mysql '.$self->dbconn_2_mysql('pipeline_db', 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
+            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
 
                 # standard eHive tables, foreign_keys and procedures:
-            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
-            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.sql',
-            $self->db_connect_command('pipeline_db').' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sql',
+            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
+            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.sql',
+            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sql',
         ];
 }
 
@@ -230,7 +228,7 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 sub db_connect_command {
     my ($self, $db_conn) = @_;
 
-    return ($hive_default_driver eq 'sqlite')
+    return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? 'sqlite3 '.$self->o($db_conn, '-dbname')
         : 'mysql '.$self->dbconn_2_mysql($db_conn, 1);
 }
@@ -245,7 +243,7 @@ sub db_connect_command {
 sub db_execute_command {
     my ($self, $db_conn, $sql_command) = @_;
 
-    return ($hive_default_driver eq 'sqlite')
+    return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'"
         : 'mysql '.$self->dbconn_2_mysql($db_conn, 1)." -e '$sql_command'";
 }
@@ -260,7 +258,7 @@ sub db_execute_command {
 sub dbconn_2_url {
     my ($self, $db_conn) = @_;
 
-    return ($hive_default_driver eq 'sqlite')
+    return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? $self->o($db_conn, '-driver').':///'.$self->o($db_conn,'-dbname')
         : $self->o($db_conn, '-driver').'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
 }
@@ -280,7 +278,10 @@ sub dbconn_2_url {
 =cut
 
 sub process_options {
-    my $self            = shift @_;
+    my ($self, $alt_cmdline_options) = @_;
+
+        # A hack: pretend this key was there already:
+    $self->o()->{'pipeline_db'}{'-driver'} = ($alt_cmdline_options || $self->_load_cmdline_options())->{'hive_driver'} || 'mysql';
 
         # first, vivify all options in $self->o()
     $self->default_options();
@@ -291,7 +292,7 @@ sub process_options {
     $self->dbconn_2_url('pipeline_db'); # force vivification of the whole 'pipeline_db' structure (used in run() )
 
         # you can override parsing of commandline options if creating pipelines by a script - just provide the overriding hash
-    my $cmdline_options = $self->{_cmdline_options} = shift @_ || $self->_load_cmdline_options();
+    my $cmdline_options = $self->{_cmdline_options} = $alt_cmdline_options || $self->_load_cmdline_options();
 
     print "\nPipeline:\n\t".ref($self)."\n\n";
 
@@ -567,10 +568,12 @@ sub _load_cmdline_options {
 
     my %cmdline_options = ();
 
+    local @ARGV = @ARGV;    # make this function reenterable by forbidding it to modify the original parameters
     GetOptions( \%cmdline_options,
         'help!',
         'analysis_topup!',
         'job_topup!',
+        'hive_driver=s',
         map { "$_=s".((ref($self->o($_)) eq 'HASH') ? '%' : '') } keys %{$self->o}
     );
     return \%cmdline_options;
