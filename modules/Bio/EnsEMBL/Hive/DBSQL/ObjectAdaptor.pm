@@ -36,7 +36,9 @@ sub object_class {
 sub slicer {    # take a slice of the object (if only we could inline in Perl!)
     my ($self, $object, $fields) = @_;
 
-    return [ map { $object->$_() } @$fields ];
+    my $autoinc_id = $self->autoinc_id();
+
+    return [ map { ($_ eq $autoinc_id) ? $object->dbID() : $object->$_() } @$fields ];
 }
 
 

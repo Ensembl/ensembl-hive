@@ -279,6 +279,7 @@ sub store {
     return unless(scalar(@$objects));
 
     my $table_name          = $self->table_name();
+    my $column_set          = $self->column_set();
     my $autoinc_id          = $self->autoinc_id();
     my $driver              = $self->dbc->driver();
     my $insertion_method    = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
@@ -287,8 +288,9 @@ sub store {
         $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
     }
 
-        # NB: here we assume all hashes will have the same keys:
-    my $stored_columns = [ keys %{$objects->[0]} ];
+        # NB: let's pretend we are storing all columns:
+    my $stored_columns = [ keys %$column_set ];
+    # my $stored_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
 
         # By using question marks we can insert true NULLs by setting corresponding values to undefs:
     my $sql = "$insertion_method INTO $table_name (".join(', ', @$stored_columns).') VALUES ('.join(',', (('?') x scalar(@$stored_columns))).')';
