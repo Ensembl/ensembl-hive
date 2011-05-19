@@ -29,8 +29,6 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 
-use Data::Dumper;
-
 use base ('Bio::EnsEMBL::Hive::Params');
 
 sub new {
