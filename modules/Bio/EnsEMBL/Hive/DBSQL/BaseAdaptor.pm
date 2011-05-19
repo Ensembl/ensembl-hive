@@ -279,7 +279,6 @@ sub store {
     return unless(scalar(@$objects));
 
     my $table_name          = $self->table_name();
-    my $column_set          = $self->column_set();
     my $autoinc_id          = $self->autoinc_id();
     my $driver              = $self->dbc->driver();
     my $insertion_method    = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
@@ -289,26 +288,26 @@ sub store {
     }
 
         # NB: here we assume all hashes will have the same keys:
-    my $non_autoinc_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
+    my $stored_columns = [ keys %{$objects->[0]} ];
 
         # By using question marks we can insert true NULLs by setting corresponding values to undefs:
-    my $sql = "$insertion_method INTO $table_name (".join(', ', @$non_autoinc_columns).') VALUES ('.join(',', (('?') x scalar(@$non_autoinc_columns))).')';
+    my $sql = "$insertion_method INTO $table_name (".join(', ', @$stored_columns).') VALUES ('.join(',', (('?') x scalar(@$stored_columns))).')';
     my $sth;    # do not prepare the statement until there is a real need
 
     foreach my $object (@$objects) {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
             $self->mark_stored($object, $present);
         } else {
-            # print "STORE: $sql\n";
+            #print "STORE: $sql\n";
             $sth ||= $self->prepare( $sql );    # only prepare (once) if we get here
 
-            #print "NON_AUTOINC_COLUMNS: ".join(', ', @$non_autoinc_columns)."\n";
-            my $non_autoinc_values = $self->slicer( $object, $non_autoinc_columns );
-            #print "NON_AUTOINC_VALUES: ".join(', ', @$non_autoinc_values)."\n";
+            #print "STORED_COLUMNS: ".join(', ', @$stored_columns)."\n";
+            my $stored_values = $self->slicer( $object, $stored_columns );
+            #print "STORED_VALUES: ".join(', ', @$stored_values)."\n";
 
-            my $return_code = $sth->execute( @$non_autoinc_values )
+            my $return_code = $sth->execute( @$stored_values )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
-                or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$non_autoinc_values).')';
+                or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$stored_values).')';
             if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
                 $self->mark_stored($object, $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id) );
             }
