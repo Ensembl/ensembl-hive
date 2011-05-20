@@ -95,8 +95,11 @@ sub _process_options {
   }
   
   if(!$self->{format}) {
-    warn 'Format was not set. Defaulting to png';
-    $self->{format} = 'png';
+    if($self->{output}=~/\.(\w+)$/) {
+        $self->{format} = $1;
+    } else {
+        die "Format was not set and could not guess from ".$self->output().". Please use either way to select it.\n";
+    }
   }
   
   if($self->{config}) {
@@ -109,9 +112,6 @@ sub _process_options {
     }
     my $hash = do $self->{config};
     $self->{config_hash} = $hash;
-  }
-  else {
-    warn 'No -config given. Using defaults';
   }
     
   return;
@@ -238,11 +238,11 @@ want to specify (png is the default).
 
 =head1 MAINTAINER
 
-$Author: ady $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.2 $
+$Revision: 1.3 $
 
 =head1 REQUIREMENTS
 
