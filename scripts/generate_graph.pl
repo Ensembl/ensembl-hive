@@ -86,13 +86,6 @@ sub _process_options {
       -verbose => 1
     });
   }
-  if(-f $self->{output}) {
-    pod2usage({
-      -message => "ERROR: $self->{output} already exists. Remove before running this script",
-      -exitvalue => 1,
-      -verbose => 1
-    });
-  }
   
   if(!$self->{format}) {
     if($self->{output}=~/\.(\w+)$/) {
@@ -242,7 +235,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.3 $
+$Revision: 1.4 $
 
 =head1 REQUIREMENTS
 
