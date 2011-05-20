@@ -26,11 +26,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: ady $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.4 $
+$Revision: 1.5 $
 
 =cut
 
@@ -179,7 +179,7 @@ sub _add_analysis_node {
   
   $graph->add_node(
     $a->dbID(), 
-    label => $a->logic_name().'\n'.$a->stats()->remaining_job_count().'/'.$a->stats()->total_job_count(), 
+    label => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
     shape => $shape,
     style => 'filled',
     fontname => $self->config()->{Fonts}->{node},
