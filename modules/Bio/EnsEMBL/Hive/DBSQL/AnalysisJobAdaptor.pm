@@ -499,11 +499,13 @@ sub grab_jobs_for_worker {
   my $any_selection_sql     = $selection_start_sql . " LIMIT $batch_size";
 
   if($self->dbc->driver eq 'sqlite') {
-      unless(my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) {
+            # we have to be explicitly numereic here because of '0E0' value returned by DBI if "no rows have been affected":
+      if( (my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) == 0 ) {
             $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
       }
   } else {
-      unless(my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) {
+            # we have to be explicitly numereic here because of '0E0' value returned by DBI if "no rows have been affected":
+      if( (my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) == 0 ) {
             $claim_count = $self->dbc->do( $update_sql . $any_selection_sql );
       }
   }
