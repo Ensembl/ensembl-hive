@@ -92,7 +92,7 @@ sub find_out_causes {
         my $bacct_output = `bacct -l $pid_batch`;
 
         foreach my $section (split(/\-{10,}\s+/, $bacct_output)) {
-            if($section=~/^Job <(\d+(?:\[\d+\]))>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
+            if($section=~/^Job <(\d+(?:\[\d+\])?)>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
                 $cod{$1} = $lsf_2_hive{$2};
             }
         }
