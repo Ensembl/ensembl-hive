@@ -45,12 +45,13 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use strict;
 use warnings;
-use Getopt::Long qw(:config pass_through);
 use Bio::EnsEMBL::Utils::Argument;          # import 'rearrange()'
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
+
+use base ('Bio::EnsEMBL::Hive::DependentOptions');
 
 
 # ---------------------------[the following methods will be overridden by specific pipelines]-------------------------
@@ -156,49 +157,16 @@ sub pipeline_analyses {
 
 # ---------------------------------[now comes the interfacing stuff - feel free to call but not to modify]--------------------
 
-my $undef_const = '-=[UnDeFiNeD_VaLuE]=-';  # we don't use undef, as it cannot be detected as a part of a string
 
-=head2 new
-
-    Description : Just a trivial constructor for this type of objects.
-    Caller      : init_pipeline.pl or any other script that will drive this module.
-
-=cut
-
-sub new {
-    my ($class) = @_;
-
-    my $self = bless {}, $class;
-
-    return $self;
-}
-
-
-=head2 o
-
-    Description : This is the method you call in the interface methods when you need to substitute an option: $self->o('password') .
-                  To reach down several levels of a multilevel option (such as $self->('pipeline_db') ) just list the keys down the desired path: $self->o('pipeline_db', '-user') .
-
-=cut
-
-sub o {                 # descends the option hash structure (vivifying all encountered nodes) and returns the value if found
+sub pre_options {
     my $self = shift @_;
 
-    my $value = $self->{_pipe_option} ||= {};
-
-    while(defined(my $option_syll = shift @_)) {
-
-        if(exists($value->{$option_syll})
-        and ((ref($value->{$option_syll}) eq 'HASH') or _completely_defined_string($value->{$option_syll}))
-        ) {
-            $value = $value->{$option_syll};            # just descend one level
-        } elsif(@_) {
-            $value = $value->{$option_syll} = {};       # force intermediate level vivification
-        } else {
-            $value = $value->{$option_syll} = $undef_const;    # force leaf level vivification
-        }
-    }
-    return $value;
+    return {
+        'help!' => '',
+        'job_topup!' => '',
+        'analysis_topup!' => '',
+        'hive_driver' => '',
+    };
 }
 
 
@@ -263,6 +231,11 @@ sub dbconn_2_url {
         : $self->o($db_conn, '-driver').'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
 }
 
+sub pipeline_url {
+    my $self = shift @_;
+
+    return $self->dbconn_2_url('pipeline_db'); # used to force vivification of the whole 'pipeline_db' structure (used in run() )
+}
 
 =head2 process_options
 
@@ -278,63 +251,16 @@ sub dbconn_2_url {
 =cut
 
 sub process_options {
-    my ($self, $alt_cmdline_options) = @_;
+    my $self = shift @_;
 
-        # A hack: pretend this key was there already:
-    $self->o()->{'pipeline_db'}{'-driver'} = ($alt_cmdline_options || $self->_load_cmdline_options())->{'hive_driver'} || 'mysql';
+        # pre-patch definitely_used_options:
+    $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
+    $self->root()->{'pipeline_db'}{'-driver'} = $self->{'_extra_options'}{'hive_driver'} || 'mysql';
 
-        # first, vivify all options in $self->o()
-    $self->default_options();
-    $self->pipeline_create_commands();
-    $self->pipeline_wide_parameters();
-    $self->resource_classes();
-    $self->pipeline_analyses();
-    $self->dbconn_2_url('pipeline_db'); # force vivification of the whole 'pipeline_db' structure (used in run() )
-
-        # you can override parsing of commandline options if creating pipelines by a script - just provide the overriding hash
-    my $cmdline_options = $self->{_cmdline_options} = $alt_cmdline_options || $self->_load_cmdline_options();
-
-    print "\nPipeline:\n\t".ref($self)."\n\n";
-
-    if($cmdline_options->{'help'}) {
-
-        my $all_needed_options = $self->_hash_undefs();
-
-        $self->_saturated_merge_defaults_into_options();
-
-        my $mandatory_options = $self->_hash_undefs();
-
-        print "Mandatory options:\n";
-        foreach my $key (sort keys %$mandatory_options) {
-            print "\t$key\n";
-        }
-        print "Pre-defined options:\n";
-        foreach my $key (sort keys %$all_needed_options) {
-            unless($mandatory_options->{$key}) {
-                print "\t$key\n";
-            }
-        }
-
-        exit(0);
-
-    } else {
-
-        $self->_merge_into_options($cmdline_options);
-
-        $self->_saturated_merge_defaults_into_options();
-
-        my $undefined_options = $self->_hash_undefs();
-
-        if(scalar(keys(%$undefined_options))) {
-            print "Undefined options:\n\n";
-            print join("\n", map { "\t$_" } keys %$undefined_options)."\n\n";
-            print "To get the list of available options for ".ref($self)." pipeline please run:\n\n";
-            print "\t$0 ".ref($self)." -help\n\n";
-            exit(1);
-        }
-    }
-    # by this point we have either exited or options are good
+    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'pipeline_url' ] );
+    return $self->SUPER::process_options();
 }
+
 
 =head2 run
 
@@ -346,8 +272,8 @@ sub process_options {
 
 sub run {
     my $self  = shift @_;
-    my $analysis_topup = $self->{_cmdline_options}{'analysis_topup'};
-    my $job_topup      = $self->{_cmdline_options}{'job_topup'};
+    my $analysis_topup = $self->{'_extra_options'}{'analysis_topup'};
+    my $job_topup      = $self->{'_extra_options'}{'job_topup'};
 
     unless($analysis_topup || $job_topup) {
         foreach my $cmd (@{$self->pipeline_create_commands}) {
@@ -515,150 +441,5 @@ sub run {
     print "  ".$self->db_connect_command('pipeline_db')."\n\n";
 }
 
-
-# -------------------------------[the rest are dirty implementation details]-------------------------------------
-
-
-=head2 _completely_defined_string
-
-    Description : a private function (not a method) that checks whether a certain string is clean from undefined options
-
-=cut
-
-sub _completely_defined_string {
-    return (index(shift @_, $undef_const) == ($[-1) );  # i.e. $undef_const is not a substring
-}
-
-
-=head2 _completely_defined_structure
-
-    Description : a private function (not a method) that checks whether a certain structure is clean from undefined options
-
-=cut
-
-sub _completely_defined_structure {
-    my $structure = shift @_;
-
-    my $completely_defined = 1;
-
-    if(ref($structure) eq 'HASH') {
-        while(my ($key, $value) = each %$structure) {
-            $completely_defined &&= _completely_defined_structure($value);
-        }
-        return $completely_defined;
-    } elsif(ref($structure) eq 'ARRAY') {
-        foreach my $element (@$structure) {
-            $completely_defined &&= _completely_defined_structure($element);
-        }
-    } else {
-        $completely_defined = _completely_defined_string($structure);
-    }
-    return $completely_defined;
-}
-
-
-=head2 _load_cmdline_options
-
-    Description : a private method that deals with parsing of the command line (currently it drives GetOptions that has some limitations)
-
-=cut
-
-sub _load_cmdline_options {
-    my $self      = shift @_;
-
-    my %cmdline_options = ();
-
-    local @ARGV = @ARGV;    # make this function reenterable by forbidding it to modify the original parameters
-    GetOptions( \%cmdline_options,
-        'help!',
-        'analysis_topup!',
-        'job_topup!',
-        'hive_driver=s',
-        map { "$_=s".((ref($self->o($_)) eq 'HASH') ? '%' : '') } keys %{$self->o}
-    );
-    return \%cmdline_options;
-}
-
-
-=head2 _merge_into_options
-
-    Description : a private method to merge one options-containing structure into another
-
-=cut
-
-sub _merge_into_options {
-    my $self      = shift @_;
-    my $hash_from = shift @_;
-    my $hash_to   = shift @_ || $self->o;
-
-    my $subst_counter = 0;
-
-    while(my($key, $from_value) = each %$hash_from) {
-        if( exists($hash_to->{$key})        # i.e. if there is interest. Only pay attention at options that are actually used in the PipeConfig
-        and !_completely_defined_structure($hash_to->{$key})
-        ) {
-            if(ref($from_value) eq 'HASH') {
-                if(ref($hash_to->{$key}) eq 'HASH') {
-                    my $rec_subst   = $self->_merge_into_options($from_value, $hash_to->{$key});
-                    $subst_counter += $rec_subst;
-                } else {
-                    $hash_to->{$key} = { %$from_value };
-                    $subst_counter += scalar(keys %$from_value);
-                }
-            } elsif(_completely_defined_structure($from_value)) {
-                $hash_to->{$key} = $from_value;
-                $subst_counter++;
-            }
-        }
-    }
-    return $subst_counter;
-}
-
-=head2 _saturated_merge_defaults_into_options
-
-    Description : a private method to merge defaults into options as many times as required to resolve the dependencies.
-                  Use with caution, as it doesn't check for loops!
-
-=cut
-
-sub _saturated_merge_defaults_into_options {
-    my $self      = shift @_;
-
-        # Note: every time the $self->default_options() has to be called afresh, do not cache!
-    while(my $res = $self->_merge_into_options($self->default_options)) { }
-}
-
-=head2 _hash_undefs
-
-    Description : a private method that collects all the options that are undefined at the moment
-                  (used at different stages to find 'all_options', 'mandatory_options' and 'undefined_options').
-
-=cut
-
-sub _hash_undefs {
-    my $self      = shift @_;
-    my $hash_to   = shift @_ || {};
-    my $source    = shift @_; unless(defined($source)) { $source = $self->o; }
-    my $prefix    = shift @_ || '';
-
-    if(ref($source) eq 'HASH') {
-        while(my ($key, $value) = each %$source) {
-            my $hash_element_prefix = ($prefix ? "$prefix->" : '') . "{'$key'}";
-
-            $self->_hash_undefs($hash_to, $value, $hash_element_prefix);
-        }
-    } elsif(ref($source) eq 'ARRAY') {
-        foreach my $index (0..scalar(@$source)-1) {
-            my $element = $source->[$index];
-            my $array_element_prefix = ($prefix ? "$prefix->" : '') . "[$index]";
-
-            $self->_hash_undefs($hash_to, $element, $array_element_prefix);
-        }
-    } elsif(!_completely_defined_string($source)) {
-        $hash_to->{$prefix} = 1;
-    }
-
-    return $hash_to;
-}
-
 1;
+

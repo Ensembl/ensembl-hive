@@ -799,16 +799,19 @@ sub print_running_worker_status {
 
 =cut
 
-sub monitor
-{
+sub monitor {
   my $self = shift;
   my $sql = qq{
       INSERT INTO monitor
       SELECT
           CURRENT_TIMESTAMP,
           count(*),
-          sum(work_done/TIME_TO_SEC(TIMEDIFF(CURRENT_TIMESTAMP,born))),
-          sum(work_done/TIME_TO_SEC(TIMEDIFF(CURRENT_TIMESTAMP,born)))/count(*),
+  }. ( ($self->dbc->driver eq 'sqlite')
+        ? qq{ sum(work_done/(strftime('%s','now')-strftime('%s',born))),
+              sum(work_done/(strftime('%s','now')-strftime('%s',born)))/count(*), }
+        : qq{ sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born))),
+              sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), }
+  ). qq{
           group_concat(DISTINCT logic_name)
       FROM worker left join analysis USING (analysis_id)
       WHERE cause_of_death = ""};
