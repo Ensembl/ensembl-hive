@@ -132,7 +132,7 @@ sub pipeline_analyses {
             ],
             -flow_into => {
                 2 => [ 'part_multiply' ],   # will create a fan of jobs
-                'MAIN' => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
+                1 => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
             },
         },
 
@@ -144,7 +144,7 @@ sub pipeline_analyses {
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
             ],
             -flow_into => {
-                'MAIN' => [ ':////intermediate_result' ],
+                1 => [ ':////intermediate_result' ],
             },
         },
         
@@ -156,7 +156,7 @@ sub pipeline_analyses {
             ],
             -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
             -flow_into => {
-                'MAIN' => [ ':////final_result' ],
+                1 => [ ':////final_result' ],
             },
         },
     ];

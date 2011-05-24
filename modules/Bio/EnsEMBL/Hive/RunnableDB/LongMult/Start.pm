@@ -86,8 +86,8 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
     $self->warning(scalar(@$output_ids).' multiplication jobs have been created');     # warning messages get recorded into 'job_message' table
 
-        # then flow into the MAIN branch funnel; input_id would flow into MAIN branch by default anyway, but we request it here explicitly:
-    $self->dataflow_output_id($self->input_id, 'MAIN');
+        # then flow into the branch#1 funnel; input_id would flow into branch#1 by default anyway, but we request it here explicitly:
+    $self->dataflow_output_id($self->input_id, 1);
 }
 
 1;
