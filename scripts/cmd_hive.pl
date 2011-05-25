@@ -214,7 +214,7 @@ sub create_resolved_input_id_job {
       (
        -input_id       => $resolved_input_id,
        -analysis       => $self->{_analysis},
-       -input_job_id   => 0,
+       -input_job_id   => undef,    # NULL, as these jobs are created by an external script
       ) unless ($self->{'debug'});
 }
 
