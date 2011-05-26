@@ -51,7 +51,6 @@ package Bio::EnsEMBL::Hive::DataflowRule;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
-#use Bio::EnsEMBL::Hive::URLFactory;
 
 =head2 new
 

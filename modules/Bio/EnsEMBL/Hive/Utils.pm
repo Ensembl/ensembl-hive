@@ -21,8 +21,7 @@ Bio::EnsEMBL::Hive::Utils
 
 =head1 DESCRIPTION
 
-This module provides general utility functions (at the moment of documentation, 'stringify' and 'destringify')
-that can be used in different contexts using three different calling mechanisms:
+This module provides general utility functions that can be used in different contexts through three different calling mechanisms:
 
     * import:  another module/script can selectively import methods from this module into its namespace
 
@@ -44,7 +43,7 @@ use warnings;
 use Data::Dumper;
 
 use Exporter 'import';
-our @EXPORT_OK = qw( stringify destringify dir_revhash );
+our @EXPORT_OK = qw( stringify destringify dir_revhash parse_cmdline_options load_file_or_module script_usage);
 
 
 =head2 stringify
@@ -114,6 +113,114 @@ sub dir_revhash {
 
     return join('/', @dirs);
 }
+
+
+=head2 parse_cmdline_options
+
+    Description: This function reads all options from command line into a key-value hash
+                (keys must be prefixed with a single or double dash, the following term becomes the value).
+                The rest of the terms go into the list.
+                Command line options are not removed from @ARGV, so the same or another parser can be run again if needed.
+
+    Callers    : scripts
+
+=cut
+
+sub parse_cmdline_options {
+    my %pairs = ();
+    my @list  = ();
+
+    my $temp_key;
+
+    foreach my $arg (@ARGV) {
+        if($temp_key) {
+            $pairs{$temp_key} = $arg;
+            $temp_key = '';
+        } elsif($arg=~/^--?(\w+)=(.+)$/) {
+            $pairs{$1} = $2;
+        } elsif($arg=~/^--?(\w+)$/) {
+            $temp_key = $1;
+        } else {
+            push @list, $arg;
+        }
+    }
+    return (\%pairs, \@list);
+}
+
+
+=head2 load_file_or_module
+
+    Description: This function takes one argument, tries to determine whether it is a module name ('::'-separated)
+                or a path to the module ('/'-separated), finds the module_name and dynamically loads it.
+
+    Callers    : scripts
+
+=cut
+
+sub load_file_or_module {
+    my $file_or_module = pop @_;
+
+    my $module_name;
+
+    if( $file_or_module=~/^(\w|::)+$/ ) {
+
+        $module_name = $file_or_module;
+
+    } elsif(-r $file_or_module) {
+
+        if(my $package_line = `grep ^package $file_or_module`) {
+            if($package_line=~/^\s*package\s+((?:\w|::)+)\s*;/) {
+
+                $module_name = $1;
+
+            } else {
+                warn "Package line format unrecognized:\n$package_line\n";
+                script_usage(1);
+            }
+        } else {
+            warn "Could not find the package definition line in '$file_or_module'\n";
+            script_usage(1);
+        }
+
+    } else {
+        warn "The parameter '$file_or_module' neither seems to be a valid module nor a valid readable file\n";
+        script_usage(1);
+    }
+
+    eval "require $module_name;";
+    die $@ if ($@);
+
+    return $module_name;
+}
+
+
+=head2 script_usage
+
+    Description: This function takes one argument (return value).
+                It attempts to run perldoc on the current script, and if perldoc is not present, emulates its behaviour.
+                Then it exits with the return value given.
+
+    Callers    : scripts
+
+=cut
+
+sub script_usage {
+    my $retvalue = pop @_;
+
+    if(`which perldoc`) {
+        system('perldoc', $0);
+    } else {
+        foreach my $line (<main::DATA>) {
+            if($line!~s/\=\w+\s?//) {
+                $line = "\t$line";
+            }
+            print $line;
+        }
+        <main::DATA>;   # this is just to stop the 'used once' warnings
+    }
+    exit($retvalue);
+}
+
 
 1;
 
