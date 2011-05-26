@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use Bio::EnsEMBL::Hive::Utils 'destringify';
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
@@ -121,7 +121,7 @@ sub main {
                '<>', sub { $self->{'db_conf'}->{'-dbname'} = shift @_; },
     );
 
-    if ($help) { usage(0); }
+    if ($help) { script_usage(0); }
 
     parse_conf($self, $conf_file);
 
@@ -148,7 +148,7 @@ sub main {
                     $self->{'url'} = $self->{'dba'}->dbc->url;
     } else {
         print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
-        usage(1);
+        script_usage(1);
     }
 
     my $queen = $self->{'dba'}->get_Queen;
@@ -265,21 +265,6 @@ sub main {
 #
 #######################
 
-sub usage {
-    my $retvalue = shift @_;
-
-    if(`which perldoc`) {
-        system('perldoc', $0);
-    } else {
-        foreach my $line (<DATA>) {
-            if($line!~s/\=\w+\s?//) {
-                $line = "\t$line";
-            }
-            print $line;
-        }
-    }
-    exit($retvalue);
-}
 
 sub parse_conf {
     my ($self, $conf_file) = @_;

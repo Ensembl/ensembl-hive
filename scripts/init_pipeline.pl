@@ -8,66 +8,17 @@
 
 use strict;
 use warnings;
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 
-sub usage {
-    my $retvalue = shift @_;
-
-    if(`which perldoc`) {
-        system('perldoc', $0);
-    } else {
-        foreach my $line (<DATA>) {
-            if($line!~s/\=\w+\s?//) {
-                $line = "\t$line";
-            }
-            print $line;
-        }
-    }
-    exit($retvalue);
-}
-
-sub module_from_file {
-    my $filename = shift @_;
-
-    if(my $package_line = `grep ^package $filename`) {
-        if($package_line=~/^package\s+((?:\w|::)+)\s*;/) {
-            return $1;
-        } else {
-            warn "Package line format unrecognized:\n$package_line\n";
-            usage(1);
-        }
-    } else {
-        warn "Could not find the package definition line in '$filename'\n";
-        usage(1);
-    }
-}
-
-sub process_options_and_run_module {
-    my $config_module = shift @_;
-
-    eval "require $config_module;";
-    die $@ if ($@);
-
-    my $self = $config_module->new();
-
-    $self->process_options();
-    $self->run();
-}
 
 sub main {
-    my $file_or_module = shift @ARGV || usage(0);
+    my $file_or_module = shift @ARGV or script_usage(0);
 
-    if( $file_or_module=~/^(\w|::)+$/ ) {
+    my $config_module = load_file_or_module( $file_or_module );
 
-        process_options_and_run_module( $file_or_module );
-        
-    } elsif(-r $file_or_module) {
-
-        process_options_and_run_module( module_from_file( $file_or_module ) );
-
-    } else {
-        warn "The first parameter '$file_or_module' neither seems to be a valid module in PERL5LIB nor a valid readable file\n";
-        usage(1);
-    }
+    my $config_object = $config_module->new();
+    $config_object->process_options();
+    $config_object->run();
 }
 
 main();

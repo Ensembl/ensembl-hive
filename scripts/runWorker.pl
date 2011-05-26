@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Bio::EnsEMBL::Hive::Utils ('script_usage');
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
@@ -63,7 +64,7 @@ GetOptions(
             '<>', sub { $db_conf->{'-dbname'} = shift @_; },
 );
 
-if ($help) { usage(0); }
+if ($help) { script_usage(0); }
 
 parse_conf($conf_file);
 
@@ -77,12 +78,12 @@ if($reg_conf) {
     $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%$db_conf);
 } else {
     print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
-    usage(1);
+    script_usage(1);
 }
 
 unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
   print("ERROR : no database connection\n\n");
-  usage(1);
+  script_usage(1);
 }
 
 my $queen = $DBA->get_Queen();
@@ -130,7 +131,7 @@ unless($worker) {
 
     if($msg_thrown) {
         print "$msg_thrown\n";
-        usage(1);
+        script_usage(1);
     } else {
         exit(1);
     }
@@ -151,21 +152,6 @@ exit 0;
 #
 #######################
 
-sub usage {
-    my $retvalue = shift @_;
-
-    if(`which perldoc`) {
-        system('perldoc', $0);
-    } else {
-        foreach my $line (<DATA>) {
-            if($line!~s/\=\w+\s?//) {
-                $line = "\t$line";
-            }
-            print $line;
-        }
-    }
-    exit($retvalue);
-}
 
 sub parse_conf {
   my $conf_file = shift;
