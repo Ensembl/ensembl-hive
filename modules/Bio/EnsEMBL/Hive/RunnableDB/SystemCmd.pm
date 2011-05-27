@@ -56,6 +56,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 use strict;
 use base ('Bio::EnsEMBL::Hive::Process');
 
+
 =head2 strict_hash_format
 
     Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
@@ -66,6 +67,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub strict_hash_format {
     return 0;
 }
+
 
 =head2 fetch_input
 
@@ -93,6 +95,7 @@ sub fetch_input {
     $self->param('cmd', $self->param_substitute($cmd));
 }
 
+
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
@@ -114,6 +117,7 @@ sub run {
 
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
 }
+
 
 =head2 write_output
 
