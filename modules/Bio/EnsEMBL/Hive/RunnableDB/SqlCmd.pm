@@ -40,9 +40,9 @@ The SQL command(s) can be given using two different syntaxes:
 package Bio::EnsEMBL::Hive::RunnableDB::SqlCmd;
 
 use strict;
-use DBI;
 
 use base ('Bio::EnsEMBL::Hive::Process');
+
 
 =head2 strict_hash_format
 
@@ -54,6 +54,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub strict_hash_format {
     return 0;
 }
+
 
 =head2 fetch_input
 
@@ -82,17 +83,8 @@ sub fetch_input {
         #   Store the sql command array:
         #
     $self->param('sqls', (ref($sql) eq 'ARRAY') ? $sql : [$sql] );  
-
-        # Use connection parameters to another database if supplied, otherwise use the current database as default:
-        #
-    if(my $db_conn = $self->param('db_conn')) {
-        $db_conn->{-driver} ||= 'mysql';
-
-        $self->param('dbh', DBI->connect("DBI:$db_conn->{-driver}:$db_conn->{-dbname}:$db_conn->{-host}:$db_conn->{-port}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 }) );
-    } else {
-        $self->param('dbh', $self->db->dbc->db_handle );
-    }
 }
+
 
 =head2 run
 
@@ -105,29 +97,29 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $dbh  = $self->param('dbh');
     my $sqls = $self->param('sqls');
+    my $dbh  = $self->dbh();
 
     my %output_id;
 
-        # What would be a generic way of indicating an error in (My)SQL statement, that percolates through PerlDBI?
     my $counter = 0;
     foreach my $unsubst_sql (@$sqls) {
 
             # Perform parameter substitution:
         my $sql = $self->param_substitute($unsubst_sql);
 
-        $dbh->do( $sql );
+        $dbh->do( $sql ) or die "Could not run '$sql': ".$dbh->errstr;
 
         my $insert_id_name  = '_insert_id_'.$counter++;
-        #my $insert_id_value = ($dbh->driver eq 'sqlite') ? $dbh->func('last_insert_rowid') : $dbh->{'mysql_insertid'};  # <---- this approach worked
-        my $insert_id_value = $dbh->last_insert_id(undef, undef, undef, undef);    # <---- this one should work, but watch out
+        my $insert_id_value = $dbh->last_insert_id(undef, undef, undef, undef);
+
         $output_id{$insert_id_name} = $insert_id_value;
         $self->param($insert_id_name, $insert_id_value); # for templates
     }
 
     $self->param('output_id', \%output_id);
 }
+
 
 =head2 write_output
 

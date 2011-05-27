@@ -43,7 +43,7 @@ use warnings;
 use Data::Dumper;
 
 use Exporter 'import';
-our @EXPORT_OK = qw( stringify destringify dir_revhash parse_cmdline_options load_file_or_module script_usage);
+our @EXPORT_OK = qw( stringify destringify dir_revhash parse_cmdline_options load_file_or_module script_usage url2dbconn_hash);
 
 
 =head2 stringify
@@ -221,6 +221,25 @@ sub script_usage {
     exit($retvalue);
 }
 
+
+sub url2dbconn_hash {
+    my $url = pop @_;
+
+    if( my ($driver, $user, $pass, $host, $port, $dbname) =
+        $url =~ m{^(\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {
+
+        return {
+            '-driver' => $driver    || 'mysql',
+            '-host'   => $host      || 'localhost',
+            '-port'   => $port      || 3306,
+            '-user'   => $user      || '',
+            '-pass'   => $pass      || '',
+            '-dbname' => $dbname,
+        };
+    } else {
+        return 0;
+    }
+}
 
 1;
 

@@ -85,6 +85,9 @@
 package Bio::EnsEMBL::Hive::Process;
 
 use strict;
+use warnings;
+use DBI;
+use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -255,6 +258,57 @@ sub dbc {
   my $self = shift;
   return undef unless($self->queen);
   return $self->queen->dbc;
+}
+
+
+=head2 dbh
+
+    Title   :   dbh
+    Usage   :   my $dbh = $self->dbh;
+    Function:   returns DBI handle to a database (the "current" one by default, but can be set up otherwise)
+    Returns :   DBI handle
+
+=cut
+
+sub dbh {
+    my $self = shift;
+
+    if(@_ or !$self->{'_dbh'}) {
+        $self->{'_dbh'} = $self->go_figure_dbh( shift @_ || $self->param('db_conn') || $self->dbc );
+    }
+
+    return $self->{'_dbh'};
+}
+
+sub go_figure_dbh {
+    my ($self, $foo) = @_;
+
+        
+    if(UNIVERSAL::isa($foo, 'DBI::db')) {   # it is already a DBI handle, just return it:
+
+        return $foo;
+
+    } elsif(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # an EnsEMBL DBConnection 
+
+        return $foo->db_handle;
+
+    } elsif(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor')) {   # a Hive adaptor
+
+        return $foo->dbc->db_handle;
+
+    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL
+
+        $db_conn->{-driver} ||= 'mysql';
+
+        return ($db_conn->{-driver} eq 'sqlite'
+            ? DBI->connect("DBI:SQLite:$db_conn->{-dbname}", '', '', { RaiseError => 1 })
+            : DBI->connect("DBI:$db_conn->{-driver}:host=$db_conn->{-host}:port=$db_conn->{-port}:database=$db_conn->{-dbname}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 })
+        ) or die "Couldn't connect to database: " . DBI->errstr;
+
+    } else {
+
+        die "Sorry, could not figure out how to make a DBI handle out of $foo";
+    }
 }
 
 =head2 analysis
