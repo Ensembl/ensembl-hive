@@ -28,6 +28,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::Params');
 
@@ -71,6 +72,19 @@ sub input_id {
   my $self = shift;
   $self->{'_input_id'} = shift if(@_);
   return $self->{'_input_id'};
+}
+
+sub dataflow_rules {    # if ever set will prevent the Job from fetching rules from the DB
+    my $self                = shift @_;
+    my $branch_name_or_code = shift @_;
+
+    my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
+
+    $self->{'_dataflow_rules'}{$branch_code} = shift if(@_);
+
+    return $self->{'_dataflow_rules'}
+        ? ( $self->{'_dataflow_rules'}{$branch_code} || [] )
+        : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_code);
 }
 
 sub worker_id {
@@ -243,14 +257,14 @@ sub dataflow_output_id {
         # However if nothing is supplied, semaphored_job_id will be propagated from the parent job:
     my $semaphored_job_id = $create_job_options->{'-semaphored_job_id'} ||= $self->semaphored_job_id();
 
-    my $dataflow_rule_adaptor = $self->adaptor->db->get_DataflowRuleAdaptor;
+        # map branch names to numbers:
+    my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
 
         # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
-    $self->autoflow(0) if($dataflow_rule_adaptor->branch_name_2_code($branch_name_or_code)==1);
+    $self->autoflow(0) if($branch_code == 1);
 
     my @output_job_ids = ();
-    my $rules       = $dataflow_rule_adaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_name_or_code);
-    foreach my $rule (@$rules) {
+    foreach my $rule (@{ $self->dataflow_rules( $branch_name_or_code ) }) {
 
         my $output_ids_for_this_rule;
         if(my $template = $rule->input_id_template()) {

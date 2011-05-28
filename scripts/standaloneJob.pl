@@ -33,6 +33,7 @@ my $process = $runnable_module->new();
 my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
 my ($param_hash, $param_list) = parse_cmdline_options();
 $job->param_init( 1, $process->param_defaults(), $param_hash );
+$job->dataflow_rules( 1, [] );  # dataflow switched off by default
 
 my $input_id = stringify($param_hash);
 $job->input_id( $input_id );
@@ -76,12 +77,18 @@ __DATA__
 
 =head1 USAGE EXAMPLES
 
-        # Just run a job with default parameters:
+        # Run a job with default parameters, specify module by its package name:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest
+
+        # Run the same job with default parameters, but specify module by its relative filename:
+    standaloneJob.pl RunnableDB/FailureTest.pm
 
         # Run a job and re-define some of the default parameters:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd 'ls -l'
+
+        # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
+    standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:ensembl@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
 
         # Run a job with given parameters, but skip the write_output() step:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -no_write -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
