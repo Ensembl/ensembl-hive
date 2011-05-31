@@ -88,7 +88,7 @@ __DATA__
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd 'ls -l'
 
         # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
-    standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:ensembl@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
+    standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
 
         # Run a job with given parameters, but skip the write_output() step:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -no_write -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
