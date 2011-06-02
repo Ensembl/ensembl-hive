@@ -322,35 +322,43 @@ sub run {
 
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
 
+    my %seen_logic_name = ();
+
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id) =
              rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id)], %$aha);
 
-        $parameters_hash ||= {};
-        $input_ids       ||= [];
-
-        if($analysis_topup and $analysis_adaptor->fetch_by_logic_name($logic_name)) {
-            warn "Skipping already existing analysis '$logic_name'\n";
-            next;
+        unless($logic_name) {
+            die "logic_name' must be defined in every analysis";
         }
 
-        my $analysis;
+        if($seen_logic_name{$logic_name}++) {
+            die "an entry with logic_name '$logic_name' appears at least twice in the configuration file, can't continue";
+        }
 
-        if($job_topup) {
+        my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
+        if( $analysis ) {
 
-            $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name) || die "Could not fetch analysis '$logic_name'";
+            if($analysis_topup) {
+                warn "Skipping creation of already existing analysis '$logic_name'.\n";
+                next;
+            }
 
         } else {
 
-            warn "Creating '$logic_name'...\n";
+            if($job_topup) {
+                die "Could not fetch analysis '$logic_name'";
+            }
 
-            $analysis = Bio::EnsEMBL::Analysis->new (
+            warn "Creating analysis '$logic_name'.\n";
+
+            $analysis = Bio::EnsEMBL::Analysis->new(
                 -db              => '',
                 -db_file         => '',
                 -db_version      => '1',
                 -logic_name      => $logic_name,
                 -module          => $module,
-                -parameters      => stringify($parameters_hash),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
                 -program_file    => $program_file,
             );
 
@@ -363,12 +371,12 @@ sub run {
             $stats->max_retry_count( $max_retry_count )             if(defined($max_retry_count));
             $stats->rc_id( $rc_id )                                 if(defined($rc_id));
             $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
-            $stats->status($blocked ? 'BLOCKED' : 'READY');         #   (some analyses will be waiting for human intervention in blocked state)
+            $stats->status($blocked ? 'BLOCKED' : 'READY');         # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
             $stats->update();
         }
 
             # now create the corresponding jobs (if there are any):
-        foreach my $input_id_hash (@$input_ids) {
+        foreach my $input_id_hash (@{$input_ids || []}) {
 
             Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                 -input_id       => $input_id_hash,  # input_ids are now centrally stringified in the AnalysisJobAdaptor
