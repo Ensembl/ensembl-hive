@@ -15,7 +15,7 @@
 
 CREATE OR REPLACE VIEW progress AS
     SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id, j.status, j.retry_count, count(*) cnt, job_id example_job_id
-    FROM job j JOIN analysis a USING (analysis_id)
+    FROM analysis a LEFT JOIN job j USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
