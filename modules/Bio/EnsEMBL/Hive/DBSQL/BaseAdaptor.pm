@@ -316,7 +316,7 @@ sub store {
         }
     }
 
-    $sth->finish();
+    $sth && $sth->finish();
 
     return $object_or_list;
 }
