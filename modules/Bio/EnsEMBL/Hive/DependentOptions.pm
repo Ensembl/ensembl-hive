@@ -137,9 +137,14 @@ sub substitute {
     my $self    = shift @_;
     my $ref     = shift @_;
 
-    unless(my $ref_type = ref($$ref)) {
+    my $ref_type = ref($$ref);
 
-        $$ref =~ s{(?:#\:subst (.+?)\:#)}{$self->o(split(/->/,$1))}eg;
+    if(!$ref_type) {
+        if($$ref =~ /^#\:subst ([^:]+)\:#$/) {      # if the given string is one complete substitution, we don't want to force the output into a string
+            $$ref = $self->o(split/->/,$1);
+        } else {
+            $$ref =~ s{(?:#\:subst (.+?)\:#)}{$self->o(split(/->/,$1))}eg;
+        }
 
     } elsif($ref_type eq 'HASH') {
         foreach my $value (values %$$ref) {
