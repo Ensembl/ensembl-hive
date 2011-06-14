@@ -59,7 +59,7 @@ This module implements a generic param() method that allows to set parameters ac
 package Bio::EnsEMBL::Hive::Params;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('stringify');  # import stringify()
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash');     # NB: dir_revhash() is used by some substituted expressions, do not remove!
 
 
 =head2 param_init
@@ -137,9 +137,9 @@ sub param {
 sub param_substitute {
     my ($self, $structure) = @_;
 
-    my $type = ref($structure);
+    my $ref_type = ref($structure);
 
-    if(!$type) {
+    if(!$ref_type) {
 
         if($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
 
@@ -151,13 +151,13 @@ sub param_substitute {
             return $structure;
         }
 
-    } elsif($type eq 'ARRAY') {
+    } elsif($ref_type eq 'ARRAY') {
         my @substituted_array = ();
         foreach my $element (@$structure) {
             push @substituted_array, $self->param_substitute($element);
         }
         return \@substituted_array;
-    } elsif($type eq 'HASH') {
+    } elsif($ref_type eq 'HASH') {
         my %substituted_hash = ();
         while(my($key,$value) = each %$structure) {
             $substituted_hash{$self->param_substitute($key)} = $self->param_substitute($value);
