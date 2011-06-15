@@ -197,7 +197,7 @@ sub process_options {
 
 
     my $rules_to_go;
-    my $attempts = 5;
+    my $attempts = 32;
     do {
         $rules_to_go = 0;
         foreach my $key (keys %$definitely_used_options) {
