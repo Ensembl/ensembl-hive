@@ -97,6 +97,7 @@ sub pipeline_create_commands {
         ? [
                 # standard eHive tables and unique/non-unique indices:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
+            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sqlite',
         ]
         : [
             'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
