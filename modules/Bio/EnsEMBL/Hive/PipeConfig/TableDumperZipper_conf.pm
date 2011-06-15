@@ -116,12 +116,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'    => $self->o('source_db'),
-#                'inputquery' => 'SHOW TABLES LIKE "'.$self->o('only_tables').'"',  # to support negative patterns in MySQL 5.1 we need a trick
                 'inputquery' => 'SELECT table_name FROM information_schema.tables WHERE table_schema = "'.$self->o('source_dbname').'" AND table_name '
                     .($self->o('invert_selection')?'NOT LIKE':'LIKE').' "'.$self->o('only_tables').'"',
             },
             -input_ids => [
-                { 'input_id' => { 'table_name' => '#_range_start#' }, },
+                { },    # the template is now implicitly defined by column_names of the query
             ],
             -flow_into => {
                 2 => [ 'dumper_zipper' ],   # will create a fan of jobs

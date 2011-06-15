@@ -101,10 +101,11 @@ sub pipeline_analyses {
         {   -logic_name => 'get_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputcmd' => 'find '.$self->o('directory').' -type f -name "'.$self->o('only_files').'"',
+                'inputcmd'     => 'find '.$self->o('directory').' -type f -name "'.$self->o('only_files').'"',
+                'column_names' => [ 'filename' ],
             },
             -input_ids => [
-                { 'input_id' => { 'filename' => '#_range_start#' }, },
+                { },    # no need to define the template in simple cases like this
             ],
             -flow_into => {
                 2 => [ 'zipper_unzipper' ],   # will create a fan of jobs

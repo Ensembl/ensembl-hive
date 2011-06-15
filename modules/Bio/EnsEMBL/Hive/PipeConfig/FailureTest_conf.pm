@@ -88,14 +88,17 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'    => '#expr([0..$job_count-1])expr#',    # this expression will evaluate into a listref
+                'column_names' => [ 'value' ],
             },
             -input_ids => [
                 {
                     'job_count'    => $self->o('job_count'),            # turn this option into a passable parameter
-                    'failure_rate' => $self->o('failure_rate'),         # turn the other option into a passable parameter as well
-                    'state'        => $self->o('state'),                # turn the third option into a passable parameter too
-                    'lethal_after' => $self->o('lethal_after'),
-                    'input_id' => { 'value' => '#_range_start#', 'divisor' => '#failure_rate#', 'state' => '#state#', 'lethal_after' => '#lethal_after#' },
+                    'input_id' => {
+                        'value'         => '#value#',
+                        'divisor'       => $self->o('failure_rate'),
+                        'state'         => $self->o('state'),
+                        'lethal_after'  => $self->o('lethal_after'),
+                    },
                 },
             ],
             -flow_into => {

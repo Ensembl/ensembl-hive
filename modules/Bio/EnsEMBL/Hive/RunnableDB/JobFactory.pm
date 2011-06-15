@@ -39,9 +39,9 @@ whose count is automatically set to the number of fan jobs that it will be waiti
 package Bio::EnsEMBL::Hive::RunnableDB::JobFactory;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
 use base ('Bio::EnsEMBL::Hive::Process');
+
 
 =head2 fetch_input
 
@@ -62,18 +62,19 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
 
-    param('input_id'):  The template that will become the input_id of newly created jobs (Note: this is something entirely different from $self->input_id of the current JobFactory job).
-
-    param('step'):      The requested size of the minibatch (1 by default). The real size may be smaller.
-
-    param('randomize'): Shuffles the ids before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
+    param('column_names'):  Controls the column names that come out of the parser: 0 = "no names", 1 = "parse names from data", arrayref = "take names from this array"
 
     param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the template input_id hash.
 
+    param('input_id'):  The template that will become the input_id of newly created jobs (Note: this is something entirely different from $self->input_id of the current JobFactory job).
+                        After introduction of param('column_names') its significance has dropped, but it may still become handy.
+
+    param('randomize'): Shuffles the rows before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
+
+    param('step'):      The requested size of the minibatch (1 by default). The real size of a range may be smaller than the requested size.
+
     param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
                          this is the way to say which column is undergoing 'ranging'
-
-    param('hashed_column_number'): if defined, turns 'hashed_column_number' into a dir_revhash and appends it to the list of fields.
 
 
         # The following 4 parameters are mutually exclusive and define the source of ids for the jobs:
@@ -91,44 +92,55 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub run {
     my $self = shift @_;
 
-    my $template_hash   = $self->param('input_id')      || die "'input_id' is an obligatory parameter";
-    my $step            = $self->param('step')          || 1;
-    my $randomize       = $self->param('randomize')     || 0;
-
-    my $key_column      = $self->param('key_column')    || 0;
+    my $column_names    = $self->param('column_names')  || 0;   # can be 0 (no names), 1 (names from data) or an arrayref (names from this array)
     my $delimiter       = $self->param('delimiter');
 
-    my $hashed_column_number   = $self->param('hashed_column_number');   # skip this step if undefined
+    my $randomize       = $self->param('randomize')     || 0;
+
+        # minibatching-related:
+    my $step            = $self->param('step')          || 0;
+    my $key_column      = $self->param('key_column')    || 0;
 
     my $inputlist       = $self->param('inputlist');
     my $inputfile       = $self->param('inputfile');
     my $inputquery      = $self->param('inputquery');
     my $inputcmd        = $self->param('inputcmd');
 
-    my $list = $self->param_substitute( $inputlist )
-        || ($inputquery && $self->_make_list_from_query( $self->param_substitute( $inputquery ) ))
-        || ($inputfile  && $self->_make_list_from_open(  $self->param_substitute( $inputfile  ),      $delimiter ))
-        || ($inputcmd   && $self->_make_list_from_open(  $self->param_substitute( $inputcmd   ).' |', $delimiter ))
-        || die "range of values should be defined by setting 'inputlist', 'inputfile' or 'inputquery'";
+    my $parse_column_names = $column_names && (ref($column_names) ne 'ARRAY');
+
+    my ($rows, $column_names_from_data) =
+              $inputlist    ? $self->_get_rows_from_list(  $self->param_substitute( $inputlist  ) )
+            : $inputquery   ? $self->_get_rows_from_query( $self->param_substitute( $inputquery ) )
+            : $inputfile    ? $self->_get_rows_from_open(  $self->param_substitute( $inputfile  ),      $delimiter, $parse_column_names )
+            : $inputcmd     ? $self->_get_rows_from_open(  $self->param_substitute( $inputcmd   ).' |', $delimiter, $parse_column_names )
+            : die "range of values should be defined by setting 'inputlist', 'inputquery', 'inputfile' or 'inputcmd'";
+
+    if( $column_names_from_data                                             # column data is available
+    and ( defined($column_names) ? (ref($column_names) ne 'ARRAY') : 1 )    # and is badly needed
+    ) {
+        $column_names = $column_names_from_data;
+    }
+    # after this point $column_names should either contain a list or be false
+
+    my $template_hash   = $self->param('input_id');
+    unless($template_hash or $column_names) {
+        die "At least one of 'input_id' or 'column_names' has to be defined";
+    }
+    unless($step ? $template_hash : 1) {
+        die "If 'step' is defined, 'input_id' also must be defined";
+    }
 
     if($randomize) {
-        _fisher_yates_shuffle_in_place($list);
+        _fisher_yates_shuffle_in_place($rows);
     }
 
-    if(defined($hashed_column_number) and scalar(@$list)) {
+    my $output_ids = $step
+        ? $self->_substitute_minibatched_rows($rows, $column_names, $template_hash, $step, $key_column)
+        : $self->_substitute_rows($rows, $column_names, $template_hash);
 
-        if(!ref($list->[0])) {
-            $list = [ map { [$_] } @$list ];    # create the second dimension if it was missing
-        }
-
-        foreach my $row (@$list) {
-            push @$row, dir_revhash($row->[$hashed_column_number]);
-        }
-    }
-
-    my $output_ids = $self->_split_list_into_ranges($template_hash, $list, $step, $key_column);
     $self->param('output_ids', $output_ids);
 }
+
 
 =head2 write_output
 
@@ -163,79 +175,134 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
     }
 }
 
+
 ################################### main functionality starts here ###################
 
-=head2 _make_list_from_query
+
+=head2 _get_rows_from_list
     
-    Description: this is a private method that loads ids from a given sql query
+    Description: a private method that ensures the list is 2D
+
+=cut
+
+sub _get_rows_from_list {
+    my ($self, $inputlist) = @_;
+
+    return ref($inputlist->[0])
+        ? $inputlist
+        : [ map { [ $_ ] } @$inputlist ];
+}
+
+
+=head2 _get_rows_from_query
+    
+    Description: a private method that loads ids from a given sql query
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the query will have to be run.
 
 =cut
 
-sub _make_list_from_query {
+sub _get_rows_from_query {
     my ($self, $inputquery) = @_;
 
-    my @list = ();
+    my @rows = ();
     my $sth = $self->dbh()->prepare($inputquery);
     $sth->execute();
+    my @column_names_from_data = @{$sth->{NAME}};   # tear it off the original reference to gain some freedom
+
     while (my @cols = $sth->fetchrow_array()) {
-        push @list, scalar(@cols)==1 ? $cols[0] : \@cols;
+        push @rows, \@cols;
     }
     $sth->finish();
 
-    return \@list;
+    return (\@rows, \@column_names_from_data);
 }
 
-=head2 _make_list_from_open
+
+=head2 _get_rows_from_open
     
-    Description: this is a private method that loads ids from a given file or command pipe
+    Description: a private method that loads ids from a given file or command pipe
 
 =cut
 
-sub _make_list_from_open {
-    my ($self, $input_file_or_pipe, $delimiter) = @_;
+sub _get_rows_from_open {
+    my ($self, $input_file_or_pipe, $delimiter, $parse_header) = @_;
 
-    my @list = ();
+    my @rows = ();
     open(FILE, $input_file_or_pipe) or die "Could not open '$input_file_or_pipe' because: $!";
     while(my $line = <FILE>) {
         chomp $line;
 
-        push @list, defined($delimiter) ? [ split(/$delimiter/, $line) ] : $line;
+        push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];
     }
     close FILE;
 
-    return \@list;
+    my $column_names_from_data = $parse_header ? shift @rows : 0;
+
+    return (\@rows, $column_names_from_data);
 }
 
-=head2 _split_list_into_ranges
-    
-    Description: this is a private method that splits a list of ids into sub-ranges
+
+=head2 _substitute_rows
+
+    Description: a private method that goes through a list and transforms every row into a hash
 
 =cut
 
-sub _split_list_into_ranges {
-    my ($self, $template_hash, $list, $step, $key_column) = @_;
+sub _substitute_rows {
+    my ($self, $rows, $column_names, $template_hash) = @_;
+
+    my @hashes = ();
+
+    foreach my $row (@$rows) {
+        if($template_hash) {
+            $self->param('_', $row);    # the whole row as a list
+
+            foreach my $i (0..scalar(@$row)-1) {
+                $self->param("_$i", $row->[$i]);
+
+                if($column_names) {
+                    $self->param($column_names->[$i], $row->[$i]);
+                }
+            }
+            push @hashes, $self->param_substitute($template_hash);
+        } else {
+            push @hashes, { map { ($column_names->[$_] => $row->[$_]) } (0..scalar(@$row)-1) };
+        }
+    }
+    return \@hashes;
+}
+
+
+=head2 _substitute_minibatched_rows
+    
+    Description: a private method that minibatches a list and transforms every minibatch using param-substitution
+
+=cut
+
+sub _substitute_minibatched_rows {
+    my ($self, $rows, $column_names, $template_hash, $step, $key_column) = @_;
 
     my @ranges = ();
 
-    while(@$list) {
-        my $start_line  = shift @$list;
-        my $range_start = (ref($start_line) eq 'ARRAY') ? $start_line->[$key_column] : $start_line;
+    while(@$rows) {
+        my $start_row  = shift @$rows;
+        my $range_start = $start_row->[$key_column];
 
         my $range_end   = $range_start;
         my $range_count = 1;
-        my $next_line   = $start_line; # safety, in case next while doesn't execute even once
-        while($range_count<$step && @$list) {
-               $next_line   = shift @$list;
-            my $next_value  = (ref($next_line) eq 'ARRAY') ? $next_line->[$key_column] : $next_line;
+        my $next_row    = $start_row; # safety, in case the internal while doesn't execute even once
+
+        while($range_count<$step && @$rows) {
+               $next_row    = shift @$rows;
+            my $next_value  = $next_row->[$key_column];
 
             my $predicted_next = $range_end;
             if(++$predicted_next eq $next_value) {
                 $range_end = $next_value;
                 $range_count++;
             } else {
-                unshift @$list, $next_line;
+                unshift @$rows, $next_row;
                 last;
             }
         }
@@ -245,21 +312,24 @@ sub _split_list_into_ranges {
         $self->param('_range_end',   $range_end);
         $self->param('_range_count', $range_count);
 
-        if(ref($start_line) eq 'ARRAY') {
-            foreach my $i (0..scalar(@$start_line)-1) {
-                $self->param("_start_$i", $start_line->[$i]);
-                $self->param("_end_$i",   $next_line->[$i]);
+        foreach my $i (0..scalar(@$start_row)-1) {
+            $self->param("_start_$i", $start_row->[$i]);
+            $self->param("_end_$i",   $next_row->[$i]);
+
+            if($column_names) {
+                $self->param('_start_'.$column_names->[$i], $start_row->[$i]);
+                $self->param('_end_'.$column_names->[$i],   $next_row->[$i]);
             }
         }
-
         push @ranges, $self->param_substitute($template_hash);
     }
     return \@ranges;
 }
 
+
 =head2 _fisher_yates_shuffle_in_place
     
-    Description: this is a private function (not a method) that shuffles a list of ids
+    Description: a private function (not a method) that shuffles a list of ids
 
 =cut
 
