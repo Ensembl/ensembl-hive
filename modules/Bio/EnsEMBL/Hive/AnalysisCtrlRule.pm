@@ -47,7 +47,7 @@ use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-=head2 Constructor
+=head2 new
 
   Title   : new
   Usage   : ...AnalysisCtrlRule->new;

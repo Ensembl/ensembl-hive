@@ -422,6 +422,14 @@ sub cleanup_worker_process_temp_directory {
 #
 ###############################
 
+sub set_worker_batch_size {
+  my $self = shift;
+  my $batch_size = shift;
+  if(defined($batch_size)) {
+    $self->{'_batch_size'} = $batch_size;
+  }
+}
+
 =head2 batch_size
 
   Args    :   none
@@ -436,15 +444,6 @@ sub cleanup_worker_process_temp_directory {
   Returntype : integer scalar
 
 =cut
-
-sub set_worker_batch_size {
-  my $self = shift;
-  my $batch_size = shift;
-  if(defined($batch_size)) {
-    $self->{'_batch_size'} = $batch_size;
-  }
-}
-
 sub batch_size {
   my $self = shift;
 
