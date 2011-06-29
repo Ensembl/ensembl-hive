@@ -28,21 +28,21 @@ sub run {
 sub _options {
   my ($self) = @_;
   GetOptions(
-    'regfile=s'         => \$self->{reg_file},
-    'regname=s'         => \$self->{reg_name},
-    'url=s'             => \$self->{url},
-    'host|dbhost=s'     => \$self->{db_conf}->{'-host'},
-    'port|dbport=i'     => \$self->{db_conf}->{'-port'},
-    'user|dbuser=s'     => \$self->{db_conf}->{'-user'},
-    'password|dbpass=s' => \$self->{db_conf}->{'-pass'},
-    'database|dbname=s' => \$self->{db_conf}->{'-dbname'},
+    'reg_conf|regfile=s'    => \$self->{'reg_conf'},
+    'reg_alias|regname=s'   => \$self->{'reg_alias'},
+    'url=s'                 => \$self->{url},
+    'host|dbhost=s'         => \$self->{db_conf}->{'-host'},
+    'port|dbport=i'         => \$self->{db_conf}->{'-port'},
+    'user|dbuser=s'         => \$self->{db_conf}->{'-user'},
+    'password|dbpass=s'     => \$self->{db_conf}->{'-pass'},
+    'database|dbname=s'     => \$self->{db_conf}->{'-dbname'},
     
-    'f|format=s'        => \$self->{format},
-    'o|output=s'        => \$self->{output},
-    'config'            => \$self->{config},
+    'f|format=s'            => \$self->{format},
+    'o|output=s'            => \$self->{output},
+    'config'                => \$self->{config},
     
-    'h|help'            => \$self->{help},
-    'm|man'             => \$self->{man},
+    'h|help'                => \$self->{help},
+    'm|man'                 => \$self->{man},
   );
   return;
 }
@@ -59,9 +59,9 @@ sub _process_options {
   }
   
   #Check for DB
-  if($self->{reg_file}) {
-    Bio::EnsEMBL::Registry->load_all($self->{reg_file});
-    $self->{dba} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{reg_name}, 'hive');
+  if($self->{'reg_conf'} and $self->{'reg_alias'}) {
+    Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
+    $self->{dba} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
   } 
   elsif($self->{url}) {
     $self->{dba} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{url}) || die("Unable to connect to $self->{url}\n");
@@ -73,7 +73,7 @@ sub _process_options {
   } 
   else {
     pod2usage({
-      -message => 'ERROR: Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified',
+      -message => 'ERROR: Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified',
       -exitvalue => 1,
       -verbose => 1
     });
@@ -173,11 +173,11 @@ Perl file which will return a Hash when evaluated. The hash is merged into the
 default option set for configuring the graphs produced. See 
 L<Bio::EnsEMBL::Hive::Utils::Graph::Config>
 
-=item B<-regfile>
+=item B<-reg_conf>
 
 path to a Registry configuration file
 
-=item B<-regname>
+=item B<-reg_alias>
 
 species/alias name for the Hive DBAdaptor
 
@@ -235,7 +235,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.4 $
+$Revision: 1.5 $
 
 =head1 REQUIREMENTS
 

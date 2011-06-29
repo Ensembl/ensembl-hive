@@ -68,16 +68,19 @@ if ($help) { script_usage(0); }
 
 parse_conf($conf_file);
 
-my $DBA;
-if($reg_conf) {
+if($reg_conf) {     # if reg_conf is defined, we load it regardless of whether it is used to connect to the Hive database or not:
     Bio::EnsEMBL::Registry->load_all($reg_conf);
-    $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias || 'hive', 'hive');
+}
+
+my $DBA;
+if($reg_alias) {
+    $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
 } elsif($url) {
     $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
 } elsif ($db_conf->{'-host'} and $db_conf->{'-user'} and $db_conf->{'-dbname'}) {
     $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%$db_conf);
 } else {
-    print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
+    print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
     script_usage(1);
 }
 
@@ -207,8 +210,8 @@ __DATA__
 =head2 Connection parameters:
 
     -conf <path>            : config file describing db connection
-    -regfile <path>         : path to a Registry configuration file
-    -regname <string>       : species/alias name for the Hive DBAdaptor
+    -reg_conf <path>        : path to a Registry configuration file
+    -reg_alias <string>     : species/alias name for the Hive DBAdaptor
     -url <url string>       : url defining where database is located
     -host <machine>         : mysql database host <machine>
     -port <port#>           : mysql port number

@@ -56,32 +56,33 @@ sub main {
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;
 
+    $self->{'reg_conf'}             = undef;
+    $self->{'reg_alias'}            = undef;
+
     $self->{'sleep_minutes'}        = 1;
-#    $self->{'overdue_minutes'}      = 60;   # which means one hour
     $self->{'verbose_stats'}        = 1;
-    $self->{'reg_name'}             = 'hive';
     $self->{'maximise_concurrency'} = 0;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'hive_output_dir'} = undef;
 
     GetOptions(
                     # connection parameters
-               'conf=s'            => \$conf_file,
-               'regfile=s'         => \$self->{'reg_file'},
-               'regname=s'         => \$self->{'reg_name'},
-               'url=s'             => \$self->{'url'},
-               'host|dbhost=s'     => \$self->{'db_conf'}->{'-host'},
-               'port|dbport=i'     => \$self->{'db_conf'}->{'-port'},
-               'user|dbuser=s'     => \$self->{'db_conf'}->{'-user'},
-               'password|dbpass=s' => \$self->{'db_conf'}->{'-pass'},
-               'database|dbname=s' => \$self->{'db_conf'}->{'-dbname'},
+               'conf=s'             => \$conf_file,
+               'reg_conf|regfile=s' => \$self->{'reg_conf'},
+               'reg_alias|regname=s'=> \$self->{'reg_alias'},
+               'url=s'              => \$self->{'url'},
+               'host|dbhost=s'      => \$self->{'db_conf'}->{'-host'},
+               'port|dbport=i'      => \$self->{'db_conf'}->{'-port'},
+               'user|dbuser=s'      => \$self->{'db_conf'}->{'-user'},
+               'password|dbpass=s'  => \$self->{'db_conf'}->{'-pass'},
+               'database|dbname=s'  => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control
                'run'                => \$run,
                'loop'               => \$loopit,
                'max_loops=i'        => \$max_loops,
                'keep_alive'         => \$keep_alive,
-               'job_id|run_job_id=i'  => \$self->{'run_job_id'},
+               'job_id|run_job_id=i'=> \$self->{'run_job_id'},
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -105,7 +106,6 @@ sub main {
                'sync'              => \$sync,
                'dead'              => \$check_for_dead,
                'killworker=i'      => \$kill_worker_id,
-#               'overdue'           => \$self->{'overdue_minutes'},
                'alldead'           => \$all_dead,
                'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'verbose_stats=i'   => \$self->{'verbose_stats'},
@@ -136,9 +136,9 @@ sub main {
         }
     }
 
-    if($self->{'reg_file'}) {
-        Bio::EnsEMBL::Registry->load_all($self->{'reg_file'});
-        $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_name'}, 'hive');
+    if($self->{'reg_conf'} and $self->{'reg_alias'}) {
+        Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
+        $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
     } elsif($self->{'url'}) {
         $self->{'dba'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'}) || die("Unable to connect to $self->{'url'}\n");
     } elsif (    $self->{'db_conf'}->{'-host'}
@@ -147,7 +147,7 @@ sub main {
                     $self->{'dba'} = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
                     $self->{'url'} = $self->{'dba'}->dbc->url;
     } else {
-        print "\nERROR : Connection parameters (regfile+regname, url or dbhost+dbuser+dbname) need to be specified\n\n";
+        print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
         script_usage(1);
     }
 
@@ -318,7 +318,18 @@ sub show_failed_workers {  # does not seem to be used
 sub generate_worker_cmd {
     my ($self) = @_;
 
-    my $worker_cmd = 'runWorker.pl';   # -bk '. $self->{'meadow'}->type();
+    my $worker_cmd = 'runWorker.pl';
+
+    if ($self->{'reg_conf'}) {      # if reg_conf is defined, we have to pass it anyway, regardless of whether it is used to connect to the Hive database or not:
+        $worker_cmd .= ' -reg_conf '. $self->{'reg_conf'};
+    }
+
+    if ($self->{'reg_alias'}) {     # then we pass the connection parameters:
+        $worker_cmd .= ' -reg_alias '. $self->{'reg_alias'};
+    } else {
+        $worker_cmd .= ' -url '. $self->{'url'};
+    }
+
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
@@ -327,12 +338,6 @@ sub generate_worker_cmd {
                 $worker_cmd .= " -${worker_option} $value";
             }
         }
-    }
-
-    if ($self->{'reg_file'}) {
-        $worker_cmd .= ' -regfile '. $self->{'reg_file'} .' -regname '. $self->{'reg_name'};
-    } else {
-        $worker_cmd .= ' -url '. $self->{'url'};
     }
 
     return $worker_cmd;
@@ -476,8 +481,8 @@ __DATA__
 =head2 Connection parameters
 
     -conf <path>           : config file describing db connection
-    -regfile <path>        : path to a Registry configuration file
-    -regname <string>      : species/alias name for the Hive DBAdaptor
+    -reg_conf <path>       : path to a Registry configuration file
+    -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
     -host <machine>        : mysql database host <machine>
     -port <port#>          : mysql port number

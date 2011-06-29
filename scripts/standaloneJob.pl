@@ -95,9 +95,10 @@ __DATA__
 
 =head1 SCRIPT-SPECIFIC OPTIONS
 
-    -help                       : print this help
-    -debug <level>              : turn on debug messages at <level>
-    -no_write                   : skip the execution of write_output() step this time
+    -help               : print this help
+    -debug <level>      : turn on debug messages at <level>
+    -no_write           : skip the execution of write_output() step this time
+    -reg_conf <path>    : load registry entries from the given file (these entries may be needed by the RunnableDB itself)
 
     NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
 
