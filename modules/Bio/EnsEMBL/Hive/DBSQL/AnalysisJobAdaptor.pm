@@ -453,20 +453,19 @@ sub store_out_files {
   $self->dbc->do($sql);
   return unless($job->stdout_file or $job->stderr_file);
 
-  my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+  my $insert_sql = 'INSERT INTO job_file (job_id, worker_id, retry, type, path) VALUES (?,?,?,?,?)';
 
-  $sql = "$insertion_method INTO job_file (job_id, worker_id, retry, type, path) VALUES ";
-  if($job->stdout_file) {
-    $sql .= sprintf("(%d,%d,%d,'STDOUT','%s')", $job->dbID, $job->worker_id, 
-		    $job->retry_count, $job->stdout_file); 
+  my $sth = $self->dbc()->prepare($insert_sql);
+  my @params = ($job->dbID(), $job->worker_id(), $job->retry_count());
+  if($job->stdout_file()) {
+    $sth->execute(@params, 'STDOUT', $job->stdout_file());
   }
-  $sql .= "," if($job->stdout_file and $job->stderr_file);
-  if($job->stderr_file) {
-    $sql .= sprintf("(%d,%d,%d,'STDERR','%s')", $job->dbID, $job->worker_id, 
-		    $job->retry_count, $job->stderr_file); 
+  if($job->stderr_file()) {
+    $sth->execute(@params, 'STDERR', $job->stderr_file());
   }
- 
-  $self->dbc->do($sql);
+  $sth->finish();
+  
+  return;
 }
 
 
