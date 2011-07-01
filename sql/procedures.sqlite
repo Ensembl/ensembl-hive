@@ -14,7 +14,11 @@
 --       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
 CREATE VIEW IF NOT EXISTS progress AS
-    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id, j.status, j.retry_count, count(*) cnt, job_id example_job_id
+    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
+        j.status,
+        j.retry_count,
+        CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
+        job_id example_job_id
     FROM analysis a LEFT JOIN job j USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
