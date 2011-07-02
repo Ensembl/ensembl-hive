@@ -211,11 +211,14 @@ sub create_new_worker {
     $worker->hive_output_dir($hive_output_dir);
 
     if($batch_size) {
-      $worker->set_worker_batch_size($batch_size);
+        $worker->batch_size($batch_size);
     }
     if($job_limit) {
       $worker->job_limit($job_limit);
       $worker->life_span(0);
+      if($job_limit < $worker->batch_size()) {
+        $worker->batch_size( $job_limit );
+      }
     }
     if($life_span) {
       $worker->life_span($life_span * 60);
@@ -512,6 +515,8 @@ sub synchronize_AnalysisStats {
 
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
+
+  my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor or return undef;
   
   $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
   $analysisStats->total_job_count(0);
@@ -529,34 +534,33 @@ sub synchronize_AnalysisStats {
 
   my $done_here      = 0;
   my $done_elsewhere = 0;
-  while (my ($status, $count, $semaphore_count)=$sth->fetchrow_array()) {
-# print STDERR "$status - $count\n";
+  while (my ($status, $job_count, $semaphore_count)=$sth->fetchrow_array()) {
+# print STDERR "$status: $job_count\n";
 
-    my $total = $analysisStats->total_job_count();
-    $analysisStats->total_job_count($total + $count);
+    my $curr_total = $analysisStats->total_job_count();
+    $analysisStats->total_job_count($curr_total + $job_count);
 
     if(($status eq 'READY') and ($semaphore_count<=0)) {
-      $analysisStats->unclaimed_job_count($count);
-      my $numWorkers;
-      if($analysisStats->batch_size > 0) {
-        $numWorkers = POSIX::ceil($count / $analysisStats->batch_size);
-      } else {
-        my $job_msec = $analysisStats->avg_msec_per_job;
-        $job_msec = 100 if($job_msec>0 and $job_msec<100);
-        $numWorkers = POSIX::ceil(($count * $job_msec) / (3*60*1000)); 
-        # guess num needed workers by total jobs / (num jobs a worker could do in 3 minutes)
-      }
-      $numWorkers=$count if($numWorkers==0);
-      if($analysisStats->hive_capacity>0 and $numWorkers > $analysisStats->hive_capacity) {
-        $numWorkers=$analysisStats->hive_capacity;
-      }
-      $analysisStats->num_required_workers($numWorkers);
+        $analysisStats->unclaimed_job_count($job_count);
+
+        my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
+
+            # adjust_stats_for_living_workers:
+        if($hive_capacity > 0) {
+            my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
+
+            if($capacity_allows_to_add < $required_workers ) {
+                $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+            }
+        }
+        $analysisStats->num_required_workers( $required_workers );
+
     } elsif($status eq 'DONE' and $semaphore_count<=0) {
-        $done_here = $count;
+        $done_here = $job_count;
     } elsif($status eq 'PASSED_ON' and $semaphore_count<=0) {
-        $done_elsewhere = $count;
+        $done_elsewhere = $job_count;
     } elsif ($status eq 'FAILED') {
-        $analysisStats->failed_job_count($count);
+        $analysisStats->failed_job_count($job_count);
     }
   }
   $sth->finish;
@@ -567,22 +571,6 @@ sub synchronize_AnalysisStats {
 
   if($analysisStats->status ne 'BLOCKED') {
     $analysisStats->determine_status();
-  }
-
-  #
-  # adjust_stats_for_living_workers
-  #
-  
-  if($analysisStats->hive_capacity > 0) {
-    my $liveCount = $analysisStats->get_running_worker_count();
-
-    my $numWorkers = $analysisStats->num_required_workers;
-
-    my $capacityAdjust = ($numWorkers + $liveCount) - $analysisStats->hive_capacity;
-    $numWorkers -= $capacityAdjust if($capacityAdjust > 0);
-    $numWorkers=0 if($numWorkers<0);
-
-    $analysisStats->num_required_workers($numWorkers);
   }
 
   $analysisStats->update;  #update and release sync_lock
@@ -692,17 +680,17 @@ sub get_num_needed_workers {
     next if($analysis_stats->status eq 'BLOCKED');
     next if($analysis_stats->num_required_workers == 0);
 
-        # FIXME: the following call sometimes returns a stale number greater than the number of workers actually needed for an analysis; resync fixes it
+        # FIXME: the following call *sometimes* returns a stale number greater than the number of workers actually needed for an analysis; -sync fixes it
     my $workers_this_analysis = $analysis_stats->num_required_workers;
 
-    if($analysis_stats->hive_capacity > 0) {   # if there is a limit, use it for cut-off
-        my $limit_workers_this_analysis = int($available_load * $analysis_stats->hive_capacity);
+    if((my $hive_capacity = $analysis_stats->hive_capacity) > 0) {   # if there is a limit, use it for cut-off
+        my $limit_workers_this_analysis = int($available_load * $hive_capacity);
 
         if($workers_this_analysis > $limit_workers_this_analysis) {
             $workers_this_analysis = $limit_workers_this_analysis;
         }
 
-        $available_load -= 1.0*$workers_this_analysis/$analysis_stats->hive_capacity;
+        $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
     }
     $total_workers += $workers_this_analysis;
     $rc2workers{$analysis_stats->rc_id} += $workers_this_analysis;
@@ -776,14 +764,14 @@ sub print_running_worker_status {
             "WHERE worker.analysis_id=analysis.analysis_id AND worker.cause_of_death='' ".
             "GROUP BY worker.analysis_id";
 
-  my $total = 0;
+  my $total_workers = 0;
   my $sth = $self->prepare($sql);
   $sth->execute();
-  while((my $logic_name, my $count)=$sth->fetchrow_array()) {
-    printf("%20s : %d workers\n", $logic_name, $count);
-    $total += $count;
+  while((my $logic_name, my $worker_count)=$sth->fetchrow_array()) {
+    printf("%20s : %d workers\n", $logic_name, $worker_count);
+    $total_workers += $worker_count;
   }
-  printf("  %d total workers\n", $total);
+  printf("  %d total workers\n", $total_workers);
   print "===========================\n";
   $sth->finish;
 }
@@ -814,7 +802,8 @@ sub monitor {
   ). qq{
           group_concat(DISTINCT logic_name)
       FROM worker left join analysis USING (analysis_id)
-      WHERE cause_of_death = ""};
+      WHERE cause_of_death = ''
+  };
       
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -856,10 +845,10 @@ sub _pick_best_analysis_for_new_worker {
   if($stats) {
     #synchronize and double check that it can be run
     $self->safe_synchronize_AnalysisStats($stats);
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id == $rc_id)));
   }
 
-  # ok so no analyses 'need' workers.
+  # ok so no analyses 'need' workers with the given $rc_id.
   if ($self->get_num_failed_analyses()) {
     return undef;
   }
@@ -874,10 +863,9 @@ sub _pick_best_analysis_for_new_worker {
     return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id == $rc_id)));
   }
 
+    # does the following really ever help?
   ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
-  return $stats if($stats);
-
-  return undef;
+  return $stats;
 }
 
 

@@ -31,6 +31,13 @@ use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 
+    ## Minimum amount of time in msec that a worker should run before reporting
+    ## back to the hive. This is used when setting the batch_size automatically.
+sub min_batch_time {
+    return 2*60*1000;
+}
+
+
 sub new {
   my ($class,@args) = @_;
   my $self = bless {}, $class;
@@ -74,12 +81,6 @@ sub increase_hive_capacity {
   $self->adaptor->increase_hive_capacity($self->analysis_id);
 }
 
-sub get_running_worker_count {
-  my $self = shift;
-  return unless ($self->adaptor);
-  return $self->adaptor->get_running_worker_count($self);
-}
-
 sub analysis_id {
   my $self = shift;
   $self->{'_analysis_id'} = shift if(@_);
@@ -104,10 +105,30 @@ sub status {
 }
 
 sub batch_size {
-  my $self = shift;
-  $self->{'_batch_size'} = shift if(@_);
-  $self->{'_batch_size'}=1 unless(defined($self->{'_batch_size'}));
-  return $self->{'_batch_size'};
+    my $self = shift;
+
+    $self->{'_batch_size'} = shift if(@_);
+    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # do we need to initialize it at all?
+
+    return $self->{'_batch_size'};
+}
+
+sub get_or_estimate_batch_size {
+    my $self = shift;
+
+    if( (my $batch_size = $self->batch_size())>0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
+
+        return $batch_size;
+                                                        # otherwise it is a request for dynamic estimation:
+    } elsif( my $avg_msec_per_job = $self->avg_msec_per_job() ) {           # further estimations from collected stats
+
+        $avg_msec_per_job = 100 if($avg_msec_per_job<100);
+
+        return POSIX::ceil( $self->min_batch_time() / $avg_msec_per_job );
+
+    } else {        # first estimation when no stats are available (take -$batch_size as first guess, if not zero)
+        return -$batch_size || 1;
+    }
 }
 
 sub avg_msec_per_job {
@@ -279,16 +300,19 @@ sub print_stats {
         $self->running_job_count,
         $self->failed_job_count,
         $self->avg_msec_per_job,
-        $self->num_required_workers, $self->hive_capacity,
+        $self->num_required_workers,
+        $self->hive_capacity,
         $self->seconds_since_last_update,
-        );
+    );
   } elsif ($mode == 2) {
     printf("%-27s(%2d) %11s [%d/%d workers] (sync'd %d sec ago)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
-        $self->num_required_workers, $self->hive_capacity,
-        $self->seconds_since_last_update);
+        $self->num_required_workers,
+        $self->hive_capacity,
+        $self->seconds_since_last_update
+    );
 
     printf("   msec_per_job   : %d\n", $self->avg_msec_per_job);
     printf("   cpu_min_total  : %d\n", $self->cpu_minutes_remaining);
@@ -331,8 +355,7 @@ sub determine_status {
     if($self->total_job_count == $self->unclaimed_job_count) {
       $self->status('READY');
     }
-    if($self->unclaimed_job_count>0 and
-       $self->total_job_count > $self->unclaimed_job_count) {
+    if( 0 < $self->unclaimed_job_count and $self->unclaimed_job_count < $self->total_job_count ) {
       $self->status('WORKING');
     }
   }

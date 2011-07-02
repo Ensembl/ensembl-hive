@@ -79,10 +79,6 @@ use Bio::EnsEMBL::Hive::Process;
 
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
-## Minimum amount of time in msec that a worker should run before reporting
-## back to the hive. This is used when setting the batch_size automatically.
-## 120000 msec = 2 minutes
-my $MIN_BATCH_TIME = 2*60*1000;
 
 sub new {
   my ($class,@args) = @_;
@@ -422,14 +418,6 @@ sub cleanup_worker_process_temp_directory {
 #
 ###############################
 
-sub set_worker_batch_size {
-  my $self = shift;
-  my $batch_size = shift;
-  if(defined($batch_size)) {
-    $self->{'_batch_size'} = $batch_size;
-  }
-}
-
 =head2 batch_size
 
   Args    :   none
@@ -444,24 +432,12 @@ sub set_worker_batch_size {
   Returntype : integer scalar
 
 =cut
-sub batch_size {
-  my $self = shift;
 
-  my $stats = $self->analysis->stats;
-  my $batch_size = $stats->batch_size;
-  if(defined($self->{'_batch_size'})) {
-    $batch_size = $self->{'_batch_size'};
-  } 
-    
-  if(($batch_size <= 0) and ($stats->avg_msec_per_job)) {
-    $batch_size = POSIX::ceil($MIN_BATCH_TIME / $stats->avg_msec_per_job); # num jobs in $MIN_BATCH_TIME msecs
-  }
-  $batch_size = 1 if($batch_size < 1); # make sure we grab at least one job
-  
-  if($self->job_limit and ($self->job_limit < $batch_size)) {
-    $batch_size = $self->job_limit;
-  }
-  return $batch_size;
+sub batch_size {
+    my $self = shift;
+
+    $self->{'_batch_size'} = shift if(@_);
+    return $self->{'_batch_size'} || $self->analysis->stats->get_or_estimate_batch_size();
 }
 
 
@@ -504,7 +480,8 @@ sub run {
 
   $self->db->dbc->disconnect_when_inactive(0);
 
-  my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+  my $min_batch_time    = $self->analysis->stats->min_batch_time();
+  my $job_adaptor       = $self->db->get_AnalysisJobAdaptor;
 
   do { # Worker's lifespan loop (ends only when the worker dies)
     my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
@@ -518,7 +495,7 @@ sub run {
         $self->cause_of_death('JOB_LIMIT'); 
     } else {    # a proper "BATCHES" loop
 
-        while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $MIN_BATCH_TIME) {
+        while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {
 
             if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->dbID ) }) ) {
                 my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
@@ -540,7 +517,7 @@ sub run {
     }
 
         # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
-        # so they are not allowed to happen too frequently (not before $MIN_BATCH_TIME of work has been done)
+        # so they are not allowed to happen too frequently (not before $min_batch_time of work has been done)
         #
     $self->db->get_AnalysisStatsAdaptor->interval_update_work_done(
         $self->analysis->dbID,
