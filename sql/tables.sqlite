@@ -240,7 +240,7 @@ CREATE TABLE job_message (
   worker_id                 INTEGER NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry                     int(10) DEFAULT 0 NOT NULL,
-  status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN', */
+  status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN', */
   msg                       TEXT,
   is_error                  BOOLEAN,
 

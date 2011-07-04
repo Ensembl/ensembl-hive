@@ -261,7 +261,7 @@ CREATE TABLE job_message (
   worker_id                 int(10) unsigned NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry                     int(10) DEFAULT 0 NOT NULL,
-  status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT') DEFAULT 'UNKNOWN',
+  status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN',
   msg                       text,
   is_error                  boolean,
 
