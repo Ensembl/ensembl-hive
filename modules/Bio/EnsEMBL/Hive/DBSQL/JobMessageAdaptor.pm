@@ -46,7 +46,7 @@ sub register_message {
     };
 
     my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $is_error, $job_id );
+    $sth->execute( $msg, $is_error ? 1 : 0, $job_id );
     $sth->finish();
 }
 
