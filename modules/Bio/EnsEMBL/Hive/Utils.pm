@@ -86,7 +86,7 @@ sub destringify {
         if($value=~/^'.*'$/
         or $value=~/^".*"$/
         or $value=~/^{.*}$/
-        or $value=~/^[.*]$/) {
+        or $value=~/^\[.*\]$/) {
 
             $value = eval($value);
         }
@@ -133,12 +133,12 @@ sub parse_cmdline_options {
     my $temp_key;
 
     foreach my $arg (@ARGV) {
-        if($temp_key) {
-            $pairs{$temp_key} = $arg;
+        if($temp_key) {                     # only the value, get the key from buffer
+            $pairs{$temp_key} = destringify($arg);
             $temp_key = '';
-        } elsif($arg=~/^--?(\w+)=(.+)$/) {
-            $pairs{$1} = $2;
-        } elsif($arg=~/^--?(\w+)$/) {
+        } elsif($arg=~/^--?(\w+)=(.+)$/) {  # both the key and the value
+            $pairs{$1} = destringify($2);
+        } elsif($arg=~/^--?(\w+)$/) {       # only the key, buffer it and expect the value on the next round
             $temp_key = $1;
         } else {
             push @list, $arg;
