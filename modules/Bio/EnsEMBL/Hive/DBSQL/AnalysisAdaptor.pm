@@ -25,6 +25,8 @@ use strict;
 
 use base ('Bio::EnsEMBL::DBSQL::AnalysisAdaptor');
 
+use Bio::EnsEMBL::Hive::URLFactory;
+
 
 =head2 fetch_by_logic_name_or_url
 
@@ -33,11 +35,11 @@ use base ('Bio::EnsEMBL::DBSQL::AnalysisAdaptor');
 =cut
 
 sub fetch_by_logic_name_or_url {
-    my $self                = shift @_;
+    my $self                = shift @_; # can either be $self or class name
     my $logic_name_or_url   = shift @_;
 
     if($logic_name_or_url =~ m{^\w*://}) {
-        return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, $self->db);
+        return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, ref($self) && $self->db);
     } else {
         return $self->fetch_by_logic_name($logic_name_or_url);
     }

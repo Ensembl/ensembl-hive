@@ -51,6 +51,7 @@ package Bio::EnsEMBL::Hive::DataflowRule;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 =head2 new
 
@@ -239,9 +240,9 @@ sub to_analysis {
     #if the 'from' and 'to' share the same adaptor, then use a simple logic_name
     #for the URL rather than a full network distributed URL
 
-    my $ref_rule_adaptor = $self->from_analysis->adaptor;
+    my $ref_rule_adaptor = $self->from_analysis && $self->from_analysis->adaptor;
 
-    if($analysis_or_nt->can('logic_name') and $self->from_analysis and ($ref_rule_adaptor == $analysis_or_nt->adaptor)) {
+    if($analysis_or_nt->can('logic_name') and $ref_rule_adaptor and ($ref_rule_adaptor == $analysis_or_nt->adaptor)) {
       $self->{'_to_analysis_url'} = $analysis_or_nt->logic_name;
     } else {
       $self->{'_to_analysis_url'} = $analysis_or_nt->url($ref_rule_adaptor->db);
@@ -250,8 +251,12 @@ sub to_analysis {
   # lazy load the analysis object if I can
   if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
 
-    $self->{'_to_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($self->to_analysis_url)
-        or die "Cannot fetch analysis from logic_name or url '".$self->to_analysis_url."' for dataflow rule with id='".$self->dbID."'\n";
+    my $url = $self->to_analysis_url;
+
+    $self->{'_to_analysis'} = $self->adaptor
+        ?  $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($url)
+        :  Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($url)
+    or die "Cannot fetch analysis from logic_name or url '$url' for dataflow rule with id='".$self->dbID."'\n";
 
   }
   return $self->{'_to_analysis'};
