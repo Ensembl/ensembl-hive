@@ -110,7 +110,7 @@ __DATA__
 
         # Run a job and re-direct its dataflow into tables:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::JobFactory -inputfile foo.txt -delimiter '\t' -column_names "[ 'name', 'age' ]" 
-                        -flow_into "{ 2 => ['mysql://ensadmin:ensembl@127.0.0.1:2914/lg4_triggers/foo', 'mysql://ensadmin:ensembl@127.0.0.1:2914/lg4_triggers/bar'] }"
+                        -flow_into "{ 2 => ['mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/foo', 'mysql://ensadmin:xxxxxxx@127.0.0.1:2914/lg4_triggers/bar'] }"
 
 =head1 SCRIPT-SPECIFIC OPTIONS
 
