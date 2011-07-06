@@ -50,6 +50,7 @@ foreach my $branch_code (keys %$flow_into) {
 }
 
 my $input_id = stringify($param_hash);
+$job->autoflow(1);
 $job->input_id( $input_id );
 warn "\nRunning '$runnable_module' with '$input_id' :\n";
 
@@ -68,6 +69,11 @@ $process->run();
 unless($no_write) {
     warn "\nWRITE_OUTPUT:\n";
     $process->write_output();
+
+    if( $job->autoflow ) {
+        warn "\nAUTOFLOW input->output\n";
+        $job->dataflow_output_id();
+    }
 }
 warn "\nDONE.\n";
 
