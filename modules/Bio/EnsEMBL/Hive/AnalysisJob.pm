@@ -28,6 +28,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use base ('Bio::EnsEMBL::Hive::Params');
@@ -283,7 +284,7 @@ sub dataflow_output_id {
 
             foreach my $output_id ( @$output_ids_for_this_rule ) {
 
-                if(my $job_id = $self->adaptor->CreateNewJob(
+                if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                     -input_id       => $output_id,
                     -analysis       => $target_analysis_or_table,
                     -input_job_id   => $self->dbID,  # creator_job's id
