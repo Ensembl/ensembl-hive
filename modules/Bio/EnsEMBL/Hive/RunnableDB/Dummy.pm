@@ -47,8 +47,6 @@ sub strict_hash_format { # allow this Runnable to parse parameters in its own wa
 =cut
 
 sub fetch_input {
-  my $self = shift;
-  $self->db->dbc->disconnect_when_inactive(0);
 }
 
 =head2 run
