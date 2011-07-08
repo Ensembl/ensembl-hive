@@ -8,11 +8,171 @@ Contact:
 
 Summary:
   This is a distributed processing system based on 'autonomous agents' and
-  Hive behavioural structure of Honey Bees .  It implements all functionality of both
+  Hive behavioural structure of Honey Bees.  It implements all functionality of both
   data-flow graphs and block-branch diagrams which should allow it to codify
   any program, algorithm, or parallel processing job control system.  It is
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
+
+6.July, 2011 : Leo
+
+* standaloneJob.pl : allow dataflow from it into job table (allow creation of jobs from a DB-less job)
+* fixed Hive::RunnableDB::Dummy to work in DB-less mode
+* standaloneJob.pl : added automatic dataflow to branch 1
+* standaloneJob.pl : added more examples to the POD docs
+
+5.July, 2011 : Leo
+
+* destringify():  fixed a bug that prevented parsing of lists
+* allow destringification of values from cmdline parser in Utils.pm
+* standaloneJob.pl : allow dataflow from it into tables
+* added a compara_db example (with support for compara_dba creation from URLs added to Compara code)
+
+4.July, 2011 : Leo
+
+* JobMessageAdaptor: be numerically strict with the value stored in boolean field
+* schema, job_message table: make sure we support PASSED_ON status for jobs that undergo GarbageCollection
+
+2.July, 2011 : Leo
+
+* rationalized dynamic batch_size estimation: it is now done centrally both for single Workers (claiming) and the Queen (sync procedure)
+
+1.July, 2011 : Leo
+
+* bugfix in procedures: show count to be 0 for analyses which have no jobs
+
+30.June, 2011 : Andy
+
+* Old implementation of store_out_files() was generating incompatible SQL for SQLite.
+Prepared statement version developed & have removed the IGNORE component due to the delete which occurs as the first task in the method.
+
+29.June, 2011 : Leo
+
+* rationalized reg_conf/reg_alias names and fixed the way they are passed into runWorker and used in it
+
+16.June, 2011 : Kieron
+
+* POD fixes for Doxygen compatibility
+
+15.June, 2011 : Leo
+
+* big change in JobFactory's interface throughout Hive/Compara. We now address fields by name, not by index (well, by default).
+* bugfix in DependentOptions : had to increase the number of allowed iterations to perform all necessary substitutions
+* added procedures.sqlite (less powerful, but still something)
+
+14.June, 2011 : Leo
+
+* make dir_revhash available for param substitution
+
+7.June, 2011 : Leo
+
+* bugfix in BaseAdaptor : should only $sth->finish if the handle is defined
+
+3.June, 2011 : Leo
+
+* procedures.sql : when selecting from 'progress' view, show all analyses including the empty ones
+
+2.June, 2011 : Leo
+
+* better support for -analysis_topup functionality: check for multiple analysis sections with the same name in current config file
+
+28.May, 2011 : Leo
+
+* intelligently block dataflow from database-less jobs (and prepare for further addition of database rules)
+
+27.May, 2011 : Leo
+
+* dbh() as the focus point of redirectable SQL handlers (similar to compara_dba() in Compara::BaseRunnable)
+
+26.May, 2011 : Leo
+
+* some common subroutines (including help generation) moving out from scripts into Utils.pm
+* first introduction of standaloneJobs.pl script for running jobs outside of the Hive (very basic at the moment)
+
+25.May, 2011 : Leo
+
+* cmd_hive.pl fixed to satisfy foreign key constraints
+
+24.May, 2011 : Leo
+
+* branch names functionality stays, but removed from examples as confusing to the users
+
+23.May, 2011 : Leo
+
+* trying to fix the monitor
+* DependentOptions: a module only dedicated to parsing of dependent options (about half of HiveGeneric_conf functionality)
+* bugfix in Meadow::LSF - correct parsing of bacct output in non-jobarray cases (long-standing)
+
+21.May, 2011 : Leo
+
+* fixed a bug in AnalysisJobAdaptor that prevented the Hive from claiming non-virgin jobs (introduced during sqlite updates)
+
+20.May, 2011 : Leo
+
+* show analysis_id and done_jobs in Utils::Graph
+* removed excess diagnostic messages from generate_graph.pl
+* removed excess checks from generate_graph.pl - let's assume the user knows what he is doing
+* removed unused ProcessWithParams module
+
+19.May, 2011 : Leo
+
+* looking for a better way to set hive_driver, put it into HiveGeneric_conf and LongMult_conf as an example. Still hacky.
+* Adaptors: allow autoincrement fields to be specified in the BaseAdaptor
+* Adaptors: attempt to store all columns, including the autoincrement
+
+12.May, 2011 : Leo
+
+* removal of tables in procedures.sql now takes into account the foreign keys (so does it in the right order)
+* using DBI-provided methods for unification of the mysql/sqlite-related code, suggested by Andy
+* small changes related to production of release_63 (schema_version etc).
+
+11.May, 2011 : Leo
+
+* bugfix: better parsing of "ps" output on MacOSX
+* (investigative) trying to find a better way to escape complex delimiters in JobFactory, then abandoned it
+
+10.May, 2011 : Leo
+
+* unification of the mysql/sqlite-related code, suggested by Andy
+
+9.May, 2011 : Leo
+
+* added experimental support of sqlite engine throughout the Hive
+* removed dependency from DBI of several scripts (it was redundant)
+* fixed a typo in AnalysisData adaptor
+* made sure docs (as well as the code) refer to ENSEMBL_CVS_ROOT_DIR
+
+5.May, 2011 : Leo
+
+* stopped providing encode_hash() to encourage using stringify() instead (Compara code has been patched already)
+
+3.May, 2011 : Andy
+
+* importing of Config into Utils::Graph
+
+19.Apr, 2011 : Leo
+
+* another rename in Queen module
+* removed analysis_id and logic_name from the basic job_message table to minimize dependences.
+    I expect people to use the more informative 'msg' view anyway.
+
+18.Apr, 2011 : Leo
+
+* new schema drawings in docs
+* updated version of adaptors' class hierarchy
+
+14.Apr, 2011 : Leo
+
+* using a new BaseAdaptor as the base class for some simpler adaptors
+* RunnableDB::LongMult::SemaStart now shows how to use $self->warning for recording non-fatal messages into job_message tbl.
+* Hive::PipeConfig modules will now universally be using ENSEMBL_CVS_ROOT_DIR environment variable
+
+13.Apr, 2011 : Leo
+
+* big schema rename: hive->worker, analysis_job->job, analysis_job_file->job_file, analysis_job_id->job_id,
+                worker.beekeeper->worker.meadow_type, etc
+
+--------------------------------------------------------------------------------------------------------
 
 30.Mar, 2011 : Leo
 
