@@ -505,17 +505,19 @@ sub output {
 sub check_if_exit_cleanly {
   my $self = shift;
 
-  my $id = $self->input_job->dbID;
-  my $honeycomb_dir = $self->{'honeycomb_dir'};
+  my $honeycomb_dir = $self->{'honeycomb_dir'} or return;
   $honeycomb_dir =~ s/\/$//;
-  my $not_allowed = $honeycomb_dir . "/" . "relegate." . $id;
+
+  my $job_id = $self->input_job->dbID;
+
+  my $not_allowed = $honeycomb_dir . "/" . "relegate." . $job_id;
   my $exit_cleanly = $honeycomb_dir . "/" . "relegate.all";
   if (-e $not_allowed) {
     $self->update_status('FAILED');
-    throw("This job has been relegated to be killed - $id\n");
+    throw("This job has been relegated to be killed - $job_id\n");
   } elsif (-e $exit_cleanly) {
     $self->update_status('READY');
-    throw("This job has been relegated to be exited - $id\n");
+    throw("This job has been relegated to be exited - $job_id\n");
   }
   return undef;
 }
