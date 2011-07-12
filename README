@@ -14,6 +14,10 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+8.July, 2011 : Leo
+
+* Process.pm : do not complain on STDERR that honeycomb_dir is not defined, just return immediately
+
 6.July, 2011 : Leo
 
 * standaloneJob.pl : allow dataflow from it into job table (allow creation of jobs from a DB-less job)
