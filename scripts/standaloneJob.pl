@@ -72,7 +72,7 @@ unless($no_write) {
 
     if( $job->autoflow ) {
         warn "\nAUTOFLOW input->output\n";
-        $job->dataflow_output_id();
+        $job->dataflow_output_id( $job->param() );
     }
 }
 warn "\nDONE.\n";

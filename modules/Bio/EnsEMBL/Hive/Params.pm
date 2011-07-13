@@ -109,6 +109,8 @@ sub param_init {
 
     Example 2  : $self->param('binpath', '/software/ensembl/compara');  # acting as a setter
 
+    Example 3  : my $all_params = $self-param();    # get the whole hash in one piece
+
     Returntype : any Perl structure or object that you dared to store
 
 =cut
@@ -116,12 +118,17 @@ sub param_init {
 sub param {
     my $self = shift @_;
 
-    my $param_name = shift @_;
-    if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
-    }
+    if(my $param_name = shift @_) {
 
-    return $self->{'_param_hash'}{$param_name};
+        if(@_) { # If there is a value (even if undef), then set it!
+            $self->{'_param_hash'}{$param_name} = shift @_;
+        }
+
+        return $self->{'_param_hash'}{$param_name};
+
+    } else {
+        return $self->{'_param_hash'};
+    }
 }
 
 =head2 param_substitute
