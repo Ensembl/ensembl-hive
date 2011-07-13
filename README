@@ -14,6 +14,10 @@ Summary:
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
 
+13.July, 2011 : Leo
+
+* Worker.pm bugfix : do not perform interval_update if no new jobs were done (to avoid division by zero)
+
 8.July, 2011 : Leo
 
 * Process.pm : do not complain on STDERR that honeycomb_dir is not defined, just return immediately
