@@ -519,14 +519,17 @@ sub run {
         # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
         # so they are not allowed to happen too frequently (not before $min_batch_time of work has been done)
         #
-    $self->db->get_AnalysisStatsAdaptor->interval_update_work_done(
-        $self->analysis->dbID,
-        $jobs_done_by_batches_loop,
-        $batches_stopwatch->get_elapsed,
-        $self->{'fetching_stopwatch'}->get_elapsed,
-        $self->{'running_stopwatch'}->get_elapsed,
-        $self->{'writing_stopwatch'}->get_elapsed,
-    );
+    if($jobs_done_by_batches_loop) {
+
+        $self->db->get_AnalysisStatsAdaptor->interval_update_work_done(
+            $self->analysis->dbID,
+            $jobs_done_by_batches_loop,
+            $batches_stopwatch->get_elapsed,
+            $self->{'fetching_stopwatch'}->get_elapsed,
+            $self->{'running_stopwatch'}->get_elapsed,
+            $self->{'writing_stopwatch'}->get_elapsed,
+        );
+    }
 
     if (!$self->cause_of_death
     and $self->analysis->stats->hive_capacity >= 0
