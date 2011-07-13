@@ -168,8 +168,7 @@ sub get_running_worker_count {
 sub update {
   my ($self, $stats) = @_;
 
-  my $running_worker_count = $self->get_running_worker_count($stats);
-  $stats->num_running_workers($running_worker_count);
+  $stats->num_running_workers( $self->get_running_worker_count($stats) );
   my $hive_capacity = $stats->hive_capacity;
 
   if ($stats->behaviour eq "DYNAMIC") {
