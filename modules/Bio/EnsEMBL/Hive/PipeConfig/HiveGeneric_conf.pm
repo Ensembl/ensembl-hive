@@ -18,15 +18,17 @@ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -ensembl_cvs_r
 Generic configuration module for all Hive pipelines with loader functionality.
 All other Hive PipeConfig modules should inherit from this module and will probably need to redefine some or all of the following interface methods:
 
-    * default_options:              returns a hash of (possibly multilevel) defaults for the options on which depend the rest of the configuration
+    * default_options:                  returns a hash of (possibly multilevel) defaults for the options on which depend the rest of the configuration
 
-    * pipeline_create_commands:     returns a list of strings that will be executed as system commands needed to create and set up the pipeline database
+    * pipeline_create_commands:         returns a list of strings that will be executed as system commands needed to create and set up the pipeline database
 
-    * pipeline_wide_parameters:     returns a hash of pipeline-wide parameter names and their values
+    * pipeline_wide_parameters:         returns a hash of pipeline-wide parameter names and their values
 
-    * resource_classes:             returns a hash of resource class definitions
+    * resource_classes:                 returns a hash of resource class definitions
 
-    * pipeline_analyses:            returns a list of hash structures that define analysis objects bundled with definitions of corresponding jobs, rules and resources
+    * pipeline_analyses:                returns a list of hash structures that define analysis objects bundled with definitions of corresponding jobs, rules and resources
+
+    * beekeeper_extra_cmdline_options   returns a string with command line options that you want to be passed to the beekeeper.pl
 
 When defining anything except the keys of default_options() a call to $self->o('myoption') can be used.
 This call means "substitute this call for the value of 'myoption' at the time of configuring the pipeline".
@@ -160,6 +162,19 @@ sub pipeline_analyses {
 }
 
 
+=head2 beekeeper_extra_cmdline_options
+
+    Description : Interface method that should return a string with extra parameters that you want to be passed to beekeeper.pl
+
+=cut
+
+sub beekeeper_extra_cmdline_options {
+    my ($self) = @_;
+
+    return '';
+}
+
+
 # ---------------------------------[now comes the interfacing stuff - feel free to call but not to modify]--------------------
 
 
@@ -263,7 +278,7 @@ sub process_options {
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
     $self->root()->{'pipeline_db'}{'-driver'} = $self->{'_extra_options'}{'hive_driver'} || 'mysql';
 
-    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'pipeline_url' ] );
+    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'pipeline_url' ] );
     return $self->SUPER::process_options();
 }
 
@@ -448,10 +463,12 @@ sub run {
     my $url = $self->dbconn_2_url('pipeline_db');
 
     print "\n\n\tPlease run the following commands:\n\n";
-    print "  beekeeper.pl -url $url -sync\t\t# (synchronize the Hive - should always be done before [re]starting a pipeline)\n\n";
-    print "  beekeeper.pl -url $url -loop\t\t# (run the pipeline in automatic mode)\n";
+    print "  beekeeper.pl -url $url -sync\t\t\t# (synchronize the Hive - should always be done before [re]starting a pipeline)\n\n";
+    print "  beekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# (run the pipeline in automatic mode)\n";
     print "(OR)\n";
-    print "  beekeeper.pl -url $url -run\t\t# (run one step of the pipeline - useful for debugging/learning)\n";
+    print "  beekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# (run one step of the pipeline - useful for debugging/learning)\n";
+    print "(OR)\n";
+    print "  runWorker.pl -url $url ".$self->beekeeper_extra_cmdline_options()."      \t\t# (run exactly one Worker locally - useful for debugging/learning)\n";
 
     print "\n\n\tTo connect to your pipeline database use the following line:\n\n";
     print "  ".$self->db_connect_command('pipeline_db')."\n\n";
