@@ -93,17 +93,21 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
+    my $hive_use_triggers = $self->{'_extra_options'}{'hive_use_triggers'};
+
     return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? [
-                # standard eHive tables and unique/non-unique indices:
+                # standard eHive tables, triggers and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
+            $hive_use_triggers ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.sqlite' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sqlite',
         ]
         : [
             'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
 
-                # standard eHive tables, foreign_keys and procedures:
+                # standard eHive tables, triggers, foreign_keys and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
+            $hive_use_triggers ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.mysql' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.mysql',
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.mysql',
         ];
@@ -167,6 +171,7 @@ sub pre_options {
         'job_topup!' => '',
         'analysis_topup!' => '',
         'hive_driver' => '',
+        'hive_use_triggers' => '',
     };
 }
 
@@ -294,6 +299,8 @@ sub run {
         warn "Loading pipeline-wide parameters ...\n";
 
         my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
+        $pipeline_wide_parameters->{'hive_use_triggers'} = $self->{'_extra_options'}{'hive_use_triggers'} || 0;  # pass it into the database
+
         while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
             if($analysis_topup) {
                 $meta_container->delete_key($meta_key);

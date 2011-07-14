@@ -260,13 +260,22 @@ sub interval_update_work_done {
 
   $weight_factor ||= 3; # makes it more sensitive to the dynamics of the farm
 
-  my $sql = qq{
+  my $sql = $self->db->hive_use_triggers()
+  ? qq{
     UPDATE analysis_stats SET
-        unclaimed_job_count = unclaimed_job_count - $job_count, 
+        avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
+        avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count))
+    WHERE analysis_id= $analysis_id
+  }
+  : qq{
+    UPDATE analysis_stats SET
         avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)), 
+        unclaimed_job_count = unclaimed_job_count - $job_count, 
         done_job_count = done_job_count + $job_count 
     WHERE analysis_id= $analysis_id
   };

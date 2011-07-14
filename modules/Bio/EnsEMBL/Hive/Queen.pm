@@ -517,55 +517,73 @@ sub synchronize_AnalysisStats {
   return $analysisStats unless($analysisStats->analysis_id);
 
   my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor or return undef;
-  
+
   $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
-  $analysisStats->total_job_count(0);
-  $analysisStats->unclaimed_job_count(0);
-  $analysisStats->done_job_count(0);
-  $analysisStats->failed_job_count(0);
-  $analysisStats->num_required_workers(0);
-
-  my $sql = "SELECT status, count(*), semaphore_count FROM job ".
-            "WHERE analysis_id=? GROUP BY status, semaphore_count";
-  my $sth = $self->prepare($sql);
-  $sth->execute($analysisStats->analysis_id);
-
   my $hive_capacity = $analysisStats->hive_capacity;
 
-  my $done_here      = 0;
-  my $done_elsewhere = 0;
-  while (my ($status, $job_count, $semaphore_count)=$sth->fetchrow_array()) {
-# print STDERR "$status: $job_count\n";
+  if($self->db->hive_use_triggers()) {
 
-    my $curr_total = $analysisStats->total_job_count();
-    $analysisStats->total_job_count($curr_total + $job_count);
+            my $job_count = $analysisStats->unclaimed_job_count();
+            my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
 
-    if(($status eq 'READY') and ($semaphore_count<=0)) {
-        $analysisStats->unclaimed_job_count($job_count);
+                # adjust_stats_for_living_workers:
+            if($hive_capacity > 0) {
+                my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
 
-        my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
-
-            # adjust_stats_for_living_workers:
-        if($hive_capacity > 0) {
-            my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
-
-            if($capacity_allows_to_add < $required_workers ) {
-                $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+                if($capacity_allows_to_add < $required_workers ) {
+                    $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+                }
             }
+            $analysisStats->num_required_workers( $required_workers );
+
+  } else {
+      $analysisStats->total_job_count(0);
+      $analysisStats->unclaimed_job_count(0);
+      $analysisStats->done_job_count(0);
+      $analysisStats->failed_job_count(0);
+      $analysisStats->num_required_workers(0);
+
+      my $sql = "SELECT status, count(*), semaphore_count FROM job ".
+                "WHERE analysis_id=? GROUP BY status, semaphore_count";
+      my $sth = $self->prepare($sql);
+      $sth->execute($analysisStats->analysis_id);
+
+
+      my $done_here      = 0;
+      my $done_elsewhere = 0;
+      while (my ($status, $job_count, $semaphore_count)=$sth->fetchrow_array()) {
+    # print STDERR "$status: $job_count\n";
+
+        my $curr_total = $analysisStats->total_job_count();
+        $analysisStats->total_job_count($curr_total + $job_count);
+
+        if(($status eq 'READY') and ($semaphore_count<=0)) {
+            $analysisStats->unclaimed_job_count($job_count);
+
+            my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
+
+                # adjust_stats_for_living_workers:
+            if($hive_capacity > 0) {
+                my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
+
+                if($capacity_allows_to_add < $required_workers ) {
+                    $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+                }
+            }
+            $analysisStats->num_required_workers( $required_workers );
+
+        } elsif($status eq 'DONE' and $semaphore_count<=0) {
+            $done_here = $job_count;
+        } elsif($status eq 'PASSED_ON' and $semaphore_count<=0) {
+            $done_elsewhere = $job_count;
+        } elsif ($status eq 'FAILED') {
+            $analysisStats->failed_job_count($job_count);
         }
-        $analysisStats->num_required_workers( $required_workers );
+      }
+      $sth->finish;
 
-    } elsif($status eq 'DONE' and $semaphore_count<=0) {
-        $done_here = $job_count;
-    } elsif($status eq 'PASSED_ON' and $semaphore_count<=0) {
-        $done_elsewhere = $job_count;
-    } elsif ($status eq 'FAILED') {
-        $analysisStats->failed_job_count($job_count);
-    }
-  }
-  $sth->finish;
-
-  $analysisStats->done_job_count($done_here + $done_elsewhere);
+      $analysisStats->done_job_count($done_here + $done_elsewhere);
+  } # /unless $self->{'_hive_use_triggers'}
 
   $analysisStats->check_blocking_control_rules();
 

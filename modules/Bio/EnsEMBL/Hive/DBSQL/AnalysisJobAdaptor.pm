@@ -99,7 +99,8 @@ sub CreateNewJob {
     $input_id = "_ext_input_analysis_data_id $input_data_id";
   }
 
-  my $dbc = $analysis->adaptor->db->dbc;
+  my $dba = $analysis->adaptor->db;
+  my $dbc = $dba->dbc;
   my $insertion_method  = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
   my $status            = $blocked ? 'BLOCKED' : 'READY';
   my $analysis_id       = $analysis->dbID();
@@ -114,13 +115,15 @@ sub CreateNewJob {
   my $job_id = $dbc->db_handle->last_insert_id(undef, undef, 'job', 'job_id');
   $sth->finish;
 
-  $dbc->do(qq{
-    UPDATE analysis_stats
-       SET total_job_count=total_job_count+1
-          ,unclaimed_job_count=unclaimed_job_count+1
-          ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
-     WHERE analysis_id=$analysis_id
-  });
+  unless($dba->hive_use_triggers()) {
+      $dbc->do(qq{
+        UPDATE analysis_stats
+           SET total_job_count=total_job_count+1
+              ,unclaimed_job_count=unclaimed_job_count+1
+              ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
+         WHERE analysis_id=$analysis_id
+      });
+  }
 
   return $job_id;
 }

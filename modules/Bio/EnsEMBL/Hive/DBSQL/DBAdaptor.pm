@@ -39,6 +39,18 @@ use strict;
 
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
+
+sub hive_use_triggers {  # getter only, not setter
+    my $self = shift @_;
+
+    unless( defined($self->{'_hive_use_triggers'}) ) {
+        my $arrRef = $self->get_MetaContainer->list_value_by_key( 'hive_use_triggers' );
+        $self->{'_hive_use_triggers'} = @$arrRef ? $arrRef->[0] : 0;
+    } 
+    return $self->{'_hive_use_triggers'};
+}
+
+
 sub get_available_adaptors {
  
     my %pairs =  (
