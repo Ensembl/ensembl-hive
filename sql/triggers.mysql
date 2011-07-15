@@ -26,3 +26,6 @@ FOR EACH ROW
         failed_job_count    = failed_job_count    + (CASE NEW.status WHEN 'FAILED' THEN 1                          ELSE 0 END)
     WHERE analysis_id = NEW.analysis_id;
 
+
+    # inform the runtime part of the system that triggers are in place:
+INSERT INTO meta (meta_key, meta_value) VALUES ('hive_use_triggers', '1');

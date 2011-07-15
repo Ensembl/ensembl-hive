@@ -32,3 +32,5 @@ BEGIN
     WHERE analysis_id = NEW.analysis_id;
 END;
 
+    # inform the runtime part of the system that triggers are in place:
+INSERT INTO meta (meta_key, meta_value) VALUES ('hive_use_triggers', '1');

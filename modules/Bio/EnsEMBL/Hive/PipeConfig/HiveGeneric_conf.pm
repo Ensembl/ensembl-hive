@@ -314,8 +314,6 @@ sub run {
         warn "Loading pipeline-wide parameters ...\n";
 
         my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
-        $pipeline_wide_parameters->{'hive_use_triggers'} = $self->{'_extra_options'}{'hive_use_triggers'} || 0;  # pass it into the database
-
         while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
             if($analysis_topup) {
                 $meta_container->delete_key($meta_key);
