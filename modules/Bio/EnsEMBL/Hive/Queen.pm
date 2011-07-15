@@ -528,7 +528,7 @@ sub synchronize_AnalysisStats {
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
-                my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
+                my $capacity_allows_to_add = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
 
                 if($capacity_allows_to_add < $required_workers ) {
                     $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
@@ -564,7 +564,7 @@ sub synchronize_AnalysisStats {
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
-                my $capacity_allows_to_add = $hive_capacity - $analysis_stats_adaptor->get_running_worker_count($analysisStats);
+                my $capacity_allows_to_add = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
 
                 if($capacity_allows_to_add < $required_workers ) {
                     $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
@@ -639,17 +639,20 @@ sub get_hive_current_load {
 }
 
 
-sub get_num_running_workers {
-  my $self = shift;
-  my $sql = "SELECT count(*) FROM worker WHERE cause_of_death =''";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  (my $runningCount)=$sth->fetchrow_array();
-  $sth->finish;
-  $runningCount=0 unless($runningCount);
-  print("current hive num_running_workers = $runningCount\n");
-  return $runningCount;
+sub count_running_workers {
+    my ($self, $analysis_id) = @_;
+
+    my $sql = "SELECT count(*) FROM worker WHERE cause_of_death =''"
+        . ($analysis_id ? " AND analysis_id='$analysis_id'" : '');
+
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    (my $running_workers_count)=$sth->fetchrow_array();
+    $sth->finish();
+
+    return $running_workers_count || 0;
 }
+
 
 sub enter_status {
   my ($self, $worker, $status) = @_;
@@ -722,14 +725,13 @@ sub get_num_needed_workers {
   return ($total_workers, \%rc2workers);
 }
 
+
 sub get_needed_workers_resync_if_necessary {
     my ($self, $meadow, $analysis) = @_;
 
-    my $load                     = $self->get_hive_current_load();
-    my $running_count            = $self->get_num_running_workers();
     my ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
 
-    if($load==0 and $needed_count==0 and $running_count==0) {
+    unless( $needed_count or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
 
         $self->synchronize_hive($analysis);
@@ -740,6 +742,7 @@ sub get_needed_workers_resync_if_necessary {
 
     return ($needed_count, $rc_hash);
 }
+
 
 sub get_remaining_jobs_show_hive_progress {
   my $self = shift;

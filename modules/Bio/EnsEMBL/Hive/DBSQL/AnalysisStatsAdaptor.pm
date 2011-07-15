@@ -136,19 +136,7 @@ sub refresh {
 }
 
 
-sub get_running_worker_count {
-  my ($self, $stats) = @_;
-
-  my $sql = "SELECT count(*) FROM worker WHERE cause_of_death='' and analysis_id=?";
-  my $sth = $self->prepare($sql);
-  $sth->execute($stats->analysis_id);
-  my ($liveCount) = $sth->fetchrow_array();
-  $sth->finish;
-
-  return $liveCount;
-}
-
-
+################
 #
 # STORE / UPDATE METHODS
 #
@@ -209,7 +197,7 @@ sub update {
       $sql .= ",failed_job_count=" . $stats->failed_job_count();
   }
 
-  $stats->num_running_workers( $self->get_running_worker_count($stats) );
+  $stats->num_running_workers( $self->db->get_Queen->count_running_workers( $stats->analysis_id() ) );
 
   $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
