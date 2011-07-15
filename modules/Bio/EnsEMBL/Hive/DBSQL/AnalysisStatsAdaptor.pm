@@ -168,7 +168,6 @@ sub get_running_worker_count {
 sub update {
   my ($self, $stats) = @_;
 
-  $stats->num_running_workers( $self->get_running_worker_count($stats) );
   my $hive_capacity = $stats->hive_capacity;
 
   if ($stats->behaviour eq "DYNAMIC") {
@@ -200,12 +199,18 @@ sub update {
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
-  $sql .= ",total_job_count=" . $stats->total_job_count();
-  $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
-  $sql .= ",done_job_count=" . $stats->done_job_count();
   $sql .= ",max_retry_count=" . $stats->max_retry_count();
-  $sql .= ",failed_job_count=" . $stats->failed_job_count();
   $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
+
+  unless( $self->db->hive_use_triggers() ) {
+      $sql .= ",total_job_count=" . $stats->total_job_count();
+      $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
+      $sql .= ",done_job_count=" . $stats->done_job_count();
+      $sql .= ",failed_job_count=" . $stats->failed_job_count();
+  }
+
+  $stats->num_running_workers( $self->get_running_worker_count($stats) );
+
   $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
