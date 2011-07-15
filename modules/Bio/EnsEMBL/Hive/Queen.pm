@@ -164,20 +164,23 @@ sub create_new_worker {
 
   unless($job) {
     #go into autonomous mode
-    return undef if($self->get_hive_current_load() >= 1.1);
-    
+
+    if($self->get_hive_current_load() >= 1.1) {
+        print "Hive is overloaded, can't create a worker\n";
+        return;
+    }
+    if($analysisStats->status eq 'BLOCKED') {
+      print "Analysis is BLOCKED, can't create workers\n";
+      return;
+    }
+    if($analysisStats->status eq 'DONE') {
+      print "Analysis is DONE, don't need to create workers\n";
+      return;
+    }
+
     $analysis_stats_adaptor->decrease_needed_workers($analysisStats->analysis_id);
     $analysis_stats_adaptor->increase_running_workers($analysisStats->analysis_id);
     $analysisStats->print_stats;
-    
-    if($analysisStats->status eq 'BLOCKED') {
-      print("Analysis is BLOCKED, can't create workers\n");
-      return undef;
-    }
-    if($analysisStats->status eq 'DONE') {
-      print("Analysis is DONE, don't need to create workers\n");
-      return undef;
-    }
   }
   
   my $sql = q{INSERT INTO worker 
