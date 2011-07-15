@@ -51,9 +51,9 @@ sub adaptor {
 }
 
 sub refresh {
-  my $self = shift;
-  return unless($self->adaptor);
-  $self->adaptor->refresh($self);
+    my $self = shift;
+
+    return $self->adaptor && $self->adaptor->refresh($self);
 }
 
 sub update {

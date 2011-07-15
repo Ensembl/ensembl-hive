@@ -516,8 +516,6 @@ sub synchronize_AnalysisStats {
   return $analysisStats unless($analysisStats);
   return $analysisStats unless($analysisStats->analysis_id);
 
-  my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor or return undef;
-
   $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
   my $hive_capacity = $analysisStats->hive_capacity;
 
