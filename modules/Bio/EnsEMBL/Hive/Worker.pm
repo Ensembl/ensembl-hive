@@ -569,7 +569,8 @@ sub run_one_batch {
 
     my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
-    $self->queen->worker_check_in($self); #will sync analysis_stats if needed
+    $self->queen->worker_check_in($self);
+    $self->queen->safe_synchronize_AnalysisStats($self->analysis->stats);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 

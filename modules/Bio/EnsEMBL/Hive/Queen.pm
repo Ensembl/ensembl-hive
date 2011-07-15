@@ -345,8 +345,6 @@ sub worker_check_in {
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
-  
-  $self->safe_synchronize_AnalysisStats($worker->analysis->stats);
 }
 
 
