@@ -225,7 +225,11 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
 sub warning {
     my ($self, $msg) = @_;
 
-    $self->adaptor->db->get_JobMessageAdaptor()->register_message($self->dbID, $msg, 0);
+    if( my $job_adaptor = $self->adaptor ) {
+        $job_adaptor->db->get_JobMessageAdaptor()->register_message($self->dbID, $msg, 0);
+    } else {
+        print STDERR "Warning: $msg\n";
+    }
 }
 
 =head2 dataflow_output_id
