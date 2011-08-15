@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS meta (
 
 CREATE TABLE IF NOT EXISTS analysis (
 
-  analysis_id                 int(10) unsigned NOT NULL auto_increment, # unique internal id
+  analysis_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   created                     datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
   logic_name                  VARCHAR(40) NOT NULL,
   db                          VARCHAR(120),
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 --
 
 CREATE TABLE worker (
-  worker_id        int(10) unsigned NOT NULL auto_increment,
+  worker_id        int(10) unsigned NOT NULL AUTO_INCREMENT,
   analysis_id      int(10) unsigned NOT NULL,
   meadow_type      enum('LSF', 'LOCAL') NOT NULL,
   host	           varchar(40) DEFAULT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE worker (
 --   input_id_template    - a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 
 CREATE TABLE dataflow_rule (
-  dataflow_rule_id    int(10) unsigned NOT NULL auto_increment,
+  dataflow_rule_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
   from_analysis_id    int(10) unsigned NOT NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE analysis_ctrl_rule (
 --                              Default=NULL means "I'm not blocking anything by default".
 
 CREATE TABLE job (
-  job_id                    int(10) NOT NULL auto_increment,
+  job_id                    int(10) NOT NULL AUTO_INCREMENT,
   prev_job_id               int(10) DEFAULT NULL,  # the job that created this one using a dataflow rule
   analysis_id               int(10) unsigned NOT NULL,
   input_id                  char(255) NOT NULL,
@@ -248,7 +248,8 @@ CREATE TABLE job (
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---      job_id              - the id of the job that threw the message
+--       job_message_id     - an autoincremented primary id of the message
+--               job_id     - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
 --                 time     - when the message was thrown
 --                retry     - retry_count of the job when the message was thrown
@@ -257,6 +258,7 @@ CREATE TABLE job (
 --             is_error     - binary flag
 
 CREATE TABLE job_message (
+  job_message_id            int(10) NOT NULL AUTO_INCREMENT,
   job_id                    int(10) NOT NULL,
   worker_id                 int(10) unsigned NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -265,7 +267,7 @@ CREATE TABLE job_message (
   msg                       text,
   is_error                  boolean,
 
-  PRIMARY KEY               (job_id, worker_id, time),
+  PRIMARY KEY               (job_message_id),
   INDEX worker_id           (worker_id),
   INDEX job_id              (job_id)
 
@@ -316,7 +318,7 @@ CREATE TABLE job_file (
 --   data               - text blob which holds the data
 
 CREATE TABLE analysis_data (
-  analysis_data_id  int(10) NOT NULL auto_increment,
+  analysis_data_id  int(10) NOT NULL AUTO_INCREMENT,
   data              longtext,
 
   PRIMARY KEY (analysis_data_id),

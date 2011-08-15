@@ -227,7 +227,8 @@ CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---      job_id              - the id of the job that threw the message
+--       job_message_id     - an autoincremented primary id of the message
+--               job_id     - the id of the job that threw the message
 --            worker_id     - the worker in charge of the job at the moment
 --                 time     - when the message was thrown
 --                retry     - retry_count of the job when the message was thrown
@@ -236,15 +237,14 @@ CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 --             is_error     - binary flag
 
 CREATE TABLE job_message (
+  job_message_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   job_id                    INTEGER NOT NULL,
   worker_id                 INTEGER NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry                     int(10) DEFAULT 0 NOT NULL,
   status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN', */
   msg                       TEXT,
-  is_error                  BOOLEAN,
-
-  PRIMARY KEY               (job_id, worker_id, time)
+  is_error                  BOOLEAN
 );
 CREATE        INDEX IF NOT EXISTS worker_idx ON job_message (worker_id);
 CREATE        INDEX IF NOT EXISTS job_idx ON job_message (job_id);
