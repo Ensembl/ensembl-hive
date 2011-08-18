@@ -30,7 +30,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.5 $
+$Revision: 1.6 $
 
 =cut
 
@@ -158,7 +158,7 @@ sub _add_hive_details {
   my ($self) = @_;
   if($self->config()->{DisplayDetails}) {
     my $dbc = $self->dba()->dbc();
-    my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host);
+    my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
     $self->graph()->add_node(
       'details',
       label => $label,
