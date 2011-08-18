@@ -108,6 +108,10 @@ sub run {
  
     my $cmd = $self->param('cmd');
 
+    if($self->debug()) {
+        warn qq{cmd = "$cmd"\n};
+    }
+
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
 
     if(my $return_value = system($cmd)) {

@@ -205,6 +205,9 @@ sub _get_rows_from_list {
 sub _get_rows_from_query {
     my ($self, $inputquery) = @_;
 
+    if($self->debug()) {
+        warn qq{inputquery = "$inputquery"\n};
+    }
     my @rows = ();
     my $sth = $self->dbh()->prepare($inputquery);
     $sth->execute();
@@ -228,6 +231,9 @@ sub _get_rows_from_query {
 sub _get_rows_from_open {
     my ($self, $input_file_or_pipe, $delimiter, $parse_header) = @_;
 
+    if($self->debug()) {
+        warn qq{input_file_or_pipe = "$input_file_or_pipe"\n};
+    }
     my @rows = ();
     open(FILE, $input_file_or_pipe) or die "Could not open '$input_file_or_pipe' because: $!";
     while(my $line = <FILE>) {

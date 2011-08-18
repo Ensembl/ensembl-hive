@@ -108,6 +108,10 @@ sub run {
             # Perform parameter substitution:
         my $sql = $self->param_substitute($unsubst_sql);
 
+         if($self->debug()) {
+             warn qq{sql = "$sql"\n};
+         }
+
         $dbh->do( $sql ) or die "Could not run '$sql': ".$dbh->errstr;
 
         my $insert_id_name  = '_insert_id_'.$counter++;
