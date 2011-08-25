@@ -7,13 +7,10 @@ Bio::EnsEMBL::Hive::RunnableDB::JobFactory
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
-
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
-
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::JobFactory \
+                    --inputcmd 'cd ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB; ls -1 *.pm' \
+                    --input_id "{'meta_key'=>'module_name','meta_value'=>'#_0#'}" \
+                    --flow_into "{ 2 => ['mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2912/lg4_compara_families_64/meta']}"
 
 =head1 DESCRIPTION
 
@@ -209,7 +206,7 @@ sub _get_rows_from_query {
         warn qq{inputquery = "$inputquery"\n};
     }
     my @rows = ();
-    my $sth = $self->dbh()->prepare($inputquery);
+    my $sth = $self->data_dbc()->prepare($inputquery);
     $sth->execute();
     my @column_names_from_data = @{$sth->{NAME}};   # tear it off the original reference to gain some freedom
 

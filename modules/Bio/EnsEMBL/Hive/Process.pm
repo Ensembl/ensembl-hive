@@ -1,4 +1,3 @@
-# You may distribute this module under the same terms as perl itself #
 
 =pod 
 
@@ -86,11 +85,12 @@ package Bio::EnsEMBL::Hive::Process;
 
 use strict;
 use warnings;
-use DBI;
-use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
+use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Utils::Exception ('throw');
+use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
+#use Bio::EnsEMBL::Hive::AnalysisJob;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
 
@@ -219,15 +219,17 @@ sub DESTROY {
 =cut
 
 sub queen {
-  my $self = shift;
-  $self->{'_queen'} = shift if(@_);
-  return $self->{'_queen'};
+    my $self = shift;
+
+    $self->{'_queen'} = shift if(@_);
+    return $self->{'_queen'};
 }
 
 sub worker {
-  my $self = shift;
-  $self->{'_worker'} = shift if(@_);
-  return $self->{'_worker'};
+    my $self = shift;
+
+    $self->{'_worker'} = shift if(@_);
+    return $self->{'_worker'};
 }
 
 =head2 db
@@ -240,10 +242,11 @@ sub worker {
 =cut
 
 sub db {
-  my $self = shift;
-  return undef unless($self->queen);
-  return $self->queen->db;
+    my $self = shift;
+
+    return $self->queen && $self->queen->db;
 }
+
 
 =head2 dbc
 
@@ -255,61 +258,65 @@ sub db {
 =cut
 
 sub dbc {
-  my $self = shift;
-  return undef unless($self->queen);
-  return $self->queen->dbc;
+    my $self = shift;
+
+    return $self->queen && $self->queen->dbc;
 }
 
 
-=head2 dbh
+=head2 data_dbc
 
-    Title   :   dbh
-    Usage   :   my $dbh = $self->dbh;
-    Function:   returns DBI handle to a database (the "current" one by default, but can be set up otherwise)
-    Returns :   DBI handle
+    Title   :   data_dbc
+    Usage   :   my $data_dbc = $self->data_dbc;
+    Function:   returns a Bio::EnsEMBL::DBSQL::DBConnection object (the "current" one by default, but can be set up otherwise)
+    Returns :   Bio::EnsEMBL::DBSQL::DBConnection
 
 =cut
 
-sub dbh {
+sub data_dbc {
     my $self = shift;
 
-    if(@_ or !$self->{'_dbh'}) {
-        $self->{'_dbh'} = $self->go_figure_dbh( shift @_ || $self->param('db_conn') || $self->dbc );
+    if(@_ or !$self->{'_data_dbc'}) {
+        $self->{'_data_dbc'} = $self->go_figure_dbc( shift @_ || $self->param('db_conn') || $self->dbc );
     }
 
-    return $self->{'_dbh'};
+    return $self->{'_data_dbc'};
 }
 
-sub go_figure_dbh {
+
+sub go_figure_dbc {
     my ($self, $foo) = @_;
 
-        
-    if(UNIVERSAL::isa($foo, 'DBI::db')) {   # it is already a DBI handle, just return it:
+    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
 
         return $foo;
 
-    } elsif(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # an EnsEMBL DBConnection 
+    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
 
-        return $foo->db_handle;
+        return $foo->dbc;
 
-    } elsif(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor')) {   # a Hive adaptor
+    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
 
-        return $foo->dbc->db_handle;
+        return $foo->db->dbc;
 
-    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL
+    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
 
-        $db_conn->{-driver} ||= 'mysql';
-
-        return ($db_conn->{-driver} eq 'sqlite'
-            ? DBI->connect("DBI:SQLite:$db_conn->{-dbname}", '', '', { RaiseError => 1 })
-            : DBI->connect("DBI:$db_conn->{-driver}:host=$db_conn->{-host}:port=$db_conn->{-port}:database=$db_conn->{-dbname}", $db_conn->{-user}, $db_conn->{-pass}, { RaiseError => 1 })
-        ) or die "Couldn't connect to database: " . DBI->errstr;
+        return Bio::EnsEMBL::DBSQL::DBConnection->new( %$db_conn );
 
     } else {
-
-        die "Sorry, could not figure out how to make a DBI handle out of $foo";
+        unless(ref($foo)) {    # maybe it is simply a registry key?
+            my $dba;
+            eval {
+                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, 'hive');     # We should not assume it is necessarily a Hive database. It would be sufficient just to get a DBConnection from it
+            };
+            if(UNIVERSAL::can($dba, 'dbc')) {
+                return $dba->dbc;
+            }
+        }
+        die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
     }
 }
+
 
 =head2 analysis
 

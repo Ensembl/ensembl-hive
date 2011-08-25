@@ -7,13 +7,9 @@ Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
-
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
-
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer --table meta_foo \
+                --src_db_conn mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2913/lg4_compara_homology_merged_64 \
+                --dest_db_conn mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2912/lg4_compara_families_64
 
 =head1 DESCRIPTION
 
@@ -31,7 +27,6 @@ Also, 'where' parameter allows to select subset of rows to be copied/merged over
 package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 
 use strict;
-use DBI;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -55,8 +50,6 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift;
 
-    my ($src_dbh, $dest_dbh);
-
     my $src_db_conn  = $self->param('src_db_conn');
     my $dest_db_conn = $self->param('dest_db_conn');
 
@@ -69,26 +62,11 @@ sub fetch_input {
 
     $table = $self->param('table', $self->param_substitute($table) );
 
-        # Use connection parameters to source database if supplied, otherwise use the current database as default:
-        #
-    my ($src_dbh, $src_mysql_conn) = $src_db_conn
-        ? ( (DBI->connect("DBI:mysql:$src_db_conn->{-dbname}:$src_db_conn->{-host}:$src_db_conn->{-port}", $src_db_conn->{-user}, $src_db_conn->{-pass}, { RaiseError => 1 })
-            || die "Couldn't connect to database: " . DBI->errstr) ,
-            $self->mysql_conn_from_hash($src_db_conn) )
-        : ($self->db->dbc->db_handle, $self->mysql_conn_from_this_dbc );
+    my $src_dbc     = $src_db_conn  ? $self->go_figure_dbc( $src_db_conn )  : $self->db->dbc;
+    my $dest_dbc    = $dest_db_conn ? $self->go_figure_dbc( $dest_db_conn ) : $self->db->dbc;
 
-        # Use connection parameters to destination database if supplied, otherwise use the current database as default:
-        #
-    my ($dest_dbh, $dest_mysql_conn) = $dest_db_conn
-        ? ( (DBI->connect("DBI:mysql:$dest_db_conn->{-dbname}:$dest_db_conn->{-host}:$dest_db_conn->{-port}", $dest_db_conn->{-user}, $dest_db_conn->{-pass}, { RaiseError => 1 })
-            || die "Couldn't connect to database: " . DBI->errstr) ,
-            $self->mysql_conn_from_hash($dest_db_conn) )
-        : ($self->db->dbc->db_handle, $self->mysql_conn_from_this_dbc );
-
-    $self->param('src_dbh',         $src_dbh);
-    $self->param('dest_dbh',        $dest_dbh);
-    $self->param('src_mysql_conn',  $src_mysql_conn);
-    $self->param('dest_mysql_conn', $dest_mysql_conn);
+    $self->param('src_dbc',         $src_dbc);
+    $self->param('dest_dbc',        $dest_dbc);
 
     my $mode = $self->param('mode') || 'overwrite';
         $self->param('mode', $self->param('mode'));
@@ -98,10 +76,10 @@ sub fetch_input {
         $where = $self->param( 'where', $self->param_substitute($where) );
     }
 
-    $self->param('src_before',  $self->get_row_count($src_dbh,  $table, $where) );
+    $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 
     if($mode ne 'overwrite') {
-        $self->param('dest_before_all', $self->get_row_count($dest_dbh, $table) );
+        $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
 }
 
@@ -115,22 +93,23 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $filter_cmd      = $self->param('filter_cmd');
+    my $src_dbc     = $self->param('src_dbc');
+    my $dest_dbc    = $self->param('dest_dbc');
 
-    my $src_mysql_conn  = $self->param('src_mysql_conn');
-    my $dest_mysql_conn = $self->param('dest_mysql_conn');
-
-    my $mode  = $self->param('mode')  || 'overwrite';
-    my $table = $self->param('table');
-    my $where = $self->param('where');
+    my $filter_cmd  = $self->param('filter_cmd');
+    my $mode        = $self->param('mode')  || 'overwrite';
+    my $table       = $self->param('table');
+    my $where       = $self->param('where');
 
     my $cmd = 'mysqldump '
                 . { 'overwrite' => '', 'topup' => '--no-create-info ', 'insertignore' => '--no-create-info --insert-ignore ' }->{$mode}
-                . "$src_mysql_conn $table "
+                . $self->mysql_conn_from_dbc($src_dbc)
+                . " $table "
                 . (defined($where) ? "--where '$where' " : '')
                 . '| '
                 . ($filter_cmd ? "$filter_cmd | " : '')
-                . "mysql $dest_mysql_conn";
+                . 'mysql '
+                . $self->mysql_conn_from_dbc($dest_dbc);
 
     if(my $return_value = system($cmd)) {   # NB: unfortunately, this code won't catch many errors because of the pipe
         $return_value >>= 8;
@@ -148,16 +127,16 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $mode  = $self->param('mode');
-    my $table = $self->param('table');
-    my $where = $self->param('where');
+    my $dest_dbc    = $self->param('dest_dbc');
 
-    my $dest_dbh = $self->param('dest_dbh');
+    my $mode        = $self->param('mode');
+    my $table       = $self->param('table');
+    my $where       = $self->param('where');
 
-    my $src_before      = $self->param('src_before');
+    my $src_before  = $self->param('src_before');
 
     if($mode eq 'overwrite') {
-        my $dest_after      = $self->get_row_count($dest_dbh,  $table, $where);
+        my $dest_after      = $self->get_row_count($dest_dbc,  $table, $where);
 
         if($src_before == $dest_after) {
             $self->warning("Successfully copied $src_before '$table' rows");
@@ -166,7 +145,7 @@ sub write_output {
         }
     } else {
 
-        my $dest_row_increase = $self->get_row_count($dest_dbh, $table) - $self->param('dest_before_all');
+        my $dest_row_increase = $self->get_row_count($dest_dbc, $table) - $self->param('dest_before_all');
 
         if($mode eq 'topup') {
             if($src_before == $dest_row_increase) {
@@ -183,11 +162,11 @@ sub write_output {
 ########################### private subroutines ####################################
 
 sub get_row_count {
-    my ($self, $dbh, $table, $where) = @_;
+    my ($self, $dbc, $table, $where) = @_;
 
     my $sql = "SELECT count(*) FROM $table" . (defined($where) ? " WHERE $where" : '');
 
-    my $sth = $dbh->prepare($sql);
+    my $sth = $dbc->prepare($sql);
     $sth->execute();
     my ($row_count) = $sth->fetchrow_array();
     $sth->finish;
@@ -195,16 +174,8 @@ sub get_row_count {
     return $row_count;
 }
 
-sub mysql_conn_from_hash {
-    my ($self, $db_conn) = @_;
-
-    return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
-}
-
-sub mysql_conn_from_this_dbc {
-    my ($self) = @_;
-
-    my $dbc = $self->db->dbc();
+sub mysql_conn_from_dbc {
+    my ($self, $dbc) = @_;
 
     return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --pass='".$dbc->password."' ".$dbc->dbname;
 }

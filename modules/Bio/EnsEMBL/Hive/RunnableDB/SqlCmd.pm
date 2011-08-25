@@ -7,18 +7,17 @@ Bio::EnsEMBL::Hive::RunnableDB::SqlCmd
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SqlCmd --db_conn mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2912/lg4_compara_families_64 \
+                        --sql "INSERT INTO meta(meta_key,meta_value) VALUES ('Hello', 'world')"
 
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
-
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SqlCmd --db_conn mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2913/lg4_compara_homology_merged_64 \
+                        --sql "[ 'CREATE TABLE meta_foo LIKE meta', 'INSERT INTO meta_foo SELECT * FROM meta' ]"
 
 =head1 DESCRIPTION
 
-This RunnableDB module acts as a wrapper for a (My)SQL command
-run against either the current hive database (default) or against one specified by connection parameters.
+This RunnableDB module acts as a wrapper for an SQL command
+run against either the current hive database (default) or against one specified by 'db_conn' parameter
+(--db_conn becomes obligatory in standalone mode, because there is no hive_db).
 If you behave you may also use parameter substitution.
 
 The SQL command(s) can be given using two different syntaxes:
@@ -98,7 +97,7 @@ sub run {
     my $self = shift;
 
     my $sqls = $self->param('sqls');
-    my $dbh  = $self->dbh();
+    my $data_dbc  = $self->data_dbc();
 
     my %output_id;
 
@@ -112,10 +111,10 @@ sub run {
              warn qq{sql = "$sql"\n};
          }
 
-        $dbh->do( $sql ) or die "Could not run '$sql': ".$dbh->errstr;
+        $data_dbc->do( $sql ) or die "Could not run '$sql': ".$data_dbc->db_handle->errstr;
 
         my $insert_id_name  = '_insert_id_'.$counter++;
-        my $insert_id_value = $dbh->last_insert_id(undef, undef, undef, undef);
+        my $insert_id_value = $data_dbc->db_handle->last_insert_id(undef, undef, undef, undef);
 
         $output_id{$insert_id_name} = $insert_id_value;
         $self->param($insert_id_name, $insert_id_value); # for templates

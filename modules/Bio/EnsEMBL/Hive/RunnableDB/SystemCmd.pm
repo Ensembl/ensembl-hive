@@ -7,13 +7,7 @@ Bio::EnsEMBL::Hive::RunnableDB::SystemCmd
 
 =head1 SYNOPSIS
 
-    This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-    and is ran by Workers during the execution of eHive pipelines.
-    It is not generally supposed to be instantiated and used outside of this framework.
-
-    Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
-
-    Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd --cmd 'ls -1 ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/*.pm >building_blocks.list'
 
 =head1 DESCRIPTION
 
