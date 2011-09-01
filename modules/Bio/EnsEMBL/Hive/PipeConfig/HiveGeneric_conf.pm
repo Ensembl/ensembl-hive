@@ -69,16 +69,18 @@ use base ('Bio::EnsEMBL::Hive::DependentOptions');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
+        'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),     # it will make sense to set this variable if you are going to use ehive frequently
+        'password'              => $self->o('ENV', 'ENSADMIN_PSW'),             # people will have to make an effort NOT to insert it into config files like .bashrc etc
 
-        'pipeline_name' => 'hive_generic',
+        'host'                  => 'localhost',
+        'pipeline_name'         => 'hive_generic',
 
         'pipeline_db'   => {
-            -host   => 'compara3',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
+            -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
         },
     };
 }

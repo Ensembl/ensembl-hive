@@ -51,21 +51,13 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
+        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'pipeline_name' => 'failure_test',                  # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
-        },
-
-        'job_count'         => 20,                                  # controls the total number of FailureTest jobs
-        'failure_rate'      =>  3,                                  # controls the rate of jobs that are programmed to fail
-        'state'             => 'RUN',                               # controls in which state the jobs are programmed to fail
+        'job_count'         => 20,                          # controls the total number of FailureTest jobs
+        'failure_rate'      =>  3,                          # controls the rate of jobs that are programmed to fail
+        'state'             => 'RUN',                       # controls in which state the jobs are programmed to fail
         'lethal_after'      => 0,
     };
 }

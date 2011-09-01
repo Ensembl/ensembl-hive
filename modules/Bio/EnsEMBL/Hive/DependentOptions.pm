@@ -185,7 +185,7 @@ sub process_options {
         $self->$method();
     }
 
-    my $possibly_used_options = {};
+    my $possibly_used_options = { 'ENV' => \%ENV };
     $self->root( $possibly_used_options );
 
         # the first run of this method allows us to collect possibly_used_options

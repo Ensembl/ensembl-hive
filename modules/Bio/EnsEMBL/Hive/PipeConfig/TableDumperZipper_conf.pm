@@ -53,17 +53,9 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
+        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'pipeline_name' => 'zip_tables',                    # name used by the beekeeper to prefix job names on the farm
-
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
-        },
 
         'source_db' => {
             -host   => 'compara2',
@@ -76,7 +68,7 @@ sub default_options {
         'with_schema'       => 1,                                           # include table creation statement before inserting the data
         'only_tables'       => '%',                                         # use 'protein_tree%' or 'analysis%' to only dump those tables
         'invert_selection'  => 0,                                           # use 'NOT LIKE' instead of 'LIKE'
-        'target_dir'        => $ENV{'HOME'}.'/'.$self->o('source_dbname'),  # where we want the compressed files to appear
+        'target_dir'        => $self->o('ENV', 'HOME').'/'.$self->o('source_dbname'),  # where we want the compressed files to appear
         'dumping_capacity'  => 10,                                          # how many tables can be dumped in parallel
     };
 }

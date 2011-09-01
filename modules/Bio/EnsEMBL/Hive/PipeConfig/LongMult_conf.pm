@@ -67,20 +67,13 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 
 sub default_options {
     my ($self) = @_;
+
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},     # it will make sense to set this variable if you are going to use ehive frequently
+        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
         'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
 
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),                        # a rule where a previously undefined parameter is used (which makes either of them obligatory)
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),    # a rule where a previously defined parameter is used (which makes both of them optional)
-        },
-
-        'first_mult'    => '9650156169',                    # the actual numbers that will be multiplied must also be possible to specify from the command line
+        'first_mult'    => '9650156169',                    # the actual numbers to be multiplied can also be specified from the command line
         'second_mult'   =>  '327358788',
     };
 }
