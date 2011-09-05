@@ -64,13 +64,13 @@ It will be convenient to set a variable pointing at this directory for future us
 
 2.6. Export ensembl and ensembl-hive CVS modules:
 
-	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl export ensembl
-	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl export ensembl-hive
+	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl
+	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-hive
 
 2.7. In the likely case you are going to use eHive in the context of Compara pipelines,
 	you will also need to install ensembl-compara:
 
-	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl export ensembl-compara
+	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-compara
 
 2.8. Add new packages to the PERL5LIB variable:
 
