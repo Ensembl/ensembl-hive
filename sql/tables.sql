@@ -323,7 +323,7 @@ CREATE TABLE analysis_data (
 
   PRIMARY KEY (analysis_data_id),
   KEY data (data(100))
-);
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 CREATE TABLE resource_description (
