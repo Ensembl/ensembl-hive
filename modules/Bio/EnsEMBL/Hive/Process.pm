@@ -285,7 +285,7 @@ sub data_dbc {
 
 
 sub go_figure_dbc {
-    my ($self, $foo) = @_;
+    my ($self, $foo, $schema_type) = @_;
 
     if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
 
@@ -307,7 +307,8 @@ sub go_figure_dbc {
         unless(ref($foo)) {    # maybe it is simply a registry key?
             my $dba;
             eval {
-                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, 'hive');     # We should not assume it is necessarily a Hive database. It would be sufficient just to get a DBConnection from it
+                $schema_type ||= 'hive';
+                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
             };
             if(UNIVERSAL::can($dba, 'dbc')) {
                 return $dba->dbc;
