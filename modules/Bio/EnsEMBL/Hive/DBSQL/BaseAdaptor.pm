@@ -2,6 +2,7 @@ package Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor;
 
 use strict;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
+use DBI 1.6;        # the 1.6 functionality is important for detecting autoincrement fields and other magic.
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 

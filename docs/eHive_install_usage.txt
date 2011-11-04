@@ -15,7 +15,7 @@
 
 	see http://dev.mysql.com/downloads/
 
-1.3. Perl DBI API
+1.3. Perl DBI API version 1.6 or higher
 	Perl database interface that includes API to MySQL
 
 	# see http://dbi.perl.org/
