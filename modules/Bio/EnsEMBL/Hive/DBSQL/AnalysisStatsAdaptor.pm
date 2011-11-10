@@ -285,35 +285,6 @@ sub interval_update_work_done {
 }
 
 
-
-
-sub decrease_hive_capacity
-{
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats ".
-      " SET hive_capacity = hive_capacity - 1, ".
-      " num_required_workers = (CASE WHEN num_required_workers > 0 THEN num_required_workers - 1 ELSE 0 END) ".
-      " WHERE analysis_id='$analysis_id' and hive_capacity > 1";
-
-  $self->dbc->do($sql);
-}
-
-
-sub increase_hive_capacity
-{
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats ".
-      " SET hive_capacity = hive_capacity + 1, num_required_workers = 1".
-      " WHERE analysis_id='$analysis_id' and hive_capacity <= 500 and num_required_workers = 0";
-
-  $self->dbc->do($sql);
-}
-
-
 sub increase_running_workers
 {
   my $self = shift;

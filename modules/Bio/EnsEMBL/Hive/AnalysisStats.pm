@@ -69,18 +69,6 @@ sub update_status {
   $self->status($status);
 }
 
-sub decrease_hive_capacity {
-  my ($self) = @_;
-  return unless ($self->adaptor);
-  $self->adaptor->decrease_hive_capacity($self->analysis_id);
-}
-
-sub increase_hive_capacity {
-  my ($self) = @_;
-  return unless ($self->adaptor);
-  $self->adaptor->increase_hive_capacity($self->analysis_id);
-}
-
 sub analysis_id {
   my $self = shift;
   $self->{'_analysis_id'} = shift if(@_);
