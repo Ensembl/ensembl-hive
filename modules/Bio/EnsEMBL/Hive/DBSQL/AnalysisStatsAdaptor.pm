@@ -203,11 +203,11 @@ sub update {
       $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
       $sql .= ",done_job_count=" . $stats->done_job_count();
       $sql .= ",failed_job_count=" . $stats->failed_job_count();
+
+      $stats->num_running_workers( $self->db->get_Queen->count_running_workers( $stats->analysis_id() ) );
+      $sql .= ",num_running_workers=" . $stats->num_running_workers();
   }
 
-  $stats->num_running_workers( $self->db->get_Queen->count_running_workers( $stats->analysis_id() ) );
-
-  $sql .= ",num_running_workers=" . $stats->num_running_workers();
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
@@ -308,18 +308,7 @@ sub decrease_running_workers
   $self->dbc->do($sql);
 }
 
-sub decrease_running_workers_on_hive_overload {
-    my $self        = shift;
-    my $analysis_id = shift;
-
-    my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
-              "WHERE num_running_workers > hive_capacity AND analysis_id = $analysis_id ";
-
-    my $row_count = $self->dbc->do($sql);
-    return $row_count;
-}
-
-sub decrease_needed_workers
+sub decrease_required_workers
 {
   my $self = shift;
   my $analysis_id = shift;
@@ -331,7 +320,7 @@ sub decrease_needed_workers
 }
 
 
-sub increase_needed_workers
+sub increase_required_workers
 {
   my $self = shift;
   my $analysis_id = shift;

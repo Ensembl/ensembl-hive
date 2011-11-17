@@ -532,12 +532,12 @@ sub run {
     }
 
     if (!$self->cause_of_death
-    and $self->analysis->stats->hive_capacity >= 0
-    and $self->analysis->stats->num_running_workers > $self->analysis->stats->hive_capacity
-    and $self->analysis->stats->adaptor->decrease_running_workers_on_hive_overload( $self->analysis->dbID ) # careful with order, this operation has side-effect
+    and 0 <= $self->analysis->stats->hive_capacity
+    and $self->analysis->stats->hive_capacity < $self->analysis->stats->num_running_workers
     ) {
         $self->cause_of_death('HIVE_OVERLOAD');
     }
+
   } while (!$self->cause_of_death); # /Worker's lifespan loop
 
   if($self->perform_cleanup) {
@@ -569,7 +569,7 @@ sub run_one_batch {
 
     my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
-    $self->queen->worker_check_in($self);
+    $self->queen->check_in_worker( $self );
     $self->queen->safe_synchronize_AnalysisStats($self->analysis->stats);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
@@ -609,20 +609,21 @@ sub run_one_batch {
             or $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
             or $job->lethal_for_worker ) {          # trust the job's expert knowledge
                 my $reason = ($self->status eq 'COMPILATION') ? 'compilation error'
-                           : $self->prev_job_error           ? 'two failed jobs in a row'
-                           :                                   'suggested by job itself';
+                           : $self->prev_job_error            ? 'two failed jobs in a row'
+                           :                                    'suggested by job itself';
                 warn "Job's error has contaminated the Worker ($reason), so the Worker will now die\n";
                 $self->cause_of_death('CONTAMINATED');
                 return $jobs_done_here;
             }
         } else {    # job successfully completed:
 
-            if(my $semaphored_job_id = $job->semaphored_job_id) {
-                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
-            }
             $self->more_work_done;
             $jobs_done_here++;
             $job->update_status('DONE');
+
+            if(my $semaphored_job_id = $job->semaphored_job_id) {
+                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+            }
         }
 
         $self->prev_job_error( $job->incomplete );
@@ -639,8 +640,7 @@ sub run_module_with_job {
   $job->incomplete(1);
   $job->autoflow(1);
 
-  $self->enter_status('COMPILATION');
-  $job->update_status('COMPILATION');
+  $self->enter_status('COMPILATION', $job);
   my $runObj = $self->analysis->process or die "Unknown compilation error";
   
   my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
@@ -662,26 +662,20 @@ sub run_module_with_job {
     $job->param_init( 0, $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() ); # Well, why not?
   }
 
-    $self->enter_status('GET_INPUT');
-    $job->update_status('GET_INPUT');
-    print("\nGET_INPUT\n") if($self->debug); 
+    $self->enter_status('GET_INPUT', $job);
 
     $self->{'fetching_stopwatch'}->continue();
     $runObj->fetch_input;
     $self->{'fetching_stopwatch'}->pause();
 
-    $self->enter_status('RUN');
-    $job->update_status('RUN');
-    print("\nRUN\n") if($self->debug); 
+    $self->enter_status('RUN', $job);
 
     $self->{'running_stopwatch'}->continue();
     $runObj->run;
     $self->{'running_stopwatch'}->pause();
 
     if($self->execute_writes) {
-        $self->enter_status('WRITE_OUTPUT');
-        $job->update_status('WRITE_OUTPUT');
-        print("\nWRITE_OUTPUT\n") if($self->debug); 
+        $self->enter_status('WRITE_OUTPUT', $job);
 
         $self->{'writing_stopwatch'}->continue();
         $runObj->write_output;
@@ -692,7 +686,7 @@ sub run_module_with_job {
             $job->dataflow_output_id();
         }
     } else {
-        print("\n\n!!!! NOT write_output\n\n\n") if($self->debug); 
+        print("\n!!! *no* WRITE_OUTPUT and *no* AUTOFLOW\n") if($self->debug); 
     }
 
     $job->query_count($self->queen->dbc->query_count);
@@ -702,8 +696,17 @@ sub run_module_with_job {
 }
 
 sub enter_status {
-  my ($self, $status) = @_;
-  return $self->queen->enter_status($self, $status);
+    my ($self, $status, $job) = @_;
+
+    if($self->debug) {
+        printf("\n%s : $status\n", $job ? 'job '.$job->dbID : 'worker');
+    }
+
+    if($job) {
+        $job->update_status( $status );
+    }
+    $self->status( $status );
+    $self->queen->check_in_worker( $self );
 }
 
 sub start_job_output_redirection {

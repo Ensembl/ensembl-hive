@@ -178,11 +178,21 @@ sub create_new_worker {
       return;
     }
 
-    $analysis_stats_adaptor->decrease_needed_workers($analysisStats->analysis_id);
-    $analysis_stats_adaptor->increase_running_workers($analysisStats->analysis_id);
+    $analysis_stats_adaptor->decrease_required_workers($analysisStats->analysis_id);
+
     $analysisStats->print_stats;
   }
   
+    # The following increment used to be done only when no specific task was given to the worker,
+    # thereby excluding such "special task" workers from being counted in num_running_workers.
+    #
+    # However this may be tricky to emulate by triggers that know nothing about "special tasks",
+    # so I am (temporarily?) simplifying the accounting algorithm.
+    #
+  unless( $self->db->hive_use_triggers() ) {
+        $analysis_stats_adaptor->increase_running_workers($analysisStats->analysis_id);
+  }
+
   my $sql = q{INSERT INTO worker 
               (born, last_check_in, meadow_type, process_id, host, analysis_id)
               VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?,?,?,?)};
@@ -243,11 +253,6 @@ sub register_worker_death {
 
   my $cod = $worker->cause_of_death();
 
-  unless ($cod eq 'HIVE_OVERLOAD') {
-    ## HIVE_OVERLOAD occurs after a successful update of the analysis_stats teble. (c.f. Worker.pm)
-    $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
-  }
-
   my $sql = "UPDATE worker SET died=CURRENT_TIMESTAMP, last_check_in=CURRENT_TIMESTAMP";
   $sql .= " ,status='DEAD'";
   $sql .= " ,work_done='" . $worker->work_done . "'";
@@ -255,6 +260,10 @@ sub register_worker_death {
   $sql .= " WHERE worker_id='" . $worker->dbID ."'";
 
   $self->dbc->do( $sql );
+
+  unless( $self->db->hive_use_triggers() ) {
+      $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis->stats->analysis_id);
+  }
 
   if($cod eq 'NO_WORK') {
     $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, 'ALL_CLAIMED');
@@ -270,7 +279,7 @@ sub register_worker_death {
   if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
     # since I'm dying I should make sure there is someone to take my place after I'm gone ...
     # above synch still sees me as a 'living worker' so I need to compensate for that
-    $self->db->get_AnalysisStatsAdaptor->increase_needed_workers($worker->analysis->dbID);
+    $self->db->get_AnalysisStatsAdaptor->increase_required_workers($worker->analysis->dbID);
   }
 
 }
@@ -334,17 +343,12 @@ sub check_for_dead_workers {    # a bit counter-intuitively only looks for curre
     }
 }
 
-sub worker_check_in {
-  my ($self, $worker) = @_;
 
-  return unless($worker);
-  my $sql = "UPDATE worker SET last_check_in=CURRENT_TIMESTAMP";
-  $sql .= " ,work_done='" . $worker->work_done . "'";
-  $sql .= " WHERE worker_id='" . $worker->dbID ."'";
+    # a new version that both checks in and updates the status
+sub check_in_worker {
+    my ($self, $worker) = @_;
 
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
+    $self->dbc->do("UPDATE worker SET last_check_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'");
 }
 
 
@@ -527,10 +531,10 @@ sub synchronize_AnalysisStats {
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
-                my $capacity_allows_to_add = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
+                my $unfulfilled_capacity = $hive_capacity - $analysisStats->num_running_workers();
 
-                if($capacity_allows_to_add < $required_workers ) {
-                    $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+                if($unfulfilled_capacity < $required_workers ) {
+                    $required_workers = (0 < $unfulfilled_capacity) ? $unfulfilled_capacity : 0;
                 }
             }
             $analysisStats->num_required_workers( $required_workers );
@@ -563,10 +567,10 @@ sub synchronize_AnalysisStats {
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
-                my $capacity_allows_to_add = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
+                my $unfulfilled_capacity = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
 
-                if($capacity_allows_to_add < $required_workers ) {
-                    $required_workers = (0 < $capacity_allows_to_add) ? $capacity_allows_to_add : 0;
+                if($unfulfilled_capacity < $required_workers ) {
+                    $required_workers = (0 < $unfulfilled_capacity) ? $unfulfilled_capacity : 0;
                 }
             }
             $analysisStats->num_required_workers( $required_workers );
@@ -652,12 +656,6 @@ sub count_running_workers {
     return $running_workers_count || 0;
 }
 
-
-sub enter_status {
-  my ($self, $worker, $status) = @_;
-
-  $self->dbc->do("UPDATE worker SET status = '$status' WHERE worker_id = ".$worker->dbID);
-}
 
 =head2 get_num_needed_workers
 
