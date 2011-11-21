@@ -94,12 +94,13 @@ sub main {
 
                     # worker control
                'job_limit|jlimit=i'     => \$self->{'job_limit'},
-               'batch_size=i'           => \$self->{'batch_size'},
                'life_span|lifespan=i'   => \$self->{'life_span'},
                'logic_name=s'      => \$self->{'logic_name'},
                'hive_output_dir=s' => \$self->{'hive_output_dir'},
                'maximise_concurrency=i' => \$self->{'maximise_concurrency'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
+
+               'batch_size=i'           => \$self->{'batch_size'},      # OBSOLETE!
 
                     # other commands/options
                'h|help'            => \$help,
@@ -122,6 +123,11 @@ sub main {
     );
 
     if ($help) { script_usage(0); }
+
+    if( $self->{'batch_size'} ) {
+        print "\nERROR : -batch_size flag is obsolete, please modify batch_size of the analysis instead\n";
+        script_usage(1);
+    }
 
     parse_conf($self, $conf_file);
 
@@ -333,7 +339,7 @@ sub generate_worker_cmd {
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
-        foreach my $worker_option ('batch_size', 'job_limit', 'life_span', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
+        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
             if(defined(my $value = $self->{$worker_option})) {
                 $worker_cmd .= " -${worker_option} $value";
             }
@@ -510,12 +516,13 @@ __DATA__
 =head2 Worker control
 
     -job_limit <num>            : #jobs to run before worker can die naturally
-    -batch_size <num>           : #jobs a worker can claim at once
     -life_span <num>            : life_span limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -maximise_concurrency 1     : try to run more different analyses at the same time
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
+
+    -batch_size <num>           : [OBSOLETE!] Please modify batch_size of the analysis instead
 
 =head2 Other commands/options
 

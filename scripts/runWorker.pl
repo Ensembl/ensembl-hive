@@ -45,7 +45,6 @@ GetOptions(
            'job_id=i'                   => \$job_id,
 
 # Worker control parameters:
-           'batch_size=i'               => \$batch_size,
            'job_limit|limit=i'          => \$job_limit,
            'life_span|lifespan=i'       => \$life_span,
            'no_cleanup'                 => \$no_cleanup,
@@ -53,6 +52,8 @@ GetOptions(
            'hive_output_dir|outdir=s'   => \$hive_output_dir,       # keep compatibility with the old name
            'worker_output_dir=s'        => \$worker_output_dir,     # will take precedence over hive_output_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
+
+           'batch_size=i'               => \$batch_size,            # OBSOLETE!
 
 # Other commands
            'h|help'                     => \$help,
@@ -65,6 +66,12 @@ GetOptions(
 );
 
 if ($help) { script_usage(0); }
+
+if( $batch_size ) {
+    print "\nERROR : -batch_size flag is obsolete, please modify batch_size of the analysis instead\n";
+    script_usage(1);
+}
+
 
 parse_conf($conf_file);
 
@@ -113,7 +120,6 @@ eval {
          -job_id                => $job_id,
 
       # Worker control parameters:
-         -batch_size            => $batch_size,
          -job_limit             => $job_limit,
          -life_span             => $life_span,
          -no_cleanup            => $no_cleanup,
@@ -121,6 +127,9 @@ eval {
          -worker_output_dir     => $worker_output_dir,
          -hive_output_dir       => $hive_output_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
+
+      ## Obsolete:
+      # -batch_size            => $batch_size,
 
       # Other parameters:
          -debug                 => $debug,
@@ -229,7 +238,6 @@ __DATA__
 
 =head2 Worker control parameters:
 
-    -batch_size <num>           : #jobs to claim at a time
     -job_limit <num>            : #jobs to run before worker can die naturally
     -life_span <num>            : number of minutes this worker is allowed to run
     -no_cleanup                 : don't perform temp directory cleanup when worker exits
@@ -237,6 +245,8 @@ __DATA__
     -hive_output_dir <path>     : directory where stdout/stderr of the whole hive of workers is redirected
     -worker_output_dir <path>   : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
+
+    -batch_size <num>           : [OBSOLETE!] Please modify batch_size of the analysis instead
 
 =head2 Other options:
 
