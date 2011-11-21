@@ -481,7 +481,7 @@ sub store_out_files {
     my $jobs  = $job_adaptor->grab_jobs_for_worker( $worker );
   Description: 
     For the specified worker, it will search available jobs, 
-    and using the workers requested batch_size, claim/fetch that
+    and using the how_many_this_batch parameter, claim/fetch that
     number of jobs, and then return them.
   Returntype : 
     reference to array of Bio::EnsEMBL::Hive::AnalysisJob objects
@@ -490,17 +490,16 @@ sub store_out_files {
 =cut
 
 sub grab_jobs_for_worker {
-    my ($self, $worker) = @_;
+    my ($self, $worker, $how_many_this_batch) = @_;
   
   my $analysis_id = $worker->analysis->dbID();
   my $worker_id   = $worker->dbID();
-  my $batch_size  = $worker->batch_size();
 
   my $update_sql            = "UPDATE job SET worker_id='$worker_id', status='CLAIMED'";
   my $selection_start_sql   = " WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0";
 
-  my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $batch_size";
-  my $any_selection_sql     = $selection_start_sql . " LIMIT $batch_size";
+  my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $how_many_this_batch";
+  my $any_selection_sql     = $selection_start_sql . " LIMIT $how_many_this_batch";
 
   if($self->dbc->driver eq 'sqlite') {
             # we have to be explicitly numereic here because of '0E0' value returned by DBI if "no rows have been affected":

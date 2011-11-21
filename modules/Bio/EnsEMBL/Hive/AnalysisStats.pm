@@ -96,7 +96,7 @@ sub batch_size {
     my $self = shift;
 
     $self->{'_batch_size'} = shift if(@_);
-    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # do we need to initialize it at all?
+    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # only initialize when undefined, so if defined as 0 will stay 0
 
     return $self->{'_batch_size'};
 }

@@ -25,8 +25,8 @@
 
   Each worker is linked to an analysis_id, registers its self on creation
   into the Hive, creates a RunnableDB instance of the Analysis->module,
-  gets $worker->batch_size() jobs from the job table, does its
-  work, creates the next layer of job entries by interfacing to
+  gets $analysis->stats->batch_size jobs from the job table, does its work,
+  creates the next layer of job entries by interfacing to
   the DataflowRuleAdaptor to determine the analyses it needs to pass its
   output data to and creates jobs on the next analysis database.
   It repeats this cycle until it has lived its lifetime or until there are no
@@ -99,11 +99,11 @@ sub create_new_worker {
 
   my (  $meadow_type, $process_id, $exec_host,
         $rc_id, $logic_name, $analysis_id, $input_id, $job_id,
-        $no_write, $debug, $worker_output_dir, $hive_output_dir, $batch_size, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
+        $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
 
  rearrange([qw(meadow_type process_id exec_host
         rc_id logic_name analysis_id input_id job_id
-        no_write debug worker_output_dir hive_output_dir batch_size job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
+        no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
 
     if($logic_name) {
         if($analysis_id) {
@@ -223,15 +223,9 @@ sub create_new_worker {
     }
     $worker->hive_output_dir($hive_output_dir);
 
-    if($batch_size) {
-        $worker->batch_size($batch_size);
-    }
     if($job_limit) {
       $worker->job_limit($job_limit);
       $worker->life_span(0);
-      if($job_limit < $worker->batch_size()) {
-        $worker->batch_size( $job_limit );
-      }
     }
     if($life_span) {
       $worker->life_span($life_span * 60);
@@ -546,19 +540,19 @@ sub synchronize_AnalysisStats {
       $analysisStats->failed_job_count(0);
       $analysisStats->num_required_workers(0);
 
-      my $sql = "SELECT status, count(*), semaphore_count FROM job ".
+      my $sql = "SELECT status, semaphore_count, count(*) FROM job ".
                 "WHERE analysis_id=? GROUP BY status, semaphore_count";
       my $sth = $self->prepare($sql);
       $sth->execute($analysisStats->analysis_id);
 
 
-      my $done_here      = 0;
-      my $done_elsewhere = 0;
-      while (my ($status, $job_count, $semaphore_count)=$sth->fetchrow_array()) {
+      my $done_here       = 0;
+      my $done_elsewhere  = 0;
+      my $total_job_count = 0;
+      while (my ($status, $semaphore_count, $job_count)=$sth->fetchrow_array()) {
     # print STDERR "$status: $job_count\n";
 
-        my $curr_total = $analysisStats->total_job_count();
-        $analysisStats->total_job_count($curr_total + $job_count);
+        my $total_job_count += $job_count;
 
         if(($status eq 'READY') and ($semaphore_count<=0)) {
             $analysisStats->unclaimed_job_count($job_count);
@@ -585,7 +579,8 @@ sub synchronize_AnalysisStats {
       }
       $sth->finish;
 
-      $analysisStats->done_job_count($done_here + $done_elsewhere);
+      $analysisStats->total_job_count( $total_job_count );
+      $analysisStats->done_job_count( $done_here + $done_elsewhere );
   } # /unless $self->{'_hive_use_triggers'}
 
   $analysisStats->check_blocking_control_rules();

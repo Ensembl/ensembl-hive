@@ -235,6 +235,22 @@ sub more_work_done {
   $self->{'work_done'}++;
 }
 
+
+sub next_batch_size {
+    my $self = shift @_;
+
+    my $batch_size = $self->analysis->stats->get_or_estimate_batch_size();
+
+    if(my $job_limit = $self->job_limit()) {               # if job_limit is set, it may influence batch_size
+        my $jobs_to_do = $job_limit - $self->work_done();
+        if($jobs_to_do < $batch_size) {
+            return $jobs_to_do;         # should return 0 when job_limit has been attained
+        }
+    }
+    return $batch_size;
+}
+
+
 sub job_limit_reached {
     my $self = shift @_;
 
@@ -378,7 +394,7 @@ sub print_worker {
      " host=",$self->host,
      " pid=",$self->process_id,
      "\n");
-  print("  batch_size = ", $self->batch_size,"\n");
+  print("  batch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
   print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
   print("  life_span  = ", $self->life_span,"\n") if(defined($self->life_span));
   if(my $worker_output_dir = $self->worker_output_dir) {
@@ -417,28 +433,6 @@ sub cleanup_worker_process_temp_directory {
 # WORK section
 #
 ###############################
-
-=head2 batch_size
-
-  Args    :   none
-  Title   :   batch_size
-  Usage   :   $value = $self->batch_size;
-              $self->batch_size($new_value);
-  Description: Defines the number of jobs that should run in batch
-               before querying the database for the next job batch.  Used by the
-               Hive system to manage the number of workers needed to complete a
-               particular job type.
-  DefaultValue : batch_size of analysis
-  Returntype : integer scalar
-
-=cut
-
-sub batch_size {
-    my $self = shift;
-
-    $self->{'_batch_size'} = shift if(@_);
-    return $self->{'_batch_size'} || $self->analysis->stats->get_or_estimate_batch_size();
-}
 
 
 =head2 run
@@ -503,7 +497,9 @@ sub run {
                 $self->cause_of_death('CONTAMINATED'); 
                 $job_adaptor->release_undone_jobs_from_worker($self, $msg);
             } else {
-                $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->grab_jobs_for_worker( $self ) );
+                if(my $how_many_this_batch = $self->next_batch_size()) {
+                    $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->grab_jobs_for_worker( $self, $how_many_this_batch ) );
+                }
 
                 if( my $jobs_completed = $self->job_limit_reached()) {
                     print "job_limit reached ($jobs_completed jobs completed)\n";
