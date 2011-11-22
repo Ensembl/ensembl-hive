@@ -347,7 +347,6 @@ sub determine_status {
       $self->status('WORKING');
     }
   }
-  return $self;
 }
 
 
