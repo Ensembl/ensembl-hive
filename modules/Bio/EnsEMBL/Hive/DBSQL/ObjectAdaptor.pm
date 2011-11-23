@@ -45,7 +45,9 @@ sub slicer {    # take a slice of the object (if only we could inline in Perl!)
 sub objectify { # turn the hashref into an object (if only we could inline in Perl!)
     my ($self, $hashref) = @_;
 
-    return $self->object_class()->new( -adaptor => $self, map { ('-'.uc($_) => $hashref->{$_}) } keys %$hashref );
+    my $autoinc_id = $self->autoinc_id();
+
+    return $self->object_class()->new( -adaptor => $self, map { ('-'.uc( ($_ eq $autoinc_id) ? 'dbID' : $_ ) => $hashref->{$_}) } keys %$hashref );
 }
 
 

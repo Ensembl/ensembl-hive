@@ -134,7 +134,7 @@ sub count_all {
         $sql .= " WHERE $constraint ";
     }
 
-    print STDOUT $sql,"\n";
+    # print STDOUT $sql,"\n";
 
     my $sth = $self->prepare($sql);
     $sth->execute;  
