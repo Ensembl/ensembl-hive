@@ -56,7 +56,7 @@ Description: encodes a branch mnemonic name into numeric code
 sub branch_name_2_code {
     my $branch_name_or_code = pop @_;   # NB: we take the *last* arg, so it works both as a method and a subroutine
 
-    $branch_name_or_code=1 unless(defined($branch_name_or_code));
+    return unless(defined($branch_name_or_code));
 
     my $branch_code = ($branch_name_or_code=~/^\-?\d+$/)
         ? $branch_name_or_code
@@ -109,7 +109,7 @@ sub fetch_all_by_from_analysis_id_and_branch_code {
 =cut
 
 sub create_rule {
-    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template) = @_;
+    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template, $funnel_branch_name_or_code) = @_;
 
     return unless($from_analysis and $to_analysis_or_url);
 
@@ -120,8 +120,9 @@ sub create_rule {
             ? ( -to_analysis     => $to_analysis_or_url )
             : ( -to_analysis_url => $to_analysis_or_url ),
 
-        -branch_code        =>  $self->branch_name_2_code($branch_name_or_code),
+        -branch_code        =>  defined($branch_name_or_code) ? $self->branch_name_2_code($branch_name_or_code) : 1,
         -input_id_template  =>  (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
+        -funnel_branch_code =>  $self->branch_name_2_code($funnel_branch_name_or_code),
     );
 
     return $self->store($rule, 1);  # avoid redundancy

@@ -440,8 +440,9 @@ sub run {
             $flow_into ||= {};
             $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
-            foreach my $branch_name_or_code (keys %$flow_into) {
-                my $heirs = $flow_into->{$branch_name_or_code};
+            foreach my $branch_tag (keys %$flow_into) {
+                my ($branch_name_or_code, $funnel_branch_name_or_code) = split(/:/, $branch_tag);
+                my $heirs = $flow_into->{$branch_tag};
 
                 $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
 
@@ -451,9 +452,9 @@ sub run {
 
                     my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template);
+                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template, $funnel_branch_name_or_code);
 
-                    warn "DataFlow rule: [$branch_name_or_code] $logic_name -> $heir_url"
+                    warn "DataFlow rule: [$branch_tag] $logic_name -> $heir_url"
                         .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
                 }
             }

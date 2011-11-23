@@ -80,8 +80,8 @@ sub CreateNewJob {
 
   return undef unless(scalar @args);
 
-  my ($input_id, $analysis, $prev_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
-     rearrange([qw(INPUT_ID ANALYSIS INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
+  my ($input_id, $analysis, $prev_job, $prev_job_id, $blocked, $semaphore_count, $semaphored_job_id) =
+     rearrange([qw(INPUT_ID ANALYSIS PREV_JOB INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID)], @args);
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
@@ -89,6 +89,15 @@ sub CreateNewJob {
     unless($analysis->isa('Bio::EnsEMBL::Analysis'));
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
+  throw("Please specify prev_job object instead of input_job_id if available") if ($prev_job_id);   # 'obsolete' message
+
+  $prev_job_id = $prev_job && $prev_job->dbID();
+
+        # if the user did not specifically ask for a new fan, consider propagation:
+  my $propagate_semaphore = !defined($semaphored_job_id);
+
+        # if nothing is supplied, semaphored_job_id will be propagated from the parent job:
+  $semaphored_job_id ||= $prev_job && $prev_job->semaphored_job_id();
 
   if(ref($input_id)) {  # let's do the Perl hash stringification centrally rather than in many places:
     $input_id = stringify($input_id);
@@ -109,20 +118,33 @@ sub CreateNewJob {
               (input_id, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
               VALUES (?,?,?,?,?,?)};
  
-  my $sth = $dbc->prepare($sql);
+  my $sth       = $dbc->prepare($sql);
+  my @values    = ($input_id, $prev_job_id, $analysis_id, $status, $semaphore_count || 0, $semaphored_job_id);
 
-  $sth->execute($input_id, $prev_job_id, $analysis_id, $status, $semaphore_count || 0, $semaphored_job_id);
-  my $job_id = $dbc->db_handle->last_insert_id(undef, undef, 'job', 'job_id');
-  $sth->finish;
+  my $return_code = $sth->execute(@values)
+            # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
+        or die "Coule not run\n\t$sql\nwith data:\n\t(".join(',', @values).')';
 
-  unless($dba->hive_use_triggers()) {
-      $dbc->do(qq{
-        UPDATE analysis_stats
-           SET total_job_count=total_job_count+1
-              ,unclaimed_job_count=unclaimed_job_count+1
-              ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
-         WHERE analysis_id=$analysis_id
-      });
+  my $job_id;
+  if($return_code > 0) {    # <--- for the same reason we have to be expliticly numeric here:
+      $job_id = $dbc->db_handle->last_insert_id(undef, undef, 'job', 'job_id');
+      $sth->finish;
+
+      if($semaphored_job_id and $propagate_semaphore) {     # ready to propagate and something to propagate
+            $prev_job->adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id ); # propagate the semaphore
+      }
+
+      unless($dba->hive_use_triggers()) {
+          $dbc->do(qq{
+            UPDATE analysis_stats
+               SET total_job_count=total_job_count+1
+                  ,unclaimed_job_count=unclaimed_job_count+1
+                  ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
+             WHERE analysis_id=$analysis_id
+          });
+      }
+  } elsif($semaphored_job_id and !$propagate_semaphore) {   # if we didn't succeed in creating the job, fix the semaphore
+        $prev_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );
   }
 
   return $job_id;

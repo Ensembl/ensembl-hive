@@ -146,15 +146,17 @@ CREATE TABLE worker (
 -- semantics:
 --   dataflow_rule_id     - internal ID
 --   from_analysis_id     - foreign key to analysis table analysis_id
+--   branch_code          - branch_code of the fan
+--   funnel_branch_code   - branch_code of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)
 --   to_analysis_url      - foreign key to net distributed analysis logic_name reference
---   branch_code          - joined to job.branch_code to allow branching
 --   input_id_template    - a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 
 CREATE TABLE dataflow_rule (
   dataflow_rule_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
   from_analysis_id    int(10) unsigned NOT NULL,
-  to_analysis_url     varchar(255) default '' NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
+  funnel_branch_code  int(10) default NULL,
+  to_analysis_url     varchar(255) default '' NOT NULL,
   input_id_template   TEXT DEFAULT NULL,
 
   PRIMARY KEY (dataflow_rule_id),

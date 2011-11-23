@@ -124,7 +124,7 @@ sub pipeline_analyses {
                 { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
             ],
             -flow_into => {
-                2 => [ 'part_multiply' ],   # will create a fan of jobs
+                '2:1' => [ 'part_multiply' ],   # will create a fan of jobs
                 1 => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
             },
         },
@@ -147,7 +147,7 @@ sub pipeline_analyses {
             -input_ids => [
                 # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
             ],
-            -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
+#            -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
             -flow_into => {
                 1 => [ ':////final_result' ],
             },
