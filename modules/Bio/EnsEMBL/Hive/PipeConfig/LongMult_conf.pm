@@ -109,7 +109,11 @@ sub pipeline_create_commands {
                     * 'part_multiply' initially without jobs (they will flow from 'start')
 
                     * 'add_together' initially without jobs (they will flow from 'start').
-                       All 'add_together' jobs will wait for completion of *all* 'part_multiply' jobs before their own execution (to ensure all data is available).
+                       All 'add_together' jobs will wait for completion of 'part_multiply' jobs before their own execution (to ensure all data is available).
+
+    There are two control modes in this pipeline:
+        A. The default mode is to use the '2' dataflow rule from 'start' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
+        B. The semaphored mode is to use '2:1' semaphored dataflow rule from 'start' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
 
 =cut
 
@@ -124,8 +128,9 @@ sub pipeline_analyses {
                 { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
             ],
             -flow_into => {
-                '2:1' => [ 'part_multiply' ],   # will create a fan of jobs
-                1 => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
+                2     => [ 'part_multiply' ],   # will create a fan of jobs
+                # '2:1' => [ 'part_multiply' ],   # will create a semaphored fan of jobs (comment out the -wait_for rule from 'add_together')
+                1     => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
             },
         },
 
@@ -147,7 +152,7 @@ sub pipeline_analyses {
             -input_ids => [
                 # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
             ],
-#            -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
+            -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
             -flow_into => {
                 1 => [ ':////final_result' ],
             },
