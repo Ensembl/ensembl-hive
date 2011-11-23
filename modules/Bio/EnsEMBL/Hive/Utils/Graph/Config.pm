@@ -69,11 +69,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: ady $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.1 $
+$Revision: 1.2 $
 
 =cut
 
@@ -116,16 +116,17 @@ sub _default {
         DONE        => 'green',
         FAILED      => 'red',
         OTHER       => 'white',
-        TABLE       => 'black'
+        TABLE       => 'black',
       },
       Flows => {
-        data => 'blue',
-        control => 'red'
+        data       => 'blue',
+        control    => 'red',
+        semablock  => 'red',
       }
     },
     Fonts => {
       node => 'Helvetica',
-      edge => 'Helvetica'
+      edge => 'Helvetica',
     },
     DisplayDetails => 1
   };

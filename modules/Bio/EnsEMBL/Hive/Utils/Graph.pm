@@ -30,7 +30,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.6 $
+$Revision: 1.7 $
 
 =cut
 
@@ -80,10 +80,9 @@ sub new {
 =cut
 
 sub graph {
-  my ($self, $graph) = @_;
+  my ($self) = @_;
   if(! exists $self->{graph}) {
-    my $g = GraphViz->new( name => 'AnalysisWorkflow', ratio => 'compress' );
-    $self->{graph} = $g;
+    $self->{graph} = GraphViz->new( name => 'AnalysisWorkflow', ratio => 'compress' );
   }
   return $self->{graph};
 }
@@ -145,7 +144,7 @@ sub config {
 sub build {
   my ($self) = @_;
   $self->_add_hive_details();
-  my $analyses = $self->_get_analyses();
+  my $analyses = $self->dba()->get_AnalysisAdaptor()->fetch_all();
   foreach my $a (@{$analyses}) {
     $self->_add_analysis_node($a);
   }
@@ -166,8 +165,8 @@ sub _add_hive_details {
       shape => 'plaintext' 
     );
   }
-  return;
 }
+
 
 sub _add_analysis_node {
   my ($self, $a) = @_;
@@ -176,35 +175,27 @@ sub _add_analysis_node {
   #Check we can invoke it & then check if it was able to be empty
   my $can_be_empty = $a->stats()->can('can_be_empty') && $a->stats()->can_be_empty();
   my $shape = ($can_be_empty) ? 'doubleoctagon' : 'ellipse' ;
+
+  my $config = $self->config()->{Colours}->{Status};
+  my $colour = $config->{$a->stats()->status()} || $config->{OTHER};
   
   $graph->add_node(
     $a->dbID(), 
-    label => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
-    shape => $shape,
-    style => 'filled',
-    fontname => $self->config()->{Fonts}->{node},
-    tooltip => $a->stats()->status()
+    label       => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
+    shape       => $shape,
+    style       => 'filled',
+    fontname    => $self->config()->{Fonts}->{node},
+    fillcolor   => $colour,
   );
-  $self->_add_colour($a);
-  return;
 }
 
-sub _add_colour {
-  my ($self, $a) = @_;
-  my $graph = $self->graph();
-  my $config = $self->config()->{Colours}->{Status};
-  my $other = $config->{OTHER};
-  my $colour = $config->{$a->stats()->status()} || $other;
-  $graph->add_node($a->dbID(), fillcolor => $colour);
-  return;
-}
 
 sub _control_rules {
   my ($self) = @_;
   
   my $config = $self->config()->{Colours}->{Flows};
   my $graph = $self->graph();
-  my $ctrl_rules = $self->_get_control_rules();
+  my $ctrl_rules = $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all();
 
   #The control rules are always from and to an analysis so no need to search for odd cases here
   foreach my $rule (@{$ctrl_rules}) {
@@ -212,58 +203,92 @@ sub _control_rules {
     $graph->add_edge($from => $to, 
       color => $config->{control},
       fontname => $self->config()->{Fonts}->{edge},
-      arrowhead => 'tee'
+      arrowhead => 'tee',
     );
   }
-  
-  return;
+}
+
+sub _midpoint_name {
+    my $dfr = shift @_;
+
+    return 'dfr_'.$dfr->dbID().'_mp';
 }
 
 sub _dataflow_rules {
   my ($self) = @_;
   my $graph = $self->graph();
   my $config = $self->config()->{Colours}->{Flows};
-  my $dataflow_rules = $self->_get_dataflow_rules();
+  my $dataflow_rules = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
 
-  #Edges are not cached/replaced in GraphViz therefore we need to do it here & add only in a non-redundant fashion
-  my $represented_flows = {};
-  my $non_analysis_sources = {};
+  my %funnel_to_fan_list = ();
+
+        # pre-create midpoint nodes
+  foreach my $rule (@{$dataflow_rules}) {
+      my $from_analysis_id   = $rule->from_analysis_id();
+      my $funnel_branch_code = $rule->funnel_branch_code();
+      my $midpoint_name      = _midpoint_name($rule);
+      $graph->add_node(
+        $midpoint_name,
+        label       => '',
+        defined($funnel_branch_code)
+            ? (
+                shape   => 'circle',
+                fixedsize   => 1,
+                width       => 0.1,
+                height      => 0.1,
+            ) : (
+                shape   => 'point',
+                fixedsize   => 1,
+                width       => 0.01,
+                height      => 0.01,
+            ),
+        color       => $config->{data}, 
+      );
+      if($funnel_branch_code) {
+        push @{$funnel_to_fan_list{$from_analysis_id}{$funnel_branch_code}}, $midpoint_name;
+      }
+  }
+
   foreach my $rule (@{$dataflow_rules}) {
     
-    my ($from, $to) = ($rule->from_analysis(), $rule->to_analysis());
-    my $from_node = $from->dbID();
+    my ($from_analysis_id, $branch_code, $funnel_branch_code, $to) = ($rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_branch_code(), $rule->to_analysis());
     my $to_node;
     
     #If we've been told to flow from an analysis to a table or external source we need
     #to process this differently
     if(check_ref($to, 'Bio::EnsEMBL::Analysis')) {
       $to_node = $to->dbID();
-    }
-    else {
-      if(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
+    } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
         $to_node = $to->table_name();
         $self->_add_table_node($to_node);
-      }
-      else {
+    } else {
         warn('Do not know how to handle the type '.ref($to));
         next;
-      }
     }
     
-    my $branch = $rule->branch_code();
-    next if $represented_flows->{$from_node}->{$to_node}->{$branch};
-    
-    $graph->add_edge($from_node => $to_node, 
-      color => $config->{data}, 
-      label => 'Branch '.$branch, 
-      fontname => $self->config()->{Fonts}->{edge}
-    );
-    
-    $represented_flows->{$from_node}->{$to_node}->{$branch} = 1;
-  }
-  return;
-}
+      my $midpoint_name = _midpoint_name($rule);
 
+      $graph->add_edge($from_analysis_id => $midpoint_name, 
+        color       => $config->{data}, 
+        arrowhead   => 'none',
+        label       => '#'.$branch_code, 
+        fontname    => $self->config()->{Fonts}->{edge},
+      );
+      $graph->add_edge($midpoint_name => $to_node, 
+          color     => $config->{data}, 
+      );
+      if($funnel_to_fan_list{$from_analysis_id}{$branch_code}) {
+        foreach my $fan_midpoint (@{$funnel_to_fan_list{$from_analysis_id}{$branch_code}}) {
+            $graph->add_edge($fan_midpoint => $midpoint_name,
+              color     => $config->{semablock},
+              fontname  => $self->config()->{Fonts}->{edge},
+              style     => 'dashed',
+              arrowhead => 'tee',
+            );
+        }
+      }
+  }
+}
 
 sub _add_table_node {
   my ($self, $table) = @_;
@@ -275,25 +300,6 @@ sub _add_table_node {
     fontname => $self->config()->{Fonts}->{node},
     color => $self->config()->{Colours}->{Status}->{TABLE}
   );
-  return;
-}
-
-sub _get_analyses {
-  my ($self) = @_;
-  return $self->dba()->get_AnalysisAdaptor()->fetch_all();
-}
-
-sub _get_control_rules {
-  my ($self) = @_;
-  my $adaptor = $self->dba()->get_AnalysisCtrlRuleAdaptor();
-  return $adaptor->fetch_all();
-}
-
-sub _get_dataflow_rules {
-  my ($self) = @_;
-  my $adaptor = $self->dba()->get_DataflowRuleAdaptor();
-  my $rules = $adaptor->fetch_all();
-  return $rules;
 }
 
 1;
