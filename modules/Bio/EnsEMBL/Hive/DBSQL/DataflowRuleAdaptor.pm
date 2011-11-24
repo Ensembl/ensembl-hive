@@ -56,7 +56,7 @@ Description: encodes a branch mnemonic name into numeric code
 sub branch_name_2_code {
     my $branch_name_or_code = pop @_;   # NB: we take the *last* arg, so it works both as a method and a subroutine
 
-    return unless(defined($branch_name_or_code));
+    return 1 unless(defined($branch_name_or_code));
 
     my $branch_code = ($branch_name_or_code=~/^\-?\d+$/)
         ? $branch_name_or_code
