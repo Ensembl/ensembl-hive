@@ -54,9 +54,12 @@ Description: encodes a branch mnemonic name into numeric code
 =cut
 
 sub branch_name_2_code {
-    my $branch_name_or_code = pop @_;   # NB: we take the *last* arg, so it works both as a method and a subroutine
 
-    return 1 unless(defined($branch_name_or_code));
+    shift @_ if(ref($_[0]));     # skip the first argument if it is an object, so it works both as a method and a subroutine
+
+    my ($branch_name_or_code, $no_default) = @_;
+
+    return ($no_default ? undef : 1) unless(defined($branch_name_or_code));
 
     my $branch_code = ($branch_name_or_code=~/^\-?\d+$/)
         ? $branch_name_or_code
@@ -120,9 +123,9 @@ sub create_rule {
             ? ( -to_analysis     => $to_analysis_or_url )
             : ( -to_analysis_url => $to_analysis_or_url ),
 
-        -branch_code        =>  defined($branch_name_or_code) ? $self->branch_name_2_code($branch_name_or_code) : 1,
+        -branch_code        =>  $self->branch_name_2_code($branch_name_or_code),
         -input_id_template  =>  (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
-        -funnel_branch_code =>  $self->branch_name_2_code($funnel_branch_name_or_code),
+        -funnel_branch_code =>  $self->branch_name_2_code($funnel_branch_name_or_code, 1),
     );
 
     return $self->store($rule, 1);  # avoid redundancy
