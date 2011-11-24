@@ -552,7 +552,7 @@ sub synchronize_AnalysisStats {
       while (my ($status, $semaphore_count, $job_count)=$sth->fetchrow_array()) {
     # print STDERR "$status: $job_count\n";
 
-        my $total_job_count += $job_count;
+        $total_job_count += $job_count;
 
         if(($status eq 'READY') and ($semaphore_count<=0)) {
             $analysisStats->unclaimed_job_count($job_count);
@@ -576,7 +576,7 @@ sub synchronize_AnalysisStats {
         } elsif ($status eq 'FAILED') {
             $analysisStats->failed_job_count($job_count);
         }
-      }
+      } # /while
       $sth->finish;
 
       $analysisStats->total_job_count( $total_job_count );
