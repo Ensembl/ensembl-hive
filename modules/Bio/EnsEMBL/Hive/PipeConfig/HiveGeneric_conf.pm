@@ -448,14 +448,19 @@ sub run {
 
                 $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
-                while(my ($heir_url, $input_id_template) = each %$heirs) {
+                while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+                    
+                    $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
 
-                    my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
+                    foreach my $input_id_template (@$input_id_template_list) {
 
-                    $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template, $funnel_branch_name_or_code);
+                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                    warn "DataFlow rule: [$branch_tag] $logic_name -> $heir_url"
-                        .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
+                        $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template, $funnel_branch_name_or_code);
+
+                        warn "DataFlow rule: [$branch_tag] $logic_name -> $heir_url"
+                            .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
+                    }
                 }
             }
         }
