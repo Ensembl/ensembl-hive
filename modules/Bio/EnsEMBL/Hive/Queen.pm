@@ -569,9 +569,9 @@ sub synchronize_AnalysisStats {
             }
             $analysisStats->num_required_workers( $required_workers );
 
-        } elsif($status eq 'DONE' and $semaphore_count<=0) {
+        } elsif($status eq 'DONE') {
             $done_here = $job_count;
-        } elsif($status eq 'PASSED_ON' and $semaphore_count<=0) {
+        } elsif($status eq 'PASSED_ON') {
             $done_elsewhere = $job_count;
         } elsif ($status eq 'FAILED') {
             $analysisStats->failed_job_count($job_count);
