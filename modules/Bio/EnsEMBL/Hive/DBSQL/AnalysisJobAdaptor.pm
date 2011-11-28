@@ -665,6 +665,10 @@ sub gc_dataflow {
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 
     $job->update_status('PASSED_ON');
+
+    if(my $semaphored_job_id = $job->semaphored_job_id) {
+        $self->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+    }
     
     return 1;
 }
