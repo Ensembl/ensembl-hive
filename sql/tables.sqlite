@@ -134,7 +134,7 @@ CREATE        INDEX IF NOT EXISTS analysis_id_status_idx ON worker (analysis_id,
 --   dataflow_rule_id     - internal ID
 --   from_analysis_id     - foreign key to analysis table analysis_id
 --   branch_code          - branch_code of the fan
---   funnel_branch_code   - branch_code of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)
+--   funnel_dataflow_rule_id - dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)
 --   to_analysis_url      - foreign key to net distributed analysis logic_name reference
 --   input_id_template    - a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 
@@ -143,11 +143,11 @@ CREATE TABLE dataflow_rule (
   dataflow_rule_id    INTEGER PRIMARY KEY AUTOINCREMENT,
   from_analysis_id    INTEGER NOT NULL,
   branch_code         int(10) default 1 NOT NULL,
-  funnel_branch_code  int(10) default NULL,
+  funnel_dataflow_rule_id INTEGER default NULL,
   to_analysis_url     varchar(255) default '' NOT NULL,
   input_id_template   TEXT DEFAULT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS from_to_branch_template_idx ON dataflow_rule (from_analysis_id, to_analysis_url, branch_code, input_id_template);
+CREATE UNIQUE INDEX IF NOT EXISTS from_to_branch_template_idx ON dataflow_rule (from_analysis_id, branch_code, funnel_dataflow_rule_id, to_analysis_url, input_id_template);
 
 
 -- ---------------------------------------------------------------------------------

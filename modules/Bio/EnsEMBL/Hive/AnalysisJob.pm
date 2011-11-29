@@ -271,7 +271,9 @@ sub dataflow_output_id {
     $self->autoflow(0) if($branch_code == 1);
 
     my @output_job_ids = ();
-    foreach my $rule (@{ $self->dataflow_rules( $branch_name_or_code ) }) {
+
+        # sort rules to make sure the fan rules come before funnel rules for the same branch_code:
+    foreach my $rule (sort {($b->funnel_dataflow_rule_id||0) <=> ($a->funnel_dataflow_rule_id||0)} @{ $self->dataflow_rules( $branch_code ) }) {
 
             # parameter substitution into input_id_template is rule-specific
         my $output_ids_for_this_rule;
@@ -289,21 +291,21 @@ sub dataflow_output_id {
 
         } else {
 
-            if(my $funnel_branch_code = $rule->funnel_branch_code()) {  # a semaphored fan: they will have to wait in cache until the funnel is created
+            if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {  # a semaphored fan: they will have to wait in cache until the funnel is created
 
-                my $fan_cache_this_branch = $self->fan_cache()->{$funnel_branch_code} ||= [];
+                my $fan_cache_this_branch = $self->fan_cache()->{$funnel_dataflow_rule_id} ||= [];
                 push @$fan_cache_this_branch, map { [$_, $target_analysis_or_table] } @$output_ids_for_this_rule;
 
             } else {
 
-                my $fan_cache = $self->fan_cache()->{$branch_code};
+                my $fan_cache = delete $self->fan_cache()->{$rule->dbID};   # clear the cache at the same time
 
                 if($fan_cache && @$fan_cache) { # a semaphored funnel
                     my $funnel_job_id;
-                    if( (my $funnel_job_number = scalar(@$output_ids_for_this_rule)) !=1 ) {
+                    if( (my $funnel_job_count = scalar(@$output_ids_for_this_rule)) !=1 ) {
 
                         $self->transient_error(0);
-                        die "Asked to dataflow into $funnel_job_number funnel jobs instead of 1";
+                        die "Asked to dataflow into $funnel_job_count funnel jobs instead of 1";
 
                     } elsif($funnel_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(   # if a semaphored funnel job creation succeeded,
                                             -input_id           => $output_ids_for_this_rule->[0],
@@ -327,8 +329,6 @@ sub dataflow_output_id {
                     } else {
                         die "Could not create a funnel job";
                     }
-
-                    delete $self->fan_cache()->{$branch_code};    # clear the cache
 
                 } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
 

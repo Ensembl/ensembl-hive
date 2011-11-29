@@ -112,8 +112,8 @@ sub pipeline_create_commands {
                        All 'add_together' jobs will wait for completion of 'part_multiply' jobs before their own execution (to ensure all data is available).
 
     There are two control modes in this pipeline:
-        A. The default mode is to use the '2' dataflow rule from 'start' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
-        B. The semaphored mode is to use '2:1' semaphored dataflow rule from 'start' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
+        A. The default mode is to use the '2' and '1' dataflow rules from 'start' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
+        B. The semaphored mode is to use '2->A' and 'A->1' semaphored dataflow rules from 'start' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
 
 =cut
 
@@ -129,8 +129,9 @@ sub pipeline_analyses {
             ],
             -flow_into => {
                 2     => [ 'part_multiply' ],   # will create a fan of jobs
-                # '2:1' => [ 'part_multiply' ],   # will create a semaphored fan of jobs (comment out the -wait_for rule from 'add_together')
                 1     => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
+#                '2->A' => [ 'part_multiply' ],   # will create a semaphored fan of jobs (comment out the -wait_for rule from 'add_together')
+#                'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
             },
         },
 

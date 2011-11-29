@@ -23,7 +23,7 @@
         dataflow_rule_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
         from_analysis_id    int(10) unsigned NOT NULL,
         branch_code         int(10) default 1 NOT NULL,
-        funnel_branch_code  int(10) default NULL,
+        funnel_dataflow_rule_id  int(10) unsigned default NULL,
         to_analysis_url     varchar(255) default '' NOT NULL,
         input_id_template   TEXT DEFAULT NULL,
 
@@ -67,8 +67,8 @@ sub new {
     my $class = shift @_;
     my $self = bless {}, $class;
 
-    my ( $dbID, $adaptor, $fromAnalysis, $toAnalysis, $from_analysis_id, $branch_code, $funnel_branch_code, $to_analysis_url, $input_id_template ) =
-    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS TO_ANALYSIS FROM_ANALYSIS_ID BRANCH_CODE FUNNEL_BRANCH_CODE TO_ANALYSIS_URL INPUT_ID_TEMPLATE) ], @_ );
+    my ( $dbID, $adaptor, $fromAnalysis, $toAnalysis, $from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to_analysis_url, $input_id_template ) =
+    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS TO_ANALYSIS FROM_ANALYSIS_ID BRANCH_CODE FUNNEL_DATAFLOW_RULE_ID TO_ANALYSIS_URL INPUT_ID_TEMPLATE) ], @_ );
 
         # database persistence:
     $self->dbID( $dbID )                            if(defined($dbID));
@@ -82,7 +82,7 @@ sub new {
     $self->from_analysis_id($from_analysis_id)      if(defined($from_analysis_id));
     $self->to_analysis_url($to_analysis_url)        if(defined($to_analysis_url));
     $self->branch_code($branch_code)                if(defined($branch_code));
-    $self->funnel_branch_code($funnel_branch_code)  if(defined($funnel_branch_code));
+    $self->funnel_dataflow_rule_id($funnel_dataflow_rule_id)  if(defined($funnel_dataflow_rule_id));
     $self->input_id_template($input_id_template)    if(defined($input_id_template));
 
     return $self;
@@ -133,19 +133,19 @@ sub branch_code {
     return $self->{'_branch_code'};
 }
 
-=head2 funnel_branch_code
+=head2 funnel_dataflow_rule_id
 
-    Function: getter/setter method for the funnel_branch_code of the dataflow rule
+    Function: getter/setter method for the funnel_dataflow_rule_id of the dataflow rule
 
 =cut
 
-sub funnel_branch_code {
+sub funnel_dataflow_rule_id {
     my $self = shift @_;
 
     if(@_) { # setter mode
-        $self->{'_funnel_branch_code'} = shift @_;
+        $self->{'_funnel_dataflow_rule_id'} = shift @_;
     }
-    return $self->{'_funnel_branch_code'};
+    return $self->{'_funnel_dataflow_rule_id'};
 }
 
 =head2 input_id_template

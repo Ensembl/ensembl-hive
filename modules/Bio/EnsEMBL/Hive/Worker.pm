@@ -685,10 +685,10 @@ sub run_module_with_job {
         print("\n!!! *no* WRITE_OUTPUT and *no* AUTOFLOW\n") if($self->debug); 
     }
 
-    my @zombie_funnel_branches = keys %{$job->fan_cache};
-    if( scalar(@zombie_funnel_branches) ) {
+    my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
+    if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
         $job->transient_error(0);
-        die "There are cached semaphored fans for which a funnel job (branch ".join(',',@zombie_funnel_branches).") has never been dataflown";
+        die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
     }
 
     $job->query_count($self->queen->dbc->query_count);

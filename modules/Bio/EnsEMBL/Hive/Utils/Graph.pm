@@ -30,7 +30,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.7 $
+$Revision: 1.8 $
 
 =cut
 
@@ -209,9 +209,9 @@ sub _control_rules {
 }
 
 sub _midpoint_name {
-    my $dfr = shift @_;
+    my $rule_id = shift @_;
 
-    return 'dfr_'.$dfr->dbID().'_mp';
+    return 'dfr_'.$rule_id.'_mp';
 }
 
 sub _dataflow_rules {
@@ -220,38 +220,9 @@ sub _dataflow_rules {
   my $config = $self->config()->{Colours}->{Flows};
   my $dataflow_rules = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
 
-  my %funnel_to_fan_list = ();
-
-        # pre-create midpoint nodes
-  foreach my $rule (@{$dataflow_rules}) {
-      my $from_analysis_id   = $rule->from_analysis_id();
-      my $funnel_branch_code = $rule->funnel_branch_code();
-      my $midpoint_name      = _midpoint_name($rule);
-      $graph->add_node(
-        $midpoint_name,
-        label       => '',
-        defined($funnel_branch_code)
-            ? (
-                shape   => 'circle',
-                fixedsize   => 1,
-                width       => 0.1,
-                height      => 0.1,
-            ) : (
-                shape   => 'point',
-                fixedsize   => 1,
-                width       => 0.01,
-                height      => 0.01,
-            ),
-        color       => $config->{data}, 
-      );
-      if($funnel_branch_code) {
-        push @{$funnel_to_fan_list{$from_analysis_id}{$funnel_branch_code}}, $midpoint_name;
-      }
-  }
-
   foreach my $rule (@{$dataflow_rules}) {
     
-    my ($from_analysis_id, $branch_code, $funnel_branch_code, $to) = ($rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_branch_code(), $rule->to_analysis());
+    my ($from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to) = ($rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_dataflow_rule_id(), $rule->to_analysis());
     my $to_node;
     
     #If we've been told to flow from an analysis to a table or external source we need
@@ -266,7 +237,7 @@ sub _dataflow_rules {
         next;
     }
     
-      my $midpoint_name = _midpoint_name($rule);
+      my $midpoint_name = _midpoint_name($rule->dbID);
 
       $graph->add_edge($from_analysis_id => $midpoint_name, 
         color       => $config->{data}, 
@@ -274,18 +245,33 @@ sub _dataflow_rules {
         label       => '#'.$branch_code, 
         fontname    => $self->config()->{Fonts}->{edge},
       );
+      $graph->add_node(
+        $midpoint_name,
+        label       => '',
+        defined($funnel_dataflow_rule_id)
+            ? (
+                shape   => 'circle',
+                fixedsize   => 1,
+                width       => 0.1,
+                height      => 0.1,
+            ) : (
+                shape   => 'point',
+                fixedsize   => 1,
+                width       => 0.01,
+                height      => 0.01,
+            ),
+        color       => $config->{data}, 
+      );
       $graph->add_edge($midpoint_name => $to_node, 
           color     => $config->{data}, 
       );
-      if($funnel_to_fan_list{$from_analysis_id}{$branch_code}) {
-        foreach my $fan_midpoint (@{$funnel_to_fan_list{$from_analysis_id}{$branch_code}}) {
-            $graph->add_edge($fan_midpoint => $midpoint_name,
+      if($funnel_dataflow_rule_id) {
+          $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id), 
               color     => $config->{semablock},
               fontname  => $self->config()->{Fonts}->{edge},
               style     => 'dashed',
               arrowhead => 'tee',
-            );
-        }
+          );
       }
   }
 }

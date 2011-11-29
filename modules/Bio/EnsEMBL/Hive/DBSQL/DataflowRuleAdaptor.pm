@@ -112,7 +112,7 @@ sub fetch_all_by_from_analysis_id_and_branch_code {
 =cut
 
 sub create_rule {
-    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template, $funnel_branch_name_or_code) = @_;
+    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template, $funnel_dataflow_rule_id) = @_;
 
     return unless($from_analysis and $to_analysis_or_url);
 
@@ -125,7 +125,7 @@ sub create_rule {
 
         -branch_code        =>  $self->branch_name_2_code($branch_name_or_code),
         -input_id_template  =>  (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
-        -funnel_branch_code =>  $self->branch_name_2_code($funnel_branch_name_or_code, 1),
+        -funnel_dataflow_rule_id => $funnel_dataflow_rule_id,
     );
 
     return $self->store($rule, 1);  # avoid redundancy
