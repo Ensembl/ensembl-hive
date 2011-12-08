@@ -92,14 +92,13 @@ sub fetch_all {
 
 
 sub fetch_by_needed_workers {
-    my ($self, $limit, $maximise_concurrency, $rc_id) = @_;
+    my ($self, $limit, $rc_id) = @_;
 
     my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')"
                     .(defined($rc_id) ? " AND ast.rc_id = $rc_id" : '');
 
-    my $final_clause = 'ORDER BY num_running_workers'
-                        .($maximise_concurrency ? '' : ' DESC')
-                        .', hive_capacity DESC, analysis_id'
+    my $final_clause = 'ORDER BY priority DESC, '
+                        .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
                         .($limit ? " LIMIT $limit" : '');
 
     $self->_final_clause($final_clause);
@@ -213,6 +212,7 @@ sub update {
   $sql .= ",sync_lock='0'";
   $sql .= ",rc_id=". $stats->rc_id();
   $sql .= ",can_be_empty=". $stats->can_be_empty();
+  $sql .= ",priority=". $stats->priority();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -437,6 +437,7 @@ sub _columns {
                     ast.sync_lock
                     ast.rc_id
                     ast.can_be_empty
+                    ast.priority
                    );
 
   push @columns , ($self->dbc->driver eq 'sqlite')
@@ -461,6 +462,7 @@ sub _objs_from_sth {
     $analStats->sync_lock($column{'sync_lock'});
     $analStats->rc_id($column{'rc_id'});
     $analStats->can_be_empty($column{'can_be_empty'});
+    $analStats->priority($column{'priority'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->avg_input_msec_per_job($column{'avg_input_msec_per_job'});

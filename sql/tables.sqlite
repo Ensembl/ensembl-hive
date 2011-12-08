@@ -349,7 +349,8 @@ CREATE TABLE analysis_stats (
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) NOT NULL DEFAULT 0,
   rc_id                 INTEGER NOT NULL DEFAULT 0,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL
+  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+  priority              TINYINT DEFAULT 0 NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS analysis_idx ON analysis_stats (analysis_id);
 
@@ -378,7 +379,8 @@ CREATE TABLE analysis_stats_monitor (
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) default 0 NOT NULL,
   rc_id                 INTEGER DEFAULT 0 NOT NULL,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL
+  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+  priority              TINYINT DEFAULT 0 NOT NULL
 );
 
 -- ---------------------------------------------------------------------------------

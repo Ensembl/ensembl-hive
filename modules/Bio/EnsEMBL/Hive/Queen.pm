@@ -158,7 +158,11 @@ sub create_new_worker {
     $self->safe_synchronize_AnalysisStats($analysisStats);
     #return undef unless(($analysisStats->status ne 'BLOCKED') and ($analysisStats->num_required_workers > 0));
   } else {
-    $analysisStats = $self->_pick_best_analysis_for_new_worker($rc_id);
+    if( $analysisStats = $self->_pick_best_analysis_for_new_worker($rc_id) ) {
+        print "Scheduler picked analysis_id=".$analysisStats->analysis_id()." for the worker\n";
+    } else {
+        print "Scheduler failed to pick analysis_id for the worker\n";
+    }
   }
   return undef unless($analysisStats);
 
@@ -441,16 +445,16 @@ sub synchronize_hive {
   print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
   foreach my $analysis (@$list_of_analyses) {
     $self->synchronize_AnalysisStats($analysis->stats);
-    print STDERR '.';
+    print STDERR ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
   }
   print STDERR "\n";
 
-  print STDERR "Checking blocking control rules:\n";
-  foreach my $analysis (@$list_of_analyses) {
-    my $open = $analysis->stats->check_blocking_control_rules();
-    print STDERR ($open ? 'o' : 'x');
-  }
-  print STDERR "\n";
+#  print STDERR "Checking blocking control rules:\n";
+#  foreach my $analysis (@$list_of_analyses) {
+#    my $open = $analysis->stats->check_blocking_control_rules();
+#    print STDERR ($open ? 'o' : 'x');
+#  }
+#  print STDERR "\n";
 
   print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
@@ -485,10 +489,10 @@ sub safe_synchronize_AnalysisStats {
             "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
   #print("$sql\n");
   my $row_count = $self->dbc->do($sql);  
-  return $stats unless($row_count == 1);
+  return $stats unless($row_count == 1);        # return the un-updated status if locked
   #printf("got sync_lock on analysis_stats(%d)\n", $stats->analysis_id);
   
-  #OK have the lock, go and do the sync
+      # since we managed to obtain the lock, let's go and perform the sync:
   $self->synchronize_AnalysisStats($stats);
 
   return $stats;
@@ -589,6 +593,7 @@ sub synchronize_AnalysisStats {
     $analysisStats->determine_status();
   }
 
+  # $analysisStats->sync_lock(0); ## do we perhaps need it here?
   $analysisStats->update;  #update and release sync_lock
 
   return $analysisStats;
@@ -652,10 +657,10 @@ sub count_running_workers {
 }
 
 
-=head2 get_num_needed_workers
+=head2 schedule_workers
 
   Arg[1]     : Bio::EnsEMBL::Analysis object (optional)
-  Example    : $count = $queen->get_num_needed_workers();
+  Example    : $count = $queen->schedule_workers();
   Description: Runs through the analyses in the system which are waiting
                for workers to be created for them.  Calculates the maximum
                number of workers needed to fill the current needs of the system
@@ -665,12 +670,12 @@ sub count_running_workers {
 
 =cut
 
-sub get_num_needed_workers {
-  my ($self, $filter_analysis) = @_;
+sub schedule_workers {
+  my ($self, $filter_analysis, $orig_pending_by_rc_id, $available_submit_limit) = @_;
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $clearly_needed_analyses     = $statsDBA->fetch_by_needed_workers(undef,$self->{maximise_concurrency});
-  my $potentially_needed_analyses = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED']);
+  my $clearly_needed_analyses     = $statsDBA->fetch_by_needed_workers(undef);
+  my $potentially_needed_analyses = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
   my @all_analyses = (@$clearly_needed_analyses, @$potentially_needed_analyses);
 
   return 0 unless(@all_analyses);
@@ -679,14 +684,17 @@ sub get_num_needed_workers {
 
   return 0 if($available_load <=0.0);
 
-  my $total_workers = 0;
-  my %rc2workers = ();
+  my %pending_by_rc_id = %{ $orig_pending_by_rc_id || {} };
+  my $total_workers_to_run = 0;
+  my %workers_to_run_by_rc_id = ();
 
   foreach my $analysis_stats (@all_analyses) {
+    last if ($available_load <= 0.0);
+    last if (defined($available_submit_limit) and !$available_submit_limit);
     next if (defined $filter_analysis && $filter_analysis->dbID != $analysis_stats->analysis_id);
 
         #digging deeper under the surface so need to sync
-    if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED')) {
+    if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED') or ($analysis_stats->status eq 'ALL_CLAIMED')) {
       $self->synchronize_AnalysisStats($analysis_stats);
     }
 
@@ -696,43 +704,65 @@ sub get_num_needed_workers {
         # FIXME: the following call *sometimes* returns a stale number greater than the number of workers actually needed for an analysis; -sync fixes it
     my $workers_this_analysis = $analysis_stats->num_required_workers;
 
-    if((my $hive_capacity = $analysis_stats->hive_capacity) > 0) {   # if there is a limit, use it for cut-off
-        my $limit_workers_this_analysis = int($available_load * $hive_capacity);
+    if(defined($available_submit_limit)) {                              # submit_limit total capping, if available
+        if($workers_this_analysis > $available_submit_limit) {
+            $workers_this_analysis = $available_submit_limit;
+        }
+        $available_submit_limit -= $workers_this_analysis;
+    }
 
-        if($workers_this_analysis > $limit_workers_this_analysis) {
-            $workers_this_analysis = $limit_workers_this_analysis;
+    if((my $hive_capacity = $analysis_stats->hive_capacity) > 0) {      # per-analysis hive_capacity capping, if available
+        my $remaining_capacity_for_this_analysis = int($available_load * $hive_capacity);
+
+        if($workers_this_analysis > $remaining_capacity_for_this_analysis) {
+            $workers_this_analysis = $remaining_capacity_for_this_analysis;
         }
 
         $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
     }
-    $total_workers += $workers_this_analysis;
-    $rc2workers{$analysis_stats->rc_id} += $workers_this_analysis;
-    $analysis_stats->print_stats();
-    printf("  (%1.3f remaining-hive-load) use %3d workers of analysis_id=%d\n", $available_load, $workers_this_analysis, $analysis_stats->analysis_id);
 
-    last if($available_load <= 0.0);
+    my $curr_rc_id = $analysis_stats->rc_id;
+    if($pending_by_rc_id{ $curr_rc_id }) {                              # per-rc_id capping by pending processes, if available
+        my $pending_this_analysis = ($pending_by_rc_id{ $curr_rc_id } < $workers_this_analysis) ? $pending_by_rc_id{ $curr_rc_id } : $workers_this_analysis;
+
+        $workers_this_analysis              -= $pending_this_analysis;
+        $pending_by_rc_id{ $curr_rc_id }    -= $pending_this_analysis;
+    }
+
+    $total_workers_to_run += $workers_this_analysis;
+    $workers_to_run_by_rc_id{ $curr_rc_id } += $workers_this_analysis;
+    $analysis_stats->print_stats();
+    printf("Scheduler suggests adding %d more workers of rc_id=%d for analysis_id=%d [%1.3f hive_load remaining]\n", $workers_this_analysis, $curr_rc_id, $analysis_stats->analysis_id, $available_load);
   }
 
-  printf("need a total of $total_workers workers (availLoad=%1.5f)\n", $available_load);
-  return ($total_workers, \%rc2workers);
+  printf("Scheduler suggests adding a total of %d workers [%1.5f hive_load remaining]\n", $total_workers_to_run, $available_load);
+  return ($total_workers_to_run, \%workers_to_run_by_rc_id);
 }
 
 
-sub get_needed_workers_resync_if_necessary {
+sub schedule_workers_resync_if_necessary {
     my ($self, $meadow, $analysis) = @_;
 
-    my ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
+    my $pending_by_rc_id    = ($meadow->can('count_pending_workers_by_rc_id') and $meadow->pending_adjust()) ? $meadow->count_pending_workers_by_rc_id() : {};
+    my $submit_limit        = $meadow->submitted_workers_limit();
+    my $meadow_limit        = ($meadow->can('count_running_workers') and defined($meadow->total_running_workers_limit)) ? $meadow->total_running_workers_limit - $meadow->count_running_workers : undef;
 
-    unless( $needed_count or $self->get_hive_current_load() or $self->count_running_workers() ) {
+    my $available_submit_limit = ($submit_limit and $meadow_limit)
+                                    ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)
+                                    : (defined($submit_limit) ? $submit_limit : $meadow_limit);
+
+    my ($total_workers_to_run, $workers_to_run_by_rc_id) = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
+
+    unless( $total_workers_to_run or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
 
-        $self->synchronize_hive($analysis);
         $self->check_for_dead_workers($meadow, 1);
+        $self->synchronize_hive($analysis);
 
-        ($needed_count, $rc_hash) = $self->get_num_needed_workers($analysis);
+        ($total_workers_to_run, $workers_to_run_by_rc_id) = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
     }
 
-    return ($needed_count, $rc_hash);
+    return ($total_workers_to_run, $workers_to_run_by_rc_id);
 }
 
 
@@ -854,7 +884,7 @@ sub _pick_best_analysis_for_new_worker {
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($statsDBA);
 
-  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
+  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1, $rc_id)};
   if($stats) {
     #synchronize and double check that it can be run
     $self->safe_synchronize_AnalysisStats($stats);
@@ -869,7 +899,7 @@ sub _pick_best_analysis_for_new_worker {
   # hidden jobs that haven't made it into the summary stats
 
   print("QUEEN: no obvious needed workers, need to dig deeper\n");
-  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED']);
+  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
   foreach $stats (@$stats_list) {
     $self->safe_synchronize_AnalysisStats($stats);
 
@@ -877,7 +907,7 @@ sub _pick_best_analysis_for_new_worker {
   }
 
     # does the following really ever help?
-  ($stats) = @{$statsDBA->fetch_by_needed_workers(1,$self->{maximise_concurrency}, $rc_id)};
+  ($stats) = @{$statsDBA->fetch_by_needed_workers(1, $rc_id)};
   return $stats;
 }
 

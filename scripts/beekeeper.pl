@@ -61,7 +61,7 @@ sub main {
 
     $self->{'sleep_minutes'}        = 1;
     $self->{'verbose_stats'}        = 1;
-    $self->{'maximise_concurrency'} = 0;
+    $self->{'maximise_concurrency'} = undef;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'hive_output_dir'} = undef;
 
@@ -97,10 +97,10 @@ sub main {
                'life_span|lifespan=i'   => \$self->{'life_span'},
                'logic_name=s'      => \$self->{'logic_name'},
                'hive_output_dir=s' => \$self->{'hive_output_dir'},
-               'maximise_concurrency=i' => \$self->{'maximise_concurrency'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
 
-               'batch_size=i'           => \$self->{'batch_size'},      # OBSOLETE!
+               'batch_size=i'           => \$self->{'batch_size'},              # OBSOLETE!
+               'maximise_concurrency=i' => \$self->{'maximise_concurrency'},    # OBSOLETE!
 
                     # other commands/options
                'h|help'            => \$help,
@@ -124,8 +124,12 @@ sub main {
 
     if ($help) { script_usage(0); }
 
-    if( $self->{'batch_size'} ) {
+    if( defined($self->{'batch_size'}) ) {
         print "\nERROR : -batch_size flag is obsolete, please modify batch_size of the analysis instead\n";
+        script_usage(1);
+    }
+    if( defined($self->{'maximise_concurrency'}) ) {
+        print "\nERROR : -maximise_concurrency flag is obsolete, please set the -priority of the analysis instead\n";
         script_usage(1);
     }
 
@@ -158,7 +162,7 @@ sub main {
     }
 
     my $queen = $self->{'dba'}->get_Queen;
-    $queen->{'maximise_concurrency'} = 1 if ($self->{'maximise_concurrency'});
+    # $queen->{'maximise_concurrency'} = 1 if ($self->{'maximise_concurrency'});
     $queen->{'verbose_stats'} = $self->{'verbose_stats'};
 
     my $pipeline_name = destringify(
@@ -180,20 +184,21 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
+    my $meadow;
     if($local) {
-        $self->{'meadow'} = Bio::EnsEMBL::Hive::Meadow::LOCAL->new();
-        $self->{'meadow'} -> total_running_workers_limit($local_cpus);
+        $meadow = Bio::EnsEMBL::Hive::Meadow::LOCAL->new();
+        $meadow->total_running_workers_limit($local_cpus);
     } else {
-        $self->{'meadow'} = Bio::EnsEMBL::Hive::Meadow::LSF->new();
-        $self->{'meadow'} -> meadow_options($meadow_options);
+        $meadow = Bio::EnsEMBL::Hive::Meadow::LSF->new();
+        $meadow->meadow_options($meadow_options);
     }
-    $self->{'meadow'} -> pending_adjust(not $no_pend_adjust);
+    $meadow->pending_adjust(not $no_pend_adjust);
 
     if($self->{'run_job_id'}) {
         $worker_limit = 1;
     }
-    $self->{'meadow'} -> submitted_workers_limit($worker_limit);
-    $self->{'meadow'} -> pipeline_name($pipeline_name);
+    $meadow->submitted_workers_limit($worker_limit);
+    $meadow->pipeline_name($pipeline_name);
 
     if($reset_job_id) { $queen->reset_and_fetch_job_by_dbID($reset_job_id); }
 
@@ -209,18 +214,18 @@ sub main {
 
     if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { $queen->check_for_dead_workers($self->{'meadow'}, 1); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($meadow, 1); }
 
     if ($kill_worker_id) {
         my $worker = $queen->fetch_by_dbID($kill_worker_id);
-        if( $self->{'meadow'}->responsible_for_worker($worker)
+        if( $meadow->responsible_for_worker($worker)
         and not defined($worker->cause_of_death())) {
 
             printf("KILL: %10d %35s %15s  %20s(%d) : ", 
                 $worker->dbID, $worker->host, $worker->process_id, 
                 $worker->analysis->logic_name, $worker->analysis->dbID);
 
-            $self->{'meadow'}->kill_worker($worker);
+            $meadow->kill_worker($worker);
             $worker->cause_of_death('KILLED_BY_USER');
             $queen->register_worker_death($worker);
                 # what about clean-up? Should we do it here or not?
@@ -231,7 +236,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $meadow, $analysis);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -243,9 +248,8 @@ sub main {
         $queen->print_running_worker_status;
 
         show_running_workers($self, $queen) if($show_worker_stats);
-        #show_failed_workers($self, $queen);
 
-        $queen->get_num_needed_workers($analysis); # apparently run not for the return value, but for the side-effects
+        $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
 
         if($show_failed_jobs) {
@@ -314,12 +318,6 @@ sub show_running_workers {
     show_given_workers($self, $queen->fetch_overdue_workers(0), $queen->{'verbose_stats'});
 }
 
-sub show_failed_workers {  # does not seem to be used
-    my ($self, $queen) = @_;
-
-    print("===== CRASHED workers\n");
-    show_given_workers($self, $queen->fetch_failed_workers(), $queen->{'verbose_stats'});
-}
 
 sub generate_worker_cmd {
     my ($self) = @_;
@@ -350,7 +348,7 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $meadow, $this_analysis) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -360,12 +358,11 @@ sub run_autonomously {
     my $worker_cmd = generate_worker_cmd($self);
 
         # pre-hash the resource_class xparams for future use:
-    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($self->{'meadow'}->type());
+    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($meadow->type());
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
     my $failed_analyses=0;
-    my $order = $self->{'maximise_concurrency'}*2-1;
     do {
         if($iteration++) {
             $queen->monitor();
@@ -376,28 +373,20 @@ sub run_autonomously {
 
         print("\n======= beekeeper loop ** $iteration **==========\n");
 
-        $queen->check_for_dead_workers($self->{'meadow'}, 0);
+        $queen->check_for_dead_workers($meadow, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
-        #show_failed_workers($self, $queen);
 
-        my ($worker_count, $rc_hash) = $queen->get_needed_workers_resync_if_necessary($self->{'meadow'}, $this_analysis);
+        my ($total_workers_to_run, $workers_to_run_by_rc_id) = $queen->schedule_workers_resync_if_necessary($meadow, $this_analysis);
 
-            # apply various technical and self-imposed limits:
-        my $worker_quota = $self->{'meadow'}->limit_workers($worker_count);
+        if($total_workers_to_run) {
+            foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
+                my $this_rc_worker_count = $workers_to_run_by_rc_id->{$rc_id};
 
-        if($worker_quota) {
-            foreach my $rc_id (sort {$order*($rc_hash->{$a}<=>$rc_hash->{$b})} keys %$rc_hash) {
-                my $this_rc_worker_count = ($worker_quota < $rc_hash->{$rc_id})
-                    ? $worker_quota
-                    : $rc_hash->{$rc_id};
+                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$meadow->type()."\n";
 
-                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$self->{'meadow'}->type()."\n";
-
-                $self->{'meadow'}->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
-
-                $worker_quota -= $this_rc_worker_count;
+                $meadow->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
@@ -518,11 +507,11 @@ __DATA__
     -job_limit <num>            : #jobs to run before worker can die naturally
     -life_span <num>            : life_span limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
-    -maximise_concurrency 1     : try to run more different analyses at the same time
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
 
     -batch_size <num>           : [OBSOLETE!] Please modify batch_size of the analysis instead
+    -maximise_concurrency 1     : [OBSOLETE!] Please set the -priority of the analysis instead
 
 =head2 Other commands/options
 

@@ -23,16 +23,21 @@ sub get_current_worker_process_id {
     }
 }
 
-sub count_pending_workers {
+sub count_pending_workers_by_rc_id {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep -c PEND};
+    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND};
 
-    my $pend_count = qx/$cmd/;
-    chomp($pend_count);
+    my %pending_by_rc_id = ();
 
-    return $pend_count;
+    foreach my $line (qx/$cmd/) {
+        if($line=~/Hive(\d+)/) {    # FIXME: should be safer to match against $jnp instead of 'Hive'
+            $pending_by_rc_id{$1}++;
+        }
+    }
+
+    return \%pending_by_rc_id;
 }
 
 sub status_of_all_our_workers { # returns a hashref

@@ -74,6 +74,7 @@ sub default_options {
 
         'host'                  => 'localhost',
         'pipeline_name'         => 'hive_generic',
+        'hive_use_triggers'     => 1,                   # experimental, default is "off"
 
         'pipeline_db'   => {
             -host   => $self->o('host'),
@@ -97,13 +98,11 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
-    my $hive_use_triggers = $self->{'_extra_options'}{'hive_use_triggers'};
-
     return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? [
                 # standard eHive tables, triggers and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
-            $hive_use_triggers ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.sqlite' ) : (),
+            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.sqlite' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sqlite',
         ]
         : [
@@ -111,7 +110,7 @@ sub pipeline_create_commands {
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
-            $hive_use_triggers ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.mysql' ) : (),
+            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.mysql' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.mysql',
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.mysql',
         ];
@@ -188,7 +187,7 @@ sub pre_options {
         'job_topup!' => '',
         'analysis_topup!' => '',
         'hive_driver' => '',
-        'hive_use_triggers' => '',
+#        'hive_use_triggers' => '',
     };
 }
 
@@ -348,8 +347,8 @@ sub run {
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $input_ids, $program_file, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id) =
-             rearrange([qw(logic_name module parameters input_ids program_file blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $program_file, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $priority) =
+             rearrange([qw(logic_name module parameters program_file input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id priority)], %$aha);
 
         unless($logic_name) {
             die "logic_name' must be defined in every analysis";
@@ -376,9 +375,9 @@ sub run {
             warn "Creating analysis '$logic_name'.\n";
 
             $analysis = Bio::EnsEMBL::Analysis->new(
-                -db              => '',
-                -db_file         => '',
-                -db_version      => '1',
+#                -db              => '',
+#                -db_file         => '',
+#                -db_version      => '1',
                 -logic_name      => $logic_name,
                 -module          => $module,
                 -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
@@ -394,6 +393,7 @@ sub run {
             $stats->max_retry_count( $max_retry_count )             if(defined($max_retry_count));
             $stats->rc_id( $rc_id )                                 if(defined($rc_id));
             $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
+            $stats->priority( $priority )                           if(defined($priority));
             $stats->status($blocked ? 'BLOCKED' : 'READY');         # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
             $stats->update();
         }

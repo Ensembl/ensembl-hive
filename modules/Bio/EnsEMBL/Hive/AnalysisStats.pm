@@ -268,6 +268,12 @@ sub can_be_empty {
     return $self->{'_can_be_empty'};
 }
 
+sub priority {
+    my $self = shift;
+
+    $self->{'_priority'} = shift if(@_);
+    return $self->{'_priority'};
+}
   
 sub print_stats {
   my $self = shift;
@@ -315,41 +321,6 @@ sub print_stats {
 }
 
 
-sub determine_status {
-  my $self = shift;
-  
-  if($self->status ne 'BLOCKED') {
-    if ($self->unclaimed_job_count == 0 and
-        $self->total_job_count == $self->done_job_count + $self->failed_job_count) {
-      my $failure_percentage = 0;
-      if ($self->total_job_count) {
-        $failure_percentage = $self->failed_job_count * 100 / $self->total_job_count;
-      }
-      if ($failure_percentage > $self->failed_job_tolerance) {
-        $self->status('FAILED');
-        print
-            "\n",
-            "##################################################\n",
-        printf
-            "##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!";
-        printf
-            "##          %4.1f%% jobs failed (tolerance: %3d%%) ##\n", $failure_percentage, $self->failed_job_tolerance;
-        print
-            "##################################################\n\n";
-      } else {
-        $self->status('DONE');
-      }
-    }
-    if($self->total_job_count == $self->unclaimed_job_count) {
-      $self->status('READY');
-    }
-    if( 0 < $self->unclaimed_job_count and $self->unclaimed_job_count < $self->total_job_count ) {
-      $self->status('WORKING');
-    }
-  }
-}
-
-
 sub check_blocking_control_rules {
     my $self = shift;
   
@@ -386,6 +357,37 @@ sub check_blocking_control_rules {
     }
 
     return $all_ctrl_rules_done;
+}
+
+
+sub determine_status {
+    my $self = shift;
+
+    if($self->status ne 'BLOCKED') {
+        if($self->unclaimed_job_count == $self->total_job_count) {     # nothing has been claimed yet (or an empty analysis)
+
+            $self->status('READY');
+
+        } elsif( $self->total_job_count == $self->done_job_count + $self->failed_job_count ) {   # all jobs of the analysis have been tried
+            my $absolute_tolerance = $self->failed_job_tolerance * $self->total_job_count / 100.0;
+            if ($self->failed_job_count > $absolute_tolerance) {
+                $self->status('FAILED');
+                print "\n##################################################\n";
+                printf("##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!");
+                printf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $self->failed_job_tolerance);
+                print "##################################################\n\n";
+            } else {
+                $self->status('DONE');
+            }
+        } elsif ($self->unclaimed_job_count == 0 ) {                        # everything has been claimed
+
+            $self->status('ALL_CLAIMED');
+
+        } elsif( 0 < $self->unclaimed_job_count and $self->unclaimed_job_count < $self->total_job_count ) {
+
+            $self->status('WORKING');
+        }
+    }
 }
 
 

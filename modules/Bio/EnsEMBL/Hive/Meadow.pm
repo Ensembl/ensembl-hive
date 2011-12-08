@@ -105,7 +105,7 @@ sub total_running_workers_limit { # if set and ->can('count_running_workers'),
     return $self->{'_total_running_workers_limit'};
 }
 
-sub pending_adjust { # if set and ->can('count_pending_workers'),
+sub pending_adjust { # if set and ->can('count_pending_workers_by_rc_id'),
                      # provides a cut-off on the number of workers being submitted
     my $self = shift @_;
 
@@ -122,35 +122,6 @@ sub submitted_workers_limit { # if set, provides a cut-off on the number of work
         $self->{'_submitted_workers_limit'} = shift @_;
     }
     return $self->{'_submitted_workers_limit'};
-}
-
-sub limit_workers {
-    my ($self, $worker_count) = @_;
-
-    if($self->can('count_pending_workers') and $self->pending_adjust()) {
-        my $pending_count = $self->count_pending_workers();
-
-        $worker_count -= $pending_count;
-    }
-
-    if(defined(my $submit_limit = $self->submitted_workers_limit)) {
-        if($submit_limit < $worker_count) {
-
-            $worker_count = $submit_limit;
-        }
-    }
-
-    if($self->can('count_running_workers') and defined(my $total_limit = $self->total_running_workers_limit)) {
-        my $available_slots = $total_limit - $self->count_running_workers();
-        if($available_slots < $worker_count) {
-
-            $worker_count = $available_slots;
-        }
-    }
-
-    $worker_count = 0 if ($worker_count<0);
-
-    return $worker_count;
 }
 
 1;
