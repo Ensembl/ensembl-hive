@@ -74,7 +74,7 @@ sub default_options {
 
         'host'                  => 'localhost',
         'pipeline_name'         => 'hive_generic',
-        'hive_use_triggers'     => 1,                   # experimental, default is "off"
+        'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
 
         'pipeline_db'   => {
             -host   => $self->o('host'),
