@@ -13,6 +13,313 @@ Summary:
   any program, algorithm, or parallel processing job control system.  It is
   not bound to any processing 'farm' system and can be adapted to any GRID.
 
+Changelog:
+
+---------------------[after EnsEMBL rel.66]----------------------------------------------------------------
+
+2012-01-31 10:58  lg4
+
+	* sql/triggers.mysql: an optimization: do not touch analysis_stats
+	  when job.status or job.analysis is not changing
+
+2012-01-20 16:33  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  sql/tables.sql: changes for rel.66
+
+2011-12-08 13:07  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm: checked in
+	  by mistake last time; took back the changes now
+
+2011-12-08 12:08  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm,
+	  scripts/beekeeper.pl, scripts/runWorker.pl,
+	  sql/patch_2011-12-08.sql, sql/tables.sql, sql/tables.sqlite,
+	  sql/triggers.mysql, sql/triggers.sqlite: Removed
+	  maximise_concurrency and added analysis_stats.priority to guide
+	  the scheduler; improved scheduler and LSF meadow
+
+2011-11-29 17:49  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisJob.pm,
+	  modules/Bio/EnsEMBL/Hive/DataflowRule.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/DataflowRuleAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  sql/patch_2011-11-29.sql, sql/tables.sql, sql/tables.sqlite: An
+	  extension to the dataflow-rule-driven semaphores ('2->A', '3->A'
+	  and 'A->1' notation)
+
+2011-11-29 12:59  lg4
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/JobFactory.pm: removed
+	  'sema_fan_branch_code' parameter since you can now set up a
+	  semaphored group via PipeConfig' language
+
+2011-11-28 09:57  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: no need to check for
+	  semaphores when state is already DONE or PASSED_ON
+
+2011-11-28 09:57  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: making sure
+	  semaphores are correctly propagated through gc_dataflow and
+	  PASSED_ON state
+
+2011-11-25 10:22  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: allow
+	  more than one input_id_template per analysis
+
+2011-11-24 20:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/DataflowRuleAdaptor.pm: bugfix:
+	  funnel_branch is no longer initialized to 1 when undef
+
+2011-11-24 20:05  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: bugfix: correct counting of
+	  total_job_number in non-trigger mode
+
+2011-11-24 12:37  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/DataflowRuleAdaptor.pm: bugfix -
+	  branch_name_2_code should return 1 on undef
+
+2011-11-23 17:05  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/: Graph.pm, Graph/Config.pm: show
+	  the dataflow-generated semaphores on the diagram
+
+2011-11-23 15:52  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/: BaseAdaptor.pm,
+	  ObjectAdaptor.pm: bugfix: object adaptor now correctly
+	  reconstructs dbID
+
+2011-11-23 12:23  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: PipeConfig/LongMult_conf.pm,
+	  PipeConfig/SemaLongMult_conf.pm, RunnableDB/LongMult/README,
+	  RunnableDB/LongMult/SemaStart.pm: merge the two ways of running
+	  the LongMult pipeline into one
+
+2011-11-23 11:57  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisJob.pm,
+	  modules/Bio/EnsEMBL/Hive/DataflowRule.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/DataflowRuleAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm,
+	  sql/patch_2011-11-23.sql, sql/tables.sql, sql/tables.sqlite:
+	  integrated semaphored fans/funnels into dataflow rules
+
+2011-11-22 14:47  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm: this value was
+	  returned but never used
+
+2011-11-21 16:44  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisStats.pm, Queen.pm, Worker.pm,
+	  DBSQL/AnalysisJobAdaptor.pm: remove the per-worker batch_size
+	  method
+
+2011-11-21 16:40  lg4
+
+	* scripts/: beekeeper.pl, runWorker.pl: remove the per-worker
+	  batch_size flag from scripts
+
+2011-11-17 14:56  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  sql/triggers.mysql, sql/triggers.sqlite: make num_running_workers
+	  updatable by triggers + better updates during worker check-in
+
+2011-11-10 14:30  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisStats.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm: these four methods were neither
+	  used by Hive nor by Compara code
+
+2011-11-04 12:05  lg4
+
+	* docs/eHive_install_usage.txt,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/BaseAdaptor.pm: DBI with versions
+	  older than 1.6 are not supported
+
+2011-10-19 09:54  db8
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/beekeeper.pl:
+	  WGA/Projection used for CHIMP2.1.4
+
+2011-10-15 10:20  lg4
+
+	* sql/: tables.sql, tables.sqlite: release 65
+
+2011-09-23 11:53  lg4
+
+	*
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/RunListOfCommandsOnFarm_conf.pm:
+	  An example pipeline that turns lines of a file into jobs and runs
+	  them on the farm
+
+2011-09-20 21:15  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Process.pm: extend for other schema
+	  types
+
+2011-09-09 09:57  lg4
+
+	* sql/tables.sql: analysis_data may be overcrowded with inserts
+	  during dataflow with input_id longer than 255 characters
+
+2011-09-05 17:18  lg4
+
+	* docs/long_mult_example_pipeline.txt: couple of typos
+
+2011-09-05 16:50  lg4
+
+	* docs/eHive_install_usage.txt: checkout seems to work better than
+	  export
+
+2011-09-01 16:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: DependentOptions.pm,
+	  PipeConfig/ApplyToDatabases_conf.pm,
+	  PipeConfig/FailureTest_conf.pm,
+	  PipeConfig/FileZipperUnzipper_conf.pm,
+	  PipeConfig/HiveGeneric_conf.pm, PipeConfig/LongMult_conf.pm,
+	  PipeConfig/SemaLongMult_conf.pm,
+	  PipeConfig/TableDumperZipper_conf.pm: Incorporate ENV hash into
+	  the tree of possible options in order to be able to "require" a
+	  value. And a bit of config inheritance cleanup.
+
+2011-08-25 20:37  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Process.pm, RunnableDB/JobFactory.pm,
+	  RunnableDB/MySQLTransfer.pm, RunnableDB/SqlCmd.pm,
+	  RunnableDB/SystemCmd.pm: Switching from DBI to DBConnection;
+	  data_dbc() as the main focus point; standaloneJob.pl examples of
+	  basic building blocks
+
+2011-08-18 15:28  lg4
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/: JobFactory.pm, SqlCmd.pm,
+	  SystemCmd.pm: show query/cmd/filename when debug is on
+
+2011-08-18 15:23  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: sqlite databases do not
+	  have a host name, so nothing to display here
+
+2011-08-15 10:58  lg4
+
+	* sql/: tables.sql, tables.sqlite: the schema did not allow more
+	  than one job_message per second from one attempt. This limitation
+	  has been removed
+
+2011-07-26 17:35  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisJob.pm: allow standalone jobs to
+	  emit warnings
+
+2011-07-26 11:45  lg4
+
+	* sql/: tables.sql, tables.sqlite: for the production of rel.64
+
+2011-07-20 19:40  lg4
+
+	* sql/: triggers.mysql, triggers.sqlite: bugfix: more foolproof
+	  maths in triggers
+
+2011-07-15 16:42  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, Worker.pm: moved Worker's
+	  call to Queen->safe_synchronize_AnalysisStats into Worker.pm for
+	  clarity
+
+2011-07-15 15:13  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm: now it
+	  should properly refresh data in the existing object
+
+2011-07-15 14:59  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: do not update counters
+	  unnecessarily
+
+2011-07-15 14:23  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisStats.pm, Queen.pm: formatting
+	  and cleanup
+
+2011-07-15 14:21  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/DBAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  sql/triggers.mysql, sql/triggers.sqlite: more flexible approach:
+	  allows to add triggers later by simply by sourcing the triggers
+	  file
+
+2011-07-15 11:44  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm: perform worker counting centrally
+	  in the Queen
+
+2011-07-15 11:14  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm: do not
+	  update these fields when triggers in place
+
+2011-07-14 15:58  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: added a
+	  new beekeeper_extra_cmdline_options() interface method for
+	  passing cmdline options to beekeeper.pl/runWorker.pl
+
+2011-07-14 15:26  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, DBSQL/AnalysisJobAdaptor.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm, DBSQL/DBAdaptor.pm,
+	  PipeConfig/HiveGeneric_conf.pm: optional (cmdline-controlled,
+	  off-by-default) support of job-counting triggers
+
+2011-07-14 12:52  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  sql/foreign_keys.mysql, sql/foreign_keys.sql,
+	  sql/procedures.mysql, sql/procedures.sql: renamed procedures.sql
+	  and foreign_keys.sql into .mysql equivalents
+
+2011-07-14 12:47  lg4
+
+	* sql/: triggers.mysql, triggers.sqlite: experimental: do the job
+	  counting immediately by SQL triggers rather than periodically by
+	  Perl code
+
+2011-07-13 17:24  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Params.pm, scripts/standaloneJob.pl:
+	  allow automatic dataflow into tables as well
+
+--------------------------------------------------------------------------------------------------------
 
 13.July, 2011 : Leo
 
