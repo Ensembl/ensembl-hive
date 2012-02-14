@@ -27,8 +27,8 @@ $dbc->do (qq{
     CREATE TABLE IF NOT EXISTS lsf_report (
         process_id       varchar(40) NOT NULL,
         status           varchar(20) NOT NULL,
-        mem              varchar(20) NOT NULL,
-        swap             varchar(20) NOT NULL,
+        mem              int NOT NULL,
+        swap             int NOT NULL,
         exception_status varchar(40) NOT NULL,
 
         PRIMARY KEY (process_id)
@@ -88,8 +88,11 @@ my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (process_id, status, m
             my (@values) = split(/\s+/, $lines[@lines-1]);
             my %usage = map { ($keys[$_] => $values[$_]) } (0..@keys-1);
 
+            my ($mem)  = $usage{MEM}  =~ /^(\d+)[KMG]$/;
+            my ($swap) = $usage{SWAP} =~ /^(\d+)[KMG]$/;
+
             #warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$usage{MEM}, SWAP=$usage{SWAP}, EXC_STATUS='$exception_status'\n";
-            $sth_replace->execute( $process_id, $usage{STATUS}, $usage{MEM}, $usage{SWAP}, $exception_status );
+            $sth_replace->execute( $process_id, $usage{STATUS}, $mem, $swap, $exception_status );
         }
     }
 
