@@ -49,31 +49,31 @@ sub root {      # getter/setter for the root
 }
 
 
-sub fully_defined_string {
+sub fully_substituted_string {
     my $self    = shift @_;
     my $input   = shift @_;
 
-    return $input !~ /#\:.+?\:#/;
+    return defined($input) && $input !~ /#\:.+?\:#/;
 }
 
 
-sub fully_defined_structure {
+sub fully_substituted_structure {
     my $self    = shift @_;
     my $input   = shift @_;
 
     unless(my $ref_type = ref($input)) {
 
-        return $self->fully_defined_string($input);
+        return $self->fully_substituted_string($input);
 
     } elsif($ref_type eq 'HASH') {
         foreach my $value (values %$input) {
-            unless($self->fully_defined_structure($value)) {
+            unless($self->fully_substituted_structure($value)) {
                 return 0;
             }
         }
     } elsif($ref_type eq 'ARRAY') {
-        foreach my $value (@$input) {
-            unless($self->fully_defined_structure($value)) {
+        foreach my $element (@$input) {
+            unless($self->fully_substituted_structure($element)) {
                 return 0;
             }
         }
@@ -101,7 +101,7 @@ sub hash_leaves {
 
             $self->hash_leaves($hash_to, $element, $array_element_prefix);
         }
-    } elsif(!$self->fully_defined_string($source)) {
+    } elsif(!$self->fully_substituted_string($source)) {
         $hash_to->{$prefix} = 1;
     }
 
@@ -120,11 +120,11 @@ sub o {
         push @syll_seen, $option_syll;
 
         if( exists($ptr->{$option_syll})
-        and ((ref($ptr->{$option_syll}) eq 'HASH') or $self->fully_defined_string( $ptr->{$option_syll} ))
+        and ((ref($ptr->{$option_syll}) eq 'HASH') or $self->fully_substituted_string( $ptr->{$option_syll} ))
         ) {
             $ptr = $ptr->{$option_syll};        # just descend one level
         } elsif(@_) {
-            $ptr = $ptr->{$option_syll} = {};   # force intermediate level vivification, even if it overwrites a fully_defined_string
+            $ptr = $ptr->{$option_syll} = {};   # force intermediate level vivification, even if it overwrites a fully_substituted_string
         } else {
             $ptr = $ptr->{$option_syll} = "#:subst ".join('->',@syll_seen).":#";   # force leaf level vivification
         }
@@ -139,7 +139,12 @@ sub substitute {
 
     my $ref_type = ref($$ref);
 
-    if(!$ref_type) {
+    if(!defined($$ref)) {
+
+        warn "\n\tWARNING: Pipeline parameters cannot take undefined values; forced into 0\n\n";
+        $$ref = 0;
+
+    } elsif(!$ref_type ) {
         if($$ref =~ /^#\:subst ([^:]+)\:#$/) {      # if the given string is one complete substitution, we don't want to force the output into a string
             $$ref = $self->o(split/->/,$1);
         } else {
@@ -207,7 +212,7 @@ sub process_options {
                     # it has to be intelligently (recursively, on by-element basis) merged back into the tree under $self->o($key):
                 $self->merge_from_rules( $value, \$self->root->{$key} );
 
-                if($self->fully_defined_structure($value)) {
+                if($self->fully_substituted_structure($value)) {
                     # warn "Resolved rule: $key -> ".Dumper($value)."\n";
                 } else {
                     # warn "Unresolved rule: $key -> ".Dumper($value)."\n";
@@ -220,6 +225,8 @@ sub process_options {
         $attempts--;
     } while($rules_to_go and $attempts);
 
+    #warn "=======================[out of the substitution loop]=================\n\n";
+
     my $missing_options = $self->hash_leaves();
     if(scalar(keys %$missing_options)) {
         warn "Missing or incomplete definition of the following options:\n";
@@ -228,7 +235,7 @@ sub process_options {
         }
         exit(1);
     } else {
-        warn "Done parsing options!\n";
+        #warn "Done parsing options!\n";
     }
 }
 
