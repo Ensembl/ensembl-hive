@@ -56,7 +56,7 @@ sub main {
 
         warn "No bacct information given, finding out the time interval when the pipeline was run...\n";
 
-        my $sth_times = $dbc->prepare( 'SELECT min(born), max(died) FROM worker WHERE meadow_type="LSF"' );
+        my $sth_times = $dbc->prepare( 'SELECT min(born), max(died) FROM worker WHERE meadow_type="LSF" AND status="DEAD"' );
         $sth_times->execute();
         my ($from_time, $to_time) = $sth_times->fetchrow_array();
         $sth_times->finish();
