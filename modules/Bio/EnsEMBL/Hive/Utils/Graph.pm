@@ -30,7 +30,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.8 $
+$Revision: 1.9 $
 
 =cut
 
@@ -215,65 +215,83 @@ sub _midpoint_name {
 }
 
 sub _dataflow_rules {
-  my ($self) = @_;
-  my $graph = $self->graph();
-  my $config = $self->config()->{Colours}->{Flows};
-  my $dataflow_rules = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
+    my ($self) = @_;
+    my $graph = $self->graph();
+    my $config = $self->config()->{Colours}->{Flows};
+    my $dataflow_rules = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
 
-  foreach my $rule (@{$dataflow_rules}) {
-    
-    my ($from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to) = ($rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_dataflow_rule_id(), $rule->to_analysis());
-    my $to_node;
-    
-    #If we've been told to flow from an analysis to a table or external source we need
-    #to process this differently
-    if(check_ref($to, 'Bio::EnsEMBL::Analysis')) {
-      $to_node = $to->dbID();
-    } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
-        $to_node = $to->table_name();
-        $self->_add_table_node($to_node);
-    } else {
-        warn('Do not know how to handle the type '.ref($to));
-        next;
+    my %dfr_flows_into = ();
+    my %needs_a_midpoint = ();
+    foreach my $rule (@{$dataflow_rules}) {
+        if($rule->to_analysis->can('dbID')) {
+            $dfr_flows_into{$rule->dbID()} = $rule->to_analysis->dbID();
+        }
+        if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {
+            $needs_a_midpoint{$rule->dbID()}++;
+            $needs_a_midpoint{$funnel_dataflow_rule_id}++;
+        }
     }
-    
-      my $midpoint_name = _midpoint_name($rule->dbID);
 
-      $graph->add_edge($from_analysis_id => $midpoint_name, 
-        color       => $config->{data}, 
-        arrowhead   => 'none',
-        label       => '#'.$branch_code, 
-        fontname    => $self->config()->{Fonts}->{edge},
-      );
-      $graph->add_node(
-        $midpoint_name,
-        label       => '',
-        defined($funnel_dataflow_rule_id)
-            ? (
-                shape   => 'circle',
-                fixedsize   => 1,
-                width       => 0.1,
-                height      => 0.1,
-            ) : (
-                shape   => 'point',
+    foreach my $rule (@{$dataflow_rules}) {
+    
+        my ($rule_id, $from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to) =
+            ($rule->dbID(), $rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_dataflow_rule_id(), $rule->to_analysis());
+        my $to_node;
+    
+            # Different treatment for analyses and tables:
+        if(check_ref($to, 'Bio::EnsEMBL::Analysis')) {
+            $to_node = $to->dbID();
+        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
+            $to_node = $to->table_name();
+            $self->_add_table_node($to_node);
+        } else {
+            warn('Do not know how to handle the type '.ref($to));
+            next;
+        }
+
+        if($needs_a_midpoint{$rule_id}) {
+            my $midpoint_name = _midpoint_name($rule_id);
+            $graph->add_edge( $from_analysis_id => $midpoint_name, 
+                color       => $config->{data}, 
+                arrowhead   => 'none',
+                label       => '#'.$branch_code, 
+                fontname    => $self->config()->{Fonts}->{edge},
+            );
+            $graph->add_node( $midpoint_name,
+                color       => $config->{data}, 
+                label       => '',
+                shape       => 'point',
                 fixedsize   => 1,
                 width       => 0.01,
                 height      => 0.01,
-            ),
-        color       => $config->{data}, 
-      );
-      $graph->add_edge($midpoint_name => $to_node, 
-          color     => $config->{data}, 
-      );
-      if($funnel_dataflow_rule_id) {
-          $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id), 
-              color     => $config->{semablock},
-              fontname  => $self->config()->{Fonts}->{edge},
-              style     => 'dashed',
-              arrowhead => 'tee',
-          );
-      }
-  }
+            );
+            $graph->add_edge( $midpoint_name => $to_node, 
+                color     => $config->{data}, 
+            );
+            if($funnel_dataflow_rule_id) {
+                $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id), 
+                    color     => $config->{semablock},
+                    fontname  => $self->config()->{Fonts}->{edge},
+                    style     => 'dashed',
+                    arrowhead => 'tee',
+                    dir       => 'both',
+                    arrowtail => 'crow',
+                );
+                $graph->add_edge( $to_node => $dfr_flows_into{$funnel_dataflow_rule_id}, 
+                    color     => 'black',
+                    dir       => 'none',
+#                   style     => 'dashed',
+                    style     => 'invis',
+                );
+            }
+        } else {
+            $graph->add_edge($from_analysis_id => $to_node, 
+                color       => $config->{data}, 
+                label       => '#'.$branch_code, 
+                fontname    => $self->config()->{Fonts}->{edge},
+            );
+        }
+    }
 }
 
 sub _add_table_node {
