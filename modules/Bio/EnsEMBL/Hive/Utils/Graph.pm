@@ -30,7 +30,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.9 $
+$Revision: 1.10 $
 
 =cut
 
@@ -214,17 +214,31 @@ sub _midpoint_name {
     return 'dfr_'.$rule_id.'_mp';
 }
 
+sub saturated_set {
+    my ($a2a, $set, $from, $except) = @_;
+
+    foreach my $to ( keys %{$a2a->{$from}} ) {
+        if( defined($to) and ($to != $except) and !$set->{ $to }++ ) {
+            saturated_set($a2a, $set, $to, $except);
+        }
+    }
+    return $set;
+}
+
+
 sub _dataflow_rules {
     my ($self) = @_;
     my $graph = $self->graph();
     my $config = $self->config()->{Colours}->{Flows};
     my $dataflow_rules = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
 
-    my %dfr_flows_into = ();
     my %needs_a_midpoint = ();
+    my %dfr_flows_into = ();
+    my %aid2aid = ();
     foreach my $rule (@{$dataflow_rules}) {
-        if($rule->to_analysis->can('dbID')) {
-            $dfr_flows_into{$rule->dbID()} = $rule->to_analysis->dbID();
+        if(my $to_id = $rule->to_analysis->can('dbID') && $rule->to_analysis->dbID()) {
+            $dfr_flows_into{$rule->dbID()} = $to_id;
+            $aid2aid{$rule->from_analysis_id()}{$to_id}++;
         }
         if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {
             $needs_a_midpoint{$rule->dbID()}++;
@@ -251,12 +265,8 @@ sub _dataflow_rules {
 
         if($needs_a_midpoint{$rule_id}) {
             my $midpoint_name = _midpoint_name($rule_id);
-            $graph->add_edge( $from_analysis_id => $midpoint_name, 
-                color       => $config->{data}, 
-                arrowhead   => 'none',
-                label       => '#'.$branch_code, 
-                fontname    => $self->config()->{Fonts}->{edge},
-            );
+
+                # midpoint itself:
             $graph->add_node( $midpoint_name,
                 color       => $config->{data}, 
                 label       => '',
@@ -265,11 +275,21 @@ sub _dataflow_rules {
                 width       => 0.01,
                 height      => 0.01,
             );
+                # first half of the two-part arrow:
+            $graph->add_edge( $from_analysis_id => $midpoint_name, 
+                color       => $config->{data}, 
+                arrowhead   => 'none',
+                label       => '#'.$branch_code, 
+                fontname    => $self->config()->{Fonts}->{edge},
+            );
+                # second half of the two-part arrow:
             $graph->add_edge( $midpoint_name => $to_node, 
                 color     => $config->{data}, 
             );
             if($funnel_dataflow_rule_id) {
-                $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id), 
+
+                    # semaphore inter-rule link:
+                $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id),
                     color     => $config->{semablock},
                     fontname  => $self->config()->{Fonts}->{edge},
                     style     => 'dashed',
@@ -277,14 +297,20 @@ sub _dataflow_rules {
                     dir       => 'both',
                     arrowtail => 'crow',
                 );
-                $graph->add_edge( $to_node => $dfr_flows_into{$funnel_dataflow_rule_id}, 
-                    color     => 'black',
-                    dir       => 'none',
-#                   style     => 'dashed',
-                    style     => 'invis',
-                );
+
+                my $funnel_analysis_id = $dfr_flows_into{$funnel_dataflow_rule_id};
+
+                    # invisible links to enforce semaphore-generated order:
+                foreach my $dependant ( keys %{ saturated_set(\%aid2aid, {$to_node =>1}, $to_node, $from_analysis_id) } ) {
+                    $graph->add_edge( $dependant => $funnel_analysis_id,
+                        color     => 'black',
+                        dir       => 'none',
+                        style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
+                    );
+                }
             }
         } else {
+                # one-part arrow:
             $graph->add_edge($from_analysis_id => $to_node, 
                 color       => $config->{data}, 
                 label       => '#'.$branch_code, 
