@@ -279,45 +279,50 @@ sub store {
         : [ $object_or_list ];
     return unless(scalar(@$objects));
 
-    my $table_name          = $self->table_name();
-    my $column_set          = $self->column_set();
-    my $autoinc_id          = $self->autoinc_id();
-    my $driver              = $self->dbc->driver();
-    my $insertion_method    = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
-    $insertion_method       =~ s/_/ /g;
+    my $table_name              = $self->table_name();
+    my $all_storable_columns    = [ keys %{ $self->column_set() } ];
+    my $autoinc_id              = $self->autoinc_id();
+    my $driver                  = $self->dbc->driver();
+    my $insertion_method        = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
+    $insertion_method           =~ s/_/ /g;
     if($driver eq 'sqlite') {
         $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
     }
 
-        # NB: let's pretend we are storing all columns:
-    my $stored_columns = [ keys %$column_set ];
-    # my $stored_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
-
-        # By using question marks we can insert true NULLs by setting corresponding values to undefs:
-    my $sql = "$insertion_method INTO $table_name (".join(', ', @$stored_columns).') VALUES ('.join(',', (('?') x scalar(@$stored_columns))).')';
-    my $sth;    # do not prepare the statement until there is a real need
+    my %hashed_sth = ();  # do not prepare statements until there is a real need
 
     foreach my $object (@$objects) {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
             $self->mark_stored($object, $present);
         } else {
-            #print "STORE: $sql\n";
-            $sth ||= $self->prepare( $sql );    # only prepare (once) if we get here
+            my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? ( [ sort keys %$object ], join(', ', sort keys %$object) ) : ($all_storable_columns, '*all*');
 
-            #print "STORED_COLUMNS: ".join(', ', @$stored_columns)."\n";
-            my $stored_values = $self->slicer( $object, $stored_columns );
-            #print "STORED_VALUES: ".join(', ', @$stored_values)."\n";
+            my $this_sth;
 
-            my $return_code = $sth->execute( @$stored_values )
+                # only prepare (once!) if we get here:
+            unless($this_sth = $hashed_sth{$column_key}) {
+                    # By using question marks we can insert true NULLs by setting corresponding values to undefs:
+                my $sql = "$insertion_method INTO $table_name (".join(', ', @$columns_being_stored).') VALUES ('.join(',', (('?') x scalar(@$columns_being_stored))).')';
+                # print "STORE: $sql\n";
+                $this_sth = $hashed_sth{$column_key} = $self->prepare( $sql ) or die "Could not prepare statement: $sql";
+            }
+
+            # print "STORED_COLUMNS: ".join(', ', map { "`$_`" } @$columns_being_stored)."\n";
+            my $values_being_stored = $self->slicer( $object, $columns_being_stored );
+            # print "STORED_VALUES: ".join(', ', map { "'$_'" } @$values_being_stored)."\n";
+
+            my $return_code = $this_sth->execute( @$values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
-                or die "Could not perform\n\t$sql\nwith data:\n\t(".join(',', @$stored_values).')';
+                or die "Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')';
             if($return_code > 0) {     # <--- for the same reason we have to be expliticly numeric here
                 $self->mark_stored($object, $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id) );
             }
         }
     }
 
-    $sth && $sth->finish();
+    foreach my $sth (values %hashed_sth) {
+        $sth->finish();
+    }
 
     return $object_or_list;
 }
