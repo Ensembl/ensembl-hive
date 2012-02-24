@@ -95,9 +95,10 @@ sub main {
                     # worker control
                'job_limit|jlimit=i'     => \$self->{'job_limit'},
                'life_span|lifespan=i'   => \$self->{'life_span'},
-               'logic_name=s'      => \$self->{'logic_name'},
-               'hive_output_dir=s' => \$self->{'hive_output_dir'},
+               'logic_name=s'           => \$self->{'logic_name'},
+               'hive_output_dir=s'      => \$self->{'hive_output_dir'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
+               'debug=i'                => \$self->{'debug'},
 
                'batch_size=i'           => \$self->{'batch_size'},              # OBSOLETE!
                'maximise_concurrency=i' => \$self->{'maximise_concurrency'},    # OBSOLETE!
@@ -337,7 +338,7 @@ sub generate_worker_cmd {
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
-        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'maximize_concurrency', 'retry_throwing_jobs', 'hive_output_dir') {
+        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'maximise_concurrency', 'retry_throwing_jobs', 'hive_output_dir', 'debug') {
             if(defined(my $value = $self->{$worker_option})) {
                 $worker_cmd .= " -${worker_option} $value";
             }
@@ -509,6 +510,7 @@ __DATA__
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
+    -debug <debug_level>        : set debug level of the workers
 
     -batch_size <num>           : [OBSOLETE!] Please modify batch_size of the analysis instead
     -maximise_concurrency 1     : [OBSOLETE!] Please set the -priority of the analysis instead
