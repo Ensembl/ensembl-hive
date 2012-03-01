@@ -267,17 +267,18 @@ CREATE        INDEX IF NOT EXISTS job_idx ON job_message (job_id);
 --   job_id             - foreign key
 --   worker_id          - link to worker table to define which worker claimed this job
 --   retry              - copy of retry_count of job as it was run
---   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
---   path               - path to file or directory
+--   stdout_file        - path to the job's STDOUT log
+--   stderr_file        - path to the job's STDERR log
+
 
 CREATE TABLE job_file (
-  job_id                  INTEGER NOT NULL,
-  worker_id               INTEGER NOT NULL,
-  retry                   int(10) NOT NULL,
-  type                    varchar(16) NOT NULL default '',
-  path                    varchar(255) NOT NULL
+  job_id                INTEGER NOT NULL,
+  retry                 int(10) NOT NULL,
+  worker_id             INTEGER NOT NULL,
+  stdout_file           varchar(255),
+  stderr_file           varchar(255)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS job_worker_type_idx ON job_file (job_id, worker_id, type);
+CREATE UNIQUE INDEX IF NOT EXISTS job_retry ON job_file (job_id, retry);
 CREATE        INDEX IF NOT EXISTS worker_idx ON job_file (worker_id);
 
 

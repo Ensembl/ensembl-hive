@@ -463,7 +463,7 @@ sub update_status {
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisJob $job
   Example    :
-  Description: if files are non-zero size, will update DB with location
+  Description: update locations of log files, if present
   Returntype : 
   Exceptions :
   Caller     : Bio::EnsEMBL::Hive::Worker
@@ -471,28 +471,17 @@ sub update_status {
 =cut
 
 sub store_out_files {
-  my ($self,$job) = @_;
+    my ($self, $job) = @_;
 
-  return unless($job);
-
-  my $sql = sprintf("DELETE from job_file WHERE worker_id=%d and job_id=%d",
-                   $job->worker_id, $job->dbID);
-  $self->dbc->do($sql);
-  return unless($job->stdout_file or $job->stderr_file);
-
-  my $insert_sql = 'INSERT INTO job_file (job_id, worker_id, retry, type, path) VALUES (?,?,?,?,?)';
-
-  my $sth = $self->dbc()->prepare($insert_sql);
-  my @params = ($job->dbID(), $job->worker_id(), $job->retry_count());
-  if($job->stdout_file()) {
-    $sth->execute(@params, 'STDOUT', $job->stdout_file());
-  }
-  if($job->stderr_file()) {
-    $sth->execute(@params, 'STDERR', $job->stderr_file());
-  }
-  $sth->finish();
-  
-  return;
+    if($job->stdout_file or $job->stderr_file) {
+        my $insert_sql = 'REPLACE INTO job_file (job_id, retry, worker_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
+        my $sth = $self->dbc()->prepare($insert_sql);
+        $sth->execute($job->dbID(), $job->retry_count(), $job->worker_id(), $job->stdout_file(), $job->stderr_file());
+        $sth->finish();
+    } else {
+        my $sql = 'DELETE from job_file WHERE worker_id='.$job->worker_id.' AND job_id='.$job->dbID;
+        $self->dbc->do($sql);
+    }
 }
 
 

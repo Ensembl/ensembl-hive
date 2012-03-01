@@ -77,6 +77,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Process;
 
+use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
 
@@ -367,6 +368,7 @@ sub worker_output_dir {
 
             my $worker_id = $self->dbID();
 
+            my $dir_revhash = dir_revhash($worker_id);
             $worker_output_dir = join('/', $hive_output_dir, dir_revhash($worker_id), 'worker_id_'.$worker_id );
         }
 
@@ -377,6 +379,18 @@ sub worker_output_dir {
         $self->{'_worker_output_dir'} = $worker_output_dir;
     }
     return $self->{'_worker_output_dir'};
+}
+
+sub get_stdout_redirector {
+    my $self = shift;
+
+    return $self->{_stdout_redirector} ||= Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
+}
+
+sub get_stderr_redirector {
+    my $self = shift;
+
+    return $self->{_stderr_redirector} ||= Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
 }
 
 
@@ -394,13 +408,13 @@ sub print_worker {
      " host=",$self->host,
      " pid=",$self->process_id,
      "\n");
-  print("  batch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
-  print("  job_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
-  print("  life_span  = ", $self->life_span,"\n") if(defined($self->life_span));
+  print("\tbatch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
+  print("\tjob_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
+  print("\tlife_span  = ", $self->life_span,"\n") if(defined($self->life_span));
   if(my $worker_output_dir = $self->worker_output_dir) {
-    print("  worker_output_dir = $worker_output_dir\n");
+    print("\tworker_output_dir = $worker_output_dir\n");
   } else {
-    print("  worker_output_dir = STDOUT/STDERR\n");
+    print("\tworker_output_dir = STDOUT/STDERR\n");
   }
 }
 
@@ -461,14 +475,8 @@ sub run {
 
   $self->print_worker();
   if( my $worker_output_dir = $self->worker_output_dir ) {
-    open OLDOUT, ">&STDOUT";
-    open OLDERR, ">&STDERR";
-    open WORKER_STDOUT, ">${worker_output_dir}/worker.out";
-    open WORKER_STDERR, ">${worker_output_dir}/worker.err";
-    close STDOUT;
-    close STDERR;
-    open STDOUT, ">&WORKER_STDOUT";
-    open STDERR, ">&WORKER_STDERR";
+    $self->get_stdout_redirector->push( $worker_output_dir.'/worker.out' );
+    $self->get_stderr_redirector->push( $worker_output_dir.'/worker.err' );
     $self->print_worker();
   }
 
@@ -549,12 +557,8 @@ sub run {
   print("total jobs completed : ", $self->work_done, "\n");
   
   if( $self->worker_output_dir() ) {
-    close STDOUT;
-    close STDERR;
-    close WORKER_STDOUT;
-    close WORKER_STDERR;
-    open STDOUT, ">&", \*OLDOUT;
-    open STDERR, ">&", \*OLDERR;
+    $self->get_stdout_redirector->pop();
+    $self->get_stderr_redirector->pop();
   }
 }
 
@@ -572,26 +576,30 @@ sub run_one_batch {
 
     if($self->debug) {
         $self->analysis->stats->print_stats;
-        print(STDOUT "claimed ",scalar(@{$jobs}), " jobs to process\n");
+        print "claimed ".scalar(@{$jobs})." jobs to process\n";
     }
 
     foreach my $job (@{$jobs}) {
         $job->print_job if($self->debug); 
 
-        $self->start_job_output_redirection($job);
+        $self->start_job_output_redirection($job);  # switch logging into job's STDERR
         eval {  # capture any throw/die
             $self->run_module_with_job($job);
         };
-        my $msg_thrown = $@;
-        $self->stop_job_output_redirection($job);
+        my $msg_thrown          = $@;
+        my $job_id              = $job->dbID();
+        my $job_completion_line = "\njob $job_id : complete\n";
 
         if($msg_thrown) {   # record the message - whether it was a success or failure:
-            my $job_id                   = $job->dbID();
             my $job_status_at_the_moment = $job->status();
             my $action = $job->incomplete ? 'died' : 'exited';
-            warn "Job with id=$job_id $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
+            $job_completion_line = "\njob $job_id : $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
             $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
         }
+
+        print STDERR $job_completion_line if($self->worker_output_dir and ($self->debug or $job->incomplete));  # one copy goes to the job's STDERR
+        $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
+        print STDERR $job_completion_line;                                                                      # one copy goes to the worker's STDERR
 
         if($job->incomplete) {
                 # If the job specifically said what to do next, respect that last wish.
@@ -612,7 +620,6 @@ sub run_one_batch {
                 return $jobs_done_here;
             }
         } else {    # job successfully completed:
-
             $self->more_work_done;
             $jobs_done_here++;
             $job->update_status('DONE');
@@ -678,11 +685,11 @@ sub run_module_with_job {
         $self->{'writing_stopwatch'}->pause();
 
         if( $job->autoflow ) {
-            printf("AUTOFLOW input->output\n") if($self->debug);
+            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
             $job->dataflow_output_id();
         }
     } else {
-        print("\n!!! *no* WRITE_OUTPUT and *no* AUTOFLOW\n") if($self->debug); 
+        print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
     }
 
     my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
@@ -701,7 +708,7 @@ sub enter_status {
     my ($self, $status, $job) = @_;
 
     if($self->debug) {
-        printf("\n%s : $status\n", $job ? 'job '.$job->dbID : 'worker');
+        print STDERR "\n". ($job ? 'job '.$job->dbID : 'worker'). " : $status\n";
     }
 
     if($job) {
@@ -712,51 +719,45 @@ sub enter_status {
 }
 
 sub start_job_output_redirection {
-    my $self = shift;
-    my $job  = shift or return;
+    my ($self, $job, $worker_output_dir) = @_;
 
-    my $job_adaptor = $job->adaptor or return;
+    if(my $worker_output_dir = $self->worker_output_dir) {
+        $self->get_stdout_redirector->push( $job->stdout_file( $worker_output_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.out' ) );
+        $self->get_stderr_redirector->push( $job->stderr_file( $worker_output_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.err' ) );
 
-    if( my $worker_output_dir = $self->worker_output_dir ) {
-
-        $job->stdout_file( $worker_output_dir . '/job_id_' . $job->dbID . '.out' );
-        $job->stderr_file( $worker_output_dir . '/job_id_' . $job->dbID . '.err' );
-
-        close STDOUT;
-        open STDOUT, ">".$job->stdout_file;
-
-        close STDERR;
-        open STDERR, ">".$job->stderr_file;
-
-        $job_adaptor->store_out_files($job);
+        if(my $job_adaptor = $job->adaptor) {
+            $job_adaptor->store_out_files($job);
+        }
     }
 }
 
 
 sub stop_job_output_redirection {
-    my $self = shift;
-    my $job  = shift or return;
+    my ($self, $job) = @_;
 
-    my $job_adaptor = $job->adaptor or return;
+    if($self->worker_output_dir) {
+        $self->get_stdout_redirector->pop();
+        $self->get_stderr_redirector->pop();
 
-    if( $self->worker_output_dir ) {
+        my $force_cleanup = !($self->debug || $job->incomplete);
 
-        # the following flushes $job->stderr_file and $job->stdout_file
-        open STDOUT, ">&WORKER_STDOUT";
-        open STDERR, ">&WORKER_STDERR";
-
-        if(-z $job->stdout_file) {
+        if($force_cleanup or -z $job->stdout_file) {
+            warn "Deleting '".$job->stdout_file."' file\n";
             unlink $job->stdout_file;
-            $job->stdout_file('');
+            $job->stdout_file(undef);
         }
-        if(-z $job->stderr_file) {
+        if($force_cleanup or -z $job->stderr_file) {
+            warn "Deleting '".$job->stderr_file."' file\n";
             unlink $job->stderr_file;
-            $job->stderr_file('');
+            $job->stderr_file(undef);
         }
 
-        $job_adaptor->store_out_files($job);
+        if(my $job_adaptor = $job->adaptor) {
+            $job_adaptor->store_out_files($job);
+        }
     }
 }
+
 
 sub _specific_job {
   my $self = shift;

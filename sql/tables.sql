@@ -290,17 +290,17 @@ CREATE TABLE job_message (
 --   job_id             - foreign key
 --   worker_id          - link to worker table to define which worker claimed this job
 --   retry              - copy of retry_count of job as it was run
---   type               - type of file e.g. STDOUT, STDERR, TMPDIR, ...
---   path               - path to file or directory
+--   stdout_file        - path to the job's STDOUT log
+--   stderr_file        - path to the job's STDERR log
 
 CREATE TABLE job_file (
-  job_id                  int(10) NOT NULL,
-  worker_id               int(10) unsigned NOT NULL,
-  retry                   int(10) NOT NULL,
-  type                    varchar(16) NOT NULL default '',
-  path                    varchar(255) NOT NULL,
+  job_id                int(10) NOT NULL,
+  retry                 int(10) NOT NULL,
+  worker_id             int(10) unsigned NOT NULL,
+  stdout_file           varchar(255),
+  stderr_file           varchar(255),
 
-  UNIQUE KEY job_worker_type  (job_id, worker_id, type),
+  UNIQUE KEY job_retry  (job_id, retry),
   INDEX worker_id           (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
