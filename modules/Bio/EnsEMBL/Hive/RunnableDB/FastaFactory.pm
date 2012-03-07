@@ -72,7 +72,12 @@ sub fetch_input {
     my $self = shift @_;
 
     my $inputfile   = $self->param('inputfile')                 || die "'inputfile' is an obligatory parameter";
-    my $input_seqio = Bio::SeqIO->new(-file => '<'.$inputfile)  || die "Could not open or parse '$inputfile', please investigate";
+    die "Cannot read '$inputfile'" unless(-r $inputfile);
+
+    if($inputfile=~/\.(?:gz|Z)$/) {
+        $inputfile = "gunzip -c $inputfile |";
+    }
+    my $input_seqio = Bio::SeqIO->new(-file => $inputfile)  || die "Could not open or parse '$inputfile', please investigate";
 
     $self->param('input_seqio', $input_seqio);
 }
