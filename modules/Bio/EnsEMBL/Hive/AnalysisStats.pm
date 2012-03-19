@@ -26,6 +26,7 @@
 package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
+use Scalar::Util ('weaken');
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
@@ -44,11 +45,18 @@ sub new {
   return $self;
 }
 
+
 sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_adaptor'} = shift @_;
+        weaken $self->{'_adaptor'};
+    }
+
+    return $self->{'_adaptor'};
 }
+
 
 sub refresh {
     my $self = shift;

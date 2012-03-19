@@ -42,6 +42,8 @@
 package Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
 use strict;
+use Scalar::Util ('weaken');
+
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Utils::Argument;
@@ -76,9 +78,14 @@ sub new {
 }
 
 sub adaptor {
-  my ( $self, $adaptor ) = @_;
-  $self->{'_adaptor'} = $adaptor if defined $adaptor;
-  return $self->{'_adaptor'};
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_adaptor'} = shift @_;
+        weaken $self->{'_adaptor'};
+    }
+
+    return $self->{'_adaptor'};
 }
 
 

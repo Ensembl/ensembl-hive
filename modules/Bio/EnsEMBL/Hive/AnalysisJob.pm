@@ -27,6 +27,8 @@
 package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
+use Scalar::Util ('weaken');
+
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
@@ -58,10 +60,16 @@ sub new {
 }
 
 sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_adaptor'} = shift @_;
+        weaken $self->{'_adaptor'};
+    }
+
+    return $self->{'_adaptor'};
 }
+
 
 sub dbID {
   my $self = shift;

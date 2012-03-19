@@ -27,6 +27,8 @@
 package Bio::EnsEMBL::Hive::ResourceDescription;
 
 use strict;
+use Scalar::Util ('weaken');
+
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 
 sub new {
@@ -46,14 +48,18 @@ sub new {
     return $self;
 }
 
+
 sub adaptor {
     my $self = shift @_;
 
     if(@_) {
         $self->{'_adaptor'} = shift @_;
+        weaken $self->{'_adaptor'};
     }
+
     return $self->{'_adaptor'};
 }
+
 
 sub rc_id {
     my $self = shift @_;

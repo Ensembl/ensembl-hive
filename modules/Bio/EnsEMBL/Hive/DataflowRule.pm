@@ -50,6 +50,8 @@
 package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
+use Scalar::Util ('weaken');
+
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
@@ -112,11 +114,14 @@ sub dbID {
 sub adaptor {
     my $self = shift @_;
 
-    if(@_) { # setter mode
+    if(@_) {
         $self->{'_adaptor'} = shift @_;
+        weaken $self->{'_adaptor'};
     }
+
     return $self->{'_adaptor'};
 }
+
 
 =head2 branch_code
 
