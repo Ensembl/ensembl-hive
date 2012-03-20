@@ -591,8 +591,9 @@ sub release_undone_jobs_from_worker {
     my $cod = $worker->cause_of_death();
     $msg ||= "GarbageCollector: The worker died because of $cod";
 
-    while(my ($job_id, $retry_count) = $sth->fetchrow_array()) {
-        my $resource_overusage = ($cod eq 'MEMLIMIT') || ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
+    my $resource_overusage = ($cod eq 'MEMLIMIT') || ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
+
+    while(my ($job_id) = $sth->fetchrow_array()) {
 
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
