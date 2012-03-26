@@ -443,5 +443,5 @@ CREATE TABLE monitor (
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
-INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '66');
+INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '67');
 
