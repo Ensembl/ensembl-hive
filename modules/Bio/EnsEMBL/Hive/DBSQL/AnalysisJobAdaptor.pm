@@ -126,7 +126,7 @@ sub CreateNewJob {
         or die "Coule not run\n\t$sql\nwith data:\n\t(".join(',', @values).')';
 
   my $job_id;
-  if($return_code > 0) {    # <--- for the same reason we have to be expliticly numeric here:
+  if($return_code > 0) {    # <--- for the same reason we have to be explicitly numeric here:
       $job_id = $dbc->db_handle->last_insert_id(undef, undef, 'job', 'job_id');
       $sth->finish;
 
