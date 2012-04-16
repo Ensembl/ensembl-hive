@@ -15,6 +15,100 @@ Summary:
 
 Changelog:
 
+---------------------[after EnsEMBL rel.67]----------------------------------------------------------------
+
+2012-03-27 12:22  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/: AnalysisJobAdaptor.pm,
+	  BaseAdaptor.pm: a typo in comments
+
+2012-03-26 14:59  mm14
+
+	* sql/tables.sqlite: schema_version=67
+
+2012-03-26 14:45  mm14
+
+	* sql/tables.sql: schema_version=67
+
+2012-03-20 11:06  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: code
+	  optimization suggested by Matthieu
+
+2012-03-19 17:15  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisCtrlRule.pm, AnalysisJob.pm,
+	  AnalysisStats.pm, DataflowRule.pm, NakedTable.pm,
+	  ResourceDescription.pm: weaken the link back from the object back
+	  to the adaptor
+
+2012-03-07 15:27  lg4
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/FastaFactory.pm: added
+	  support for reading compressed files
+
+2012-03-07 14:41  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: PipeConfig/FastaSplitter_conf.pm,
+	  RunnableDB/FastaFactory.pm: a Bio::Seq example factory Runnable
+	  and a matching PipeConfig file
+
+2012-03-01 10:31  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  sql/tables.sql, sql/tables.sqlite: improved STDOUT/STDERR
+	  redirection into files; removal of job logs on success
+
+2012-03-01 10:29  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/RedirectStack.pm: a special module
+	  to deal with stacks of filehandle redirection
+
+2012-02-24 15:59  lg4
+
+	* scripts/beekeeper.pl: pass debug level parameter from
+	  beekeeper.pl to runWorker.pl
+
+2012-02-23 13:52  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/BaseAdaptor.pm: bugfix: only store
+	  values that have been set - avoid overriding defaults
+
+2012-02-20 16:04  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: attempt to display each
+	  funnel below its fan
+
+2012-02-16 16:39  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: diagram tool no longer
+	  generates unnecessarily broken edges
+
+2012-02-15 11:26  lg4
+
+	* scripts/lsf_report.pl: restrict to DEAD workers only
+
+2012-02-15 11:14  lg4
+
+	* scripts/lsf_report.pl: documentation and better user interface
+	  (dumping and undumping supported)
+
+2012-02-14 16:56  lg4
+
+	* scripts/lsf_report.pl: turned mem and swap into numeric columns;
+	  careful with units!
+
+2012-02-14 16:40  lg4
+
+	* scripts/lsf_report.pl: post-mortem loader of worker memory usage
+	  information from the LSF
+
+2012-02-14 10:36  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DependentOptions.pm: Pipeline parameters
+	  cannot take undefined values. Warn and force into 0
+
 ---------------------[after EnsEMBL rel.66]----------------------------------------------------------------
 
 2012-01-31 10:58  lg4
