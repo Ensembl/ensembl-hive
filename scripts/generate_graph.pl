@@ -15,14 +15,13 @@ use Bio::EnsEMBL::Hive::Utils::Graph::Config;
 
 my $self = bless({}, __PACKAGE__);
 
-$self->run();
+$self->main();
 
-sub run {
+sub main {
   my ($self) = @_;
   $self->_options();
   $self->_process_options();
   $self->_write_graph();
-  return;
 }
 
 sub _options {
@@ -40,11 +39,13 @@ sub _options {
     'f|format=s'            => \$self->{format},
     'o|output=s'            => \$self->{output},
     'config'                => \$self->{config},
+
+    's|stretch!'            => \$self->{stretch},
+    'b|box!'                => \$self->{box},
     
     'h|help'                => \$self->{help},
     'm|man'                 => \$self->{man},
   );
-  return;
 }
 
 sub _process_options {
@@ -106,8 +107,6 @@ sub _process_options {
     my $hash = do $self->{config};
     $self->{config_hash} = $hash;
   }
-    
-  return;
 }
 
 sub _write_graph {
@@ -119,7 +118,7 @@ sub _write_graph {
   }
   
   my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $self->{dba}, -CONFIG => $config);
-  my $graphviz = $graph->build();
+  my $graphviz = $graph->build( $self->{box}, $self->{stretch} );
   
   my $call = q{as_}.$self->{format};
     
@@ -132,8 +131,6 @@ sub _write_graph {
       -verbose => 1
     });
   }
-  
-  return;
 }
 
 __END__
@@ -235,7 +232,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.5 $
+$Revision: 1.6 $
 
 =head1 REQUIREMENTS
 
