@@ -13,7 +13,7 @@
   AnalysisCtrl rules.
   
   Instances of these Processes are created by the system as work is done.
-  The newly created Process will have preset $self->queen, $self->dbc, 
+  The newly created Process will have preset $self->db, $self->dbc, 
   $self->input_id, $self->analysis and several other variables. 
   From this input and configuration data, each Process can then proceed to 
   do something.  The flow of execution within a Process is:
@@ -32,10 +32,10 @@
   branch_codes. This is accomplished within the Process via 
   $self->dataflow_output_id(...);  
   
-  The design philosophy is that each Process does it's work and creates output, 
+  The design philosophy is that each Process does its work and creates output, 
   but it doesn't worry about where the input came from, or where it's output 
   goes. If the system has dataflow pipes connected, then the output jobs 
-  have purpose, if not the output work is thrown away.  The workflow graph 
+  have purpose, if not - the output work is thrown away.  The workflow graph 
   'controls' the behaviour of the system, not the processes.  The processes just 
   need to do their job.  The design of the workflow graph is based on the knowledge 
   of what each Process does so that the graph can be correctly constructed.
@@ -208,21 +208,14 @@ sub DESTROY {
 ######################################################
 
 
-=head2 queen
+=head2 worker
 
-    Title   :   queen
-    Usage   :   my $hiveDBA = $self->queen;
-    Function:   returns the 'Queen' this Process was created by
+    Title   :   worker
+    Usage   :   my $worker = $self->worker;
+    Function:   returns the Worker object this Process is run by
     Returns :   Bio::EnsEMBL::Hive::Queen
 
 =cut
-
-sub queen {
-    my $self = shift;
-
-    $self->{'_queen'} = shift if(@_);
-    return $self->{'_queen'};
-}
 
 sub worker {
     my $self = shift;
@@ -230,6 +223,7 @@ sub worker {
     $self->{'_worker'} = shift if(@_);
     return $self->{'_worker'};
 }
+
 
 =head2 db
 
@@ -243,7 +237,8 @@ sub worker {
 sub db {
     my $self = shift;
 
-    return $self->queen && $self->queen->db;
+    $self->{'_db'} = shift if(@_);
+    return $self->{'_db'};
 }
 
 
@@ -259,7 +254,7 @@ sub db {
 sub dbc {
     my $self = shift;
 
-    return $self->queen && $self->queen->dbc;
+    return $self->db && $self->db->dbc;
 }
 
 

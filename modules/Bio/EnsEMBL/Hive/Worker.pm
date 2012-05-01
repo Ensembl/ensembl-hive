@@ -366,7 +366,7 @@ sub worker_output_dir {
 
         } elsif( my $hive_output_dir = $self->hive_output_dir ) {
 
-            my $worker_id = $self->dbID();
+            my $worker_id = $self->dbID;
 
             my $dir_revhash = dir_revhash($worker_id);
             $worker_output_dir = join('/', $hive_output_dir, dir_revhash($worker_id), 'worker_id_'.$worker_id );
@@ -425,7 +425,7 @@ sub worker_process_temp_directory {
   unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
     #create temp directory to hold fasta databases
     my $username = $ENV{'USER'};
-    my $worker_id = $self->dbID();
+    my $worker_id = $self->dbID;
     $self->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}/";
     mkdir($self->{'_tmp_dir'}, 0777);
     throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
@@ -590,7 +590,7 @@ sub run_one_batch {
             $self->enter_status('COMPILATION', $job);       # ToDo: when Runnables are ready, switch to compiling once per batch (saves time)
             my $runnable_db = $self->analysis->process or die "Unknown compilation error";
 
-            $self->queen->dbc->query_count(0);
+            $self->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
             $self->run_module_with_job($runnable_db, $job);
@@ -598,7 +598,7 @@ sub run_one_batch {
         my $msg_thrown          = $@;
 
         $job->runtime_msec( $job_stopwatch->get_elapsed );
-        $job->query_count( $self->queen->dbc->query_count );
+        $job->query_count( $self->db->dbc->query_count );
 
         my $job_id              = $job->dbID();
         my $job_completion_line = "\njob $job_id : complete\n";
@@ -607,7 +607,7 @@ sub run_one_batch {
             my $job_status_at_the_moment = $job->status();
             my $action = $job->incomplete ? 'died' : 'exited';
             $job_completion_line = "\njob $job_id : $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
-            $self->db()->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
+            $self->db->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
         }
 
         print STDERR $job_completion_line if($self->worker_output_dir and ($self->debug or $job->incomplete));  # one copy goes to the job's STDERR
@@ -653,10 +653,10 @@ sub run_one_batch {
 sub run_module_with_job {
     my ($self, $runnable_db, $job) = @_;
 
-    $runnable_db->input_job($job);
-    $runnable_db->queen($self->queen);
-    $runnable_db->worker($self);
-    $runnable_db->debug($self->debug);
+    $runnable_db->input_job( $job );
+    $runnable_db->db( $self->db );
+    $runnable_db->worker( $self );
+    $runnable_db->debug( $self->debug );
 
     $job->param_init( $runnable_db->strict_hash_format(), $runnable_db->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
     $job->incomplete(1);
