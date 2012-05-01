@@ -582,11 +582,24 @@ sub run_one_batch {
     foreach my $job (@{$jobs}) {
         $job->print_job if($self->debug); 
 
+        my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
+
         $self->start_job_output_redirection($job);  # switch logging into job's STDERR
         eval {  # capture any throw/die
-            $self->run_module_with_job($job);
+
+            $self->enter_status('COMPILATION', $job);       # ToDo: when Runnables are ready, switch to compiling once per batch (saves time)
+            my $runnable_db = $self->analysis->process or die "Unknown compilation error";
+
+            $self->queen->dbc->query_count(0);
+            $job_stopwatch->restart();
+
+            $self->run_module_with_job($runnable_db, $job);
         };
         my $msg_thrown          = $@;
+
+        $job->runtime_msec( $job_stopwatch->get_elapsed );
+        $job->query_count( $self->queen->dbc->query_count );
+
         my $job_id              = $job->dbID();
         my $job_completion_line = "\njob $job_id : complete\n";
 
@@ -638,50 +651,34 @@ sub run_one_batch {
 
 
 sub run_module_with_job {
-  my ($self, $job) = @_;
+    my ($self, $runnable_db, $job) = @_;
 
-  $job->incomplete(1);
-  $job->autoflow(1);
+    $runnable_db->input_job($job);
+    $runnable_db->queen($self->queen);
+    $runnable_db->worker($self);
+    $runnable_db->debug($self->debug);
 
-  $self->enter_status('COMPILATION', $job);
-  my $runObj = $self->analysis->process or die "Unknown compilation error";
-  
-  my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
-  $self->queen->dbc->query_count(0);
-
-  #pass the input_id from the job into the Process object
-  if( $runObj->isa('Bio::EnsEMBL::Hive::Process') ) {
-    $runObj->input_job($job);
-    $runObj->queen($self->queen);
-    $runObj->worker($self);
-    $runObj->debug($self->debug);
-
-    $job->param_init( $runObj->strict_hash_format(), $runObj->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
-
-  } else {
-    $runObj->input_id($job->input_id);
-    $runObj->db($self->db);
-
-    $job->param_init( 0, $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() ); # Well, why not?
-  }
+    $job->param_init( $runnable_db->strict_hash_format(), $runnable_db->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
+    $job->incomplete(1);
+    $job->autoflow(1);
 
     $self->enter_status('GET_INPUT', $job);
 
     $self->{'fetching_stopwatch'}->continue();
-    $runObj->fetch_input;
+    $runnable_db->fetch_input;
     $self->{'fetching_stopwatch'}->pause();
 
     $self->enter_status('RUN', $job);
 
     $self->{'running_stopwatch'}->continue();
-    $runObj->run;
+    $runnable_db->run;
     $self->{'running_stopwatch'}->pause();
 
     if($self->execute_writes) {
         $self->enter_status('WRITE_OUTPUT', $job);
 
         $self->{'writing_stopwatch'}->continue();
-        $runObj->write_output;
+        $runnable_db->write_output;
         $self->{'writing_stopwatch'}->pause();
 
         if( $job->autoflow ) {
@@ -698,11 +695,9 @@ sub run_module_with_job {
         die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
     }
 
-    $job->query_count($self->queen->dbc->query_count);
-    $job->runtime_msec( $job_stopwatch->get_elapsed );
-
     $job->incomplete(0);
 }
+
 
 sub enter_status {
     my ($self, $status, $job) = @_;
