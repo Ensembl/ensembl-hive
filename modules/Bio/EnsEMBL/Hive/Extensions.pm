@@ -184,30 +184,6 @@ sub Bio::EnsEMBL::Analysis::RunnableDB::debug {
   return $self->{'_debug'};
 }
 
-sub Bio::EnsEMBL::Analysis::RunnableDB::analyze_tables {
-  my $self = shift;  
-
-  my $starttime = time();
-
-  my $gdb = $self->{'comparaDBA'}->get_GenomeDBAdaptor;   
-
-  foreach my $genome_db ( @{$gdb->fetch_all} ) { 
-    my $gdb_id = $genome_db->dbID;
-    my $species_name = lc($genome_db->name);
-    $species_name =~ s/\ /\_/g;
-    my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$gdb_id";
-    # Re-enable the keys before starting the queries
-    my $sql = "ALTER TABLE $tbl_name ENABLE KEYS";
-  
-    print("$sql\n") if ($self->debug);
-    my $sth = $self->dbc->prepare($sql);
-    $sth->execute();
-    $sql = "ANALYZE TABLE $tbl_name";
-    $sth = $self->dbc->prepare($sql);
-    $sth->execute();
-    printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
-  }
-}
  
 1;
 
