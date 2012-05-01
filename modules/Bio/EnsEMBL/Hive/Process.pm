@@ -90,7 +90,6 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception ('throw');
 use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
-#use Bio::EnsEMBL::Hive::AnalysisJob;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
 
