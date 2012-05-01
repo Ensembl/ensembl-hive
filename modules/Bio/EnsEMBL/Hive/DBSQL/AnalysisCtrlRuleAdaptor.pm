@@ -44,32 +44,6 @@ sub object_class {
 }
 
 
-
-
-=head2 remove_by_condition_analysis_url
-
-  Arg[1]  : string condition_analysis_url
-  Usage   : $self->remove_by_condition_analysis_url("ThisAnalysisLogicName");
-  Function: removes all the control rules for this condition analysis URL
-  Returns : -
-
-  NB: This method is not called by ensembl-hive code itself,
-  however it is used by two Compara pipeline modules,
-        Bio/EnsEMBL/Compara/Production/GenomicAlignBlock/CreateAlignmentChainsJobs.pm
-      and
-        Bio/EnsEMBL/Compara/Production/GenomicAlignBlock/CreateAlignmentNetsJobs.pm
-  in order to avoid blocking by an empty analysis. It should be re-written by using can_be_empty=1 analyses.
-
-=cut
-
-sub remove_by_condition_analysis_url {
-  my ( $self, $condition_analysis_url ) = @_;
-
-  my $sth = $self->prepare("DELETE FROM analysis_ctrl_rule WHERE condition_analysis_url =?");
-  $sth->execute($condition_analysis_url);
-}
-
-
 =head2 create_rule
 
   Arg[1]      : condition analysis object (Bio::EnsEMBL::Analysis object)
