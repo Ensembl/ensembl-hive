@@ -54,6 +54,7 @@ use Scalar::Util ('weaken');
 
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 =head2 new
@@ -163,7 +164,8 @@ sub input_id_template {
     my $self = shift @_;
 
     if(@_) { # setter mode
-        $self->{'_input_id_template'} = shift @_;
+        my $input_id_template = shift @_;
+        $self->{'_input_id_template'} = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
     }
     return $self->{'_input_id_template'};
 }

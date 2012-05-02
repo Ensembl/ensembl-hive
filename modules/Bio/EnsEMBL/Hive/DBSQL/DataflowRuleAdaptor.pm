@@ -117,15 +117,15 @@ sub create_rule {
     return unless($from_analysis and $to_analysis_or_url);
 
     my $rule = Bio::EnsEMBL::Hive::DataflowRule->new(
-        -from_analysis      =>  $from_analysis,
+        -from_analysis              =>  $from_analysis,
 
         ref($to_analysis_or_url)
-            ? ( -to_analysis     => $to_analysis_or_url )
-            : ( -to_analysis_url => $to_analysis_or_url ),
+            ? ( -to_analysis        => $to_analysis_or_url )
+            : ( -to_analysis_url    => $to_analysis_or_url ),
 
-        -branch_code        =>  $self->branch_name_2_code($branch_name_or_code),
-        -input_id_template  =>  (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
-        -funnel_dataflow_rule_id => $funnel_dataflow_rule_id,
+        -branch_code                =>  $self->branch_name_2_code($branch_name_or_code),
+        -input_id_template          =>  $input_id_template,
+        -funnel_dataflow_rule_id    => $funnel_dataflow_rule_id,
     );
 
     return $self->store($rule, 1);  # avoid redundancy
