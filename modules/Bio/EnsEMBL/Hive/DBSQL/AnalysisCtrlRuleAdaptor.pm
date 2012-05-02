@@ -44,33 +44,5 @@ sub object_class {
 }
 
 
-=head2 create_rule
-
-  Arg[1]      : condition analysis object (Bio::EnsEMBL::Analysis object)
-  Arg[2]      : controled analysis object (Bio::EnsEMBL::Analysis object)
-  Example     : $dba->get_AnalysisCtrlRuleAdaptor->create_rule($conditionAnalysis, $ctrledAnalysis);
-  Description : Creates an AnalysisCtrlRule where the condition analysis must be completely DONE with
-                all jobs in order for the controlled analysis to be unblocked and allowed to proceed.
-                If an analysis requires multiple conditions, simply create multiple rules and controlled
-                analysis will only unblock if ALL conditions are satisified.
-  Returntype  : none
-  Exceptions  : none
-  Caller      : HiveGeneric_conf.pm and various pipeline-creating scripts
-  
-=cut
-
-sub create_rule {
-    my ($self, $conditionAnalysis, $ctrledAnalysis) = @_;
-
-    return unless($conditionAnalysis and $ctrledAnalysis);
-
-    my $rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new();
-    # NB: ctrled_analysis must be set first in order for internal logic to abbreviate 'to_url'
-    $rule->ctrled_analysis($ctrledAnalysis);
-    $rule->condition_analysis($conditionAnalysis);
-
-    return $self->store($rule, 1);  # avoid redundancy
-}
-
-
 1;
+

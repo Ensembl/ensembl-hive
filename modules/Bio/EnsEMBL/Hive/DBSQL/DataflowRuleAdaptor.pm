@@ -45,8 +45,6 @@ sub object_class {
 }
 
 
-
-
 =head2 branch_name_2_code
 
 Description: encodes a branch mnemonic name into numeric code
@@ -73,6 +71,7 @@ sub branch_name_2_code {
     return defined($branch_code) ? $branch_code : die "Could not map the branch_name '$branch_name_or_code' to the internal code";
 }
 
+
 =head2 fetch_all_by_from_analysis_id_and_branch_code
 
   Args       : unsigned int $analysis_id, unsigned int $branch_code
@@ -95,40 +94,6 @@ sub fetch_all_by_from_analysis_id_and_branch_code {
     my $constraint = "from_analysis_id=${analysis_id} AND branch_code=${branch_code}";
 
     return $self->fetch_all($constraint);
-}
-
-
-=head2 create_rule
-
-  Title   : create_rule
-  Usage   : $self->create_rule( $from_analysis, $to_analysis, $branch_code );
-  Function: Creates and stores a new rule in the DB.
-  Returns : Bio::EnsEMBL::Hive::DataflowRule
-  Args[1] : Bio::EnsEMBL::Analysis $from_analysis
-  Args[2] : Bio::EnsEMBL::Analysis OR a hive-style URL  $to_analysis_or_url
-  Args[3] : (optional) int $branch_code
-  Args[4] : (optional) (Perl structure or string) $input_id_template
-
-=cut
-
-sub create_rule {
-    my ($self, $from_analysis, $to_analysis_or_url, $branch_name_or_code, $input_id_template, $funnel_dataflow_rule_id) = @_;
-
-    return unless($from_analysis and $to_analysis_or_url);
-
-    my $rule = Bio::EnsEMBL::Hive::DataflowRule->new(
-        -from_analysis              =>  $from_analysis,
-
-        ref($to_analysis_or_url)
-            ? ( -to_analysis        => $to_analysis_or_url )
-            : ( -to_analysis_url    => $to_analysis_or_url ),
-
-        -branch_code                =>  $self->branch_name_2_code($branch_name_or_code),
-        -input_id_template          =>  $input_id_template,
-        -funnel_dataflow_rule_id    => $funnel_dataflow_rule_id,
-    );
-
-    return $self->store($rule, 1);  # avoid redundancy
 }
 
 
