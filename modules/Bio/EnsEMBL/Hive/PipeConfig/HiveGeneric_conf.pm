@@ -429,9 +429,13 @@ sub run {
             foreach my $condition_url (@$wait_for) {
                 if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($condition_url)) {
 
-                    $ctrl_rule_adaptor->create_rule( $condition_analysis, $analysis);
+                    my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
+                            -condition_analysis_url => $condition_url,
+                            -ctrled_analysis_id     => $analysis->dbID,
+                    );
+                    $ctrl_rule_adaptor->store( $c_rule, 1 );
 
-                    warn "Control rule: $condition_url -| $logic_name\n";
+                    warn $c_rule->toString."\n";
                 } else {
                     die "Could not fetch analysis '$condition_url' to create a control rule";
                 }
@@ -481,21 +485,27 @@ sub run {
 
                         my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
-                        my $rule = $dataflow_rule_adaptor->create_rule( $analysis, $heir_analysis || $heir_url, $branch_name_or_code, $input_id_template, $funnel_dataflow_rule_id);
+                        my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
+                            -from_analysis              => $analysis,
+                            -to_analysis_url            => $heir_url,
+                            -branch_code                => $dataflow_rule_adaptor->branch_name_2_code( $branch_name_or_code ),
+                            -input_id_template          => $input_id_template,
+                            -funnel_dataflow_rule_id    => $funnel_dataflow_rule_id,
+                        );
+                        $dataflow_rule_adaptor->store( $df_rule, 1 );
+
+                        warn $df_rule->toString."\n";
 
                         if($group_role eq 'funnel') {
                             if($group_tag_to_funnel_dataflow_rule_id{$group_tag}) {
                                 die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
                             } else {
-                                $group_tag_to_funnel_dataflow_rule_id{$group_tag} = $rule->dbID();
+                                $group_tag_to_funnel_dataflow_rule_id{$group_tag} = $df_rule->dbID();
                             }
                         }
-
-                        warn "DataFlow rule: [$branch_tag] $logic_name -> $heir_url"
-                            .($input_id_template ? ' WITH TEMPLATE: '.stringify($input_id_template) : '')."\n";
-                    }
-                }
-            }
+                    } # /for all templates
+                } # /for all heirs
+            } # /for all branch_tags
         }
     }
 
