@@ -286,14 +286,33 @@ sub to_analysis {
   return $self->{'_to_analysis'};
 }
 
-sub print_rule {
-  my $self = shift;
-  print("DataflowRule dbID=", $self->dbID,
-        "  from_id=", $self->from_analysis_id,
-        "  to_url=", $self->to_analysis_url,
-        "  branch=", $self->branch_code,
-        "\n");
+
+=head2 toString
+
+  Args       : (none)
+  Example    : print $df_rule->toString()."\n";
+  Description: returns a stringified representation of the rule
+  Returntype : string
+
+=cut
+
+sub toString {
+    my $self = shift;
+
+    return join('',
+            'DataflowRule(dbID=',
+            ($self->dbID || '?'),
+            ($self->funnel_dataflow_rule_id ? ' --|| '.$self->funnel_dataflow_rule_id : ''),
+            '): [#',
+            $self->branch_code,
+            '] ',
+            $self->from_analysis->logic_name,
+            ' -> ',
+            $self->to_analysis_url,
+            ($self->input_id_template ? (' WITH TEMPLATE: '.$self->input_id_template) : ''),
+    );
 }
+
 
 1;
 

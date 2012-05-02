@@ -208,20 +208,28 @@ sub condition_analysis {
 }
 
 
-=head2 print_rule
+=head2 toString
 
-  Usage   : $ctrlRule->print_rule;
-  Function: Prints a description of the rule for use in debugging.
-  
+  Args       : (none)
+  Example    : print $c_rule->toString()."\n";
+  Description: returns a stringified representation of the rule
+  Returntype : string
+
 =cut
 
-sub print_rule {
-  my $self = shift;
-  print("AnalysisCtrlRule ",
-        "  ctrled_analysis_id=", $self->ctrled_analysis_id,
-        "  condition_analysis_url=", $self->condition_analysis_url,
-        "\n");
+sub toString {
+    my $self = shift;
+
+    return join('',
+            'AnalysisCtrlRule',
+#            '(dbID=', ($self->dbID || '?'), ')',   # this object doesn't have a dbID
+            ': ',
+            $self->condition_analysis_url,
+            ' -| ',
+            $self->ctrled_analysis->logic_name,
+    );
 }
+
 
 1;
 
