@@ -6,6 +6,13 @@ use strict;
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
+
+sub available {     # always invoked as a class method
+
+    return `which bjobs 2>/dev/null`;
+}
+
+
 sub get_current_worker_process_id {
     my ($self) = @_;
 

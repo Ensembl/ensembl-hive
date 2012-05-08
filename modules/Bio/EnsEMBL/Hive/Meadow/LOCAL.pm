@@ -7,6 +7,12 @@ use Sys::Hostname;
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
+
+sub available {     # always invoked as a class method
+
+    return 1;       # for the moment assume LOCAL meadow is always available
+}
+
 sub get_current_worker_process_id {
     my ($self) = @_;
 
