@@ -43,7 +43,7 @@ use warnings;
 use Data::Dumper;
 
 use Exporter 'import';
-our @EXPORT_OK = qw( stringify destringify dir_revhash parse_cmdline_options load_file_or_module script_usage url2dbconn_hash);
+our @EXPORT_OK = qw( stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash);
 
 
 =head2 stringify
@@ -145,6 +145,37 @@ sub parse_cmdline_options {
         }
     }
     return (\%pairs, \@list);
+}
+
+
+=head2 find_submodules
+
+    Description: This function takes one argument ("prefix" of a module name),
+                transforms it into a directory name from the filesystem's point of view
+                and finds all module names in these "directories".
+                Each module_name found is reported only once,
+                even if there are multiple matching files in different directories.
+
+    Callers    : scripts
+
+=cut
+
+sub find_submodules {
+    my $prefix = shift @_;
+
+    $prefix=~s{::}{/}g;
+
+    my %seen_module_name = ();
+
+    foreach my $inc (@INC) {
+        foreach my $full_module_path (<$inc/$prefix/*.pm>) {
+            my $module_name = substr($full_module_path, length($inc)+1, -3);    # remove leading "$inc/" and trailing '.pm'
+            $module_name=~s{/}{::}g;                                            # transform back to module_name space
+
+            $seen_module_name{$module_name}++;
+        }
+    }
+    return [ keys %seen_module_name ];
 }
 
 
