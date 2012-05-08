@@ -4,19 +4,24 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'find_submodules');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
-use Bio::EnsEMBL::Hive::Meadow::LSF;
-use Bio::EnsEMBL::Hive::Meadow::LOCAL;
-
 main();
 
 sub main {
+
+    my %available_meadow_classes = ();
+    foreach my $meadow_class (@{ find_submodules('Bio::EnsEMBL::Hive::Meadow') }) {
+        eval "require $meadow_class";
+        if($meadow_class->available) {
+            $available_meadow_classes{$meadow_class}=1;
+        }
+    }
 
     $| = 1;
     Bio::EnsEMBL::Registry->no_version_check(1);
@@ -43,6 +48,7 @@ sub main {
     my $no_pend_adjust              = 0;
     my $worker_limit                = 50;
     my $local_cpus                  = 2;
+    my $meadow_name                 = '';
     my $meadow_options              = '';
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
@@ -90,7 +96,8 @@ sub main {
                'local_cpus=i'      => \$local_cpus,
                'wlimit=i'          => \$worker_limit,
                'no_pend'           => \$no_pend_adjust,
-               'meadow_options|lsf_options=s'  => \$meadow_options, # 'lsf_options' is deprecated (please investigate the resource requirements, they may suit your needs way better)
+               'meadow_name=s'     => \$meadow_name,
+               'meadow_options=s'  => \$meadow_options,
 
                     # worker control
                'job_limit|jlimit=i'     => \$self->{'job_limit'},
@@ -185,21 +192,35 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
-    my $meadow;
-    if($local) {
-        $meadow = Bio::EnsEMBL::Hive::Meadow::LOCAL->new();
-        $meadow->total_running_workers_limit($local_cpus);
-    } else {
-        $meadow = Bio::EnsEMBL::Hive::Meadow::LSF->new();
-        $meadow->meadow_options($meadow_options);
+
+    unless($meadow_name or $local) {    # first try anything but local
+        foreach my $mn (keys %available_meadow_classes) {
+            if($mn!~/LOCAL$/i) {
+                $meadow_name = $mn;
+                last;
+            }
+        }
     }
-    $meadow->pending_adjust(not $no_pend_adjust);
+    $meadow_name ||= 'LOCAL';           # but default to local in the end
+
+    $meadow_name = 'Bio::EnsEMBL::Hive::Meadow::'.uc($meadow_name)  unless($meadow_name=~/::/);
+
+    my $meadow_object;
+    if($available_meadow_classes{$meadow_name}) {
+        warn "Current meadow: '$meadow_name'\n";
+        $meadow_object = $meadow_name->new();   
+        $meadow_object->meadow_options($meadow_options);
+        $meadow_object->total_running_workers_limit($local_cpus)    if($meadow_object->can('total_running_workers_limit'));
+    } else {
+        die "Meadow '$meadow_name' does not seem to be available on this machine, please investigate";
+    }
+    $meadow_object->pending_adjust(not $no_pend_adjust);
 
     if($self->{'run_job_id'}) {
         $worker_limit = 1;
     }
-    $meadow->submitted_workers_limit($worker_limit);
-    $meadow->pipeline_name($pipeline_name);
+    $meadow_object->submitted_workers_limit($worker_limit);
+    $meadow_object->pipeline_name($pipeline_name);
 
     if($reset_job_id) { $queen->reset_and_fetch_job_by_dbID($reset_job_id); }
 
@@ -215,18 +236,18 @@ sub main {
 
     if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { $queen->check_for_dead_workers($meadow, 1); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($meadow_object, 1); }
 
     if ($kill_worker_id) {
         my $worker = $queen->fetch_by_dbID($kill_worker_id);
-        if( $meadow->responsible_for_worker($worker)
+        if( $meadow_object->responsible_for_worker($worker)
         and not defined($worker->cause_of_death())) {
 
             printf("KILL: %10d %35s %15s  %20s(%d) : ", 
                 $worker->dbID, $worker->host, $worker->process_id, 
                 $worker->analysis->logic_name, $worker->analysis->dbID);
 
-            $meadow->kill_worker($worker);
+            $meadow_object->kill_worker($worker);
             $worker->cause_of_death('KILLED_BY_USER');
             $queen->register_worker_death($worker);
                 # what about clean-up? Should we do it here or not?
@@ -237,7 +258,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $meadow, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $meadow_object, $analysis);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -349,7 +370,7 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $meadow, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $meadow_object, $this_analysis) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -359,7 +380,7 @@ sub run_autonomously {
     my $worker_cmd = generate_worker_cmd($self);
 
         # pre-hash the resource_class xparams for future use:
-    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($meadow->type());
+    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($meadow_object->type());
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -374,20 +395,20 @@ sub run_autonomously {
 
         print("\n======= beekeeper loop ** $iteration **==========\n");
 
-        $queen->check_for_dead_workers($meadow, 0);
+        $queen->check_for_dead_workers($meadow_object, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
 
-        my ($total_workers_to_run, $workers_to_run_by_rc_id) = $queen->schedule_workers_resync_if_necessary($meadow, $this_analysis);
+        my ($total_workers_to_run, $workers_to_run_by_rc_id) = $queen->schedule_workers_resync_if_necessary($meadow_object, $this_analysis);
 
         if($total_workers_to_run) {
             foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
                 my $this_rc_worker_count = $workers_to_run_by_rc_id->{$rc_id};
 
-                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$meadow->type()."\n";
+                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$meadow_object->type()."\n";
 
-                $meadow->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
+                $meadow_object->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
@@ -501,6 +522,7 @@ __DATA__
     -local_cpus <num>         : max # workers to be running locally
     -wlimit <num>             : max # workers to create per loop
     -no_pend                  : don't adjust needed workers by pending workers
+    -meadow_name <string>     : the desired Meadow class name, such as 'LSF' or 'LOCAL'
     -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
