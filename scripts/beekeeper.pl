@@ -46,8 +46,8 @@ sub main {
     my $local                       = 0;
     my $show_failed_jobs            = 0;
     my $no_pend_adjust              = 0;
-    my $worker_limit                = 50;
-    my $local_cpus                  = 2;
+    my $submit_workers_max          = 50;
+    my $total_workers_max           = undef;
     my $meadow_name                 = '';
     my $meadow_options              = '';
     my $run                         = 0;
@@ -93,8 +93,8 @@ sub main {
 
                     # meadow control
                'local!'            => \$local,
-               'local_cpus=i'      => \$local_cpus,
-               'wlimit=i'          => \$worker_limit,
+               'total_workers_max|local_cpus=i'  => \$total_workers_max,
+               'submit_workers_max|wlimit=i' => \$submit_workers_max,
                'no_pend'           => \$no_pend_adjust,
                'meadow_name=s'     => \$meadow_name,
                'meadow_options=s'  => \$meadow_options,
@@ -205,21 +205,20 @@ sub main {
 
     $meadow_name = 'Bio::EnsEMBL::Hive::Meadow::'.uc($meadow_name)  unless($meadow_name=~/::/);
 
-    my $meadow_object;
-    if($available_meadow_classes{$meadow_name}) {
-        warn "Current meadow: '$meadow_name'\n";
-        $meadow_object = $meadow_name->new();   
-        $meadow_object->meadow_options($meadow_options);
-        $meadow_object->total_running_workers_limit($local_cpus)    if($meadow_object->can('total_running_workers_limit'));
-    } else {
+    unless($available_meadow_classes{$meadow_name}) {
         die "Meadow '$meadow_name' does not seem to be available on this machine, please investigate";
     }
+
+    warn "Current meadow: '$meadow_name'\n";
+    my $meadow_object = $meadow_name->new();   
+    $meadow_object->meadow_options($meadow_options);
+    $meadow_object->total_running_workers_max($total_workers_max) if($total_workers_max);
     $meadow_object->pending_adjust(not $no_pend_adjust);
 
     if($self->{'run_job_id'}) {
-        $worker_limit = 1;
+        $submit_workers_max = 1;
     }
-    $meadow_object->submitted_workers_limit($worker_limit);
+    $meadow_object->submit_workers_max($submit_workers_max);
     $meadow_object->pipeline_name($pipeline_name);
 
     if($reset_job_id) { $queen->reset_and_fetch_job_by_dbID($reset_job_id); }
@@ -465,7 +464,7 @@ __DATA__
     and to send the requested number of workers to open machines via the runWorker.pl script.
 
     It is also responsible for interfacing with the Queen to identify workers which died
-    unexpectantly so that she can free the dead workers and reclaim unfinished jobs.
+    unexpectedly so that she can free the dead workers and reclaim unfinished jobs.
 
 =head1 USAGE EXAMPLES
 
@@ -478,8 +477,8 @@ __DATA__
         # Do not run any additional Workers, just check for the current status of the pipeline:
     beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-        # Run the pipeline in automatic mode (-loop), run all the workers locally (-local) and allow for 3 parallel workers (-local_cpus 3)
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -local -local_cpus 3 -loop
+        # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_name LOCAL) and allow for 3 parallel workers (-total_workers_max 3)
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_name LOCAL -total_workers_max 3 -loop
 
         # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
@@ -518,9 +517,8 @@ __DATA__
 
 =head2 Meadow control
 
-    -local                    : run jobs on local CPU (fork)
-    -local_cpus <num>         : max # workers to be running locally
-    -wlimit <num>             : max # workers to create per loop
+    -total_workers_max <num>  : max # workers to be running in parallel
+    -submit_workers_max <num> : max # workers to create per loop
     -no_pend                  : don't adjust needed workers by pending workers
     -meadow_name <string>     : the desired Meadow class name, such as 'LSF' or 'LOCAL'
     -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)

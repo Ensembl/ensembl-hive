@@ -95,14 +95,19 @@ sub kill_worker {
 
 # --------------[(combinable) means of adjusting the number of submitted workers]----------------------
 
-sub total_running_workers_limit { # if set and ->can('count_running_workers'),
+sub total_running_workers_default_max {   # no default by default :)
+
+    return undef;
+}
+
+sub total_running_workers_max { # if set and ->can('count_running_workers'),
                                   # provides a cut-off on the number of workers being submitted
     my $self = shift @_;
 
     if(scalar(@_)) { # new value is being set (which can be undef)
-        $self->{'_total_running_workers_limit'} = shift @_;
+        $self->{'_total_running_workers_max'} = shift @_;
     }
-    return $self->{'_total_running_workers_limit'};
+    return $self->{'_total_running_workers_max'} || $self->total_running_workers_default_max();
 }
 
 sub pending_adjust { # if set and ->can('count_pending_workers_by_rc_id'),
@@ -115,13 +120,13 @@ sub pending_adjust { # if set and ->can('count_pending_workers_by_rc_id'),
     return $self->{'_pending_adjust'};
 }
 
-sub submitted_workers_limit { # if set, provides a cut-off on the number of workers being submitted
+sub submit_workers_max { # if set, provides a cut-off on the number of workers being submitted
     my $self = shift @_;
 
     if(scalar(@_)) { # new value is being set (which can be undef)
-        $self->{'_submitted_workers_limit'} = shift @_;
+        $self->{'_submit_workers_max'} = shift @_;
     }
-    return $self->{'_submitted_workers_limit'};
+    return $self->{'_submit_workers_max'};
 }
 
 1;
