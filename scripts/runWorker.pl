@@ -23,7 +23,6 @@ my ($conf_file, $reg_conf, $reg_alias, $url);                   # Connection par
 my ($rc_id, $logic_name, $analysis_id, $input_id, $job_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_output_dir, $worker_output_dir, $retry_throwing_jobs);   # Worker control parameters
 my ($help, $debug, $show_analysis_stats);
-my ($batch_size, $maximise_concurrency);    # OBSOLETE options since December 2011
 
 GetOptions(
 
@@ -54,30 +53,16 @@ GetOptions(
            'worker_output_dir=s'        => \$worker_output_dir,     # will take precedence over hive_output_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
 
-           'batch_size=i'               => \$batch_size,            # OBSOLETE!
-
 # Other commands
            'h|help'                     => \$help,
            'debug=i'                    => \$debug,
            'analysis_stats'             => \$show_analysis_stats,
-
-           'maximise_concurrency=i'     => \$maximise_concurrency,  # OBSOLETE!
 
 # loose arguments interpreted as database name (for compatibility with mysql[dump])
             '<>', sub { $db_conf->{'-dbname'} = shift @_; },
 );
 
 if ($help) { script_usage(0); }
-
-if( defined($batch_size) ) {
-    print "\nERROR : -batch_size flag is obsolete, please modify batch_size of the analysis instead\n";
-    script_usage(1);
-}
-if( defined($maximise_concurrency) ) {
-    print "\nERROR : -maximise_concurrency flag is obsolete, please set the -priority of the analysis instead\n";
-    script_usage(1);
-}
-
 
 parse_conf($conf_file);
 
@@ -103,7 +88,6 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 }
 
 my $queen = $DBA->get_Queen();
-# $queen->{maximise_concurrency} = 1 if ($maximise_concurrency);
 
 my ($meadow_type, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Meadow->guess_current_type_pid_exechost();
 
@@ -133,9 +117,6 @@ eval {
          -worker_output_dir     => $worker_output_dir,
          -hive_output_dir       => $hive_output_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
-
-      ## Obsolete:
-      # -batch_size            => $batch_size,
 
       # Other parameters:
          -debug                 => $debug,
@@ -252,15 +233,11 @@ __DATA__
     -worker_output_dir <path>   : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
 
-    -batch_size <num>           : [OBSOLETE!] Please modify -batch_size of the analysis instead
-
 =head2 Other options:
 
     -help                       : print this help
     -debug <level>              : turn on debug messages at <level>
     -analysis_stats             : show status of each analysis in hive
-
-    -maximise_concurrency <0|1> : [OBSOLETE!] Please set the -priority of the analysis instead
 
 =head1 CONTACT
 

@@ -67,7 +67,6 @@ sub main {
 
     $self->{'sleep_minutes'}        = 1;
     $self->{'verbose_stats'}        = 1;
-    $self->{'maximise_concurrency'} = undef;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'hive_output_dir'} = undef;
 
@@ -107,9 +106,6 @@ sub main {
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
                'debug=i'                => \$self->{'debug'},
 
-               'batch_size=i'           => \$self->{'batch_size'},              # OBSOLETE!
-               'maximise_concurrency=i' => \$self->{'maximise_concurrency'},    # OBSOLETE!
-
                     # other commands/options
                'h|help'            => \$help,
                'sync'              => \$sync,
@@ -131,15 +127,6 @@ sub main {
     );
 
     if ($help) { script_usage(0); }
-
-    if( defined($self->{'batch_size'}) ) {
-        print "\nERROR : -batch_size flag is obsolete, please modify batch_size of the analysis instead\n";
-        script_usage(1);
-    }
-    if( defined($self->{'maximise_concurrency'}) ) {
-        print "\nERROR : -maximise_concurrency flag is obsolete, please set the -priority of the analysis instead\n";
-        script_usage(1);
-    }
 
     parse_conf($self, $conf_file);
 
@@ -170,7 +157,6 @@ sub main {
     }
 
     my $queen = $self->{'dba'}->get_Queen;
-    # $queen->{'maximise_concurrency'} = 1 if ($self->{'maximise_concurrency'});
     $queen->{'verbose_stats'} = $self->{'verbose_stats'};
 
     my $pipeline_name = destringify(
@@ -358,7 +344,7 @@ sub generate_worker_cmd {
     if ($self->{'run_job_id'}) {
         $worker_cmd .= " -job_id ".$self->{'run_job_id'};
     } else {
-        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'maximise_concurrency', 'retry_throwing_jobs', 'hive_output_dir', 'debug') {
+        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'retry_throwing_jobs', 'hive_output_dir', 'debug') {
             if(defined(my $value = $self->{$worker_option})) {
                 $worker_cmd .= " -${worker_option} $value";
             }
@@ -531,9 +517,6 @@ __DATA__
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
     -debug <debug_level>        : set debug level of the workers
-
-    -batch_size <num>           : [OBSOLETE!] Please modify batch_size of the analysis instead
-    -maximise_concurrency 1     : [OBSOLETE!] Please set the -priority of the analysis instead
 
 =head2 Other commands/options
 
