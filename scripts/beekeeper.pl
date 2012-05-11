@@ -4,25 +4,17 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'find_submodules');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
+use Bio::EnsEMBL::Hive::Valley;
 
 main();
 
 sub main {
-
-    my %available_meadow_classes = ();
-    foreach my $meadow_class (@{ find_submodules('Bio::EnsEMBL::Hive::Meadow') }) {
-        eval "require $meadow_class";
-        if($meadow_class->available) {
-            $available_meadow_classes{$meadow_class}=1;
-        }
-    }
-
     $| = 1;
     Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -48,7 +40,7 @@ sub main {
     my $no_pend_adjust              = 0;
     my $submit_workers_max          = 50;
     my $total_workers_max           = undef;
-    my $meadow_name                 = '';
+    my $meadow_name                 = undef;
     my $meadow_options              = '';
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
@@ -178,25 +170,12 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
+    $meadow_name = 'LOCAL' if($local);
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( -current_meadow_class => $meadow_name );
 
-    unless($meadow_name or $local) {    # first try anything but local
-        foreach my $mn (keys %available_meadow_classes) {
-            if($mn!~/LOCAL$/i) {
-                $meadow_name = $mn;
-                last;
-            }
-        }
-    }
-    $meadow_name ||= 'LOCAL';           # but default to local in the end
-
-    $meadow_name = 'Bio::EnsEMBL::Hive::Meadow::'.uc($meadow_name)  unless($meadow_name=~/::/);
-
-    unless($available_meadow_classes{$meadow_name}) {
-        die "Meadow '$meadow_name' does not seem to be available on this machine, please investigate";
-    }
-
-    warn "Current meadow: '$meadow_name'\n";
-    my $meadow_object = $meadow_name->new();   
+    my $current_meadow_class = $valley->current_meadow_class();
+    warn "Current meadow: '$current_meadow_class'\n";
+    my $meadow_object = $current_meadow_class->new();   
     $meadow_object->meadow_options($meadow_options);
     $meadow_object->total_running_workers_max($total_workers_max) if($total_workers_max);
     $meadow_object->pending_adjust(not $no_pend_adjust);
