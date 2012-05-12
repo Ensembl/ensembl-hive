@@ -23,6 +23,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
+use Sys::Hostname;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 
@@ -93,6 +94,29 @@ sub current_meadow_class {
         }
     }
     return $self->{_current_meadow_name} ||= $self->get_available_meadow_classes_list->[0];     # take the first from preference list
+}
+
+
+sub guess_current_type_pid_exechost {
+    my $self = shift @_;
+
+    my ($type, $pid);
+    foreach my $meadow_class (@{ $self->get_available_meadow_classes_list }) {
+        eval {
+            $pid = $meadow_class->get_current_worker_process_id();
+            $type = $meadow_class->type();
+        };
+        unless($@) {
+            last;
+        }
+    }
+    unless($pid) {
+        die "Could not determine the Meadow, please investigate";
+    }
+
+    my $exechost = hostname();
+
+    return ($type, $pid, $exechost);
 }
 
 

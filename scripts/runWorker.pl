@@ -7,7 +7,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
-use Bio::EnsEMBL::Hive::Meadow;
+use Bio::EnsEMBL::Hive::Valley;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
@@ -89,7 +89,7 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 
 my $queen = $DBA->get_Queen();
 
-my ($meadow_type, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Meadow->guess_current_type_pid_exechost();
+my ($meadow_type, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->guess_current_type_pid_exechost();
 
 print "runWorker(-MeadowType => $meadow_type, -ProcessId => $process_id, -ExecHost => $exec_host)\n";
 
