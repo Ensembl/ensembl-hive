@@ -40,7 +40,7 @@ sub main {
     my $no_pend_adjust              = 0;
     my $submit_workers_max          = 50;
     my $total_workers_max           = undef;
-    my $meadow_name                 = undef;
+    my $meadow_type                 = undef;
     my $meadow_options              = '';
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
@@ -87,7 +87,7 @@ sub main {
                'total_workers_max|local_cpus=i'  => \$total_workers_max,
                'submit_workers_max|wlimit=i' => \$submit_workers_max,
                'no_pend'           => \$no_pend_adjust,
-               'meadow_name=s'     => \$meadow_name,
+               'meadow_type=s'     => \$meadow_type,
                'meadow_options=s'  => \$meadow_options,
 
                     # worker control
@@ -170,8 +170,8 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
-    $meadow_name = 'LOCAL' if($local);
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( -current_meadow_class => $meadow_name );
+    $meadow_type = 'LOCAL' if($local);
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( -current_meadow_class => $meadow_type );
 
     my $current_meadow_class = $valley->current_meadow_class();
     warn "Current meadow: '$current_meadow_class'\n";
@@ -442,8 +442,8 @@ __DATA__
         # Do not run any additional Workers, just check for the current status of the pipeline:
     beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-        # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_name LOCAL) and allow for 3 parallel workers (-total_workers_max 3)
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_name LOCAL -total_workers_max 3 -loop
+        # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_type LOCAL) and allow for 3 parallel workers (-total_workers_max 3)
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_workers_max 3 -loop
 
         # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
@@ -485,7 +485,7 @@ __DATA__
     -total_workers_max <num>  : max # workers to be running in parallel
     -submit_workers_max <num> : max # workers to create per loop
     -no_pend                  : don't adjust needed workers by pending workers
-    -meadow_name <string>     : the desired Meadow class name, such as 'LSF' or 'LOCAL'
+    -meadow_type <string>     : the desired Meadow class name, such as 'LSF' or 'LOCAL'
     -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
