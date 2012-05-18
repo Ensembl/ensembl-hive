@@ -93,7 +93,7 @@ sub current_meadow_class {
             die "Meadow '$current_meadow_class' does not seem to be available on this machine, please investigate";
         }
     }
-    return $self->{_current_meadow_name} ||= $self->get_available_meadow_classes_list->[0];     # take the first from preference list
+    return $self->{_current_meadow_class} ||= $self->get_available_meadow_classes_list->[0];     # take the first from preference list
 }
 
 
