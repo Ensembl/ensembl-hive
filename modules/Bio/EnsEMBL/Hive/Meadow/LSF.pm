@@ -12,6 +12,15 @@ sub available {     # always invoked as a class method
     return `which bjobs 2>/dev/null`;
 }
 
+sub name {
+
+    my $mcni = 'My cluster name is';
+    if(my $name = `lsid | grep '$mcni'`) {
+        $name=~/^$mcni\s+(\w+)/;
+        return $1;
+    }
+}
+
 
 sub get_current_worker_process_id {
     my ($self) = @_;

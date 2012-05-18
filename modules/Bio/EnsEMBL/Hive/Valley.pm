@@ -97,14 +97,15 @@ sub current_meadow_class {
 }
 
 
-sub guess_current_type_pid_exechost {
+sub whereami {
     my $self = shift @_;
 
-    my ($type, $pid);
+    my ($meadow_type, $meadow_name, $pid);
     foreach my $meadow_class (@{ $self->get_available_meadow_classes_list }) {
         eval {
-            $pid = $meadow_class->get_current_worker_process_id();
-            $type = $meadow_class->type();
+            $pid         = $meadow_class->get_current_worker_process_id();
+            $meadow_type = $meadow_class->type();
+            $meadow_name = $meadow_class->name();
         };
         unless($@) {
             last;
@@ -116,7 +117,7 @@ sub guess_current_type_pid_exechost {
 
     my $exechost = hostname();
 
-    return ($type, $pid, $exechost);
+    return ($meadow_type, $meadow_name, $pid, $exechost);
 }
 
 

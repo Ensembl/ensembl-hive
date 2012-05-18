@@ -114,6 +114,11 @@ sub meadow_type {
   $self->{'_meadow_type'} = shift if(@_);
   return $self->{'_meadow_type'};
 }
+sub meadow_name {
+  my $self = shift;
+  $self->{'_meadow_name'} = shift if(@_);
+  return $self->{'_meadow_name'};
+}
 sub debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);

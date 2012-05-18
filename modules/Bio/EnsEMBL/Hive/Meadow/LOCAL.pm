@@ -14,6 +14,12 @@ sub available {     # always invoked as a class method
 }
 
 
+sub name {
+
+    return hostname();
+}
+
+
 sub total_running_workers_default_max {
 
     return 2;
@@ -26,6 +32,7 @@ sub get_current_worker_process_id {
     return $$;
 }
 
+
 sub count_running_workers {
     my $self = shift @_;
 
@@ -36,11 +43,6 @@ sub count_running_workers {
     return $run_count;
 }
 
-sub responsible_for_worker {
-    my ($self, $worker) = @_;
-
-    return ( $self->SUPER::responsible_for_worker($worker) && ($worker->host eq hostname()) );
-}
 
 sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
@@ -76,6 +78,7 @@ sub status_of_all_our_workers { # returns a hashref
     return \%status_hash;
 }
 
+
 sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
@@ -85,6 +88,7 @@ sub check_worker_is_alive_and_mine {
 
     return $is_alive_and_mine;
 }
+
 
 sub kill_worker {
     my ($self, $worker) = @_;
@@ -100,6 +104,7 @@ sub kill_worker {
         warn 'Cannot kill worker '.$worker->process_id().'@'.$worker->host.' it is probably running on a different host';
     }
 }
+
 
 sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;

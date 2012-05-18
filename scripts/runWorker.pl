@@ -89,9 +89,9 @@ unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
 
 my $queen = $DBA->get_Queen();
 
-my ($meadow_type, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->guess_current_type_pid_exechost();
+my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
 
-print "runWorker(-MeadowType => $meadow_type, -ProcessId => $process_id, -ExecHost => $exec_host)\n";
+print "runWorker(-MeadowType => $meadow_type, -MeadowName => $meadow_name, -ProcessId => $process_id, -ExecHost => $exec_host)\n";
 
 my $worker;
 
@@ -99,6 +99,7 @@ eval {
     $worker = $queen->create_new_worker(
       # Worker identity:
          -meadow_type           => $meadow_type,
+         -meadow_name           => $meadow_name,
          -process_id            => $process_id,
          -exec_host             => $exec_host,
 

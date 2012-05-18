@@ -59,7 +59,7 @@ sub generate_job_name {
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
-    return $worker->meadow_type() eq $self->type();
+    return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->name);
 }
 
 sub check_worker_is_alive_and_mine {

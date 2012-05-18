@@ -98,6 +98,7 @@ CREATE TABLE worker (
   worker_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   analysis_id      INTEGER NOT NULL,
   meadow_type      TEXT NOT NULL, /* enum('LSF', 'LOCAL') NOT NULL, */
+  meadow_name      varchar(40) DEFAULT NULL,
   host	           varchar(40) DEFAULT NULL,
   process_id       varchar(40) DEFAULT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,

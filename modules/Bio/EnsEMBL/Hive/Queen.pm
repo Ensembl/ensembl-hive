@@ -97,11 +97,11 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub create_new_worker {
   my ($self, @args) = @_;
 
-  my (  $meadow_type, $process_id, $exec_host,
+  my (  $meadow_type, $meadow_name, $process_id, $exec_host,
         $rc_id, $logic_name, $analysis_id, $input_id, $job_id,
         $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
 
- rearrange([qw(meadow_type process_id exec_host
+ rearrange([qw(meadow_type meadow_name process_id exec_host
         rc_id logic_name analysis_id input_id job_id
         no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
 
@@ -198,11 +198,11 @@ sub create_new_worker {
   }
 
   my $sql = q{INSERT INTO worker 
-              (born, last_check_in, meadow_type, process_id, host, analysis_id)
-              VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?,?,?,?)};
+              (born, last_check_in, meadow_type, meadow_name, process_id, host, analysis_id)
+              VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?,?,?,?,?)};
 
   my $sth = $self->prepare($sql);
-  $sth->execute($meadow_type, $process_id, $exec_host, $analysisStats->analysis_id);
+  $sth->execute($meadow_type, $meadow_name, $process_id, $exec_host, $analysisStats->analysis_id);
   my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id');
   $sth->finish;
 
@@ -1016,6 +1016,7 @@ sub _columns {
   return qw (w.worker_id
              w.analysis_id
              w.meadow_type
+             w.meadow_name
              w.host
              w.process_id
              w.work_done
@@ -1041,6 +1042,7 @@ sub _objs_from_sth {
 
     $worker->dbID($column{'worker_id'});
     $worker->meadow_type($column{'meadow_type'});
+    $worker->meadow_name($column{'meadow_name'});
     $worker->host($column{'host'});
     $worker->process_id($column{'process_id'});
     $worker->work_done($column{'work_done'});
