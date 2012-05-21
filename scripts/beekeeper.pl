@@ -171,20 +171,20 @@ sub main {
     }
 
     $meadow_type = 'LOCAL' if($local);
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( -current_meadow_class => $meadow_type );
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( $meadow_type );
 
-    my $current_meadow_class = $valley->current_meadow_class();
-    warn "Current meadow: '$current_meadow_class'\n";
-    my $meadow_object = $current_meadow_class->new();   
-    $meadow_object->meadow_options($meadow_options);
-    $meadow_object->total_running_workers_max($total_workers_max) if($total_workers_max);
-    $meadow_object->pending_adjust(not $no_pend_adjust);
+    my $current_meadow = $valley->get_current_meadow();
+    warn "Current meadow: ".$current_meadow->toString."\n";
+
+    $current_meadow->pipeline_name($pipeline_name);
+    $current_meadow->meadow_options($meadow_options);
+    $current_meadow->total_running_workers_max($total_workers_max) if($total_workers_max);
+    $current_meadow->pending_adjust(not $no_pend_adjust);
 
     if($self->{'run_job_id'}) {
         $submit_workers_max = 1;
     }
-    $meadow_object->submit_workers_max($submit_workers_max);
-    $meadow_object->pipeline_name($pipeline_name);
+    $current_meadow->submit_workers_max($submit_workers_max);
 
     if($reset_job_id) { $queen->reset_and_fetch_job_by_dbID($reset_job_id); }
 
@@ -200,21 +200,27 @@ sub main {
 
     if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { $queen->check_for_dead_workers($meadow_object, 1); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($current_meadow, 1); }
 
     if ($kill_worker_id) {
         my $worker = $queen->fetch_by_dbID($kill_worker_id);
-        if( $meadow_object->responsible_for_worker($worker)
-        and not defined($worker->cause_of_death())) {
 
-            printf("KILL: %10d %35s %15s  %20s(%d) : ", 
-                $worker->dbID, $worker->host, $worker->process_id, 
-                $worker->analysis->logic_name, $worker->analysis->dbID);
+        unless( $worker->cause_of_death() ) {
+            if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
 
-            $meadow_object->kill_worker($worker);
-            $worker->cause_of_death('KILLED_BY_USER');
-            $queen->register_worker_death($worker);
-                # what about clean-up? Should we do it here or not?
+                printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
+                        $worker->dbID, $worker->host, $worker->process_id, 
+                        $worker->analysis->logic_name, $worker->analysis->dbID);
+
+                $meadow->kill_worker($worker);
+                $worker->cause_of_death('KILLED_BY_USER');
+                $queen->register_worker_death($worker);
+                     # what about clean-up? Should we do it here or not?
+            } else {
+                die "Could not access meadow responsible for worker (dbID=$kill_worker_id), so cannot kill";
+            }
+        } else {
+            die "Worker (dbID=$kill_worker_id) already dead, so cannot kill";
         }
     }
 
@@ -222,7 +228,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $meadow_object, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $current_meadow, $analysis);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -334,7 +340,7 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $meadow_object, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $current_meadow, $this_analysis) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -344,7 +350,7 @@ sub run_autonomously {
     my $worker_cmd = generate_worker_cmd($self);
 
         # pre-hash the resource_class xparams for future use:
-    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($meadow_object->type());
+    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($current_meadow->type());
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -359,20 +365,20 @@ sub run_autonomously {
 
         print("\n======= beekeeper loop ** $iteration **==========\n");
 
-        $queen->check_for_dead_workers($meadow_object, 0);
+        $queen->check_for_dead_workers($current_meadow, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
 
-        my ($total_workers_to_run, $workers_to_run_by_rc_id) = $queen->schedule_workers_resync_if_necessary($meadow_object, $this_analysis);
+        my ($total_workers_to_run, $workers_to_run_by_rc_id) = $queen->schedule_workers_resync_if_necessary($current_meadow, $this_analysis);
 
         if($total_workers_to_run) {
             foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
                 my $this_rc_worker_count = $workers_to_run_by_rc_id->{$rc_id};
 
-                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$meadow_object->type()."\n";
+                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$current_meadow->type()."\n";
 
-                $meadow_object->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
+                $current_meadow->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";

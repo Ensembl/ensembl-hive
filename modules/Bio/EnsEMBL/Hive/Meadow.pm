@@ -23,6 +23,14 @@ sub type { # should return 'LOCAL' or 'LSF'
     return (reverse split(/::/, $class ))[0];
 }
 
+
+sub toString {
+    my $self = shift @_;
+
+    return "Meadow[type='".$self->type."', name='".$self->name."']";
+}
+
+
 sub pipeline_name { # if set, provides a filter for job-related queries
     my $self = shift @_;
 
