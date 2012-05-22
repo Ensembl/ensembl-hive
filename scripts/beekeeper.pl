@@ -186,7 +186,7 @@ sub main {
     }
     $current_meadow->submit_workers_max($submit_workers_max);
 
-    if($reset_job_id) { $queen->reset_and_fetch_job_by_dbID($reset_job_id); }
+    if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
     if($job_id_for_output) {
         printf("===== job output\n");

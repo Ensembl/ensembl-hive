@@ -141,8 +141,11 @@ sub create_new_worker {
         if($analysis_id) {
             die "When you specify -job_id, please omit both -logic_name and -analysis_id to avoid confusion\n";
         } else {
-            print "fetching job for job_id '$job_id'\n";
-            if($job = $self->reset_and_fetch_job_by_dbID($job_id)) {
+            print "resetting and fetching job for job_id '$job_id'\n";
+
+            my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+            $job_adaptor->reset_job_by_dbID($job_id); 
+            if($job = $job_adaptor->fetch_by_dbID($job_id)) {
                 $analysis_id = $job->analysis_id;
             } else {
                 die "job_id '$job_id' could not be fetched from the database\n";
@@ -350,36 +353,32 @@ sub check_in_worker {
 }
 
 
-=head2 reset_and_fetch_job_by_dbID
+=head2 reset_job_by_dbID_and_sync
 
   Arg [1]: int $job_id
   Example: 
-    my $job = $queen->reset_and_fetch_job_by_dbID($job_id);
+    my $job = $queen->reset_job_by_dbID_and_sync($job_id);
   Description: 
     For the specified job_id it will fetch just that job, 
     reset it completely as if it has never run, and return it.  
     Specifying a specific job bypasses the safety checks, 
     thus multiple workers could be running the 
     same job simultaneously (use only for debugging).
-  Returntype : 
-    Bio::EnsEMBL::Hive::AnalysisJob object
+  Returntype : none
   Exceptions :
-  Caller     : beekeepers, runWorker.pl scripts
+  Caller     : beekeeper.pl
 
 =cut
 
-sub reset_and_fetch_job_by_dbID {
-  my $self = shift;
-  my $job_id = shift;
-  
-  my $jobDBA = $self->db->get_AnalysisJobAdaptor;
-  $jobDBA->reset_job_by_dbID($job_id); 
+sub reset_job_by_dbID_and_sync {
+    my ($self, $job_id) = @_;
 
-  my $job = $jobDBA->fetch_by_dbID($job_id); 
-  my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
-  $self->synchronize_AnalysisStats($stats);
-  
-  return $job;
+    my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+    $job_adaptor->reset_job_by_dbID($job_id); 
+
+    my $job = $job_adaptor->fetch_by_dbID($job_id); 
+    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
+    $self->synchronize_AnalysisStats($stats);
 }
 
 
