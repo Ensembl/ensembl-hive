@@ -34,7 +34,7 @@ sub meadow_class_path {
 
 
 sub new {
-    my ($class, $current_meadow_class) = @_;
+    my ($class, $current_meadow_type) = @_;
 
     my $self = bless {}, $class;
 
@@ -44,11 +44,11 @@ sub new {
     foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
         eval "require $meadow_class";
         if($meadow_class->available) {
-            $amch->{$meadow_class} = $meadow_class->new();
+            $amch->{$meadow_class->type} = $meadow_class->new();
         }
     }
 
-    $self->set_current_meadow_class($current_meadow_class);     # run this method even if $current_meadow_class was not given
+    $self->set_current_meadow_type($current_meadow_type);     # run this method even if $current_meadow_type was not specified
 
     return $self;
 }
@@ -73,18 +73,14 @@ sub get_available_meadow_list {     # this beautiful one-liner pushes $local to 
 }
 
 
-sub set_current_meadow_class {
-    my ($self, $current_meadow_class) = @_;
+sub set_current_meadow_type {
+    my ($self, $current_meadow_type) = @_;
 
-    if($current_meadow_class) {
-        unless($current_meadow_class=~/::/) {       # extend the shorthand into full class name if needed
-            $current_meadow_class = $self->meadow_class_path .'::'. uc($current_meadow_class);
-        }
-
-        if( my $current_meadow = $self->available_meadow_hash->{$current_meadow_class} ) {   # store if available
+    if($current_meadow_type) {
+        if( my $current_meadow = $self->available_meadow_hash->{$current_meadow_type} ) {   # store if available
             $self->{_current_meadow} = $current_meadow;
         } else {
-            die "Meadow '$current_meadow_class' does not seem to be available on this machine, please investigate";
+            die "Meadow '$current_meadow_type' does not seem to be available on this machine, please investigate";
         }
     } else {
         $self->{_current_meadow} = $self->get_available_meadow_list->[0];     # take the first from preference list
@@ -102,8 +98,8 @@ sub get_current_meadow {
 sub find_available_meadow_responsible_for_worker {
     my ($self, $worker) = @_;
 
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        if( $meadow->responsible_for_worker($worker) ) {
+    if( my $meadow = $self->available_meadow_hash->{$worker->meadow_type} ) {
+        if($meadow->name eq $worker->meadow_name) {
             return $meadow;
         }
     }
