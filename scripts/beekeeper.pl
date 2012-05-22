@@ -208,19 +208,23 @@ sub main {
         unless( $worker->cause_of_death() ) {
             if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
 
-                printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
-                        $worker->dbID, $worker->host, $worker->process_id, 
-                        $worker->analysis->logic_name, $worker->analysis->dbID);
+                if( $meadow->check_worker_is_alive_and_mine ) {
+                    printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
+                            $worker->dbID, $worker->host, $worker->process_id, 
+                            $worker->analysis->logic_name, $worker->analysis->dbID);
 
-                $meadow->kill_worker($worker);
-                $worker->cause_of_death('KILLED_BY_USER');
-                $queen->register_worker_death($worker);
-                     # what about clean-up? Should we do it here or not?
+                    $meadow->kill_worker($worker);
+                    $worker->cause_of_death('KILLED_BY_USER');
+                    $queen->register_worker_death($worker);
+                         # what about clean-up? Should we do it here or not?
+                } else {
+                    die "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
+                }
             } else {
-                die "Could not access meadow responsible for worker (dbID=$kill_worker_id), so cannot kill";
+                die "Cannot access the Meadow responsible for the Worker (dbID=$kill_worker_id), so cannot kill";
             }
         } else {
-            die "Worker (dbID=$kill_worker_id) already dead, so cannot kill";
+            die "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
         }
     }
 

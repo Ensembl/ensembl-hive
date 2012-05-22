@@ -88,14 +88,10 @@ sub check_worker_is_alive_and_mine {
 }
 
 sub kill_worker {
-    my ($self, $worker) = @_;
+    my $worker = pop @_;
 
-    if($self->check_worker_is_alive_and_mine($worker)) {
-        my $cmd = 'bkill '.$worker->process_id();
-        system($cmd);
-    } else {
-        warn 'Cannot kill worker '.$worker->process_id().' because it is not running';
-    }
+    my $cmd = 'bkill '.$worker->process_id();
+    system($cmd);
 }
 
 sub find_out_causes {

@@ -91,18 +91,10 @@ sub check_worker_is_alive_and_mine {
 
 
 sub kill_worker {
-    my ($self, $worker) = @_;
+    my $worker = pop @_;
 
-    if( $self->responsible_for_worker($worker) ) {
-        if($self->check_worker_is_alive_and_mine($worker)) {
-            my $cmd = 'kill -9 '.$worker->process_id();
-            system($cmd);
-        } else {
-            warn 'Cannot kill worker '.$worker->process_id().' because it is not running';
-        }
-    } else {
-        warn 'Cannot kill worker '.$worker->process_id().'@'.$worker->host.' it is probably running on a different host';
-    }
+    my $cmd = 'kill -9 '.$worker->process_id();
+    system($cmd);
 }
 
 
