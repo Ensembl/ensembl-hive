@@ -673,20 +673,17 @@ sub count_running_workers {
 sub schedule_workers {
   my ($self, $filter_analysis, $orig_pending_by_rc_id, $available_submit_limit) = @_;
 
-  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $clearly_needed_analyses     = $statsDBA->fetch_by_needed_workers(undef);
-  my $potentially_needed_analyses = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
-  my @all_analyses = (@$clearly_needed_analyses, @$potentially_needed_analyses);
+  my $statsDBA                      = $self->db->get_AnalysisStatsAdaptor;
+  my $clearly_needed_analyses       = $statsDBA->fetch_by_needed_workers(undef);
+  my $potentially_needed_analyses   = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
+  my @all_analyses                  = (@$clearly_needed_analyses, @$potentially_needed_analyses);
 
-  return 0 unless(@all_analyses);
+  return {} unless(@all_analyses);
 
-  my $available_load = 1.0 - $self->get_hive_current_load();
-
-  return 0 if($available_load <=0.0);
-
-  my %pending_by_rc_id = %{ $orig_pending_by_rc_id || {} };
-  my $total_workers_to_run = 0;
-  my %workers_to_run_by_rc_id = ();
+  my %pending_by_rc_id          = %{ $orig_pending_by_rc_id || {} };
+  my $total_workers_to_run      = 0;
+  my %workers_to_run_by_rc_id   = ();
+  my $available_load            = 1.0 - $self->get_hive_current_load();
 
   foreach my $analysis_stats (@all_analyses) {
     last if ($available_load <= 0.0);
@@ -729,6 +726,8 @@ sub schedule_workers {
         $pending_by_rc_id{ $curr_rc_id }    -= $pending_this_analysis;
     }
 
+    next unless($workers_this_analysis);    # do not autovivify the hash by a zero
+
     $total_workers_to_run += $workers_this_analysis;
     $workers_to_run_by_rc_id{ $curr_rc_id } += $workers_this_analysis;
     $analysis_stats->print_stats();
@@ -736,7 +735,7 @@ sub schedule_workers {
   }
 
   printf("Scheduler suggests adding a total of %d workers [%1.5f hive_load remaining]\n", $total_workers_to_run, $available_load);
-  return ($total_workers_to_run, \%workers_to_run_by_rc_id);
+  return \%workers_to_run_by_rc_id;
 }
 
 
@@ -751,18 +750,18 @@ sub schedule_workers_resync_if_necessary {
                                     ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)
                                     : (defined($submit_limit) ? $submit_limit : $meadow_limit);
 
-    my ($total_workers_to_run, $workers_to_run_by_rc_id) = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
+    my $workers_to_run_by_rc_id = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
 
-    unless( $total_workers_to_run or $self->get_hive_current_load() or $self->count_running_workers() ) {
+    unless( keys %$workers_to_run_by_rc_id or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
 
         $self->check_for_dead_workers($meadow, 1);
         $self->synchronize_hive($analysis);
 
-        ($total_workers_to_run, $workers_to_run_by_rc_id) = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
+        $workers_to_run_by_rc_id = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
     }
 
-    return ($total_workers_to_run, $workers_to_run_by_rc_id);
+    return $workers_to_run_by_rc_id;
 }
 
 
