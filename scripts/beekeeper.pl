@@ -374,7 +374,7 @@ sub run_autonomously {
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
 
-        my $workers_to_run_by_rc_id = $queen->schedule_workers_resync_if_necessary($current_meadow, $this_analysis);
+        my $workers_to_run_by_rc_id = $queen->schedule_workers_resync_if_necessary($valley, $this_analysis);
 
         if(keys %$workers_to_run_by_rc_id) {
             foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
