@@ -286,11 +286,13 @@ sub register_worker_death {
 }
 
 sub check_for_dead_workers {    # a bit counter-intuitively only looks for current meadow's workers, not all of the dead workers.
-    my ($self, $meadow, $check_buried_in_haste) = @_;
+    my ($self, $valley, $check_buried_in_haste) = @_;
 
-    my $worker_status_hash    = $meadow->status_of_all_our_workers();
-    my %worker_status_summary = ();
-    my $queen_worker_list     = $self->fetch_overdue_workers(0);    # maybe it should return a {meadow->worker_count} hash instead?
+    my $meadow                  = $valley->get_current_meadow();
+
+    my $worker_status_hash      = $meadow->status_of_all_our_workers();
+    my %worker_status_summary   = ();
+    my $queen_worker_list       = $self->fetch_overdue_workers(0);    # maybe it should return a {meadow->worker_count} hash instead?
 
     print "====== Live workers according to    Queen:".scalar(@$queen_worker_list).", Meadow:".scalar(keys %$worker_status_hash)."\n";
 
@@ -739,7 +741,9 @@ sub schedule_workers {
 
 
 sub schedule_workers_resync_if_necessary {
-    my ($self, $meadow, $analysis) = @_;
+    my ($self, $valley, $analysis) = @_;
+
+    my $meadow              = $valley->get_current_meadow();
 
     my $pending_by_rc_id    = ($meadow->can('count_pending_workers_by_rc_id') and $meadow->pending_adjust()) ? $meadow->count_pending_workers_by_rc_id() : {};
     my $submit_limit        = $meadow->submit_workers_max();
@@ -754,7 +758,7 @@ sub schedule_workers_resync_if_necessary {
     unless( keys %$workers_to_run_by_rc_id or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
 
-        $self->check_for_dead_workers($meadow, 1);
+        $self->check_for_dead_workers($valley, 1);
         $self->synchronize_hive($analysis);
 
         $workers_to_run_by_rc_id = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);

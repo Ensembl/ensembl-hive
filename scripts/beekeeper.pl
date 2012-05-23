@@ -200,7 +200,7 @@ sub main {
 
     if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { $queen->check_for_dead_workers($current_meadow, 1); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
 
     if ($kill_worker_id) {
         my $worker = $queen->fetch_by_dbID($kill_worker_id);
@@ -232,7 +232,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $current_meadow, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -344,13 +344,14 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $current_meadow, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $this_analysis) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
         exit(1);
     }
 
+    my $current_meadow = $valley->get_current_meadow();
     my $worker_cmd = generate_worker_cmd($self);
 
         # pre-hash the resource_class xparams for future use:
@@ -369,7 +370,7 @@ sub run_autonomously {
 
         print("\n======= beekeeper loop ** $iteration **==========\n");
 
-        $queen->check_for_dead_workers($current_meadow, 0);
+        $queen->check_for_dead_workers($valley, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
