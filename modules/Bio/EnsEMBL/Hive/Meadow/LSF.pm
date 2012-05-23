@@ -7,15 +7,10 @@ use strict;
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-sub available {     # always invoked as a class method
-
-    return `which bjobs 2>/dev/null`;
-}
-
-sub name {
+sub name {  # also called to check for availability; assume LSF is available if LSF cluster_name can be established
 
     my $mcni = 'My cluster name is';
-    if(my $name = `lsid | grep '$mcni'`) {
+    if(my $name = `lsid 2>/dev/null | grep '$mcni' `) {
         $name=~/^$mcni\s+(\w+)/;
         return $1;
     }
@@ -39,6 +34,7 @@ sub get_current_worker_process_id {
     }
 }
 
+
 sub count_pending_workers_by_rc_id {
     my ($self) = @_;
 
@@ -55,6 +51,7 @@ sub count_pending_workers_by_rc_id {
 
     return \%pending_by_rc_id;
 }
+
 
 sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
@@ -76,6 +73,7 @@ sub status_of_all_our_workers { # returns a hashref
     return \%status_hash;
 }
 
+
 sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
@@ -87,12 +85,14 @@ sub check_worker_is_alive_and_mine {
     return $is_alive_and_mine;
 }
 
+
 sub kill_worker {
     my $worker = pop @_;
 
     my $cmd = 'bkill '.$worker->process_id();
     system($cmd);
 }
+
 
 sub find_out_causes {
     my $self = shift @_;
@@ -117,6 +117,7 @@ sub find_out_causes {
 
     return \%cod;
 }
+
 
 sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;

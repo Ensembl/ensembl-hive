@@ -43,7 +43,7 @@ sub new {
         # make sure modules are loaded and available ones are checked prior to setting the current one
     foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
         eval "require $meadow_class";
-        if($meadow_class->available) {
+        if($meadow_class->name) {
             $amch->{$meadow_class->type} = $meadow_class->new();
         }
     }
