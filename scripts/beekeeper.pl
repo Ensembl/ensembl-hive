@@ -171,12 +171,11 @@ sub main {
     }
 
     $meadow_type = 'LOCAL' if($local);
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( $meadow_type );
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( $meadow_type, $pipeline_name );
 
     my $current_meadow = $valley->get_current_meadow();
     warn "Current meadow: ".$current_meadow->toString."\n";
 
-    $current_meadow->pipeline_name($pipeline_name);
     $current_meadow->meadow_options($meadow_options);
     $current_meadow->total_running_workers_max($total_workers_max) if($total_workers_max);
     $current_meadow->pending_adjust(not $no_pend_adjust);
