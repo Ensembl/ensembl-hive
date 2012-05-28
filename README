@@ -17,6 +17,196 @@ Changelog:
 
 ---------------------[before EnsEMBL rel.68]----------------------------------------------------------------
 
+2012-05-28 16:18  lg4
+
+	* README, modules/Bio/EnsEMBL/Hive/ResourceDescription.pm: schema
+	  change to allow any short string for meadow_type
+
+2012-05-28 14:10  lg4
+
+	* sql/: patch_2012-05-28.sql, tables.sql: schema change to allow
+	  any short string for meadow_type
+
+2012-05-23 15:27  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: a Valley-wide (potentially
+	  multi-meadow) garbage collector
+
+2012-05-23 15:14  lg4
+
+	* scripts/beekeeper.pl: bugfix:
+	  schedule_workers_resync_if_necessary should now be run with a
+	  $valley argument
+
+2012-05-23 12:07  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Valley.pm, scripts/beekeeper.pl:
+	  pipeline_name now gets propagated to all meadows of the Valley
+	  (preparatory)
+
+2012-05-23 11:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Valley.pm, Meadow/LOCAL.pm,
+	  Meadow/LSF.pm: reuse the meadow->name() method to check for
+	  availability [cleanup]
+
+2012-05-23 11:11  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/beekeeper.pl: pass in
+	  a Valley instead of the current_meadow (preparatory)
+
+2012-05-22 17:58  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/beekeeper.pl:
+	  kill-worker-process-by-worker-id: simplified specific Meadow code
+	  by moving general checks out of them
+
+2012-05-22 17:54  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Valley.pm: the Meadow hash is now by
+	  type, so no need to iterate to find Meadow-by-Worker
+
+2012-05-22 13:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/beekeeper.pl:
+	  untangling a bit. Queen does not need to re-sync and beekeeper
+	  does not need to fetch
+
+2012-05-22 11:50  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/beekeeper.pl:
+	  simplified output interface from schedule_workers and
+	  schedule_workers_resync_if_necessary
+
+2012-05-21 22:47  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Valley.pm, scripts/beekeeper.pl: valley
+	  now contains available meadow objects, not classes; beekeeper
+	  contains corrected algorithm for killing a worker
+
+2012-05-18 15:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Valley.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/runWorker.pl,
+	  sql/patch_2012-05-18.sql, sql/tables.sql, sql/tables.sqlite:
+	  added schema and API support for meadow_name
+
+2012-05-18 14:00  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Valley.pm: fixed a typo bug
+
+2012-05-17 10:33  lg4
+
+	* scripts/beekeeper.pl: rename meadow_name to meadow_type to match
+	  the rest of the repository, before it is too late
+
+2012-05-12 08:47  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Valley.pm, scripts/runWorker.pl: moved
+	  meadow identification code to Valley.pm
+
+2012-05-11 16:40  lg4
+
+	* scripts/beekeeper.pl: moved the "meadow-collection" code into a
+	  separate class called "Valley"
+
+2012-05-11 16:39  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Valley.pm: a new class to represent a
+	  collection of available Meadows
+
+2012-05-10 16:27  lg4
+
+	* scripts/: beekeeper.pl, runWorker.pl: removed obsolete
+	  -maximise_concurrency and -batch_size options from both scripts
+
+2012-05-09 12:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm, scripts/beekeeper.pl:
+	  bugfix+feature: -local_cpus renamed into -total_workers_max and
+	  so made available for any meadow (not just LOCAL). Plus some
+	  renames
+
+2012-05-08 17:50  lg4
+
+	* scripts/beekeeper.pl: make beekeeper more Meadow-agnostic and
+	  allow it to automatically find alternative Meadow modules in the
+	  INC list
+
+2012-05-08 17:49  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/: LOCAL.pm, LSF.pm: check the
+	  availability of this Meadow on the given machine
+
+2012-05-08 17:48  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils.pm: new function for finding all
+	  modules in a "directory" across the whole INC list
+
+2012-05-02 15:59  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/: AnalysisCtrlRuleAdaptor.pm,
+	  DataflowRuleAdaptor.pm: removed create_rule() method that is no
+	  longer used
+
+2012-05-02 15:54  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: explicit
+	  new->store rules; retiring create_rule(); switch to using
+	  toString()
+
+2012-05-02 15:53  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisCtrlRule.pm, DataflowRule.pm:
+	  switch to using uniform toString() diagnostic method
+
+2012-05-02 12:10  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: DataflowRule.pm,
+	  DBSQL/DataflowRuleAdaptor.pm: move input_id_template
+	  stringification into DFR class
+
+2012-05-01 17:04  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisCtrlRuleAdaptor.pm:
+	  remove_by_condition_analysis_url() is no longer used by Compara,
+	  so has been removed
+
+2012-05-01 16:37  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Process.pm, Worker.pm: a Process does
+	  not need a reference to the Queen
+
+2012-05-01 16:30  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Extensions.pm: analyze_tables() does not
+	  seem to be used anymore
+
+2012-05-01 15:55  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: bugfix: make sure
+	  runtime_msec is stored even when a job dies
+
+2012-05-01 10:58  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Extensions.pm, Process.pm: no longer
+	  used
+
+2012-04-23 23:04  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/GraphViz.pm,
+	  scripts/generate_graph.pl: code for showing semaphores as nested
+	  boxes
 
 
 ---------------------[after EnsEMBL rel.67]----------------------------------------------------------------
