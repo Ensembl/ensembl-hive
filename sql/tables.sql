@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
 CREATE TABLE worker (
   worker_id        int(10) unsigned NOT NULL AUTO_INCREMENT,
   analysis_id      int(10) unsigned NOT NULL,
-  meadow_type      enum('LSF', 'LOCAL') NOT NULL,
+  meadow_type      varchar(40) NOT NULL,
   meadow_name      varchar(40) DEFAULT NULL,
   host	           varchar(40) DEFAULT NULL,
   process_id       varchar(40) DEFAULT NULL,
@@ -331,7 +331,7 @@ CREATE TABLE analysis_data (
 
 CREATE TABLE resource_description (
     rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
-    meadow_type           enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL,
+    meadow_type           varchar(40) NOT NULL,
     parameters            varchar(255) DEFAULT '' NOT NULL,
     description           varchar(255),
     PRIMARY KEY(rc_id, meadow_type)
