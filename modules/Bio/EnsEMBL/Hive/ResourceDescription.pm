@@ -12,9 +12,9 @@
 
     CREATE TABLE resource_description (
         rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
-        meadow_type           enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL,
+        meadow_type           varchar(40) NOT NULL,
         parameters            varchar(255) DEFAULT '' NOT NULL,
-        description           varchar(255) DEFAULT NULL,
+        description           varchar(255),
         PRIMARY KEY(rc_id, meadow_type)
     ) ENGINE=InnoDB;
 
