@@ -7,12 +7,6 @@ use strict;
 use warnings;
 use base ('GraphViz');
 
-#my ($colorscheme, $coloroffset) = ('ylorbr9', 1);
-#my ($colorscheme, $coloroffset) = ('purples7', 1);
-#my ($colorscheme, $coloroffset) = ('orrd8', 1);
-#my ($colorscheme, $coloroffset) = ('bugn7', 0);
-my ($colorscheme, $coloroffset) = ('blues9', 1);
-
 
 sub subgraphs {
     my $self = shift @_;
@@ -20,6 +14,24 @@ sub subgraphs {
         $self->{_subgraphs} = shift @_;
     }
     return $self->{_subgraphs};
+}
+
+
+sub colour_scheme {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_colour_scheme} = shift @_;
+    }
+    return $self->{_colour_scheme};
+}
+
+
+sub colour_offset {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_colour_offset} = shift @_;
+    }
+    return $self->{_colour_offset};
 }
 
 
@@ -55,7 +67,9 @@ sub get_nodes_that_point_at {
 sub generate_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $subgraphs = $self->subgraphs();
+    my $subgraphs       = $self->subgraphs();
+    my $colour_scheme   = $self->colour_scheme();
+    my $colour_offset   = $self->colour_offset();
 
     my $prefix = "\t" x $depth;
 
@@ -63,9 +77,9 @@ sub generate_subgraph {
 
     $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
 #    $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
-    $text .= $prefix . "\tcolorscheme=$colorscheme;\n";
+    $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
     $text .= $prefix . "\tstyle=filled;\n";
-    $text .= $prefix . "\tcolor=".($depth+$coloroffset).";\n";
+    $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
 
     foreach my $node_name ( @{ $self->get_nodes_that_point_at( $cluster_name ) } ) {
 
