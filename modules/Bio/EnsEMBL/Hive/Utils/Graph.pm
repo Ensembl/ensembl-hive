@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.15 $
+$Revision: 1.16 $
 
 =cut
 
@@ -43,11 +43,12 @@ use Bio::EnsEMBL::Hive::Utils::Config;
 
 =head2 new()
 
-  Arg [DBA] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor; The adaptor to get 
-              information from
-  Arg [CONFIG] :  Bio::EnsEMBL::Hive::Utils::Config object used to
-                  control how the object is produced.
-                  If one is not given then a default instance is created
+  Arg [1] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor $dba;
+              The adaptor to get information from
+  Arg [2] : (optional) string $config_file_name;
+                  A JSON file name to initialize the Config object with.
+                  If one is not given then we don't pass anything into Config's constructor,
+                  which results in loading configuration from Config's standard locations.
   Returntype : Graph object
   Exceptions : If the parameters are not as required
   Status     : Beta
@@ -55,12 +56,12 @@ use Bio::EnsEMBL::Hive::Utils::Config;
 =cut
 
 sub new {
-  my ($class, $dba, $config_file) = @_;
+  my ($class, $dba, $config_file_name) = @_;
 
   my $self = bless({}, ref($class) || $class);
 
   $self->dba($dba);
-  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file ? $config_file : () );
+  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file_name ? $config_file_name : () );
   $self->config($config);
 
   return $self;
