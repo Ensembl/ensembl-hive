@@ -1,8 +1,16 @@
-#!/usr/bin/env perl
-
 package Bio::EnsEMBL::Hive::Utils::Config;
 
 use JSON;
+
+
+sub default_config_files {  # a class method, returns a list
+
+    my $system_config   = $ENV{'ENSEMBL_CVS_ROOT_DIR'}.'/ensembl-hive/hive_config.json';
+    my $user_config     = $ENV{'HOME'}.'/.hive_config.json';
+
+    return ($system_config, (-r $user_config) ? ($user_config) : ());
+}
+
 
 sub new {
     my $class = shift @_;
@@ -10,7 +18,7 @@ sub new {
     my $self = bless {}, $class;
     $self->config_hash( {} );
 
-    foreach my $cfg_file (@_) {
+    foreach my $cfg_file ( scalar(@_) ? @_ : $self->default_config_files ) {
         if(my $cfg_hash = $self->load_from_json($cfg_file)) {
             $self->merge($cfg_hash);
         }

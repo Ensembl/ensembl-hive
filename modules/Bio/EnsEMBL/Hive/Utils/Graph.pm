@@ -28,18 +28,16 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.13 $
+$Revision: 1.14 $
 
 =cut
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Utils::GraphViz;
 
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 
+use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 
@@ -57,10 +55,12 @@ use Bio::EnsEMBL::Hive::Utils::Config;
 =cut
 
 sub new {
-  my ($class, $dba, $config) = @_;
+  my ($class, $dba, $config_file) = @_;
 
   my $self = bless({}, ref($class) || $class);
+
   $self->dba($dba);
+  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file ? $config_file : () );
   $self->config($config);
 
   return $self;

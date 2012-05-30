@@ -11,7 +11,6 @@ use Pod::Usage;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Graph;
-use Bio::EnsEMBL::Hive::Utils::Config;
 
 my $self = bless({}, __PACKAGE__);
 
@@ -96,9 +95,7 @@ sub _process_options {
 sub _write_graph {
   my ($self) = @_;
   
-  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $ENV{'ENSEMBL_CVS_ROOT_DIR'}.'/ensembl-hive/hive_config.json' );
-
-  my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{dba}, $config );
+  my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{dba} );
   my $graphviz = $graph->build();
   
   my $call = q{as_}.$self->{format};
@@ -207,7 +204,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.8 $
+$Revision: 1.9 $
 
 =head1 REQUIREMENTS
 
