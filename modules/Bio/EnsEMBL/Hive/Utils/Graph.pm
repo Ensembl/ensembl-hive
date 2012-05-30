@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.11 $
+$Revision: 1.12 $
 
 =cut
 
@@ -40,16 +40,16 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 
-use Bio::EnsEMBL::Hive::Utils::Graph::Config;
+use Bio::EnsEMBL::Hive::Utils::Config;
 
 
 =head2 new()
 
   Arg [DBA] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor; The adaptor to get 
               information from
-  Arg [CONFIG] :  Bio::EnsEMBL::Hive::Utils::Graph::Config object used to
-                  control how the object is produced. If one is not given
-                  then a default instance is created
+  Arg [CONFIG] :  Bio::EnsEMBL::Hive::Utils::Config object used to
+                  control how the object is produced.
+                  If one is not given then a default instance is created
   Returntype : Graph object
   Exceptions : If the parameters are not as required
   Status     : Beta
@@ -57,11 +57,12 @@ use Bio::EnsEMBL::Hive::Utils::Graph::Config;
 =cut
 
 sub new {
-  my ($class, @args) = @_;
+  my ($class, $dba, $config) = @_;
+
   my $self = bless({}, ref($class) || $class);
-  my ($dba, $config) = rearrange([qw(dba config)], @args);
   $self->dba($dba);
   $self->config($config);
+
   return $self;
 }
 
@@ -106,7 +107,7 @@ sub dba {
 =head2 config()
 
   Arg [1] : The graph configuration object
-  Returntype : Graph::Config.
+  Returntype : Bio::EnsEMBL::Hive::Utils::Config.
   Exceptions : If the object given is not of the required type
   Status     : Beta
 
@@ -115,11 +116,8 @@ sub dba {
 sub config {
   my ($self, $config) = @_;
   if(defined $config) {
-    assert_ref($config, 'Bio::EnsEMBL::Hive::Utils::Graph::Config');
+    assert_ref($config, 'Bio::EnsEMBL::Hive::Utils::Config');
     $self->{config} = $config;
-  }
-  if(! exists $self->{config}) {
-    $self->{config} = Bio::EnsEMBL::Hive::Utils::Graph::Config->new();
   }
   return $self->{config};
 }
@@ -148,7 +146,7 @@ sub _midpoint_name {
 =cut
 
 sub build {
-    my ($self, $box, $stretch) = @_;
+    my ($self) = @_;
 
     my $all_analyses          = $self->dba()->get_AnalysisAdaptor()->fetch_all();
     my $all_ctrl_rules        = $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all();
@@ -185,7 +183,7 @@ sub build {
     $self->_control_rules( $all_ctrl_rules );
     $self->_dataflow_rules( $all_dataflow_rules );
 
-    if($stretch) {
+    if($self->config->get('Graph', 'DisplayStretched') ) {
         while( my($from, $to) = each %subgraph_allocation) {
             if($to) {
                 $self->graph->add_edge( $from => $to,
@@ -196,7 +194,7 @@ sub build {
         }
     }
 
-    if($box) {
+    if($self->config->get('Graph', 'DisplaySemaphoreBoxes') ) {
         $self->graph->subgraphs( \%subgraph_allocation );
     }
 
@@ -249,13 +247,16 @@ sub _allocate_to_subgraph {
 
 sub _add_hive_details {
   my ($self) = @_;
-  if($self->config()->{DisplayDetails}) {
+
+  my $node_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
+
+  if($self->config->get('Graph', 'DisplayDetails') ) {
     my $dbc = $self->dba()->dbc();
     my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
     $self->graph()->add_node( 'details',
-      label => $label,
-      fontname => $self->config()->{Fonts}->{node},
-      shape => 'plaintext' 
+      label     => $label,
+      fontname  => $node_fontname,
+      shape     => 'plaintext',
     );
   }
 }
@@ -269,15 +270,16 @@ sub _add_analysis_node {
   my $can_be_empty = $a->stats()->can('can_be_empty') && $a->stats()->can_be_empty();
   my $shape = ($can_be_empty) ? 'doubleoctagon' : 'ellipse' ;
 
-  my $config = $self->config()->{Colours}->{Status};
-  my $colour = $config->{$a->stats()->status()} || $config->{OTHER};
+  my $status_colour = $self->config->get('Graph', 'Colours', 'Status', $a->stats->status)
+                   || $self->config->get('Graph', 'Colours', 'Status', 'OTHER');
+  my $node_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
   
   $graph->add_node( _analysis_node_name( $a->dbID() ), 
     label       => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
     shape       => $shape,
     style       => 'filled',
-    fontname    => $self->config()->{Fonts}->{node},
-    fillcolor   => $colour,
+    fontname    => $node_fontname,
+    fillcolor   => $status_colour,
   );
 }
 
@@ -285,15 +287,16 @@ sub _add_analysis_node {
 sub _control_rules {
   my ($self, $all_ctrl_rules) = @_;
   
-  my $config = $self->config()->{Colours}->{Flows};
+  my $control_colour = $self->config->get('Graph', 'Colours', 'Flows', 'control');
+  my $edge_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
   my $graph = $self->graph();
 
   #The control rules are always from and to an analysis so no need to search for odd cases here
   foreach my $rule ( @$all_ctrl_rules ) {
     my ($from, $to) = ( _analysis_node_name( $rule->condition_analysis()->dbID() ), _analysis_node_name( $rule->ctrled_analysis()->dbID() ) );
     $graph->add_edge( $from => $to, 
-      color => $config->{control},
-      fontname => $self->config()->{Fonts}->{edge},
+      color => $control_colour,
+      fontname => $edge_fontname,
       arrowhead => 'tee',
     );
   }
@@ -304,7 +307,9 @@ sub _dataflow_rules {
     my ($self, $all_dataflow_rules) = @_;
 
     my $graph = $self->graph();
-    my $config = $self->config()->{Colours}->{Flows};
+    my $dataflow_colour  = $self->config->get('Graph', 'Colours', 'Flows', 'data');
+    my $semablock_colour = $self->config->get('Graph', 'Colours', 'Flows', 'semablock');
+    my $edge_fontname    = $self->config->get('Graph', 'Fonts', 'edge');
 
     my %needs_a_midpoint = ();
     my %aid2aid_nonsem = ();    # simply a directed graph between numerical analysis_ids, except for semaphored rules
@@ -342,7 +347,7 @@ sub _dataflow_rules {
             my $midpoint_name = _midpoint_name($rule_id);
 
             $graph->add_node( $midpoint_name,   # midpoint itself
-                color       => $config->{data}, 
+                color       => $dataflow_colour,
                 label       => '',
                 shape       => 'point',
                 fixedsize   => 1,
@@ -350,18 +355,18 @@ sub _dataflow_rules {
                 height      => 0.01,
             );
             $graph->add_edge( $from_node => $midpoint_name, # first half of the two-part arrow
-                color       => $config->{data}, 
+                color       => $dataflow_colour,
                 arrowhead   => 'none',
                 label       => '#'.$branch_code, 
-                fontname    => $self->config()->{Fonts}->{edge},
+                fontname    => $edge_fontname,
             );
             $graph->add_edge( $midpoint_name => $to_node,   # second half of the two-part arrow
-                color     => $config->{data}, 
+                color     => $dataflow_colour,
             );
             if($funnel_dataflow_rule_id) {
                 $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id),   # semaphore inter-rule link
-                    color     => $config->{semablock},
-                    fontname  => $self->config()->{Fonts}->{edge},
+                    color     => $semablock_colour,
+                    fontname  => $edge_fontname,
                     style     => 'dashed',
                     arrowhead => 'tee',
                     dir       => 'both',
@@ -371,9 +376,9 @@ sub _dataflow_rules {
         } else {
                 # one-part arrow:
             $graph->add_edge( $from_node => $to_node, 
-                color       => $config->{data}, 
+                color       => $dataflow_colour,
                 label       => '#'.$branch_code, 
-                fontname    => $self->config()->{Fonts}->{edge},
+                fontname    => $edge_fontname,
             );
         } # /if($needs_a_midpoint{$rule_id})
     } # /foreach my $rule (@$all_dataflow_rules)
@@ -387,8 +392,8 @@ sub _add_table_node {
     label => $table.'\n', 
     fontname => 'serif',
     shape => 'tab',
-    fontname => $self->config()->{Fonts}->{node},
-    color => $self->config()->{Colours}->{Status}->{TABLE}
+    fontname => $self->config->get('Graph', 'Fonts', 'node'),
+    color => $self->config->get('Graph', 'Colours', 'Status', 'TABLE'),
   );
 }
 

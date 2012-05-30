@@ -11,7 +11,7 @@ use Pod::Usage;
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Graph;
-use Bio::EnsEMBL::Hive::Utils::Graph::Config;
+use Bio::EnsEMBL::Hive::Utils::Config;
 
 my $self = bless({}, __PACKAGE__);
 
@@ -40,9 +40,6 @@ sub _options {
     'o|output=s'            => \$self->{output},
     'config'                => \$self->{config},
 
-    's|stretch!'            => \$self->{stretch},
-    'b|box!'                => \$self->{box},
-    
     'h|help'                => \$self->{help},
     'm|man'                 => \$self->{man},
   );
@@ -104,21 +101,16 @@ sub _process_options {
       -verbose => 1
     });
     }
-    my $hash = do $self->{config};
-    $self->{config_hash} = $hash;
   }
 }
 
 sub _write_graph {
   my ($self) = @_;
   
-  my $config = Bio::EnsEMBL::Hive::Utils::Graph::Config->new();
-  if($self->{config_hash}) {
-    $config->merge($config);
-  }
-  
-  my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $self->{dba}, -CONFIG => $config);
-  my $graphviz = $graph->build( $self->{box}, $self->{stretch} );
+  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $ENV{'ENSEMBL_CVS_ROOT_DIR'}.'/ensembl-hive/hive_config.json' );
+
+  my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{dba}, $config );
+  my $graphviz = $graph->build();
   
   my $call = q{as_}.$self->{format};
     
@@ -232,7 +224,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.6 $
+$Revision: 1.7 $
 
 =head1 REQUIREMENTS
 
