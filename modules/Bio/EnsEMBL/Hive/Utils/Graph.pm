@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.14 $
+$Revision: 1.15 $
 
 =cut
 
@@ -194,10 +194,10 @@ sub build {
         }
     }
 
-    if($self->config->get('Graph', 'SemaphoreBoxes', 'Display') ) {
+    if($self->config->get('Graph', 'DisplaySemaphoreBoxes') ) {
         $self->graph->subgraphs( \%subgraph_allocation );
-        $self->graph->colour_scheme( $self->config->get('Graph', 'SemaphoreBoxes', 'ColourScheme') );
-        $self->graph->colour_offset( $self->config->get('Graph', 'SemaphoreBoxes', 'ColourOffset') );
+        $self->graph->colour_scheme( $self->config->get('Graph', 'Colours', 'SemaphoreBoxes', 'ColourScheme') );
+        $self->graph->colour_offset( $self->config->get('Graph', 'Colours', 'SemaphoreBoxes', 'ColourOffset') );
     }
 
     return $self->graph();

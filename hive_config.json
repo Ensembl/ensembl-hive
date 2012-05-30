@@ -18,6 +18,10 @@
                 "control"    : "red",
                 "semablock"  : "red",
             },
+            "SemaphoreBoxes" : {
+                "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
+                "ColourOffset"  : 1,
+            },
         },
         "Fonts" : {
             "node" : "Helvetica",
@@ -25,11 +29,7 @@
         },
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,
-        "SemaphoreBoxes" : {
-            "Display"       : 1,
-            "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
-            "ColourOffset"  : 1,
-        },
+        "DisplaySemaphoreBoxes" : 1,
     }
 }
 
