@@ -38,7 +38,6 @@ sub _options {
     
     'f|format=s'            => \$self->{format},
     'o|output=s'            => \$self->{output},
-    'config'                => \$self->{config},
 
     'h|help'                => \$self->{help},
     'm|man'                 => \$self->{man},
@@ -92,16 +91,6 @@ sub _process_options {
         die "Format was not set and could not guess from ".$self->output().". Please use either way to select it.\n";
     }
   }
-  
-  if($self->{config}) {
-    if(! -f $self->{config}) {
-      pod2usage({
-      -message => "ERROR: Cannot find $self->{config}. Check your locations",
-      -exitvalue => 1,
-      -verbose => 1
-    });
-    }
-  }
 }
 
 sub _write_graph {
@@ -141,8 +130,8 @@ generate_graph.pl
 This program will generate a graphical representation of your hive pipeline. 
 This includes visalising the flow of data from the different analyses, blocking
 rules & table writers. The graph is also coloured to indicate the stage 
-an analysis is at. The colours & fonts used can be configured via the 
-C<--config> flag but see the option information about how to do this.
+an analysis is at. The colours & fonts used can be configured via
+hive_config.json configuration file.
 
 =head1 OPTIONS
 
@@ -155,12 +144,6 @@ The format of the file output. See FORMATS for more information
 =item B<--output>
 
 Location of the file to write to. 
-
-=item B<--config>
-
-Perl file which will return a Hash when evaluated. The hash is merged into the
-default option set for configuring the graphs produced. See 
-L<Bio::EnsEMBL::Hive::Utils::Graph::Config>
 
 =item B<-reg_conf>
 
@@ -224,7 +207,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.7 $
+$Revision: 1.8 $
 
 =head1 REQUIREMENTS
 
