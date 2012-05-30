@@ -1,0 +1,31 @@
+{
+    "Graph" : {
+        "Colours" : {
+            "Status" : {
+                "BLOCKED"     : "grey",
+                "LOADING"     : "yellow",
+                "SYNCHING"    : "yellow",
+                "READY"       : "yellow",
+                "WORKING"     : "yellow",
+                "ALL_CLAIMED" : "yellow",
+                "DONE"        : "green",
+                "FAILED"      : "red",
+                "OTHER"       : "white",
+                "TABLE"       : "black",
+            },
+            "Flows" : {
+                "data"       : "blue",
+                "control"    : "red",
+                "semablock"  : "red",
+            },
+        },
+        "Fonts" : {
+            "node" : "Helvetica",
+            "edge" : "Helvetica",
+        },
+        "DisplayDetails"        : 1,
+        "DisplaySemaphoreBoxes" : 1,
+        "DisplayStretched"      : 0,
+    }
+}
+
