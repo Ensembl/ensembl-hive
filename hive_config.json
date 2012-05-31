@@ -1,5 +1,30 @@
 {
-    "Graph" : {
+    "Meadow" : {    # configure Meadow-specific options here:
+        "LSF" : {
+            "SubmissionOptions"         : "",   # general options that different Meadows can plug into the submission command
+            "PendingAdjust"             : 1,    # if set and ->can('count_pending_workers_by_rc_id'), adjusts submitted workers by those in pending state
+            "TotalRunningWorkersMax"    : 1000, # how many workers can be run on this Meadow in total
+            "farm2" : {
+                "SubmitWorkersMax"  : 50,       # if set, provides a cut-off on the number of workers being submitted each iteration
+            },
+            "pcs4" : {
+                "SubmitWorkersMax"  : 30,
+            },
+            "EBI" : {
+                "SubmitWorkersMax"  : 60,
+            },
+        },
+        "LOCAL" : {
+            "TotalRunningWorkersMax"   : 2,
+            "my-quadcore-desktop" : {
+                "TotalRunningWorkersMax"   : 4,
+            },
+            "your-weak-laptop" : {
+                "TotalRunningWorkersMax"   : 1,
+            },
+        },
+    },
+    "Graph" : {     # configure diagram-generation options here:
         "Colours" : {
             "Status" : {
                 "BLOCKED"     : "grey",
@@ -32,4 +57,3 @@
         "DisplaySemaphoreBoxes" : 1,
     }
 }
-

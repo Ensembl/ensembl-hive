@@ -34,7 +34,7 @@ sub meadow_class_path {
 
 
 sub new {
-    my ($class, $current_meadow_type, $pipeline_name) = @_;
+    my ($class, $config, $current_meadow_type, $pipeline_name) = @_;
 
     my $self = bless {}, $class;
 
@@ -44,7 +44,7 @@ sub new {
     foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
         eval "require $meadow_class";
         if($meadow_class->name) {
-            my $meadow_object            = $meadow_class->new();
+            my $meadow_object            = $meadow_class->new( $config );
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
 

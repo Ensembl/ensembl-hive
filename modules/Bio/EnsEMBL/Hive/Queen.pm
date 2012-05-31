@@ -763,9 +763,9 @@ sub schedule_workers_resync_if_necessary {
 
     my $meadow              = $valley->get_current_meadow();
 
-    my $pending_by_rc_id    = ($meadow->can('count_pending_workers_by_rc_id') and $meadow->pending_adjust()) ? $meadow->count_pending_workers_by_rc_id() : {};
-    my $submit_limit        = $meadow->submit_workers_max();
-    my $meadow_limit        = ($meadow->can('count_running_workers') and defined($meadow->total_running_workers_max)) ? $meadow->total_running_workers_max - $meadow->count_running_workers : undef;
+    my $pending_by_rc_id    = ($meadow->can('count_pending_workers_by_rc_id') and $meadow->config_get('PendingAdjust')) ? $meadow->count_pending_workers_by_rc_id() : {};
+    my $submit_limit        = $meadow->config_get('SubmitWorkersMax');
+    my $meadow_limit        = ($meadow->can('count_running_workers') and defined($meadow->config_get('TotalRunningWorkersMax'))) ? $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers : undef;
 
     my $available_submit_limit = ($submit_limit and $meadow_limit)
                                     ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)

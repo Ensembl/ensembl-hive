@@ -2,14 +2,14 @@
 
 use strict;
 use warnings;
+use Data::Dumper;
 use Getopt::Long;
 
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Worker;
-use Bio::EnsEMBL::Hive::Queen;
+use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::URLFactory;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 
 main();
@@ -37,11 +37,11 @@ sub main {
     my $sync                        = 0;
     my $local                       = 0;
     my $show_failed_jobs            = 0;
-    my $no_pend_adjust              = 0;
-    my $submit_workers_max          = 50;
-    my $total_workers_max           = undef;
     my $meadow_type                 = undef;
-    my $meadow_options              = '';
+    my $pending_adjust              = undef;
+    my $submit_workers_max          = undef;
+    my $total_running_workers_max   = undef;
+    my $submission_options          = undef;
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
     my $run_job_id                  = undef;
@@ -83,12 +83,12 @@ sub main {
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
-               'local!'            => \$local,
-               'total_workers_max|local_cpus=i'  => \$total_workers_max,
-               'submit_workers_max|wlimit=i' => \$submit_workers_max,
-               'no_pend'           => \$no_pend_adjust,
-               'meadow_type=s'     => \$meadow_type,
-               'meadow_options=s'  => \$meadow_options,
+               'local!'                         => \$local,
+               'meadow_type=s'                  => \$meadow_type,
+               'total_running_workers_max=i'    => \$total_running_workers_max,
+               'submit_workers_max=i'           => \$submit_workers_max,
+               'pending_adjust=i'               => \$pending_adjust,
+               'submission_options=s'           => \$submission_options,
 
                     # worker control
                'job_limit|jlimit=i'     => \$self->{'job_limit'},
@@ -119,6 +119,8 @@ sub main {
     );
 
     if ($help) { script_usage(0); }
+
+    my $config = Bio::EnsEMBL::Hive::Utils::Config->new();      # will probably add a config_file option later
 
     if($run or $run_job_id) {
         $max_loops = 1;
@@ -168,20 +170,20 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
+    if($run_job_id) {
+        $submit_workers_max = 1;
+    }
+
     $meadow_type = 'LOCAL' if($local);
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( $meadow_type, $pipeline_name );
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $meadow_type, $pipeline_name );
 
     my $current_meadow = $valley->get_current_meadow();
     warn "Current meadow: ".$current_meadow->toString."\n";
 
-    $current_meadow->meadow_options($meadow_options);
-    $current_meadow->total_running_workers_max($total_workers_max) if($total_workers_max);
-    $current_meadow->pending_adjust(not $no_pend_adjust);
-
-    if($run_job_id) {
-        $submit_workers_max = 1;
-    }
-    $current_meadow->submit_workers_max($submit_workers_max);
+    $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
+    $current_meadow->config_set('PendingAdjust', $pending_adjust) if(defined $pending_adjust);
+    $current_meadow->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
+    $current_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
@@ -433,8 +435,8 @@ __DATA__
         # Do not run any additional Workers, just check for the current status of the pipeline:
     beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-        # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_type LOCAL) and allow for 3 parallel workers (-total_workers_max 3)
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_workers_max 3 -loop
+        # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_type LOCAL) and allow for 3 parallel workers (-total_running_workers_max 3)
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_running_workers_max 3 -loop
 
         # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
@@ -452,7 +454,6 @@ __DATA__
 
 =head2 Connection parameters
 
-    -conf <path>           : config file describing db connection
     -reg_conf <path>       : path to a Registry configuration file
     -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
@@ -471,13 +472,13 @@ __DATA__
     -run                   : run 1 iteration of automation loop
     -sleep <num>           : when looping, sleep <num> minutes (default 2min)
 
-=head2 Meadow control
+=head2 Current Meadow control
 
-    -total_workers_max <num>  : max # workers to be running in parallel
-    -submit_workers_max <num> : max # workers to create per loop
-    -no_pend                  : don't adjust needed workers by pending workers
-    -meadow_type <string>     : the desired Meadow class name, such as 'LSF' or 'LOCAL'
-    -meadow_options <string>  : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
+    -meadow_type <string>               : the desired Meadow class name, such as 'LSF' or 'LOCAL'
+    -total_running_workers_max <num>    : max # workers to be running in parallel
+    -submit_workers_max <num>           : max # workers to create per loop iteration
+    -pending_adjust <0|1>               : [do not] adjust needed workers by pending workers
+    -submission_options <string>        : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
 

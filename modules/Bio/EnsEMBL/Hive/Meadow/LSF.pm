@@ -123,11 +123,11 @@ sub submit_workers {
     my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
 
     my $job_name       = $self->generate_job_name($worker_count, $iteration, $rc_id);
-    my $meadow_options = $self->meadow_options();
+    my $submission_options = $self->config_get('SubmissionOptions');
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o /dev/null -J "${job_name}" $rc_parameters $meadow_options $worker_cmd -rc_id $rc_id};
+    my $cmd = qq{bsub -o /dev/null -J "${job_name}" $rc_parameters $submission_options $worker_cmd -rc_id $rc_id};
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax

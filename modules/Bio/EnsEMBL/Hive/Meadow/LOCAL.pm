@@ -14,12 +14,6 @@ sub name {  # also called to check for availability; for the moment assume LOCAL
 }
 
 
-sub total_running_workers_default_max {
-
-    return 2;
-}
-
-
 sub get_current_worker_process_id {
     my ($self) = @_;
 

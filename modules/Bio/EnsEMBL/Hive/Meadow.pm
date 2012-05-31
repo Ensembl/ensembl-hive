@@ -9,9 +9,13 @@ use warnings;
 
 
 sub new {
-    my $class = shift @_;
+    my ($class, $config) = @_;
 
-    return bless { @_ }, $class;
+    my $self = bless {}, $class;
+
+    $self->config( $config );
+
+    return $self;
 }
 
 
@@ -31,29 +35,46 @@ sub toString {
 }
 
 
+sub config {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_config'} = shift @_;
+    }
+    return $self->{'_config'};
+}
+
+
+sub config_get {
+    my $self = shift @_;
+
+    return $self->config->get('Meadow', $self->type, $self->name, @_);
+}
+
+
+sub config_set {
+    my $self = shift @_;
+
+    return $self->config->set('Meadow', $self->type, $self->name, @_);
+}
+
+
 sub pipeline_name { # if set, provides a filter for job-related queries
     my $self = shift @_;
 
-    if(scalar(@_)) { # new value is being set (which can be undef)
+    if(@_) { # new value is being set (which can be undef)
         $self->{'_pipeline_name'} = shift @_;
     }
     return $self->{'_pipeline_name'};
 }
 
-sub meadow_options {    # general options that different Meadows can plug into the submission command
-    my $self = shift @_;
-
-    if(scalar(@_)) {
-        $self->{'_meadow_options'} = shift @_;
-    }
-    return $self->{'_meadow_options'} || '';
-}
 
 sub job_name_prefix {
     my $self = shift @_;
 
     return ($self->pipeline_name() ? $self->pipeline_name().'-' : '') . 'Hive';
 }
+
 
 sub generate_job_name {
     my ($self, $worker_count, $iteration, $rc_id) = @_;
@@ -64,11 +85,13 @@ sub generate_job_name {
         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
 }
 
+
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
     return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->name);
 }
+
 
 sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
@@ -76,46 +99,11 @@ sub check_worker_is_alive_and_mine {
     die "Please use a derived method";
 }
 
+
 sub kill_worker {
     my ($self, $worker) = @_;
 
     die "Please use a derived method";
-}
-
-# --------------[(combinable) means of adjusting the number of submitted workers]----------------------
-
-sub total_running_workers_default_max {   # no default by default :)
-
-    return undef;
-}
-
-sub total_running_workers_max { # if set and ->can('count_running_workers'),
-                                  # provides a cut-off on the number of workers being submitted
-    my $self = shift @_;
-
-    if(scalar(@_)) { # new value is being set (which can be undef)
-        $self->{'_total_running_workers_max'} = shift @_;
-    }
-    return $self->{'_total_running_workers_max'} || $self->total_running_workers_default_max();
-}
-
-sub pending_adjust { # if set and ->can('count_pending_workers_by_rc_id'),
-                     # provides a cut-off on the number of workers being submitted
-    my $self = shift @_;
-
-    if(scalar(@_)) { # new value is being set (which can be undef)
-        $self->{'_pending_adjust'} = shift @_;
-    }
-    return $self->{'_pending_adjust'};
-}
-
-sub submit_workers_max { # if set, provides a cut-off on the number of workers being submitted
-    my $self = shift @_;
-
-    if(scalar(@_)) { # new value is being set (which can be undef)
-        $self->{'_submit_workers_max'} = shift @_;
-    }
-    return $self->{'_submit_workers_max'};
 }
 
 1;
