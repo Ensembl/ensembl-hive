@@ -87,5 +87,26 @@ sub get {
     return $option_value;
 }
 
-1;
 
+sub set {
+    my $self        = shift @_;
+    my $value       = pop @_;
+    my $key         = pop @_;
+
+    my $hash_ptr    = $self->config_hash;
+
+    foreach my $context_syll (@_) {
+        unless(exists $hash_ptr->{$context_syll}) {
+            $hash_ptr->{$context_syll} = {};
+        }
+        $hash_ptr = $hash_ptr->{$context_syll};
+    }
+
+    if(ref($hash_ptr->{$key}) ne ref($value)) {
+        die "Mismatch of types in Config::set(".join(',',@_,$key,$value).") : trying to set a ".(ref($value)||'scalar')." instead of ".ref($hash_ptr->{$key});
+    } else {
+        $hash_ptr->{$key} = $value;
+    }
+}
+
+1;
