@@ -44,6 +44,7 @@ sub main {
     my $meadow_options              = '';
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
+    my $run_job_id                  = undef;
     my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $all_dead                    = 0;
@@ -79,7 +80,7 @@ sub main {
                'loop'               => \$loopit,
                'max_loops=i'        => \$max_loops,
                'keep_alive'         => \$keep_alive,
-               'job_id|run_job_id=i'=> \$self->{'run_job_id'},
+               'job_id|run_job_id=i'=> \$run_job_id,
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -122,7 +123,7 @@ sub main {
 
     parse_conf($self, $conf_file);
 
-    if($run or $self->{'run_job_id'}) {
+    if($run or $run_job_id) {
         $max_loops = 1;
     } elsif ($loopit or $keep_alive) {
         unless($max_loops) {
@@ -180,7 +181,7 @@ sub main {
     $current_meadow->total_running_workers_max($total_workers_max) if($total_workers_max);
     $current_meadow->pending_adjust(not $no_pend_adjust);
 
-    if($self->{'run_job_id'}) {
+    if($run_job_id) {
         $submit_workers_max = 1;
     }
     $current_meadow->submit_workers_max($submit_workers_max);
@@ -231,7 +232,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis, $run_job_id);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -315,7 +316,7 @@ sub show_running_workers {
 
 
 sub generate_worker_cmd {
-    my ($self) = @_;
+    my ($self, $run_job_id) = @_;
 
     my $worker_cmd = 'runWorker.pl';
 
@@ -329,8 +330,8 @@ sub generate_worker_cmd {
         $worker_cmd .= ' -url '. $self->{'url'};
     }
 
-    if ($self->{'run_job_id'}) {
-        $worker_cmd .= " -job_id ".$self->{'run_job_id'};
+    if ($run_job_id) {
+        $worker_cmd .= " -job_id $run_job_id";
     } else {
         foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'retry_throwing_jobs', 'hive_output_dir', 'debug') {
             if(defined(my $value = $self->{$worker_option})) {
@@ -343,7 +344,7 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $this_analysis) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $this_analysis, $run_job_id) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
@@ -351,7 +352,7 @@ sub run_autonomously {
     }
 
     my $current_meadow = $valley->get_current_meadow();
-    my $worker_cmd = generate_worker_cmd($self);
+    my $worker_cmd = generate_worker_cmd($self, $run_job_id);
 
         # pre-hash the resource_class xparams for future use:
     my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($current_meadow->type());
