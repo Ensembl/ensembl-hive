@@ -32,7 +32,7 @@ sub main {
         -dbname => '',
     };
 
-    my ($help, $conf_file);
+    my $help;
     my $loopit                      = 0;
     my $sync                        = 0;
     my $local                       = 0;
@@ -65,7 +65,6 @@ sub main {
 
     GetOptions(
                     # connection parameters
-               'conf=s'             => \$conf_file,
                'reg_conf|regfile=s' => \$self->{'reg_conf'},
                'reg_alias|regname=s'=> \$self->{'reg_alias'},
                'url=s'              => \$self->{'url'},
@@ -120,8 +119,6 @@ sub main {
     );
 
     if ($help) { script_usage(0); }
-
-    parse_conf($self, $conf_file);
 
     if($run or $run_job_id) {
         $max_loops = 1;
@@ -270,23 +267,6 @@ sub main {
 # subroutines
 #
 #######################
-
-
-sub parse_conf {
-    my ($self, $conf_file) = @_;
-
-  if($conf_file and (-e $conf_file)) {
-    #read configuration file from disk
-    my @conf_list = @{do $conf_file};
-
-    foreach my $confPtr (@conf_list) {
-      #print("HANDLE type " . $confPtr->{TYPE} . "\n");
-      if(($confPtr->{TYPE} eq 'COMPARA') or ($confPtr->{TYPE} eq 'DATABASE')) {
-        $self->{'db_conf'} = $confPtr;
-      }
-    }
-  }
-}
 
 
 # --------------[worker reports]--------------------

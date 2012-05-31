@@ -19,7 +19,7 @@ my $db_conf = {
     -dbname => '',
 };
 
-my ($conf_file, $reg_conf, $reg_alias, $url);                   # Connection parameters
+my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($rc_id, $logic_name, $analysis_id, $input_id, $job_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_output_dir, $worker_output_dir, $retry_throwing_jobs);   # Worker control parameters
 my ($help, $debug, $show_analysis_stats);
@@ -27,7 +27,6 @@ my ($help, $debug, $show_analysis_stats);
 GetOptions(
 
 # Connection parameters:
-           'conf=s'                     => \$conf_file,
            'reg_conf|regfile=s'         => \$reg_conf,
            'reg_alias|regname=s'        => \$reg_alias,
            'url=s'                      => \$url,
@@ -63,8 +62,6 @@ GetOptions(
 );
 
 if ($help) { script_usage(0); }
-
-parse_conf($conf_file);
 
 if($reg_conf) {     # if reg_conf is defined, we load it regardless of whether it is used to connect to the Hive database or not:
     Bio::EnsEMBL::Registry->load_all($reg_conf);
@@ -146,28 +143,6 @@ if($show_analysis_stats) {
 
 exit 0;
 
-#######################
-#
-# subroutines
-#
-#######################
-
-
-sub parse_conf {
-  my $conf_file = shift;
-
-  if($conf_file and (-e $conf_file)) {
-    #read configuration file from disk
-    my @conf_list = @{do $conf_file};
-
-    foreach my $confPtr (@conf_list) {
-      #print("HANDLE type " . $confPtr->{TYPE} . "\n");
-      if(($confPtr->{TYPE} eq 'COMPARA') or ($confPtr->{TYPE} eq 'DATABASE')) {
-        $db_conf = $confPtr;
-      }
-    }
-  }
-}
 
 __DATA__
 
