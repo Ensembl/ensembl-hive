@@ -10,7 +10,7 @@ use base ('Bio::EnsEMBL::Hive::Meadow');
 
 sub name {  # also called to check for availability; for the moment assume LOCAL meadow is always available
 
-    return hostname();
+    return (split(/\./, hostname))[0];     # only take the first name
 }
 
 
