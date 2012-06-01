@@ -24,26 +24,6 @@ CREATE OR REPLACE VIEW progress AS
     ORDER BY a.analysis_id, j.status;
 
 
-#### show LSF resource usage measured by lsf_report.pl script (won't show much if you haven't run the script)
-#
-# Usage:
-#       select * from lsf_usage;                                                    # the whole table
-#       select * from lsf_usage where analysis_name_and_id like 'family_blast%';    # filter by analysis_name pattern
-#       select * from lsf_usage where rc_id=5;                                      # filter by specific rc_id
-
-CREATE OR REPLACE VIEW lsf_usage AS
-    SELECT CONCAT(logic_name,'(',analysis_id,')') analysis_name_and_id,
-        rc_id, count(*) workers,
-        min(mem), avg(mem), max(mem),
-        min(swap), avg(swap), max(swap)
-    FROM analysis
-    JOIN analysis_stats USING(analysis_id)
-    JOIN worker USING(analysis_id)
-    LEFT JOIN lsf_report USING (process_id)
-    GROUP BY analysis_id
-    ORDER BY analysis_id;
-
-
 #### a convenient view that also incorporates (otherwise redundant) analysis_id and logic_name ###########
 #
 # Usage:

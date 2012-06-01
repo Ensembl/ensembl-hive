@@ -48,6 +48,21 @@ sub main {
         ) ENGINE=InnoDB;
     });
 
+    warn "Creating the 'lsf_usage' view if it doesn't exist...\n";
+    $dbc->do (qq{
+        CREATE OR REPLACE VIEW lsf_usage AS
+            SELECT CONCAT(logic_name,'(',analysis_id,')') analysis_name_and_id,
+                rc_id, count(*) workers,
+                min(mem), avg(mem), max(mem),
+                min(swap), avg(swap), max(swap)
+            FROM analysis
+            JOIN analysis_stats USING(analysis_id)
+            LEFT JOIN worker USING(analysis_id)
+            LEFT JOIN lsf_report USING (process_id)
+            GROUP BY analysis_id
+            ORDER BY analysis_id;
+    });
+
     if( $bacct_source_line && -r $bacct_source_line ) {
 
         warn "Parsing given bacct file '$bacct_source_line'...\n";
@@ -60,6 +75,10 @@ sub main {
         $sth_times->execute();
         my ($from_time, $to_time) = $sth_times->fetchrow_array();
         $sth_times->finish();
+
+        unless(defined($from_time) and defined($to_time)) {
+            die "There seems to be no information on workers, exiting...\n";
+        }
 
         $from_time=~s/[- ]/\//g;
         $from_time=~s/:\d\d$//;
