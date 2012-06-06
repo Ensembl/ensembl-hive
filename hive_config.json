@@ -25,32 +25,29 @@
         },
     },
     "Graph" : {     # configure diagram-generation options here:
-        "Colours" : {
-            "Status" : {
-                "BLOCKED"     : "grey",
-                "LOADING"     : "yellow",
-                "SYNCHING"    : "yellow",
-                "READY"       : "yellow",
-                "WORKING"     : "yellow",
-                "ALL_CLAIMED" : "yellow",
-                "DONE"        : "green",
-                "FAILED"      : "red",
-                "OTHER"       : "white",
-                "TABLE"       : "black",
-            },
-            "Flows" : {
-                "data"       : "blue",
-                "control"    : "red",
-                "semablock"  : "red",
-            },
-            "SemaphoreBoxes" : {
-                "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
-                "ColourOffset"  : 1,
-            },
+        "Node" : {
+            "Font"        : "Times-Roman",
+            "Colour"      : "white",
+            "READY"       : { "Colour" : "yellow" },    # immediately claimable
+            "WORKING"     : { "Colour" : "yellow" },    # immediately claimable
+            "LOADING"     : { "Colour" : "orange" },    # need a sync to claim
+            "ALL_CLAIMED" : { "Colour" : "orange" },    # need a sync to claim
+            "SYNCHING"    : { "Colour" : "orange" },    # need a sync to complete to claim
+            "BLOCKED"     : { "Colour" : "grey"   },    # need a sync that may or may not unblock
+            "DONE"        : { "Colour" : "green"  },
+            "FAILED"      : { "Colour" : "red"    },
+            "Table"       : { "Colour" : "black", "Font" : "Courier" },
+            "Details"     : { "Font"   : "Helvetica" },
         },
-        "Fonts" : {
-            "node" : "Helvetica",
-            "edge" : "Helvetica",
+        "Edge" : {
+            "Font"        : "Helvetica",
+            "Data"        : { "Colour" : "blue"    },
+            "Control"     : { "Colour" : "red"     },
+            "Semablock"   : { "Colour" : "red"     },
+        },
+        "Box"  : {
+            "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
+            "ColourOffset"  : 1,
         },
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,

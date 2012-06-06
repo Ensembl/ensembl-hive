@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.16 $
+$Revision: 1.17 $
 
 =cut
 
@@ -197,8 +197,8 @@ sub build {
 
     if($self->config->get('Graph', 'DisplaySemaphoreBoxes') ) {
         $self->graph->subgraphs( \%subgraph_allocation );
-        $self->graph->colour_scheme( $self->config->get('Graph', 'Colours', 'SemaphoreBoxes', 'ColourScheme') );
-        $self->graph->colour_offset( $self->config->get('Graph', 'Colours', 'SemaphoreBoxes', 'ColourOffset') );
+        $self->graph->colour_scheme( $self->config->get('Graph', 'Box', 'ColourScheme') );
+        $self->graph->colour_offset( $self->config->get('Graph', 'Box', 'ColourOffset') );
     }
 
     return $self->graph();
@@ -251,12 +251,12 @@ sub _allocate_to_subgraph {
 sub _add_hive_details {
   my ($self) = @_;
 
-  my $node_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
+  my $node_fontname  = $self->config->get('Graph', 'Node', 'Details', 'Font');
 
   if($self->config->get('Graph', 'DisplayDetails') ) {
     my $dbc = $self->dba()->dbc();
     my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
-    $self->graph()->add_node( 'details',
+    $self->graph()->add_node( 'Details',
       label     => $label,
       fontname  => $node_fontname,
       shape     => 'plaintext',
@@ -273,9 +273,8 @@ sub _add_analysis_node {
   my $can_be_empty = $a->stats()->can('can_be_empty') && $a->stats()->can_be_empty();
   my $shape = ($can_be_empty) ? 'doubleoctagon' : 'ellipse' ;
 
-  my $status_colour = $self->config->get('Graph', 'Colours', 'Status', $a->stats->status)
-                   || $self->config->get('Graph', 'Colours', 'Status', 'OTHER');
-  my $node_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
+  my $status_colour = $self->config->get('Graph', 'Node', $a->stats->status, 'Colour');
+  my $node_fontname  = $self->config->get('Graph', 'Node', $a->stats->status, 'Font');
   
   $graph->add_node( _analysis_node_name( $a->dbID() ), 
     label       => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
@@ -290,8 +289,7 @@ sub _add_analysis_node {
 sub _control_rules {
   my ($self, $all_ctrl_rules) = @_;
   
-  my $control_colour = $self->config->get('Graph', 'Colours', 'Flows', 'control');
-  my $edge_fontname  = $self->config->get('Graph', 'Fonts', 'edge');
+  my $control_colour = $self->config->get('Graph', 'Edge', 'Control', 'Colour');
   my $graph = $self->graph();
 
   #The control rules are always from and to an analysis so no need to search for odd cases here
@@ -299,7 +297,6 @@ sub _control_rules {
     my ($from, $to) = ( _analysis_node_name( $rule->condition_analysis()->dbID() ), _analysis_node_name( $rule->ctrled_analysis()->dbID() ) );
     $graph->add_edge( $from => $to, 
       color => $control_colour,
-      fontname => $edge_fontname,
       arrowhead => 'tee',
     );
   }
@@ -310,9 +307,9 @@ sub _dataflow_rules {
     my ($self, $all_dataflow_rules) = @_;
 
     my $graph = $self->graph();
-    my $dataflow_colour  = $self->config->get('Graph', 'Colours', 'Flows', 'data');
-    my $semablock_colour = $self->config->get('Graph', 'Colours', 'Flows', 'semablock');
-    my $edge_fontname    = $self->config->get('Graph', 'Fonts', 'edge');
+    my $dataflow_colour  = $self->config->get('Graph', 'Edge', 'Data', 'Colour');
+    my $semablock_colour = $self->config->get('Graph', 'Edge', 'Semablock', 'Colour');
+    my $df_edge_fontname    = $self->config->get('Graph', 'Edge', 'Data', 'Font');
 
     my %needs_a_midpoint = ();
     my %aid2aid_nonsem = ();    # simply a directed graph between numerical analysis_ids, except for semaphored rules
@@ -361,7 +358,7 @@ sub _dataflow_rules {
                 color       => $dataflow_colour,
                 arrowhead   => 'none',
                 label       => '#'.$branch_code, 
-                fontname    => $edge_fontname,
+                fontname    => $df_edge_fontname,
             );
             $graph->add_edge( $midpoint_name => $to_node,   # second half of the two-part arrow
                 color     => $dataflow_colour,
@@ -369,7 +366,6 @@ sub _dataflow_rules {
             if($funnel_dataflow_rule_id) {
                 $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id),   # semaphore inter-rule link
                     color     => $semablock_colour,
-                    fontname  => $edge_fontname,
                     style     => 'dashed',
                     arrowhead => 'tee',
                     dir       => 'both',
@@ -381,7 +377,7 @@ sub _dataflow_rules {
             $graph->add_edge( $from_node => $to_node, 
                 color       => $dataflow_colour,
                 label       => '#'.$branch_code, 
-                fontname    => $edge_fontname,
+                fontname    => $df_edge_fontname,
             );
         } # /if($needs_a_midpoint{$rule_id})
     } # /foreach my $rule (@$all_dataflow_rules)
@@ -391,12 +387,14 @@ sub _dataflow_rules {
 
 sub _add_table_node {
   my ($self, $table) = @_;
+
+  my $node_fontname    = $self->config->get('Graph', 'Node', 'Table', 'Font');
+
   $self->graph()->add_node( $table, 
     label => $table.'\n', 
-    fontname => 'serif',
     shape => 'tab',
-    fontname => $self->config->get('Graph', 'Fonts', 'node'),
-    color => $self->config->get('Graph', 'Colours', 'Status', 'TABLE'),
+    fontname => $node_fontname,
+    color => $self->config->get('Graph', 'Node', 'Table', 'Colour'),
   );
 }
 
