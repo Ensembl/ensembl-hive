@@ -14,7 +14,6 @@
         rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
         meadow_type           varchar(40) NOT NULL,
         parameters            varchar(255) DEFAULT '' NOT NULL,
-        description           varchar(255),
         PRIMARY KEY(rc_id, meadow_type)
     ) ENGINE=InnoDB;
 
@@ -36,14 +35,13 @@ sub new {
 
     my $self = bless {}, $class;
 
-    my ($adaptor, $rc_id, $meadow_type, $parameters ,$description) =
-         rearrange([qw(adaptor rc_id meadow_type parameters description) ], @_);
+    my ($adaptor, $rc_id, $meadow_type, $parameters) =
+         rearrange([qw(adaptor rc_id meadow_type parameters) ], @_);
 
     $self->adaptor($adaptor) if(defined($adaptor));
     $self->rc_id($rc_id);
     $self->meadow_type($meadow_type);
     $self->parameters($parameters);
-    $self->description($description);
 
     return $self;
 }
@@ -88,19 +86,10 @@ sub parameters {
     return $self->{'_parameters'};
 }
 
-sub description {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_description'} = shift @_;
-    }
-    return $self->{'_description'};
-}
-
 sub to_string {
     my $self = shift @_;
 
-    return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(rc_id meadow_type parameters description) ));
+    return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(rc_id meadow_type parameters) ));
 }
 
 1;

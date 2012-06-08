@@ -333,9 +333,17 @@ CREATE TABLE resource_description (
     rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
     meadow_type           varchar(40) NOT NULL,
     parameters            varchar(255) DEFAULT '' NOT NULL,
-    description           varchar(255),
-    PRIMARY KEY(rc_id, meadow_type)
 
+    PRIMARY KEY(rc_id, meadow_type)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+CREATE TABLE resource_class (
+    resource_class_id   int(10) unsigned NOT NULL AUTO_INCREMENT,     # unique internal id
+    name                varchar(40) NOT NULL,
+
+    PRIMARY KEY(resource_class_id),
+    UNIQUE KEY(name)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 

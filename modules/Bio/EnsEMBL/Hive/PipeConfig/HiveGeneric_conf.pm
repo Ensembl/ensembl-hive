@@ -143,8 +143,8 @@ sub pipeline_wide_parameters {
 sub resource_classes {
     my ($self) = @_;
     return {
-        0 => { -desc => 'default, 8h',      'LSF' => '' },
-        1 => { -desc => 'urgent',           'LSF' => '-q yesterday' },
+        1 => { -desc => 'default',  'LSF' => '' },
+        2 => { -desc => 'urgent',   'LSF' => '-q yesterday' },
     };
 }
 
@@ -309,6 +309,7 @@ sub run {
     }
 
     my $hive_dba                     = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->o('pipeline_db')});
+    my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
     
     unless($job_topup) {
         my $meta_container = $hive_dba->get_MetaContainer;
@@ -323,19 +324,30 @@ sub run {
         }
         warn "Done.\n\n";
 
-            # pre-load the resource_description table
-        my $resource_description_adaptor = $hive_dba->get_ResourceDescriptionAdaptor;
-        warn "Loading the ResourceDescriptions ...\n";
+            # pre-load resource_class and resource_description tables:
+        my $resource_description_adaptor    = $hive_dba->get_ResourceDescriptionAdaptor;
+        warn "Loading the Resources ...\n";
 
         my $resource_classes = $self->resource_classes;
+        my %seen_resource_name = ();
         while( my($rc_id, $mt2param) = each %$resource_classes ) {
-            my $description = delete $mt2param->{-desc};
+            my $name = delete $mt2param->{-desc};
+            if(!$name or $seen_resource_name{$name}++) {
+                die "Every resource has to have a unique description, please fix the PipeConfig file";
+            }
+
+            warn "Creating resource_class '$name'($rc_id).\n";
+            $resource_class_adaptor->create_new(
+                -DBID   => $rc_id,
+                -NAME   => $name,
+            );
+
+
             while( my($meadow_type, $xparams) = each %$mt2param ) {
                 $resource_description_adaptor->create_new(
                     -RC_ID       => $rc_id,
                     -MEADOW_TYPE => $meadow_type,
                     -PARAMETERS  => $xparams,
-                    -DESCRIPTION => $description,
                 );
             }
         }
@@ -347,8 +359,8 @@ sub run {
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $program_file, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $priority) =
-             rearrange([qw(logic_name module parameters program_file input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id priority)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $program_file, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority) =
+             rearrange([qw(logic_name module parameters program_file input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id rc_name priority)], %$aha);
 
         unless($logic_name) {
             die "logic_name' must be defined in every analysis";
@@ -373,6 +385,13 @@ sub run {
             }
 
             warn "Creating analysis '$logic_name'.\n";
+
+            if($rc_id) {
+                warn "(-rc_id => $rc_id) syntax is deprecated, please start using (-rc_name => 'your_resource_class_name')";
+            } elsif($rc_name) {
+                my $rc = $resource_class_adaptor->fetch_by_name($rc_name ) or die "Could not fetch resource with name '$rc_name', please check the resource_classes() method of your PipeConfig";
+                $rc_id = $rc->dbID();
+            }
 
             $analysis = Bio::EnsEMBL::Analysis->new(
 #                -db              => '',
