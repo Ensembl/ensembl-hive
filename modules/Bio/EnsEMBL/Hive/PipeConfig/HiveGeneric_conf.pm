@@ -143,8 +143,12 @@ sub pipeline_wide_parameters {
 sub resource_classes {
     my ($self) = @_;
     return {
-        1 => { -desc => 'default',  'LSF' => '' },
-        2 => { -desc => 'urgent',   'LSF' => '-q yesterday' },
+## Old style:
+#        1 => { -desc => 'default',  'LSF' => '' },
+#        2 => { -desc => 'urgent',   'LSF' => '-q yesterday' },
+## New style:
+        'default' => { 'LSF' => '' },
+        'urgent'  => { 'LSF' => '-q yesterday' },
     };
 }
 
@@ -331,21 +335,26 @@ sub run {
         my $resource_classes = $self->resource_classes;
         my %seen_resource_name = ();
         while( my($rc_id, $mt2param) = each %$resource_classes ) {
+
             my $name = delete $mt2param->{-desc};
+            if($rc_id!~/^\d+$/) {
+                $name = $rc_id;
+            }
+
             if(!$name or $seen_resource_name{$name}++) {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
-            warn "Creating resource_class '$name'($rc_id).\n";
-            $resource_class_adaptor->create_new(
-                -DBID   => $rc_id,
+            warn "Creating resource_class '$name'.\n";
+            my $rc = $resource_class_adaptor->create_new(
+                defined($rc_id) ? (-DBID   => $rc_id) : (),
                 -NAME   => $name,
             );
 
 
             while( my($meadow_type, $xparams) = each %$mt2param ) {
                 $resource_description_adaptor->create_new(
-                    -RC_ID       => $rc_id,
+                    -RC_ID       => $rc->dbID,
                     -MEADOW_TYPE => $meadow_type,
                     -PARAMETERS  => $xparams,
                 );
