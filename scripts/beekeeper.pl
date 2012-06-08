@@ -363,7 +363,7 @@ sub run_autonomously {
             foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
                 my $this_rc_worker_count = $workers_to_run_by_rc_id->{$rc_id};
 
-                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$current_meadow->type()."\n";
+                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id) to ".$current_meadow->toString()."\n";
 
                 $current_meadow->submit_workers($iteration, $worker_cmd, $this_rc_worker_count, $rc_id, $rc_xparams->{$rc_id} || '');
             }
