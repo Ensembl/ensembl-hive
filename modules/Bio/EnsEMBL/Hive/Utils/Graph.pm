@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.17 $
+$Revision: 1.18 $
 
 =cut
 
@@ -218,7 +218,8 @@ sub _allocate_to_subgraph {
         my $funnel_dataflow_rule_id     = $rule->funnel_dataflow_rule_id();
 
         my $proposed_allocation = $funnel_dataflow_rule_id  # depends on whether we start a new semaphore
-            ? $dfr_flows_into->{$funnel_dataflow_rule_id}       # if we do, report to the new funnel
+#           ? $dfr_flows_into->{$funnel_dataflow_rule_id}       # if we do, report to the new funnel (based on common funnel's analysis name)
+            ? _midpoint_name( $funnel_dataflow_rule_id )        # if we do, report to the new funnel (based on common funnel rule's midpoint)
             : $parent_allocation;                               # it we don't, inherit the parent's funnel
 
         if($funnel_dataflow_rule_id) {
