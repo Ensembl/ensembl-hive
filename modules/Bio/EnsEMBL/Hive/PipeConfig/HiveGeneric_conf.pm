@@ -338,7 +338,8 @@ sub run {
 
             my $name = delete $mt2param->{-desc};
             if($rc_id!~/^\d+$/) {
-                $name = $rc_id;
+                $name  = $rc_id;
+                $rc_id = undef;
             }
 
             if(!$name or $seen_resource_name{$name}++) {
