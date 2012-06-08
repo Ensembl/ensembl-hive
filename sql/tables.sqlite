@@ -307,9 +307,17 @@ CREATE TABLE resource_description (
     rc_id                 INTEGER NOT NULL,
     meadow_type           TEXT, /* enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL, */
     parameters            varchar(255) DEFAULT '' NOT NULL,
-    description           varchar(255),
+
     PRIMARY KEY(rc_id, meadow_type)
 );
+
+
+CREATE TABLE resource_class (
+    resource_class_id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name                varchar(40) NOT NULL
+
+);
+CREATE UNIQUE INDEX IF NOT EXISTS resource_class_name_idx ON resource_class (name);
 
 
 -- ---------------------------------------------------------------------------------
