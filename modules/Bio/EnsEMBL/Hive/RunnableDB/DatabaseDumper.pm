@@ -38,7 +38,6 @@ use strict;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
-
 sub fetch_input {
     my $self = shift @_;
 
@@ -49,7 +48,13 @@ sub fetch_input {
 
     my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress);
     
+    my $src_db_conn  = $self->param('src_db_conn');
+    my $src_dbc = $src_db_conn ? $self->go_figure_dbc($src_db_conn) : $self->db->dbc;
+
     $self->input_job->transient_error(0);
+    die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
+    $self->param('src_dbc', $src_dbc);
+
     $self->param('output_file') || die 'The parameter "output_file" is mandatory';
     $self->param('output_file', $self->param_substitute($self->param('output_file')));
 
@@ -62,14 +67,10 @@ sub fetch_input {
         die 'The parameter "table_list" is mandatory' unless $table_list;
         push @ignores, @$table_list;
     } else {
-        push @tables, @{$self->_get_table_list || []};
+        push @tables, @{$self->_get_table_list};
     }
 
     $self->input_job->transient_error(1);
-
-    my $src_db_conn  = $self->param('src_db_conn');
-    my $src_dbc = $src_db_conn ? $self->go_figure_dbc($src_db_conn) : $self->db->dbc;
-    $self->param('src_dbc', $src_dbc);
 }
 
 
@@ -80,9 +81,9 @@ sub _get_table_list {
     my $self = shift @_;
 
     my $table_list = $self->param_substitute($self->param('table_list') || '');
-    my @newtables;
+    my @newtables = ();
     my $dbc = $self->param('src_dbc');
-    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split($table_list)) {
+    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
         if ($initable =~ /%/) {
             $initable =~ s/_/\\_/g;
             my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
