@@ -404,9 +404,6 @@ sub run {
             }
 
             $analysis = Bio::EnsEMBL::Analysis->new(
-#                -db              => '',
-#                -db_file         => '',
-#                -db_version      => '1',
                 -logic_name      => $logic_name,
                 -module          => $module,
                 -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
