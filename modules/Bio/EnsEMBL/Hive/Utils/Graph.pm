@@ -24,11 +24,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: lg4 $
+$Author: mm14 $
 
 =head1 VERSION
 
-$Revision: 1.18 $
+$Revision: 1.19 $
 
 =cut
 
@@ -173,7 +173,7 @@ sub build {
     foreach my $analysis_id ( map { $_->dbID } @$all_analyses ) {
         my $analysis_node_name =  _analysis_node_name( $analysis_id );
         unless($inflow_count{$analysis_node_name}) {
-            _allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into, $analysis_node_name, \%subgraph_allocation ); # run the recursion in each component that has a non-cyclic start
+            _allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into, $analysis_node_name, \%subgraph_allocation, $self->config ); # run the recursion in each component that has a non-cyclic start
         }
     }
 
@@ -206,15 +206,21 @@ sub build {
 
 
 sub _allocate_to_subgraph {
-    my ( $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation ) = @_;
+    my ( $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation, $config ) = @_;
 
     my $parent_allocation = $subgraph_allocation->{ $parent_analysis_node_name };  # for some analyses it will be undef
 
     foreach my $rule ( @{ $outflow_rules->{$parent_analysis_node_name} } ) {
         my $to_analysis                 = $rule->to_analysis();
-        next unless( $to_analysis->can('dbID'));    # skip dataflow-into-tables
+        next unless $to_analysis->can('dbID') or $config->get('Graph', 'DuplicateTables');
 
-        my $this_analysis_node_name     = _analysis_node_name( $rule->to_analysis->dbID() );
+        my $this_analysis_node_name;
+        if ($to_analysis->can('dbID')) {
+            $this_analysis_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
+        } else {
+            $this_analysis_node_name = $to_analysis->table_name();
+            $this_analysis_node_name .= '_'.$rule->from_analysis_id() if $config->get('Graph', 'DuplicateTables');
+        }
         my $funnel_dataflow_rule_id     = $rule->funnel_dataflow_rule_id();
 
         my $proposed_allocation = $funnel_dataflow_rule_id  # depends on whether we start a new semaphore
@@ -243,7 +249,7 @@ sub _allocate_to_subgraph {
             # warn "allocating analysis '$this_analysis_node_name' to '$proposed_allocation'";
             $subgraph_allocation->{ $this_analysis_node_name } = $proposed_allocation;
 
-            _allocate_to_subgraph( $outflow_rules, $dfr_flows_into, $this_analysis_node_name, $subgraph_allocation );
+            _allocate_to_subgraph( $outflow_rules, $dfr_flows_into, $this_analysis_node_name, $subgraph_allocation, $config );
         }
     }
 }
@@ -338,6 +344,7 @@ sub _dataflow_rules {
             $to_node = _analysis_node_name($to_id);
         } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $to_node = $to->table_name();
+            $to_node .= '_'.$from_analysis_id if $self->config->get('Graph', 'DuplicateTables');
             $self->_add_table_node($to_node);
         } else {
             warn('Do not know how to handle the type '.ref($to));
@@ -391,8 +398,14 @@ sub _add_table_node {
 
   my $node_fontname    = $self->config->get('Graph', 'Node', 'Table', 'Font');
 
+  my $table_name = $table;
+  if ($self->config->get('Graph', 'DuplicateTables')) {
+    $table =~ /^(.*)_([^_]*)$/;
+    $table_name = $1;
+  }
+
   $self->graph()->add_node( $table, 
-    label => $table.'\n', 
+    label => $table_name.'\n', 
     shape => 'tab',
     fontname => $node_fontname,
     color => $self->config->get('Graph', 'Node', 'Table', 'Colour'),

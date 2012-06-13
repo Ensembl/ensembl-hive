@@ -52,5 +52,6 @@
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,
         "DisplaySemaphoreBoxes" : 1,
+	  "DuplicateTables"       : 0,
     }
 }
