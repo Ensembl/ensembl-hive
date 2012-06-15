@@ -24,11 +24,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: mm14 $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.19 $
+$Revision: 1.20 $
 
 =cut
 
@@ -173,7 +173,7 @@ sub build {
     foreach my $analysis_id ( map { $_->dbID } @$all_analyses ) {
         my $analysis_node_name =  _analysis_node_name( $analysis_id );
         unless($inflow_count{$analysis_node_name}) {
-            _allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into, $analysis_node_name, \%subgraph_allocation, $self->config ); # run the recursion in each component that has a non-cyclic start
+            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into, $analysis_node_name, \%subgraph_allocation ); # run the recursion in each component that has a non-cyclic start
         }
     }
 
@@ -206,9 +206,10 @@ sub build {
 
 
 sub _allocate_to_subgraph {
-    my ( $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation, $config ) = @_;
+    my ($self, $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation ) = @_;
 
     my $parent_allocation = $subgraph_allocation->{ $parent_analysis_node_name };  # for some analyses it will be undef
+    my $config = $self->config();
 
     foreach my $rule ( @{ $outflow_rules->{$parent_analysis_node_name} } ) {
         my $to_analysis                 = $rule->to_analysis();
@@ -249,7 +250,7 @@ sub _allocate_to_subgraph {
             # warn "allocating analysis '$this_analysis_node_name' to '$proposed_allocation'";
             $subgraph_allocation->{ $this_analysis_node_name } = $proposed_allocation;
 
-            _allocate_to_subgraph( $outflow_rules, $dfr_flows_into, $this_analysis_node_name, $subgraph_allocation, $config );
+            $self->_allocate_to_subgraph( $outflow_rules, $dfr_flows_into, $this_analysis_node_name, $subgraph_allocation );
         }
     }
 }
