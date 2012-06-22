@@ -116,8 +116,8 @@ sub main {
                     }
                 }
 
-                my (@keys)   = split(/\s+/, $lines[@lines-2]);
-                my (@values) = split(/\s+/, $lines[@lines-1]);
+                my (@keys)   = split(/\s+/, ' '.$lines[@lines-2]);
+                my (@values) = split(/\s+/, ' '.$lines[@lines-1]);
                 my %usage = map { ($keys[$_] => $values[$_]) } (0..@keys-1);
 
                 my ($mem)  = $usage{MEM}  =~ /^(\d+)[KMG]$/;
