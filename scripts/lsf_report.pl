@@ -15,12 +15,14 @@ exit(0);
 
 sub main {
 
-    my ($url, $bacct_source_line, $lsf_user, $help);
+    my ($url, $bacct_source_line, $lsf_user, $help, $start_date, $end_date);
 
     GetOptions(
                'url=s'                      => \$url,
                'dump|file=s'                => \$bacct_source_line,
                'lu|lsf_user=s'              => \$lsf_user,
+               'sd|start_date=s'            => \$start_date,
+               'ed|end_date=s'              => \$end_date,
                'h|help'                     => \$help,
     );
 
@@ -80,10 +82,21 @@ sub main {
             die "There seems to be no information on workers, exiting...\n";
         }
 
-        $from_time=~s/[- ]/\//g;
-        $from_time=~s/:\d\d$//;
-        $to_time=~s/[- ]/\//g;
-        $to_time=~s/:\d\d$//;
+        if (defined $start_date) {
+            die "start_date must be in a format like '2012/01/25/13:46'" unless $start_date =~ /^\d{4}\/\d{2}\/\d{2}\/\d{2}:\d{2}$/;
+            $from_time = $start_date;
+        } else {
+            $from_time=~s/[- ]/\//g;
+            $from_time=~s/:\d\d$//;
+        }
+
+        if (defined $end_date) {
+            die "end_date must be in a format like '2012/01/25/13:46'" unless $end_date =~ /^\d{4}\/\d{2}\/\d{2}\/\d{2}:\d{2}$/;
+            $to_time = $end_date;
+        } else {
+            $to_time=~s/[- ]/\//g;
+            $to_time=~s/:\d\d$//;
+        }
 
         warn "\tfrom=$from_time, to=$to_time\n";
 
@@ -148,8 +161,9 @@ __DATA__
     This script is used for offline examination of resources used by a Hive pipeline running on LSF
     (the script is [Pp]latform-dependent).
 
-    Based on the start time of the first worker and end time of the last worker (as recorded in pipeline DB)
-    it pulls the relevant data out of LSF's 'bacct' database, parses it and stores in 'lsf_report' table.
+    Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
+    worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
+    of LSF's 'bacct' database, parses it and stores in 'lsf_report' table.
     You can join this table to 'worker' table USING(process_id) in the usual MySQL way
     to filter by analysis_id, do various stats, etc.
 
@@ -179,6 +193,8 @@ __DATA__
     -url <url string>       : url defining where hive database is located
     -dump <filename>        : a filename for bacct dump. It will be read from if the file exists, and written to otherwise.
     -lsf_user <username>    : if it wasn't you who ran the pipeline, LSF user name of that user can be provided
+    -start_date <date>      : minimal start date of a job (the format is '2012/01/25/13:46')
+    -end_date <date>        : maximal end date of a job (the format is '2012/01/25/13:46')
 
 =head1 CONTACT
 
