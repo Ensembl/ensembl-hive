@@ -24,11 +24,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: lg4 $
+$Author: mm14 $
 
 =head1 VERSION
 
-$Revision: 1.20 $
+$Revision: 1.21 $
 
 =cut
 
@@ -185,9 +185,15 @@ sub build {
     $self->_dataflow_rules( $all_dataflow_rules );
 
     if($self->config->get('Graph', 'DisplayStretched') ) {
+
+        # The invisible edges will be linked to the destination analysis instead of the midpoint
+        my $id_to_rule = {map { $_->dbID => $_ } @$all_dataflow_rules};
+        my @all_fdr_id = grep {$_} (map {$_->funnel_dataflow_rule_id} @$all_dataflow_rules);
+        my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis->dbID ) } @all_fdr_id};
+
         while( my($from, $to) = each %subgraph_allocation) {
             if($to) {
-                $self->graph->add_edge( $from => $to,
+                $self->graph->add_edge( $from => $midpoint_to_analysis->{$to},
                     color     => 'black',
                     style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
                 );
