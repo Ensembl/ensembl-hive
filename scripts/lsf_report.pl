@@ -61,6 +61,7 @@ sub main {
             JOIN analysis_stats USING(analysis_id)
             LEFT JOIN worker USING(analysis_id)
             LEFT JOIN lsf_report USING (process_id)
+            WHERE meadow_type='LSF'
             GROUP BY analysis_id
             ORDER BY analysis_id;
     });
@@ -73,7 +74,11 @@ sub main {
 
         warn "No bacct information given, finding out the time interval when the pipeline was run...\n";
 
-        my $sth_times = $dbc->prepare( 'SELECT min(born), max(died) FROM worker WHERE meadow_type="LSF" AND status="DEAD"' );
+        my $offset_died_expression = ($dbc->driver eq 'sqlite')
+                        ? "datetime(max(died), '+1 minute')"
+                        : "FROM_UNIXTIME(UNIX_TIMESTAMP(max(died))+60)";
+
+        my $sth_times = $dbc->prepare( "SELECT min(born), $offset_died_expression FROM worker WHERE meadow_type='LSF' AND status='DEAD'" );
         $sth_times->execute();
         my ($from_time, $to_time) = $sth_times->fetchrow_array();
         $sth_times->finish();
