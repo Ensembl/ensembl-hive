@@ -1,4 +1,3 @@
-
 -- The first 3 tables are from the ensembl core schema: meta, analysis and analysis_description.
 -- We create them with the 'IF NOT EXISTS' option in case they already exist in the DB.
 
@@ -79,7 +78,7 @@ CREATE TABLE IF NOT EXISTS analysis_description (
   analysis_id                 int(10) unsigned NOT NULL,
   description                  TEXT,
   display_label                VARCHAR(255),
-  displayable                  BOOLEAN NOT NULL DEFAULT 1,
+  displayable                  TINYINT NOT NULL DEFAULT 1,
   web_data                     TEXT,
 
   UNIQUE KEY analysis_idx (analysis_id)
@@ -268,7 +267,7 @@ CREATE TABLE job_message (
   retry                     int(10) DEFAULT 0 NOT NULL,
   status                    enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN',
   msg                       text,
-  is_error                  boolean,
+  is_error                  TINYINT,
 
   PRIMARY KEY               (job_message_id),
   INDEX worker_id           (worker_id),
