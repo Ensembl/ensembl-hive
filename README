@@ -15,6 +15,204 @@ Summary:
 
 Changelog:
 
+---------------------[during EnsEMBL rel.68]----------------------------------------------------------------
+
+2012-06-26 12:58  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: fixed a bug where job failed
+	  in COMPILATION state were still set to DONE status
+
+2012-06-26 11:22  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/beekeeper.pl: slightly
+	  improved output
+
+2012-06-26 11:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/beekeeper.pl: fixed
+	  and cleaned up the code that outputs a list of workers
+
+2012-06-25 16:00  lg4
+
+	* scripts/lsf_report.pl: untested version that corrects the
+	  max(dead) by one minute to include the stats on the last worker
+
+2012-06-22 12:51  mm14
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: With the
+	  "DisplayStretched" option on: now draws the mid-point of the
+	  semaphores next to the boxes instead of under them
+
+2012-06-22 11:51  mm14
+
+	* scripts/lsf_report.pl: Now accepts two parameters on the command
+	  line: "start_date" and "end_date"
+
+2012-06-22 11:44  mm14
+
+	* scripts/lsf_report.pl: bugfix: now works if the lines in the
+	  bacct output do not start with a space
+
+2012-06-19 16:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/: AnalysisJobAdaptor.pm,
+	  AnalysisStatsAdaptor.pm: unnecessary uses
+
+2012-06-15 16:43  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: making
+	  _allocate_to_subgraph() a member function allows not to pass
+	  $config as a parameter every time
+
+2012-06-13 17:13  mm14
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: Added
+	  an option to duplicate the tables and include them into their
+	  parent boxes in the graphical output of the pipeline
+
+2012-06-11 12:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: removed
+	  commented lines
+
+2012-06-10 10:30  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: Dies if
+	  the db driver is not mysql + fixed a bug that prevented
+	  "table_list" to be parsed
+
+2012-06-08 20:28  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: group boxes based on
+	  funnel rule's midpoint (more boxes)
+
+2012-06-08 16:54  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: fixed a
+	  bug that looked like a feature
+
+2012-06-08 15:46  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: a
+	  rc_id-less format of resource_classes() supported now; DO NOT
+	  MIX!!!
+
+2012-06-08 14:50  lg4
+
+	* sql/tables.sqlite: updated sqlite schema: added resource_class
+	  and modified resource_description
+
+2012-06-08 14:38  lg4
+
+	* sql/patch_2012-06-08.sql,
+	  modules/Bio/EnsEMBL/Hive/ResourceDescription.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  sql/tables.sql: splitting the resource_description table into two
+
+2012-06-08 11:41  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: ResourceClass.pm, DBSQL/DBAdaptor.pm,
+	  DBSQL/ResourceClassAdaptor.pm: adding ResourceClass and
+	  ResourceClassAdaptor
+
+2012-06-08 11:03  lg4
+
+	* scripts/beekeeper.pl: print meadow->toString instead of
+	  meadow->type
+
+2012-06-06 21:07  lg4
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Graph.pm:
+	  reorganized the "Graph" part of the config file
+
+2012-06-01 16:00  lg4
+
+	* scripts/lsf_report.pl, sql/procedures.mysql: moved creation of
+	  both 'lsf_report' table and 'lsf_usage' view into
+	  scripts/lsf_report.pl
+
+2012-06-01 15:40  lg4
+
+	* sql/procedures.mysql: added an SQL view over analysis, worker and
+	  lsf_report tables to show analysis-wide resource usage stats
+
+2012-06-01 15:34  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: New
+	  Runnable to create a snapshot of a database
+
+2012-05-31 17:09  lg4
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Valley.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/beekeeper.pl:
+	  moved
+	  submit_workers_max/pending_adjust/total_workers_max/meadow_options
+	  into Config, but they are still configurable from BK's
+	  commandline via config_set(); lots of code cleanup on the way
+
+2012-05-31 16:09  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Config.pm: now with a setter
+	  function
+
+2012-05-31 11:51  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm: only take the first
+	  name, ignore the domain name altogether
+
+2012-05-31 09:32  lg4
+
+	* scripts/: beekeeper.pl, runWorker.pl: removed references to old
+	  config file as obsolete
+
+2012-05-31 09:27  lg4
+
+	* scripts/beekeeper.pl: moved run_job_id into a separate variable
+	  for clarity
+
+2012-05-30 14:48  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm: updated POD about
+	  new()'s arguments
+
+2012-05-30 14:38  lg4
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Graph.pm:
+	  SemaphoreBoxes colours moved under "Colours" section
+
+2012-05-30 14:30  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Config.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  scripts/generate_graph.pl: A personal ~/.hive_config.json will be
+	  merged in by default (overriding system defaults)
+
+2012-05-30 12:25  lg4
+
+	* scripts/generate_graph.pl: removed reference to the deleted
+	  Util::Graph::Config
+
+2012-05-30 12:16  lg4
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/GraphViz.pm: allow configuring
+	  boxes' colourscheme/offset from hive_config.json
+
+2012-05-30 12:00  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  scripts/generate_graph.pl: switching to using the new
+	  configuration file+parser
+
+2012-05-30 11:58  lg4
+
+	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Config.pm: a new
+	  JSON-based configuration file and parser
+
 ---------------------[before EnsEMBL rel.68]----------------------------------------------------------------
 
 2012-05-28 16:18  lg4
