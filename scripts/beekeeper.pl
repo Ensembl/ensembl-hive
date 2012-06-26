@@ -242,7 +242,13 @@ sub main {
         $queen->print_analysis_status($analysis) unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_status;
 
-        show_running_workers($self, $queen) if($show_worker_stats);
+        if($show_worker_stats) {
+            print("===== List of live Workers according to the Queen: ======\n");
+            foreach my $worker (@{ $queen->fetch_overdue_workers(0) }) {
+                print $worker->toString()."\n";
+            }
+            print "\n";
+        }
 
         $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
@@ -269,32 +275,6 @@ sub main {
 # subroutines
 #
 #######################
-
-
-# --------------[worker reports]--------------------
-
-sub show_given_workers {
-    my ($self, $worker_list, $verbose_stats) = @_;
-
-    foreach my $worker (@{$worker_list}) {
-        printf("%10d %35s(%5d) %5s:%15s %15s (%s)\n", 
-            $worker->dbID,
-            $worker->analysis->logic_name,
-            $worker->analysis->dbID,
-            $worker->beekeeper,
-            $worker->process_id, 
-            $worker->host,
-            $worker->last_check_in);
-        printf("%s\n", $worker->worker_output_dir) if ($verbose_stats);
-    }
-}
-
-sub show_running_workers {
-    my ($self, $queen) = @_;
-
-    print("===== running workers\n");
-    show_given_workers($self, $queen->fetch_overdue_workers(0), $queen->{'verbose_stats'});
-}
 
 
 sub generate_worker_cmd {

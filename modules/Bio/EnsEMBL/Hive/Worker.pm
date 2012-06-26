@@ -407,20 +407,29 @@ sub perform_cleanup {
 }
 
 sub print_worker {
-  my $self = shift;
-  print("WORKER: worker_id=",$self->dbID,
-     " analysis_id=(",$self->analysis->dbID,")",$self->analysis->logic_name,
-     " host=",$self->host,
-     " pid=",$self->process_id,
-     "\n");
-  print("\tbatch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
-  print("\tjob_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
-  print("\tlife_span  = ", $self->life_span,"\n") if(defined($self->life_span));
-  if(my $worker_output_dir = $self->worker_output_dir) {
-    print("\tworker_output_dir = $worker_output_dir\n");
-  } else {
-    print("\tworker_output_dir = STDOUT/STDERR\n");
-  }
+    my $self = shift;
+
+    print $self->toString()."\n";
+    print("\tbatch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
+    print("\tjob_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
+    print("\tlife_span  = ", $self->life_span,"\n") if(defined($self->life_span));
+    if(my $worker_output_dir = $self->worker_output_dir) {
+        print("\tworker_output_dir = $worker_output_dir\n");
+    } else {
+        print("\tworker_output_dir = STDOUT/STDERR\n");
+    }
+}
+
+
+sub toString {
+    my $self = shift @_;
+
+    return "Worker:\t".join(', ',
+            'analysis='.$self->analysis->logic_name.'('.$self->analysis->dbID.')',
+            'meadow='.$self->meadow_type.'/'.$self->meadow_name,
+            'process='.$self->process_id.'@'.$self->host,
+            'last_check_in='.$self->last_check_in,
+    );
 }
 
 
