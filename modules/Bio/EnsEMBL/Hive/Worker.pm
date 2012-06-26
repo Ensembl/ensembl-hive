@@ -600,6 +600,7 @@ sub run_one_batch {
 
         $self->start_job_output_redirection($job);  # switch logging into job's STDERR
         eval {  # capture any throw/die
+            $job->incomplete(1);
 
             $self->enter_status('COMPILATION', $job);       # ToDo: when Runnables are ready, switch to compiling once per batch (saves time)
             my $runnable_db = $self->analysis->process or die "Unknown compilation error";
@@ -608,6 +609,8 @@ sub run_one_batch {
             $job_stopwatch->restart();
 
             $self->run_module_with_job($runnable_db, $job);
+
+            $job->incomplete(0);
         };
         my $msg_thrown          = $@;
 
@@ -673,7 +676,6 @@ sub run_module_with_job {
     $runnable_db->debug( $self->debug );
 
     $job->param_init( $runnable_db->strict_hash_format(), $runnable_db->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
-    $job->incomplete(1);
     $job->autoflow(1);
 
     $self->enter_status('GET_INPUT', $job);
@@ -709,7 +711,6 @@ sub run_module_with_job {
         die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
     }
 
-    $job->incomplete(0);
 }
 
 
