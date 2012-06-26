@@ -819,10 +819,10 @@ sub print_analysis_status {
 }
 
 
-sub print_running_worker_status {
+sub print_running_worker_counts {
   my $self = shift;
 
-  print "====== Live workers according to Queen:\n";
+  print "\n===== Stats of live Workers according to the Queen: ======\n";
   my $sql = "SELECT logic_name, count(*) FROM worker, analysis ".
             "WHERE worker.analysis_id=analysis.analysis_id AND worker.cause_of_death='' ".
             "GROUP BY worker.analysis_id";
@@ -831,12 +831,11 @@ sub print_running_worker_status {
   my $sth = $self->prepare($sql);
   $sth->execute();
   while((my $logic_name, my $worker_count)=$sth->fetchrow_array()) {
-    printf("%20s : %d workers\n", $logic_name, $worker_count);
+    printf("%30s : %d workers\n", $logic_name, $worker_count);
     $total_workers += $worker_count;
   }
-  printf("  %d total workers\n", $total_workers);
-  print "===========================\n";
   $sth->finish;
+  printf("%30s : %d workers\n\n", '======= TOTAL =======', $total_workers);
 }
 
 =head2 monitor

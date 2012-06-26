@@ -31,7 +31,7 @@ sub type { # should return 'LOCAL' or 'LSF'
 sub toString {
     my $self = shift @_;
 
-    return "Meadow[type='".$self->type."', name='".$self->name."']";
+    return "Meadow:\t".$self->type.'/'.$self->name;
 }
 
 

@@ -178,7 +178,7 @@ sub main {
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $meadow_type, $pipeline_name );
 
     my $current_meadow = $valley->get_current_meadow();
-    warn "Current meadow: ".$current_meadow->toString."\n";
+    warn "Current ".$current_meadow->toString."\n\n";
 
     $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
     $current_meadow->config_set('PendingAdjust', $pending_adjust) if(defined $pending_adjust);
@@ -240,15 +240,14 @@ sub main {
             $queen->synchronize_hive($analysis);
         }
         $queen->print_analysis_status($analysis) unless($self->{'no_analysis_stats'});
-        $queen->print_running_worker_status;
 
         if($show_worker_stats) {
-            print("===== List of live Workers according to the Queen: ======\n");
+            print "\n===== List of live Workers according to the Queen: ======\n";
             foreach my $worker (@{ $queen->fetch_overdue_workers(0) }) {
                 print $worker->toString()."\n";
             }
-            print "\n";
         }
+        $queen->print_running_worker_counts;
 
         $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
@@ -335,7 +334,7 @@ sub run_autonomously {
         $queen->check_for_dead_workers($valley, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
-        $queen->print_running_worker_status;
+        $queen->print_running_worker_counts;
 
         my $workers_to_run_by_rc_id = $queen->schedule_workers_resync_if_necessary($valley, $this_analysis);
 
