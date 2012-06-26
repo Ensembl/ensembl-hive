@@ -104,7 +104,7 @@ CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
     DROP VIEW IF EXISTS msg, progress;
-    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_class, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, job_message, job, worker;
+    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, resource_class, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, job_message, job, worker;
 END; //
 DELIMITER ;
 
