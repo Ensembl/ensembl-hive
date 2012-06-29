@@ -316,7 +316,7 @@ sub run_autonomously {
     my $worker_cmd = generate_worker_cmd($self, $run_job_id);
 
         # pre-hash the resource_class xparams for future use:
-    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_rc_id_TO_parameters($current_meadow->type());
+    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($current_meadow->type());
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;

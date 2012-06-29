@@ -737,7 +737,7 @@ sub schedule_workers {
         $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
     }
 
-    my $curr_rc_id = $analysis_stats->rc_id;
+    my $curr_rc_id = $analysis_stats->resource_class_id;
     if($pending_by_rc_id{ $curr_rc_id }) {                              # per-rc_id capping by pending processes, if available
         my $pending_this_analysis = ($pending_by_rc_id{ $curr_rc_id } < $workers_this_analysis) ? $pending_by_rc_id{ $curr_rc_id } : $workers_this_analysis;
 
@@ -750,7 +750,7 @@ sub schedule_workers {
     $total_workers_to_run += $workers_this_analysis;
     $workers_to_run_by_rc_id{ $curr_rc_id } += $workers_this_analysis;
     $analysis_stats->print_stats();
-    printf("Scheduler suggests adding %d more workers of rc_id=%d for analysis_id=%d [%1.3f hive_load remaining]\n", $workers_this_analysis, $curr_rc_id, $analysis_stats->analysis_id, $available_load);
+    printf("Scheduler suggests adding %d more workers of resource_class_id=%d for analysis_id=%d [%1.3f hive_load remaining]\n", $workers_this_analysis, $curr_rc_id, $analysis_stats->analysis_id, $available_load);
   }
 
   printf("Scheduler suggests adding a total of %d workers [%1.5f hive_load remaining]\n", $total_workers_to_run, $available_load);
@@ -907,7 +907,7 @@ sub _pick_best_analysis_for_new_worker {
   if($stats) {
     #synchronize and double check that it can be run
     $self->safe_synchronize_AnalysisStats($stats);
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id == $rc_id)));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->resource_class_id == $rc_id)));
   }
 
   # ok so no analyses 'need' workers with the given $rc_id.
@@ -922,7 +922,7 @@ sub _pick_best_analysis_for_new_worker {
   foreach $stats (@$stats_list) {
     $self->safe_synchronize_AnalysisStats($stats);
 
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->rc_id == $rc_id)));
+    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->resource_class_id == $rc_id)));
   }
 
     # does the following really ever help?

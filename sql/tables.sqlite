@@ -303,21 +303,22 @@ CREATE TABLE analysis_data (
 CREATE        INDEX IF NOT EXISTS data_idx ON analysis_data (data);
 
 
-CREATE TABLE resource_description (
-    rc_id                 INTEGER NOT NULL,
-    meadow_type           TEXT, /* enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL, */
-    parameters            varchar(255) DEFAULT '' NOT NULL,
-
-    PRIMARY KEY(rc_id, meadow_type)
-);
-
-
 CREATE TABLE resource_class (
     resource_class_id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     name                varchar(40) NOT NULL
 
 );
 CREATE UNIQUE INDEX IF NOT EXISTS resource_class_name_idx ON resource_class (name);
+
+
+CREATE TABLE resource_description (
+    resource_class_id     INTEGER NOT NULL,
+    meadow_type           TEXT, /* enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL, */
+    parameters            varchar(255) DEFAULT '' NOT NULL,
+
+    PRIMARY KEY(resource_class_id, meadow_type)
+);
+
 
 
 -- ---------------------------------------------------------------------------------
@@ -334,7 +335,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS resource_class_name_idx ON resource_class (nam
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the jobs (cached state)
 --   failed_job_tolerance - % of tolerated failed jobs
---   rc_id                - resource class id (analyses are grouped into disjoint classes)
+--   resource_class_id    - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
   analysis_id           INTEGER NOT NULL,
@@ -358,7 +359,7 @@ CREATE TABLE analysis_stats (
   num_required_workers  int(10) NOT NULL DEFAULT 0,
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) NOT NULL DEFAULT 0,
-  rc_id                 INTEGER NOT NULL DEFAULT 0,
+  resource_class_id     INTEGER NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 );
@@ -388,7 +389,7 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL DEFAULT 0,
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) default 0 NOT NULL,
-  rc_id                 INTEGER DEFAULT 0 NOT NULL,
+  resource_class_id     INTEGER NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 );

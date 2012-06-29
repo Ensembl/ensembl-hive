@@ -47,6 +47,17 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
+sub create_new_for_analysis_id_resource_class_id {
+    my ($self, $analysis_id, $resource_class_id) = @_;
+
+    my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+    my $sql = "$insertion_method INTO analysis_stats (analysis_id, resource_class_id) VALUES ($analysis_id, $resource_class_id)";
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    $sth->finish;
+}
+
+
 =head2 fetch_by_analysis_id
 
   Arg [1]    : int $id
@@ -71,15 +82,10 @@ sub fetch_by_analysis_id {
 
   #return first element of _generic_fetch list
   my ($obj) = @{$self->_generic_fetch($constraint)};
-  unless(defined($obj)) {
-    $self->_create_new_for_analysis_id($id);
-    ($obj) = @{$self->_generic_fetch($constraint)};  
-  }
 
   if(!defined($obj)) {
     throw("unable to fetch analysis_stats for analysis_id = $id\n");
   }
-  
   return $obj;
 }
 
@@ -91,10 +97,10 @@ sub fetch_all {
 
 
 sub fetch_by_needed_workers {
-    my ($self, $limit, $rc_id) = @_;
+    my ($self, $limit, $resource_class_id) = @_;
 
     my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')"
-                    .(defined($rc_id) ? " AND ast.rc_id = $rc_id" : '');
+                    .(defined($resource_class_id) ? " AND ast.resource_class_id = $resource_class_id" : '');
 
     my $final_clause = 'ORDER BY priority DESC, '
                         .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
@@ -109,10 +115,10 @@ sub fetch_by_needed_workers {
 
 
 sub fetch_by_statuses {
-  my ($self, $statuses, $rc_id) = @_;
+  my ($self, $statuses, $resource_class_id) = @_;
 
   my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')'
-                   .(defined($rc_id) ? " AND ast.rc_id = $rc_id" : '');
+                   .(defined($resource_class_id) ? " AND ast.resource_class_id = $resource_class_id" : '');
 
   $self->_final_clause('ORDER BY last_update');
   my $results = $self->_generic_fetch($constraint);
@@ -209,7 +215,7 @@ sub update {
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
-  $sql .= ",rc_id=". $stats->rc_id();
+  $sql .= ",resource_class_id=". $stats->resource_class_id();
   $sql .= ",can_be_empty=". $stats->can_be_empty();
   $sql .= ",priority=". $stats->priority();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
@@ -434,7 +440,7 @@ sub _columns {
                     ast.num_required_workers
                     ast.last_update
                     ast.sync_lock
-                    ast.rc_id
+                    ast.resource_class_id
                     ast.can_be_empty
                     ast.priority
                    );
@@ -459,7 +465,7 @@ sub _objs_from_sth {
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
     $analStats->sync_lock($column{'sync_lock'});
-    $analStats->rc_id($column{'rc_id'});
+    $analStats->resource_class_id($column{'resource_class_id'});
     $analStats->can_be_empty($column{'can_be_empty'});
     $analStats->priority($column{'priority'});
     $analStats->batch_size($column{'batch_size'});
@@ -501,20 +507,6 @@ sub _final_clause {
   return $self->{'_final_clause'};
 }
 
-
-sub _create_new_for_analysis_id {
-  my ($self, $analysis_id) = @_;
-
-  my $sql;
-
-  my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-
-  $sql = "$insertion_method INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
-  #print("$sql\n");
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  $sth->finish;
-}
 
 1;
 

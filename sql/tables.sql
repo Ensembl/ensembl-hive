@@ -328,21 +328,21 @@ CREATE TABLE analysis_data (
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
-CREATE TABLE resource_description (
-    rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
-    meadow_type           varchar(40) NOT NULL,
-    parameters            varchar(255) DEFAULT '' NOT NULL,
-
-    PRIMARY KEY(rc_id, meadow_type)
-) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
-
-
 CREATE TABLE resource_class (
     resource_class_id   int(10) unsigned NOT NULL AUTO_INCREMENT,     # unique internal id
     name                varchar(40) NOT NULL,
 
     PRIMARY KEY(resource_class_id),
     UNIQUE KEY(name)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+CREATE TABLE resource_description (
+    resource_class_id     int(10) unsigned NOT NULL,
+    meadow_type           varchar(40) NOT NULL,
+    parameters            varchar(255) DEFAULT '' NOT NULL,
+
+    PRIMARY KEY(resource_class_id, meadow_type)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
@@ -360,7 +360,7 @@ CREATE TABLE resource_class (
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the jobs (cached state)
 --   failed_job_tolerance - % of tolerated failed jobs
---   rc_id                - resource class id (analyses are grouped into disjoint classes)
+--   resource_class_id    - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
   analysis_id           int(10) unsigned NOT NULL,
@@ -385,7 +385,7 @@ CREATE TABLE analysis_stats (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
-  rc_id                 int(10) unsigned default 0 NOT NULL,
+  resource_class_id     int(10) unsigned NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL,
   
@@ -418,7 +418,7 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
-  rc_id                 int(10) unsigned default 0 NOT NULL,
+  resource_class_id     int(10) unsigned NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 
@@ -451,5 +451,5 @@ CREATE TABLE monitor (
 
 
 # Auto add schema version to database (should be overridden by Compara's table.sql)
-INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '67');
+INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '68');
 

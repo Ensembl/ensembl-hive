@@ -11,10 +11,10 @@
     A data container object (the only methods are getters/setters) that corresponds to a row in 'resource_description' table:
 
     CREATE TABLE resource_description (
-        rc_id                 int(10) unsigned DEFAULT 0 NOT NULL,
+        resource_class_id     int(10) unsigned NOT NULL,
         meadow_type           varchar(40) NOT NULL,
         parameters            varchar(255) DEFAULT '' NOT NULL,
-        PRIMARY KEY(rc_id, meadow_type)
+        PRIMARY KEY(resource_class_id, meadow_type)
     ) ENGINE=InnoDB;
 
 =head1 CONTACT
@@ -35,11 +35,11 @@ sub new {
 
     my $self = bless {}, $class;
 
-    my ($adaptor, $rc_id, $meadow_type, $parameters) =
-         rearrange([qw(adaptor rc_id meadow_type parameters) ], @_);
+    my ($adaptor, $resource_class_id, $meadow_type, $parameters) =
+         rearrange([qw(adaptor resource_class_id meadow_type parameters) ], @_);
 
     $self->adaptor($adaptor) if(defined($adaptor));
-    $self->rc_id($rc_id);
+    $self->resource_class_id($resource_class_id);
     $self->meadow_type($meadow_type);
     $self->parameters($parameters);
 
@@ -59,13 +59,13 @@ sub adaptor {
 }
 
 
-sub rc_id {
+sub resource_class_id {
     my $self = shift @_;
 
     if(@_) {
-        $self->{'_rc_id'} = shift @_;
+        $self->{'_resource_class_id'} = shift @_;
     }
-    return $self->{'_rc_id'};
+    return $self->{'_resource_class_id'};
 }
 
 sub meadow_type {
@@ -89,7 +89,7 @@ sub parameters {
 sub to_string {
     my $self = shift @_;
 
-    return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(rc_id meadow_type parameters) ));
+    return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(resource_class_id meadow_type parameters) ));
 }
 
 1;

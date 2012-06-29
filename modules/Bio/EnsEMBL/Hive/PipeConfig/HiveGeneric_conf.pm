@@ -346,18 +346,19 @@ sub run {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
-            warn "Creating resource_class '$rc_name'.\n";
             my $rc = $resource_class_adaptor->create_new(
                 defined($rc_id) ? (-DBID   => $rc_id) : (),
                 -NAME   => $rc_name,
             );
+            $rc_id = $rc->dbID();
 
+            warn "Creating resource_class $rc_name($rc_id).\n";
 
             while( my($meadow_type, $xparams) = each %$mt2param ) {
                 $resource_description_adaptor->create_new(
-                    -RC_ID       => $rc->dbID,
-                    -MEADOW_TYPE => $meadow_type,
-                    -PARAMETERS  => $xparams,
+                    -RESOURCE_CLASS_ID  => $rc_id,
+                    -MEADOW_TYPE        => $meadow_type,
+                    -PARAMETERS         => $xparams,
                 );
             }
         }
@@ -369,6 +370,7 @@ sub run {
     }
 
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
+    my $analysis_stats_adaptor       = $hive_dba->get_AnalysisStatsAdaptor;
 
     my %seen_logic_name = ();
 
@@ -414,15 +416,15 @@ sub run {
                 -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
                 -program_file    => $program_file,
             );
-
             $analysis_adaptor->store($analysis);
+
+            $analysis_stats_adaptor->create_new_for_analysis_id_resource_class_id($analysis->dbID, $rc_id);
 
             my $stats = $analysis->stats();
             $stats->batch_size( $batch_size )                       if(defined($batch_size));
             $stats->hive_capacity( $hive_capacity )                 if(defined($hive_capacity));
             $stats->failed_job_tolerance( $failed_job_tolerance )   if(defined($failed_job_tolerance));
             $stats->max_retry_count( $max_retry_count )             if(defined($max_retry_count));
-            $stats->rc_id( $rc_id )                                 if(defined($rc_id));
             $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
             $stats->priority( $priority )                           if(defined($priority));
             $stats->status($blocked ? 'BLOCKED' : 'READY');         # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync

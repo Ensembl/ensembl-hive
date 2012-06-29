@@ -262,11 +262,11 @@ sub sync_lock {
   return $self->{'_sync_lock'};
 }
 
-sub rc_id {
+sub resource_class_id {
     my $self = shift;
 
-    $self->{'_rc_id'} = shift if(@_);
-    return $self->{'_rc_id'};
+    $self->{'_resource_class_id'} = shift if(@_);
+    return $self->{'_resource_class_id'};
 }
 
 sub can_be_empty {
