@@ -336,20 +336,20 @@ sub run {
         my %seen_resource_name = ();
         while( my($rc_id, $mt2param) = each %$resource_classes ) {
 
-            my $name = delete $mt2param->{-desc};
+            my $rc_name = delete $mt2param->{-desc};
             if($rc_id!~/^\d+$/) {
-                $name  = $rc_id;
+                $rc_name  = $rc_id;
                 $rc_id = undef;
             }
 
-            if(!$name or $seen_resource_name{$name}++) {
+            if(!$rc_name or $seen_resource_name{$rc_name}++) {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
-            warn "Creating resource_class '$name'.\n";
+            warn "Creating resource_class '$rc_name'.\n";
             my $rc = $resource_class_adaptor->create_new(
                 defined($rc_id) ? (-DBID   => $rc_id) : (),
-                -NAME   => $name,
+                -NAME   => $rc_name,
             );
 
 
@@ -360,6 +360,10 @@ sub run {
                     -PARAMETERS  => $xparams,
                 );
             }
+        }
+        unless($seen_resource_name{'default'}) {
+            warn "\tNB:You don't seem to have 'default' as one of the resource classes (forgot to inherit from SUPER::resource_classes ?) - creating one for you\n";
+            $resource_class_adaptor->create_new(-NAME => 'default');
         }
         warn "Done.\n\n";
     }
@@ -398,8 +402,9 @@ sub run {
 
             if($rc_id) {
                 warn "(-rc_id => $rc_id) syntax is deprecated, please start using (-rc_name => 'your_resource_class_name')";
-            } elsif($rc_name) {
-                my $rc = $resource_class_adaptor->fetch_by_name($rc_name ) or die "Could not fetch resource with name '$rc_name', please check the resource_classes() method of your PipeConfig";
+            } else {
+                $rc_name ||= 'default';
+                my $rc = $resource_class_adaptor->fetch_by_name($rc_name ) or die "Could not fetch resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contain it or inherit from the parent class";
                 $rc_id = $rc->dbID();
             }
 
