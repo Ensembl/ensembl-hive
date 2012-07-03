@@ -48,12 +48,12 @@ sub main {
     my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $all_dead                    = 0;
-    my $remove_analysis_id          = 0;
     my $job_id_for_output           = 0;
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;
+    my $reset_failed_jobs_for_analysis = 0;
 
     $self->{'reg_conf'}             = undef;
     $self->{'reg_alias'}            = undef;
@@ -109,8 +109,8 @@ sub main {
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
                'reset_job_id=i'    => \$reset_job_id,
+               'reset_failed|reset_failed_jobs_for_analysis=s' => \$reset_failed_jobs_for_analysis,
                'reset_all|reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
-               'delete|remove=s'   => \$remove_analysis_id, # careful
                'job_output=i'      => \$job_id_for_output,
                'monitor!'          => \$self->{'monitor'},
 
@@ -193,11 +193,15 @@ sub main {
         $job->print_job();
     }
 
-    if($reset_all_jobs_for_analysis) {
-        reset_all_jobs_for_analysis($self, $reset_all_jobs_for_analysis)
+    if(my $logic_name_to_reset = $reset_all_jobs_for_analysis || $reset_failed_jobs_for_analysis) {
+
+        my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($logic_name_to_reset)
+              || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($logic_name_to_reset)"); 
+
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id($analysis->dbID, $reset_all_jobs_for_analysis); 
+        $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
     }
 
-    if($remove_analysis_id) { remove_analysis_id($self, $remove_analysis_id); }
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
 
@@ -365,26 +369,6 @@ sub run_autonomously {
     printf("dbc %d disconnect cycles\n", $self->{'dba'}->dbc->disconnect_count);
 }
 
-sub reset_all_jobs_for_analysis {
-    my ($self, $logic_name) = @_;
-  
-  my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($logic_name)
-      || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($logic_name)"); 
-  
-  $self->{'dba'}->get_AnalysisJobAdaptor->reset_all_jobs_for_analysis_id($analysis->dbID); 
-  $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
-}
-
-sub remove_analysis_id {
-    my ($self, $analysis_id) = @_;
-
-    require Bio::EnsEMBL::DBSQL::AnalysisAdaptor or die "$!";
-
-    my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID($analysis_id); 
-
-    $self->{'dba'}->get_AnalysisJobAdaptor->remove_analysis_id($analysis->dbID); 
-    $self->{'dba'}->get_AnalysisAdaptor->remove($analysis); 
-}
 
 __DATA__
 
@@ -423,8 +407,8 @@ __DATA__
         # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
 
-        # Reset all 'buggy_analysis' jobs to 'READY' state, so that they can be run again
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_all_jobs_for_analysis buggy_analysis
+        # Reset failed 'buggy_analysis' jobs to 'READY' state, so that they can be run again
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_failed_jobs_for_analysis buggy_analysis
 
         # Do a cleanup: find and bury dead workers, reclaim their jobs
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
@@ -477,8 +461,10 @@ __DATA__
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
+    -reset_failed_jobs_for_analysis <logic_name>
+                           : reset FAILED jobs of an analysis back to READY so they can be rerun
     -reset_all_jobs_for_analysis <logic_name>
-                           : reset jobs back to READY so they can be rerun
+                           : reset ALL jobs of an analysis back to READY so they can be rerun
 
 =head1 CONTACT
 

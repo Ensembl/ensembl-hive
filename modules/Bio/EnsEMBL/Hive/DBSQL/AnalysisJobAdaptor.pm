@@ -681,71 +681,27 @@ sub reset_job_by_dbID {
 }
 
 
-=head2 reset_all_jobs_for_analysis_id
+=head2 reset_jobs_for_analysis_id
 
   Arg [1]    : int $analysis_id
-  Example    :
-  Description: Resets all not BLOCKED jobs back to READY so they can be rerun.
-               Needed if an analysis/process modifies the dataflow rules as the
-              system runs.  The jobs that are flowed 'from'  will need to be reset so
-              that the output data can be flowed through the new rule.  
-              If one is designing a system based on a need to change rules mid-process
-              it is best to make sure such 'from' analyses that need to be reset are 'Dummy'
-              types so that they can 'hold' the output from the previous step and not require
-              the system to actually redo processing.
-  Exceptions : $analysis_id must be defined
-  Caller     : user RunnableDB subclasses which build dataflow rules on the fly
+  Arg [2]    : bool $all (false by default)
+  Description: Resets either all FAILED jobs of an analysis (default)
+                or ALL jobs of an analysis to 'READY' and their retry_count to 0.
+  Caller     : beekeeper.pl
 
 =cut
 
-sub reset_all_jobs_for_analysis_id {
-  my $self        = shift;
-  my $analysis_id = shift;
+sub reset_jobs_for_analysis_id {
+    my ($self, $analysis_id, $all) = @_;
 
-  throw("must define analysis_id") unless($analysis_id);
+    my $sql = "UPDATE job SET status='READY', retry_count=0 WHERE analysis_id=?".($all ? "" : " AND status='FAILED'");
+    my $sth = $self->prepare($sql);
+    $sth->execute($analysis_id);
+    $sth->finish;
 
-  my ($sql, $sth);
-  $sql = "UPDATE job SET status='READY' WHERE status!='BLOCKED' and analysis_id=?";
-  $sth = $self->prepare($sql);
-  $sth->execute($analysis_id);
-  $sth->finish;
-
-  $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
+    $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
 }
 
-=head2 remove_analysis_id
-
-  Arg [1]    : int $analysis_id
-  Example    :
-  Description: Remove the analysis from the database.
-               Jobs should have been killed before.
-  Exceptions : $analysis_id must be defined
-  Caller     :
-
-=cut
-
-sub remove_analysis_id {
-  my $self        = shift;
-  my $analysis_id = shift;
-
-  throw("must define analysis_id") unless($analysis_id);
-
-  my $sql;
-  #first just reset the claimed jobs, these don't need a retry_count index increment
-  $sql = "DELETE FROM analysis_stats WHERE analysis_id=$analysis_id";
-  $self->dbc->do($sql);
-  $sql = "ANALYZE TABLE analysis_stats";
-  $self->dbc->do($sql);
-  $sql = "DELETE FROM job WHERE analysis_id=$analysis_id";
-  $self->dbc->do($sql);
-  $sql = "ANALYZE TABLE job";
-  $self->dbc->do($sql);
-  $sql = "DELETE FROM worker WHERE analysis_id=$analysis_id";
-  $self->dbc->do($sql);
-  $sql = "ANALYZE TABLE worker";
-  $self->dbc->do($sql);
-
-}
 
 1;
 
