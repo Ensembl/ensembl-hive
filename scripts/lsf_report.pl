@@ -54,7 +54,7 @@ sub main {
     $dbc->do (qq{
         CREATE OR REPLACE VIEW lsf_usage AS
             SELECT CONCAT(logic_name,'(',analysis_id,')') analysis_name_and_id,
-                rc_id, count(*) workers,
+                resource_class_id, count(*) workers,
                 min(mem), avg(mem), max(mem),
                 min(swap), avg(swap), max(swap)
             FROM analysis
