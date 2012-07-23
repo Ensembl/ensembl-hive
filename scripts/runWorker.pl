@@ -21,7 +21,7 @@ my $db_conf = {
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($rc_id, $logic_name, $analysis_id, $input_id, $job_id);     # Task specification parameters
-my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_output_dir, $worker_output_dir, $retry_throwing_jobs);   # Worker control parameters
+my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_output_dir, $worker_output_dir, $retry_throwing_jobs, $compile_module_once);   # Worker control parameters
 my ($help, $debug, $show_analysis_stats);
 
 GetOptions(
@@ -51,6 +51,7 @@ GetOptions(
            'hive_output_dir|outdir=s'   => \$hive_output_dir,       # keep compatibility with the old name
            'worker_output_dir=s'        => \$worker_output_dir,     # will take precedence over hive_output_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
+           'compile_module_once=i'      => \$compile_module_once,
 
 # Other commands
            'h|help'                     => \$help,
@@ -101,7 +102,7 @@ eval {
          -exec_host             => $exec_host,
 
       # Task specification:
-         -rc_id                 => $rc_id,
+         -rc_id                 => $rc_id,          # Idea: could/should we use rc_name instead?
          -logic_name            => $logic_name,
          -analysis_id           => $analysis_id,
          -input_id              => $input_id,
@@ -115,6 +116,7 @@ eval {
          -worker_output_dir     => $worker_output_dir,
          -hive_output_dir       => $hive_output_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
+         -compile_module_once   => $compile_module_once,
 
       # Other parameters:
          -debug                 => $debug,
@@ -208,6 +210,7 @@ __DATA__
     -hive_output_dir <path>     : directory where stdout/stderr of the whole hive of workers is redirected
     -worker_output_dir <path>   : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
+    -compile_module_once 0|1    : should we compile the module only once (desired future behaviour), or pretend to do it before every job (current behaviour)?
 
 =head2 Other options:
 

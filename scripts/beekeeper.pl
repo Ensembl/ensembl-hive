@@ -61,6 +61,7 @@ sub main {
     $self->{'sleep_minutes'}        = 1;
     $self->{'verbose_stats'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
+    $self->{'compile_module_once'}  = undef;
     $self->{'hive_output_dir'} = undef;
 
     GetOptions(
@@ -96,6 +97,7 @@ sub main {
                'logic_name=s'           => \$self->{'logic_name'},
                'hive_output_dir=s'      => \$self->{'hive_output_dir'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
+               'compile_module_once=i'  => \$self->{'compile_module_once'},
                'debug=i'                => \$self->{'debug'},
 
                     # other commands/options
@@ -298,7 +300,7 @@ sub generate_worker_cmd {
     if ($run_job_id) {
         $worker_cmd .= " -job_id $run_job_id";
     } else {
-        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'retry_throwing_jobs', 'hive_output_dir', 'debug') {
+        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'retry_throwing_jobs', 'compile_module_once', 'hive_output_dir', 'debug') {
             if(defined(my $value = $self->{$worker_option})) {
                 $worker_cmd .= " -${worker_option} $value";
             }
@@ -449,6 +451,7 @@ __DATA__
     -life_span <num>            : life_span limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
+    -compile_module_once 0|1    : should we compile the module only once (desired future behaviour), or pretend to do it before every job (current behaviour)?
     -hive_output_dir <path>     : directory where stdout/stderr of the hive is redirected
     -debug <debug_level>        : set debug level of the workers
 

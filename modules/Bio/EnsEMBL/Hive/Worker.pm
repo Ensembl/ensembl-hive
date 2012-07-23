@@ -327,6 +327,15 @@ sub last_check_in {
   return $self->{'_last_check_in'};
 }
 
+
+sub runnable_object {
+    my $self = shift @_;
+
+    $self->{'_runnable_object'} = shift @_ if(@_);
+    return $self->{'_runnable_object'};
+}
+
+
 # this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
 
 sub retry_throwing_jobs {
@@ -334,6 +343,13 @@ sub retry_throwing_jobs {
 
     $self->{'_retry_throwing_jobs'} = shift @_ if(@_);
     return defined($self->{'_retry_throwing_jobs'}) ? $self->{'_retry_throwing_jobs'} : 1;
+}
+
+sub compile_module_once {
+    my $self = shift @_;
+
+    $self->{'_compile_module_once'} = shift @_ if(@_);
+    return $self->{'_compile_module_once'} ;
 }
 
 =head2 hive_output_dir
@@ -485,14 +501,21 @@ sub cleanup_worker_process_temp_directory {
 =cut
 
 sub run {
-  my $self = shift;
+    my $self = shift;
 
-  $self->print_worker();
-  if( my $worker_output_dir = $self->worker_output_dir ) {
-    $self->get_stdout_redirector->push( $worker_output_dir.'/worker.out' );
-    $self->get_stderr_redirector->push( $worker_output_dir.'/worker.err' );
     $self->print_worker();
-  }
+    if( my $worker_output_dir = $self->worker_output_dir ) {
+        $self->get_stdout_redirector->push( $worker_output_dir.'/worker.out' );
+        $self->get_stderr_redirector->push( $worker_output_dir.'/worker.err' );
+        $self->print_worker();
+    }
+
+    if( $self->compile_module_once() ) {
+        $self->enter_status('COMPILATION');
+        my $runnable_object = $self->analysis->process or die "Unknown compilation error";
+        $self->runnable_object( $runnable_object );
+        $self->enter_status('READY');
+    }
 
   $self->db->dbc->disconnect_when_inactive(0);
 
@@ -602,13 +625,19 @@ sub run_one_batch {
         eval {  # capture any throw/die
             $job->incomplete(1);
 
-            $self->enter_status('COMPILATION', $job);       # ToDo: when Runnables are ready, switch to compiling once per batch (saves time)
-            my $runnable_db = $self->analysis->process or die "Unknown compilation error";
+            my $runnable_object;
+
+            if( $self->compile_module_once() ) {
+                $runnable_object = $self->runnable_object();
+            } else {
+                $self->enter_status('COMPILATION', $job);
+                $runnable_object = $self->analysis->process or die "Unknown compilation error";
+            }
 
             $self->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $self->run_module_with_job($runnable_db, $job);
+            $self->run_module_with_job($runnable_object, $job);
 
             $job->incomplete(0);
         };
@@ -668,33 +697,33 @@ sub run_one_batch {
 
 
 sub run_module_with_job {
-    my ($self, $runnable_db, $job) = @_;
+    my ($self, $runnable_object, $job) = @_;
 
-    $runnable_db->input_job( $job );
-    $runnable_db->db( $self->db );
-    $runnable_db->worker( $self );
-    $runnable_db->debug( $self->debug );
+    $runnable_object->input_job( $job );
+    $runnable_object->db( $self->db );
+    $runnable_object->worker( $self );
+    $runnable_object->debug( $self->debug );
 
-    $job->param_init( $runnable_db->strict_hash_format(), $runnable_db->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
+    $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
     $job->autoflow(1);
 
     $self->enter_status('GET_INPUT', $job);
 
     $self->{'fetching_stopwatch'}->continue();
-    $runnable_db->fetch_input;
+    $runnable_object->fetch_input;
     $self->{'fetching_stopwatch'}->pause();
 
     $self->enter_status('RUN', $job);
 
     $self->{'running_stopwatch'}->continue();
-    $runnable_db->run;
+    $runnable_object->run;
     $self->{'running_stopwatch'}->pause();
 
     if($self->execute_writes) {
         $self->enter_status('WRITE_OUTPUT', $job);
 
         $self->{'writing_stopwatch'}->continue();
-        $runnable_db->write_output;
+        $runnable_object->write_output;
         $self->{'writing_stopwatch'}->pause();
 
         if( $job->autoflow ) {

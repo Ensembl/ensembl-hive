@@ -99,11 +99,11 @@ sub create_new_worker {
 
   my (  $meadow_type, $meadow_name, $process_id, $exec_host,
         $rc_id, $logic_name, $analysis_id, $input_id, $job_id,
-        $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
+        $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
 
  rearrange([qw(meadow_type meadow_name process_id exec_host
         rc_id logic_name analysis_id input_id job_id
-        no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
+        no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
 
     if($logic_name) {
         if($analysis_id) {
@@ -243,9 +243,13 @@ sub create_new_worker {
     if(defined $retry_throwing_jobs) {
         $worker->retry_throwing_jobs($retry_throwing_jobs);
     }
+    if(defined $compile_module_once) {
+        $worker->compile_module_once($compile_module_once);
+    }
 
-  return $worker;
+    return $worker;
 }
+
 
 sub register_worker_death {
   my ($self, $worker) = @_;
