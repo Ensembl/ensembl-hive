@@ -707,7 +707,7 @@ sub run_module_with_job {
     $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
     $job->autoflow(1);
 
-    $self->enter_status('GET_INPUT', $job);
+    $self->enter_status('FETCH_INPUT', $job);
 
     $self->{'fetching_stopwatch'}->continue();
     $runnable_object->fetch_input;

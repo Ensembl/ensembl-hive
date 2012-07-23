@@ -32,10 +32,10 @@ if($reg_conf) {
     Bio::EnsEMBL::Registry->load_all($reg_conf);
 }
 
-my $process = $runnable_module->new();
+my $runnable_object = $runnable_module->new();
 my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
 my ($param_hash, $param_list) = parse_cmdline_options();
-$job->param_init( 1, $process->param_defaults(), $param_hash );
+$job->param_init( 1, $runnable_object->param_defaults(), $param_hash );
 
 $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
 $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
@@ -54,21 +54,21 @@ $job->autoflow(1);
 $job->input_id( $input_id );
 warn "\nRunning '$runnable_module' with '$input_id' :\n";
 
-$process->input_job($job);
+$runnable_object->input_job($job);
 if($debug) {
-    $process->debug($debug);
+    $runnable_object->debug($debug);
 }
 
     # job's life cycle:
 warn "\nFETCH_INPUT:\n";
-$process->fetch_input();
+$runnable_object->fetch_input();
 
 warn "\nRUN:\n";
-$process->run();
+$runnable_object->run();
 
 unless($no_write) {
     warn "\nWRITE_OUTPUT:\n";
-    $process->write_output();
+    $runnable_object->write_output();
 
     if( $job->autoflow ) {
         warn "\nAUTOFLOW input->output\n";

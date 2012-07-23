@@ -102,7 +102,7 @@ CREATE TABLE worker (
   host	           varchar(40) DEFAULT NULL,
   process_id       varchar(40) DEFAULT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
-  status           TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL, */
+  status           TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL, */
   born	           timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
@@ -208,7 +208,7 @@ CREATE TABLE job (
   analysis_id               INTEGER NOT NULL,
   input_id                  char(255) NOT NULL,
   worker_id                 INTEGER DEFAULT NULL,
-  status                    TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','BLOCKED','CLAIMED','COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL, */
+  status                    TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','BLOCKED','CLAIMED','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL, */
   retry_count               int(10) DEFAULT 0 NOT NULL,
   completed                 datetime DEFAULT NULL,
   runtime_msec              int(10) DEFAULT NULL, 
@@ -246,7 +246,7 @@ CREATE TABLE job_message (
   worker_id                 INTEGER NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry                     int(10) DEFAULT 0 NOT NULL,
-  status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'GET_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN', */
+  status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'FETCH_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN', */
   msg                       TEXT,
   is_error                  BOOLEAN
 );

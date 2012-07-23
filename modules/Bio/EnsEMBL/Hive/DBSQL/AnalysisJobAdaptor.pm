@@ -224,7 +224,7 @@ sub fetch_all_failed_jobs {
 sub fetch_all_incomplete_jobs_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    my $constraint = "j.status IN ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT') AND j.worker_id='$worker_id'";
+    my $constraint = "j.status IN ('COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT') AND j.worker_id='$worker_id'";
     return $self->_generic_fetch($constraint);
 }
 
@@ -550,7 +550,7 @@ sub reclaim_job_for_worker {
   Description: If a worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
-               If jobs was in a 'working' state (COMPILATION, GET_INPUT, RUN, WRITE_OUTPUT) 
+               If jobs was in a 'working' state (COMPILATION, FETCH_INPUT, RUN, WRITE_OUTPUT) 
                the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
@@ -578,7 +578,7 @@ sub release_undone_jobs_from_worker {
         SELECT job_id
           FROM job
          WHERE worker_id='$worker_id'
-           AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+           AND status in ('COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT')
     } );
     $sth->execute();
 
@@ -624,7 +624,7 @@ sub release_and_age_job {
         UPDATE job
            SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END), retry_count=retry_count+1
          WHERE job_id=$job_id
-           AND status in ('COMPILATION','GET_INPUT','RUN','WRITE_OUTPUT')
+           AND status in ('COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT')
     } );
 }
 

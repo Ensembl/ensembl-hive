@@ -33,7 +33,7 @@ Available parameters:
 
     param('lethal_after'):  makes jobs' failures lethal when 'value' is greater than this parameter
 
-    param('time_GET_INPUT'):    time in seconds that the job will spend sleeping in GET_INPUT state.
+    param('time_FETCH_INPUT'):  time in seconds that the job will spend sleeping in FETCH_INPUT state.
 
     param('time_RUN'):          time in seconds that the job will spend sleeping in RUN state.
 
@@ -70,7 +70,7 @@ sub param_defaults {
         'state'         => 'RUN',   # the state in which the process may commit apoptosis
         'lethal_after'  => 0,       # If value is above this (nonzero) threshold, job's death becomes lethal to the worker.
 
-        'time_GET_INPUT'    => 0,   # how much time fetch_input()  will spend in sleeping state
+        'time_FETCH_INPUT'  => 0,   # how much time fetch_input()  will spend in sleeping state
         'time_RUN'          => 1,   # how much time run()          will spend in sleeping state
         'time_WRITE_OUTPUT' => 0,   # how much time write_output() will spend in sleeping state
     };
@@ -86,7 +86,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->dangerous_math('GET_INPUT');
+    $self->dangerous_math('FETCH_INPUT');
 }
 
 =head2 run
