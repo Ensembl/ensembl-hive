@@ -17,23 +17,24 @@
   $self->input_id, $self->analysis and several other variables. 
   From this input and configuration data, each Process can then proceed to 
   do something.  The flow of execution within a Process is:
-    fetch_input();
-    run();
-    write_output();
-    DESTROY
-  The developer can implement their own versions of fetch_input, run, 
-  write_output, and DESTROY to do what they need.  
+    pre_cleanup() if($retry_count>0);   # clean up databases/filesystem before subsequent attempts
+    fetch_input();                      # fetch the data from databases/filesystems
+    run();                              # perform the main computation 
+    write_output();                     # record the results in databases/filesystems
+    post_cleanup();                     # destroy all non-trivial data structures after the job is done
+  The developer can implement their own versions of
+  pre_cleanup, fetch_input, run, write_output, and post_cleanup to do what they need.  
   
   The entire system is based around the concept of a workflow graph which
   can split and loop back on itself.  This is accomplished by dataflow
-  rules (or pipes) that connect one Process (or analysis) to others.
-  Where a unix commandline program can send output on STDOUT STDERR pipes, 
+  rules (similar to Unix pipes) that connect one Process (or analysis) to others.
+  Where a Unix command line program can send output on STDOUT STDERR pipes, 
   a hive Process has access to unlimited pipes referenced by numerical 
   branch_codes. This is accomplished within the Process via 
   $self->dataflow_output_id(...);  
   
   The design philosophy is that each Process does its work and creates output, 
-  but it doesn't worry about where the input came from, or where it's output 
+  but it doesn't worry about where the input came from, or where its output 
   goes. If the system has dataflow pipes connected, then the output jobs 
   have purpose, if not - the output work is thrown away.  The workflow graph 
   'controls' the behaviour of the system, not the processes.  The processes just 
@@ -136,6 +137,20 @@ sub param_defaults {
 }
 
 
+=head2 pre_cleanup
+
+    Title   :  pre_cleanup
+    Function:  sublcass can implement functions related to cleaning up the database/filesystem after the previous unsuccessful run.
+               
+=cut
+
+# sub pre_cleanup {
+#    my $self = shift;
+#
+#    return 1;
+# }
+
+
 =head2 fetch_input
 
     Title   :  fetch_input
@@ -153,6 +168,7 @@ sub fetch_input {
     return 1;
 }
 
+
 =head2 run
 
     Title   :  run
@@ -169,6 +185,7 @@ sub run {
     return 1;
 }
 
+
 =head2 write_output
 
     Title   :  write_output
@@ -184,20 +201,20 @@ sub write_output {
     return 1;
 }
 
-=head2 DESTROY
 
-    Title   :  DESTROY
-    Function:  sublcass can implement functions related to cleanup and release.
-               Typical activities includes freeing datastructures or 
-	       closing files. 
+=head2 post_cleanup
 
+    Title   :  post_cleanup
+    Function:  sublcass can implement functions related to cleaning up after running one job
+               (destroying non-trivial data structures in memory).
+               
 =cut
 
-sub DESTROY {
-    my $self = shift;
-
-    $self->SUPER::DESTROY if $self->can("SUPER::DESTROY");
-}
+#sub post_cleanup {
+#    my $self = shift;
+#
+#    return 1;
+#}
 
 
 ######################################################

@@ -707,21 +707,23 @@ sub run_module_with_job {
     $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
     $job->autoflow(1);
 
-    $self->enter_status('FETCH_INPUT', $job);
+    if( $runnable_object->can('pre_cleanup') and $job->retry_count()>0 ) {
+        $self->enter_status('PRE_CLEANUP', $job);
+        $runnable_object->pre_cleanup;
+    }
 
+    $self->enter_status('FETCH_INPUT', $job);
     $self->{'fetching_stopwatch'}->continue();
     $runnable_object->fetch_input;
     $self->{'fetching_stopwatch'}->pause();
 
     $self->enter_status('RUN', $job);
-
     $self->{'running_stopwatch'}->continue();
     $runnable_object->run;
     $self->{'running_stopwatch'}->pause();
 
     if($self->execute_writes) {
         $self->enter_status('WRITE_OUTPUT', $job);
-
         $self->{'writing_stopwatch'}->continue();
         $runnable_object->write_output;
         $self->{'writing_stopwatch'}->pause();
@@ -732,6 +734,11 @@ sub run_module_with_job {
         }
     } else {
         print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
+    }
+
+    if( $runnable_object->can('post_cleanup') ) {   # Todo: may need to run it after the eval, to clean up the memory even after partially failed attempts?
+        $self->enter_status('POST_CLEANUP', $job);
+        $runnable_object->post_cleanup;
     }
 
     my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};

@@ -76,6 +76,19 @@ sub param_defaults {
     };
 }
 
+
+=head2 pre_cleanup
+
+    Title   :  pre_cleanup
+    Function:  sublcass can implement functions related to cleaning up the database/filesystem after the previous unsuccessful run.
+                Here we just define it to see when the job gets into this state.
+               
+=cut
+
+sub pre_cleanup {
+}
+
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
@@ -88,6 +101,7 @@ sub fetch_input {
 
     $self->dangerous_math('FETCH_INPUT');
 }
+
 
 =head2 run
 
@@ -102,6 +116,7 @@ sub run {
     $self->dangerous_math('RUN');
 }
 
+
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
@@ -114,6 +129,20 @@ sub write_output {
 
     $self->dangerous_math('WRITE_OUTPUT');
 }
+
+
+=head2 post_cleanup
+
+    Title   :  post_cleanup
+    Function:  sublcass can implement functions related to cleaning up after running one job
+               (destroying non-trivial data structures in memory).
+                Here we just define it to see when the job gets into this state.
+               
+=cut
+
+sub post_cleanup {
+}
+
 
 =head2 dangerous_math
 
