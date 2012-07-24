@@ -664,6 +664,8 @@ sub gc_dataflow {
   Example    :
   Description: Forces a job to be reset to 'READY' so it can be run again.
                Will also reset a previously 'BLOCKED' jobs to READY.
+               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
+               but will not change retry_count if a job has never *really* started.
   Exceptions : $job_id must not be false or zero
   Caller     : user process
 
@@ -673,9 +675,11 @@ sub reset_job_by_dbID {
     my $self   = shift;
     my $job_id = shift or throw("job_id of the job to be reset is undefined");
 
+        # Note: the order of the fields being updated is critical!
     $self->dbc->do( qq{
         UPDATE job
-           SET status='READY', retry_count=0
+           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED' OR status='BLOCKED') THEN retry_count ELSE 1 END)
+             , status='READY'
          WHERE job_id=$job_id
     } );
 }
