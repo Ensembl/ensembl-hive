@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmd
 
 use Data::Dumper;
 
-my ($reg_conf, $help, $debug, $no_write, $flow_into, $input_id);
+my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id);
 
 my $module_or_file = shift @ARGV or script_usage();
 
@@ -19,6 +19,7 @@ GetOptions(
            'debug=i'            => \$debug,
            'reg_conf|regfile=s' => \$reg_conf,
            'no_write|nowrite'   => \$no_write,
+           'no_cleanup'         => \$no_cleanup,
            'flow_into|flow=s'   => \$flow_into,
            'input_id=s'         => \$input_id,
 );
@@ -63,6 +64,10 @@ if($debug) {
 $runnable_object->execute_writes( not $no_write );
 
 $runnable_object->life_cycle();
+
+unless($no_cleanup) {
+    $runnable_object->cleanup_worker_temp_directory();
+}
 
 __DATA__
 

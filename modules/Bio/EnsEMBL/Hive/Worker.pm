@@ -454,21 +454,6 @@ sub toString {
 }
 
 
-sub worker_process_temp_directory {
-  my $self = shift;
-  
-  unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
-    #create temp directory to hold fasta databases
-    my $username = $ENV{'USER'};
-    my $worker_id = $self->dbID;
-    $self->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}/";
-    mkdir($self->{'_tmp_dir'}, 0777);
-    throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
-  }
-  return $self->{'_tmp_dir'};
-}
-
-
 sub cleanup_worker_process_temp_directory {
   my $self = shift;
   if($self->{'_tmp_dir'}) {
@@ -589,10 +574,14 @@ sub run {
 
   } while (!$self->cause_of_death); # /Worker's lifespan loop
 
-  if($self->perform_cleanup) {
-    #have runnable cleanup any global/process files/data it may have created
-    $self->cleanup_worker_process_temp_directory;
-  }
+        # have runnable clean up any global/process files/data it may have created
+    if($self->perform_cleanup) {
+        if(my $runnable_object = $self->runnable_object()) {    # if -compile_module_once is 1, keep _tmp_dir in the Process object:
+            $runnable_object->cleanup_worker_temp_directory();
+        } else {                                                # otherwise keep _tmp_dir in the Worker object, so it needs its own cleanup method:
+            $self->cleanup_worker_process_temp_directory();     #   TODO: remove this method when -compile_module_once becomes the only option
+        }
+    }
 
   $self->queen->register_worker_death($self);
 

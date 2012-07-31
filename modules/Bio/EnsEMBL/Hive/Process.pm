@@ -534,10 +534,34 @@ sub debug {
 =cut
 
 sub worker_temp_directory {
-  my $self = shift;
-  return undef unless($self->worker);
-  return $self->worker->worker_process_temp_directory;
+    my $self = shift @_;
+
+        # TODO: simplify $holding_object=$self when -compile_module_once becomes the only option:
+    my $holding_object = $self->worker ? $self->worker : $self;
+
+    unless(defined($holding_object->{'_tmp_dir'}) and (-e $holding_object->{'_tmp_dir'})) {
+        my $username = $ENV{'USER'};
+        my $worker_id = $self->worker ? $self->worker->dbID : 'standalone';
+        $holding_object->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}/";
+        mkdir($holding_object->{'_tmp_dir'}, 0777);
+        throw("unable to create a writable directory ".$holding_object->{'_tmp_dir'}) unless(-w $holding_object->{'_tmp_dir'});
+    }
+    return $holding_object->{'_tmp_dir'};
 }
+
+
+sub cleanup_worker_temp_directory {
+    my $self = shift @_;
+
+        # TODO: simplify $holding_object=$self when -compile_module_once becomes the only option:
+    my $holding_object = $self->worker ? $self->worker : $self;
+
+    if($holding_object->{'_tmp_dir'}) {
+        my $cmd = "rm -r ". $holding_object->{'_tmp_dir'};
+        system($cmd);
+    }
+}
+
 
 #################################################
 #
