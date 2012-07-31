@@ -521,6 +521,7 @@ sub run {
         $runnable_object->db( $self->db );
         $runnable_object->worker( $self );
         $runnable_object->debug( $self->debug );
+        $runnable_object->execute_writes( $self->execute_writes );
 
         $self->runnable_object( $runnable_object );
         $self->enter_status('READY');
@@ -645,6 +646,7 @@ sub run_one_batch {
                 $runnable_object->db( $self->db );
                 $runnable_object->worker( $self );
                 $runnable_object->debug( $self->debug );
+                $runnable_object->execute_writes( $self->execute_writes );
             }
 
             $self->db->dbc->query_count(0);
@@ -653,7 +655,7 @@ sub run_one_batch {
             $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
             $runnable_object->input_job( $job );
 
-            $job_partial_timing = $self->life_cycle($runnable_object);
+            $job_partial_timing = $runnable_object->life_cycle();
 
             $job->incomplete(0);
         };

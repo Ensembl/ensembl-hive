@@ -10,7 +10,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmd
 
 use Data::Dumper;
 
-my ($reg_conf, $help, $debug, $no_write, $flow_into);
+my ($reg_conf, $help, $debug, $no_write, $flow_into, $input_id);
 
 my $module_or_file = shift @ARGV or script_usage();
 
@@ -20,6 +20,7 @@ GetOptions(
            'reg_conf|regfile=s' => \$reg_conf,
            'no_write|nowrite'   => \$no_write,
            'flow_into|flow=s'   => \$flow_into,
+           'input_id=s'         => \$input_id,
 );
 
 if ($help or !$module_or_file) {
@@ -33,9 +34,15 @@ if($reg_conf) {
 }
 
 my $runnable_object = $runnable_module->new();
-my $job = Bio::EnsEMBL::Hive::AnalysisJob->new();
-my ($param_hash, $param_list) = parse_cmdline_options();
-$job->param_init( 1, $runnable_object->param_defaults(), $param_hash );
+my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( -dbID => -1 );
+unless($input_id) {
+    my ($param_hash, $param_list) = parse_cmdline_options();
+    $input_id = stringify($param_hash);
+}
+$job->input_id( $input_id );
+warn "\nRunning '$runnable_module' with input_id='$input_id' :\n";
+
+$job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $job->input_id() );
 
 $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
 $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
@@ -49,35 +56,13 @@ foreach my $branch_code (keys %$flow_into) {
     $job->dataflow_rules( $branch_code, \@dataflow_rules );
 }
 
-my $input_id = stringify($param_hash);
-$job->autoflow(1);
-$job->input_id( $input_id );
-warn "\nRunning '$runnable_module' with '$input_id' :\n";
-
 $runnable_object->input_job($job);
 if($debug) {
     $runnable_object->debug($debug);
 }
+$runnable_object->execute_writes( not $no_write );
 
-    # job's life cycle:
-warn "\nFETCH_INPUT:\n";
-$runnable_object->fetch_input();
-
-warn "\nRUN:\n";
-$runnable_object->run();
-
-unless($no_write) {
-    warn "\nWRITE_OUTPUT:\n";
-    $runnable_object->write_output();
-
-    if( $job->autoflow ) {
-        warn "\nAUTOFLOW input->output\n";
-        $job->dataflow_output_id( $job->param() );
-    }
-}
-warn "\nDONE.\n";
-
-exit(0);
+$runnable_object->life_cycle();
 
 __DATA__
 

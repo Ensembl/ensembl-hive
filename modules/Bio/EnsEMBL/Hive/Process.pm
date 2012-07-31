@@ -91,17 +91,92 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception ('throw');
 use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
+use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
 
+
 sub new {
-  my ($class,@args) = @_;
-  my $self = bless {}, $class;
-  
-  my ($analysis) = rearrange([qw( ANALYSIS )], @args);
-  $self->analysis($analysis) if($analysis);
-  
-  return $self;
+    my ($class, @args) = @_;
+
+    my $self = bless {}, $class;
+
+    my ($analysis) = rearrange([qw( ANALYSIS )], @args);
+    $self->analysis($analysis) if($analysis);
+
+    return $self;
+}
+
+
+sub life_cycle {
+    my ($self, $worker) = @_;
+
+    my $job = $self->input_job();
+    my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
+    my %job_partial_timing = ();
+
+    $job->autoflow(1);
+
+    if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
+        $self->enter_status('PRE_CLEANUP');
+        $self->pre_cleanup;
+    }
+
+    $self->enter_status('FETCH_INPUT');
+    $partial_stopwatch->restart();
+    $self->fetch_input;
+    $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->get_elapsed();
+
+    $self->enter_status('RUN');
+    $partial_stopwatch->restart();
+    $self->run;
+    $job_partial_timing{'RUN'} = $partial_stopwatch->get_elapsed();
+
+    if($self->execute_writes) {
+        $self->enter_status('WRITE_OUTPUT');
+        $partial_stopwatch->restart();
+        $self->write_output;
+        $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
+
+        if( $job->autoflow ) {
+            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
+            $job->dataflow_output_id();
+        }
+    } else {
+        print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
+    }
+
+    if( $self->can('post_cleanup') ) {   # Todo: may need to run it after the eval, to clean up the memory even after partially failed attempts?
+        $self->enter_status('POST_CLEANUP');
+        $self->post_cleanup;
+    }
+
+    my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
+    if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
+        $job->transient_error(0);
+        die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
+    }
+
+    return \%job_partial_timing;
+}
+
+
+sub enter_status {
+    my ($self, $status) = @_;
+
+    my $job     = $self->input_job();
+    my $worker  = $self->worker();
+
+    if($self->debug) {
+        print STDERR "\nworker_id=".($worker ? $worker->dbID : '(standalone)').($job ? ', job_id='.$job->dbID : ''). " : $status\n";
+    }
+    if($job) {
+        $job->update_status( $status );
+    }
+    if($worker) {
+        $worker->status( $status );
+        $worker->queen->check_in_worker( $worker );
+    }
 }
 
 
@@ -230,7 +305,7 @@ sub write_output {
     Title   :   worker
     Usage   :   my $worker = $self->worker;
     Function:   returns the Worker object this Process is run by
-    Returns :   Bio::EnsEMBL::Hive::Queen
+    Returns :   Bio::EnsEMBL::Hive::Worker
 
 =cut
 
@@ -239,6 +314,23 @@ sub worker {
 
     $self->{'_worker'} = shift if(@_);
     return $self->{'_worker'};
+}
+
+
+=head2 execute_writes
+
+    Title   :   execute_writes
+    Usage   :   $self->execute_writes( 1 );
+    Function:   getter/setter for whether we want the 'write_output' method to be run
+    Returns :   boolean
+
+=cut
+
+sub execute_writes {
+    my $self = shift;
+
+    $self->{'_execute_writes'} = shift if(@_);
+    return $self->{'_execute_writes'};
 }
 
 
