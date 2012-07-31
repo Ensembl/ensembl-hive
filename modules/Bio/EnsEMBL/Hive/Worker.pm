@@ -714,59 +714,6 @@ sub run_one_batch {
 }
 
 
-sub life_cycle {
-    my ($self, $runnable_object) = @_;
-
-    my $job = $runnable_object->input_job();
-    my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
-    my %job_partial_timing = ();
-
-    $job->autoflow(1);
-
-    if( $runnable_object->can('pre_cleanup') and $job->retry_count()>0 ) {
-        $self->enter_status('PRE_CLEANUP', $job);
-        $runnable_object->pre_cleanup;
-    }
-
-    $self->enter_status('FETCH_INPUT', $job);
-    $partial_stopwatch->restart();
-    $runnable_object->fetch_input;
-    $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->get_elapsed();
-
-    $self->enter_status('RUN', $job);
-    $partial_stopwatch->restart();
-    $runnable_object->run;
-    $job_partial_timing{'RUN'} = $partial_stopwatch->get_elapsed();
-
-    if($self->execute_writes) {
-        $self->enter_status('WRITE_OUTPUT', $job);
-        $partial_stopwatch->restart();
-        $runnable_object->write_output;
-        $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
-
-        if( $job->autoflow ) {
-            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
-            $job->dataflow_output_id();
-        }
-    } else {
-        print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
-    }
-
-    if( $runnable_object->can('post_cleanup') ) {   # Todo: may need to run it after the eval, to clean up the memory even after partially failed attempts?
-        $self->enter_status('POST_CLEANUP', $job);
-        $runnable_object->post_cleanup;
-    }
-
-    my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
-    if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
-        $job->transient_error(0);
-        die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
-    }
-
-    return \%job_partial_timing;
-}
-
-
 sub enter_status {
     my ($self, $status, $job) = @_;
 
@@ -780,6 +727,7 @@ sub enter_status {
     $self->status( $status );
     $self->queen->check_in_worker( $self );
 }
+
 
 sub start_job_output_redirection {
     my ($self, $job, $worker_output_dir) = @_;
