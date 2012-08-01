@@ -47,7 +47,7 @@ GetOptions(
            'job_limit|limit=i'          => \$job_limit,
            'life_span|lifespan=i'       => \$life_span,
            'no_cleanup'                 => \$no_cleanup,
-           'no_write|nowrite'           => \$no_write,
+           'no_write'                   => \$no_write,
            'hive_output_dir|outdir=s'   => \$hive_output_dir,       # keep compatibility with the old name
            'worker_output_dir=s'        => \$worker_output_dir,     # will take precedence over hive_output_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,

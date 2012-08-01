@@ -18,7 +18,7 @@ GetOptions(
            'help'               => \$help,
            'debug=i'            => \$debug,
            'reg_conf|regfile=s' => \$reg_conf,
-           'no_write|nowrite'   => \$no_write,
+           'no_write'           => \$no_write,
            'no_cleanup'         => \$no_cleanup,
            'flow_into|flow=s'   => \$flow_into,
            'input_id=s'         => \$input_id,
