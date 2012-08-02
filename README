@@ -15,6 +15,121 @@ Summary:
 
 Changelog:
 
+---------------------[before EnsEMBL rel.69]----------------------------------------------------------------
+
+2012-08-01 14:23  lg4
+
+	* scripts/: runWorker.pl, standaloneJob.pl: removed the alternative
+	  "nowrite" spelling to simplify interface
+
+2012-07-31 17:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Process.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/standaloneJob.pl:
+	  made it possible for a standaloneJob to provide Runnables with a
+	  functional worker_temp_directory()
+
+2012-07-31 16:15  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: moved life_cycle() from
+	  Worker.pm into Process.pm and now also calling it from
+	  standaloneJob.pl (actually removed from Worker)
+
+2012-07-31 16:13  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Process.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/standaloneJob.pl:
+	  moved life_cycle() from Worker.pm into Process.pm and now also
+	  calling it from standaloneJob.pl
+
+2012-07-25 16:30  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: only add partial timers'
+	  measurement if the job completed successfully
+
+2012-07-24 16:48  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: if running
+	  a worker with a specific job_id, the status is set to READY, but
+	  the retry_count is set depending on whether PRE_CLEANUP is needed
+	  or not
+
+2012-07-24 16:17  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Process.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/RunnableDB/FailureTest.pm,
+	  sql/patch_2012-07-23.sql, sql/tables.sql: added two states,
+	  PRE_CLEANUP (conditional) and POST_CLEANUP (unconditional) to the
+	  life cycle of the Job
+
+2012-07-23 16:49  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/RunnableDB/FailureTest.pm,
+	  scripts/standaloneJob.pl, sql/patch_2012-07-22.sql,
+	  sql/tables.sql, sql/tables.sqlite: At last rename GET_INPUT into
+	  FETCH_INPUT for consistency between the schema and the code (it
+	  seems to be harder to patch all the accumulated code)
+
+2012-07-23 12:13  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/beekeeper.pl,
+	  scripts/runWorker.pl: added -compile_modules_once flag to test
+	  the new (slightly faster and more logical) approach
+
+2012-07-16 17:54  mm14
+
+	* scripts/lsf_report.pl: rc_id renamed to resource_class_id
+
+2012-07-03 12:06  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  scripts/beekeeper.pl: fixed reset_failed_jobs/reset_all_jobs and
+	  removed remove_analysis_id
+
+2012-06-29 14:20  lg4
+
+	* docs/hive_schema.mwb, docs/hive_schema.png,
+	  modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/ResourceDescription.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  scripts/beekeeper.pl, sql/foreign_keys.mysql,
+	  sql/patch_2012-06-29.sql, sql/tables.sql, sql/tables.sqlite:
+	  replaced rc_id by resource_class_id throughout the schema and
+	  added the foreign keys on resource_class_id
+
+2012-06-29 09:41  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: support
+	  'default' as the default resource class (if none is defined) and
+	  create the 'default' rc even if not defined in PipeConfig
+
+2012-06-27 16:17  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisJob.pm,
+	  DBSQL/AnalysisJobAdaptor.pm: simplified logic that controls how
+	  semaphores are propagates (preparing for semaphore escaping rule
+	  support)
+
+2012-06-26 20:53  lg4
+
+	* sql/tables.sql: to please MySQL Workbench (does not like boolean,
+	  does not like leading newlines)
+
+2012-06-26 17:02  mm14
+
+	* sql/procedures.mysql: resource_description is still there
+
+2012-06-26 16:28  mm14
+
+	* sql/procedures.mysql: Added resource_class to the list of removed
+	  tables
+
 ---------------------[during EnsEMBL rel.68]----------------------------------------------------------------
 
 2012-06-26 12:58  lg4
