@@ -468,7 +468,7 @@ sub input_job {
 sub input_id {
     my $self = shift;
 
-    return '' unless($self->input_job);
+#   return '' unless($self->input_job);
     return $self->input_job->input_id(@_);
 }
 
@@ -507,10 +507,11 @@ sub dataflow_output_id {
 =cut
 
 sub debug {
-  my $self = shift;
-  $self->{'_debug'} = shift if(@_);
-  $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
-  return $self->{'_debug'};
+    my $self = shift;
+
+    $self->{'_debug'} = shift if(@_);
+    $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
+    return $self->{'_debug'};
 }
 
 
@@ -570,9 +571,10 @@ sub cleanup_worker_temp_directory {
 #################################################
 
 sub parameters {
-  my $self = shift;
-  return '' unless($self->analysis);
-  return $self->analysis->parameters;
+    my $self = shift;
+
+#   return '' unless($self->analysis);
+    return $self->analysis->parameters;
 }
 
 =head2 runnable
@@ -626,36 +628,6 @@ sub output {
   return @{$self->{'output'}};
 }
 
-=head2 check_if_exit_cleanly
-
-    Title   :   check_if_exit_cleanly
-    Usage   :   $self->check_if_exit_cleanly()
-    Function:   Check if we want to exit or kill it cleanly at the
-                runnable level
-    Returns :   None
-    Args    :   None
-
-=cut
-
-sub check_if_exit_cleanly {
-  my $self = shift;
-
-  my $honeycomb_dir = $self->{'honeycomb_dir'} or return;
-  $honeycomb_dir =~ s/\/$//;
-
-  my $job_id = $self->input_job->dbID;
-
-  my $not_allowed = $honeycomb_dir . "/" . "relegate." . $job_id;
-  my $exit_cleanly = $honeycomb_dir . "/" . "relegate.all";
-  if (-e $not_allowed) {
-    $self->update_status('FAILED');
-    throw("This job has been relegated to be killed - $job_id\n");
-  } elsif (-e $exit_cleanly) {
-    $self->update_status('READY');
-    throw("This job has been relegated to be exited - $job_id\n");
-  }
-  return undef;
-}
 
 1;
 
