@@ -40,7 +40,7 @@ sub register_message {
 
         # (the timestamp 'time' column will be set automatically)
     my $sql = qq{
-        REPLACE INTO $table_name (job_id, worker_id, retry, status, msg, is_error)
+        INSERT INTO $table_name (job_id, worker_id, retry, status, msg, is_error)
                            SELECT job_id, worker_id, retry_count, status, ?, ?
                              FROM job WHERE job_id=?
     };
