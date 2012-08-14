@@ -460,7 +460,7 @@ sub _objs_from_sth {
   my @statsArray = ();
 
   while ($sth->fetch()) {
-    my $analStats = new Bio::EnsEMBL::Hive::AnalysisStats;
+    my $analStats = Bio::EnsEMBL::Hive::AnalysisStats->new();
 
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});

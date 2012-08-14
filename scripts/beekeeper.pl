@@ -143,7 +143,7 @@ sub main {
     } elsif (    $self->{'db_conf'}->{'-host'}
              and $self->{'db_conf'}->{'-user'}
              and $self->{'db_conf'}->{'-dbname'}) { # connect to database specified
-                    $self->{'dba'} = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+                    $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->{'db_conf'}} );
                     $self->{'url'} = $self->{'dba'}->dbc->url;
     } else {
         print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";

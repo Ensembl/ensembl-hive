@@ -65,7 +65,7 @@ sub _process_options {
   elsif (    $self->{db_conf}->{'-host'}
           && $self->{db_conf}->{'-user'}
           && $self->{db_conf}->{'-dbname'}) { # connect to database specified
-    $self->{dba} = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{db_conf}});
+    $self->{dba} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->{db_conf}} );
   } 
   else {
     pod2usage({
@@ -204,7 +204,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.9 $
+$Revision: 1.10 $
 
 =head1 REQUIREMENTS
 

@@ -1060,7 +1060,7 @@ sub _objs_from_sth {
   my @workers = ();
 
   while ($sth->fetch()) {
-    my $worker = new Bio::EnsEMBL::Hive::Worker;
+    my $worker = Bio::EnsEMBL::Hive::Worker->new();
     $worker->init;
 
     $worker->dbID($column{'worker_id'});

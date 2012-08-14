@@ -312,7 +312,7 @@ sub run {
         }
     }
 
-    my $hive_dba                     = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->o('pipeline_db')});
+    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->o('pipeline_db')} );
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
     
     unless($job_topup) {

@@ -84,7 +84,7 @@ if($url) {
   }
 
   # connect to database specified
-  $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%{$self->{'db_conf'}});
+  $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->{'db_conf'}} );
   #$url = $DBA->url();
 }
 

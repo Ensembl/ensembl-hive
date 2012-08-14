@@ -74,7 +74,7 @@ if($reg_alias) {
 } elsif($url) {
     $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
 } elsif ($db_conf->{'-host'} and $db_conf->{'-user'} and $db_conf->{'-dbname'}) {
-    $DBA = new Bio::EnsEMBL::Hive::DBSQL::DBAdaptor(%$db_conf);
+    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %$db_conf );
 } else {
     print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
     script_usage(1);
