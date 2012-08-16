@@ -41,9 +41,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift @_;
 
-    my @tables;
+    my @tables = ();
     $self->param('tables', \@tables);
-    my @ignores;
+    my @ignores = ();
     $self->param('ignores', \@ignores);
 
     my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress);
@@ -55,8 +55,13 @@ sub fetch_input {
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
     $self->param('src_dbc', $src_dbc);
 
-    $self->param('output_file') || die 'The parameter "output_file" is mandatory';
-    $self->param('output_file', $self->param_substitute($self->param('output_file')));
+    $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
+    if ($self->param('output_file')) {
+        $self->param('real_output_file', $self->param_substitute($self->param('output_file')));
+    } else {
+        $self->param('real_output_db', $self->go_figure_dbc($self->param_substitute($self->param('output_db'))));
+        die 'Only the "mysql" driver is supported.' if $self->param('real_output_db')->driver ne 'mysql';
+    }
 
     if ($self->param('exclude_ehive')) {
         push @ignores, @ehive_tables;
@@ -103,11 +108,13 @@ sub run {
     my $tables = $self->param('tables');
     my $ignores = $self->param('ignores');
 
-    my $cmd = 'mysqldump'
-        . ' ' . $self->mysql_conn_from_dbc($src_dbc)
-        . ' ' . join(' ', @$tables)
-        . ' ' . join(' ', map( {'--ignore-table='.$src_dbc->dbname.'.'.$_} @$ignores))
-        . ' > ' . $self->param('output_file');
+    my $cmd = join(' ', 
+        'mysqldump',
+        $self->mysql_conn_from_dbc($src_dbc),
+        @$tables,
+        map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores,
+        $self->param('output_file') ? sprintf('> %s', $self->param('real_output_file')) : sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db'))),
+    );
 
     print "$cmd\n" if $self->debug;
     if(my $return_value = system($cmd)) {
