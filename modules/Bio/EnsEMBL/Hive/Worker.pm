@@ -456,7 +456,7 @@ sub toString {
 
 sub cleanup_worker_process_temp_directory {
   my $self = shift;
-  if($self->{'_tmp_dir'}) {
+  if($self->{'_tmp_dir'} and (-e $self->{'_tmp_dir'}) ) {
     my $cmd = "rm -r ". $self->{'_tmp_dir'};
     system($cmd);
   }

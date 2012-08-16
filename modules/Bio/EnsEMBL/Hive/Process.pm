@@ -557,7 +557,7 @@ sub cleanup_worker_temp_directory {
         # TODO: simplify $holding_object=$self when -compile_module_once becomes the only option:
     my $holding_object = $self->worker ? $self->worker : $self;
 
-    if($holding_object->{'_tmp_dir'}) {
+    if($holding_object->{'_tmp_dir'} and (-e $holding_object->{'_tmp_dir'}) ) {
         my $cmd = "rm -r ". $holding_object->{'_tmp_dir'};
         system($cmd);
     }
