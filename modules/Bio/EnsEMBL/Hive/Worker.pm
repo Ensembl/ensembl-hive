@@ -615,7 +615,7 @@ sub run_one_batch {
 
     my $job_partial_timing;
 
-    foreach my $job (@{$jobs}) {
+    while(my $job = shift @$jobs) {         # to make sure jobs go out of scope without undue delay
         $job->print_job if($self->debug); 
 
         my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
@@ -642,9 +642,10 @@ sub run_one_batch {
             $job_stopwatch->restart();
 
             $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
-            $runnable_object->input_job( $job );
 
+            $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();
+            $runnable_object->input_job( undef );   # release an extra reference to the job
 
             $job->incomplete(0);
         };
@@ -697,7 +698,7 @@ sub run_one_batch {
 
         $self->prev_job_error( $job->incomplete );
         $self->enter_status('READY');
-    }
+    } # /while(my $job = shift @$jobs)
 
     return $jobs_done_here;
 }
