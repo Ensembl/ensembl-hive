@@ -117,8 +117,10 @@ sub run {
     );
 
     print "$cmd\n" if $self->debug;
-    if(my $return_value = system($cmd)) {
-        die "system( $cmd ) failed: $return_value";
+    unless (param('skip_dump')) {
+        if(my $return_value = system($cmd)) {
+            die "system( $cmd ) failed: $return_value";
+        }
     }
 }
 
