@@ -79,7 +79,7 @@ sub name {
 }
 
 
-sub to_string {
+sub toString {
     my $self = shift @_;
 
     return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(dbID name) ));

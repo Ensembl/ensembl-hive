@@ -86,7 +86,7 @@ sub parameters {
     return $self->{'_parameters'};
 }
 
-sub to_string {
+sub toString {
     my $self = shift @_;
 
     return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(resource_class_id meadow_type parameters) ));
