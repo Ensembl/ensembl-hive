@@ -50,12 +50,15 @@
 package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
+
 use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
+
+use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+         );
+
 
 =head2 new
 
@@ -68,14 +71,11 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 sub new {
     my $class = shift @_;
-    my $self = bless {}, $class;
 
-    my ( $dbID, $adaptor, $fromAnalysis, $toAnalysis, $from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to_analysis_url, $input_id_template ) =
-    rearrange( [ qw (DBID ADAPTOR FROM_ANALYSIS TO_ANALYSIS FROM_ANALYSIS_ID BRANCH_CODE FUNNEL_DATAFLOW_RULE_ID TO_ANALYSIS_URL INPUT_ID_TEMPLATE) ], @_ );
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-        # database persistence:
-    $self->dbID( $dbID )                            if(defined($dbID));
-    $self->adaptor( $adaptor )                      if(defined($adaptor));
+    my ($fromAnalysis, $toAnalysis, $from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to_analysis_url, $input_id_template ) =
+    rearrange( [ qw (FROM_ANALYSIS TO_ANALYSIS FROM_ANALYSIS_ID BRANCH_CODE FUNNEL_DATAFLOW_RULE_ID TO_ANALYSIS_URL INPUT_ID_TEMPLATE) ], @_ );
 
         # from objects:
     $self->from_analysis( $fromAnalysis )           if(defined($fromAnalysis));
@@ -89,38 +89,6 @@ sub new {
     $self->input_id_template($input_id_template)    if(defined($input_id_template));
 
     return $self;
-}
-
-=head2 dbID
-
-    Function: getter/setter method for the dbID of the dataflow rule
-
-=cut
-
-sub dbID {
-    my $self = shift @_;
-
-    if(@_) { # setter mode
-        $self->{'_dbID'} = shift @_;
-    }
-    return $self->{'_dbID'};
-}
-
-=head2 adaptor
-
-    Function: getter/setter method for the adaptor of the dataflow rule
-
-=cut
-
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
 }
 
 
@@ -139,6 +107,7 @@ sub branch_code {
     return $self->{'_branch_code'};
 }
 
+
 =head2 funnel_dataflow_rule_id
 
     Function: getter/setter method for the funnel_dataflow_rule_id of the dataflow rule
@@ -153,6 +122,7 @@ sub funnel_dataflow_rule_id {
     }
     return $self->{'_funnel_dataflow_rule_id'};
 }
+
 
 =head2 input_id_template
 
@@ -169,6 +139,7 @@ sub input_id_template {
     }
     return $self->{'_input_id_template'};
 }
+
 
 =head2 from_analysis_id
 

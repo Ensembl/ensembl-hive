@@ -64,73 +64,82 @@
 package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 use POSIX;
-
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Exception;
+
+use Bio::EnsEMBL::Hive::Extensions;
+use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::Extensions;
-use Bio::EnsEMBL::Hive::Process;
-
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
+use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+         );
+
 
 sub new {
-  my ($class,@args) = @_;
-  my $self = bless {}, $class;
-  return $self;
+    my $class = shift @_;
+
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
+
+    return $self;
 }
+
 
 sub init {
-  my $self = shift;
+    my $self = shift;
 
-  my $lifespan_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
-  $lifespan_stopwatch->_unit(1); # count in seconds (default is milliseconds)
-  $lifespan_stopwatch->restart;
-  $self->lifespan_stopwatch( $lifespan_stopwatch );
+    my $lifespan_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
+    $lifespan_stopwatch->_unit(1); # count in seconds (default is milliseconds)
+    $lifespan_stopwatch->restart;
+    $self->lifespan_stopwatch( $lifespan_stopwatch );
 
-  $self->debug(0);
-  return $self;
+    return $self;
 }
 
-sub queen {
-  my $self = shift;
-  $self->{'_queen'} = shift if(@_);
-  return $self->{'_queen'};
-}
+
 sub db {
   my $self = shift;
   $self->{'_db'} = shift if(@_);
   return $self->{'_db'};
 }
+
+
 sub meadow_type {
   my $self = shift;
   $self->{'_meadow_type'} = shift if(@_);
   return $self->{'_meadow_type'};
 }
+
+
 sub meadow_name {
   my $self = shift;
   $self->{'_meadow_name'} = shift if(@_);
   return $self->{'_meadow_name'};
 }
+
+
 sub debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);
   $self->{'_debug'}=0 unless(defined($self->{'_debug'}));
   return $self->{'_debug'};
 }
+
+
 sub execute_writes {
   my $self = shift;
   $self->{'_execute_writes'} = shift if(@_);
   $self->{'_execute_writes'}=1 unless(defined($self->{'_execute_writes'}));
   return $self->{'_execute_writes'};
 }
+
 
 =head2 analysis
 
@@ -283,12 +292,6 @@ sub prev_job_error {
     return $self->{'_prev_job_error'};
 }
 
-
-sub dbID {
-  my( $self, $value ) = @_;
-  $self->{'_worker_id'} = $value if($value);
-  return $self->{'_worker_id'};
-}
 
 sub host {
   my( $self, $value ) = @_;
@@ -583,7 +586,7 @@ sub run {
         }
     }
 
-  $self->queen->register_worker_death($self);
+  $self->adaptor->register_worker_death($self);
 
   $self->analysis->stats->print_stats if($self->debug);
 
@@ -603,8 +606,8 @@ sub run_one_batch {
 
     my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
-    $self->queen->check_in_worker( $self );
-    $self->queen->safe_synchronize_AnalysisStats($self->analysis->stats);
+    $self->adaptor->check_in_worker( $self );
+    $self->adaptor->safe_synchronize_AnalysisStats($self->analysis->stats);
 
     $self->cause_of_death('NO_WORK') unless(scalar @{$jobs});
 
@@ -715,7 +718,7 @@ sub enter_status {
         $job->update_status( $status );
     }
     $self->status( $status );
-    $self->queen->check_in_worker( $self );
+    $self->adaptor->check_in_worker( $self );
 }
 
 

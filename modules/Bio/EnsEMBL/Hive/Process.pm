@@ -175,7 +175,7 @@ sub enter_status {
     }
     if($worker) {
         $worker->status( $status );
-        $worker->queen->check_in_worker( $worker );
+        $worker->adaptor->check_in_worker( $worker );
     }
 }
 

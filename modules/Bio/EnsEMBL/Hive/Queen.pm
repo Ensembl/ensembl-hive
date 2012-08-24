@@ -212,6 +212,8 @@ sub create_new_worker {
   my $worker = $self->fetch_by_dbID($worker_id);
   $worker=undef unless($worker and $worker->analysis);
 
+  $worker->init;
+
   if($worker and $analysisStats) {
     $analysisStats->update_status('WORKING');
   }
@@ -1060,10 +1062,11 @@ sub _objs_from_sth {
   my @workers = ();
 
   while ($sth->fetch()) {
-    my $worker = Bio::EnsEMBL::Hive::Worker->new();
-    $worker->init;
+    my $worker = Bio::EnsEMBL::Hive::Worker->new(   # will be passed to Storable's new()
+        -adaptor    => $self,
+        -dbID       => $column{'worker_id'},
+    );
 
-    $worker->dbID($column{'worker_id'});
     $worker->meadow_type($column{'meadow_type'});
     $worker->meadow_name($column{'meadow_name'});
     $worker->host($column{'host'});
@@ -1074,7 +1077,6 @@ sub _objs_from_sth {
     $worker->last_check_in($column{'last_check_in'});
     $worker->died($column{'died'});
     $worker->cause_of_death($column{'cause_of_death'});
-    $worker->queen($self);
     $worker->db($self->db);
 
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {

@@ -26,46 +26,23 @@
 package Bio::EnsEMBL::Hive::ResourceClass;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+
+use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+         );
  
 
 sub new {
     my $class = shift @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($adaptor, $dbID, $name) =
-         rearrange([qw(adaptor dbID name) ], @_);
+    my ($name) =
+         rearrange([qw(name) ], @_);
 
-    $self->adaptor($adaptor) if(defined($adaptor));
-    $self->dbID($dbID);
-    $self->name($name);
+    $self->name($name) if($name);
 
     return $self;
-}
-
-
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
-}
-
-
-sub dbID {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_resource_class_id'} = shift @_;
-    }
-    return $self->{'_resource_class_id'};
 }
 
 

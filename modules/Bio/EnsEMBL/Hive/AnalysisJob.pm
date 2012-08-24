@@ -27,23 +27,24 @@
 package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::Params');
+use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+            'Bio::EnsEMBL::Hive::Params',   # inherit param management functionality
+         );
+
 
 sub new {
     my $class = shift @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my($dbID, $analysis_id, $input_id, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id, $adaptor) =
-        rearrange([qw(dbID analysis_id input_id worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id adaptor) ], @_);
+    my($analysis_id, $input_id, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id) =
+        rearrange([qw(analysis_id input_id worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id) ], @_);
 
-    $self->dbID($dbID)                          if(defined($dbID));
     $self->analysis_id($analysis_id)            if(defined($analysis_id));
     $self->input_id($input_id)                  if(defined($input_id));
     $self->worker_id($worker_id)                if(defined($worker_id));
@@ -54,34 +55,17 @@ sub new {
     $self->query_count($query_count)            if(defined($query_count));
     $self->semaphore_count($semaphore_count)    if(defined($semaphore_count));
     $self->semaphored_job_id($semaphored_job_id) if(defined($semaphored_job_id));
-    $self->adaptor($adaptor)                    if(defined($adaptor));
 
     return $self;
 }
 
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
-}
-
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
-}
 
 sub input_id {
   my $self = shift;
   $self->{'_input_id'} = shift if(@_);
   return $self->{'_input_id'};
 }
+
 
 sub dataflow_rules {    # if ever set will prevent the Job from fetching rules from the DB
     my $self                = shift @_;
@@ -96,11 +80,13 @@ sub dataflow_rules {    # if ever set will prevent the Job from fetching rules f
         : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_code);
 }
 
+
 sub worker_id {
   my $self = shift;
   $self->{'_worker_id'} = shift if(@_);
   return $self->{'_worker_id'};
 }
+
 
 sub analysis_id {
   my $self = shift;
