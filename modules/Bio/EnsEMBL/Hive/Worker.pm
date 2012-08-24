@@ -559,9 +559,9 @@ sub run {
             $self->analysis->dbID,
             $jobs_done_by_batches_loop,
             $batches_stopwatch->get_elapsed,
-            $self->{'_interval_partial_timing'}{'FETCH_INPUT'},
-            $self->{'_interval_partial_timing'}{'RUN'},
-            $self->{'_interval_partial_timing'}{'WRITE_OUTPUT'},
+            $self->{'_interval_partial_timing'}{'FETCH_INPUT'}  || 0,
+            $self->{'_interval_partial_timing'}{'RUN'}          || 0,
+            $self->{'_interval_partial_timing'}{'WRITE_OUTPUT'} || 0,
         );
     }
 
