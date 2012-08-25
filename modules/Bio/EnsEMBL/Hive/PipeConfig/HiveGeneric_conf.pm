@@ -332,9 +332,11 @@ sub run {
         my $resource_description_adaptor    = $hive_dba->get_ResourceDescriptionAdaptor;
         warn "Loading the Resources ...\n";
 
-        my $resource_classes = $self->resource_classes;
+        my $resource_classes_hash = $self->resource_classes;
+        my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
         my %seen_resource_name = ();
-        while( my($rc_id, $mt2param) = each %$resource_classes ) {
+        foreach my $rc_id (@resource_classes_order) {
+            my $mt2param = $resource_classes_hash->{$rc_id};
 
             my $rc_name = delete $mt2param->{-desc};
             if($rc_id!~/^\d+$/) {
@@ -342,7 +344,7 @@ sub run {
                 $rc_id = undef;
             }
 
-            if(!$rc_name or $seen_resource_name{$rc_name}++) {
+            if(!$rc_name or $seen_resource_name{lc($rc_name)}++) {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
