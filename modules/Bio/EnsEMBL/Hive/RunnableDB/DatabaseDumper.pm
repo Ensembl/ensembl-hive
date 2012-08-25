@@ -46,7 +46,7 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress);
+    my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress resource_class);
     
     my $src_db_conn  = $self->param('src_db_conn');
     my $src_dbc = $src_db_conn ? $self->go_figure_dbc($src_db_conn) : $self->db->dbc;
@@ -117,7 +117,7 @@ sub run {
     );
 
     print "$cmd\n" if $self->debug;
-    unless (param('skip_dump')) {
+    unless ($self->param('skip_dump')) {
         if(my $return_value = system($cmd)) {
             die "system( $cmd ) failed: $return_value";
         }
