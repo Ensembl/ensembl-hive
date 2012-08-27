@@ -41,38 +41,46 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift @_;
 
+    # The final list of tables
     my @tables = ();
     $self->param('tables', \@tables);
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
+    # Would be good to have this from eHive
     my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress resource_class);
-    
+
+    # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
     my $src_dbc = $src_db_conn ? $self->go_figure_dbc($src_db_conn) : $self->db->dbc;
+    $self->param('src_dbc', $src_dbc);
 
     $self->input_job->transient_error(0);
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
-    $self->param('src_dbc', $src_dbc);
 
+    # Get the table list in either "tables" or "ignores"
+    die 'The parameter "table_list" is mandatory' unless $self->param('table_list');
+    if ($self->param('exclude_list')) {
+        my $table_list = $self->_get_table_list;
+        push @ignores, @$table_list;
+    } else {
+        push @tables, @{$self->_get_table_list};
+    }
+
+    # eHive tables are dumped unless exclude_ehive is defined
+    if ($self->param('exclude_ehive')) {
+        push @ignores, @ehive_tables;
+    } elsif ($self->param('table_list')) {
+        push @tables, @ehive_tables;
+    }
+
+    # Output file / output database
     $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
     if ($self->param('output_file')) {
         $self->param('real_output_file', $self->param_substitute($self->param('output_file')));
     } else {
         $self->param('real_output_db', $self->go_figure_dbc($self->param_substitute($self->param('output_db'))));
         die 'Only the "mysql" driver is supported.' if $self->param('real_output_db')->driver ne 'mysql';
-    }
-
-    if ($self->param('exclude_ehive')) {
-        push @ignores, @ehive_tables;
-    }
-
-    if ($self->param('exclude_list')) {
-        my $table_list = $self->_get_table_list;
-        die 'The parameter "table_list" is mandatory' unless $table_list;
-        push @ignores, @$table_list;
-    } else {
-        push @tables, @{$self->_get_table_list};
     }
 
     $self->input_job->transient_error(1);
