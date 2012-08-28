@@ -662,7 +662,7 @@ sub get_hive_current_load {
   (my $load)=$sth->fetchrow_array();
   $sth->finish;
   $load=0 unless($load);
-  print("current hive load = $load\n");
+#  print("current hive load = $load\n");
   return $load;
 }
 
@@ -782,7 +782,7 @@ sub schedule_workers_resync_if_necessary {
     my $workers_to_run_by_rc_id = $self->schedule_workers($analysis, $pending_by_rc_id, $available_submit_limit);
 
     unless( keys %$workers_to_run_by_rc_id or $self->get_hive_current_load() or $self->count_running_workers() ) {
-        print "*** nothing is running and nothing to do (according to analysis_stats) => perform a hard resync\n" ;
+        print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
 
         $self->check_for_dead_workers($valley, 1);
         $self->synchronize_hive($analysis);

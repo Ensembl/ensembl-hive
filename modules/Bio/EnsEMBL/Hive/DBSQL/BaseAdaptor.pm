@@ -358,7 +358,7 @@ sub AUTOLOAD {
             die "unknown column '$value_column'";
         }
 
-        print "Setting up '$AUTOLOAD' method\n";
+#        print "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
@@ -376,7 +376,7 @@ sub AUTOLOAD {
         my $column_set = $self->column_set();
 
         if($column_set->{$filter_name}) {
-            print "Setting up '$AUTOLOAD' method\n";
+#            print "Setting up '$AUTOLOAD' method\n";
             *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->count_all("$filter_name='$filter_value'"); };
             goto &$AUTOLOAD;    # restart the new method
         } else {
@@ -384,7 +384,7 @@ sub AUTOLOAD {
         }
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
         my @columns_to_update = split('_and_', $1);
-        print "Setting up '$AUTOLOAD' method\n";
+#        print "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub { my ($self, $object) = @_; return $self->update($object, @columns_to_update); };
         goto &$AUTOLOAD;    # restart the new method
     } else {
