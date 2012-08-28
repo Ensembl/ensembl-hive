@@ -699,7 +699,7 @@ sub schedule_workers {
   my ($self, $filter_analysis, $orig_pending_by_rc_id, $available_submit_limit) = @_;
 
   my $statsDBA                      = $self->db->get_AnalysisStatsAdaptor;
-  my $clearly_needed_analyses       = $statsDBA->fetch_by_needed_workers(undef);
+  my $clearly_needed_analyses       = $statsDBA->fetch_by_needed_workers();
   my $potentially_needed_analyses   = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
   my @all_analyses                  = (@$clearly_needed_analyses, @$potentially_needed_analyses);
 
@@ -709,6 +709,7 @@ sub schedule_workers {
   my $total_workers_to_run      = 0;
   my %workers_to_run_by_rc_id   = ();
   my $available_load            = 1.0 - $self->get_hive_current_load();
+
 
   foreach my $analysis_stats (@all_analyses) {
     last if ($available_load <= 0.0);
@@ -747,6 +748,7 @@ sub schedule_workers {
     if($pending_by_rc_id{ $curr_rc_id }) {                              # per-rc_id capping by pending processes, if available
         my $pending_this_analysis = ($pending_by_rc_id{ $curr_rc_id } < $workers_this_analysis) ? $pending_by_rc_id{ $curr_rc_id } : $workers_this_analysis;
 
+        print "Scheduler detected $pending_this_analysis pending workers with rc_id=$curr_rc_id\n";
         $workers_this_analysis              -= $pending_this_analysis;
         $pending_by_rc_id{ $curr_rc_id }    -= $pending_this_analysis;
     }
