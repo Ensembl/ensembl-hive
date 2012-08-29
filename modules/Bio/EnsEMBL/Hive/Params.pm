@@ -109,7 +109,7 @@ sub param_init {
 
     Example 2  : $self->param('binpath', '/software/ensembl/compara');  # acting as a setter
 
-    Example 3  : my $all_params = $self-param();    # get the whole hash in one piece
+    Example 3  : my $all_params = $self->param();    # get the whole hash in one piece
 
     Returntype : any Perl structure or object that you dared to store
 
