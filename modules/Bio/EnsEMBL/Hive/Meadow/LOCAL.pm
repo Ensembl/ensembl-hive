@@ -87,13 +87,13 @@ sub kill_worker {
 
 
 sub submit_workers {
-    my ($self, $iteration, $worker_cmd, $worker_count, $rc_id, $rc_parameters) = @_;
+    my ($self, $worker_cmd, $worker_count, $iteration, $rc_id, $rc_parameters) = @_;
 
-    my $cmd = "$worker_cmd -rc_id $rc_id &";    # $rc_parameters are ignored for the time being
+    my $cmd = "$worker_cmd &";
 
     foreach (1..$worker_count) {
         print "SUBMITTING_CMD:\t\t$cmd\n";
-        system($cmd);
+        system( $cmd );
     }
 }
 
