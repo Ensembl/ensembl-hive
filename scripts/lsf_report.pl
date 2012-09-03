@@ -53,12 +53,14 @@ sub main {
     warn "Creating the 'lsf_usage' view if it doesn't exist...\n";
     $dbc->do (qq{
         CREATE OR REPLACE VIEW lsf_usage AS
-            SELECT CONCAT(logic_name,'(',analysis_id,')') analysis_name_and_id,
-                resource_class_id, count(*) workers,
-                min(mem), avg(mem), max(mem),
-                min(swap), avg(swap), max(swap)
+            SELECT CONCAT(logic_name,'(',analysis_id,')') analysis,
+                   CONCAT(rc.name,'(',resource_class_id,')') resource_class,
+                   count(*) workers,
+                   min(mem), avg(mem), max(mem),
+                   min(swap), avg(swap), max(swap)
             FROM analysis
             JOIN analysis_stats USING(analysis_id)
+            JOIN resource_class rc USING(resource_class_id)
             LEFT JOIN worker USING(analysis_id)
             LEFT JOIN lsf_report USING (process_id)
             WHERE meadow_type='LSF'
