@@ -255,7 +255,8 @@ sub main {
         }
         $queen->print_running_worker_counts;
 
-        $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
+#        $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
+        $queen->schedule_workers_resync_if_necessary($valley, $analysis);   # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
 
         if($show_failed_jobs) {
