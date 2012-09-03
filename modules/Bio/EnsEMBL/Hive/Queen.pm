@@ -98,12 +98,23 @@ sub create_new_worker {
   my ($self, @args) = @_;
 
   my (  $meadow_type, $meadow_name, $process_id, $exec_host,
-        $rc_id, $logic_name, $analysis_id, $input_id, $job_id,
+        $rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id,
         $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
 
  rearrange([qw(meadow_type meadow_name process_id exec_host
-        rc_id logic_name analysis_id input_id job_id
+        rc_id rc_name analysis_id logic_name job_id input_id
         no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
+
+    if($rc_name) {
+        if($rc_id) {
+            die "You should either define -rc_id or -rc_name, but not both\n";
+        }
+        if(my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($rc_name)) {
+            $rc_id = $rc->dbID;
+        } else {
+            die "rc_name '$rc_name' could not be fetched from the database\n";
+        }
+    }
 
     if($logic_name) {
         if($analysis_id) {

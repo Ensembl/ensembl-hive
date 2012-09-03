@@ -20,7 +20,7 @@ my $db_conf = {
 };
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
-my ($rc_id, $logic_name, $analysis_id, $input_id, $job_id);     # Task specification parameters
+my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_output_dir, $worker_output_dir, $retry_throwing_jobs, $compile_module_once);   # Worker control parameters
 my ($help, $debug, $show_analysis_stats);
 
@@ -38,10 +38,11 @@ GetOptions(
 
 # Task specification parameters:
            'rc_id=i'                    => \$rc_id,
-           'logic_name=s'               => \$logic_name,
+           'rc_name=s'                  => \$rc_name,
            'analysis_id=i'              => \$analysis_id,
-           'input_id=s'                 => \$input_id,
+           'logic_name=s'               => \$logic_name,
            'job_id=i'                   => \$job_id,
+           'input_id=s'                 => \$input_id,
 
 # Worker control parameters:
            'job_limit|limit=i'          => \$job_limit,
@@ -102,11 +103,12 @@ eval {
          -exec_host             => $exec_host,
 
       # Task specification:
-         -rc_id                 => $rc_id,          # Idea: could/should we use rc_name instead?
-         -logic_name            => $logic_name,
+         -rc_id                 => $rc_id,
+         -rc_name               => $rc_name,
          -analysis_id           => $analysis_id,
-         -input_id              => $input_id,
+         -logic_name            => $logic_name,
          -job_id                => $job_id,
+         -input_id              => $input_id,
 
       # Worker control parameters:
          -job_limit             => $job_limit,
@@ -196,10 +198,11 @@ __DATA__
 =head2 Task specificaton parameters:
 
     -rc_id <id>                 : resource class id
-    -logic_name <string>        : pre-specify this worker in a particular analysis defined by name
+    -rc_name <string>           : resource class name
     -analysis_id <id>           : pre-specify this worker in a particular analysis defined by database id
-    -input_id <string>          : test this input_id on specified analysis (defined either by analysis_id or logic_name)
+    -logic_name <string>        : pre-specify this worker in a particular analysis defined by name
     -job_id <id>                : run a specific job defined by its database id
+    -input_id <string>          : test this input_id on specified analysis (defined either by analysis_id or logic_name)
 
 =head2 Worker control parameters:
 
