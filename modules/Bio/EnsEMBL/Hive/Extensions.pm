@@ -35,46 +35,6 @@ use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::URLFactory;
 
 
-=head2 Bio::EnsEMBL::Analysis::process
-
-  Arg [1]    : none
-  Example    : $process = $analysis->process;
-  Description: from the $analysis->module construct a Process object
-  Returntype : Bio::EnsEMBL::Hive::Process subclass 
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub Bio::EnsEMBL::Analysis::process {
-    my $self = shift;  #self is an Analysis object
-
-  return undef unless($self);
-  die("self must be a [Bio::EnsEMBL::Analysis] not a [$self]")
-    unless($self->isa('Bio::EnsEMBL::Analysis'));
-
-  throw("analysis ". $self->logic_name . " has an undefined analysis.module")
-    unless($self->module);
-
-  my $process_class;
-  if($self->module =~ /::/) { $process_class = $self->module; }
-  else { $process_class = "Bio::EnsEMBL::Pipeline::RunnableDB::".$self->module; }
-  (my $file = $process_class) =~ s/::/\//g;
-  require "$file.pm";
-  print STDERR "creating runnable ".$file."\n" if($self->{'verbose'});
-
-  $process_class =~ s/\//::/g;
-  my $runobj = "$process_class"->new(
-                                -db       => $self->adaptor->db,
-                                -input_id => '1',
-                                -analysis => $self,
-                                );
-  print STDERR "Instantiated ". $process_class. " runnabledb\n" if($self->{'verbose'});
-
-  return $runobj
-}
-
-
 =head2 Bio::EnsEMBL::DBSQL::DBConnection::url
 
   Arg [1]    : none
@@ -109,54 +69,6 @@ sub Bio::EnsEMBL::DBSQL::DBConnection::url {
   $url .= '/' . $self->dbname;
 
   return $url;
-}
-
-
-=head2 Bio::EnsEMBL::Analysis::url
-
-  Arg [1]    : none
-  Example    : $url = $dbc->url;
-  Description: Constructs a URL string for this database connection
-               Follows the general URL rules.
-  Returntype : string of format
-               mysql://<user>:<pass>@<host>:<port>/<dbname>/analysis?logic_name=<name>
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub Bio::EnsEMBL::Analysis::url {
-  my $self = shift;
-
-  return undef unless($self->adaptor);
-
-  return $self->adaptor->db->dbc->url . '/analysis?logic_name=' . $self->logic_name;
-}
-
-
-=head2 Bio::EnsEMBL::Analysis::stats
-
-  Arg [1]    : none
-  Example    : $stats = $analysis->stats;
-  Description: returns the AnalysisStats object associated with this Analysis
-               object.  Does not cache, but pull from database by using the
-               Analysis objects adaptor->db.
-  Returntype : Bio::EnsEMBL::Hive::AnalysisStats object
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub Bio::EnsEMBL::Analysis::stats
-{
-  my $self = shift;
-  my $stats = undef;
-
-  #not cached internally since I want it to always be in sync with the database
-  #otherwise the user application would need to be aware of the sync state and send
-  #explicit 'sync' calls.
-  $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
-  return $stats;
 }
 
 
