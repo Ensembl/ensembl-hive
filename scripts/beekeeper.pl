@@ -322,7 +322,7 @@ sub run_autonomously {
     my $current_meadow = $valley->get_current_meadow();
     my $worker_cmd = generate_worker_cmd($self, $run_job_id);
 
-    my $rc_id2name = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_name_TO_resource_class_id();
+    my $rc_id2name = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
 
         # pre-hash the resource_class xparams for future use:
     my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($current_meadow->type());
@@ -355,7 +355,7 @@ sub run_autonomously {
 
                 print "Submitting $this_rc_worker_count workers (rc_id=$rc_id, rc_name=$rc_name) to ".$current_meadow->toString()."\n";
 
-                $current_meadow->submit_workers("$worker_cmd -rc_id $rc_id", $this_rc_worker_count, $iteration, $rc_id, $rc_xparams->{$rc_id} || '');
+                $current_meadow->submit_workers("$worker_cmd -rc_name $rc_name", $this_rc_worker_count, $iteration, $rc_id, $rc_xparams->{$rc_id} || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
