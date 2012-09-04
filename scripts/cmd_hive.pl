@@ -171,13 +171,10 @@ sub create_analysis {
     # No existing analysis with this logic_name. Create a new one.
     print("creating analysis '$logic_name' to be computed using module '$module' with parameters '$parameters'\n");
 
-    $self->{_analysis} = Bio::EnsEMBL::Analysis->new (
-        -db              => '',
-        -db_file         => '',
-        -db_version      => '1',
-        -parameters      => $parameters,
+    $self->{_analysis} = Bio::EnsEMBL::Hive::Analysis->new (
         -logic_name      => $logic_name,
         -module          => $module,
+        -parameters      => $parameters,
       );
     $DBA->get_AnalysisAdaptor()->store($self->{_analysis});
 

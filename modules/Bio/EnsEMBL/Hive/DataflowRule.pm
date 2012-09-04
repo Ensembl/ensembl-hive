@@ -183,8 +183,8 @@ sub to_analysis_url {
 
   Usage   : $self->from_analysis($analysis);
   Function: Get/set method for the condition analysis object of this rule.
-  Returns : Bio::EnsEMBL::Analysis
-  Args    : Bio::EnsEMBL::Analysis
+  Returns : Bio::EnsEMBL::Hive::Analysis
+  Args    : Bio::EnsEMBL::Hive::Analysis
   
 =cut
 
@@ -193,9 +193,9 @@ sub from_analysis {
 
   # setter mode
   if( defined $analysis ) {
-    unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
+    unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
       throw(
-        "from_analysis arg must be a [Bio::EnsEMBL::Analysis]".
+        "from_analysis arg must be a [Bio::EnsEMBL::Hive::Analysis]".
         "not a [$analysis]");
     }
     $self->{'_from_analysis'} = $analysis;
@@ -218,8 +218,8 @@ sub from_analysis {
 
   Usage   : $self->to_analysis($analysis);
   Function: Get/set method for the goal analysis object of this rule.
-  Returns : Bio::EnsEMBL::Analysis
-  Args    : Bio::EnsEMBL::Analysis
+  Returns : Bio::EnsEMBL::Hive::Analysis
+  Args    : Bio::EnsEMBL::Hive::Analysis
   
 =cut
 

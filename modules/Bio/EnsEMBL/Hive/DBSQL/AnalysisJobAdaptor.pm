@@ -57,7 +57,7 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 =head2 CreateNewJob
 
   Args       : -input_id => string of input_id which will be passed to run the job (or a Perl hash that will be automagically stringified)
-               -analysis => Bio::EnsEMBL::Analysis object from a database
+               -analysis => Bio::EnsEMBL::Hive::Analysis object from a database
                -block        => int(0,1) set blocking state of job (default = 0)
                -input_job_id => (optional) job_id of job that is creating this
                                 job.  Used purely for book keeping.
@@ -86,8 +86,8 @@ sub CreateNewJob {
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
-  throw("analysis must be [Bio::EnsEMBL::Analysis] not a [$analysis]")
-    unless($analysis->isa('Bio::EnsEMBL::Analysis'));
+  throw("analysis must be [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")
+    unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
   throw("Please specify prev_job object instead of input_job_id if available") if ($prev_job_id);   # 'obsolete' message

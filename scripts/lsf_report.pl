@@ -58,7 +58,7 @@ sub main {
                    count(*) workers,
                    min(mem), avg(mem), max(mem),
                    min(swap), avg(swap), max(swap)
-            FROM analysis
+            FROM analysis_base
             JOIN analysis_stats USING(analysis_id)
             JOIN resource_class rc USING(resource_class_id)
             LEFT JOIN worker USING(analysis_id)

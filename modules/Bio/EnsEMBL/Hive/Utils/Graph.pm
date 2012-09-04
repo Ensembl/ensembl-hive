@@ -24,11 +24,11 @@ See inline
 
 =head1 AUTHOR
 
-$Author: mm14 $
+$Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.21 $
+$Revision: 1.22 $
 
 =cut
 
@@ -346,7 +346,7 @@ sub _dataflow_rules {
         my ($from_node, $to_id, $to_node) = ( _analysis_node_name($from_analysis_id)      );
     
             # Different treatment for analyses and tables:
-        if(check_ref($to, 'Bio::EnsEMBL::Analysis')) {
+        if(check_ref($to, 'Bio::EnsEMBL::Hive::Analysis')) {
             $to_id   = $to->dbID();
             $to_node = _analysis_node_name($to_id);
         } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {

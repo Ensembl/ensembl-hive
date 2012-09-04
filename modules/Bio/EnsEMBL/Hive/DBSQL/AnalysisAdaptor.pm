@@ -8,9 +8,12 @@
 
   $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor;
 
+  $analysis_adaptor = $analysis_object->adaptor;
+
 =head1 DESCRIPTION
 
-  This module extends EnsEMBL Core's AnalysisAdaptor, adding some Hive-specific stuff.
+  Module to encapsulate all db access for persistent class Analysis.
+  There should be just one such adaptor per application and database connection.
 
 =head1 CONTACT
 
@@ -22,10 +25,25 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 use strict;
-
-use base ('Bio::EnsEMBL::DBSQL::AnalysisAdaptor');
-
+use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::URLFactory;
+
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
+
+
+sub default_table_name {
+    return 'analysis_base';
+}
+
+
+sub default_insertion_method {
+    return 'INSERT';
+}
+
+
+sub object_class {
+    return 'Bio::EnsEMBL::Hive::Analysis';
+}
 
 
 =head2 fetch_by_logic_name_or_url

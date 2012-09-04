@@ -19,7 +19,7 @@ CREATE OR REPLACE VIEW progress AS
             j.retry_count,
             CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
             job_id example_job_id
-    FROM analysis a LEFT JOIN job j USING (analysis_id)
+    FROM analysis_base a LEFT JOIN job j USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
@@ -35,7 +35,7 @@ CREATE OR REPLACE VIEW msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM job_message m
     JOIN job j USING (job_id)
-    JOIN analysis a USING (analysis_id);
+    JOIN analysis_base a USING (analysis_id);
 
 
 #### time an analysis or group of analyses (given by a name pattern) ######################################
@@ -53,7 +53,7 @@ READS SQL DATA
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/60 AS measured_in_minutes,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 AS measured_in_hours,
         (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 AS measured_in_days
-        FROM worker JOIN analysis USING (analysis_id)
+        FROM worker JOIN analysis_base USING (analysis_id)
         WHERE logic_name like param_logic_name_pattern;
 
 
@@ -74,7 +74,7 @@ READS SQL DATA
     j.status,
     j.retry_count,
     IFNULL(d.data, j.input_id) input_id
-  FROM job j JOIN analysis a USING (analysis_id)
+  FROM job j JOIN analysis_base a USING (analysis_id)
     LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)
   WHERE j.input_id LIKE concat('%',srch,'%') OR d.data LIKE concat('%',srch,'%');
 
@@ -87,7 +87,7 @@ READS SQL DATA
 DROP PROCEDURE IF EXISTS reset_failed_jobs_for_analysis;
 CREATE PROCEDURE reset_failed_jobs_for_analysis(IN param_logic_name char(64))
 MODIFIES SQL DATA
-    UPDATE job j JOIN analysis a USING (analysis_id)
+    UPDATE job j JOIN analysis_base a USING (analysis_id)
     SET j.status='READY', j.retry_count=0
     WHERE a.logic_name=param_logic_name
     AND   j.status='FAILED';

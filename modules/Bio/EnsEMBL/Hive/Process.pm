@@ -428,7 +428,7 @@ sub go_figure_dbc {
     Usage   :  $self->analysis;
     Function:  Returns the Analysis object associated with this
                instance of the Process.
-    Returns :  Bio::EnsEMBL::Analysis object
+    Returns :  Bio::EnsEMBL::Hive::Analysis object
 
 =cut
 
@@ -436,8 +436,8 @@ sub analysis {
   my ($self, $analysis) = @_;
 
   if($analysis) {
-    throw("Not a Bio::EnsEMBL::Analysis object")
-      unless ($analysis->isa("Bio::EnsEMBL::Analysis"));
+    throw("Not a Bio::EnsEMBL::Hive::Analysis object")
+      unless ($analysis->isa("Bio::EnsEMBL::Hive::Analysis"));
     $self->{'_analysis'} = $analysis;
   }
   return $self->{'_analysis'};

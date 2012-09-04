@@ -47,10 +47,12 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Utils::Argument;          # import 'rearrange()'
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::Extensions;
 
 use base ('Bio::EnsEMBL::Hive::DependentOptions');
@@ -377,8 +379,8 @@ sub run {
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $program_file, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority) =
-             rearrange([qw(logic_name module parameters program_file input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id rc_name priority)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority) =
+             rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id rc_name priority)], %$aha);
 
         unless($logic_name) {
             die "logic_name' must be defined in every analysis";
@@ -412,11 +414,10 @@ sub run {
                 $rc_id = $rc->dbID();
             }
 
-            $analysis = Bio::EnsEMBL::Analysis->new(
+            $analysis = Bio::EnsEMBL::Hive::Analysis->new(
                 -logic_name      => $logic_name,
                 -module          => $module,
                 -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
-                -program_file    => $program_file,
             );
             $analysis_adaptor->store($analysis);
 

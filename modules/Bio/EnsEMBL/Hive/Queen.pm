@@ -695,7 +695,7 @@ sub count_running_workers {
 
 =head2 schedule_workers
 
-  Arg[1]     : Bio::EnsEMBL::Analysis object (optional)
+  Arg[1]     : Bio::EnsEMBL::Hive::Analysis object (optional)
   Example    : $count = $queen->schedule_workers();
   Description: Runs through the analyses in the system which are waiting
                for workers to be created for them.  Calculates the maximum
@@ -842,9 +842,12 @@ sub print_running_worker_counts {
   my $self = shift;
 
   print "\n===== Stats of live Workers according to the Queen: ======\n";
-  my $sql = "SELECT logic_name, count(*) FROM worker, analysis ".
-            "WHERE worker.analysis_id=analysis.analysis_id AND worker.cause_of_death='' ".
-            "GROUP BY worker.analysis_id";
+  my $sql = qq{ SELECT logic_name, count(*)
+                FROM worker
+                JOIN analysis_base USING(analysis_id)
+                WHERE worker.cause_of_death=''
+                GROUP BY worker.analysis_id
+  };
 
   my $total_workers = 0;
   my $sth = $self->prepare($sql);
@@ -882,7 +885,7 @@ sub monitor {
               sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), }
   ). qq{
           group_concat(DISTINCT logic_name)
-      FROM worker left join analysis USING (analysis_id)
+      FROM worker left join analysis_base USING (analysis_id)
       WHERE cause_of_death = ''
   };
       

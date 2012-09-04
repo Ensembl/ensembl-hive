@@ -131,11 +131,11 @@ sub condition_analysis_url {
 
 =head2 ctrled_analysis
 
-  Arg[1]  : (optional) Bio::EnsEMBL::Analysis object
+  Arg[1]  : (optional) Bio::EnsEMBL::Hive::Analysis object
   Usage   : $self->ctrled_analysis($anal);
   Function: Get/set method for the analysis which will be BLOCKED until all
             of its condition analyses are 'DONE'
-  Returns : Bio::EnsEMBL::Analysis
+  Returns : Bio::EnsEMBL::Hive::Analysis
   
 =cut
 
@@ -144,9 +144,9 @@ sub ctrled_analysis {
 
   # setter mode
   if( defined $analysis ) {
-    unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
+    unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
       throw(
-        "ctrled_analysis arg must be a [Bio::EnsEMBL::Analysis]".
+        "ctrled_analysis arg must be a [Bio::EnsEMBL::Hive::Analysis]".
         "not a [$analysis]");
     }
     $self->{'_ctrled_analysis'} = $analysis;
@@ -158,8 +158,7 @@ sub ctrled_analysis {
      and defined($self->ctrled_analysis_id)
      and defined($self->adaptor))
   {
-    $self->{'_ctrled_analysis'} =
-      $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->ctrled_analysis_id);
+    $self->{'_ctrled_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->ctrled_analysis_id);
   }
   return $self->{'_ctrled_analysis'};
 }
@@ -167,11 +166,11 @@ sub ctrled_analysis {
 
 =head2 condition_analysis
 
-  Arg[1]  : (optional) Bio::EnsEMBL::Analysis object
+  Arg[1]  : (optional) Bio::EnsEMBL::Hive::Analysis object
   Usage   : $self->condition_analysis($anal);
   Function: Get/set method for the analysis which must be 'DONE' in order for
             the controlled analysis to be un-BLOCKED
-  Returns : Bio::EnsEMBL::Analysis
+  Returns : Bio::EnsEMBL::Hive::Analysis
   
 =cut
 
@@ -179,9 +178,9 @@ sub condition_analysis {
   my ($self,$analysis) = @_;
 
   if( defined $analysis ) {
-    unless ($analysis->isa('Bio::EnsEMBL::Analysis')) {
+    unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
       throw(
-        "condition_analysis arg must be a [Bio::EnsEMBL::Analysis]".
+        "condition_analysis arg must be a [Bio::EnsEMBL::Hive::Analysis]".
         "not a [$analysis]");
     }
     $self->{'_condition_analysis'} = $analysis;

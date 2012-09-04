@@ -19,7 +19,7 @@ CREATE VIEW IF NOT EXISTS progress AS
         j.retry_count,
         CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
         job_id example_job_id
-    FROM analysis a LEFT JOIN job j USING (analysis_id)
+    FROM analysis_base a LEFT JOIN job j USING (analysis_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
@@ -35,5 +35,5 @@ CREATE VIEW IF NOT EXISTS msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM job_message m
     JOIN job j USING (job_id)
-    JOIN analysis a USING (analysis_id);
+    JOIN analysis_base a USING (analysis_id);
 

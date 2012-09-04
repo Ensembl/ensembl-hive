@@ -65,7 +65,7 @@ package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
 use POSIX;
-use Bio::EnsEMBL::Analysis;
+use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -143,13 +143,13 @@ sub execute_writes {
 
 =head2 analysis
 
-  Arg [1] : (optional) Bio::EnsEMBL::Analysis $value
+  Arg [1] : (optional) Bio::EnsEMBL::Hive::Analysis $value
   Title   :   analysis
   Usage   :   $value = $self->analysis;
               $self->analysis($$analysis);
   Description: Get/Set analysis object of this Worker
   DefaultValue : undef
-  Returntype : Bio::EnsEMBL::Analysis object
+  Returntype : Bio::EnsEMBL::Hive::Analysis object
 
 =cut
 
@@ -158,8 +158,8 @@ sub analysis {
   my $analysis = shift;
 
   if(defined($analysis)) {
-    throw("analysis arg must be a [Bio::EnsEMBL::Analysis] not a [$analysis]")
-       unless($analysis->isa('Bio::EnsEMBL::Analysis'));
+    throw("analysis arg must be a [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")
+       unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
     $self->{'_analysis'} = $analysis;
   }
 
