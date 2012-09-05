@@ -39,7 +39,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
-#use Bio::EnsEMBL::DBSQL::BaseAdaptor;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::Worker;

@@ -28,9 +28,7 @@ package Bio::EnsEMBL::Hive::AnalysisStats;
 use strict;
 use Scalar::Util ('weaken');
 
-#use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
-#use Bio::EnsEMBL::Hive::Worker;
 
     ## Minimum amount of time in msec that a worker should run before reporting
     ## back to the hive. This is used when setting the batch_size automatically.
