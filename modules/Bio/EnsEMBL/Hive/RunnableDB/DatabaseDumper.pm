@@ -48,7 +48,7 @@ sub fetch_input {
     $self->param('ignores', \@ignores);
 
     # Would be good to have this from eHive
-    my @ehive_tables = qw(worker dataflow_rule analysis analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor analysis_description monitor msg progress resource_class);
+    my @ehive_tables = qw(worker dataflow_rule analysis_base analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
 
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
