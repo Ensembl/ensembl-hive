@@ -494,10 +494,6 @@ sub _objs_from_sth {
   return \@statsArray
 }
 
-sub _default_where_clause {
-  my $self = shift;
-  return '';
-}
 
 sub _final_clause {
   my $self = shift;
