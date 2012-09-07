@@ -568,6 +568,7 @@ sub run {
         );
     }
 
+        # FIXME: The following check is not *completely* correct, as it assumes hive_capacity is "local" to the analysis:
     if (!$self->cause_of_death
     and 0 <= $self->analysis->stats->hive_capacity
     and $self->analysis->stats->hive_capacity < $self->analysis->stats->num_running_workers
@@ -696,6 +697,12 @@ sub run_one_batch {
 
             if(my $semaphored_job_id = $job->semaphored_job_id) {
                 $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+            }
+
+            if($job->lethal_for_worker) {
+                warn "The Job, although complete, wants the Worker to die\n";
+                $self->cause_of_death('CONTAMINATED');
+                return $jobs_done_here;
             }
         }
 
