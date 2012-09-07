@@ -11,7 +11,7 @@
 
 =head1 SYNOPSIS
 
-  Object categories to extend the functionality of existing classes
+  Performs method injection into (mainly) ensembl-core classes
 
 =head1 DESCRIPTION
 
@@ -29,10 +29,10 @@
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Analysis;
+#use Bio::EnsEMBL::Utils::Exception;
+#use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::URLFactory;
+#use Bio::EnsEMBL::Hive::URLFactory;
 
 
 =head2 Bio::EnsEMBL::DBSQL::DBConnection::url
