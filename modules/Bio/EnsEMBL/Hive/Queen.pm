@@ -934,15 +934,15 @@ sub _pick_best_analysis_for_new_worker {
     return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->resource_class_id == $rc_id)));
   }
 
-  # ok so no analyses 'need' workers with the given $rc_id.
+      # ok so no analyses 'need' workers with the given $rc_id.
+
   if ($self->get_num_failed_analyses()) {
     return undef;
   }
-  # see if anything needs an update, in case there are
-  # hidden jobs that haven't made it into the summary stats
 
+      # see if any analysis needs an update, in case there are hidden jobs that haven't made it into the summary stats:
   print("QUEEN: no obvious needed workers, need to dig deeper\n");
-  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
+  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED'], $rc_id);
   foreach $stats (@$stats_list) {
     $self->safe_synchronize_AnalysisStats($stats);
 

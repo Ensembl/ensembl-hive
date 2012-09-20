@@ -99,7 +99,7 @@ sub fetch_by_needed_workers {
     my ($self, $limit, $resource_class_id) = @_;
 
     my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')"
-                    .(defined($resource_class_id) ? " AND ast.resource_class_id = $resource_class_id" : '');
+                    .($resource_class_id ? " AND ast.resource_class_id = $resource_class_id" : '');
 
     my $final_clause = 'ORDER BY priority DESC, '
                         .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
@@ -117,7 +117,7 @@ sub fetch_by_statuses {
   my ($self, $statuses, $resource_class_id) = @_;
 
   my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')'
-                   .(defined($resource_class_id) ? " AND ast.resource_class_id = $resource_class_id" : '');
+                   .($resource_class_id ? " AND ast.resource_class_id = $resource_class_id" : '');
 
   $self->_final_clause('ORDER BY last_update');
   my $results = $self->_generic_fetch($constraint);
