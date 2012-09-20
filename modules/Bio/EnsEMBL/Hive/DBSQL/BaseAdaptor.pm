@@ -130,11 +130,12 @@ sub count_all {
 
     my $sql = "SELECT COUNT(*) FROM $table_name";
 
-    if($constraint) { 
-        $sql .= " WHERE $constraint ";
+    if($constraint) {
+            # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
+        $sql .= (($constraint=~/\bJOIN\b/i) ? ' ' : ' WHERE ') . $constraint;
     }
 
-    # print STDOUT $sql,"\n";
+    # warn "SQL: $sql\n";
 
     my $sth = $self->prepare($sql);
     $sth->execute;  
@@ -154,10 +155,11 @@ sub fetch_all {
     my $sql = "SELECT $columns_csv FROM $table_name";
 
     if($constraint) { 
-        $sql .= " WHERE $constraint ";
+            # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
+        $sql .= (($constraint=~/\bJOIN\b/i) ? ' ' : ' WHERE ') . $constraint;
     }
 
-    # print STDOUT $sql,"\n";
+    # warn "SQL: $sql\n";
 
     my $sth = $self->prepare($sql);
     $sth->execute;  
