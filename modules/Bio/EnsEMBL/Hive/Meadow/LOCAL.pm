@@ -87,7 +87,7 @@ sub kill_worker {
 
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $iteration, $rc_id, $rc_parameters) = @_;
+    my ($self, $worker_cmd, $worker_count, $iteration, $rc_name, $rc_parameters) = @_;
 
     my $cmd = "$worker_cmd &";
 

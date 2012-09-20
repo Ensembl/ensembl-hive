@@ -72,16 +72,15 @@ sub pipeline_name { # if set, provides a filter for job-related queries
 sub job_name_prefix {
     my $self = shift @_;
 
-    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '') . 'Hive';
+    return ($self->pipeline_name() ? $self->pipeline_name().'-' : '') . 'Hive-';
 }
 
 
 sub generate_job_name {
-    my ($self, $worker_count, $iteration, $rc_id) = @_;
-    $rc_id ||= 0;
+    my ($self, $worker_count, $iteration, $rc_name) = @_;
 
     return $self->job_name_prefix()
-        ."${rc_id}_${iteration}"
+        ."${rc_name}-${iteration}"
         . (($worker_count > 1) ? "[1-${worker_count}]" : '');
 }
 

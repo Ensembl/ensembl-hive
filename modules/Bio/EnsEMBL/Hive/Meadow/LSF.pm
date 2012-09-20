@@ -35,21 +35,21 @@ sub get_current_worker_process_id {
 }
 
 
-sub count_pending_workers_by_rc_id {
+sub count_pending_workers_by_rc_name {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
     my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND};
 
-    my %pending_by_rc_id = ();
+    my %pending_by_rc_name = ();
 
     foreach my $line (qx/$cmd/) {
-        if($line=~/Hive(\d+)/) {    # FIXME: should be safer to match against $jnp instead of 'Hive'
-            $pending_by_rc_id{$1}++;
+        if($line=~/\b\Q$jnp\E(.+)\-\d+\b/) {
+            $pending_by_rc_name{$1}++;
         }
     }
 
-    return \%pending_by_rc_id;
+    return \%pending_by_rc_name;
 }
 
 
@@ -120,9 +120,9 @@ sub find_out_causes {
 
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $iteration, $rc_id, $rc_parameters) = @_;
+    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_parameters) = @_;
 
-    my $job_name       = $self->generate_job_name($worker_count, $iteration, $rc_id);
+    my $job_name       = $self->generate_job_name($required_worker_count, $iteration, $rc_name);
     my $submission_options = $self->config_get('SubmissionOptions');
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command

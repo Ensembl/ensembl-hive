@@ -255,7 +255,6 @@ sub main {
         }
         $queen->print_running_worker_counts;
 
-#        $queen->schedule_workers($analysis);    # show what would be submitted, but do not actually submit
         $queen->schedule_workers_resync_if_necessary($valley, $analysis);   # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
 
@@ -322,10 +321,14 @@ sub run_autonomously {
     my $current_meadow = $valley->get_current_meadow();
     my $worker_cmd = generate_worker_cmd($self, $run_job_id);
 
-    my $rc_id2name = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
 
-        # pre-hash the resource_class xparams for future use:
-    my $rc_xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($current_meadow->type());
+        # first, fetch two resource-related mappings from the database:
+    my $rc_name2id = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_name_TO_resource_class_id();
+    my $rc_id2xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($current_meadow->type());
+
+        # now, chain these two mappings together:
+        #   FIXME: in future this  mapping should be obtainable from the adaptor in one go.
+    my %rc_name2xparams = map { $_ =>  $rc_id2xparams->{ $rc_name2id->{ $_ }} } keys %$rc_name2id;
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -345,17 +348,15 @@ sub run_autonomously {
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_counts;
 
-        my $workers_to_run_by_rc_id = $queen->schedule_workers_resync_if_necessary($valley, $this_analysis);
+        my $workers_to_run_by_rc_name = $queen->schedule_workers_resync_if_necessary($valley, $this_analysis);
 
-        if(keys %$workers_to_run_by_rc_id) {
-            foreach my $rc_id ( sort { $workers_to_run_by_rc_id->{$a}<=>$workers_to_run_by_rc_id->{$b} } keys %$workers_to_run_by_rc_id) {
-                my $this_rc_worker_count = $workers_to_run_by_rc_id->{$rc_id};
+        if(keys %$workers_to_run_by_rc_name) {
+            foreach my $rc_name ( sort { $workers_to_run_by_rc_name->{$a}<=>$workers_to_run_by_rc_name->{$b} } keys %$workers_to_run_by_rc_name) {
+                my $this_rc_worker_count = $workers_to_run_by_rc_name->{$rc_name};
 
-                my $rc_name = $rc_id2name->{$rc_id};
+                print "Submitting $this_rc_worker_count workers (rc_name=$rc_name) to ".$current_meadow->toString()."\n";
 
-                print "Submitting $this_rc_worker_count workers (rc_id=$rc_id, rc_name=$rc_name) to ".$current_meadow->toString()."\n";
-
-                $current_meadow->submit_workers("$worker_cmd -rc_name $rc_name", $this_rc_worker_count, $iteration, $rc_id, $rc_xparams->{$rc_id} || '');
+                $current_meadow->submit_workers("$worker_cmd -rc_name $rc_name", $this_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
