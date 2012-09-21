@@ -44,7 +44,7 @@ sub count_pending_workers_by_rc_name {
     my %pending_by_rc_name = ();
 
     foreach my $line (qx/$cmd/) {
-        if($line=~/\b\Q$jnp\E(.+)\-\d+\b/) {
+        if($line=~/\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
             $pending_by_rc_name{$1}++;
         }
     }
