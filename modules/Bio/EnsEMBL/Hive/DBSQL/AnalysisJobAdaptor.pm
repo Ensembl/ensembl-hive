@@ -182,23 +182,6 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_all
-
-  Arg        : None
-  Example    : 
-  Description: fetches all jobs from database
-  Returntype : 
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-sub fetch_all {
-  my $self = shift;
-
-  return $self->_generic_fetch();
-}
-
 =head2 fetch_all_failed_jobs
 
   Arg [1]    : (optional) int $analysis_id

@@ -89,12 +89,6 @@ sub fetch_by_analysis_id {
 }
 
 
-sub fetch_all {
-  my $self = shift;
-  return $self->_generic_fetch();
-}
-
-
 sub fetch_by_needed_workers {
     my ($self, $limit, $resource_class_id) = @_;
 
