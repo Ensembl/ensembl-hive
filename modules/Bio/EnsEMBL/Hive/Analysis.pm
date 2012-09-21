@@ -35,12 +35,13 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($logic_name, $module, $parameters) =
-         rearrange([qw(logic_name module parameters) ], @_);
+    my ($logic_name, $module, $parameters, $resource_class_id) =
+         rearrange([qw(logic_name module parameters resource_class_id) ], @_);
 
-    $self->logic_name($logic_name)  if($logic_name);
-    $self->module($module)          if($module);
-    $self->parameters($parameters)  if($parameters);
+    $self->logic_name($logic_name)                  if($logic_name);
+    $self->module($module)                          if($module);
+    $self->parameters($parameters)                  if($parameters);
+    $self->resource_class_id($resource_class_id)    if($resource_class_id);
 
     return $self;
 }
@@ -49,9 +50,8 @@ sub new {
 sub logic_name {
     my $self = shift @_;
 
-    if(@_) {
-        $self->{'_logic_name'} = shift @_;
-    }
+    $self->{'_logic_name'} = shift @_ if(@_);
+
     return $self->{'_logic_name'};
 }
 
@@ -59,9 +59,8 @@ sub logic_name {
 sub module {
     my $self = shift @_;
 
-    if(@_) {
-        $self->{'_module'} = shift @_;
-    }
+    $self->{'_module'} = shift @_ if(@_);
+
     return $self->{'_module'};
 }
 
@@ -69,10 +68,18 @@ sub module {
 sub parameters {
     my $self = shift @_;
 
-    if(@_) {
-        $self->{'_parameters'} = shift @_;
-    }
+    $self->{'_parameters'} = shift @_ if(@_);
+
     return $self->{'_parameters'};
+}
+
+
+sub resource_class_id {
+    my $self = shift @_;
+
+    $self->{'_resource_class_id'} = shift @_ if(@_);
+
+    return $self->{'_resource_class_id'};
 }
 
 

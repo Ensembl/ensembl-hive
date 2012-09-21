@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS analysis_base (
   analysis_id                 INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   logic_name                  VARCHAR(40) NOT NULL,
   module                      VARCHAR(255),
-  parameters                  TEXT
+  parameters                  TEXT,
+  resource_class_id           INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS logic_name_idx ON analysis_base (logic_name);
 
@@ -322,7 +323,6 @@ CREATE TABLE analysis_stats (
   num_required_workers  int(10) NOT NULL DEFAULT 0,
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) NOT NULL DEFAULT 0,
-  resource_class_id     INTEGER NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 );
@@ -352,7 +352,6 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL DEFAULT 0,
   last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   sync_lock             int(10) default 0 NOT NULL,
-  resource_class_id     INTEGER NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 );

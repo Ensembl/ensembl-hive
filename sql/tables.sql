@@ -44,6 +44,7 @@ CREATE TABLE analysis_base (
   logic_name                  VARCHAR(40) NOT NULL,
   module                      VARCHAR(255),
   parameters                  TEXT,
+  resource_class_id           int(10) unsigned NOT NULL,
 
   PRIMARY KEY (analysis_id),
   UNIQUE KEY logic_name_idx (logic_name)
@@ -346,7 +347,6 @@ CREATE TABLE analysis_stats (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
-  resource_class_id     int(10) unsigned NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL,
   
@@ -379,7 +379,6 @@ CREATE TABLE analysis_stats_monitor (
   num_required_workers  int(10) NOT NULL,
   last_update           datetime NOT NULL,
   sync_lock             int(10) default 0 NOT NULL,
-  resource_class_id     int(10) unsigned NOT NULL,
   can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
   priority              TINYINT DEFAULT 0 NOT NULL
 

@@ -415,13 +415,14 @@ sub run {
             }
 
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
-                -logic_name      => $logic_name,
-                -module          => $module,
-                -parameters      => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -logic_name         => $logic_name,
+                -module             => $module,
+                -parameters         => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -resource_class_id  => $rc_id,
             );
             $analysis_adaptor->store($analysis);
 
-            $analysis_stats_adaptor->create_new_for_analysis_id_resource_class_id($analysis->dbID, $rc_id);
+            $analysis_stats_adaptor->create_new_for_analysis_id($analysis->dbID);
 
             my $stats = $analysis->stats();
             $stats->batch_size( $batch_size )                       if(defined($batch_size));

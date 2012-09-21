@@ -640,7 +640,7 @@ sub get_num_failed_analyses {
   my ($self, $analysis) = @_;
 
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $failed_analyses = $statsDBA->fetch_by_statuses(['FAILED']);
+  my $failed_analyses = $statsDBA->fetch_by_statuses_rc_id(['FAILED']);
   if ($analysis) {
     foreach my $this_failed_analysis (@$failed_analyses) {
       if ($this_failed_analysis->analysis_id == $analysis->dbID) {
@@ -710,10 +710,14 @@ sub schedule_workers {
   my ($self, $filter_analysis, $orig_pending_by_rc_name, $available_submit_limit) = @_;
 
   my $statsDBA                      = $self->db->get_AnalysisStatsAdaptor;
-  my $clearly_needed_analyses       = $statsDBA->fetch_by_needed_workers();
-  my $potentially_needed_analyses   = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
+  my $clearly_needed_analyses       = $statsDBA->fetch_by_needed_workers_rc_id();
+  my $potentially_needed_analyses   = $statsDBA->fetch_by_statuses_rc_id(['LOADING', 'BLOCKED', 'ALL_CLAIMED']);
   my @all_analyses                  = (@$clearly_needed_analyses, @$potentially_needed_analyses);
+
+  my $analysis_id2rc_id             = $self->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
   my $rc_id2name                    = $self->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+        # combined mapping:
+  my %analysis_id2rc_name           = map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id;
 
   return {} unless(@all_analyses);
 
@@ -756,7 +760,7 @@ sub schedule_workers {
         $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
     }
 
-    my $curr_rc_name    = $rc_id2name->{ $analysis_stats->resource_class_id };
+    my $curr_rc_name    = $analysis_id2rc_name{ $analysis_stats->analysis_id };
 
     if($pending_by_rc_name{ $curr_rc_name }) {                              # per-rc_name capping by pending processes, if available
         my $pending_this_analysis = ($pending_by_rc_name{ $curr_rc_name } < $workers_this_analysis) ? $pending_by_rc_name{ $curr_rc_name } : $workers_this_analysis;
@@ -927,11 +931,11 @@ sub _pick_best_analysis_for_new_worker {
   my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
   return undef unless($statsDBA);
 
-  my ($stats) = @{$statsDBA->fetch_by_needed_workers(1, $rc_id)};
+  my ($stats) = @{$statsDBA->fetch_by_needed_workers_rc_id(1, $rc_id)};
   if($stats) {
     #synchronize and double check that it can be run
     $self->safe_synchronize_AnalysisStats($stats);
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->resource_class_id == $rc_id)));
+    return $stats if( ($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) );
   }
 
       # ok so no analyses 'need' workers with the given $rc_id.
@@ -942,15 +946,15 @@ sub _pick_best_analysis_for_new_worker {
 
       # see if any analysis needs an update, in case there are hidden jobs that haven't made it into the summary stats:
   print("QUEEN: no obvious needed workers, need to dig deeper\n");
-  my $stats_list = $statsDBA->fetch_by_statuses(['LOADING', 'BLOCKED', 'ALL_CLAIMED'], $rc_id);
+  my $stats_list = $statsDBA->fetch_by_statuses_rc_id(['LOADING', 'BLOCKED', 'ALL_CLAIMED'], $rc_id);
   foreach $stats (@$stats_list) {
     $self->safe_synchronize_AnalysisStats($stats);
 
-    return $stats if(($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) and (!defined($rc_id) or ($stats->resource_class_id == $rc_id)));
+    return $stats if( ($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) );
   }
 
     # does the following really ever help?
-  ($stats) = @{$statsDBA->fetch_by_needed_workers(1, $rc_id)};
+  ($stats) = @{$statsDBA->fetch_by_needed_workers_rc_id(1, $rc_id)};
   return $stats;
 }
 

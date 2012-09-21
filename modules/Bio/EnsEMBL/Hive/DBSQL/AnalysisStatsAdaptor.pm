@@ -46,11 +46,11 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
-sub create_new_for_analysis_id_resource_class_id {
-    my ($self, $analysis_id, $resource_class_id) = @_;
+sub create_new_for_analysis_id{
+    my ($self, $analysis_id) = @_;
 
     my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-    my $sql = "$insertion_method INTO analysis_stats (analysis_id, resource_class_id) VALUES ($analysis_id, $resource_class_id)";
+    my $sql = "$insertion_method INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
     my $sth = $self->prepare($sql);
     $sth->execute();
     $sth->finish;
@@ -89,35 +89,37 @@ sub fetch_by_analysis_id {
 }
 
 
-sub fetch_by_needed_workers {
+sub fetch_by_needed_workers_rc_id {
     my ($self, $limit, $resource_class_id) = @_;
 
-    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')"
-                    .($resource_class_id ? " AND ast.resource_class_id = $resource_class_id" : '');
+    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
+
+    my $join = $resource_class_id ? [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id AND a.resource_class_id=$resource_class_id"]] : [];
 
     my $final_clause = 'ORDER BY priority DESC, '
                         .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
                         .($limit ? " LIMIT $limit" : '');
 
     $self->_final_clause($final_clause);
-    my $results = $self->_generic_fetch($constraint);
+    my $results = $self->_generic_fetch($constraint, $join);
     $self->_final_clause(''); # reset final clause for other fetches
 
     return $results;
 }
 
 
-sub fetch_by_statuses {
-  my ($self, $statuses, $resource_class_id) = @_;
+sub fetch_by_statuses_rc_id {
+    my ($self, $statuses, $resource_class_id) = @_;
 
-  my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')'
-                   .($resource_class_id ? " AND ast.resource_class_id = $resource_class_id" : '');
+    my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')';
 
-  $self->_final_clause('ORDER BY last_update');
-  my $results = $self->_generic_fetch($constraint);
-  $self->_final_clause(''); #reset final clause for other fetches
+    my $join = $resource_class_id ? [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id AND a.resource_class_id=$resource_class_id"]] : [];
 
-  return $results;
+    $self->_final_clause('ORDER BY last_update');
+    my $results = $self->_generic_fetch($constraint, $join);
+    $self->_final_clause(''); #reset final clause for other fetches
+
+    return $results;
 }
 
 
@@ -208,7 +210,6 @@ sub update {
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
-  $sql .= ",resource_class_id=". $stats->resource_class_id();
   $sql .= ",can_be_empty=". $stats->can_be_empty();
   $sql .= ",priority=". $stats->priority();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
@@ -433,7 +434,6 @@ sub _columns {
                     ast.num_required_workers
                     ast.last_update
                     ast.sync_lock
-                    ast.resource_class_id
                     ast.can_be_empty
                     ast.priority
                    );
@@ -458,7 +458,6 @@ sub _objs_from_sth {
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->status($column{'status'});
     $analStats->sync_lock($column{'sync_lock'});
-    $analStats->resource_class_id($column{'resource_class_id'});
     $analStats->can_be_empty($column{'can_be_empty'});
     $analStats->priority($column{'priority'});
     $analStats->batch_size($column{'batch_size'});
