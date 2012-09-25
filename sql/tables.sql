@@ -78,6 +78,7 @@ CREATE TABLE worker (
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
   cause_of_death   enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'FATALITY') DEFAULT '' NOT NULL,
+  log_dir          varchar(80) DEFAULT NULL,
 
   PRIMARY KEY (worker_id),
   INDEX analysis_status (analysis_id, status)

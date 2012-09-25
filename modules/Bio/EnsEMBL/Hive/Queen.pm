@@ -64,7 +64,7 @@ use POSIX;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Utils 'destringify';  # import 'destringify()'
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # import 'destringify()' and 'dir_revhash()'
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
@@ -99,11 +99,11 @@ sub create_new_worker {
 
   my (  $meadow_type, $meadow_name, $process_id, $exec_host,
         $rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id,
-        $no_write, $debug, $worker_output_dir, $hive_output_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
+        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
 
  rearrange([qw(meadow_type meadow_name process_id exec_host
         rc_id rc_name analysis_id logic_name job_id input_id
-        no_write debug worker_output_dir hive_output_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
+        no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
 
     if($rc_name) {
         if($rc_id) {
@@ -142,7 +142,6 @@ sub create_new_worker {
             print "creating a job outside the database\n";
             $job->print_job;
             $debug=1 unless(defined($debug));
-            $hive_output_dir='' unless(defined($hive_output_dir)); # make it defined but empty/false
         } else {
             die "For creating a job outside the database either -analysis_id or -logic_name must also be defined\n";
         }
@@ -211,37 +210,36 @@ sub create_new_worker {
         $analysis_stats_adaptor->increase_running_workers($analysisStats->analysis_id);
   }
 
-  my $sql = q{INSERT INTO worker 
-              (born, last_check_in, meadow_type, meadow_name, process_id, host, analysis_id)
+    my $sql = q{INSERT INTO worker (born, last_check_in, meadow_type, meadow_name, process_id, host, analysis_id)
               VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?,?,?,?,?)};
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($meadow_type, $meadow_name, $process_id, $exec_host, $analysisStats->analysis_id);
-  my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id');
-  $sth->finish;
+    my $sth = $self->prepare($sql);
+    $sth->execute($meadow_type, $meadow_name, $process_id, $exec_host, $analysisStats->analysis_id);
+    my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id');
+    $sth->finish;
 
-  my $worker = $self->fetch_by_dbID($worker_id);
-  $worker=undef unless($worker and $worker->analysis);
+    if($hive_log_dir or $worker_log_dir) {
+        my $dir_revhash = dir_revhash($worker_id);
+        $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$worker_id;
 
-  $worker->init;
+            # Note: the following die-message will not reach the log files for circular reason!
+        system("mkdir -p $worker_log_dir") && die "Could not create '$worker_log_dir' because: $!";
 
-  if($worker and $analysisStats) {
-    $analysisStats->update_status('WORKING');
-  }
-  
-  $worker->_specific_job($job) if($job);
-  $worker->execute_writes(0) if($no_write);
+        my $sql_add_log = "UPDATE worker SET log_dir=? WHERE worker_id=?";
+        my $sth_add_log = $self->prepare($sql_add_log);
+        $sth_add_log->execute($worker_log_dir, $worker_id);
+        $sth_add_log->finish;
+    }
+
+    my $worker = $self->fetch_by_dbID($worker_id);
+
+    $worker->init;
+
+    $worker->_specific_job($job) if($job);
+    $worker->execute_writes(0) if($no_write);
 
     $worker->debug($debug) if($debug);
-    $worker->worker_output_dir($worker_output_dir) if(defined($worker_output_dir));
 
-    unless(defined($hive_output_dir)) {
-        my $arrRef = $self->db->get_MetaContainer->list_value_by_key( 'hive_output_dir' );
-        if( @$arrRef ) {
-            $hive_output_dir = destringify($arrRef->[0]);
-        } 
-    }
-    $worker->hive_output_dir($hive_output_dir);
 
     if($job_limit) {
       $worker->job_limit($job_limit);
@@ -259,6 +257,8 @@ sub create_new_worker {
     if(defined $compile_module_once) {
         $worker->compile_module_once($compile_module_once);
     }
+
+    $analysisStats->update_status('WORKING');
 
     return $worker;
 }
@@ -1072,6 +1072,7 @@ sub _columns {
              w.last_check_in
              w.died
              w.cause_of_death
+             w.log_dir
             );
 }
 
@@ -1099,6 +1100,8 @@ sub _objs_from_sth {
     $worker->last_check_in($column{'last_check_in'});
     $worker->died($column{'died'});
     $worker->cause_of_death($column{'cause_of_death'});
+    $worker->log_dir($column{'log_dir'});
+
     $worker->db($self->db);
 
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {

@@ -77,7 +77,6 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
-use Bio::EnsEMBL::Hive::Utils ('dir_revhash');  # import dir_revhash
 
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
          );
@@ -360,55 +359,28 @@ sub compile_module_once {
     return $self->{'_compile_module_once'} ;
 }
 
-=head2 hive_output_dir
+
+=head2 log_dir
 
   Arg [1] : (optional) string directory path
-  Title   :   hive_output_dir
-  Usage   :   $hive_output_dir = $self->hive_output_dir;
-              $self->hive_output_dir($hive_output_dir);
-  Description: getter/setter for the directory where STDOUT and STRERR of the hive will be redirected to.
-          If it is "true", each worker will create its own subdirectory in it
-          where each job will have its own .out and .err files.
+  Title   : log_dir
+  Usage   : $worker_log_dir = $self->log_dir;
+            $self->log_dir($worker_log_dir);
+  Description: getter/setter for the directory where STDOUT and STRERR of the worker will be redirected to.
+          In this directory each job will have its own .out and .err files.
   Returntype : string
 
 =cut
 
-sub hive_output_dir {
+sub log_dir {
     my $self = shift @_;
 
-    $self->{'_hive_output_dir'} = shift @_ if(@_);
-    return $self->{'_hive_output_dir'};
-}
-
-sub worker_output_dir {
-    my $self = shift @_;
-
-    if((my $worker_output_dir = $self->{'_worker_output_dir'}) and not @_) { # no need to set, just return:
-
-        return $worker_output_dir;
-
-    } else { # let's try to set first:
-    
-        if(@_) { # setter mode ignores hive_output_dir
-
-            $worker_output_dir = shift @_;
-
-        } elsif( my $hive_output_dir = $self->hive_output_dir ) {
-
-            my $worker_id = $self->dbID;
-
-            my $dir_revhash = dir_revhash($worker_id);
-            $worker_output_dir = join('/', $hive_output_dir, dir_revhash($worker_id), 'worker_id_'.$worker_id );
-        }
-
-        if($worker_output_dir) { # will not attempt to create if set to false
-            system("mkdir -p $worker_output_dir") && die "Could not create '$worker_output_dir' because: $!";
-        }
-
-        $self->{'_worker_output_dir'} = $worker_output_dir;
+    if(@_) {
+        $self->{'_log_dir'} = shift @_;
     }
-    return $self->{'_worker_output_dir'};
+    return $self->{'_log_dir'};
 }
+
 
 sub get_stdout_redirector {
     my $self = shift;
@@ -437,10 +409,10 @@ sub print_worker {
     print("\tbatch_size = ", $self->analysis->stats->get_or_estimate_batch_size(),"\n");
     print("\tjob_limit  = ", $self->job_limit,"\n") if(defined($self->job_limit));
     print("\tlife_span  = ", $self->life_span,"\n") if(defined($self->life_span));
-    if(my $worker_output_dir = $self->worker_output_dir) {
-        print("\tworker_output_dir = $worker_output_dir\n");
+    if(my $worker_log_dir = $self->log_dir) {
+        print("\tworker_log_dir = $worker_log_dir\n");
     } else {
-        print("\tworker_output_dir = STDOUT/STDERR\n");
+        print("\tworker_log_dir = STDOUT/STDERR\n");
     }
 }
 
@@ -497,9 +469,9 @@ sub run {
     my $self = shift;
 
     $self->print_worker();
-    if( my $worker_output_dir = $self->worker_output_dir ) {
-        $self->get_stdout_redirector->push( $worker_output_dir.'/worker.out' );
-        $self->get_stderr_redirector->push( $worker_output_dir.'/worker.err' );
+    if( my $worker_log_dir = $self->log_dir ) {
+        $self->get_stdout_redirector->push( $worker_log_dir.'/worker.out' );
+        $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
         $self->print_worker();
     }
 
@@ -594,7 +566,7 @@ sub run {
   printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
   print("total jobs completed : ", $self->work_done, "\n");
   
-  if( $self->worker_output_dir() ) {
+  if( $self->log_dir() ) {
     $self->get_stdout_redirector->pop();
     $self->get_stderr_redirector->pop();
   }
@@ -668,7 +640,7 @@ sub run_one_batch {
             $self->db->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
         }
 
-        print STDERR $job_completion_line if($self->worker_output_dir and ($self->debug or $job->incomplete));  # one copy goes to the job's STDERR
+        print STDERR $job_completion_line if($self->log_dir and ($self->debug or $job->incomplete));            # one copy goes to the job's STDERR
         $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
         print STDERR $job_completion_line;                                                                      # one copy goes to the worker's STDERR
 
@@ -730,11 +702,11 @@ sub enter_status {
 
 
 sub start_job_output_redirection {
-    my ($self, $job, $worker_output_dir) = @_;
+    my ($self, $job) = @_;
 
-    if(my $worker_output_dir = $self->worker_output_dir) {
-        $self->get_stdout_redirector->push( $job->stdout_file( $worker_output_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.out' ) );
-        $self->get_stderr_redirector->push( $job->stderr_file( $worker_output_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.err' ) );
+    if(my $worker_log_dir = $self->log_dir) {
+        $self->get_stdout_redirector->push( $job->stdout_file( $worker_log_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.out' ) );
+        $self->get_stderr_redirector->push( $job->stderr_file( $worker_log_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.err' ) );
 
         if(my $job_adaptor = $job->adaptor) {
             $job_adaptor->store_out_files($job);
@@ -746,7 +718,7 @@ sub start_job_output_redirection {
 sub stop_job_output_redirection {
     my ($self, $job) = @_;
 
-    if($self->worker_output_dir) {
+    if($self->log_dir) {
         $self->get_stdout_redirector->pop();
         $self->get_stderr_redirector->pop();
 
