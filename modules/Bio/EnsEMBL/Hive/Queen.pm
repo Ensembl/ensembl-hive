@@ -581,7 +581,7 @@ sub synchronize_AnalysisStats {
       $analysisStats->num_required_workers(0);
 
             # ask for analysis_id to force MySQL to use existing index on (analysis_id, status)
-      my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY status";
+      my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY analysis_id, status";
       my $sth = $self->prepare($sql);
       $sth->execute($analysisStats->analysis_id);
 
