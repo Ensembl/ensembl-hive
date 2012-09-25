@@ -79,10 +79,8 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub CreateNewJob {
   my ($class, @args) = @_;
 
-  return undef unless(scalar @args);
-
-  my ($input_id, $analysis, $prev_job, $prev_job_id, $blocked, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-     rearrange([qw(INPUT_ID ANALYSIS PREV_JOB INPUT_JOB_ID BLOCK SEMAPHORE_COUNT SEMAPHORED_JOB_ID PUSH_NEW_SEMAPHORE)], @args);
+  my ($input_id, $analysis, $prev_job, $prev_job_id, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
+     rearrange([qw(INPUT_ID ANALYSIS PREV_JOB INPUT_JOB_ID SEMAPHORE_COUNT SEMAPHORED_JOB_ID PUSH_NEW_SEMAPHORE)], @args);
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
@@ -103,10 +101,12 @@ sub CreateNewJob {
     $input_id = "_ext_input_analysis_data_id $input_data_id";
   }
 
+  $semaphore_count ||= 0;
+
   my $dba = $analysis->adaptor->db;
   my $dbc = $dba->dbc;
   my $insertion_method  = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-  my $status            = $blocked ? 'BLOCKED' : 'READY';
+  my $status            = ($semaphore_count>0) ? 'SEMAPHORED' : 'READY';
   my $analysis_id       = $analysis->dbID();
 
   my $sql = qq{$insertion_method INTO job 
@@ -114,7 +114,7 @@ sub CreateNewJob {
               VALUES (?,?,?,?,?,?)};
  
   my $sth       = $dbc->prepare($sql);
-  my @values    = ($input_id, $prev_job_id, $analysis_id, $status, $semaphore_count || 0, $semaphored_job_id);
+  my @values    = ($input_id, $prev_job_id, $analysis_id, $status, $semaphore_count, $semaphored_job_id);
 
   my $return_code = $sth->execute(@values)
             # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
@@ -359,12 +359,18 @@ sub _objs_from_sth {
 #
 ################
 
+
 sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or unsuccessful creation
     my $self  = shift @_;
     my $jobid = shift @_ or return;
     my $dec   = shift @_ || 1;
 
-    my $sql = "UPDATE job SET semaphore_count=semaphore_count-? WHERE job_id=?";
+    my $sql = qq{
+        UPDATE job
+        SET semaphore_count=semaphore_count-?,
+            status=(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END)
+        WHERE job_id=? AND status='SEMAPHORED'
+    };
     
     my $sth = $self->prepare($sql);
     $sth->execute($dec, $jobid);
@@ -376,7 +382,11 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     my $jobid = shift @_ or return;
     my $inc   = shift @_ || 1;
 
-    my $sql = "UPDATE job SET semaphore_count=semaphore_count+? WHERE job_id=?";
+    my $sql = qq{
+        UPDATE jobs
+        SET semaphore_count=semaphore_count+?
+        WHERE job_id=? AND status='SEMAPHORED'
+    };
     
     my $sth = $self->prepare($sql);
     $sth->execute($inc, $jobid);
@@ -641,7 +651,7 @@ sub gc_dataflow {
   Arg [1]    : int $job_id
   Example    :
   Description: Forces a job to be reset to 'READY' so it can be run again.
-               Will also reset a previously 'BLOCKED' jobs to READY.
+               Will also reset a previously 'SEMAPHORED' jobs to READY (FIXME?).
                The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
                but will not change retry_count if a job has never *really* started.
   Exceptions : $job_id must not be false or zero
@@ -656,7 +666,7 @@ sub reset_job_by_dbID {
         # Note: the order of the fields being updated is critical!
     $self->dbc->do( qq{
         UPDATE job
-           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED' OR status='BLOCKED') THEN retry_count ELSE 1 END)
+           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
              , status='READY'
          WHERE job_id=$job_id
     } );

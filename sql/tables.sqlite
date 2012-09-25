@@ -174,7 +174,7 @@ CREATE TABLE job (
   analysis_id               INTEGER NOT NULL,
   input_id                  char(255) NOT NULL,
   worker_id                 INTEGER DEFAULT NULL,
-  status                    TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','BLOCKED','CLAIMED','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL, */
+  status                    TEXT DEFAULT 'READY' NOT NULL, /* enum('SEMAPHORED','READY','CLAIMED','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL, */
   retry_count               int(10) DEFAULT 0 NOT NULL,
   completed                 datetime DEFAULT NULL,
   runtime_msec              int(10) DEFAULT NULL, 
@@ -184,7 +184,7 @@ CREATE TABLE job (
   semaphored_job_id         INTEGER DEFAULT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS input_id_analysis_id_idx ON job (input_id, analysis_id);
-CREATE        INDEX IF NOT EXISTS analysis_status_sema_retry_idx ON job (analysis_id, status, semaphore_count, retry_count);
+CREATE        INDEX IF NOT EXISTS analysis_status_retry_idx ON job (analysis_id, status, retry_count);
 CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 
 

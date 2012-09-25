@@ -187,7 +187,7 @@ CREATE TABLE job (
   analysis_id               int(10) unsigned NOT NULL,
   input_id                  char(255) NOT NULL,
   worker_id                 int(10) unsigned DEFAULT NULL,
-  status                    enum('READY','BLOCKED','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
+  status                    enum('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
   retry_count               int(10) default 0 NOT NULL,
   completed                 datetime DEFAULT NULL,
   runtime_msec              int(10) default NULL, 
@@ -198,7 +198,7 @@ CREATE TABLE job (
 
   PRIMARY KEY                  (job_id),
   UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX analysis_status_sema_retry (analysis_id, status, semaphore_count, retry_count),
+  INDEX analysis_status_retry (analysis_id, status, retry_count),
   INDEX worker_id              (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;

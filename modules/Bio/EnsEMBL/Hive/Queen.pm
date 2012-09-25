@@ -580,21 +580,20 @@ sub synchronize_AnalysisStats {
       $analysisStats->failed_job_count(0);
       $analysisStats->num_required_workers(0);
 
-      my $sql = "SELECT status, semaphore_count, count(*) FROM job ".
-                "WHERE analysis_id=? GROUP BY status, semaphore_count";
+            # ask for analysis_id to force MySQL to use existing index on (analysis_id, status)
+      my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY status";
       my $sth = $self->prepare($sql);
       $sth->execute($analysisStats->analysis_id);
-
 
       my $done_here       = 0;
       my $done_elsewhere  = 0;
       my $total_job_count = 0;
-      while (my ($status, $semaphore_count, $job_count)=$sth->fetchrow_array()) {
+      while (my ($dummy_analysis_id, $status, $job_count)=$sth->fetchrow_array()) {
     # print STDERR "$status: $job_count\n";
 
         $total_job_count += $job_count;
 
-        if(($status eq 'READY') and ($semaphore_count<=0)) {
+        if($status eq 'READY') {
             $analysisStats->unclaimed_job_count($job_count);
 
             my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
