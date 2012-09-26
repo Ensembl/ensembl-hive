@@ -103,13 +103,6 @@ sub init {
 }
 
 
-sub db {
-  my $self = shift;
-  $self->{'_db'} = shift if(@_);
-  return $self->{'_db'};
-}
-
-
 sub meadow_type {
   my $self = shift;
   $self->{'_meadow_type'} = shift if(@_);
@@ -478,7 +471,7 @@ sub run {
     if( $self->compile_module_once() ) {
         $self->enter_status('COMPILATION');
         my $runnable_object = $self->analysis->process or die "Unknown compilation error";
-        $runnable_object->db( $self->db );
+        $runnable_object->db( $self->adaptor->db );
         $runnable_object->worker( $self );
         $runnable_object->debug( $self->debug );
         $runnable_object->execute_writes( $self->execute_writes );
@@ -487,10 +480,10 @@ sub run {
         $self->enter_status('READY');
     }
 
-  $self->db->dbc->disconnect_when_inactive(0);
+  $self->adaptor->db->dbc->disconnect_when_inactive(0);
 
   my $min_batch_time    = $self->analysis->stats->min_batch_time();
-  my $job_adaptor       = $self->db->get_AnalysisJobAdaptor;
+  my $job_adaptor       = $self->adaptor->db->get_AnalysisJobAdaptor;
 
   do { # Worker's lifespan loop (ends only when the worker dies)
     my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
@@ -530,7 +523,7 @@ sub run {
         #
     if($jobs_done_by_batches_loop) {
 
-        $self->db->get_AnalysisStatsAdaptor->interval_update_work_done(
+        $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_work_done(
             $self->analysis->dbID,
             $jobs_done_by_batches_loop,
             $batches_stopwatch->get_elapsed,
@@ -563,7 +556,7 @@ sub run {
 
   $self->analysis->stats->print_stats if($self->debug);
 
-  printf("dbc %d disconnect cycles\n", $self->db->dbc->disconnect_count);
+  printf("dbc %d disconnect cycles\n", $self->adaptor->db->dbc->disconnect_count);
   print("total jobs completed : ", $self->work_done, "\n");
   
   if( $self->log_dir() ) {
@@ -608,16 +601,16 @@ sub run_one_batch {
             } else {
                 $self->enter_status('COMPILATION', $job);
                 $runnable_object = $self->analysis->process or die "Unknown compilation error";
-                $runnable_object->db( $self->db );
+                $runnable_object->db( $self->adaptor->db );
                 $runnable_object->worker( $self );
                 $runnable_object->debug( $self->debug );
                 $runnable_object->execute_writes( $self->execute_writes );
             }
 
-            $self->db->dbc->query_count(0);
+            $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
+            $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->adaptor->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
 
             $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();
@@ -628,7 +621,7 @@ sub run_one_batch {
         my $msg_thrown          = $@;
 
         $job->runtime_msec( $job_stopwatch->get_elapsed );  # whether successful or not
-        $job->query_count( $self->db->dbc->query_count );
+        $job->query_count( $self->adaptor->db->dbc->query_count );
 
         my $job_id              = $job->dbID();
         my $job_completion_line = "\njob $job_id : complete\n";
@@ -637,7 +630,7 @@ sub run_one_batch {
             my $job_status_at_the_moment = $job->status();
             my $action = $job->incomplete ? 'died' : 'exited';
             $job_completion_line = "\njob $job_id : $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
-            $self->db->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
+            $self->adaptor->db->get_JobMessageAdaptor()->register_message($job_id, $msg_thrown, $job->incomplete );
         }
 
         print STDERR $job_completion_line if($self->log_dir and ($self->debug or $job->incomplete));            # one copy goes to the job's STDERR

@@ -1101,8 +1101,6 @@ sub _objs_from_sth {
     $worker->cause_of_death($column{'cause_of_death'});
     $worker->log_dir($column{'log_dir'});
 
-    $worker->db($self->db);
-
     if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
       $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
     }
