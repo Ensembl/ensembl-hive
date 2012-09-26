@@ -67,7 +67,7 @@ use strict;
 use POSIX;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Extensions;
@@ -87,6 +87,22 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
+    my($analysis_id, $meadow_type, $meadow_name, $host, $process_id, $work_done, $status, $born, $last_check_in, $died, $cause_of_death, $log_dir) =
+        rearrange([qw(analysis_id meadow_type meadow_name host process_id work_done status born last_check_in died cause_of_death log_dir) ], @_);
+
+    $self->analysis_id($analysis_id)        if(defined($analysis_id));
+    $self->meadow_type($meadow_type)        if(defined($meadow_type));
+    $self->meadow_name($meadow_name)        if(defined($meadow_name));
+    $self->host($host)                      if(defined($host));
+    $self->process_id($process_id)          if(defined($process_id));
+    $self->work_done($work_done)            if(defined($work_done));
+    $self->status($status)                  if(defined($status));
+    $self->born($born)                      if(defined($born));
+    $self->last_check_in($last_check_in)    if(defined($last_check_in));
+    $self->died($died)                      if(defined($died));
+    $self->cause_of_death($cause_of_death)  if(defined($cause_of_death));
+    $self->log_dir($log_dir)                if(defined($log_dir));
+
     return $self;
 }
 
@@ -103,19 +119,107 @@ sub init {
 }
 
 
+## Storable object's getters/setters:
+
+
+sub analysis_id {
+    my $self = shift;
+    $self->{'_analysis_id'} = shift if(@_);
+    return $self->{'_analysis_id'};
+}
+
+
 sub meadow_type {
-  my $self = shift;
-  $self->{'_meadow_type'} = shift if(@_);
-  return $self->{'_meadow_type'};
+    my $self = shift;
+    $self->{'_meadow_type'} = shift if(@_);
+    return $self->{'_meadow_type'};
 }
 
 
 sub meadow_name {
-  my $self = shift;
-  $self->{'_meadow_name'} = shift if(@_);
-  return $self->{'_meadow_name'};
+    my $self = shift;
+    $self->{'_meadow_name'} = shift if(@_);
+    return $self->{'_meadow_name'};
 }
 
+
+sub host {
+    my $self = shift;
+    $self->{'_host'} = shift if(@_);
+    return $self->{'_host'};
+}
+
+
+sub process_id {
+    my $self = shift;
+    $self->{'_process_id'} = shift if(@_);
+    return $self->{'_process_id'};
+}
+
+
+sub work_done {
+    my $self = shift;
+    $self->{'_work_done'} = shift if(@_);
+    return $self->{'_work_done'} || 0;
+}
+
+
+sub status {
+    my $self = shift;
+    $self->{'_status'} = shift if(@_);
+    return $self->{'_status'};
+}
+
+
+sub born {
+    my $self = shift;
+    $self->{'_born'} = shift if(@_);
+    return $self->{'_born'};
+}
+
+
+sub last_check_in {
+    my $self = shift;
+    $self->{'_last_check_in'} = shift if(@_);
+    return $self->{'_last_check_in'};
+}
+
+
+sub died {
+    my $self = shift;
+    $self->{'_died'} = shift if(@_);
+    return $self->{'_died'};
+}
+
+
+sub cause_of_death {
+    my $self = shift;
+    $self->{'_cause_of_death'} = shift if(@_);
+    return $self->{'_cause_of_death'};
+}
+
+
+=head2 log_dir
+
+  Arg [1] : (optional) string directory path
+  Title   : log_dir
+  Usage   : $worker_log_dir = $self->log_dir;
+            $self->log_dir($worker_log_dir);
+  Description: Storable getter/setter attribute for the directory where STDOUT and STRERR of the worker will be redirected to.
+               In this directory each job will have its own .out and .err files.
+  Returntype : string
+
+=cut
+
+sub log_dir {
+    my $self = shift;
+    $self->{'_log_dir'} = shift if(@_);
+    return $self->{'_log_dir'};
+}
+
+
+
+## Non-Storable attributes:
 
 sub debug {
   my $self = shift;
@@ -137,8 +241,8 @@ sub execute_writes {
 
   Arg [1] : (optional) Bio::EnsEMBL::Hive::Analysis $value
   Title   :   analysis
-  Usage   :   $value = $self->analysis;
-              $self->analysis($$analysis);
+  Usage   :   $analysis = $self->analysis;
+              $self->analysis($analysis);
   Description: Get/Set analysis object of this Worker
   DefaultValue : undef
   Returntype : Bio::EnsEMBL::Hive::Analysis object
@@ -146,16 +250,19 @@ sub execute_writes {
 =cut
 
 sub analysis {
-  my $self = shift;
-  my $analysis = shift;
+    my $self = shift @_;
 
-  if(defined($analysis)) {
-    throw("analysis arg must be a [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")
-       unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
-    $self->{'_analysis'} = $analysis;
-  }
+    if(@_) {    # setter mode
+        $self->{'_analysis'} = shift @_;
+    } elsif(! $self->{'_analysis'} ) {
+        if(my $analysis_id = $self->analysis_id()) {
+            $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID( $analysis_id );
+        } else {
+            die "analysis_id not defined, could not fetch Hive::Analysis object";
+        }
+    }
 
-  return $self->{'_analysis'};
+    return $self->{'_analysis'};
 }
 
 
@@ -206,7 +313,6 @@ sub life_span_limit_reached {
 }
 
 
-
 =head2 job_limit
 
   Title   :   job_limit
@@ -227,20 +333,11 @@ sub job_limit {
   return $self->{'_job_limit'};
 }
 
-sub work_done {
-  my $self = shift @_;
-
-  if(@_) {
-    $self->{'work_done'} = shift @_;
-  }
-  return $self->{'work_done'} || 0;
-}
-
 
 sub more_work_done {
     my ($self, $job_partial_timing) = @_;
 
-    $self->{'work_done'}++;
+    $self->{'_work_done'}++;
 
     while( my ($state, $partial_timing_in_state) = each %$job_partial_timing ) {
         $self->{'_interval_partial_timing'}{$state} += $partial_timing_in_state;
@@ -272,6 +369,7 @@ sub job_limit_reached {
     return 0;
 }
 
+
 # By maintaining this information we attempt to detect worker contamination without the user specifically telling us about it
 #
 # Ideally we should be doing an *ALIGNMENT* of error messages (allowing for some numerical IDs to differ),
@@ -284,57 +382,12 @@ sub prev_job_error {
     return $self->{'_prev_job_error'};
 }
 
-
-sub host {
-  my( $self, $value ) = @_;
-  $self->{'_host'} = $value if($value);
-  return $self->{'_host'};
-}
-
-sub process_id {
-  my( $self, $value ) = @_;
-  $self->{'_ppid'} = $value if($value);
-  return $self->{'_ppid'};
-}
-
-sub cause_of_death {
-  my( $self, $value ) = @_;
-  $self->{'_cause_of_death'} = $value if($value);
-  return $self->{'_cause_of_death'};
-}
-
-sub status {
-  my( $self, $value ) = @_;
-  $self->{'_status'} = $value if($value);
-  return $self->{'_status'};
-}
-
-sub born {
-  my( $self, $value ) = @_;
-  $self->{'_born'} = $value if($value);
-  return $self->{'_born'};
-}
-
-sub died {
-  my( $self, $value ) = @_;
-  $self->{'_died'} = $value if($value);
-  return $self->{'_died'};
-}
-
-sub last_check_in {
-  my( $self, $value ) = @_;
-  $self->{'_last_check_in'} = $value if($value);
-  return $self->{'_last_check_in'};
-}
-
-
 sub runnable_object {
     my $self = shift @_;
 
     $self->{'_runnable_object'} = shift @_ if(@_);
     return $self->{'_runnable_object'};
 }
-
 
 # this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
 
@@ -350,28 +403,6 @@ sub compile_module_once {
 
     $self->{'_compile_module_once'} = shift @_ if(@_);
     return $self->{'_compile_module_once'} ;
-}
-
-
-=head2 log_dir
-
-  Arg [1] : (optional) string directory path
-  Title   : log_dir
-  Usage   : $worker_log_dir = $self->log_dir;
-            $self->log_dir($worker_log_dir);
-  Description: getter/setter for the directory where STDOUT and STRERR of the worker will be redirected to.
-          In this directory each job will have its own .out and .err files.
-  Returntype : string
-
-=cut
-
-sub log_dir {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_log_dir'} = shift @_;
-    }
-    return $self->{'_log_dir'};
 }
 
 
@@ -740,5 +771,6 @@ sub _specific_job {
   $self->{'_specific_job'} = shift if(@_);
   return $self->{'_specific_job'};
 }
+
 
 1;

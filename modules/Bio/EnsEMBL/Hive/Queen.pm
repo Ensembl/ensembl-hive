@@ -1084,26 +1084,23 @@ sub _objs_from_sth {
   my @workers = ();
 
   while ($sth->fetch()) {
-    my $worker = Bio::EnsEMBL::Hive::Worker->new(   # will be passed to Storable's new()
-        -adaptor    => $self,
-        -dbID       => $column{'worker_id'},
+    my $worker = Bio::EnsEMBL::Hive::Worker->new(
+        -adaptor        => $self,
+        -dbID           => $column{'worker_id'},
+
+        -analysis_id    => $column{'analysis_id'},
+        -meadow_type    => $column{'meadow_type'},
+        -meadow_name    => $column{'meadow_name'},
+        -host           => $column{'host'},
+        -process_id     => $column{'process_id'},
+        -work_done      => $column{'work_done'},
+        -status         => $column{'status'},
+        -born           => $column{'born'},
+        -last_check_in  => $column{'last_check_in'},
+        -died           => $column{'died'},
+        -cause_of_death => $column{'cause_of_death'},
+        -log_dir        => $column{'log_dir'},
     );
-
-    $worker->meadow_type($column{'meadow_type'});
-    $worker->meadow_name($column{'meadow_name'});
-    $worker->host($column{'host'});
-    $worker->process_id($column{'process_id'});
-    $worker->work_done($column{'work_done'});
-    $worker->status($column{'status'});
-    $worker->born($column{'born'});
-    $worker->last_check_in($column{'last_check_in'});
-    $worker->died($column{'died'});
-    $worker->cause_of_death($column{'cause_of_death'});
-    $worker->log_dir($column{'log_dir'});
-
-    if($column{'analysis_id'} and $self->db->get_AnalysisAdaptor) {
-      $worker->analysis($self->db->get_AnalysisAdaptor->fetch_by_dbID($column{'analysis_id'}));
-    }
 
     push @workers, $worker;
   }
