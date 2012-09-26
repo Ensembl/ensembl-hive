@@ -67,9 +67,23 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # import 'destringify()' and 'dir_revhash()'
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
+
+
+sub default_table_name {
+    return 'worker';
+}
+
+
+sub default_insertion_method {
+    return 'INSERT';
+}
+
+
+sub object_class {
+    return 'Bio::EnsEMBL::Hive::Worker';
+}
 
 
 ############################
@@ -302,6 +316,7 @@ sub register_worker_death {
 
 }
 
+
 sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachagle ones)
     my ($self, $valley, $check_buried_in_haste) = @_;
 
@@ -425,37 +440,36 @@ sub reset_job_by_dbID_and_sync {
 #
 ######################################
 
+
     # Note: asking for Queen->fetch_overdue_workers(0) essentially means
     #       "fetch all workers known to the Queen not to be officially dead"
     #
 sub fetch_overdue_workers {
-  my ($self,$overdue_secs) = @_;
+    my ($self,$overdue_secs) = @_;
 
-  $overdue_secs = 3600 unless(defined($overdue_secs));
+    $overdue_secs = 3600 unless(defined($overdue_secs));
 
-  my $constraint = "w.cause_of_death='' AND ".
+    my $constraint = "cause_of_death='' AND ".
                     ( ($self->dbc->driver eq 'sqlite')
-                        ? "(strftime('%s','now')-strftime('%s',w.last_check_in))>$overdue_secs"
-                        : "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(w.last_check_in))>$overdue_secs");
-  return $self->_generic_fetch($constraint);
+                        ? "(strftime('%s','now')-strftime('%s',last_check_in))>$overdue_secs"
+                        : "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in))>$overdue_secs");
+    return $self->fetch_all( $constraint );
 }
+
 
 sub fetch_failed_workers {
-  my $self = shift;
+    my $self = shift;
 
-  my $constraint = "w.cause_of_death='FATALITY' ";
-  return $self->_generic_fetch($constraint);
+    return $self->fetch_all( "cause_of_death='FATALITY'" );
 }
+
 
 sub fetch_all_dead_workers_with_jobs {
-  my $self = shift;
+    my $self = shift;
 
-  # SELECT w.* FROM worker h, job j WHERE w.worker_id=j.worker_id AND w.cause_of_death!='' AND j.status NOT IN ('DONE', 'READY','FAILED', 'PASSED_ON') GROUP BY w.worker_id
-
-  my $constraint = "w.cause_of_death!='' ";
-  my $join = [[['job', 'j'], " w.worker_id=j.worker_id AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY w.worker_id"]];
-  return $self->_generic_fetch($constraint, $join);
+    return $self->fetch_all( "JOIN job j USING(worker_id) WHERE j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY worker_id" );
 }
+
 
 =head2 synchronize_hive
 
@@ -865,6 +879,7 @@ sub print_running_worker_counts {
   printf("%30s : %d workers\n\n", '======= TOTAL =======', $total_workers);
 }
 
+
 =head2 monitor
 
   Arg[1]     : --none--
@@ -898,6 +913,7 @@ sub monitor {
   $sth->execute();
 }
 
+
 =head2 register_all_workers_dead
 
   Example    : $queen->register_all_workers_dead();
@@ -917,11 +933,6 @@ sub register_all_workers_dead {
     }
 }
 
-
-#
-# INTERNAL METHODS
-#
-###################
 
 sub _pick_best_analysis_for_new_worker {
   my $self  = shift;
@@ -955,158 +966,6 @@ sub _pick_best_analysis_for_new_worker {
     # does the following really ever help?
   ($stats) = @{$statsDBA->fetch_by_needed_workers_rc_id(1, $rc_id)};
   return $stats;
-}
-
-
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $feat = $queen->fetch_by_dbID(1234);
-  Description: Returns the feature created from the database defined by the
-               the id $id.
-  Returntype : Bio::EnsEMBL::Hive::Worker
-  Exceptions : thrown if $worker_id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self, $worker_id) = @_;
-
-  unless(defined $worker_id) {
-    throw("fetch_by_dbID must have an id");
-  }
-
-  my ($obj) = @{$self->_generic_fetch( "w.worker_id = $worker_id" ) };
-  return $obj;
-}
-
-=head2 _generic_fetch
-
-  Arg [1]    : (optional) string $constraint
-               An SQL query constraint (i.e. part of the WHERE clause)
-  Arg [2]    : (optional) string $logic_name
-               the logic_name of the analysis of the features to obtain
-  Example    : $fts = $a->_generic_fetch('contig_id in (1234, 1235)', 'Swall');
-  Description: Performs a database fetch and returns feature objects in
-               contig coordinates.
-  Returntype : listref of Bio::EnsEMBL::SeqFeature in contig coordinates
-  Exceptions : none
-  Caller     : BaseFeatureAdaptor, ProxyDnaAlignFeatureAdaptor::_generic_fetch
-
-=cut
-
-sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
-
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      }
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
-
-  #append a where clause if it was defined
-  if($constraint) {
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause";
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;
-
-#  print STDERR $sql,"\n";
-
-  return $self->_objs_from_sth($sth);
-}
-
-sub _tables {
-  my $self = shift;
-
-  return (['worker', 'w']);
-}
-
-sub _columns {
-  my $self = shift;
-
-  return qw (w.worker_id
-             w.analysis_id
-             w.meadow_type
-             w.meadow_name
-             w.host
-             w.process_id
-             w.work_done
-             w.status
-             w.born
-             w.last_check_in
-             w.died
-             w.cause_of_death
-             w.log_dir
-            );
-}
-
-sub _objs_from_sth {
-  my ($self, $sth) = @_;
-
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
-  my @workers = ();
-
-  while ($sth->fetch()) {
-    my $worker = Bio::EnsEMBL::Hive::Worker->new(
-        -adaptor        => $self,
-        -dbID           => $column{'worker_id'},
-
-        -analysis_id    => $column{'analysis_id'},
-        -meadow_type    => $column{'meadow_type'},
-        -meadow_name    => $column{'meadow_name'},
-        -host           => $column{'host'},
-        -process_id     => $column{'process_id'},
-        -work_done      => $column{'work_done'},
-        -status         => $column{'status'},
-        -born           => $column{'born'},
-        -last_check_in  => $column{'last_check_in'},
-        -died           => $column{'died'},
-        -cause_of_death => $column{'cause_of_death'},
-        -log_dir        => $column{'log_dir'},
-    );
-
-    push @workers, $worker;
-  }
-  $sth->finish;
-
-  return \@workers
 }
 
 

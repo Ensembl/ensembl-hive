@@ -150,13 +150,16 @@ sub fetch_all {
     my ($self, $constraint, $one_per_key, $key_list, $value_column) = @_;
     
     my $table_name      = $self->table_name();
-    my $columns_csv     = join(', ', keys %{$self->column_set()});
 
-    my $sql = "SELECT $columns_csv FROM $table_name";
+    my $sql = 'SELECT ' . join(', ', keys %{$self->column_set()}) . " FROM $table_name";
 
     if($constraint) { 
             # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
-        $sql .= (($constraint=~/\bJOIN\b/i) ? ' ' : ' WHERE ') . $constraint;
+        if($constraint=~/\bJOIN\b/i) {
+            $sql = 'SELECT ' . join(', ', map { "$table_name.$_" } keys %{$self->column_set()}) . " FROM $table_name $constraint";
+        } else {
+            $sql .= ' WHERE '.$constraint;
+        }
     }
 
     # warn "SQL: $sql\n";
