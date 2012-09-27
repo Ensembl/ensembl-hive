@@ -207,7 +207,7 @@ sub fetch_all_failed_jobs {
 sub fetch_all_incomplete_jobs_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    my $constraint = "j.status IN ('COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT') AND j.worker_id='$worker_id'";
+    my $constraint = "j.status IN ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND j.worker_id='$worker_id'";
     return $self->_generic_fetch($constraint);
 }
 
