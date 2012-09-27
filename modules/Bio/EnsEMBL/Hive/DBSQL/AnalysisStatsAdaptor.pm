@@ -166,25 +166,19 @@ sub update {
   my $hive_capacity = $stats->hive_capacity;
 
   if ($stats->behaviour eq "DYNAMIC") {
-    my $max_hive_capacity = $hive_capacity;
-    if ($stats->avg_input_msec_per_job) {
-      $max_hive_capacity = int($stats->input_capacity * $stats->avg_msec_per_job / $stats->avg_input_msec_per_job);
-    }
+
+    my $max_hive_capacity = $stats->avg_input_msec_per_job
+        ? int($stats->input_capacity * $stats->avg_msec_per_job / $stats->avg_input_msec_per_job)
+        : $hive_capacity;
+
     if ($stats->avg_output_msec_per_job) {
       my $max_hive_capacity2 = int($stats->output_capacity * $stats->avg_msec_per_job / $stats->avg_output_msec_per_job);
       if ($max_hive_capacity2 < $max_hive_capacity) {
         $max_hive_capacity = $max_hive_capacity2;
       }
     }
-    if (($hive_capacity > $max_hive_capacity) or ($hive_capacity < $max_hive_capacity )) {
-      if (abs($hive_capacity - $max_hive_capacity) > 2) {
-        $stats->hive_capacity(($hive_capacity + $max_hive_capacity) / 2);
-      } elsif ($hive_capacity > $max_hive_capacity) {
-        $stats->hive_capacity($hive_capacity - 1);
-      } elsif ($hive_capacity < $max_hive_capacity) {
-        $stats->hive_capacity($hive_capacity + 1);
-      }
-    }
+
+    $stats->hive_capacity( int( ($hive_capacity+$max_hive_capacity+1)/2 ) );
   }
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
