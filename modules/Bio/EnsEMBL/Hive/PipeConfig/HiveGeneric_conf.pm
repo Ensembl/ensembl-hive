@@ -53,6 +53,7 @@ use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
+use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Extensions;
 
 use base ('Bio::EnsEMBL::Hive::DependentOptions');
@@ -422,17 +423,17 @@ sub run {
             );
             $analysis_adaptor->store($analysis);
 
-            $analysis_stats_adaptor->create_new_for_analysis_id($analysis->dbID);
-
-            my $stats = $analysis->stats();
-            $stats->batch_size( $batch_size )                       if(defined($batch_size));
-            $stats->hive_capacity( $hive_capacity )                 if(defined($hive_capacity));
-            $stats->failed_job_tolerance( $failed_job_tolerance )   if(defined($failed_job_tolerance));
-            $stats->max_retry_count( $max_retry_count )             if(defined($max_retry_count));
-            $stats->can_be_empty( $can_be_empty )                   if(defined($can_be_empty));
-            $stats->priority( $priority )                           if(defined($priority));
-            $stats->status($blocked ? 'BLOCKED' : 'READY');         # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
-            $stats->update();
+            my $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
+                -analysis_id            => $analysis->dbID,
+                -batch_size             => $batch_size,
+                -hive_capacity          => $hive_capacity,
+                -failed_job_tolerance   => $failed_job_tolerance,
+                -max_retry_count        => $max_retry_count,
+                -can_be_empty           => $can_be_empty,
+                -priority               => $priority,
+                -status                 => $blocked ? 'BLOCKED' : 'READY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
+            );
+            $analysis_stats_adaptor->store($stats);
         }
 
             # now create the corresponding jobs (if there are any):

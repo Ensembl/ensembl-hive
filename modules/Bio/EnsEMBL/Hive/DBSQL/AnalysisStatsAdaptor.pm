@@ -46,17 +46,6 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
 
-sub create_new_for_analysis_id{
-    my ($self, $analysis_id) = @_;
-
-    my $insertion_method = ($self->dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-    my $sql = "$insertion_method INTO analysis_stats (analysis_id) VALUES ($analysis_id)";
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    $sth->finish;
-}
-
-
 =head2 fetch_by_analysis_id
 
   Arg [1]    : int $id
@@ -149,6 +138,23 @@ sub refresh {
 #
 ################
 
+
+sub store {
+    my ($self, $stats) = @_;
+
+    my $sql = "INSERT INTO analysis_stats (analysis_id, batch_size, hive_capacity, failed_job_tolerance, max_retry_count, can_be_empty, priority, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    my $sth = $self->prepare($sql);
+    $sth->execute($stats->analysis_id, $stats->batch_size, $stats->hive_capacity, $stats->failed_job_tolerance,
+                  $stats->max_retry_count, $stats->can_be_empty, $stats->priority, $stats->status);
+    $sth->finish;
+
+    $stats->adaptor( $self );
+
+    return $stats;
+}
+
+
 =head2 update
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
@@ -182,14 +188,14 @@ sub update {
   }
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
-  $sql .= ",batch_size=" . $stats->batch_size();
+#  $sql .= ",batch_size=" . $stats->batch_size();
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
-  $sql .= ",max_retry_count=" . $stats->max_retry_count();
-  $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
+#  $sql .= ",max_retry_count=" . $stats->max_retry_count();
+#  $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
 
   unless( $self->db->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
@@ -204,8 +210,8 @@ sub update {
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
-  $sql .= ",can_be_empty=". $stats->can_be_empty();
-  $sql .= ",priority=". $stats->priority();
+#  $sql .= ",can_be_empty=". $stats->can_be_empty();
+#  $sql .= ",priority=". $stats->priority();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -215,12 +221,10 @@ sub update {
   $sth->execute();
   $sth->finish;
   $stats->seconds_since_last_update(0); #not exact but good enough :)
-
 }
 
 
-sub update_status
-{
+sub update_status {
   my ($self, $analysis_id, $status) = @_;
 
   my $sql = "UPDATE analysis_stats SET status='$status' ";
@@ -278,8 +282,7 @@ sub interval_update_work_done {
 }
 
 
-sub increase_running_workers
-{
+sub increase_running_workers {
   my $self = shift;
   my $analysis_id = shift;
 
@@ -290,8 +293,7 @@ sub increase_running_workers
 }
 
 
-sub decrease_running_workers
-{
+sub decrease_running_workers {
   my $self = shift;
   my $analysis_id = shift;
 
@@ -301,8 +303,8 @@ sub decrease_running_workers
   $self->dbc->do($sql);
 }
 
-sub decrease_required_workers
-{
+
+sub decrease_required_workers {
   my $self = shift;
   my $analysis_id = shift;
 
@@ -313,8 +315,7 @@ sub decrease_required_workers
 }
 
 
-sub increase_required_workers
-{
+sub increase_required_workers {
   my $self = shift;
   my $analysis_id = shift;
 
@@ -472,6 +473,7 @@ sub _objs_from_sth {
     $analStats->num_running_workers($column{'num_running_workers'});
     $analStats->num_required_workers($column{'num_required_workers'});
     $analStats->seconds_since_last_update($column{'seconds_since_last_update'});
+
     $analStats->adaptor($self);
 
     push @statsArray, $analStats;
