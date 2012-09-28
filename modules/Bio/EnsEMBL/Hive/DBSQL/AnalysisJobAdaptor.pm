@@ -383,7 +383,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     my $inc   = shift @_ || 1;
 
     my $sql = qq{
-        UPDATE jobs
+        UPDATE job
         SET semaphore_count=semaphore_count+?
         WHERE job_id=? AND status='SEMAPHORED'
     };
