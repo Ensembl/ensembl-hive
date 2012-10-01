@@ -198,12 +198,13 @@ sub fetch_all {
 
 
 sub primary_key_constraint {
-    my $self = shift @_;
+    my $self        = shift @_;
+    my $sliceref    = shift @_;
 
     my $primary_key  = $self->primary_key();  # Attention: the order of primary_key columns of your call should match the order in the table definition!
 
     if(@$primary_key) {
-        return join (' AND ', map { $primary_key->[$_]."='".$_[$_]."'" } (0..scalar(@$primary_key)-1));
+        return join (' AND ', map { $primary_key->[$_]."='".$sliceref->[$_]."'" } (0..scalar(@$primary_key)-1));
     } else {
         my $table_name = $self->table_name();
         die "Table '$table_name' doesn't have a primary_key";
@@ -245,9 +246,12 @@ sub update {    # update (some or all) non_primary columns from the primary
         die "There are no dependent columns to update, as everything seems to belong to the primary key";
     }
 
-    my $sql = "UPDATE $table_name SET ".join(', ', map { "$columns_to_update->[$_]=$values_to_update->[$_]" } (0..@$columns_to_update-1) )." WHERE $primary_key_constraint";
+    my $sql = "UPDATE $table_name SET ".join(', ', map { "$_=?" } @$columns_to_update)." WHERE $primary_key_constraint";
+    # print "SQL: $sql\n";
     my $sth = $self->prepare($sql);
-    $sth->execute();
+    # print "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
+    $sth->execute( @$values_to_update);
+
     $sth->finish();
 }
 
