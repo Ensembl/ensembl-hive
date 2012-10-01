@@ -256,7 +256,8 @@ sub analysis {
         $self->{'_analysis'} = shift @_;
     } elsif(! $self->{'_analysis'} ) {
         if(my $analysis_id = $self->analysis_id()) {
-            $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID( $analysis_id );
+            $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID( $analysis_id )
+                or die "Could not fetch analysis for analysis_id=$analysis_id";
         } else {
             die "analysis_id not defined, could not fetch Hive::Analysis object";
         }

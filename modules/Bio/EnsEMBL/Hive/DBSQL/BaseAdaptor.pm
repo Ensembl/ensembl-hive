@@ -215,7 +215,7 @@ sub primary_key_constraint {
 sub fetch_by_dbID {
     my $self = shift @_;    # the rest in @_ should be primary_key column values
 
-    return $self->fetch_all( $self->primary_key_constraint( @_ ), 1 );
+    return $self->fetch_all( $self->primary_key_constraint( \@_ ), 1 );
 }
 
 
