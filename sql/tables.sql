@@ -350,7 +350,7 @@ CREATE TABLE analysis_stats (
     avg_run_msec_per_job    int(10) DEFAULT NULL,
     avg_output_msec_per_job int(10) DEFAULT NULL,
 
-    last_update             datetime NOT NULL,
+    last_update             datetime NOT NULL default '0000-00-00 00:00:00',
     sync_lock               int(10) default 0 NOT NULL,
 
     UNIQUE KEY   (analysis_id)
@@ -386,7 +386,7 @@ CREATE TABLE analysis_stats_monitor (
     avg_run_msec_per_job    int(10) DEFAULT NULL,
     avg_output_msec_per_job int(10) DEFAULT NULL,
 
-    last_update             datetime NOT NULL,
+    last_update             datetime NOT NULL default '0000-00-00 00:00:00',
     sync_lock               int(10) default 0 NOT NULL
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
