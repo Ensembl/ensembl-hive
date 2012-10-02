@@ -409,28 +409,32 @@ sub _columns {
   my $self = shift;
 
   my @columns = qw (ast.analysis_id
-                    ast.status
                     ast.batch_size
+                    ast.hive_capacity
+                    ast.failed_job_tolerance
+                    ast.max_retry_count
+                    ast.can_be_empty
+                    ast.priority
+                    ast.status
+
+                    ast.total_job_count
+                    ast.unclaimed_job_count
+                    ast.done_job_count
+                    ast.failed_job_count
+                    ast.num_running_workers
+                    ast.num_required_workers
+
+                    ast.behaviour
+                    ast.input_capacity
+                    ast.output_capacity
+
                     ast.avg_msec_per_job
                     ast.avg_input_msec_per_job
                     ast.avg_run_msec_per_job
                     ast.avg_output_msec_per_job
-                    ast.hive_capacity
-                    ast.behaviour
-                    ast.input_capacity
-                    ast.output_capacity
-                    ast.total_job_count
-                    ast.unclaimed_job_count
-                    ast.done_job_count
-                    ast.max_retry_count
-                    ast.failed_job_count
-                    ast.failed_job_tolerance
-                    ast.num_running_workers
-                    ast.num_required_workers
+
                     ast.last_update
                     ast.sync_lock
-                    ast.can_be_empty
-                    ast.priority
                    );
 
   push @columns , ($self->dbc->driver eq 'sqlite')
@@ -451,28 +455,32 @@ sub _objs_from_sth {
     my $analStats = Bio::EnsEMBL::Hive::AnalysisStats->new();
 
     $analStats->analysis_id($column{'analysis_id'});
-    $analStats->status($column{'status'});
-    $analStats->sync_lock($column{'sync_lock'});
+    $analStats->batch_size($column{'batch_size'});
+    $analStats->hive_capacity($column{'hive_capacity'});
+    $analStats->failed_job_tolerance($column{'failed_job_tolerance'});
+    $analStats->max_retry_count($column{'max_retry_count'});
     $analStats->can_be_empty($column{'can_be_empty'});
     $analStats->priority($column{'priority'});
-    $analStats->batch_size($column{'batch_size'});
+    $analStats->status($column{'status'});
+
+    $analStats->total_job_count($column{'total_job_count'});
+    $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
+    $analStats->done_job_count($column{'done_job_count'});
+    $analStats->failed_job_count($column{'failed_job_count'});
+    $analStats->num_running_workers($column{'num_running_workers'});
+    $analStats->num_required_workers($column{'num_required_workers'});
+
+    $analStats->behaviour($column{'behaviour'});
+    $analStats->input_capacity($column{'input_capacity'});
+    $analStats->output_capacity($column{'output_capacity'});
+
     $analStats->avg_msec_per_job($column{'avg_msec_per_job'});
     $analStats->avg_input_msec_per_job($column{'avg_input_msec_per_job'});
     $analStats->avg_run_msec_per_job($column{'avg_run_msec_per_job'});
     $analStats->avg_output_msec_per_job($column{'avg_output_msec_per_job'});
-    $analStats->hive_capacity($column{'hive_capacity'});
-    $analStats->behaviour($column{'behaviour'});
-    $analStats->input_capacity($column{'input_capacity'});
-    $analStats->output_capacity($column{'output_capacity'});
-    $analStats->total_job_count($column{'total_job_count'});
-    $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
-    $analStats->done_job_count($column{'done_job_count'});
-    $analStats->max_retry_count($column{'max_retry_count'});
-    $analStats->failed_job_count($column{'failed_job_count'});
-    $analStats->failed_job_tolerance($column{'failed_job_tolerance'});
-    $analStats->num_running_workers($column{'num_running_workers'});
-    $analStats->num_required_workers($column{'num_required_workers'});
+
     $analStats->seconds_since_last_update($column{'seconds_since_last_update'});
+    $analStats->sync_lock($column{'sync_lock'});
 
     $analStats->adaptor($self);
 

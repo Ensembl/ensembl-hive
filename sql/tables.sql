@@ -323,67 +323,74 @@ CREATE TABLE resource_description (
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the jobs (cached state)
 --   failed_job_tolerance - % of tolerated failed jobs
---   resource_class_id    - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
-  analysis_id           int(10) unsigned NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
-                          DEFAULT 'READY' NOT NULL,
-  batch_size            int(10) default 1 NOT NULL,
-  avg_msec_per_job      int(10) default 0 NOT NULL,
-  avg_input_msec_per_job      int(10) default 0 NOT NULL,
-  avg_run_msec_per_job      int(10) default 0 NOT NULL,
-  avg_output_msec_per_job      int(10) default 0 NOT NULL,
-  hive_capacity         int(10) default 1 NOT NULL,
-  behaviour             enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
-  input_capacity        int(10) default 4 NOT NULL,
-  output_capacity       int(10) default 4 NOT NULL,
-  total_job_count       int(10) NOT NULL,
-  unclaimed_job_count   int(10) NOT NULL,
-  done_job_count        int(10) NOT NULL,
-  max_retry_count       int(10) default 3 NOT NULL,
-  failed_job_count      int(10) NOT NULL,
-  failed_job_tolerance  int(10) default 0 NOT NULL,
-  num_running_workers   int(10) default 0 NOT NULL,
-  num_required_workers  int(10) NOT NULL,
-  last_update           datetime NOT NULL,
-  sync_lock             int(10) default 0 NOT NULL,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-  priority              TINYINT DEFAULT 0 NOT NULL,
-  
-  UNIQUE KEY   (analysis_id)
+    analysis_id             int(10) unsigned NOT NULL,
+    batch_size              int(10) DEFAULT 1 NOT NULL,
+    hive_capacity           int(10) DEFAULT 1 NOT NULL,
+    failed_job_tolerance    int(10) DEFAULT 0 NOT NULL,
+    max_retry_count         int(10) DEFAULT 3 NOT NULL,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL,
+    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
+
+    total_job_count         int(10) DEFAULT NULL,
+    unclaimed_job_count     int(10) DEFAULT NULL,
+    done_job_count          int(10) DEFAULT NULL,
+    failed_job_count        int(10) DEFAULT NULL,
+    num_running_workers     int(10) DEFAULT NULL,
+    num_required_workers    int(10) DEFAULT NULL,
+
+    behaviour               enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
+    input_capacity          int(10) DEFAULT 4 NOT NULL,
+    output_capacity         int(10) DEFAULT 4 NOT NULL,
+
+    avg_msec_per_job        int(10) DEFAULT NULL,
+    avg_input_msec_per_job  int(10) DEFAULT NULL,
+    avg_run_msec_per_job    int(10) DEFAULT NULL,
+    avg_output_msec_per_job int(10) DEFAULT NULL,
+
+    last_update             datetime NOT NULL,
+    sync_lock               int(10) default 0 NOT NULL,
+
+    UNIQUE KEY   (analysis_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
 CREATE TABLE analysis_stats_monitor (
-  time                  datetime NOT NULL default '0000-00-00 00:00:00',
-  analysis_id           int(10) unsigned NOT NULL,
-  status                enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')
-                          DEFAULT 'READY' NOT NULL,
-  batch_size            int(10) default 1 NOT NULL,
-  avg_msec_per_job      int(10) default 0 NOT NULL,
-  avg_input_msec_per_job      int(10) default 0 NOT NULL,
-  avg_run_msec_per_job      int(10) default 0 NOT NULL,
-  avg_output_msec_per_job      int(10) default 0 NOT NULL,
-  hive_capacity         int(10) default 1 NOT NULL,
-  behaviour             enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
-  input_capacity        int(10) default 4 NOT NULL,
-  output_capacity       int(10) default 4 NOT NULL,
-  total_job_count       int(10) NOT NULL,
-  unclaimed_job_count   int(10) NOT NULL,
-  done_job_count        int(10) NOT NULL,
-  max_retry_count       int(10) default 3 NOT NULL,
-  failed_job_count      int(10) NOT NULL,
-  failed_job_tolerance  int(10) default 0 NOT NULL,
-  num_running_workers   int(10) default 0 NOT NULL,
-  num_required_workers  int(10) NOT NULL,
-  last_update           datetime NOT NULL,
-  sync_lock             int(10) default 0 NOT NULL,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-  priority              TINYINT DEFAULT 0 NOT NULL
+    time                    datetime NOT NULL default '0000-00-00 00:00:00',
+
+    analysis_id             int(10) unsigned NOT NULL,
+    batch_size              int(10) DEFAULT 1 NOT NULL,
+    hive_capacity           int(10) DEFAULT 1 NOT NULL,
+    failed_job_tolerance    int(10) DEFAULT 0 NOT NULL,
+    max_retry_count         int(10) DEFAULT 3 NOT NULL,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL,
+    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
+
+    total_job_count         int(10) DEFAULT NULL,
+    unclaimed_job_count     int(10) DEFAULT NULL,
+    done_job_count          int(10) DEFAULT NULL,
+    failed_job_count        int(10) DEFAULT NULL,
+    num_running_workers     int(10) DEFAULT NULL,
+    num_required_workers    int(10) DEFAULT NULL,
+
+    behaviour               enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
+    input_capacity          int(10) DEFAULT 4 NOT NULL,
+    output_capacity         int(10) DEFAULT 4 NOT NULL,
+
+    avg_msec_per_job        int(10) DEFAULT NULL,
+    avg_input_msec_per_job  int(10) DEFAULT NULL,
+    avg_run_msec_per_job    int(10) DEFAULT NULL,
+    avg_output_msec_per_job int(10) DEFAULT NULL,
+
+    last_update             datetime NOT NULL,
+    sync_lock               int(10) default 0 NOT NULL
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
 
 -- ---------------------------------------------------------------------------------
 --

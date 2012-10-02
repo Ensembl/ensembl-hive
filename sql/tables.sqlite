@@ -304,58 +304,67 @@ CREATE TABLE resource_description (
 --   resource_class_id    - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
-  analysis_id           INTEGER NOT NULL,
-  status                TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
-  batch_size                int(10) default 1 NOT NULL,
-  avg_msec_per_job          int(10) default 0 NOT NULL,
-  avg_input_msec_per_job    int(10) default 0 NOT NULL,
-  avg_run_msec_per_job      int(10) default 0 NOT NULL,
-  avg_output_msec_per_job   int(10) default 0 NOT NULL,
-  hive_capacity         int(10) default 1 NOT NULL,
-  behaviour             TEXT DEFAULT 'STATIC' NOT NULL, /* enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL, */
-  input_capacity        int(10) NOT NULL DEFAULT 4,
-  output_capacity       int(10) NOT NULL DEFAULT 4,
-  total_job_count       int(10) NOT NULL DEFAULT 0,
-  unclaimed_job_count   int(10) NOT NULL DEFAULT 0,
-  done_job_count        int(10) NOT NULL DEFAULT 0,
-  max_retry_count       int(10) NOT NULL DEFAULT 3,
-  failed_job_count      int(10) NOT NULL DEFAULT 0,
-  failed_job_tolerance  int(10) NOT NULL DEFAULT 0,
-  num_running_workers   int(10) NOT NULL DEFAULT 0,
-  num_required_workers  int(10) NOT NULL DEFAULT 0,
-  last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  sync_lock             int(10) NOT NULL DEFAULT 0,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-  priority              TINYINT DEFAULT 0 NOT NULL
+    analysis_id             INTEGER NOT NULL,
+    batch_size              int(10) default 1 NOT NULL,
+    hive_capacity           int(10) default 1 NOT NULL,
+    failed_job_tolerance    int(10) NOT NULL DEFAULT 0,
+    max_retry_count         int(10) NOT NULL DEFAULT 3,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL,
+    status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
+
+    total_job_count         int(10) NOT NULL DEFAULT 0,
+    unclaimed_job_count     int(10) NOT NULL DEFAULT 0,
+    done_job_count          int(10) NOT NULL DEFAULT 0,
+    failed_job_count        int(10) NOT NULL DEFAULT 0,
+    num_running_workers     int(10) NOT NULL DEFAULT 0,
+    num_required_workers    int(10) NOT NULL DEFAULT 0,
+
+    behaviour               TEXT DEFAULT 'STATIC' NOT NULL, /* enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL, */
+    input_capacity          int(10) NOT NULL DEFAULT 4,
+    output_capacity         int(10) NOT NULL DEFAULT 4,
+
+    avg_msec_per_job        int(10) default 0 NOT NULL,
+    avg_input_msec_per_job  int(10) default 0 NOT NULL,
+    avg_run_msec_per_job    int(10) default 0 NOT NULL,
+    avg_output_msec_per_job int(10) default 0 NOT NULL,
+
+    last_update             datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_lock               int(10) NOT NULL DEFAULT 0
 );
 CREATE UNIQUE INDEX IF NOT EXISTS analysis_idx ON analysis_stats (analysis_id);
 
 
 CREATE TABLE analysis_stats_monitor (
-  time                  datetime NOT NULL default '0000-00-00 00:00:00',
-  analysis_id           INTEGER NOT NULL,
-  status                TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
-  batch_size            int(10) default 1 NOT NULL,
-  avg_msec_per_job      int(10) default 0 NOT NULL,
-  avg_input_msec_per_job      int(10) default 0 NOT NULL,
-  avg_run_msec_per_job      int(10) default 0 NOT NULL,
-  avg_output_msec_per_job      int(10) default 0 NOT NULL,
-  hive_capacity         int(10) default 1 NOT NULL,
-  behaviour             TEXT DEFAULT 'STATIC' NOT NULL, /* enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL, */
-  input_capacity        int(10) default 4 NOT NULL,
-  output_capacity       int(10) default 4 NOT NULL,
-  total_job_count       int(10) NOT NULL DEFAULT 0,
-  unclaimed_job_count   int(10) NOT NULL DEFAULT 0,
-  done_job_count        int(10) NOT NULL DEFAULT 0,
-  max_retry_count       int(10) default 3 NOT NULL,
-  failed_job_count      int(10) NOT NULL DEFAULT 0,
-  failed_job_tolerance  int(10) default 0 NOT NULL,
-  num_running_workers   int(10) default 0 NOT NULL,
-  num_required_workers  int(10) NOT NULL DEFAULT 0,
-  last_update           datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  sync_lock             int(10) default 0 NOT NULL,
-  can_be_empty          TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-  priority              TINYINT DEFAULT 0 NOT NULL
+    time                    datetime NOT NULL default '0000-00-00 00:00:00',
+
+    analysis_id             INTEGER NOT NULL,
+    batch_size              int(10) default 1 NOT NULL,
+    hive_capacity           int(10) default 1 NOT NULL,
+    failed_job_tolerance    int(10) default 0 NOT NULL,
+    max_retry_count         int(10) default 3 NOT NULL,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL,
+    status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
+
+    total_job_count         int(10) NOT NULL DEFAULT 0,
+    unclaimed_job_count     int(10) NOT NULL DEFAULT 0,
+    done_job_count          int(10) NOT NULL DEFAULT 0,
+    failed_job_count        int(10) NOT NULL DEFAULT 0,
+    num_running_workers     int(10) default 0 NOT NULL,
+    num_required_workers    int(10) NOT NULL DEFAULT 0,
+
+    behaviour               TEXT DEFAULT 'STATIC' NOT NULL, /* enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL, */
+    input_capacity          int(10) default 4 NOT NULL,
+    output_capacity         int(10) default 4 NOT NULL,
+
+    avg_msec_per_job        int(10) default 0 NOT NULL,
+    avg_input_msec_per_job  int(10) default 0 NOT NULL,
+    avg_run_msec_per_job    int(10) default 0 NOT NULL,
+    avg_output_msec_per_job int(10) default 0 NOT NULL,
+
+    last_update             datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_lock               int(10) default 0 NOT NULL
 );
 
 -- ---------------------------------------------------------------------------------

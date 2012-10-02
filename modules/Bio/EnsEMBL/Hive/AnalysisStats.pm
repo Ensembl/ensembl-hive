@@ -127,54 +127,8 @@ sub status {
 }
 
 
-## non-presettable storable object's getters/setters:
+## counters of jobs in different states:
 
-
-sub avg_msec_per_job {
-    my $self = shift;
-    $self->{'_avg_msec_per_job'} = shift if(@_);
-    $self->{'_avg_msec_per_job'}=0 unless($self->{'_avg_msec_per_job'});
-    return $self->{'_avg_msec_per_job'};
-}
-
-sub avg_input_msec_per_job {
-    my $self = shift;
-    $self->{'_avg_input_msec_per_job'} = shift if(@_);
-    $self->{'_avg_input_msec_per_job'}=0 unless($self->{'_avg_input_msec_per_job'});
-    return $self->{'_avg_input_msec_per_job'};
-}
-
-sub avg_run_msec_per_job {
-    my $self = shift;
-    $self->{'_avg_run_msec_per_job'} = shift if(@_);
-    $self->{'_avg_run_msec_per_job'}=0 unless($self->{'_avg_run_msec_per_job'});
-    return $self->{'_avg_run_msec_per_job'};
-}
-
-sub avg_output_msec_per_job {
-    my $self = shift;
-    $self->{'_avg_output_msec_per_job'} = shift if(@_);
-    $self->{'_avg_output_msec_per_job'}=0 unless($self->{'_avg_output_msec_per_job'});
-    return $self->{'_avg_output_msec_per_job'};
-}
-
-sub behaviour {
-    my $self = shift;
-    $self->{'_behaviour'} = shift if(@_);
-    return $self->{'_behaviour'};
-}
-
-sub input_capacity {
-    my $self = shift;
-    $self->{'_input_capacity'} = shift if(@_);
-    return $self->{'_input_capacity'};
-}
-
-sub output_capacity {
-    my $self = shift;
-    $self->{'_output_capacity'} = shift if(@_);
-    return $self->{'_output_capacity'};
-}
 
 sub total_job_count {
     my $self = shift;
@@ -212,6 +166,64 @@ sub num_required_workers {
     $self->{'_num_required_workers'} = shift if(@_);
     return $self->{'_num_required_workers'};
 }
+
+
+## dynamic hive_capacity mode attributes:
+
+
+sub behaviour {
+    my $self = shift;
+    $self->{'_behaviour'} = shift if(@_);
+    return $self->{'_behaviour'};
+}
+
+sub input_capacity {
+    my $self = shift;
+    $self->{'_input_capacity'} = shift if(@_);
+    return $self->{'_input_capacity'};
+}
+
+sub output_capacity {
+    my $self = shift;
+    $self->{'_output_capacity'} = shift if(@_);
+    return $self->{'_output_capacity'};
+}
+
+
+## dynamic hive_capacity mode counters:
+
+
+sub avg_msec_per_job {
+    my $self = shift;
+    $self->{'_avg_msec_per_job'} = shift if(@_);
+    $self->{'_avg_msec_per_job'}=0 unless($self->{'_avg_msec_per_job'});
+    return $self->{'_avg_msec_per_job'};
+}
+
+sub avg_input_msec_per_job {
+    my $self = shift;
+    $self->{'_avg_input_msec_per_job'} = shift if(@_);
+    $self->{'_avg_input_msec_per_job'}=0 unless($self->{'_avg_input_msec_per_job'});
+    return $self->{'_avg_input_msec_per_job'};
+}
+
+sub avg_run_msec_per_job {
+    my $self = shift;
+    $self->{'_avg_run_msec_per_job'} = shift if(@_);
+    $self->{'_avg_run_msec_per_job'}=0 unless($self->{'_avg_run_msec_per_job'});
+    return $self->{'_avg_run_msec_per_job'};
+}
+
+sub avg_output_msec_per_job {
+    my $self = shift;
+    $self->{'_avg_output_msec_per_job'} = shift if(@_);
+    $self->{'_avg_output_msec_per_job'}=0 unless($self->{'_avg_output_msec_per_job'});
+    return $self->{'_avg_output_msec_per_job'};
+}
+
+
+## other storable ttributes:
+
 
 sub seconds_since_last_update {
     my( $self, $value ) = @_;
