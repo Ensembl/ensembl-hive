@@ -35,51 +35,79 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($logic_name, $module, $parameters, $resource_class_id) =
-         rearrange([qw(logic_name module parameters resource_class_id) ], @_);
+    my ($logic_name, $module, $parameters, $resource_class_id, $failed_job_tolerance, $max_retry_count, $can_be_empty, $priority) =
+         rearrange([qw(logic_name module parameters resource_class_id failed_job_tolerance max_retry_count can_be_empty priority) ], @_);
 
-    $self->logic_name($logic_name)                  if($logic_name);
-    $self->module($module)                          if($module);
-    $self->parameters($parameters)                  if($parameters);
-    $self->resource_class_id($resource_class_id)    if($resource_class_id);
+    $self->logic_name($logic_name)                      if($logic_name);
+    $self->module($module)                              if($module);
+    $self->parameters($parameters)                      if($parameters);
+    $self->resource_class_id($resource_class_id)        if($resource_class_id);
+    $self->failed_job_tolerance($failed_job_tolerance)  if($failed_job_tolerance);
+    $self->max_retry_count($max_retry_count)            if($max_retry_count);
+    $self->can_be_empty($can_be_empty)                  if($can_be_empty);
+    $self->priority($priority)                          if($priority);
 
     return $self;
 }
 
 
 sub logic_name {
-    my $self = shift @_;
-
-    $self->{'_logic_name'} = shift @_ if(@_);
-
+    my $self = shift;
+    $self->{'_logic_name'} = shift if(@_);
     return $self->{'_logic_name'};
 }
 
 
 sub module {
-    my $self = shift @_;
-
-    $self->{'_module'} = shift @_ if(@_);
-
+    my $self = shift;
+    $self->{'_module'} = shift if(@_);
     return $self->{'_module'};
 }
 
 
 sub parameters {
-    my $self = shift @_;
-
-    $self->{'_parameters'} = shift @_ if(@_);
-
+    my $self = shift;
+    $self->{'_parameters'} = shift if(@_);
     return $self->{'_parameters'};
 }
 
 
 sub resource_class_id {
-    my $self = shift @_;
-
-    $self->{'_resource_class_id'} = shift @_ if(@_);
-
+    my $self = shift;
+    $self->{'_resource_class_id'} = shift if(@_);
     return $self->{'_resource_class_id'};
+}
+
+
+sub failed_job_tolerance {
+    my $self = shift;
+    $self->{'_failed_job_tolerance'} = shift if(@_);
+    $self->{'_failed_job_tolerance'} = 0 unless(defined($self->{'_failed_job_tolerance'}));
+    return $self->{'_failed_job_tolerance'};
+}
+
+
+sub max_retry_count {
+    my $self = shift;
+    $self->{'_max_retry_count'} = shift if(@_);
+    $self->{'_max_retry_count'} = 3 unless(defined($self->{'_max_retry_count'}));
+    return $self->{'_max_retry_count'};
+}
+
+
+sub can_be_empty {
+    my $self = shift;
+    $self->{'_can_be_empty'} = shift if(@_);
+    $self->{'_can_be_empty'} = 0 unless(defined($self->{'_can_be_empty'}));
+    return $self->{'_can_be_empty'};
+}
+
+
+sub priority {
+    my $self = shift;
+    $self->{'_priority'} = shift if(@_);
+    $self->{'_priority'} = 0 unless(defined($self->{'_priority'}));
+    return $self->{'_priority'};
 }
 
 

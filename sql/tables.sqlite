@@ -26,20 +26,25 @@ CREATE        INDEX IF NOT EXISTS species_value_idx     ON meta (species_id, met
 --
 -- overview:
 --  Each Analysis object contains
---      analysis_id     - a unique ID that is also a foreign key to most of the other tables
---      logic_name      - the name of the Analysis object
---      module          - the Perl module name that runs this Analysis
---      parameters      - a stingified hash of parameters common to all jobs of the Analysis
---
--- semantics:
---
+--      analysis_id             - a unique ID that is also a foreign key to most of the other tables
+--      logic_name              - the name of the Analysis object
+--      module                  - the Perl module name that runs this Analysis
+--      parameters              - a stingified hash of parameters common to all jobs of the Analysis
+--      failed_job_tolerance    - % of tolerated failed jobs
+--      max_retry_count         - how many times a job of this Analysis will be retried (unless there is no point)
+--      can_be_empty            - if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs
+--      priority                - an Analysis with higher priority will be more likely chosen on Worker's specialization
 
 CREATE TABLE IF NOT EXISTS analysis_base (
-  analysis_id                 INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  logic_name                  VARCHAR(40) NOT NULL,
-  module                      VARCHAR(255),
-  parameters                  TEXT,
-  resource_class_id           INTEGER NOT NULL
+    analysis_id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    logic_name              VARCHAR(40) NOT NULL,
+    module                  VARCHAR(255),
+    parameters              TEXT,
+    resource_class_id       INTEGER NOT NULL,
+    failed_job_tolerance    int(10) NOT NULL DEFAULT 0,
+    max_retry_count         int(10) default 3 NOT NULL,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS logic_name_idx ON analysis_base (logic_name);
 
@@ -300,17 +305,12 @@ CREATE TABLE resource_description (
 -- semantics:
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the jobs (cached state)
---   failed_job_tolerance - % of tolerated failed jobs
 --   resource_class_id    - resource class id (analyses are grouped into disjoint classes)
 
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
     hive_capacity           int(10) default 1 NOT NULL,
-    failed_job_tolerance    int(10) NOT NULL DEFAULT 0,
-    max_retry_count         int(10) NOT NULL DEFAULT 3,
-    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-    priority                TINYINT DEFAULT 0 NOT NULL,
     status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,
@@ -341,10 +341,6 @@ CREATE TABLE analysis_stats_monitor (
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
     hive_capacity           int(10) default 1 NOT NULL,
-    failed_job_tolerance    int(10) default 0 NOT NULL,
-    max_retry_count         int(10) default 3 NOT NULL,
-    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-    priority                TINYINT DEFAULT 0 NOT NULL,
     status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,

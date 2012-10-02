@@ -553,7 +553,7 @@ sub reclaim_job_for_worker {
 sub release_undone_jobs_from_worker {
     my ($self, $worker, $msg) = @_;
 
-    my $max_retry_count = $worker->analysis->stats->max_retry_count();
+    my $max_retry_count = $worker->analysis->max_retry_count();
     my $worker_id       = $worker->dbID();
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:

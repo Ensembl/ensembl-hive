@@ -28,7 +28,7 @@ $Author: lg4 $
 
 =head1 VERSION
 
-$Revision: 1.22 $
+$Revision: 1.23 $
 
 =cut
 
@@ -284,8 +284,7 @@ sub _add_analysis_node {
   my $graph = $self->graph();
   
   #Check we can invoke it & then check if it was able to be empty
-  my $can_be_empty = $a->stats()->can('can_be_empty') && $a->stats()->can_be_empty();
-  my $shape = ($can_be_empty) ? 'doubleoctagon' : 'ellipse' ;
+  my $shape = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
 
   my $status_colour = $self->config->get('Graph', 'Node', $a->stats->status, 'Colour');
   my $node_fontname  = $self->config->get('Graph', 'Node', $a->stats->status, 'Font');

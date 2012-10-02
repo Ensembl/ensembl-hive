@@ -83,9 +83,9 @@ sub fetch_by_needed_workers_rc_id {
 
     my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
 
-    my $join = $resource_class_id ? [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id AND a.resource_class_id=$resource_class_id"]] : [];
+    my $join = [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id ".( $resource_class_id ? "AND a.resource_class_id=$resource_class_id " : '') ]];
 
-    my $final_clause = 'ORDER BY priority DESC, '
+    my $final_clause = 'ORDER BY a.priority DESC, '
                         .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
                         .($limit ? " LIMIT $limit" : '');
 
@@ -142,11 +142,10 @@ sub refresh {
 sub store {
     my ($self, $stats) = @_;
 
-    my $sql = "INSERT INTO analysis_stats (analysis_id, batch_size, hive_capacity, failed_job_tolerance, max_retry_count, can_be_empty, priority, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    my $sql = "INSERT INTO analysis_stats (analysis_id, batch_size, hive_capacity, status) VALUES (?, ?, ?, ?)";
 
     my $sth = $self->prepare($sql);
-    $sth->execute($stats->analysis_id, $stats->batch_size, $stats->hive_capacity, $stats->failed_job_tolerance,
-                  $stats->max_retry_count, $stats->can_be_empty, $stats->priority, $stats->status);
+    $sth->execute($stats->analysis_id, $stats->batch_size, $stats->hive_capacity, $stats->status);
     $sth->finish;
 
     $stats->adaptor( $self );
@@ -194,8 +193,6 @@ sub update {
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
   $sql .= ",hive_capacity=" . $stats->hive_capacity();
-#  $sql .= ",max_retry_count=" . $stats->max_retry_count();
-#  $sql .= ",failed_job_tolerance=" . $stats->failed_job_tolerance();
 
   unless( $self->db->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
@@ -210,8 +207,6 @@ sub update {
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",last_update=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
-#  $sql .= ",can_be_empty=". $stats->can_be_empty();
-#  $sql .= ",priority=". $stats->priority();
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
   my $sth = $self->prepare($sql);
@@ -411,10 +406,6 @@ sub _columns {
   my @columns = qw (ast.analysis_id
                     ast.batch_size
                     ast.hive_capacity
-                    ast.failed_job_tolerance
-                    ast.max_retry_count
-                    ast.can_be_empty
-                    ast.priority
                     ast.status
 
                     ast.total_job_count
@@ -457,10 +448,6 @@ sub _objs_from_sth {
     $analStats->analysis_id($column{'analysis_id'});
     $analStats->batch_size($column{'batch_size'});
     $analStats->hive_capacity($column{'hive_capacity'});
-    $analStats->failed_job_tolerance($column{'failed_job_tolerance'});
-    $analStats->max_retry_count($column{'max_retry_count'});
-    $analStats->can_be_empty($column{'can_be_empty'});
-    $analStats->priority($column{'priority'});
     $analStats->status($column{'status'});
 
     $analStats->total_job_count($column{'total_job_count'});

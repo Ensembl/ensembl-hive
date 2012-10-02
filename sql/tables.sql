@@ -30,24 +30,29 @@ CREATE TABLE IF NOT EXISTS meta (
 --
 -- overview:
 --  Each Analysis object contains
---      analysis_id     - a unique ID that is also a foreign key to most of the other tables
---      logic_name      - the name of the Analysis object
---      module          - the Perl module name that runs this Analysis
---      parameters      - a stingified hash of parameters common to all jobs of the Analysis
---
--- semantics:
---
-
+--      analysis_id             - a unique ID that is also a foreign key to most of the other tables
+--      logic_name              - the name of the Analysis object
+--      module                  - the Perl module name that runs this Analysis
+--      parameters              - a stingified hash of parameters common to all jobs of the Analysis
+--      resource_class_id       - link to the resource_class table
+--      failed_job_tolerance    - % of tolerated failed jobs
+--      max_retry_count         - how many times a job of this Analysis will be retried (unless there is no point)
+--      can_be_empty            - if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs
+--      priority                - an Analysis with higher priority will be more likely chosen on Worker's specialization
 
 CREATE TABLE analysis_base (
-  analysis_id                 int(10) unsigned NOT NULL AUTO_INCREMENT,
-  logic_name                  VARCHAR(40) NOT NULL,
-  module                      VARCHAR(255),
-  parameters                  TEXT,
-  resource_class_id           int(10) unsigned NOT NULL,
+    analysis_id             int(10) unsigned NOT NULL AUTO_INCREMENT,
+    logic_name              VARCHAR(40) NOT NULL,
+    module                  VARCHAR(255),
+    parameters              TEXT,
+    resource_class_id       int(10) unsigned NOT NULL,
+    failed_job_tolerance    int(10) DEFAULT 0 NOT NULL,
+    max_retry_count         int(10) DEFAULT 3 NOT NULL,
+    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
+    priority                TINYINT DEFAULT 0 NOT NULL,
 
-  PRIMARY KEY (analysis_id),
-  UNIQUE KEY logic_name_idx (logic_name)
+    PRIMARY KEY (analysis_id),
+    UNIQUE KEY logic_name_idx (logic_name)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
@@ -322,16 +327,11 @@ CREATE TABLE resource_description (
 -- semantics:
 --   analysis_id          - foreign key to analysis table
 --   status               - overview status of the jobs (cached state)
---   failed_job_tolerance - % of tolerated failed jobs
 
 CREATE TABLE analysis_stats (
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
-    failed_job_tolerance    int(10) DEFAULT 0 NOT NULL,
-    max_retry_count         int(10) DEFAULT 3 NOT NULL,
-    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-    priority                TINYINT DEFAULT 0 NOT NULL,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
 
     total_job_count         int(10) DEFAULT NULL,
@@ -364,10 +364,6 @@ CREATE TABLE analysis_stats_monitor (
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
-    failed_job_tolerance    int(10) DEFAULT 0 NOT NULL,
-    max_retry_count         int(10) DEFAULT 3 NOT NULL,
-    can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-    priority                TINYINT DEFAULT 0 NOT NULL,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
 
     total_job_count         int(10) DEFAULT NULL,

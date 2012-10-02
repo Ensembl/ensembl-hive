@@ -43,16 +43,12 @@ sub new {
     my $class = shift;
     my $self = bless {}, $class;
 
-    my ($analysis_id, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $priority, $status) = 
-      rearrange([qw(analysis_id batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty priority status) ], @_);
+    my ($analysis_id, $batch_size, $hive_capacity, $status) = 
+      rearrange([qw(analysis_id batch_size hive_capacity status) ], @_);
 
     $self->analysis_id($analysis_id)                    if(defined($analysis_id));
     $self->batch_size($batch_size)                      if(defined($batch_size));
     $self->hive_capacity($hive_capacity)                if(defined($hive_capacity));
-    $self->failed_job_tolerance($failed_job_tolerance)  if(defined($failed_job_tolerance));
-    $self->max_retry_count($max_retry_count)            if(defined($max_retry_count));
-    $self->can_be_empty($can_be_empty)                  if(defined($can_be_empty));
-    $self->priority($priority)                          if(defined($priority));
     $self->status($status)                              if(defined($status));
 
     return $self;
@@ -90,34 +86,6 @@ sub hive_capacity {
     $self->{'_hive_capacity'} = shift if(@_);
     $self->{'_hive_capacity'} = 1 unless(defined($self->{'_hive_capacity'}));
     return $self->{'_hive_capacity'};
-}
-
-sub failed_job_tolerance {
-    my $self = shift;
-    $self->{'_failed_job_tolerance'} = shift if(@_);
-    $self->{'_failed_job_tolerance'} = 0 unless(defined($self->{'_failed_job_tolerance'}));
-    return $self->{'_failed_job_tolerance'};
-}
-
-sub max_retry_count {
-    my $self = shift;
-    $self->{'_max_retry_count'} = shift if(@_);
-    $self->{'_max_retry_count'} = 3 unless(defined($self->{'_max_retry_count'}));
-    return $self->{'_max_retry_count'};
-}
-
-sub can_be_empty {
-    my $self = shift;
-    $self->{'_can_be_empty'} = shift if(@_);
-    $self->{'_can_be_empty'} = 0 unless(defined($self->{'_can_be_empty'}));
-    return $self->{'_can_be_empty'};
-}
-
-sub priority {
-    my $self = shift;
-    $self->{'_priority'} = shift if(@_);
-    $self->{'_priority'} = 0 unless(defined($self->{'_priority'}));
-    return $self->{'_priority'};
 }
 
 sub status {
@@ -310,8 +278,6 @@ sub print_stats {
   my $self = shift;
   my $mode = shift;
 
-  return unless($self->get_analysis);
-
   $mode=1 unless($mode);
 
   if($mode == 1) {
@@ -368,10 +334,10 @@ sub check_blocking_control_rules {
             my $condition_analysis              = $ctrl_rule->condition_analysis;
             my $condition_analysis_stats        = $condition_analysis && $condition_analysis->stats;
             my $condition_analysis_stats_status = $condition_analysis_stats && $condition_analysis_stats->status;
-            my $condition_analysis_stats_cbe    = $condition_analysis_stats && $condition_analysis_stats->can_be_empty;
+            my $condition_analysis_cbe          = $condition_analysis && $condition_analysis->can_be_empty;
 
             my $unblocked_condition = ($condition_analysis_stats_status eq 'DONE')
-                        || ($condition_analysis_stats_cbe && ($condition_analysis_stats_status eq 'READY'));
+                        || ($condition_analysis_cbe && ($condition_analysis_stats_status eq 'READY'));
 
             unless( $unblocked_condition ) {
                 $all_ctrl_rules_done = 0;
@@ -400,12 +366,13 @@ sub determine_status {
             $self->status('READY');
 
         } elsif( $self->total_job_count == $self->done_job_count + $self->failed_job_count ) {   # all jobs of the analysis have been tried
-            my $absolute_tolerance = $self->failed_job_tolerance * $self->total_job_count / 100.0;
+            my $analysis = $self->get_analysis;
+            my $absolute_tolerance = $analysis->failed_job_tolerance * $self->total_job_count / 100.0;
             if ($self->failed_job_count > $absolute_tolerance) {
                 $self->status('FAILED');
                 print "\n##################################################\n";
-                printf("##   ERROR: %-35s ##\n", $self->get_analysis->logic_name." failed!");
-                printf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $self->failed_job_tolerance);
+                printf("##   ERROR: %-35s ##\n", $analysis->logic_name." failed!");
+                printf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $analysis->failed_job_tolerance);
                 print "##################################################\n\n";
             } else {
                 $self->status('DONE');

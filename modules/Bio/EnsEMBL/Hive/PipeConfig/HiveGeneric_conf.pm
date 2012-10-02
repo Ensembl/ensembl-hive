@@ -416,10 +416,14 @@ sub run {
             }
 
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
-                -logic_name         => $logic_name,
-                -module             => $module,
-                -parameters         => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
-                -resource_class_id  => $rc_id,
+                -logic_name             => $logic_name,
+                -module                 => $module,
+                -parameters             => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -resource_class_id      => $rc_id,
+                -failed_job_tolerance   => $failed_job_tolerance,
+                -max_retry_count        => $max_retry_count,
+                -can_be_empty           => $can_be_empty,
+                -priority               => $priority,
             );
             $analysis_adaptor->store($analysis);
 
@@ -427,10 +431,6 @@ sub run {
                 -analysis_id            => $analysis->dbID,
                 -batch_size             => $batch_size,
                 -hive_capacity          => $hive_capacity,
-                -failed_job_tolerance   => $failed_job_tolerance,
-                -max_retry_count        => $max_retry_count,
-                -can_be_empty           => $can_be_empty,
-                -priority               => $priority,
                 -status                 => $blocked ? 'BLOCKED' : 'READY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
             );
             $analysis_stats_adaptor->store($stats);

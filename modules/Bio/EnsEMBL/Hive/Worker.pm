@@ -602,7 +602,7 @@ sub run_one_batch {
 
     my $jobs_done_here = 0;
 
-    my $max_retry_count = $self->analysis->stats->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+    my $max_retry_count = $self->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
     $self->adaptor->check_in_worker( $self );
     $self->adaptor->safe_synchronize_AnalysisStats($self->analysis->stats);
