@@ -80,7 +80,7 @@ sub CreateNewJob {
   my ($class, @args) = @_;
 
   my ($input_id, $analysis, $prev_job, $prev_job_id, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-     rearrange([qw(INPUT_ID ANALYSIS PREV_JOB INPUT_JOB_ID SEMAPHORE_COUNT SEMAPHORED_JOB_ID PUSH_NEW_SEMAPHORE)], @args);
+     rearrange([qw(input_id analysis prev_job input_job_id semaphore_count semaphored_job_id push_new_semaphore)], @args);
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
@@ -332,18 +332,18 @@ sub _objs_from_sth {
             : $column{'input_id'};
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        -DBID               => $column{'job_id'},
-        -ANALYSIS_ID        => $column{'analysis_id'},
-        -INPUT_ID           => $input_id,
-        -WORKER_ID          => $column{'worker_id'},
-        -STATUS             => $column{'status'},
-        -RETRY_COUNT        => $column{'retry_count'},
-        -COMPLETED          => $column{'completed'},
-        -RUNTIME_MSEC       => $column{'runtime_msec'},
-        -QUERY_COUNT        => $column{'query_count'},
-        -SEMAPHORE_COUNT    => $column{'query_count'},
-        -SEMAPHORED_JOB_ID  => $column{'semaphored_job_id'},
-        -ADAPTOR            => $self,
+        -dbID               => $column{'job_id'},
+        -analysis_id        => $column{'analysis_id'},
+        -input_id           => $input_id,
+        -worker_id          => $column{'worker_id'},
+        -status             => $column{'status'},
+        -retry_count        => $column{'retry_count'},
+        -completed          => $column{'completed'},
+        -runtime_msec       => $column{'runtime_msec'},
+        -query_count        => $column{'query_count'},
+        -semaphore_count    => $column{'semaphore_count'},
+        -semaphored_job_id  => $column{'semaphored_job_id'},
+        -adaptor            => $self,
     );
 
     push @jobs, $job;    
@@ -365,10 +365,13 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
     my $jobid = shift @_ or return;
     my $dec   = shift @_ || 1;
 
+        # NB: BOTH THE ORDER OF UPDATES AND EXACT WORDING IS ESSENTIAL FOR SYNCHRONOUS ATOMIC OPERATION,
+        #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
+        #
     my $sql = qq{
         UPDATE job
-        SET semaphore_count=semaphore_count-?,
-            status=(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END)
+        SET status=(CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END),
+            semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
     };
     
@@ -610,7 +613,8 @@ sub release_and_age_job {
         #
     $self->dbc->do( qq{
         UPDATE job
-           SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END), retry_count=retry_count+1
+           SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END),
+               retry_count=retry_count+1
          WHERE job_id=$job_id
            AND status in ('COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT')
     } );
