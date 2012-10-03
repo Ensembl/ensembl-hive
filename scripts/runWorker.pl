@@ -22,7 +22,7 @@ my $db_conf = {
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once);   # Worker control parameters
-my ($help, $debug, $show_analysis_stats);
+my ($help, $debug);
 
 GetOptions(
 
@@ -57,7 +57,6 @@ GetOptions(
 # Other commands
            'h|help'                     => \$help,
            'debug=i'                    => \$debug,
-           'analysis_stats'             => \$show_analysis_stats,
 
 # loose arguments interpreted as database name (for compatibility with mysql[dump])
             '<>', sub { $db_conf->{'-dbname'} = shift @_; },
@@ -82,7 +81,7 @@ if($reg_alias) {
 }
 
 unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
-  print("ERROR : no database connection\n\n");
+  print "ERROR : no database connection\n\n";
   script_usage(1);
 }
 
@@ -126,26 +125,20 @@ eval {
 };
 my $msg_thrown = $@;
 
-unless($worker) {
-    $queen->print_analysis_status if($show_analysis_stats);
+if($worker) {
+
+    $worker->run();
+
+} else {
+
+    $queen->print_analysis_status;
     print "\n=== COULDN'T CREATE WORKER ===\n";
 
     if($msg_thrown) {
         print "$msg_thrown\n";
-        script_usage(1);
-    } else {
-        exit(1);
     }
+    exit(1);
 }
-
-$worker->run();
-
-if($show_analysis_stats) {
-    $queen->print_analysis_status;
-    $queen->schedule_workers(); # apparently run not for the return value, but for the side-effects
-}
-
-exit 0;
 
 
 __DATA__
