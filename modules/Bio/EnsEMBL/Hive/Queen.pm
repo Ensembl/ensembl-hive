@@ -649,30 +649,37 @@ sub synchronize_AnalysisStats {
 }
 
 
+=head2 get_num_failed_analyses
+
+  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object (optional)
+  Example    : if( $self->get_num_failed_analyses( $my_analysis )) { do_something; }
+  Example    : my $num_failed_analyses = $self->get_num_failed_analyses();
+  Description: Reports all failed analyses and returns
+                either the number of total failed (if no $filter_analysis was provided)
+                or 1/0, depending on whether $filter_analysis failed or not.
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub get_num_failed_analyses {
-  my ($self, $analysis) = @_;
+    my ($self, $filter_analysis) = @_;
 
-  my $statsDBA = $self->db->get_AnalysisStatsAdaptor;
-  my $failed_analyses = $statsDBA->fetch_by_statuses_rc_id(['FAILED']);
-  if ($analysis) {
-    foreach my $this_failed_analysis (@$failed_analyses) {
-      if ($this_failed_analysis->analysis_id == $analysis->dbID) {
-        print "#########################################################\n",
-            " Too many jobs failed for analysis ".$analysis->logic_name.". FAIL!!\n",
-            "#########################################################\n\n";
-        return 1;
-      }
+    my $failed_analyses = $self->db->get_AnalysisAdaptor->fetch_all_failed_analyses();
+
+    my $filter_analysis_failed = 0;
+
+    foreach my $failed_analysis (@$failed_analyses) {
+        print "\t##########################################################\n";
+        print "\t# Too many jobs in analysis '".$failed_analysis->logic_name."' FAILED #\n";
+        print "\t##########################################################\n\n";
+        if($filter_analysis and ($filter_analysis->dbID == $failed_analysis)) {
+            $filter_analysis_failed = 1;
+        }
     }
-    return 0;
-  }
 
-  if (@$failed_analyses) {
-    print "##################################################\n",
-        " Too many failed jobs. FAIL!!\n",
-        "##################################################\n";
-  }
-
-  return scalar(@$failed_analyses);
+    return $filter_analysis ? $filter_analysis_failed : scalar(@$failed_analyses);
 }
 
 
