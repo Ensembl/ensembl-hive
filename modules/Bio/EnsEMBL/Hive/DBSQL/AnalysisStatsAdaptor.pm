@@ -78,37 +78,28 @@ sub fetch_by_analysis_id {
 }
 
 
-sub fetch_by_needed_workers_rc_id {
-    my ($self, $limit, $resource_class_id) = @_;
-
-    my $constraint = "ast.num_required_workers>0 AND ast.status in ('READY','WORKING')";
+sub fetch_all_by_suitability_rc_id {
+    my ($self, $resource_class_id) = @_;
 
     my $join = [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id ".( $resource_class_id ? "AND a.resource_class_id=$resource_class_id " : '') ]];
 
-    my $final_clause = 'ORDER BY a.priority DESC, '
-                        .( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' )
-                        .($limit ? " LIMIT $limit" : '');
+        # the ones that clearly have work to do:
+        #
+    my $primary_results = $self->_generic_fetch(
+        "ast.num_required_workers>0 AND ast.status in ('READY', 'WORKING')" ,
+        $join ,
+        'ORDER BY a.priority DESC, ' . ( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' ),
+    );
 
-    $self->_final_clause($final_clause);
-    my $results = $self->_generic_fetch($constraint, $join);
-    $self->_final_clause(''); # reset final clause for other fetches
+        # the ones that may have work to do after a sync:
+        #
+    my $secondary_results = $self->_generic_fetch(
+        "ast.status in ('LOADING', 'BLOCKED', 'ALL_CLAIMED')" ,
+        $join ,
+        'ORDER BY last_update',     # FIXME: could mix in a.priority if sync is not too expensive?
+    );
 
-    return $results;
-}
-
-
-sub fetch_by_statuses_rc_id {
-    my ($self, $statuses, $resource_class_id) = @_;
-
-    my $constraint = 'ast.status in ('.join(', ', map { "'$_'" } @$statuses).')';
-
-    my $join = $resource_class_id ? [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id AND a.resource_class_id=$resource_class_id"]] : [];
-
-    $self->_final_clause('ORDER BY last_update');
-    my $results = $self->_generic_fetch($constraint, $join);
-    $self->_final_clause(''); #reset final clause for other fetches
-
-    return $results;
+    return [ @$primary_results, @$secondary_results ];
 }
 
 
@@ -342,7 +333,7 @@ sub increase_required_workers {
 =cut
   
 sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
+  my ($self, $constraint, $join, $final_clause) = @_;
   
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
@@ -371,7 +362,6 @@ sub _generic_fetch {
   my $sql = "SELECT $columns FROM $tablenames";
 
   my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
 
   #append a where clause if it was defined
   if($constraint) { 
@@ -384,7 +374,7 @@ sub _generic_fetch {
   }
 
   #append additional clauses which may have been defined
-  $sql .= " $final_clause";
+  $sql .= " $final_clause" if($final_clause);
   #rint STDOUT $sql,"\n";
 
   my $sth = $self->prepare($sql);
@@ -476,14 +466,6 @@ sub _objs_from_sth {
   $sth->finish;
 
   return \@statsArray
-}
-
-
-sub _final_clause {
-  my $self = shift;
-  $self->{'_final_clause'} = shift if(@_);
-  $self->{'_final_clause'} = "" unless($self->{'_final_clause'});
-  return $self->{'_final_clause'};
 }
 
 
