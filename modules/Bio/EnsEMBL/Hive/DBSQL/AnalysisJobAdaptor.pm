@@ -57,10 +57,9 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 =head2 CreateNewJob
 
   Args       : -input_id => string of input_id which will be passed to run the job (or a Perl hash that will be automagically stringified)
-               -analysis => Bio::EnsEMBL::Hive::Analysis object from a database
-               -block        => int(0,1) set blocking state of job (default = 0)
-               -input_job_id => (optional) job_id of job that is creating this
-                                job.  Used purely for book keeping.
+               -analysis => Bio::EnsEMBL::Hive::Analysis object stored in the database
+               -prev_job_id => (optional) job_id of job that is creating this job.
+                               Used purely for book keeping.
   Example    : $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                                     -input_id => 'my input data',
                                     -analysis => $myAnalysis);
@@ -80,7 +79,7 @@ sub CreateNewJob {
   my ($class, @args) = @_;
 
   my ($input_id, $analysis, $prev_job, $prev_job_id, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-     rearrange([qw(input_id analysis prev_job input_job_id semaphore_count semaphored_job_id push_new_semaphore)], @args);
+     rearrange([qw(input_id analysis prev_job prev_job_id semaphore_count semaphored_job_id push_new_semaphore)], @args);
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
@@ -88,7 +87,7 @@ sub CreateNewJob {
     unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
   throw("analysis must have adaptor connected to database")
     unless($analysis->adaptor and $analysis->adaptor->db);
-  throw("Please specify prev_job object instead of input_job_id if available") if ($prev_job_id);   # 'obsolete' message
+  throw("Please specify prev_job object instead of prev_job_id if available") if ($prev_job_id);   # 'obsolete' message
 
   $prev_job_id = $prev_job && $prev_job->dbID();
 
