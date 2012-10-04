@@ -431,7 +431,7 @@ sub run {
                 -analysis_id            => $analysis->dbID,
                 -batch_size             => $batch_size,
                 -hive_capacity          => $hive_capacity,
-                -status                 => $blocked ? 'BLOCKED' : 'READY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
+                -status                 => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
             );
             $analysis_stats_adaptor->store($stats);
         }

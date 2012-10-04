@@ -326,7 +326,7 @@ sub check_blocking_control_rules {
             my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;
 
             my $this_condition_satisfied = ($condition_status eq 'DONE')
-                        || ($condition_cbe && !$condition_tjc);
+                        || ($condition_cbe && !$condition_tjc);             # probably safer than saying ($condition_status eq 'EMPTY') because of the sync order
 
             unless( $this_condition_satisfied ) {
                 $all_conditions_satisfied = 0;
@@ -350,11 +350,11 @@ sub determine_status {
     my $self = shift;
 
     if($self->status ne 'BLOCKED') {
-        if($self->ready_job_count == $self->total_job_count) {     # nothing has been claimed yet (or an empty analysis)
+        if( !$self->total_job_count ) {
 
-            $self->status('READY');
+            $self->status('EMPTY');
 
-        } elsif( $self->total_job_count == $self->done_job_count + $self->failed_job_count ) {   # all jobs of the analysis have been tried
+        } elsif( $self->total_job_count == $self->done_job_count + $self->failed_job_count ) {   # all jobs of the analysis have been finished
             my $analysis = $self->get_analysis;
             my $absolute_tolerance = $analysis->failed_job_tolerance * $self->total_job_count / 100.0;
             if ($self->failed_job_count > $absolute_tolerance) {
@@ -366,11 +366,15 @@ sub determine_status {
             } else {
                 $self->status('DONE');
             }
-        } elsif ($self->ready_job_count == 0 ) {                        # everything has been claimed
+        } elsif( $self->ready_job_count && !$self->inprogress_job_count ) { # there are claimable jobs, but nothing actually running
+
+            $self->status('READY');
+
+        } elsif( !$self->ready_job_count ) {                                # there are no claimable jobs, possibly because some are semaphored
 
             $self->status('ALL_CLAIMED');
 
-        } elsif( 0 < $self->ready_job_count and $self->ready_job_count < $self->total_job_count ) {
+        } elsif( $self->inprogress_job_count ) {
 
             $self->status('WORKING');
         }

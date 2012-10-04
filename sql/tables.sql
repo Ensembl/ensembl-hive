@@ -332,7 +332,7 @@ CREATE TABLE analysis_stats (
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
-    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
+    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL,
 
     total_job_count         int(10) DEFAULT 0 NOT NULL,
     semaphored_job_count    int(10) DEFAULT 0 NOT NULL,
@@ -366,7 +366,7 @@ CREATE TABLE analysis_stats_monitor (
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
-    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
+    status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL,
 
     total_job_count         int(10) DEFAULT 0 NOT NULL,
     semaphored_job_count    int(10) DEFAULT 0 NOT NULL,
