@@ -314,7 +314,7 @@ CREATE TABLE analysis_stats (
     status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,
-    unclaimed_job_count     int(10) NOT NULL DEFAULT 0,
+    ready_job_count         int(10) NOT NULL DEFAULT 0,
     done_job_count          int(10) NOT NULL DEFAULT 0,
     failed_job_count        int(10) NOT NULL DEFAULT 0,
     num_running_workers     int(10) NOT NULL DEFAULT 0,
@@ -344,7 +344,7 @@ CREATE TABLE analysis_stats_monitor (
     status                  TEXT DEFAULT 'READY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,
-    unclaimed_job_count     int(10) NOT NULL DEFAULT 0,
+    ready_job_count         int(10) NOT NULL DEFAULT 0,
     done_job_count          int(10) NOT NULL DEFAULT 0,
     failed_job_count        int(10) NOT NULL DEFAULT 0,
     num_running_workers     int(10) default 0 NOT NULL,

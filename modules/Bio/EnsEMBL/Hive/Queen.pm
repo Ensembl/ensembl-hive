@@ -499,13 +499,6 @@ sub synchronize_hive {
   }
   print STDERR "\n";
 
-#  print STDERR "Checking blocking control rules:\n";
-#  foreach my $analysis (@$list_of_analyses) {
-#    my $open = $analysis->stats->check_blocking_control_rules();
-#    print STDERR ($open ? 'o' : 'x');
-#  }
-#  print STDERR "\n";
-
   print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
 
@@ -574,8 +567,8 @@ sub synchronize_AnalysisStats {
 
   if($self->db->hive_use_triggers()) {
 
-            my $job_count = $analysisStats->unclaimed_job_count();
-            my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
+            my $job_count = $analysisStats->ready_job_count();
+            my $required_workers = $hive_capacity && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
@@ -589,7 +582,8 @@ sub synchronize_AnalysisStats {
 
   } else {
       $analysisStats->total_job_count(0);
-      $analysisStats->unclaimed_job_count(0);
+      $analysisStats->semaphored_job_count(0);
+      $analysisStats->ready_job_count(0);
       $analysisStats->done_job_count(0);
       $analysisStats->failed_job_count(0);
       $analysisStats->num_required_workers(0);
@@ -608,9 +602,9 @@ sub synchronize_AnalysisStats {
         $total_job_count += $job_count;
 
         if($status eq 'READY') {
-            $analysisStats->unclaimed_job_count($job_count);
+            $analysisStats->ready_job_count($job_count);
 
-            my $required_workers = POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
+            my $required_workers = $hive_capacity && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
 
                 # adjust_stats_for_living_workers:
             if($hive_capacity > 0) {
@@ -622,6 +616,8 @@ sub synchronize_AnalysisStats {
             }
             $analysisStats->num_required_workers( $required_workers );
 
+        } elsif($status eq 'SEMAPHORED') {
+            $analysisStats->semaphored_job_count($job_count);
         } elsif($status eq 'DONE') {
             $done_here = $job_count;
         } elsif($status eq 'PASSED_ON') {
@@ -832,7 +828,7 @@ sub schedule_workers_resync_if_necessary {
 sub get_remaining_jobs_show_hive_progress {
   my $self = shift;
   my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
-            "sum(unclaimed_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
+            "sum(ready_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
             "FROM analysis_stats";
   my $sth = $self->prepare($sql);
   $sth->execute();
@@ -857,7 +853,7 @@ sub print_analysis_status {
 
     my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
-        $analysis->stats->print_stats($self->{'verbose_stats'});
+        $analysis->stats->print_stats();
     }
 }
 

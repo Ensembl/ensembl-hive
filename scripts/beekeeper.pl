@@ -59,7 +59,6 @@ sub main {
     $self->{'reg_alias'}            = undef;
 
     $self->{'sleep_minutes'}        = 1;
-    $self->{'verbose_stats'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'compile_module_once'}  = undef;
     $self->{'hive_log_dir'} = undef;
@@ -107,7 +106,6 @@ sub main {
                'killworker=i'      => \$kill_worker_id,
                'alldead'           => \$all_dead,
                'no_analysis_stats' => \$self->{'no_analysis_stats'},
-               'verbose_stats=i'   => \$self->{'verbose_stats'},
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
                'reset_job_id=i'    => \$reset_job_id,
@@ -151,7 +149,6 @@ sub main {
     }
 
     my $queen = $self->{'dba'}->get_Queen;
-    $queen->{'verbose_stats'} = $self->{'verbose_stats'};
 
     my $pipeline_name = destringify(
             $self->{'dba'}->get_MetaContainer->list_value_by_key("pipeline_name")->[0]

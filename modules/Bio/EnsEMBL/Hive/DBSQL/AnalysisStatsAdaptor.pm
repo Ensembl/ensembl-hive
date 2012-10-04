@@ -187,7 +187,8 @@ sub update {
 
   unless( $self->db->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
-      $sql .= ",unclaimed_job_count=" . $stats->unclaimed_job_count();
+      $sql .= ",semaphored_job_count=" . $stats->semaphored_job_count();
+      $sql .= ",ready_job_count=" . $stats->ready_job_count();
       $sql .= ",done_job_count=" . $stats->done_job_count();
       $sql .= ",failed_job_count=" . $stats->failed_job_count();
 
@@ -259,7 +260,7 @@ sub interval_update_work_done {
         avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)), 
-        unclaimed_job_count = unclaimed_job_count - $job_count, 
+        ready_job_count = ready_job_count - $job_count, 
         done_job_count = done_job_count + $job_count 
     WHERE analysis_id= $analysis_id
   };
@@ -399,7 +400,8 @@ sub _columns {
                     ast.status
 
                     ast.total_job_count
-                    ast.unclaimed_job_count
+                    ast.semaphored_job_count
+                    ast.ready_job_count
                     ast.done_job_count
                     ast.failed_job_count
                     ast.num_running_workers
@@ -441,7 +443,8 @@ sub _objs_from_sth {
     $analStats->status($column{'status'});
 
     $analStats->total_job_count($column{'total_job_count'});
-    $analStats->unclaimed_job_count($column{'unclaimed_job_count'});
+    $analStats->semaphored_job_count($column{'semaphored_job_count'});
+    $analStats->ready_job_count($column{'ready_job_count'});
     $analStats->done_job_count($column{'done_job_count'});
     $analStats->failed_job_count($column{'failed_job_count'});
     $analStats->num_running_workers($column{'num_running_workers'});

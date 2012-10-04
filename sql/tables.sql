@@ -334,12 +334,14 @@ CREATE TABLE analysis_stats (
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
 
-    total_job_count         int(10) DEFAULT NULL,
-    unclaimed_job_count     int(10) DEFAULT NULL,
-    done_job_count          int(10) DEFAULT NULL,
-    failed_job_count        int(10) DEFAULT NULL,
-    num_running_workers     int(10) DEFAULT NULL,
-    num_required_workers    int(10) DEFAULT NULL,
+    total_job_count         int(10) DEFAULT 0 NOT NULL,
+    semaphored_job_count    int(10) DEFAULT 0 NOT NULL,
+    ready_job_count         int(10) DEFAULT 0 NOT NULL,
+    done_job_count          int(10) DEFAULT 0 NOT NULL,
+    failed_job_count        int(10) DEFAULT 0 NOT NULL,
+
+    num_running_workers     int(10) DEFAULT 0 NOT NULL,
+    num_required_workers    int(10) DEFAULT 0 NOT NULL,
 
     behaviour               enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
     input_capacity          int(10) DEFAULT 4 NOT NULL,
@@ -366,12 +368,14 @@ CREATE TABLE analysis_stats_monitor (
     hive_capacity           int(10) DEFAULT 1 NOT NULL,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'READY' NOT NULL,
 
-    total_job_count         int(10) DEFAULT NULL,
-    unclaimed_job_count     int(10) DEFAULT NULL,
-    done_job_count          int(10) DEFAULT NULL,
-    failed_job_count        int(10) DEFAULT NULL,
-    num_running_workers     int(10) DEFAULT NULL,
-    num_required_workers    int(10) DEFAULT NULL,
+    total_job_count         int(10) DEFAULT 0 NOT NULL,
+    semaphored_job_count    int(10) DEFAULT 0 NOT NULL,
+    ready_job_count         int(10) DEFAULT 0 NOT NULL,
+    done_job_count          int(10) DEFAULT 0 NOT NULL,
+    failed_job_count        int(10) DEFAULT 0 NOT NULL,
+
+    num_running_workers     int(10) DEFAULT 0 NOT NULL,
+    num_required_workers    int(10) DEFAULT 0 NOT NULL,
 
     behaviour               enum('STATIC', 'DYNAMIC') DEFAULT 'STATIC' NOT NULL,
     input_capacity          int(10) DEFAULT 4 NOT NULL,

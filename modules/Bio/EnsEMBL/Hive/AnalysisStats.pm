@@ -104,10 +104,16 @@ sub total_job_count {
     return $self->{'_total_job_count'};
 }
 
-sub unclaimed_job_count {
+sub semaphored_job_count {
     my $self = shift;
-    $self->{'_unclaimed_job_count'} = shift if(@_);
-    return $self->{'_unclaimed_job_count'};
+    $self->{'_semaphored_job_count'} = shift if(@_);
+    return $self->{'_semaphored_job_count'};
+}
+
+sub ready_job_count {
+    my $self = shift;
+    $self->{'_ready_job_count'} = shift if(@_);
+    return $self->{'_ready_job_count'};
 }
 
 sub done_job_count {
@@ -256,16 +262,9 @@ sub get_or_estimate_batch_size {
 
 sub cpu_minutes_remaining {
   my $self = shift;
-  return ($self->avg_msec_per_job * $self->unclaimed_job_count / 60000);
+  return ($self->avg_msec_per_job * $self->ready_job_count / 60000);
 }
 
-sub running_job_count {
-  my $self = shift;
-  return $self->total_job_count
-         - $self->done_job_count
-         - $self->unclaimed_job_count
-         - $self->failed_job_count;
-}
 
 sub remaining_job_count {
   my $self = shift;
@@ -274,47 +273,36 @@ sub remaining_job_count {
          - $self->failed_job_count;
 }
 
+sub inprogress_job_count {
+    my $self = shift;
+    return    $self->total_job_count
+            - $self->semaphored_job_count
+            - $self->ready_job_count
+            - $self->done_job_count
+            - $self->failed_job_count;
+}
+
 sub print_stats {
-  my $self = shift;
-  my $mode = shift;
+    my $self = shift;
 
-  $mode=1 unless($mode);
-
-  if($mode == 1) {
-    printf("%-27s(%2d) %11s %d:cpum job(%d/%d run:%d fail:%d %dms) worker[%d/%d] (sync'd %d sec ago)\n",
+    printf("%-27s(%2d) %11s jobs(Semaphored:%d, Ready:%d, InProgress:%d, Done+PassedOn:%d, Failed:%d):%d Ave_msec:%d, worker[%d/%d] (sync'd %d sec ago)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
-        $self->cpu_minutes_remaining,
-        $self->remaining_job_count,
-        $self->total_job_count,
-        $self->running_job_count,
+
+        $self->semaphored_job_count,
+        $self->ready_job_count,
+        $self->inprogress_job_count,
+        $self->done_job_count,
         $self->failed_job_count,
+        $self->total_job_count,
+
         $self->avg_msec_per_job,
+
         $self->num_required_workers,
         $self->hive_capacity,
         $self->seconds_since_last_update,
     );
-  } elsif ($mode == 2) {
-    printf("%-27s(%2d) %11s [%d/%d workers] (sync'd %d sec ago)\n",
-        $self->get_analysis->logic_name,
-        $self->analysis_id,
-        $self->status,
-        $self->num_required_workers,
-        $self->hive_capacity,
-        $self->seconds_since_last_update
-    );
-
-    printf("   msec_per_job   : %d\n", $self->avg_msec_per_job);
-    printf("   cpu_min_total  : %d\n", $self->cpu_minutes_remaining);
-    printf("   batch_size     : %d\n", $self->batch_size);
-    printf("   total_jobs     : %d\n", $self->total_job_count);
-    printf("   unclaimed jobs : %d\n", $self->unclaimed_job_count);
-    printf("   running jobs   : %d\n", $self->running_job_count);
-    printf("   done jobs      : %d\n", $self->done_job_count);
-    printf("   failed jobs    : %d\n", $self->failed_job_count);
-  }
-
 }
 
 
@@ -323,7 +311,7 @@ sub check_blocking_control_rules {
   
     my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id($self->analysis_id);
 
-    my $all_ctrl_rules_done = 1;
+    my $all_conditions_satisfied = 1;
 
     if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
 
@@ -331,20 +319,21 @@ sub check_blocking_control_rules {
                 #use this method because the condition_analysis objects can be
                 #network distributed to a different database so use it's adaptor to get
                 #the AnalysisStats object
-            my $condition_analysis              = $ctrl_rule->condition_analysis;
-            my $condition_analysis_stats        = $condition_analysis && $condition_analysis->stats;
-            my $condition_analysis_stats_status = $condition_analysis_stats && $condition_analysis_stats->status;
-            my $condition_analysis_cbe          = $condition_analysis && $condition_analysis->can_be_empty;
+            my $condition_analysis  = $ctrl_rule->condition_analysis;
+            my $condition_stats     = $condition_analysis && $condition_analysis->stats;
+            my $condition_status    = $condition_stats    && $condition_stats->status;
+            my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
+            my $condition_tjc       = $condition_analysis && $condition_analysis->total_job_count;
 
-            my $unblocked_condition = ($condition_analysis_stats_status eq 'DONE')
-                        || ($condition_analysis_cbe && ($condition_analysis_stats_status eq 'READY'));
+            my $this_condition_satisfied = ($condition_status eq 'DONE')
+                        || ($condition_cbe && !$condition_tjc);
 
-            unless( $unblocked_condition ) {
-                $all_ctrl_rules_done = 0;
+            unless( $this_condition_satisfied ) {
+                $all_conditions_satisfied = 0;
             }
         }
 
-        if($all_ctrl_rules_done) {
+        if($all_conditions_satisfied) {
             if($self->status eq 'BLOCKED') {    # unblock, since all conditions are met
                 $self->update_status('LOADING'); # trigger sync
             }
@@ -353,7 +342,7 @@ sub check_blocking_control_rules {
         }
     }
 
-    return $all_ctrl_rules_done;
+    return $all_conditions_satisfied;
 }
 
 
@@ -361,7 +350,7 @@ sub determine_status {
     my $self = shift;
 
     if($self->status ne 'BLOCKED') {
-        if($self->unclaimed_job_count == $self->total_job_count) {     # nothing has been claimed yet (or an empty analysis)
+        if($self->ready_job_count == $self->total_job_count) {     # nothing has been claimed yet (or an empty analysis)
 
             $self->status('READY');
 
@@ -377,11 +366,11 @@ sub determine_status {
             } else {
                 $self->status('DONE');
             }
-        } elsif ($self->unclaimed_job_count == 0 ) {                        # everything has been claimed
+        } elsif ($self->ready_job_count == 0 ) {                        # everything has been claimed
 
             $self->status('ALL_CLAIMED');
 
-        } elsif( 0 < $self->unclaimed_job_count and $self->unclaimed_job_count < $self->total_job_count ) {
+        } elsif( 0 < $self->ready_job_count and $self->ready_job_count < $self->total_job_count ) {
 
             $self->status('WORKING');
         }

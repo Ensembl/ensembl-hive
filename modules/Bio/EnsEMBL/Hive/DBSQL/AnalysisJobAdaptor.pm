@@ -66,7 +66,7 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
   Description: uses the analysis object to get the db connection from the adaptor to store a new
                job in a hive.  This is a class level method since it does not have any state.
                Also updates corresponding analysis_stats by incrementing total_job_count,
-               unclaimed_job_count and flagging the incremental update by changing the status
+               ready_job_count and flagging the incremental update by changing the status
                to 'LOADING' (but only if the analysis is not blocked).
                NOTE: no AnalysisJob object is created in memory as the result of this call; it is simply a "fast store".
   Returntype : int job_id on database analysis is from.
@@ -133,7 +133,9 @@ sub CreateNewJob {
           $dbc->do(qq{
             UPDATE analysis_stats
                SET total_job_count=total_job_count+1
-                  ,unclaimed_job_count=unclaimed_job_count+1
+          }
+          .(($status eq 'READY') ? " ,ready_job_count=ready_job_count+1 " : '')
+          .qq{
                   ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
              WHERE analysis_id=$analysis_id
           });
