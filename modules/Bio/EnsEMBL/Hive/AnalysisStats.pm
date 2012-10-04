@@ -323,7 +323,7 @@ sub check_blocking_control_rules {
             my $condition_stats     = $condition_analysis && $condition_analysis->stats;
             my $condition_status    = $condition_stats    && $condition_stats->status;
             my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
-            my $condition_tjc       = $condition_analysis && $condition_analysis->total_job_count;
+            my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;
 
             my $this_condition_satisfied = ($condition_status eq 'DONE')
                         || ($condition_cbe && !$condition_tjc);
