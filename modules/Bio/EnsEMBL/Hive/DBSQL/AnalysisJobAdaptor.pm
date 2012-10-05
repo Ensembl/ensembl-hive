@@ -584,12 +584,12 @@ sub release_undone_jobs_from_worker {
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
         if( $resource_overusage ) {
-            if($passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, $cod )) {
+            if($passed_on = $self->gc_dataflow( $worker->analysis, $job_id, $cod )) {
                 $msg .= ', performing gc_dataflow';
             }
         }
         unless($passed_on) {
-            if($passed_on = $self->gc_dataflow( $worker->analysis->dbID(), $job_id, 'ANYFAILURE' )) {
+            if($passed_on = $self->gc_dataflow( $worker->analysis, $job_id, 'ANYFAILURE' )) {
                 $msg .= ", performing 'ANYFAILURE' gc_dataflow";
             }
         }
@@ -629,15 +629,15 @@ sub release_and_age_job {
 =cut
 
 sub gc_dataflow {
-    my ($self, $analysis_id, $job_id, $branch_name) = @_;
+    my ($self, $analysis, $job_id, $branch_name) = @_;
 
-    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($analysis_id, $branch_name) }) {
+    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($analysis->dbID, $branch_name) }) {
         return 0;   # no corresponding gc_dataflow rule has been defined
     }
 
     my $job = $self->fetch_by_dbID($job_id);
 
-    $job->param_init( 0, $job->input_id() );    # input_id_templates still supported, however to a limited extent
+    $job->param_init( 0, $self->analysis->parameters(), $job->input_id() );    # input_id_templates still supported, however to a limited extent
 
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 
