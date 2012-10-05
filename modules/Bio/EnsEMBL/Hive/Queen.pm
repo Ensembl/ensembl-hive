@@ -457,13 +457,6 @@ sub fetch_overdue_workers {
 }
 
 
-sub fetch_failed_workers {
-    my $self = shift;
-
-    return $self->fetch_all( "cause_of_death='FATALITY'" );
-}
-
-
 sub fetch_all_dead_workers_with_jobs {
     my $self = shift;
 
@@ -680,17 +673,17 @@ sub get_num_failed_analyses {
 
 
 sub get_hive_current_load {
-  my $self = shift;
-  my $sql = "SELECT sum(1/s.hive_capacity) FROM worker w, analysis_stats s ".
-            "WHERE w.analysis_id=s.analysis_id and w.cause_of_death ='' ".
-            "AND s.hive_capacity>0";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  (my $load)=$sth->fetchrow_array();
-  $sth->finish;
-  $load=0 unless($load);
-#  print("current hive load = $load\n");
-  return $load;
+    my $self = shift;
+    my $sql = qq{
+        SELECT sum(1/hive_capacity)
+        FROM worker JOIN analysis_stats USING(analysis_id)
+        WHERE cause_of_death ='' AND hive_capacity>0
+    };
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    my ($load)=$sth->fetchrow_array();
+    $sth->finish;
+    return ($load || 0);
 }
 
 
