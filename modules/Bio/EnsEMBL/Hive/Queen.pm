@@ -283,7 +283,7 @@ sub register_worker_death {
 
   return unless($worker);
 
-  my $cod = $worker->cause_of_death();
+  my $cod = $worker->cause_of_death() || 'UNKNOWN';    # make sure we do not attempt to insert a void
 
   my $sql = "UPDATE worker SET died=CURRENT_TIMESTAMP, last_check_in=CURRENT_TIMESTAMP";
   $sql .= " ,status='DEAD'";
@@ -300,7 +300,7 @@ sub register_worker_death {
   if($cod eq 'NO_WORK') {
     $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, 'ALL_CLAIMED');
   }
-  if($cod eq 'FATALITY'
+  if($cod eq 'UNKNOWN'
   or $cod eq 'MEMLIMIT'
   or $cod eq 'RUNLIMIT'
   or $cod eq 'KILLED_BY_USER') {
@@ -372,7 +372,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             warn "GarbageCollector:\tReleasing the jobs\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->cause_of_death( $wpid_to_cod->{$process_id} || 'FATALITY');
+                $worker->cause_of_death( $wpid_to_cod->{$process_id} || 'UNKNOWN');
                 $self->register_worker_death($worker);
             }
         }
@@ -449,7 +449,7 @@ sub fetch_overdue_workers {
 
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
-    my $constraint = "cause_of_death='' AND ".
+    my $constraint = "status!='DEAD' AND ".
                     ( ($self->dbc->driver eq 'sqlite')
                         ? "(strftime('%s','now')-strftime('%s',last_check_in))>$overdue_secs"
                         : "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in))>$overdue_secs");
@@ -676,8 +676,10 @@ sub get_hive_current_load {
     my $self = shift;
     my $sql = qq{
         SELECT sum(1/hive_capacity)
-        FROM worker JOIN analysis_stats USING(analysis_id)
-        WHERE cause_of_death ='' AND hive_capacity>0
+        FROM worker w
+        JOIN analysis_stats USING(analysis_id)
+        WHERE w.status!='DEAD'
+        AND hive_capacity>0
     };
     my $sth = $self->prepare($sql);
     $sth->execute();
@@ -690,8 +692,11 @@ sub get_hive_current_load {
 sub count_running_workers {
     my ($self, $analysis_id) = @_;
 
-    my $sql = "SELECT count(*) FROM worker WHERE cause_of_death =''"
-        . ($analysis_id ? " AND analysis_id='$analysis_id'" : '');
+    my $sql = qq{
+            SELECT count(*)
+            FROM worker
+            WHERE status!='DEAD'
+        } . ($analysis_id ? " AND analysis_id='$analysis_id'" : '');
 
     my $sth = $self->prepare($sql);
     $sth->execute();
@@ -852,25 +857,27 @@ sub print_analysis_status {
 
 
 sub print_running_worker_counts {
-  my $self = shift;
+    my $self = shift;
 
-  print "\n===== Stats of live Workers according to the Queen: ======\n";
-  my $sql = qq{ SELECT logic_name, count(*)
-                FROM worker
-                JOIN analysis_base USING(analysis_id)
-                WHERE worker.cause_of_death=''
-                GROUP BY worker.analysis_id
-  };
+    my $sql = qq{
+        SELECT logic_name, count(*)
+        FROM worker w
+        JOIN analysis_base USING(analysis_id)
+        WHERE w.status!='DEAD'
+        GROUP BY analysis_id
+    };
 
-  my $total_workers = 0;
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  while((my $logic_name, my $worker_count)=$sth->fetchrow_array()) {
-    printf("%30s : %d workers\n", $logic_name, $worker_count);
-    $total_workers += $worker_count;
-  }
-  $sth->finish;
-  printf("%30s : %d workers\n\n", '======= TOTAL =======', $total_workers);
+    my $total_workers = 0;
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+
+    print "\n===== Stats of live Workers according to the Queen: ======\n";
+    while((my $logic_name, my $worker_count)=$sth->fetchrow_array()) {
+        printf("%30s : %d workers\n", $logic_name, $worker_count);
+        $total_workers += $worker_count;
+    }
+    $sth->finish;
+    printf("%30s : %d workers\n\n", '======= TOTAL =======', $total_workers);
 }
 
 
@@ -899,8 +906,9 @@ sub monitor {
               sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), }
   ). qq{
           group_concat(DISTINCT logic_name)
-      FROM worker left join analysis_base USING (analysis_id)
-      WHERE cause_of_death = ''
+      FROM worker w
+      LEFT JOIN analysis_base USING (analysis_id)
+      WHERE w.status!='DEAD'
   };
       
   my $sth = $self->prepare($sql);
@@ -922,7 +930,7 @@ sub register_all_workers_dead {
 
     my $overdueWorkers = $self->fetch_overdue_workers(0);
     foreach my $worker (@{$overdueWorkers}) {
-        $worker->cause_of_death( 'FATALITY' );  # well, maybe we could have investigated further...
+        $worker->cause_of_death( 'UNKNOWN' );  # well, maybe we could have investigated further...
         $self->register_worker_death($worker);
     }
 }

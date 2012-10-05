@@ -1,0 +1,5 @@
+
+# Adding the (default) NULL option and renaming 'FATALITY'-->'UNKNOWN'
+
+ALTER TABLE worker MODIFY COLUMN cause_of_death   enum('NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'UNKNOWN') DEFAULT NULL;
+

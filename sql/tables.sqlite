@@ -75,7 +75,7 @@ CREATE TABLE worker (
   born	           timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   last_check_in    datetime NOT NULL,
   died             datetime DEFAULT NULL,
-  cause_of_death   TEXT DEFAULT '' NOT NULL, /* enum('', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'FATALITY') DEFAULT '' NOT NULL */
+  cause_of_death   TEXT DEFAULT NULL, /* enum('NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'UNKNOWN') DEFAULT NULL */
   log_dir          varchar(80) DEFAULT NULL
 
 );
