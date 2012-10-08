@@ -178,12 +178,13 @@ sub update {
   }
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
-#  $sql .= ",batch_size=" . $stats->batch_size();
+  $sql .= ",batch_size=" . $stats->batch_size();
+  $sql .= ",hive_capacity=" . $stats->hive_capacity();
+
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
-  $sql .= ",hive_capacity=" . $stats->hive_capacity();
 
   unless( $self->db->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
