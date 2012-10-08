@@ -516,12 +516,10 @@ sub grab_jobs_for_worker {
 
 
 sub reclaim_job_for_worker {
-    my $self   = shift;
-    my $worker = shift or return;
-    my $job    = shift or return;
+    my ($self, $worker, $job) = @_;
 
-    my $worker_id = $worker->dbID();
-    my $job_id    = $job->dbID;
+    my $worker_id   = $worker->dbID();
+    my $job_id      = $job->dbID;
 
     my $sql = "UPDATE job SET status='CLAIMED', worker_id=? WHERE job_id=? AND status='READY'";
 
