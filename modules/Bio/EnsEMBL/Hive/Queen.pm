@@ -112,11 +112,11 @@ sub create_new_worker {
   my ($self, @args) = @_;
 
   my (  $meadow_type, $meadow_name, $process_id, $exec_host,
-        $rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id,
+        $rc_id, $rc_name, $analysis_id, $logic_name, $job_id,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
 
  rearrange([qw(meadow_type meadow_name process_id exec_host
-        rc_id rc_name analysis_id logic_name job_id input_id
+        rc_id rc_name analysis_id logic_name job_id
         no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
 
     if($rc_name) {
@@ -142,24 +142,6 @@ sub create_new_worker {
     }
 
     my $job;
-
-    if($input_id) {
-        if($job_id) {
-            die "You should either define -input_id or -job_id, but not both\n";
-
-        } elsif($analysis_id) {
-            $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-                -INPUT_ID       => $input_id,
-                -ANALYSIS_ID    => $analysis_id,
-                -DBID           => -1,
-            );
-            print "creating a job outside the database\n";
-            $job->print_job;
-            $debug=1 unless(defined($debug));
-        } else {
-            die "For creating a job outside the database either -analysis_id or -logic_name must also be defined\n";
-        }
-    }
 
     if($job_id) {
         if($analysis_id) {

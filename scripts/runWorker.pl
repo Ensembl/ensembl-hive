@@ -20,7 +20,7 @@ my $db_conf = {
 };
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
-my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id, $input_id);     # Task specification parameters
+my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once);   # Worker control parameters
 my ($help, $debug);
 
@@ -42,7 +42,6 @@ GetOptions(
            'analysis_id=i'              => \$analysis_id,
            'logic_name=s'               => \$logic_name,
            'job_id=i'                   => \$job_id,
-           'input_id=s'                 => \$input_id,
 
 # Worker control parameters:
            'job_limit|limit=i'          => \$job_limit,
@@ -107,7 +106,6 @@ eval {
          -analysis_id           => $analysis_id,
          -logic_name            => $logic_name,
          -job_id                => $job_id,
-         -input_id              => $input_id,
 
       # Worker control parameters:
          -job_limit             => $job_limit,
@@ -171,9 +169,6 @@ __DATA__
         # Run a specific job (by a local worker process):
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
 
-        # Create a job outside the eHive to test the specified input_id
-    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast -input_id '{ "foo" => 1500 }'
-
 =head1 OPTIONS
 
 =head2 Connection parameters:
@@ -195,7 +190,6 @@ __DATA__
     -analysis_id <id>           : pre-specify this worker in a particular analysis defined by database id
     -logic_name <string>        : pre-specify this worker in a particular analysis defined by name
     -job_id <id>                : run a specific job defined by its database id
-    -input_id <string>          : test this input_id on specified analysis (defined either by analysis_id or logic_name)
 
 =head2 Worker control parameters:
 
