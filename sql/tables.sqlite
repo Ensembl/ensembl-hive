@@ -248,9 +248,10 @@ CREATE TABLE job_file (
   retry                 int(10) NOT NULL,
   worker_id             INTEGER NOT NULL,
   stdout_file           varchar(255),
-  stderr_file           varchar(255)
+  stderr_file           varchar(255),
+
+  PRIMARY KEY (job_id, retry)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS job_retry ON job_file (job_id, retry);
 CREATE        INDEX IF NOT EXISTS worker_idx ON job_file (worker_id);
 
 
@@ -330,9 +331,10 @@ CREATE TABLE analysis_stats (
     avg_output_msec_per_job int(10) default 0 NOT NULL,
 
     last_update             datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    sync_lock               int(10) NOT NULL DEFAULT 0
+    sync_lock               int(10) NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (analysis_id)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS analysis_idx ON analysis_stats (analysis_id);
 
 
 CREATE TABLE analysis_stats_monitor (

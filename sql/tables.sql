@@ -268,7 +268,7 @@ CREATE TABLE job_file (
   stdout_file           varchar(255),
   stderr_file           varchar(255),
 
-  UNIQUE KEY job_retry  (job_id, retry),
+  PRIMARY KEY job_retry  (job_id, retry),
   INDEX worker_id           (worker_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -355,7 +355,7 @@ CREATE TABLE analysis_stats (
     last_update             datetime NOT NULL default '0000-00-00 00:00:00',
     sync_lock               int(10) default 0 NOT NULL,
 
-    UNIQUE KEY   (analysis_id)
+    PRIMARY KEY   (analysis_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
