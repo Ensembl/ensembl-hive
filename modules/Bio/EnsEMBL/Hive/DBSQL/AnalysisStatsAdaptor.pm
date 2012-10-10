@@ -39,6 +39,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 
 use strict;
+
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -94,7 +95,7 @@ sub fetch_all_by_suitability_rc_id {
         # the ones that may have work to do after a sync:
         #
     my $secondary_results = $self->_generic_fetch(
-        "ast.status in ('LOADING', 'BLOCKED', 'ALL_CLAIMED')" ,
+        "ast.status in ('LOADING', 'BLOCKED', 'ALL_CLAIMED', 'SYNCHING')" ,
         $join ,
         'ORDER BY last_update',     # FIXME: could mix in a.priority if sync is not too expensive?
     );
