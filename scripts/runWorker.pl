@@ -21,7 +21,7 @@ my $db_conf = {
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
-my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once);   # Worker control parameters
+my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once, $force);   # Worker control parameters
 my ($help, $debug);
 
 GetOptions(
@@ -52,6 +52,7 @@ GetOptions(
            'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
            'compile_module_once=i'      => \$compile_module_once,
+           'force=i'                    => \$force,
 
 # Other commands
            'h|help'                     => \$help,
@@ -116,6 +117,7 @@ eval {
          -hive_log_dir          => $hive_log_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
          -compile_module_once   => $compile_module_once,
+         -force                 => $force,
 
       # Other parameters:
          -debug                 => $debug,
@@ -126,6 +128,7 @@ my $msg_thrown = $@;
 if($worker) {
 
     $worker->run();
+#    warn "Not really running the worker (debug)";
 
 } else {
 
@@ -201,6 +204,7 @@ __DATA__
     -worker_log_dir <path>      : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
     -compile_module_once 0|1    : should we compile the module only once (desired future behaviour), or pretend to do it before every job (current behaviour)?
+    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis
 
 =head2 Other options:
 
