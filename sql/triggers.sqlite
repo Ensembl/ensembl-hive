@@ -3,10 +3,11 @@ CREATE TRIGGER add_job AFTER INSERT ON job
 FOR EACH ROW
 BEGIN
     UPDATE analysis_stats SET
-        total_job_count     = total_job_count     + 1,
-        ready_job_count     = ready_job_count     + (CASE NEW.status WHEN 'READY'  THEN 1                         ELSE 0 END),
-        done_job_count      = done_job_count      + (CASE NEW.status WHEN 'DONE'   THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
-        failed_job_count    = failed_job_count    + (CASE NEW.status WHEN 'FAILED' THEN 1                         ELSE 0 END),
+        total_job_count         = total_job_count       + 1,
+        semaphored_job_count    = semaphored_job_count  + (CASE NEW.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
+        ready_job_count         = ready_job_count       + (CASE NEW.status WHEN 'READY'         THEN 1                         ELSE 0 END),
+        done_job_count          = done_job_count        + (CASE NEW.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
+        failed_job_count        = failed_job_count      + (CASE NEW.status WHEN 'FAILED'        THEN 1                         ELSE 0 END),
         status              = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
     WHERE analysis_id = NEW.analysis_id;
 END;
@@ -15,10 +16,11 @@ CREATE TRIGGER delete_job AFTER DELETE ON job
 FOR EACH ROW
 BEGIN
     UPDATE analysis_stats SET
-        total_job_count     = total_job_count     - 1,
-        ready_job_count     = ready_job_count     - (CASE OLD.status WHEN 'READY'  THEN 1                         ELSE 0 END),
-        done_job_count      = done_job_count      - (CASE OLD.status WHEN 'DONE'   THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
-        failed_job_count    = failed_job_count    - (CASE OLD.status WHEN 'FAILED' THEN 1                         ELSE 0 END)
+        total_job_count         = total_job_count       - 1,
+        semaphored_job_count    = semaphored_job_count  - (CASE OLD.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
+        ready_job_count         = ready_job_count       - (CASE OLD.status WHEN 'READY'         THEN 1                         ELSE 0 END),
+        done_job_count          = done_job_count        - (CASE OLD.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
+        failed_job_count        = failed_job_count      - (CASE OLD.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
     WHERE analysis_id = OLD.analysis_id;
 END;
 
@@ -26,16 +28,19 @@ CREATE TRIGGER update_job AFTER UPDATE ON job
 FOR EACH ROW
 BEGIN
     UPDATE analysis_stats SET
-        total_job_count     = total_job_count     - 1,
-        ready_job_count     = ready_job_count     - (CASE OLD.status WHEN 'READY'  THEN 1                         ELSE 0 END),
-        done_job_count      = done_job_count      - (CASE OLD.status WHEN 'DONE'   THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
-        failed_job_count    = failed_job_count    - (CASE OLD.status WHEN 'FAILED' THEN 1                         ELSE 0 END)
+
+        total_job_count         = total_job_count       - 1,
+        semaphored_job_count    = semaphored_job_count  - (CASE OLD.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
+        ready_job_count         = ready_job_count       - (CASE OLD.status WHEN 'READY'         THEN 1                         ELSE 0 END),
+        done_job_count          = done_job_count        - (CASE OLD.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
+        failed_job_count        = failed_job_count      - (CASE OLD.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
     WHERE analysis_id = OLD.analysis_id;
     UPDATE analysis_stats SET
-        total_job_count     = total_job_count     + 1,
-        ready_job_count     = ready_job_count     + (CASE NEW.status WHEN 'READY'  THEN 1                         ELSE 0 END),
-        done_job_count      = done_job_count      + (CASE NEW.status WHEN 'DONE'   THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
-        failed_job_count    = failed_job_count    + (CASE NEW.status WHEN 'FAILED' THEN 1                         ELSE 0 END)
+        total_job_count         = total_job_count       + 1,
+        semaphored_job_count    = semaphored_job_count  + (CASE NEW.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
+        ready_job_count         = ready_job_count       + (CASE NEW.status WHEN 'READY'         THEN 1                         ELSE 0 END),
+        done_job_count          = done_job_count        + (CASE NEW.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
+        failed_job_count        = failed_job_count      + (CASE NEW.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
     WHERE analysis_id = NEW.analysis_id;
 END;
 

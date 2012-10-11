@@ -105,7 +105,7 @@ sub CreateNewJob {
   my $dba = $analysis->adaptor->db;
   my $dbc = $dba->dbc;
   my $insertion_method  = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
-  my $status            = ($semaphore_count>0) ? 'SEMAPHORED' : 'READY';
+  my $job_status        = ($semaphore_count>0) ? 'SEMAPHORED' : 'READY';
   my $analysis_id       = $analysis->dbID();
 
   my $sql = qq{$insertion_method INTO job 
@@ -113,7 +113,7 @@ sub CreateNewJob {
               VALUES (?,?,?,?,?,?)};
  
   my $sth       = $dbc->prepare($sql);
-  my @values    = ($input_id, $prev_job_id, $analysis_id, $status, $semaphore_count, $semaphored_job_id);
+  my @values    = ($input_id, $prev_job_id, $analysis_id, $job_status, $semaphore_count, $semaphored_job_id);
 
   my $return_code = $sth->execute(@values)
             # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
@@ -134,8 +134,10 @@ sub CreateNewJob {
             UPDATE analysis_stats
                SET total_job_count=total_job_count+1
           }
-          .(($status eq 'READY') ? " ,ready_job_count=ready_job_count+1 " : '')
-          .qq{
+          .(($job_status eq 'READY')
+                  ? " ,ready_job_count=ready_job_count+1 "
+                  : " ,semaphored_job_count=semaphored_job_count+1 "
+          ).qq{
                   ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
              WHERE analysis_id=$analysis_id
           });
