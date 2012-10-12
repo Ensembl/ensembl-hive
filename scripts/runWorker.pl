@@ -100,13 +100,8 @@ eval {
          -meadow_name           => $meadow_name,
          -process_id            => $process_id,
          -exec_host             => $exec_host,
-
-      # Task specification:
          -rc_id                 => $rc_id,
          -rc_name               => $rc_name,
-         -analysis_id           => $analysis_id,
-         -logic_name            => $logic_name,
-         -job_id                => $job_id,
 
       # Worker control parameters:
          -job_limit             => $job_limit,
@@ -117,10 +112,16 @@ eval {
          -hive_log_dir          => $hive_log_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
          -compile_module_once   => $compile_module_once,
-         -force                 => $force,
 
       # Other parameters:
          -debug                 => $debug,
+    );
+
+    $queen->specialize_new_worker(  $worker,
+         -analysis_id           => $analysis_id,
+         -logic_name            => $logic_name,
+         -job_id                => $job_id,
+         -force                 => $force,
     );
 };
 my $msg_thrown = $@;
@@ -128,7 +129,6 @@ my $msg_thrown = $@;
 if($worker) {
 
     $worker->run();
-#    warn "Not really running the worker (debug)";
 
 } else {
 

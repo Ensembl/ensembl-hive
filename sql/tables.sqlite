@@ -64,12 +64,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS logic_name_idx ON analysis_base (logic_name);
 --
 
 CREATE TABLE worker (
-  worker_id        INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  analysis_id      INTEGER NOT NULL,
-  meadow_type      TEXT NOT NULL, /* enum('LSF', 'LOCAL') NOT NULL, */
-  meadow_name      varchar(40) DEFAULT NULL,
-  host	           varchar(40) DEFAULT NULL,
-  process_id       varchar(40) DEFAULT NULL,
+    worker_id           INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    meadow_type         varchar(40) NOT NULL,
+    meadow_name         varchar(40) NOT NULL,
+    host	            varchar(40) NOT NULL,
+    process_id          varchar(40) NOT NULL,
+    resource_class_id   INTEGER NOT NULL,
+
+  analysis_id      INTEGER DEFAULT NULL,
   work_done        int(11) DEFAULT '0' NOT NULL,
   status           TEXT DEFAULT 'READY' NOT NULL, /* enum('READY','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DEAD') DEFAULT 'READY' NOT NULL, */
   born	           timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -285,7 +287,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS resource_class_name_idx ON resource_class (nam
 
 CREATE TABLE resource_description (
     resource_class_id     INTEGER NOT NULL,
-    meadow_type           TEXT, /* enum('LSF', 'LOCAL') DEFAULT 'LSF' NOT NULL, */
+    meadow_type           varchar(40) NOT NULL,
     parameters            varchar(255) DEFAULT '' NOT NULL,
 
     PRIMARY KEY(resource_class_id, meadow_type)
