@@ -113,13 +113,12 @@ sub create_new_worker {
     rearrange([qw(meadow_type meadow_name process_id exec_host resource_class_id resource_class_name
                 no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
 
-    if($resource_class_name) {
+    if( defined($resource_class_name) ) {
         my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
             or die "resource_class with name='$resource_class_name' could not be fetched from the database";
 
         $resource_class_id = $rc->dbID;
     }
-    $resource_class_id ||= 1;
 
     my $sql = q{INSERT INTO worker (born, last_check_in, meadow_type, meadow_name, host, process_id, resource_class_id)
               VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)};
@@ -190,7 +189,7 @@ sub specialize_new_worker {
     my ($job, $analysis, $stats);
     my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
-    if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized by running a runWorker.pl by hand
+    if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized from command-line
 
         if($job_id) {
             print "resetting and fetching job for job_id '$job_id'\n";
@@ -215,8 +214,9 @@ sub specialize_new_worker {
                 or die "analysis with dbID='$analysis_id' could not be fetched from the database";
         }
 
-        if($worker->resource_class_id != $analysis->resource_class_id) {
-            die "resource_class of analysis ".$analysis->logic_name." is incompatible with this Worker's resource_class";
+        if( $worker->resource_class_id
+        and $worker->resource_class_id != $analysis->resource_class_id) {
+                die "resource_class of analysis ".$analysis->logic_name." is incompatible with this Worker's resource_class";
         }
 
         $stats = $analysis_stats_adaptor->fetch_by_analysis_id($analysis_id);
@@ -224,16 +224,16 @@ sub specialize_new_worker {
 
         unless($job or $force) {    # do we really need to run this analysis?
             if($self->get_hive_current_load() >= 1.1) {
-                die "Hive is overloaded, can't create a worker";
+                die "Hive is overloaded, can't specialize a worker";
             }
             if($stats->status eq 'BLOCKED') {
-                die "Analysis is BLOCKED, can't create workers";
+                die "Analysis is BLOCKED, can't specialize a worker";
             }
             if($stats->num_required_workers <= 0) {
-                die "Analysis does not require workers at the moment";
+                die "Analysis requires 0 workers at the moment";
             }
             if($stats->status eq 'DONE') {
-                die "Analysis is DONE, don't need to create workers";
+                die "Analysis is DONE, and doesn't require workers";
             }
         }
 
@@ -251,9 +251,16 @@ sub specialize_new_worker {
 
     $worker->analysis_id( $analysis_id );
 
+    my $sth_update_analysis_id = $self->prepare( "UPDATE worker SET analysis_id=? WHERE worker_id=?" );
+    $sth_update_analysis_id->execute($worker->analysis_id, $worker->dbID);
+    $sth_update_analysis_id->finish;
+
     if($job) {
         $worker->_specific_job($job);
     } else {    # count it as autonomous worker sharing the load of that analysis:
+
+        $stats->update_status('WORKING');
+
         $analysis_stats_adaptor->decrease_required_workers($worker->analysis_id);
     }
 
@@ -266,12 +273,6 @@ sub specialize_new_worker {
     unless( $self->db->hive_use_triggers() ) {
         $analysis_stats_adaptor->increase_running_workers($worker->analysis_id);
     }
-
-    my $sth_update_analysis_id = $self->prepare( "UPDATE worker SET analysis_id=? WHERE worker_id=?" );
-    $sth_update_analysis_id->execute($worker->analysis_id, $worker->dbID);
-    $sth_update_analysis_id->finish;
-
-    $stats->update_status('WORKING');
 
     return $worker;
 }

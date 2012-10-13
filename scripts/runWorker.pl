@@ -20,7 +20,7 @@ my $db_conf = {
 };
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
-my ($rc_id, $rc_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
+my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once, $force);   # Worker control parameters
 my ($help, $debug);
 
@@ -37,8 +37,8 @@ GetOptions(
            'database|dbname=s'          => \$db_conf->{'-dbname'},
 
 # Task specification parameters:
-           'rc_id=i'                    => \$rc_id,
-           'rc_name=s'                  => \$rc_name,
+           'rc_id=i'                    => \$resource_class_id,
+           'rc_name=s'                  => \$resource_class_name,
            'analysis_id=i'              => \$analysis_id,
            'logic_name=s'               => \$logic_name,
            'job_id=i'                   => \$job_id,
@@ -100,8 +100,8 @@ eval {
          -meadow_name           => $meadow_name,
          -process_id            => $process_id,
          -exec_host             => $exec_host,
-         -rc_id                 => $rc_id,
-         -rc_name               => $rc_name,
+         -resource_class_id     => $resource_class_id,
+         -resource_class_name   => $resource_class_name,
 
       # Worker control parameters:
          -job_limit             => $job_limit,

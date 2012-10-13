@@ -76,7 +76,7 @@ CREATE TABLE worker (
     meadow_name         varchar(40) NOT NULL,
     host	            varchar(40) NOT NULL,
     process_id          varchar(40) NOT NULL,
-    resource_class_id   int(10) unsigned NOT NULL,
+    resource_class_id   int(10) unsigned DEFAULT NULL,
 
     analysis_id      int(10) unsigned DEFAULT NULL,
     work_done        int(11) DEFAULT '0' NOT NULL,
