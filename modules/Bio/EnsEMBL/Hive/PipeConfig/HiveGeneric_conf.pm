@@ -109,7 +109,7 @@ sub pipeline_create_commands {
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sqlite',
         ]
         : [
-            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE ".$self->o('pipeline_db', '-dbname')."'",
+            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o('pipeline_db', '-dbname')."`'",
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',

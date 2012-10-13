@@ -90,7 +90,7 @@ sub fetch {
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
     if( my ($conn, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
-        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
+        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
 
         my %conn_param = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
 
