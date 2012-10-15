@@ -192,32 +192,32 @@ sub main {
         $job->print_job();
     }
 
-    if(my $logic_name_to_reset = $reset_all_jobs_for_analysis || $reset_failed_jobs_for_analysis) {
+    if(my $reset_logic_name = $reset_all_jobs_for_analysis || $reset_failed_jobs_for_analysis) {
 
-        my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($logic_name_to_reset)
-              || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($logic_name_to_reset)"); 
+        my $reset_analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($reset_logic_name)
+              || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($reset_logic_name)"); 
 
-        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id($analysis->dbID, $reset_all_jobs_for_analysis); 
-        $self->{'dba'}->get_Queen->synchronize_AnalysisStats($analysis->stats);
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id($reset_analysis->dbID, $reset_all_jobs_for_analysis); 
+        $self->{'dba'}->get_Queen->synchronize_AnalysisStats($reset_analysis->stats);
     }
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
 
     if ($kill_worker_id) {
-        my $worker = $queen->fetch_by_dbID($kill_worker_id);
+        my $kill_worker = $queen->fetch_by_dbID($kill_worker_id);
 
-        unless( $worker->cause_of_death() ) {
-            if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
+        unless( $kill_worker->cause_of_death() ) {
+            if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $kill_worker ) ) {
 
                 if( $meadow->check_worker_is_alive_and_mine ) {
                     printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
-                            $worker->dbID, $worker->host, $worker->process_id, 
-                            $worker->analysis->logic_name, $worker->analysis->dbID);
+                            $kill_worker->dbID, $kill_worker->host, $kill_worker->process_id, 
+                            $kill_worker->analysis->logic_name, $kill_worker->analysis->dbID);
 
-                    $meadow->kill_worker($worker);
-                    $worker->cause_of_death('KILLED_BY_USER');
-                    $queen->register_worker_death($worker);
+                    $meadow->kill_worker($kill_worker);
+                    $kill_worker->cause_of_death('KILLED_BY_USER');
+                    $queen->register_worker_death($kill_worker);
                          # what about clean-up? Should we do it here or not?
                 } else {
                     die "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
@@ -280,7 +280,7 @@ sub main {
 
 
 sub generate_worker_cmd {
-    my ($self, $run_job_id) = @_;
+    my ($self, $run_analysis, $run_job_id) = @_;
 
     my $worker_cmd = 'runWorker.pl';
 
@@ -294,30 +294,33 @@ sub generate_worker_cmd {
         $worker_cmd .= ' -url '. $self->{'url'};
     }
 
-    if ($run_job_id) {
-        $worker_cmd .= " -job_id $run_job_id";
-    } else {
-        foreach my $worker_option ('job_limit', 'life_span', 'logic_name', 'retry_throwing_jobs', 'compile_module_once', 'hive_log_dir', 'debug') {
-            if(defined(my $value = $self->{$worker_option})) {
-                $worker_cmd .= " -${worker_option} $value";
-            }
+    foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'compile_module_once', 'hive_log_dir', 'debug') {
+        if(defined(my $value = $self->{$worker_option})) {
+            $worker_cmd .= " -${worker_option} $value";
         }
+    }
+
+        # special task:
+    if ($run_analysis) {
+        $worker_cmd .= " -logic_name ".$run_analysis->logic_name;
+    } elsif ($run_job_id) {
+        $worker_cmd .= " -job_id $run_job_id";
     }
 
     return $worker_cmd;
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $this_analysis, $run_job_id) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id) = @_;
 
     unless(`runWorker.pl`) {
         print("can't find runWorker.pl script.  Please make sure it's in your path\n");
         exit(1);
     }
 
-    my $current_meadow = $valley->get_current_meadow();
-    my $worker_cmd = generate_worker_cmd($self, $run_job_id);
-
+    my $current_meadow  = $valley->get_current_meadow();
+    my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id);
+    my $special_task    = $run_analysis || $run_job_id;
 
         # first, fetch two resource-related mappings from the database:
     my $rc_name2id = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_name_TO_resource_class_id();
@@ -345,7 +348,7 @@ sub run_autonomously {
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_counts;
 
-        my $workers_to_run_by_rc_name = $queen->schedule_workers_resync_if_necessary($valley, $this_analysis);
+        my $workers_to_run_by_rc_name = $queen->schedule_workers_resync_if_necessary($valley, $run_analysis);
 
         if(keys %$workers_to_run_by_rc_name) {
             foreach my $rc_name ( sort { $workers_to_run_by_rc_name->{$a}<=>$workers_to_run_by_rc_name->{$b} } keys %$workers_to_run_by_rc_name) {
@@ -353,13 +356,13 @@ sub run_autonomously {
 
                 print "Submitting $this_rc_worker_count workers (rc_name=$rc_name) to ".$current_meadow->toString()."\n";
 
-                $current_meadow->submit_workers("$worker_cmd -rc_name $rc_name", $this_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
+                $current_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
             }
         } else {
             print "Not submitting any workers this iteration\n";
         }
 
-        $failed_analyses       = $queen->get_num_failed_analyses($this_analysis);
+        $failed_analyses       = $queen->get_num_failed_analyses($run_analysis);
         $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress();
 
     } while( $keep_alive
