@@ -411,7 +411,7 @@ sub compile_module_once {
     my $self = shift @_;
 
     $self->{'_compile_module_once'} = shift @_ if(@_);
-    return $self->{'_compile_module_once'} ;
+    return defined($self->{'_compile_module_once'}) ? $self->{'_compile_module_once'} : 1;
 }
 
 
