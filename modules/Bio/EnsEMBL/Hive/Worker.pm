@@ -454,10 +454,11 @@ sub toString {
     my $self = shift @_;
 
     return "Worker:\t".join(', ',
-            'analysis='.$self->analysis->logic_name.'('.$self->analysis->dbID.')',
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
             'process='.$self->process_id.'@'.$self->host,
+            'resource_class_id='.($self->resource_class_id || 'NULL'),
             'last_check_in='.$self->last_check_in,
+            'analysis='.$self->analysis->logic_name.'('.$self->analysis->dbID.')',
     );
 }
 
