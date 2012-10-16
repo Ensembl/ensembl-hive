@@ -500,14 +500,17 @@ sub cleanup_worker_process_temp_directory {
 =cut
 
 sub run {
-    my $self = shift;
+    my $self        = shift;
+    my @spec_args   = @_;
 
-    $self->print_worker();
     if( my $worker_log_dir = $self->log_dir ) {
         $self->get_stdout_redirector->push( $worker_log_dir.'/worker.out' );
         $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
-        $self->print_worker();
     }
+
+    $self->adaptor->specialize_new_worker( $self, @spec_args );
+
+    $self->print_worker();
 
     if( $self->compile_module_once() ) {
         $self->enter_status('COMPILATION');

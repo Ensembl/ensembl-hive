@@ -116,19 +116,17 @@ eval {
       # Other parameters:
          -debug                 => $debug,
     );
-
-    $queen->specialize_new_worker(  $worker,
-         -analysis_id           => $analysis_id,
-         -logic_name            => $logic_name,
-         -job_id                => $job_id,
-         -force                 => $force,
-    );
 };
 my $msg_thrown = $@;
 
 if($worker) {
 
-    $worker->run();
+    $worker->run(
+         -analysis_id           => $analysis_id,
+         -logic_name            => $logic_name,
+         -job_id                => $job_id,
+         -force                 => $force,
+    );
 
 } else {
 
