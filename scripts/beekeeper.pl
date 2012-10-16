@@ -213,7 +213,7 @@ sub main {
                 if( $meadow->check_worker_is_alive_and_mine ) {
                     printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
                             $kill_worker->dbID, $kill_worker->host, $kill_worker->process_id, 
-                            $kill_worker->analysis->logic_name, $kill_worker->analysis->dbID);
+                            $kill_worker->analysis->logic_name, $kill_worker->analysis_id);
 
                     $meadow->kill_worker($kill_worker);
                     $kill_worker->cause_of_death('KILLED_BY_USER');

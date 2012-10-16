@@ -279,41 +279,43 @@ sub specialize_new_worker {
 
 
 sub register_worker_death {
-  my ($self, $worker) = @_;
+    my ($self, $worker) = @_;
 
-  return unless($worker);
+    return unless($worker);
 
-  my $cod = $worker->cause_of_death() || 'UNKNOWN';    # make sure we do not attempt to insert a void
+    my $cod = $worker->cause_of_death() || 'UNKNOWN';    # make sure we do not attempt to insert a void
 
-  my $sql = "UPDATE worker SET died=CURRENT_TIMESTAMP, last_check_in=CURRENT_TIMESTAMP";
-  $sql .= " ,status='DEAD'";
-  $sql .= " ,work_done='" . $worker->work_done . "'";
-  $sql .= " ,cause_of_death='$cod'";
-  $sql .= " WHERE worker_id='" . $worker->dbID ."'";
+    my $sql = qq{UPDATE worker SET died=CURRENT_TIMESTAMP
+                    ,last_check_in=CURRENT_TIMESTAMP
+                    ,status='DEAD'
+                    ,work_done='}. $worker->work_done . qq{'
+                    ,cause_of_death='$cod'
+                WHERE worker_id='}. $worker->dbID . qq{'};
+    $self->dbc->do( $sql );
 
-  $self->dbc->do( $sql );
+    if(my $analysis_id = $worker->analysis_id) {
+        my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
-  unless( $self->db->hive_use_triggers() ) {
-      $worker->analysis->stats->adaptor->decrease_running_workers($worker->analysis_id);
-  }
+        unless( $self->db->hive_use_triggers() ) {
+            $analysis_stats_adaptor->decrease_running_workers($worker->analysis_id);
+        }
 
-  if($cod eq 'NO_WORK') {
-    $self->db->get_AnalysisStatsAdaptor->update_status($worker->analysis->dbID, 'ALL_CLAIMED');
-  }
-  if($cod eq 'UNKNOWN'
-  or $cod eq 'MEMLIMIT'
-  or $cod eq 'RUNLIMIT'
-  or $cod eq 'KILLED_BY_USER') {
-    $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
-  }
-  
-  # re-sync the analysis_stats when a worker dies as part of dynamic sync system
-  if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
-    # since I'm dying I should make sure there is someone to take my place after I'm gone ...
-    # above synch still sees me as a 'living worker' so I need to compensate for that
-    $self->db->get_AnalysisStatsAdaptor->increase_required_workers($worker->analysis->dbID);
-  }
+        if($cod eq 'NO_WORK') {
+            $analysis_stats_adaptor->update_status($worker->analysis_id, 'ALL_CLAIMED');
+        } elsif($cod eq 'UNKNOWN'
+            or $cod eq 'MEMLIMIT'
+            or $cod eq 'RUNLIMIT'
+            or $cod eq 'KILLED_BY_USER') {
+                $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
+        }
 
+            # re-sync the analysis_stats when a worker dies as part of dynamic sync system
+        if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
+            # since I'm dying I should make sure there is someone to take my place after I'm gone ...
+            # above synch still sees me as a 'living worker' so I need to compensate for that
+            $analysis_stats_adaptor->increase_required_workers($worker->analysis_id);
+        }
+    }
 }
 
 
