@@ -491,7 +491,7 @@ sub store_out_files {
 sub grab_jobs_for_worker {
     my ($self, $worker, $how_many_this_batch) = @_;
   
-  my $analysis_id = $worker->analysis->dbID();
+  my $analysis_id = $worker->analysis_id();
   my $worker_id   = $worker->dbID();
 
   my $update_sql            = "UPDATE job SET worker_id='$worker_id', status='CLAIMED'";
@@ -556,6 +556,7 @@ sub release_undone_jobs_from_worker {
 
     my $max_retry_count = $worker->analysis->max_retry_count();
     my $worker_id       = $worker->dbID();
+    my $analysis        = $worker->analysis();
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
         # (previous worker_id does not matter, because that worker has never had a chance to run the job)
@@ -584,12 +585,12 @@ sub release_undone_jobs_from_worker {
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
         if( $resource_overusage ) {
-            if($passed_on = $self->gc_dataflow( $worker->analysis, $job_id, $cod )) {
+            if($passed_on = $self->gc_dataflow( $analysis, $job_id, $cod )) {
                 $msg .= ', performing gc_dataflow';
             }
         }
         unless($passed_on) {
-            if($passed_on = $self->gc_dataflow( $worker->analysis, $job_id, 'ANYFAILURE' )) {
+            if($passed_on = $self->gc_dataflow( $analysis, $job_id, 'ANYFAILURE' )) {
                 $msg .= ", performing 'ANYFAILURE' gc_dataflow";
             }
         }
