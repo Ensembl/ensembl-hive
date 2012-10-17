@@ -245,6 +245,12 @@ sub execute_writes {
 }
 
 
+sub special_batch {
+  my $self = shift;
+  $self->{'_special_batch'} = shift if(@_);
+  return $self->{'_special_batch'};
+}
+
 =head2 analysis
 
   Arg [1] : (optional) Bio::EnsEMBL::Hive::Analysis $value
@@ -534,8 +540,8 @@ sub run {
     my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
     $self->{'_interval_partial_timing'} = {};
 
-    if( my $specific_job = $self->_specific_job() ) {
-        $jobs_done_by_batches_loop += $self->run_one_batch( $job_adaptor->reclaim_job_for_worker($self, $specific_job) );
+    if( my $special_batch = $self->special_batch() ) {
+        $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
         $self->cause_of_death('JOB_LIMIT'); 
     } else {    # a proper "BATCHES" loop
 
@@ -776,13 +782,6 @@ sub stop_job_output_redirection {
             $job_adaptor->store_out_files($job);
         }
     }
-}
-
-
-sub _specific_job {
-  my $self = shift;
-  $self->{'_specific_job'} = shift if(@_);
-  return $self->{'_specific_job'};
 }
 
 

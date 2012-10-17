@@ -171,8 +171,7 @@ sub create_new_worker {
 
   Description: If analysis_id or logic_name is specified it will try to specialize the Worker into this analysis.
                If not specified the Queen will analyze the hive and pick the most suitable analysis.
-  Returntype : Bio::EnsEMBL::Hive::Worker
-  Caller     : runWorker.pl
+  Caller     : Bio::EnsEMBL::Hive::Worker
 
 =cut
 
@@ -186,7 +185,7 @@ sub specialize_new_worker {
         die "At most one of the options {-analysis_id, -logic_name, -job_id} can be set to pre-specialize a Worker";
     }
 
-    my ($job, $analysis, $stats);
+    my ($analysis, $stats, $special_batch);
     my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
     if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized from command-line
@@ -197,10 +196,14 @@ sub specialize_new_worker {
             my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
             $job_adaptor->reset_job_by_dbID($job_id); 
 
-            $job = $job_adaptor->fetch_by_dbID($job_id)
-                or die "job with dbID='$job_id' could not be fetched from the database";
+            my $worker_id = $worker->dbID;
+            $special_batch = $job_adaptor->reclaim_job_for_worker($job_id, $worker_id);
 
-            $analysis_id = $job->analysis_id;
+            if(my $job = $special_batch->[0]) {
+                $analysis_id = $job->analysis_id;
+            } else {
+                die "Could not reclaim job with dbID='$job_id' for worker with dbID='$worker_id'";
+            }
         }
 
         if($logic_name) {
@@ -222,7 +225,7 @@ sub specialize_new_worker {
         $stats = $analysis_stats_adaptor->fetch_by_analysis_id($analysis_id);
         $self->safe_synchronize_AnalysisStats($stats);
 
-        unless($job or $force) {    # do we really need to run this analysis?
+        unless($special_batch or $force) {    # do we really need to run this analysis?
             if($self->get_hive_current_load() >= 1.1) {
                 die "Hive is overloaded, can't specialize a worker";
             }
@@ -255,8 +258,8 @@ sub specialize_new_worker {
     $sth_update_analysis_id->execute($worker->analysis_id, $worker->dbID);
     $sth_update_analysis_id->finish;
 
-    if($job) {
-        $worker->_specific_job($job);
+    if($special_batch) {
+        $worker->special_batch( $special_batch );
     } else {    # count it as autonomous worker sharing the load of that analysis:
 
         $stats->update_status('WORKING');
@@ -273,8 +276,6 @@ sub specialize_new_worker {
     unless( $self->db->hive_use_triggers() ) {
         $analysis_stats_adaptor->increase_running_workers($worker->analysis_id);
     }
-
-    return $worker;
 }
 
 

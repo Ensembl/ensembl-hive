@@ -501,12 +501,12 @@ sub grab_jobs_for_worker {
   my $any_selection_sql     = $selection_start_sql . " LIMIT $how_many_this_batch";
 
   if($self->dbc->driver eq 'sqlite') {
-            # we have to be explicitly numereic here because of '0E0' value returned by DBI if "no rows have been affected":
+            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
       if( (my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) == 0 ) {
             $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
       }
   } else {
-            # we have to be explicitly numereic here because of '0E0' value returned by DBI if "no rows have been affected":
+            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
       if( (my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) == 0 ) {
             $claim_count = $self->dbc->do( $update_sql . $any_selection_sql );
       }
@@ -517,11 +517,35 @@ sub grab_jobs_for_worker {
 }
 
 
-sub reclaim_job_for_worker {
-    my ($self, $worker, $job) = @_;
+=head2 reset_job_by_dbID
 
-    my $worker_id   = $worker->dbID();
-    my $job_id      = $job->dbID;
+  Arg [1]    : int $job_id
+  Example    :
+  Description: Forces a job to be reset to 'READY' so it can be run again.
+               FIXME: Will also reset a previously 'SEMAPHORED' jobs to READY.
+               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
+               but will not change retry_count if a job has never *really* started.
+  Exceptions : $job_id must not be false or zero
+  Caller     : user process
+
+=cut
+
+sub reset_job_by_dbID {
+    my $self        = shift;
+    my $job_id      = shift;
+
+        # Note: the order of the fields being updated is critical!
+    $self->dbc->do( qq{
+        UPDATE job
+           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
+             , status='READY'
+         WHERE job_id=$job_id
+    } );
+}
+
+
+sub reclaim_job_for_worker {
+    my ($self, $job_id, $worker_id) = @_;
 
     my $sql = "UPDATE job SET status='CLAIMED', worker_id=? WHERE job_id=? AND status='READY'";
 
@@ -649,33 +673,6 @@ sub gc_dataflow {
     }
     
     return 1;
-}
-
-
-=head2 reset_job_by_dbID
-
-  Arg [1]    : int $job_id
-  Example    :
-  Description: Forces a job to be reset to 'READY' so it can be run again.
-               Will also reset a previously 'SEMAPHORED' jobs to READY (FIXME?).
-               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
-               but will not change retry_count if a job has never *really* started.
-  Exceptions : $job_id must not be false or zero
-  Caller     : user process
-
-=cut
-
-sub reset_job_by_dbID {
-    my $self   = shift;
-    my $job_id = shift or throw("job_id of the job to be reset is undefined");
-
-        # Note: the order of the fields being updated is critical!
-    $self->dbc->do( qq{
-        UPDATE job
-           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
-             , status='READY'
-         WHERE job_id=$job_id
-    } );
 }
 
 
