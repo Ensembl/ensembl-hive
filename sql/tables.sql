@@ -203,10 +203,10 @@ CREATE TABLE job (
   semaphore_count           int(10) NOT NULL default 0,
   semaphored_job_id         int(10) DEFAULT NULL,
 
-  PRIMARY KEY                  (job_id),
-  UNIQUE KEY input_id_analysis (input_id, analysis_id),
-  INDEX analysis_status_retry (analysis_id, status, retry_count),
-  INDEX worker_id              (worker_id)
+  PRIMARY KEY                   (job_id),
+  UNIQUE KEY input_id_analysis  (input_id, analysis_id),                -- to avoid repeating tasks
+  INDEX analysis_status_retry   (analysis_id, status, retry_count),     -- for claiming jobs
+  INDEX worker_id               (worker_id, status)                     -- for fetching and releasing claimed jobs
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
