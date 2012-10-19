@@ -45,6 +45,7 @@ sub main {
     my $run                         = 0;
     my $max_loops                   = 0; # not running by default
     my $run_job_id                  = undef;
+    my $force                       = undef;
     my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $all_dead                    = 0;
@@ -80,6 +81,7 @@ sub main {
                'max_loops=i'        => \$max_loops,
                'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'=> \$run_job_id,
+               'force=i'            => \$force,
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -234,7 +236,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis, $run_job_id);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis, $run_job_id, $force);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -280,9 +282,13 @@ sub main {
 
 
 sub generate_worker_cmd {
-    my ($self, $run_analysis, $run_job_id) = @_;
+    my ($self, $run_analysis, $run_job_id, $force) = @_;
 
     my $worker_cmd = 'runWorker.pl';
+    unless(`$worker_cmd`) {
+        print("can't find $worker_cmd script.  Please make sure it's in your path\n");
+        exit(1);
+    }
 
     if ($self->{'reg_conf'}) {      # if reg_conf is defined, we have to pass it anyway, regardless of whether it is used to connect to the Hive database or not:
         $worker_cmd .= ' -reg_conf '. $self->{'reg_conf'};
@@ -307,19 +313,18 @@ sub generate_worker_cmd {
         $worker_cmd .= " -job_id $run_job_id";
     }
 
+    if (defined($force)) {
+        $worker_cmd .= " -force $force";
+    }
+
     return $worker_cmd;
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id) = @_;
-
-    unless(`runWorker.pl`) {
-        print("can't find runWorker.pl script.  Please make sure it's in your path\n");
-        exit(1);
-    }
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id, $force) = @_;
 
     my $current_meadow  = $valley->get_current_meadow();
-    my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id);
+    my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
     my $special_task    = $run_analysis || $run_job_id;
 
         # first, fetch two resource-related mappings from the database:
