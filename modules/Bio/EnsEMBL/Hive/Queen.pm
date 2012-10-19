@@ -194,15 +194,28 @@ sub specialize_new_worker {
             print "resetting and fetching job for job_id '$job_id'\n";
 
             my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
-            $job_adaptor->reset_job_by_dbID($job_id); 
+
+            my $job = $job_adaptor->fetch_by_dbID( $job_id )
+                or die "Could not fetch job with dbID='$job_id'";
+            my $job_status = $job->status();
+
+            if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_CLEANUP)/ ) {
+                die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
+            } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
+                die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
+            }
+
+            if(($job_status eq 'DONE') and $job->semaphored_job_id) {
+                warn "Increasing the semaphore count of the dependent job";
+                $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
+            }
 
             my $worker_id = $worker->dbID;
-            $special_batch = $job_adaptor->reclaim_job_for_worker($job_id, $worker_id);
-
-            if(my $job = $special_batch->[0]) {
+            if($job = $job_adaptor->reset_or_grab_job_by_dbID($job_id, $worker_id)) {
+                $special_batch = [ $job ];
                 $analysis_id = $job->analysis_id;
             } else {
-                die "Could not reclaim job with dbID='$job_id' for worker with dbID='$worker_id'";
+                die "Could not claim job with dbID='$job_id' for worker with dbID='$worker_id'";
             }
         }
 
@@ -429,9 +442,8 @@ sub reset_job_by_dbID_and_sync {
     my ($self, $job_id) = @_;
 
     my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
-    $job_adaptor->reset_job_by_dbID($job_id); 
+    my $job = $job_adaptor->reset_or_grab_job_by_dbID($job_id); 
 
-    my $job = $job_adaptor->fetch_by_dbID($job_id); 
     my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
     $self->synchronize_AnalysisStats($stats);
 }

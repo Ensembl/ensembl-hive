@@ -473,6 +473,47 @@ sub store_out_files {
 }
 
 
+=head2 reset_or_grab_job_by_dbID
+
+  Arg [1]    : int $job_id
+  Arg [2]    : int $worker_id (optional)
+  Description: resets a job to to 'READY' (if no $worker_id given) or directly to 'CLAIMED' so it can be run again, and fetches it..
+               NB: Will also reset a previously 'SEMAPHORED' job to READY.
+               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
+               but will not change retry_count if a job has never *really* started.
+  Returntype : Bio::EnsEMBL::Hive::AnalysisJob or undef
+
+=cut
+
+sub reset_or_grab_job_by_dbID {
+    my $self        = shift;
+    my $job_id      = shift;
+    my $worker_id   = shift;
+
+    my $new_status  = ($worker_id?'CLAIMED':'READY');
+
+        # Note: the order of the fields being updated is critical!
+    my $sql = qq{
+        UPDATE job
+           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
+             , status=?
+             , worker_id=?
+         WHERE job_id=?
+    };
+    my @values = ($new_status, $worker_id, $job_id);
+
+    my $sth = $self->prepare( $sql );
+    my $return_code = $sth->execute( @values )
+        or die "Could not run\n\t$sql\nwith data:\n\t(".join(',', @values).')';
+    $sth->finish;
+
+    my $constraint = "j.job_id='$job_id' AND j.status='$new_status'";
+    my ($job) = @{ $self->_generic_fetch($constraint) };
+
+    return $job;
+}
+
+
 =head2 grab_jobs_for_worker
 
   Arg [1]           : Bio::EnsEMBL::Hive::Worker object $worker
@@ -495,7 +536,7 @@ sub grab_jobs_for_worker {
   my $worker_id   = $worker->dbID();
 
   my $update_sql            = "UPDATE job SET worker_id='$worker_id', status='CLAIMED'";
-  my $selection_start_sql   = " WHERE analysis_id='$analysis_id' AND status='READY' AND semaphore_count<=0";
+  my $selection_start_sql   = " WHERE analysis_id='$analysis_id' AND status='READY'";
 
   my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $how_many_this_batch";
   my $any_selection_sql     = $selection_start_sql . " LIMIT $how_many_this_batch";
@@ -512,48 +553,8 @@ sub grab_jobs_for_worker {
       }
   }
 
-  my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
-  return $self->_generic_fetch($constraint);
-}
-
-
-=head2 reset_job_by_dbID
-
-  Arg [1]    : int $job_id
-  Example    :
-  Description: Forces a job to be reset to 'READY' so it can be run again.
-               FIXME: Will also reset a previously 'SEMAPHORED' jobs to READY.
-               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
-               but will not change retry_count if a job has never *really* started.
-  Exceptions : $job_id must not be false or zero
-  Caller     : user process
-
-=cut
-
-sub reset_job_by_dbID {
-    my $self        = shift;
-    my $job_id      = shift;
-
-        # Note: the order of the fields being updated is critical!
-    $self->dbc->do( qq{
-        UPDATE job
-           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
-             , status='READY'
-         WHERE job_id=$job_id
-    } );
-}
-
-
-sub reclaim_job_for_worker {
-    my ($self, $job_id, $worker_id) = @_;
-
-    my $sql = "UPDATE job SET status='CLAIMED', worker_id=? WHERE job_id=? AND status='READY'";
-
-    my $sth = $self->prepare($sql);
-    $sth->execute($worker_id, $job_id);
-    $sth->finish;
-
-    my $constraint = "j.job_id='$job_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
+#  my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
+    my $constraint = "j.worker_id='$worker_id' AND j.status='CLAIMED'";
     return $self->_generic_fetch($constraint);
 }
 
@@ -587,8 +588,8 @@ sub release_undone_jobs_from_worker {
     $self->dbc->do( qq{
         UPDATE job
            SET status='READY', worker_id=NULL
-         WHERE status='CLAIMED'
-           AND worker_id='$worker_id'
+         WHERE worker_id='$worker_id'
+           AND status='CLAIMED'
     } );
 
     my $sth = $self->prepare( qq{
