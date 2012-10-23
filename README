@@ -15,6 +15,559 @@ Summary:
 
 Changelog:
 
+---------------------[after EnsEMBL rel.69]----------------------------------------------------------------
+
+2012-10-19 15:45  lg4
+
+	* sql/tables.sql: better match heavy queries with indices on job
+	  table
+
+2012-10-19 15:43  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, DBSQL/AnalysisJobAdaptor.pm:
+	  merge reset_and_grab into one subroutine; pre-increment dependent
+	  semaphore if re-running a DONE job; use -force flag for
+	  force-running an individual job
+
+2012-10-19 15:40  lg4
+
+	* scripts/beekeeper.pl: propagation of -force flag through
+	  beekeeper.pl
+
+2012-10-17 12:55  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, Worker.pm,
+	  DBSQL/AnalysisJobAdaptor.pm: moved special-job-reset and
+	  special-job-reclaim into the same call, removed the unnecessary
+	  fetch in between
+
+2012-10-16 12:37  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: cosmetic
+	  changes
+
+2012-10-16 10:42  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/beekeeper.pl: try not
+	  to shock the Q::register_worker_death() code with inexistent
+	  W->analysis_id
+
+2012-10-16 10:26  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/runWorker.pl: moved
+	  specializaton call into W::run, so that death messages during
+	  specialization could be recorded in W->log_dir
+
+2012-10-15 16:06  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: print the resource_class_id
+	  of the worker
+
+2012-10-15 16:04  lg4
+
+	* scripts/beekeeper.pl: pass either rc_name or logic_name or job_id
+	  from beekeeper.pl to runWorker.pl
+
+2012-10-15 10:44  mm14
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix:
+	  $analysis instead of $self->analysis
+
+2012-10-15 10:42  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: set compile_module_once=1 as
+	  default
+
+2012-10-13 12:31  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: URLFactory.pm,
+	  PipeConfig/HiveGeneric_conf.pm: allow database names to contain
+	  dashes
+
+2012-10-13 11:02  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/runWorker.pl,
+	  sql/patch_2012-10-13.sql, sql/tables.sql, sql/tables.sqlite: if
+	  runWorker.pl is run manually, rc_name may stay NULL in the
+	  database
+
+2012-10-12 21:24  lg4
+
+	* docs/: hive_schema.mwb, hive_schema.png: updated schema diagram
+	  with worker.resource_class_id
+
+2012-10-12 17:15  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/runWorker.pl,
+	  sql/foreign_keys.mysql, sql/patch_2012-10-12.sql, sql/tables.sql,
+	  sql/tables.sqlite: separating create_new_worker() from
+	  specialize_new_worker()
+
+2012-10-11 12:37  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  sql/triggers.mysql, sql/triggers.sqlite: proper counting of
+	  semaphored jobs by triggers and in constructor
+
+2012-10-10 14:45  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/runWorker.pl:
+	  refactoring of the Q::create_new_worker() and introduction of
+	  -force flag
+
+2012-10-10 14:36  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm: we should
+	  not leave SYNCHING analysis out (especially if there are not too
+	  many READY analyses)
+
+2012-10-10 14:34  lg4
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/PartMultiply.pm:
+	  slow things down a little
+
+2012-10-09 10:48  lg4
+
+	* docs/hive_schema.mwb, docs/hive_schema.png,
+	  sql/foreign_keys.mysql: added a DF-to-DF foreign key and
+	  refreshed the diagram
+
+2012-10-09 10:25  lg4
+
+	* sql/tables.sqlite: bugfix: forgot to add semaphored_job_count to
+	  SQLite schema, now included
+
+2012-10-09 10:22  lg4
+
+	* sql/: patch_2012-10-08.sql, tables.sql, tables.sqlite: turned two
+	  unique keys into primary keys (needed by BaseAdaptor)
+
+2012-10-08 16:06  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm: allow the
+	  batch_size to be updated via
+	  $analysis_stats_adaptor->update($stats);
+
+2012-10-08 12:17  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/runWorker.pl: removed
+	  the input_id functionality from runWorker as both redundant
+	  (standaloneJob) and probably not working
+
+2012-10-08 12:13  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: those
+	  "return" statements would have never worked anyway, so I removed
+	  them
+
+2012-10-05 16:14  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: extend the
+	  param_init() of the garbage-collected jobs to include
+	  analysis->parameters() for template substitution (still limited!)
+
+2012-10-05 14:14  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, sql/patch_2012-10-06.sql,
+	  sql/tables.sql, sql/tables.sqlite: cause_of_death="" no longer
+	  used for decision making, cause_of_death IS NULL by default and
+	  FATALITY renamed UNKNOWN for clarity
+
+2012-10-05 10:09  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: fetch_failed_workers() is
+	  dropped as no longer used, get_hive_current_load() cosmetically
+	  touched
+
+2012-10-04 16:47  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  sql/patch_2012-10-05.sql, sql/tables.sql, sql/tables.sqlite:
+	  EMPTY state added and definitions of READY and WORKING made more
+	  intuitive
+
+2012-10-04 15:45  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm: bugfix: a typo
+
+2012-10-04 15:39  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  scripts/beekeeper.pl, sql/patch_2012-10-04.sql, sql/tables.sql,
+	  sql/tables.sqlite, sql/triggers.mysql, sql/triggers.sqlite:
+	  introduced semaphored_job_count, renamed
+	  unclaimed_job_count-->ready_job_count, changed reporting, fixed
+	  hive_capacity=0
+
+2012-10-03 14:55  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm: common denominator for
+	  schedule_workers and specialize_new_worker
+
+2012-10-03 14:11  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, DBSQL/AnalysisAdaptor.pm:
+	  Fetching data via AnalysisAdaptor allows to print logic_names of
+	  failed analyses
+
+2012-10-03 11:09  lg4
+
+	* scripts/runWorker.pl: print stats if could not create worker
+	  anyway, but do not sync in the end (too cryptic)
+
+2012-10-03 10:51  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: DBSQL/AnalysisJobAdaptor.pm,
+	  PipeConfig/HiveGeneric_conf.pm: renamed -input_job_id to
+	  -prev_job_id to be in sync with other names
+
+2012-10-02 16:47  lg4
+
+	* docs/: hive_schema.mwb, hive_schema.png: updated schema diagrams
+
+2012-10-02 16:18  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Analysis.pm,
+	  modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/Graph.pm,
+	  sql/patch_2012-10-02.sql, sql/tables.sql, sql/tables.sqlite:
+	  moved failed_job_tolerance, max_retry_count, can_be_empty and
+	  priority columns from analysis_stats to analysis_base
+
+2012-10-02 14:56  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix: do
+	  not forget PRE_- and POST_CLEANUP states
+
+2012-10-02 13:00  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix:
+	  changed the order of the atomic SEMAPHORED->READY state&counter
+	  UPDATE so that it works as intended in SQLite as well
+
+2012-10-02 12:17  lg4
+
+	* sql/tables.sql: added a fake default to last_update field
+	  (required by stricter MySQL setup of Vega)
+
+2012-10-02 11:48  lg4
+
+	* modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  sql/tables.sql, sql/tables.sqlite: added specific defaults into
+	  analysis_stats and analysis_stats_monitor; re-ordered the fields
+	  for easier navigation
+
+2012-10-01 15:58  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Worker.pm, DBSQL/BaseAdaptor.pm:
+	  bugfix: fetch_by_dbID should work now (thanks to ChuangKee and
+	  Miguel)
+
+2012-10-01 12:53  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/BaseAdaptor.pm: bugfix:
+	  primary_key_constraint now works (thanks to Miguel!)
+
+2012-09-28 11:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix:
+	  typo fixed, thanks to Miguel for pointing out!
+
+2012-09-27 16:48  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisStats.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm, PipeConfig/HiveGeneric_conf.pm:
+	  make AnalysisStats a rearrangeable EnsEMBL-style constructor, a
+	  proper store method and other preparations
+
+2012-09-27 15:29  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm:
+	  simplification of DYNAMIC hive_capacity update code
+
+2012-09-27 12:03  lg4
+
+	* scripts/cmd_hive.pl: retired the cmd_hive.pl script; likely not
+	  working and duplicating functionality of more flexible PipeConfig
+
+2012-09-27 10:50  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix:
+	  also release jobs that were in PRE_CLEANUP or POST_CLEANUP states
+
+2012-09-26 15:03  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, DBSQL/BaseAdaptor.pm:
+	  switched Queen to become descendent of Hive::DBSQL::ObjectAdaptor
+	  and removed _generic_fetch from it
+
+2012-09-26 12:31  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, Worker.pm: rearranged
+	  Worker's storable getters/setters, introduced and used a proper
+	  rearranging new() method
+
+2012-09-26 11:27  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, Worker.pm: Worker doesnt
+	  really need its own reference to db (can go via adaptor)
+
+2012-09-25 16:20  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: bugfix: GROUP BY now includes
+	  a proper prefix of the index
+
+2012-09-25 16:04  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm,
+	  sql/patch_2012-09-25.sql, sql/tables.sql, sql/tables.sqlite:
+	  Dropped 'BLOCKED' job status and introduced 'SEMAPHORED' status
+	  that is maintained in sync with semaphore_counts; less confusing
+	  and more efficient (with new 3-part index)
+
+2012-09-25 12:32  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm, scripts/beekeeper.pl,
+	  scripts/runWorker.pl, sql/patch_2012-09-24.sql, sql/tables.sql,
+	  sql/tables.sqlite: record each Workers log_dir in the database;
+	  simplified the log_dir code and renamed cmdline options
+	  accordingly
+
+2012-09-21 22:16  lg4
+
+	* docs/hive_schema.mwb, docs/hive_schema.png,
+	  modules/Bio/EnsEMBL/Hive/Analysis.pm,
+	  modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  scripts/lsf_report.pl, sql/foreign_keys.mysql,
+	  sql/patch_2012-09-21.sql, sql/tables.sql, sql/tables.sqlite:
+	  moved resource_class_id from analysis_stats and
+	  analysis_stats_monitor to analysis_base
+
+2012-09-21 14:46  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/: AnalysisJobAdaptor.pm,
+	  AnalysisStatsAdaptor.pm: fetch_all never seems to be executed for
+	  these adaptors
+
+2012-09-21 09:34  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm: bugfix: better parsing of
+	  the LSF-job-name
+
+2012-09-20 15:56  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm: optimization: worker should not
+	  sync analyses it is not ready to run
+
+2012-09-20 11:51  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/beekeeper.pl:
+	  replaced internal rc_id by rc_name in the Meadow code and in most
+	  of the Scheduler; needs testing
+
+2012-09-20 11:44  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/BaseAdaptor.pm: allow JOIN to
+	  appear in the constraint and act wisely - so we do not need extra
+	  complicated syntax for joining
+
+2012-09-07 11:20  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Extensions.pm: not ready yet to scrap
+	  the "Runnable" support
+
+2012-09-07 10:29  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: (patch offered by Matthieu)
+	  Allow the Job to kill the Worker even on succecss
+
+2012-09-05 15:07  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: Updated
+	  the list of eHive tables
+
+2012-09-05 15:00  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Queen.pm, DBSQL/AnalysisJobAdaptor.pm,
+	  DBSQL/AnalysisStatsAdaptor.pm: these methods are already defined
+	  in the parent class
+
+2012-09-05 10:33  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisStats.pm,
+	  DBSQL/AnalysisJobAdaptor.pm, DBSQL/AnalysisStatsAdaptor.pm:
+	  trimmed the commented-out 'use' statements
+
+2012-09-04 17:07  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Extensions.pm: slimmed down the
+	  Extensions module a bit (valuable code already moved into
+	  Hive::Analysis)
+
+2012-09-04 17:02  lg4
+
+	* docs/hive_schema.mwb, docs/hive_schema.png,
+	  modules/Bio/EnsEMBL/Hive.pm,
+	  modules/Bio/EnsEMBL/Hive/Analysis.pm,
+	  modules/Bio/EnsEMBL/Hive/AnalysisCtrlRule.pm,
+	  modules/Bio/EnsEMBL/Hive/AnalysisStats.pm,
+	  modules/Bio/EnsEMBL/Hive/DataflowRule.pm,
+	  modules/Bio/EnsEMBL/Hive/Process.pm,
+	  modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/Worker.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/BaseAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  modules/Bio/EnsEMBL/Hive/Utils/Graph.pm, scripts/cmd_hive.pl,
+	  scripts/lsf_report.pl, sql/foreign_keys.mysql,
+	  sql/patch_2012-09-04.sql, sql/procedures.mysql,
+	  sql/procedures.sqlite, sql/tables.sql, sql/tables.sqlite:
+	  substituted the overloaded legacy 'analysis' table by a slimmer
+	  'analysis_base'
+
+2012-09-04 10:09  lg4
+
+	* scripts/beekeeper.pl: actually switch to using rc_name in the
+	  workers commandline
+
+2012-09-03 12:26  lg4
+
+	* scripts/beekeeper.pl: make sure beekeeper reports the same
+	  scheduling plans both when it is actually scheduling and in
+	  "reporting" mode
+
+2012-09-03 12:23  lg4
+
+	* scripts/lsf_report.pl: adding rc_name to the lsf_report
+
+2012-09-03 12:21  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Meadow/LOCAL.pm,
+	  modules/Bio/EnsEMBL/Hive/Meadow/LSF.pm, scripts/beekeeper.pl:
+	  rc_name support in the beekeeper
+
+2012-09-03 12:20  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm, scripts/runWorker.pl: rc_name
+	  support in the Worker
+
+2012-08-29 09:51  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Params.pm: a typo in perldoc
+
+2012-08-28 10:17  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: DBSQL/BaseAdaptor.pm, Queen.pm: this
+	  diagnostic information is no longer needed
+
+2012-08-28 10:05  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm: Scheduler should explain that
+	  workers are not added because of the pending ones
+
+2012-08-27 14:10  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: eHive
+	  tables are always included unless exclude_ehive is defined
+
+2012-08-25 21:09  lg4
+
+	* modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm: make
+	  sure default is in the beginning of the list
+
+2012-08-25 10:58  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: Updated
+	  the eHive table list + fixed typo
+
+2012-08-24 15:49  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: AnalysisJob.pm, DataflowRule.pm,
+	  Process.pm, Queen.pm, ResourceClass.pm, Worker.pm: inherit
+	  Job,Worker,DFR,RC from Bio::EnsEMBL::Storable, reuse some code
+
+2012-08-24 15:44  lg4
+
+	* sql/tables.sql: starting the rel69...
+
+2012-08-24 14:38  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: bugfix: make sure there is at
+	  least a number in the query (reported by Matthieu)
+
+2012-08-23 12:01  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: ResourceClass.pm,
+	  ResourceDescription.pm: renamed to_string into toString for
+	  uniformity
+
+2012-08-23 10:45  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: Added a
+	  "skip_dump" parameter to ease the restoration of a dump
+
+2012-08-17 15:52  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Worker.pm: trying to be more careful
+	  with references; release jobs' parameters earlier
+
+2012-08-16 12:16  mm14
+
+	* modules/Bio/EnsEMBL/Hive/RunnableDB/DatabaseDumper.pm: Can copy a
+	  database to another database
+
+2012-08-16 12:12  lg4
+
+	* modules/Bio/EnsEMBL/Hive/: Process.pm, Worker.pm: change
+	  suggested by Matthieu to avoid crashing if the temp_directory has
+	  already been deleted by Runnable
+
+2012-08-14 11:57  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Queen.pm,
+	  modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisStatsAdaptor.pm,
+	  modules/Bio/EnsEMBL/Hive/PipeConfig/HiveGeneric_conf.pm,
+	  scripts/beekeeper.pl, scripts/cmd_hive.pl,
+	  scripts/generate_graph.pl, scripts/runWorker.pl: switch to
+	  module->new() notation everywhere, to simplify text searches
+
+2012-08-03 16:31  lg4
+
+	* scripts/ehive_unblock.pl: no longer used as individual jobs are
+	  no longer specifically blocked
+
+2012-08-03 16:22  lg4
+
+	* modules/Bio/EnsEMBL/Hive/Process.pm: removed honeycomb support
+	  because it is no longer used by Compara modules
+
+2012-08-03 10:36  lg4
+
+	* modules/Bio/EnsEMBL/Hive/DBSQL/JobMessageAdaptor.pm: hopefully
+	  will fix the "was not locked with LOCK TABLES" error message
+
 ---------------------[before EnsEMBL rel.69]----------------------------------------------------------------
 
 2012-08-01 14:23  lg4
