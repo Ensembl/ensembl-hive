@@ -59,12 +59,11 @@ sub fetch_input {
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
 
     # Get the table list in either "tables" or "ignores"
-    die 'The parameter "table_list" is mandatory' unless $self->param('table_list');
+    my $table_list = $self->_get_table_list;
     if ($self->param('exclude_list')) {
-        my $table_list = $self->_get_table_list;
         push @ignores, @$table_list;
     } else {
-        push @tables, @{$self->_get_table_list};
+        push @tables, @$table_list;
     }
 
     # eHive tables are dumped unless exclude_ehive is defined
