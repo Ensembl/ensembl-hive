@@ -29,36 +29,38 @@
 
 use strict;
 
-#use Bio::EnsEMBL::Utils::Exception;
-#use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::DBSQL::DBConnection;
-#use Bio::EnsEMBL::Hive::URLFactory;
 
 
 =head2 Bio::EnsEMBL::DBSQL::DBConnection::url
 
-  Arg [1]    : none
+  Arg [1]    : String $environment_variable_name_to_store_password_in (optional)
   Example    : $url = $dbc->url;
-  Description: Constructs a URL string for this database connection. Follows
-               the format defined for FTP urls and adopted by
-               
+  Description: Constructs a URL string for this database connection.
   Returntype : string of format  mysql://<user>:<pass>@<host>:<port>/<dbname>
+                             or  sqlite:///<dbname>
   Exceptions : none
   Caller     : general
 
 =cut
 
 sub Bio::EnsEMBL::DBSQL::DBConnection::url {
-  my $self = shift;
-
-  return undef unless($self->driver and $self->dbname);
+  my ($self, $psw_env_var_name) = @_;
 
   my $url = $self->driver . '://';
 
   if($self->username) {
     $url .= $self->username;
-    $url .= ":".$self->password if($self->password);
-    $url .= "@";
+
+    if(my $psw_expression = $self->password) {
+        if($psw_env_var_name) {
+            $ENV{$psw_env_var_name} = $psw_expression;
+            $psw_expression = '${'.$psw_env_var_name.'}';
+        }
+        $url .= ':'.$psw_expression if($psw_expression);
+    }
+
+    $url .= '@';
   }
   if($self->host) {
     $url .= $self->host;

@@ -144,11 +144,12 @@ sub main {
              and $self->{'db_conf'}->{'-user'}
              and $self->{'db_conf'}->{'-dbname'}) { # connect to database specified
                     $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->{'db_conf'}} );
-                    $self->{'url'} = $self->{'dba'}->dbc->url;
     } else {
         print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
         script_usage(1);
     }
+
+    $self->{'safe_url'} = $self->{'dba'}->dbc->url('WORKER_PASSWORD');
 
     my $queen = $self->{'dba'}->get_Queen;
 
@@ -297,7 +298,7 @@ sub generate_worker_cmd {
     if ($self->{'reg_alias'}) {     # then we pass the connection parameters:
         $worker_cmd .= ' -reg_alias '. $self->{'reg_alias'};
     } else {
-        $worker_cmd .= ' -url '. $self->{'url'};
+        $worker_cmd .= ' -url '. $self->{'safe_url'};
     }
 
     foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'compile_module_once', 'hive_log_dir', 'debug') {
