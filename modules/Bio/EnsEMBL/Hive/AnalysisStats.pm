@@ -274,7 +274,7 @@ sub inprogress_job_count {
 sub print_stats {
     my $self = shift;
 
-    printf("%-27s(%2d) %11s jobs(Semaphored:%d, Ready:%d, InProgress:%d, Done+PassedOn:%d, Failed:%d):%d Ave_msec:%d, worker[%d/%d] (sync'd %d sec ago)\n",
+    printf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, worker[%d/%d] (sync'd %d sec ago)\n",
         $self->get_analysis->logic_name,
         $self->analysis_id,
         $self->status,
