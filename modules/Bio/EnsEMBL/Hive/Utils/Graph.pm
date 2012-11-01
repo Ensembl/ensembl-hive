@@ -288,9 +288,20 @@ sub _add_analysis_node {
 
   my $status_colour = $self->config->get('Graph', 'Node', $a->stats->status, 'Colour');
   my $node_fontname  = $self->config->get('Graph', 'Node', $a->stats->status, 'Font');
+
+  my $stats = $a->stats();
+
+  my @counter_list = ();
+  foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
+    if(my $count = $stats->$count_method()) {
+        push @counter_list, $count.substr($count_method,0,1);
+    }
+  }
+  my $analysis_label = $a->logic_name().' ('.$a->dbID().')\n'.join('+',@counter_list);
+  $analysis_label .= '='.$stats->total_job_count() if(scalar(@counter_list)!=1);    # only provide a total if multiple or no categories available
   
   $graph->add_node( _analysis_node_name( $a->dbID() ), 
-    label       => $a->logic_name().' ('.$a->dbID().')\n'.$a->stats()->done_job_count().'+'.$a->stats()->remaining_job_count().'='.$a->stats()->total_job_count(), 
+    label       => $analysis_label,
     shape       => $shape,
     style       => 'filled',
     fontname    => $node_fontname,

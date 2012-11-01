@@ -260,18 +260,6 @@ sub get_or_estimate_batch_size {
     }
 }
 
-sub cpu_minutes_remaining {
-  my $self = shift;
-  return ($self->avg_msec_per_job * $self->ready_job_count / 60000);
-}
-
-
-sub remaining_job_count {
-  my $self = shift;
-  return $self->total_job_count
-         - $self->done_job_count
-         - $self->failed_job_count;
-}
 
 sub inprogress_job_count {
     my $self = shift;
@@ -281,6 +269,7 @@ sub inprogress_job_count {
             - $self->done_job_count
             - $self->failed_job_count;
 }
+
 
 sub print_stats {
     my $self = shift;
