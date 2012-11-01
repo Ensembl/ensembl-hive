@@ -475,7 +475,7 @@ sub fetch_overdue_workers {
 sub fetch_all_dead_workers_with_jobs {
     my $self = shift;
 
-    return $self->fetch_all( "JOIN job j USING(worker_id) WHERE w.status='DEAD' AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY worker_id" );
+    return $self->fetch_all( "JOIN job j USING(worker_id) WHERE worker.status='DEAD' AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY worker_id" );
 }
 
 
