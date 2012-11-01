@@ -57,11 +57,13 @@ sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep -v JOBID | grep -v DONE | grep -v EXIT};
+    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null";
 
     my %status_hash = ();
     foreach my $line (`$cmd`) {
         my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
+
+        next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
 
         my $worker_pid = $group_pid;
         if($job_name=~/(\[\d+\])/) {
