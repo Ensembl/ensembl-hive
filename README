@@ -15,6 +15,19 @@ Summary:
 
 Changelog:
 
+---------------------[before EnsEMBL rel.70]----------------------------------------------------------------
+
+* Thu Nov 1 15:59:55 2012 +0000 | Leo Gordon | bugfix: query in Q::fetch_all_dead_workers_with_jobs() has to reference worker table by its full name
+* Thu Nov 1 15:31:36 2012 +0000 | Leo Gordon | clearer display of job_counters in beekeeper's output
+* Thu Nov 1 15:16:08 2012 +0000 | Leo Gordon | clearer display of job_counters on the graph; removed misleading and unused remaining_job_count() and cpu_minutes_remaining()
+*   Thu Nov 1 14:33:42 2012 +0000 | Leo Gordon | Merge branch 'bugfix_greedy_grep'
+|\  
+| * Thu Nov 1 12:05:35 2012 +0000 | Leo Gordon | avoid grepping out lines by patterns potentially present in job_name_prefix
+* | Thu Nov 1 12:00:00 2012 +0000 | Leo Gordon | bugfix: only limit buried-in-haste workers to really dead ones
+|/  
+* Wed Oct 31 13:22:46 2012 +0000 | Leo Gordon | fixing permissions of all files in one go
+* Wed Oct 31 13:19:14 2012 +0000 | Leo Gordon | Do not expose the password in workers' url by storing it in an environment variable
+
 ---------------------[after EnsEMBL rel.69]----------------------------------------------------------------
 
 2012-10-19 15:45  lg4
