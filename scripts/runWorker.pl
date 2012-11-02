@@ -72,6 +72,16 @@ my $DBA;
 if($reg_alias) {
     $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
 } elsif($url) {
+        # Perform environment variable substitution separately with and without curly braces.
+        #       Fixme: Perl 5.10 has a cute new "branch reset" (?|pattern)
+        #              that would allow to merge the two substitutions below into a nice one-liner.
+        #              But people around may still be using Perl 5.8, so let's wait a bit.
+        #
+        # Make sure expressions stay as they were if we were unable to substitute them.
+        #
+    $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+    $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+
     $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
 } elsif ($db_conf->{'-host'} and $db_conf->{'-user'} and $db_conf->{'-dbname'}) {
     $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %$db_conf );

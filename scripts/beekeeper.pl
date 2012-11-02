@@ -298,7 +298,7 @@ sub generate_worker_cmd {
     if ($self->{'reg_alias'}) {     # then we pass the connection parameters:
         $worker_cmd .= ' -reg_alias '. $self->{'reg_alias'};
     } else {
-        $worker_cmd .= ' -url '. $self->{'safe_url'};
+        $worker_cmd .= " -url '". $self->{'safe_url'} ."'";
     }
 
     foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'compile_module_once', 'hive_log_dir', 'debug') {
