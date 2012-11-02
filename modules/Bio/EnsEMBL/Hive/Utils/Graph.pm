@@ -22,14 +22,6 @@ in GraphViz.
 
 See inline
 
-=head1 AUTHOR
-
-$Author: lg4 $
-
-=head1 VERSION
-
-$Revision: 1.23 $
-
 =cut
 
 use strict;

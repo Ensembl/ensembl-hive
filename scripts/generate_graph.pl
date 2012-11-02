@@ -198,14 +198,6 @@ want to specify (png is the default).
 
 =back
 
-=head1 MAINTAINER
-
-$Author: lg4 $
-
-=head1 VERSION
-
-$Revision: 1.10 $
-
 =head1 REQUIREMENTS
 
 =over 8
