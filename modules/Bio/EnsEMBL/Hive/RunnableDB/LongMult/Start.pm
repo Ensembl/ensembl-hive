@@ -37,6 +37,8 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     param('b_multiplier'):  The second long number (also a string of digits).
 
+    param('take_time'):     How much time to spend sleeping (seconds).
+
 =cut
 
 sub fetch_input {
@@ -58,15 +60,20 @@ sub fetch_input {
     $self->param('output_ids', \@output_ids);
 }
 
+
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here we don't have any real work to do, just input and output, so run() remains empty.
+                  Here we don't have any real work to do, just input and output, so run() just spends some time waiting.
 
 =cut
 
 sub run {
+    my $self = shift @_;
+
+    sleep( $self->param('take_time') );
 }
+
 
 =head2 write_output
 

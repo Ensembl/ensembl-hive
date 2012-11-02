@@ -42,6 +42,8 @@ sub fetch_input {
 
     param('digit'):         A decimal digit that is a part of the second multiplier.
 
+    param('take_time'):     How much time to spend sleeping (seconds).
+
 =cut
 
 sub run {   # call the recursive function that will compute the stuff
@@ -52,7 +54,7 @@ sub run {   # call the recursive function that will compute the stuff
 
     $self->param('result', _rec_multiply($a_multiplier, $digit, 0) || 0);
 
-    sleep(1);   # slow it down a little
+    sleep( $self->param('take_time') );
 }
 
 =head2 write_output

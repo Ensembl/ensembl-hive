@@ -33,6 +33,8 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     param('b_multiplier'):  The second long number (also a string of digits).
 
+    param('take_time'):     How much time to spend sleeping (seconds).
+
 =cut
 
 sub fetch_input {   # fetch all the (relevant) precomputed products
@@ -64,6 +66,8 @@ sub run {   # call the function that will compute the stuff
     my $product_pair = $self->param('product_pair');
 
     $self->param('result', _add_together($b_multiplier, $product_pair));
+
+    sleep( $self->param('take_time') );
 }
 
 =head2 write_output

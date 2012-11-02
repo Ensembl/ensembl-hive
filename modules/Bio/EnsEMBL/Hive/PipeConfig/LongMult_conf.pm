@@ -75,6 +75,8 @@ sub default_options {
 
         'first_mult'    => '9650156169',                    # the actual numbers to be multiplied can also be specified from the command line
         'second_mult'   =>  '327358788',
+
+        'take_time'     => 0,                               # how much time (in seconds) should each job take -- to slow things down
     };
 }
 
@@ -95,6 +97,24 @@ sub pipeline_create_commands {
         $self->db_execute_command('pipeline_db', 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
         $self->db_execute_command('pipeline_db', 'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
     ];
+}
+
+
+=head2 pipeline_wide_parameters
+
+    Description : Interface method that should return a hash of pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
+                  The value doesn't have to be a scalar, can be any Perl structure now (will be stringified and de-stringified automagically).
+                  Please see existing PipeConfig modules for examples.
+
+=cut
+
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'take_time' => $self->o('take_time'),
+    };
 }
 
 
