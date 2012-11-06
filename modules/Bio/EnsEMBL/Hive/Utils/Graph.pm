@@ -273,26 +273,15 @@ sub _add_hive_details {
 
 sub _add_analysis_node {
   my ($self, $a) = @_;
-  my $graph = $self->graph();
-  
-  #Check we can invoke it & then check if it was able to be empty
-  my $shape = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
-
-  my $status_colour = $self->config->get('Graph', 'Node', $a->stats->status, 'Colour');
-  my $node_fontname  = $self->config->get('Graph', 'Node', $a->stats->status, 'Font');
 
   my $stats = $a->stats();
-
-  my @counter_list = ();
-  foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
-    if(my $count = $stats->$count_method()) {
-        push @counter_list, $count.substr($count_method,0,1);
-    }
-  }
-  my $analysis_label = $a->logic_name().' ('.$a->dbID().')\n'.join('+',@counter_list);
-  $analysis_label .= '='.$stats->total_job_count() if(scalar(@counter_list)!=1);    # only provide a total if multiple or no categories available
   
-  $graph->add_node( _analysis_node_name( $a->dbID() ), 
+  my $analysis_label    = $a->logic_name().' ('.$a->dbID().')\n'.$stats->job_count_breakout();
+  my $shape             = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
+  my $status_colour     = $self->config->get('Graph', 'Node', $stats->status, 'Colour');
+  my $node_fontname     = $self->config->get('Graph', 'Node', $stats->status, 'Font');
+  
+  $self->graph->add_node( _analysis_node_name( $a->dbID() ), 
     label       => $analysis_label,
     shape       => $shape,
     style       => 'filled',
