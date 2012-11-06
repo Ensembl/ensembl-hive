@@ -260,7 +260,7 @@ sub main {
 
         if($show_failed_jobs) {
             print("===== failed jobs\n");
-            my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_failed_jobs();
+            my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_by_analysis_id_status($analysis && $analysis->dbID, 'FAILED');
 
             foreach my $job (@{$failed_job_list}) {
                 $job->print_job();

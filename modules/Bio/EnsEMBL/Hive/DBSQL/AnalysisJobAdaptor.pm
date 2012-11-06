@@ -185,25 +185,26 @@ sub fetch_by_dbID {
 }
 
 
-=head2 fetch_all_failed_jobs
+=head2 fetch_all_by_analysis_id_status
 
   Arg [1]    : (optional) int $analysis_id
-  Example    : $failed_jobs = $adaptor->fetch_all_failed_jobs;
-               $failed_jobs = $adaptor->fetch_all_failed_jobs($analysis->dbID);
-  Description: Returns a list of all jobs with status 'FAILED'.  If an $analysis_id 
-               is specified it will limit the search accordingly.
+  Arg [2]    : (optional) string $status
+  Arg [3]    : (optional) int $retry_at_least
+  Example    : $all_failed_jobs = $adaptor->fetch_all_by_analysis_id_status(undef, 'FAILED');
+               $analysis_done_jobs = $adaptor->fetch_all_by_analysis_id_status($analysis->dbID, 'DONE');
+  Description: Returns a list of all jobs filtered by given analysis_id (if specified) and given status (if specified).
   Returntype : reference to list of Bio::EnsEMBL::Hive::AnalysisJob objects
-  Exceptions : none
-  Caller     : user processes
 
 =cut
 
-sub fetch_all_failed_jobs {
-  my ($self,$analysis_id) = @_;
+sub fetch_all_by_analysis_id_status {
+    my ($self, $analysis_id, $status, $retry_count_at_least) = @_;
 
-  my $constraint = "j.status='FAILED'";
-  $constraint .= " AND j.analysis_id=$analysis_id" if($analysis_id);
-  return $self->_generic_fetch($constraint);
+    my @constraints = ();
+    push @constraints, "j.analysis_id=$analysis_id"             if ($analysis_id);
+    push @constraints, "j.status='$status'"                     if ($status);
+    push @constraints, "j.retry_count >= $retry_count_at_least" if ($retry_count_at_least);
+    return $self->_generic_fetch(join " AND ", @constraints);
 }
 
 
