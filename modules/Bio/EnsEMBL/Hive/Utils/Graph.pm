@@ -275,8 +275,10 @@ sub _add_analysis_node {
   my ($self, $a) = @_;
 
   my $stats = $a->stats();
+
+  my ($breakout_label) = $stats->job_count_breakout();
   
-  my $analysis_label    = $a->logic_name().' ('.$a->dbID().')\n'.$stats->job_count_breakout();
+  my $analysis_label    = $a->logic_name().' ('.$a->dbID().')\n'.$breakout_label;
   my $shape             = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
   my $status_colour     = $self->config->get('Graph', 'Node', $stats->status, 'Colour');
   my $node_fontname     = $self->config->get('Graph', 'Node', $stats->status, 'Font');

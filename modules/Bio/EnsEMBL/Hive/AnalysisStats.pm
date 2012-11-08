@@ -274,16 +274,18 @@ sub inprogress_job_count {
 sub job_count_breakout {
     my $self = shift;
 
-    my @counter_list = ();
+    my @count_list = ();
+    my %count_hash = ();
+    my $total_job_count = $self->total_job_count();
     foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
-        if(my $count = $self->$count_method()) {
-            push @counter_list, $count.substr($count_method,0,1);
+        if( my $count = $count_hash{$count_method} = $self->$count_method() ) {
+            push @count_list, $count.substr($count_method,0,1);
         }
     }
-    my $breakout = join('+', @counter_list);
-    $breakout .= '='.$self->total_job_count() if(scalar(@counter_list)!=1); # only provide a total if multiple or no categories available
+    my $breakout_label = join('+', @count_list);
+    $breakout_label .= '='.$total_job_count if(scalar(@count_list)!=1); # only provide a total if multiple or no categories available
 
-    return $breakout;
+    return ($breakout_label, $total_job_count, \%count_hash);
 }
 
 
