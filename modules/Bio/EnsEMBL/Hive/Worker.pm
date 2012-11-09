@@ -519,15 +519,23 @@ sub run {
     $self->print_worker();
 
     if( $self->compile_module_once() ) {
-        $self->enter_status('COMPILATION');
-        my $runnable_object = $self->analysis->process or die "Unknown compilation error";
-        $runnable_object->db( $self->adaptor->db );
-        $runnable_object->worker( $self );
-        $runnable_object->debug( $self->debug );
-        $runnable_object->execute_writes( $self->execute_writes );
+        eval {
+            $self->enter_status('COMPILATION');
+            my $runnable_object = $self->analysis->process or die "Unknown compilation error";
+            $runnable_object->db( $self->adaptor->db );
+            $runnable_object->worker( $self );
+            $runnable_object->debug( $self->debug );
+            $runnable_object->execute_writes( $self->execute_writes );
 
-        $self->runnable_object( $runnable_object );
-        $self->enter_status('READY');
+            $self->runnable_object( $runnable_object );
+            $self->enter_status('READY');
+            1;
+        } or do {
+            my $msg = "Could not compile Runnable '".$self->analysis->module."' :\n\t".$@;
+            warn "$msg\n";
+
+            $self->cause_of_death('CONTAMINATED');
+        }
     }
 
   $self->adaptor->db->dbc->disconnect_when_inactive(0);
@@ -535,7 +543,8 @@ sub run {
   my $min_batch_time    = $self->analysis->stats->min_batch_time();
   my $job_adaptor       = $self->adaptor->db->get_AnalysisJobAdaptor;
 
-  do { # Worker's lifespan loop (ends only when the worker dies)
+  while (!$self->cause_of_death) {  # Worker's lifespan loop (ends only when the worker dies for any reason)
+
     my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
     my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
     $self->{'_interval_partial_timing'} = {};
@@ -591,7 +600,7 @@ sub run {
         $self->cause_of_death('HIVE_OVERLOAD');
     }
 
-  } while (!$self->cause_of_death); # /Worker's lifespan loop
+  }     # /Worker's lifespan loop
 
         # have runnable clean up any global/process files/data it may have created
     if($self->perform_cleanup) {
@@ -609,7 +618,7 @@ sub run {
   printf("dbc %d disconnect cycles\n", $self->adaptor->db->dbc->disconnect_count);
   print("total jobs completed : ", $self->work_done, "\n");
   
-  if( $self->log_dir() ) {
+  if( $self->log_dir ) {
     $self->get_stdout_redirector->pop();
     $self->get_stderr_redirector->pop();
   }
