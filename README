@@ -17,6 +17,19 @@ Changelog:
 
 ---------------------[before EnsEMBL rel.70]----------------------------------------------------------------
 
+* Mon Nov 12 14:15:40 2012 +0000 | Leo Gordon | updated the release number to 70 in the schema
+* Fri Nov 9 13:59:24 2012 +0000 | Leo Gordon | bugfix: worker.log_dir varchar(80) was too limiting, now extended to varchar(255); (thanks, Kathryn!)
+* Fri Nov 9 12:05:28 2012 +0000 | Leo Gordon | bugfix: make sure we release claimed jobs from a manually-run worker whose Runnable fails at compilation (thanks, Miguel!)
+* Thu Nov 8 10:50:51 2012 +0000 | Leo Gordon | job_count_breakout now also returns the components that go into the breakout_label
+* Tue Nov 6 12:55:26 2012 +0000 | Leo Gordon | bugfix: now works on patched schema too
+* Tue Nov 6 12:52:34 2012 +0000 | Leo Gordon | substituted fetch_all_failed_jobs() by a more versatile fetch_all_by_analysis_id_status()
+* Tue Nov 6 12:23:45 2012 +0000 | Leo Gordon | move job_count_breakout code into AnalysisStats to be called centrally
+* Fri Nov 2 14:23:13 2012 +0000 | Leo Gordon | quote and env-substitute runWorker.pl's -url commandline parameter
+* Fri Nov 2 15:14:57 2012 +0000 | Leo Gordon | parametrically slow down the LongMult test pipeline using -take_time global parameter
+* Fri Nov 2 10:03:39 2012 +0000 | Leo Gordon | cosmetic: removed CVS magic $_Revision and $_Author variables that cause CVS out of sync with Git
+* Fri Nov 2 09:59:09 2012 +0000 | Leo Gordon | cosmetic: added a short summary of Git commits to Changelog for CVS-only users
+
+
 * Thu Nov 1 15:59:55 2012 +0000 | Leo Gordon | bugfix: query in Q::fetch_all_dead_workers_with_jobs() has to reference worker table by its full name
 * Thu Nov 1 15:31:36 2012 +0000 | Leo Gordon | clearer display of job_counters in beekeeper's output
 * Thu Nov 1 15:16:08 2012 +0000 | Leo Gordon | clearer display of job_counters on the graph; removed misleading and unused remaining_job_count() and cpu_minutes_remaining()
