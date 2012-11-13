@@ -240,6 +240,7 @@ sub specialize_new_worker {
 
         unless($special_batch or $force) {    # do we really need to run this analysis?
             if($self->get_hive_current_load() >= 1.1) {
+                $worker->cause_of_death('HIVE_OVERLOAD');
                 die "Hive is overloaded, can't specialize a worker";
             }
             if($stats->status eq 'BLOCKED') {

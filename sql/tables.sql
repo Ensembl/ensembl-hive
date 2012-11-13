@@ -80,11 +80,11 @@ CREATE TABLE worker (
 
     analysis_id      int(10) unsigned DEFAULT NULL,
     work_done        int(11) DEFAULT '0' NOT NULL,
-    status           enum('READY','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL,
+    status           enum('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL,
     born	           timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_check_in    datetime NOT NULL,
     died             datetime DEFAULT NULL,
-    cause_of_death   enum('NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'UNKNOWN') DEFAULT NULL,
+    cause_of_death   enum('NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN') DEFAULT NULL,
     log_dir          varchar(255) DEFAULT NULL,
 
     PRIMARY KEY (worker_id),
@@ -221,11 +221,11 @@ CREATE TABLE job (
 --
 -- semantics:
 --       job_message_id     - an autoincremented primary id of the message
---               job_id     - the id of the job that threw the message
---            worker_id     - the worker in charge of the job at the moment
+--               job_id     - the id of the job that threw the message (or NULL if it was outside of a message)
+--            worker_id     - the 'current' worker
 --                 time     - when the message was thrown
---                retry     - retry_count of the job when the message was thrown
---               status     - of the job when the message was thrown
+--                retry     - retry_count of the job when the message was thrown (or NULL if no job)
+--               status     - of the job or worker when the message was thrown
 --                  msg     - string that contains the message
 --             is_error     - binary flag
 
@@ -235,7 +235,7 @@ CREATE TABLE job_message (
   worker_id                 int(10) unsigned NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   retry                     int(10) DEFAULT NULL,
-  status                    enum('UNKNOWN','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
+  status                    enum('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
   msg                       text,
   is_error                  TINYINT,
 

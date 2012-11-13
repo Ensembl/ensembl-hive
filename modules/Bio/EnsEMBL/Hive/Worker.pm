@@ -514,11 +514,22 @@ sub run {
         $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
     }
 
-    $self->adaptor->specialize_new_worker( $self, @spec_args );
+    eval {
+        $self->enter_status('SPECIALIZATION');
+        $self->adaptor->specialize_new_worker( $self, @spec_args );
+        $self->print_worker();
+        1;
+    } or do {
+        my $msg = "Could not specialize worker:\n\t".$@;
+        warn "$msg\n";
+        $self->adaptor->db->get_JobMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
-    $self->print_worker();
+        $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+    };
 
-    if( $self->compile_module_once() ) {
+    my $min_batch_time;
+
+    if(!$self->cause_of_death() and $self->compile_module_once() ) {
         eval {
             $self->enter_status('COMPILATION');
             my $runnable_object = $self->analysis->process or die "Unknown compilation error";
@@ -529,20 +540,20 @@ sub run {
 
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
+
+            $min_batch_time = $self->analysis->stats->min_batch_time();
+            $self->adaptor->db->dbc->disconnect_when_inactive(0);
             1;
         } or do {
             my $msg = "Could not compile Runnable '".$self->analysis->module."' :\n\t".$@;
             warn "$msg\n";
             $self->adaptor->db->get_JobMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
-            $self->cause_of_death('CONTAMINATED');
-        }
+            $self->cause_of_death('SEE_MSG');
+        };
     }
 
-  $self->adaptor->db->dbc->disconnect_when_inactive(0);
-
-  my $min_batch_time    = $self->analysis->stats->min_batch_time();
-  my $job_adaptor       = $self->adaptor->db->get_AnalysisJobAdaptor;
+    my $job_adaptor       = $self->adaptor->db->get_AnalysisJobAdaptor;
 
   while (!$self->cause_of_death) {  # Worker's lifespan loop (ends only when the worker dies for any reason)
 
