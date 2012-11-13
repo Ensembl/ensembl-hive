@@ -7,6 +7,6 @@ CREATE OR REPLACE VIEW msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM job_message m
     JOIN worker w USING (worker_id)
-    JOIN analysis_base a USING (analysis_id)
-    LEFT JOIN job j USING (job_id);
+    LEFT JOIN analysis_base a ON (a.analysis_id=w.analysis_id)
+    LEFT JOIN job j ON (j.job_id=m.job_id);
 
