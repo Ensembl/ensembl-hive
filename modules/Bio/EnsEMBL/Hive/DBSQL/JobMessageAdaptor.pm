@@ -6,7 +6,9 @@
 
 =head1 SYNOPSIS
 
-    $dba->get_JobMessageAdaptor->register_message($job_id, $msg, $is_error);
+    $dba->get_JobMessageAdaptor->store_job_message($job_id, $msg, $is_error);
+
+    $dba->get_JobMessageAdaptor->store_worker_message($worker_id, $msg, $is_error);
 
 =head1 DESCRIPTION
 
@@ -31,14 +33,14 @@ sub default_table_name {
 }
 
 
-sub register_message {
+sub store_job_message {
     my ($self, $job_id, $msg, $is_error) = @_;
 
     chomp $msg;   # we don't want that last "\n" in the database
 
     my $table_name = $self->table_name();
 
-        # (the timestamp 'time' column will be set automatically)
+        # Note: the timestamp 'time' column will be set automatically
     my $sql = qq{
         INSERT INTO $table_name (job_id, worker_id, retry, status, msg, is_error)
                            SELECT job_id, worker_id, retry_count, status, ?, ?
@@ -47,6 +49,25 @@ sub register_message {
 
     my $sth = $self->prepare( $sql );
     $sth->execute( $msg, $is_error ? 1 : 0, $job_id );
+    $sth->finish();
+}
+
+
+sub store_worker_message {
+    my ($self, $worker_id, $msg, $is_error) = @_;
+
+    chomp $msg;   # we don't want that last "\n" in the database
+
+    my $table_name = $self->table_name();
+
+        # Note: the timestamp 'time' column will be set automatically
+    my $sql = qq{
+        INSERT INTO $table_name (worker_id, status, msg, is_error)
+                           SELECT worker_id, status, ?, ?
+                             FROM worker WHERE worker_id=?
+    };
+    my $sth = $self->prepare( $sql );
+    $sth->execute( $msg, $is_error ? 1 : 0, $worker_id );
     $sth->finish();
 }
 

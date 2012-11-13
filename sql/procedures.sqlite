@@ -34,6 +34,7 @@ CREATE VIEW IF NOT EXISTS progress AS
 CREATE VIEW IF NOT EXISTS msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM job_message m
-    JOIN job j USING (job_id)
-    JOIN analysis_base a USING (analysis_id);
+    JOIN worker w USING (worker_id)
+    JOIN analysis_base a USING (analysis_id)
+    LEFT JOIN job j ON (m.job_id=j.job_id);
 

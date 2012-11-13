@@ -220,7 +220,7 @@ sub warning {
     my ($self, $msg) = @_;
 
     if( my $job_adaptor = $self->adaptor ) {
-        $job_adaptor->db->get_JobMessageAdaptor()->register_message($self->dbID, $msg, 0);
+        $job_adaptor->db->get_JobMessageAdaptor()->store_job_message($self->dbID, $msg, 0);
     } else {
         print STDERR "Warning: $msg\n";
     }

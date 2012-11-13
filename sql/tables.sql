@@ -231,10 +231,10 @@ CREATE TABLE job (
 
 CREATE TABLE job_message (
   job_message_id            int(10) NOT NULL AUTO_INCREMENT,
-  job_id                    int(10) NOT NULL,
+  job_id                    int(10) DEFAULT NULL,
   worker_id                 int(10) unsigned NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  retry                     int(10) DEFAULT 0 NOT NULL,
+  retry                     int(10) DEFAULT NULL,
   status                    enum('UNKNOWN','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
   msg                       text,
   is_error                  TINYINT,

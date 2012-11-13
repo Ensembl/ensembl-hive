@@ -215,10 +215,10 @@ CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 
 CREATE TABLE job_message (
   job_message_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  job_id                    INTEGER NOT NULL,
+  job_id                    INTEGER DEFAULT NULL,
   worker_id                 INTEGER NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  retry                     int(10) DEFAULT 0 NOT NULL,
+  retry                     int(10) DEFAULT NULL,
   status                    TEXT DEFAULT 'UNKNOWN', /* enum('UNKNOWN', 'COMPILATION', 'FETCH_INPUT', 'RUN', 'WRITE_OUTPUT', 'PASSED_ON') DEFAULT 'UNKNOWN', */
   msg                       TEXT,
   is_error                  BOOLEAN
