@@ -30,7 +30,6 @@ sub main {
     my $local                       = 0;
     my $show_failed_jobs            = 0;
     my $meadow_type                 = undef;
-    my $pending_adjust              = undef;
     my $submit_workers_max          = undef;
     my $total_running_workers_max   = undef;
     my $submission_options          = undef;
@@ -76,7 +75,6 @@ sub main {
                'meadow_type=s'                  => \$meadow_type,
                'total_running_workers_max=i'    => \$total_running_workers_max,
                'submit_workers_max=i'           => \$submit_workers_max,
-               'pending_adjust=i'               => \$pending_adjust,
                'submission_options=s'           => \$submission_options,
 
                     # worker control
@@ -163,7 +161,6 @@ sub main {
     warn "Current ".$current_meadow->toString."\n\n";
 
     $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
-    $current_meadow->config_set('PendingAdjust', $pending_adjust) if(defined $pending_adjust);
     $current_meadow->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
     $current_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
@@ -426,7 +423,6 @@ __DATA__
     -meadow_type <string>               : the desired Meadow class name, such as 'LSF' or 'LOCAL'
     -total_running_workers_max <num>    : max # workers to be running in parallel
     -submit_workers_max <num>           : max # workers to create per loop iteration
-    -pending_adjust <0|1>               : [do not] adjust needed workers by pending workers
     -submission_options <string>        : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
 
 =head2 Worker control
