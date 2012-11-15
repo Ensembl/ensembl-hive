@@ -11,14 +11,6 @@ use Bio::EnsEMBL::Hive::Valley;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-my $db_conf = {
-    -host   => '',
-    -port   => 3306,
-    -user   => 'ensro',
-    -pass   => '',
-    -dbname => '',
-};
-
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once, $force);   # Worker control parameters
@@ -30,11 +22,6 @@ GetOptions(
            'reg_conf|regfile=s'         => \$reg_conf,
            'reg_alias|regname=s'        => \$reg_alias,
            'url=s'                      => \$url,
-           'host|dbhost=s'              => \$db_conf->{'-host'},
-           'port|dbport=i'              => \$db_conf->{'-port'},
-           'user|dbuser=s'              => \$db_conf->{'-user'},
-           'password|dbpass=s'          => \$db_conf->{'-pass'},
-           'database|dbname=s'          => \$db_conf->{'-dbname'},
 
 # Task specification parameters:
            'rc_id=i'                    => \$resource_class_id,
@@ -57,9 +44,6 @@ GetOptions(
 # Other commands
            'h|help'                     => \$help,
            'debug=i'                    => \$debug,
-
-# loose arguments interpreted as database name (for compatibility with mysql[dump])
-            '<>', sub { $db_conf->{'-dbname'} = shift @_; },
 );
 
 if ($help) { script_usage(0); }
@@ -83,23 +67,19 @@ if($reg_alias) {
     $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
 
     $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
-} elsif ($db_conf->{'-host'} and $db_conf->{'-user'} and $db_conf->{'-dbname'}) {
-    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %$db_conf );
 } else {
-    print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
+    print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
     script_usage(1);
 }
 
 unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
-  print "ERROR : no database connection\n\n";
-  script_usage(1);
+    print "ERROR : no database connection\n\n";
+    script_usage(1);
 }
 
 my $queen = $DBA->get_Queen();
 
 my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-
-print "runWorker(-MeadowType => $meadow_type, -MeadowName => $meadow_name, -ProcessId => $process_id, -ExecHost => $exec_host)\n";
 
 my $worker;
 
@@ -169,30 +149,24 @@ __DATA__
 =head1 USAGE EXAMPLES
 
         # Run one local worker process in ehive_dbname and let the system pick up the analysis
-    runWorker.pl --host=hostname --port=3306 --user=username --password=secret ehive_dbname
-
-        # Run one local worker process in ehive_dbname and let the system pick up the analysis (another connection syntax)
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
+
+        # Run one local worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
 
         # Run one local worker process in ehive_dbname and specify the logic_name
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast
 
-        # Run a specific job (by a local worker process):
+        # Run a specific job in a local worker process:
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
 
 =head1 OPTIONS
 
 =head2 Connection parameters:
 
-    -conf <path>            : config file describing db connection
     -reg_conf <path>        : path to a Registry configuration file
     -reg_alias <string>     : species/alias name for the Hive DBAdaptor
     -url <url string>       : url defining where database is located
-    -host <machine>         : mysql database host <machine>
-    -port <port#>           : mysql port number
-    -user <name>            : mysql connection user <name>
-    -password <pass>        : mysql connection password
-    [-database] <name>      : mysql database <name>
 
 =head2 Task specificaton parameters:
 
@@ -212,7 +186,7 @@ __DATA__
     -worker_log_dir <path>      : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
     -compile_module_once 0|1    : should we compile the module only once (desired future behaviour), or pretend to do it before every job (current behaviour)?
-    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis
+    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 
 =head2 Other options:
 

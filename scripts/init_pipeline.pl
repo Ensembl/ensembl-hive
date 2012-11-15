@@ -33,7 +33,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl <config_module_or_filename> [-help | [ [-analysis_topup | -job_topup] <options_for_this_particular_pipeline>]
+    init_pipeline.pl <config_module_or_filename> [-help | [-analysis_topup | -job_topup] <options_for_this_particular_pipeline>]
 
 =head1 DESCRIPTION
 

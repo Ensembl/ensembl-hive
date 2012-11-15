@@ -24,14 +24,6 @@ sub main {
         # the globals into a nice '$self' package
     my $self = {};
 
-    $self->{'db_conf'} = {
-        -host   => '',
-        -port   => 3306,
-        -user   => 'ensro',
-        -pass   => '',
-        -dbname => '',
-    };
-
     my $help;
     my $loopit                      = 0;
     my $sync                        = 0;
@@ -69,11 +61,6 @@ sub main {
                'reg_conf|regfile=s' => \$self->{'reg_conf'},
                'reg_alias|regname=s'=> \$self->{'reg_alias'},
                'url=s'              => \$self->{'url'},
-               'host|dbhost=s'      => \$self->{'db_conf'}->{'-host'},
-               'port|dbport=i'      => \$self->{'db_conf'}->{'-port'},
-               'user|dbuser=s'      => \$self->{'db_conf'}->{'-user'},
-               'password|dbpass=s'  => \$self->{'db_conf'}->{'-pass'},
-               'database|dbname=s'  => \$self->{'db_conf'}->{'-dbname'},
 
                     # loop control
                'run'                => \$run,
@@ -115,9 +102,6 @@ sub main {
                'reset_all|reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
                'job_output=i'      => \$job_id_for_output,
                'monitor!'          => \$self->{'monitor'},
-
-                    # loose arguments interpreted as database name (for compatibility with mysql[dump])
-               '<>', sub { $self->{'db_conf'}->{'-dbname'} = shift @_; },
     );
 
     if ($help) { script_usage(0); }
@@ -140,12 +124,8 @@ sub main {
         $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
     } elsif($self->{'url'}) {
         $self->{'dba'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'}) || die("Unable to connect to $self->{'url'}\n");
-    } elsif (    $self->{'db_conf'}->{'-host'}
-             and $self->{'db_conf'}->{'-user'}
-             and $self->{'db_conf'}->{'-dbname'}) { # connect to database specified
-                    $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->{'db_conf'}} );
     } else {
-        print "\nERROR : Connection parameters (reg_conf+reg_alias, url or dbhost+dbuser+dbname) need to be specified\n\n";
+        print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
     }
 
@@ -404,9 +384,6 @@ __DATA__
 =head1 USAGE EXAMPLES
 
         # Usually run after the pipeline has been created to calculate the internal statistics necessary for eHive functioning
-    beekeeper.pl --host=hostname --port=3306 --user=username --password=secret ehive_dbname -sync
-
-        # An alternative way of doing the same thing
     beekeeper.pl -url mysql://username:secret@hostname:port/ehive_dbname -sync
 
         # Do not run any additional Workers, just check for the current status of the pipeline:
@@ -434,11 +411,6 @@ __DATA__
     -reg_conf <path>       : path to a Registry configuration file
     -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
-    -host <machine>        : mysql database host <machine>
-    -port <port#>          : mysql port number
-    -user <name>           : mysql connection user <name>
-    -password <pass>       : mysql connection password <pass>
-    [-database] <name>     : mysql database <name>
 
 =head2 Looping control
 
