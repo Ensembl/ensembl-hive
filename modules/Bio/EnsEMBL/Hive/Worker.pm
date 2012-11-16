@@ -514,10 +514,13 @@ sub run {
         $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
     }
 
+    my $min_batch_time;
+
     eval {
         $self->enter_status('SPECIALIZATION');
         $self->adaptor->specialize_new_worker( $self, @spec_args );
         $self->print_worker();
+        $min_batch_time = $self->analysis->stats->min_batch_time();
         1;
     } or do {
         my $msg = "Could not specialize worker:\n\t".$@;
@@ -526,8 +529,6 @@ sub run {
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
     };
-
-    my $min_batch_time;
 
     if(!$self->cause_of_death() and $self->compile_module_once() ) {
         eval {
@@ -541,7 +542,6 @@ sub run {
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
 
-            $min_batch_time = $self->analysis->stats->min_batch_time();
             $self->adaptor->db->dbc->disconnect_when_inactive(0);
             1;
         } or do {
