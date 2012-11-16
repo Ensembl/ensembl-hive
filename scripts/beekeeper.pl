@@ -156,12 +156,12 @@ sub main {
 
     $meadow_type = 'LOCAL' if($local);
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $meadow_type, $pipeline_name );
+    $valley->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
 
     my $current_meadow = $valley->get_current_meadow();
     warn "Current meadow: ".$current_meadow->signature."\n\n";
 
     $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
-    $current_meadow->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
     $current_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }

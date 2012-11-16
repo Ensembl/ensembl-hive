@@ -1,16 +1,19 @@
 {
+    "Valley" : {
+        "SubmitWorkersMax"  : 50,       # if set, provides a cut-off on the total number of workers (across all Meadows) submitted each iteration
+    },
     "Meadow" : {    # configure Meadow-specific options here:
         "LSF" : {
             "SubmissionOptions"         : "",   # general options that different Meadows can plug into the submission command
             "TotalRunningWorkersMax"    : 1000, # how many workers can be run on this Meadow in total
             "farm2" : {
-                "SubmitWorkersMax"  : 50,       # if set, provides a cut-off on the number of workers being submitted each iteration
+                "SubmissionOptions"  : "",      # submission options specific for LSF/farm2
             },
             "pcs4" : {
-                "SubmitWorkersMax"  : 30,
+                "SubmissionOptions"  : "",      # submission options specific for LSF/pcs4
             },
             "EBI" : {
-                "SubmitWorkersMax"  : 60,
+                "SubmissionOptions"  : "",      # submission options specific for LSF/EBI
             },
         },
         "LOCAL" : {

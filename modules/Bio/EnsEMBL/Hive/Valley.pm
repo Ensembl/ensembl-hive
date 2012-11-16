@@ -26,6 +26,8 @@ use warnings;
 use Sys::Hostname;
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 
+use base ('Bio::EnsEMBL::Hive::Configurable');
+
 
 sub meadow_class_path {
 
@@ -37,6 +39,9 @@ sub new {
     my ($class, $config, $current_meadow_type, $pipeline_name) = @_;
 
     my $self = bless {}, $class;
+
+    $self->config( $config );
+    $self->context( [ 'Valley' ] );
 
     my $amch = $self->available_meadow_hash( {} );
 
