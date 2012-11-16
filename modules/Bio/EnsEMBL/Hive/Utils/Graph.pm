@@ -32,6 +32,8 @@ use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
+use base ('Bio::EnsEMBL::Hive::Configurable');
+
 
 =head2 new()
 
@@ -55,6 +57,7 @@ sub new {
   $self->dba($dba);
   my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file_name ? $config_file_name : () );
   $self->config($config);
+  $self->context( [ 'Graph' ] );
 
   return $self;
 }
@@ -97,30 +100,12 @@ sub dba {
 }
 
 
-=head2 config()
-
-  Arg [1] : The graph configuration object
-  Returntype : Bio::EnsEMBL::Hive::Utils::Config.
-  Exceptions : If the object given is not of the required type
-  Status     : Beta
-
-=cut
-
-sub config {
-  my ($self, $config) = @_;
-  if(defined $config) {
-    assert_ref($config, 'Bio::EnsEMBL::Hive::Utils::Config');
-    $self->{config} = $config;
-  }
-  return $self->{config};
-}
-
-
 sub _analysis_node_name {
     my $analysis_id = shift @_;
 
     return 'analysis_' . $analysis_id;
 }
+
 
 sub _midpoint_name {
     my $rule_id = shift @_;
@@ -176,7 +161,7 @@ sub build {
     $self->_control_rules( $all_ctrl_rules );
     $self->_dataflow_rules( $all_dataflow_rules );
 
-    if($self->config->get('Graph', 'DisplayStretched') ) {
+    if($self->config_get('DisplayStretched') ) {
 
         # The invisible edges will be linked to the destination analysis instead of the midpoint
         my $id_to_rule = {map { $_->dbID => $_ } @$all_dataflow_rules};
@@ -193,10 +178,10 @@ sub build {
         }
     }
 
-    if($self->config->get('Graph', 'DisplaySemaphoreBoxes') ) {
+    if($self->config_get('DisplaySemaphoreBoxes') ) {
         $self->graph->subgraphs( \%subgraph_allocation );
-        $self->graph->colour_scheme( $self->config->get('Graph', 'Box', 'ColourScheme') );
-        $self->graph->colour_offset( $self->config->get('Graph', 'Box', 'ColourOffset') );
+        $self->graph->colour_scheme( $self->config_get('Box', 'ColourScheme') );
+        $self->graph->colour_offset( $self->config_get('Box', 'ColourOffset') );
     }
 
     return $self->graph();
@@ -207,18 +192,17 @@ sub _allocate_to_subgraph {
     my ($self, $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation ) = @_;
 
     my $parent_allocation = $subgraph_allocation->{ $parent_analysis_node_name };  # for some analyses it will be undef
-    my $config = $self->config();
 
     foreach my $rule ( @{ $outflow_rules->{$parent_analysis_node_name} } ) {
         my $to_analysis                 = $rule->to_analysis();
-        next unless $to_analysis->can('dbID') or $config->get('Graph', 'DuplicateTables');
+        next unless $to_analysis->can('dbID') or $self->config_get('DuplicateTables');
 
         my $this_analysis_node_name;
         if ($to_analysis->can('dbID')) {
             $this_analysis_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
         } else {
             $this_analysis_node_name = $to_analysis->table_name();
-            $this_analysis_node_name .= '_'.$rule->from_analysis_id() if $config->get('Graph', 'DuplicateTables');
+            $this_analysis_node_name .= '_'.$rule->from_analysis_id() if $self->config_get('DuplicateTables');
         }
         my $funnel_dataflow_rule_id     = $rule->funnel_dataflow_rule_id();
 
@@ -257,9 +241,9 @@ sub _allocate_to_subgraph {
 sub _add_hive_details {
   my ($self) = @_;
 
-  my $node_fontname  = $self->config->get('Graph', 'Node', 'Details', 'Font');
+  my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
 
-  if($self->config->get('Graph', 'DisplayDetails') ) {
+  if( $self->config_get('DisplayDetails') ) {
     my $dbc = $self->dba()->dbc();
     my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
     $self->graph()->add_node( 'Details',
@@ -280,8 +264,8 @@ sub _add_analysis_node {
   
   my $analysis_label    = $a->logic_name().' ('.$a->dbID().')\n'.$breakout_label;
   my $shape             = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
-  my $status_colour     = $self->config->get('Graph', 'Node', $stats->status, 'Colour');
-  my $node_fontname     = $self->config->get('Graph', 'Node', $stats->status, 'Font');
+  my $status_colour     = $self->config_get('Node', $stats->status, 'Colour');
+  my $node_fontname     = $self->config_get('Node', $stats->status, 'Font');
   
   $self->graph->add_node( _analysis_node_name( $a->dbID() ), 
     label       => $analysis_label,
@@ -296,7 +280,7 @@ sub _add_analysis_node {
 sub _control_rules {
   my ($self, $all_ctrl_rules) = @_;
   
-  my $control_colour = $self->config->get('Graph', 'Edge', 'Control', 'Colour');
+  my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
   my $graph = $self->graph();
 
   #The control rules are always from and to an analysis so no need to search for odd cases here
@@ -314,9 +298,9 @@ sub _dataflow_rules {
     my ($self, $all_dataflow_rules) = @_;
 
     my $graph = $self->graph();
-    my $dataflow_colour  = $self->config->get('Graph', 'Edge', 'Data', 'Colour');
-    my $semablock_colour = $self->config->get('Graph', 'Edge', 'Semablock', 'Colour');
-    my $df_edge_fontname    = $self->config->get('Graph', 'Edge', 'Data', 'Font');
+    my $dataflow_colour  = $self->config_get('Edge', 'Data', 'Colour');
+    my $semablock_colour = $self->config_get('Edge', 'Semablock', 'Colour');
+    my $df_edge_fontname = $self->config_get('Edge', 'Data', 'Font');
 
     my %needs_a_midpoint = ();
     my %aid2aid_nonsem = ();    # simply a directed graph between numerical analysis_ids, except for semaphored rules
@@ -344,7 +328,7 @@ sub _dataflow_rules {
             $to_node = _analysis_node_name($to_id);
         } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $to_node = $to->table_name();
-            $to_node .= '_'.$from_analysis_id if $self->config->get('Graph', 'DuplicateTables');
+            $to_node .= '_'.$from_analysis_id if $self->config_get('DuplicateTables');
             $self->_add_table_node($to_node);
         } else {
             warn('Do not know how to handle the type '.ref($to));
@@ -396,10 +380,10 @@ sub _dataflow_rules {
 sub _add_table_node {
   my ($self, $table) = @_;
 
-  my $node_fontname    = $self->config->get('Graph', 'Node', 'Table', 'Font');
+  my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
 
   my $table_name = $table;
-  if ($self->config->get('Graph', 'DuplicateTables')) {
+  if( $self->config_get('DuplicateTables') ) {
     $table =~ /^(.*)_([^_]*)$/;
     $table_name = $1;
   }
@@ -408,7 +392,7 @@ sub _add_table_node {
     label => $table_name.'\n', 
     shape => 'tab',
     fontname => $node_fontname,
-    color => $self->config->get('Graph', 'Node', 'Table', 'Colour'),
+    color => $self->config_get('Node', 'Table', 'Colour'),
   );
 }
 
