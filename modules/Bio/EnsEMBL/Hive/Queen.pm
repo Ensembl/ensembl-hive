@@ -321,6 +321,7 @@ sub register_worker_death {
             or $cod eq 'MEMLIMIT'
             or $cod eq 'RUNLIMIT'
             or $cod eq 'KILLED_BY_USER'
+            or $cod eq 'SEE_MSG'
             or $cod eq 'CONTAMINATED') {
                 $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
         }
