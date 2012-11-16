@@ -7,6 +7,8 @@ package Bio::EnsEMBL::Hive::Meadow;
 use strict;
 use warnings;
 
+use base ('Bio::EnsEMBL::Hive::Configurable');
+
 
 sub new {
     my ($class, $config) = @_;
@@ -14,6 +16,7 @@ sub new {
     my $self = bless {}, $class;
 
     $self->config( $config );
+    $self->context( [ 'Meadow', $self->type, $self->name ] );
 
     return $self;
 }
@@ -32,30 +35,6 @@ sub signature {
     my $self = shift @_;
 
     return $self->type.'/'.$self->name;
-}
-
-
-sub config {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_config'} = shift @_;
-    }
-    return $self->{'_config'};
-}
-
-
-sub config_get {
-    my $self = shift @_;
-
-    return $self->config->get('Meadow', $self->type, $self->name, @_);
-}
-
-
-sub config_set {
-    my $self = shift @_;
-
-    return $self->config->set('Meadow', $self->type, $self->name, @_);
 }
 
 
