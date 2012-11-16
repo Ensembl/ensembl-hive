@@ -738,16 +738,19 @@ sub count_running_workers {
 =cut
 
 sub schedule_workers {
-  my ($self, $filter_analysis, $orig_pending_this_meadow_by_rc_name, $available_submit_limit) = @_;
+    my ($self, $filter_analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name, $default_meadow_type) = @_;
+
+    my $meadow_limit                        = $available_worker_slots_by_meadow_type->{ $default_meadow_type };
+    my $orig_pending_this_meadow_by_rc_name = $pending_worker_counts_by_meadow_type_rc_name->{ $default_meadow_type };
+
+    my $available_submit_limit = ($submit_limit and $meadow_limit)
+                                    ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)
+                                    : (defined($submit_limit) ? $submit_limit : $meadow_limit);
 
   my @suitable_analyses         = $filter_analysis
                                     ? ( $filter_analysis->stats )
                                     : @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id() };
 
-  my $analysis_id2rc_id         = $self->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
-  my $rc_id2name                = $self->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
-        # combined mapping
-  my %analysis_id2rc_name       = map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id;
 
   return {} unless(@suitable_analyses);
 
@@ -789,7 +792,7 @@ sub schedule_workers {
         $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
     }
 
-    my $curr_rc_name    = $analysis_id2rc_name{ $analysis_stats->analysis_id };
+    my $curr_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
 
     if($pending_this_meadow_by_rc_name{ $curr_rc_name }) {                              # per-rc_name capping by pending processes, if available
         my $pending_this_analysis = ($pending_this_meadow_by_rc_name{ $curr_rc_name } < $workers_this_analysis) ? $pending_this_meadow_by_rc_name{ $curr_rc_name } : $workers_this_analysis;
@@ -815,20 +818,18 @@ sub schedule_workers {
 sub schedule_workers_resync_if_necessary {
     my ($self, $valley, $analysis) = @_;
 
-    my $submit_limit        = $valley->config_get('SubmitWorkersMax');
-    my $meadow              = $valley->get_current_meadow();
-
-    my $available_worker_slots_by_meadow_type   = $valley->get_available_worker_slots_by_meadow_type();
-    my $meadow_limit                            = $available_worker_slots_by_meadow_type->{ $meadow->type };
-
+    my $submit_limit                                                                = $valley->config_get('SubmitWorkersMax');
+    my $available_worker_slots_by_meadow_type                                       = $valley->get_available_worker_slots_by_meadow_type();
     my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name();
-    my $pending_this_meadow_by_rc_name          = $pending_worker_counts_by_meadow_type_rc_name->{ $meadow->type };
 
-    my $available_submit_limit = ($submit_limit and $meadow_limit)
-                                    ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)
-                                    : (defined($submit_limit) ? $submit_limit : $meadow_limit);
+    my $analysis_id2rc_id         = $self->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
+    my $rc_id2name                = $self->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+        # combined mapping:
+    my %analysis_id2rc_name       = map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id;
 
-    my $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $pending_this_meadow_by_rc_name, $available_submit_limit);
+    my $default_meadow_type       = $valley->get_current_meadow()->type;
+
+    my $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
 
     unless( keys %$workers_to_run_by_rc_name or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
@@ -836,7 +837,7 @@ sub schedule_workers_resync_if_necessary {
         $self->check_for_dead_workers($valley, 1);
         $self->synchronize_hive($analysis);
 
-        $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $pending_this_meadow_by_rc_name, $available_submit_limit);
+        $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
     }
 
     return $workers_to_run_by_rc_name;
