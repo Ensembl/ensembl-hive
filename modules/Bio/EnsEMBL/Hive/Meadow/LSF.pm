@@ -39,17 +39,19 @@ sub count_pending_workers_by_rc_name {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = qq{bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND};
+    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND";
 
-    my %pending_by_rc_name = ();
+    my %pending_this_meadow_by_rc_name = ();
+    my $total_pending_this_meadow = 0;
 
     foreach my $line (qx/$cmd/) {
         if($line=~/\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
-            $pending_by_rc_name{$1}++;
+            $pending_this_meadow_by_rc_name{$1}++;
+            $total_pending_this_meadow++;
         }
     }
 
-    return \%pending_by_rc_name;
+    return (\%pending_this_meadow_by_rc_name, $total_pending_this_meadow);
 }
 
 

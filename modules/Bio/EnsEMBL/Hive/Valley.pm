@@ -140,5 +140,36 @@ sub whereami {
 }
 
 
+sub get_pending_worker_counts_by_meadow_type_rc_name {
+    my $self = shift @_;
+
+    my %pending_counts = ();
+    my $total_pending_all_meadows = 0;
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my ($pending_this_meadow_by_rc_name, $total_pending_this_meadow) = ($meadow->count_pending_workers_by_rc_name());
+        $pending_counts{ $meadow->type } = $pending_this_meadow_by_rc_name;
+        $total_pending_all_meadows += $total_pending_this_meadow;
+    }
+
+    return (\%pending_counts, $total_pending_all_meadows);
+}
+
+
+sub get_available_worker_slots_by_meadow_type {
+    my $self = shift @_;
+
+    my %available_worker_slots = ();
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        if( $meadow->can('count_running_workers') and defined($meadow->config_get('TotalRunningWorkersMax'))) {
+            $available_worker_slots{ $meadow->type } = $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers;
+        }
+    }
+
+    return \%available_worker_slots;
+}
+
+
 1;
 

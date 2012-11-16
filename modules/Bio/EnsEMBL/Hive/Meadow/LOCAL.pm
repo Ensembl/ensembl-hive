@@ -21,6 +21,13 @@ sub get_current_worker_process_id {
 }
 
 
+sub count_pending_workers_by_rc_name {
+    my ($self) = @_;
+
+    return ({}, 0);     # LOCAL has no concept of pending workers
+}
+
+
 sub count_running_workers {
     my $self = shift @_;
 
