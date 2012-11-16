@@ -158,7 +158,7 @@ sub main {
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $meadow_type, $pipeline_name );
 
     my $current_meadow = $valley->get_current_meadow();
-    warn "Current ".$current_meadow->toString."\n\n";
+    warn "Current meadow: ".$current_meadow->signature."\n\n";
 
     $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
     $current_meadow->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
@@ -337,7 +337,7 @@ sub run_autonomously {
             foreach my $rc_name ( sort { $workers_to_run_by_rc_name->{$a}<=>$workers_to_run_by_rc_name->{$b} } keys %$workers_to_run_by_rc_name) {
                 my $this_rc_worker_count = $workers_to_run_by_rc_name->{$rc_name};
 
-                print "Submitting $this_rc_worker_count workers (rc_name=$rc_name) to ".$current_meadow->toString()."\n";
+                print "Submitting $this_rc_worker_count workers (rc_name=$rc_name) to ".$current_meadow->signature()."\n";
 
                 $current_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
             }
