@@ -26,6 +26,21 @@ The following parameters are accepted:
 
  - output_file [string] : the file to write the dump to
 
+The following table describes how the various options combine:
+(T means table_list, EL exclude_list, EH exclude_ehive)
+(l+ is the list of included tables, l- of excluded tables)
+
+T EL EH      l+  l-
+
++  1  0      0   T  = all except T
++  0  0      TH  0  = T and H
+0  0  0      0   0  = all
+0  1  0      H   0  = H
++  1  1      0   TH = all except T and H
++  0  1      T   H  = T (minus H)
+0  0  1      0   H  = all except H
+0  1  1      0   0  = nothing
+
 =head1 SYNOPSIS
 
 standaloneJob.pl RunnableDB/DatabaseDumper.pm -exclude_ehive 1 -exclude_list 1 -table_list "['peptide_align_%']" -src_db_conn mysql://ensro@127.0.0.1:4313/mm14_compara_homology_67 -output_file ~/dump1.sql
@@ -49,6 +64,7 @@ sub fetch_input {
 
     # Would be good to have this from eHive
     my @ehive_tables = qw(worker dataflow_rule analysis_base analysis_ctrl_rule job job_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
+    $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
@@ -60,6 +76,8 @@ sub fetch_input {
 
     # Get the table list in either "tables" or "ignores"
     my $table_list = $self->_get_table_list;
+    print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
+
     if ($self->param('exclude_list')) {
         push @ignores, @$table_list;
     } else {
@@ -69,7 +87,9 @@ sub fetch_input {
     # eHive tables are dumped unless exclude_ehive is defined
     if ($self->param('exclude_ehive')) {
         push @ignores, @ehive_tables;
-    } elsif ($self->param('table_list')) {
+    } elsif (scalar(@$table_list) and not $self->param('exclude_list')) {
+        push @tables, @ehive_tables;
+    } elsif (not scalar(@$table_list) and $self->param('exclude_list')) {
         push @tables, @ehive_tables;
     }
 
@@ -115,19 +135,29 @@ sub run {
     my $tables = $self->param('tables');
     my $ignores = $self->param('ignores');
 
+    print "tables: ", scalar(@$tables), " ", join('/', @$tables), "\n" if $self->debug;
+    print "ignores: ", scalar(@$ignores), " ", join('/', @$ignores), "\n" if $self->debug;
+
+    # We have to exclude everything
+    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
+
+    # mysqldump command
     my $cmd = join(' ', 
         'mysqldump',
         $self->mysql_conn_from_dbc($src_dbc),
+        '--skip-lock-tables',
         @$tables,
-        map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores,
+        (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
         $self->param('output_file') ? sprintf('> %s', $self->param('real_output_file')) : sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db'))),
     );
-
     print "$cmd\n" if $self->debug;
-    unless ($self->param('skip_dump')) {
-        if(my $return_value = system($cmd)) {
-            die "system( $cmd ) failed: $return_value";
-        }
+
+    # We have to skip the dump
+    return if ($self->param('skip_dump'));
+
+    # OK, we can dump
+    if(my $return_value = system($cmd)) {
+        die "system( $cmd ) failed: $return_value";
     }
 }
 
