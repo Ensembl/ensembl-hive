@@ -759,7 +759,9 @@ sub schedule_workers {
   foreach my $analysis_stats (@suitable_analyses) {
     last if ($available_load <= 0.0);
 
-    my $this_meadow_type = $default_meadow_type;    # this should be coming from each specific analysis (and only default if undef)
+    my $analysis = $analysis_stats->get_analysis();         # FIXME: if it proves too expensive we may need to consider caching
+
+    my $this_meadow_type = $analysis->meadow_type || $default_meadow_type;
 
     if( defined(my $meadow_limit = $available_worker_slots_by_meadow_type->{ $this_meadow_type }) ) {
         $available_submit_limit = defined($available_submit_limit)
@@ -812,7 +814,7 @@ sub schedule_workers {
     $total_workers_to_submit_by_meadow_type{ $this_meadow_type }                    += $workers_this_analysis;
     $total_workers_to_submit                                                        += $workers_this_analysis;
     $analysis_stats->print_stats();
-    printf("Scheduler suggests adding $workers_this_analysis more $this_meadow_type:$curr_rc_name workers for analysis_id=%d [%.3f hive_load remaining]\n", $analysis_stats->analysis_id, $available_load);
+    printf("Scheduler suggests adding $workers_this_analysis x $this_meadow_type:$curr_rc_name workers for '%s' [%.3f hive_load remaining]\n", $analysis->logic_name, $available_load);
   }
 
     print ''.('-'x60)."\n";

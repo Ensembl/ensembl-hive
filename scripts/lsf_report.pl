@@ -60,9 +60,9 @@ sub main {
                    min(swap), avg(swap), max(swap)
             FROM analysis_base
             JOIN resource_class rc USING(resource_class_id)
-            LEFT JOIN worker USING(analysis_id)
+            LEFT JOIN worker w USING(analysis_id)
             LEFT JOIN lsf_report USING (process_id)
-            WHERE meadow_type='LSF'
+            WHERE w.meadow_type='LSF'
             GROUP BY analysis_id
             ORDER BY analysis_id;
     });
