@@ -61,6 +61,7 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use POSIX;
+use Clone 'clone';
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -738,30 +739,33 @@ sub count_running_workers {
 =cut
 
 sub schedule_workers {
-    my ($self, $filter_analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name, $default_meadow_type) = @_;
+    my ($self, $filter_analysis, $available_submit_limit, $available_worker_slots_by_meadow_type, $orig_pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name, $default_meadow_type) = @_;
 
-    my $meadow_limit                        = $available_worker_slots_by_meadow_type->{ $default_meadow_type };
-    my $orig_pending_this_meadow_by_rc_name = $pending_worker_counts_by_meadow_type_rc_name->{ $default_meadow_type };
+    my @suitable_analyses   = $filter_analysis
+                                ? ( $filter_analysis->stats )
+                                : @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id() };
 
-    my $available_submit_limit = ($submit_limit and $meadow_limit)
-                                    ? (($submit_limit<$meadow_limit) ? $submit_limit : $meadow_limit)
-                                    : (defined($submit_limit) ? $submit_limit : $meadow_limit);
+    unless(@suitable_analyses) {
+        print "Scheduler could not find any suitable analyses to start with\n";
+        return ({}, 0);
+    }
 
-  my @suitable_analyses         = $filter_analysis
-                                    ? ( $filter_analysis->stats )
-                                    : @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id() };
-
-
-  return {} unless(@suitable_analyses);
-
-  my %pending_this_meadow_by_rc_name    = %{ $orig_pending_this_meadow_by_rc_name || {} };  # NB: make our own copy to be able to modify it
-  my $total_workers_to_run      = 0;
-  my %workers_to_run_by_rc_name = ();
-  my $available_load            = 1.0 - $self->get_hive_current_load();
-
+    my %workers_to_submit_by_meadow_type_rc_name    = ();
+    my %total_workers_to_submit_by_meadow_type      = ();
+    my %pending_worker_counts_by_meadow_type_rc_name= %{ clone $orig_pending_worker_counts_by_meadow_type_rc_name };    # we need a deep disposable copy here
+    my $total_workers_to_submit                     = 0;
+    my $available_load                              = 1.0 - $self->get_hive_current_load();
 
   foreach my $analysis_stats (@suitable_analyses) {
     last if ($available_load <= 0.0);
+
+    my $this_meadow_type = $default_meadow_type;    # this should be coming from each specific analysis (and only default if undef)
+
+    if( defined(my $meadow_limit = $available_worker_slots_by_meadow_type->{ $this_meadow_type }) ) {
+        $available_submit_limit = defined($available_submit_limit)
+                                    ? (($available_submit_limit<$meadow_limit) ? $available_submit_limit : $meadow_limit)
+                                    : $meadow_limit;
+    }
     last if (defined($available_submit_limit) and !$available_submit_limit);
 
         #digging deeper under the surface so need to sync
@@ -770,12 +774,12 @@ sub schedule_workers {
     }
 
     next if($analysis_stats->status eq 'BLOCKED');
-    next if($analysis_stats->num_required_workers == 0);
 
         # FIXME: the following call *sometimes* returns a stale number greater than the number of workers actually needed for an analysis; -sync fixes it
-    my $workers_this_analysis = $analysis_stats->num_required_workers;
+    my $workers_this_analysis = $analysis_stats->num_required_workers
+        or next;
 
-    if(defined($available_submit_limit)) {                              # submit_limit total capping, if available
+    if(defined($available_submit_limit)) {                              # available_submit_limit total capping, if available
         if($workers_this_analysis > $available_submit_limit) {
             $workers_this_analysis = $available_submit_limit;
         }
@@ -794,31 +798,37 @@ sub schedule_workers {
 
     my $curr_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
 
-    if($pending_this_meadow_by_rc_name{ $curr_rc_name }) {                              # per-rc_name capping by pending processes, if available
-        my $pending_this_analysis = ($pending_this_meadow_by_rc_name{ $curr_rc_name } < $workers_this_analysis) ? $pending_this_meadow_by_rc_name{ $curr_rc_name } : $workers_this_analysis;
+    if(my $pending_this_meadow_type_and_rc_name = $pending_worker_counts_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name }) { # per-rc_name capping by pending processes, if available
+        my $pending_this_analysis = ($pending_this_meadow_type_and_rc_name < $workers_this_analysis) ? $pending_this_meadow_type_and_rc_name : $workers_this_analysis;
 
-        print "Scheduler detected $pending_this_analysis pending workers with resource_class_name=$curr_rc_name\n";
-        $workers_this_analysis                              -= $pending_this_analysis;
-        $pending_this_meadow_by_rc_name{ $curr_rc_name }    -= $pending_this_analysis;
+        print "Scheduler detected $pending_this_analysis pending workers with resource_class_name=$curr_rc_name, adjusting for this value\n";
+        $pending_worker_counts_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name } -= $pending_this_analysis;
+        $workers_this_analysis                                                              -= $pending_this_analysis;
     }
 
-    next unless($workers_this_analysis);    # do not autovivify the hash by a zero
+    next unless($workers_this_analysis);    # do not autovivify the output hash by a zero
 
-    $total_workers_to_run += $workers_this_analysis;
-    $workers_to_run_by_rc_name{ $curr_rc_name } += $workers_this_analysis;
+    $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name } += $workers_this_analysis;
+    $total_workers_to_submit_by_meadow_type{ $this_meadow_type }                    += $workers_this_analysis;
+    $total_workers_to_submit                                                        += $workers_this_analysis;
     $analysis_stats->print_stats();
-    printf("Scheduler suggests adding %d more workers of resource_class_name=%s for analysis_id=%d [%1.3f hive_load remaining]\n", $workers_this_analysis, $curr_rc_name, $analysis_stats->analysis_id, $available_load);
+    printf("Scheduler suggests adding $workers_this_analysis more $this_meadow_type:$curr_rc_name workers for analysis_id=%d [%.3f hive_load remaining]\n", $analysis_stats->analysis_id, $available_load);
   }
 
-  printf("Scheduler suggests adding a total of %d workers [%1.5f hive_load remaining]\n", $total_workers_to_run, $available_load);
-  return \%workers_to_run_by_rc_name;
+    print ''.('-'x60)."\n";
+    foreach my $meadow_type (keys %total_workers_to_submit_by_meadow_type) {
+        print "Scheduler suggests submitting a total of $total_workers_to_submit_by_meadow_type{$meadow_type} workers to $meadow_type\n";
+    }
+    printf("The remaining hive_load after submitting these workers will be: %.3f\n", $available_load);
+    print ''.('='x60)."\n";
+    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
 }
 
 
 sub schedule_workers_resync_if_necessary {
     my ($self, $valley, $analysis) = @_;
 
-    my $submit_limit                                                                = $valley->config_get('SubmitWorkersMax');
+    my $available_submit_limit                                                      = $valley->config_get('SubmitWorkersMax');
     my $available_worker_slots_by_meadow_type                                       = $valley->get_available_worker_slots_by_meadow_type();
     my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name();
 
@@ -827,20 +837,22 @@ sub schedule_workers_resync_if_necessary {
         # combined mapping:
     my %analysis_id2rc_name       = map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id;
 
-    my $default_meadow_type       = $valley->get_current_meadow()->type;
+    my $default_meadow_type       = $valley->get_default_meadow()->type;
 
-    my $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
+    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
+        = $self->schedule_workers($analysis, $available_submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
 
-    unless( keys %$workers_to_run_by_rc_name or $self->get_hive_current_load() or $self->count_running_workers() ) {
+    unless( $total_workers_to_submit or $self->get_hive_current_load() or $self->count_running_workers() ) {
         print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
 
         $self->check_for_dead_workers($valley, 1);
         $self->synchronize_hive($analysis);
 
-        $workers_to_run_by_rc_name = $self->schedule_workers($analysis, $submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
+        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
+            = $self->schedule_workers($analysis, $available_submit_limit, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, \%analysis_id2rc_name, $default_meadow_type);
     }
 
-    return $workers_to_run_by_rc_name;
+    return ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
 }
 
 
