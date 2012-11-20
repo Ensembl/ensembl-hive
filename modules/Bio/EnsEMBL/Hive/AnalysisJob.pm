@@ -329,9 +329,7 @@ sub dataflow_output_id {
                         if($failed_to_create) { # adjust semaphore_count for jobs that failed to create:
                             $self->adaptor->decrease_semaphore_count_for_jobid( $funnel_job_id, $failed_to_create );
                         }
-
-                    } else {
-                        die "Could not create a funnel job";
+                    } else {    # assume the whole semaphored group of jobs has been created already
                     }
 
                 } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
