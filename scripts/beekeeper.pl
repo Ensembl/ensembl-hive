@@ -11,6 +11,7 @@ use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
+use Bio::EnsEMBL::Hive::Scheduler;
 
 main();
 
@@ -232,7 +233,7 @@ sub main {
         }
         $queen->print_running_worker_counts;
 
-        $queen->schedule_workers_resync_if_necessary($valley, $analysis);   # show what would be submitted, but do not actually submit
+        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $analysis);   # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
 
         if($show_failed_jobs) {
@@ -332,7 +333,7 @@ sub run_autonomously {
         $queen->print_running_worker_counts;
 
         my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
-            = $queen->schedule_workers_resync_if_necessary($valley, $run_analysis);
+            = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $run_analysis);
 
         if($total_workers_to_submit) {
             foreach my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {
