@@ -29,7 +29,7 @@ sub main {
     my $sync                        = 0;
     my $local                       = 0;
     my $show_failed_jobs            = 0;
-    my $meadow_type                 = undef;
+    my $default_meadow_type         = undef;
     my $submit_workers_max          = undef;
     my $total_running_workers_max   = undef;
     my $submission_options          = undef;
@@ -72,7 +72,7 @@ sub main {
 
                     # meadow control
                'local!'                         => \$local,
-               'meadow_type=s'                  => \$meadow_type,
+               'meadow_type=s'                  => \$default_meadow_type,
                'total_running_workers_max=i'    => \$total_running_workers_max,
                'submit_workers_max=i'           => \$submit_workers_max,
                'submission_options=s'           => \$submission_options,
@@ -154,15 +154,15 @@ sub main {
         $submit_workers_max = 1;
     }
 
-    $meadow_type = 'LOCAL' if($local);
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $meadow_type, $pipeline_name );
+    $default_meadow_type = 'LOCAL' if($local);
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $default_meadow_type, $pipeline_name );
     $valley->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
 
-    my $current_meadow = $valley->get_current_meadow();
-    warn "Current meadow: ".$current_meadow->signature."\n\n";
+    my $default_meadow = $valley->get_default_meadow();
+    warn "Default meadow: ".$default_meadow->signature."\n\n";
 
-    $current_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
-    $current_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
+    $default_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
+    $default_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
@@ -301,13 +301,13 @@ sub generate_worker_cmd {
 sub run_autonomously {
     my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id, $force) = @_;
 
-    my $current_meadow  = $valley->get_current_meadow();
+    my $default_meadow  = $valley->get_default_meadow();
     my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
     my $special_task    = $run_analysis || $run_job_id;
 
         # first, fetch two resource-related mappings from the database:
     my $rc_name2id = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_name_TO_resource_class_id();
-    my $rc_id2xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($current_meadow->type());
+    my $rc_id2xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($default_meadow->type());
 
         # now, chain these two mappings together:
         #   FIXME: in future this  mapping should be obtainable from the adaptor in one go.
@@ -331,15 +331,21 @@ sub run_autonomously {
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
         $queen->print_running_worker_counts;
 
-        my $workers_to_run_by_rc_name = $queen->schedule_workers_resync_if_necessary($valley, $run_analysis);
+        my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
+            = $queen->schedule_workers_resync_if_necessary($valley, $run_analysis);
 
-        if(keys %$workers_to_run_by_rc_name) {
-            foreach my $rc_name ( sort { $workers_to_run_by_rc_name->{$a}<=>$workers_to_run_by_rc_name->{$b} } keys %$workers_to_run_by_rc_name) {
-                my $this_rc_worker_count = $workers_to_run_by_rc_name->{$rc_name};
+        if($total_workers_to_submit) {
+            foreach my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {
 
-                print "Submitting $this_rc_worker_count workers (rc_name=$rc_name) to ".$current_meadow->signature()."\n";
+                my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
 
-                $current_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
+                foreach my $rc_name (keys %{ $workers_to_submit_by_meadow_type_rc_name->{$meadow_type} }) {
+                    my $this_meadow_rc_worker_count = $workers_to_submit_by_meadow_type_rc_name->{$meadow_type}{$rc_name};
+
+                    print "Submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
+
+                    $this_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_meadow_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
+                }
             }
         } else {
             print "Not submitting any workers this iteration\n";

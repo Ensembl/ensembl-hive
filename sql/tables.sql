@@ -50,6 +50,7 @@ CREATE TABLE analysis_base (
     max_retry_count         int(10) DEFAULT 3 NOT NULL,
     can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
     priority                TINYINT DEFAULT 0 NOT NULL,
+    meadow_type             varchar(40) DEFAULT NULL,
 
     PRIMARY KEY (analysis_id),
     UNIQUE KEY logic_name_idx (logic_name)

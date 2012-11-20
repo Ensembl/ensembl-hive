@@ -142,6 +142,7 @@ sub CreateNewJob {
              WHERE analysis_id=$analysis_id
           });
       }
+  } else {  #   if we got 0E0, it means "ignored insert collision" (job created previously), so we simply return an undef and deal with it outside
   }
 
   return $job_id;

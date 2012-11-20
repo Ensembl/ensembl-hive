@@ -35,8 +35,8 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($logic_name, $module, $parameters, $resource_class_id, $failed_job_tolerance, $max_retry_count, $can_be_empty, $priority) =
-         rearrange([qw(logic_name module parameters resource_class_id failed_job_tolerance max_retry_count can_be_empty priority) ], @_);
+    my ($logic_name, $module, $parameters, $resource_class_id, $failed_job_tolerance, $max_retry_count, $can_be_empty, $priority, $meadow_type) =
+         rearrange([qw(logic_name module parameters resource_class_id failed_job_tolerance max_retry_count can_be_empty priority meadow_type) ], @_);
 
     $self->logic_name($logic_name)                      if($logic_name);
     $self->module($module)                              if($module);
@@ -46,6 +46,7 @@ sub new {
     $self->max_retry_count($max_retry_count)            if($max_retry_count);
     $self->can_be_empty($can_be_empty)                  if($can_be_empty);
     $self->priority($priority)                          if($priority);
+    $self->meadow_type($meadow_type)                    if($meadow_type);
 
     return $self;
 }
@@ -108,6 +109,13 @@ sub priority {
     $self->{'_priority'} = shift if(@_);
     $self->{'_priority'} = 0 unless(defined($self->{'_priority'}));
     return $self->{'_priority'};
+}
+
+
+sub meadow_type {
+    my $self = shift;
+    $self->{'_meadow_type'} = shift if(@_);
+    return $self->{'_meadow_type'};
 }
 
 

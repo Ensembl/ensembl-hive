@@ -36,14 +36,14 @@ sub meadow_class_path {
 
 
 sub new {
-    my ($class, $config, $current_meadow_type, $pipeline_name) = @_;
+    my ($class, $config, $default_meadow_type, $pipeline_name) = @_;
 
     my $self = bless {}, $class;
 
     $self->config( $config );
     $self->context( [ 'Valley' ] );
 
-    my $amch = $self->available_meadow_hash( {} );
+    my $amh = $self->available_meadow_hash( {} );
 
         # make sure modules are loaded and available ones are checked prior to setting the current one
     foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
@@ -53,11 +53,11 @@ sub new {
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
 
-            $amch->{$meadow_class->type} = $meadow_object;
+            $amh->{$meadow_class->type} = $meadow_object;
         }
     }
 
-    $self->set_current_meadow_type($current_meadow_type);     # run this method even if $current_meadow_type was not specified
+    $self->set_default_meadow_type($default_meadow_type);     # run this method even if $default_meadow_type was not specified
 
     return $self;
 }
@@ -82,25 +82,25 @@ sub get_available_meadow_list {     # this beautiful one-liner pushes $local to 
 }
 
 
-sub set_current_meadow_type {
-    my ($self, $current_meadow_type) = @_;
+sub set_default_meadow_type {
+    my ($self, $default_meadow_type) = @_;
 
-    if($current_meadow_type) {
-        if( my $current_meadow = $self->available_meadow_hash->{$current_meadow_type} ) {   # store if available
-            $self->{_current_meadow} = $current_meadow;
+    if($default_meadow_type) {
+        if( my $default_meadow = $self->available_meadow_hash->{$default_meadow_type} ) {   # store if available
+            $self->{_default_meadow} = $default_meadow;
         } else {
-            die "Meadow '$current_meadow_type' does not seem to be available on this machine, please investigate";
+            die "Meadow '$default_meadow_type' does not seem to be available on this machine, please investigate";
         }
     } else {
-        $self->{_current_meadow} = $self->get_available_meadow_list->[0];     # take the first from preference list
+        $self->{_default_meadow} = $self->get_available_meadow_list->[0];     # take the first from preference list
     }
 }
 
 
-sub get_current_meadow {
+sub get_default_meadow {
     my $self = shift @_;
 
-    return $self->{_current_meadow};
+    return $self->{_default_meadow};
 }
 
 
@@ -137,6 +137,37 @@ sub whereami {
     my $exechost = hostname();
 
     return ($meadow_type, $meadow_name, $pid, $exechost);
+}
+
+
+sub get_pending_worker_counts_by_meadow_type_rc_name {
+    my $self = shift @_;
+
+    my %pending_counts = ();
+    my $total_pending_all_meadows = 0;
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my ($pending_this_meadow_by_rc_name, $total_pending_this_meadow) = ($meadow->count_pending_workers_by_rc_name());
+        $pending_counts{ $meadow->type } = $pending_this_meadow_by_rc_name;
+        $total_pending_all_meadows += $total_pending_this_meadow;
+    }
+
+    return (\%pending_counts, $total_pending_all_meadows);
+}
+
+
+sub get_available_worker_slots_by_meadow_type {
+    my $self = shift @_;
+
+    my %available_worker_slots = ();
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        if( $meadow->can('count_running_workers') and defined($meadow->config_get('TotalRunningWorkersMax'))) {
+            $available_worker_slots{ $meadow->type } = $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers;
+        }
+    }
+
+    return \%available_worker_slots;
 }
 
 

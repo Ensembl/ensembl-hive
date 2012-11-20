@@ -380,8 +380,8 @@ sub run {
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
-        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority) =
-             rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id rc_name priority)], %$aha);
+        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance, $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type) =
+             rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity failed_job_tolerance max_retry_count can_be_empty rc_id rc_name priority meadow_type)], %$aha);
 
         unless($logic_name) {
             die "logic_name' must be defined in every analysis";
@@ -424,6 +424,7 @@ sub run {
                 -max_retry_count        => $max_retry_count,
                 -can_be_empty           => $can_be_empty,
                 -priority               => $priority,
+                -meadow_type            => $meadow_type,
             );
             $analysis_adaptor->store($analysis);
 

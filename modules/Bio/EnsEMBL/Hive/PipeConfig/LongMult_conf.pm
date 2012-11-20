@@ -142,6 +142,7 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'start',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start',
+            -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -parameters => {},
             -input_ids => [
                 { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
