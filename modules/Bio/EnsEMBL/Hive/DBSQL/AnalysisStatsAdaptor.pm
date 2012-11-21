@@ -79,10 +79,13 @@ sub fetch_by_analysis_id {
 }
 
 
-sub fetch_all_by_suitability_rc_id {
-    my ($self, $resource_class_id) = @_;
+sub fetch_all_by_suitability_rc_id_meadow_type {
+    my ($self, $resource_class_id, $meadow_type) = @_;
 
-    my $join = [[['analysis_base', 'a'], " ast.analysis_id=a.analysis_id ".( $resource_class_id ? "AND a.resource_class_id=$resource_class_id " : '') ]];
+    my $join = [[ ['analysis_base', 'a'], " ast.analysis_id=a.analysis_id "
+                                                .( $resource_class_id ? "AND a.resource_class_id=$resource_class_id " : '')
+                                                .( $meadow_type       ? "AND (a.meadow_type IS NULL OR a.meadow_type='$meadow_type') " : '')
+               ]];
 
         # the ones that clearly have work to do:
         #

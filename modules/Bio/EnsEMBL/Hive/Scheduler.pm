@@ -64,7 +64,7 @@ sub schedule_workers {
 
     my @suitable_analyses   = $filter_analysis
                                 ? ( $filter_analysis->stats )
-                                : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id() };
+                                : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type() };
 
     unless(@suitable_analyses) {
         print "Scheduler could not find any suitable analyses to start with\n";

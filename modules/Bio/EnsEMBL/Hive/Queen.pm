@@ -257,7 +257,7 @@ sub specialize_new_worker {
 
     } else {    # probably scheduled by beekeeper.pl
 
-        $stats = $self->suggest_analysis_to_specialize_by_rc_id($worker->resource_class_id)
+        $stats = $self->suggest_analysis_to_specialize_by_rc_id_meadow_type($worker->resource_class_id, $worker->meadow_type)
             or die "Queen failed to pick an analysis for the worker";
 
         print "Queen picked analysis with dbID=".$stats->analysis_id." for the worker\n";
@@ -838,11 +838,12 @@ sub register_all_workers_dead {
 }
 
 
-sub suggest_analysis_to_specialize_by_rc_id {
+sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
     my $self                = shift;
     my $rc_id               = shift;
+    my $meadow_type         = shift;
 
-    my @suitable_analyses = @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id( $rc_id ) };
+    my @suitable_analyses = @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type( $rc_id, $meadow_type ) };
 
     foreach my $stats (@suitable_analyses) {
 
