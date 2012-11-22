@@ -159,7 +159,8 @@ sub pipeline_analyses {
         {   -logic_name    => 'part_multiply',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -parameters    => {},
-            -hive_capacity => 8,
+            -hive_capacity      => -1,  # turn off the reciprocal limiter
+            -analysis_capacity  =>  4,  # use per-analysis limiter
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
             ],

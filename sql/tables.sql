@@ -51,6 +51,7 @@ CREATE TABLE analysis_base (
     can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
     priority                TINYINT DEFAULT 0 NOT NULL,
     meadow_type             varchar(40) DEFAULT NULL,
+    analysis_capacity       int(10) DEFAULT NULL,
 
     PRIMARY KEY (analysis_id),
     UNIQUE KEY logic_name_idx (logic_name)
@@ -334,7 +335,7 @@ CREATE TABLE resource_description (
 CREATE TABLE analysis_stats (
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
-    hive_capacity           int(10) DEFAULT 1 NOT NULL,
+    hive_capacity           int(10) DEFAULT 1,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL,
 
     total_job_count         int(10) DEFAULT 0 NOT NULL,
@@ -368,7 +369,7 @@ CREATE TABLE analysis_stats_monitor (
 
     analysis_id             int(10) unsigned NOT NULL,
     batch_size              int(10) DEFAULT 1 NOT NULL,
-    hive_capacity           int(10) DEFAULT 1 NOT NULL,
+    hive_capacity           int(10) DEFAULT 1,
     status                  enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL,
 
     total_job_count         int(10) DEFAULT 0 NOT NULL,

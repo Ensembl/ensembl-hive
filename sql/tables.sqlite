@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS analysis_base (
     failed_job_tolerance    int(10) NOT NULL DEFAULT 0,
     max_retry_count         int(10) default 3 NOT NULL,
     can_be_empty            TINYINT UNSIGNED DEFAULT 0 NOT NULL,
-    priority                TINYINT DEFAULT 0 NOT NULL
+    priority                TINYINT DEFAULT 0 NOT NULL,
+    meadow_type             varchar(40) DEFAULT NULL,
+    analysis_capacity       int(10) DEFAULT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS logic_name_idx ON analysis_base (logic_name);
 
@@ -313,7 +315,7 @@ CREATE TABLE resource_description (
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
-    hive_capacity           int(10) default 1 NOT NULL,
+    hive_capacity           int(10) default 1,
     status                  TEXT DEFAULT 'EMPTY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,
@@ -345,7 +347,7 @@ CREATE TABLE analysis_stats_monitor (
 
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
-    hive_capacity           int(10) default 1 NOT NULL,
+    hive_capacity           int(10) default 1,
     status                  TEXT DEFAULT 'EMPTY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,

@@ -108,7 +108,7 @@ sub schedule_workers {
     my %meadow_capacity                             = map { $_ => Bio::EnsEMBL::Hive::Limiter->new( $available_worker_slots_by_meadow_type->{$_} ) } keys %$available_worker_slots_by_meadow_type;
 
     foreach my $analysis_stats (@suitable_analyses) {
-        last if( $submit_capacity->reached or $queen_capacity->reached);
+        last if( $submit_capacity->reached );
 
         my $analysis            = $analysis_stats->get_analysis;    # FIXME: if it proves too expensive we may need to consider caching
         my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
@@ -127,19 +127,25 @@ sub schedule_workers {
 
             # setting up all negotiating limiters:
         $queen_capacity->multiplier( $analysis_stats->hive_capacity );
+        my @limiters = (
+            $submit_capacity,
+            $queen_capacity,
+            $meadow_capacity{$this_meadow_type},
+            defined($analysis->analysis_capacity) ? Bio::EnsEMBL::Hive::Limiter->new( $analysis->analysis_capacity ) : (),
+        );
 
             # negotiations:
-        $workers_this_analysis = $submit_capacity->preliminary_offer( $workers_this_analysis );
-        $workers_this_analysis = $queen_capacity->preliminary_offer( $workers_this_analysis );
-        $workers_this_analysis = $meadow_capacity{$this_meadow_type}->preliminary_offer( $workers_this_analysis );
+        foreach my $limiter (@limiters) {
+            $workers_this_analysis = $limiter->preliminary_offer( $workers_this_analysis );
+        }
 
-            # do not continue with this analysis if haven't agreed on a positive number:
+            # do not continue with this analysis if limiters haven't agreed on a positive number:
         next unless($workers_this_analysis);
 
             # let all parties know the final decision of negotiations:
-        $submit_capacity->final_decision(                     $workers_this_analysis );
-        $queen_capacity->final_decision(                      $workers_this_analysis );
-        $meadow_capacity{$this_meadow_type}->final_decision(  $workers_this_analysis );
+        foreach my $limiter (@limiters) {
+            $limiter->final_decision( $workers_this_analysis );
+        }
 
         my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
         $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $workers_this_analysis;
