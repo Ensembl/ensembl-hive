@@ -523,8 +523,8 @@ sub run {
         $min_batch_time = $self->analysis->stats->min_batch_time();
         1;
     } or do {
-        my $msg = "Could not specialize worker:\n\t".$@;
-        warn "$msg\n";
+        my $msg = $@;
+        warn "Could not specialize worker:\n\t$msg\n";
         $self->adaptor->db->get_JobMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";

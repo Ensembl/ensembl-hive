@@ -254,15 +254,15 @@ sub specialize_new_worker {
                 die "Analysis is DONE, and doesn't require workers";
             }
         }
-
-    } else {    # probably scheduled by beekeeper.pl
-
-        $stats = $self->suggest_analysis_to_specialize_by_rc_id_meadow_type($worker->resource_class_id, $worker->meadow_type)
-            or die "Queen failed to pick an analysis for the worker";
+            # probably scheduled by beekeeper.pl:
+    } elsif( $stats = $self->suggest_analysis_to_specialize_by_rc_id_meadow_type($worker->resource_class_id, $worker->meadow_type) ) {
 
         print "Queen picked analysis with dbID=".$stats->analysis_id." for the worker\n";
 
         $analysis_id = $stats->analysis_id;
+    } else {
+        $worker->cause_of_death('NO_ROLE');
+        die "No analysis suitable for the worker was found\n";
     }
 
         # now set it in the $worker:
@@ -323,6 +323,7 @@ sub register_worker_death {
             or $cod eq 'RUNLIMIT'
             or $cod eq 'KILLED_BY_USER'
             or $cod eq 'SEE_MSG'
+            or $cod eq 'NO_ROLE'
             or $cod eq 'CONTAMINATED') {
                 $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
         }
