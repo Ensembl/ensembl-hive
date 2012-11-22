@@ -35,7 +35,6 @@ sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $filter_analysis) = @_;
 
     my $available_worker_slots_by_meadow_type                                       = $valley->get_available_worker_slots_by_meadow_type();
-    my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name();
 
     my $analysis_id2rc_id         = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
     my $rc_id2name                = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
@@ -43,7 +42,7 @@ sub schedule_workers_resync_if_necessary {
     my $analysis_id2rc_name       = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
-        = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name);
+        = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name);
 
     unless( $total_workers_to_submit or $queen->get_hive_current_load() or $queen->count_running_workers() ) {
         print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
@@ -52,7 +51,31 @@ sub schedule_workers_resync_if_necessary {
         $queen->synchronize_hive($filter_analysis);
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
-            = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name);
+            = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name);
+    }
+
+        # adjustment for pending workers:
+    my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name();
+
+    while( my ($this_meadow_type, $partial_workers_to_submit_by_rc_name) = each %$workers_to_submit_by_meadow_type_rc_name) {
+        while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
+            if(my $pending_this_group = $pending_worker_counts_by_meadow_type_rc_name->{ $this_meadow_type }{ $this_rc_name }) {
+
+                print "Scheduler was thinking of submitting $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when it detected $pending_this_group pending in this group, ";
+
+                if( $workers_to_submit_this_group > $pending_this_group) {
+                    $total_workers_to_submit                                                        -= $pending_this_group;
+                    $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}   -= $pending_this_group; # adjust the hashed value
+                    print "so is going to submit only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra\n";
+                } else {
+                    $total_workers_to_submit                                                        -= $workers_to_submit_this_group;
+                    delete $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name};                   # avoid leaving an empty group in the hash
+                    print "so is not going to submit any extra\n";
+                }
+            } else {
+                print "Scheduler is going to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers\n";
+            }
+        }
     }
 
     return ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
@@ -60,7 +83,7 @@ sub schedule_workers_resync_if_necessary {
 
 
 sub schedule_workers {
-    my ($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $orig_pending_worker_counts_by_meadow_type_rc_name, $analysis_id2rc_name) = @_;
+    my ($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name) = @_;
 
     my @suitable_analyses   = $filter_analysis
                                 ? ( $filter_analysis->stats )
@@ -71,11 +94,12 @@ sub schedule_workers {
         return ({}, 0);
     }
 
+        # the pre-pending-adjusted outcome will be stored here:
     my %workers_to_submit_by_meadow_type_rc_name    = ();
-    my %total_workers_to_submit_by_meadow_type      = ();
-    my %pending_worker_counts_by_meadow_type_rc_name= %{ clone $orig_pending_worker_counts_by_meadow_type_rc_name };    # we need a deep disposable copy here
     my $total_workers_to_submit                     = 0;
+
     my $default_meadow_type                         = $valley->get_default_meadow()->type;
+
     my $available_submit_limit                      = $valley->config_get('SubmitWorkersMax');
     my $available_load                              = 1.0 - $queen->get_hive_current_load();
 
@@ -120,32 +144,16 @@ sub schedule_workers {
 
             $available_load -= 1.0*$workers_this_analysis/$hive_capacity;
         }
+        next unless($workers_this_analysis);
 
-        my $curr_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
+        my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
 
-        if(my $pending_this_meadow_type_and_rc_name = $pending_worker_counts_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name }) { # per-rc_name capping by pending processes, if available
-            my $pending_this_analysis = ($pending_this_meadow_type_and_rc_name < $workers_this_analysis) ? $pending_this_meadow_type_and_rc_name : $workers_this_analysis;
-
-            print "Scheduler detected $pending_this_analysis pending workers with resource_class_name=$curr_rc_name, adjusting for this value\n";
-            $pending_worker_counts_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name } -= $pending_this_analysis;
-            $workers_this_analysis                                                              -= $pending_this_analysis;
-        }
-
-        next unless($workers_this_analysis);    # do not autovivify the output hash by a zero
-
-        $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $curr_rc_name } += $workers_this_analysis;
-        $total_workers_to_submit_by_meadow_type{ $this_meadow_type }                    += $workers_this_analysis;
+        $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $workers_this_analysis;
         $total_workers_to_submit                                                        += $workers_this_analysis;
         $analysis_stats->print_stats();
-        printf("Scheduler suggests adding $workers_this_analysis x $this_meadow_type:$curr_rc_name workers for '%s' [%.4f hive_load remaining]\n", $analysis->logic_name, $available_load);
+        printf("Before checking the Valley for pending jobs, Scheduler allocated $workers_this_analysis x $this_meadow_type:$this_rc_name workers for '%s' [%.4f hive_load remaining]\n", $analysis->logic_name, $available_load);
     }
 
-    print ''.('-'x60)."\n";
-    foreach my $meadow_type (keys %total_workers_to_submit_by_meadow_type) {
-        print "Scheduler suggests submitting a total of $total_workers_to_submit_by_meadow_type{$meadow_type} workers to $meadow_type\n";
-    }
-    printf("The remaining hive_load after submitting these workers will be: %.4f\n", $available_load);
-    print ''.('='x60)."\n";
     return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
 }
 
