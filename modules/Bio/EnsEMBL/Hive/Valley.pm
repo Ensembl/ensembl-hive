@@ -25,6 +25,7 @@ use strict;
 use warnings;
 use Sys::Hostname;
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
+use Bio::EnsEMBL::Hive::Limiter;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -156,18 +157,21 @@ sub get_pending_worker_counts_by_meadow_type_rc_name {
 }
 
 
-sub get_available_worker_slots_by_meadow_type {
+sub get_meadow_capacity_hash_by_meadow_type {
     my $self = shift @_;
 
-    my %available_worker_slots = ();
+    my %meadow_capacity_hash = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $available_worker_slots = undef;
         if( $meadow->can('count_running_workers') and defined($meadow->config_get('TotalRunningWorkersMax'))) {
-            $available_worker_slots{ $meadow->type } = $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers;
+            $available_worker_slots  = $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers;
         }
+            # so the hash will contain limiters for every meadow_type, but not all of them active:
+        $meadow_capacity_hash{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( $available_worker_slots );
     }
 
-    return \%available_worker_slots;
+    return \%meadow_capacity_hash;
 }
 
 

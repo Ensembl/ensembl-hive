@@ -35,15 +35,15 @@ use Bio::EnsEMBL::Hive::Limiter;
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $filter_analysis) = @_;
 
-    my $available_worker_slots_by_meadow_type                                       = $valley->get_available_worker_slots_by_meadow_type();
+    my $meadow_capacity_by_type                 = $valley->get_meadow_capacity_hash_by_meadow_type();
 
-    my $analysis_id2rc_id         = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
-    my $rc_id2name                = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+    my $analysis_id2rc_id                       = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
+    my $rc_id2name                              = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
         # combined mapping:
-    my $analysis_id2rc_name       = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
+    my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
-        = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
 
     unless( $total_workers_to_submit or $queen->get_hive_current_load() or $queen->count_running_workers() ) {
         print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
@@ -52,7 +52,7 @@ sub schedule_workers_resync_if_necessary {
         $queen->synchronize_hive($filter_analysis);
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
-            = schedule_workers($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
     }
 
         # adjustment for pending workers:
@@ -84,7 +84,7 @@ sub schedule_workers_resync_if_necessary {
 
 
 sub schedule_workers {
-    my ($queen, $valley, $filter_analysis, $available_worker_slots_by_meadow_type, $analysis_id2rc_name) = @_;
+    my ($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name) = @_;
 
     my @suitable_analyses   = $filter_analysis
                                 ? ( $filter_analysis->stats )
@@ -105,7 +105,6 @@ sub schedule_workers {
 
     my $submit_capacity                             = Bio::EnsEMBL::Hive::Limiter->new( $valley->config_get('SubmitWorkersMax') );
     my $queen_capacity                              = Bio::EnsEMBL::Hive::Limiter->new( 1.0 - $queen->get_hive_current_load() );
-    my %meadow_capacity                             = map { $_ => Bio::EnsEMBL::Hive::Limiter->new( $available_worker_slots_by_meadow_type->{$_} ) } keys %$available_worker_slots_by_meadow_type;
 
     foreach my $analysis_stats (@suitable_analyses) {
         last if( $submit_capacity->reached );
@@ -113,7 +112,7 @@ sub schedule_workers {
         my $analysis            = $analysis_stats->get_analysis;    # FIXME: if it proves too expensive we may need to consider caching
         my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
-        next if( $meadow_capacity{$this_meadow_type}->reached );
+        next if( $meadow_capacity_by_type->{$this_meadow_type}->reached );
 
             #digging deeper under the surface so need to sync:
         if(($analysis_stats->status eq 'LOADING') or ($analysis_stats->status eq 'BLOCKED') or ($analysis_stats->status eq 'ALL_CLAIMED')) {
@@ -130,7 +129,7 @@ sub schedule_workers {
         my @limiters = (
             $submit_capacity,
             $queen_capacity,
-            $meadow_capacity{$this_meadow_type},
+            $meadow_capacity_by_type->{$this_meadow_type},
             defined($analysis->analysis_capacity) ? Bio::EnsEMBL::Hive::Limiter->new( $analysis->analysis_capacity ) : (),
         );
 
