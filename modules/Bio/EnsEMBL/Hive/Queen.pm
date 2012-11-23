@@ -849,7 +849,7 @@ sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
 
             #synchronize and double check that it can be run:
         $self->safe_synchronize_AnalysisStats($stats);
-        return $stats if( ($stats->status ne 'BLOCKED') and ($stats->num_required_workers > 0) );
+        return $stats if( ($stats->status ne 'BLOCKED') and ($stats->status ne 'SYNCHING') and ($stats->num_required_workers > 0) );
     }
 
     return undef;
