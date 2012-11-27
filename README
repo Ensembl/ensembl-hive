@@ -15,6 +15,40 @@ Summary:
 
 Changelog:
 
+---------------------[during EnsEMBL rel.70]----------------------------------------------------------------
+
+* Fri Nov 23 14:26:53 2012 +0000 | Leo Gordon | bugifx: create meadow_capacity limiters whether or not there is a limit
+* Thu Nov 22 21:26:37 2012 +0000 | Leo Gordon | added a new per-analysis "analysis_capacity" limiter for cases where users want to limit analyses independently
+* Thu Nov 22 16:56:36 2012 +0000 | Leo Gordon | switch the Scheduler to using universal Limiter objects (cleaner code, more precise computation and should allow for expansion)
+* Thu Nov 22 14:07:21 2012 +0000 | Leo Gordon | moved pending adjustment out of the main scheduling subroutine, which simplified the logic and improved readability
+* Thu Nov 22 17:21:22 2012 +0000 | Leo Gordon | Introduced a new 'NO_ROLE' cause_of_death for failures during specialization (not so much of an error, really!)
+* Fri Nov 23 11:16:12 2012 +0000 | Leo Gordon | bugfix: avoid specializing in an otherwise BLOCKED analysis that is temporarily in SYNCHING state (thanks to Kathryn for reporting)
+* Wed Nov 21 12:23:11 2012 +0000 | Leo Gordon | (multi-meadow scheduler) restrict the set of analyses that a worker with a given meadow_type can specialize into
+* Tue Nov 20 15:35:44 2012 +0000 | Leo Gordon | separated the Scheduler's code into a separate module (not an object yet)
+*   Tue Nov 20 16:57:23 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
+|\  
+| * Tue Nov 20 12:35:30 2012 +0000 | Leo Gordon | bugfix: if re-running a job that creates a semaphored group, we no longer die (thanks Miguel for reporting)
+| * Mon Nov 19 16:25:14 2012 +0000 | Leo Gordon | Added API and schema support for analysis_base.meadow_type / Analysis->meadow_type(), which will be NULL/undef by default
+| * Mon Nov 19 15:22:44 2012 +0000 | Leo Gordon | proof of concept: all structures passed into calls and back are now meadow-aware
+| * Fri Nov 16 13:44:01 2012 +0000 | Leo Gordon | pass complete valley-wide stats into schedule_workers without filtering
+| * Fri Nov 16 10:36:49 2012 +0000 | Leo Gordon | aggregate meadow stats collection in the Valley
+* |   Mon Nov 19 22:16:26 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
+|\ \  
+| |/  
+| * Fri Nov 16 23:27:58 2012 +0000 | Leo Gordon | turn Utils::Graph into Configurable and use the same interface to config as Meadow and Valley
+* | Sun Nov 18 11:59:06 2012 +0000 | Matthieu Muffato | All the combinations of parameters are tested and cover all possible cases
+|/  
+* Fri Nov 16 15:03:19 2012 +0000 | Leo Gordon | bugfix: no longer leaves CLAIMED jobs after compilation error during specific -job_id execution
+* Fri Nov 16 14:29:48 2012 +0000 | Leo Gordon | bugfix: min_batch_time moved to prevent infinite loop in -compile_module_once 0 mode
+* Fri Nov 16 12:11:01 2012 +0000 | Leo Gordon | make Valley into Configurable and move SubmitWorkersMax into Valley's context, because it is more "global" than a Meadow
+* Fri Nov 16 11:52:51 2012 +0000 | Leo Gordon | concentrate the "Configurable" functionality in one class with the intention to use it wider
+* Fri Nov 16 10:48:01 2012 +0000 | Leo Gordon | meadow->signature() is slightly more useful than meadow->toString()
+* Thu Nov 15 12:08:11 2012 +0000 | Leo Gordon | removed PendingAdjust option from beekeeper and config file as it never really needs to be unset
+* Thu Nov 15 10:37:01 2012 +0000 | Leo Gordon | simplification of the interface: scripts no longer understand --user/--password/--host/--port/--database and require --url instead
+* Tue Nov 13 15:19:29 2012 +0000 | Leo Gordon | capture Worker's death message during the new 'SPECIALIZATION' status in job_message/msg (thanks, Thomas!)
+* Tue Nov 13 13:07:26 2012 +0000 | Leo Gordon | bugfix: msg view should behave when analysis_id is still NULL
+* Tue Nov 13 11:06:01 2012 +0000 | Leo Gordon | feature: jobless workers will now leave module compilation errors in the job_message table (thanks, Kathryn!)
+
 ---------------------[before EnsEMBL rel.70]----------------------------------------------------------------
 
 * Mon Nov 12 14:15:40 2012 +0000 | Leo Gordon | updated the release number to 70 in the schema
