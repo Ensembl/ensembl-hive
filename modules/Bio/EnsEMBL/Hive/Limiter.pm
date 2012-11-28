@@ -44,8 +44,11 @@ sub reached {
 sub preliminary_offer {
     my ($self, $slots_asked) = @_;
 
-    if( defined($self->available_capacity) and (my $multiplier = $self->multiplier) > 0.0 ) {    # if multiplier is not positive, capacity stays unaffected
-        my $slots_available = int($self->available_capacity * $multiplier);
+    my $available_capacity  = $self->available_capacity;
+    my $multiplier          = $self->multiplier;
+
+    if( defined($available_capacity) and defined($multiplier) and ($multiplier >= 0.0) ) {  # if multiplier is negative it is not limiting
+        my $slots_available = int($available_capacity * $multiplier);
 
         return ($slots_available<$slots_asked) ? $slots_available : $slots_asked;
     }
@@ -57,9 +60,13 @@ sub preliminary_offer {
 sub final_decision {
     my ($self, $slots_agreed) = @_;
 
-    if( defined($self->available_capacity) and (my $multiplier = $self->multiplier) > 0.0 ) {    # if multiplier is not positive, capacity stays unaffected
+    my $available_capacity  = $self->available_capacity;
+    my $multiplier          = $self->multiplier;
 
-        $self->available_capacity( $self->available_capacity - $slots_agreed/$multiplier );
+    if( defined($available_capacity) and defined($multiplier) and ($multiplier > 0.0) ) {   # if multiplier is not positive capacity stays unaffected
+                                                                                            # and we should not arrive here if $multiplier==0
+
+        $self->available_capacity( $available_capacity - $slots_agreed/$multiplier );
     }
 }
 

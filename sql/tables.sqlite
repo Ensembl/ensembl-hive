@@ -315,7 +315,7 @@ CREATE TABLE resource_description (
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
-    hive_capacity           int(10) default 1,
+    hive_capacity           int(10) default NULL,
     status                  TEXT DEFAULT 'EMPTY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,
@@ -347,7 +347,7 @@ CREATE TABLE analysis_stats_monitor (
 
     analysis_id             INTEGER NOT NULL,
     batch_size              int(10) default 1 NOT NULL,
-    hive_capacity           int(10) default 1,
+    hive_capacity           int(10) default NULL,
     status                  TEXT DEFAULT 'EMPTY' NOT NULL, /* enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED') DEFAULT 'EMPTY' NOT NULL, */
 
     total_job_count         int(10) NOT NULL DEFAULT 0,

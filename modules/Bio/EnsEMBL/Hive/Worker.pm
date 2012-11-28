@@ -589,8 +589,11 @@ sub run {
         );
     }
 
+        # A mechanism whereby workers can be caused to exit even if they were doing fine:
+        #
         # FIXME: The following check is not *completely* correct, as it assumes hive_capacity is "local" to the analysis:
     if (!$self->cause_of_death
+    and defined($self->analysis->stats->hive_capacity)
     and 0 <= $self->analysis->stats->hive_capacity
     and $self->analysis->stats->hive_capacity < $self->analysis->stats->num_running_workers
     ) {

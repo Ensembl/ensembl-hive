@@ -144,6 +144,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -parameters => {},
+            -analysis_capacity  =>  1,  # use per-analysis limiter
             -input_ids => [
                 { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
                 { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
@@ -159,7 +160,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'part_multiply',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -parameters    => {},
-            -hive_capacity      => -1,  # turn off the reciprocal limiter
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
@@ -172,6 +172,7 @@ sub pipeline_analyses {
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
             -parameters => {},
+#           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -input_ids => [
                 # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
             ],

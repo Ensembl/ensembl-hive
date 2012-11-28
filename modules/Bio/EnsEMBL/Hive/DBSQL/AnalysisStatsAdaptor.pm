@@ -183,7 +183,7 @@ sub update {
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
   $sql .= ",batch_size=" . $stats->batch_size();
-  $sql .= ",hive_capacity=" . $stats->hive_capacity();
+  $sql .= ",hive_capacity=" . (defined($stats->hive_capacity()) ? $stats->hive_capacity() : 'NULL');
 
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();

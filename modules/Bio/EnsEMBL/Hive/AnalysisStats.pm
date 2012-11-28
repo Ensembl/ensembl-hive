@@ -84,7 +84,6 @@ sub batch_size {
 sub hive_capacity {
     my $self = shift;
     $self->{'_hive_capacity'} = shift if(@_);
-    $self->{'_hive_capacity'} = 1 unless(defined($self->{'_hive_capacity'}));
     return $self->{'_hive_capacity'};
 }
 
@@ -292,8 +291,10 @@ sub job_count_breakout {
 sub print_stats {
     my $self = shift;
 
-    printf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, worker[%d/%d] (sync'd %d sec ago)\n",
-        $self->get_analysis->logic_name,
+    my $analysis = $self->get_analysis;
+
+    printf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, ",
+        $analysis->logic_name,
         $self->analysis_id,
         $self->status,
 
@@ -305,11 +306,11 @@ sub print_stats {
         $self->total_job_count,
 
         $self->avg_msec_per_job,
-
-        $self->num_required_workers,
-        $self->hive_capacity,
-        $self->seconds_since_last_update,
     );
+    print 'req.workers:'.$self->num_required_workers
+         .'  h.cap:'    .( defined($self->hive_capacity) ? $self->hive_capacity : '-' )
+         .'  a.cap:'    .( defined($analysis->analysis_capacity) ? $analysis->analysis_capacity : '-')
+         ."  (sync'd "  .$self->seconds_since_last_update." sec ago)\n",
 }
 
 

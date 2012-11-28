@@ -47,7 +47,7 @@ sub new {
     $self->can_be_empty($can_be_empty)                  if($can_be_empty);
     $self->priority($priority)                          if($priority);
     $self->meadow_type($meadow_type)                    if($meadow_type);
-    $self->analysis_capacity($analysis_capacity)        if($analysis_capacity);
+    $self->analysis_capacity($analysis_capacity)        if( defined($analysis_capacity) );
 
     return $self;
 }

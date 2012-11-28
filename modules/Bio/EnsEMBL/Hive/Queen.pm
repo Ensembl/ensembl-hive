@@ -573,21 +573,20 @@ sub synchronize_AnalysisStats {
   return $analysisStats unless($analysisStats->analysis_id);
 
   $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
-  my $hive_capacity = $analysisStats->hive_capacity;
+
+  my $analysis              = $analysisStats->get_analysis();
+  my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
+                            && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
 
   if($self->db->hive_use_triggers()) {
 
             my $job_count = $analysisStats->ready_job_count();
-            my $required_workers = $hive_capacity && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
 
-                # adjust_stats_for_living_workers:
-            if($hive_capacity > 0) {
-                my $unfulfilled_capacity = $hive_capacity - $analysisStats->num_running_workers();
+            my $required_workers     = $scheduling_allowed
+                                    && ( POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() )
+                                         - $analysisStats->num_running_workers() );
+            $required_workers = 0 if($required_workers < 0);
 
-                if($unfulfilled_capacity < $required_workers ) {
-                    $required_workers = (0 < $unfulfilled_capacity) ? $unfulfilled_capacity : 0;
-                }
-            }
             $analysisStats->num_required_workers( $required_workers );
 
   } else {
@@ -614,16 +613,11 @@ sub synchronize_AnalysisStats {
         if($status eq 'READY') {
             $analysisStats->ready_job_count($job_count);
 
-            my $required_workers = $hive_capacity && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
+            my $required_workers     = $scheduling_allowed
+                                    && ( POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() )
+                                         - $analysisStats->num_running_workers() );
+            $required_workers = 0 if($required_workers < 0);
 
-                # adjust_stats_for_living_workers:
-            if($hive_capacity > 0) {
-                my $unfulfilled_capacity = $hive_capacity - $self->count_running_workers( $analysisStats->analysis_id() );
-
-                if($unfulfilled_capacity < $required_workers ) {
-                    $required_workers = (0 < $unfulfilled_capacity) ? $unfulfilled_capacity : 0;
-                }
-            }
             $analysisStats->num_required_workers( $required_workers );
 
         } elsif($status eq 'SEMAPHORED') {
@@ -696,6 +690,7 @@ sub get_hive_current_load {
         FROM worker w
         JOIN analysis_stats USING(analysis_id)
         WHERE w.status!='DEAD'
+        AND hive_capacity IS NOT NULL
         AND hive_capacity>0
     };
     my $sth = $self->prepare($sql);
