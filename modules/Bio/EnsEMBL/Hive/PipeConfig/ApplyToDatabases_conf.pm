@@ -67,7 +67,6 @@ sub pipeline_analyses {
                 'inputquery'   => q{SHOW DATABASES LIKE "}.$self->o('only_databases').q{"},
                 'column_names' => [ 'dbname' ],
             },
-            -hive_capacity => 5,       # allow several workers to perform identical tasks in parallel
             -input_ids => [
                 { 'db_conn' => $self->o('source_server1'), 'input_id' => { 'db_conn' => {'-host' => $self->o('source_server1', '-host'), '-port' => $self->o('source_server1', '-port'), '-user' => $self->o('source_server1', '-user'), '-pass' => $self->o('source_server1', '-pass'), '-dbname' => '#dbname#'}, }, },
                 { 'db_conn' => $self->o('source_server2'), 'input_id' => { 'db_conn' => {'-host' => $self->o('source_server2', '-host'), '-port' => $self->o('source_server2', '-port'), '-user' => $self->o('source_server2', '-user'), '-pass' => $self->o('source_server2', '-pass'), '-dbname' => '#dbname#'}, }, },
@@ -81,7 +80,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',  # use SqlCmd.pm to run your query or another JobFactory.pm to make another fan on table names
             -parameters    => {
             },
-            -hive_capacity => 10,       # allow several workers to perform identical tasks in parallel
+            -analysis_capacity => 10,       # allow several workers to perform identical tasks in parallel
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'get_databases' jobs above)
             ],

@@ -87,7 +87,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'run_cmd',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => { },
-            -hive_capacity => $self->o('capacity'),   # allow several workers to perform identical tasks in parallel
+            -analysis_capacity => $self->o('capacity'),   # allow several workers to perform identical tasks in parallel
         },
     ];
 }

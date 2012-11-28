@@ -109,7 +109,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'cmd'       => 'gzip '.($self->o('unzip')?'-d ':'').'#filename#',
             },
-            -hive_capacity => $self->o('zipping_capacity'),   # allow several workers to perform identical tasks in parallel
+            -analysis_capacity => $self->o('zipping_capacity'),   # allow several workers to perform identical tasks in parallel
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'get_tables' jobs above)
             ],

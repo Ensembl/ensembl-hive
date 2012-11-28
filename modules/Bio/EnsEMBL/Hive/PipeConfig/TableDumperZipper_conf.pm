@@ -125,7 +125,7 @@ sub pipeline_analyses {
                 'target_dir' => $self->o('target_dir'),
                 'cmd'        => 'mysqldump '.$self->dbconn_2_mysql('source_db', 0).' '.$self->o('source_db','-dbname').($self->o('with_schema')?'':' -t').' #table_name# | gzip >#target_dir#/#table_name#.sql.gz',
             },
-            -hive_capacity => $self->o('dumping_capacity'),       # allow several workers to perform identical tasks in parallel
+            -analysis_capacity => $self->o('dumping_capacity'),       # allow several workers to perform identical tasks in parallel
             -input_ids     => [
                 # (jobs for this analysis will be flown_into via branch-2 from 'get_tables' jobs above)
             ],
