@@ -109,10 +109,10 @@ sub create_new_worker {
     my ($self, @args) = @_;
 
     my ($meadow_type, $meadow_name, $process_id, $exec_host, $resource_class_id, $resource_class_name,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $compile_module_once) =
+        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
 
     rearrange([qw(meadow_type meadow_name process_id exec_host resource_class_id resource_class_name
-                no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs compile_module_once) ], @args);
+                no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
 
     if( defined($resource_class_name) ) {
         my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
@@ -161,8 +161,6 @@ sub create_new_worker {
     $worker->debug($debug)                              if($debug);
 
     $worker->retry_throwing_jobs($retry_throwing_jobs)  if(defined $retry_throwing_jobs);
-
-    $worker->compile_module_once($compile_module_once)  if(defined $compile_module_once);
 
     return $worker;
 }

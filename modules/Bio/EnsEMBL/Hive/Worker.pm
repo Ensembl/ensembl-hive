@@ -413,13 +413,6 @@ sub retry_throwing_jobs {
     return defined($self->{'_retry_throwing_jobs'}) ? $self->{'_retry_throwing_jobs'} : 1;
 }
 
-sub compile_module_once {
-    my $self = shift @_;
-
-    $self->{'_compile_module_once'} = shift @_ if(@_);
-    return defined($self->{'_compile_module_once'}) ? $self->{'_compile_module_once'} : 1;
-}
-
 
 sub get_stdout_redirector {
     my $self = shift;
@@ -468,14 +461,6 @@ sub toString {
     );
 }
 
-
-sub cleanup_worker_process_temp_directory {
-  my $self = shift;
-  if($self->{'_tmp_dir'} and (-e $self->{'_tmp_dir'}) ) {
-    my $cmd = "rm -r ". $self->{'_tmp_dir'};
-    system($cmd);
-  }
-}
 
 ###############################
 #
@@ -530,7 +515,7 @@ sub run {
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
     };
 
-    if(!$self->cause_of_death() and $self->compile_module_once() ) {
+    if( !$self->cause_of_death() ) {
         eval {
             $self->enter_status('COMPILATION');
             my $runnable_object = $self->analysis->process or die "Unknown compilation error";
@@ -616,10 +601,8 @@ sub run {
 
         # have runnable clean up any global/process files/data it may have created
     if($self->perform_cleanup) {
-        if(my $runnable_object = $self->runnable_object()) {    # if -compile_module_once is 1, keep _tmp_dir in the Process object:
+        if(my $runnable_object = $self->runnable_object()) {    # the temp_directory is actually kept in the Process object:
             $runnable_object->cleanup_worker_temp_directory();
-        } else {                                                # otherwise keep _tmp_dir in the Worker object, so it needs its own cleanup method:
-            $self->cleanup_worker_process_temp_directory();     #   TODO: remove this method when -compile_module_once becomes the only option
         }
     }
 
@@ -635,6 +618,7 @@ sub run {
     $self->get_stderr_redirector->pop();
   }
 }
+
 
 sub run_one_batch {
     my ($self, $jobs) = @_;
@@ -665,18 +649,7 @@ sub run_one_batch {
         eval {  # capture any throw/die
             $job->incomplete(1);
 
-            my $runnable_object;
-
-            if( $self->compile_module_once() ) {
-                $runnable_object = $self->runnable_object();
-            } else {
-                $self->enter_status('COMPILATION', $job);
-                $runnable_object = $self->analysis->process or die "Unknown compilation error";
-                $runnable_object->db( $self->adaptor->db );
-                $runnable_object->worker( $self );
-                $runnable_object->debug( $self->debug );
-                $runnable_object->execute_writes( $self->execute_writes );
-            }
+            my $runnable_object = $self->runnable_object();
 
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();

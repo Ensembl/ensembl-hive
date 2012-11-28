@@ -13,7 +13,7 @@ Bio::EnsEMBL::Registry->no_version_check(1);
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
-my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $compile_module_once, $force);   # Worker control parameters
+my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $force);   # Worker control parameters
 my ($help, $debug);
 
 GetOptions(
@@ -38,7 +38,6 @@ GetOptions(
            'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
            'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
-           'compile_module_once=i'      => \$compile_module_once,
            'force=i'                    => \$force,
 
 # Other commands
@@ -101,7 +100,6 @@ eval {
          -worker_log_dir        => $worker_log_dir,
          -hive_log_dir          => $hive_log_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
-         -compile_module_once   => $compile_module_once,
 
       # Other parameters:
          -debug                 => $debug,
@@ -185,7 +183,6 @@ __DATA__
     -hive_log_dir <path>        : directory where stdout/stderr of the whole hive of workers is redirected
     -worker_log_dir <path>      : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
-    -compile_module_once 0|1    : should we compile the module only once (desired future behaviour), or pretend to do it before every job (current behaviour)?
     -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 
 =head2 Other options:
