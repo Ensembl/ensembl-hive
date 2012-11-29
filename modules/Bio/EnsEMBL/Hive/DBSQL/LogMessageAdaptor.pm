@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::DBSQL::JobMessageAdaptor
+    Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor
 
 =head1 SYNOPSIS
 
-    $dba->get_JobMessageAdaptor->store_job_message($job_id, $msg, $is_error);
+    $dba->get_LogMessageAdaptor->store_job_message($job_id, $msg, $is_error);
 
-    $dba->get_JobMessageAdaptor->store_worker_message($worker_id, $msg, $is_error);
+    $dba->get_LogMessageAdaptor->store_worker_message($worker_id, $msg, $is_error);
 
 =head1 DESCRIPTION
 
@@ -21,7 +21,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::DBSQL::JobMessageAdaptor;
+package Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor;
 
 use strict;
 
@@ -29,7 +29,7 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
 sub default_table_name {
-    return 'job_message';
+    return 'log_message';
 }
 
 

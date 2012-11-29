@@ -510,7 +510,7 @@ sub run {
     } or do {
         my $msg = $@;
         warn "Could not specialize worker:\n\t$msg\n";
-        $self->adaptor->db->get_JobMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
     };
@@ -532,7 +532,7 @@ sub run {
         } or do {
             my $msg = "Could not compile Runnable '".$self->analysis->module."' :\n\t".$@;
             warn "$msg\n";
-            $self->adaptor->db->get_JobMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
+            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
             $self->cause_of_death('SEE_MSG');
         };
@@ -677,7 +677,7 @@ sub run_one_batch {
             my $job_status_at_the_moment = $job->status();
             my $action = $job->incomplete ? 'died' : 'exited';
             $job_completion_line = "\njob $job_id : $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown\n";
-            $self->adaptor->db->get_JobMessageAdaptor()->store_job_message($job_id, $msg_thrown, $job->incomplete );
+            $self->adaptor->db->get_LogMessageAdaptor()->store_job_message($job_id, $msg_thrown, $job->incomplete );
         }
 
         print STDERR $job_completion_line if($self->log_dir and ($self->debug or $job->incomplete));            # one copy goes to the job's STDERR

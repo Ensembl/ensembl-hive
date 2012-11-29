@@ -33,7 +33,7 @@ CREATE OR REPLACE VIEW progress AS
 
 CREATE OR REPLACE VIEW msg AS
     SELECT a.analysis_id, a.logic_name, m.*
-    FROM job_message m
+    FROM log_message m
     JOIN worker w USING (worker_id)
     LEFT JOIN analysis_base a ON (a.analysis_id=w.analysis_id)
     LEFT JOIN job j ON (j.job_id=m.job_id);
@@ -105,7 +105,7 @@ CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
     DROP VIEW IF EXISTS msg, progress;
-    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, resource_class, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, job_message, job, worker;
+    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, resource_class, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, job, worker;
 END; //
 DELIMITER ;
 

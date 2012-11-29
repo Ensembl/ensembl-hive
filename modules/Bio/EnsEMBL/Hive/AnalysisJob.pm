@@ -212,7 +212,7 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
 
 =head2 warning
 
-    Description:    records a non-error message in 'job_message' table linked to the current job
+    Description:    records a non-error message in 'log_message' table linked to the current job
 
 =cut
 
@@ -220,7 +220,7 @@ sub warning {
     my ($self, $msg) = @_;
 
     if( my $job_adaptor = $self->adaptor ) {
-        $job_adaptor->db->get_JobMessageAdaptor()->store_job_message($self->dbID, $msg, 0);
+        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($self->dbID, $msg, 0);
     } else {
         print STDERR "Warning: $msg\n";
     }

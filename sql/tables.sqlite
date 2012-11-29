@@ -199,14 +199,14 @@ CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 
 -- ---------------------------------------------------------------------------------
 --
--- Table structure for table 'job_message'
+-- Table structure for table 'log_message'
 --
 -- overview:
 --      In case a job throws a message (via die/throw), this message is registered in this table.
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---       job_message_id     - an autoincremented primary id of the message
+--       log_message_id     - an autoincremented primary id of the message
 --               job_id     - the id of the job that threw the message (or NULL if it was outside of a message)
 --            worker_id     - the 'current' worker
 --                 time     - when the message was thrown
@@ -215,8 +215,8 @@ CREATE        INDEX IF NOT EXISTS worker_idx ON job (worker_id);
 --                  msg     - string that contains the message
 --             is_error     - binary flag
 
-CREATE TABLE job_message (
-  job_message_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE log_message (
+  log_message_id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   job_id                    INTEGER DEFAULT NULL,
   worker_id                 INTEGER NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -225,8 +225,8 @@ CREATE TABLE job_message (
   msg                       TEXT,
   is_error                  BOOLEAN
 );
-CREATE        INDEX IF NOT EXISTS worker_idx ON job_message (worker_id);
-CREATE        INDEX IF NOT EXISTS job_idx ON job_message (job_id);
+CREATE        INDEX IF NOT EXISTS worker_idx ON log_message (worker_id);
+CREATE        INDEX IF NOT EXISTS job_idx ON log_message (job_id);
 
 
 -- ---------------------------------------------------------------------------------

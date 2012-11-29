@@ -215,14 +215,14 @@ CREATE TABLE job (
 
 -- ---------------------------------------------------------------------------------
 --
--- Table structure for table 'job_message'
+-- Table structure for table 'log_message'
 --
 -- overview:
 --      In case a job throws a message (via die/throw), this message is registered in this table.
 --      It may or may not indicate that the job was unsuccessful via is_error flag.
 --
 -- semantics:
---       job_message_id     - an autoincremented primary id of the message
+--       log_message_id     - an autoincremented primary id of the message
 --               job_id     - the id of the job that threw the message (or NULL if it was outside of a message)
 --            worker_id     - the 'current' worker
 --                 time     - when the message was thrown
@@ -231,8 +231,8 @@ CREATE TABLE job (
 --                  msg     - string that contains the message
 --             is_error     - binary flag
 
-CREATE TABLE job_message (
-  job_message_id            int(10) NOT NULL AUTO_INCREMENT,
+CREATE TABLE log_message (
+  log_message_id            int(10) NOT NULL AUTO_INCREMENT,
   job_id                    int(10) DEFAULT NULL,
   worker_id                 int(10) unsigned NOT NULL,
   time                      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -241,7 +241,7 @@ CREATE TABLE job_message (
   msg                       text,
   is_error                  TINYINT,
 
-  PRIMARY KEY               (job_message_id),
+  PRIMARY KEY               (log_message_id),
   INDEX worker_id           (worker_id),
   INDEX job_id              (job_id)
 

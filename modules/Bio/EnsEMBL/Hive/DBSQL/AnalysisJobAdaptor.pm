@@ -622,7 +622,7 @@ sub release_undone_jobs_from_worker {
             }
         }
 
-        $self->db()->get_JobMessageAdaptor()->store_job_message($job_id, $msg, not $passed_on );
+        $self->db()->get_LogMessageAdaptor()->store_job_message($job_id, $msg, not $passed_on );
 
         unless($passed_on) {
             $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );

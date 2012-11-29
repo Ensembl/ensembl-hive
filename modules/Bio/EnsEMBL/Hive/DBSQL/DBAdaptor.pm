@@ -63,7 +63,7 @@ sub get_available_adaptors {
         'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
         'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
         'ResourceClass'       => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
-        'JobMessage'          => 'Bio::EnsEMBL::Hive::DBSQL::JobMessageAdaptor',
+        'LogMessage'          => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
         'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
 
             # "old" Hive adaptors (having their own fetching/storing code) :

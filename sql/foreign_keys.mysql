@@ -8,12 +8,12 @@ ALTER TABLE analysis_stats          ADD FOREIGN KEY (analysis_id)               
 ALTER TABLE analysis_stats_monitor  ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 
 ALTER TABLE job                     ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id);
-ALTER TABLE job_message             ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id);
+ALTER TABLE log_message             ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id);
 ALTER TABLE job_file                ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id);
 
 ALTER TABLE job                     ADD FOREIGN KEY (prev_job_id)               REFERENCES job(job_id);
 ALTER TABLE job                     ADD FOREIGN KEY (semaphored_job_id)         REFERENCES job(job_id);
-ALTER TABLE job_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id);
+ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id);
 ALTER TABLE job_file                ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id);
 
 ALTER TABLE resource_description    ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
