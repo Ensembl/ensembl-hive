@@ -121,8 +121,10 @@ sub schedule_workers {
         next if($analysis_stats->status eq 'BLOCKED');
 
             # getting the initial worker requirement for this analysis (may be stale if not sync'ed recently)
-        my $workers_this_analysis = $analysis_stats->num_required_workers
-            or next;
+        my $extra_workers_this_analysis = $analysis_stats->num_required_workers - $analysis_stats->num_running_workers;
+
+            # if this analysis doesn't require any extra workers - just skip it:
+        next if ($extra_workers_this_analysis <= 0);
 
             # setting up all negotiating limiters:
         $queen_capacity->multiplier( $analysis_stats->hive_capacity );
@@ -135,22 +137,22 @@ sub schedule_workers {
 
             # negotiations:
         foreach my $limiter (@limiters) {
-            $workers_this_analysis = $limiter->preliminary_offer( $workers_this_analysis );
+            $extra_workers_this_analysis = $limiter->preliminary_offer( $extra_workers_this_analysis );
         }
 
             # do not continue with this analysis if limiters haven't agreed on a positive number:
-        next unless($workers_this_analysis);
+        next unless($extra_workers_this_analysis);
 
             # let all parties know the final decision of negotiations:
         foreach my $limiter (@limiters) {
-            $limiter->final_decision( $workers_this_analysis );
+            $limiter->final_decision( $extra_workers_this_analysis );
         }
 
         my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
-        $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $workers_this_analysis;
-        $total_workers_to_submit                                                        += $workers_this_analysis;
+        $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
+        $total_workers_to_submit                                                        += $extra_workers_this_analysis;
         $analysis_stats->print_stats();
-        printf("Before checking the Valley for pending jobs, Scheduler allocated $workers_this_analysis x $this_meadow_type:$this_rc_name workers for '%s' [%.4f hive_load remaining]\n",
+        printf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
             $analysis->logic_name,
             $queen_capacity->available_capacity,
         );

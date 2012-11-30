@@ -134,6 +134,8 @@ sub num_running_workers {
     return $self->{'_num_running_workers'};
 }
 
+# NB: the meaning of this field changes from "how many workers we need to add" to "how many workers we actually need"
+
 sub num_required_workers {
     my $self = shift;
     $self->{'_num_required_workers'} = shift if(@_);
@@ -293,7 +295,7 @@ sub print_stats {
 
     my $analysis = $self->get_analysis;
 
-    printf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, ",
+    printf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id,
         $self->status,
@@ -306,9 +308,11 @@ sub print_stats {
         $self->total_job_count,
 
         $self->avg_msec_per_job,
+
+        $self->num_running_workers,
+        $self->num_required_workers,
     );
-    print 'req.workers:'.$self->num_required_workers
-         .'  h.cap:'    .( defined($self->hive_capacity) ? $self->hive_capacity : '-' )
+    print '  h.cap:'    .( defined($self->hive_capacity) ? $self->hive_capacity : '-' )
          .'  a.cap:'    .( defined($analysis->analysis_capacity) ? $analysis->analysis_capacity : '-')
          ."  (sync'd "  .$self->seconds_since_last_update." sec ago)\n",
 }
