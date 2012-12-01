@@ -31,7 +31,7 @@ GetOptions(
            'job_id=i'                   => \$job_id,
 
 # Worker control parameters:
-           'job_limit|limit=i'          => \$job_limit,
+           'job_limit=i'                => \$job_limit,
            'life_span|lifespan=i'       => \$life_span,
            'no_cleanup'                 => \$no_cleanup,
            'no_write'                   => \$no_write,

@@ -78,7 +78,7 @@ sub main {
                'submission_options=s'           => \$submission_options,
 
                     # worker control
-               'job_limit|jlimit=i'     => \$self->{'job_limit'},
+               'job_limit=i'            => \$self->{'job_limit'},
                'life_span|lifespan=i'   => \$self->{'life_span'},
                'logic_name=s'           => \$self->{'logic_name'},
                'hive_log_dir|hive_output_dir=s'      => \$self->{'hive_log_dir'},

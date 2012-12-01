@@ -147,8 +147,8 @@ sub create_new_worker {
 
     $worker->init;
 
-    if($job_limit) {
-      $worker->job_limit($job_limit);
+    if(defined($job_limit)) {
+      $worker->job_limiter($job_limit);
       $worker->life_span(0);
     }
 
