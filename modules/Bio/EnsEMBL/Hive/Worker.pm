@@ -65,19 +65,20 @@ package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
 use POSIX;
-use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
+
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::Hive::Analysis;
+use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Extensions;
+use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
-use Bio::EnsEMBL::Hive::Limiter;
+use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
          );
@@ -252,6 +253,32 @@ sub special_batch {
   return $self->{'_special_batch'};
 }
 
+
+sub perform_cleanup {
+  my $self = shift;
+  $self->{'_perform_cleanup'} = shift if(@_);
+  $self->{'_perform_cleanup'} = 1 unless(defined($self->{'_perform_cleanup'}));
+  return $self->{'_perform_cleanup'};
+}
+
+
+# this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
+
+sub retry_throwing_jobs {
+    my $self = shift @_;
+
+    $self->{'_retry_throwing_jobs'} = shift @_ if(@_);
+    return defined($self->{'_retry_throwing_jobs'}) ? $self->{'_retry_throwing_jobs'} : 1;
+}
+
+
+sub can_respecialize {
+    my $self = shift;
+    $self->{'_can_respecialize'} = shift if(@_);
+    return $self->{'_can_respecialize'};
+}
+
+
 =head2 analysis
 
   Arg [1] : (optional) Bio::EnsEMBL::Hive::Analysis $value
@@ -381,15 +408,6 @@ sub runnable_object {
     return $self->{'_runnable_object'};
 }
 
-# this is a setter/getter that defines default behaviour when a job throws: should it be retried or not?
-
-sub retry_throwing_jobs {
-    my $self = shift @_;
-
-    $self->{'_retry_throwing_jobs'} = shift @_ if(@_);
-    return defined($self->{'_retry_throwing_jobs'}) ? $self->{'_retry_throwing_jobs'} : 1;
-}
-
 
 sub get_stdout_redirector {
     my $self = shift;
@@ -403,13 +421,6 @@ sub get_stderr_redirector {
     return $self->{_stderr_redirector} ||= Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
 }
 
-
-sub perform_cleanup {
-  my $self = shift;
-  $self->{'_perform_cleanup'} = shift if(@_);
-  $self->{'_perform_cleanup'} = 1 unless(defined($self->{'_perform_cleanup'}));
-  return $self->{'_perform_cleanup'};
-}
 
 sub print_worker {
     my $self = shift;
@@ -469,21 +480,134 @@ sub toString {
 =cut
 
 sub run {
-    my $self        = shift;
-    my @spec_args   = @_;
+    my ($self, $specialization_arglist) = @_;
 
     if( my $worker_log_dir = $self->log_dir ) {
         $self->get_stdout_redirector->push( $worker_log_dir.'/worker.out' );
         $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
     }
 
-    my $min_batch_time;
+    my $min_batch_time  = Bio::EnsEMBL::Hive::AnalysisStats::min_batch_time();
+    my $job_adaptor     = $self->adaptor->db->get_AnalysisJobAdaptor;
+
+    $self->specialize_and_compile_wrapper( $specialization_arglist );
+
+    while (!$self->cause_of_death) {  # Worker's lifespan loop (ends only when the worker dies for any reason)
+
+        my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
+        my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
+        $self->{'_interval_partial_timing'} = {};
+
+        if( my $special_batch = $self->special_batch() ) {
+            $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
+            $self->cause_of_death('JOB_LIMIT');
+        } else {    # a proper "BATCHES" loop
+
+            while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {
+
+                if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->dbID ) }) ) {
+                    my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
+                    warn "$msg";
+                    $self->cause_of_death('CONTAMINATED');
+                    $job_adaptor->release_undone_jobs_from_worker($self, $msg);
+
+                } elsif( $self->job_limiter->reached()) {
+                    print "job_limit reached (".$self->work_done." jobs completed)\n";
+                    $self->cause_of_death('JOB_LIMIT');
+
+                } elsif ( my $alive_for_secs = $self->life_span_limit_reached()) {
+                    print "life_span limit reached (alive for $alive_for_secs secs)\n";
+                    $self->cause_of_death('LIFESPAN');
+
+                } else {
+                    my $desired_batch_size = $self->analysis->stats->get_or_estimate_batch_size();
+                    $desired_batch_size = $self->job_limiter->preliminary_offer( $desired_batch_size );
+                    $self->job_limiter->final_decision( $desired_batch_size );
+
+                    my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size );
+                    if(scalar(@$actual_batch)) {
+                        $jobs_done_by_batches_loop += $self->run_one_batch( $actual_batch );
+                    } else {
+                        $self->cause_of_death('NO_WORK');
+                    }
+                }
+            }
+        }
+
+        # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
+        # so they are not allowed to happen too frequently (not before $min_batch_time of work has been done)
+        #
+        if($jobs_done_by_batches_loop) {
+
+            $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_work_done(
+                $self->analysis->dbID,
+                $jobs_done_by_batches_loop,
+                $batches_stopwatch->get_elapsed,
+                $self->{'_interval_partial_timing'}{'FETCH_INPUT'}  || 0,
+                $self->{'_interval_partial_timing'}{'RUN'}          || 0,
+                $self->{'_interval_partial_timing'}{'WRITE_OUTPUT'} || 0,
+            );
+        }
+
+        # A mechanism whereby workers can be caused to exit even if they were doing fine:
+        #
+        # FIXME: The following check is not *completely* correct, as it assumes hive_capacity is "local" to the analysis:
+        if (!$self->cause_of_death) {
+            my $stats = $self->analysis->stats;
+            if( defined($stats->hive_capacity)
+            and 0 <= $stats->hive_capacity
+            and $stats->hive_capacity < $stats->num_running_workers
+            ) {
+                $self->cause_of_death('HIVE_OVERLOAD');
+            }
+        }
+
+        if( $self->cause_of_death() eq 'NO_WORK') {
+            $self->adaptor->db->get_AnalysisStatsAdaptor->update_status($self->analysis_id, 'ALL_CLAIMED');
+            
+            if( $self->can_respecialize and !$specialization_arglist ) {
+                $self->cause_of_death(undef);
+                $self->specialize_and_compile_wrapper();
+            }
+        }
+
+    }     # /Worker's lifespan loop
+
+        # have runnable clean up any global/process files/data it may have created
+    if($self->perform_cleanup) {
+        if(my $runnable_object = $self->runnable_object()) {    # the temp_directory is actually kept in the Process object:
+            $runnable_object->cleanup_worker_temp_directory();
+        }
+    }
+
+    $self->adaptor->register_worker_death($self);
+
+    $self->analysis->stats->print_stats if($self->debug);
+
+    printf("dbc %d disconnect cycles\n", $self->adaptor->db->dbc->disconnect_count);
+    print("total jobs completed : ", $self->work_done, "\n");
+
+    if( $self->log_dir ) {
+        $self->get_stdout_redirector->pop();
+        $self->get_stderr_redirector->pop();
+    }
+}
+
+
+sub specialize_and_compile_wrapper {
+    my ($self, $specialization_arglist) = @_;
 
     eval {
         $self->enter_status('SPECIALIZATION');
-        $self->adaptor->specialize_new_worker( $self, @spec_args );
+        my $respecialization_from = $self->analysis_id && $self->analysis->logic_name.'('.$self->analysis_id.')';
+        $self->adaptor->specialize_new_worker( $self, $specialization_arglist ? @$specialization_arglist : () );
+        if($respecialization_from) {
+            my $respecialization_to = $self->analysis->logic_name.'('.$self->analysis_id.')';
+            my $msg = "Respecialization from $respecialization_from to $respecialization_to";
+            warn "\n$msg\n";
+            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 0 );
+        }
         $self->print_worker();
-        $min_batch_time = $self->analysis->stats->min_batch_time();
         1;
     } or do {
         my $msg = $@;
@@ -508,103 +632,12 @@ sub run {
             $self->adaptor->db->dbc->disconnect_when_inactive(0);
             1;
         } or do {
-            my $msg = "Could not compile Runnable '".$self->analysis->module."' :\n\t".$@;
-            warn "$msg\n";
+            my $msg = $@;
+            warn "Could not compile Runnable '".$self->analysis->module."' :\n\t$msg\n";
             $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
 
-            $self->cause_of_death('SEE_MSG');
+            $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
         };
-    }
-
-    my $job_adaptor       = $self->adaptor->db->get_AnalysisJobAdaptor;
-
-  while (!$self->cause_of_death) {  # Worker's lifespan loop (ends only when the worker dies for any reason)
-
-    my $batches_stopwatch           = Bio::EnsEMBL::Hive::Utils::Stopwatch->new()->restart();
-    my $jobs_done_by_batches_loop   = 0; # by all iterations of internal loop
-    $self->{'_interval_partial_timing'} = {};
-
-    if( my $special_batch = $self->special_batch() ) {
-        $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
-        $self->cause_of_death('JOB_LIMIT'); 
-    } else {    # a proper "BATCHES" loop
-
-        while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {
-
-            if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->dbID ) }) ) {
-                my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
-                warn "$msg";
-                $self->cause_of_death('CONTAMINATED'); 
-                $job_adaptor->release_undone_jobs_from_worker($self, $msg);
-
-            } elsif( $self->job_limiter->reached()) {
-                print "job_limit reached (".$self->work_done." jobs completed)\n";
-                $self->cause_of_death('JOB_LIMIT'); 
-
-            } elsif ( my $alive_for_secs = $self->life_span_limit_reached()) {
-                print "life_span limit reached (alive for $alive_for_secs secs)\n";
-                $self->cause_of_death('LIFESPAN'); 
-
-            } else {
-                my $desired_batch_size = $self->analysis->stats->get_or_estimate_batch_size();
-                $desired_batch_size = $self->job_limiter->preliminary_offer( $desired_batch_size );
-                $self->job_limiter->final_decision( $desired_batch_size );
-
-                my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size );
-                if(scalar(@$actual_batch)) {
-                    $jobs_done_by_batches_loop += $self->run_one_batch( $actual_batch );
-                } else {
-                    $self->cause_of_death('NO_WORK'); 
-                }
-            }
-        }
-    }
-
-        # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
-        # so they are not allowed to happen too frequently (not before $min_batch_time of work has been done)
-        #
-    if($jobs_done_by_batches_loop) {
-
-        $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_work_done(
-            $self->analysis->dbID,
-            $jobs_done_by_batches_loop,
-            $batches_stopwatch->get_elapsed,
-            $self->{'_interval_partial_timing'}{'FETCH_INPUT'}  || 0,
-            $self->{'_interval_partial_timing'}{'RUN'}          || 0,
-            $self->{'_interval_partial_timing'}{'WRITE_OUTPUT'} || 0,
-        );
-    }
-
-        # A mechanism whereby workers can be caused to exit even if they were doing fine:
-        #
-        # FIXME: The following check is not *completely* correct, as it assumes hive_capacity is "local" to the analysis:
-    if (!$self->cause_of_death
-    and defined($self->analysis->stats->hive_capacity)
-    and 0 <= $self->analysis->stats->hive_capacity
-    and $self->analysis->stats->hive_capacity < $self->analysis->stats->num_running_workers
-    ) {
-        $self->cause_of_death('HIVE_OVERLOAD');
-    }
-
-  }     # /Worker's lifespan loop
-
-        # have runnable clean up any global/process files/data it may have created
-    if($self->perform_cleanup) {
-        if(my $runnable_object = $self->runnable_object()) {    # the temp_directory is actually kept in the Process object:
-            $runnable_object->cleanup_worker_temp_directory();
-        }
-    }
-
-    $self->adaptor->register_worker_death($self);
-
-    $self->analysis->stats->print_stats if($self->debug);
-
-    printf("dbc %d disconnect cycles\n", $self->adaptor->db->dbc->disconnect_count);
-    print("total jobs completed : ", $self->work_done, "\n");
-
-    if( $self->log_dir ) {
-        $self->get_stdout_redirector->pop();
-        $self->get_stderr_redirector->pop();
     }
 }
 

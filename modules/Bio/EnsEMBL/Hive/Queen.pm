@@ -109,10 +109,10 @@ sub create_new_worker {
     my ($self, @args) = @_;
 
     my ($meadow_type, $meadow_name, $process_id, $exec_host, $resource_class_id, $resource_class_name,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs) =
+        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize) =
 
     rearrange([qw(meadow_type meadow_name process_id exec_host resource_class_id resource_class_name
-                no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs) ], @args);
+                no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs can_respecialize) ], @args);
 
     if( defined($resource_class_name) ) {
         my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
@@ -161,6 +161,8 @@ sub create_new_worker {
     $worker->debug($debug)                              if($debug);
 
     $worker->retry_throwing_jobs($retry_throwing_jobs)  if(defined $retry_throwing_jobs);
+
+    $worker->can_respecialize($can_respecialize)        if(defined $can_respecialize);
 
     return $worker;
 }
@@ -257,6 +259,7 @@ sub specialize_new_worker {
 
         print "Queen picked analysis with dbID=".$stats->analysis_id." for the worker\n";
 
+        $worker->analysis( undef ); # make sure we reset anything that was there before
         $analysis_id = $stats->analysis_id;
     } else {
         $worker->cause_of_death('NO_ROLE');
@@ -314,15 +317,11 @@ sub register_worker_death {
             $analysis_stats_adaptor->decrease_running_workers($worker->analysis_id);
         }
 
-        if($cod eq 'NO_WORK') {
-            $analysis_stats_adaptor->update_status($worker->analysis_id, 'ALL_CLAIMED');
-        } elsif($cod eq 'UNKNOWN'
-            or $cod eq 'MEMLIMIT'
-            or $cod eq 'RUNLIMIT'
-            or $cod eq 'KILLED_BY_USER'
-            or $cod eq 'SEE_MSG'
-            or $cod eq 'NO_ROLE'
-            or $cod eq 'CONTAMINATED') {
+        unless( $cod eq 'NO_WORK'
+            or  $cod eq 'JOB_LIMIT'
+            or  $cod eq 'HIVE_OVERLOAD'
+            or  $cod eq 'LIFESPAN'
+        ) {
                 $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
         }
 

@@ -12,8 +12,8 @@ use Bio::EnsEMBL::Hive::Valley;
 Bio::EnsEMBL::Registry->no_version_check(1);
 
 my ($reg_conf, $reg_alias, $url);                   # Connection parameters
-my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id);     # Task specification parameters
-my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $force);   # Worker control parameters
+my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
+my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
 my ($help, $debug);
 
 GetOptions(
@@ -29,6 +29,7 @@ GetOptions(
            'analysis_id=i'              => \$analysis_id,
            'logic_name=s'               => \$logic_name,
            'job_id=i'                   => \$job_id,
+           'force=i'                    => \$force,
 
 # Worker control parameters:
            'job_limit=i'                => \$job_limit,
@@ -38,7 +39,7 @@ GetOptions(
            'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
            'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
            'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
-           'force=i'                    => \$force,
+           'can_respecialize=i'         => \$can_respecialize,
 
 # Other commands
            'h|help'                     => \$help,
@@ -100,6 +101,7 @@ eval {
          -worker_log_dir        => $worker_log_dir,
          -hive_log_dir          => $hive_log_dir,
          -retry_throwing_jobs   => $retry_throwing_jobs,
+         -can_respecialize      => $can_respecialize,
 
       # Other parameters:
          -debug                 => $debug,
@@ -109,12 +111,14 @@ my $msg_thrown = $@;
 
 if($worker) {
 
-    $worker->run(
+    my $specialization_arglist = ($analysis_id || $logic_name || $job_id) && [
          -analysis_id           => $analysis_id,
          -logic_name            => $logic_name,
          -job_id                => $job_id,
          -force                 => $force,
-    );
+    ];
+
+    $worker->run( $specialization_arglist );
 
 } else {
 
@@ -173,6 +177,7 @@ __DATA__
     -analysis_id <id>           : pre-specify this worker in a particular analysis defined by database id
     -logic_name <string>        : pre-specify this worker in a particular analysis defined by name
     -job_id <id>                : run a specific job defined by its database id
+    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 
 =head2 Worker control parameters:
 
@@ -183,7 +188,7 @@ __DATA__
     -hive_log_dir <path>        : directory where stdout/stderr of the whole hive of workers is redirected
     -worker_log_dir <path>      : directory where stdout/stderr of this particular worker is redirected
     -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
-    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
+    -can_respecialize <0|1>     : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
 
 =head2 Other options:
 

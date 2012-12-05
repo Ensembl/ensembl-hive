@@ -53,6 +53,7 @@ sub main {
 
     $self->{'sleep_minutes'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
+    $self->{'can_respecialize'}     = undef;
     $self->{'hive_log_dir'} = undef;
 
     GetOptions(
@@ -83,6 +84,7 @@ sub main {
                'logic_name=s'           => \$self->{'logic_name'},
                'hive_log_dir|hive_output_dir=s'      => \$self->{'hive_log_dir'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
+               'can_respecialize=i'     => \$self->{'can_respecialize'},
                'debug=i'                => \$self->{'debug'},
 
                     # other commands/options
@@ -277,7 +279,7 @@ sub generate_worker_cmd {
         $worker_cmd .= " -url '". $self->{'safe_url'} ."'";
     }
 
-    foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
@@ -436,6 +438,7 @@ __DATA__
     -life_span <num>            : life_span limit for each worker
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
+    -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
     -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected
     -debug <debug_level>        : set debug level of the workers
 
