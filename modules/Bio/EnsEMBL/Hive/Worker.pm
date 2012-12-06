@@ -522,11 +522,12 @@ sub run {
                 } else {
                     my $desired_batch_size = $self->analysis->stats->get_or_estimate_batch_size();
                     $desired_batch_size = $self->job_limiter->preliminary_offer( $desired_batch_size );
-                    $self->job_limiter->final_decision( $desired_batch_size );
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size );
                     if(scalar(@$actual_batch)) {
-                        $jobs_done_by_batches_loop += $self->run_one_batch( $actual_batch );
+                        my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
+                        $jobs_done_by_batches_loop += $jobs_done_by_this_batch;
+                        $self->job_limiter->final_decision( $jobs_done_by_this_batch );
                     } else {
                         $self->cause_of_death('NO_WORK');
                     }
