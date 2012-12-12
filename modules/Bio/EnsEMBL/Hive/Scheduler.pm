@@ -132,7 +132,7 @@ sub schedule_workers {
             $submit_capacity,
             $queen_capacity,
             $meadow_capacity_by_type->{$this_meadow_type},
-            defined($analysis->analysis_capacity) ? Bio::EnsEMBL::Hive::Limiter->new( $analysis->analysis_capacity ) : (),
+            defined($analysis->analysis_capacity) ? Bio::EnsEMBL::Hive::Limiter->new( $analysis->analysis_capacity - $analysis_stats->num_running_workers ) : (),
         );
 
             # negotiations:
