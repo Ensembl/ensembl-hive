@@ -141,7 +141,7 @@ sub schedule_workers {
         }
 
             # do not continue with this analysis if limiters haven't agreed on a positive number:
-        next unless($extra_workers_this_analysis);
+        next if ($extra_workers_this_analysis <= 0);
 
             # let all parties know the final decision of negotiations:
         foreach my $limiter (@limiters) {
