@@ -573,25 +573,13 @@ sub synchronize_AnalysisStats {
 
   $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
-  my $analysis              = $analysisStats->get_analysis();
-  my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
-                            && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
 
-  if($self->db->hive_use_triggers()) {
-
-            my $job_count           = $analysisStats->ready_job_count();
-
-            my $required_workers    = $scheduling_allowed && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
-
-            $analysisStats->num_required_workers( $required_workers );
-
-  } else {
+  unless($self->db->hive_use_triggers()) {
       $analysisStats->total_job_count(0);
       $analysisStats->semaphored_job_count(0);
       $analysisStats->ready_job_count(0);
       $analysisStats->done_job_count(0);
       $analysisStats->failed_job_count(0);
-      $analysisStats->num_required_workers(0);
 
             # ask for analysis_id to force MySQL to use existing index on (analysis_id, status)
       my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY analysis_id, status";
@@ -608,11 +596,6 @@ sub synchronize_AnalysisStats {
 
         if($status eq 'READY') {
             $analysisStats->ready_job_count($job_count);
-
-            my $required_workers    = $scheduling_allowed && POSIX::ceil( $job_count / $analysisStats->get_or_estimate_batch_size() );
-
-            $analysisStats->num_required_workers( $required_workers );
-
         } elsif($status eq 'SEMAPHORED') {
             $analysisStats->semaphored_job_count($job_count);
         } elsif($status eq 'DONE') {
@@ -627,18 +610,29 @@ sub synchronize_AnalysisStats {
 
       $analysisStats->total_job_count( $total_job_count );
       $analysisStats->done_job_count( $done_here + $done_elsewhere );
-  } # /unless $self->{'_hive_use_triggers'}
+  } # unless($self->db->hive_use_triggers())
 
-  $analysisStats->check_blocking_control_rules();
 
-  if($analysisStats->status ne 'BLOCKED') {
-    $analysisStats->determine_status();
-  }
+        # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
+    my $analysis              = $analysisStats->get_analysis();
+    my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
+                              && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
+    my $required_workers    = $scheduling_allowed
+                            && POSIX::ceil( ($analysisStats->ready_job_count() + $analysisStats->inprogress_job_count())
+                                            / $analysisStats->get_or_estimate_batch_size() );
+    $analysisStats->num_required_workers( $required_workers );
 
-  # $analysisStats->sync_lock(0); ## do we perhaps need it here?
-  $analysisStats->update;  #update and release sync_lock
 
-  return $analysisStats;
+    $analysisStats->check_blocking_control_rules();
+
+    if($analysisStats->status ne 'BLOCKED') {
+        $analysisStats->determine_status();
+    }
+
+    # $analysisStats->sync_lock(0); ## do we perhaps need it here?
+    $analysisStats->update;  #update and release sync_lock
+
+    return $analysisStats;
 }
 
 
