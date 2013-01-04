@@ -137,7 +137,8 @@ sub create_new_worker {
 
         eval {
             make_path( $worker_log_dir );
-        } and die "Could not create '$worker_log_dir' directory : $@";
+            1;
+        } or die "Could not create '$worker_log_dir' directory : $@";
 
         my $sth_add_log = $self->prepare( "UPDATE worker SET log_dir=? WHERE worker_id=?" );
         $sth_add_log->execute($worker_log_dir, $worker_id);

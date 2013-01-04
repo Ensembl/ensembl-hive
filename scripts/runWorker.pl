@@ -106,30 +106,23 @@ eval {
       # Other parameters:
          -debug                 => $debug,
     );
-};
-my $msg_thrown = $@;
 
-if($worker) {
+} or do {
 
-    my $specialization_arglist = ($analysis_id || $logic_name || $job_id) && [
-         -analysis_id           => $analysis_id,
-         -logic_name            => $logic_name,
-         -job_id                => $job_id,
-         -force                 => $force,
-    ];
-
-    $worker->run( $specialization_arglist );
-
-} else {
-
+    my $msg_thrown = $@;
     $queen->print_analysis_status;
-    print "\n=== COULDN'T CREATE WORKER ===\n";
+    die "\n=== COULDN'T CREATE WORKER ===\n\t$msg_thrown";
+};
 
-    if($msg_thrown) {
-        print "$msg_thrown\n";
-    }
-    exit(1);
-}
+
+my $specialization_arglist = ($analysis_id || $logic_name || $job_id) && [
+     -analysis_id           => $analysis_id,
+     -logic_name            => $logic_name,
+     -job_id                => $job_id,
+     -force                 => $force,
+];
+
+$worker->run( $specialization_arglist );
 
 
 __DATA__
