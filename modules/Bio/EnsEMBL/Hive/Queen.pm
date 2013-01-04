@@ -62,6 +62,7 @@ package Bio::EnsEMBL::Hive::Queen;
 use strict;
 use POSIX;
 use Clone 'clone';
+use File::Path 'make_path';
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
@@ -127,15 +128,16 @@ sub create_new_worker {
     my $sth = $self->prepare($sql);
     $sth->execute($meadow_type, $meadow_name, $exec_host, $process_id, $resource_class_id);
     my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id')
-        or die "Could not create a new worker";
+        or die "Could not insert a new worker";
     $sth->finish;
 
     if($hive_log_dir or $worker_log_dir) {
         my $dir_revhash = dir_revhash($worker_id);
         $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$worker_id;
 
-            # Note: the following die-message will not reach the log files for circular reason!
-        system("mkdir -p $worker_log_dir") && die "Could not create '$worker_log_dir' because: $!";
+        eval {
+            make_path( $worker_log_dir );
+        } and die "Could not create '$worker_log_dir' directory : $@";
 
         my $sth_add_log = $self->prepare( "UPDATE worker SET log_dir=? WHERE worker_id=?" );
         $sth_add_log->execute($worker_log_dir, $worker_id);
