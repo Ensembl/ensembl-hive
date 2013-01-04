@@ -54,7 +54,9 @@ sub main {
     $self->{'sleep_minutes'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'can_respecialize'}     = undef;
-    $self->{'hive_log_dir'} = undef;
+    $self->{'hive_log_dir'}         = undef;
+    $self->{'submit_stdout_file'}   = undef;
+    $self->{'submit_stderr_file'}   = undef;
 
     GetOptions(
                     # connection parameters
@@ -86,6 +88,8 @@ sub main {
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
                'can_respecialize=i'     => \$self->{'can_respecialize'},
                'debug=i'                => \$self->{'debug'},
+               'submit_stdout_file=s'   => \$self->{'submit_stdout_file'},
+               'submit_stderr_file=s'   => \$self->{'submit_stderr_file'},
 
                     # other commands/options
                'h|help'            => \$help,
@@ -345,7 +349,9 @@ sub run_autonomously {
 
                     print "Submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
 
-                    $this_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_meadow_rc_worker_count, $iteration, $rc_name, $rc_name2xparams{ $rc_name } || '');
+                    $this_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_meadow_rc_worker_count, $iteration,
+                                                    $rc_name, $rc_name2xparams{ $rc_name } || '',
+                                                    $self->{'submit_stdout_file'}, $self->{'submit_stderr_file'});
                 }
             }
         } else {
@@ -431,6 +437,8 @@ __DATA__
     -total_running_workers_max <num>    : max # workers to be running in parallel
     -submit_workers_max <num>           : max # workers to create per loop iteration
     -submission_options <string>        : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
+    -submit_stdout_file <file>          : record submission output stream in a file (to see why workers fail to run after submission). Use with -run instead of -loop.
+    -submit_stderr_file <file>          : record submission error stream in a file (to see why workers fail to run after submission). Use with -run instead of -loop.
 
 =head2 Worker control
 
