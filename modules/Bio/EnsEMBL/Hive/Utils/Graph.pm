@@ -75,7 +75,7 @@ sub new {
 sub graph {
   my ($self) = @_;
   if(! exists $self->{graph}) {
-    $self->{graph} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => 'compress' );
+    $self->{graph} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => 'compress"; pad = "1.0'  ); # injection hack!
   }
   return $self->{graph};
 }
