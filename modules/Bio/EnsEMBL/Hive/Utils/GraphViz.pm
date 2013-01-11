@@ -108,7 +108,13 @@ sub _as_debug {
     }
     $text .= "}\n";
 
-#    print $text;
+        # GraphViz.pm thinks 'record' is the only shape that allows HTML-like labels,
+        # but newer versions of dot allow more freedom, so we patch dot input after generation:
+        #
+    $text=~s/^(\s+table_.*)"record"/$1"tab"/mg;
+    $text=~s/^(\s+analysis_.*)"record"/$1"Mrecord"/mg;
+
+    print $text;
 
     return $text;
 }

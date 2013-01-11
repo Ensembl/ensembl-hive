@@ -73,11 +73,13 @@ sub new {
 =cut
 
 sub graph {
-  my ($self) = @_;
-  if(! exists $self->{graph}) {
-    $self->{graph} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => 'compress"; pad = "1.0'  ); # injection hack!
-  }
-  return $self->{graph};
+    my ($self) = @_;
+
+    if(! exists $self->{graph}) {
+        my $padding  = $self->config_get('Pad') || 0;
+        $self->{graph} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
+    }
+    return $self->{graph};
 }
 
 
@@ -256,24 +258,68 @@ sub _add_hive_details {
 
 
 sub _add_analysis_node {
-  my ($self, $a) = @_;
+    my ($self, $analysis) = @_;
 
-  my $stats = $a->stats();
+    my $analysis_stats = $analysis->stats();
 
-  my ($breakout_label) = $stats->job_count_breakout();
+    my ($breakout_label, $total_job_count, $count_hash)   = $analysis_stats->job_count_breakout();
+    my $analysis_status                                   = $analysis_stats->status;
+    my $analysis_status_colour                            = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Colour');
+    my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
+    my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
+    my $display_stats                                     = $self->config_get('DisplayStats');
+
+    my $colspan = 0;
+    my $bar_chart = '';
+
+    if( $display_stats eq 'barchart' ) {
+        foreach my $count_method (qw(SEMAPHORED READY INPROGRESS DONE FAILED)) {
+            if(my $count=$count_hash->{lc($count_method).'_job_count'}) {
+                $bar_chart .= '<td bgcolor="'.$self->config_get('Node', 'JobStatus', $count_method, 'Colour').'" width="'.int(100*$count/$total_job_count).'%">'.$count.lc(substr($count_method,0,1)).'</td>';
+                ++$colspan;
+            }
+        }
+        if($colspan != 1) {
+            $bar_chart .= '<td>='.$total_job_count.'</td>';
+            ++$colspan;
+        }
+    }
+
+    $colspan ||= 1;
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.$analysis->dbID().')</td></tr>';
+    if( $display_stats ) {
+        $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
+        if( $display_stats eq 'barchart') {
+            $analysis_label    .= qq{<tr>$bar_chart</tr>};
+        } elsif( $display_stats eq 'text') {
+            $analysis_label    .= qq{<tr><td colspan="$colspan">$breakout_label</td></tr>};
+        }
+    }
+
+    if( $self->config_get('DisplayJobs') ) {
+        my $adaptor = $self->dba->get_AnalysisJobAdaptor();
+        my @jobs = sort {$a->dbID <=> $b->dbID} @{ $adaptor->fetch_all_by_analysis_id_status( $analysis->dbID )};
+
+        $analysis_label    .= '<tr><td colspan="'.$colspan.'"> </td></tr>';
+        foreach my $job (@jobs) {
+            my $input_id = $job->input_id;
+            my $status   = $job->status;
+            my $job_id   = $job->dbID;
+            $input_id=~s/\>/&gt;/g;
+            $input_id=~s/\</&lt;/g;
+            $input_id=~s/\{|\}//g;
+            $analysis_label    .= qq{<tr><td colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
+        }
+    }
+    $analysis_label    .= '</table>>';
   
-  my $analysis_label    = $a->logic_name().' ('.$a->dbID().')\n'.$breakout_label;
-  my $shape             = $a->can_be_empty() ? 'doubleoctagon' : 'ellipse' ;
-  my $status_colour     = $self->config_get('Node', $stats->status, 'Colour');
-  my $node_fontname     = $self->config_get('Node', $stats->status, 'Font');
-  
-  $self->graph->add_node( _analysis_node_name( $a->dbID() ), 
-    label       => $analysis_label,
-    shape       => $shape,
-    style       => 'filled',
-    fontname    => $node_fontname,
-    fillcolor   => $status_colour,
-  );
+    $self->graph->add_node( _analysis_node_name( $analysis->dbID() ), 
+        label       => $analysis_label,
+        shape       => 'record',
+        fontname    => $node_fontname,
+        style       => $style,
+        fillcolor   => $analysis_status_colour,
+    );
 }
 
 
@@ -327,9 +373,9 @@ sub _dataflow_rules {
             $to_id   = $to->dbID();
             $to_node = _analysis_node_name($to_id);
         } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
-            $to_node = $to->table_name();
+            $to_node = 'table_' . $to->table_name;
             $to_node .= '_'.$from_analysis_id if $self->config_get('DuplicateTables');
-            $self->_add_table_node($to_node);
+            $self->_add_table_node($to_node, $to->table_name);
         } else {
             warn('Do not know how to handle the type '.ref($to));
             next;
@@ -378,22 +424,37 @@ sub _dataflow_rules {
 
 
 sub _add_table_node {
-  my ($self, $table) = @_;
+    my ($self, $table_node, $table_name) = @_;
 
-  my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
+    my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
+    my (@column_names, $columns, $table_data);
 
-  my $table_name = $table;
-  if( $self->config_get('DuplicateTables') ) {
-    $table =~ /^(.*)_([^_]*)$/;
-    $table_name = $1;
-  }
+    if( $self->config_get('DisplayData') ) {
+        my $adaptor = $self->dba->get_NakedTableAdaptor();
+        $adaptor->table_name( $table_name );
 
-  $self->graph()->add_node( $table, 
-    label => $table_name.'\n', 
-    shape => 'tab',
-    fontname => $node_fontname,
-    color => $self->config_get('Node', 'Table', 'Colour'),
-  );
+        @column_names = sort keys %{$adaptor->column_set};
+        $columns = scalar(@column_names);
+        $table_data = $adaptor->fetch_all( );
+    }
+
+    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'.$table_name.'</td></tr>';
+
+    if( $self->config_get('DisplayData') ) {
+        $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
+        $table_label .= '<tr>'.join('', map { qq{<td bgcolor="lightblue" border="1">$_</td>} } @column_names).'</tr>';
+        foreach my $row (@$table_data) {
+            $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
+        }
+    }
+    $table_label .= '</table>>';
+
+    $self->graph()->add_node( $table_node, 
+        label => $table_label,
+        shape => 'record',
+        fontname => $node_fontname,
+        color => $self->config_get('Node', 'Table', 'Colour'),
+    );
 }
 
 1;

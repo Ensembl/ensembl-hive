@@ -27,19 +27,34 @@
         },
     },
     "Graph" : {     # configure diagram-generation options here:
+        "Pad"  : "1.0", # empty margin around the whole diagram
+
         "Node" : {
             "Font"        : "Times-Roman",
-            "Colour"      : "white",
-            "READY"       : { "Colour" : "yellow" },    # immediately claimable
-            "WORKING"     : { "Colour" : "yellow" },    # immediately claimable
-            "LOADING"     : { "Colour" : "orange" },    # need a sync to claim
-            "ALL_CLAIMED" : { "Colour" : "orange" },    # need a sync to claim
-            "SYNCHING"    : { "Colour" : "orange" },    # need a sync to complete to claim
-            "BLOCKED"     : { "Colour" : "grey"   },    # need a sync that may or may not unblock
-            "DONE"        : { "Colour" : "green"  },
-            "FAILED"      : { "Colour" : "red"    },
+            "Colour"      : "cyan",
             "Table"       : { "Colour" : "black", "Font" : "Courier" },
             "Details"     : { "Font"   : "Helvetica" },
+
+            "JobStatus"   : {
+                "Colour"        : "yellow",
+                "SEMAPHORED"    : { "Colour" : "red"    },
+                "READY"         : { "Colour" : "orange" },
+                "INPROGRESS"    : { "Colour" : "yellow" },
+                "DONE"          : { "Colour" : "green"  },
+                "FAILED"        : { "Colour" : "grey"   },
+            },
+
+            "AnalysisStatus"   : {
+                "EMPTY"       : { "Colour" : "white"  },    # unpopulated
+                "BLOCKED"     : { "Colour" : "red"    },    # need a sync that may or may not unblock
+                "LOADING"     : { "Colour" : "orange" },    # need a sync to claim
+                "ALL_CLAIMED" : { "Colour" : "orange" },    # need a sync to claim
+                "SYNCHING"    : { "Colour" : "orange" },    # need a sync to complete to claim
+                "READY"       : { "Colour" : "yellow" },    # immediately claimable
+                "WORKING"     : { "Colour" : "yellow" },    # immediately claimable
+                "DONE"        : { "Colour" : "green"  },
+                "FAILED"      : { "Colour" : "grey"   },
+            },
         },
         "Edge" : {
             "Font"        : "Helvetica",
@@ -51,9 +66,14 @@
             "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
             "ColourOffset"  : 1,
         },
+
+        "DisplayStats"          : "barchart",   # show analysis statistics using "barchart", "text" or "" (don't show statistics)
+        "DisplayJobs"           : 0,
+        "DisplayData"           : 0,
+
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,
         "DisplaySemaphoreBoxes" : 1,
-	  "DuplicateTables"       : 0,
+	    "DuplicateTables"       : 0,
     }
 }
