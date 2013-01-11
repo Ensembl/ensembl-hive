@@ -114,7 +114,8 @@ sub _as_debug {
     $text=~s/^(\s+table_.*)"record"/$1"tab"/mg;
     $text=~s/^(\s+analysis_.*)"record"/$1"Mrecord"/mg;
 
-    print $text;
+        # uncomment the following line to see the final input to dot
+    # print $text;
 
     return $text;
 }
