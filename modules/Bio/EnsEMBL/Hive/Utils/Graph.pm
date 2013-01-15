@@ -203,7 +203,7 @@ sub _allocate_to_subgraph {
         if ($to_analysis->can('dbID')) {
             $this_analysis_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
         } else {
-            $this_analysis_node_name = $to_analysis->table_name();
+            $this_analysis_node_name = 'table_' . $to_analysis->table_name();
             $this_analysis_node_name .= '_'.$rule->from_analysis_id() if $self->config_get('DuplicateTables');
         }
         my $funnel_dataflow_rule_id     = $rule->funnel_dataflow_rule_id();
