@@ -41,9 +41,9 @@ sub get_top_clusters {
     my $subgraphs = $self->subgraphs();
 
     my %set = ();
-    foreach my $top_cluster (values %$subgraphs) {
-        if( $top_cluster and !$subgraphs->{ $top_cluster } ) {  # if it's a valid node not mentioned in the keys, it is a top cluster
-            $set{$top_cluster}++;
+    foreach my $potential_top_cluster (values %$subgraphs) {
+        if( $potential_top_cluster and !$subgraphs->{ $potential_top_cluster } ) {  # if it's a valid node not mentioned in the keys, it is a top cluster
+            $set{$potential_top_cluster}++;
         }
     }
     return [ keys %set ];
@@ -64,10 +64,9 @@ sub get_nodes_that_point_at {
 }
 
 
-sub generate_subgraph {
+sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $subgraphs       = $self->subgraphs();
     my $colour_scheme   = $self->colour_scheme();
     my $colour_offset   = $self->colour_offset();
 
@@ -76,7 +75,7 @@ sub generate_subgraph {
     my $text = '';
 
     $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
-#    $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
+#     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
     $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
     $text .= $prefix . "\tstyle=filled;\n";
     $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
@@ -85,7 +84,7 @@ sub generate_subgraph {
 
         $text .= $prefix . "\t${node_name};\n";
         if( @{ $self->get_nodes_that_point_at( $node_name ) } ) {
-            $text .= $self->generate_subgraph( $node_name, $depth+1 );
+            $text .= $self->display_subgraph( $node_name, $depth+1 );
         }
     }
     $text .= $prefix . "}\n";
@@ -99,12 +98,10 @@ sub _as_debug {
 
     my $text = $self->SUPER::_as_debug;
 
-    my $subgraphs = $self->subgraphs();
-
     $text=~s/^}$//m;
 
     foreach my $node_name ( @{ $self->get_top_clusters() } ) {
-        $text .= $self->generate_subgraph( $node_name, 1);
+        $text .= $self->display_subgraph( $node_name, 1);
     }
     $text .= "}\n";
 
@@ -115,7 +112,7 @@ sub _as_debug {
     $text=~s/^(\s+analysis_.*)"record"/$1"Mrecord"/mg;
 
         # uncomment the following line to see the final input to dot
-    # print $text;
+#    print $text;
 
     return $text;
 }

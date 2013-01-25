@@ -108,6 +108,12 @@ sub _analysis_node_name {
     return 'analysis_' . $analysis_id;
 }
 
+sub _table_node_name {
+    my $table_name = shift @_;
+
+    return 'table_' . $table_name;
+}
+
 
 sub _midpoint_name {
     my $rule_id = shift @_;
@@ -134,13 +140,14 @@ sub build {
 
     my %inflow_count = ();    # used to detect sources (nodes with zero inflow)
     my %outflow_rules = ();   # maps from anlaysis_node_name to a list of all dataflow rules that flow out of it
-    my %dfr_flows_into= ();   # maps from dfr_id to target analysis_node_name
+    my %dfr_flows_into_node = ();   # maps from dfr_id to target analysis_node_name
 
     foreach my $rule ( @$all_dataflow_rules ) {
-        if(my $to_id = $rule->to_analysis->can('dbID') && $rule->to_analysis->dbID()) {
-            my $to_node_name    = _analysis_node_name( $to_id );
+        my $target_object = $rule->to_analysis;
+        if(my $to_id = $target_object->can('dbID') && $target_object->dbID()) {
+            my $to_node_name = _analysis_node_name( $to_id );
             $inflow_count{$to_node_name}++;
-            $dfr_flows_into{$rule->dbID()} = $to_node_name;
+            $dfr_flows_into_node{$rule->dbID()} = $to_node_name;
         }
         push @{$outflow_rules{ _analysis_node_name($rule->from_analysis_id()) }}, $rule;
     }
@@ -149,10 +156,9 @@ sub build {
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $analysis_id ( map { $_->dbID } @$all_analyses ) {
-        my $analysis_node_name =  _analysis_node_name( $analysis_id );
-        unless($inflow_count{$analysis_node_name}) {
-            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into, $analysis_node_name, \%subgraph_allocation ); # run the recursion in each component that has a non-cyclic start
+    foreach my $source_analysis_node_name ( map { _analysis_node_name( $_->dbID ) } @$all_analyses ) {
+        unless($inflow_count{$source_analysis_node_name}) {    # if there is no dataflow into this analysis
+            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into_node, $source_analysis_node_name, \%subgraph_allocation ); # run the recursion in each component that has a non-cyclic start
         }
     }
 
@@ -161,7 +167,7 @@ sub build {
         $self->_add_analysis_node($a);
     }
     $self->_control_rules( $all_ctrl_rules );
-    $self->_dataflow_rules( $all_dataflow_rules );
+    $self->_dataflow_rules( $all_dataflow_rules, \%subgraph_allocation );
 
     if($self->config_get('DisplayStretched') ) {
 
@@ -191,50 +197,57 @@ sub build {
 
 
 sub _allocate_to_subgraph {
-    my ($self, $outflow_rules, $dfr_flows_into, $parent_analysis_node_name, $subgraph_allocation ) = @_;
+    my ($self, $outflow_rules, $dfr_flows_into_node, $source_analysis_node_name, $subgraph_allocation ) = @_;
 
-    my $parent_allocation = $subgraph_allocation->{ $parent_analysis_node_name };  # for some analyses it will be undef
+    my $source_analysis_allocation = $subgraph_allocation->{ $source_analysis_node_name };  # for some analyses it will be undef
 
-    foreach my $rule ( @{ $outflow_rules->{$parent_analysis_node_name} } ) {
-        my $to_analysis                 = $rule->to_analysis();
-        next unless $to_analysis->can('dbID') or $self->config_get('DuplicateTables');
+    foreach my $rule ( @{ $outflow_rules->{$source_analysis_node_name} } ) {
+        my $target_object                 = $rule->to_analysis();
+        my $target_node_name;
 
-        my $this_analysis_node_name;
-        if ($to_analysis->can('dbID')) {
-            $this_analysis_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
-        } else {
-            $this_analysis_node_name = $to_analysis->table_name();
-            $this_analysis_node_name .= '_'.$rule->from_analysis_id() if $self->config_get('DuplicateTables');
+        if ($target_object->can('dbID')) {                      # target is an analysis
+            $target_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
+        } else {                                                # target is a table
+            $target_node_name = _table_node_name($target_object->table_name()) . '_' .
+                ($self->config_get('DuplicateTables') ?  $rule->from_analysis_id() : ($source_analysis_allocation||''));
         }
-        my $funnel_dataflow_rule_id     = $rule->funnel_dataflow_rule_id();
 
-        my $proposed_allocation = $funnel_dataflow_rule_id  # depends on whether we start a new semaphore
-#           ? $dfr_flows_into->{$funnel_dataflow_rule_id}       # if we do, report to the new funnel (based on common funnel's analysis name)
-            ? _midpoint_name( $funnel_dataflow_rule_id )        # if we do, report to the new funnel (based on common funnel rule's midpoint)
-            : $parent_allocation;                               # it we don't, inherit the parent's funnel
+        my $proposed_allocation;    # will depend on whether we start a new semaphore
+        my $funnel_dataflow_rule_id  = $rule->funnel_dataflow_rule_id();
+        if( $funnel_dataflow_rule_id ) {
+            $proposed_allocation =
+                $dfr_flows_into_node->{$funnel_dataflow_rule_id};   # if we do start a new semaphore, report to the new funnel (based on common funnel's analysis name)
+#                _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
-        if($funnel_dataflow_rule_id) {
             my $fan_midpoint_name = _midpoint_name( $rule->dbID() );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
 
             my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule_id );
-            $subgraph_allocation->{ $funnel_midpoint_name } = $parent_allocation;   # draw the funnel's midpoint outside of the box
+            $subgraph_allocation->{ $funnel_midpoint_name } = $source_analysis_allocation;   # draw the funnel's midpoint outside of the box
+        } else {
+            $proposed_allocation = $source_analysis_allocation;   # if we don't start a new semaphore, inherit the allocation of the source
         }
-        if( exists $subgraph_allocation->{ $this_analysis_node_name } ) {        # we allocate on first-come basis at the moment
-            my $known_allocation = $subgraph_allocation->{ $this_analysis_node_name } || '';
+            # we allocate on first-come basis at the moment:
+        if( exists $subgraph_allocation->{ $target_node_name } ) {  # already allocated?
+            my $known_allocation = $subgraph_allocation->{ $target_node_name } || '';
             $proposed_allocation ||= '';
 
             if( $known_allocation eq $proposed_allocation) {
-                # warn "analysis '$this_analysis_node_name' has already been allocated to the same '$known_allocation' by another branch";
+                # warn "analysis '$target_node_name' has already been allocated to the same '$known_allocation' by another branch";
             } else {
-                # warn "analysis '$this_analysis_node_name' has already been allocated to '$known_allocation' however this branch would allocate it to '$proposed_allocation'";
+                # warn "analysis '$target_node_name' has already been allocated to '$known_allocation' however this branch would allocate it to '$proposed_allocation'";
+            }
+
+            if($funnel_dataflow_rule_id) {  # correction for multiple entries into the same box (probably needs re-thinking)
+                my $fan_midpoint_name = _midpoint_name( $rule->dbID() );
+                $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
             }
 
         } else {
-            # warn "allocating analysis '$this_analysis_node_name' to '$proposed_allocation'";
-            $subgraph_allocation->{ $this_analysis_node_name } = $proposed_allocation;
+            # warn "allocating analysis '$target_node_name' to '$proposed_allocation'";
+            $subgraph_allocation->{ $target_node_name } = $proposed_allocation;
 
-            $self->_allocate_to_subgraph( $outflow_rules, $dfr_flows_into, $this_analysis_node_name, $subgraph_allocation );
+            $self->_allocate_to_subgraph( $outflow_rules, $dfr_flows_into_node, $target_node_name, $subgraph_allocation );
         }
     }
 }
@@ -341,7 +354,7 @@ sub _control_rules {
 
 
 sub _dataflow_rules {
-    my ($self, $all_dataflow_rules) = @_;
+    my ($self, $all_dataflow_rules, $subgraph_allocation) = @_;
 
     my $graph = $self->graph();
     my $dataflow_colour  = $self->config_get('Edge', 'Data', 'Colour');
@@ -373,8 +386,10 @@ sub _dataflow_rules {
             $to_id   = $to->dbID();
             $to_node = _analysis_node_name($to_id);
         } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
-            $to_node = 'table_' . $to->table_name;
-            $to_node .= '_'.$from_analysis_id if $self->config_get('DuplicateTables');
+
+            $to_node = _table_node_name($to->table_name) . '_' .
+                ( $self->config_get('DuplicateTables') ? $rule->from_analysis_id() : ($subgraph_allocation->{$from_node}||''));
+
             $self->_add_table_node($to_node, $to->table_name);
         } else {
             warn('Do not know how to handle the type '.ref($to));
