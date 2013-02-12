@@ -306,17 +306,14 @@ sub generate_worker_cmd {
 sub run_autonomously {
     my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id, $force) = @_;
 
-    my $default_meadow  = $valley->get_default_meadow();
     my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
     my $special_task    = $run_analysis || $run_job_id;
 
-        # first, fetch two resource-related mappings from the database:
-    my $rc_name2id = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_name_TO_resource_class_id();
-    my $rc_id2xparams = $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_by_meadow_type_HASHED_FROM_resource_class_id_TO_parameters($default_meadow->type());
-
-        # now, chain these two mappings together:
-        #   FIXME: in future this  mapping should be obtainable from the adaptor in one go.
-    my %rc_name2xparams = map { $_ =>  $rc_id2xparams->{ $rc_name2id->{ $_ }} } keys %$rc_name2id;
+    my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+    my %meadow_type_rc_name2xparams = ();
+    foreach my $rd (@{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all() }) {
+        $meadow_type_rc_name2xparams{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = $rd->parameters();
+    }
 
     my $iteration=0;
     my $num_of_remaining_jobs=0;
@@ -350,7 +347,7 @@ sub run_autonomously {
                     print "Submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
 
                     $this_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_meadow_rc_worker_count, $iteration,
-                                                    $rc_name, $rc_name2xparams{ $rc_name } || '',
+                                                    $rc_name, $meadow_type_rc_name2xparams{ $meadow_type }{ $rc_name } || '',
                                                     $self->{'submit_stdout_file'}, $self->{'submit_stderr_file'});
                 }
             }
