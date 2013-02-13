@@ -66,7 +66,7 @@ if($reg_alias) {
     $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
     $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
 
-    $DBA = Bio::EnsEMBL::Hive::URLFactory->fetch($url) or die "Unable to connect to '$url'\n";
+    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url);
 } else {
     print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
     script_usage(1);

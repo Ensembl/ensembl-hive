@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 main();
@@ -33,7 +33,7 @@ sub main {
         script_usage(1);
     }
 
-    my $dba = Bio::EnsEMBL::Hive::URLFactory->fetch( $url ) || die "Unable to connect to pipeline database '$url'\n";
+    my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url );
     my $dbc = $dba->dbc();
 
     warn "Creating the 'lsf_report' table if it doesn't exist...\n";

@@ -36,8 +36,22 @@ Bio::EnsEMBL::Hive::DBSQL::DBAdaptor
 package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Hive::URLFactory;
 
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
+
+
+sub new {
+    my ($class, @args) = @_;
+
+    my ($url) = rearrange(['URL'], @args);
+    if($url) {
+        return Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to '$url'\n";
+    } else {
+        return $class->SUPER::new(@args);
+    }
+}
 
 
 sub hive_use_triggers {  # getter only, not setter
@@ -74,5 +88,5 @@ sub get_available_adaptors {
     );
     return \%pairs;
 }
- 
+
 1;

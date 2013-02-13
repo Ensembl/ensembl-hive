@@ -7,7 +7,6 @@ use Getopt::Long;
 
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::Config;
-use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
@@ -126,7 +125,7 @@ sub main {
         Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
         $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
     } elsif($self->{'url'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::URLFactory->fetch($self->{'url'}) || die("Unable to connect to $self->{'url'}\n");
+        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{'url'});
     } else {
         print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
