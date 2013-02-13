@@ -4,9 +4,10 @@ use strict;
 use warnings;
 use Getopt::Long;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
 
 my ($reg_conf, $reg_alias, $url, $analysis_id, $logic_name, $input_id);
 
@@ -32,7 +33,8 @@ if($reg_conf and $reg_alias) {
 } elsif($url) {
     $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url);
 } else {
-    die "Connection parameters (url or reg_conf+reg_alias) need to be specified";
+    warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
+    script_usage(1);
 }
 
 my $analysis_adaptor = $hive_dba->get_AnalysisAdaptor;
@@ -66,5 +68,31 @@ Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
 
 warn "Job '$input_id' in analysis '".$analysis->logic_name."'(".$analysis->dbID.") has been created\n";
 
-1;
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+    seed_pipeline.pl
+
+=head1 SYNOPSIS
+
+    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias>} [{-analysis_id <analysis_id> | -logic_name <logic_name>}] [{-input_id <input_id>}]
+
+=head1 DESCRIPTION
+
+    seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
+
+=head1 USAGE EXAMPLE
+
+        # seed one job into the Long Multiplication pipeline's "start" analysis:
+    seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
+
+=head1 CONTACT
+
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=cut
 
