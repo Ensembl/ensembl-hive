@@ -237,7 +237,7 @@ sub fetch_by_url_query {
 ###################
 
 sub _generic_fetch {
-  my ($self, $constraint, $join) = @_;
+  my ($self, $constraint, $join, $final_clause) = @_;
   
   my @tables = $self->_tables;
   my $columns = join(', ', $self->_columns());
@@ -266,7 +266,6 @@ sub _generic_fetch {
   my $sql = "SELECT $columns FROM $tablenames";
 
   my $default_where = $self->_default_where_clause;
-  my $final_clause = $self->_final_clause;
 
   #append a where clause if it was defined
   if($constraint) { 
@@ -279,7 +278,7 @@ sub _generic_fetch {
   }
 
   #append additional clauses which may have been defined
-  $sql .= " $final_clause";
+  $sql .= " $final_clause" if($final_clause);
 
   my $sth = $self->prepare($sql);
   $sth->execute;  
@@ -313,12 +312,6 @@ sub _columns {
              j.semaphore_count
              j.semaphored_job_id
             );
-}
-
-
-sub _final_clause {
-  my $self = shift;
-  return 'ORDER BY retry_count';
 }
 
 
