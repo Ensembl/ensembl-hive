@@ -21,7 +21,9 @@ sub show_seedable_analyses {
     foreach my $analysis (@$analyses) {
         my $logic_name = $analysis->logic_name;
         unless($incoming->{$logic_name}) {
-            print "\t".$logic_name." (".$analysis->dbID.")\n";
+            my $analysis_id = $analysis->dbID;
+            my $example_job = $job_adaptor->fetch_one_example_by_analysis_id( $analysis_id );
+            print "\t$logic_name ($analysis_id)\t\t".($example_job ? "Example input_id:   '".$example_job->input_id."'" : "[not populated yet]")."\n";
         }
     }
 }
@@ -98,16 +100,23 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias>} [{-analysis_id <analysis_id> | -logic_name <logic_name>}] [{-input_id <input_id>}]
+    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias>} [ {-analysis_id <analysis_id> | -logic_name <logic_name>} [ -input_id <input_id> ] ]
 
 =head1 DESCRIPTION
 
     seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
 
-=head1 USAGE EXAMPLE
+=head1 USAGE EXAMPLES
 
-        # seed one job into the Long Multiplication pipeline's "start" analysis:
-    seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
+        # find out which analyses may need seeding (with an example input_id):
+
+    seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
+
+
+        # seed one job into the "start" analysis:
+
+    seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" \
+                     -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
 
 =head1 CONTACT
 

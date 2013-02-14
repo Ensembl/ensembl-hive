@@ -205,7 +205,15 @@ sub fetch_all_by_analysis_id_status {
     push @constraints, "j.analysis_id=$analysis_id"             if ($analysis_id);
     push @constraints, "j.status='$status'"                     if ($status);
     push @constraints, "j.retry_count >= $retry_count_at_least" if ($retry_count_at_least);
-    return $self->_generic_fetch(join " AND ", @constraints);
+    return $self->_generic_fetch( join(" AND ", @constraints) );
+}
+
+
+sub fetch_one_example_by_analysis_id {
+    my ($self, $analysis_id) = @_;
+
+    my ($job) = @{ $self->_generic_fetch( "j.analysis_id = '$analysis_id'", undef, 'LIMIT 1' ) };
+    return $job;    # if the list was empty, $job will be false
 }
 
 
