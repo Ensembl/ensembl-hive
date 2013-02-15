@@ -109,7 +109,7 @@ sub find_out_causes {
 
     my %cod = ();
 
-    while (my $pid_batch = join(' ', splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
+    while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
         my $bacct_output = `bacct -l $pid_batch`;
 
         foreach my $section (split(/\-{10,}\s+/, $bacct_output)) {
