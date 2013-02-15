@@ -469,18 +469,17 @@ sub run {
 
                 # create control rules:
             foreach my $condition_url (@$wait_for) {
-                if(my $condition_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($condition_url)) {
-
-                    my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
-                            -condition_analysis_url => $condition_url,
-                            -ctrled_analysis_id     => $analysis->dbID,
-                    );
-                    $ctrl_rule_adaptor->store( $c_rule, 1 );
-
-                    warn $c_rule->toString."\n";
-                } else {
-                    die "Could not fetch analysis '$condition_url' to create a control rule";
+                unless ($condition_url =~ m{^\w*://}) {
+                    my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_url);
+                    die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n" unless defined $condition_analysis;
                 }
+                my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
+                        -condition_analysis_url => $condition_url,
+                        -ctrled_analysis_id     => $analysis->dbID,
+                );
+                $ctrl_rule_adaptor->store( $c_rule, 1 );
+
+                warn $c_rule->toString."\n";
             }
 
             $flow_into ||= {};
