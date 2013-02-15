@@ -417,6 +417,9 @@ sub run {
                 $rc_id = $rc->dbID();
             }
 
+            eval "require $module;";
+            die "The module '$module' cannot be loaded.\n$@" if $@;
+
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
                 -logic_name             => $logic_name,
                 -module                 => $module,
