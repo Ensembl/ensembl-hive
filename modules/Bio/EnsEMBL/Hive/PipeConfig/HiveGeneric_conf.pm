@@ -519,12 +519,15 @@ sub run {
                 $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
                 while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+
+                    unless ($heir_url =~ m{^\w*://}) {
+                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_url);
+                        die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n" unless defined $heir_analysis;
+                    }
                     
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
 
                     foreach my $input_id_template (@$input_id_template_list) {
-
-                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name_or_url($heir_url);
 
                         my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
                             -from_analysis              => $analysis,
