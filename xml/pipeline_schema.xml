@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:complexType name="structured_type" mixed="true">
+<xs:choice>
+    <xs:element name="array" minOccurs="0">
+        <xs:complexType>
+        <xs:sequence>
+            <xs:element name="array_item" type="structured_type" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="hash" minOccurs="0">
+        <xs:complexType>
+        <xs:sequence>
+            <xs:element name="hash_pair" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                <xs:all>
+                    <xs:element name="hash_key" type="xs:string"/>
+                    <xs:element name="hash_value" type="structured_type"/>
+                </xs:all>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:choice>
+</xs:complexType>
+
+<xs:complexType name="param_hash_type">
+<xs:sequence>
+    <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+    <xs:complexType>
+    <xs:all>
+        <xs:element name="param_name"           type="xs:string"/>
+        <xs:element name="param_value"          type="structured_type"/>
+    </xs:all>
+    </xs:complexType>
+    </xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="resource_hash_type">
+<xs:sequence>
+    <xs:element name="resource" minOccurs="0" maxOccurs="unbounded">
+    <xs:complexType>
+    <xs:all>
+        <xs:element name="resource_name"           type="xs:string"/>
+        <xs:element name="resource_string"         type="xs:string"/>
+    </xs:all>
+    </xs:complexType>
+    </xs:element>
+</xs:sequence>
+</xs:complexType>
+
+    <xs:element name="pipeline">
+    <xs:complexType>
+    <xs:all>
+
+        <xs:element name="hive_db" minOccurs="0">
+        <xs:complexType>
+        <xs:all>
+            <xs:element name="host" type="xs:string"/>
+            <xs:element name="port" type="xs:positiveInteger"/>
+            <xs:element name="user" type="xs:string"/>
+            <xs:element name="pass" type="xs:string"/>
+            <xs:element name="dbname" type="xs:string"/>
+        </xs:all>
+        </xs:complexType>
+        </xs:element>
+
+        <xs:element name="pipeline_analyses" minOccurs="0">
+        <xs:complexType>
+        <xs:sequence>
+
+            <xs:element name="analysis" maxOccurs="unbounded">
+            <xs:complexType>
+            <xs:all>
+                <xs:element name="logic_name"           type="xs:string"/>
+                <xs:element name="module"               type="xs:string"/>
+
+                <xs:element name="analysis_capacity"    type="xs:nonNegativeInteger"    minOccurs="0"/>
+                <xs:element name="can_be_empty"         type="xs:boolean"               minOccurs="0"/>
+                <xs:element name="failed_job_tolerance" type="xs:nonNegativeInteger"    minOccurs="0"/>
+                <xs:element name="max_retry_count"      type="xs:nonNegativeInteger"    minOccurs="0"/>
+                <xs:element name="meadow_type"          type="xs:string"                minOccurs="0"/>
+                <xs:element name="priority"             type="xs:integer"               minOccurs="0"/>
+                <xs:element name="rc_name"              type="xs:string"                minOccurs="0"/>
+                <xs:element name="batch_size"           type="xs:integer"               minOccurs="0"/>
+                <xs:element name="hive_capacity"        type="xs:integer"               minOccurs="0"/>
+
+                <xs:element name="parameters"           type="param_hash_type"      minOccurs="0"/>
+                <xs:element name="wait_for_rules"                                   minOccurs="0">
+                    <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="wait_for"     type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="flow_rules"                                       minOccurs="0">
+                <xs:complexType>
+                <xs:sequence>
+                    <xs:element name="flow" minOccurs="0" maxOccurs="unbounded">
+                    <xs:complexType>
+                    <xs:all>
+                        <xs:element name="target"   type="xs:string"/>
+                        <xs:element name="branch"   type="xs:integer"           minOccurs="0"/>
+                        <xs:element name="template" type="structured_type"      minOccurs="0"/>
+
+                        <xs:element name="dependent" minOccurs="0">
+                        <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="flow" minOccurs="0" maxOccurs="unbounded">
+                            <xs:complexType>
+                            <xs:all>
+                                <xs:element name="target"   type="xs:string"/>
+                                <xs:element name="branch"   type="xs:integer"           minOccurs="0"/>
+                                <xs:element name="template" type="structured_type"      minOccurs="0"/>
+                            </xs:all>
+                            </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                        </xs:complexType>
+                        </xs:element>
+
+                    </xs:all>
+                    </xs:complexType>
+                    </xs:element>
+                </xs:sequence>
+                </xs:complexType>
+                </xs:element>
+
+
+            </xs:all>
+            </xs:complexType>
+            </xs:element>
+
+        </xs:sequence>
+        </xs:complexType>
+        </xs:element>
+
+        <xs:element name="pipeline_parameters" type="param_hash_type" minOccurs="0"/>
+
+        <xs:element name="resource_mapping" minOccurs="0">
+        <xs:complexType>
+        <xs:sequence>
+            <xs:element name="meadow" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+            <xs:all>
+                <xs:element name="meadow_type" type="xs:string"/>
+                <xs:element name="resources"   type="resource_hash_type"/>
+            </xs:all>
+            </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        </xs:complexType>
+        </xs:element>
+
+    </xs:all>
+    </xs:complexType>
+    </xs:element>
+
+</xs:schema>
