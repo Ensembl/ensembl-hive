@@ -55,6 +55,7 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Extensions;
+use Bio::EnsEMBL::Hive::Valley;
 
 use base ('Bio::EnsEMBL::Hive::DependentOptions');
 
@@ -377,6 +378,8 @@ sub run {
     my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
     my $analysis_stats_adaptor       = $hive_dba->get_AnalysisStatsAdaptor;
 
+    my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
+
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
@@ -419,6 +422,10 @@ sub run {
 
             eval "require $module;";
             die "The module '$module' cannot be loaded.\n$@" if $@;
+
+            if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
+                die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
+            }
 
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
                 -logic_name             => $logic_name,
