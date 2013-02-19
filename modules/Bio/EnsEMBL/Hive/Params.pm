@@ -64,7 +64,9 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash');     # NB: dir_revhas
 
 =head2 param_init
 
-    Description: Parses the parameters from all sources in the reverse precedence order (supply the lowest precedence hash first).
+    Description: First parses the parameters from all sources in the reverse precedence order (supply the lowest precedence hash first),
+                 then preforms "total" parameter substitution.
+                 Will fail on detecting a substitution loop.
 
 =cut
 
@@ -73,27 +75,26 @@ sub param_init {
     my $self                = shift @_;
     my $strict_hash_format  = shift @_;
 
-    if( !$self->{'_param_hash'} ) {
+    my %unsubstituted_param_hash = ();
 
-        $self->{'_param_hash'} = {};
-
-        foreach my $source (@_) {
-            if(ref($source) ne 'HASH') {
-                if($strict_hash_format or $source=~/^\{.*\}$/) {
-                    my $param_hash = eval($source) || {};
-                    if($@ or (ref($param_hash) ne 'HASH')) {
-                        die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
-                    }
-                    $source = $param_hash;
-                } else {
-                    $source = {};
+    foreach my $source (@_) {
+        if(ref($source) ne 'HASH') {
+            if($strict_hash_format or $source=~/^\{.*\}$/) {
+                my $param_hash = eval($source) || {};
+                if($@ or (ref($param_hash) ne 'HASH')) {
+                    die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
                 }
-            }
-            while(my ($k,$v) = each %$source ) {
-                $self->{'_param_hash'}{$k} = $v;
+                $source = $param_hash;
+            } else {
+                $source = {};
             }
         }
+        while(my ($k,$v) = each %$source ) {
+            $unsubstituted_param_hash{$k} = $v;
+        }
     }
+
+    $self->{'_unsubstituted_param_hash'} = \%unsubstituted_param_hash;
 }
 
 
@@ -109,26 +110,24 @@ sub param_init {
 
     Example 2  : $self->param('binpath', '/software/ensembl/compara');  # acting as a setter
 
-    Example 3  : my $all_params = $self->param();    # get the whole hash in one piece
-
     Returntype : any Perl structure or object that you dared to store
 
 =cut
 
 sub param {
-    my $self = shift @_;
+    my $self        = shift @_;
+    my $param_name  = shift @_
+        or die "ParamError: calling param() without arguments\n";
 
-    if(my $param_name = shift @_) {
-
-        if(@_) { # If there is a value (even if undef), then set it!
-            $self->{'_param_hash'}{$param_name} = shift @_;
-        }
-
-        return $self->{'_param_hash'}{$param_name};
-
-    } else {
-        return $self->{'_param_hash'};
+    if(@_) { # If there is a value (even if undef), then set it!
+        $self->{'_param_hash'}{$param_name} = shift @_;
+    } elsif( exists $self->{'_unsubstituted_param_hash'}{$param_name} ) {
+        $self->{'_param_hash'}{$param_name} = $self->param_substitute( $self->{'_unsubstituted_param_hash'}{$param_name} );
+    } elsif( !exists $self->{'_param_hash'}{$param_name} ) {
+        warn "ParamWarning: value for param('$param_name') is used before having been initialized!\n";
     }
+
+    return $self->{'_param_hash'}{$param_name};
 }
 
 =head2 param_substitute
@@ -148,7 +147,11 @@ sub param_substitute {
 
     if(!$ref_type) {
 
-        if($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
+        if(!$structure) {
+
+            return $structure;
+
+        } elsif($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
 
             return $self->_subst_one_hashpair($1);
 
@@ -205,21 +208,32 @@ sub csvq { # another example stringification formatter
 sub _subst_one_hashpair {
     my ($self, $inside_hashes) = @_;
 
+    if($self->{'_substitution_in_progress'}{$inside_hashes}++) {
+        die "ParamError: substitution loop among {".join(', ', map {"'$_'"} keys %{$self->{'_substitution_in_progress'}})."} has been detected\n";
+    }
+
+    my $value;
+
     if($inside_hashes=~/^\w+$/) {
 
-        return $self->param($inside_hashes);
+        $value = $self->param($inside_hashes);
 
     } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
 
-        return $self->$1($self->param($2));
+        $value = $self->$1($self->param($2));
 
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
         $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
 
-        return eval($expression);
+        $value = eval($expression);
     }
+
+    warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
+
+    delete $self->{'_substitution_in_progress'}{$inside_hashes};
+    return $value;
 }
 
 1;
