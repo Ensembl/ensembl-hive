@@ -95,10 +95,8 @@ sub fetch_input {
 
     # Output file / output database
     $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
-    if ($self->param('output_file')) {
-        $self->param('real_output_file', $self->param_substitute($self->param('output_file')));
-    } else {
-        $self->param('real_output_db', $self->go_figure_dbc($self->param_substitute($self->param('output_db'))));
+    unless ($self->param('output_file')) {
+        $self->param('real_output_db', $self->go_figure_dbc( $self->param('output_db') ) );
         die 'Only the "mysql" driver is supported.' if $self->param('real_output_db')->driver ne 'mysql';
     }
 
@@ -112,7 +110,7 @@ sub fetch_input {
 sub _get_table_list {
     my $self = shift @_;
 
-    my $table_list = $self->param_substitute($self->param('table_list') || '');
+    my $table_list = $self->param('table_list') || '';
     my @newtables = ();
     my $dbc = $self->param('src_dbc');
     foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
@@ -148,7 +146,7 @@ sub run {
         '--skip-lock-tables',
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
-        $self->param('output_file') ? sprintf('> %s', $self->param('real_output_file')) : sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db'))),
+        $self->param('output_file') ? sprintf('> %s', $self->param('output_file')) : sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db'))),
     );
     print "$cmd\n" if $self->debug;
 

@@ -41,9 +41,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     param('mode'):          'overwrite' (default), 'topup' or 'insertignore'
 
-    param('where'):         filter for rows to be copied/merged. [ param_substituted ]
+    param('where'):         filter for rows to be copied/merged.
 
-    param('table'):         table name to be copied/merged.      [ param_substituted ]
+    param('table'):         table name to be copied/merged.
 
 =cut
 
@@ -60,8 +60,6 @@ sub fetch_input {
     my $table = $self->param('table') or die "Please specify 'table' parameter\n";
     $self->input_job->transient_error(1);
 
-    $table = $self->param('table', $self->param_substitute($table) );
-
     my $src_dbc     = $src_db_conn  ? $self->go_figure_dbc( $src_db_conn )  : $self->db->dbc;
     my $dest_dbc    = $dest_db_conn ? $self->go_figure_dbc( $dest_db_conn ) : $self->db->dbc;
 
@@ -72,9 +70,6 @@ sub fetch_input {
         $self->param('mode', $self->param('mode'));
 
     my $where = $self->param('where');
-    if(defined($where)) {
-        $where = $self->param( 'where', $self->param_substitute($where) );
-    }
 
     $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 

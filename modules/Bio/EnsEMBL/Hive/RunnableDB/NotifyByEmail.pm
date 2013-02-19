@@ -68,10 +68,6 @@ sub run {
     my $subject = $self->param('subject') || "An automatic message from your pipeline";
     my $text    = $self->param('text')    || die "'text' parameter is obligatory";
 
-    #   Run parameter substitutions:
-    #
-    $text = $self->param_substitute($text);
-
     open(SENDMAIL, "|sendmail $email");
     print SENDMAIL "Subject: $subject\n";
     print SENDMAIL "\n";

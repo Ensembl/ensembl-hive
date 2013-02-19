@@ -68,7 +68,7 @@ sub strict_hash_format {
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
                   Here it deals with finding the command line, doing parameter substitution and storing the result in a predefined place.
 
-    param('cmd'): The recommended way of passing in the command line. [param_substituted]
+    param('cmd'): The recommended way of passing in the command line.
 
     param('*'):   Any other parameters can be freely used for parameter substitution.
 
@@ -86,7 +86,7 @@ sub fetch_input {
 
         # Store the value with parameter substitutions for the actual execution:
         #
-    $self->param('cmd', $self->param_substitute($cmd));
+    $self->param('cmd', $cmd);
 }
 
 

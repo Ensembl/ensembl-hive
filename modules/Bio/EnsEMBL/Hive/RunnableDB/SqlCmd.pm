@@ -61,7 +61,7 @@ sub strict_hash_format {
                   Here it deals with finding the sql command(s), doing parameter substitution, storing the result in a predefined place
                   and optionally connecting to another database (see param('db_conn')).
 
-    param('sql'): The recommended way of passing in the sql command(s). [param_substituted]
+    param('sql'): The recommended way of passing in the sql command(s).
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the sql command(s) will have to be run.
 
@@ -102,10 +102,7 @@ sub run {
     my %output_id;
 
     my $counter = 0;
-    foreach my $unsubst_sql (@$sqls) {
-
-            # Perform parameter substitution:
-        my $sql = $self->param_substitute($unsubst_sql);
+    foreach my $sql (@$sqls) {
 
          if($self->debug()) {
              warn qq{sql = "$sql"\n};
