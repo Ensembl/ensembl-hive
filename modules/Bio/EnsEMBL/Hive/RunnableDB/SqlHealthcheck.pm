@@ -103,14 +103,13 @@ sub _get_rowcount_bound {
 
     my $inputquery  = $self->param_substitute( $self->param('inputquery') );
     warn "Testing at least '$maxrow' rows of the input query: '$inputquery'" if ($self->debug());
+    $inputquery .= " LIMIT $maxrow" unless $inputquery =~ /LIMIT/i;
 
     my $sth = $self->data_dbc()->prepare($inputquery);
     $sth->execute();
 
     my $nrow = 0;
-    while ($nrow < $maxrow) {
-        my $row = $sth->fetchrow_arrayref();
-        last unless (defined $row);
+    while (defined $sth->fetchrow_arrayref()) {
         $nrow++;
     }
     $sth->finish;
