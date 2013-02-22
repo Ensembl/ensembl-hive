@@ -98,6 +98,72 @@ sub param_init {
 }
 
 
+sub _param_silent {
+    my $self        = shift @_;
+    my $param_name  = shift @_
+        or die "ParamError: calling param() without arguments\n";
+
+    if(@_) { # If there is a value (even if undef), then set it!
+        $self->{'_param_hash'}{$param_name} = shift @_;
+    } elsif( !exists( $self->{'_param_hash'}{$param_name} )
+       and    exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
+        my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
+
+        $self->{'_param_hash'}{$param_name} = $self->param_substitute( $unsubstituted );
+    }
+
+    return exists( $self->{'_param_hash'}{$param_name} )
+                ? $self->{'_param_hash'}{$param_name}
+                : undef;
+}
+
+
+=head2 param_required
+
+    Arg [1]    : string $param_name
+
+    Description: A strict getter method for a job's parameter; will die if the parameter was not set or is undefined
+
+    Example    : my $source = $self->param_required('source');
+
+    Returntype : any Perl structure or object that you dared to store
+
+=cut
+
+sub param_required {
+    my $self        = shift @_;
+    my $param_name  = shift @_;
+
+    my $value = $self->_param_silent($param_name);
+
+    return defined( $value )
+            ? $value
+            : die "ParamError: value for param_required('$param_name') is required and has to be defined\n";
+}
+
+
+=head2 param_is_defined
+
+    Arg [1]    : string $param_name
+
+    Description: A predicate tester for definedness of a parameter
+
+    Example    : if( $self->param_is_defined('source') ) { print "defined, possibly zero"; } else { print "undefined"; }
+
+    Returntype : boolean
+
+=cut
+
+sub param_is_defined {
+    my $self        = shift @_;
+    my $param_name  = shift @_;
+
+    return defined( $self->_param_silent($param_name) )
+            ? 1
+            : 0;
+}
+
+
 =head2 param
 
     Arg [1]    : string $param_name
@@ -119,16 +185,15 @@ sub param {
     my $param_name  = shift @_
         or die "ParamError: calling param() without arguments\n";
 
-    if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
-    } elsif( exists $self->{'_unsubstituted_param_hash'}{$param_name} ) {
-        $self->{'_param_hash'}{$param_name} = $self->param_substitute( $self->{'_unsubstituted_param_hash'}{$param_name} );
-    } elsif( !exists $self->{'_param_hash'}{$param_name} ) {
+    my $value = $self->_param_silent( $param_name, @_ );
+    
+    unless( exists $self->{'_param_hash'}{$param_name} ) {
         warn "ParamWarning: value for param('$param_name') is used before having been initialized!\n";
     }
 
-    return $self->{'_param_hash'}{$param_name};
+    return $value;
 }
+
 
 =head2 param_substitute
 
@@ -156,9 +221,11 @@ sub param_substitute {
             return $self->_subst_one_hashpair($1);
 
         } else {
+            my $scalar_defined  = 1;
 
-            $structure=~s/(?:#(.+?)#)/$self->_subst_one_hashpair($1)/eg;
-            return $structure;
+            $structure=~s/(?:#(.+?)#)/my $value = $self->_subst_one_hashpair($1); $scalar_defined &&= defined($value); $value/eg;
+
+            return $scalar_defined ? $structure : undef;
         }
 
     } elsif($ref_type eq 'ARRAY') {
@@ -216,16 +283,16 @@ sub _subst_one_hashpair {
 
     if($inside_hashes=~/^\w+$/) {
 
-        $value = $self->param($inside_hashes);
+        $value = $self->_param_silent($inside_hashes);
 
     } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
 
-        $value = $self->$1($self->param($2));
+        $value = $self->$1($self->_param_silent($2));
 
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
-        $expression=~s/(?:\$(\w+))/stringify($self->param($1))/eg;
+        $expression=~s/(?:\$(\w+))/stringify($self->_param_silent($1))/eg;
 
         $value = eval($expression);
     }
