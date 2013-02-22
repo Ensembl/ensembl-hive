@@ -377,13 +377,16 @@ sub dbc {
 =cut
 
 sub data_dbc {
-    my $self = shift;
+    my $self = shift @_;
 
-    if(@_ or !$self->{'_data_dbc'}) {
-        $self->{'_data_dbc'} = $self->go_figure_dbc( shift @_ || $self->param('db_conn') || $self->dbc );
+    my $given_db_conn = shift @_ || $self->param('db_conn') || $self;
+
+    if( !$self->{'_cached_db_conn'} or $self->{'_cached_db_conn'}!=$given_db_conn) {
+        $self->{'_cached_db_conn'} = $given_db_conn;
+        $self->{'_cached_data_dbc'} = $self->go_figure_dbc( $given_db_conn );
     }
 
-    return $self->{'_data_dbc'};
+    return $self->{'_cached_data_dbc'};
 }
 
 
