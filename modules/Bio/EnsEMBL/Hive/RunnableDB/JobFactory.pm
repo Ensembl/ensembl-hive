@@ -9,8 +9,7 @@ Bio::EnsEMBL::Hive::RunnableDB::JobFactory
 
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::JobFactory \
                     --inputcmd 'cd ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB; ls -1 *.pm' \
-                    --input_id "{'meta_key'=>'module_name','meta_value'=>'#_0#'}" \
-                    --flow_into "{ 2 => ['mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2912/lg4_compara_families_64/meta']}"
+                    --flow_into "{ 2 => { 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1:2914/lg4_compara_families_70/meta' => {'meta_key'=>'module_name','meta_value'=>'#_0#'} } }""
 
 =head1 DESCRIPTION
 
@@ -37,6 +36,25 @@ use strict;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
+sub param_defaults {
+    return {
+        'column_names'      => 0,
+        'delimiter'         => undef,
+        'randomize'         => 0,
+        'step'              => 0,
+        'key_column'        => 0,
+        'input_id'          => 0,   # this parameter is no longer supported and should stay at 0
+
+        'inputlist'         => undef,
+        'inputfile'         => undef,
+        'inputquery'        => undef,
+        'inputcmd'          => undef,
+
+        'fan_branch_code'   => 2,
+    };
+}
+
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
@@ -58,10 +76,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
     param('column_names'):  Controls the column names that come out of the parser: 0 = "no names", 1 = "parse names from data", arrayref = "take names from this array"
 
-    param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the template input_id hash.
-
-    param('input_id'):  The template that will become the input_id of newly created jobs (Note: this is something entirely different from $self->input_id of the current JobFactory job).
-                        After introduction of param('column_names') its significance has dropped, but it may still become handy.
+    param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the input_id_template hash.
 
     param('randomize'): Shuffles the rows before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
 
@@ -86,14 +101,14 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub run {
     my $self = shift @_;
 
-    my $column_names    = $self->param('column_names')  || 0;   # can be 0 (no names), 1 (names from data) or an arrayref (names from this array)
+    my $column_names    = $self->param('column_names');   # can be 0 (no names), 1 (names from data) or an arrayref (names from this array)
     my $delimiter       = $self->param('delimiter');
 
-    my $randomize       = $self->param('randomize')     || 0;
+    my $randomize       = $self->param('randomize');
 
         # minibatching-related:
-    my $step            = $self->param('step')          || 0;
-    my $key_column      = $self->param('key_column')    || 0;
+    my $step            = $self->param('step');
+    my $key_column      = $self->param('key_column');
 
     my $inputlist       = $self->param('inputlist');
     my $inputfile       = $self->param('inputfile');
@@ -116,12 +131,8 @@ sub run {
     }
     # after this point $column_names should either contain a list or be false
 
-    my $template_hash   = $self->param('input_id');
-    unless($template_hash or $column_names) {
-        die "At least one of 'input_id' or 'column_names' has to be defined";
-    }
-    unless($step ? $template_hash : 1) {
-        die "If 'step' is defined, 'input_id' also must be defined";
+    if( $self->param('input_id') ) {
+        die "'input_id' is no longer supported, please reconfigure as the input_id_template of the dataflow_rule";
     }
 
     if($randomize) {
@@ -129,8 +140,8 @@ sub run {
     }
 
     my $output_ids = $step
-        ? $self->_substitute_minibatched_rows($rows, $column_names, $template_hash, $step, $key_column)
-        : $self->_substitute_rows($rows, $column_names, $template_hash);
+        ? $self->_substitute_minibatched_rows($rows, $column_names, $step, $key_column)
+        : $self->_substitute_rows($rows, $column_names);
 
     $self->param('output_ids', $output_ids);
 }
@@ -149,7 +160,7 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
     my $self = shift @_;
 
     my $output_ids              = $self->param('output_ids');
-    my $fan_branch_code         = $self->param('fan_branch_code') || 2;
+    my $fan_branch_code         = $self->param('fan_branch_code');
 
         # "fan out" into fan_branch_code:
     $self->dataflow_output_id($output_ids, $fan_branch_code);
@@ -236,25 +247,16 @@ sub _get_rows_from_open {
 =cut
 
 sub _substitute_rows {
-    my ($self, $rows, $column_names, $template_hash) = @_;
+    my ($self, $rows, $column_names) = @_;
 
     my @hashes = ();
 
     foreach my $row (@$rows) {
-        if($template_hash) {
-            $self->param('_', $row);    # the whole row as a list
+        my $job_param_hash =  $column_names
+            ?  {              map { ($column_names->[$_] => $row->[$_]) } (0..scalar(@$row)-1) }
+            :  { '_' => $row, map { ("_$_"               => $row->[$_]) } (0..scalar(@$row)-1) };
 
-            foreach my $i (0..scalar(@$row)-1) {
-                $self->param("_$i", $row->[$i]);
-
-                if($column_names) {
-                    $self->param($column_names->[$i], $row->[$i]);
-                }
-            }
-            push @hashes, $self->param_substitute($template_hash);
-        } else {
-            push @hashes, { map { ($column_names->[$_] => $row->[$_]) } (0..scalar(@$row)-1) };
-        }
+        push @hashes, $job_param_hash;
     }
     return \@hashes;
 }
@@ -267,7 +269,7 @@ sub _substitute_rows {
 =cut
 
 sub _substitute_minibatched_rows {
-    my ($self, $rows, $column_names, $template_hash, $step, $key_column) = @_;
+    my ($self, $rows, $column_names, $step, $key_column) = @_;
 
     my @ranges = ();
 
@@ -293,21 +295,16 @@ sub _substitute_minibatched_rows {
             }
         }
 
-            # pseudo-parameters that will be substituted in the template hash:
-        $self->param('_range_start', $range_start);
-        $self->param('_range_end',   $range_end);
-        $self->param('_range_count', $range_count);
+        my $job_range = {
+            '_range_start'  => $range_start,
+            '_range_end'    => $range_end,
+            '_range_count'  => $range_count,
 
-        foreach my $i (0..scalar(@$start_row)-1) {
-            $self->param("_start_$i", $start_row->[$i]);
-            $self->param("_end_$i",   $next_row->[$i]);
-
-            if($column_names) {
-                $self->param('_start_'.$column_names->[$i], $start_row->[$i]);
-                $self->param('_end_'.$column_names->[$i],   $next_row->[$i]);
-            }
-        }
-        push @ranges, $self->param_substitute($template_hash);
+            $column_names
+                ?  map { ('_start_'.$column_names->[$_] => $start_row->[$_], '_end_'.$column_names->[$_] => $next_row->[$_]) } (0..scalar(@$start_row)-1)
+                :  map { ("_start_$_"                   => $start_row->[$_], "_end_$_"                   => $next_row->[$_]) } (0..scalar(@$start_row)-1)
+        };
+        push @ranges, $job_range;
     }
     return \@ranges;
 }

@@ -51,8 +51,22 @@ foreach my $branch_code (keys %$flow_into) {
     my $heirs = $flow_into->{$branch_code};
 
     $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
+    $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
-    my @dataflow_rules = map { Bio::EnsEMBL::Hive::DataflowRule->new( -to_analysis_url => $_ ) } @$heirs;
+    my @dataflow_rules = ();
+
+    while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+
+        $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
+
+        foreach my $input_id_template (@$input_id_template_list) {
+
+            push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule->new(
+                -to_analysis_url            => $heir_url,
+                -input_id_template          => $input_id_template,
+            );
+        }
+    }
 
     $job->dataflow_rules( $branch_code, \@dataflow_rules );
 }
