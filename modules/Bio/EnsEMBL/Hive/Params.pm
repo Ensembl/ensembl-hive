@@ -206,7 +206,7 @@ sub param {
 =cut
 
 sub param_substitute {
-    my ($self, $structure) = @_;
+    my ($self, $structure, $overriding_hash) = @_;
 
     my $ref_type = ref($structure);
 
@@ -218,12 +218,12 @@ sub param_substitute {
 
         } elsif($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
 
-            return $self->_subst_one_hashpair($1);
+            return $self->_subst_one_hashpair($1, $overriding_hash);
 
         } else {
             my $scalar_defined  = 1;
 
-            $structure=~s/(?:#(.+?)#)/my $value = $self->_subst_one_hashpair($1); $scalar_defined &&= defined($value); $value/eg;
+            $structure=~s/(?:#(.+?)#)/my $value = $self->_subst_one_hashpair($1, $overriding_hash); $scalar_defined &&= defined($value); $value/eg;
 
             return $scalar_defined ? $structure : undef;
         }
@@ -231,13 +231,13 @@ sub param_substitute {
     } elsif($ref_type eq 'ARRAY') {
         my @substituted_array = ();
         foreach my $element (@$structure) {
-            push @substituted_array, $self->param_substitute($element);
+            push @substituted_array, $self->param_substitute($element, $overriding_hash);
         }
         return \@substituted_array;
     } elsif($ref_type eq 'HASH') {
         my %substituted_hash = ();
         while(my($key,$value) = each %$structure) {
-            $substituted_hash{$self->param_substitute($key)} = $self->param_substitute($value);
+            $substituted_hash{$self->param_substitute($key, $overriding_hash)} = $self->param_substitute($value, $overriding_hash);
         }
         return \%substituted_hash;
     } else {
@@ -273,7 +273,7 @@ sub csvq { # another example stringification formatter
 =cut
 
 sub _subst_one_hashpair {
-    my ($self, $inside_hashes) = @_;
+    my ($self, $inside_hashes, $overriding_hash) = @_;
 
     if($self->{'_substitution_in_progress'}{$inside_hashes}++) {
         die "ParamError: substitution loop among {".join(', ', map {"'$_'"} keys %{$self->{'_substitution_in_progress'}})."} has been detected\n";
@@ -283,7 +283,9 @@ sub _subst_one_hashpair {
 
     if($inside_hashes=~/^\w+$/) {
 
-        $value = $self->_param_silent($inside_hashes);
+        $value = ( (ref($overriding_hash) eq 'HASH') && exists($overriding_hash->{ $inside_hashes }) )
+                    ? $overriding_hash->{ $inside_hashes }
+                    : $self->_param_silent($inside_hashes);
 
     } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
 

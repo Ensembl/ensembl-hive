@@ -29,6 +29,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
 
+use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
@@ -271,8 +272,9 @@ sub dataflow_output_id {
 
             # parameter substitution into input_id_template is rule-specific
         my $output_ids_for_this_rule;
-        if(my $template = $rule->input_id_template()) {
-            $output_ids_for_this_rule = [ eval $self->param_substitute($template) ];
+        if(my $template_string = $rule->input_id_template()) {
+            my $template_hash = destringify($template_string);
+            $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @$output_ids ];
         } else {
             $output_ids_for_this_rule = $output_ids;
         }
