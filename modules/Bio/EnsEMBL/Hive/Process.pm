@@ -90,7 +90,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception ('throw');
-use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash');
+use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash', 'stringify');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
@@ -379,10 +379,11 @@ sub dbc {
 sub data_dbc {
     my $self = shift @_;
 
-    my $given_db_conn = shift @_ || $self->param('db_conn') || $self;
+    my $given_db_conn   = shift @_ || $self->param('db_conn') || $self;
+    my $given_signature = stringify( $given_db_conn );
 
-    if( !$self->{'_cached_db_conn'} or $self->{'_cached_db_conn'}!=$given_db_conn) {
-        $self->{'_cached_db_conn'} = $given_db_conn;
+    if( !$self->{'_cached_db_signature'} or ($self->{'_cached_db_signature'} ne $given_signature) ) {
+        $self->{'_cached_db_signature'} = $given_signature;
         $self->{'_cached_data_dbc'} = $self->go_figure_dbc( $given_db_conn );
     }
 
