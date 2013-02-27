@@ -61,8 +61,8 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use POSIX;
-use Clone 'clone';
 use File::Path 'make_path';
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 

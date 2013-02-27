@@ -23,8 +23,6 @@ package Bio::EnsEMBL::Hive::Scheduler;
 use strict;
 use warnings;
 
-use Clone 'clone';
-
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Queen;
