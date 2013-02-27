@@ -83,23 +83,20 @@ sub pipeline_analyses {
                 'column_names' => [ 'value' ],
             },
             -input_ids => [
-                {
-                    'job_count'    => $self->o('job_count'),            # turn this option into a passable parameter
-                    'input_id' => {
-                        'value'         => '#value#',
-                        'divisor'       => $self->o('failure_rate'),
-                        'state'         => $self->o('state'),
-                        'lethal_after'  => $self->o('lethal_after'),
-                    },
-                },
+                { 'job_count'    => $self->o('job_count') },
             ],
             -flow_into => {
-                2 => [ 'failure_test' ],   # will create a fan of jobs
+                2 => [ 'failure_test' ],
             },
         },
 
         {   -logic_name    => 'failure_test',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::FailureTest',
+            -parameters    => {
+                'divisor'       => $self->o('failure_rate'),
+                'state'         => $self->o('state'),
+                'lethal_after'  => $self->o('lethal_after'),
+            }
         },
     ];
 }

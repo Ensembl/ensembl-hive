@@ -40,21 +40,10 @@ sub default_options {
 
         'pipeline_name' => 'apply_to_databases',            # name used by the beekeeper to prefix job names on the farm
 
-        'source_server1' => {
-            -host   => 'ens-staging',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
+        'source_server1' => 'mysql://ensadmin:'.$self->o('password').'@127.0.0.1:3306/',
+        'source_server2' => 'mysql://ensadmin:'.$self->o('password').'@127.0.0.1:2914/',
 
-        'source_server2' => {
-            -host   => 'ens-staging2',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-        },
-        
-        'only_databases'   => '%\_core\_%',                           # use '%' to get a list of all available databases
+        'only_databases'   => '%\_core\_%',                 # use '%' to get a list of all available databases
     };
 }
 
@@ -68,15 +57,16 @@ sub pipeline_analyses {
                 'column_names' => [ 'dbname' ],
             },
             -input_ids => [
-                { 'db_conn' => $self->o('source_server1'), 'input_id' => { 'db_conn' => {'-host' => $self->o('source_server1', '-host'), '-port' => $self->o('source_server1', '-port'), '-user' => $self->o('source_server1', '-user'), '-pass' => $self->o('source_server1', '-pass'), '-dbname' => '#dbname#'}, }, },
-                { 'db_conn' => $self->o('source_server2'), 'input_id' => { 'db_conn' => {'-host' => $self->o('source_server2', '-host'), '-port' => $self->o('source_server2', '-port'), '-user' => $self->o('source_server2', '-user'), '-pass' => $self->o('source_server2', '-pass'), '-dbname' => '#dbname#'}, }, },
+                { 'db_conn' => $self->o('source_server1') },
+                { 'db_conn' => $self->o('source_server2') },
             ],
             -flow_into => {
-                2 => [ 'dummy' ],   # will create a fan of jobs
+                2 => { 'run_sql' => { 'db_conn' => '#db_conn##dbname#' },
+                }
             },
         },
 
-        {   -logic_name    => 'dummy',
+        {   -logic_name    => 'run_sql',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',  # use SqlCmd.pm to run your query or another JobFactory.pm to make another fan on table names
             -parameters    => {
             },
