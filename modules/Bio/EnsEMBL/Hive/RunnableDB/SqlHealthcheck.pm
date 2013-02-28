@@ -41,7 +41,6 @@ sub fetch_input {
     die "'inputquery' is a mandatory parameter" unless $self->param('inputquery');
     
     my $expected_size = $self->param('expected_size');
-    $expected_size = $self->param_substitute($expected_size) if $expected_size;
     unless ($expected_size =~ /^\s*(=|==|>|>=|<|<=|<>|!=|)\s*(\d*)\s*$/) {
         die "Cannot interpret the 'expected_size' parameter: '$expected_size'";
     }
@@ -93,7 +92,7 @@ sub run {
 
     Description: Tries to fetch at least $maxrow rows from the database. Returns the actual number of fetched rows.
 
-    param('inputquery'); [param_substituted] SQL query (against the production database by default) : 'inputquery' => 'SELECT object_id FROM object WHERE x=y'
+    param('inputquery'); SQL query (against the production database by default) : 'inputquery' => 'SELECT object_id FROM object WHERE x=y'
 
 =cut
 
@@ -101,7 +100,7 @@ sub _get_rowcount_bound {
     my $self    = shift @_;
     my $maxrow  = shift @_;
 
-    my $inputquery  = $self->param_substitute( $self->param('inputquery') );
+    my $inputquery  = $self->param_required('inputquery');
     warn "Testing at least '$maxrow' rows of the input query: '$inputquery'" if ($self->debug());
     $inputquery .= " LIMIT $maxrow" unless $inputquery =~ /LIMIT/i;
 
