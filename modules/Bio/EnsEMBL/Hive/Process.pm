@@ -472,7 +472,6 @@ sub input_job {
 sub input_id {
     my $self = shift;
 
-#   return '' unless($self->input_job);
     return $self->input_job->input_id(@_);
 }
 
@@ -480,6 +479,18 @@ sub param {
     my $self = shift @_;
 
     return $self->input_job->param(@_);
+}
+
+sub param_required {
+    my $self = shift @_;
+
+    return $self->input_job->param_required(@_);
+}
+
+sub param_is_defined {
+    my $self = shift @_;
+
+    return $self->input_job->param_is_defined(@_);
 }
 
 sub param_substitute {
