@@ -1,19 +1,64 @@
-# Bio::EnsEMBL::Hive project
-#
-# Copyright Team Ensembl
-# You may distribute this package under the same terms as perl itself
 
-Contact:
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+---------------------[before and during EnsEMBL rel.71]----------------------------------------------------------------
 
-Summary:
-  This is a distributed processing system based on 'autonomous agents' and
-  Hive behavioural structure of Honey Bees.  It implements all functionality of both
-  data-flow graphs and block-branch diagrams which should allow it to codify
-  any program, algorithm, or parallel processing job control system.  It is
-  not bound to any processing 'farm' system and can be adapted to any GRID.
-
-Changelog:
+* Thu Feb 28 10:12:41 2013 +0000 | Leo Gordon | avoid having beekeeper run in submitted-to-the-farm state - detect it, report and quit
+* Thu Feb 28 09:47:40 2013 +0000 | Leo Gordon | param_substitution is now default everywhere, no need to call it explicitly
+* Thu Feb 28 09:42:33 2013 +0000 | Leo Gordon | added param_required() and param_is_defined() interfaces to Process
+* Wed Feb 27 21:34:47 2013 +0000 | Leo Gordon | bugfix: updated examples of how to use JobFactory without and with input_id_template
+* Wed Feb 27 19:08:40 2013 +0000 | Leo Gordon | bugfix: changed implementation of data_dbc() to correctly compare things before caching
+* Wed Feb 27 14:00:42 2013 +0000 | Leo Gordon | Clone::clone is no longer used, so dependency has been removed
+* Fri Feb 22 16:55:12 2013 +0000 | Matthieu Muffato | It is more efficient to give MySQL a LIMIT clause
+* Sat Feb 23 00:52:57 2013 +0000 | Leo Gordon | JobFactory uses $overriding_hash to create jobs/rows from input_id_template; 'input_id' parameter deprecated; standaloneJob supports templates.
+* Sat Feb 23 00:49:15 2013 +0000 | Leo Gordon | Substitution machinery now supports an extra $overriding_hash that contains parameters with higher precedence than the whole of param() structure
+* Fri Feb 22 16:36:19 2013 +0000 | Leo Gordon | fixed several problems with parameter substitution and detection of undefs; added param_required() and param_is_defined()
+* Fri Feb 22 10:42:51 2013 +0000 | Leo Gordon | reload the cached data_dbc() value on change of param('db_conn')
+* Thu Feb 21 16:14:35 2013 +0000 | emepyc | The modules of the analyses must be accessible
+* Fri Feb 15 17:05:20 2013 +0000 | Matthieu Muffato | New runnable to check the size of the resultset of any SQL query
+* Tue Feb 19 17:18:06 2013 +0000 | Leo Gordon | removed param_substitute() call from Runnables -- no longer needed, as substitution is automatic
+* Tue Feb 19 16:46:05 2013 +0000 | Leo Gordon | a "total" (anything-to-anything) substitution mechanism has been implemented in Hive::Params
+* Fri Feb 15 17:04:36 2013 +0000 | Matthieu Muffato | The preferred meadow type must be registered
+* Fri Feb 15 17:03:24 2013 +0000 | Matthieu Muffato | The modules of the analysis must be loadable
+* Fri Feb 15 17:01:27 2013 +0000 | Matthieu Muffato | In dataflow rules within the same database, the destination analysis must exist
+* Fri Feb 15 17:00:38 2013 +0000 | Matthieu Muffato | In control rules within the same database, the condition analysis must exist
+* Fri Feb 15 22:25:39 2013 +0000 | Leo Gordon | make sure all LSF pids are quoted, to protect them from tcsh interpretation of square brackets
+* Thu Feb 14 16:41:49 2013 +0000 | Leo Gordon | a new script to remove old "DONE" jobs and associated job_file and log_message entries
+* Thu Feb 14 10:45:26 2013 +0000 | Leo Gordon | seed_pipeline.pl now shows examples of input_ids of seedable analyses
+* Thu Feb 14 09:54:00 2013 +0000 | Leo Gordon | Made $final_clause a parameter of _generic_fetch() & removed default ORDER-BY; hopefully faster
+* Wed Feb 13 17:20:14 2013 +0000 | Leo Gordon | In case no -logic_name/-analysis_id was supplied, show the list of analyses that have no incoming dataflow (and so are candidates for seeding)
+* Wed Feb 13 13:52:56 2013 +0000 | Leo Gordon | Added perldoc to seed_pipeline.pl script
+* Wed Feb 13 13:35:55 2013 +0000 | Leo Gordon | A new script to quickly seed any analysis of any pipeline.
+* Wed Feb 13 10:19:08 2013 +0000 | Leo Gordon | hide the calls to URLFactory into the DBAdaptor's constructor
+* Tue Feb 12 10:22:02 2013 +0000 | Leo Gordon | hash of resources no longer depends on default_meadow (bugfix)
+* Thu Feb 7 11:42:11 2013 +0000 | Kathryn Beal | Updated to release 71
+* Wed Feb 6 17:43:21 2013 +0000 | Matthieu Muffato | Tables must be in the right order. Otherwise, the foreign key checks complain
+*   Fri Jan 25 19:42:28 2013 +0000 | Leo Gordon | resolving conflict: using mine
+|\  
+| * Tue Jan 15 11:03:26 2013 +0000 | Matthieu Muffato | Table dataflows are now included into semaphore boxes (bugfix: wrong internal name)
+* | Fri Jan 25 19:26:36 2013 +0000 | Leo Gordon | diagram improvement: (1) no more "empty boxes" and (2) tables dataflown from a box are shown in their boxes
+|/  
+* Mon Jan 14 13:23:52 2013 +0000 | Leo Gordon | Added a new presentation, moved presentations into a separate folder.
+* Fri Jan 11 11:19:11 2013 +0000 | Leo Gordon | cosmetic fix: commented back the debug output that was left uncommented by mistake
+* Fri Jan 11 11:07:47 2013 +0000 | Leo Gordon | Added coloured barchart display option and jobs/data display option (no big data checks, use with care on small examples). 'Pad' is now configurable from JSON. Beware: JSON config options have moved around!
+* Thu Jan 10 16:14:06 2013 +0000 | Leo Gordon | injected a padding around the pipeline diagram
+* Fri Jan 4 17:03:14 2013 +0000 | Leo Gordon | send the fatal "COULDNT CREATE WORKER" message to stderr instead of stdout
+* Fri Jan 4 15:10:47 2013 +0000 | Leo Gordon | added command line options -submit_stdout_file and -submit_stderr_file to peek into submission output/error streams
+* Fri Jan 4 14:51:35 2013 +0000 | Leo Gordon | using PERLs File::Path::make_path instead of mkdir-p to create hive_log_dir
+* Fri Jan 4 11:03:31 2013 +0000 | Leo Gordon | added a LongMult pipeline diagram in completed state (for easier reference)
+* Mon Dec 17 12:13:43 2012 +0000 | Leo Gordon | fixed a bug in computing num_required_workers according to the new rules (thanks Matthieu for reporting)
+* Wed Dec 12 14:41:16 2012 +0000 | Leo Gordon | bugfix: correctly checking analysis_capacity (thanks Andy for reporting)
+* Wed Dec 12 10:44:01 2012 +0000 | Leo Gordon | bugfix: do not proceed with negative numbers of workers for submission (thanks to Matthieu for reporting)
+* Thu Dec 6 11:18:59 2012 +0000 | Leo Gordon | bugfix:  -job_limit now works correctly also with respecializing workers
+* Thu Dec 6 10:47:07 2012 +0000 | Leo Gordon | fix: 'msg' view now displays the analysis of the job (which is fixed), not that of worker (which may change with time)
+* Wed Dec 5 22:25:35 2012 +0000 | Leo Gordon | experimental feature: re-specialization of workers instead of dying from NO_WORK
+* Sat Dec 1 19:11:56 2012 +0000 | Leo Gordon | switched to using Limiter class for job_limit and made some related structural changes
+* Fri Nov 30 13:47:42 2012 +0000 | Leo Gordon | changed the meaning of 'num_required_workers' to "total estimated number of workers needed for this analysis" ( 'num_running_workers' is now included in it )
+* Thu Nov 29 12:21:22 2012 +0000 | Leo Gordon | fresh schema diagram
+* Thu Nov 29 11:46:47 2012 +0000 | Leo Gordon | renamed 'job_message' table to 'log_message' and JobMessageAdaptor to LogMessageAdaptor everywhere
+* Wed Nov 28 21:40:45 2012 +0000 | Leo Gordon | swapped hive_capacity for analysis_capacity in example PipeConfig files
+* Wed Nov 28 21:30:44 2012 +0000 | Leo Gordon | change of default behaviour: hive_capacity is now off by default (=NULL); setting hive_capacity=0 or analysis_capacity=0 stops scheduling AND specialization to a particular analysis
+* Wed Nov 28 13:23:48 2012 +0000 | Leo Gordon | cleanup: removed runnable(), output() and parameters() subroutines from Process as no longer used by Compara
+* Wed Nov 28 12:21:37 2012 +0000 | Leo Gordon | removed the "compile_module_once" option as the only way to compile modules now is once after specialization
+* Tue Nov 27 11:31:00 2012 +0000 | Leo Gordon | secutiry: make sure stringify() always produces perl-parsable structures, so that global settings of Data::Dumper do not affect its results (thanks to Uma and Matthieu for reporting)
 
 ---------------------[during EnsEMBL rel.70]----------------------------------------------------------------
 
