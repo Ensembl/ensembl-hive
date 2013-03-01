@@ -379,8 +379,9 @@ sub dbc {
 sub data_dbc {
     my $self = shift @_;
 
-    my $given_db_conn   = shift @_ || $self->param('db_conn') || $self;
-    my $given_signature = stringify( $given_db_conn );
+    my $given_db_conn   = shift @_ || ($self->param_is_defined('db_conn') ? $self->param('db_conn') : $self);
+    my $given_ref = ref( $given_db_conn );
+    my $given_signature = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_db_conn ) : "$given_db_conn";
 
     if( !$self->{'_cached_db_signature'} or ($self->{'_cached_db_signature'} ne $given_signature) ) {
         $self->{'_cached_db_signature'} = $given_signature;
