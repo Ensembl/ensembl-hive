@@ -309,9 +309,15 @@ sub _add_analysis_node {
         }
     }
 
-    if( $self->config_get('DisplayJobs') ) {
+    if( my $job_limit = $self->config_get('DisplayJobs') ) {
         my $adaptor = $self->dba->get_AnalysisJobAdaptor();
-        my @jobs = sort {$a->dbID <=> $b->dbID} @{ $adaptor->fetch_all_by_analysis_id_status( $analysis->dbID )};
+        my @jobs = sort {$a->dbID <=> $b->dbID} @{ $adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+
+        my $hit_limit;
+        if(scalar(@jobs)>$job_limit) {
+            pop @jobs;
+            $hit_limit = 1;
+        }
 
         $analysis_label    .= '<tr><td colspan="'.$colspan.'"> </td></tr>';
         foreach my $job (@jobs) {
@@ -322,6 +328,10 @@ sub _add_analysis_node {
             $input_id=~s/\</&lt;/g;
             $input_id=~s/\{|\}//g;
             $analysis_label    .= qq{<tr><td colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
+        }
+
+        if($hit_limit) {
+            $analysis_label    .= qq{<tr><td colspan="$colspan">[ and }.($total_job_count-$job_limit).qq{ more ]</td></tr>};
         }
     }
     $analysis_label    .= '</table>>';

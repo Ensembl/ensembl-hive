@@ -68,7 +68,7 @@
         },
 
         "DisplayStats"          : "barchart",   # show analysis statistics using "barchart", "text" or "" (don't show statistics)
-        "DisplayJobs"           : 0,
+        "DisplayJobs"           : 0,            # if nonzero, represents the max number of jobs to show in each analysis node
         "DisplayData"           : 0,
 
         "DisplayDetails"        : 1,
