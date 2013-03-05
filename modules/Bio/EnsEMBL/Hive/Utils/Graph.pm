@@ -452,15 +452,20 @@ sub _add_table_node {
     my ($self, $table_node, $table_name) = @_;
 
     my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
-    my (@column_names, $columns, $table_data);
+    my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    if( $self->config_get('DisplayData') ) {
+    if( $data_limit = $self->config_get('DisplayData') ) {
         my $adaptor = $self->dba->get_NakedTableAdaptor();
         $adaptor->table_name( $table_name );
 
         @column_names = sort keys %{$adaptor->column_set};
         $columns = scalar(@column_names);
-        $table_data = $adaptor->fetch_all( );
+        $table_data = $adaptor->fetch_all( 'LIMIT '.($data_limit+1) );
+
+        if(scalar(@$table_data)>$data_limit) {
+            pop @$table_data;
+            $hit_limit = 1;
+        }
     }
 
     my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'.$table_name.'</td></tr>';
@@ -470,6 +475,9 @@ sub _add_table_node {
         $table_label .= '<tr>'.join('', map { qq{<td bgcolor="lightblue" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
             $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
+        }
+        if($hit_limit) {
+            $table_label  .= qq{<tr><td colspan="$columns">[ more data ]</td></tr>};
         }
     }
     $table_label .= '</table>>';

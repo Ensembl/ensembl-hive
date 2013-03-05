@@ -157,6 +157,8 @@ sub fetch_all {
             # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
         if($constraint=~/\bJOIN\b/i) {
             $sql = 'SELECT ' . join(', ', map { "$table_name.$_" } keys %{$self->column_set()}) . " FROM $table_name $constraint";
+        } elsif($constraint=~/^LIMIT|ORDER|GROUP/) {
+            $sql .= ' '.$constraint;
         } else {
             $sql .= ' WHERE '.$constraint;
         }
