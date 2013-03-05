@@ -22,7 +22,7 @@ sub show_seedable_analyses {
         my $logic_name = $analysis->logic_name;
         unless($incoming->{$logic_name}) {
             my $analysis_id = $analysis->dbID;
-            my $example_job = $job_adaptor->fetch_one_example_by_analysis_id( $analysis_id );
+            my ($example_job) = @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis_id, 1 ) };
             print "\t$logic_name ($analysis_id)\t\t".($example_job ? "Example input_id:   '".$example_job->input_id."'" : "[not populated yet]")."\n";
         }
     }

@@ -209,11 +209,10 @@ sub fetch_all_by_analysis_id_status {
 }
 
 
-sub fetch_one_example_by_analysis_id {
-    my ($self, $analysis_id) = @_;
+sub fetch_some_by_analysis_id_limit {
+    my ($self, $analysis_id, $limit) = @_;
 
-    my ($job) = @{ $self->_generic_fetch( "j.analysis_id = '$analysis_id'", undef, 'LIMIT 1' ) };
-    return $job;    # if the list was empty, $job will be false
+    return $self->_generic_fetch( "j.analysis_id = '$analysis_id'", undef, "LIMIT $limit" );
 }
 
 
