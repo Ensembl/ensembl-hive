@@ -27,8 +27,23 @@ Also, 'where' parameter allows to select subset of rows to be copied/merged over
 package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 
 use strict;
+use warnings;
+
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Hive::Process');
+
+sub param_defaults {
+    return {
+        'src_db_conn'   => '',
+        'dest_db_conn'  => '',
+        'mode'          => 'overwrite',
+        'table'         => '',
+        'where'         => undef,
+        'filter_cmd'    => undef,
+    };
+}
+
 
 =head2 fetch_input
 
@@ -60,20 +75,17 @@ sub fetch_input {
     my $table = $self->param('table') or die "Please specify 'table' parameter\n";
     $self->input_job->transient_error(1);
 
-    my $src_dbc     = $src_db_conn  ? $self->go_figure_dbc( $src_db_conn )  : $self->db->dbc;
-    my $dest_dbc    = $dest_db_conn ? $self->go_figure_dbc( $dest_db_conn ) : $self->db->dbc;
+    my $src_dbc     = $src_db_conn  ? go_figure_dbc( $src_db_conn )  : $self->data_dbc;
+    my $dest_dbc    = $dest_db_conn ? go_figure_dbc( $dest_db_conn ) : $self->data_dbc;
 
     $self->param('src_dbc',         $src_dbc);
     $self->param('dest_dbc',        $dest_dbc);
-
-    my $mode = $self->param('mode') || 'overwrite';
-        $self->param('mode', $self->param('mode'));
 
     my $where = $self->param('where');
 
     $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 
-    if($mode ne 'overwrite') {
+    if($self->param('mode') ne 'overwrite') {
         $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
 }
@@ -91,10 +103,10 @@ sub run {
     my $src_dbc     = $self->param('src_dbc');
     my $dest_dbc    = $self->param('dest_dbc');
 
-    my $filter_cmd  = $self->param('filter_cmd');
-    my $mode        = $self->param('mode')  || 'overwrite';
+    my $mode        = $self->param('mode');
     my $table       = $self->param('table');
     my $where       = $self->param('where');
+    my $filter_cmd  = $self->param('filter_cmd');
 
     my $cmd = 'mysqldump '
                 . { 'overwrite' => '', 'topup' => '--no-create-info ', 'insertignore' => '--no-create-info --insert-ignore ' }->{$mode}

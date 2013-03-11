@@ -90,7 +90,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception ('throw');
-use Bio::EnsEMBL::Hive::Utils ('url2dbconn_hash', 'stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
@@ -385,45 +385,10 @@ sub data_dbc {
 
     if( !$self->{'_cached_db_signature'} or ($self->{'_cached_db_signature'} ne $given_signature) ) {
         $self->{'_cached_db_signature'} = $given_signature;
-        $self->{'_cached_data_dbc'} = $self->go_figure_dbc( $given_db_conn );
+        $self->{'_cached_data_dbc'} = go_figure_dbc( $given_db_conn );
     }
 
     return $self->{'_cached_data_dbc'};
-}
-
-
-sub go_figure_dbc {
-    my ($self, $foo, $schema_type) = @_;
-
-    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
-
-        return $foo;
-
-    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
-
-        return $foo->dbc;
-
-    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
-
-        return $foo->db->dbc;
-
-    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
-
-        return Bio::EnsEMBL::DBSQL::DBConnection->new( %$db_conn );
-
-    } else {
-        unless(ref($foo)) {    # maybe it is simply a registry key?
-            my $dba;
-            eval {
-                $schema_type ||= 'hive';
-                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
-            };
-            if(UNIVERSAL::can($dba, 'dbc')) {
-                return $dba->dbc;
-            }
-        }
-        die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
-    }
 }
 
 

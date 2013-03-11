@@ -50,6 +50,9 @@ standaloneJob.pl RunnableDB/DatabaseDumper.pm -exclude_ehive 1 -exclude_list 1 -
 package Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper;
 
 use strict;
+use warnings;
+
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -68,7 +71,7 @@ sub fetch_input {
 
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
-    my $src_dbc = $src_db_conn ? $self->go_figure_dbc($src_db_conn) : $self->db->dbc;
+    my $src_dbc = $src_db_conn ? go_figure_dbc($src_db_conn) : $self->data_dbc;
     $self->param('src_dbc', $src_dbc);
 
     $self->input_job->transient_error(0);
@@ -96,7 +99,7 @@ sub fetch_input {
     # Output file / output database
     $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
     unless ($self->param('output_file')) {
-        $self->param('real_output_db', $self->go_figure_dbc( $self->param('output_db') ) );
+        $self->param('real_output_db', go_figure_dbc( $self->param('output_db') ) );
         die 'Only the "mysql" driver is supported.' if $self->param('real_output_db')->driver ne 'mysql';
     }
 
