@@ -143,7 +143,7 @@ sub write_output {
         my $dest_row_increase = $self->get_row_count($dest_dbc, $table) - $self->param('dest_before_all');
 
         if($mode eq 'topup') {
-            if($src_before < $dest_row_increase) {
+            if($src_before <= $dest_row_increase) {
                 $self->warning("Cannot check success/failure in this mode, but the number of '$table' rows in target increased by $dest_row_increase (higher than $src_before)");
             } else {
                 die "Could not add rows: $src_before '$table' rows from source copied into $dest_row_increase rows in target\n";
