@@ -7,25 +7,28 @@
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf -password <your_password> -source_dbname ncbi_taxonomy
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf -password $ENSADMIN_PSW -db_conn "mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult"
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf -password <your_password> -source_dbname avilella_compara_homology_58 -only_tables 'protein_tree%' -with_schema 0
+    seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_zip_tables" -logic_name find_tables -input_id "{'only_tables' => '%_result'}"
+
+    runWorker.pl -url mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_zip_tables
+    runWorker.pl -url mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_zip_tables
+    runWorker.pl -url mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_zip_tables
 
 =head1 DESCRIPTION  
 
-    This is an example pipeline put together from basic building blocks:
+    This is an example pipeline put together from three analyses (with pre-existing Runnables) :
 
     Analysis_1: JobFactory.pm is used to turn the list of tables of the given database into jobs
 
         these jobs are sent down the branch #2 into the second analysis
 
-    Analysis_2: SystemCmd.pm is used to run these dumping+compression jobs in parallel.
+    Analysis_2: SystemCmd.pm is used to dump individual tables; each flows via branch #1 into Analysis_3
 
-=head1 CONTACT
-
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Analysis_3: another instance of SystemCmd.pm is used to compress an individual table dump file
 
 =cut
+
 
 package Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf;
 
@@ -37,16 +40,6 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                  In addition to the standard things it defines four options:
-                    o('with_schema')        controls whether the table definition will be dumped together with each table's data
-                    o('only_tables')        defines the mysql 'LIKE' pattern to select the tables of interest
-                    o('target_dir')         defines the directory where the dumped files will be deposited
-                    o('dumping_capacity')   defines how many tables can be dumped and zipped in parallel
-                
-                  There are rules dependent on two options that do not have defaults (this makes them mandatory):
-                    o('password')       your read-write password for creation and maintenance of the hive database
-                                        (it is assumed to be the same as for the source database, but you can override this assumption)
-                    o('source_dbname')  name of the database from which tables are to be dumped
 
 =cut
 
@@ -55,80 +48,80 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'pipeline_name' => 'zip_tables',                    # name used by the beekeeper to prefix job names on the farm
-
-        'source_db' => {
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('source_dbname'),
-        },
-        
-        'with_schema'       => 1,                                           # include table creation statement before inserting the data
-        'only_tables'       => '%',                                         # use 'protein_tree%' or 'analysis%' to only dump those tables
-        'invert_selection'  => 0,                                           # use 'NOT LIKE' instead of 'LIKE'
-        'target_dir'        => $self->o('ENV', 'HOME').'/'.$self->o('source_dbname'),  # where we want the compressed files to appear
-        'dumping_capacity'  => 10,                                          # how many tables can be dumped in parallel
+        'pipeline_name'     => 'zip_tables',                # name used by the beekeeper to prefix job names on the farm
     };
 }
 
-=head2 pipeline_create_commands
 
-    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates a directory for storing the output.
+=head2 pipeline_wide_parameters
+
+    Description : Interface method that should return a hash of pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
+                  The value doesn't have to be a scalar, can be any Perl structure (will be stringified and de-stringified automagically).
 
 =cut
 
-sub pipeline_create_commands {
+sub pipeline_wide_parameters {
     my ($self) = @_;
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class, then add our own stuff
 
-        'mkdir -p '.$self->o('target_dir'),
-    ];
+        'db_conn'       => $self->o('db_conn'),
+        'dumping_flags' => '-t',    # '-t' for "dump without table definition" or '' for "dump with table definition"
+        'directory'     => '.',     # directory where both source and target files are located
+        'matching_op'   => 'LIKE',  # 'LIKE' or 'NOT LIKE'
+        'only_tables'   => '%',     # any wildcard understood by MySQL
+    };
 }
+
 
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines two analyses:
 
-                    * 'get_tables'  generates a list of tables whose names match the pattern o('only_tables')
-                      Each job of this analysis will dataflow (create jobs) via branch #2 into 'dumper_zipper' analysis.
+                    * 'find_tables'         generates a list of tables whose names match the pattern #only_tables#
+                      Each job of this analysis will dataflow (create jobs) via branch #2 into 'table_dumper' analysis.
 
-                    * 'dumper_zipper'   actually does the dumping of table data (possibly with table definition) and zips the stream into an archive file.
+                    * 'table_dumper'        dumps table contents (possibly with table definition) and flows via branch #1 into 'file_compressor' analysis.
+
+                    * 'file_compressor'     compresses the dump file
 
 =cut
 
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'get_tables',
+        {   -logic_name => 'find_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'    => $self->o('source_db'),
-                'inputquery' => 'SELECT table_name FROM information_schema.tables WHERE table_schema = "'.$self->o('source_dbname').'" AND table_name '
-                    .($self->o('invert_selection')?'NOT LIKE':'LIKE').' "'.$self->o('only_tables').'"',
+                'inputquery'    => 'SELECT table_name FROM information_schema.tables WHERE table_schema = "#mysql_dbname:db_conn#" AND table_name #matching_op# "#only_tables#"',
             },
-            -input_ids => [
-                { },    # the template is now implicitly defined by column_names of the query
-            ],
             -flow_into => {
-                2 => [ 'dumper_zipper' ],   # will create a fan of jobs
+#                2 => { 'table_dumper' => { 'table_name' => '#table_name#', 'db_conn' => '#db_conn#' }, },
+                2 => [ 'table_dumper' ],
             },
         },
 
-        {   -logic_name    => 'dumper_zipper',
+        {   -logic_name    => 'table_dumper',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'target_dir' => $self->o('target_dir'),
-                'cmd'        => 'mysqldump '.$self->dbconn_2_mysql('source_db', 0).' '.$self->o('source_db','-dbname').($self->o('with_schema')?'':' -t').' #table_name# | gzip >#target_dir#/#table_name#.sql.gz',
+                'filename'   => '#directory#/#table_name#.sql',
+                'cmd'        => 'mysqldump #mysql_conn:db_conn# #dumping_flags# #table_name# >#filename#',
             },
-            -analysis_capacity => $self->o('dumping_capacity'),       # allow several workers to perform identical tasks in parallel
-            -input_ids     => [
-                # (jobs for this analysis will be flown_into via branch-2 from 'get_tables' jobs above)
-            ],
+            -analysis_capacity => 2,
+            -flow_into => {
+#                1 => { 'file_compressor' => { 'filename' => '#filename#' }, },
+                1 => [ 'file_compressor' ],
+            },
+        },
+
+        {   -logic_name    => 'file_compressor',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters    => {
+                'filename'   => '#directory#/#table_name#.sql',
+                'cmd'        => 'gzip #filename#',
+            },
+            -analysis_capacity => 8,
         },
     ];
 }

@@ -59,7 +59,9 @@ This module implements a generic param() method that allows to set parameters ac
 package Bio::EnsEMBL::Hive::Params;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash');     # NB: dir_revhash() is used by some substituted expressions, do not remove!
+use warnings;
+
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc');     # NB: dir_revhash() is used by some substituted expressions, do not remove!
 
 
 =head2 param_init
@@ -249,13 +251,23 @@ sub param_substitute {
 sub mysql_conn { # an example stringification formatter (others can be defined here or in a descendent of Params)
     my ($self, $db_conn) = @_;
 
-    return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
+    if(ref($db_conn) eq 'HASH') {
+        return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
+    } else {
+        my $dbc = go_figure_dbc( $db_conn );
+        return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --pass='".$dbc->password."' ".$dbc->dbname;
+    }
 }
 
 sub mysql_dbname { # another example stringification formatter
     my ($self, $db_conn) = @_;
 
-    return $db_conn->{-dbname};
+    if(ref($db_conn) eq 'HASH') {
+        return $db_conn->{-dbname};
+    } else {
+        my $dbc = go_figure_dbc( $db_conn );
+        return $dbc->dbname;
+    }
 }
 
 sub csvq { # another example stringification formatter
