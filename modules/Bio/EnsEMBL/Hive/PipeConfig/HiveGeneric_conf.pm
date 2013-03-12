@@ -568,16 +568,31 @@ sub run {
 
     my $url = $self->dbconn_2_url('pipeline_db');
 
-    print "\n\n\tPlease run the following commands:\n\n";
-    print "  beekeeper.pl -url $url -sync\t\t\t# (synchronize the Hive - should always be done before [re]starting a pipeline)\n\n";
-    print "  beekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# (run the pipeline in automatic mode)\n";
+    print "\n\n# --------------------[Useful commands]--------------------------\n";
+    print "\n";
+    print " # It is convenient to store the pipeline url in a variable:\n";
+    print "\texport HIVE_URL=$url\t\t\t# bash version\n";
     print "(OR)\n";
-    print "  beekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# (run one step of the pipeline - useful for debugging/learning)\n";
+    print "\tsetenv HIVE_URL $url\t\t\t# [t]csh version\n";
+    print "\n";
+    print " # Add a new job to the pipeline (usually done once before running, but pipeline can be \"topped-up\" at any time) :\n";
+    print "\tseed_pipeline.pl -url $url -logic_name <analysis_name> -input_id <param_hash>\n";
+    print "\n";
+    print " # Synchronize the Hive (should be done before [re]starting a pipeline) :\n";
+    print "\tbeekeeper.pl -url $url -sync\n";
+    print "\n";
+    print " # Run the pipeline (can be interrupted and restarted) :\n";
+    print "\tbeekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)\n";
     print "(OR)\n";
-    print "  runWorker.pl -url $url ".$self->beekeeper_extra_cmdline_options()."      \t\t# (run exactly one Worker locally - useful for debugging/learning)\n";
-
-    print "\n\n\tTo connect to your pipeline database use the following line:\n\n";
-    print "  ".$self->db_connect_command('pipeline_db')."\n\n";
+    print "\tbeekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)\n";
+    print "(OR)\n";
+    print "\trunWorker.pl -url $url ".$self->beekeeper_extra_cmdline_options()."      \t\t# run exactly one Worker locally (useful for debugging/learning)\n";
+    print "\n";
+    print " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n";
+    print "\tgenerate_graph.pl -url $url -out diagram.png\n";
+    print "\n";
+    print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
+    print "\t".$self->db_connect_command('pipeline_db')."\n\n";
 }
 
 1;
