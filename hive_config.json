@@ -1,33 +1,34 @@
 {
+    "VERSION" : 0.01,
     "Valley" : {
-        "SubmitWorkersMax"  : 50,       # if set, provides a cut-off on the total number of workers (across all Meadows) submitted each iteration
+        "SubmitWorkersMax"  : 50
     },
-    "Meadow" : {    # configure Meadow-specific options here:
+    "Meadow" : {
         "LSF" : {
-            "SubmissionOptions"         : "",   # general options that different Meadows can plug into the submission command
-            "TotalRunningWorkersMax"    : 1000, # how many workers can be run on this Meadow in total
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 1000,
             "farm2" : {
-                "SubmissionOptions"  : "",      # submission options specific for LSF/farm2
+                "SubmissionOptions"  : ""
             },
             "pcs4" : {
-                "SubmissionOptions"  : "",      # submission options specific for LSF/pcs4
+                "SubmissionOptions"  : ""
             },
             "EBI" : {
-                "SubmissionOptions"  : "",      # submission options specific for LSF/EBI
-            },
+                "SubmissionOptions"  : ""
+            }
         },
         "LOCAL" : {
             "TotalRunningWorkersMax"   : 2,
             "my-quadcore-desktop" : {
-                "TotalRunningWorkersMax"   : 4,
+                "TotalRunningWorkersMax"   : 4
             },
             "your-weak-laptop" : {
-                "TotalRunningWorkersMax"   : 1,
-            },
-        },
+                "TotalRunningWorkersMax"   : 1
+            }
+        }
     },
-    "Graph" : {     # configure diagram-generation options here:
-        "Pad"  : "1.0", # empty margin around the whole diagram
+    "Graph" : {
+        "Pad"  : "1.0",
 
         "Node" : {
             "Font"        : "Times-Roman",
@@ -41,39 +42,39 @@
                 "READY"         : { "Colour" : "orange" },
                 "INPROGRESS"    : { "Colour" : "yellow" },
                 "DONE"          : { "Colour" : "green"  },
-                "FAILED"        : { "Colour" : "grey"   },
+                "FAILED"        : { "Colour" : "grey"   }
             },
 
             "AnalysisStatus"   : {
-                "EMPTY"       : { "Colour" : "white"  },    # unpopulated
-                "BLOCKED"     : { "Colour" : "red"    },    # need a sync that may or may not unblock
-                "LOADING"     : { "Colour" : "orange" },    # need a sync to claim
-                "ALL_CLAIMED" : { "Colour" : "orange" },    # need a sync to claim
-                "SYNCHING"    : { "Colour" : "orange" },    # need a sync to complete to claim
-                "READY"       : { "Colour" : "yellow" },    # immediately claimable
-                "WORKING"     : { "Colour" : "yellow" },    # immediately claimable
+                "EMPTY"       : { "Colour" : "white"  },
+                "BLOCKED"     : { "Colour" : "red"    },
+                "LOADING"     : { "Colour" : "orange" },
+                "ALL_CLAIMED" : { "Colour" : "orange" },
+                "SYNCHING"    : { "Colour" : "orange" },
+                "READY"       : { "Colour" : "yellow" },
+                "WORKING"     : { "Colour" : "yellow" },
                 "DONE"        : { "Colour" : "green"  },
-                "FAILED"      : { "Colour" : "grey"   },
-            },
+                "FAILED"      : { "Colour" : "grey"   }
+            }
         },
         "Edge" : {
             "Font"        : "Helvetica",
             "Data"        : { "Colour" : "blue"    },
             "Control"     : { "Colour" : "red"     },
-            "Semablock"   : { "Colour" : "red"     },
+            "Semablock"   : { "Colour" : "red"     }
         },
         "Box"  : {
-            "ColourScheme"  : "blues9",  # Examples: "blues9" or "bugn7" or "orrd8" or "purples7" or "ylorbr9"
-            "ColourOffset"  : 1,
+            "ColourScheme"  : "blues9",
+            "ColourOffset"  : 1
         },
 
-        "DisplayStats"          : "barchart",   # show analysis statistics using "barchart", "text" or "" (don't show statistics)
-        "DisplayJobs"           : 0,            # if nonzero, represents the max number of jobs to show in each analysis node
-        "DisplayData"           : 0,            # if nonzero, represents the max number of data rows to show in each table node
+        "DisplayStats"          : "barchart",
+        "DisplayJobs"           : 0,
+        "DisplayData"           : 0,
 
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,
         "DisplaySemaphoreBoxes" : 1,
-        "DuplicateTables"       : 0,
+        "DuplicateTables"       : 0
     }
 }
