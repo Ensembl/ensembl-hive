@@ -105,6 +105,7 @@ sub _get_rowcount_bound {
     $inputquery .= " LIMIT $maxrow" unless $inputquery =~ /LIMIT/i;
 
     my $sth = $self->data_dbc()->prepare($inputquery);
+    $sth->{mysql_use_result} = 1 if $self->data_dbc->driver eq 'mysql';
     $sth->execute();
 
     my $nrow = 0;
