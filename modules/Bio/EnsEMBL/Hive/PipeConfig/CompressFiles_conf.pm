@@ -91,7 +91,7 @@ sub pipeline_analyses {
         {   -logic_name => 'find_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputcmd'     => 'find #directory# -type f -name #only_files#',
+                'inputcmd'     => 'find #directory# -type f -name "#only_files#"',
                 'column_names' => [ 'filename' ],
             },
             -flow_into => {
