@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start
+Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
 
-'LongMult::Start' is the first step of the LongMult example pipeline that multiplies two long numbers.
+'LongMult::DigitFactory' is the first step of the LongMult example pipeline that multiplies two long numbers.
 
 It takes apart the second multiplier and creates several 'LongMult::PartMultiply' jobs
 that correspond to the different digits of the second multiplier.
@@ -22,7 +22,7 @@ complete and will arrive at the final result.
 
 =cut
 
-package Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start;
+package Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory;
 
 use strict;
 
@@ -33,9 +33,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
                   Here the task of fetch_input() is to read in the two multipliers, split the second one into digits and create a set of input_ids that will be used later.
 
-    param('a_multiplier'):  The first long number (a string of digits - doesn't have to fit a register).
-
-    param('b_multiplier'):  The second long number (also a string of digits).
+    param('b_multiplier'):  The second long number (a string of digits - doesn't have to fit a register)
 
     param('take_time'):     How much time to spend sleeping (seconds).
 
@@ -44,7 +42,6 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift @_;
 
-    my $a_multiplier    = $self->param('a_multiplier')  || die "'a_multiplier' is an obligatory parameter";
     my $b_multiplier    = $self->param('b_multiplier')  || die "'b_multiplier' is an obligatory parameter";
 
     my %digit_hash = ();
@@ -54,7 +51,7 @@ sub fetch_input {
     }
 
         # output_ids of partial multiplications to be computed:
-    my @output_ids = map { { 'a_multiplier' => $a_multiplier, 'digit' => $_ } } keys %digit_hash;
+    my @output_ids = map { { 'digit' => $_ } } keys %digit_hash;
 
         # store them for future use:
     $self->param('output_ids', \@output_ids);

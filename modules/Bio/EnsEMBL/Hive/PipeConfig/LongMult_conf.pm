@@ -29,10 +29,10 @@ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -job_topup -passw
     So long that they do not fit into registers of the CPU and should be multiplied digit-by-digit.
     For the purposes of this example we also assume this task is very computationally intensive and has to be done in parallel.
 
-    The long multiplication pipeline consists of three "analyses" (types of tasks):  'start', 'part_multiply' and 'add_together'
+    The long multiplication pipeline consists of three "analyses" (types of tasks):  'take_b_apart', 'part_multiply' and 'add_together'
     that we will be using to examplify various features of the Hive.
 
-        * A 'start' job takes in two string parameters, 'a_multiplier' and 'b_multiplier',
+        * A 'take_b_apart' job takes in two string parameters, 'a_multiplier' and 'b_multiplier',
           takes the second one apart into digits, finds what _different_ digits are there,
           creates several jobs of the 'part_multiply' analysis and one job of 'add_together' analysis.
 
@@ -123,47 +123,40 @@ sub pipeline_wide_parameters {
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
 
-                    * 'start' with two jobs (multiply 'first_mult' by 'second_mult' and vice versa - to check the commutativity of multiplivation).
+                    * 'take_b_apart' with two jobs (multiply 'first_mult' by 'second_mult' and vice versa - to check the commutativity of multiplivation).
                       Each job will dataflow (create more jobs) via branch #2 into 'part_multiply' and via branch #1 into 'add_together'.
 
-                    * 'part_multiply' initially without jobs (they will flow from 'start')
+                    * 'part_multiply' initially without jobs (they will flow from 'take_b_apart')
 
-                    * 'add_together' initially without jobs (they will flow from 'start').
+                    * 'add_together' initially without jobs (they will flow from 'take_b_apart').
                        All 'add_together' jobs will wait for completion of 'part_multiply' jobs before their own execution (to ensure all data is available).
 
     There are two control modes in this pipeline:
-        A. The default mode is to use the '2' and '1' dataflow rules from 'start' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
-        B. The semaphored mode is to use '2->A' and 'A->1' semaphored dataflow rules from 'start' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
+        A. The default mode is to use the '2' and '1' dataflow rules from 'take_b_apart' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
+        B. The semaphored mode is to use '2->A' and 'A->1' semaphored dataflow rules from 'take_b_apart' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
 
 =cut
 
 sub pipeline_analyses {
     my ($self) = @_;
     return [
-        {   -logic_name => 'start',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::Start',
+        {   -logic_name => 'take_b_apart',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
-            -parameters => {},
             -analysis_capacity  =>  1,  # use per-analysis limiter
             -input_ids => [
                 { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
                 { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
             ],
             -flow_into => {
-#                2     => [ 'part_multiply' ],   # will create a fan of jobs
-#                1     => [ 'add_together'  ],   # will create a funnel job to wait for the fan to complete and add the results
-                '2->A' => [ 'part_multiply' ],   # will create a semaphored fan of jobs (comment out the -wait_for rule from 'add_together')
+                '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },   # will create a semaphored fan of jobs; will use a template to top-up the hashes
                 'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
             },
         },
 
         {   -logic_name    => 'part_multiply',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
-            -parameters    => {},
             -analysis_capacity  =>  4,  # use per-analysis limiter
-            -input_ids     => [
-                # (jobs for this analysis will be flown_into via branch-2 from 'start' jobs above)
-            ],
             -flow_into => {
                 1 => [ ':////intermediate_result' ],
             },
@@ -171,12 +164,7 @@ sub pipeline_analyses {
         
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
-            -parameters => {},
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
-            -input_ids => [
-                # (jobs for this analysis will be flown_into via branch-1 from 'start' jobs above)
-            ],
-#           -wait_for => [ 'part_multiply' ],   # we can only start adding when all partial products have been computed
             -flow_into => {
                 1 => [ ':////final_result' ],
             },
