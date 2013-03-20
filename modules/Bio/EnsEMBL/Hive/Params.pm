@@ -243,7 +243,8 @@ sub param_substitute {
         }
         return \%substituted_hash;
     } else {
-        die "Could not substitute parameters in $structure";
+        warn "Could not substitute parameters in '$structure' - unsupported data type '$ref_type'\n";
+        return $structure;
     }
 }
 
