@@ -127,6 +127,21 @@ sub analysis_capacity {
 }
 
 
+sub get_compiled_module_name {
+    my $self = shift;
+
+    my $runnable_module_name = $self->module
+        or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
+
+    eval "require $runnable_module_name";
+    die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n$@" if($@);
+    die "Problem accessing methods in '$runnable_module_name'. Please check that it inherits from Bio::EnsEMBL::Hive::Process and is named correctly.\n"
+        unless($runnable_module_name->isa('Bio::EnsEMBL::Hive::Process'));
+
+    return $runnable_module_name;
+}
+
+
 =head2 process
 
   Arg [1]    : none
@@ -141,24 +156,9 @@ sub analysis_capacity {
 sub process {
     my $self = shift;
 
-    my $process_class = $self->module
-                     or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
+    my $runnable_object = $self->get_compiled_module_name->new( -analysis => $self );
 
-    if($process_class!~/::/) {
-        $process_class = 'Bio::EnsEMBL::Hive::Runnable::'.$process_class;
-    }
-
-    my $file = $process_class;
-    $file =~ s/::/\//g;
-    require "${file}.pm";
-
-    my $process_object = $process_class->new(
-                                -db       => $self->adaptor->db,
-                                -input_id => '1',
-                                -analysis => $self,
-                                );
-
-    return $process_object;
+    return $runnable_object;
 }
 
 

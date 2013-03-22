@@ -420,12 +420,6 @@ sub run {
                 $rc_id = $rc->dbID();
             }
 
-	    ## Module has to be compilable and accessible
-            eval "require $module;";
-            die "The module '$module' cannot be loaded.\n$@" if $@;
-	    die "Problem accessing methods in '$module'. Please check that it inherits from Bio::EnsEMBL::Hive::Process and is named correctly.\n"
-                unless($module->isa('Bio::EnsEMBL::Hive::Process'));
-
             if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
                 die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
             }
@@ -442,6 +436,7 @@ sub run {
                 -meadow_type            => $meadow_type,
                 -analysis_capacity      => $analysis_capacity,
             );
+            $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
             $analysis_adaptor->store($analysis);
 
             my $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
