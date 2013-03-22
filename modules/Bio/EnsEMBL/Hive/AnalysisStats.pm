@@ -134,9 +134,7 @@ sub num_running_workers {
     return $self->{'_num_running_workers'};
 }
 
-# NB: the meaning of this field changes from "how many workers we need to add" to "how many workers we actually need"
-
-sub num_required_workers {
+sub num_required_workers {      # NB: the meaning of this field is, again, "how many extra workers we need to add"
     my $self = shift;
     $self->{'_num_required_workers'} = shift if(@_);
     return $self->{'_num_required_workers'};

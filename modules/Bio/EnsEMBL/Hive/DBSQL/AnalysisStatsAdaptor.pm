@@ -90,7 +90,7 @@ sub fetch_all_by_suitability_rc_id_meadow_type {
         # the ones that clearly have work to do:
         #
     my $primary_results = $self->_generic_fetch(
-        "ast.num_running_workers<ast.num_required_workers AND ast.status in ('READY', 'WORKING')" ,
+        "ast.num_required_workers>0 AND ast.status in ('READY', 'WORKING')" ,
         $join ,
         'ORDER BY a.priority DESC, ' . ( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' ),
     );

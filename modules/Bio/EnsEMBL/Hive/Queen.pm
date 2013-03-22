@@ -250,7 +250,7 @@ sub specialize_new_worker {
             if($stats->status eq 'BLOCKED') {
                 die "Analysis is BLOCKED, can't specialize a worker";
             }
-            if($stats->num_running_workers >= $stats->num_required_workers) {
+            if($stats->num_required_workers <= 0) {
                 die "Analysis doesn't require extra workers at the moment";
             }
             if($stats->status eq 'DONE') {
@@ -621,8 +621,7 @@ sub synchronize_AnalysisStats {
     my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
                               && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
     my $required_workers    = $scheduling_allowed
-                            && POSIX::ceil( ($analysisStats->ready_job_count() + $analysisStats->inprogress_job_count())
-                                            / $analysisStats->get_or_estimate_batch_size() );
+                            && POSIX::ceil( $analysisStats->ready_job_count() / $analysisStats->get_or_estimate_batch_size() );
     $analysisStats->num_required_workers( $required_workers );
 
 
@@ -833,7 +832,7 @@ sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
 
             #synchronize and double check that it can be run:
         $self->safe_synchronize_AnalysisStats($stats);
-        return $stats if( ($stats->status ne 'BLOCKED') and ($stats->status ne 'SYNCHING') and ($stats->num_running_workers < $stats->num_required_workers) );
+        return $stats if( ($stats->status ne 'BLOCKED') and ($stats->status ne 'SYNCHING') and ($stats->num_required_workers > 0) );
     }
 
     return undef;

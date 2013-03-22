@@ -119,7 +119,7 @@ sub schedule_workers {
         next if($analysis_stats->status eq 'BLOCKED');
 
             # getting the initial worker requirement for this analysis (may be stale if not sync'ed recently)
-        my $extra_workers_this_analysis = $analysis_stats->num_required_workers - $analysis_stats->num_running_workers;
+        my $extra_workers_this_analysis = $analysis_stats->num_required_workers;
 
             # if this analysis doesn't require any extra workers - just skip it:
         next if ($extra_workers_this_analysis <= 0);
