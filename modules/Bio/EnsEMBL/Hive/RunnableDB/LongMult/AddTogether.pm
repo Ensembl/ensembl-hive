@@ -40,7 +40,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
 
-    my $a_multiplier = $self->param('a_multiplier') || die "'a_multiplier' is an obligatory parameter";
+    my $a_multiplier = $self->param_required('a_multiplier');
 
     my $adaptor = $self->db->get_NakedTableAdaptor();
     $adaptor->table_name( 'intermediate_result' );
@@ -62,7 +62,7 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
 sub run {   # call the function that will compute the stuff
     my $self = shift @_;
 
-    my $b_multiplier = $self->param('b_multiplier') || die "'b_multiplier' is an obligatory parameter";
+    my $b_multiplier = $self->param_required('b_multiplier');
     my $product_pair = $self->param('product_pair');
 
     $self->param('result', _add_together($b_multiplier, $product_pair));

@@ -42,7 +42,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift @_;
 
-    my $b_multiplier    = $self->param('b_multiplier')  || die "'b_multiplier' is an obligatory parameter";
+    my $b_multiplier    = $self->param_required('b_multiplier');
 
     my %digit_hash = ();
     foreach my $digit (split(//,$b_multiplier)) {

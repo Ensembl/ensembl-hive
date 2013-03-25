@@ -36,6 +36,13 @@ use strict;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+sub param_defaults {
+    return {
+            'subject' => 'An automatic message from your pipeline',
+    };
+}
+
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
@@ -64,9 +71,9 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $email   = $self->param('email')   || die "'email' parameter is obligatory";
-    my $subject = $self->param('subject') || "An automatic message from your pipeline";
-    my $text    = $self->param('text')    || die "'text' parameter is obligatory";
+    my $email   = $self->param_required('email');
+    my $subject = $self->param_required('subject');
+    my $text    = $self->param_required('text');
 
     open(SENDMAIL, "|sendmail $email");
     print SENDMAIL "Subject: $subject\n";

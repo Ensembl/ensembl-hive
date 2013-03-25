@@ -49,8 +49,8 @@ sub fetch_input {
 sub run {   # call the recursive function that will compute the stuff
     my $self = shift @_;
 
-    my $a_multiplier = $self->param('a_multiplier') || die "'a_multiplier' is an obligatory parameter";
-    my $digit        = $self->param('digit')        || die "'digit' is an obligatory parameter";
+    my $a_multiplier = $self->param_required('a_multiplier');
+    my $digit        = $self->param_required('digit');
 
     $self->param('result', _rec_multiply($a_multiplier, $digit, 0) || 0);
 

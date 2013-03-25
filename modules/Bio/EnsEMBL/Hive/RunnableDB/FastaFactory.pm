@@ -71,7 +71,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $inputfile   = $self->param('inputfile')                 || die "'inputfile' is an obligatory parameter";
+    my $inputfile   = $self->param_required('inputfile');
     die "Cannot read '$inputfile'" unless(-r $inputfile);
 
     if($inputfile=~/\.(?:gz|Z)$/) {

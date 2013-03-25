@@ -38,7 +38,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {
     my $self = shift @_;
 
-    die "'inputquery' is a mandatory parameter" unless $self->param('inputquery');
+    $self->param_required('inputquery');
     
     my $expected_size = $self->param('expected_size');
     unless ($expected_size =~ /^\s*(=|==|>|>=|<|<=|<>|!=|)\s*(\d*)\s*$/) {
