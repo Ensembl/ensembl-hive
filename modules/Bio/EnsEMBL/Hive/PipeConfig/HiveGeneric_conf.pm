@@ -424,10 +424,13 @@ sub run {
                 die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
             }
 
+            $parameters_hash ||= {};    # in case nothing was given
+            die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
+
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
                 -logic_name             => $logic_name,
                 -module                 => $module,
-                -parameters             => stringify($parameters_hash || {}),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -parameters             => stringify($parameters_hash),    # have to stringify it here, because Analysis code is external wrt Hive code
                 -resource_class_id      => $rc_id,
                 -failed_job_tolerance   => $failed_job_tolerance,
                 -max_retry_count        => $max_retry_count,
