@@ -1,0 +1,1013 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <resource_mapping>
+    <meadow type="LSF">
+      <resource name="urgent_hcluster" value="-C0 -M32000000 -R&quot;select[mem&gt;32000] rusage[mem=32000]&quot; -q yesterday"/>
+      <resource name="8Gb_job" value="-C0 -M8000000  -R&quot;select[mem&gt;8000]  rusage[mem=8000]&quot;"/>
+      <resource name="cafe" value="-S 1024 -C0 -M1000000 -R&quot;select[mem&gt;1000] rusage[mem=1000]&quot;"/>
+      <resource name="500Mb_job" value="-C0 -M500000   -R&quot;select[mem&gt;500]   rusage[mem=500]&quot;"/>
+      <resource name="250Mb_job" value="-C0 -M250000   -R&quot;select[mem&gt;250]   rusage[mem=250]&quot;"/>
+      <resource name="urgent" value="-q yesterday"/>
+      <resource name="msa_himem" value="-C0 -M8000000  -R&quot;select[mem&gt;8000]  rusage[mem=8000]&quot;"/>
+      <resource name="default" value=""/>
+      <resource name="1Gb_job" value="-C0 -M1000000  -R&quot;select[mem&gt;1000]  rusage[mem=1000]&quot;"/>
+      <resource name="msa" value="-C0 -M2000000  -R&quot;select[mem&gt;2000]  rusage[mem=2000]&quot;"/>
+      <resource name="idmap_himem" value="-C0 -M8000000 -R&quot;select[mem&gt;8000] rusage[mem=8000]&quot;"/>
+      <resource name="cafe_default" value="-C0 -M1000000 -R&quot;select[mem&gt;1000] rusage[mem=1000]&quot;"/>
+      <resource name="2Gb_job" value="-C0 -M2000000  -R&quot;select[mem&gt;2000]  rusage[mem=2000]&quot;"/>
+    </meadow>
+  </resource_mapping>
+  <pipeline_parameters>
+    <param name="schema_type">compara</param>
+    <param name="reuse_ss_id">35135</param>
+    <param name="pipeline_name">STID_70c</param>
+    <param name="full_species_tree_string">(((((((((((9305*,9315*,13616*)9263,((9361*,9358*)9348,(((((10116*,10090*)39107,10020*,43179*)33553,10141*)9989,(9978*,9986*)9975)314147,((30611*,30608*)376911,((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913)9443,37347*)314146,(9813*,9371*,9785*)311790,((9365*,42254*)9362,(59463*,132908*)9397,((9646*,9615*,9669*)379584,9685*)33554,(30538*,9823*,9739*,9913*)91561,9796*)314145)9347)32525,9258*)40674,((((9031*,9103*)9005,59729*)8825,28377*)32561,13735*)8457)32524,8364*)32523,7897*)8287,(((((8083*,8090*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370,7955*)186625)117571,7757*)7742,(51511*,7719*)7718)7711,(6239*,7227*)1206794)33316,4932*)33154;</param>
+    <param name="nonreuse_ss_csv">61,90,105,115,125,129,134,139,140</param>
+    <param name="CAFE_tree_string"></param>
+    <param name="schema_version">70</param>
+    <param name="nonreuse_ss_id">35136</param>
+    <param name="reuse_ss_csv">4,27,31,33,36,37,42,43,46,48,49,55,58,60,65,67,69,78,79,80,82,83,84,85,86,87,91,98,108,109,110,111,112,116,117,118,120,121,122,123,124,126,127,128,130,131,132,133,135,136,137,138</param>
+    <param name="dataflow_subclusters">1</param>
+  </pipeline_parameters>
+  <pipeline_analyses>
+    <analysis logic_name="backbone_fire_db_prepare" module="Bio::EnsEMBL::Hive::RunnableDB::Dummy" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target="backbone_fire_species_list_prepare">
+          <dependent>
+            <flow target="copy_table_factory"/>
+            <flow target="innodbise_table_factory"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_species_list_prepare" module="Bio::EnsEMBL::Hive::RunnableDB::Dummy" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target="backbone_fire_genome_load">
+          <dependent>
+            <flow target="prepare_species_sets"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_genome_load" module="Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="table_list"></param>
+        <param name="filename">snapshot_1_before_genome_load.sql</param>
+      </parameters>
+      <flow_rules>
+        <flow target="backbone_fire_allvsallblast">
+          <dependent>
+            <flow target="genome_reuse_factory"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_allvsallblast" module="Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="table_list"></param>
+        <param name="filename">snapshot_2_before_allvsallblast.sql</param>
+      </parameters>
+      <flow_rules>
+        <flow target="backbone_fire_hcluster">
+          <dependent>
+            <flow target="paf_reuse_factory"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_hcluster" module="Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="table_list">peptide_align_feature_%</param>
+        <param name="filename">snapshot_3_before_hcluster.sql</param>
+      </parameters>
+      <flow_rules>
+        <flow target="backbone_fire_tree_building">
+          <dependent>
+            <flow target="hcluster_dump_factory"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_tree_building" module="Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="table_list">peptide_align_feature_%</param>
+        <param name="filename">snapshot_4_before_tree_building.sql</param>
+        <param name="exclude_list">1</param>
+      </parameters>
+      <flow_rules>
+        <flow target="backbone_fire_dnds">
+          <dependent>
+            <flow target="tree_factory"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_fire_dnds" module="Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="table_list">peptide_align_feature_%</param>
+        <param name="filename">snapshot_5_before_dnds.sql</param>
+        <param name="exclude_list">1</param>
+      </parameters>
+      <flow_rules>
+        <flow target="backbone_pipeline_finished">
+          <dependent>
+            <flow target="group_genomes_under_taxa"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="backbone_pipeline_finished" module="Bio::EnsEMBL::Hive::RunnableDB::Dummy" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default"/>
+    <analysis logic_name="copy_table_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="db_conn">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara1</pair>
+            <pair key="-dbname">sf5_ensembl_compara_master</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="column_names">
+          <array>
+            <item>table</item>
+          </array>
+        </param>
+        <param name="inputlist">
+          <array>
+            <item>ncbi_taxa_node</item>
+            <item>ncbi_taxa_name</item>
+            <item>method_link</item>
+            <item>method_link_species_set</item>
+            <item>species_set</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="input_id">
+          <hash>
+            <pair key="src_db_conn">#db_conn#</pair>
+            <pair key="table">#table#</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="copy_table" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="copy_table" module="Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="filter_cmd">sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"</param>
+        <param name="mode">overwrite</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="innodbise_table_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT table_name FROM information_schema.tables WHERE table_schema ="mm14_compara_homology_70" AND table_name!="meta" AND engine="MyISAM" </param>
+      </parameters>
+      <flow_rules>
+        <flow target="innodbise_table" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="innodbise_table" module="Bio::EnsEMBL::Hive::RunnableDB::SqlCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="100" rc_name="default">
+      <parameters>
+        <param name="sql">ALTER TABLE #table_name# ENGINE=InnoDB</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="prepare_species_sets" module="Bio::EnsEMBL::Hive::RunnableDB::SqlCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="sql">
+          <array>
+            <item>INSERT INTO species_set VALUES ()</item>
+            <item>DELETE FROM species_set WHERE species_set_id=#_insert_id_0#</item>
+            <item>INSERT INTO meta (meta_key,meta_value) VALUES ("reuse_ss_id", #_insert_id_0#)</item>
+            <item>INSERT INTO species_set VALUES ()</item>
+            <item>DELETE FROM species_set WHERE species_set_id=#_insert_id_3#</item>
+            <item>INSERT INTO meta (meta_key,meta_value) VALUES ("nonreuse_ss_id", #_insert_id_3#)</item>
+          </array>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="load_genomedb_factory"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="load_genomedb_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="compara_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara1</pair>
+            <pair key="-dbname">sf5_ensembl_compara_master</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="mlss_id">40087</param>
+        <param name="call_list">
+          <array>
+            <item>compara_dba</item>
+            <item>get_MethodLinkSpeciesSetAdaptor</item>
+            <item>
+              <array>
+                <item>fetch_by_dbID</item>
+                <item>#mlss_id#</item>
+              </array>
+            </item>
+            <item>species_set_obj</item>
+            <item>genome_dbs</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="column_names2getters">
+          <hash>
+            <pair key="species_name">name</pair>
+            <pair key="locator">locator</pair>
+            <pair key="genebuild">genebuild</pair>
+            <pair key="assembly_name">assembly</pair>
+            <pair key="genome_db_id">dbID</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="finish_species_sets">
+          <dependent>
+            <flow target="load_genomedb" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="load_genomedb" module="Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="500" rc_name="default">
+      <parameters>
+        <param name="registry_dbs">
+          <array>
+            <item>
+              <hash>
+                <pair key="-user">ensro</pair>
+                <pair key="-host">ens-staging</pair>
+                <pair key="-port">3306</pair>
+                <pair key="-pass"></pair>
+              </hash>
+            </item>
+            <item>
+              <hash>
+                <pair key="-user">ensro</pair>
+                <pair key="-host">ens-staging2</pair>
+                <pair key="-port">3306</pair>
+                <pair key="-pass"></pair>
+              </hash>
+            </item>
+          </array>
+        </param>
+        <param name="db_version">70</param>
+        <param name="registry_files">
+          <array/>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="check_reusability"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="check_reusability" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="10" batch_size="1" rc_name="500Mb_job">
+      <parameters>
+        <param name="registry_dbs">
+          <array>
+            <item>
+              <hash>
+                <pair key="-user">ensro</pair>
+                <pair key="-host">ens-livemirror</pair>
+                <pair key="-port">3306</pair>
+                <pair key="-pass"></pair>
+              </hash>
+            </item>
+          </array>
+        </param>
+        <param name="prev_release">0</param>
+        <param name="do_not_reuse_list">
+          <array/>
+        </param>
+        <param name="release">70</param>
+        <param name="reuse_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="mysql:////species_set" branch="2">
+          <template>
+            <hash>
+              <pair key="species_set_id">#reuse_ss_id#</pair>
+              <pair key="genome_db_id">#genome_db_id#</pair>
+            </hash>
+          </template>
+        </flow>
+        <flow target="mysql:////species_set" branch="3">
+          <template>
+            <hash>
+              <pair key="species_set_id">#nonreuse_ss_id#</pair>
+              <pair key="genome_db_id">#genome_db_id#</pair>
+            </hash>
+          </template>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="finish_species_sets" module="Bio::EnsEMBL::Hive::RunnableDB::SqlCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="sql">
+          <array>
+            <item>CREATE TEMPORARY TABLE tmp_ss SELECT species_set_id FROM species_set LEFT JOIN genome_db USING (genome_db_id) GROUP BY species_set_id HAVING COUNT(*) != COUNT(genome_db.genome_db_id)</item>
+            <item>DELETE method_link_species_set FROM method_link_species_set JOIN tmp_ss USING (species_set_id)</item>
+            <item>DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)</item>
+            <item>INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#reuse_ss_id#</item>
+            <item>INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#nonreuse_ss_id#</item>
+            <item>ALTER TABLE member ADD KEY gene_list_index (source_name, taxon_id, chr_name, chr_strand, chr_start)</item>
+          </array>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="make_species_tree"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="make_species_tree" module="Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="mlss_id">40087</param>
+        <param name="species_tree_input_file"></param>
+      </parameters>
+      <flow_rules>
+        <flow target="mysql:////method_link_species_set_tag" branch="3">
+          <template>
+            <hash>
+              <pair key="value">#species_tree_string#</pair>
+              <pair key="tag">species_tree</pair>
+              <pair key="method_link_species_set_id">#mlss_id#</pair>
+            </hash>
+          </template>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="genome_reuse_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="genome_loadfresh_factory">
+          <dependent>
+            <flow target="sequence_table_reuse" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="sequence_table_reuse" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="500Mb_job">
+      <parameters>
+        <param name="db_conn">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id&lt;=100000000 AND genome_db_id = #genome_db_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="member_table_reuse"/>
+        <flow target="mysql:////sequence" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="member_table_reuse" module="Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="src_db_conn">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="mode">insertignore</param>
+        <param name="table">member</param>
+        <param name="where">member_id&lt;=100000000 AND genome_db_id = #genome_db_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="other_sequence_table_reuse"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="other_sequence_table_reuse" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="1Gb_job">
+      <parameters>
+        <param name="db_conn">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT s.member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mysql:////other_member_sequence" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="genome_loadfresh_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"</param>
+      </parameters>
+      <flow_rules>
+        <flow target="load_fresh_members" branch="2"/>
+        <flow target="genome_loadfresh_fromfile_factory"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="genome_loadfresh_fromfile_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator NOT LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"</param>
+      </parameters>
+      <flow_rules>
+        <flow target="load_fresh_members_fromfile" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="load_fresh_members" module="Bio::EnsEMBL::Compara::RunnableDB::LoadMembers" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="2Gb_job">
+      <parameters>
+        <param name="store_related_pep_sequences">1</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="load_fresh_members_fromfile" module="Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="2Gb_job">
+      <parameters>
+        <param name="-need_cds_seq">1</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="paf_reuse_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="blastdb_factory">
+          <dependent>
+            <flow target="paf_noreuse_factory"/>
+            <flow target="paf_table_reuse" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="paf_noreuse_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#</param>
+      </parameters>
+      <flow_rules>
+        <flow target="paf_create_empty_table" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="paf_table_reuse" module="Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="src_db_conn">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="filter_cmd">sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"</param>
+        <param name="table">peptide_align_feature_#name#_#genome_db_id#</param>
+        <param name="where">hgenome_db_id IN (#reuse_ss_csv#)</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="paf_create_empty_table" module="Bio::EnsEMBL::Hive::RunnableDB::SqlCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="100" rc_name="default">
+      <parameters>
+        <param name="sql">
+          <array>
+            <item>CREATE TABLE IF NOT EXISTS peptide_align_feature_#name#_#genome_db_id# LIKE peptide_align_feature</item>
+            <item>ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS</item>
+          </array>
+        </param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="blastdb_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="call_list">
+          <array>
+            <item>compara_dba</item>
+            <item>get_GenomeDBAdaptor</item>
+            <item>fetch_all</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="column_names2getters">
+          <hash>
+            <pair key="genome_db_id">dbID</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="blast_species_factory">
+          <dependent>
+            <flow target="dump_subset_create_blastdb" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="dump_subset_create_blastdb" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::DumpSubsetCreateBlastDB" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="20" rc_name="default">
+      <parameters>
+        <param name="fasta_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/blast_db</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="blast_species_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="call_list">
+          <array>
+            <item>compara_dba</item>
+            <item>get_GenomeDBAdaptor</item>
+            <item>fetch_all</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="column_names2getters">
+          <hash>
+            <pair key="genome_db_id">dbID</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="blast_factory" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="blast_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="50" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT canonical_member_id AS member_id FROM member WHERE genome_db_id = #genome_db_id# AND canonical_member_id IS NOT NULL</param>
+      </parameters>
+      <flow_rules>
+        <flow target="blastp_with_reuse" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="blastp_with_reuse" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="900" batch_size="40" rc_name="250Mb_job">
+      <parameters>
+        <param name="mlss_id">40087</param>
+        <param name="wublastp_exe">/usr/local/ensembl/bin/wublastp</param>
+        <param name="blast_options">-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1</param>
+        <param name="blast_tmp_dir"></param>
+        <param name="reuse_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="fasta_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/blast_db</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="hcluster_dump_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="call_list">
+          <array>
+            <item>compara_dba</item>
+            <item>get_GenomeDBAdaptor</item>
+            <item>fetch_all</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="column_names2getters">
+          <hash>
+            <pair key="genome_db_id">dbID</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="hcluster_merge_factory">
+          <dependent>
+            <flow target="hcluster_dump_input_per_genome" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="hcluster_dump_input_per_genome" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="cluster_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/cluster</param>
+        <param name="outgroups">
+          <array>
+            <item>127</item>
+          </array>
+        </param>
+        <param name="mlss_id">40087</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="hcluster_merge_factory" module="Bio::EnsEMBL::Hive::RunnableDB::Dummy" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target="hcluster_run">
+          <dependent>
+            <flow target="hcluster_merge_inputs">
+              <template>
+                <hash>
+                  <pair key="ext">cat</pair>
+                </hash>
+              </template>
+            </flow>
+            <flow target="hcluster_merge_inputs">
+              <template>
+                <hash>
+                  <pair key="ext">txt</pair>
+                </hash>
+              </template>
+            </flow>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="hcluster_merge_inputs" module="Bio::EnsEMBL::Hive::RunnableDB::SystemCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="cluster_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/cluster</param>
+        <param name="cmd">cat #cluster_dir#/*.hcluster.#ext# &gt; #cluster_dir#/hcluster.#ext#</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="hcluster_run" module="Bio::EnsEMBL::Hive::RunnableDB::SystemCmd" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="urgent_hcluster">
+      <parameters>
+        <param name="cluster_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/cluster</param>
+        <param name="cmd">#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt</param>
+        <param name="clustering_max_gene_halfcount">750</param>
+        <param name="hcluster_exe">/software/ensembl/compara/hcluster/hcluster_sg</param>
+      </parameters>
+      <flow_rules>
+        <flow target="hcluster_parse_output"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="hcluster_parse_output" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="2Gb_job">
+      <parameters>
+        <param name="cluster_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/cluster</param>
+        <param name="mlss_id">40087</param>
+        <param name="additional_clustersets">
+          <array>
+            <item>phyml-aa</item>
+            <item>phyml-nt</item>
+            <item>nj-dn</item>
+            <item>nj-ds</item>
+            <item>nj-mm</item>
+          </array>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="run_qc_tests"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="run_qc_tests" module="Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="mlss_id">40087</param>
+        <param name="call_list">
+          <array>
+            <item>compara_dba</item>
+            <item>get_GenomeDBAdaptor</item>
+            <item>fetch_all</item>
+          </array>
+        </param>
+        <param name="fan_branch_code">2</param>
+        <param name="input_id">
+          <hash>
+            <pair key="genome_db_id">#genome_db_id#</pair>
+          </hash>
+        </param>
+        <param name="column_names2getters">
+          <hash>
+            <pair key="genome_db_id">dbID</pair>
+          </hash>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="overall_qc"/>
+        <flow target="per_genome_qc" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="overall_qc" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="1Gb_job">
+      <parameters>
+        <param name="cluster_dir">/lustre/scratch109/ensembl/mm14/protein_trees_70/cluster</param>
+        <param name="reuse_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="per_genome_qc" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="reuse_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">compara3</pair>
+            <pair key="-dbname">sf5_ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="mcoffee" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="600" batch_size="1" rc_name="msa">
+      <parameters>
+        <param name="use_exon_boundaries">0</param>
+        <param name="mcoffee_exe">/software/ensembl/compara/tcoffee-7.86b/t_coffee</param>
+        <param name="method">cmcoffee</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mcoffee_himem" branch="-1"/>
+        <flow target="mafft" branch="-2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="mafft" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="600" batch_size="1" rc_name="msa">
+      <parameters>
+        <param name="use_exon_boundaries">0</param>
+        <param name="mafft_exe">/software/ensembl/compara/mafft-6.707/bin/mafft</param>
+        <param name="mafft_binaries">/software/ensembl/compara/mafft-6.707/binaries</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mafft_himem" branch="-1"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="mcoffee_himem" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="600" batch_size="1" rc_name="msa_himem">
+      <parameters>
+        <param name="use_exon_boundaries">0</param>
+        <param name="mcoffee_exe">/software/ensembl/compara/tcoffee-7.86b/t_coffee</param>
+        <param name="method">cmcoffee</param>
+        <param name="escape_branch">-2</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mafft_himem" branch="-2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="mafft_himem" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="600" batch_size="1" rc_name="msa_himem">
+      <parameters>
+        <param name="use_exon_boundaries">0</param>
+        <param name="mafft_exe">/software/ensembl/compara/mafft-6.707/bin/mafft</param>
+        <param name="mafft_binaries">/software/ensembl/compara/mafft-6.707/binaries</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="tree_factory" module="Bio::EnsEMBL::Hive::RunnableDB::JobFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="fan_branch_code">2</param>
+        <param name="inputquery">SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC</param>
+      </parameters>
+      <flow_rules>
+        <flow target="msa_chooser" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="msa_chooser" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSAChooser" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="10" rc_name="500Mb_job">
+      <parameters>
+        <param name="mafft_runtime">7200</param>
+        <param name="mafft_gene_count">200</param>
+      </parameters>
+      <flow_rules>
+        <flow target="split_genes">
+          <dependent>
+            <flow target="mcoffee" branch="2"/>
+            <flow target="mafft" branch="3"/>
+          </dependent>
+        </flow>
+        <flow target="quick_tree_break" branch="5">
+          <dependent>
+            <flow target="mafft" branch="4"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="split_genes" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="20" rc_name="250Mb_job">
+      <flow_rules>
+        <flow target="njtree_phyml"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="njtree_phyml" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="3" rc_name="2Gb_job">
+      <parameters>
+        <param name="treebest_exe">/software/ensembl/compara/treebest.doubletracking</param>
+        <param name="mlss_id">40087</param>
+        <param name="store_intermediate_trees">1</param>
+        <param name="cdna">1</param>
+        <param name="store_filtered_align">1</param>
+        <param name="bootstrap">1</param>
+        <param name="use_genomedb_id">0</param>
+      </parameters>
+      <flow_rules>
+        <flow target="ortho_tree_annot" branch="2"/>
+        <flow target="build_HMM_cds"/>
+        <flow target="ortho_tree"/>
+        <flow target="ktreedist"/>
+        <flow target="build_HMM_aa"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="ortho_tree" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="50" batch_size="5" rc_name="500Mb_job">
+      <parameters>
+        <param name="tag_split_genes">1</param>
+        <param name="mlss_id">40087</param>
+        <param name="use_genomedb_id">0</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="ktreedist" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="100" batch_size="5" rc_name="2Gb_job">
+      <parameters>
+        <param name="treebest_exe">/software/ensembl/compara/treebest.doubletracking</param>
+        <param name="mlss_id">40087</param>
+        <param name="ktreedist_exe">/software/ensembl/compara/ktreedist/Ktreedist.pl</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="ortho_tree_annot" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="250" batch_size="5" rc_name="500Mb_job">
+      <parameters>
+        <param name="store_homologies">0</param>
+        <param name="tag_split_genes">1</param>
+        <param name="mlss_id">40087</param>
+        <param name="use_genomedb_id">0</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="build_HMM_aa" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="100" batch_size="5" rc_name="250Mb_job">
+      <parameters>
+        <param name="sreformat_exe">/usr/local/ensembl/bin/sreformat</param>
+        <param name="buildhmm_exe">/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="build_HMM_cds" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="100" batch_size="5" rc_name="500Mb_job">
+      <parameters>
+        <param name="sreformat_exe">/usr/local/ensembl/bin/sreformat</param>
+        <param name="buildhmm_exe">/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild</param>
+        <param name="cdna">1</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="quick_tree_break" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="100" batch_size="1" rc_name="500Mb_job">
+      <parameters>
+        <param name="sreformat_exe">/usr/local/ensembl/bin/sreformat</param>
+        <param name="quicktree_exe">/software/ensembl/compara/quicktree_1.1/bin/quicktree</param>
+        <param name="mlss_id">40087</param>
+        <param name="treebreak_gene_count">400</param>
+      </parameters>
+      <flow_rules>
+        <flow target="other_paralogs"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="other_paralogs" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="250Mb_job">
+      <parameters>
+        <param name="mlss_id">40087</param>
+        <param name="use_genomedb_id">0</param>
+      </parameters>
+      <flow_rules>
+        <flow target="split_genes" branch="2">
+          <dependent>
+            <flow target="mafft" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="group_genomes_under_taxa" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="taxlevels">
+          <array>
+            <item>Theria</item>
+            <item>Sauria</item>
+            <item>Tetraodontiformes</item>
+          </array>
+        </param>
+        <param name="mlss_id">40087</param>
+        <param name="filter_high_coverage">1</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mlss_factory" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="mlss_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="method_link_types">
+          <array>
+            <item>ENSEMBL_ORTHOLOGUES</item>
+            <item>ENSEMBL_PARALOGUES</item>
+          </array>
+        </param>
+      </parameters>
+      <flow_rules>
+        <flow target="homology_factory" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="homology_factory" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HomologyGroupingFactory" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="4" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target="threshold_on_dS">
+          <dependent>
+            <flow target="homology_dNdS" branch="2"/>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="homology_dNdS" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS" can_be_empty="0" failed_job_tolerance="2" max_retry_count="3" priority="10" hive_capacity="150" batch_size="1" rc_name="500Mb_job">
+      <parameters>
+        <param name="codeml_exe">/usr/local/ensembl/bin/codeml</param>
+        <param name="codeml_parameters_file">/nfs/users/nfs_m/mm14/workspace/cvs/head/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash</param>
+      </parameters>
+    </analysis>
+    <analysis logic_name="threshold_on_dS" module="Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="10" batch_size="1" rc_name="default"/>
+    <analysis logic_name="make_full_species_tree" module="Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="mlss_id">40087</param>
+        <param name="species_tree_meta_key">full_species_tree_string</param>
+      </parameters>
+      <wait_for_rules>
+        <wait_for condition="backbone_fire_dnds"/>
+      </wait_for_rules>
+      <flow_rules>
+        <flow target="CAFE_species_tree"/>
+        <flow target="mysql:////meta" branch="3">
+          <template>
+            <hash>
+              <pair key="meta_value">#species_tree_string#</pair>
+              <pair key="meta_key">full_species_tree_string</pair>
+            </hash>
+          </template>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="CAFE_species_tree" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="default">
+      <parameters>
+        <param name="work_dir">/nfs/users/nfs_m/mm14/scratch/109/protein_trees_70/</param>
+        <param name="cafe_shell">/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell</param>
+        <param name="mlss_id">40087</param>
+        <param name="species_tree_meta_key">full_species_tree_string</param>
+        <param name="type">prot</param>
+        <param name="perFamTable">1</param>
+      </parameters>
+      <flow_rules>
+        <flow target="CAFE_table"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="CAFE_table" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="cafe_default">
+      <parameters>
+        <param name="work_dir">/nfs/users/nfs_m/mm14/scratch/109/protein_trees_70/</param>
+        <param name="cafe_shell">/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell</param>
+        <param name="mlss_id">40087</param>
+        <param name="type">prot</param>
+        <param name="perFamTable">1</param>
+      </parameters>
+      <flow_rules>
+        <flow target="CAFE_analysis" branch="2"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="CAFE_analysis" module="Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="10" hive_capacity="50" batch_size="1" rc_name="cafe">
+      <parameters>
+        <param name="work_dir">/nfs/users/nfs_m/mm14/scratch/109/protein_trees_70/</param>
+        <param name="cafe_struct_tree_str"></param>
+        <param name="cafe_shell">/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell</param>
+        <param name="mlss_id">40087</param>
+      </parameters>
+      <flow_rules>
+        <flow target="mysql:////meta" branch="3">
+          <template>
+            <hash>
+              <pair key="meta_value">#cafe_tree_string#</pair>
+              <pair key="meta_key">CAFE_tree_string</pair>
+            </hash>
+          </template>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="genetrees_idmap" module="Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="idmap_himem">
+      <parameters>
+        <param name="master_db">
+          <hash>
+            <pair key="-user">ensadmin</pair>
+            <pair key="-host">compara1</pair>
+            <pair key="-dbname">sf5_ensembl_compara_master</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass">ensembl</pair>
+          </hash>
+        </param>
+        <param name="prev_rel_db">
+          <hash>
+            <pair key="-user">ensro</pair>
+            <pair key="-host">ens-livemirror</pair>
+            <pair key="-dbname">ensembl_compara_69</pair>
+            <pair key="-port">3306</pair>
+            <pair key="-pass"></pair>
+          </hash>
+        </param>
+        <param name="release">70</param>
+      </parameters>
+      <wait_for_rules>
+        <wait_for condition="backbone_fire_dnds"/>
+      </wait_for_rules>
+    </analysis>
+    <analysis logic_name="treefam_xref_idmap" module="Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" hive_capacity="-1" batch_size="1" rc_name="idmap_himem">
+      <parameters>
+        <param name="release">70</param>
+      </parameters>
+      <wait_for_rules>
+        <wait_for condition="backbone_fire_dnds"/>
+      </wait_for_rules>
+    </analysis>
+  </pipeline_analyses>
+</pipeline>

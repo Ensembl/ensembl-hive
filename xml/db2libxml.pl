@@ -62,9 +62,7 @@ sub resource_mapping_2_dom {
             my $resource_element = $dom->createElement('resource');
             $meadow_element->appendChild($resource_element);
             $resource_element->setAttribute('name', $rc_name);
-
-            my $resource_string = $dom->createTextNode( $xparams );
-            $resource_element->appendChild($resource_string);
+            $resource_element->setAttribute('value', $xparams);
         }
     }
     return $resource_mapping_element;
@@ -118,7 +116,7 @@ sub pipeline_analyses_2_dom {
         }
 
         my $analysis_parameters_hash = eval ( $analysis->parameters() || '{}');
-        $analysis_element->appendChild( parameters_2_dom( 'parameters', $analysis_parameters_hash, $dom ) );
+        $analysis_element->appendChild( parameters_2_dom( 'parameters', $analysis_parameters_hash, $dom ) ) if(scalar(keys %$analysis_parameters_hash));
 
         $analysis_element->setAttribute( 'rc_name', $rc_id2name->{$analysis->resource_class_id} );
 

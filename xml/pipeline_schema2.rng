@@ -1,0 +1,166 @@
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+
+    <start>
+        <ref name="pipeline"/>
+    </start>
+
+    <define name="structure">
+        <choice>
+            <element name="hash">
+                <zeroOrMore>
+                    <element name="pair">
+                        <attribute name="key"/>
+                        <ref name="structure"/>
+                    </element>
+                </zeroOrMore>
+            </element>
+            <element name="array">
+                <zeroOrMore>
+                  <element name="item">
+                    <ref name="structure"/>
+                  </element>
+                </zeroOrMore>
+            </element>
+            <text/>
+        </choice>
+    </define>
+
+    <define name="resource_mapping">
+        <element name="resource_mapping">
+            <zeroOrMore>
+                <element name="meadow">
+                    <attribute name="type"/>
+                    <zeroOrMore>
+                        <element name="resource">
+                            <attribute name="name"/>
+                            <attribute name="value"/>
+                        </element>
+                    </zeroOrMore>
+                </element>
+            </zeroOrMore>
+        </element>
+    </define>
+
+    <define name="pipeline_parameters">
+        <element name="pipeline_parameters">
+            <zeroOrMore>
+                <element name="param">
+                    <attribute name="name"/>
+                    <ref name="structure"/>
+                </element>
+            </zeroOrMore>
+        </element>
+    </define>
+
+    <define name="pipeline_analyses">
+        <element name="pipeline_analyses">
+            <zeroOrMore>
+                <element name="analysis">
+                    <attribute name="logic_name"/>
+                    <attribute name="module"/>
+                    <optional>
+                        <attribute name="analysis_capacity"/>
+                    </optional>
+                    <optional>
+                        <attribute name="can_be_empty"/>
+                    </optional>
+                    <optional>
+                        <attribute name="failed_job_tolerance"/>
+                    </optional>
+                    <optional>
+                        <attribute name="max_retry_count"/>
+                    </optional>
+                    <optional>
+                        <attribute name="meadow_type"/>
+                    </optional>
+                    <optional>
+                        <attribute name="priority"/>
+                    </optional>
+                    <optional>
+                        <attribute name="hive_capacity"/>
+                    </optional>
+                    <optional>
+                        <attribute name="batch_size"/>
+                    </optional>
+                    <optional>
+                        <attribute name="rc_name"/>
+                    </optional>
+                    <interleave>
+                        <optional>
+                            <element name="parameters">
+                                <zeroOrMore>
+                                    <element name="param">
+                                        <attribute name="name"/>
+                                        <ref name="structure"/>
+                                    </element>
+                                </zeroOrMore>
+                            </element>
+                        </optional>
+                        <optional>
+                            <element name="wait_for_rules">
+                                <zeroOrMore>
+                                    <element name="wait_for">
+                                        <attribute name="condition"/>
+                                    </element>
+                                </zeroOrMore>
+                            </element>
+                        </optional>
+                        <optional>
+                            <element name="flow_rules">
+                                <zeroOrMore>
+                                    <element name="flow">
+                                        <attribute name="target"/>
+                                        <optional>
+                                            <attribute name="branch"/>
+                                        </optional>
+                                        <interleave>
+                                            <optional>
+                                                <element name="template">
+                                                    <ref name="structure"/>
+                                                </element>
+                                            </optional>
+                                            <optional>
+                                                <element name="dependent">
+                                                    <zeroOrMore>
+                                                        <element name="flow">
+                                                            <attribute name="target"/>
+                                                            <optional>
+                                                                <attribute name="branch"/>
+                                                            </optional>
+                                                            <optional>
+                                                                <element name="template">
+                                                                    <ref name="structure"/>
+                                                                </element>
+                                                            </optional>
+                                                        </element>
+                                                    </zeroOrMore>
+                                                </element>
+                                            </optional>
+                                        </interleave>
+                                    </element>
+                                </zeroOrMore>
+                            </element>
+                        </optional>
+                    </interleave>
+                </element>
+            </zeroOrMore>
+        </element>
+    </define>
+
+    <define name="pipeline">
+        <element name="pipeline">
+            <interleave>
+                <optional>
+                    <ref name="resource_mapping"/>
+                </optional>
+                <optional>
+                    <ref name="pipeline_parameters"/>
+                </optional>
+                <optional>
+                    <ref name="pipeline_analyses"/>
+                </optional>
+            </interleave>
+        </element>
+    </define>
+
+</grammar>

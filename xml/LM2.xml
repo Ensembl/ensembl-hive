@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <resource_mapping>
+    <meadow type="LSF">
+      <resource name="urgent" value="-q yesterday"/>
+      <resource name="default" value=""/>
+    </meadow>
+  </resource_mapping>
+  <pipeline_parameters>
+    <param name="pipeline_name">long_mult</param>
+    <param name="take_time">0</param>
+    <param name="bar_hash">
+      <hash>
+        <pair key="epsilon">
+          <hash>
+            <pair key="6">six</pair>
+            <pair key="1">one</pair>
+          </hash>
+        </pair>
+        <pair key="alpha">3</pair>
+        <pair key="beta">
+          <array>
+            <item>gamma</item>
+            <item>delta</item>
+          </array>
+        </pair>
+      </hash>
+    </param>
+    <param name="schema_version">71</param>
+    <param name="foo_array">
+      <array>
+        <item>alpha</item>
+        <item>beta</item>
+        <item>gamma</item>
+      </array>
+    </param>
+  </pipeline_parameters>
+  <pipeline_analyses>
+    <analysis logic_name="take_b_apart" module="Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory" analysis_capacity="1" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" meadow_type="LOCAL" priority="0" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target="add_together">
+          <dependent>
+            <flow target="part_multiply" branch="2">
+              <template>
+                <hash>
+                  <pair key="a_multiplier">#a_multiplier#</pair>
+                  <pair key="digit">#digit#</pair>
+                </hash>
+              </template>
+            </flow>
+          </dependent>
+        </flow>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="part_multiply" module="Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply" analysis_capacity="4" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target=":////intermediate_result"/>
+      </flow_rules>
+    </analysis>
+    <analysis logic_name="add_together" module="Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether" can_be_empty="0" failed_job_tolerance="0" max_retry_count="3" priority="0" batch_size="1" rc_name="default">
+      <flow_rules>
+        <flow target=":////final_result"/>
+      </flow_rules>
+    </analysis>
+  </pipeline_analyses>
+</pipeline>
