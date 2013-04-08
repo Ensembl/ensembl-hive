@@ -708,7 +708,7 @@ sub run_one_batch {
                 #
             my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
 
-            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry );
+            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry, $job->runtime_msec );
 
             if( $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
              or $job->lethal_for_worker ) {          # trust the job's expert knowledge

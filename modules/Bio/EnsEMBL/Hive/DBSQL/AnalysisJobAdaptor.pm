@@ -633,9 +633,9 @@ sub release_undone_jobs_from_worker {
 
 
 sub release_and_age_job {
-    my ($self, $job_id, $max_retry_count, $may_retry) = @_;
+    my ($self, $job_id, $max_retry_count, $may_retry, $runtime_msec) = @_;
     $may_retry ||= 0;
-
+    $runtime_msec = "NULL" unless(defined $runtime_msec);
         # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
         #
         # FIXME: would it be possible to retain worker_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
@@ -643,7 +643,8 @@ sub release_and_age_job {
     $self->dbc->do( qq{
         UPDATE job
            SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END),
-               retry_count=retry_count+1
+               retry_count=retry_count+1,
+               runtime_msec=$runtime_msec
          WHERE job_id=$job_id
            AND status in ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
