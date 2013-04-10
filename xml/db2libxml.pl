@@ -183,6 +183,7 @@ sub pipeline_2_dom {
 
     my $pipeline = $dom->createElement('pipeline');
     $dom->setDocumentElement($pipeline);
+    $pipeline->setAttribute( 'xmlns', "ehive_pipeline_config" );
 
     $pipeline->appendChild( resource_mapping_2_dom( $hive_dba, $dom ) );
 

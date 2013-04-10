@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pipeline>
+<pipeline xmlns="ehive_pipeline_config">
   <resource_mapping>
     <meadow type="LSF">
       <resource name="urgent_hcluster" value="-C0 -M32000000 -R&quot;select[mem&gt;32000] rusage[mem=32000]&quot; -q yesterday"/>
