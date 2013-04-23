@@ -352,13 +352,18 @@ sub run {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
-            my ($rc) = $resource_class_adaptor->create_new(
+            my ($rc, $rc_newly_created) = $resource_class_adaptor->create_new(
                 defined($rc_id) ? (-DBID   => $rc_id) : (),
                 -NAME   => $rc_name,
+                1   # check whether this ResourceClass was already present in the database
             );
             $rc_id = $rc->dbID();
 
-            warn "Creating resource_class $rc_name($rc_id).\n";
+            if($rc_newly_created) {
+                warn "Creating resource_class $rc_name($rc_id).\n";
+            } else {
+                warn "Attempt to re-create and potentially redefine resource_class $rc_name($rc_id). NB: This may affect already created analyses!\n";
+            }
 
             while( my($meadow_type, $xparams) = each %$mt2param ) {
                 $resource_description_adaptor->create_new(
