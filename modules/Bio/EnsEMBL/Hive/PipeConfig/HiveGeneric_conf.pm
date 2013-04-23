@@ -373,8 +373,8 @@ sub run {
                 );
             }
         }
-        unless($seen_resource_name{'default'}) {
-            warn "\tNB:You don't seem to have 'default' as one of the resource classes (forgot to inherit from SUPER::resource_classes ?) - creating one for you\n";
+        unless(my $default_rc = $resource_class_adaptor->fetch_by_name('default')) {
+            warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
             $resource_class_adaptor->create_new(-NAME => 'default');
         }
         warn "Done.\n\n";
