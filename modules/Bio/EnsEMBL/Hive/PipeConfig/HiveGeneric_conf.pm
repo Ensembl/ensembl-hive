@@ -352,7 +352,7 @@ sub run {
                 die "Every resource has to have a unique description, please fix the PipeConfig file";
             }
 
-            my $rc = $resource_class_adaptor->create_new(
+            my ($rc) = $resource_class_adaptor->create_new(
                 defined($rc_id) ? (-DBID   => $rc_id) : (),
                 -NAME   => $rc_name,
             );

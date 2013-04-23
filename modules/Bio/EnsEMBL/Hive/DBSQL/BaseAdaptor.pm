@@ -302,6 +302,8 @@ sub store {
 
     my %hashed_sth = ();  # do not prepare statements until there is a real need
 
+    my $stored_this_time        = 0;
+
     foreach my $object (@$objects) {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
             $self->mark_stored($object, $present);
@@ -327,6 +329,7 @@ sub store {
                 or die "Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')';
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
                 $self->mark_stored($object, $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id) );
+                ++$stored_this_time;
             }
         }
     }
@@ -335,7 +338,7 @@ sub store {
         $sth->finish();
     }
 
-    return $object_or_list;
+    return ($object_or_list, $stored_this_time);
 }
 
 
