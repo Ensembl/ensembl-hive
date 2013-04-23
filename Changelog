@@ -1,4 +1,36 @@
 
+---------------------[before EnsEMBL rel.72]---------------------------------------------------------------------------
+
+* Tue Apr 23 14:50:55 2013 +0100 | Leo Gordon | bugfix: only create 'default' resource_class if it was not actually stored in the database
+* Tue Apr 23 13:08:44 2013 +0100 | Leo Gordon | bugfix: check before storing rc (may be necessary in -analysis_topup mode) and warn about consequences of redefining it.
+* Tue Apr 23 13:05:37 2013 +0100 | Leo Gordon | API extension: store() now also returns how many actual store operations (as opposed to fetching of already stored ones) it has performed
+* Fri Apr 12 16:43:19 2013 +0100 | Leo Gordon | tables.sql was made compatible with Core/Production sql2html.pl and the result is kept in docs/
+* Mon Apr 8 12:20:29 2013 +0100 | Miguel Pignatelli [prf1] | Runtime is recorded for failing jobs
+* Wed Mar 27 12:16:35 2013 +0000 | Javier Herrero | Added 22 Feb 2013 eHive workshop slides and examples to docs/presentation/
+* Tue Mar 26 15:40:19 2013 +0000 | Leo Gordon | Make sure we do not create an analysis with non-hash parameters
+* Mon Mar 25 11:05:00 2013 +0000 | Leo Gordon | use param_required() calls wherever a parameter value is required
+* Fri Mar 22 16:50:42 2013 +0000 | Leo Gordon | Back to num_required_workers' meaning "how many extra workers we need to add to this analysis"; fixing a scheduling bug/oversensitivity to manual change of batch_size
+* Fri Mar 22 15:44:55 2013 +0000 | Leo Gordon | Moved runnable checks into a separate method Analysis::get_compiled_module_name()
+* Wed Mar 20 22:44:04 2013 +0000 | Leo Gordon | Do not crash when asked to param_substitute a Regexp, but issue a warning
+* Wed Mar 20 13:02:12 2013 +0000 | Leo Gordon | free 'Start' from dealing with 'a_multiplier' by using an input_id_template in PipeConfig instead; renamed 'Start' to 'DigitFactory' to reflect that
+* Wed Mar 20 10:35:08 2013 +0000 | Leo Gordon | A new and friendlier README file; defines main concepts and provides contact data
+* Thu Mar 14 09:15:53 2013 +0000 | Leo Gordon | bugfix: added missing quotes
+* Tue Mar 12 21:45:23 2013 +0000 | Leo Gordon | A 3-analysis pipeline with almost exclusive use of #substitution#; mysql_conn() and mysql_dbname() modified to transform urls as well
+* Tue Mar 12 12:06:37 2013 +0000 | Leo Gordon | Improved legend with useful commands
+* Tue Mar 12 10:56:55 2013 +0000 | Leo Gordon |     The smallest Hive pipeline example possible. Just one SystemCmd-based analysis.
+* Mon Mar 11 23:59:20 2013 +0000 | Leo Gordon | A cleaner example of a two-analysis pipelines with better demonstration of #substitution# and only implicit $self->o() references
+* Mon Mar 11 21:13:58 2013 +0000 | Leo Gordon | moved 'go_figure_dbc()' into Utils; supplied defaults for MySQLTransfer to make it quiet
+* Tue Mar 12 21:04:14 2013 +0000 | emepyc | This file is now JSON strict
+* Tue Mar 12 13:50:33 2013 +0000 | Matthieu Muffato | Do not buffer the resultset (only tested with MySQL)
+* Tue Mar 12 11:07:23 2013 +0000 | Matthieu Muffato | bugfix: <= instead of <
+* Fri Mar 8 18:41:39 2013 +0000 | Matthieu Muffato | In "topup" mode, concurrent inserts make the row count unreliable
+* Tue Mar 5 17:05:21 2013 +0000 | Leo Gordon | Protect generate_graph.pl in table-drawing mode from printing too many rows (by setting a limit in JSON config)
+* Tue Mar 5 13:12:32 2013 +0000 | Leo Gordon | Protect generate_graph.pl in job-drawing mode from printing too many jobs (by setting a limit in JSON config)
+* Tue Mar 5 13:10:38 2013 +0000 | Leo Gordon | extend a method in JobAdaptor to return a limited number of jobs (for use in generate_graph)
+* Fri Mar 1 11:53:39 2013 +0000 | Matthieu Muffato | Fixed a memory leak in data_dbc()
+* Thu Feb 28 15:41:46 2013 +0000 | Leo Gordon | cosmetic: renamed README.txt back to README to retain an unbroken history in CVS
+* Thu Feb 28 15:37:42 2013 +0000 | Leo Gordon | cosmetic:  added new commits to README and renamed it Changelog; split out the old README.txt (non-Changelog part)
+
 ---------------------[before and during EnsEMBL rel.71]----------------------------------------------------------------
 
 * Thu Feb 28 10:12:41 2013 +0000 | Leo Gordon | avoid having beekeeper run in submitted-to-the-farm state - detect it, report and quit
