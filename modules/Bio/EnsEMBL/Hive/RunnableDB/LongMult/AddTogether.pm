@@ -20,14 +20,13 @@ and stores the result in 'final_result' database table.
 package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
 
 use strict;
-use Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor;   # to fetch data from 'intermediate_result' table
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-                  Here all relevant partial products are fetched from the 'intermediate_result' table and stored in a hash for future use.
+                  Here all relevant partial products are fetched from the 'partial_product' accumulator and stored in a hash for future use.
 
     param('a_multiplier'):  The first long number (a string of digits - doesn't have to fit a register).
 
@@ -40,16 +39,11 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
 
-    my $a_multiplier = $self->param_required('a_multiplier');
+    my $a_multiplier    = $self->param_required('a_multiplier');
+    my $partial_product = $self->param('partial_product');
 
-    my $adaptor = $self->db->get_NakedTableAdaptor();
-    $adaptor->table_name( 'intermediate_result' );
-    my $product_pair = $adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_result( $a_multiplier );
-
-    $product_pair->{1} = $a_multiplier;
-    $product_pair->{0} = 0;
-
-    $self->param('product_pair', $product_pair);
+    $partial_product->{1} = $a_multiplier;
+    $partial_product->{0} = 0;
 }
 
 =head2 run
@@ -62,10 +56,10 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
 sub run {   # call the function that will compute the stuff
     my $self = shift @_;
 
-    my $b_multiplier = $self->param_required('b_multiplier');
-    my $product_pair = $self->param('product_pair');
+    my $b_multiplier    = $self->param_required('b_multiplier');
+    my $partial_product = $self->param('partial_product');
 
-    $self->param('result', _add_together($b_multiplier, $product_pair));
+    $self->param('result', _add_together($b_multiplier, $partial_product));
 
     sleep( $self->param('take_time') );
 }
@@ -95,14 +89,14 @@ sub write_output {  # store and dataflow
 =cut
 
 sub _add_together {
-    my ($b_multiplier, $product_pair) = @_;
+    my ($b_multiplier, $partial_product) = @_;
 
     my @accu  = ();
 
     my @b_digits = reverse split(//, $b_multiplier);
     foreach my $b_index (0..(@b_digits-1)) {
         my $b_digit = $b_digits[$b_index];
-        my $product = $product_pair->{$b_digit};
+        my $product = $partial_product->{$b_digit};
 
         my @p_digits = reverse split(//, $product);
         foreach my $p_index (0..(@p_digits-1)) {

@@ -14,7 +14,7 @@
     ('add_together' is blocked both by 'part_multiply').
 
     D) As filesystems are frequently a bottleneck for big pipelines, it is advised that eHive processes store intermediate
-    and final results in a database (in this pipeline, 'intermediate_result' and 'final_result' tables are used).
+    and final results in a database (in this pipeline, 'accu' and 'final_result' tables are used).
 
 4.2 The pipeline is defined in 4 files:
 
@@ -74,15 +74,15 @@
 5.5 Go to mysql window again and check the contents of job table. Keep checking as the worker may spend some time in 'pending' state.
 
     After the first worker is done you will see that 'take_b_apart' jobs are now done and new 'part_multiply' and 'add_together' jobs have been created.
-    Also check the contents of 'intermediate_result' table, it should be empty at that moment:
+    Also check the contents of 'accu' table, it should be empty at that moment:
 
-        MySQL> SELECT * from intermediate_result;
+        MySQL> SELECT * from accu;
 
     Go back to the beekeeper window and run the 'beekeeper.pl ... -run' for the second time.
     It will submit another worker to the farm that will at some point get the 'part_multiply' jobs.
 
-5.6 Now check both 'job' and 'intermediate_result' tables again.
-    At some moment 'part_multiply' jobs will have been completed and the results will go into 'intermediate_result' table;
+5.6 Now check both 'job' and 'accu' tables again.
+    At some moment 'part_multiply' jobs will have been completed and the results will go into 'accu' table;
     'add_together' jobs are still to be done.
     
     Check the contents of 'final_result' table (should be empty) and run the third and the last round of 'beekeeper.pl ... -run'

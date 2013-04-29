@@ -36,10 +36,10 @@ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -job_topup -passw
           takes the second one apart into digits, finds what _different_ digits are there,
           creates several jobs of the 'part_multiply' analysis and one job of 'add_together' analysis.
 
-        * A 'part_multiply' job takes in 'a_multiplier' and 'digit', multiplies them and records the result in 'intermediate_result' table.
+        * A 'part_multiply' job takes in 'a_multiplier' and 'digit', multiplies them and accumulates the result in 'partial_product' accumulator.
 
         * An 'add_together' job waits for the first two analyses to complete,
-          takes in 'a_multiplier', 'b_multiplier' and 'intermediate_result' table and produces the final result in 'final_result' table.
+          takes in 'a_multiplier', 'b_multiplier' and 'partial_product' hash and produces the final result in 'final_result' table.
 
     Please see the implementation details in Runnable modules themselves.
 
@@ -94,7 +94,6 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
             # additional tables needed for long multiplication pipeline's operation:
-        $self->db_execute_command('pipeline_db', 'CREATE TABLE intermediate_result (a_multiplier char(40) NOT NULL, digit tinyint NOT NULL, result char(41) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
         $self->db_execute_command('pipeline_db', 'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
     ];
 }
@@ -158,7 +157,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////intermediate_result' ],
+                1 => [ ':////accu?partial_product={digit}' ],
             },
         },
         

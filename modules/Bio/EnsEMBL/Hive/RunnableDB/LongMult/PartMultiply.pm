@@ -13,7 +13,7 @@ to understand how this particular example pipeline is configured and ran.
 =head1 DESCRIPTION
 
 'LongMult::PartMultiply' has a separate task of multiplying 'a_multiplier' by the given 'digit',
-then it stores the result into the 'intermetiate_result' database table.
+then it passes its partial_product on.
 
 =cut
 
@@ -52,7 +52,7 @@ sub run {   # call the recursive function that will compute the stuff
     my $a_multiplier = $self->param_required('a_multiplier');
     my $digit        = $self->param_required('digit');
 
-    $self->param('result', _rec_multiply($a_multiplier, $digit, 0) || 0);
+    $self->param('partial_product', _rec_multiply($a_multiplier, $digit, 0) || 0);
 
     sleep( $self->param('take_time') );
 }
@@ -60,7 +60,7 @@ sub run {   # call the recursive function that will compute the stuff
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Dataflows the intermediate results down branch 1, which will be routed into 'intermediate_result' table.
+                  Dataflows the intermediate results down branch 1, which will be routed into 'partial_product' accumulator.
 
 =cut
 
@@ -68,9 +68,9 @@ sub write_output {  # but this time we have something to store
     my $self = shift @_;
 
     $self->dataflow_output_id( {
-        'a_multiplier'  => $self->param('a_multiplier'),
-        'digit'         => $self->param('digit'),
-        'result'        => $self->param('result')
+        'a_multiplier'      => $self->param('a_multiplier'),
+        'digit'             => $self->param('digit'),
+        'partial_product'   => $self->param('partial_product')
     }, 1);
 }
 
