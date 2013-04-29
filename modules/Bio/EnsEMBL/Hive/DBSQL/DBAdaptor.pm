@@ -70,7 +70,6 @@ sub get_available_adaptors {
     my %pairs =  (
             # Core adaptors extended with Hive stuff:
         'MetaContainer'       => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
-        'Analysis'            => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
 
             # "new" Hive adaptors (sharing the same fetching/storing code inherited from the BaseAdaptor class) :
         'AnalysisCtrlRule'    => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
@@ -79,12 +78,14 @@ sub get_available_adaptors {
         'ResourceClass'       => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
         'LogMessage'          => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
         'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
+        'Analysis'            => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
+        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
+        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
 
             # "old" Hive adaptors (having their own fetching/storing code) :
-        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
         'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
         'AnalysisStats'       => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
-        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
+        'Accumulator'         => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',
     );
     return \%pairs;
 }

@@ -44,10 +44,9 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Extensions;
-use Bio::EnsEMBL::DBSQL::AnalysisAdaptor;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Extensions;
+use Bio::EnsEMBL::Hive::Accumulator;
 use Bio::EnsEMBL::Hive::NakedTable;
 
 #use Data::Dumper;
@@ -90,7 +89,7 @@ sub fetch {
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
     if( my ($conn, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
-        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=(\w+))?)?((?:;(\w+)=(\w+))*)$} ) {
+        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]+))?)?((?:;(\w+)=(\w+))*)$} ) {
 
         my %conn_param = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
 
@@ -110,6 +109,14 @@ sub fetch {
         } elsif($table_name eq 'job') {
 
             return $dba->get_AnalysisJobAdaptor->fetch_by_url_query($tparam_name, $tparam_value);
+
+        } elsif($table_name eq 'accu') {
+
+            return Bio::EnsEMBL::Hive::Accumulator->new(
+                    -adaptor            => $dba->get_AccumulatorAdaptor,
+                    -struct_name        => $tparam_name,
+                    -signature_template => $tparam_value,
+            );
 
         } else {
 

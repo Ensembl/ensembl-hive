@@ -283,7 +283,7 @@ sub dataflow_output_id {
 
         if($target_analysis_or_table->can('dataflow')) {
 
-            $target_analysis_or_table->dataflow( $output_ids_for_this_rule );
+            $target_analysis_or_table->dataflow( $output_ids_for_this_rule, $self );
 
         } else {
 

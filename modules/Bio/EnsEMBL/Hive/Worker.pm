@@ -74,11 +74,13 @@ use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
          );
@@ -648,6 +650,7 @@ sub run_one_batch {
 
     my $jobs_done_here = 0;
 
+    my $accu_adaptor    = $self->adaptor->db->get_AccumulatorAdaptor;
     my $max_retry_count = $self->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
     $self->adaptor->check_in_worker( $self );
@@ -675,7 +678,18 @@ sub run_one_batch {
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $self->adaptor->db->get_MetaContainer->get_param_hash(), $self->analysis->parameters(), $job->input_id() );
+            $job->param_init(
+                $runnable_object->strict_hash_format(),
+                $runnable_object->param_defaults(),
+                $self->adaptor->db->get_MetaContainer->get_param_hash(),
+                $self->analysis->parameters(),
+                $job->input_id(),
+                $accu_adaptor->fetch_structures_for_job_id( $job->dbID ),   # FIXME: or should we pass in the original hash to be extended by pushing?
+            );
+
+            if($self->debug()) {
+                print "\nunsubstituted_param_hash = ".stringify($job->{'_unsubstituted_param_hash'})."\n";
+            }
 
             $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();

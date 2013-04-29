@@ -352,6 +352,30 @@ CREATE TABLE job_file (
 
 
 /**
+@table  accu
+
+@colour #1D73DA
+
+@desc   Accumulator for funneled dataflow.
+
+@column sending_job_id     semaphoring job in the "box"
+@column receiving_job_id   semaphored job outside the "box"
+@column struct_name        name of the structured parameter
+@column key_signature      locates the part of the structured parameter
+@column value              value of the part
+*/
+
+CREATE TABLE accu (
+    sending_job_id          int(10),
+    receiving_job_id        int(10) NOT NULL,
+    struct_name             varchar(255) NOT NULL,
+    key_signature           varchar(255) NOT NULL,
+    value                   varchar(255)
+
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+/**
 @table  analysis_data
 
 @colour #1D73DA

@@ -15,6 +15,8 @@ ALTER TABLE job                     ADD FOREIGN KEY (prev_job_id)               
 ALTER TABLE job                     ADD FOREIGN KEY (semaphored_job_id)         REFERENCES job(job_id);
 ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id);
 ALTER TABLE job_file                ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id);
+ALTER TABLE accu                    ADD FOREIGN KEY (sending_job_id)            REFERENCES job(job_id);
+ALTER TABLE accu                    ADD FOREIGN KEY (receiving_job_id)          REFERENCES job(job_id);
 
 ALTER TABLE resource_description    ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 ALTER TABLE analysis_base           ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
