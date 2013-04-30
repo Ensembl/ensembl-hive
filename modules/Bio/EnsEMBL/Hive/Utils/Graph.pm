@@ -177,8 +177,8 @@ sub build {
         my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis->dbID ) } @all_fdr_id};
 
         while( my($from, $to) = each %subgraph_allocation) {
-            if($to) {
-                $self->graph->add_edge( $from => $midpoint_to_analysis->{$to},
+            if($to && $from=~/^analysis/) {
+                $self->graph->add_edge( $from => $to,
                     color     => 'black',
                     style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
                 );
@@ -205,11 +205,14 @@ sub _allocate_to_subgraph {
         my $target_object                 = $rule->to_analysis();
         my $target_node_name;
 
-        if ($target_object->can('dbID')) {                      # target is an analysis
+        if(check_ref($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
             $target_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
-        } else {                                                # target is a table
+        } elsif(check_ref($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = _table_node_name($target_object->table_name()) . '_' .
                 ($self->config_get('DuplicateTables') ?  $rule->from_analysis_id() : ($source_analysis_allocation||''));
+        } else {
+            warn('Do not know how to handle the type '.ref($target_object));
+            next;
         }
 
         my $proposed_allocation;    # will depend on whether we start a new semaphore
