@@ -210,6 +210,8 @@ sub _allocate_to_subgraph {
         } elsif(check_ref($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = _table_node_name($target_object->table_name()) . '_' .
                 ($self->config_get('DuplicateTables') ?  $rule->from_analysis_id() : ($source_analysis_allocation||''));
+        } elsif(check_ref($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
+            next;
         } else {
             warn('Do not know how to handle the type '.ref($target_object));
             next;
@@ -219,8 +221,8 @@ sub _allocate_to_subgraph {
         my $funnel_dataflow_rule_id  = $rule->funnel_dataflow_rule_id();
         if( $funnel_dataflow_rule_id ) {
             $proposed_allocation =
-                $dfr_flows_into_node->{$funnel_dataflow_rule_id};   # if we do start a new semaphore, report to the new funnel (based on common funnel's analysis name)
-#                _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+#                $dfr_flows_into_node->{$funnel_dataflow_rule_id};   # if we do start a new semaphore, report to the new funnel (based on common funnel's analysis name)
+                _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
             my $fan_midpoint_name = _midpoint_name( $rule->dbID() );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
@@ -370,9 +372,10 @@ sub _dataflow_rules {
     my ($self, $all_dataflow_rules, $subgraph_allocation) = @_;
 
     my $graph = $self->graph();
-    my $dataflow_colour  = $self->config_get('Edge', 'Data', 'Colour');
-    my $semablock_colour = $self->config_get('Edge', 'Semablock', 'Colour');
-    my $df_edge_fontname = $self->config_get('Edge', 'Data', 'Font');
+    my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
+    my $semablock_colour    = $self->config_get('Edge', 'Semablock', 'Colour');
+    my $accu_colour         = $self->config_get('Edge', 'Accu', 'Colour');
+    my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
 
     my %needs_a_midpoint = ();
     my %aid2aid_nonsem = ();    # simply a directed graph between numerical analysis_ids, except for semaphored rules
@@ -404,6 +407,9 @@ sub _dataflow_rules {
                 ( $self->config_get('DuplicateTables') ? $rule->from_analysis_id() : ($subgraph_allocation->{$from_node}||''));
 
             $self->_add_table_node($to_node, $to->table_name);
+        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
+            $to_node = $subgraph_allocation->{$from_node};
+
         } else {
             warn('Do not know how to handle the type '.ref($to));
             next;
@@ -423,8 +429,9 @@ sub _dataflow_rules {
             $graph->add_edge( $from_node => $midpoint_name, # first half of the two-part arrow
                 color       => $dataflow_colour,
                 arrowhead   => 'none',
-                label       => '#'.$branch_code, 
                 fontname    => $df_edge_fontname,
+                fontcolor   => $dataflow_colour,
+                label       => '#'.$branch_code,
             );
             $graph->add_edge( $midpoint_name => $to_node,   # second half of the two-part arrow
                 color     => $dataflow_colour,
@@ -438,12 +445,24 @@ sub _dataflow_rules {
                     arrowtail => 'crow',
                 );
             }
+        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
+                # one-part dashed arrow:
+            $graph->add_edge( $from_node => $to_node,
+                color       => $accu_colour,
+                style       => 'dashed',
+                label       => $to->struct_name().'#'.$branch_code,
+                fontname    => $df_edge_fontname,
+                fontcolor   => $accu_colour,
+                dir         => 'both',
+                arrowtail   => 'crow',
+            );
         } else {
-                # one-part arrow:
+                # one-part solid arrow:
             $graph->add_edge( $from_node => $to_node, 
                 color       => $dataflow_colour,
-                label       => '#'.$branch_code, 
                 fontname    => $df_edge_fontname,
+                fontcolor   => $dataflow_colour,
+                label       => '#'.$branch_code,
             );
         } # /if($needs_a_midpoint{$rule_id})
     } # /foreach my $rule (@$all_dataflow_rules)

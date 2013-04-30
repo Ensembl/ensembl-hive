@@ -59,9 +59,10 @@
         },
         "Edge" : {
             "Font"        : "Helvetica",
-            "Data"        : { "Colour" : "blue"    },
-            "Control"     : { "Colour" : "red"     },
-            "Semablock"   : { "Colour" : "red"     }
+            "Data"        : { "Colour" : "blue"         },
+            "Control"     : { "Colour" : "red"          },
+            "Semablock"   : { "Colour" : "red"          },
+            "Accu"        : { "Colour" : "darkgreen"    }
         },
         "Box"  : {
             "ColourScheme"  : "blues9",
