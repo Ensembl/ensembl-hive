@@ -192,38 +192,6 @@ CREATE TABLE analysis_ctrl_rule (
 
 
 /**
-@table  meta
-
-@colour #000000
-
-@desc This table comes from the Ensembl core schema.
-	It is created here with the 'IF NOT EXISTS' option to avoid a potential clash
-	 if we are dealing with core-hive hybrid that is created in the wrong order.
-	At the moment meta table is used
-		(1) for compatibility with the Core API ('schema_version'),
-		(2) to keep some Hive-specific meta-information ('pipeline_name') and
-		(3) to keep pipeline-wide parameters.
-
-@column meta_id			auto-incrementing primary key, not really used per se
-@column species_id		always 1, kept for compatibility with the Core API
-@column	meta_key		the KEY of KEY-VALUE pairs
-@column	meta_value		the VALUE of KEY-VALUE pairs
-*/
-
-CREATE TABLE IF NOT EXISTS meta (
-    meta_id                     INT NOT NULL AUTO_INCREMENT,
-    species_id                  INT UNSIGNED DEFAULT 1,
-    meta_key                    VARCHAR(40) NOT NULL,
-    meta_value                  TEXT NOT NULL,
-
-    PRIMARY   KEY (meta_id),
-    UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value(255)),
-              KEY species_value_idx (species_id, meta_value(255))
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-/**
 @header Resources
 @colour #FF7504
 */
@@ -397,6 +365,38 @@ CREATE TABLE analysis_data (
             KEY (data(100))
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
+/**
+@table  meta
+
+@colour #000000
+
+@desc This table comes from the Ensembl core schema.
+	It is created here with the 'IF NOT EXISTS' option to avoid a potential clash
+	 if we are dealing with core-hive hybrid that is created in the wrong order.
+	At the moment meta table is used
+		(1) for compatibility with the Core API ('schema_version'),
+		(2) to keep some Hive-specific meta-information ('pipeline_name') and
+		(3) to keep pipeline-wide parameters.
+
+@column meta_id			auto-incrementing primary key, not really used per se
+@column species_id		always 1, kept for compatibility with the Core API
+@column	meta_key		the KEY of KEY-VALUE pairs
+@column	meta_value		the VALUE of KEY-VALUE pairs
+*/
+
+CREATE TABLE IF NOT EXISTS meta (
+    meta_id                     INT NOT NULL AUTO_INCREMENT,
+    species_id                  INT UNSIGNED DEFAULT 1,
+    meta_key                    VARCHAR(40) NOT NULL,
+    meta_value                  TEXT NOT NULL,
+
+    PRIMARY   KEY (meta_id),
+    UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value(255)),
+              KEY species_value_idx (species_id, meta_value(255))
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 /**

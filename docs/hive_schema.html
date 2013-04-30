@@ -70,11 +70,11 @@
 </script>
 
 </head>
-
 <body>
+
 <h1>Ensembl Hive Schema Documentation</h1>
 
-<br />
+<br/>
 <h3 id="top">List of the tables:</h3>
 <div>
 
@@ -88,7 +88,6 @@
         <li><a href="#analysis_stats"><b>analysis_stats</b></a></li>
         <li><a href="#dataflow_rule"><b>dataflow_rule</b></a></li>
         <li><a href="#analysis_ctrl_rule"><b>analysis_ctrl_rule</b></a></li>
-        <li><a href="#meta"><b>meta</b></a></li>
       </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
@@ -109,7 +108,9 @@
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#job"><b>job</b></a></li>
         <li><a href="#job_file"><b>job_file</b></a></li>
+        <li><a href="#accu"><b>accu</b></a></li>
         <li><a href="#analysis_data"><b>analysis_data</b></a></li>
+        <li><a href="#meta"><b>meta</b></a></li>
       </ul>  </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
@@ -141,28 +142,21 @@
   <input type="hidden" id="expand" value="0" />
   
 <br /><br />
-
-<A HREF=hive_schema.png>Table relationship diagram (PNG)</A>.
-
-<br /><br />
 <div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #C70C09">
   <h2 style="display:inline;color:#000">Pipeline structure</h2>
 </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#C70C09"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="analysis_base" style="font-size:11pt;font-weight:bold">analysis_base</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_analysis_base" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_base')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="analysis_base" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">analysis_base</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_analysis_base" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_base')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Each Analysis is a node of the pipeline diagram. It acts both as a "class" to which Jobs belong (and inherit from it certain properties) and as a "container" for them (Jobs of an Analysis can be blocking all Jobs of another Analysis).</p>
 
   <div id="div_analysis_base" style="display:none">
@@ -182,20 +176,17 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#C70C09"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="analysis_stats" style="font-size:11pt;font-weight:bold">analysis_stats</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_analysis_stats" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_stats')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="analysis_stats" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">analysis_stats</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_analysis_stats" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_stats')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Parallel table to analysis_base which provides high level statistics on the state of an analysis and it's jobs.  Used to provide a fast overview, and to provide final approval of 'DONE' which is used by the blocking rules to determine when to unblock other analyses.  Also provides</p>
 
   <div id="div_analysis_stats" style="display:none">
@@ -224,81 +215,49 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#C70C09"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="dataflow_rule" style="font-size:11pt;font-weight:bold">dataflow_rule</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_dataflow_rule" style="cursor:pointer;text-decoration:none" onclick="show_hide('dataflow_rule')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="dataflow_rule" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">dataflow_rule</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_dataflow_rule" style="cursor:pointer;text-decoration:none" onclick="show_hide('dataflow_rule')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Extension of simple_rule design except that goal(to) is now in extended URL format e.g. mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34' (full network address of an analysis). The only requirement is that there are rows in the job, analysis, dataflow_rule, and worker tables so that the following join works on the same database  WHERE analysis.analysis_id = dataflow_rule.from_analysis_id  AND   analysis.analysis_id = job.analysis_id AND   analysis.analysis_id = worker.analysis_id These are the rules used to create entries in the job table where the input_id (control data) is passed from one analysis to the next to define work. The analysis table will be extended so that it can specify different read and write databases, with the default being the database the analysis is on</p>
 
   <div id="div_dataflow_rule" style="display:none">
     <table style="border:1px outset #222222">
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
       <tr class="bg1"><td><b>dataflow_rule_id</b></td><td>int(10)</td><td></td><td>internal ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>from_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td></td></tr>
-      <tr class="bg1"><td><b>branch_code</b></td><td>int(10)</td><td>1</td><td>branch_code of the fan</td><td></td></tr>
-      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>int(10)</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td></td></tr>
-      <tr class="bg1"><td><b>to_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td></td></tr>
-      <tr class="bg2"><td><b>input_id_template</b></td><td>TEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td></td></tr>
+      <tr class="bg2"><td><b>from_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>branch_code</b></td><td>int(10)</td><td>1</td><td>branch_code of the fan</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>int(10)</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>to_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>input_id_template</b></td><td>TEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#C70C09"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="analysis_ctrl_rule" style="font-size:11pt;font-weight:bold">analysis_ctrl_rule</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_analysis_ctrl_rule" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_ctrl_rule')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="analysis_ctrl_rule" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">analysis_ctrl_rule</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_analysis_ctrl_rule" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_ctrl_rule')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">These rules define a higher level of control. These rules are used to turn whole anlysis nodes on/off (READY/BLOCKED). If any of the condition_analyses are not 'DONE' the ctrled_analysis is set to BLOCKED. When all conditions become 'DONE' then ctrled_analysis is set to READY The workers switch the analysis.status to 'WORKING' and 'DONE'. But any moment if a condition goes false, the analysis is reset to BLOCKED.</p>
 
   <div id="div_analysis_ctrl_rule" style="display:none">
     <table style="border:1px outset #222222">
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>condition_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td></td></tr>
-      <tr class="bg2"><td><b>ctrled_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td></td></tr>
-    </table>
-  </div>
-
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#C70C09"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="meta" style="font-size:11pt;font-weight:bold">meta</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table comes from the Ensembl core schema. It is created here with the 'IF NOT EXISTS' option to avoid a potential clash if we are dealing with core-hive hybrid that is created in the wrong order. At the moment meta table is used (1) for compatibility with the Core API ('schema_version'), (2) to keep some Hive-specific meta-information ('pipeline_name') and (3) to keep pipeline-wide parameters.</p>
-
-  <div id="div_meta" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>meta_id</b></td><td>INT</td><td></td><td>auto-incrementing primary key, not really used per se</td><td>primary   key</td></tr>
-      <tr class="bg2"><td><b>species_id</b></td><td>INT</td><td>1</td><td>always 1, kept for compatibility with the Core API</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
-      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(40)</td><td></td><td>the KEY of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx</td></tr>
-      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
+      <tr class="bg1"><td><b>condition_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>ctrled_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -307,44 +266,38 @@
   <h2 style="display:inline;color:#000">Resources</h2>
 </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF7504"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="resource_class" style="font-size:11pt;font-weight:bold">resource_class</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_resource_class" style="cursor:pointer;text-decoration:none" onclick="show_hide('resource_class')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="resource_class" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF7504;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">resource_class</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_resource_class" style="cursor:pointer;text-decoration:none" onclick="show_hide('resource_class')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Maps between resource_class numeric IDs and unique names.</p>
 
   <div id="div_resource_class" style="display:none">
     <table style="border:1px outset #222222">
       <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
       <tr class="bg1"><td><b>resource_class_id</b></td><td>int(10)</td><td></td><td>unique ID of the ResourceClass</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>unique name of the ResourceClass</td><td></td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>unique name of the ResourceClass</td><td>unique: key</td></tr>
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#FF7504"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="resource_description" style="font-size:11pt;font-weight:bold">resource_description</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_resource_description" style="cursor:pointer;text-decoration:none" onclick="show_hide('resource_description')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="resource_description" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#FF7504;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">resource_description</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_resource_description" style="cursor:pointer;text-decoration:none" onclick="show_hide('resource_description')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Maps (ResourceClass, MeadowType) pair to Meadow-specific resource lines.</p>
 
   <div id="div_resource_description" style="display:none">
@@ -361,20 +314,17 @@
   <h2 style="display:inline;color:#000">Job-related</h2>
 </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1D73DA"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="job" style="font-size:11pt;font-weight:bold">job</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_job" style="cursor:pointer;text-decoration:none" onclick="show_hide('job')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="job" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">job</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_job" style="cursor:pointer;text-decoration:none" onclick="show_hide('job')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">The job is the heart of this system.  It is the kiosk or blackboard where workers find things to do and then post work for other works to do. These jobs are created prior to work being done, are claimed by workers, are updated as the work is done, with a final update on completion.</p>
 
   <div id="div_job" style="display:none">
@@ -395,20 +345,17 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1D73DA"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="job_file" style="font-size:11pt;font-weight:bold">job_file</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_job_file" style="cursor:pointer;text-decoration:none" onclick="show_hide('job_file')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="job_file" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">job_file</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_job_file" style="cursor:pointer;text-decoration:none" onclick="show_hide('job_file')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">For testing/debugging purposes both STDOUT and STDERR streams of each Job can be redirected into a separate log file. This table holds filesystem paths to one or both of those files. There is max one entry per job_id and retry.</p>
 
   <div id="div_job_file" style="display:none">
@@ -422,20 +369,41 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#1D73DA"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="analysis_data" style="font-size:11pt;font-weight:bold">analysis_data</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_analysis_data" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_data')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="accu" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">accu</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_accu" style="cursor:pointer;text-decoration:none" onclick="show_hide('accu')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Accumulator for funneled dataflow.</p>
+
+  <div id="div_accu" style="display:none">
+    <table style="border:1px outset #222222">
+      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+      <tr class="bg1"><td><b>sending_job_id</b></td><td>int(10)</td><td></td><td>semaphoring job in the "box"</td><td></td></tr>
+      <tr class="bg2"><td><b>receiving_job_id</b></td><td>int(10)</td><td></td><td>semaphored job outside the "box"</td><td></td></tr>
+      <tr class="bg1"><td><b>struct_name</b></td><td>varchar(255)</td><td></td><td>name of the structured parameter</td><td></td></tr>
+      <tr class="bg2"><td><b>key_signature</b></td><td>varchar(255)</td><td></td><td>locates the part of the structured parameter</td><td></td></tr>
+      <tr class="bg1"><td><b>value</b></td><td>varchar(255)</td><td></td><td>value of the part</td><td></td></tr>
+    </table>
+  </div>
+
+  <div id="analysis_data" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">analysis_data</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_analysis_data" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_data')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A generic blob-storage hash. Currently the only legitimate use of this table is "overflow" of job.input_ids: when they grow longer than 254 characters the real data is stored in analysis_data instead, and the input_id contains the corresponding analysis_data_id.</p>
 
   <div id="div_analysis_data" style="display:none">
@@ -446,25 +414,45 @@
     </table>
   </div>
 
+  <div id="meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">meta</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table comes from the Ensembl core schema. It is created here with the 'IF NOT EXISTS' option to avoid a potential clash if we are dealing with core-hive hybrid that is created in the wrong order. At the moment meta table is used (1) for compatibility with the Core API ('schema_version'), (2) to keep some Hive-specific meta-information ('pipeline_name') and (3) to keep pipeline-wide parameters.</p>
+
+  <div id="div_meta" style="display:none">
+    <table style="border:1px outset #222222">
+      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
+      <tr class="bg1"><td><b>meta_id</b></td><td>INT</td><td></td><td>auto-incrementing primary key, not really used per se</td><td>primary   key</td></tr>
+      <tr class="bg2"><td><b>species_id</b></td><td>INT</td><td>1</td><td>always 1, kept for compatibility with the Core API</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
+      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(40)</td><td></td><td>the KEY of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx</td></tr>
+      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
+    </table>
+  </div>
+
 <br /><br />
 <div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #24DA06">
   <h2 style="display:inline;color:#000">worker table</h2>
 </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#24DA06"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="worker" style="font-size:11pt;font-weight:bold">worker</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_worker" style="cursor:pointer;text-decoration:none" onclick="show_hide('worker')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="worker" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#24DA06;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">worker</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_worker" style="cursor:pointer;text-decoration:none" onclick="show_hide('worker')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Entries of this table correspond to Worker objects of the API. Workers are created by inserting into this table so that there is only one instance of a Worker object in the database. As Workers live and do work, they update this table, and when they die they update again.</p>
 
   <div id="div_worker" style="display:none">
@@ -492,20 +480,17 @@
   <h2 style="display:inline;color:#000">Logging and monitoring</h2>
 </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#F4D20C"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="log_message" style="font-size:11pt;font-weight:bold">log_message</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_log_message" style="cursor:pointer;text-decoration:none" onclick="show_hide('log_message')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="log_message" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">log_message</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_log_message" style="cursor:pointer;text-decoration:none" onclick="show_hide('log_message')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">When a Job or a job-less Worker (job_id=NULL) throws a "die" message for any reason, the message is recorded in this table. It may or may not indicate that the job was unsuccessful via is_error flag. Also $self->warning("...") messages are recorded with is_error=0.</p>
 
   <div id="div_log_message" style="display:none">
@@ -522,20 +507,17 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#F4D20C"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="analysis_stats_monitor" style="font-size:11pt;font-weight:bold">analysis_stats_monitor</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_analysis_stats_monitor" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_stats_monitor')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="analysis_stats_monitor" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">analysis_stats_monitor</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_analysis_stats_monitor" style="cursor:pointer;text-decoration:none" onclick="show_hide('analysis_stats_monitor')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A regular timestamped snapshot of the analysis_stats table.</p>
 
   <div id="div_analysis_stats_monitor" style="display:none">
@@ -565,20 +547,17 @@
     </table>
   </div>
 
-<br />
-  <table style="border: 2px groove #CCCCCC;background-color:#FAFAFF">
-    <tr style="vertical-align:middle">
-      <td style="padding:0px;width:10px;background-color:#F4D20C"></td>
-      <td style="width:2px"></td>
-      <td style="width:420px;text-align:left;height:10px"><span id="monitor" style="font-size:11pt;font-weight:bold">monitor</span></td>
-      <td style="width:200px;text-align:right">
-        <a id="a_monitor" style="cursor:pointer;text-decoration:none" onclick="show_hide('monitor')">
-          <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-          <span style="vertical-align:middle">Show columns</span>
-        </a>
-        &nbsp;<b>|</b>&nbsp;<a href="#top">[Back to top]</a></td>
-    </tr>
-  </table>
+  <div id="monitor" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">monitor</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_monitor" style="cursor:pointer;text-decoration:none" onclick="show_hide('monitor')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+			<b> | </b> <a href="#top">[Back to top]</a>
+		</div>
+  </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A regular collated snapshot of the Worker table.</p>
 
   <div id="div_monitor" style="display:none">
