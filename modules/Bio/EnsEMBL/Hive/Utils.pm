@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::Utils;
 use strict;
 use warnings;
 use Data::Dumper;
-use Bio::EnsEMBL::DBSQL::DBConnection;
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 use Exporter 'import';
 our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc);
@@ -292,7 +292,7 @@ sub go_figure_dbc {
 
     } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
 
-        return Bio::EnsEMBL::DBSQL::DBConnection->new( %$db_conn );
+        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( %$db_conn );
 
     } else {
         unless(ref($foo)) {    # maybe it is simply a registry key?

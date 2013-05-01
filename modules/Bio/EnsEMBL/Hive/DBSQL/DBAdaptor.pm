@@ -38,6 +38,7 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
@@ -51,6 +52,16 @@ sub new {
     } else {
         return $class->SUPER::new(@args);
     }
+}
+
+
+sub dbc {
+    my $self = shift @_;
+
+    my $dbc = $self->SUPER::dbc( @_ );
+    bless $dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection' if( $dbc );
+
+    return $dbc;
 }
 
 

@@ -87,9 +87,9 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception ('throw');
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
@@ -356,7 +356,7 @@ sub db {
     Title   :   dbc
     Usage   :   my $hiveDBConnection = $self->dbc;
     Function:   returns DBConnection to Hive database
-    Returns :   Bio::EnsEMBL::DBSQL::DBConnection
+    Returns :   Bio::EnsEMBL::Hive::DBSQL::DBConnection
 
 =cut
 
@@ -371,7 +371,7 @@ sub dbc {
 
     Title   :   data_dbc
     Usage   :   my $data_dbc = $self->data_dbc;
-    Function:   returns a Bio::EnsEMBL::DBSQL::DBConnection object (the "current" one by default, but can be set up otherwise)
+    Function:   returns a Bio::EnsEMBL::Hive::DBSQL::DBConnection object (the "current" one by default, but can be set up otherwise)
     Returns :   Bio::EnsEMBL::DBSQL::DBConnection
 
 =cut
