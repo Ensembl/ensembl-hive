@@ -71,5 +71,29 @@ sub url {
 }
 
 
+sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by trying again (a useful workaround even in mysql 5.1.61)
+    my $self        = shift @_;
+    my $sql         = shift @_;
+
+    my $retries     = 3;
+
+    foreach (0..$retries) {
+        eval {
+            my $sth = $self->prepare($sql);
+            $sth->execute( @_ );
+            $sth->finish;
+            1;
+        } or do {
+            if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
+                sleep 1;
+                next;
+            }
+            die $@;     # but definitely report other errors
+        };
+        last;
+    }
+    die "After $retries retries still in a deadlock: $@" if($@);
+}
+
 1;
 

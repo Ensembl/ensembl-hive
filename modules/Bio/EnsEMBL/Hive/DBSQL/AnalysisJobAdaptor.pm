@@ -396,9 +396,8 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
         WHERE job_id=? AND status='SEMAPHORED'
     };
     
-    my $sth = $self->prepare($sql);
-    $sth->execute($inc, $jobid);
-    $sth->finish;
+        # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
+    $self->dbc->protected_prepare_execute( $sql, $inc, $jobid );
 }
 
 
@@ -429,23 +428,8 @@ sub update_status {
 
     $sql .= " WHERE job_id='".$job->dbID."' ";
 
-        # This particular query is infamous for collisions and 'deadlock' situations; let's make them wait and retry.
-    foreach (0..3) {
-        eval {
-            my $sth = $self->prepare($sql);
-            $sth->execute();
-            $sth->finish;
-            1;
-        } or do {
-            if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
-                sleep 1;
-                next;
-            }
-            die $@;     # but definitely report other errors
-        };
-        last;
-    }
-    die "After 3 retries still in a deadlock: $@" if($@);
+        # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
+    $self->dbc->protected_prepare_execute( $sql );
 }
 
 
