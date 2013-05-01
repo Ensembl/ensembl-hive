@@ -35,7 +35,7 @@ CREATE        INDEX IF NOT EXISTS species_value_idx     ON meta (species_id, met
 --      can_be_empty            - if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs
 --      priority                - an Analysis with higher priority will be more likely chosen on Worker's specialization
 
-CREATE TABLE IF NOT EXISTS analysis_base (
+CREATE TABLE analysis_base (
     analysis_id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     logic_name              VARCHAR(40) NOT NULL,
     module                  VARCHAR(255),
@@ -277,6 +277,18 @@ CREATE TABLE analysis_data (
   data              longtext
 );
 CREATE        INDEX IF NOT EXISTS data_idx ON analysis_data (data);
+
+
+CREATE TABLE accu (
+    sending_job_id          int(10),
+    receiving_job_id        int(10) NOT NULL,
+    struct_name             varchar(255) NOT NULL,
+    key_signature           varchar(255) NOT NULL,
+    value                   varchar(255)
+
+);
+CREATE        INDEX IF NOT EXISTS sending_idx   ON accu (sending_job_id);
+CREATE        INDEX IF NOT EXISTS receiving_idx ON accu (receiving_job_id);
 
 
 CREATE TABLE resource_class (
