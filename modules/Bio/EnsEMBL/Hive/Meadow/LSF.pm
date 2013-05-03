@@ -11,7 +11,7 @@ sub name {  # also called to check for availability; assume LSF is available if 
 
     my $mcni = 'My cluster name is';
     if(my $name = `lsid 2>/dev/null | grep '$mcni' `) {
-        $name=~/^$mcni\s+(\w+)/;
+        $name=~/^$mcni\s+(\S+)/;
         return $1;
     }
 }
