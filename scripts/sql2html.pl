@@ -268,7 +268,7 @@ while (<SQLFILE>) {
       fill_documentation ($1,$2);
     }
     # See other tables
-    elsif ($doc =~ /^\@(see)\s*(.+)$/i) {
+    elsif ($doc =~ /^\@(see)\s*(\w+)\s*$/i) {
       fill_documentation ($1,$2);  
     }
     # Addtional information block
@@ -812,6 +812,7 @@ sub add_columns {
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>\n};
 	my $bg = 1;
+	
   foreach my $col (@$cols) {
     my $name    = $col->{name};
     my $type    = $col->{type};
