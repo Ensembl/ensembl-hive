@@ -2,8 +2,10 @@
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Getopt::Long;
+
+use Cwd 'abs_path';             # both are needed to pick 'our' runWorker.pl
+use File::Basename 'dirname';   #
 
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -273,9 +275,11 @@ sub main {
 sub generate_worker_cmd {
     my ($self, $run_analysis, $run_job_id, $force) = @_;
 
-    my $worker_cmd = 'runWorker.pl';
-    unless(`$worker_cmd`) {
-        print("can't find $worker_cmd script.  Please make sure it's in your path\n");
+    my $beekeeper_fullpath = abs_path($0);
+    my $worker_cmd = dirname($beekeeper_fullpath).'/runWorker.pl';
+
+    unless(-x $worker_cmd) {
+        print("Can't run '$worker_cmd' script for some reason, please investigate.\n");
         exit(1);
     }
 
