@@ -11,7 +11,7 @@ Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
 init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <mypass>
 
     # Example 2: specifying the mandatory options as well as overriding some defaults:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -ensembl_cvs_root_dir ~/ensembl_main -pipeline_db -host <myhost> -pipeline_db -dbname <mydbname> -password <mypass>
+init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -hive_root_dir ~/ensembl_main/ensembl-hive-new -pipeline_db -host <myhost> -pipeline_db -dbname <mydbname> -password <mypass>
 
 =head1 DESCRIPTION
 
@@ -73,8 +73,9 @@ use base ('Bio::EnsEMBL::Hive::DependentOptions');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),     # it will make sense to set this variable if you are going to use ehive frequently
-        'password'              => $self->o('ENV', 'ENSADMIN_PSW'),             # people will have to make an effort NOT to insert it into config files like .bashrc etc
+        'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),             # it will make sense to set this variable if you are going to use ehive frequently
+        'hive_root_dir'         => $self->o('ensembl_cvs_root_dir').'/ensembl-hive',    # but you may want to have Hive elsewhere, which is perfectly legitimate
+        'password'              => $self->o('ENV', 'ENSADMIN_PSW'),                     # people will have to make an effort NOT to insert it into config files like .bashrc etc
 
         'host'                  => 'localhost',
         'pipeline_name'         => 'hive_generic',
@@ -105,18 +106,18 @@ sub pipeline_create_commands {
     return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? [
                 # standard eHive tables, triggers and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sqlite',
-            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.sqlite' ) : (),
-            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.sqlite',
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sqlite',
+            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.sqlite' ) : (),
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.sqlite',
         ]
         : [
             'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o('pipeline_db', '-dbname')."`'",
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/tables.sql',
-            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/triggers.mysql' ) : (),
-            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/foreign_keys.mysql',
-            $self->db_connect_command($db_conn).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-hive/sql/procedures.mysql',
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sql',
+            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.mysql' ) : (),
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.mysql',
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.mysql',
         ];
 }
 
