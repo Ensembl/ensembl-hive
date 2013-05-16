@@ -4,8 +4,17 @@
 
 use strict;
 use warnings;
-use Getopt::Long;
 
+    # Finding out own path in order to reference own components (including own modules):
+use Cwd            ();
+use File::Basename ();
+our $hive_root_dir;
+BEGIN {
+    $hive_root_dir = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    unshift @INC, "$hive_root_dir/modules";
+}
+
+use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 

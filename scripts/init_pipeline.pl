@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#
+
 # A generic loader of hive pipelines.
 #
 # Because all of the functionality is hidden in Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
@@ -8,8 +8,18 @@
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 
+    # Finding out own path in order to reference own components (including own modules):
+use Cwd            ();
+use File::Basename ();
+our $hive_root_dir;
+BEGIN {
+    $hive_root_dir = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    unshift @INC, "$hive_root_dir/modules";
+}
+
+
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 
 sub main {
     my $file_or_module = shift @ARGV or script_usage(0);
