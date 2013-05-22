@@ -27,8 +27,6 @@ See inline
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Scalar qw(check_ref assert_ref);
-
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
@@ -93,12 +91,13 @@ sub graph {
 =cut
 
 sub dba {
-  my ($self, $dba) = @_;
-  if(defined $dba) {
-    assert_ref($dba, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-    $self->{dba} = $dba;
-  }
-  return $self->{dba};
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{dba} = shift @_;
+    }
+
+    return $self->{dba};
 }
 
 
@@ -205,12 +204,12 @@ sub _allocate_to_subgraph {
         my $target_object                 = $rule->to_analysis();
         my $target_node_name;
 
-        if(check_ref($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
             $target_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
-        } elsif(check_ref($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
+        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = _table_node_name($target_object->table_name()) . '_' .
                 ($self->config_get('DuplicateTables') ?  $rule->from_analysis_id() : ($source_analysis_allocation||''));
-        } elsif(check_ref($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
+        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
             next;
         } else {
             warn('Do not know how to handle the type '.ref($target_object));
@@ -398,16 +397,16 @@ sub _dataflow_rules {
         my ($from_node, $to_id, $to_node) = ( _analysis_node_name($from_analysis_id)      );
     
             # Different treatment for analyses and tables:
-        if(check_ref($to, 'Bio::EnsEMBL::Hive::Analysis')) {
+        if(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Analysis')) {
             $to_id   = $to->dbID();
             $to_node = _analysis_node_name($to_id);
-        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
+        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
             $to_node = _table_node_name($to->table_name) . '_' .
                 ( $self->config_get('DuplicateTables') ? $rule->from_analysis_id() : ($subgraph_allocation->{$from_node}||''));
 
             $self->_add_table_node($to_node, $to->table_name);
-        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
+        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
             $to_node = $subgraph_allocation->{$from_node};
 
         } else {
@@ -445,7 +444,7 @@ sub _dataflow_rules {
                     arrowtail => 'crow',
                 );
             }
-        } elsif(check_ref($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
+        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
                 # one-part dashed arrow:
             $graph->add_edge( $from_node => $to_node,
                 color       => $accu_colour,
