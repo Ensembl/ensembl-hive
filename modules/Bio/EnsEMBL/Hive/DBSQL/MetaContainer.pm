@@ -24,7 +24,7 @@ package Bio::EnsEMBL::Hive::DBSQL::MetaContainer;
 use strict;
 use Bio::EnsEMBL::Hive::Utils ('destringify');  # import both functions
 
-use base ('Bio::EnsEMBL::DBSQL::MetaContainer');
+use base ('Bio::EnsEMBL::DBSQL::BaseMetaContainer');
 
 =head2 get_param_hash
 
