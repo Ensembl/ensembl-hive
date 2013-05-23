@@ -22,7 +22,7 @@ package Bio::EnsEMBL::Hive::NakedTable;
 use strict;
 use Scalar::Util ('weaken');
 
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 sub new {
     my $class = shift @_;

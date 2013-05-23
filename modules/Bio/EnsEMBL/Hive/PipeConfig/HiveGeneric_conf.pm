@@ -48,8 +48,9 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Argument;          # import 'rearrange()'
-use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;

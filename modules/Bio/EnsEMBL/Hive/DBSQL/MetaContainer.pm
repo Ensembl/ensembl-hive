@@ -10,7 +10,7 @@
 
 =head1 DESCRIPTION
 
-  This module extends EnsEMBL Core's MetaContainer, adding some Hive-specific stuff.
+  This module extends EnsEMBL Core's BaseMetaContainer, adding some Hive-specific stuff.
 
 =head1 CONTACT
 
@@ -22,7 +22,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::MetaContainer;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('destringify');  # import both functions
+use Bio::EnsEMBL::Hive::Utils ('destringify');
 
 use base ('Bio::EnsEMBL::DBSQL::BaseMetaContainer');
 

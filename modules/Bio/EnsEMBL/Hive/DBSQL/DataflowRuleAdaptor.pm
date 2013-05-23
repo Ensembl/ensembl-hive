@@ -24,8 +24,8 @@
 package Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DataflowRule;
-use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 

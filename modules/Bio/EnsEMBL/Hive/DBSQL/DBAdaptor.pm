@@ -36,7 +36,9 @@ Bio::EnsEMBL::Hive::DBSQL::DBAdaptor
 package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;
+
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 

@@ -40,11 +40,11 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
-use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+use Bio::EnsEMBL::Utils::Exception ('throw');
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 

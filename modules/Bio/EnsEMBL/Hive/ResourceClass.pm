@@ -26,7 +26,8 @@
 package Bio::EnsEMBL::Hive::ResourceClass;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
          );

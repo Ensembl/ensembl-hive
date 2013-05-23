@@ -63,10 +63,9 @@ use strict;
 use POSIX;
 use File::Path 'make_path';
 
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # import 'destringify()' and 'dir_revhash()'
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
 

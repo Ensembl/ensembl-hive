@@ -66,8 +66,7 @@ package Bio::EnsEMBL::Hive::Worker;
 use strict;
 use POSIX;
 
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;

@@ -44,10 +44,11 @@ package Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use strict;
 use Scalar::Util ('weaken');
 
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+use Bio::EnsEMBL::Utils::Exception ('throw');
+
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::Extensions;
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
 
 =head2 new
 

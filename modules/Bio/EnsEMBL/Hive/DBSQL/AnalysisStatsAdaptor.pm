@@ -40,9 +40,9 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Exception ('throw');
+use Bio::EnsEMBL::Hive::AnalysisStats;
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 

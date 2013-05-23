@@ -27,7 +27,8 @@
 package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
+
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;

@@ -50,10 +50,11 @@
 package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;  # import 'rearrange()'
-use Bio::EnsEMBL::Utils::Exception;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');  # import 'stringify()'
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+use Bio::EnsEMBL::Utils::Exception ('throw');
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
