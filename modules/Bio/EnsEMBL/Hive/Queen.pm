@@ -528,28 +528,28 @@ sub synchronize_hive {
 =cut
 
 sub safe_synchronize_AnalysisStats {
-  my $self = shift;
-  my $stats = shift;
+    my ($self, $stats) = @_;
 
-  return $stats unless($stats->analysis_id);
-  return $stats if($stats->status eq 'SYNCHING');
-  return $stats if($stats->status eq 'DONE');
-  return $stats if($stats->sync_lock);
-  return $stats if(($stats->status eq 'WORKING') and
+    my $max_refresh_attempts = 5;
+    while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
+        sleep(1);
+        $stats->refresh();  # just try to avoid collision
+    }
+
+    return $stats if($stats->status eq 'DONE');
+    return $stats if(($stats->status eq 'WORKING') and
                    ($stats->seconds_since_last_update < 3*60));
 
-  # OK try to claim the sync_lock
-  my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
-            "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
-  #print("$sql\n");
-  my $row_count = $self->dbc->do($sql);  
-  return $stats unless($row_count == 1);        # return the un-updated status if locked
-  #printf("got sync_lock on analysis_stats(%d)\n", $stats->analysis_id);
+        # try to claim the sync_lock
+    my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
+              "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
+    my $row_count = $self->dbc->do($sql);  
+    return $stats unless($row_count == 1);        # return the un-updated status if locked
   
-      # since we managed to obtain the lock, let's go and perform the sync:
-  $self->synchronize_AnalysisStats($stats);
+        # if we managed to obtain the lock, let's go and perform the sync:
+    $self->synchronize_AnalysisStats($stats);
 
-  return $stats;
+    return $stats;
 }
 
 
