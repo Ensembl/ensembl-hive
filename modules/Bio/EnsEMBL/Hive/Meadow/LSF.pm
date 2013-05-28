@@ -55,6 +55,19 @@ sub count_pending_workers_by_rc_name {
 }
 
 
+sub count_running_workers {
+    my ($self) = @_;
+
+    my $jnp = $self->job_name_prefix();
+    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep RUN | wc -l";
+
+    my $run_count = qx/$cmd/;
+    chomp($run_count);
+
+    return $run_count;
+}
+
+
 sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 

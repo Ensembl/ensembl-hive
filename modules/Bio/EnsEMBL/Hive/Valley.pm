@@ -163,15 +163,29 @@ sub get_meadow_capacity_hash_by_meadow_type {
     my %meadow_capacity_hash = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $available_worker_slots = undef;
-        if( $meadow->can('count_running_workers') and defined($meadow->config_get('TotalRunningWorkersMax'))) {
-            $available_worker_slots  = $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers;
-        }
+
+        my $available_worker_slots = defined($meadow->config_get('TotalRunningWorkersMax'))
+            ? $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers
+            : undef;
+
             # so the hash will contain limiters for every meadow_type, but not all of them active:
         $meadow_capacity_hash{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( $available_worker_slots );
     }
 
     return \%meadow_capacity_hash;
+}
+
+
+sub count_running_workers {     # just an aggregator
+    my $self = shift @_;
+
+    my $valley_running_workers = 0;
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        $valley_running_workers += $meadow->count_running_workers;
+    }
+
+    return $valley_running_workers;
 }
 
 

@@ -700,10 +700,10 @@ sub count_running_workers {
 
     my $sth = $self->prepare($sql);
     $sth->execute();
-    (my $running_workers_count)=$sth->fetchrow_array();
+    (my $queen_running_workers)=$sth->fetchrow_array();
     $sth->finish();
 
-    return $running_workers_count || 0;
+    return $queen_running_workers || 0;
 }
 
 
