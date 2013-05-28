@@ -40,16 +40,20 @@ sub schedule_workers_resync_if_necessary {
         # combined mapping:
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
-    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
+    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required)
         = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
 
-    unless( $total_workers_to_submit or $queen->get_hive_current_load() or $queen->count_running_workers() ) {
-        print "\nScheduler: nothing is running and nothing to do (according to analysis_stats) => executing garbage collection and sync\n" ;
+    unless( $total_workers_required ) {
+        print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
 
-        $queen->check_for_dead_workers($valley, 1);
+        if( $queen->count_running_workers() != $valley->count_running_workers ) {
+            print "Scheduler: mismatch between Queen's workers and Valley's workers detected, checking for dead workers...\n";
+            $queen->check_for_dead_workers($valley, 1);
+        }
+        print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 
-        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit)
+        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required)
             = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
     }
 
@@ -63,11 +67,9 @@ sub schedule_workers_resync_if_necessary {
                 print "Scheduler was thinking of submitting $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when it detected $pending_this_group pending in this group, ";
 
                 if( $workers_to_submit_this_group > $pending_this_group) {
-                    $total_workers_to_submit                                                        -= $pending_this_group;
                     $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}   -= $pending_this_group; # adjust the hashed value
                     print "so is going to submit only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra\n";
                 } else {
-                    $total_workers_to_submit                                                        -= $workers_to_submit_this_group;
                     delete $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name};                   # avoid leaving an empty group in the hash
                     print "so is not going to submit any extra\n";
                 }
@@ -99,7 +101,8 @@ sub schedule_workers {
 
         # the pre-pending-adjusted outcome will be stored here:
     my %workers_to_submit_by_meadow_type_rc_name    = ();
-    my $total_workers_to_submit                     = 0;
+
+    my $total_workers_required                      = 0;
 
     my $default_meadow_type                         = $valley->get_default_meadow()->type;
 
@@ -128,6 +131,8 @@ sub schedule_workers {
             # if this analysis doesn't require any extra workers - just skip it:
         next if ($extra_workers_this_analysis <= 0);
 
+        $total_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
+
             # setting up all negotiating limiters:
         $queen_capacity->multiplier( $analysis_stats->hive_capacity );
         my @limiters = (
@@ -152,7 +157,6 @@ sub schedule_workers {
 
         my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
         $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-        $total_workers_to_submit                                                        += $extra_workers_this_analysis;
         $analysis_stats->print_stats();
         printf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
             $analysis->logic_name,
@@ -160,7 +164,7 @@ sub schedule_workers {
         );
     }
 
-    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
+    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_required);
 }
 
 
