@@ -75,9 +75,13 @@ sub schedule_workers_resync_if_necessary {
                 print "Scheduler is going to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers\n";
             }
         }
+
+        unless(keys %{ $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type} }) {  # if nothing has been scheduled for a meadow,
+            delete $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type};          # do not mention the meadow in the hash
+        }
     }
 
-    return ($workers_to_submit_by_meadow_type_rc_name, $total_workers_to_submit);
+    return $workers_to_submit_by_meadow_type_rc_name;
 }
 
 
