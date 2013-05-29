@@ -100,6 +100,16 @@ sub param_init {
 }
 
 
+sub _param_possibly_overridden {
+    my ($self, $param_name, $overriding_hash) = @_;
+
+    return ( ( (ref($overriding_hash) eq 'HASH') && exists($overriding_hash->{ $param_name }) )
+                    ? $overriding_hash->{ $param_name }
+                    : $self->_param_silent($param_name)
+           );
+}
+
+
 sub _param_silent {
     my $self        = shift @_;
     my $param_name  = shift @_
@@ -296,18 +306,16 @@ sub _subst_one_hashpair {
 
     if($inside_hashes=~/^\w+$/) {
 
-        $value = ( (ref($overriding_hash) eq 'HASH') && exists($overriding_hash->{ $inside_hashes }) )
-                    ? $overriding_hash->{ $inside_hashes }
-                    : $self->_param_silent($inside_hashes);
+        $value =  $self->_param_possibly_overridden($inside_hashes, $overriding_hash);
 
     } elsif($inside_hashes=~/^(\w+):(\w+)$/) {
 
-        $value = $self->$1($self->_param_silent($2));
+        $value = $self->$1($self->_param_possibly_overridden($2, $overriding_hash));
 
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
-        $expression=~s/(?:\$(\w+))/stringify($self->_param_silent($1))/eg;
+        $expression=~s/(?:\$(\w+))/stringify($self->_param_possibly_overridden($1, $overriding_hash))/eg;
 
         $value = eval($expression);
     }
