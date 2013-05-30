@@ -380,9 +380,7 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         WHERE job_id=? AND status='SEMAPHORED'
     };
     
-    my $sth = $self->prepare($sql);
-    $sth->execute($dec, $jobid);
-    $sth->finish;
+    $self->dbc->protected_prepare_execute( $sql, $dec, $jobid );
 }
 
 sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
@@ -393,10 +391,9 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     my $sql = qq{
         UPDATE job
         SET semaphore_count=semaphore_count+?
-        WHERE job_id=? AND status='SEMAPHORED'
+        WHERE job_id=?
     };
     
-        # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
     $self->dbc->protected_prepare_execute( $sql, $inc, $jobid );
 }
 
