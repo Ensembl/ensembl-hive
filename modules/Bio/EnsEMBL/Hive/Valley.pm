@@ -169,7 +169,7 @@ sub get_meadow_capacity_hash_by_meadow_type {
             : undef;
 
             # so the hash will contain limiters for every meadow_type, but not all of them active:
-        $meadow_capacity_hash{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( $available_worker_slots );
+        $meadow_capacity_hash{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( "Number of workers in '".$meadow->signature."' meadow", $available_worker_slots );
     }
 
     return \%meadow_capacity_hash;

@@ -108,8 +108,8 @@ sub schedule_workers {
 
     my $available_submit_limit                      = $valley->config_get('SubmitWorkersMax');
 
-    my $submit_capacity                             = Bio::EnsEMBL::Hive::Limiter->new( $valley->config_get('SubmitWorkersMax') );
-    my $queen_capacity                              = Bio::EnsEMBL::Hive::Limiter->new( 1.0 - $queen->get_hive_current_load() );
+    my $submit_capacity                             = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers submitted this iteration', $valley->config_get('SubmitWorkersMax') );
+    my $queen_capacity                              = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->get_hive_current_load() );
 
     foreach my $analysis_stats (@suitable_analyses) {
         last if( $submit_capacity->reached );
@@ -139,7 +139,10 @@ sub schedule_workers {
             $submit_capacity,
             $queen_capacity,
             $meadow_capacity_by_type->{$this_meadow_type},
-            defined($analysis->analysis_capacity) ? Bio::EnsEMBL::Hive::Limiter->new( $analysis->analysis_capacity - $analysis_stats->num_running_workers ) : (),
+            defined($analysis->analysis_capacity)
+                ? Bio::EnsEMBL::Hive::Limiter->new( "Number of Workers working at '".$analysis->logic_name."' analysis",
+                                                    $analysis->analysis_capacity - $analysis_stats->num_running_workers )
+                : (),
         );
 
             # negotiations:

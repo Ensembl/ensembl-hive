@@ -373,7 +373,7 @@ sub life_span_limit_reached {
 sub job_limiter {
     my $self=shift;
     if( scalar(@_) or !defined($self->{'_job_limiter'}) ) {
-        $self->{'_job_limiter'} = Bio::EnsEMBL::Hive::Limiter->new(shift @_);
+        $self->{'_job_limiter'} = Bio::EnsEMBL::Hive::Limiter->new("Total number of jobs this Worker is allowed to take", shift @_);
     }
     return $self->{'_job_limiter'};
 }

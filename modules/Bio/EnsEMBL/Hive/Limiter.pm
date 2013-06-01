@@ -2,15 +2,26 @@ package Bio::EnsEMBL::Hive::Limiter;
 
 
 sub new {
-    my ($class, $available_capacity) = @_;
+    my ($class, $description, $available_capacity) = @_;
 
     my $self = bless {}, $class;
+    $self->description( $description );
     $self->available_capacity( $available_capacity );
 
         # we fix the multiplier at 1 for direct limiters, but expect it to be (re)set later by reciprocal limiters:
     $self->multiplier( 1 );     
 
     return $self;
+}
+
+
+sub description {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{_description} = shift @_;
+    }
+    return $self->{_description};
 }
 
 
