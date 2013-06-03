@@ -28,6 +28,21 @@ use strict;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+
+=head2 param_defaults
+
+    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters.
+
+=cut
+
+sub param_defaults {
+
+    return {
+        'take_time' => 0,   # how much time run() method will spend in sleeping state
+    };
+}
+
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.

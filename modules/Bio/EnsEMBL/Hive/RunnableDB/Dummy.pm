@@ -41,6 +41,20 @@ sub strict_hash_format { # allow this Runnable to parse parameters in its own wa
     return 0;
 }
 
+=head2 param_defaults
+
+    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters.
+
+=cut
+
+sub param_defaults {
+
+    return {
+        'take_time' => 0,   # how much time run() method will spend in sleeping state
+    };
+}
+
+
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
