@@ -7,23 +7,22 @@ Bio::EnsEMBL::Hive::RunnableDB::Dummy
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::Dummy -input_id "{}"
 
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::Dummy -input_id "{take_time=>3}"
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::Dummy -input_id "{take_time=>'rand(3)+1'}"
 
 =head1 DESCRIPTION
 
-A job of 'Bio::EnsEMBL::Hive::RunnableDB::Dummy' analysis does not do any work by itself,
-but it benefits from the side-effects that are associated with having an analysis.
+    A job of 'Bio::EnsEMBL::Hive::RunnableDB::Dummy' analysis does not do any work by itself,
+    but it benefits from the side-effects that are associated with having an analysis.
 
-For example, if a dataflow rule is linked to the analysis then
-every job that is created or flown into this analysis will be dataflown further according to this rule.
+    For example, if a dataflow rule is linked to the analysis then
+    every job that is created or flown into this analysis will be dataflown further according to this rule.
 
-param('take_time'):     How much time to spend sleeping (seconds); useful for testing
+    param('take_time'):     How much time to spend sleeping (floating point seconds);
+                            can be given by a runtime-evaluated formula; useful for testing.
 
 =head1 CONTACT
 
@@ -35,7 +34,11 @@ param('take_time'):     How much time to spend sleeping (seconds); useful for te
 package Bio::EnsEMBL::Hive::RunnableDB::Dummy;
 
 use strict;
+use warnings;
+use Time::HiRes ('usleep');
+
 use base ('Bio::EnsEMBL::Hive::Process');
+
 
 sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
     return 0;
@@ -75,7 +78,12 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    sleep( $self->param('take_time') );
+    my $take_time = eval $self->param('take_time');
+    if($take_time) {
+        print "Sleeping for '$take_time' seconds...\n";
+        usleep( $take_time*1000000 );
+        print "Done.\n";
+    }
 }
 
 =head2 write_output
