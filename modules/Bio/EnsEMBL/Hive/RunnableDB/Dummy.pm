@@ -23,6 +23,8 @@ but it benefits from the side-effects that are associated with having an analysi
 For example, if a dataflow rule is linked to the analysis then
 every job that is created or flown into this analysis will be dataflown further according to this rule.
 
+param('take_time'):     How much time to spend sleeping (seconds); useful for testing
+
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
@@ -52,11 +54,14 @@ sub fetch_input {
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here we simply override this method so that nothing is done.
+                  Since this Runnable is a Dummy, it does nothing. But it can also optionally sleep for param('take_time') seconds.
 
 =cut
 
 sub run {
+    my $self = shift @_;
+
+    sleep( $self->param('take_time') );
 }
 
 =head2 write_output
