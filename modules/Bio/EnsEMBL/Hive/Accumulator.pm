@@ -23,6 +23,7 @@ use strict;
 use Scalar::Util ('weaken');
 
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 sub new {
     my $class = shift @_;
@@ -106,7 +107,7 @@ sub dataflow {
             'receiving_job_id'  => $receiving_job_id,
             'struct_name'       => $struct_name,
             'key_signature'     => $key_signature,
-            'value'             => $output_id->{$struct_name},
+            'value'             => stringify( $output_id->{$struct_name} ),
         };
     }
 

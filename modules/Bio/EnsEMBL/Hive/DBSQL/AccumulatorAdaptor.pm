@@ -23,6 +23,8 @@ package Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
 
 use strict;
 
+use Bio::EnsEMBL::Hive::Utils ('destringify');
+
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
@@ -40,7 +42,9 @@ sub fetch_structures_for_job_id {
 
     my %structures = ();
 
-    ROW: while(my ($struct_name, $key_signature, $value) = $sth->fetchrow() ) {
+    ROW: while(my ($struct_name, $key_signature, $stringified_value) = $sth->fetchrow() ) {
+
+        my $value = destringify($stringified_value);
 
         my $sptr = \$structures{$struct_name};
 
