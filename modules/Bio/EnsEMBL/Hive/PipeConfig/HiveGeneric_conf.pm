@@ -82,6 +82,8 @@ sub default_options {
         'host'                  => 'localhost',
         'pipeline_name'         => 'hive_generic',
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
+        'hive_force_init'       => 0,                   # setting it to 1 will drop the database prior to creation (use with care!)
+
 
         'pipeline_db'   => {
             -host   => $self->o('host'),
@@ -113,6 +115,8 @@ sub pipeline_create_commands {
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.sqlite',
         ]
         : [
+            $self->o('hive_force_init') ? ( 'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'DROP DATABASE IF EXISTS `".$self->o('pipeline_db', '-dbname')."`'" ) : (),
+
             'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o('pipeline_db', '-dbname')."`'",
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
