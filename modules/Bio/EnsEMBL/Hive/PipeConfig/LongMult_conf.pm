@@ -76,7 +76,7 @@ sub default_options {
         'first_mult'    => '9650156169',                    # the actual numbers to be multiplied can also be specified from the command line
         'second_mult'   =>  '327358788',
 
-        'take_time'     => 0,                               # how much time (in seconds) should each job take -- to slow things down
+        'take_time'     => 1,                               # how much time (in seconds) should each job take -- to slow things down
     };
 }
 
@@ -142,7 +142,7 @@ sub pipeline_analyses {
         {   -logic_name => 'take_b_apart',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
-            -analysis_capacity  =>  1,  # use per-analysis limiter
+            -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
                 { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
                 { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
