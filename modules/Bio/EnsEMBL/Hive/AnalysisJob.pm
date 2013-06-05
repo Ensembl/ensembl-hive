@@ -359,6 +359,13 @@ sub dataflow_output_id {
 }
 
 
+sub toString {
+    my $self = shift @_;
+
+    return 'Job '.$self->dbID." input_id='".$self->input_id."', retry=".$self->retry_count;
+}
+
+
 sub print_job {
   my $self = shift;
   my $logic_name = $self->adaptor()

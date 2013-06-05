@@ -259,8 +259,6 @@ sub specialize_new_worker {
             # probably scheduled by beekeeper.pl:
     } elsif( $stats = $self->suggest_analysis_to_specialize_by_rc_id_meadow_type($worker->resource_class_id, $worker->meadow_type) ) {
 
-        print "Queen picked analysis with dbID=".$stats->analysis_id." for the worker\n";
-
         $worker->analysis( undef ); # make sure we reset anything that was there before
         $analysis_id = $stats->analysis_id;
     } else {

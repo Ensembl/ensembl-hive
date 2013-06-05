@@ -166,18 +166,16 @@ sub life_cycle {
 sub enter_status {
     my ($self, $status) = @_;
 
-    my $job     = $self->input_job();
-    my $worker  = $self->worker();
+    my $job = $self->input_job();
 
-    if($self->debug) {
-        print STDERR "\nworker_id=".($worker ? $worker->dbID : '(standalone)').($job ? ', job_id='.$job->dbID : ''). " : $status\n";
-    }
-    if($job) {
-        $job->update_status( $status );
-    }
-    if($worker) {
-        $worker->status( $status );
-        $worker->adaptor->check_in_worker( $worker );
+    $job->update_status( $status );
+
+    my $status_msg  = 'Job '.$job->dbID.' : '.$status;
+
+    if(my $worker = $self->worker) {
+        $worker->enter_status( $status, $status_msg );
+    } elsif($self->debug) {
+        print STDERR "Standalone$status_msg\n";
     }
 }
 
