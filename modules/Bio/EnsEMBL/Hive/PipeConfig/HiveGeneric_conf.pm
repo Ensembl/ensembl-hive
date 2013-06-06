@@ -109,6 +109,8 @@ sub pipeline_create_commands {
 
     return ($self->o($db_conn, '-driver') eq 'sqlite')
         ? [
+            $self->o('hive_force_init') ? ( 'rm -f '.$self->o('pipeline_db', '-dbname') ) : (),
+
                 # standard eHive tables, triggers and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sqlite',
             $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.sqlite' ) : (),
