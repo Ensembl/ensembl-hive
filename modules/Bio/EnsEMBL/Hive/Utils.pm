@@ -88,7 +88,8 @@ sub destringify {
         if($value=~/^'.*'$/
         or $value=~/^".*"$/
         or $value=~/^{.*}$/
-        or $value=~/^\[.*\]$/) {
+        or $value=~/^\[.*\]$/
+        or $value eq 'undef') {
 
             $value = eval($value);
         }
