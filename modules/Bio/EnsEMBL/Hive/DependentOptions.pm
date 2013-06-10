@@ -3,8 +3,9 @@ package Bio::EnsEMBL::Hive::DependentOptions;
 
 use strict;
 use warnings;
-use Data::Dumper;
 use Getopt::Long qw(:config pass_through);
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 
 sub new {
@@ -49,31 +50,31 @@ sub root {      # getter/setter for the root
 }
 
 
-sub fully_substituted_string {
+sub is_fully_substituted_string {
     my $self    = shift @_;
     my $input   = shift @_;
 
-    return defined($input) && $input !~ /#\:.+?\:#/;
+    return (!defined($input) || $input !~ /#\:.+?\:#/);
 }
 
 
-sub fully_substituted_structure {
+sub is_fully_substituted_structure {
     my $self    = shift @_;
     my $input   = shift @_;
 
     unless(my $ref_type = ref($input)) {
 
-        return $self->fully_substituted_string($input);
+        return $self->is_fully_substituted_string($input);
 
     } elsif($ref_type eq 'HASH') {
         foreach my $value (values %$input) {
-            unless($self->fully_substituted_structure($value)) {
+            unless($self->is_fully_substituted_structure($value)) {
                 return 0;
             }
         }
     } elsif($ref_type eq 'ARRAY') {
         foreach my $element (@$input) {
-            unless($self->fully_substituted_structure($element)) {
+            unless($self->is_fully_substituted_structure($element)) {
                 return 0;
             }
         }
@@ -83,10 +84,7 @@ sub fully_substituted_structure {
 
 
 sub hash_leaves {
-    my $self      = shift @_;
-    my $hash_to   = shift @_ || {};
-    my $source    = shift @_; unless(defined($source)) { $source = $self->root; }
-    my $prefix    = shift @_ || '';
+    my ($self, $hash_to, $source, $prefix) = @_;
 
     if(ref($source) eq 'HASH') {
         while(my ($key, $value) = each %$source) {
@@ -101,7 +99,7 @@ sub hash_leaves {
 
             $self->hash_leaves($hash_to, $element, $array_element_prefix);
         }
-    } elsif(!$self->fully_substituted_string($source)) {
+    } elsif(!$self->is_fully_substituted_string($source)) {
         $hash_to->{$prefix} = 1;
     }
 
@@ -120,7 +118,7 @@ sub o {
         push @syll_seen, $option_syll;
 
         if( exists($ptr->{$option_syll})
-        and ((ref($ptr->{$option_syll}) eq 'HASH') or $self->fully_substituted_string( $ptr->{$option_syll} ))
+        and ((ref($ptr->{$option_syll}) eq 'HASH') or $self->is_fully_substituted_string( $ptr->{$option_syll} ))
         ) {
             $ptr = $ptr->{$option_syll};        # just descend one level
         } elsif(@_) {
@@ -139,25 +137,20 @@ sub substitute {
 
     my $ref_type = ref($$ref);
 
-    if(!defined($$ref)) {
-
-        warn "\n\tWARNING: Pipeline parameters cannot take undefined values; forced into 0\n\n";
-        $$ref = 0;
-
-    } elsif(!$ref_type ) {
-        if($$ref =~ /^#\:subst ([^:]+)\:#$/) {      # if the given string is one complete substitution, we don't want to force the output into a string
-            $$ref = $self->o(split/->/,$1);
-        } else {
-            $$ref =~ s{(?:#\:subst (.+?)\:#)}{$self->o(split(/->/,$1))}eg;
-        }
-
-    } elsif($ref_type eq 'HASH') {
+    if($ref_type eq 'HASH') {
         foreach my $value (values %$$ref) {
             $self->substitute( \$value );
         }
     } elsif($ref_type eq 'ARRAY') {
         foreach my $value (@$$ref) {
             $self->substitute( \$value );
+        }
+    } elsif( !$ref_type and defined($$ref) ) {
+
+        if($$ref =~ /^#\:subst ([^:]+)\:#$/) {      # if the given string is one complete substitution, we don't want to force the output into a string
+            $$ref = $self->o(split/->/,$1);
+        } else {
+            $$ref =~ s{(?:#\:subst (.+?)\:#)}{$self->o(split(/->/,$1))}eg;
         }
     }
     return $$ref;
@@ -212,22 +205,23 @@ sub process_options {
                     # it has to be intelligently (recursively, on by-element basis) merged back into the tree under $self->o($key):
                 $self->merge_from_rules( $value, \$self->root->{$key} );
 
-                if($self->fully_substituted_structure($value)) {
-                    # warn "Resolved rule: $key -> ".Dumper($value)."\n";
+                if($self->is_fully_substituted_structure($value)) {
+                    #warn "Resolved rule: $key -> ".stringify($value)."\n";
                 } else {
-                    # warn "Unresolved rule: $key -> ".Dumper($value)."\n";
+                    #warn "Unresolved rule: $key -> ".stringify($value)."\n";
                     $rules_to_go++;
                 }
             }
         }
-        #warn "=======================[$rules_to_go rules to go]=================\n\n";
-        #warn " definitely_used_options{} contains: ".Dumper($definitely_used_options)."\n";
         $attempts--;
+        #warn "=======================[$rules_to_go rules to go; $attempts attempts to go]=================\n\n";
+        #warn " definitely_used_options{} contains: ".stringify($definitely_used_options)."\n";
     } while($rules_to_go and $attempts);
 
     #warn "=======================[out of the substitution loop]=================\n\n";
 
-    my $missing_options = $self->hash_leaves();
+    my $missing_options = $self->hash_leaves( {}, $self->root, '' );
+
     if(scalar(keys %$missing_options)) {
         warn "Missing or incomplete definition of the following options:\n";
         foreach my $key (sort keys %$missing_options) {
