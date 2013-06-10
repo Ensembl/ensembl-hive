@@ -88,13 +88,19 @@ sub main {
         # to avoid alternative "spellings" of the same input_id hash:
     $input_id = stringify( destringify( $input_id ) ); 
 
-    Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
+    if( my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
         -analysis       => $analysis,
         -input_id       => $input_id,
         -prev_job_id    => undef,       # this job has been created by the initialization script, not by another job
-    ) or die "Could not create job '$input_id' (it could have been there already)\n";
+    ) ) {
 
-    warn "Job '$input_id' in analysis '".$analysis->logic_name."'(".$analysis->dbID.") has been created\n";
+        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
+
+    } else {
+
+        warn "Could not create job '$input_id' (it may have been created already)\n";
+
+    }
 }
 
 main();
