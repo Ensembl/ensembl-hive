@@ -113,7 +113,8 @@ sub _table_info_loader {
     }
     $sth->finish;
 
-    if(($driver eq 'sqlite') and scalar(@primary_key)==1 and (uc($name2type{$primary_key[0]}) eq 'INTEGER') ) {
+    if( ($driver ne 'mysql')
+     and scalar(@primary_key)==1 and (uc($name2type{$primary_key[0]}) eq 'INTEGER') ) {
         $autoinc_id = $primary_key[0];
     }
 
@@ -291,13 +292,15 @@ sub store {
     return unless(scalar(@$objects));
 
     my $table_name              = $self->table_name();
-    my $all_storable_columns    = [ keys %{ $self->column_set() } ];
     my $autoinc_id              = $self->autoinc_id();
+    my $all_storable_columns    = [ grep { $_ ne $autoinc_id } keys %{ $self->column_set() } ];
     my $driver                  = $self->dbc->driver();
     my $insertion_method        = $self->insertion_method;  # INSERT, INSERT_IGNORE or REPLACE
     $insertion_method           =~ s/_/ /g;
     if($driver eq 'sqlite') {
         $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
+    } elsif($driver eq 'pgsql') {   # FIXME! temporary hack
+        $insertion_method = 'INSERT';
     }
 
     my %hashed_sth = ();  # do not prepare statements until there is a real need
@@ -309,6 +312,7 @@ sub store {
             $self->mark_stored($object, $present);
         } else {
             my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? ( [ sort keys %$object ], join(', ', sort keys %$object) ) : ($all_storable_columns, '*all*');
+            # print "COLUMN_KEY='$column_key'\n";
 
             my $this_sth;
 
@@ -328,7 +332,8 @@ sub store {
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or die "Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')';
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
-                $self->mark_stored($object, $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id) );
+                my $liid = $autoinc_id && $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id);
+                $self->mark_stored($object, $liid );
                 ++$stored_this_time;
             }
         }

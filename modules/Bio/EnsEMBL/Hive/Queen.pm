@@ -466,10 +466,12 @@ sub fetch_overdue_workers {
 
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
-    my $constraint = "status!='DEAD' AND ".
-                    ( ($self->dbc->driver eq 'sqlite')
-                        ? "(strftime('%s','now')-strftime('%s',last_check_in))>$overdue_secs"
-                        : "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in))>$overdue_secs");
+    my $constraint = "status!='DEAD' AND ".{
+            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in)) > $overdue_secs",
+            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',last_check_in)) > $overdue_secs",
+            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - last_check_in) > $overdue_secs",
+        }->{ $self->dbc->driver };
+
     return $self->fetch_all( $constraint );
 }
 
@@ -744,9 +746,9 @@ sub print_running_worker_counts {
     my $sql = qq{
         SELECT logic_name, count(*)
         FROM worker w
-        JOIN analysis_base USING(analysis_id)
+        JOIN analysis_base a USING(analysis_id)
         WHERE w.status!='DEAD'
-        GROUP BY analysis_id
+        GROUP BY a.analysis_id
     };
 
     my $total_workers = 0;
@@ -775,23 +777,23 @@ sub print_running_worker_counts {
 =cut
 
 sub monitor {
-  my $self = shift;
-  my $sql = qq{
-      INSERT INTO monitor
-      SELECT
-          CURRENT_TIMESTAMP,
-          count(*),
-  }. ( ($self->dbc->driver eq 'sqlite')
-        ? qq{ sum(work_done/(strftime('%s','now')-strftime('%s',born))),
-              sum(work_done/(strftime('%s','now')-strftime('%s',born)))/count(*), }
-        : qq{ sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born))),
-              sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), }
-  ). qq{
-          group_concat(DISTINCT logic_name)
-      FROM worker w
-      LEFT JOIN analysis_base USING (analysis_id)
-      WHERE w.status!='DEAD'
-  };
+    my $self = shift;
+    my $sql = qq{
+        INSERT INTO monitor
+        SELECT CURRENT_TIMESTAMP, count(*),
+    } . {
+        'mysql'     =>  qq{ sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born))),
+                            sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), },
+        'sqlite'    =>  qq{ sum(work_done/(strftime('%s','now')-strftime('%s',born))),
+                            sum(work_done/(strftime('%s','now')-strftime('%s',born)))/count(*), },
+        'pgsql'     =>  qq{ sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born))),
+                            sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born)))/count(*), },
+    }->{ $self->dbc->driver }. qq{
+        group_concat(DISTINCT logic_name)
+        FROM worker w
+        LEFT JOIN analysis_base USING (analysis_id)
+        WHERE w.status!='DEAD'
+    };
       
   my $sth = $self->prepare($sql);
   $sth->execute();

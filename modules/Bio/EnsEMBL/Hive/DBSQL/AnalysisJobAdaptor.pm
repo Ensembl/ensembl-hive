@@ -104,7 +104,7 @@ sub CreateNewJob {
 
   my $dba = $analysis->adaptor->db;
   my $dbc = $dba->dbc;
-  my $insertion_method  = ($dbc->driver eq 'sqlite') ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+  my $insertion_method  = { 'mysql' => 'INSERT IGNORE', 'sqlite' => 'INSERT OR IGNORE', 'pgsql' => 'INSERT' }->{ $dbc->driver };
   my $job_status        = ($semaphore_count>0) ? 'SEMAPHORED' : 'READY';
   my $analysis_id       = $analysis->dbID();
 
@@ -137,10 +137,10 @@ sub CreateNewJob {
           .(($job_status eq 'READY')
                   ? " ,ready_job_count=ready_job_count+1 "
                   : " ,semaphored_job_count=semaphored_job_count+1 "
-          ).qq{
-                  ,status = (CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END)
-             WHERE analysis_id=$analysis_id
-          });
+          ).(($dbc->driver eq 'pgsql')
+          ? " ,status = CAST(CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END AS analysis_status) "
+          : " ,status =      CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END "
+          )." WHERE analysis_id=$analysis_id ");
       }
   } else {  #   if we got 0E0, it means "ignored insert collision" (job created previously), so we simply return an undef and deal with it outside
   }
@@ -373,9 +373,11 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         # NB: BOTH THE ORDER OF UPDATES AND EXACT WORDING IS ESSENTIAL FOR SYNCHRONOUS ATOMIC OPERATION,
         #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
         #
-    my $sql = qq{
-        UPDATE job
-        SET status=(CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END),
+    my $sql = "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+        ? "SET status = CAST(CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status), "
+        : "SET status =      CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END, "
+        ).qq{
             semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
     };
@@ -478,7 +480,7 @@ sub reset_or_grab_job_by_dbID {
         # Note: the order of the fields being updated is critical!
     my $sql = qq{
         UPDATE job
-           SET retry_count = (CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END)
+           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
              , status=?
              , worker_id=?
          WHERE job_id=?
@@ -524,15 +526,15 @@ sub grab_jobs_for_worker {
   my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $how_many_this_batch";
   my $any_selection_sql     = $selection_start_sql . " LIMIT $how_many_this_batch";
 
-  if($self->dbc->driver eq 'sqlite') {
-            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-      if( (my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) == 0 ) {
-            $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
-      }
-  } else {
+  if($self->dbc->driver eq 'mysql') {
             # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
       if( (my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) == 0 ) {
             $claim_count = $self->dbc->do( $update_sql . $any_selection_sql );
+      }
+  } else {
+            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
+      if( (my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) == 0 ) {
+            $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
       }
   }
 
@@ -621,9 +623,12 @@ sub release_and_age_job {
         #
         # FIXME: would it be possible to retain worker_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
         #
-    $self->dbc->do( qq{
-        UPDATE job
-           SET status=(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END),
+    $self->dbc->do( 
+        "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "SET status = CAST(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS jw_status), "
+            : "SET status =      CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END, "
+         ).qq{
                retry_count=retry_count+1,
                runtime_msec=$runtime_msec
          WHERE job_id=$job_id

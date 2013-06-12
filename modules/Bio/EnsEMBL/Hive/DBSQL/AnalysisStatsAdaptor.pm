@@ -92,7 +92,7 @@ sub fetch_all_by_suitability_rc_id_meadow_type {
     my $primary_results = $self->_generic_fetch(
         "ast.num_required_workers>0 AND ast.status in ('READY', 'WORKING')" ,
         $join ,
-        'ORDER BY a.priority DESC, ' . ( ($self->dbc->driver eq 'sqlite') ? 'RANDOM()' : 'RAND()' ),
+        'ORDER BY a.priority DESC, ' . ( ($self->dbc->driver eq 'mysql') ? 'RAND()' : 'RANDOM()' ),
     );
 
         # the ones that may have work to do after a sync:
@@ -425,10 +425,13 @@ sub _columns {
                     ast.sync_lock
                    );
 
-  push @columns , ($self->dbc->driver eq 'sqlite')
-                    ? "strftime('%s','now')-strftime('%s',ast.last_update) seconds_since_last_update "
-                    : "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ";
-  return @columns;            
+    push @columns, {
+            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(ast.last_update) seconds_since_last_update ",
+            'sqlite'    => "strftime('%s','now')-strftime('%s',ast.last_update) seconds_since_last_update ",
+            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - ast.last_update) seconds_since_last_update ",
+        }->{ $self->dbc->driver };
+
+    return @columns;            
 }
 
 sub _objs_from_sth {

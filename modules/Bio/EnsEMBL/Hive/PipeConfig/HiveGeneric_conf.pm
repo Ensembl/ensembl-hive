@@ -107,26 +107,34 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
-    return ($self->o($db_conn, '-driver') eq 'sqlite')
-        ? [
-            $self->o('hive_force_init') ? ( 'rm -f '.$self->o('pipeline_db', '-dbname') ) : (),
+    return {
+        'sqlite' => [
+            $self->o('hive_force_init') ? ( 'rm -f '.$self->o($db_conn, '-dbname') ) : (),
 
                 # standard eHive tables, triggers and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sqlite',
             $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.sqlite' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.sqlite',
-        ]
-        : [
-            $self->o('hive_force_init') ? ( 'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'DROP DATABASE IF EXISTS `".$self->o('pipeline_db', '-dbname')."`'" ) : (),
+        ],
+        'mysql' => [
+            $self->o('hive_force_init') ? ( 'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'DROP DATABASE IF EXISTS `".$self->o($db_conn, '-dbname')."`'" ) : (),
 
-            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o('pipeline_db', '-dbname')."`'",
+            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o($db_conn, '-dbname')."`'",
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sql',
             $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.mysql' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.mysql',
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.mysql',
-        ];
+        ],
+        'pgsql' => [
+            $self->o('hive_force_init') ? ( $self->db_execute_command($db_conn, 'DROP DATABASE IF EXISTS '.$self->o($db_conn, '-dbname'), 0 ) ) : (),
+
+            $self->db_execute_command($db_conn, 'CREATE DATABASE '.$self->o($db_conn, '-dbname'), 0 ),
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.pgsql',
+        ],
+    }->{ $self->o($db_conn, '-driver') };
+
 }
 
 
@@ -235,9 +243,11 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 sub db_connect_command {
     my ($self, $db_conn) = @_;
 
-    return ($self->o($db_conn, '-driver') eq 'sqlite')
-        ? 'sqlite3 '.$self->o($db_conn, '-dbname')
-        : 'mysql '.$self->dbconn_2_mysql($db_conn, 1);
+    return {
+        'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname'),
+        'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, 1),
+        'pgsql'     => 'psql '.$self->o($db_conn, '-dbname'),
+    }->{ $self->o($db_conn, '-driver') };
 }
 
 
@@ -248,11 +258,15 @@ sub db_connect_command {
 =cut
 
 sub db_execute_command {
-    my ($self, $db_conn, $sql_command) = @_;
+    my ($self, $db_conn, $sql_command, $with_db) = @_;
 
-    return ($self->o($db_conn, '-driver') eq 'sqlite')
-        ? 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'"
-        : 'mysql '.$self->dbconn_2_mysql($db_conn, 1)." -e '$sql_command'";
+    $with_db = 1 unless(defined($with_db));
+
+    return {
+        'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'",      # can't imagine an sqlite3 cmd without dbname
+        'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, $with_db)." -e '$sql_command'",
+        'pgsql'     => "psql --command='$sql_command' ".($with_db ? $self->o($db_conn, '-dbname') : ''),
+    }->{ $self->o($db_conn, '-driver') };
 }
 
 
