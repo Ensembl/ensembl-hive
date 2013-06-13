@@ -327,7 +327,7 @@ CREATE TABLE accu (
     receiving_job_id        INTEGER     NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
-    value                   VARCHAR(255),
+    value                   TEXT,
 
     KEY accu_sending_idx (sending_job_id),
     KEY accu_receiving_idx (receiving_job_id)

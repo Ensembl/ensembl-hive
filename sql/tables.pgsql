@@ -332,7 +332,7 @@ CREATE TABLE accu (
     receiving_job_id        INTEGER     NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
-    value                   VARCHAR(255)
+    value                   TEXT
 );
 CREATE INDEX ON accu (sending_job_id);
 CREATE INDEX ON accu (receiving_job_id);
