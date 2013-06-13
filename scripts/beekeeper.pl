@@ -229,7 +229,9 @@ sub main {
         }
     }
 
-    my $analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+    my $analysis = $run_job_id
+        ? $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID( $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis_id )
+        : $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
@@ -305,10 +307,10 @@ sub generate_worker_cmd {
     }
 
         # special task:
-    if ($run_analysis) {
-        $worker_cmd .= " -logic_name ".$run_analysis->logic_name;
-    } elsif ($run_job_id) {
+    if ($run_job_id) {
         $worker_cmd .= " -job_id $run_job_id";
+    } elsif ($run_analysis) {
+        $worker_cmd .= " -logic_name ".$run_analysis->logic_name;
     }
 
     if (defined($force)) {
