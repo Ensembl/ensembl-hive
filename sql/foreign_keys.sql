@@ -1,4 +1,9 @@
-# introducing the FOREIGN KEY constraints as a separate file (so that they could be optionally switched on or off):
+/*
+    FOREIGN KEY constraints are listed in a separate file so that they could be optionally switched on or off.
+
+    A nice surprise is that the syntax for defining them is the same for MySQL and PostgreSQL.
+*/
+
 
 ALTER TABLE worker                  ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id)          REFERENCES analysis_base(analysis_id);
