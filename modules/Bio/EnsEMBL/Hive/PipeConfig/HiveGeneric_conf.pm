@@ -122,7 +122,7 @@ sub pipeline_create_commands {
             'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o($db_conn, '-dbname')."`'",
 
                 # standard eHive tables, triggers, foreign_keys and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sql',
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.mysql',
             $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.mysql' ) : (),
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.mysql',
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.mysql',
