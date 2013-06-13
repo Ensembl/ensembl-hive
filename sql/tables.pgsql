@@ -16,7 +16,6 @@
 @colour #C70C09
 */
 
-
 /**
 @table  analysis_base
 
@@ -40,19 +39,18 @@
 */
 
 CREATE TABLE analysis_base (
-    analysis_id             SERIAL NOT NULL,
+    analysis_id             SERIAL PRIMARY KEY,
     logic_name              VARCHAR(40) NOT NULL,
     module                  VARCHAR(255),
     parameters              TEXT,
-    resource_class_id       INTEGER NOT NULL,
-    failed_job_tolerance    INTEGER DEFAULT 0 NOT NULL,
-    max_retry_count         INTEGER DEFAULT 3 NOT NULL,
-    can_be_empty            SMALLINT DEFAULT 0 NOT NULL,
-    priority                SMALLINT DEFAULT 0 NOT NULL,
-    meadow_type             VARCHAR(40) DEFAULT NULL,
-    analysis_capacity       INTEGER DEFAULT NULL,
+    resource_class_id       INTEGER     NOT NULL,
+    failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
+    max_retry_count         INTEGER     NOT NULL DEFAULT 3,
+    can_be_empty            SMALLINT    NOT NULL DEFAULT 0,
+    priority                SMALLINT    NOT NULL DEFAULT 0,
+    meadow_type             VARCHAR(40)          DEFAULT NULL,
+    analysis_capacity       INTEGER              DEFAULT NULL,
 
-    PRIMARY KEY (analysis_id),
     UNIQUE  (logic_name)
 );
 
@@ -97,33 +95,32 @@ CREATE TABLE analysis_base (
 CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED');
 CREATE TYPE analysis_behaviour AS ENUM ('STATIC', 'DYNAMIC');
 CREATE TABLE analysis_stats (
-    analysis_id             INTEGER NOT NULL,
-    batch_size              INTEGER DEFAULT 1 NOT NULL,
-    hive_capacity           INTEGER DEFAULT NULL,
-    status                  analysis_status DEFAULT 'EMPTY' NOT NULL,
+    analysis_id             INTEGER     NOT NULL,
+    batch_size              INTEGER     NOT NULL DEFAULT 1,
+    hive_capacity           INTEGER              DEFAULT NULL,
+    status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
-    total_job_count         INTEGER DEFAULT 0 NOT NULL,
-    semaphored_job_count    INTEGER DEFAULT 0 NOT NULL,
-    ready_job_count         INTEGER DEFAULT 0 NOT NULL,
-    done_job_count          INTEGER DEFAULT 0 NOT NULL,
-    failed_job_count        INTEGER DEFAULT 0 NOT NULL,
+    total_job_count         INTEGER     NOT NULL DEFAULT 0,
+    semaphored_job_count    INTEGER     NOT NULL DEFAULT 0,
+    ready_job_count         INTEGER     NOT NULL DEFAULT 0,
+    done_job_count          INTEGER     NOT NULL DEFAULT 0,
+    failed_job_count        INTEGER     NOT NULL DEFAULT 0,
+    num_running_workers     INTEGER     NOT NULL DEFAULT 0,
+    num_required_workers    INTEGER     NOT NULL DEFAULT 0,
 
-    num_running_workers     INTEGER DEFAULT 0 NOT NULL,
-    num_required_workers    INTEGER DEFAULT 0 NOT NULL,
+    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
+    input_capacity          INTEGER     NOT NULL DEFAULT 4,
+    output_capacity         INTEGER     NOT NULL DEFAULT 4,
 
-    behaviour               analysis_behaviour DEFAULT 'STATIC' NOT NULL,
-    input_capacity          INTEGER DEFAULT 4 NOT NULL,
-    output_capacity         INTEGER DEFAULT 4 NOT NULL,
+    avg_msec_per_job        INTEGER              DEFAULT NULL,
+    avg_input_msec_per_job  INTEGER              DEFAULT NULL,
+    avg_run_msec_per_job    INTEGER              DEFAULT NULL,
+    avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
-    avg_msec_per_job        INTEGER DEFAULT NULL,
-    avg_input_msec_per_job  INTEGER DEFAULT NULL,
-    avg_run_msec_per_job    INTEGER DEFAULT NULL,
-    avg_output_msec_per_job INTEGER DEFAULT NULL,
+    last_update             TIMESTAMP            DEFAULT NULL,
+    sync_lock               SMALLINT    NOT NULL DEFAULT 0,
 
-    last_update             TIMESTAMP NOT NULL DEFAULT '0001-01-01 00:00:00',
-    sync_lock               INTEGER DEFAULT 0 NOT NULL,
-
-    PRIMARY KEY   (analysis_id)
+    PRIMARY KEY (analysis_id)
 );
 
 
@@ -137,9 +134,9 @@ CREATE TABLE analysis_stats (
         (full network address of an analysis).
         The only requirement is that there are rows in the job, analysis, dataflow_rule,
         and worker tables so that the following join works on the same database 
-           WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
-           AND   analysis.analysis_id = job.analysis_id
-           AND   analysis.analysis_id = worker.analysis_id
+            WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
+            AND   analysis.analysis_id = job.analysis_id
+            AND   analysis.analysis_id = worker.analysis_id
         These are the rules used to create entries in the job table where the
         input_id (control data) is passed from one analysis to the next to define work.
         The analysis table will be extended so that it can specify different read and write
@@ -154,14 +151,13 @@ CREATE TABLE analysis_stats (
 */
 
 CREATE TABLE dataflow_rule (
-    dataflow_rule_id    SERIAL NOT NULL,
-    from_analysis_id    INTEGER NOT NULL,
-    branch_code         INTEGER DEFAULT 1 NOT NULL,
-    funnel_dataflow_rule_id  INTEGER DEFAULT NULL,
-    to_analysis_url     VARCHAR(255) DEFAULT '' NOT NULL,
-    input_id_template   TEXT DEFAULT NULL,
+    dataflow_rule_id        SERIAL PRIMARY KEY,
+    from_analysis_id        INTEGER     NOT NULL,
+    branch_code             INTEGER     NOT NULL DEFAULT 1,
+    funnel_dataflow_rule_id INTEGER              DEFAULT NULL,
+    to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',
+    input_id_template       TEXT                 DEFAULT NULL,
 
-    PRIMARY KEY (dataflow_rule_id),
     UNIQUE (from_analysis_id, branch_code, funnel_dataflow_rule_id, to_analysis_url, input_id_template)
 );
 
@@ -183,8 +179,8 @@ CREATE TABLE dataflow_rule (
 */
 
 CREATE TABLE analysis_ctrl_rule (
-    condition_analysis_url     VARCHAR(255) DEFAULT '' NOT NULL,
-    ctrled_analysis_id         INTEGER NOT NULL,
+    condition_analysis_url  VARCHAR(255) NOT NULL DEFAULT '',
+    ctrled_analysis_id      INTEGER     NOT NULL,
 
     UNIQUE (condition_analysis_url, ctrled_analysis_id)
 );
@@ -207,10 +203,9 @@ CREATE TABLE analysis_ctrl_rule (
 */
 
 CREATE TABLE resource_class (
-    resource_class_id   SERIAL,
-    name                VARCHAR(40) NOT NULL,
+    resource_class_id       SERIAL PRIMARY KEY,
+    name                    VARCHAR(40) NOT NULL,
 
-    PRIMARY KEY(resource_class_id),
     UNIQUE  (name)
 );
 
@@ -228,9 +223,9 @@ CREATE TABLE resource_class (
 */
 
 CREATE TABLE resource_description (
-    resource_class_id     INTEGER NOT NULL,
-    meadow_type           VARCHAR(40) NOT NULL,
-    parameters            VARCHAR(255) DEFAULT '' NOT NULL,
+    resource_class_id       INTEGER     NOT NULL,
+    meadow_type             VARCHAR(40) NOT NULL,
+    parameters              VARCHAR(255) NOT NULL DEFAULT '',
 
     PRIMARY KEY(resource_class_id, meadow_type)
 );
@@ -258,7 +253,7 @@ CREATE TABLE resource_description (
 @column worker_id               link to worker table to define which worker claimed this job
 @column status                  state the job is in
 @column retry_count             number times job had to be reset when worker failed to run it
-@column completed               datetime when job was completed
+@column completed               when the job was completed
 @column runtime_msec            how long did it take to execute the job (or until the moment it failed)
 @column query_count             how many SQL queries were run during this job
 @column semaphore_count         if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".
@@ -269,21 +264,20 @@ CREATE TABLE resource_description (
 CREATE TYPE jw_status AS ENUM ('UNKNOWN','SPECIALIZATION','COMPILATION','SEMAPHORED','READY','CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON','DEAD');
 
 CREATE TABLE job (
-    job_id                    SERIAL NOT NULL,
-    prev_job_id               INTEGER DEFAULT NULL,  -- the job that created this one using a dataflow rule
-    analysis_id               INTEGER NOT NULL,
-    input_id                  CHAR(255) NOT NULL,
-    worker_id                 INTEGER DEFAULT NULL,
-    status                    jw_status DEFAULT 'READY' NOT NULL,
-    retry_count               INTEGER DEFAULT 0 NOT NULL,
-    completed                 TIMESTAMP DEFAULT NULL,
-    runtime_msec              INTEGER DEFAULT NULL,
-    query_count               INTEGER DEFAULT NULL,
+    job_id                  SERIAL PRIMARY KEY,
+    prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
+    analysis_id             INTEGER     NOT NULL,
+    input_id                CHAR(255)   NOT NULL,
+    worker_id               INTEGER              DEFAULT NULL,
+    status                  jw_status   NOT NULL DEFAULT 'READY',
+    retry_count             INTEGER     NOT NULL DEFAULT 0,
+    completed               TIMESTAMP            DEFAULT NULL,
+    runtime_msec            INTEGER              DEFAULT NULL,
+    query_count             INTEGER              DEFAULT NULL,
 
-    semaphore_count           INTEGER NOT NULL DEFAULT 0,
-    semaphored_job_id         INTEGER DEFAULT NULL,
+    semaphore_count         INTEGER     NOT NULL DEFAULT 0,
+    semaphored_job_id       INTEGER              DEFAULT NULL,
 
-    PRIMARY KEY (job_id),
     UNIQUE (input_id, analysis_id)                      -- to avoid repeating tasks
 );
 CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
@@ -308,9 +302,9 @@ CREATE INDEX ON job (worker_id, status);                -- for fetching and rele
 */
 
 CREATE TABLE job_file (
-    job_id                  INTEGER NOT NULL,
-    retry                   INTEGER NOT NULL,
-    worker_id               INTEGER NOT NULL,
+    job_id                  INTEGER     NOT NULL,
+    retry                   INTEGER     NOT NULL,
+    worker_id               INTEGER     NOT NULL,
     stdout_file             VARCHAR(255),
     stderr_file             VARCHAR(255),
 
@@ -335,11 +329,13 @@ CREATE INDEX ON job_file (worker_id);
 
 CREATE TABLE accu (
     sending_job_id          INTEGER,
-    receiving_job_id        INTEGER NOT NULL,
+    receiving_job_id        INTEGER     NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
     value                   VARCHAR(255)
 );
+CREATE INDEX ON accu (sending_job_id);
+CREATE INDEX ON accu (receiving_job_id);
 
 
 /**
@@ -357,10 +353,8 @@ CREATE TABLE accu (
 */
 
 CREATE TABLE analysis_data (
-    analysis_data_id  SERIAL NOT NULL,
-    data              TEXT,
-
-    PRIMARY KEY (analysis_data_id)
+    analysis_data_id        SERIAL PRIMARY KEY,
+    data                    TEXT
 );
 CREATE INDEX ON analysis_data (data);
 
@@ -374,23 +368,22 @@ CREATE INDEX ON analysis_data (data);
         It is created here with the 'IF NOT EXISTS' option to avoid a potential clash
          if we are dealing with core-hive hybrid that is created in the wrong order.
         At the moment meta table is used
-                (1) for compatibility with the Core API ('schema_version'),
-                (2) to keep some Hive-specific meta-information ('pipeline_name') and
-                (3) to keep pipeline-wide parameters.
+            (1) for compatibility with the Core API ('schema_version'),
+            (2) to keep some Hive-specific meta-information ('pipeline_name') and
+            (3) to keep pipeline-wide parameters.
 
-@column meta_id                 auto-incrementing primary key, not really used per se
-@column species_id              always 1, kept for compatibility with the Core API
-@column meta_key                the KEY of KEY-VALUE pairs
-@column meta_value              the VALUE of KEY-VALUE pairs
+@column meta_id         auto-incrementing primary key, not really used per se
+@column species_id      always 1, kept for compatibility with the Core API
+@column meta_key        the KEY of KEY-VALUE pairs
+@column meta_value      the VALUE of KEY-VALUE pairs
 */
 
 CREATE TABLE IF NOT EXISTS meta (
-    meta_id                     SERIAL NOT NULL,
-    species_id                  INTEGER DEFAULT 1,
-    meta_key                    VARCHAR(40) NOT NULL,
-    meta_value                  TEXT NOT NULL,
+    meta_id                 SERIAL PRIMARY KEY,
+    species_id              INTEGER              DEFAULT 1,
+    meta_key                VARCHAR(40) NOT NULL,
+    meta_value              TEXT        NOT NULL,
 
-    PRIMARY KEY (meta_id),
     UNIQUE (species_id, meta_key, meta_value)
 );
 CREATE INDEX ON meta (species_id, meta_value);
@@ -411,41 +404,39 @@ CREATE INDEX ON meta (species_id, meta_value);
         so that there is only one instance of a Worker object in the database.
         As Workers live and do work, they update this table, and when they die they update again.
 
-@column worker_id               unique ID of the Worker
-@column meadow_type             type of the Meadow it is running on
-@column meadow_name             name of the Meadow it is running on (for 'LOCAL' type is the same as host)
-@column host                    execution host name
-@column process_id              identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
-@column resource_class_id       links to Worker's resource class
-@column analysis_id             Analysis the Worker is specified into
-@column work_done               how many jobs the Worker has completed successfully
-@column status                  current status of the Worker
-@column born                    when the Worker process was started
-@column last_check_in           when the Worker last checked into the database
-@column died                    if defined, when the Worker died (or its premature death was first detected by GC)
-@column cause_of_death          if defined, why did the Worker exit (or why it was killed)
-@column log_dir                 if defined, a filesystem directory where this Worker's output is logged
+@column worker_id           unique ID of the Worker
+@column meadow_type         type of the Meadow it is running on
+@column meadow_name         name of the Meadow it is running on (for 'LOCAL' type is the same as host)
+@column host                execution host name
+@column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
+@column resource_class_id   links to Worker's resource class
+@column analysis_id         Analysis the Worker is specified into
+@column work_done           how many jobs the Worker has completed successfully
+@column status              current status of the Worker
+@column born                when the Worker process was started
+@column last_check_in       when the Worker last checked into the database
+@column died                if defined, when the Worker died (or its premature death was first detected by GC)
+@column cause_of_death      if defined, why did the Worker exit (or why it was killed)
+@column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
 
 CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
 CREATE TABLE worker (
-    worker_id           SERIAL NOT NULL,
-    meadow_type         VARCHAR(40) NOT NULL,
-    meadow_name         VARCHAR(40) NOT NULL,
-    host	            VARCHAR(40) NOT NULL,
-    process_id          VARCHAR(40) NOT NULL,
-    resource_class_id   INTEGER DEFAULT NULL,
+    worker_id               SERIAL PRIMARY KEY,
+    meadow_type             VARCHAR(40) NOT NULL,
+    meadow_name             VARCHAR(40) NOT NULL,
+    host                    VARCHAR(40) NOT NULL,
+    process_id              VARCHAR(40) NOT NULL,
+    resource_class_id       INTEGER              DEFAULT NULL,
 
-    analysis_id         INTEGER DEFAULT NULL,
-    work_done           INTEGER DEFAULT 0 NOT NULL,
-    status              jw_status DEFAULT 'READY' NOT NULL,
-    born	            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_check_in       TIMESTAMP NOT NULL,
-    died                TIMESTAMP DEFAULT NULL,
-    cause_of_death      worker_cod DEFAULT NULL,
-    log_dir             VARCHAR(255) DEFAULT NULL,
-
-    PRIMARY KEY (worker_id)
+    analysis_id             INTEGER              DEFAULT NULL,
+    work_done               INTEGER     NOT NULL DEFAULT 0,
+    status                  jw_status   NOT NULL DEFAULT 'READY',
+    born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_check_in           TIMESTAMP   NOT NULL,
+    died                    TIMESTAMP            DEFAULT NULL,
+    cause_of_death          worker_cod           DEFAULT NULL,
+    log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX ON worker (analysis_id, status);
 
@@ -476,16 +467,15 @@ CREATE INDEX ON worker (analysis_id, status);
 */
 
 CREATE TABLE log_message (
-    log_message_id            SERIAL NOT NULL,
-    job_id                    INTEGER DEFAULT NULL,
-    worker_id                 INTEGER NOT NULL,
-    time                      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    retry                     INTEGER DEFAULT NULL,
-    status                    jw_status DEFAULT 'UNKNOWN',
-    msg                       TEXT,
-    is_error                  SMALLINT,
+    log_message_id          SERIAL PRIMARY KEY,
+    job_id                  INTEGER              DEFAULT NULL,
+    worker_id               INTEGER     NOT NULL,
+    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    retry                   INTEGER              DEFAULT NULL,
+    status                  jw_status            DEFAULT 'UNKNOWN',
+    msg                     TEXT,
+    is_error                SMALLINT
 
-    PRIMARY KEY               (log_message_id)
 );
 CREATE INDEX ON log_message (worker_id);
 CREATE INDEX ON log_message (job_id);
@@ -528,33 +518,33 @@ CREATE INDEX ON log_message (job_id);
 */
 
 CREATE TABLE analysis_stats_monitor (
-    time                    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    analysis_id             INTEGER NOT NULL,
-    batch_size              INTEGER DEFAULT 1 NOT NULL,
-    hive_capacity           INTEGER DEFAULT NULL,
-    status                  analysis_status DEFAULT 'EMPTY' NOT NULL,
+    analysis_id             INTEGER     NOT NULL,
+    batch_size              INTEGER     NOT NULL DEFAULT 1,
+    hive_capacity           INTEGER              DEFAULT NULL,
+    status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
-    total_job_count         INTEGER DEFAULT 0 NOT NULL,
-    semaphored_job_count    INTEGER DEFAULT 0 NOT NULL,
-    ready_job_count         INTEGER DEFAULT 0 NOT NULL,
-    done_job_count          INTEGER DEFAULT 0 NOT NULL,
-    failed_job_count        INTEGER DEFAULT 0 NOT NULL,
+    total_job_count         INTEGER     NOT NULL DEFAULT 0,
+    semaphored_job_count    INTEGER     NOT NULL DEFAULT 0,
+    ready_job_count         INTEGER     NOT NULL DEFAULT 0,
+    done_job_count          INTEGER     NOT NULL DEFAULT 0,
+    failed_job_count        INTEGER     NOT NULL DEFAULT 0,
+    num_running_workers     INTEGER     NOT NULL DEFAULT 0,
+    num_required_workers    INTEGER     NOT NULL DEFAULT 0,
 
-    num_running_workers     INTEGER DEFAULT 0 NOT NULL,
-    num_required_workers    INTEGER DEFAULT 0 NOT NULL,
+    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
+    input_capacity          INTEGER     NOT NULL DEFAULT 4,
+    output_capacity         INTEGER     NOT NULL DEFAULT 4,
 
-    behaviour               analysis_behaviour DEFAULT 'STATIC' NOT NULL,
-    input_capacity          INTEGER DEFAULT 4 NOT NULL,
-    output_capacity         INTEGER DEFAULT 4 NOT NULL,
+    avg_msec_per_job        INTEGER              DEFAULT NULL,
+    avg_input_msec_per_job  INTEGER              DEFAULT NULL,
+    avg_run_msec_per_job    INTEGER              DEFAULT NULL,
+    avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
-    avg_msec_per_job        INTEGER DEFAULT NULL,
-    avg_input_msec_per_job  INTEGER DEFAULT NULL,
-    avg_run_msec_per_job    INTEGER DEFAULT NULL,
-    avg_output_msec_per_job INTEGER DEFAULT NULL,
+    last_update             TIMESTAMP            DEFAULT NULL,
+    sync_lock               SMALLINT    NOT NULL DEFAULT 0
 
-    last_update             TIMESTAMP NOT NULL DEFAULT '0001-01-01 00:00:00',
-    sync_lock               INTEGER DEFAULT 0 NOT NULL
 );
 
 
@@ -574,18 +564,15 @@ CREATE TABLE analysis_stats_monitor (
 */
 
 CREATE TABLE monitor (
-    time                  TIMESTAMP NOT NULL DEFAULT '0001-01-01 00:00:00',
-    workers               INTEGER NOT NULL DEFAULT 0,
-    throughput            FLOAT DEFAULT NULL,
-    per_worker            FLOAT DEFAULT NULL,
-    analysis              VARCHAR(255) DEFAULT NULL  -- not just one, but a list of logic_names
+    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    workers                 INTEGER     NOT NULL DEFAULT 0,
+    throughput              FLOAT                DEFAULT NULL,
+    per_worker              FLOAT                DEFAULT NULL,
+    analysis                VARCHAR(255)         DEFAULT NULL   -- not just one, but a list of logic_names
 
 );
 
 
 -- Auto add schema version to database (should be overridden by Compara's table.sql)
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '72');
-
--- drop table accu, analysis_base, analysis_ctrl_rule, analysis_data, analysis_stats, analysis_stats_monitor, dataflow_rule, job, job_file, log_message, meta, monitor, resource_class, resource_description, worker;
--- drop type analysis_behaviour, analysis_status, jw_status, worker_cod;
 
