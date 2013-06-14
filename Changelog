@@ -1,4 +1,52 @@
 
+---------------------[after EnsEMBL rel.72]---------------------------------------------------------------------------
+
+* Fri Jun 14 15:17:45 2013 +0100 | Leo Gordon | PostgreSQL: connection parameters are now supplied on the command line (no need to set PG variables by hand)
+* Thu Jun 13 16:48:01 2013 +0100 | Leo Gordon | given -job_id Scheduler should take the Analysis into account and only submit a Worker for this Analysis
+* Thu Jun 13 16:08:12 2013 +0100 | Leo Gordon | renamed some old patch files so that they would all conform to the same naming format
+* Thu Jun 13 16:02:23 2013 +0100 | Leo Gordon | Adding foreign keys to PostgreSQL schema by reusing the MySQL file (the syntax happens to be exactly the same!)
+* Thu Jun 13 15:50:38 2013 +0100 | Leo Gordon | Rename tables.sql to tables.mysql (less confusion)
+* Thu Jun 13 15:47:15 2013 +0100 | Leo Gordon | allow the accumulated values to be longer than 255 characters
+* Thu Jun 13 15:34:40 2013 +0100 | Leo Gordon | synchronized all 3 schema files
+* Wed Jun 12 12:21:00 2013 +0100 | Leo Gordon | First attempt to support PostgreSQL in eHive. Use with caution.
+* Mon Jun 10 17:00:31 2013 +0100 | Leo Gordon | experimental support for undef values in default_options
+* Mon Jun 10 11:25:36 2013 +0100 | Leo Gordon | make sure both DatabaseDumper.pm and drop_hive_tables() know about the 'accu' table
+* Mon Jun 10 09:54:38 2013 +0100 | Leo Gordon | report job_id of a created job (STDOUT) or warn that it had been created before (STDERR)
+* Thu Jun 6 17:18:11 2013 +0100 | Leo Gordon | sqlite mode now also supports "-hive_force_init 1" flag
+* Thu Jun 6 11:50:40 2013 +0100 | Leo Gordon | bugfix: correct destringification of a single undef on a line
+* Wed Jun 5 17:11:18 2013 +0100 | Leo Gordon | Slow the example down a bit and allow 2 Workers. In "-can_specialize 1" mode the two Workers will complete the whole pipeline.
+* Wed Jun 5 17:08:33 2013 +0100 | Leo Gordon | Improved output to distinguish multiple Workers' output in the same stream
+* Wed Jun 5 11:31:17 2013 +0100 | Leo Gordon | setting "-hive_force_init 1" will cause init_pipeline.pl to drop the database prior to creation (use with care!)
+* Tue Jun 4 17:03:05 2013 +0100 | Leo Gordon | added support for stringification/destringification of accumulated values (an element is allowed to be a complex structure)
+* Mon Jun 3 22:28:28 2013 +0100 | Leo Gordon | now supports sleeping for a floating point seconds; take_time can be given by a runtime-computed formula such as "1+rand(1)/1000"
+* Mon Jun 3 14:12:27 2013 +0100 | Leo Gordon | stop complaining about undefined take_time parameter (set it to 0 by default)
+* Mon Jun 3 14:05:53 2013 +0100 | Leo Gordon | Added optional sleeping functionality to Dummy runnable
+* Mon Jun 3 11:46:27 2013 +0100 | Leo Gordon | a presentation introducing accumulated dataflow concept
+* Sat Jun 1 21:31:34 2013 +0100 | Leo Gordon | added description attribute to Limiter class
+* Thu May 30 16:01:33 2013 +0100 | Leo Gordon | bugfix: both queries modifying semaphore_count are wrapped in protected_prepare_execute
+* Wed May 29 16:13:09 2013 +0100 | Leo Gordon | bugfix: allow #expr(...)expr# to be properly overriding in the templates as well
+* Tue May 28 16:29:23 2013 +0100 | Leo Gordon | Simplified logic to decide whether Scheduler needs a resync. Temporarily ignore limiters and look at the number of workers initially required.
+* Tue May 28 15:13:56 2013 +0100 | Leo Gordon | finally implemented LSF's version of count_running_workers() and a Valley aggregator for all visible meadows
+* Tue May 28 13:09:39 2013 +0100 | Leo Gordon | bugfix: make sure specializing workers wait while their analysis is being sync'ed
+* Tue May 28 12:34:51 2013 +0100 | Leo Gordon | No need to pass $total_workers_to_submit back to beekeeper anymore.
+* Thu May 23 10:10:14 2013 +0100 | Leo Gordon | cosmetic: make it explicit that we are importing rearrange() and throw()
+* Wed May 22 12:43:00 2013 +0100 | Leo Gordon | removed dependency on check_ref and assert_ref
+* Wed May 22 11:13:38 2013 +0100 | Leo Gordon | Hive is no longer directly dependent on BioPerl
+* Thu May 16 16:37:49 2013 +0100 | Leo Gordon | All Hive scripts now detect $::hive_root_dir and use it for setting the @INC so manual setting of PERL5LIB is only needed if using API directly
+* Tue May 14 16:55:38 2013 +0100 | Leo Gordon | make sure beekeeper.pl runs runWorker.pl from its own scripts directory (ignore the one in the path)
+* Tue May 14 16:14:47 2013 +0100 | Leo Gordon | allow the user to choose a particular hive_root_dir (esp. if there are many)
+* Thu May 9 13:55:40 2013 +0100 | Leo Gordon | Copied the @-tag annotation from tables.sql to tables.sqlite. Unlike the original mysql version, the SQLite version gives no warnings when processed by sql2html.pl
+* Fri May 3 14:46:03 2013 +0100 | Leo Gordon | bugfix: some farms have non-alphanumeric characters in their cluster name
+* Wed May 1 11:48:23 2013 +0100 | Leo Gordon | added a new protected_prepare_execute() method to avoid deadlocks and used it twice in AnalysisJobAdaptor, to fix Stephen's deadlocks
+* Wed May 1 11:46:48 2013 +0100 | Leo Gordon | moved Hive's extensions to DBConnection into a separate Hive::DBSQL::DBConnection class
+* Wed May 1 12:03:10 2013 +0100 | Leo Gordon | added a patch to add 'accu' table to an existing database & fixed sqlite schema
+* Tue Apr 30 13:12:33 2013 +0100 | Leo Gordon | updated schema documentation to reflect addition of 'accu' table
+* Tue Apr 30 12:48:09 2013 +0100 | Leo Gordon | added support to generate_graph.pl to show accumulated dataflow on the diagram
+* Tue Apr 30 11:38:44 2013 +0100 | Leo Gordon | bugfix: do not crash on encountering accumulated dataflow (just ignore it for the moment); work correctly in DisplayStretched mode
+* Mon Apr 29 17:12:17 2013 +0100 | Leo Gordon | Modified the LongMult example to use accumulated dataflow
+* Mon Apr 29 17:07:56 2013 +0100 | Leo Gordon | added schema & API support for accumulated dataflow
+* Tue Apr 23 15:35:35 2013 +0100 | Leo Gordon | changed schema version to 72
+
 ---------------------[before EnsEMBL rel.72]---------------------------------------------------------------------------
 
 * Tue Apr 23 14:50:55 2013 +0100 | Leo Gordon | bugfix: only create 'default' resource_class if it was not actually stored in the database
