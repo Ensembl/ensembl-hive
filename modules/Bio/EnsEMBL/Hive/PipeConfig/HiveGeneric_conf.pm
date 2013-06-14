@@ -235,6 +235,21 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 }
 
 
+=head2 dbconn_2_pgsql
+
+    Description : A convenience method used to stringify a connection-parameters hash into a parameter string that pgsql can understand
+
+=cut
+
+sub dbconn_2_pgsql {    # will save you a lot of typing
+    my ($self, $db_conn, $with_db) = @_;
+
+    return '--host='.$self->o($db_conn,'-host').' '
+          .'--port='.$self->o($db_conn,'-port').' '
+          .'--username="'.$self->o($db_conn,'-user').'" '
+          .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
+}
+
 =head2 db_connect_command
 
     Description : A convenience method used to stringify a command to connect to the db OR pipe an sql file into it.
@@ -247,7 +262,7 @@ sub db_connect_command {
     return {
         'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname'),
         'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, 1),
-        'pgsql'     => 'psql '.$self->o($db_conn, '-dbname'),
+        'pgsql'     => 'env PGPASSWORD="'.$self->o($db_conn,'-pass').'" psql '.$self->dbconn_2_pgsql($db_conn, 1),
     }->{ $self->o($db_conn, '-driver') };
 }
 
@@ -266,7 +281,7 @@ sub db_execute_command {
     return {
         'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'",      # can't imagine an sqlite3 cmd without dbname
         'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, $with_db)." -e '$sql_command'",
-        'pgsql'     => "psql --command='$sql_command' ".($with_db ? $self->o($db_conn, '-dbname') : ''),
+        'pgsql'     => 'env PGPASSWORD="'.$self->o($db_conn,'-pass').'" psql '.$self->dbconn_2_pgsql($db_conn, 0)." --command='$sql_command' ".($with_db ? $self->o($db_conn, '-dbname') : ''),
     }->{ $self->o($db_conn, '-driver') };
 }
 
