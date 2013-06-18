@@ -108,6 +108,8 @@ sub CreateNewJob {
   my $job_status        = ($semaphore_count>0) ? 'SEMAPHORED' : 'READY';
   my $analysis_id       = $analysis->dbID();
 
+    $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($semaphored_job_id and ($dbc->driver ne 'sqlite'));
+
   my $sql = qq{$insertion_method INTO job 
               (input_id, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
               VALUES (?,?,?,?,?,?)};
