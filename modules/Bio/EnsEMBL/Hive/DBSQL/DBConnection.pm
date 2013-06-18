@@ -92,7 +92,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         };
         last;
     }
-    die "After $retries retries still in a deadlock: $@" if($@);
+    die "After $retries retries the query '$sql' is still in a deadlock: $@" if($@);
 }
 
 1;
