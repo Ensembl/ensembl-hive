@@ -174,8 +174,10 @@ sub fetch_all {
 
     while(my $hashref = $sth->fetchrow_hashref) {
         my $pptr = \$result_struct;
-        foreach my $syll (@$key_list) {
-            $pptr = \$$pptr->{$hashref->{$syll}};   # using pointer-to-pointer to enforce same-level vivification
+        if($key_list) {
+            foreach my $syll (@$key_list) {
+                $pptr = \$$pptr->{$hashref->{$syll}};   # using pointer-to-pointer to enforce same-level vivification
+            }
         }
         my $object = $value_column
             ? $hashref->{$value_column}
@@ -189,7 +191,7 @@ sub fetch_all {
     $sth->finish;  
 
     unless(defined($result_struct)) {
-        if(scalar(@$key_list)) {
+        if($key_list and scalar(@$key_list)) {
             $result_struct = {};
         } elsif(!$one_per_key) {
             $result_struct = [];
