@@ -313,7 +313,7 @@ sub store {
         if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
             $self->mark_stored($object, $present);
         } else {
-            my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? ( [ sort keys %$object ], join(', ', sort keys %$object) ) : ($all_storable_columns, '*all*');
+            my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? $self->keys_to_columns($object) : ($all_storable_columns, '*all*');
             # print "COLUMN_KEY='$column_key'\n";
 
             my $this_sth;

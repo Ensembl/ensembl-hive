@@ -50,5 +50,13 @@ sub mark_stored {
 }
 
 
+sub keys_to_columns {
+    my ($self, $object) = @_;
+
+    my $sorted_keys = [ sort keys %$object ];
+
+    return ( $sorted_keys, join(', ', @$sorted_keys) );
+}
+
 1;
 
