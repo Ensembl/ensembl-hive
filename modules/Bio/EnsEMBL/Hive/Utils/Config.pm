@@ -5,7 +5,7 @@ use JSON;
 
 sub default_config_files {  # a class method, returns a list
 
-    my $system_config   = $ENV{'ENSEMBL_CVS_ROOT_DIR'}.'/ensembl-hive/hive_config.json';
+    my $system_config   = $::hive_root_dir.'/hive_config.json';
     my $user_config     = $ENV{'HOME'}.'/.hive_config.json';
 
     return ($system_config, (-r $user_config) ? ($user_config) : ());
