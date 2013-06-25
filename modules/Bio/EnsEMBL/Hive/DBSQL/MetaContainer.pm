@@ -10,7 +10,7 @@
 
 =head1 DESCRIPTION
 
-  This module extends EnsEMBL Core's BaseMetaContainer, adding some Hive-specific stuff.
+  This module deals with pipeline_wide_parameters' storage and retrieval, and also stores 'schema_version' for compatibility with Core API
 
 =head1 CONTACT
 
@@ -22,9 +22,22 @@
 package Bio::EnsEMBL::Hive::DBSQL::MetaContainer;
 
 use strict;
-use Bio::EnsEMBL::Hive::Utils ('destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 
-use base ('Bio::EnsEMBL::DBSQL::BaseMetaContainer');
+use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor', 'Bio::EnsEMBL::DBSQL::BaseMetaContainer');
+
+
+sub default_table_name {
+    return 'meta';
+}
+
+
+sub store_pair {
+    my ($self, $meta_key, $meta_value) = @_;
+
+    return $self->store( { 'meta_key' => $meta_key, 'meta_value' => stringify( $meta_value ), 'species_id' => undef } );
+}
+
 
 =head2 get_param_hash
 
@@ -35,20 +48,10 @@ use base ('Bio::EnsEMBL::DBSQL::BaseMetaContainer');
 sub get_param_hash {
     my $self = shift @_;
 
-    my %meta_params_hash = ();
+    my $original_value      = $self->fetch_all_HASHED_FROM_meta_key_TO_meta_value();
+    my %destringified_hash  = map { $_, destringify($original_value->{$_}[0]) } keys %$original_value;
 
-        # Here we are assuming that meta_keys are unique.
-        # If they are not, you'll be getting the value with the highest meta_id.
-        #
-    my $sth = $self->prepare("SELECT meta_key, meta_value FROM meta ORDER BY meta_id");
-    $sth->execute();
-    while (my ($meta_key, $meta_value)=$sth->fetchrow_array()) {
-
-        $meta_params_hash{$meta_key} = destringify($meta_value);
-    }
-    $sth->finish();
-
-    return \%meta_params_hash;
+    return \%destringified_hash;
 }
 
 1;

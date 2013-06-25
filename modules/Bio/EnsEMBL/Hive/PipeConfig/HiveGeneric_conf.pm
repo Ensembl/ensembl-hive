@@ -379,9 +379,9 @@ sub run {
         my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
         while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
             if($analysis_topup) {
-                $meta_container->delete_key($meta_key);
+                $meta_container->remove_all_by_meta_key($meta_key);
             }
-            $meta_container->store_key_value($meta_key, stringify($meta_value));
+            $meta_container->store_pair($meta_key, $meta_value);
         }
         warn "Done.\n\n";
 
