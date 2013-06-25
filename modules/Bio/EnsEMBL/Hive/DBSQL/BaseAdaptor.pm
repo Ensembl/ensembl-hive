@@ -224,17 +224,26 @@ sub fetch_by_dbID {
 }
 
 
-sub remove {    # remove the object by primary_key
-    my $self    = shift @_;
-    my $object  = shift @_;
+sub remove_all {    # remove entries by a constraint
+    my $self        = shift @_;
+    my $constraint  = shift @_ || 1;
 
-    my $table_name              = $self->table_name();
-    my $primary_key_constraint  = $self->primary_key_constraint( $self->slicer($object, $self->primary_key()) );
+    my $table_name  = $self->table_name();
 
-    my $sql = "DELETE FROM $table_name WHERE $primary_key_constraint";
+    my $sql = "DELETE FROM $table_name WHERE $constraint";
     my $sth = $self->prepare($sql);
     $sth->execute();
     $sth->finish();
+}
+
+
+sub remove {    # remove the object by primary_key
+    my $self        = shift @_;
+    my $object      = shift @_;
+
+    my $primary_key_constraint  = $self->primary_key_constraint( $self->slicer($object, $self->primary_key()) );
+
+    return $self->remove_all( $primary_key_constraint );
 }
 
 
@@ -399,6 +408,19 @@ sub AUTOLOAD {
         if($column_set->{$filter_name}) {
 #            print "Setting up '$AUTOLOAD' method\n";
             *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->count_all("$filter_name='$filter_value'"); };
+            goto &$AUTOLOAD;    # restart the new method
+        } else {
+            die "unknown column '$filter_name'";
+        }
+    } elsif($AUTOLOAD =~ /::remove_all_by_(\w+)$/) {
+        my $filter_name = $1;
+
+        my ($self) = @_;
+        my $column_set = $self->column_set();
+
+        if($column_set->{$filter_name}) {
+#            print "Setting up '$AUTOLOAD' method\n";
+            *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->remove_all("$filter_name='$filter_value'"); };
             goto &$AUTOLOAD;    # restart the new method
         } else {
             die "unknown column '$filter_name'";
