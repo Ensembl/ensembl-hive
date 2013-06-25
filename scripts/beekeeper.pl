@@ -143,10 +143,7 @@ sub main {
 
     my $queen = $self->{'dba'}->get_Queen;
 
-    my $pipeline_name = destringify(
-            $self->{'dba'}->get_MetaContainer->list_value_by_key("pipeline_name")->[0]
-         || $self->{'dba'}->get_MetaContainer->list_value_by_key("name")->[0]
-    );
+    my $pipeline_name = $self->{'dba'}->get_MetaAdaptor->fetch_by_meta_key( 'hive_pipeline_name' );
 
     unless($pipeline_name) {
         print STDERR "+---------------------------------------------------------------------+\n";

@@ -71,7 +71,7 @@ sub hive_use_triggers {  # getter only, not setter
     my $self = shift @_;
 
     unless( defined($self->{'_hive_use_triggers'}) ) {
-        my ($hive_use_triggers) = @{ $self->get_MetaContainer->list_value_by_key( 'hive_use_triggers' ) };
+        my $hive_use_triggers = $self->get_MetaAdaptor->fetch_by_meta_key( 'hive_use_triggers' );
         $self->{'_hive_use_triggers'} = $hive_use_triggers || 0;
     } 
     return $self->{'_hive_use_triggers'};
@@ -82,23 +82,24 @@ sub get_available_adaptors {
  
     my %pairs =  (
             # Core adaptors extended with Hive stuff:
-        'MetaContainer'       => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
+        'MetaContainer'         => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
 
             # "new" Hive adaptors (sharing the same fetching/storing code inherited from the BaseAdaptor class) :
-        'AnalysisCtrlRule'    => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
-        'DataflowRule'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
-        'ResourceDescription' => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
-        'ResourceClass'       => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
-        'LogMessage'          => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
-        'NakedTable'          => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
-        'Analysis'            => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
-        'Queen'               => 'Bio::EnsEMBL::Hive::Queen',
-        'AnalysisData'        => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
+        'AnalysisCtrlRule'      => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
+        'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
+        'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
+        'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
+        'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
+        'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
+        'Analysis'              => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
+        'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
+        'AnalysisData'          => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
+        'Accumulator'           => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',
+        'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
 
             # "old" Hive adaptors (having their own fetching/storing code) :
-        'AnalysisJob'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
-        'AnalysisStats'       => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
-        'Accumulator'         => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',
+        'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
+        'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
     );
     return \%pairs;
 }

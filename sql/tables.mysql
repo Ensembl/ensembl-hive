@@ -357,6 +357,25 @@ CREATE TABLE analysis_data (
 
 
 /**
+@table  hive_meta
+
+@colour #000000
+
+@desc This table keeps several important hive-specific pipeline-wide key-value pairs
+        such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
+
+@column meta_key        the KEY of KEY-VALUE pairs (primary key)
+@column meta_value      the VALUE of KEY-VALUE pairs
+*/
+
+CREATE TABLE hive_meta (
+    meta_key                VARCHAR(80) NOT NULL PRIMARY KEY,
+    meta_value              TEXT
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
 @table  meta
 
 @colour #000000
@@ -366,8 +385,7 @@ CREATE TABLE analysis_data (
          if we are dealing with core-hive hybrid that is created in the wrong order.
         At the moment meta table is used
             (1) for compatibility with the Core API ('schema_version'),
-            (2) to keep some Hive-specific meta-information ('pipeline_name') and
-            (3) to keep pipeline-wide parameters.
+            (2) to keep pipeline-wide parameters.
 
 @column meta_id         auto-incrementing primary key, not really used per se
 @column species_id      always 1, kept for compatibility with the Core API
@@ -571,6 +589,9 @@ CREATE TABLE monitor (
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
--- Auto add schema version to database (should be overridden by Compara's table.sql)
+-- Auto add core schema_version to core meta table - for compatibility with core API. Could be overridden by Compara's table.sql
 INSERT IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '72');
+
+-- Auto add hive_sql_schema_version to hive_meta table
+INSERT INTO hive_meta (meta_key, meta_value) VALUES ('hive_sql_schema_version', '49');
 

@@ -150,7 +150,6 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-        'pipeline_name'  => $self->o('pipeline_name'),       # name the pipeline to differentiate the submitted processes
     };
 }
 
@@ -204,6 +203,14 @@ sub beekeeper_extra_cmdline_options {
 
 # ---------------------------------[now comes the interfacing stuff - feel free to call but not to modify]--------------------
 
+
+sub hive_meta_table {
+    my ($self) = @_;
+
+    return {
+        'hive_pipeline_name' => $self->o('pipeline_name'),
+    };
+}
 
 sub pre_options {
     my $self = shift @_;
@@ -326,7 +333,7 @@ sub process_options {
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
     $self->root()->{'pipeline_db'}{'-driver'} = $self->{'_extra_options'}{'hive_driver'} || 'mysql';
 
-    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'pipeline_url' ] );
+    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'pipeline_url', 'hive_meta_table' ] );
     return $self->SUPER::process_options();
 }
 
@@ -359,7 +366,14 @@ sub run {
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
     
     unless($job_topup) {
-        my $meta_container = $hive_dba->get_MetaContainer;
+        my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
+        warn "Loading hive_meta table ...\n";
+        my $hive_meta_table = $self->hive_meta_table;
+        while( my($meta_key, $meta_value) = each %$hive_meta_table ) {
+            $meta_adaptor->store_pair( $meta_key, $meta_value );
+        }
+
+        my $meta_container = $hive_dba->get_MetaContainer;  # adaptor over core's 'meta' table for compatibility with core API
         warn "Loading pipeline-wide parameters ...\n";
 
         my $pipeline_wide_parameters = $self->pipeline_wide_parameters;

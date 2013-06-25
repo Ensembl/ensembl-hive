@@ -65,4 +65,4 @@ END;
 
 
     -- inform the runtime part of the system that triggers are in place:
-INSERT INTO meta (meta_key, meta_value) VALUES ('hive_use_triggers', '1');
+INSERT INTO hive_meta (meta_key, meta_value) VALUES ('hive_use_triggers', '1');
