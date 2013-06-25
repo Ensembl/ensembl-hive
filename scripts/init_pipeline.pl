@@ -67,12 +67,14 @@ __DATA__
 
 =head1 OPTIONS
 
-    -help           :   get automatically generated list of options that can be set/changed when initializing a particular pipeline
+    -help            :   Gets this help message and exits
 
-    -analysis_topup :   a special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
-                        This mode is only useful in the process of putting together a new pipeline.
+    -analysis_topup  :   A special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
+                         This mode is only useful in the process of putting together a new pipeline.
 
-    -job_topup      :   another special initialization mode when only jobs are created - no other structural changes to the pipeline are acted upon.
+    -job_topup       :   Another special initialization mode when only jobs are created - no other structural changes to the pipeline are acted upon.
+
+    -hive_force_init :   If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
 
 =head1 CONTACT
 
