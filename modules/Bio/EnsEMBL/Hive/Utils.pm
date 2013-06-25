@@ -66,6 +66,7 @@ sub stringify {
     local $Data::Dumper::Quotekeys = 1;         # conserve some space
     local $Data::Dumper::Useqq     = 1;         # escape the \n and \t correctly
     local $Data::Dumper::Pair      = ' => ';    # make sure we always produce Perl-parsable structures, no matter what is set externally
+    local $Data::Dumper::Maxdepth  = undef;     # make sure nobody can mess up stringification by setting a lower Maxdepth
 
     return Dumper($structure);
 }
