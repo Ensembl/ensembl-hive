@@ -577,9 +577,6 @@ CREATE TABLE monitor (
 );
 
 
--- Auto add core schema_version to core meta table - for compatibility with core API. Could be overridden by Compara's table.sql
-INSERT OR IGNORE INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '72');
-
 -- Auto add hive_sql_schema_version to hive_meta table
 INSERT INTO hive_meta (meta_key, meta_value) VALUES ('hive_sql_schema_version', '49');
 

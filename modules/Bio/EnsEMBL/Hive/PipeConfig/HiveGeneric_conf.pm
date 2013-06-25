@@ -48,6 +48,7 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::ApiVersion ();
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
@@ -77,6 +78,9 @@ sub default_options {
         'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),                     # it will make sense to set this variable if you are going to use ehive with ensembl
         'hive_root_dir'         => $self->o('ENV', 'EHIVE_ROOT_DIR')                            # this value is set up automatically if this code is run by init_pipeline.pl
                                     || $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR').'/ensembl-hive', # otherwise we have to rely on other means
+
+        'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                # snapshot of EnsEMBL Core API version. Please do not change if not sure.
+
         'password'              => $self->o('ENV', 'ENSADMIN_PSW'),                             # people will have to make an effort NOT to insert it into config files like .bashrc etc
 
         'host'                  => 'localhost',
@@ -150,6 +154,7 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
+        'schema_version' => $self->o('ensembl_release'),    # keep compatibility with core API
     };
 }
 
@@ -363,8 +368,9 @@ sub run {
     }
 
     my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->o('pipeline_db')} );
+    Bio::EnsEMBL::Registry->no_version_check(1);
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
-    
+
     unless($job_topup) {
         my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
         warn "Loading hive_meta table ...\n";
