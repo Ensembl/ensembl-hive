@@ -577,6 +577,3 @@ CREATE TABLE monitor (
 );
 
 
--- Auto add hive_sql_schema_version to hive_meta table
-INSERT INTO hive_meta (meta_key, meta_value) VALUES ('hive_sql_schema_version', '49');
-

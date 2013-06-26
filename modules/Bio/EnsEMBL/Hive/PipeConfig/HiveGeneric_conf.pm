@@ -53,6 +53,7 @@ use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
@@ -213,7 +214,8 @@ sub hive_meta_table {
     my ($self) = @_;
 
     return {
-        'hive_pipeline_name' => $self->o('pipeline_name'),
+        'hive_sql_schema_version'   => Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version(),
+        'hive_pipeline_name'        => $self->o('pipeline_name'),
     };
 }
 
