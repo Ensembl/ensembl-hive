@@ -6,11 +6,11 @@ use warnings;
     # Finding out own path in order to reference own components (including own modules):
 use Cwd            ();
 use File::Basename ();
-our $hive_root_dir;
 BEGIN {
-    $hive_root_dir = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
-    unshift @INC, "$hive_root_dir/modules";
+    $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
+
 
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
@@ -283,7 +283,7 @@ sub main {
 sub generate_worker_cmd {
     my ($self, $run_analysis, $run_job_id, $force) = @_;
 
-    my $worker_cmd = "$::hive_root_dir/scripts/runWorker.pl";
+    my $worker_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl';
 
     unless(-x $worker_cmd) {
         print("Can't run '$worker_cmd' script for some reason, please investigate.\n");

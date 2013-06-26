@@ -75,7 +75,7 @@ sub default_options {
     my ($self) = @_;
     return {
         'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),                     # it will make sense to set this variable if you are going to use ehive with ensembl
-        'hive_root_dir'         => $::hive_root_dir                                             # this value is set up automatically if this code is run by init_pipeline.pl
+        'hive_root_dir'         => $self->o('ENV', 'EHIVE_ROOT_DIR')                            # this value is set up automatically if this code is run by init_pipeline.pl
                                     || $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR').'/ensembl-hive', # otherwise we have to rely on other means
         'password'              => $self->o('ENV', 'ENSADMIN_PSW'),                             # people will have to make an effort NOT to insert it into config files like .bashrc etc
 

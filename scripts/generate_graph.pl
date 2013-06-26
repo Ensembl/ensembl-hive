@@ -8,10 +8,9 @@ use warnings;
     # Finding out own path in order to reference own components (including own modules):
 use Cwd            ();
 use File::Basename ();
-our $hive_root_dir;
 BEGIN {
-    $hive_root_dir = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
-    unshift @INC, "$hive_root_dir/modules";
+    $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
 
