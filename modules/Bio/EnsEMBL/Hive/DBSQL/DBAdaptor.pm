@@ -57,10 +57,27 @@ sub new {
 
     unless($no_sql_schema_version_check) {
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version();
-        my $db_sql_schema_version   = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' );
 
-        if($code_sql_schema_version ne $db_sql_schema_version) {
-            die "SQL schema versions mismatch: code_sql_schema_version='$code_sql_schema_version', db_sql_schema_version='$db_sql_schema_version' ";
+        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' ); };
+        if($@) {
+
+            die "\nThe 'hive_meta' table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version '$code_sql_schema_version' and try again.\n";
+
+        } elsif(!$db_sql_schema_version) {
+
+            die "\nThe 'hive_meta' table does not contain 'hive_sql_schema_version' entry.\nPlease investigate.\n";
+
+        } elsif($db_sql_schema_version < $code_sql_schema_version) {
+
+            my @new_patches = @{ Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_sql_schema_patches( $db_sql_schema_version ) };
+
+            die "sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
+               ."Please upgrade the database by applying the following patches:\n\n".join("\n", map { "\t$_" } @new_patches)."\n\nand try again.\n";
+
+        } elsif($code_sql_schema_version < $db_sql_schema_version) {
+
+            die "sql_schema_version mismatch: the database's version is '$db_sql_schema_version', but your code is still '$code_sql_schema_version'.\n"
+               ."Please update the code and try again.\n";
         }
     }
 

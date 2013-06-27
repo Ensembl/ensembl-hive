@@ -24,14 +24,20 @@ package Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use strict;
 
 
-sub get_code_sql_schema_version {
+sub get_sql_schema_patches {
+    my $after_version = pop @_ || 0;
 
     my $sql_directory = $ENV{'EHIVE_ROOT_DIR'}.'/sql';
 
-    my $number_of_patches = `ls -1 ~/work/ensembl-hive/sql/patch_*.sql | wc -l`;
-    $number_of_patches=~s/\s+//g;
-    
-    return $number_of_patches;
+    my @patches = split(/\n/, `ls -1 ~/work/ensembl-hive/sql/patch_20*.sql`);
+
+    return [ @patches[$after_version..scalar(@patches)-1] ];
+}
+
+
+sub get_code_sql_schema_version {
+
+    return scalar( @{ get_sql_schema_patches() } );
 }
 
 1;
