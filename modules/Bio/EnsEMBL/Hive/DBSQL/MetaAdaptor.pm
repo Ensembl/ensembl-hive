@@ -37,5 +37,12 @@ sub store_pair {
     return $self->store( { 'meta_key' => $meta_key, 'meta_value' => $meta_value } );
 }
 
+
+sub fetch_value_by_key {
+    my ($self, $meta_key) = @_;
+
+    return $self->fetch_by_meta_key( $meta_key )->{'meta_value'};
+}
+
 1;
 
