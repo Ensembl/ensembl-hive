@@ -41,6 +41,7 @@ use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 
 use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
@@ -48,12 +49,22 @@ use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 sub new {
     my ($class, @args) = @_;
 
-    my ($url) = rearrange(['URL'], @args);
-    if($url) {
-        return Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to '$url'\n";
-    } else {
-        return $class->SUPER::new(@args);
+    my ($url, $no_sql_schema_version_check) = rearrange(['URL', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
+
+    my $self = $url
+        ? (Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to '$url'\n")
+        : $class->SUPER::new(@args);
+
+    unless($no_sql_schema_version_check) {
+        my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version();
+        my $db_sql_schema_version   = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' );
+
+        if($code_sql_schema_version ne $db_sql_schema_version) {
+            die "SQL schema versions mismatch: code_sql_schema_version='$code_sql_schema_version', db_sql_schema_version='$db_sql_schema_version' ";
+        }
     }
+
+    return $self;
 }
 
 

@@ -369,8 +369,8 @@ sub run {
         }
     }
 
-    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->o('pipeline_db')} );
     Bio::EnsEMBL::Registry->no_version_check(1);
+    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->o('pipeline_db')}, -no_sql_schema_version_check => 1 );
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
 
     unless($job_topup) {
