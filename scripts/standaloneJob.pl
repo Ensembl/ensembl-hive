@@ -119,6 +119,7 @@ __DATA__
         # Run a job and re-define some of the default parameters:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd 'ls -l'
+    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -input_id "{ 'cmd' => 'ls -l' }"
 
         # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
     standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
@@ -146,6 +147,7 @@ __DATA__
     -debug <level>      : turn on debug messages at <level>
     -no_write           : skip the execution of write_output() step this time
     -reg_conf <path>    : load registry entries from the given file (these entries may be needed by the RunnableDB itself)
+    -input_id "<hash>"  : specify the whole input_id parameter in one stringified hash
     -flow_out "<hash>"  : defines the dataflow re-direction rules in a format similar to PipeConfig's - see the last example
 
     NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
