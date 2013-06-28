@@ -584,7 +584,7 @@ sub run {
     $self->adaptor->register_worker_death($self);
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats :'.$self->analysis->stats->toString );
+        $self->worker_say( 'AnalysisStats :'.$self->analysis->stats->toString ) if($self->analysis_id());
         $self->worker_say( 'dbc '.$self->adaptor->db->dbc->disconnect_count. ' disconnect cycles' );
     }
 
