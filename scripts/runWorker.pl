@@ -91,10 +91,7 @@ my $queen = $DBA->get_Queen();
 
 my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
 
-my $worker;
-
-eval {
-    $worker = $queen->create_new_worker(
+my $worker = $queen->create_new_worker(
       # Worker identity:
          -meadow_type           => $meadow_type,
          -meadow_name           => $meadow_name,
@@ -115,15 +112,7 @@ eval {
 
       # Other parameters:
          -debug                 => $debug,
-    );
-
-} or do {
-
-    my $msg_thrown = $@;
-    $queen->print_analysis_status;
-    die "\n=== COULDN'T CREATE WORKER ===\n\t$msg_thrown";
-};
-
+);
 
 my $specialization_arglist = ($analysis_id || $logic_name || $job_id) && [
      -analysis_id           => $analysis_id,
