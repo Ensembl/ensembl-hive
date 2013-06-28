@@ -29,7 +29,7 @@ sub get_sql_schema_patches {
 
     my $sql_directory = $ENV{'EHIVE_ROOT_DIR'}.'/sql';
 
-    my @patches = split(/\n/, `ls -1 ~/work/ensembl-hive/sql/patch_20*.sql`);
+    my @patches = split(/\n/, `ls -1 $sql_directory/patch_20*.sql`);
 
     return [ @patches[$after_version..scalar(@patches)-1] ];
 }
