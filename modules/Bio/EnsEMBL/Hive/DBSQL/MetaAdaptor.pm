@@ -41,7 +41,8 @@ sub store_pair {
 sub fetch_value_by_key {
     my ($self, $meta_key) = @_;
 
-    return $self->fetch_by_meta_key( $meta_key )->{'meta_value'};
+    my $pair = $self->fetch_by_meta_key( $meta_key );
+    return $pair && $pair->{'meta_value'};
 }
 
 1;

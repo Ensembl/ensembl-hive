@@ -99,7 +99,7 @@ sub hive_use_triggers {  # getter only, not setter
     my $self = shift @_;
 
     unless( defined($self->{'_hive_use_triggers'}) ) {
-        my $hive_use_triggers = $self->get_MetaAdaptor->fetch_by_meta_key( 'hive_use_triggers' );
+        my $hive_use_triggers = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_use_triggers' );
         $self->{'_hive_use_triggers'} = $hive_use_triggers || 0;
     } 
     return $self->{'_hive_use_triggers'};
