@@ -52,16 +52,22 @@ sub new {
     my ($url, $no_sql_schema_version_check) = rearrange(['URL', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
 
     my $self = $url
-        ? (Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to '$url'\n")
-        : $class->SUPER::new(@args);
+        ? (Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to DBA using url='$url'\n")
+        : ($class->SUPER::new(@args) || die "Unable to connect to DBA using parameters (".join(', ', @args).")\n");
 
     unless($no_sql_schema_version_check) {
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version();
 
         my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' ); };
         if($@) {
+            if($@ =~ /hive_meta.*doesn't exist/) {
 
-            die "\nThe 'hive_meta' table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version '$code_sql_schema_version' and try again.\n";
+                die "\nThe 'hive_meta' table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version '$code_sql_schema_version' and try again.\n";
+
+            } else {
+
+                die "$@";
+            }
 
         } elsif(!$db_sql_schema_version) {
 
