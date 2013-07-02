@@ -135,9 +135,10 @@ sub pipeline_create_commands {
             $self->o('hive_force_init') ? ( $self->db_execute_command($db_conn, 'DROP DATABASE IF EXISTS '.$self->o($db_conn, '-dbname'), 0 ) ) : (),
             $self->db_execute_command($db_conn, 'CREATE DATABASE '.$self->o($db_conn, '-dbname'), 0 ),
 
-                # standard eHive tables, triggers, foreign_keys and procedures:
+                # standard eHive tables, foreign_keys and procedures:
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.pgsql',
             $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql',
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.pgsql',
         ],
     }->{ $self->o($db_conn, '-driver') };
 
