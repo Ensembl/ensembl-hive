@@ -1,10 +1,10 @@
--- ------------------------------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------
 --
 -- Some stored functions, views and procedures used in hive:
 --
 
 
--- --- show hive progress for analyses (turned into a view to give extra flexibility) -------------------
+-- show hive progress for analyses (turned into a view to give extra flexibility) ----------------
 --
 -- Thanks to Greg Jordan for the idea and the original version
 --
@@ -15,11 +15,14 @@
 
 CREATE VIEW IF NOT EXISTS progress AS
     SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
+        MIN(rc.name) resource_class,
         j.status,
         j.retry_count,
         CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
-        job_id example_job_id
-    FROM analysis_base a LEFT JOIN job j USING (analysis_id)
+        MIN(job_id) example_job_id
+    FROM        analysis_base a
+    LEFT JOIN   job j USING (analysis_id)
+    LEFT JOIN   resource_class rc ON (a.resource_class_id=rc.resource_class_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 

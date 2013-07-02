@@ -1,35 +1,38 @@
-#########################################################################################################
-#
-# Some stored functions, views and procedures used in hive:
-#
+-- ------------------------------------------------------------------------
+--
+-- Some stored functions, views and procedures used in hive:
+--
 
 
-#### show hive progress for analyses (turned into a view to give extra flexibility) #####################
-#
-# Thanks to Greg Jordan for the idea and the original version
-#
-# Usage:
-#       select * from progress;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
-#       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
-#       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
+-- show hive progress for analyses (turned into a view to give extra flexibility) ----------------
+--
+-- Thanks to Greg Jordan for the idea and the original version
+--
+-- Usage:
+--       select * from progress;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
+--       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
+--       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
 CREATE OR REPLACE VIEW progress AS
-    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis_name_and_id,
-            j.status,
-            j.retry_count,
-            CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
-            job_id example_job_id
-    FROM analysis_base a LEFT JOIN job j USING (analysis_id)
+    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
+        MIN(rc.name) resource_class,
+        j.status,
+        j.retry_count,
+        CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
+        MIN(job_id) example_job_id
+    FROM        analysis_base a
+    LEFT JOIN   job j USING (analysis_id)
+    LEFT JOIN   resource_class rc ON (a.resource_class_id=rc.resource_class_id)
     GROUP BY a.analysis_id, j.status, j.retry_count
     ORDER BY a.analysis_id, j.status;
 
 
-#### a convenient view that also incorporates (otherwise redundant) analysis_id and logic_name ###########
-#
-# Usage:
-#       select * from msg;
-#       select * from msg where analysis_id=18;
-#       select * from msg where logic_name like 'family_blast%';
+-- a convenient view that also incorporates (otherwise redundant) analysis_id and logic_name ------------
+--
+-- Usage:
+--       select * from msg;
+--       select * from msg where analysis_id=18;
+--       select * from msg where logic_name like 'family_blast%';
 
 CREATE OR REPLACE VIEW msg AS
     SELECT a.analysis_id, a.logic_name, m.*
@@ -105,7 +108,7 @@ CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
     DROP VIEW IF EXISTS msg, progress;
-    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class;
+    DROP TABLE IF EXISTS monitor, analysis_stats_monitor, resource_description, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class, hive_meta;
 END; //
 DELIMITER ;
 
