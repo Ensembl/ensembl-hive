@@ -44,6 +44,7 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
+use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Accumulator;
@@ -88,15 +89,15 @@ sub fetch {
 
     Bio::EnsEMBL::Hive::URLFactory->new();  # make sure global instance is created
 
-    if( my ($conn, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
-        $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]+))?)?((?:;(\w+)=(\w+))*)$} ) {
+    if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
-        my %conn_param = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
+        my $dba = ($parsed_url->{'dbconn_part'} =~ m{^\w*:///$} )
+            ? $default_dba
+            : $class->create_cached_dba( @$parsed_url{qw(driver user pass host port dbname conn_params)} );
 
-#warn "URLPARSER: conn='$conn', driver='$driver', user='$user', pass='$pass', host='$host', port='$port', dbname='$dbname', table_name='$table_name', tparam_name='$tparam_name', tparam_value='$tparam_value'";
-#warn "CONN_PARAMS: ".Dumper(\%conn_param);
-
-        my $dba = ($conn =~ m{^\w*:///$} ) ? $default_dba : $class->create_cached_dba($driver, $user, $pass, $host, $port, $dbname, %conn_param);
+        my $table_name      = $parsed_url->{'table_name'};
+        my $tparam_name     = $parsed_url->{'tparam_name'};
+        my $tparam_value    = $parsed_url->{'tparam_value'};
 
         if(not $table_name) {
         
@@ -131,7 +132,7 @@ sub fetch {
 }
 
 sub create_cached_dba {
-    my ($class, $driver, $user, $pass, $host, $port, $dbname, %conn_param) = @_;
+    my ($class, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
 
     if($driver eq 'mysql') {
         $user ||= 'ensro';
@@ -140,8 +141,8 @@ sub create_cached_dba {
         $port ||= 3306;
     }
 
-    my $type   = $conn_param{'type'};
-    my $discon = $conn_param{'discon'};
+    my $type   = $conn_params->{'type'};
+    my $discon = $conn_params->{'discon'};
 
     my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
     my $dba = $_URLFactory_global_instance->{$connectionKey};
