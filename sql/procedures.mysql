@@ -14,7 +14,7 @@
 --       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
 CREATE OR REPLACE VIEW progress AS
-    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
+    SELECT CONCAT( a.logic_name, '(', a.analysis_id, ')') analysis_name_and_id,
         MIN(rc.name) resource_class,
         j.status,
         j.retry_count,
