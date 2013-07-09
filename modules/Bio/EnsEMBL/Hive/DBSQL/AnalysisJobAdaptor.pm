@@ -725,6 +725,7 @@ sub balance_semaphores {
     while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
         warn "Balancing semaphore: job_id=$job_id ($was -> $should)\n";
         $update_sth->execute($should, $job_id);
+        $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "Re-balancing the semaphore_count: $was -> $should", 1 );
     }
     $find_sth->finish;
     $update_sth->finish;
