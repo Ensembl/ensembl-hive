@@ -476,7 +476,7 @@ CREATE        INDEX worker_analysis_id_status_idx ON worker (analysis_id, status
 CREATE TABLE log_message (
     log_message_id          INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     job_id                  INTEGER              DEFAULT NULL,
-    worker_id               INTEGER     NOT NULL,
+    worker_id               INTEGER              DEFAULT NULL,
     time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  TEXT        NOT NULL DEFAULT 'UNKNOWN', /* enum('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN' */

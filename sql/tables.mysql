@@ -485,7 +485,7 @@ CREATE TABLE worker (
 CREATE TABLE log_message (
     log_message_id          INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
     job_id                  INTEGER              DEFAULT NULL,
-    worker_id               INTEGER     NOT NULL,
+    worker_id               INTEGER              DEFAULT NULL,
     time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',

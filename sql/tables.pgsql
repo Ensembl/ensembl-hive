@@ -487,7 +487,7 @@ CREATE INDEX ON worker (analysis_id, status);
 CREATE TABLE log_message (
     log_message_id          SERIAL PRIMARY KEY,
     job_id                  INTEGER              DEFAULT NULL,
-    worker_id               INTEGER     NOT NULL,
+    worker_id               INTEGER              DEFAULT NULL,
     time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  jw_status            DEFAULT 'UNKNOWN',
