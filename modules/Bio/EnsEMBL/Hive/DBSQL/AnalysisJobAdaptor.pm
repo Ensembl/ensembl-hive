@@ -690,5 +690,43 @@ sub reset_jobs_for_analysis_id {
 }
 
 
+=head2 balance_semaphores
+
+  Description: Reset all semaphore_counts to the numbers of unDONE semaphoring jobs.
+
+=cut
+
+sub balance_semaphores {
+    my ($self) = @_;
+
+    my $find_sql    = qq{
+                        SELECT funnel.job_id, funnel.semaphore_count was, COALESCE(SUM(fan.status!='DONE'),0) should
+                        FROM job funnel
+                        LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
+                        WHERE funnel.status='SEMAPHORED'
+                        GROUP BY funnel.job_id
+                        HAVING was<>should OR should=0
+                    };
+
+    my $update_sql  = "UPDATE job SET "
+        ." semaphore_count=? , "
+        .( ($self->dbc->driver eq 'pgsql')
+        ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
+        : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        )." WHERE job_id=? AND status='SEMAPHORED'";
+
+    my $find_sth    = $self->prepare($find_sql);
+    my $update_sth  = $self->prepare($update_sql);
+
+    $find_sth->execute();
+    while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
+        warn "Balancing semaphore: job_id=$job_id ($was -> $should)\n";
+        $update_sth->execute($should, $job_id);
+    }
+    $find_sth->finish;
+    $update_sth->finish;
+}
+
+
 1;
 

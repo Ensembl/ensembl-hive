@@ -48,6 +48,7 @@ sub main {
     my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $all_dead                    = 0;
+    my $balance_semaphores          = 0;
     my $job_id_for_output           = 0;
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
@@ -104,6 +105,7 @@ sub main {
                'dead'              => \$check_for_dead,
                'killworker=i'      => \$kill_worker_id,
                'alldead'           => \$all_dead,
+               'balance_semaphores'=> \$balance_semaphores,
                'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
@@ -201,6 +203,8 @@ sub main {
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
+
+    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores(); }
 
     if ($kill_worker_id) {
         my $kill_worker = $queen->fetch_by_dbID($kill_worker_id);
@@ -466,8 +470,9 @@ __DATA__
 =head2 Other commands/options
 
     -help                  : print this help
-    -dead                  : clean dead jobs for resubmission
-    -alldead               : all outstanding workers
+    -dead                  : detect all unaccounted dead workers and reset their jobs for resubmission
+    -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
+    -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
     -no_analysis_stats     : don't show status of each analysis
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
