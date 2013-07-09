@@ -50,6 +50,8 @@ sub schedule_workers_resync_if_necessary {
             print "Scheduler: mismatch between Queen's workers and Valley's workers detected, checking for dead workers...\n";
             $queen->check_for_dead_workers($valley, 1);
         }
+        print "Scheduler: re-balancing of semaphore_counts...\n";
+        $queen->db->get_AnalysisJobAdaptor->balance_semaphores();
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 
