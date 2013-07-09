@@ -233,7 +233,7 @@ sub main {
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
-    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $analysis ); }
+    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $analysis && $analysis->dbID ); }
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 

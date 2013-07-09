@@ -51,7 +51,7 @@ sub schedule_workers_resync_if_necessary {
             $queen->check_for_dead_workers($valley, 1);
         }
         print "Scheduler: re-balancing of semaphore_counts...\n";
-        $queen->db->get_AnalysisJobAdaptor->balance_semaphores();
+        $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID);
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 

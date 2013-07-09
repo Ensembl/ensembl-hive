@@ -697,16 +697,14 @@ sub reset_jobs_for_analysis_id {
 =cut
 
 sub balance_semaphores {
-    my ($self, $filter_analysis) = @_;
-
-    my $analysis_id = $filter_analysis && $filter_analysis->dbID();
+    my ($self, $filter_analysis_id) = @_;
 
     my $find_sql    = qq{
                         SELECT funnel.job_id, funnel.semaphore_count was, COALESCE(SUM(fan.status!='DONE'),0) should
                         FROM job funnel
                         LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
                         WHERE }
-                    .($analysis_id ? "funnel.analysis_id=$analysis_id AND " : '')
+                    .($filter_analysis_id ? "funnel.analysis_id=$filter_analysis_id AND " : '')
                     .qq{
                         funnel.status='SEMAPHORED'
                         GROUP BY funnel.job_id
