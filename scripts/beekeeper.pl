@@ -201,11 +201,6 @@ sub main {
         $self->{'dba'}->get_Queen->synchronize_AnalysisStats($reset_analysis->stats);
     }
 
-    if($all_dead)           { $queen->register_all_workers_dead(); }
-    if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
-
-    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores(); }
-
     if ($kill_worker_id) {
         my $kill_worker = $queen->fetch_by_dbID($kill_worker_id);
 
@@ -235,6 +230,10 @@ sub main {
     my $analysis = $run_job_id
         ? $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID( $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis_id )
         : $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+
+    if($all_dead)           { $queen->register_all_workers_dead(); }
+    if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
+    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $analysis ); }
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
