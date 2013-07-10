@@ -112,36 +112,24 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
-    return {
-        'sqlite' => [
-            $self->o('hive_force_init') ? ( 'rm -f '.$self->o($db_conn, '-dbname') ) : (),
+    my $driver = $self->o($db_conn, '-driver');
 
-                # standard eHive tables, triggers and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.sqlite',
-            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.sqlite' ) : (),
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.sqlite',
-        ],
-        'mysql' => [
-            $self->o('hive_force_init') ? ( 'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'DROP DATABASE IF EXISTS `".$self->o($db_conn, '-dbname')."`'" ) : (),
-            'mysql '.$self->dbconn_2_mysql($db_conn, 0)." -e 'CREATE DATABASE `".$self->o($db_conn, '-dbname')."`'",
-
-                # standard eHive tables, triggers, foreign_keys and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.mysql',
-            $self->o('hive_use_triggers') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.mysql' ) : (),
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql',
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.mysql',
-        ],
-        'pgsql' => [
+    return [
             $self->o('hive_force_init') ? ( $self->db_execute_command($db_conn, 'DROP DATABASE IF EXISTS '.$self->o($db_conn, '-dbname'), 0 ) ) : (),
             $self->db_execute_command($db_conn, 'CREATE DATABASE '.$self->o($db_conn, '-dbname'), 0 ),
 
-                # standard eHive tables, foreign_keys and procedures:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.pgsql',
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql',
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.pgsql',
-        ],
-    }->{ $self->o($db_conn, '-driver') };
+                # we got table definitions for all drivers:
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
+                # auto-sync'ing triggers are off by default and not yet available in pgsql:
+            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+
+                # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
+                                             ($driver ne 'sqlite') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
+
+                # we got procedure definitions for all drivers:
+            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+    ];
 }
 
 
@@ -274,11 +262,13 @@ sub dbconn_2_pgsql {    # will save you a lot of typing
 sub db_connect_command {
     my ($self, $db_conn) = @_;
 
+    my $driver = $self->o($db_conn, '-driver');
+
     return {
         'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname'),
         'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, 1),
-        'pgsql'     => 'env PGPASSWORD="'.$self->o($db_conn,'-pass').'" psql '.$self->dbconn_2_pgsql($db_conn, 1),
-    }->{ $self->o($db_conn, '-driver') };
+        'pgsql'     => "env PGPASSWORD='".$self->o($db_conn,'-pass')."' psql ".$self->dbconn_2_pgsql($db_conn, 1),
+    }->{ $driver };
 }
 
 
@@ -293,11 +283,18 @@ sub db_execute_command {
 
     $with_db = 1 unless(defined($with_db));
 
-    return {
-        'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'",      # can't imagine an sqlite3 cmd without dbname
-        'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, $with_db)." -e '$sql_command'",
-        'pgsql'     => 'env PGPASSWORD="'.$self->o($db_conn,'-pass').'" psql '.$self->dbconn_2_pgsql($db_conn, 0)." --command='$sql_command' ".($with_db ? $self->o($db_conn, '-dbname') : ''),
-    }->{ $self->o($db_conn, '-driver') };
+    my $driver = $self->o($db_conn, '-driver');
+
+    if(($driver eq 'sqlite') && !$with_db) {    # in these special cases we pretend sqlite can understand these commands
+        return "rm -f $1" if($sql_command=~/DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?(\w+)/);
+        return "touch $1" if($sql_command=~/CREATE\s+DATABASE\s+(\w+)/);
+    } else {
+        return {
+            'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'",
+            'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, $with_db)." -e '$sql_command'",
+            'pgsql'     => "env PGPASSWORD='".$self->o($db_conn,'-pass')."' psql --command='$sql_command' ".$self->dbconn_2_pgsql($db_conn, $with_db),
+        }->{ $driver };
+    }
 }
 
 
@@ -310,16 +307,20 @@ sub db_execute_command {
 sub dbconn_2_url {
     my ($self, $db_conn) = @_;
 
-    return ($self->o($db_conn, '-driver') eq 'sqlite')
-        ? $self->o($db_conn, '-driver').':///'.$self->o($db_conn,'-dbname')
-        : $self->o($db_conn, '-driver').'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
+    my $driver = $self->o($db_conn, '-driver');
+
+    return ($driver eq 'sqlite')
+        ? $driver.':///'.$self->o($db_conn,'-dbname')
+        : $driver.'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
 }
+
 
 sub pipeline_url {
     my $self = shift @_;
 
     return $self->dbconn_2_url('pipeline_db'); # used to force vivification of the whole 'pipeline_db' structure (used in run() )
 }
+
 
 =head2 process_options
 
