@@ -71,6 +71,7 @@ sub main {
                'reg_conf|regfile=s' => \$self->{'reg_conf'},
                'reg_alias|regname=s'=> \$self->{'reg_alias'},
                'url=s'              => \$self->{'url'},
+               'nosqlvc'            => \$self->{'nosqlvc'},
 
                     # loop control
                'run'                => \$run,
@@ -135,7 +136,7 @@ sub main {
         Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
         $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
     } elsif($self->{'url'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{'url'});
+        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{'url'}, -no_sql_schema_version_check => $self->{'nosqlvc'} );
     } else {
         print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
@@ -302,7 +303,7 @@ sub generate_worker_cmd {
         $worker_cmd .= " -url '". $self->{'safe_url'} ."'";
     }
 
-    foreach my $worker_option ('job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }

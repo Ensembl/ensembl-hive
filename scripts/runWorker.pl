@@ -21,7 +21,7 @@ use Bio::EnsEMBL::Hive::Valley;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-my ($reg_conf, $reg_alias, $url);                   # Connection parameters
+my ($reg_conf, $reg_alias, $url, $nosqlvc);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
 my ($help, $debug);
@@ -32,6 +32,7 @@ GetOptions(
            'reg_conf|regfile=s'         => \$reg_conf,
            'reg_alias|regname=s'        => \$reg_alias,
            'url=s'                      => \$url,
+           'nosqlvc'                    => \$nosqlvc,
 
 # Task specification parameters:
            'rc_id=i'                    => \$resource_class_id,
@@ -76,7 +77,7 @@ if($reg_alias) {
     $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
     $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
 
-    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url);
+    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url, -no_sql_schema_version_check => $nosqlvc);
 } else {
     print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
     script_usage(1);
