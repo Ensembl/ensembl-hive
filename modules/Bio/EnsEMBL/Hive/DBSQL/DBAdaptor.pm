@@ -51,6 +51,8 @@ sub new {
 
     my ($url, $no_sql_schema_version_check) = rearrange(['URL', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
 
+    $url .= ';nosqlvc=1' if($url && $no_sql_schema_version_check);
+
     my $self = $url
         ? (Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to DBA using url='$url'\n")
         : ($class->SUPER::new(@args) || die "Unable to connect to DBA using parameters (".join(', ', @args).")\n");

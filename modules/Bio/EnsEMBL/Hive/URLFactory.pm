@@ -141,8 +141,9 @@ sub create_cached_dba {
         $port ||= 3306;
     }
 
-    my $type   = $conn_params->{'type'};
-    my $discon = $conn_params->{'discon'};
+    my $type    = $conn_params->{'type'};
+    my $discon  = $conn_params->{'discon'};
+    my $nosqlvc = $conn_params->{'nosqlvc'};
 
     my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
     my $dba = $_URLFactory_global_instance->{$connectionKey};
@@ -167,6 +168,7 @@ sub create_cached_dba {
             -dbname => $dbname,
             -species => $dbname,
             -disconnect_when_inactive => $discon,
+            -no_sql_schema_version_check => $nosqlvc,
         );
     }
     return $dba;
