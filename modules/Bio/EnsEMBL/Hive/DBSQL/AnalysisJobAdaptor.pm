@@ -700,7 +700,7 @@ sub balance_semaphores {
     my ($self, $filter_analysis_id) = @_;
 
     my $find_sql    = qq{
-                        SELECT funnel.job_id, funnel.semaphore_count was, COALESCE(SUM(fan.status!='DONE'),0) should
+                        SELECT funnel.job_id, funnel.semaphore_count was, COALESCE(SUM(fan.status!='DONE' AND fan.status!='PASSED_ON'),0) should
                         FROM job funnel
                         LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
                         WHERE }
