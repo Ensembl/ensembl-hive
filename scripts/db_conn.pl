@@ -30,6 +30,7 @@ sub main {
             'help!'             => \$help,
     );
 
+    my $dbc_hash;
 
     if($help) {
         script_usage(0);
@@ -39,36 +40,44 @@ sub main {
         $reg_type ||= 'hive';
         my $hive_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, $reg_type)
             || die "Could not connect to database via registry file '$reg_conf' and alias '$reg_alias' (assuming type '$reg_type')";
-        $url = $hive_dba->dbc()->url();
-    }
+        my $dbc = $url = $hive_dba->dbc();
 
-    if($url) {
-        if(my $dbc_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
-
-            my $cmd;
-
-            my $driver = $dbc_hash->{'driver'} || 'mysql';
-            if($driver eq 'mysql') {
-                my $port = $dbc_hash->{port} || 3306;
-                $cmd = "mysql --host=$dbc_hash->{host} --port=$port --user='$dbc_hash->{user}' --pass='$dbc_hash->{pass}' $dbc_hash->{dbname}";
-            } elsif($driver eq 'pgsql') {
-                my $port = $dbc_hash->{port} || 5432;
-                $cmd = "env PGPASSWORD='$dbc_hash->{pass}' psql --host=$dbc_hash->{host} --port=$port --username='$dbc_hash->{user}' $dbc_hash->{dbname}";
-            } elsif($driver eq 'sqlite') {
-                $cmd = "sqlite3 $dbc_hash->{dbname}";
-            } else {
-                die "Driver '$driver' is currently unsupported";
-            }
-
-            print "Connection command:\t$cmd\n";
-            exec($cmd);
-        } else {
-            die "Could not parse URL '$url'";
-        }
+        $dbc_hash = {
+            'driver'    => $dbc->driver,
+            'host'      => $dbc->host,
+            'port'      => $dbc->port,
+            'user'      => $dbc->username,
+            'pass'      => $dbc->password,
+            'dbname'    => $dbc->dbname,
+        };
+    } elsif($url) {
+        $dbc_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )
+            || die "Could not parse URL '$url'";
     } else {
         script_usage(1);
     }
 
+    my $cmd = dbc_hash_to_cmd( $dbc_hash );
+
+    print "Connection command:\t$cmd\n";
+
+    exec($cmd);
+}
+
+sub dbc_hash_to_cmd {
+    my $dbc_hash = shift @_;
+
+    my $driver = $dbc_hash->{'driver'} || 'mysql';
+
+    if($driver eq 'mysql') {
+        my $port = $dbc_hash->{port} || 3306;
+        return "mysql --host=$dbc_hash->{host} --port=$port --user='$dbc_hash->{user}' --pass='$dbc_hash->{pass}' $dbc_hash->{dbname}";
+    } elsif($driver eq 'pgsql') {
+        my $port = $dbc_hash->{port} || 5432;
+        return "env PGPASSWORD='$dbc_hash->{pass}' psql --host=$dbc_hash->{host} --port=$port --username='$dbc_hash->{user}' $dbc_hash->{dbname}";
+    } elsif($driver eq 'sqlite') {
+        return "sqlite3 $dbc_hash->{dbname}";
+    }
 }
 
 main();
