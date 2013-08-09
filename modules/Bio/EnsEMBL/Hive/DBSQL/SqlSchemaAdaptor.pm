@@ -27,11 +27,15 @@ use strict;
 sub get_sql_schema_patches {
     my $after_version = pop @_ || 0;
 
-    my $sql_directory = $ENV{'EHIVE_ROOT_DIR'}.'/sql';
+    if(my $hive_root_dir = $ENV{'EHIVE_ROOT_DIR'} ) {
 
-    my @patches = split(/\n/, `ls -1 $sql_directory/patch_20*.sql`);
+        my @patches = split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.sql`);
 
-    return [ @patches[$after_version..scalar(@patches)-1] ];
+        return [ @patches[$after_version..scalar(@patches)-1] ];
+    } else {
+        warn "WARNING: 'EHIVE_ROOT_DIR' environment variable has not been set, things may start crashing soon\n";
+        return [];
+    }
 }
 
 
