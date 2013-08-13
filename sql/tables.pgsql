@@ -586,7 +586,7 @@ CREATE TABLE monitor (
     workers                 INTEGER     NOT NULL DEFAULT 0,
     throughput              FLOAT                DEFAULT NULL,
     per_worker              FLOAT                DEFAULT NULL,
-    analysis                VARCHAR(255)         DEFAULT NULL   -- not just one, but a list of logic_names
+    analysis                TEXT                 DEFAULT NULL   -- not just one, but a list of logic_names
 
 );
 
