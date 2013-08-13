@@ -58,33 +58,43 @@ sub new {
         : ($class->SUPER::new(@args) || die "Unable to connect to DBA using parameters (".join(', ', @args).")\n");
 
     unless($no_sql_schema_version_check) {
-        my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version();
+
+        my $dbc = $self->dbc();
+        $url ||= $dbc->url();
+
+        my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
+            || die "DB($url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
 
         my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' ); };
         if($@) {
             if($@ =~ /hive_meta.*doesn't exist/) {
 
-                die "\nThe 'hive_meta' table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version '$code_sql_schema_version' and try again.\n";
+                die "\nDB($url) The 'hive_meta' table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version '$code_sql_schema_version' and try again.\n";
 
             } else {
 
-                die "$@";
+                die "DB($url) $@";
             }
 
         } elsif(!$db_sql_schema_version) {
 
-            die "\nThe 'hive_meta' table does not contain 'hive_sql_schema_version' entry.\nPlease investigate.\n";
+            die "\nDB($url) The 'hive_meta' table does not contain 'hive_sql_schema_version' entry.\nPlease investigate.\n";
 
         } elsif($db_sql_schema_version < $code_sql_schema_version) {
 
-            my @new_patches = @{ Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_sql_schema_patches( $db_sql_schema_version ) };
 
-            die "sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
-               ."Please upgrade the database by applying the following patches:\n\n".join("\n", map { "\t$_" } @new_patches)."\n\nand try again.\n";
+            my $new_patches = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_sql_schema_patches( $db_sql_schema_version, $dbc->driver )
+                || die "DB($url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
+                      ."Unfortunately we cannot patch the database; you may have to create a new database or agree to run older code\n";
+
+            my $patcher_command = "$ENV{'EHIVE_ROOT_DIR'}/scripts/db_conn.pl -url $url";
+
+            die "DB($url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
+               ."Please upgrade the database by applying the following patches:\n\n".join("\n", map { "\t$patcher_command < $_" } @$new_patches)."\n\nand try again.\n";
 
         } elsif($code_sql_schema_version < $db_sql_schema_version) {
 
-            die "sql_schema_version mismatch: the database's version is '$db_sql_schema_version', but your code is still '$code_sql_schema_version'.\n"
+            die "DB($url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version', but your code is still '$code_sql_schema_version'.\n"
                ."Please update the code and try again.\n";
         }
     }
