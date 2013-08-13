@@ -18,15 +18,19 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 
 sub main {
-    my ($reg_conf, $reg_type, $reg_alias, $url, $help);
+    my ($reg_conf, $reg_type, $reg_alias, $url, $sqlcmd, $verbose, $help);
 
     GetOptions(
                 # connect to the database:
             'reg_conf=s'        => \$reg_conf,
             'reg_type=s'        => \$reg_type,
             'reg_alias=s'       => \$reg_alias,
+
             'url=s'             => \$url,
 
+            'sqlcmd=s'          => \$sqlcmd,
+
+            'verbose!'          => \$verbose,
             'help!'             => \$help,
     );
 
@@ -57,28 +61,48 @@ sub main {
         script_usage(1);
     }
 
-    my $cmd = dbc_hash_to_cmd( $dbc_hash );
+    my $cmd = dbc_hash_to_cmd( $dbc_hash, $sqlcmd );
 
-    print "Connection command:\t$cmd\n";
+    print "\nRunning command:\t$cmd\n\n" if($verbose);
 
     exec($cmd);
 }
 
 sub dbc_hash_to_cmd {
-    my $dbc_hash = shift @_;
+    my ($dbc_hash, $sqlcmd) = @_;
+
+    my $cmd;
 
     my $driver = $dbc_hash->{'driver'} || 'mysql';
 
     if($driver eq 'mysql') {
-        my $port = $dbc_hash->{port} || 3306;
-        return "mysql --host=$dbc_hash->{host} --port=$port --user='$dbc_hash->{user}' --pass='$dbc_hash->{pass}' $dbc_hash->{dbname}";
+
+        $cmd = "mysql --host=$dbc_hash->{host} "
+              .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port}" : '')
+              ." --user='$dbc_hash->{user}' --pass='$dbc_hash->{pass}' $dbc_hash->{dbname}"
+              .(defined($sqlcmd) ? " -e '$sqlcmd'" : '');
     } elsif($driver eq 'pgsql') {
-        my $port = $dbc_hash->{port} || 5432;
-        return "env PGPASSWORD='$dbc_hash->{pass}' psql --host=$dbc_hash->{host} --port=$port --username='$dbc_hash->{user}' $dbc_hash->{dbname}";
+
+        $cmd = "env PGPASSWORD='$dbc_hash->{pass}' psql --host=$dbc_hash->{host} "
+              .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port}" : '')
+              ." --username='$dbc_hash->{user}'"
+              .(defined($sqlcmd) ? " --command='$sqlcmd'" : '')
+              ." $dbc_hash->{dbname}";
     } elsif($driver eq 'sqlite') {
-        return "sqlite3 $dbc_hash->{dbname}";
+
+        if($dbc_hash->{dbname}) {
+            $cmd = "sqlite3 $dbc_hash->{dbname}"
+                  .(defined($sqlcmd) ? " '$sqlcmd'" : '');
+        } elsif($sqlcmd =~ /DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?(\w+)/i ) {
+            $cmd = "rm -f $1";
+        } elsif($sqlcmd =~ /CREATE\s+DATABASE\s+(\w+)/i ) {
+            $cmd = "touch $1";
+        }
     }
+
+    return $cmd;
 }
+
 
 main();
 
@@ -92,17 +116,22 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    db_conn.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias> [-reg_type <reg_type>] }
+    db_conn.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -verbose ]
 
 =head1 DESCRIPTION
 
-    db_conn.pl is a generic script that connects you interactively to your database
+    db_conn.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command
 
 =head1 USAGE EXAMPLES
 
+    db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/" -sql 'CREATE DATABASE lg4_long_mult'
     db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
+    db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base'
 
     db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master -reg_type compara
+    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_prev   -reg_type compara
+    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
+    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql 'SELECT * FROM coord_system'
 
 =head1 CONTACT
 
