@@ -114,21 +114,24 @@ sub pipeline_create_commands {
 
     my $driver = $self->o($db_conn, '-driver');
 
+    my $db_execute_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn, 0 ).' -sql ';
+    my $db_connect_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn );
+
     return [
-            $self->o('hive_force_init') ? ( $self->db_execute_command($db_conn, 'DROP DATABASE IF EXISTS '.$self->o($db_conn, '-dbname'), 0 ) ) : (),
-            $self->db_execute_command($db_conn, 'CREATE DATABASE '.$self->o($db_conn, '-dbname'), 0 ),
+            $self->o('hive_force_init') ? ( $db_execute_prefix."'DROP DATABASE IF EXISTS ".$self->o($db_conn, '-dbname')."'" ) : (),
+            $db_execute_prefix."'CREATE DATABASE ".$self->o($db_conn, '-dbname')."'",
 
                 # we got table definitions for all drivers:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
+            $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
                 # auto-sync'ing triggers are off by default and not yet available in pgsql:
-            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
 
                 # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
-                                             ($driver ne 'sqlite') ? ( $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
+                                             ($driver ne 'sqlite') ? ( $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
 
                 # we got procedure definitions for all drivers:
-            $self->db_connect_command($db_conn).' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+            $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
     ];
 }
 
@@ -305,13 +308,16 @@ sub db_execute_command {
 =cut
 
 sub dbconn_2_url {
-    my ($self, $db_conn) = @_;
+    my ($self, $db_conn, $with_db) = @_;
+
+    $with_db = 1 unless(defined($with_db));
 
     my $driver = $self->o($db_conn, '-driver');
 
-    return ($driver eq 'sqlite')
-        ? $driver.':///'.$self->o($db_conn,'-dbname')
-        : $driver.'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'.$self->o($db_conn,'-dbname');
+    return (    ($driver eq 'sqlite')
+            ? $driver.':///'
+            : $driver.'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'
+           ) . ($with_db ? $self->o($db_conn,'-dbname') : '');
 }
 
 
@@ -658,7 +664,7 @@ sub run {
     print "\tgenerate_graph.pl -url $url -out diagram.png\n";
     print "\n";
     print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
-    print "\t".$self->db_connect_command('pipeline_db')."\n\n";
+    print "\tdb_conn.pl -url $url\n\n";
 }
 
 1;
