@@ -56,8 +56,11 @@ sub main {
     my $reset_all_jobs_for_analysis = 0;
     my $reset_failed_jobs_for_analysis = 0;
 
+    $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
+    $self->{'reg_type'}             = undef;
     $self->{'reg_alias'}            = undef;
+    $self->{'nosqlvc'}              = undef;
 
     $self->{'sleep_minutes'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
@@ -68,10 +71,11 @@ sub main {
 
     GetOptions(
                     # connection parameters
-               'reg_conf|regfile=s' => \$self->{'reg_conf'},
-               'reg_alias|regname=s'=> \$self->{'reg_alias'},
                'url=s'              => \$self->{'url'},
-               'nosqlvc'            => \$self->{'nosqlvc'},
+               'reg_conf|regfile=s' => \$self->{'reg_conf'},
+               'reg_type=s'         => \$self->{'reg_type'},
+               'reg_alias|regname=s'=> \$self->{'reg_alias'},
+               'nosqlvc=i'          => \$self->{'nosqlvc'},     # can't use the binary "!" as it is a propagated option
 
                     # loop control
                'run'                => \$run,
@@ -132,11 +136,14 @@ sub main {
         }
     }
 
-    if($self->{'reg_conf'} and $self->{'reg_alias'}) {
-        Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
-        $self->{'dba'} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
-    } elsif($self->{'url'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{'url'}, -no_sql_schema_version_check => $self->{'nosqlvc'} );
+    if($self->{'url'} or $self->{'reg_alias'}) {
+        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+            -url                            => $self->{'url'},
+            -reg_conf                       => $self->{'reg_conf'},
+            -reg_type                       => $self->{'reg_type'},
+            -reg_alias                      => $self->{'reg_alias'},
+            -no_sql_schema_version_check    => $self->{'nosqlvc'},
+        );
     } else {
         print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
@@ -293,17 +300,7 @@ sub generate_worker_cmd {
         exit(1);
     }
 
-    if ($self->{'reg_conf'}) {      # if reg_conf is defined, we have to pass it anyway, regardless of whether it is used to connect to the Hive database or not:
-        $worker_cmd .= ' -reg_conf '. $self->{'reg_conf'};
-    }
-
-    if ($self->{'reg_alias'}) {     # then we pass the connection parameters:
-        $worker_cmd .= ' -reg_alias '. $self->{'reg_alias'};
-    } else {
-        $worker_cmd .= " -url '". $self->{'safe_url'} ."'";
-    }
-
-    foreach my $worker_option ('nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
@@ -436,6 +433,7 @@ __DATA__
 =head2 Connection parameters
 
     -reg_conf <path>       : path to a Registry configuration file
+    -reg_type <string>     : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
     -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
 

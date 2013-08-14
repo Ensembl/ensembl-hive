@@ -21,7 +21,7 @@ use Bio::EnsEMBL::Hive::Valley;
 
 Bio::EnsEMBL::Registry->no_version_check(1);
 
-my ($reg_conf, $reg_alias, $url, $nosqlvc);                   # Connection parameters
+my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
 my ($help, $debug);
@@ -29,10 +29,11 @@ my ($help, $debug);
 GetOptions(
 
 # Connection parameters:
-           'reg_conf|regfile=s'         => \$reg_conf,
-           'reg_alias|regname=s'        => \$reg_alias,
            'url=s'                      => \$url,
-           'nosqlvc'                    => \$nosqlvc,
+           'reg_conf|regfile=s'         => \$reg_conf,
+           'reg_type=s'                 => \$reg_type,
+           'reg_alias|regname=s'        => \$reg_alias,
+           'nosqlvc=i'                  => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
 
 # Task specification parameters:
            'rc_id=i'                    => \$resource_class_id,
@@ -63,10 +64,9 @@ if($reg_conf) {     # if reg_conf is defined, we load it regardless of whether i
     Bio::EnsEMBL::Registry->load_all($reg_conf);
 }
 
-my $DBA;
-if($reg_alias) {
-    $DBA = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
-} elsif($url) {
+my $hive_dba;
+
+if($url or $reg_alias) {
         # Perform environment variable substitution separately with and without curly braces.
         #       Fixme: Perl 5.10 has a cute new "branch reset" (?|pattern)
         #              that would allow to merge the two substitutions below into a nice one-liner.
@@ -74,21 +74,30 @@ if($reg_alias) {
         #
         # Make sure expressions stay as they were if we were unable to substitute them.
         #
-    $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
-    $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+    if($url) {
+        $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+        $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+    }
 
-    $DBA = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url, -no_sql_schema_version_check => $nosqlvc);
+    $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+            -url                            => $url,
+            -reg_conf                       => $reg_conf,
+            -reg_type                       => $reg_type,
+            -reg_alias                      => $reg_alias,
+            -no_sql_schema_version_check    => $nosqlvc,
+    );
+
 } else {
     print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
     script_usage(1);
 }
 
-unless($DBA and $DBA->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
+unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
     print "ERROR : no database connection\n\n";
     script_usage(1);
 }
 
-my $queen = $DBA->get_Queen();
+my $queen = $hive_dba->get_Queen();
 
 my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
 

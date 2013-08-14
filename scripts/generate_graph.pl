@@ -36,16 +36,17 @@ sub _options {
     my ($self) = @_;
     GetOptions(
             # connection parameters
-        'reg_conf|regfile=s'    => \$self->{'reg_conf'},
-        'reg_alias|regname=s'   => \$self->{'reg_alias'},
+        'url=s'                 => \$self->{'url'},
+        'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
-        'url=s'                 => \$self->{url},
+        'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
+        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-        'f|format=s'            => \$self->{format},
-        'o|output=s'            => \$self->{output},
+        'f|format=s'            => \$self->{'format'},
+        'o|output=s'            => \$self->{'output'},
 
-        'h|help'                => \$self->{help},
-        'm|man'                 => \$self->{man},
+        'h|help'                => \$self->{'help'},
+        'm|man'                 => \$self->{'man'},
     );
 }
 
@@ -53,25 +54,21 @@ sub _process_options {
     my ($self) = @_;
 
     #Check for help
-    if($self->{help}) {
+    if($self->{'help'}) {
         pod2usage({-exitvalue => 0, -verbose => 1});
     }
-    if($self->{man}) {
+    if($self->{'man'}) {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
 
-    #Check for DB
-    if($self->{'reg_conf'} and $self->{'reg_alias'}) {
-        $self->{'reg_type'} ||= 'hive';
-        Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
-        $self->{dba} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, $self->{'reg_type'});
-
-        if($self->{'reg_type'} ne 'hive') {     # have to ensure we are getting a Hive DBAdaptor:
-            my $dbc = $self->{dba}->dbc();
-            $self->{dba} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc);
-        }
-    } elsif($self->{url}) {
-        $self->{dba} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{url});
+    if($self->{'url'} or $self->{'reg_alias'}) {
+        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+            -url                            => $self->{'url'},
+            -reg_conf                       => $self->{'reg_conf'},
+            -reg_type                       => $self->{'reg_type'},
+            -reg_alias                      => $self->{'reg_alias'},
+            -no_sql_schema_version_check    => $self->{'nosqlvc'},
+        );
     } else {
         pod2usage({
             -message => 'ERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified',
@@ -80,7 +77,7 @@ sub _process_options {
         });
     }
   
-    if(! $self->{output}) {
+    if(! $self->{'output'}) {
         pod2usage({
             -message => 'ERROR: No -output flag given',
             -exitvalue => 1,
@@ -88,9 +85,9 @@ sub _process_options {
         });
     }
   
-    if(!$self->{format}) {
-        if($self->{output}=~/\.(\w+)$/) {
-            $self->{format} = $1;
+    if(!$self->{'format'}) {
+        if($self->{'output'}=~/\.(\w+)$/) {
+            $self->{'format'} = $1;
         } else {
             die "Format was not set and could not guess from ".$self->output().". Please use either way to select it.\n";
         }
@@ -100,16 +97,16 @@ sub _process_options {
 sub _write_graph {
     my ($self) = @_;
 
-    my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{dba} );
+    my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{'dba'} );
     my $graphviz = $graph->build();
 
-    my $call = q{as_}.$self->{format};
+    my $call = q{as_}.$self->{'format'};
 
-    eval {$graphviz->$call($self->{output});};
+    eval {$graphviz->$call($self->{'output'});};
     if($@) {
         warn $@;
         pod2usage({
-            -message => 'Error detected. Check '.$self->{format}.' is a valid format. Use a format name as supported by graphviz',
+            -message => 'Error detected. Check '.$self->{'format'}.' is a valid format. Use a format name as supported by graphviz',
             -exitvalue => 1,
             -verbose => 1
         });

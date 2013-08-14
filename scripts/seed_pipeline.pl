@@ -13,7 +13,6 @@ BEGIN {
 
 
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
@@ -39,13 +38,16 @@ sub show_seedable_analyses {
 
 
 sub main {
-    my ($reg_conf, $reg_alias, $url, $analysis_id, $logic_name, $input_id);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $analysis_id, $logic_name, $input_id);
 
     GetOptions(
                 # connect to the database:
-            'reg_conf|regfile=s'    => \$reg_conf,
-            'reg_alias|regname=s'   => \$reg_alias,
-            'url=s'                 => \$url,
+            'url=s'                      => \$url,
+            'reg_conf|regfile=s'         => \$reg_conf,
+            'reg_type=s'                 => \$reg_type,
+            'reg_alias|regname=s'        => \$reg_alias,
+            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+
 
                 # identify the analysis:
             'analysis_id=i'         => \$analysis_id,
@@ -56,11 +58,14 @@ sub main {
     );
 
     my $hive_dba;
-    if($reg_conf and $reg_alias) {
-        Bio::EnsEMBL::Registry->load_all($reg_conf);
-        $hive_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
-    } elsif($url) {
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url);
+    if($url or $reg_alias) {
+        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+                -url                            => $url,
+                -reg_conf                       => $reg_conf,
+                -reg_type                       => $reg_type,
+                -reg_alias                      => $reg_alias,
+                -no_sql_schema_version_check    => $nosqlvc,
+        );
     } else {
         warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
         script_usage(1);
@@ -115,7 +120,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias>} [ {-analysis_id <analysis_id> | -logic_name <logic_name>} [ -input_id <input_id> ] ]
+    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> [-reg_type <reg_type>] -reg_alias <reg_alias>} [ {-analysis_id <analysis_id> | -logic_name <logic_name>} [ -input_id <input_id> ] ]
 
 =head1 DESCRIPTION
 

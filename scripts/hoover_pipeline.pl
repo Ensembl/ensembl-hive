@@ -20,13 +20,15 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 
 sub main {
-    my ($reg_conf, $reg_alias, $url, $before_datetime, $days_ago);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago);
 
     GetOptions(
                 # connect to the database:
-            'reg_conf|regfile=s'    => \$reg_conf,
-            'reg_alias|regname=s'   => \$reg_alias,
-            'url=s'                 => \$url,
+            'url=s'                      => \$url,
+            'reg_conf|regfile=s'         => \$reg_conf,
+            'reg_type=s'                 => \$reg_type,
+            'reg_alias|regname=s'        => \$reg_alias,
+            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
                 # specify the threshold datetime:
             'before_datetime=s'     => \$before_datetime,
@@ -34,11 +36,14 @@ sub main {
     );
 
     my $hive_dba;
-    if($reg_conf and $reg_alias) {
-        Bio::EnsEMBL::Registry->load_all($reg_conf);
-        $hive_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, 'hive');
-    } elsif($url) {
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url);
+    if($url or $reg_alias) {
+        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+                -url                            => $url,
+                -reg_conf                       => $reg_conf,
+                -reg_type                       => $reg_type,
+                -reg_alias                      => $reg_alias,
+                -no_sql_schema_version_check    => $nosqlvc,
+        );
     } else {
         warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
         script_usage(1);

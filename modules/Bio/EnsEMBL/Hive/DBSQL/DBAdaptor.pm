@@ -37,6 +37,7 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
 
+use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::URLFactory;
@@ -49,13 +50,31 @@ use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 sub new {
     my ($class, @args) = @_;
 
-    my ($url, $no_sql_schema_version_check) = rearrange(['URL', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $no_sql_schema_version_check)
+        = rearrange(['URL', 'REG_CONF', 'REG_TYPE', 'REG_ALIAS', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
 
     $url .= ';nosqlvc=1' if($url && $no_sql_schema_version_check);
 
-    my $self = $url
-        ? (Bio::EnsEMBL::Hive::URLFactory->fetch($url) || die "Unable to connect to DBA using url='$url'\n")
-        : ($class->SUPER::new(@args) || die "Unable to connect to DBA using parameters (".join(', ', @args).")\n");
+    my $self;
+
+    if($url) {
+        $self = Bio::EnsEMBL::Hive::URLFactory->fetch($url)
+            or die "Unable to connect to DBA using url='$url'\n";
+    } elsif($reg_alias) {
+        Bio::EnsEMBL::Registry->load_all($reg_conf) if($reg_conf);
+
+        $reg_type ||= 'hive';
+
+        $self = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, $reg_type)
+            or die "Unable to connect to DBA using reg_conf='$reg_conf', reg_type='$reg_type', reg_alias='$reg_alias'\n";
+
+        if($reg_type ne 'hive') {   # ensure we are getting a Hive adaptor even from a non-Hive Registry entry:
+            $self = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -dbconn => $self->dbc(), -no_sql_schema_version_check => $no_sql_schema_version_check );
+        }
+    } else {
+        $self = $class->SUPER::new(@args)
+            or die "Unable to connect to DBA using parameters (".join(', ', @args).")\n"
+    }
 
     unless($no_sql_schema_version_check) {
 

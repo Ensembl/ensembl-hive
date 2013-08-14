@@ -24,26 +24,40 @@ exit(0);
 
 sub main {
 
-    my ($url, $bacct_source_line, $lsf_user, $help, $start_date, $end_date);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $bacct_source_line, $lsf_user, $help, $start_date, $end_date);
 
     GetOptions(
-               'url=s'                      => \$url,
-               'dump|file=s'                => \$bacct_source_line,
-               'lu|lsf_user=s'              => \$lsf_user,
-               'sd|start_date=s'            => \$start_date,
-               'ed|end_date=s'              => \$end_date,
-               'h|help'                     => \$help,
+                # connect to the database:
+            'url=s'                      => \$url,
+            'reg_conf|regfile=s'         => \$reg_conf,
+            'reg_type=s'                 => \$reg_type,
+            'reg_alias|regname=s'        => \$reg_alias,
+            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+
+            'dump|file=s'                => \$bacct_source_line,
+            'lu|lsf_user=s'              => \$lsf_user,
+            'sd|start_date=s'            => \$start_date,
+            'ed|end_date=s'              => \$end_date,
+            'h|help'                     => \$help,
     );
 
     if ($help) { script_usage(0); }
 
-    unless( $url ) {
-        print "\nERROR : --url is an obligatory parameter for connecting to your database\n\n";
+    my $hive_dba;
+    if($url or $reg_alias) {
+        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+                -url                            => $url,
+                -reg_conf                       => $reg_conf,
+                -reg_type                       => $reg_type,
+                -reg_alias                      => $reg_alias,
+                -no_sql_schema_version_check    => $nosqlvc,
+        );
+    } else {
+        warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
         script_usage(1);
     }
 
-    my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $url );
-    my $dbc = $dba->dbc();
+    my $dbc = $hive_dba->dbc();
 
     warn "Creating the 'lsf_report' table if it doesn't exist...\n";
     $dbc->do (qq{
