@@ -38,6 +38,7 @@ sub _options {
             # connection parameters
         'reg_conf|regfile=s'    => \$self->{'reg_conf'},
         'reg_alias|regname=s'   => \$self->{'reg_alias'},
+        'reg_type=s'            => \$self->{'reg_type'},
         'url=s'                 => \$self->{url},
 
         'f|format=s'            => \$self->{format},
@@ -61,8 +62,14 @@ sub _process_options {
 
     #Check for DB
     if($self->{'reg_conf'} and $self->{'reg_alias'}) {
+        $self->{'reg_type'} ||= 'hive';
         Bio::EnsEMBL::Registry->load_all($self->{'reg_conf'});
-        $self->{dba} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, 'hive');
+        $self->{dba} = Bio::EnsEMBL::Registry->get_DBAdaptor($self->{'reg_alias'}, $self->{'reg_type'});
+
+        if($self->{'reg_type'} ne 'hive') {     # have to ensure we are getting a Hive DBAdaptor:
+            my $dbc = $self->{dba}->dbc();
+            $self->{dba} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc);
+        }
     } elsif($self->{url}) {
         $self->{dba} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $self->{url});
     } else {
