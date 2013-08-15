@@ -89,7 +89,8 @@ sub default_options {
         'hive_root_dir'         => $ENV{'EHIVE_ROOT_DIR'}                                               # this value is set up automatically if this code is run by init_pipeline.pl
                                     || $self->o('ensembl_cvs_root_dir').'/ensembl-hive',                # otherwise we have to rely on other means
 
-        'host'                  => 'localhost',
+        'host'                  => 'localhost',                                                         # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
+                                                                                                        # If you need to connect to TCPIP socket, set  -host => '127.0.0.1' instead.
         'port'                  => undef,
         'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
         'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
