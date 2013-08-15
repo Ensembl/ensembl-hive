@@ -313,10 +313,11 @@ sub dbconn_2_url {
     $with_db = 1 unless(defined($with_db));
 
     my $driver = $self->o($db_conn, '-driver');
+    my $port   = $self->o($db_conn,'-port');
 
     return (    ($driver eq 'sqlite')
             ? $driver.':///'
-            : $driver.'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').':'.$self->o($db_conn,'-port').'/'
+            : $driver.'://'.$self->o($db_conn,'-user').':'.$self->o($db_conn,'-pass').'@'.$self->o($db_conn,'-host').($port ? ':'.$port : '').'/'
            ) . ($with_db ? $self->o($db_conn,'-dbname') : '');
 }
 
