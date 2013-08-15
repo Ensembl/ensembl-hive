@@ -700,16 +700,17 @@ sub balance_semaphores {
     my ($self, $filter_analysis_id) = @_;
 
     my $find_sql    = qq{
-                        SELECT funnel.job_id, funnel.semaphore_count was, COALESCE(SUM(fan.status!='DONE' AND fan.status!='PASSED_ON'),0) should
-                        FROM job funnel
-                        LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
-                        WHERE }
-                    .($filter_analysis_id ? "funnel.analysis_id=$filter_analysis_id AND " : '')
-                    .qq{
-                        funnel.status='SEMAPHORED'
-                        GROUP BY funnel.job_id
-                        HAVING was<>should OR should=0
-                    };
+                        SELECT * FROM (
+                            SELECT funnel.job_id, funnel.semaphore_count AS was, COALESCE(COUNT(CASE WHEN fan.status!='DONE' AND fan.status!='PASSED_ON' THEN 1 ELSE NULL END),0) AS should
+                            FROM job funnel
+                            LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
+                            WHERE }
+                        .($filter_analysis_id ? "funnel.analysis_id=$filter_analysis_id AND " : '')
+                        .qq{
+                            funnel.status='SEMAPHORED'
+                            GROUP BY funnel.job_id
+                         ) AS internal WHERE was<>should OR should=0
+                     };
 
     my $update_sql  = "UPDATE job SET "
         ." semaphore_count=? , "
