@@ -76,27 +76,37 @@ use base ('Bio::EnsEMBL::Hive::DependentOptions');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir'  => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),                     # it will make sense to set this variable if you are going to use ehive with ensembl
-        'hive_root_dir'         => $self->o('ENV', 'EHIVE_ROOT_DIR')                            # this value is set up automatically if this code is run by init_pipeline.pl
-                                    || $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR').'/ensembl-hive', # otherwise we have to rely on other means
+            # Please note: ENVironment variables may be "exported" to inherit from enclosing shell,
+            # but if you want to *prevent* that you need to specifically say so
+            #  (setting a password to empty string does exactly that - sets it to an empty string)
+            #
+            #   [bash]      export -n ENSEMBL_CVS_ROOT_DIR  # will stop exporting, but the value in current shell stays as it was
+            #   [tcsh]      unsetenv ENSEMBL_CVS_ROOT_DIR   # will destroy the variable even in current shell, and stop exporting
 
-        'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                # snapshot of EnsEMBL Core API version. Please do not change if not sure.
+        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'} || $self->o('ensembl_cvs_root_dir'),    # it will make sense to set this variable if you are going to use ehive with ensembl
+        'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
 
-        'password'              => $self->o('ENV', 'ENSADMIN_PSW'),                             # people will have to make an effort NOT to insert it into config files like .bashrc etc
+        'hive_root_dir'         => $ENV{'EHIVE_ROOT_DIR'}                                               # this value is set up automatically if this code is run by init_pipeline.pl
+                                    || $self->o('ensembl_cvs_root_dir').'/ensembl-hive',                # otherwise we have to rely on other means
 
         'host'                  => 'localhost',
+        'port'                  => undef,
+        'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
+        'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
+        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'}         || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
         'pipeline_name'         => 'hive_generic',
+
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_force_init'       => 0,                   # setting it to 1 will drop the database prior to creation (use with care!)
 
-
         'pipeline_db'   => {
             -host   => $self->o('host'),
-            -port   => 3306,
-            -user   => 'ensadmin',
+            -port   => $self->o('port'),
+            -user   => $self->o('user'),
             -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
+            -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
         },
+
     };
 }
 
@@ -112,7 +122,7 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
-    my $driver = $self->o($db_conn, '-driver');
+    my $driver              = $self->o($db_conn, '-driver');
 
     my $db_execute_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn, 0 ).' -sql ';
     my $db_connect_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn );
