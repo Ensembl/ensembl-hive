@@ -1,4 +1,61 @@
 
+---------------------[after EnsEMBL rel.73]---------------------------------------------------------------------------
+
+* Thu Aug 15 16:18:49 2013 +0100 | Leo Gordon | Bugfixes to pacify pgsql: changed a non-functional "HAVING" into a nested SELECT, and changed unsupported SUM() into COUNT(CASE ... )
+* Thu Aug 15 16:15:28 2013 +0100 | Leo Gordon | An important comment about UNIX sockets (without a port number) vs TCPIP sockets (with a port number).
+* Thu Aug 15 14:30:40 2013 +0100 | Leo Gordon | Expose parts of pipeline_db, make them less EnsEMBL-specific, allow multiple failover initializers and use self-reference if none of them worked. Phasing out $self->o('ENV', ...) expressions
+* Thu Aug 15 14:27:43 2013 +0100 | Leo Gordon | Allow skipping the port number; you no longer need to define your port if you are happy with driver's default (thanks to db_conn.pl and core's DBConnection)
+* Wed Aug 14 18:44:38 2013 +0100 | Leo Gordon | Registry support is now cenralised in DBAdaptor, so scripts just pass reg_* options into the constructor. Passing -reg_type allows to connect to originally non-Hive Registry entries.
+* Wed Aug 14 12:58:04 2013 +0100 | Leo Gordon | make sure diagrams are generated from non-Hive registry entries as long as they are Hive-hybrids
+* Wed Aug 14 10:44:29 2013 +0100 | Leo Gordon | Support extra parameters added to the client's command line
+* Tue Aug 13 17:13:07 2013 +0100 | Leo Gordon | Start using the new db_conn.pl script instead of building driver-specific commands and running them.
+* Tue Aug 13 17:10:45 2013 +0100 | Leo Gordon | Execute individual SQL commands as well as sessions; translate some db-meta SQLite into Bash; control verbosity
+* Tue Aug 13 15:18:28 2013 +0100 | Leo Gordon | Schema change: changed the data type of monitor.analysis to TEXT as per Michael Paulini's suggestion, to fit more and longer analysis names.
+* Tue Aug 13 15:14:01 2013 +0100 | Leo Gordon | Make this patch less mysql-dependent. Needs testing with PostgreSQL.
+* Tue Aug 13 15:12:04 2013 +0100 | Leo Gordon | Allow multiple driver-dependent versions of the same patch; suggest schema patching with db_conn.pl commands.
+* Fri Aug 9 15:46:37 2013 +0100 | Leo Gordon | concession for Bio::EnsEMBL::DBSQL::DBConnection that does not support urls
+* Fri Aug 9 15:20:49 2013 +0100 | Leo Gordon | A unified dispatching client for databases. Finds the correct database client via -url or -reg_conf/-reg_alias combination.
+* Fri Aug 9 15:11:09 2013 +0100 | Leo Gordon | Give a more meaningful warning if EHIVE_ROOT_DIR is not set (probably because an external script is trying to run Hive API)
+* Sun Jul 28 20:47:52 2013 +0100 | Leo Gordon | bugfix: count both DONE and PASSED_ON jobs when re-balancing semaphores
+* Thu Jul 11 11:30:27 2013 +0100 | Leo Gordon | included a new -nosqlvc flag in beekeeper.pl and runWorker.pl to overcome the version restriction in non-critical cases
+* Thu Jul 11 11:28:58 2013 +0100 | Leo Gordon | bugfix: propagate no_sql_schema_version_check parameter through the URLFactory/DBAdaptor loop (should be re-factored at some point)
+* Wed Jul 10 16:18:37 2013 +0100 | Leo Gordon | cleaned up the pipeline_create_commands a bit
+* Tue Jul 9 17:15:32 2013 +0100 | Leo Gordon | the actual schema change (log_message.worker_id DEFAULT NULL)
+* Tue Jul 9 17:03:08 2013 +0100 | Leo Gordon | Log all instances when a semaphore had to be re-balanced
+* Tue Jul 9 17:02:04 2013 +0100 | Leo Gordon | schema change: allow recording of log_messages with worker_id=NULL
+* Tue Jul 9 16:15:19 2013 +0100 | Leo Gordon | changed the interface of balance_semaphores() : pass in $filter_analysis_id instead of $filter_analysis
+* Tue Jul 9 15:59:59 2013 +0100 | Leo Gordon | support selective balancing of semaphores funneling into a specific analysis
+* Tue Jul 9 15:44:45 2013 +0100 | Leo Gordon | automate the re-balancing of semaphore_counts - do it when there is nothing running
+* Tue Jul 9 15:38:47 2013 +0100 | Leo Gordon | introduced a new -balance option for beekeeper.pl so that semaphore_counts could be force-balanced
+* Mon Jul 8 15:48:38 2013 +0100 | Leo Gordon | bugfix: back to using CONCAT -- it looks like || operator is non-standard in MySQL
+* Tue Jul 2 16:17:01 2013 +0100 | Leo Gordon | start using procedures.pgsql with two main views ("progress" and "msg")
+* Tue Jul 2 16:16:00 2013 +0100 | Leo Gordon | start showing resource_class in "progress" view + some SQL unification
+* Tue Jul 2 13:15:37 2013 +0100 | Leo Gordon | bugfix: produce more specific bug report (either cannot connect or hive_meta unavailable)
+* Tue Jul 2 12:52:30 2013 +0100 | Leo Gordon | separated the task of URL parsing out of the dba caching mechanism (needs more work)
+* Mon Jul 1 12:10:44 2013 +0100 | Leo Gordon | bugfix: make sure we are getting the actual meta_value for hive_use_triggers
+* Fri Jun 28 16:53:58 2013 +0100 | Leo Gordon | added 'hive_meta' to the list of tables being dumped
+* Fri Jun 28 16:35:59 2013 +0100 | Leo Gordon | docs: documented the -input_id command line option
+* Fri Jun 28 16:32:24 2013 +0100 | Leo Gordon | optimization: no point in catching and re-throwing my own throw!
+* Fri Jun 28 16:27:09 2013 +0100 | Leo Gordon | bugfix: do not attempt to show AnalysisStats in case of an unspecialized Worker
+* Fri Jun 28 11:40:31 2013 +0100 | Leo Gordon | bugfix: substituted the hard-coded value for the formula
+* Thu Jun 27 16:17:48 2013 +0100 | Leo Gordon | tell the user whether to update the code to match the database SQL schema version, or which SQL patches to apply to the database
+* Thu Jun 27 09:24:33 2013 +0100 | Leo Gordon | start checking Hive SQL schema version (code version against db version) and die on mismatch
+* Thu Jun 27 09:19:42 2013 +0100 | Leo Gordon | bugfix: make sure we are only getting one value, not the rowhash
+* Wed Jun 26 17:35:03 2013 +0100 | Leo Gordon | use SqlSchemaAdaptor to detect the current code's sql version and record it in 'hive_meta' (leave it out of tables.*sql* files)
+* Wed Jun 26 17:32:22 2013 +0100 | Leo Gordon | A new "adaptor" for detection of software's sql version based on the number of available sql patches.
+* Tue Jun 25 10:35:25 2013 +0100 | Leo Gordon | move Core 'schema_version' out of tables.* files into HiveGeneric_conf (via ApiVersion), expose it for manipulation and make it available to PipeConfigs
+* Tue Jun 25 17:08:48 2013 +0100 | Leo Gordon | re-based MetaContainer (now it has two parents, NakedTableAdaptor is first); using the new version
+* Tue Jun 25 17:04:04 2013 +0100 | Leo Gordon | new method(s) to remove objects/rows by a given condition
+* Tue Jun 25 10:26:25 2013 +0100 | Leo Gordon | new 'hive_meta' table to keep hive_sql_schema_version (=number of patches), hive_pipeline_name and hive_use_triggers
+* Wed Jun 26 16:55:34 2013 +0100 | Leo Gordon | Changed an 'our' global variable to ENV{EHIVE_ROOT_DIR} to allow API-only users to set it and work as usual
+* Tue Jun 25 15:35:16 2013 +0100 | Miguel Pignatelli | added -hive_force_init option to documentation
+* Tue Jun 25 11:11:45 2013 +0100 | Leo Gordon | bugfix: make sure users' tweaking of Data::Dumper::Maxdepth does not mess up stringify()' s operation
+* Mon Jun 24 11:27:33 2013 +0100 | Leo Gordon | cosmetic: moving the sorting of keys into an external subroutine (it will be extended later)
+* Mon Jun 24 11:07:25 2013 +0100 | Leo Gordon | Utils/Config.pm no longer depends on ENSEMBL_CVS_ROOT_DIR, which becomes non-essential for non-EnsEMBL applications.
+* Fri Jun 21 15:54:28 2013 +0100 | Leo Gordon | bugfix: make sure fetch_all() works with empty tables
+* Tue Jun 18 20:11:19 2013 +0100 | Leo Gordon | avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example)
+* Tue Jun 18 18:38:26 2013 +0100 | Leo Gordon | print the failed query
+
 ---------------------[after EnsEMBL rel.72]---------------------------------------------------------------------------
 
 * Fri Jun 14 15:17:45 2013 +0100 | Leo Gordon | PostgreSQL: connection parameters are now supplied on the command line (no need to set PG variables by hand)
