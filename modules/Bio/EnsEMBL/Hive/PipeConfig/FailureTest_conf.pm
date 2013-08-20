@@ -9,7 +9,7 @@
 
     init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf -password <your_password>
 
-    init_pipeline.pl FailureTest_conf.pm -pipeline_db -host=localhost -password <your_password> -job_count 100 -failure_rate 3
+    init_pipeline.pl FailureTest_conf.pm -host=localhost -password <your_password> -job_count 100 -failure_rate 3
 
 =head1 DESCRIPTION
 

@@ -46,9 +46,10 @@
     You will probably need to specify the following:
 
         $ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf \
-            -pipeline_db -host=<your_mysql_host> \
-            -pipeline_db -user=<your_mysql_username> \
-            -pipeline_db -pass=<your_mysql_password> \
+            -host=<your_mysql_host> \
+            -port=<your_mysql_port> \
+            -user=<your_mysql_username> \
+            -password=<your_mysql_password> \
 
     This should create a fresh eHive database and initalize it with long multiplication pipeline data (the two numbers to be multiplied are taken from defaults).
 
