@@ -122,8 +122,8 @@ my $link_text = 'columns';
 my $html_header = qq{
 <html>
 <head>
-<meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
 <title>$db_team Schema Documentation</title>
+<meta name="order" content="2" />
 
 <script language="Javascript" type="text/javascript">
   var img_plus   = '$img_plus';
