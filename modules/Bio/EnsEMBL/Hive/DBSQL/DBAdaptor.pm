@@ -106,7 +106,7 @@ sub new {
                 || die "DB($url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
                       ."Unfortunately we cannot patch the database; you may have to create a new database or agree to run older code\n";
 
-            my $patcher_command = "$ENV{'EHIVE_ROOT_DIR'}/scripts/db_conn.pl -url $url";
+            my $patcher_command = "$ENV{'EHIVE_ROOT_DIR'}/scripts/db_cmd.pl -url $url";
 
             die "DB($url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
                ."Please upgrade the database by applying the following patches:\n\n".join("\n", map { "\t$patcher_command < $_" } @$new_patches)."\n\nand try again.\n";

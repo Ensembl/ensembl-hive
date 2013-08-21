@@ -126,8 +126,8 @@ sub pipeline_create_commands {
 
     my $driver              = $self->o($db_conn, '-driver');
 
-    my $db_execute_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn, 0 ).' -sql ';
-    my $db_connect_prefix   = 'db_conn.pl -url '.$self->dbconn_2_url( $db_conn );
+    my $db_execute_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn, 0 ).' -sql ';
+    my $db_connect_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn );
 
     return [
             $self->o('hive_force_init') ? ( $db_execute_prefix."'DROP DATABASE IF EXISTS ".$self->o($db_conn, '-dbname')."'" ) : (),
@@ -678,7 +678,7 @@ sub run {
     print "\tgenerate_graph.pl -url $url -out diagram.png\n";
     print "\n";
     print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
-    print "\tdb_conn.pl -url $url\n\n";
+    print "\tdb_cmd.pl -url $url\n\n";
 }
 
 1;

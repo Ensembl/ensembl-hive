@@ -115,26 +115,26 @@ __DATA__
 
 =head1 NAME
 
-    db_conn.pl
+    db_cmd.pl
 
 =head1 SYNOPSIS
 
-    db_conn.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -extra <extra_params> ] [ -verbose ]
+    db_cmd.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -extra <extra_params> ] [ -verbose ]
 
 =head1 DESCRIPTION
 
-    db_conn.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command
+    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command
 
 =head1 USAGE EXAMPLES
 
-    db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/" -sql 'CREATE DATABASE lg4_long_mult'
-    db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
-    db_conn.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -extra='--html'
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/" -sql 'CREATE DATABASE lg4_long_mult'
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -extra='--html'
 
-    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master -reg_type compara
-    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_prev   -reg_type compara
-    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
-    db_conn.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql 'SELECT * FROM coord_system'
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master -reg_type compara
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_prev   -reg_type compara
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql 'SELECT * FROM coord_system'
 
 =head1 CONTACT
 
