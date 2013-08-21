@@ -65,11 +65,11 @@ sub fetch_input {
         $digit_hash{$digit}++;
     }
 
-        # output_ids of partial multiplications to be computed:
-    my @output_ids = map { { 'digit' => $_ } } keys %digit_hash;
+        # parameter hashes of partial multiplications to be computed:
+    my @sub_tasks = map { { 'digit' => $_ } } keys %digit_hash;
 
         # store them for future use:
-    $self->param('output_ids', \@output_ids);
+    $self->param('sub_tasks', \@sub_tasks);
 }
 
 
@@ -98,15 +98,15 @@ sub run {
 sub write_output {  # nothing to write out, but some dataflow to perform:
     my $self = shift @_;
 
-    my $output_ids = $self->param('output_ids');
+    my $sub_tasks = $self->param('sub_tasks');
 
-        # "fan out" into branch#2 first
-    $self->dataflow_output_id($output_ids, 2);
+        # "fan out" into branch#2 first, branch#1 will be created if we wire it (and we do)
+    $self->dataflow_output_id($sub_tasks, 2);
 
-    $self->warning(scalar(@$output_ids).' multiplication jobs have been created');     # warning messages get recorded into 'log_message' table
+    $self->warning(scalar(@$sub_tasks).' multiplication jobs have been created');     # warning messages get recorded into 'log_message' table
 
-        # then flow into the branch#1 funnel; input_id would flow into branch#1 by default anyway, but we request it here explicitly:
-    $self->dataflow_output_id($self->input_id, 1);
+## extra information sent to the funnel will extend its stack:
+#    $self->dataflow_output_id( { 'different_digits' => scalar(@$sub_tasks) } , 1);
 }
 
 1;

@@ -83,8 +83,6 @@ sub write_output {  # but this time we have something to store
     my $self = shift @_;
 
     $self->dataflow_output_id( {
-        'a_multiplier'      => $self->param('a_multiplier'),
-        'digit'             => $self->param('digit'),
         'partial_product'   => $self->param('partial_product')
     }, 1);
 }
