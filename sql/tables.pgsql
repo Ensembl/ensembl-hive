@@ -3,11 +3,12 @@
 
     It has been annotated with @-tags.
     The following command is used to create HTML documentation:
-        perl $ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/sql2html.pl -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.pgsql \
+        perl $ENSEMBL_CVS_ROOT_DIR/ensembl-production/scripts/sql2html.pl -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.pgsql \
              -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html -d Hive -sort_headers 0 -sort_tables 0
 
-    Adding the following line into the header of the previous output will make it look prettier (valid in rel.71):
-        <link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/f75db6b3a877e4e04329aa1283dec34e.css" />
+    Adding the following line into the header of the previous output will make it look prettier (valid in rel.72):
+        <link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/eb8658698ad4d45258b954c2d3f35bad.css" />
+
 */
 
 
@@ -247,9 +248,11 @@ CREATE TABLE resource_description (
     are updated as the work is done, with a final update on completion.
 
 @column job_id                  autoincrement id
-@column prev_job_id             previous job which created this one (and passed input_id)
+@column prev_job_id             previous job which created this one
 @column analysis_id             the analysis_id needed to accomplish this job.
 @column input_id                input data passed into Analysis:RunnableDB to control the work
+@column param_id_stack          a CSV of job_ids whose input_ids contribute to the stack of local variables for the job
+@column accu_id_stack           a CSV of job_ids whose accu's contribute to the stack of local variables for the job
 @column worker_id               link to worker table to define which worker claimed this job
 @column status                  state the job is in
 @column retry_count             number times job had to be reset when worker failed to run it

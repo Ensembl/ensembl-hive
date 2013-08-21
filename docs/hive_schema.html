@@ -4,7 +4,7 @@
 <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8" />
 <title>Hive Schema Documentation</title>
 
-<link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/f75db6b3a877e4e04329aa1283dec34e.css" />
+<link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/eb8658698ad4d45258b954c2d3f35bad.css" />
 
 <script language="Javascript" type="text/javascript">
   var img_plus   = '<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>';
@@ -73,8 +73,9 @@
 <body>
 
 <h1>Ensembl Hive Schema Documentation</h1>
+<h2>Introduction</h2>
+<p><i>please, insert your introduction here</i><p><br />
 
-<br/>
 <h3 id="top">List of the tables:</h3>
 <div>
 
@@ -88,7 +89,9 @@
         <li><a href="#analysis_stats"><b>analysis_stats</b></a></li>
         <li><a href="#dataflow_rule"><b>dataflow_rule</b></a></li>
         <li><a href="#analysis_ctrl_rule"><b>analysis_ctrl_rule</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
@@ -98,7 +101,9 @@
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#resource_class"><b>resource_class</b></a></li>
         <li><a href="#resource_description"><b>resource_description</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
@@ -110,8 +115,11 @@
         <li><a href="#job_file"><b>job_file</b></a></li>
         <li><a href="#accu"><b>accu</b></a></li>
         <li><a href="#analysis_data"><b>analysis_data</b></a></li>
+        <li><a href="#hive_meta"><b>hive_meta</b></a></li>
         <li><a href="#meta"><b>meta</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
@@ -120,7 +128,9 @@
     </div>
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#worker"><b>worker</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
   <div style="clear:both" />
 </div>
 
@@ -134,7 +144,9 @@
         <li><a href="#log_message"><b>log_message</b></a></li>
         <li><a href="#analysis_stats_monitor"><b>analysis_stats_monitor</b></a></li>
         <li><a href="#monitor"><b>monitor</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="clear:both" />
 </div>
@@ -154,25 +166,25 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Each Analysis is a node of the pipeline diagram. It acts both as a "class" to which Jobs belong (and inherit from it certain properties) and as a "container" for them (Jobs of an Analysis can be blocking all Jobs of another Analysis).</p>
 
   <div id="div_analysis_base" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>int(10)</td><td></td><td>a unique ID that is also a foreign key to most of the other tables</td><td>primary key</td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td></td><td>a unique ID that is also a foreign key to most of the other tables</td><td></td></tr>
       <tr class="bg2"><td><b>logic_name</b></td><td>VARCHAR(40)</td><td></td><td>the name of the Analysis object</td><td>unique  key: logic_name_idx</td></tr>
       <tr class="bg1"><td><b>module</b></td><td>VARCHAR(255)</td><td></td><td>the Perl module name that runs this Analysis</td><td></td></tr>
       <tr class="bg2"><td><b>parameters</b></td><td>TEXT</td><td></td><td>a stingified hash of parameters common to all jobs of the Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>resource_class_id</b></td><td>int(10)</td><td></td><td>link to the resource_class table</td><td></td></tr>
-      <tr class="bg2"><td><b>failed_job_tolerance</b></td><td>int(10)</td><td>0</td><td>% of tolerated failed Jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>max_retry_count</b></td><td>int(10)</td><td>3</td><td>how many times a job of this Analysis will be retried (unless there is no point)</td><td></td></tr>
-      <tr class="bg2"><td><b>can_be_empty</b></td><td>TINYINT</td><td>0</td><td>if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>priority</b></td><td>TINYINT</td><td>0</td><td>an Analysis with higher priority will be more likely chosen on Worker's specialization</td><td></td></tr>
-      <tr class="bg2"><td><b>meadow_type</b></td><td>varchar(40)</td><td>NULL</td><td>if defined, forces this Analysis to be run only on the given Meadow</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis_capacity</b></td><td>int(10)</td><td>NULL</td><td>if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel</td><td></td></tr>
+      <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td></td><td>link to the resource_class table</td><td></td></tr>
+      <tr class="bg2"><td><b>failed_job_tolerance</b></td><td>INTEGER</td><td>0</td><td>% of tolerated failed Jobs</td><td></td></tr>
+      <tr class="bg1"><td><b>max_retry_count</b></td><td>INTEGER</td><td>3</td><td>how many times a job of this Analysis will be retried (unless there is no point)</td><td></td></tr>
+      <tr class="bg2"><td><b>can_be_empty</b></td><td>SMALLINT</td><td>0</td><td>if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs</td><td></td></tr>
+      <tr class="bg1"><td><b>priority</b></td><td>SMALLINT</td><td>0</td><td>an Analysis with higher priority will be more likely chosen on Worker's specialization</td><td></td></tr>
+      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(40)</td><td>NULL</td><td>if defined, forces this Analysis to be run only on the given Meadow</td><td></td></tr>
+      <tr class="bg1"><td><b>analysis_capacity</b></td><td>INTEGER</td><td>NULL</td><td>if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel</td><td></td></tr>
     </table>
   </div>
 
@@ -184,34 +196,34 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Parallel table to analysis_base which provides high level statistics on the state of an analysis and it's jobs.  Used to provide a fast overview, and to provide final approval of 'DONE' which is used by the blocking rules to determine when to unblock other analyses.  Also provides</p>
 
   <div id="div_analysis_stats" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>int(10)</td><td></td><td>foreign-keyed to the corresponding analysis_base entry</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>batch_size</b></td><td>int(10)</td><td>1</td><td>how many jobs are claimed in one claiming operation before Worker starts executing them</td><td></td></tr>
-      <tr class="bg1"><td><b>hive_capacity</b></td><td>int(10)</td><td>NULL</td><td>a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)</td><td></td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')</td><td>'EMPTY'</td><td>cached state of the Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>total_job_count</b></td><td>int(10)</td><td>0</td><td>total number of Jobs of this Analysis</td><td></td></tr>
-      <tr class="bg2"><td><b>semaphored_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in SEMAPHORED state</td><td></td></tr>
-      <tr class="bg1"><td><b>ready_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in READY state</td><td></td></tr>
-      <tr class="bg2"><td><b>done_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
-      <tr class="bg1"><td><b>failed_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
-      <tr class="bg2"><td><b>num_running_workers</b></td><td>int(10)</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>num_required_workers</b></td><td>int(10)</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
-      <tr class="bg2"><td><b>behaviour</b></td><td>enum('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
-      <tr class="bg1"><td><b>input_capacity</b></td><td>int(10)</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg2"><td><b>output_capacity</b></td><td>int(10)</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_input_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_run_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_output_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>last_update</b></td><td>datetime</td><td>'0000-00-00</td><td>when this entry was last updated</td><td></td></tr>
-      <tr class="bg2"><td><b>sync_lock</b></td><td>int(10)</td><td>0</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td></td><td>foreign-keyed to the corresponding analysis_base entry</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>batch_size</b></td><td>INTEGER</td><td>1</td><td>how many jobs are claimed in one claiming operation before Worker starts executing them</td><td></td></tr>
+      <tr class="bg1"><td><b>hive_capacity</b></td><td>INTEGER</td><td>NULL</td><td>a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)</td><td></td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')</td><td>'EMPTY'</td><td>cached state of the Analysis</td><td></td></tr>
+      <tr class="bg1"><td><b>total_job_count</b></td><td>INTEGER</td><td>0</td><td>total number of Jobs of this Analysis</td><td></td></tr>
+      <tr class="bg2"><td><b>semaphored_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in SEMAPHORED state</td><td></td></tr>
+      <tr class="bg1"><td><b>ready_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in READY state</td><td></td></tr>
+      <tr class="bg2"><td><b>done_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
+      <tr class="bg1"><td><b>failed_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
+      <tr class="bg2"><td><b>num_running_workers</b></td><td>INTEGER</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
+      <tr class="bg1"><td><b>num_required_workers</b></td><td>INTEGER</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
+      <tr class="bg2"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
+      <tr class="bg1"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg2"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>last_update</b></td><td>TIMESTAMP</td><td></td><td>when this entry was last updated</td><td></td></tr>
+      <tr class="bg2"><td><b>sync_lock</b></td><td>SMALLINT</td><td>0</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
     </table>
   </div>
 
@@ -223,19 +235,19 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Extension of simple_rule design except that goal(to) is now in extended URL format e.g. mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34' (full network address of an analysis). The only requirement is that there are rows in the job, analysis, dataflow_rule, and worker tables so that the following join works on the same database  WHERE analysis.analysis_id = dataflow_rule.from_analysis_id  AND   analysis.analysis_id = job.analysis_id AND   analysis.analysis_id = worker.analysis_id These are the rules used to create entries in the job table where the input_id (control data) is passed from one analysis to the next to define work. The analysis table will be extended so that it can specify different read and write databases, with the default being the database the analysis is on</p>
 
   <div id="div_dataflow_rule" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>dataflow_rule_id</b></td><td>int(10)</td><td></td><td>internal ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>from_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
-      <tr class="bg1"><td><b>branch_code</b></td><td>int(10)</td><td>1</td><td>branch_code of the fan</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>int(10)</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td>unique: key</td></tr>
-      <tr class="bg1"><td><b>to_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td>unique: key</td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>dataflow_rule_id</b></td><td>INTEGER</td><td></td><td>internal ID</td><td></td></tr>
+      <tr class="bg2"><td><b>from_analysis_id</b></td><td>INTEGER</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>branch_code</b></td><td>INTEGER</td><td>1</td><td>branch_code of the fan</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>INTEGER</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>to_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td>unique: key</td></tr>
       <tr class="bg2"><td><b>input_id_template</b></td><td>TEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
     </table>
   </div>
@@ -248,16 +260,16 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">These rules define a higher level of control. These rules are used to turn whole anlysis nodes on/off (READY/BLOCKED). If any of the condition_analyses are not 'DONE' the ctrled_analysis is set to BLOCKED. When all conditions become 'DONE' then ctrled_analysis is set to READY The workers switch the analysis.status to 'WORKING' and 'DONE'. But any moment if a condition goes false, the analysis is reset to BLOCKED.</p>
 
   <div id="div_analysis_ctrl_rule" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>condition_analysis_url</b></td><td>varchar(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>ctrled_analysis_id</b></td><td>int(10)</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>condition_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>ctrled_analysis_id</b></td><td>INTEGER</td><td></td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -274,16 +286,16 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Maps between resource_class numeric IDs and unique names.</p>
 
   <div id="div_resource_class" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>resource_class_id</b></td><td>int(10)</td><td></td><td>unique ID of the ResourceClass</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>name</b></td><td>varchar(40)</td><td></td><td>unique name of the ResourceClass</td><td>unique: key</td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td></td><td>unique ID of the ResourceClass</td><td></td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>VARCHAR(40)</td><td></td><td>unique name of the ResourceClass</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -295,17 +307,17 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Maps (ResourceClass, MeadowType) pair to Meadow-specific resource lines.</p>
 
   <div id="div_resource_description" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>resource_class_id</b></td><td>int(10)</td><td></td><td>foreign-keyed to the ResourceClass entry</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>meadow_type</b></td><td>varchar(40)</td><td></td><td>if the Worker is about to be executed on the given Meadow...</td><td>primary key</td></tr>
-      <tr class="bg1"><td><b>parameters</b></td><td>varchar(255)</td><td>''</td><td>... the following resource line should be given to it.</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td></td><td>foreign-keyed to the ResourceClass entry</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(40)</td><td></td><td>if the Worker is about to be executed on the given Meadow...</td><td>primary key</td></tr>
+      <tr class="bg1"><td><b>parameters</b></td><td>VARCHAR(255)</td><td>''</td><td>... the following resource line should be given to it.</td><td></td></tr>
     </table>
   </div>
 
@@ -322,26 +334,28 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">The job is the heart of this system.  It is the kiosk or blackboard where workers find things to do and then post work for other works to do. These jobs are created prior to work being done, are claimed by workers, are updated as the work is done, with a final update on completion.</p>
 
   <div id="div_job" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>job_id</b></td><td>int(10)</td><td></td><td>autoincrement id</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>prev_job_id</b></td><td>int(10)</td><td>NULL</td><td>previous job which created this one (and passed input_id)</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>int(10)</td><td></td><td>the analysis_id needed to accomplish this job.</td><td>unique  key: input_id_analysis<br />key: analysis_status_retry</td></tr>
-      <tr class="bg2"><td><b>input_id</b></td><td>char(255)</td><td></td><td>input data passed into Analysis:RunnableDB to control the work</td><td>unique  key: input_id_analysis</td></tr>
-      <tr class="bg1"><td><b>worker_id</b></td><td>int(10)</td><td>NULL</td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>enum('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: worker_id</td></tr>
-      <tr class="bg1"><td><b>retry_count</b></td><td>int(10)</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
-      <tr class="bg2"><td><b>completed</b></td><td>datetime</td><td>NULL</td><td>datetime when job was completed</td><td></td></tr>
-      <tr class="bg1"><td><b>runtime_msec</b></td><td>int(10)</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
-      <tr class="bg2"><td><b>query_count</b></td><td>int(10)</td><td>NULL</td><td>how many SQL queries were run during this job</td><td></td></tr>
-      <tr class="bg1"><td><b>semaphore_count</b></td><td>int(10)</td><td>0</td><td>if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".</td><td></td></tr>
-      <tr class="bg2"><td><b>semaphored_job_id</b></td><td>int(10)</td><td>NULL</td><td>the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>job_id</b></td><td>INTEGER</td><td></td><td>autoincrement id</td><td></td></tr>
+      <tr class="bg2"><td><b>prev_job_id</b></td><td>INTEGER</td><td>NULL</td><td>previous job which created this one</td><td></td></tr>
+      <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td></td><td>the analysis_id needed to accomplish this job.</td><td>unique  key: input_id_stacks_analysis<br />key: analysis_status_retry</td></tr>
+      <tr class="bg2"><td><b>input_id</b></td><td>CHAR(255)</td><td></td><td>input data passed into Analysis:RunnableDB to control the work</td><td>unique  key: input_id_stacks_analysis</td></tr>
+      <tr class="bg1"><td><b>param_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose input_ids contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
+      <tr class="bg2"><td><b>accu_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose accu's contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
+      <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: worker_id</td></tr>
+      <tr class="bg1"><td><b>retry_count</b></td><td>INTEGER</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
+      <tr class="bg2"><td><b>completed</b></td><td>TIMESTAMP</td><td></td><td>when the job was completed</td><td></td></tr>
+      <tr class="bg1"><td><b>runtime_msec</b></td><td>INTEGER</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
+      <tr class="bg2"><td><b>query_count</b></td><td>INTEGER</td><td>NULL</td><td>how many SQL queries were run during this job</td><td></td></tr>
+      <tr class="bg1"><td><b>semaphore_count</b></td><td>INTEGER</td><td>0</td><td>if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".</td><td></td></tr>
+      <tr class="bg2"><td><b>semaphored_job_id</b></td><td>INTEGER</td><td>NULL</td><td>the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".</td><td></td></tr>
     </table>
   </div>
 
@@ -353,19 +367,19 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">For testing/debugging purposes both STDOUT and STDERR streams of each Job can be redirected into a separate log file. This table holds filesystem paths to one or both of those files. There is max one entry per job_id and retry.</p>
 
   <div id="div_job_file" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>job_id</b></td><td>int(10)</td><td></td><td>foreign key</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>worker_id</b></td><td>int(10)</td><td></td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
-      <tr class="bg1"><td><b>retry</b></td><td>int(10)</td><td></td><td>copy of retry_count of job as it was run</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>stdout_file</b></td><td>varchar(255)</td><td></td><td>path to the job's STDOUT log</td><td></td></tr>
-      <tr class="bg1"><td><b>stderr_file</b></td><td>varchar(255)</td><td></td><td>path to the job's STDERR log</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>job_id</b></td><td>INTEGER</td><td></td><td>foreign key</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>worker_id</b></td><td>INTEGER</td><td></td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
+      <tr class="bg1"><td><b>retry</b></td><td>INTEGER</td><td></td><td>copy of retry_count of job as it was run</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>stdout_file</b></td><td>VARCHAR(255)</td><td></td><td>path to the job's STDOUT log</td><td></td></tr>
+      <tr class="bg1"><td><b>stderr_file</b></td><td>VARCHAR(255)</td><td></td><td>path to the job's STDERR log</td><td></td></tr>
     </table>
   </div>
 
@@ -377,19 +391,19 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Accumulator for funneled dataflow.</p>
 
   <div id="div_accu" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>sending_job_id</b></td><td>int(10)</td><td></td><td>semaphoring job in the "box"</td><td></td></tr>
-      <tr class="bg2"><td><b>receiving_job_id</b></td><td>int(10)</td><td></td><td>semaphored job outside the "box"</td><td></td></tr>
-      <tr class="bg1"><td><b>struct_name</b></td><td>varchar(255)</td><td></td><td>name of the structured parameter</td><td></td></tr>
-      <tr class="bg2"><td><b>key_signature</b></td><td>varchar(255)</td><td></td><td>locates the part of the structured parameter</td><td></td></tr>
-      <tr class="bg1"><td><b>value</b></td><td>varchar(255)</td><td></td><td>value of the part</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>sending_job_id</b></td><td>INTEGER</td><td></td><td>semaphoring job in the "box"</td><td>key: accu_sending_idx</td></tr>
+      <tr class="bg2"><td><b>receiving_job_id</b></td><td>INTEGER</td><td></td><td>semaphored job outside the "box"</td><td>key: accu_receiving_idx</td></tr>
+      <tr class="bg1"><td><b>struct_name</b></td><td>VARCHAR(255)</td><td></td><td>name of the structured parameter</td><td></td></tr>
+      <tr class="bg2"><td><b>key_signature</b></td><td>VARCHAR(255)</td><td></td><td>locates the part of the structured parameter</td><td></td></tr>
+      <tr class="bg1"><td><b>value</b></td><td>TEXT</td><td></td><td>value of the part</td><td></td></tr>
     </table>
   </div>
 
@@ -401,16 +415,37 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A generic blob-storage hash. Currently the only legitimate use of this table is "overflow" of job.input_ids: when they grow longer than 254 characters the real data is stored in analysis_data instead, and the input_id contains the corresponding analysis_data_id.</p>
 
   <div id="div_analysis_data" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>analysis_data_id</b></td><td>int(10)</td><td></td><td>primary id</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>data</b></td><td>longtext</td><td></td><td>text blob which holds the data</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>analysis_data_id</b></td><td>INTEGER</td><td></td><td>primary id</td><td></td></tr>
+      <tr class="bg2"><td><b>data</b></td><td>TEXT</td><td></td><td>text blob which holds the data</td><td>key: data(100)</td></tr>
+    </table>
+  </div>
+
+  <div id="hive_meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">hive_meta</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_hive_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('hive_meta')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table keeps several important hive-specific pipeline-wide key-value pairs such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.</p>
+
+  <div id="div_hive_meta" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(80)</td><td></td><td>the KEY of KEY-VALUE pairs (primary key)</td><td></td></tr>
+      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
     </table>
   </div>
 
@@ -422,16 +457,16 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table comes from the Ensembl core schema. It is created here with the 'IF NOT EXISTS' option to avoid a potential clash if we are dealing with core-hive hybrid that is created in the wrong order. At the moment meta table is used (1) for compatibility with the Core API ('schema_version'), (2) to keep some Hive-specific meta-information ('pipeline_name') and (3) to keep pipeline-wide parameters.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table comes from the Ensembl core schema. It is created here with the 'IF NOT EXISTS' option to avoid a potential clash if we are dealing with core-hive hybrid that is created in the wrong order. At the moment meta table is used (1) for compatibility with the Core API ('schema_version'), (2) to keep pipeline-wide parameters.</p>
 
   <div id="div_meta" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>meta_id</b></td><td>INT</td><td></td><td>auto-incrementing primary key, not really used per se</td><td>primary   key</td></tr>
-      <tr class="bg2"><td><b>species_id</b></td><td>INT</td><td>1</td><td>always 1, kept for compatibility with the Core API</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>meta_id</b></td><td>INTEGER</td><td></td><td>auto-incrementing primary key, not really used per se</td><td></td></tr>
+      <tr class="bg2"><td><b>species_id</b></td><td>INTEGER</td><td>1</td><td>always 1, kept for compatibility with the Core API</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
       <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(40)</td><td></td><td>the KEY of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx</td></tr>
       <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
     </table>
@@ -450,28 +485,28 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Entries of this table correspond to Worker objects of the API. Workers are created by inserting into this table so that there is only one instance of a Worker object in the database. As Workers live and do work, they update this table, and when they die they update again.</p>
 
   <div id="div_worker" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>worker_id</b></td><td>int(10)</td><td></td><td>unique ID of the Worker</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>meadow_type</b></td><td>varchar(40)</td><td></td><td>type of the Meadow it is running on</td><td></td></tr>
-      <tr class="bg1"><td><b>meadow_name</b></td><td>varchar(40)</td><td></td><td>name of the Meadow it is running on (for 'LOCAL' type is the same as host)</td><td></td></tr>
-      <tr class="bg2"><td><b>host</b></td><td>varchar(40)</td><td></td><td>execution host name</td><td></td></tr>
-      <tr class="bg1"><td><b>process_id</b></td><td>varchar(40)</td><td></td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td></td></tr>
-      <tr class="bg2"><td><b>resource_class_id</b></td><td>int(10)</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>int(10)</td><td>NULL</td><td>Analysis the Worker is specified into</td><td>key: analysis_status</td></tr>
-      <tr class="bg2"><td><b>work_done</b></td><td>int(11)</td><td>'0'</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
-      <tr class="bg1"><td><b>status</b></td><td>enum('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td>key: analysis_status</td></tr>
-      <tr class="bg2"><td><b>born</b></td><td>timestamp</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
-      <tr class="bg1"><td><b>last_check_in</b></td><td>datetime</td><td></td><td>when the Worker last checked into the database</td><td></td></tr>
-      <tr class="bg2"><td><b>died</b></td><td>datetime</td><td>NULL</td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
-      <tr class="bg1"><td><b>cause_of_death</b></td><td>enum('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN')</td><td>NULL</td><td>if defined, why did the Worker exit (or why it was killed)</td><td></td></tr>
-      <tr class="bg2"><td><b>log_dir</b></td><td>varchar(255)</td><td>NULL</td><td>if defined, a filesystem directory where this Worker's output is logged</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td></td><td>unique ID of the Worker</td><td></td></tr>
+      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(40)</td><td></td><td>type of the Meadow it is running on</td><td></td></tr>
+      <tr class="bg1"><td><b>meadow_name</b></td><td>VARCHAR(40)</td><td></td><td>name of the Meadow it is running on (for 'LOCAL' type is the same as host)</td><td></td></tr>
+      <tr class="bg2"><td><b>host</b></td><td>VARCHAR(40)</td><td></td><td>execution host name</td><td></td></tr>
+      <tr class="bg1"><td><b>process_id</b></td><td>VARCHAR(40)</td><td></td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td></td></tr>
+      <tr class="bg2"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
+      <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td>NULL</td><td>Analysis the Worker is specified into</td><td>key: analysis_status</td></tr>
+      <tr class="bg2"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
+      <tr class="bg1"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td>key: analysis_status</td></tr>
+      <tr class="bg2"><td><b>born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
+      <tr class="bg1"><td><b>last_check_in</b></td><td>TIMESTAMP</td><td></td><td>when the Worker last checked into the database</td><td></td></tr>
+      <tr class="bg2"><td><b>died</b></td><td>TIMESTAMP</td><td></td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
+      <tr class="bg1"><td><b>cause_of_death</b></td><td>ENUM('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN')</td><td>NULL</td><td>if defined, why did the Worker exit (or why it was killed)</td><td></td></tr>
+      <tr class="bg2"><td><b>log_dir</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, a filesystem directory where this Worker's output is logged</td><td></td></tr>
     </table>
   </div>
 
@@ -488,22 +523,22 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">When a Job or a job-less Worker (job_id=NULL) throws a "die" message for any reason, the message is recorded in this table. It may or may not indicate that the job was unsuccessful via is_error flag. Also $self->warning("...") messages are recorded with is_error=0.</p>
 
   <div id="div_log_message" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>log_message_id</b></td><td>int(10)</td><td></td><td>an autoincremented primary id of the message</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>job_id</b></td><td>int(10)</td><td>NULL</td><td>the id of the job that threw the message (or NULL if it was outside of a message)</td><td>key: job_id</td></tr>
-      <tr class="bg1"><td><b>worker_id</b></td><td>int(10)</td><td></td><td>the 'current' worker</td><td>key: worker_id</td></tr>
-      <tr class="bg2"><td><b>time</b></td><td>timestamp</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
-      <tr class="bg1"><td><b>retry</b></td><td>int(10)</td><td>NULL</td><td>retry_count of the job when the message was thrown (or NULL if no job)</td><td></td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>enum('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
-      <tr class="bg1"><td><b>msg</b></td><td>text</td><td></td><td>string that contains the message</td><td></td></tr>
-      <tr class="bg2"><td><b>is_error</b></td><td>TINYINT</td><td></td><td>binary flag</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>log_message_id</b></td><td>INTEGER</td><td></td><td>an autoincremented primary id of the message</td><td></td></tr>
+      <tr class="bg2"><td><b>job_id</b></td><td>INTEGER</td><td>NULL</td><td>the id of the job that threw the message (or NULL if it was outside of a message)</td><td>key: job_id</td></tr>
+      <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>the 'current' worker</td><td>key: worker_id</td></tr>
+      <tr class="bg2"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
+      <tr class="bg1"><td><b>retry</b></td><td>INTEGER</td><td>NULL</td><td>retry_count of the job when the message was thrown (or NULL if no job)</td><td></td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
+      <tr class="bg1"><td><b>msg</b></td><td>TEXT</td><td></td><td>string that contains the message</td><td></td></tr>
+      <tr class="bg2"><td><b>is_error</b></td><td>SMALLINT</td><td></td><td>binary flag</td><td></td></tr>
     </table>
   </div>
 
@@ -515,35 +550,35 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A regular timestamped snapshot of the analysis_stats table.</p>
 
   <div id="div_analysis_stats_monitor" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>time</b></td><td>datetime</td><td>'0000-00-00</td><td>when this snapshot was taken</td><td></td></tr>
-      <tr class="bg2"><td><b>analysis_id</b></td><td>int(10)</td><td></td><td>foreign-keyed to the corresponding analysis_base entry</td><td></td></tr>
-      <tr class="bg1"><td><b>batch_size</b></td><td>int(10)</td><td>1</td><td>how many jobs are claimed in one claiming operation before Worker starts executing them</td><td></td></tr>
-      <tr class="bg2"><td><b>hive_capacity</b></td><td>int(10)</td><td>NULL</td><td>a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)</td><td></td></tr>
-      <tr class="bg1"><td><b>status</b></td><td>enum('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')</td><td>'EMPTY'</td><td>cached state of the Analysis</td><td></td></tr>
-      <tr class="bg2"><td><b>total_job_count</b></td><td>int(10)</td><td>0</td><td>total number of Jobs of this Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>semaphored_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in SEMAPHORED state</td><td></td></tr>
-      <tr class="bg2"><td><b>ready_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in READY state</td><td></td></tr>
-      <tr class="bg1"><td><b>done_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
-      <tr class="bg2"><td><b>failed_job_count</b></td><td>int(10)</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
-      <tr class="bg1"><td><b>num_running_workers</b></td><td>int(10)</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
-      <tr class="bg2"><td><b>num_required_workers</b></td><td>int(10)</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>behaviour</b></td><td>enum('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
-      <tr class="bg2"><td><b>input_capacity</b></td><td>int(10)</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg1"><td><b>output_capacity</b></td><td>int(10)</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_input_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_run_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_output_msec_per_job</b></td><td>int(10)</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>last_update</b></td><td>datetime</td><td>'0000-00-00</td><td>when this entry was last updated</td><td></td></tr>
-      <tr class="bg1"><td><b>sync_lock</b></td><td>int(10)</td><td></td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when this snapshot was taken</td><td></td></tr>
+      <tr class="bg2"><td><b>analysis_id</b></td><td>INTEGER</td><td></td><td>foreign-keyed to the corresponding analysis_base entry</td><td></td></tr>
+      <tr class="bg1"><td><b>batch_size</b></td><td>INTEGER</td><td>1</td><td>how many jobs are claimed in one claiming operation before Worker starts executing them</td><td></td></tr>
+      <tr class="bg2"><td><b>hive_capacity</b></td><td>INTEGER</td><td>NULL</td><td>a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)</td><td></td></tr>
+      <tr class="bg1"><td><b>status</b></td><td>ENUM('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED')</td><td>'EMPTY'</td><td>cached state of the Analysis</td><td></td></tr>
+      <tr class="bg2"><td><b>total_job_count</b></td><td>INTEGER</td><td>0</td><td>total number of Jobs of this Analysis</td><td></td></tr>
+      <tr class="bg1"><td><b>semaphored_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in SEMAPHORED state</td><td></td></tr>
+      <tr class="bg2"><td><b>ready_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in READY state</td><td></td></tr>
+      <tr class="bg1"><td><b>done_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
+      <tr class="bg2"><td><b>failed_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
+      <tr class="bg1"><td><b>num_running_workers</b></td><td>INTEGER</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
+      <tr class="bg2"><td><b>num_required_workers</b></td><td>INTEGER</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
+      <tr class="bg1"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
+      <tr class="bg2"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg1"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>last_update</b></td><td>TIMESTAMP</td><td></td><td>when this entry was last updated</td><td></td></tr>
+      <tr class="bg1"><td><b>sync_lock</b></td><td>SMALLINT</td><td></td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
     </table>
   </div>
 
@@ -555,19 +590,19 @@
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">A regular collated snapshot of the Worker table.</p>
 
   <div id="div_monitor" style="display:none">
-    <table style="border:1px outset #222222">
-      <tr class="bg3 center"><th style="width:180px">Column</th><th style="width:150px">Type</th><th style="width:100px">Default value</th><th style="width:400px">Description</th><th style="width:150px">Index</th></tr>
-      <tr class="bg1"><td><b>time</b></td><td>datetime</td><td>'0000-00-00</td><td>when this snapshot was taken</td><td></td></tr>
-      <tr class="bg2"><td><b>workers</b></td><td>int(10)</td><td>'0'</td><td>number of running workers</td><td></td></tr>
-      <tr class="bg1"><td><b>throughput</b></td><td>float</td><td>NULL</td><td>average numb of completed Jobs per sec. of the hive (this number is calculated using running workers only)</td><td></td></tr>
-      <tr class="bg2"><td><b>per_worker</b></td><td>float</td><td>NULL</td><td>average numb of completed Jobs per sec. per Worker (this number is calculated using running workers only)</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis</b></td><td>varchar(255)</td><td>NULL</td><td>a comma-separated list of analyses running at the time of snapshot</td><td></td></tr>
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when this snapshot was taken</td><td></td></tr>
+      <tr class="bg2"><td><b>workers</b></td><td>INTEGER</td><td>0</td><td>number of running workers</td><td></td></tr>
+      <tr class="bg1"><td><b>throughput</b></td><td>FLOAT</td><td>NULL</td><td>average numb of completed Jobs per sec. of the hive (this number is calculated using running workers only)</td><td></td></tr>
+      <tr class="bg2"><td><b>per_worker</b></td><td>FLOAT</td><td>NULL</td><td>average numb of completed Jobs per sec. per Worker (this number is calculated using running workers only)</td><td></td></tr>
+      <tr class="bg1"><td><b>analysis</b></td><td>TEXT</td><td>NULL</td><td>a comma-separated list of analyses running at the time of snapshot</td><td></td></tr>
     </table>
   </div>
 
