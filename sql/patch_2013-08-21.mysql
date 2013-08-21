@@ -1,0 +1,12 @@
+
+    -- Add two new fields to job table to support parameter/accu stacks:
+ALTER TABLE job ADD COLUMN param_id_stack CHAR(64) NOT NULL DEFAULT '' AFTER input_id;
+ALTER TABLE job ADD COLUMN  accu_id_stack CHAR(64) NOT NULL DEFAULT '' AFTER param_id_stack;
+
+    -- Extend the unique constraint to include both new fields:
+ALTER TABLE job DROP KEY input_id_analysis;
+ALTER TABLE job ADD UNIQUE KEY input_id_stacks_analysis (input_id, param_id_stack, accu_id_stack, analysis_id);
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=52 WHERE meta_key='hive_sql_schema_version' AND meta_value='51';
+

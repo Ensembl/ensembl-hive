@@ -267,7 +267,9 @@ CREATE TABLE job (
     job_id                  SERIAL PRIMARY KEY,
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
     analysis_id             INTEGER     NOT NULL,
-    input_id                CHAR(255)   NOT NULL,
+    input_id                TEXT        NOT NULL,
+    param_id_stack          TEXT        NOT NULL DEFAULT '',
+    accu_id_stack           TEXT        NOT NULL DEFAULT '',
     worker_id               INTEGER              DEFAULT NULL,
     status                  jw_status   NOT NULL DEFAULT 'READY',
     retry_count             INTEGER     NOT NULL DEFAULT 0,
@@ -278,7 +280,7 @@ CREATE TABLE job (
     semaphore_count         INTEGER     NOT NULL DEFAULT 0,
     semaphored_job_id       INTEGER              DEFAULT NULL,
 
-    UNIQUE (input_id, analysis_id)                      -- to avoid repeating tasks
+    UNIQUE (input_id, param_id_stack, accu_id_stack, analysis_id)   -- to avoid repeating tasks
 );
 CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
 CREATE INDEX ON job (worker_id, status);                -- for fetching and releasing claimed jobs

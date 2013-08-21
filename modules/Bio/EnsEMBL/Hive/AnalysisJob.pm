@@ -44,11 +44,13 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my($analysis_id, $input_id, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id) =
-        rearrange([qw(analysis_id input_id worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id) ], @_);
+    my($analysis_id, $input_id, $param_id_stack, $accu_id_stack, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id) =
+        rearrange([qw(analysis_id input_id param_id_stack accu_id_stack worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id) ], @_);
 
     $self->analysis_id($analysis_id)            if(defined($analysis_id));
     $self->input_id($input_id)                  if(defined($input_id));
+    $self->param_id_stack($param_id_stack)      if(defined($param_id_stack));
+    $self->accu_id_stack($accu_id_stack)        if(defined($accu_id_stack));
     $self->worker_id($worker_id)                if(defined($worker_id));
     $self->status($status)                      if(defined($status));
     $self->retry_count($retry_count)            if(defined($retry_count));
@@ -62,12 +64,89 @@ sub new {
 }
 
 
-sub input_id {
-  my $self = shift;
-  $self->{'_input_id'} = shift if(@_);
-  return $self->{'_input_id'};
+sub analysis_id {
+    my $self = shift;
+    $self->{'_analysis_id'} = shift if(@_);
+    return $self->{'_analysis_id'};
 }
 
+sub input_id {
+    my $self = shift;
+    $self->{'_input_id'} = shift if(@_);
+    return $self->{'_input_id'};
+}
+
+sub param_id_stack {
+    my $self = shift;
+    $self->{'_param_id_stack'} = shift if(@_);
+    return $self->{'_param_id_stack'};
+}
+
+sub accu_id_stack {
+    my $self = shift;
+    $self->{'_accu_id_stack'} = shift if(@_);
+    return $self->{'_accu_id_stack'};
+}
+
+sub worker_id {
+    my $self = shift;
+    $self->{'_worker_id'} = shift if(@_);
+    return $self->{'_worker_id'};
+}
+
+sub status {
+    my $self = shift;
+    $self->{'_status'} = shift if(@_);
+    return $self->{'_status'};
+}
+
+sub retry_count {
+    my $self = shift;
+    $self->{'_retry_count'} = shift if(@_);
+    $self->{'_retry_count'} = 0 unless(defined($self->{'_retry_count'}));
+    return $self->{'_retry_count'};
+}
+
+sub completed {
+    my $self = shift;
+    $self->{'_completed'} = shift if(@_);
+    return $self->{'_completed'};
+}
+
+sub runtime_msec {
+    my $self = shift;
+    $self->{'_runtime_msec'} = shift if(@_);
+    $self->{'_runtime_msec'} = 0 unless(defined($self->{'_runtime_msec'}));
+    return $self->{'_runtime_msec'};
+}
+
+sub query_count {
+    my $self = shift;
+    $self->{'_query_count'} = shift if(@_);
+    $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
+    return $self->{'_query_count'};
+}
+
+sub semaphore_count {
+    my $self = shift;
+    $self->{'_semaphore_count'} = shift if(@_);
+    $self->{'_semaphore_count'} = 0 unless(defined($self->{'_semaphore_count'}));
+    return $self->{'_semaphore_count'};
+}
+
+sub semaphored_job_id {
+    my $self = shift;
+    $self->{'_semaphored_job_id'} = shift if(@_);
+    return $self->{'_semaphored_job_id'};
+}
+
+
+sub update_status {
+    my ($self, $status ) = @_;
+    return unless($self->adaptor);
+    $self->status($status);
+    $self->adaptor->update_status($self);
+}
 
 sub dataflow_rules {    # if ever set will prevent the Job from fetching rules from the DB
     my $self                = shift @_;
@@ -82,73 +161,6 @@ sub dataflow_rules {    # if ever set will prevent the Job from fetching rules f
         : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_code);
 }
 
-
-sub worker_id {
-  my $self = shift;
-  $self->{'_worker_id'} = shift if(@_);
-  return $self->{'_worker_id'};
-}
-
-
-sub analysis_id {
-  my $self = shift;
-  $self->{'_analysis_id'} = shift if(@_);
-  return $self->{'_analysis_id'};
-}
-
-sub status {
-  my $self = shift;
-  $self->{'_status'} = shift if(@_);
-  return $self->{'_status'};
-}
-
-sub update_status {
-  my ($self, $status ) = @_;
-  return unless($self->adaptor);
-  $self->status($status);
-  $self->adaptor->update_status($self);
-}
-
-sub retry_count {
-  my $self = shift;
-  $self->{'_retry_count'} = shift if(@_);
-  $self->{'_retry_count'} = 0 unless(defined($self->{'_retry_count'}));
-  return $self->{'_retry_count'};
-}
-
-sub completed {
-  my $self = shift;
-  $self->{'_completed'} = shift if(@_);
-  return $self->{'_completed'};
-}
-
-sub runtime_msec {
-  my $self = shift;
-  $self->{'_runtime_msec'} = shift if(@_);
-  $self->{'_runtime_msec'} = 0 unless(defined($self->{'_runtime_msec'}));
-  return $self->{'_runtime_msec'};
-}
-
-sub query_count {
-  my $self = shift;
-  $self->{'_query_count'} = shift if(@_);
-  $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
-  return $self->{'_query_count'};
-}
-
-sub semaphore_count {
-  my $self = shift;
-  $self->{'_semaphore_count'} = shift if(@_);
-  $self->{'_semaphore_count'} = 0 unless(defined($self->{'_semaphore_count'}));
-  return $self->{'_semaphore_count'};
-}
-
-sub semaphored_job_id {
-  my $self = shift;
-  $self->{'_semaphored_job_id'} = shift if(@_);
-  return $self->{'_semaphored_job_id'};
-}
-
 sub stdout_file {
   my $self = shift;
   $self->{'_stdout_file'} = shift if(@_);
@@ -160,6 +172,14 @@ sub stderr_file {
   $self->{'_stderr_file'} = shift if(@_);
   return $self->{'_stderr_file'};
 }
+
+sub accu_hash {
+    my $self = shift;
+    $self->{'_accu_hash'} = shift if(@_);
+    $self->{'_accu_hash'} = {} unless(defined($self->{'_accu_hash'}));
+    return $self->{'_accu_hash'};
+}
+
 
 =head2 autoflow
 
@@ -253,7 +273,21 @@ sub fan_cache {     # a self-initializing getter (no setting)
 sub dataflow_output_id {
     my ($self, $output_ids, $branch_name_or_code, $create_job_options) = @_;
 
-    $output_ids  ||= [ $self->input_id() ];                                 # replicate the input_id in the branch_code's output by default
+    my $input_id                = $self->input_id();
+    my $param_id_stack          = $self->param_id_stack();
+    my $accu_id_stack           = $self->accu_id_stack();
+    my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
+
+    if($hive_use_param_stack) {
+        if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
+            $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$self->dbID();
+        }
+        if(scalar(keys %{$self->accu_hash()})) {    # add the parent to the accu_id_stack if it had "own" accumulator
+            $accu_id_stack = ($accu_id_stack ? $accu_id_stack.',' : '').$self->dbID();
+        }
+    }
+
+    $output_ids  ||= [ $hive_use_param_stack ? {} : $input_id ];            # by default replicate the parameters of the parent in the child
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
 
     if($create_job_options) {
@@ -306,6 +340,8 @@ sub dataflow_output_id {
 
                     } elsif($funnel_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(   # if a semaphored funnel job creation succeeded, ...
                                             -input_id           => $output_ids_for_this_rule->[0],
+                                            -param_id_stack     => $param_id_stack,
+                                            -accu_id_stack      => $accu_id_stack,
                                             -analysis           => $target_analysis_or_table,
                                             -prev_job           => $self,
                                             -semaphore_count    => scalar(@$fan_cache),         # "pre-increase" the semaphore count before creating the dependent jobs
@@ -319,6 +355,8 @@ sub dataflow_output_id {
                             my ($output_id, $fan_analysis) = @$pair;
                             if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                                 -input_id           => $output_id,
+                                -param_id_stack     => $param_id_stack,
+                                -accu_id_stack      => $accu_id_stack,
                                 -analysis           => $fan_analysis,
                                 -prev_job           => $self,
                                 -semaphored_job_id  => $funnel_job_id,      # by passing this parameter we request not to propagate semaphores
@@ -341,6 +379,8 @@ sub dataflow_output_id {
 
                         if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
                             -input_id           => $output_id,
+                            -param_id_stack     => $param_id_stack,
+                            -accu_id_stack      => $accu_id_stack,
                             -analysis           => $target_analysis_or_table,
                             -prev_job           => $self,
                             -semaphored_job_id  => $self->semaphored_job_id(),  # propagate parent's semaphore if any

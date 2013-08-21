@@ -33,41 +33,46 @@ sub default_table_name {
 }
 
 
-sub fetch_structures_for_job_id {
-    my ($self, $receiving_job_id) = @_;
-
-    my $sql = 'SELECT struct_name, key_signature, value FROM accu WHERE receiving_job_id=?';
-    my $sth = $self->prepare( $sql );
-    $sth->execute( $receiving_job_id );
+sub fetch_structures_for_job_ids {
+    my ($self, $job_ids_csv, $id_scale, $id_offset) = @_;
+    $id_scale   ||= 1;
+    $id_offset  ||= 0;
 
     my %structures = ();
 
-    ROW: while(my ($struct_name, $key_signature, $stringified_value) = $sth->fetchrow() ) {
+    if( $job_ids_csv ) {
 
-        my $value = destringify($stringified_value);
+        my $sql = "SELECT receiving_job_id, struct_name, key_signature, value FROM accu WHERE receiving_job_id in ($job_ids_csv)";
+        my $sth = $self->prepare( $sql );
+        $sth->execute();
 
-        my $sptr = \$structures{$struct_name};
+        ROW: while(my ($receiving_job_id, $struct_name, $key_signature, $stringified_value) = $sth->fetchrow_array() ) {
 
-        while( $key_signature=~/(?:(?:\[(\w*)\])|(?:\{(\w*)\}))/g) {
-            my ($array_index, $hash_key) = ($1, $2);
-            if(defined($array_index)) {
-                unless(length($array_index)) {
-                    $array_index = scalar(@{$$sptr||[]});
-                }
-                $sptr = \$$sptr->[$array_index];
-            } elsif(defined($hash_key)) {
-                if(length($hash_key)) {
-                    $sptr = \$$sptr->{$hash_key};
-                } else {
-                    $sptr = \$$sptr->{$value};
-                    $$sptr++;
-                    next ROW;
+            my $value = destringify($stringified_value);
+
+            my $sptr = \$structures{$receiving_job_id * $id_scale + $id_offset}{$struct_name};
+
+            while( $key_signature=~/(?:(?:\[(\w*)\])|(?:\{(\w*)\}))/g) {
+                my ($array_index, $hash_key) = ($1, $2);
+                if(defined($array_index)) {
+                    unless(length($array_index)) {
+                        $array_index = scalar(@{$$sptr||[]});
+                    }
+                    $sptr = \$$sptr->[$array_index];
+                } elsif(defined($hash_key)) {
+                    if(length($hash_key)) {
+                        $sptr = \$$sptr->{$hash_key};
+                    } else {
+                        $sptr = \$$sptr->{$value};
+                        $$sptr++;
+                        next ROW;
+                    }
                 }
             }
+            $$sptr = $value;
         }
-        $$sptr = $value;
+        $sth->finish;
     }
-    $sth->finish;
 
     return \%structures;
 }

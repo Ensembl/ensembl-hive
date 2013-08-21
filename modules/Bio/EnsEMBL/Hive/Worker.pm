@@ -652,8 +652,9 @@ sub run_one_batch {
 
     my $jobs_done_here = 0;
 
-    my $accu_adaptor    = $self->adaptor->db->get_AccumulatorAdaptor;
-    my $max_retry_count = $self->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+    my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
+    my $accu_adaptor            = $self->adaptor->db->get_AccumulatorAdaptor;
+    my $max_retry_count         = $self->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
     $self->adaptor->check_in_worker( $self );
     $self->adaptor->safe_synchronize_AnalysisStats($self->analysis->stats);
@@ -666,6 +667,8 @@ sub run_one_batch {
     my $job_partial_timing;
 
     ONE_BATCH: while(my $job = shift @$jobs) {         # to make sure jobs go out of scope without undue delay
+
+        my $job_id = $job->dbID();
         $self->worker_say( $job->toString ) if($self->debug); 
 
         my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
@@ -675,21 +678,30 @@ sub run_one_batch {
         eval {  # capture any throw/die
             $job->incomplete(1);
 
+            $job->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
+
             my $runnable_object = $self->runnable_object();
 
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $job->param_init(
-                $runnable_object->strict_hash_format(),
+            my @params_precedence = (
                 $runnable_object->param_defaults(),
                 $self->adaptor->db->get_MetaContainer->get_param_hash(),
                 $self->analysis->parameters(),
-                $job->input_id(),
-                $accu_adaptor->fetch_structures_for_job_id( $job->dbID ),   # FIXME: or should we pass in the original hash to be extended by pushing?
             );
 
-            $self->worker_say( 'Job '.$job->dbID." unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
+            if( $hive_use_param_stack ) {
+                my $input_ids_hash      = $job->adaptor->fetch_input_ids_for_job_ids( $job->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
+                my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $job->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
+                my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
+                push @params_precedence, @input_id_accu_hash{ sort keys %input_id_accu_hash }; # take a slice. Mmm...
+            }
+            push @params_precedence, $job->input_id(), $job->accu_hash();
+
+            $job->param_init( $runnable_object->strict_hash_format(), @params_precedence );
+
+            $self->worker_say( "Job $job_id unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
 
             $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();
@@ -702,7 +714,6 @@ sub run_one_batch {
         $job->runtime_msec( $job_stopwatch->get_elapsed );  # whether successful or not
         $job->query_count( $self->adaptor->db->dbc->query_count );
 
-        my $job_id              = $job->dbID();
         my $job_completion_line = "Job $job_id : complete";
 
         if($msg_thrown) {   # record the message - whether it was a success or failure:
@@ -722,7 +733,7 @@ sub run_one_batch {
                 #
             my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
 
-            $job->adaptor->release_and_age_job( $job->dbID, $max_retry_count, $may_retry, $job->runtime_msec );
+            $job->adaptor->release_and_age_job( $job_id, $max_retry_count, $may_retry, $job->runtime_msec );
 
             if( $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
              or $job->lethal_for_worker ) {          # trust the job's expert knowledge

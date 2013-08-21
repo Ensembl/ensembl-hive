@@ -78,8 +78,8 @@ use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 sub CreateNewJob {
   my ($class, @args) = @_;
 
-  my ($input_id, $analysis, $prev_job, $prev_job_id, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-     rearrange([qw(input_id analysis prev_job prev_job_id semaphore_count semaphored_job_id push_new_semaphore)], @args);
+  my ($input_id, $param_id_stack, $accu_id_stack, $analysis, $prev_job, $prev_job_id, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
+     rearrange([qw(input_id param_id_stack accu_id_stack analysis prev_job prev_job_id semaphore_count semaphored_job_id push_new_semaphore)], @args);
 
   throw("must define input_id") unless($input_id);
   throw("must define analysis") unless($analysis);
@@ -89,16 +89,30 @@ sub CreateNewJob {
     unless($analysis->adaptor and $analysis->adaptor->db);
   throw("Please specify prev_job object instead of prev_job_id if available") if ($prev_job_id);   # 'obsolete' message
 
-  $prev_job_id = $prev_job && $prev_job->dbID();
+    $prev_job_id = $prev_job && $prev_job->dbID();
 
-  if(ref($input_id)) {  # let's do the Perl hash stringification centrally rather than in many places:
-    $input_id = stringify($input_id);
-  }
+    if(ref($input_id)) {  # let's do the Perl hash stringification centrally rather than in many places:
+        $input_id = stringify($input_id);
+    }
 
-  if(length($input_id) >= 255) {
-    my $input_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
-    $input_id = "_ext_input_analysis_data_id $input_data_id";
-  }
+    if(length($input_id) >= 255) {
+        print "input_id is '$input_id', length = ".length($input_id)."\n";
+        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
+        $input_id = "_extended_data_id $extended_data_id";
+    }
+
+    if(length($param_id_stack) >= 64) {
+        print "param_id_stack is '$param_id_stack', length = ".length($param_id_stack)."\n";
+        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($param_id_stack);
+        $param_id_stack = "_extended_data_id $extended_data_id";
+    }
+
+    if(length($accu_id_stack) >= 64) {
+        print "accu_id_stack is '$accu_id_stack', length = ".length($accu_id_stack)."\n";
+        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($accu_id_stack);
+        $accu_id_stack = "_extended_data_id $extended_data_id";
+    }
+
 
   $semaphore_count ||= 0;
 
@@ -111,11 +125,11 @@ sub CreateNewJob {
     $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($semaphored_job_id and ($dbc->driver ne 'sqlite'));
 
   my $sql = qq{$insertion_method INTO job 
-              (input_id, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
-              VALUES (?,?,?,?,?,?)};
+              (input_id, param_id_stack, accu_id_stack, prev_job_id,analysis_id,status,semaphore_count,semaphored_job_id)
+              VALUES (?,?,?,?,?,?,?,?)};
  
   my $sth       = $dbc->prepare($sql);
-  my @values    = ($input_id, $prev_job_id, $analysis_id, $job_status, $semaphore_count, $semaphored_job_id);
+  my @values    = ($input_id, $param_id_stack || '', $accu_id_stack || '', $prev_job_id, $analysis_id, $job_status, $semaphore_count, $semaphored_job_id);
 
   my $return_code = $sth->execute(@values)
             # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
@@ -312,6 +326,8 @@ sub _columns {
              j.prev_job_id
              j.analysis_id	      
              j.input_id 
+             j.param_id_stack 
+             j.accu_id_stack 
              j.worker_id	      
              j.status 
              j.retry_count          
@@ -334,14 +350,25 @@ sub _objs_from_sth {
     
   while ($sth->fetch()) {
 
-    my $input_id = ($column{'input_id'} =~ /_ext_input_analysis_data_id (\d+)/)
+    my $input_id = ($column{'input_id'} =~ /_ext(?:\w+)_data_id (\d+)/)
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
             : $column{'input_id'};
+
+    my $param_id_stack = ($column{'param_id_stack'} =~ /_ext(?:\w+)_data_id (\d+)/)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            : $column{'param_id_stack'};
+
+    my $accu_id_stack = ($column{'accu_id_stack'} =~ /_ext(?:\w+)_data_id (\d+)/)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            : $column{'accu_id_stack'};
+
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
         -dbID               => $column{'job_id'},
         -analysis_id        => $column{'analysis_id'},
         -input_id           => $input_id,
+        -param_id_stack     => $param_id_stack,
+        -accu_id_stack      => $accu_id_stack,
         -worker_id          => $column{'worker_id'},
         -status             => $column{'status'},
         -retry_count        => $column{'retry_count'},
@@ -730,6 +757,27 @@ sub balance_semaphores {
     }
     $find_sth->finish;
     $update_sth->finish;
+}
+
+
+sub fetch_input_ids_for_job_ids {
+    my ($self, $job_ids_csv, $id_scale, $id_offset) = @_;
+    $id_scale   ||= 1;
+    $id_offset  ||= 0;
+
+    my %input_ids = ();
+
+    if( $job_ids_csv ) {
+
+        my $sql = "SELECT job_id, input_id FROM job WHERE job_id in ($job_ids_csv)";
+        my $sth = $self->prepare( $sql );
+        $sth->execute();
+
+        while(my ($job_id, $input_id) = $sth->fetchrow_array() ) {
+            $input_ids{$job_id * $id_scale + $id_offset} = $input_id;
+        }
+    }
+    return \%input_ids;
 }
 
 
