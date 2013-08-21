@@ -143,6 +143,17 @@ sub hive_use_triggers {  # getter only, not setter
 }
 
 
+sub hive_use_param_stack {  # getter only, not setter
+    my $self = shift @_;
+
+    unless( defined($self->{'_hive_use_param_stack'}) ) {
+        my $hive_use_param_stack = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_use_param_stack' );
+        $self->{'_hive_use_param_stack'} = $hive_use_param_stack || 0;
+    } 
+    return $self->{'_hive_use_param_stack'};
+}
+
+
 sub get_available_adaptors {
  
     my %pairs =  (

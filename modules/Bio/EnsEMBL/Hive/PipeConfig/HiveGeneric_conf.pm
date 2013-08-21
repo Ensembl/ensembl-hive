@@ -98,6 +98,7 @@ sub default_options {
         'pipeline_name'         => 'hive_generic',
 
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
+        'hive_use_param_stack'  => 0,                   # do not reconstruct the calling stack of parameters by default (yet)
         'hive_force_init'       => 0,                   # setting it to 1 will drop the database prior to creation (use with care!)
 
         'pipeline_db'   => {
@@ -219,6 +220,7 @@ sub hive_meta_table {
     return {
         'hive_sql_schema_version'   => Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version(),
         'hive_pipeline_name'        => $self->o('pipeline_name'),
+        'hive_use_param_stack'      => $self->o('hive_use_param_stack'),
     };
 }
 
