@@ -140,7 +140,7 @@ sub count_all {
 
     my $sth = $self->prepare($sql);
     $sth->execute;  
-    my ($count) = $sth->fetchrow();
+    my ($count) = $sth->fetchrow_array();
     $sth->finish;  
 
     return $count;
@@ -287,7 +287,7 @@ sub check_object_present_in_db {    # return autoinc_id/undef if the table has a
     my $sth = $self->prepare($sql);
     $sth->execute();
 
-    my ($return_value) = $sth->fetchrow();
+    my ($return_value) = $sth->fetchrow_array();
     $sth->finish;
 
     return $return_value;
