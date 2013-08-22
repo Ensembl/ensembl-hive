@@ -46,7 +46,7 @@ sub main {
         $reg_type ||= 'hive';
         my $hive_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, $reg_type)
             || die "Could not connect to database via registry file '$reg_conf' and alias '$reg_alias' (assuming type '$reg_type')";
-        my $dbc = $url = $hive_dba->dbc();
+        my $dbc = $hive_dba->dbc();
 
         $dbc_hash = {
             'driver'    => $dbc->driver,
@@ -77,9 +77,31 @@ sub main {
 sub dbc_hash_to_cmd {
     my ($dbc_hash, $sqlcmd, $extra, $to_params) = @_;
 
-    my $cmd;
-
     my $driver = $dbc_hash->{'driver'} || 'mysql';
+
+    if($sqlcmd) {
+        if($sqlcmd =~ /(DROP\s+DATABASE(?:\s+IF\s+EXISTS)?\s*?)(?:\s+(\w+))?/i) {
+            my $dbname = $2 || $dbc_hash->{dbname};
+
+            if($driver eq 'sqlite') {
+                return "rm -f $dbname";
+            } elsif(!$2) {
+                $sqlcmd = "$1 $dbname";
+                $dbc_hash->{dbname} = '';
+            }
+        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
+            my $dbname = $2 || $dbc_hash->{dbname};
+
+            if($driver eq 'sqlite') {
+                return "touch $dbname";
+            } elsif(!$2) {
+                $sqlcmd = "$1 $dbname";
+                $dbc_hash->{dbname} = '';
+            }
+        }
+    }
+
+    my $cmd;
 
     if($driver eq 'mysql') {
 
@@ -101,16 +123,10 @@ sub dbc_hash_to_cmd {
               .$dbc_hash->{dbname};
     } elsif($driver eq 'sqlite') {
 
-        if($dbc_hash->{dbname}) {
-            $cmd = "sqlite3 "
-                  .(defined($extra) ? "$extra " : '')
-                  .$dbc_hash->{dbname}
-                  .(defined($sqlcmd) ? " '$sqlcmd'" : '');
-        } elsif($sqlcmd =~ /DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?(\w+)/i ) {
-            $cmd = "rm -f $1";
-        } elsif($sqlcmd =~ /CREATE\s+DATABASE\s+(\w+)/i ) {
-            $cmd = "touch $1";
-        }
+        $cmd = "sqlite3 "
+              .(defined($extra) ? "$extra " : '')
+              .$dbc_hash->{dbname}
+              .(defined($sqlcmd) ? " '$sqlcmd'" : '');
     }
 
     return $cmd;

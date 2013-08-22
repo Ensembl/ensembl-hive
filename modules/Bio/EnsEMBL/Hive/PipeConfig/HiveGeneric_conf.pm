@@ -124,26 +124,24 @@ sub pipeline_create_commands {
     my $self    = shift @_;
     my $db_conn = shift @_ || 'pipeline_db';
 
-    my $driver              = $self->o($db_conn, '-driver');
-
-    my $db_execute_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn, 0 ).' -sql ';
-    my $db_connect_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn );
+    my $driver          = $self->o($db_conn, '-driver');
+    my $db_cmd_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn );
 
     return [
-            $self->o('hive_force_init') ? ( $db_execute_prefix."'DROP DATABASE IF EXISTS ".$self->o($db_conn, '-dbname')."'" ) : (),
-            $db_execute_prefix."'CREATE DATABASE ".$self->o($db_conn, '-dbname')."'",
+            $self->o('hive_force_init') ? ( $db_cmd_prefix." -sql 'DROP DATABASE IF EXISTS'" ) : (),
+            $db_cmd_prefix." -sql 'CREATE DATABASE'",
 
                 # we got table definitions for all drivers:
-            $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
+            $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
                 # auto-sync'ing triggers are off by default and not yet available in pgsql:
-            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
 
                 # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
-                                             ($driver ne 'sqlite') ? ( $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
+                                             ($driver ne 'sqlite') ? ( $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
 
                 # we got procedure definitions for all drivers:
-            $db_connect_prefix.' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+            $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
     ];
 }
 
