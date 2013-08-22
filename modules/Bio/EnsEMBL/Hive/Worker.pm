@@ -695,7 +695,7 @@ sub run_one_batch {
                 my $input_ids_hash      = $job->adaptor->fetch_input_ids_for_job_ids( $job->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
                 my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $job->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
                 my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
-                push @params_precedence, @input_id_accu_hash{ sort keys %input_id_accu_hash }; # take a slice. Mmm...
+                push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
             }
             push @params_precedence, $job->input_id(), $job->accu_hash();
 
