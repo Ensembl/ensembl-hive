@@ -43,8 +43,9 @@ use strict;
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
 
@@ -350,15 +351,15 @@ sub _objs_from_sth {
     
   while ($sth->fetch()) {
 
-    my $input_id = ($column{'input_id'} =~ /_ext(?:\w+)_data_id (\d+)/)
+    my $input_id = ($column{'input_id'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
             : $column{'input_id'};
 
-    my $param_id_stack = ($column{'param_id_stack'} =~ /_ext(?:\w+)_data_id (\d+)/)
+    my $param_id_stack = ($column{'param_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
             : $column{'param_id_stack'};
 
-    my $accu_id_stack = ($column{'accu_id_stack'} =~ /_ext(?:\w+)_data_id (\d+)/)
+    my $accu_id_stack = ($column{'accu_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
             ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
             : $column{'accu_id_stack'};
 
@@ -774,6 +775,9 @@ sub fetch_input_ids_for_job_ids {
         $sth->execute();
 
         while(my ($job_id, $input_id) = $sth->fetchrow_array() ) {
+            if($input_id =~ /^_ext(?:\w+)_data_id (\d+)$/) {
+                $input_id = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1);
+            }
             $input_ids{$job_id * $id_scale + $id_offset} = $input_id;
         }
     }
