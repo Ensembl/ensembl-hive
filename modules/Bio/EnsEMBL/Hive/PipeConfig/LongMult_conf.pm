@@ -158,6 +158,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
+                    # NB: a_multiplier is mentioned in the template to guarantee job's uniqueness
                 1 => { ':////accu?partial_product={digit}' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'partial_product' => '#partial_product#' } },
             },
         },

@@ -100,14 +100,14 @@ sub dataflow {
     foreach my $output_id (@$output_ids) {
 
         my $key_signature = $signature_template;
-        $key_signature=~s/(\w+)/$output_id->{$1}/eg;    # FIXME: could be possibly extended in future to also use $self->param() ?
+        $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
 
         push @rows, {
             'sending_job_id'    => $sending_job_id,
             'receiving_job_id'  => $receiving_job_id,
             'struct_name'       => $struct_name,
             'key_signature'     => $key_signature,
-            'value'             => stringify( $output_id->{$struct_name} ),
+            'value'             => stringify( $emitting_job->_param_possibly_overridden($struct_name, $output_id) ),
         };
     }
 
