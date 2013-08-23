@@ -83,7 +83,7 @@ sub url {
 }
 
 sub dataflow {
-    my ( $self, $output_ids ) = @_;
+    my ( $self, $output_ids, $emitting_job ) = @_;
 
         # we have to do this the ugly way
         # because Registry code currently prevents us from passing arguments to adaptors' new() methods
@@ -92,7 +92,17 @@ sub dataflow {
     $adaptor->table_name( $self->table_name() );
     $adaptor->insertion_method( $self->insertion_method() );
 
-    $adaptor->store( $output_ids );
+    my @column_names = keys %{$self->adaptor->column_set};
+    my @rows = ();
+
+    foreach my $output_id (@$output_ids) {
+        my %row_hash = ();
+        foreach my $column (@column_names) {
+            $row_hash{ $column } = $emitting_job->_param_possibly_overridden($column, $output_id);
+        }
+        push @rows, \%row_hash;
+    }
+    $adaptor->store( \@rows );
 }
 
 

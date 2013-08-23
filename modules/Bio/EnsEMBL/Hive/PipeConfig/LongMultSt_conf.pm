@@ -178,9 +178,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
-                1 => { ':////final_result' => { 'a_multiplier' => '#a_multiplier#', 'b_multiplier' => '#b_multiplier#', 'result' => '#result#' },
-                       'last' => undef,
-                },
+                1 => [ ':////final_result', 'last' ],
             },
         },
 
