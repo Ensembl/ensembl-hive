@@ -64,8 +64,8 @@ sub main {
         CREATE TABLE IF NOT EXISTS lsf_report (
             process_id       varchar(40) NOT NULL,
             status           varchar(20) NOT NULL,
-            mem              int NOT NULL,
-            swap             int NOT NULL,
+            mem_megs         float NOT NULL,
+            swap_megs        float NOT NULL,
             exception_status varchar(40) NOT NULL,
 
             PRIMARY KEY (process_id)
@@ -79,8 +79,8 @@ sub main {
             SELECT CONCAT(logic_name,'(',analysis_id,')') analysis,
                    CONCAT(rc.name,'(',rc.resource_class_id,')') resource_class,
                    count(*) workers,
-                   min(mem), avg(mem), max(mem),
-                   min(swap), avg(swap), max(swap)
+                   min(mem_megs), avg(mem_megs), max(mem_megs),
+                   min(swap_megs), avg(swap_megs), max(swap_megs)
             FROM analysis_base
             JOIN resource_class rc USING(resource_class_id)
             LEFT JOIN worker w USING(analysis_id)
@@ -136,7 +136,7 @@ sub main {
         warn 'Will run the following command to obtain '.($tee ? 'and dump ' : '')."bacct information: '$bacct_source_line' (may take a few minutes)\n";
     }
 
-    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (process_id, status, mem, swap, exception_status) VALUES (?, ?, ?, ?, ?)' );
+    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (process_id, status, mem_megs, swap_megs, exception_status) VALUES (?, ?, ?, ?, ?)' );
     {
         local $/ = "------------------------------------------------------------------------------\n\n";
         open(my $bacct_fh, $bacct_source_line);
@@ -162,11 +162,14 @@ sub main {
                 my (@values) = split(/\s+/, ' '.$lines[@lines-1]);
                 my %usage = map { ($keys[$_] => $values[$_]) } (0..@keys-1);
 
-                my ($mem)  = $usage{MEM}  =~ /^(\d+)[KMG]$/;
-                my ($swap) = $usage{SWAP} =~ /^(\d+)[KMG]$/;
+                my ($mem_in_units, $mem_unit)   = $usage{'MEM'}  =~ /^([\d\.]+)([KMG])$/;
+                my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMG])$/;
 
-                #warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$usage{MEM}, SWAP=$usage{SWAP}, EXC_STATUS='$exception_status'\n";
-                $sth_replace->execute( $process_id, $usage{STATUS}, $mem, $swap, $exception_status );
+                my $mem_megs    = $mem_in_units  * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024 }->{$mem_unit};
+                my $swap_megs   = $swap_in_units * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024 }->{$swap_unit};
+
+                # warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$mem_megs, SWAP=$swap_megs, EXC_STATUS='$exception_status'\n";
+                $sth_replace->execute( $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
             }
         }
 
