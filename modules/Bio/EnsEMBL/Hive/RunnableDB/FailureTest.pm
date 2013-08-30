@@ -67,12 +67,14 @@ sub param_defaults {
     return {
         'value'         => 1,       # normally you generate a batch of jobs with different values of param('value')
         'divisor'       => 2,       # but the same param('divisor') and see how every param('divisor')'s job will crash
-        'state'         => 'RUN',   # the state in which the process may commit apoptosis
+        'state'         => 'RUN',   # the state in which the process may commit apoptosis ('FETCH_INPUT', 'RUN' or 'WRITE_OUTPUT')
         'lethal_after'  => 0,       # If value is above this (nonzero) threshold, job's death becomes lethal to the worker.
 
         'time_FETCH_INPUT'  => 0,   # how much time fetch_input()  will spend in sleeping state
         'time_RUN'          => 1,   # how much time run()          will spend in sleeping state
         'time_WRITE_OUTPUT' => 0,   # how much time write_output() will spend in sleeping state
+
+        'grab_mln'          => 0,   # how many millions of numeric elements to allocate
     };
 }
 
@@ -112,6 +114,11 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
+
+    my $mem_ref;
+    if(my $grab_mln = $self->param('grab_mln')) {
+        $mem_ref = $self->grab_memory( $grab_mln );
+    }
 
     $self->dangerous_math('RUN');
 }
@@ -155,7 +162,8 @@ sub dangerous_math {
     my ($self, $current_state) = @_;
 
         # First, sleep as required:
-    sleep($self->param('time_'.$current_state));
+    my $seconds_to_sleep = $self->param('time_'.$current_state);
+    sleep( $seconds_to_sleep );
 
     my $state   = $self->param('state');
     return if($current_state ne $state);
@@ -173,6 +181,22 @@ sub dangerous_math {
 
         die "Preprogrammed death since $value is a multiple of $divisor";
     }
+}
+
+
+sub grab_memory {
+    my ($self, $grab_mln) = @_;
+
+    my $elements        = $grab_mln*1_000_000;
+    my $estimated_megs  = $grab_mln*69 + 23;    # empirically found by running on farm3, may differ elsewhere
+
+    $|=1;
+
+    $self->warning("Allocating $elements elements, which should map to approximately $estimated_megs megabytes");
+
+    my @mem = (1..$elements);
+
+    return \@mem;
 }
 
 1;
