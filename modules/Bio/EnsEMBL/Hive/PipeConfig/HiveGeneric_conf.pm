@@ -248,8 +248,12 @@ sub pre_options {
 sub dbconn_2_mysql {    # will save you a lot of typing
     my ($self, $db_conn, $with_db) = @_;
 
+    warn "\nDEPRECATED: dbconn_2_mysql() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+
+    my $port = $self->o($db_conn,'-port');
+
     return '--host='.$self->o($db_conn,'-host').' '
-          .'--port='.$self->o($db_conn,'-port').' '
+          .($port ? '--port='.$self->o($db_conn,'-port').' ' : '')
           .'--user="'.$self->o($db_conn,'-user').'" '
           .'--pass="'.$self->o($db_conn,'-pass').'" '
           .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
@@ -265,8 +269,12 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 sub dbconn_2_pgsql {    # will save you a lot of typing
     my ($self, $db_conn, $with_db) = @_;
 
+    warn "\nDEPRECATED: dbconn_2_pgsql() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+
+    my $port = $self->o($db_conn,'-port');
+
     return '--host='.$self->o($db_conn,'-host').' '
-          .'--port='.$self->o($db_conn,'-port').' '
+          .($port ? '--port='.$self->o($db_conn,'-port').' ' : '')
           .'--username="'.$self->o($db_conn,'-user').'" '
           .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
 }
@@ -279,6 +287,8 @@ sub dbconn_2_pgsql {    # will save you a lot of typing
 
 sub db_connect_command {
     my ($self, $db_conn) = @_;
+
+    warn "\nDEPRECATED: db_connect_command() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
 
     my $driver = $self->o($db_conn, '-driver');
 
@@ -298,6 +308,8 @@ sub db_connect_command {
 
 sub db_execute_command {
     my ($self, $db_conn, $sql_command, $with_db) = @_;
+
+    warn "\nDEPRECATED: db_execute_command() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
 
     $with_db = 1 unless(defined($with_db));
 
@@ -379,8 +391,9 @@ sub process_options {
 
 sub run {
     my $self  = shift @_;
-    my $analysis_topup = $self->{'_extra_options'}{'analysis_topup'};
-    my $job_topup      = $self->{'_extra_options'}{'job_topup'};
+    my $analysis_topup  = $self->{'_extra_options'}{'analysis_topup'};
+    my $job_topup       = $self->{'_extra_options'}{'job_topup'};
+    my $pipeline_url    = $self->pipeline_url();
 
     unless($analysis_topup || $job_topup) {
         foreach my $cmd (@{$self->pipeline_create_commands}) {
@@ -394,7 +407,7 @@ sub run {
     }
 
     Bio::EnsEMBL::Registry->no_version_check(1);
-    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $self->pipeline_url(), -no_sql_schema_version_check => 1 );
+    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
 
     unless($job_topup) {
@@ -653,8 +666,6 @@ sub run {
             } # /for all branch_tags
         }
     }
-
-    my $pipeline_url = $self->pipeline_url();
 
     print "\n\n# --------------------[Useful commands]--------------------------\n";
     print "\n";
