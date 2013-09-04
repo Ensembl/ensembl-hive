@@ -48,6 +48,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
+         'default'      => {'LSF' => '-C0 -M100   -R"select[mem>100]   rusage[mem=100]"' }, # to make sure it fails similarly on both farms
          '200Mb_job'    => {'LSF' => '-C0 -M200   -R"select[mem>200]   rusage[mem=200]"' },
          '400Mb_job'    => {'LSF' => '-C0 -M400   -R"select[mem>400]   rusage[mem=400]"' },
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
@@ -78,17 +79,6 @@ sub pipeline_analyses {
             -parameters => {
                 'time_RUN'      => 30,
             },
-            -flow_into => {
-                -1 => [ 'failure_test_himem' ],
-            }
-        },
-
-        {   -logic_name    => 'failure_test_himem',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::FailureTest',
-            -parameters => {
-                'time_RUN'      => 30,
-            },
-            -rc_name => '200Mb_job',
         },
     ];
 }
