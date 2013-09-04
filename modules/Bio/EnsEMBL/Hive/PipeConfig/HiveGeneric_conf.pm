@@ -11,7 +11,7 @@ Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
 init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <mypass>
 
     # Example 2: specifying the mandatory options as well as overriding some defaults:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -pipeline_db -host <myhost> -pipeline_db -dbname <mydbname> -password <mypass>
+init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -host <myhost> -dbname <mydbname> -password <mypass>
 
 =head1 DESCRIPTION
 
@@ -52,6 +52,7 @@ use Bio::EnsEMBL::ApiVersion ();
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
@@ -89,6 +90,7 @@ sub default_options {
         'hive_root_dir'         => $ENV{'EHIVE_ROOT_DIR'}                                               # this value is set up automatically if this code is run by init_pipeline.pl
                                     || $self->o('ensembl_cvs_root_dir').'/ensembl-hive',                # otherwise we have to rely on other means
 
+        'hive_driver'           => 'mysql',
         'host'                  => 'localhost',                                                         # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
                                                                                                         # If you need to connect to TCPIP socket, set  -host => '127.0.0.1' instead.
         'port'                  => undef,
@@ -102,13 +104,13 @@ sub default_options {
         'hive_force_init'       => 0,                   # setting it to 1 will drop the database prior to creation (use with care!)
 
         'pipeline_db'   => {
+            -driver => $self->o('hive_driver'),
             -host   => $self->o('host'),
             -port   => $self->o('port'),
             -user   => $self->o('user'),
             -pass   => $self->o('password'),
             -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
         },
-
     };
 }
 
@@ -122,10 +124,12 @@ sub default_options {
 
 sub pipeline_create_commands {
     my $self    = shift @_;
-    my $db_conn = shift @_ || 'pipeline_db';
 
-    my $driver          = $self->o($db_conn, '-driver');
-    my $db_cmd_prefix   = 'db_cmd.pl -url '.$self->dbconn_2_url( $db_conn );
+    my $pipeline_url    = $self->pipeline_url();
+    my $parsed_url      = Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
+    my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
+
+    my $db_cmd_prefix   = "db_cmd.pl -url $pipeline_url";
 
     return [
             $self->o('hive_force_init') ? ( $db_cmd_prefix." -sql 'DROP DATABASE IF EXISTS'" ) : (),
@@ -229,7 +233,7 @@ sub pre_options {
         'help!' => '',
         'job_topup!' => '',
         'analysis_topup!' => '',
-        'hive_driver' => '',
+        'pipeline_url' => '',
 #        'hive_use_triggers' => '',
     };
 }
@@ -237,7 +241,7 @@ sub pre_options {
 
 =head2 dbconn_2_mysql
 
-    Description : A convenience method used to stringify a connection-parameters hash into a parameter string that both mysql and beekeeper.pl can understand
+    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
 
 =cut
 
@@ -254,7 +258,7 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 
 =head2 dbconn_2_pgsql
 
-    Description : A convenience method used to stringify a connection-parameters hash into a parameter string that pgsql can understand
+    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
 
 =cut
 
@@ -269,7 +273,7 @@ sub dbconn_2_pgsql {    # will save you a lot of typing
 
 =head2 db_connect_command
 
-    Description : A convenience method used to stringify a command to connect to the db OR pipe an sql file into it.
+    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
 
 =cut
 
@@ -288,7 +292,7 @@ sub db_connect_command {
 
 =head2 db_execute_command
 
-    Description : A convenience method used to stringify a command to connect to the db OR pipe an sql file into it.
+    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
 
 =cut
 
@@ -314,7 +318,7 @@ sub db_execute_command {
 
 =head2 dbconn_2_url
 
-    Description :  A convenience method used to stringify a connection-parameters hash into a 'url' that beekeeper.pl will undestand
+    Description :  A convenience method used to stringify a connection-parameters hash into a 'pipeline_url' that beekeeper.pl will undestand
 
 =cut
 
@@ -336,7 +340,7 @@ sub dbconn_2_url {
 sub pipeline_url {
     my $self = shift @_;
 
-    return $self->dbconn_2_url('pipeline_db'); # used to force vivification of the whole 'pipeline_db' structure (used in run() )
+    return $self->root()->{'pipeline_url'} || $self->dbconn_2_url('pipeline_db', 1); # used to force vivification of the whole 'pipeline_db' structure (used in run() )
 }
 
 
@@ -358,7 +362,7 @@ sub process_options {
 
         # pre-patch definitely_used_options:
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
-    $self->root()->{'pipeline_db'}{'-driver'} = $self->{'_extra_options'}{'hive_driver'} || 'mysql';
+    $self->root()->{'pipeline_url'} = $self->{'_extra_options'}{'pipeline_url'};
 
     $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'pipeline_url', 'hive_meta_table' ] );
     return $self->SUPER::process_options();
@@ -390,7 +394,7 @@ sub run {
     }
 
     Bio::EnsEMBL::Registry->no_version_check(1);
-    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %{$self->o('pipeline_db')}, -no_sql_schema_version_check => 1 );
+    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $self->pipeline_url(), -no_sql_schema_version_check => 1 );
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
 
     unless($job_topup) {
@@ -650,33 +654,33 @@ sub run {
         }
     }
 
-    my $url = $self->dbconn_2_url('pipeline_db');
+    my $pipeline_url = $self->pipeline_url();
 
     print "\n\n# --------------------[Useful commands]--------------------------\n";
     print "\n";
     print " # It is convenient to store the pipeline url in a variable:\n";
-    print "\texport HIVE_URL=$url\t\t\t# bash version\n";
+    print "\texport EHIVE_URL=$pipeline_url\t\t\t# bash version\n";
     print "(OR)\n";
-    print "\tsetenv HIVE_URL $url\t\t\t# [t]csh version\n";
+    print "\tsetenv EHIVE_URL $pipeline_url\t\t\t# [t]csh version\n";
     print "\n";
     print " # Add a new job to the pipeline (usually done once before running, but pipeline can be \"topped-up\" at any time) :\n";
-    print "\tseed_pipeline.pl -url $url -logic_name <analysis_name> -input_id <param_hash>\n";
+    print "\tseed_pipeline.pl -url $pipeline_url -logic_name <analysis_name> -input_id <param_hash>\n";
     print "\n";
     print " # Synchronize the Hive (should be done before [re]starting a pipeline) :\n";
-    print "\tbeekeeper.pl -url $url -sync\n";
+    print "\tbeekeeper.pl -url $pipeline_url -sync\n";
     print "\n";
     print " # Run the pipeline (can be interrupted and restarted) :\n";
-    print "\tbeekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)\n";
+    print "\tbeekeeper.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)\n";
     print "(OR)\n";
-    print "\tbeekeeper.pl -url $url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)\n";
+    print "\tbeekeeper.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)\n";
     print "(OR)\n";
-    print "\trunWorker.pl -url $url ".$self->beekeeper_extra_cmdline_options()."      \t\t# run exactly one Worker locally (useful for debugging/learning)\n";
+    print "\trunWorker.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()."      \t\t# run exactly one Worker locally (useful for debugging/learning)\n";
     print "\n";
     print " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n";
-    print "\tgenerate_graph.pl -url $url -out diagram.png\n";
+    print "\tgenerate_graph.pl -url $pipeline_url -out diagram.png\n";
     print "\n";
     print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
-    print "\tdb_cmd.pl -url $url\n\n";
+    print "\tdb_cmd.pl -url $pipeline_url\n\n";
 }
 
 1;
