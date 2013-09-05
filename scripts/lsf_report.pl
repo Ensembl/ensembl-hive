@@ -162,11 +162,11 @@ sub main {
                 my (@values) = split(/\s+/, ' '.$lines[@lines-1]);
                 my %usage = map { ($keys[$_] => $values[$_]) } (0..@keys-1);
 
-                my ($mem_in_units, $mem_unit)   = $usage{'MEM'}  =~ /^([\d\.]+)([KMG])$/;
-                my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMG])$/;
+                my ($mem_in_units, $mem_unit)   = $usage{'MEM'}  =~ /^([\d\.]+)([KMGT])$/;
+                my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMGT])$/;
 
-                my $mem_megs    = $mem_in_units  * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024 }->{$mem_unit};
-                my $swap_megs   = $swap_in_units * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024 }->{$swap_unit};
+                my $mem_megs    = $mem_in_units  * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 }->{$mem_unit};
+                my $swap_megs   = $swap_in_units * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 }->{$swap_unit};
 
                 # warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$mem_megs, SWAP=$swap_megs, EXC_STATUS='$exception_status'\n";
                 $sth_replace->execute( $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
