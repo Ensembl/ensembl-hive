@@ -1,4 +1,28 @@
 
+---------------------[before EBI workshop]---------------------------------------------------------------------------
+
+* Thu Sep 5 16:55:44 2013 +0100 | Leo Gordon | PDF version of the workshop slides from GoogleDocs
+* Thu Sep 5 09:37:00 2013 +0100 | Leo Gordon | adding new unit - T for terabytes (mainly to pacify EBIs LSF 8 with a reporting bug)
+* Wed Sep 4 21:54:43 2013 +0100 | Leo Gordon | the initial state of MemlimitTest pipeline for the workshop
+* Wed Sep 4 13:06:46 2013 +0100 | Leo Gordon | methods dbconn_2_mysql(), dbconn_2_pgsql(), db_connect_command(), db_execute_command() are DEPRECATED - use db_cmd.pl instead
+* Wed Sep 4 12:49:04 2013 +0100 | Leo Gordon | added support for -pipeline_url as an input parameter (no need to supply hive_driver or password in this case)
+* Wed Sep 4 11:53:23 2013 +0100 | Leo Gordon | allow the port number to be skipped but the colon to be present
+* Fri Aug 30 15:09:05 2013 +0100 | Leo Gordon | a new example pipeline designed to fail because of MEMLIMIT in some of the cases
+* Tue Aug 27 12:09:20 2013 +0100 | Leo Gordon | bugfix: properly use different memory units to compute the memory req in megabytes
+* Fri Aug 23 14:40:51 2013 +0100 | Leo Gordon | now performing deep-stack substitution for whatever is dataflown into tables (rather than just dataflowing the output_id)
+* Fri Aug 23 12:48:20 2013 +0100 | Leo Gordon | bugfix: substituting the accu signature on demand from the very depths of emitting job's param_stack
+* Fri Aug 23 10:46:46 2013 +0100 | Leo Gordon | bugfix: make sure longer input_id hashes are correctly fetched from analysis_data table in "param stack" mode
+* Thu Aug 22 15:49:32 2013 +0100 | Leo Gordon | Simplified interface: now db_cmd.pl understands 'CREATE DATABASE' and 'DROP DATABASE' without parameters, given a full URL.
+* Thu Aug 22 14:40:11 2013 +0100 | Leo Gordon | Can now do a mysqldump given a URL or Registry data, using a newly supported -to_params option. Note the necessity of 'eval' before 'mysqldump' (it removes quotes around the password).
+* Thu Aug 22 11:13:09 2013 +0100 | Leo Gordon | bugfix: sorting by job_id should be numeric, not alphabetic
+* Wed Aug 21 16:13:26 2013 +0100 | Leo Gordon | renamed db_conn.pl to db_cmd.pl to avoid the name clash with already existing term
+* Wed Aug 21 15:55:46 2013 +0100 | Leo Gordon | Updated schema diagram and description file that include param_id_stack and accu_id_stack in job table.
+* Wed Aug 21 14:53:11 2013 +0100 | Leo Gordon | "parameter stack" implementation using two extra fields in job table. Accu content intended for any job_id has preference over Input_id content for the same job.
+* Wed Aug 21 11:34:01 2013 +0100 | Leo Gordon | store and retrieve hive_meta.'hive_use_param_stack'
+* Wed Aug 21 11:31:20 2013 +0100 | Leo Gordon | cosmetic: reduce the number of synonymous calls to DBI
+* Wed Aug 21 10:14:00 2013 +0100 | Leo Gordon | Dataflowing minimal information out of Runnables, relying on templates in PipeConfig file to extend it if needed
+* Tue Aug 20 14:32:51 2013 +0100 | Leo Gordon | shortened connection parameters in docs
+
 ---------------------[after EnsEMBL rel.73]---------------------------------------------------------------------------
 
 * Thu Aug 15 16:18:49 2013 +0100 | Leo Gordon | Bugfixes to pacify pgsql: changed a non-functional "HAVING" into a nested SELECT, and changed unsupported SUM() into COUNT(CASE ... )
