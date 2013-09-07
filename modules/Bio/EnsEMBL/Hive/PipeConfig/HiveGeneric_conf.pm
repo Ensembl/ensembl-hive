@@ -91,9 +91,10 @@ sub default_options {
                                     || $self->o('ensembl_cvs_root_dir').'/ensembl-hive',                # otherwise we have to rely on other means
 
         'hive_driver'           => 'mysql',
-        'host'                  => 'localhost',                                                         # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
+        'host'                  => $ENV{'EHIVE_HOST'} || 'localhost',                                   # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
                                                                                                         # If you need to connect to TCPIP socket, set  -host => '127.0.0.1' instead.
-        'port'                  => undef,
+
+        'port'                  => $ENV{'EHIVE_PORT'},                                                  # or remain undef, which means default for the driver
         'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
         'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
         'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'}         || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
