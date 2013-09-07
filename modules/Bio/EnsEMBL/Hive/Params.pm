@@ -61,7 +61,8 @@ package Bio::EnsEMBL::Hive::Params;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc');     # NB: dir_revhash() is used by some substituted expressions, do not remove!
+use List::Util qw(first min max minstr maxstr reduce sum shuffle);              # make them available for substituted expressions
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc');    # NB: dir_revhash() is used by some substituted expressions, do not remove!
 
 
 =head2 param_init
