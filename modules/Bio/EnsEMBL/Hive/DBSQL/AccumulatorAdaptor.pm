@@ -52,7 +52,7 @@ sub fetch_structures_for_job_ids {
 
             my $sptr = \$structures{$receiving_job_id * $id_scale + $id_offset}{$struct_name};
 
-            while( $key_signature=~/(?:(?:\[(\w*)\])|(?:\{(\w*)\}))/g) {
+            while( $key_signature=~/(?:(?:\[(\d*)\])|(?:\{(.*?)\}))/g) {
                 my ($array_index, $hash_key) = ($1, $2);
                 if(defined($array_index)) {
                     unless(length($array_index)) {
