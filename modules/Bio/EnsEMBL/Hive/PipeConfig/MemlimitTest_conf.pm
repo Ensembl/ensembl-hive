@@ -79,6 +79,7 @@ sub pipeline_analyses {
             -parameters => {
                 'time_RUN'      => 30,
             },
+            -rc_name => 'default',      # pick a valid value from resource_classes() section
         },
     ];
 }
