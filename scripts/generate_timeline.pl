@@ -139,18 +139,16 @@ sub main {
 #    my $max_workers = 0;
 
     my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $name{$a} cmp lc $name{$b})} keys %tot_analysis;
-    my $s = 0;
-    my @filtered_analysis_ids = grep {my $pre_s = $s; $s += $tot_analysis{$_}/$total_total; $pre_s < .995} @sorted_analysis_ids;
     #warn Dumper \@sorted_analysis_ids;
-    print join("\t", 'analysis', $nothing_title, map {$name{$_}} @filtered_analysis_ids), "\n";
-    print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @filtered_analysis_ids), "\n";
-    print join("\t", 'proportion', '0', map {$tot_analysis{$_}/$total_total} @filtered_analysis_ids), "\n";
-    $s = 0;
-    print join("\t", 'cum_proportion', '0', map {$s+=$tot_analysis{$_}/$total_total} @filtered_analysis_ids), "\n";
+    print join("\t", 'analysis', $nothing_title, map {$name{$_}} @sorted_analysis_ids), "\n";
+    print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_analysis_ids), "\n";
+    print join("\t", 'proportion', '0', map {$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
+    my $s = 0;
+    print join("\t", 'cum_proportion', '0', map {$s+=$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
 
     my @buffer = ();
     foreach my $row (@data_timings) {
-        my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers, map {$row->[2]->{$_} || 0} @filtered_analysis_ids)."\n";
+        my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
         if ($row->[1]) {
             if (@buffer) {
                 my $n = scalar(@buffer);
@@ -182,15 +180,19 @@ set ylabel 'Number of workers'
 
 ";
 
+    $s = 0;
+    my $n_relevant_analysis = 0;
+    map {my $pre_s = $s; $s += $tot_analysis{$_}/$total_total; $pre_s < .995 && $n_relevant_analysis++} @sorted_analysis_ids;
 
     print $gnuplot_intro;
-    foreach my $i (1..scalar(@filtered_analysis_ids)) {
+    foreach my $i (1..($n_relevant_analysis+1)) {
         printf("set style line %d linetype %d pointtype 0 linewidth 1 linecolor %d\n", $i, $i, $i);
     }
     my @plot_info = ();
-    push @plot_info, sprintf(" 'prof_prot.csv' using 1:2 t '$nothing_title' w lines linestyle 0 ");
-    foreach my $i (reverse 1..scalar(@filtered_analysis_ids)) {
-        push @plot_info, sprintf(" 'prof_prot.csv' using 1:(%s) t '%s' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..($i+2)), $name{$filtered_analysis_ids[$i-1]}, $i);
+    push @plot_info, sprintf(" 'prof_nc2.csv' using 1:2 t '$nothing_title' w lines linestyle 0 ");
+    push @plot_info, sprintf(" 'prof_nc2.csv' using 1:(%s) t 'OTHER' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..(scalar(@sorted_analysis_ids)+2)), $n_relevant_analysis+1);
+    foreach my $i (reverse 1..$n_relevant_analysis) {
+        push @plot_info, sprintf(" 'prof_nc2.csv' using 1:(%s) t '%s' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..($i+2)), $name{$sorted_analysis_ids[$i-1]}, $i);
     }
     print "plot ['$start_date':'$end_date'][:] ", join(',', @plot_info), "\n";
 
