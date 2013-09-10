@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Gets the activity of each analysis along time, in a CSV file
+# Gets the activity of each analysis along time, in a CSV file or in an image (see list of formats supported by GNUplot)
 
 use strict;
 use warnings;
@@ -275,47 +275,46 @@ __DATA__
 
 =head1 NAME
 
-    lsf_report.pl
+    generate_profile.pl
 
 =head1 DESCRIPTION
 
-    This script is used for offline examination of resources used by a Hive pipeline running on LSF
-    (the script is [Pp]latform-dependent).
+    This script is used for offline examination of the allocation of workers.
 
     Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
     worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-    of LSF's 'bacct' database, parses it and stores in 'lsf_report' table.
-    You can join this table to 'worker' table USING(process_id) in the usual MySQL way
-    to filter by analysis_id, do various stats, etc.
+    of the 'worker' table for accurate timing.
+    By default, the output is in CSV format, to allow extra analaysis to be carried.
 
-    You can optionally ask the script to dump the 'bacct' database in a dump file,
-    or fill in the 'lsf_report' table from an existing dump file (most time is taken by querying bacct).
+    You can optionally ask the script to generate an image with Gnuplot.
 
-    Please note the script may additionally pull information about LSF processes that you ran simultaneously
-    with running the pipeline. It is easy to ignore them by joining into 'worker' table.
+    Please note the script runs a query for each interval (default: 5 minutes), which can take some time
+    for long-running pipelines.
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: query 'bacct' and load the relevant data into 'lsf_report' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test
+        # Just run it the usual way: only the top 19 analysis will be reported in CSV format
+    generate_profile.pl -url mysql://username:secret@hostname:port/database > profile.csv
 
-        # The same, but assuming LSF user someone_else ran the pipeline:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -lsf_user someone_else
+        # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
+    generate_profile.pl -url mysql://username:secret@hostname:port/database -top .995 -output profile.png
 
-        # Assuming the dump file existed. Load the dumped bacct data into 'lsf_report' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -dump long_mult.bacct
+        # Assuming you are only interested in a precise interval (in a PNG file)
+    generate_profile.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -granularity 1 -output profile.png
 
-        # Assuming the dump file did not exist. Query 'bacct', dump the data into a file and load it into 'lsf_report':
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -dump long_mult_again.bacct
+        # Assuming that the pipeline has large periods of inactivity
+    generate_profile.pl -url mysql://username:secret@hostname:port/database -granularity 10 -skip_no_activity 1 > profile.csv
 
 =head1 OPTIONS
 
     -help                   : print this help
     -url <url string>       : url defining where hive database is located
-    -dump <filename>        : a filename for bacct dump. It will be read from if the file exists, and written to otherwise.
-    -lsf_user <username>    : if it wasn't you who ran the pipeline, LSF user name of that user can be provided
-    -start_date <date>      : minimal start date of a job (the format is '2012/01/25/13:46')
-    -end_date <date>        : maximal end date of a job (the format is '2012/01/25/13:46')
+    -start_date <date>      : minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+    -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+    -granularity <int>      : size of the intervals on which the activity is computed (minutes) (default: 5)
+    -skip_no_activity <int> : only for CSV output: shrink the periods of inactivity which are longer than "skip_no_activity" hours (default: 2)
+    -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 19)
+    -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
 
 =head1 CONTACT
 
