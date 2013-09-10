@@ -208,7 +208,7 @@ sub main {
             title => $nothing_title,
             style => sprintf('filledcurves above y1=%d', int(.47*$max_workers)),
             linetype => '0',
-            color => 'grey',
+            color => '#2F4F4F',
         );
     }
     {
