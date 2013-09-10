@@ -28,7 +28,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $start_date, $end_date, $granularity, $skip, $output);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $start_date, $end_date, $granularity, $skip, $output, $top);
 
     GetOptions(
                 # connect to the database:
@@ -41,8 +41,9 @@ sub main {
             'start_date=s'               => \$start_date,
             'end_date=s'                 => \$end_date,
             'step=i'                     => \$granularity,
-            'output=s'                   => \$output,
             'skip=i'                     => \$skip,
+            'top=f'                      => \$top,
+            'output=s'                   => \$output,
             'h|help'                     => \$help,
     );
 
@@ -63,7 +64,9 @@ sub main {
     }
 
     $granularity = 5 unless $granularity;
-    $skip = 20 unless $skip;
+    $skip = int(($skip || 24) / $granularity);
+    $top = 19 unless $top;
+
     my $nothing_title = 'NOTHING';
 
     my $dbc = $hive_dba->dbc();
@@ -121,7 +124,7 @@ sub main {
         $curr_date = $next_date;
     }
     warn $max_workers;
-    $max_workers = 100*ceil($max_workers /100)-10;
+    #$max_workers = 100*ceil($max_workers /100)-10;
 #    output_csv(\%tot_analysis, \%name, \@data_timings, $skip);
 #}
 
@@ -148,7 +151,7 @@ sub main {
 
     my @buffer = ();
     foreach my $row (@data_timings) {
-        my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
+        my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers / 2, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
         if ($row->[1]) {
             if (@buffer) {
                 my $n = scalar(@buffer);
@@ -166,33 +169,46 @@ sub main {
         }
     }
 
-    #my $pipeline_name = $hive_dba->get_MetaAdaptor->fetch_value_by_key( 'hive_pipeline_name' );
     my $gnuplot_intro = "
 set terminal png size 1400, 800
 set key outside right
 set style fill solid
 set xdata time
-set timefmt '%Y-%m-%dT%H:%M:%S'
-set format x '%b %d'
-set ytics 200
-set xlabel 'Profile of $url from $start_date to $end_date'
+set timefmt '%%Y-%%m-%%dT%%H:%%M:%%S'
+set format x '%%b %%d'
+set ytics %d
+set xlabel 'Profile of %s from %s to %s'
 set ylabel 'Number of workers'
 
 ";
 
-    $s = 0;
+    # Get the number of analysis we want to display
     my $n_relevant_analysis = 0;
-    map {my $pre_s = $s; $s += $tot_analysis{$_}/$total_total; $pre_s < .995 && $n_relevant_analysis++} @sorted_analysis_ids;
+    if ($top and $top > 0) {
+        if ($top < 1) {
+            my $s = 0;
+            map {my $pre_s = $s; $s += $tot_analysis{$_}/$total_total; $pre_s < .995 && $n_relevant_analysis++} @sorted_analysis_ids;
+        } else {
+            $n_relevant_analysis = $top
+        }
+    } else {
+        $n_relevant_analysis = scalar(@sorted_analysis_ids);
+    }
 
-    print $gnuplot_intro;
+    printf(
+        $gnuplot_intro,
+        50*ceil($max_workers/500),
+        $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url,
+        $start_date, $end_date
+    );
     foreach my $i (1..($n_relevant_analysis+1)) {
         printf("set style line %d linetype %d pointtype 0 linewidth 1 linecolor %d\n", $i, $i, $i);
     }
     my @plot_info = ();
-    push @plot_info, sprintf(" 'prof_nc2.csv' using 1:2 t '$nothing_title' w lines linestyle 0 ");
-    push @plot_info, sprintf(" 'prof_nc2.csv' using 1:(%s) t 'OTHER' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..(scalar(@sorted_analysis_ids)+2)), $n_relevant_analysis+1);
+    push @plot_info, sprintf(" 'prof_prot4.csv' using 1:2 t '$nothing_title' w lines linestyle 0 ");
+    push @plot_info, sprintf(" 'prof_prot4.csv' using 1:(%s) t 'OTHER' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..(scalar(@sorted_analysis_ids)+2)), $n_relevant_analysis+1);
     foreach my $i (reverse 1..$n_relevant_analysis) {
-        push @plot_info, sprintf(" 'prof_nc2.csv' using 1:(%s) t '%s' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..($i+2)), $name{$sorted_analysis_ids[$i-1]}, $i);
+        push @plot_info, sprintf(" 'prof_prot4.csv' using 1:(%s) t '%s' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..($i+2)), $name{$sorted_analysis_ids[$i-1]}, $i);
     }
     print "plot ['$start_date':'$end_date'][:] ", join(',', @plot_info), "\n";
 
