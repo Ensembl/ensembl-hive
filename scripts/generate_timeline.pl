@@ -19,9 +19,12 @@ use DateTime;
 use DateTime::Format::ISO8601;
 use List::Util qw(sum max);
 use POSIX;
+use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
+
+no warnings qw{qw};
 
 main();
 exit(0);
@@ -40,8 +43,8 @@ sub main {
 
             'start_date=s'               => \$start_date,
             'end_date=s'                 => \$end_date,
-            'step=i'                     => \$granularity,
-            'skip=i'                     => \$skip,
+            'granularity=i'              => \$granularity,
+            'skip_no_activity=i'         => \$skip,
             'top=f'                      => \$top,
             'output=s'                   => \$output,
             'h|help'                     => \$help,
@@ -63,17 +66,37 @@ sub main {
         script_usage(1);
     }
 
+    # Palette generated with R: c(brewer.pal(9, "Set1"), brewer.pal(12, "Set3")). #FFFFB3 is removed because it is too close to white
+    my @palette = qw(#E41A1C #377EB8 #4DAF4A #984EA3 #FF7F00 #FFFF33 #A65628 #F781BF #999999     #8DD3C7 #BEBADA #FB8072 #80B1D3 #FDB462 #B3DE69 #FCCDE5 #D9D9D9 #BC80BD #CCEBC5 #FFED6F);
+
+    # Default options
     $granularity = 5 unless $granularity;
-    $skip = int(($skip || 24) / $granularity);
-    $top = 19 unless $top;
+    $skip = int(($skip || 2*60) / $granularity);
+    $top = scalar(@palette)-1 unless $top;
+
+    my %terminal_mapping = (
+        'emf' => 'emf',
+        'png' => 'png',
+        'svg' => 'svg',
+        'jpg' => 'jpeg',
+        'gif' => 'gif',
+        'ps'  => 'postscript eps enhanced color',
+        'pdf' => 'pdf color enhanced',
+    );
+    my $gnuplot_terminal = undef;
+    if ($output and $output =~ /\.(\w+)$/) {
+        $gnuplot_terminal = $1;
+        die "The format '$gnuplot_terminal' is not currently supported." if not exists $terminal_mapping{$gnuplot_terminal};
+        require Chart::Gnuplot;
+
+    }
 
     my $nothing_title = 'NOTHING';
 
-    my $dbc = $hive_dba->dbc();
-    my $dbh = $dbc->db_handle();
+    my $dbh = $hive_dba->dbc->db_handle();
 
-
-    my $sql_index = 'ALTER TABLE worker ADD KEY date_stats (analysis_id, born, died);';
+    # really needed ?
+    #my $sql_index = 'ALTER TABLE worker ADD KEY date_stats (analysis_id, born, died);';
 
     my $sql_limits = 'SELECT DATE_FORMAT(MIN(born), "%Y-%m-%dT%T"), DATE_FORMAT(MAX(died), "%Y-%m-%dT%T") FROM worker;';
     my $worker_limits = $dbh->selectall_arrayref($sql_limits);
@@ -92,7 +115,6 @@ sub main {
     my $data = $dbh->selectall_arrayref($sql_analysis_names);
     my %name = (map {$_->[0] => $_->[1] } @$data);
 
-    use Data::Dumper;
     #die Dumper \%name;
 
     $start_date = DateTime::Format::ISO8601->parse_datetime($start_date);
@@ -124,63 +146,39 @@ sub main {
         $curr_date = $next_date;
     }
     warn $max_workers;
-    #$max_workers = 100*ceil($max_workers /100)-10;
-#    output_csv(\%tot_analysis, \%name, \@data_timings, $skip);
-#}
 
-#sub output_csv {
-#    my %tot_analysis = %{ (shift) };
-#    my %name         = %{ (shift) };
-#    my @data_timings = @{ (shift) };
-#    my $skip         = shift;
-    
     my $total_total = sum(values %tot_analysis);
-#    my $max_workers = max(map {$_->[1]} @data_timings);
-#    warn $max_workers;
-#    #$max_workers = 1000*ceil(max(map {$_->[1]} @data_timings)
-#    #$max_workers /1000)-100;
-#    my $max_workers = 0;
 
     my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $name{$a} cmp lc $name{$b})} keys %tot_analysis;
     #warn Dumper \@sorted_analysis_ids;
-    print join("\t", 'analysis', $nothing_title, map {$name{$_}} @sorted_analysis_ids), "\n";
-    print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_analysis_ids), "\n";
-    print join("\t", 'proportion', '0', map {$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
-    my $s = 0;
-    print join("\t", 'cum_proportion', '0', map {$s+=$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
+    if (not $gnuplot_terminal) {
+        print join("\t", 'analysis', $nothing_title, map {$name{$_}} @sorted_analysis_ids), "\n";
+        print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_analysis_ids), "\n";
+        print join("\t", 'proportion', '0', map {$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
+        my $s = 0;
+        print join("\t", 'cum_proportion', '0', map {$s+=$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
 
-    my @buffer = ();
-    foreach my $row (@data_timings) {
-        my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers / 2, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
-        if ($row->[1]) {
-            if (@buffer) {
-                my $n = scalar(@buffer);
-                if ($n > $skip) {
-                    splice(@buffer, int($skip / 2), $n-$skip);
+        my @buffer = ();
+        foreach my $row (@data_timings) {
+            my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers / 2, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
+            if ($row->[1]) {
+                if (@buffer) {
+                    my $n = scalar(@buffer);
+                    if ($n > $skip) {
+                        splice(@buffer, int($skip / 2), $n-$skip);
+                    }
+                    foreach my $old_str (@buffer) {
+                        print $old_str;
+                    }
+                    @buffer = ();
                 }
-                foreach my $old_str (@buffer) {
-                    print $old_str;
-                }
-                @buffer = ();
+                print $str;
+            } else {
+                push @buffer, $str;
             }
-            print $str;
-        } else {
-            push @buffer, $str;
         }
+        return;
     }
-
-    my $gnuplot_intro = "
-set terminal png size 1400, 800
-set key outside right
-set style fill solid
-set xdata time
-set timefmt '%%Y-%%m-%%dT%%H:%%M:%%S'
-set format x '%%b %%d'
-set ytics %d
-set xlabel 'Profile of %s from %s to %s'
-set ylabel 'Number of workers'
-
-";
 
     # Get the number of analysis we want to display
     my $n_relevant_analysis = 0;
@@ -194,23 +192,78 @@ set ylabel 'Number of workers'
     } else {
         $n_relevant_analysis = scalar(@sorted_analysis_ids);
     }
+    #warn Dumper(\@sorted_analysis_ids);
+    #warn Dumper([map {$name{$_}} @sorted_analysis_ids]);
 
-    printf(
-        $gnuplot_intro,
-        50*ceil($max_workers/500),
-        $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url,
-        $start_date, $end_date
-    );
-    foreach my $i (1..($n_relevant_analysis+1)) {
-        printf("set style line %d linetype %d pointtype 0 linewidth 1 linecolor %d\n", $i, $i, $i);
+    my @xdata = map {$_->[0]} @data_timings;
+
+    my @datasets = ();
+
+    {
+        my @ydata = map {$_->[1] ? 0 : $max_workers / 2} @data_timings;
+        push @datasets, Chart::Gnuplot::DataSet->new(
+            xdata => \@xdata,
+            ydata => \@ydata,
+            timefmt => '%Y-%m-%dT%H:%M:%S',
+            title => $nothing_title,
+            style => sprintf('filledcurves above y1=%d', int(.47*$max_workers)),
+            linetype => '0',
+            color => 'grey',
+        );
     }
-    my @plot_info = ();
-    push @plot_info, sprintf(" 'prof_prot4.csv' using 1:2 t '$nothing_title' w lines linestyle 0 ");
-    push @plot_info, sprintf(" 'prof_prot4.csv' using 1:(%s) t 'OTHER' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..(scalar(@sorted_analysis_ids)+2)), $n_relevant_analysis+1);
+    {
+        my @ydata = ();
+        foreach my $row (@data_timings) {
+            push @ydata, sum(map {$row->[2]->{$_} || 0} @sorted_analysis_ids );
+        }
+        push @datasets, Chart::Gnuplot::DataSet->new(
+            xdata => \@xdata,
+            ydata => \@ydata,
+            timefmt => '%Y-%m-%dT%H:%M:%S',
+            title => 'OTHER',
+            style => 'filledcurves x1',
+            linewidth => '0',
+            color => $palette[$n_relevant_analysis],
+        );
+    }
+
     foreach my $i (reverse 1..$n_relevant_analysis) {
-        push @plot_info, sprintf(" 'prof_prot4.csv' using 1:(%s) t '%s' w filledcurves x1 linestyle %d ", join('+', map {"\$$_"} 3..($i+2)), $name{$sorted_analysis_ids[$i-1]}, $i);
+        my @ydata;
+        foreach my $row (@data_timings) {
+            push @ydata, sum(map {$row->[2]->{$_} || 0} @sorted_analysis_ids[0..($i-1)] );
+        }
+        my $dataset = Chart::Gnuplot::DataSet->new(
+            xdata => \@xdata,
+            ydata => \@ydata,
+            timefmt => '%Y-%m-%dT%H:%M:%S',
+            title => $name{$sorted_analysis_ids[$i-1]},
+            style => 'filledcurves x1',
+            linewidth => '0',
+            #linetype => $i
+            color => $palette[$i-1],
+        );
+        push @datasets, $dataset;
     }
-    print "plot ['$start_date':'$end_date'][:] ", join(',', @plot_info), "\n";
+
+    my $chart = Chart::Gnuplot->new(
+        title => sprintf('Profile of %s from %s to %s', $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url, $start_date, $end_date),
+        timeaxis => 'x',
+        legend => {
+            position => 'outside right',
+            align => 'left',
+        },
+        xtics => {
+            labelfmt => '%b %d',
+        },
+        bg => {
+            color => 'white',
+        },
+        imagesize => '1400, 800',
+        output => $output,
+        terminal => $terminal_mapping{$gnuplot_terminal},
+        ylabel => 'Number of workers',
+    );
+    $chart->plot2d(@datasets);
 
 }
 
