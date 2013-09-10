@@ -710,7 +710,7 @@ sub reset_jobs_for_analysis_id {
     my ($self, $analysis_id, $all) = @_;
 
     my $sql = qq{
-        UPDATE jobs
+        UPDATE job
            SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END
              , status='READY'
         WHERE analysis_id=?
