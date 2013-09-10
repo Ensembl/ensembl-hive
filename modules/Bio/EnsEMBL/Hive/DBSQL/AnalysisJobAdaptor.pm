@@ -709,7 +709,13 @@ sub gc_dataflow {
 sub reset_jobs_for_analysis_id {
     my ($self, $analysis_id, $all) = @_;
 
-    my $sql = "UPDATE job SET status='READY', retry_count=0 WHERE analysis_id=?".($all ? "" : " AND status='FAILED'");
+    my $sql = qq{
+        UPDATE jobs
+           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END
+             , status='READY'
+        WHERE analysis_id=?
+    } . ($all ? "" : " AND status='FAILED'");
+
     my $sth = $self->prepare($sql);
     $sth->execute($analysis_id);
     $sth->finish;
