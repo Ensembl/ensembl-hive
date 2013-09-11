@@ -37,24 +37,23 @@
             "Details"     : { "Font"   : "Helvetica" },
 
             "JobStatus"   : {
-                "Colour"        : "yellow",
-                "SEMAPHORED"    : { "Colour" : "red"    },
-                "READY"         : { "Colour" : "orange" },
-                "INPROGRESS"    : { "Colour" : "yellow" },
-                "DONE"          : { "Colour" : "green"  },
-                "FAILED"        : { "Colour" : "grey"   }
+                "SEMAPHORED"    : { "Colour" : "grey"        },
+                "READY"         : { "Colour" : "green"       },
+                "INPROGRESS"    : { "Colour" : "yellow"      },
+                "DONE"          : { "Colour" : "DeepSkyBlue" },
+                "FAILED"        : { "Colour" : "red"         }
             },
 
             "AnalysisStatus"   : {
-                "EMPTY"       : { "Colour" : "white"  },
-                "BLOCKED"     : { "Colour" : "red"    },
-                "LOADING"     : { "Colour" : "orange" },
-                "ALL_CLAIMED" : { "Colour" : "orange" },
-                "SYNCHING"    : { "Colour" : "orange" },
-                "READY"       : { "Colour" : "yellow" },
-                "WORKING"     : { "Colour" : "yellow" },
-                "DONE"        : { "Colour" : "green"  },
-                "FAILED"      : { "Colour" : "grey"   }
+                "EMPTY"       : { "Colour" : "white"       },
+                "BLOCKED"     : { "Colour" : "grey"        },
+                "LOADING"     : { "Colour" : "green"       },
+                "ALL_CLAIMED" : { "Colour" : "grey"        },
+                "SYNCHING"    : { "Colour" : "green"       },
+                "READY"       : { "Colour" : "green"       },
+                "WORKING"     : { "Colour" : "yellow"      },
+                "DONE"        : { "Colour" : "DeepSkyBlue" },
+                "FAILED"      : { "Colour" : "red"         }
             }
         },
         "Edge" : {
