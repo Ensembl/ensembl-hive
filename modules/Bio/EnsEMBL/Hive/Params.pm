@@ -65,6 +65,19 @@ use List::Util qw(first min max minstr maxstr reduce sum shuffle);              
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc');    # NB: dir_revhash() is used by some substituted expressions, do not remove!
 
 
+=head2 new
+
+    Description: a trivial constructor, mostly for testing a Params object
+
+=cut
+
+sub new {
+    my $class = shift @_;
+
+    return bless {}, $class;
+}
+
+
 =head2 param_init
 
     Description: First parses the parameters from all sources in the reverse precedence order (supply the lowest precedence hash first),
@@ -236,7 +249,7 @@ sub param_substitute {
         } else {
             my $scalar_defined  = 1;
 
-            $structure=~s/(?:#(.+?)#)/my $value = $self->_subst_one_hashpair($1, $overriding_hash); $scalar_defined &&= defined($value); $value/eg;
+            $structure=~s/(?:#(expr\(.+?\)expr|[\w:]+)#)/my $value = $self->_subst_one_hashpair($1, $overriding_hash); $scalar_defined &&= defined($value); $value/eg;
 
             return $scalar_defined ? $structure : undef;
         }
@@ -316,7 +329,7 @@ sub _subst_one_hashpair {
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
-        $expression=~s/(?:\$(\w+))/stringify($self->_param_possibly_overridden($1, $overriding_hash))/eg;
+        $expression=~s{(?:\$(\w+)|#(\w+)#)}{stringify($self->_param_possibly_overridden($1 // $2, $overriding_hash))}eg;
 
         $value = eval($expression);
     }
