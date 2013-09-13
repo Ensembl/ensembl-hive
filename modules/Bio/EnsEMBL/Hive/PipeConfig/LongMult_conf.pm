@@ -150,16 +150,15 @@ sub pipeline_analyses {
             ],
             -flow_into => {
                 '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },   # will create a semaphored fan of jobs; will use a template to top-up the hashes
-                'A->1' => [ 'add_together' ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
+                'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
             },
         },
 
-        {   -logic_name    => 'part_multiply',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
+        {   -logic_name => 'part_multiply',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                    # NB: a_multiplier is mentioned in the template to guarantee job's uniqueness
-                1 => { ':////accu?partial_product={digit}' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'partial_product' => '#partial_product#' } },
+                1 => [ ':////accu?partial_product={digit}' ],
             },
         },
         
@@ -167,7 +166,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
-                1 => { ':////final_result' => { 'a_multiplier' => '#a_multiplier#', 'b_multiplier' => '#b_multiplier#', 'result' => '#result#' } },
+                1 => [ ':////final_result' ],
             },
         },
     ];
