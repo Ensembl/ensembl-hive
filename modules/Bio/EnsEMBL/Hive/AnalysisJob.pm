@@ -276,7 +276,8 @@ sub dataflow_output_id {
     my $input_id                = $self->input_id();
     my $param_id_stack          = $self->param_id_stack();
     my $accu_id_stack           = $self->accu_id_stack();
-    my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
+
+    my $hive_use_param_stack    = $self->adaptor() && $self->adaptor->db->hive_use_param_stack();
 
     if($hive_use_param_stack) {
         if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
