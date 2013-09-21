@@ -9,9 +9,7 @@
 
     init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::CompressFiles_conf -password <your_password>
 
-    seed_pipeline.pl -url <url> -logic_name find_files -input_id "{ 'directory' => 'dumps', 'only_files' => '*.sql' }"
-
-    seed_pipeline.pl -url <url> -logic_name find_files -input_id "{ 'directory' => '$HOME/ncbi_taxonomy', 'gzip_flags' => '-d' }"
+    seed_pipeline.pl -url <url> -logic_name find_files -input_id "{ 'directory' => 'dumps' }"
 
 =head1 DESCRIPTION
 
@@ -37,6 +35,7 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
+
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
@@ -54,25 +53,6 @@ sub default_options {
 }
 
 
-=head2 pipeline_wide_parameters
-
-    Description : Interface method that should return a hash of pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
-                  The value doesn't have to be a scalar, can be any Perl structure (will be stringified and de-stringified automagically).
-
-=cut
-
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class, then add our own stuff
-
-        'gzip_flags'    => '',      # can be set to '-d' for decompression
-        'directory'     => '.',     # directory where both source and target files are located
-        'only_files'    => '*',     # any wildcard understood by shell
-    };
-}
-
-
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
@@ -81,7 +61,7 @@ sub pipeline_wide_parameters {
                     * 'find_files'          generates a list of files whose names match the pattern #only_files#
                                             Each job of this analysis will dataflow (create jobs) via branch #2 into 'compress_a_file' analysis.
 
-                    * 'compress_a_file'     actually performs the (un)zipping of the files in parallel
+                    * 'compress_a_file'     actually performs the (un)gzipping of the files in parallel
 
 =cut
 
@@ -91,19 +71,18 @@ sub pipeline_analyses {
         {   -logic_name => 'find_files',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputcmd'     => 'find #directory# -type f -name "#only_files#"',
+                'inputcmd'     => 'find #directory# -type f',
                 'column_names' => [ 'filename' ],
             },
             -flow_into => {
-#                2 => [ 'compress_a_file' ],     # will create a fan of jobs
-                2 => { 'compress_a_file' => { 'filename' => '#filename#', 'gzip_flags' => '#gzip_flags#' }, },  # propagate 'gzip_flags' as well
+                2 => [ 'compress_a_file' ],     # will create a fan of jobs
             },
         },
 
         {   -logic_name    => 'compress_a_file',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cmd'       => 'gzip #gzip_flags# #filename#',
+                'cmd'       => 'gzip #filename#',
             },
             -analysis_capacity => 4,            # limit the number of workers that will be performing jobs in parallel
         },
