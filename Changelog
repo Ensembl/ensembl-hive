@@ -1,4 +1,25 @@
 
+---------------------[before Sanger workshop]---------------------------------------------------------------------------
+
+* Mon Sep 23 12:29:44 2013 +0100 | Leo Gordon | added "git clone" option
+* Mon Sep 23 12:22:07 2013 +0100 | Leo Gordon | some corrections to slides part2
+* Sun Sep 22 20:18:42 2013 +0100 | Leo Gordon | part3 of the slides and the solutions (first version)
+* Sat Sep 21 22:31:29 2013 +0100 | Leo Gordon | updated slides for parts 1 and 2 and solutions2.tar
+* Thu Sep 19 11:25:37 2013 +0100 | Leo Gordon | Sanger version of the first part (re-made in LibreOffice)
+* Mon Sep 16 09:30:15 2013 +0100 | Leo Gordon | bugfix: should not assume the presence of JobAdaptor in dataflow
+* Fri Sep 13 16:28:13 2013 +0100 | Leo Gordon | alternative substitution syntax #expr( #alpha#*#beta# )expr# and a test script
+* Fri Sep 13 11:17:45 2013 +0100 | Leo Gordon | cleanup: two templates that are no longer necessary
+* Wed Sep 11 16:45:53 2013 +0100 | Leo Gordon | new colourscheme has arrived!
+* Tue Sep 10 16:43:29 2013 +0100 | Leo Gordon | typo bugfix: jobs-->job in SQL
+* Tue Sep 10 15:46:40 2013 +0100 | Leo Gordon | bugfix: reset the tried jobs to retry_count=1 and untried ones to retry_count=0 when doing a bulk reset
+* Mon Sep 9 13:11:10 2013 +0100 | Leo Gordon | changes made before the talk
+* Sun Sep 8 22:58:11 2013 +0100 | Leo Gordon | Preliminary version of slides for the second part of the workshop.
+* Sun Sep 8 19:20:02 2013 +0100 | Leo Gordon | bugfix: we should allow any characters apart from { and } in the key
+* Sun Sep 8 14:37:43 2013 +0100 | Leo Gordon | cosmetic: a hint for people working on the example
+* Sat Sep 7 14:25:36 2013 +0100 | Leo Gordon | added support for EHIVE_HOST and EHIVE_PORT envariables; useful for the workshop environment
+* Sat Sep 7 12:35:11 2013 +0100 | Leo Gordon | imported List::Util to be able to run max/min/sum of lists in substituted expressions
+* Sat Sep 7 11:26:18 2013 +0100 | Leo Gordon | bugfix: now correctly supports directory names with dots in them
+
 ---------------------[before EBI workshop]---------------------------------------------------------------------------
 
 * Thu Sep 5 16:55:44 2013 +0100 | Leo Gordon | PDF version of the workshop slides from GoogleDocs
