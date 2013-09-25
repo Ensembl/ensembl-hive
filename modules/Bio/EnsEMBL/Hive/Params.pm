@@ -242,7 +242,7 @@ sub param_substitute {
 
             return $structure;
 
-        } elsif($structure=~/^#([^#]*)#$/) {    # if the given string is one complete substitution, we don't want to force the output into a string
+        } elsif($structure=~/^(?:#(expr\(.+?\)expr|[\w:]+)#)$/) {   # if the given string is one complete substitution, we don't want to force the output into a string
 
             return $self->_subst_one_hashpair($1, $overriding_hash);
 
@@ -329,9 +329,12 @@ sub _subst_one_hashpair {
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
-        $expression=~s{(?:\$(\w+)|#(\w+)#)}{stringify($self->_param_possibly_overridden($1 // $2, $overriding_hash))}eg;
+            # FIXME: the following two lines will have to be switched to drop support for $old_substitution_syntax and stay with #new_substitution_syntax#
+        $expression=~s{(?:\$(\w+)|#(\w+)#)}{stringify($self->_param_possibly_overridden($1 // $2, $overriding_hash))}eg;    # substitute-by-value (bulky, but supports old syntax)
+#        $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;                         # substitute-by-call (no longer supports old syntax)
 
-        $value = eval($expression);
+        $value = eval "return $expression";     # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+# warn "SOH: #$inside_hashes# becomes $expression and is then evaluated into ".stringify($value)."\n";
     }
 
     warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
