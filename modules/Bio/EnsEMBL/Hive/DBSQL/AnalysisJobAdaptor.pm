@@ -405,8 +405,8 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         #
     my $sql = "UPDATE job "
         .( ($self->dbc->driver eq 'pgsql')
-        ? "SET status = CAST(CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status), "
-        : "SET status =      CASE WHEN semaphore_count>1 THEN 'SEMAPHORED' ELSE 'READY' END, "
+        ? "SET status = CAST(CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status), "
+        : "SET status =      CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END, "
         ).qq{
             semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
