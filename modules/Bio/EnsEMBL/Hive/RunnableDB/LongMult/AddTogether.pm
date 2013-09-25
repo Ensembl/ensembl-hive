@@ -33,7 +33,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
 
     return {
-        'take_time' => 0,   # how much time run() method will spend in sleeping state
+        'partial_product' => { },   # to be used when b_multiplier only contains digits '0' and '1'
+
+        'take_time' => 0,           # how much time run() method will spend in sleeping state
     };
 }
 
