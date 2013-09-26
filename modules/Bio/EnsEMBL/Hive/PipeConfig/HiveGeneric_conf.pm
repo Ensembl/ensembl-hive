@@ -49,7 +49,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::URL;
@@ -489,8 +488,8 @@ sub run {
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
                 $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
-         = rearrange([qw(logic_name module parameters input_ids blocked batch_size hive_capacity failed_job_tolerance
-                 max_retry_count can_be_empty rc_id rc_name priority meadow_type analysis_capacity)], %$aha);
+         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked batch_size -hive_capacity -failed_job_tolerance
+                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
 
         unless($logic_name) {
             die "logic_name' must be defined in every analysis";
@@ -574,8 +573,8 @@ sub run {
         my $dataflow_rule_adaptor        = $hive_dba->get_DataflowRuleAdaptor;
 
         foreach my $aha (@{$self->pipeline_analyses}) {
-            my ($logic_name, $wait_for, $flow_into) =
-                 rearrange([qw(logic_name wait_for flow_into)], %$aha);
+            my ($logic_name, $wait_for, $flow_into)
+                 = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
             my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
 
