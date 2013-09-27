@@ -40,13 +40,33 @@ sub main {
 
     if($help) {
         script_usage(0);
-    } elsif($reg_conf and $reg_alias) {
+
+    } elsif($reg_alias) {
+        script_usage(1) if $url;
         Bio::EnsEMBL::Registry->load_all($reg_conf);
 
-        $reg_type ||= 'hive';
-        my $hive_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($reg_alias, $reg_type)
-            || die "Could not connect to database via registry file '$reg_conf' and alias '$reg_alias' (assuming type '$reg_type')";
-        my $dbc = $hive_dba->dbc();
+        my $species = Bio::EnsEMBL::Registry->get_alias($reg_alias)
+            || die "Could not solve the alias '$reg_alias'".($reg_conf ? " via the registry file '$reg_conf'" : "");
+
+        my $dba;
+        if ($reg_type) {
+            $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species, $reg_type)
+                || die "Could not find any database for '$species' (alias: '$reg_alias') with the type '$reg_type'".($reg_conf ? " via the registry file '$reg_conf'" : "");
+
+        } else {
+
+            my $dbas = Bio::EnsEMBL::Registry->get_all_DBAdaptors(-species => $species);
+            if (scalar(@$dbas) == 0) {
+                # I think this case cannot happen: if there are no databases, the alias does not exist and get_alias() should have failed
+                die "Could not find any database for '$species' (alias: '$reg_alias')".($reg_conf ? " via the registry file '$reg_conf'" : "");
+
+            } elsif (scalar(@$dbas) >= 2) {
+                die "There are several databases for '$species' (alias: '$reg_alias'). Please set -reg_type to one of: ".join(", ", map {$_->group} @$dbas);
+            };
+            $dba = $dbas->[0];
+        }
+
+        my $dbc = $dba->dbc();
 
         $dbc_hash = {
             'driver'    => $dbc->driver,
@@ -145,11 +165,12 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    db_cmd.pl {-url <url> | -reg_conf <reg_conf> -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -extra <extra_params> ] [ -to_params | -verbose ]
+    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -extra <extra_params> ] [ -to_params | -verbose ]
 
 =head1 DESCRIPTION
 
-    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command
+    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
+    -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.
 
 =head1 USAGE EXAMPLES
 
@@ -158,7 +179,7 @@ __DATA__
     db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -extra='--html'
     eval mysqldump -t `db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -to_params` worker
 
-    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master -reg_type compara
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql 'SELECT * FROM coord_system'
 
