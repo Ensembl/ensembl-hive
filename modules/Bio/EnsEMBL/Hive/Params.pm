@@ -168,6 +168,27 @@ sub param_required {
 }
 
 
+=head2 param_exists
+
+    Arg [1]    : string $param_name
+
+    Description: A predicate tester for whether the parameter has been initialized (even to undef)
+
+    Example    : if( $self->param_exists('source') ) { print "'source' exists\n"; } else { print "never heard of 'source'\n"; }
+
+    Returntype : boolean
+
+=cut
+
+sub param_exists {
+    my $self        = shift @_;
+    my $param_name  = shift @_;
+
+    return exists( $self->{'_param_hash'}{$param_name} )
+            ? 1
+            : 0;
+}
+
 =head2 param_is_defined
 
     Arg [1]    : string $param_name
@@ -213,7 +234,7 @@ sub param {
 
     my $value = $self->_param_silent( $param_name, @_ );
     
-    unless( exists $self->{'_param_hash'}{$param_name} ) {
+    unless( $self->param_exists( $param_name ) ) {
         warn "ParamWarning: value for param('$param_name') is used before having been initialized!\n";
     }
 
