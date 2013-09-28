@@ -39,6 +39,8 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
+use Bio::EnsEMBL::Hive::Utils ('stringify');
+
 use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
          );
  
@@ -82,7 +84,10 @@ sub module {
 
 sub parameters {
     my $self = shift;
-    $self->{'_parameters'} = shift if(@_);
+    if(@_) {
+        my $parameters = shift @_;
+        $self->{'_parameters'} = ref($parameters) ? stringify($parameters) : $parameters;
+    }
     return $self->{'_parameters'};
 }
 

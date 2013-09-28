@@ -62,7 +62,6 @@ use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
@@ -579,7 +578,7 @@ sub run {
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
                 -logic_name             => $logic_name,
                 -module                 => $module,
-                -parameters             => stringify($parameters_hash),    # have to stringify it here, because Analysis code is external wrt Hive code
+                -parameters             => $parameters_hash,
                 -resource_class_id      => $rc_id,
                 -failed_job_tolerance   => $failed_job_tolerance,
                 -max_retry_count        => $max_retry_count,
