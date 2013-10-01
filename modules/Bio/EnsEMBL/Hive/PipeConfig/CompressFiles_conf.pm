@@ -36,23 +36,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
-=head2 default_options
-
-    Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                  Redefines the current pipeline_name. There is also an invisible dependency on o('password') which has to be defined.
-
-=cut
-
-sub default_options {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::default_options() },       # inherit other stuff from the base class
-
-        'pipeline_name' => 'compress_files',        # name used by the beekeeper to prefix job names on the farm
-    };
-}
-
-
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.

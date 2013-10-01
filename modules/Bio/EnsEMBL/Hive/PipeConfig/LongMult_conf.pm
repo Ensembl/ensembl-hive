@@ -7,14 +7,14 @@
 
 =head1 SYNOPSIS
 
-   # Example 1: specifying only the mandatory option (numbers to be multiplied are taken from defaults)
+   # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
 init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
 
-   # Example 2: specifying the mandatory options as well as overriding the default numbers to be multiplied:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass> -first_mult 2344556 -second_mult 777666555
+    # optionally also seed it with your specific values:
+seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
 
-   # Example 3: do not re-create the database, just load another multiplicaton task into an existing one:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -job_topup -password <mypass> -first_mult 1111222233334444 -second_mult 38578377835
+    # run the pipeline:
+beekeeper.pl -url $EHIVE_URL -loop
 
 
 =head1 DESCRIPTION
@@ -24,13 +24,12 @@ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -job_topup -passw
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
-
-    The setting. Let's assume we are given two loooooong numbers to multiply. Reeeeally long.
-    So long that they do not fit into registers of the CPU and should be multiplied digit-by-digit.
+    The setting. let's assume we are given two loooooong numbers to multiply. reeeeally long.
+    soooo long that they do not fit into registers of the cpu and should be multiplied digit-by-digit.
     For the purposes of this example we also assume this task is very computationally intensive and has to be done in parallel.
 
-    The long multiplication pipeline consists of three "analyses" (types of tasks):  'take_b_apart', 'part_multiply' and 'add_together'
-    that we will be using to examplify various features of the Hive.
+    The long multiplication pipeline consists of three "analyses" (types of tasks):
+        'take_b_apart', 'part_multiply' and 'add_together' that we use to examplify various features of the Hive.
 
         * A 'take_b_apart' job takes in two string parameters, 'a_multiplier' and 'b_multiplier',
           takes the second one apart into digits, finds what _different_ digits are there,
@@ -56,29 +55,6 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-
-
-=head2 default_options
-
-    Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                  In addition to the standard things it defines two options, 'first_mult' and 'second_mult' that are supposed to contain the long numbers to be multiplied.
-
-=cut
-
-sub default_options {
-    my ($self) = @_;
-
-    return {
-        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
-
-        'pipeline_name' => 'long_mult',                     # name used by the beekeeper to prefix job names on the farm
-
-        'first_mult'    => '9650156169',                    # the actual numbers to be multiplied can also be specified from the command line
-        'second_mult'   =>  '327358788',
-
-        'take_time'     => 1,                               # how much time (in seconds) should each job take -- to slow things down
-    };
-}
 
 
 =head2 pipeline_create_commands
@@ -113,7 +89,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'take_time' => $self->o('take_time'),
+        'take_time'     => 1,
     };
 }
 
@@ -122,18 +98,16 @@ sub pipeline_wide_parameters {
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
-
-                    * 'take_b_apart' with two jobs (multiply 'first_mult' by 'second_mult' and vice versa - to check the commutativity of multiplivation).
+                    * 'take_b_apart' that is auto-seeded with a pair of jobs (to check the commutativity of multiplication).
                       Each job will dataflow (create more jobs) via branch #2 into 'part_multiply' and via branch #1 into 'add_together'.
 
-                    * 'part_multiply' initially without jobs (they will flow from 'take_b_apart')
+                    * 'part_multiply' with jobs fed from take_b_apart#2.
+                        It multiplies input parameters 'a_multiplier' and 'digit' and dataflows 'partial_product' parameter into branch #1.
 
-                    * 'add_together' initially without jobs (they will flow from 'take_b_apart').
-                       All 'add_together' jobs will wait for completion of 'part_multiply' jobs before their own execution (to ensure all data is available).
-
-    There are two control modes in this pipeline:
-        A. The default mode is to use the '2' and '1' dataflow rules from 'take_b_apart' analysis and a -wait_for rule in 'add_together' analysis for analysis-wide synchronization.
-        B. The semaphored mode is to use '2->A' and 'A->1' semaphored dataflow rules from 'take_b_apart' instead, and comment out the analysis-wide -wait_for rule, relying on semaphores.
+                    * 'add_together' with jobs fed from take_b_apart#1.
+                        It adds together results of partial multiplication computed by 'part_multiply'.
+                        These results are accumulated in 'partial_product' hash.
+                        Until the hash is complete the corresponding 'add_together' job is blocked by a semaphore.
 
 =cut
 
@@ -145,12 +119,14 @@ sub pipeline_analyses {
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
-                { 'a_multiplier' => $self->o('first_mult'),  'b_multiplier' => $self->o('second_mult') },
-                { 'a_multiplier' => $self->o('second_mult'), 'b_multiplier' => $self->o('first_mult')  },
+                { 'a_multiplier' => '9650156169', 'b_multiplier' => '327358788' },
+                { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },   # will create a semaphored fan of jobs; will use a template to top-up the hashes
-                'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
+                    # will create a semaphored fan of jobs; will use a template to top-up the hashes:
+                '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                    # will create a semaphored funnel job to wait for the fan to complete and add the results:
+                'A->1' => [ 'add_together'  ],
             },
         },
 

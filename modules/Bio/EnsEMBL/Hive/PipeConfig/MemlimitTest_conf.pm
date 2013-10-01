@@ -33,16 +33,6 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
-sub default_options {
-    my ($self) = @_;
-    return {
-        %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
-
-        'pipeline_name' => 'memlimit_test',                 # name used by the beekeeper to prefix job names on the farm
-    };
-}
-
-
 sub resource_classes {
     my ($self) = @_;
     return {

@@ -97,7 +97,7 @@ sub default_options {
         'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
         'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
         'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'}         || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
-        'pipeline_name'         => 'hive_generic',
+        'pipeline_name'         => $self->pipeline_name(),
 
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'  => 0,                   # do not reconstruct the calling stack of parameters by default (yet)
@@ -356,6 +356,22 @@ sub pipeline_url {
 }
 
 
+sub pipeline_name {
+    my $self            = shift @_;
+    my $pipeline_name   = shift @_;
+
+    unless($pipeline_name) {    # or turn the ClassName into pipeline_name:
+        $pipeline_name = ref($self);        # get the original class name
+        $pipeline_name=~s/^.*:://;          # trim the leading classpath prefix
+        $pipeline_name=~s/_conf$//;         # trim the optional _conf from the end
+    }
+
+    $pipeline_name=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
+
+    return lc($pipeline_name);
+}
+
+
 =head2 process_options
 
     Description : The method that does all the parameter parsing magic.
@@ -394,6 +410,7 @@ sub run {
     my $analysis_topup  = $self->{'_extra_options'}{'analysis_topup'};
     my $job_topup       = $self->{'_extra_options'}{'job_topup'};
     my $pipeline_url    = $self->pipeline_url();
+    my $pipeline_name   = $self->o('pipeline_name');
 
     unless($analysis_topup || $job_topup) {
         foreach my $cmd (@{$self->pipeline_create_commands}) {
@@ -688,7 +705,7 @@ sub run {
     print "\trunWorker.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()."      \t\t# run exactly one Worker locally (useful for debugging/learning)\n";
     print "\n";
     print " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n";
-    print "\tgenerate_graph.pl -url $pipeline_url -out diagram.png\n";
+    print "\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png\n";
     print "\n";
     print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
     print "\tdb_cmd.pl -url $pipeline_url\n\n";
