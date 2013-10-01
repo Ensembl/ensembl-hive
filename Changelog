@@ -1,4 +1,16 @@
 
+---------------------[after Sept'2013 workshops]------------------------------------------------------------------------
+
+* Tue Oct 1 16:30:14 2013 +0100 | Leo Gordon | newer Perl required, BioPerl no longer required, seed_pipeline.pl mentioned
+* Tue Oct 1 13:03:21 2013 +0100 | Leo Gordon | pipeline_name is now automatically computed from ClassName; simplified workshop's example files and slides
+* Fri Sep 27 15:21:04 2013 +0100 | Leo Gordon | added param_exists() method for checking whether a parameter has been initialized at all
+* Thu Sep 26 23:57:55 2013 +0100 | Leo Gordon | cleaned up the last (optional) slide on pipeline_wide_parameters; removed the exercise about abstracting out the compressor (formerly from CompressFiles_conf)
+* Thu Sep 26 23:54:55 2013 +0100 | Leo Gordon | separated out "long addition" functionality to concentrate on Hive API when writing the Runnable, and not on maths
+* Thu Sep 26 10:53:44 2013 +0100 | Leo Gordon | bugfix: ENSCOMPARASW-131. Swapped two rearrange() calls for slicing a hashref
+* Wed Sep 25 16:42:47 2013 +0100 | Leo Gordon | bugfix: ENSCOMPARASW-132. When all dependent jobs (>1) fail to be created due to unique constraint, they now correctly update status to READY
+* Wed Sep 25 15:43:58 2013 +0100 | Leo Gordon | bugfix: make sure the pipeline works even when b_multiplier only contains digits 0 and 1
+* Wed Sep 25 15:03:09 2013 +0100 | Leo Gordon | bugfix: properly support evaluation of complex substituted expressions that yield a hashref
+
 ---------------------[before Sanger workshop]---------------------------------------------------------------------------
 
 * Mon Sep 23 12:29:44 2013 +0100 | Leo Gordon | added "git clone" option
