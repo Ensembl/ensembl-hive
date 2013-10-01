@@ -2,7 +2,7 @@
 
 1. Download and install the necessary external software:
 
-1.1. Perl 5.6 or higher, since eHive code is written in Perl
+1.1. Perl 5.10 or higher, since eHive code is written in Perl
 
 	# see http://www.perl.com/download.csp
 
@@ -46,47 +46,37 @@ It will be convenient to set a variable pointing at this directory for future us
 
 	$ cd $ENSEMBL_CVS_ROOT_DIR
 
-2.3. Log into the BioPerl CVS server (using "cvs" for password):
-
-	$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl login
-
-	# see http://www.bioperl.org/wiki/Using_CVS
-
-2.4. Export the bioperl-live package:
-
-	$ cvs -d :pserver:cvs@code.open-bio.org:/home/repository/bioperl export bioperl-live
-
-2.5. Log into the EnsEMBL CVS server at Sanger (using "CVSUSER" for password):
+2.3. Log into the EnsEMBL CVS server at Sanger (using "CVSUSER" for password):
 
 	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl login
 	Logging in to :pserver:cvsuser@cvs.sanger.ac.uk:2401/cvsroot/ensembl
 	CVS password: CVSUSER
 
-2.6. Export ensembl and ensembl-hive CVS modules:
+2.4. Export ensembl and ensembl-hive CVS modules:
 
 	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl
 	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-hive
 
-2.7. In the likely case you are going to use eHive in the context of Compara pipelines,
+2.5. In the likely case you are going to use eHive in the context of Compara pipelines,
 	you will also need to install ensembl-compara:
 
 	$ cvs -d :pserver:cvsuser@cvs.sanger.ac.uk:/cvsroot/ensembl checkout ensembl-compara
 
-2.8. Add new packages to the PERL5LIB variable:
+2.6. Add new packages to the PERL5LIB variable:
 
 # using bash syntax:
-	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live              # optional for eHive, but may be needed for EnsEMBL
 	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
 	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see 2.7.
+	$ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules   # only needed if you are planning to run Compara pipelines, see 2.5
 		#
 		# (for best results, append these lines to your ~/.bashrc configuration file)
 
 # using [t]csh syntax:
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/bioperl-live             # optional for eHive, but may be needed for EnsEMBL
 	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
 	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules # optional but recommended, see 2.7.
+	$ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/modules  # only needed if you are planning to run Compara pipelines, see 2.5
 		#
 		# (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)
 
@@ -97,6 +87,8 @@ It will be convenient to set a variable pointing at this directory for future us
     Adding this directory to your $PATH may make your life easier.
 
     * init_pipeline.pl is used to create hive databases, populate hive-specific and pipeline-specific tables and load data
+
+    * seed_pipeline.pl is used to add new jobs to the pipeline.
 
     * beekeeper.pl is used to run the pipeline; send 'Workers' to the 'Meadow' to run the jobs of the pipeline
 
