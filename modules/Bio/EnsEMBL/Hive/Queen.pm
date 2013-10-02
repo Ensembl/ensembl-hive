@@ -634,7 +634,7 @@ sub synchronize_AnalysisStats {
 
 
         # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
-    my $analysis              = $analysisStats->get_analysis();
+    my $analysis              = $analysisStats->analysis();
     my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
                               && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
     my $required_workers    = $scheduling_allowed

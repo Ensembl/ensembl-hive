@@ -116,11 +116,11 @@ sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
 sub schedule_workers {
     my ($queen, $submit_capacity, $default_meadow_type, $filter_rc_id, $filter_meadow_type, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
 
-    my @suitable_analyses   = $filter_analysis
+    my @suitable_analyses_stats   = $filter_analysis
                                 ? ( $filter_analysis->stats )
                                 : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type($filter_rc_id, $filter_meadow_type) };
 
-    unless(@suitable_analyses) {
+    unless(@suitable_analyses_stats) {
         return $analysis_id2rc_name ? ({}, 0, "Scheduler could not find any suitable analyses to start with\n") : undef;    # FIXME: returns data in different format in "suggest analysis" mode
     }
 
@@ -132,10 +132,10 @@ sub schedule_workers {
     my $submit_capacity_limiter                     = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
     my $queen_capacity_limiter                      = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->get_hive_current_load() );
 
-    foreach my $analysis_stats (@suitable_analyses) {
+    foreach my $analysis_stats (@suitable_analyses_stats) {
         last if( $submit_capacity_limiter->reached );
 
-        my $analysis            = $analysis_stats->get_analysis;    # FIXME: if it proves too expensive we may need to consider caching
+        my $analysis            = $analysis_stats->analysis();    # FIXME: if it proves too expensive we may need to consider caching
         my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
         next if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached );

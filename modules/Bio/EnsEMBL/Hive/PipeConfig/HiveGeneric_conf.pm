@@ -576,10 +576,9 @@ sub run {
                 'analysis_capacity'     => $analysis_capacity,
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
-            $analysis_adaptor->store($analysis);
 
             my $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
-                'analysis_id'           => $analysis->dbID,
+                'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
                 'status'                => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
@@ -595,6 +594,8 @@ sub run {
                 'output_capacity'       => 4,
                 'sync_lock'             => 0,
             );
+
+            $analysis_adaptor->store($analysis);
             $analysis_stats_adaptor->store($stats);
         }
 
@@ -629,8 +630,9 @@ sub run {
                 # create control rules:
             foreach my $condition_url (@$wait_for) {
                 unless ($condition_url =~ m{^\w*://}) {
-                    my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_url);
-                    die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n" unless defined $condition_analysis;
+                        # TODO: this should become a call to Pipeline_object:
+                    my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_url)
+                        or die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
                 }
                 my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
                         'condition_analysis_url'    => $condition_url,
@@ -680,8 +682,9 @@ sub run {
                 while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
                     unless ($heir_url =~ m{^\w*://}) {
-                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_url);
-                        die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n" unless defined $heir_analysis;
+                            # TODO: this should become a call to Pipeline_object:
+                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_url)
+                            or die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                     }
                     
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis

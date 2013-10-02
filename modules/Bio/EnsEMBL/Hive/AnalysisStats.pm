@@ -49,12 +49,13 @@ sub min_batch_time {
     return 2*60*1000;
 }
 
-## pre-settable storable object's getters/setters:
 
-sub analysis_id {   # an alias
-    my $self = shift;
-    return $self->dbID(@_);
-}
+=head1 AUTOLOADED
+
+    analysis_id / analysis
+
+=cut
+
 
 sub batch_size {
     my $self = shift;
@@ -220,16 +221,6 @@ sub update_status {
     $self->status($status);
 }
 
-sub get_analysis {
-    my $self = shift;
-    unless($self->{'_analysis'}) {
-        unless($self->analysis_id) {
-            throw("self->analysis_id undefined, please investigate");
-        }
-        $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id);
-    }
-    return $self->{'_analysis'};
-}
 
 sub get_or_estimate_batch_size {
     my $self = shift;
@@ -281,7 +272,7 @@ sub job_count_breakout {
 sub toString {
     my $self = shift @_;
 
-    my $analysis = $self->get_analysis;
+    my $analysis = $self->analysis;
 
     my $output .= sprintf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
@@ -358,7 +349,7 @@ sub determine_status {
             $self->status('EMPTY');
 
         } elsif( $self->total_job_count == $self->done_job_count + $self->failed_job_count ) {   # all jobs of the analysis have been finished
-            my $analysis = $self->get_analysis;
+            my $analysis = $self->analysis;
             my $absolute_tolerance = $analysis->failed_job_tolerance * $self->total_job_count / 100.0;
             if ($self->failed_job_count > $absolute_tolerance) {
                 $self->status('FAILED');
