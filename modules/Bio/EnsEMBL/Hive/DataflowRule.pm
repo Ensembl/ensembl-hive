@@ -104,8 +104,9 @@ sub new {
 sub branch_code {
     my $self = shift @_;
 
-    if(@_) { # setter mode
-        $self->{'_branch_code'} = shift @_;
+    if(@_) {
+        my $branch_name_or_code = shift @_;
+        $self->{'_branch_code'} = $branch_name_or_code && Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code( $branch_name_or_code );
     }
     return $self->{'_branch_code'};
 }
@@ -136,7 +137,7 @@ sub funnel_dataflow_rule_id {
 sub input_id_template {
     my $self = shift @_;
 
-    if(@_) { # setter mode
+    if(@_) {
         my $input_id_template = shift @_;
         $self->{'_input_id_template'} = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
     }

@@ -691,7 +691,7 @@ sub run {
                         my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
                             -from_analysis              => $analysis,
                             -to_analysis_url            => $heir_url,
-                            -branch_code                => $dataflow_rule_adaptor->branch_name_2_code( $branch_name_or_code ),
+                            -branch_code                => $branch_name_or_code,
                             -input_id_template          => $input_id_template,
                             -funnel_dataflow_rule_id    => $funnel_dataflow_rule_id,
                         );
