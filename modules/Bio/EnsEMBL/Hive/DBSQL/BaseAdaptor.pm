@@ -407,13 +407,13 @@ sub AUTOLOAD {
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        my $filter_components = $filter_string && [ split('_and_', $filter_string) ];
+        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
         foreach my $column_name ( @$filter_components ) {
             unless($column_set->{$column_name}) {
                 die "unknown column '$column_name'";
             }
         }
-        my $key_components = $key_string && [ split('_and_', $key_string) ];
+        my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
         foreach my $column_name ( @$key_components ) {
             unless($column_set->{$column_name}) {
                 die "unknown column '$column_name'";
@@ -434,19 +434,29 @@ sub AUTOLOAD {
             );
         };
         goto &$AUTOLOAD;    # restart the new method
+
     } elsif($AUTOLOAD =~ /::count_all_by_(\w+)$/) {
-        my $filter_name = $1;
+        my $filter_string = $1;
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        if($column_set->{$filter_name}) {
-#            print "Setting up '$AUTOLOAD' method\n";
-            *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->count_all("$filter_name='$filter_value'"); };
-            goto &$AUTOLOAD;    # restart the new method
-        } else {
-            die "unknown column '$filter_name'";
+        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
+        foreach my $column_name ( @$filter_components ) {
+            unless($column_set->{$column_name}) {
+                die "unknown column '$column_name'";
+            }
         }
+
+#        print "Setting up '$AUTOLOAD' method\n";
+        *$AUTOLOAD = sub {
+            my $self = shift @_;
+            return $self->count_all(
+                join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+            );
+        };
+        goto &$AUTOLOAD;    # restart the new method
+
     } elsif($AUTOLOAD =~ /::remove_all_by_(\w+)$/) {
         my $filter_name = $1;
 
@@ -461,7 +471,7 @@ sub AUTOLOAD {
             die "unknown column '$filter_name'";
         }
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
-        my @columns_to_update = split('_and_', $1);
+        my @columns_to_update = split(/_AND_/i, $1);
 #        print "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub { my ($self, $object) = @_; return $self->update($object, @columns_to_update); };
         goto &$AUTOLOAD;    # restart the new method
