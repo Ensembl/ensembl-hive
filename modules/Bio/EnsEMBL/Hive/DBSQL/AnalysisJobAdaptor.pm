@@ -48,6 +48,7 @@ use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
@@ -553,8 +554,10 @@ sub release_and_age_job {
 sub gc_dataflow {
     my ($self, $analysis, $job_id, $branch_name) = @_;
 
-    unless(@{ $self->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($analysis->dbID, $branch_name) }) {
-        return 0;   # no corresponding gc_dataflow rule has been defined
+    my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name);
+
+    unless( $self->db->get_DataflowRuleAdaptor->count_all_by_from_analysis_id_AND_branch_code($analysis->dbID, $branch_code) ) {
+        return 0;   # just return if no corresponding gc_dataflow rule has been defined
     }
 
     my $job = $self->fetch_by_dbID($job_id);

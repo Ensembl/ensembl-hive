@@ -164,11 +164,13 @@ sub dataflow_rules {    # if ever set will prevent the Job from fetching rules f
 
     my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
 
-    $self->{'_dataflow_rules'}{$branch_code} = shift if(@_);
+    if(@_) {
+        $self->{'_dataflow_rules'}{$branch_code} = shift @_;
+    }
 
-    return $self->{'_dataflow_rules'}
-        ? ( $self->{'_dataflow_rules'}{$branch_code} || [] )
-        : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($self->analysis_id, $branch_code);
+    $self->{'_dataflow_rules'} ||= $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_HASHED_FROM_branch_code( $self->analysis_id );
+
+    return $self->{'_dataflow_rules'}{$branch_code} || [];
 }
 
 sub stdout_file {

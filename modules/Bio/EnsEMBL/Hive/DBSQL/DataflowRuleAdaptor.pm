@@ -84,31 +84,5 @@ sub branch_name_2_code {
     return defined($branch_code) ? $branch_code : die "Could not map the branch_name '$branch_name_or_code' to the internal code";
 }
 
-
-=head2 fetch_all_by_from_analysis_id_and_branch_code
-
-  Args       : unsigned int $analysis_id, unsigned int $branch_code
-  Example    : my @rules = @{$ruleAdaptor->fetch_all_by_from_analysis_id_and_branch_code($analysis_id, $branch_code)};
-  Description: searches database for rules with given from_analysis_id and branch_code
-               and returns all such rules in a list (by reference)
-  Returntype : reference to list of Bio::EnsEMBL::Hive::DataflowRule objects
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Hive::AnalysisJob::dataflow_output_id
-
-=cut
-
-sub fetch_all_by_from_analysis_id_and_branch_code {
-    my ($self, $analysis_id, $branch_name_or_code) = @_;
-
-    return [] unless($analysis_id);
-
-    my $branch_code = $self->branch_name_2_code($branch_name_or_code);
-
-    my $constraint = "from_analysis_id=${analysis_id} AND branch_code=${branch_code}";
-
-    return $self->fetch_all($constraint);
-}
-
-
 1;
 
