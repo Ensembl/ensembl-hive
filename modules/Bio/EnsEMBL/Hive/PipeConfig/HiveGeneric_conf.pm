@@ -516,6 +516,9 @@ sub run {
 
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
+    my @analysis_stats_collection = (); # a list of AnalysisStats objects, initially un-stored
+    my %job_collection = ();            # a hash-of-lists of Job objects (hashed by logic_name), initially un-stored
+
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
@@ -595,19 +598,27 @@ sub run {
                 'sync_lock'             => 0,
             );
 
-            $analysis_adaptor->store($analysis);
-            $analysis_stats_adaptor->store($stats);
+            push @analysis_stats_collection, $stats;
         }
 
             # now create the corresponding jobs (if there are any):
         if($input_ids) {
-            my @jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
+            push @{ $job_collection{$logic_name} }, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                 'prev_job'      => undef,           # these jobs are created by the initialization script, not by another job
                 'analysis'      => $analysis,
                 'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;
+        }
+    }
 
-            $job_adaptor->store_jobs_and_adjust_counters( \@jobs );
+    foreach my $stats (@analysis_stats_collection) {
+        my $analysis = $stats->analysis;
+
+        $analysis_adaptor->store( $analysis );
+        $analysis_stats_adaptor->store( $stats );
+
+        if(my $our_jobs = $job_collection{ $analysis->logic_name }) {
+            $job_adaptor->store_jobs_and_adjust_counters( $our_jobs );
         }
     }
 
@@ -622,7 +633,10 @@ sub run {
             my ($logic_name, $wait_for, $flow_into)
                  = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-            my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
+#            my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name); # TODO: this should become internal "find" of the Pipeline_object:
+            my ($analysis) = grep { $_->logic_name eq $logic_name } map { $_->analysis } @analysis_stats_collection;
+
+            my @c_rules = ();
 
             $wait_for ||= [];
             $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -638,10 +652,11 @@ sub run {
                         'condition_analysis_url'    => $condition_url,
                         'ctrled_analysis'           => $analysis,
                 );
-                $ctrl_rule_adaptor->store( $c_rule, 1 );
-
-                warn $c_rule->toString."\n";
+#                $ctrl_rule_adaptor->store( $c_rule, 1 );
+                warn "[new] ".$c_rule->toString."\n";
+                push @c_rules, $c_rule;
             }
+            $analysis->control_rules( \@c_rules );
 
             $flow_into ||= {};
             $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
@@ -699,7 +714,6 @@ sub run {
                             'input_id_template'         => $input_id_template,
                         );
                         $dataflow_rule_adaptor->store( $df_rule, 1 );
-
                         warn $df_rule->toString."\n";
 
                         if($group_role eq 'funnel') {
@@ -713,6 +727,16 @@ sub run {
                 } # /for all heirs
             } # /for all branch_tags
         } # /for all pipeline_analyses
+
+        foreach my $stats (@analysis_stats_collection) {
+            my $analysis = $stats->analysis;
+
+            foreach my $c_rule ( @{ $analysis->control_rules() } ) {
+                $ctrl_rule_adaptor->store( $c_rule, 1 );
+                warn "[stored] ".$c_rule->toString."\n";
+            }
+        }
+
     } # /unless($job_topup)
 
     print "\n\n# --------------------[Useful commands]--------------------------\n";

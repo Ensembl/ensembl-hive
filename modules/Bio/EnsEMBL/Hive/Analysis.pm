@@ -196,8 +196,17 @@ sub stats {
     # Not cached internally since we want it to always be in sync with the database.
     # Otherwise the user application would need to be aware of the sync state and send explicit 'sync' calls.
 
-    my $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($self->dbID);
+    my $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
     return $stats;
+}
+
+
+sub control_rules {
+    my $self = shift @_;
+
+    $self->{'_control_rules'} = shift if(@_);
+
+    return $self->{'_control_rules'} || $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
 }
 
 
