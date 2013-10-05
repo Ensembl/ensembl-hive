@@ -148,6 +148,9 @@ sub create_new_worker {
         or die "Could not insert a new worker";
     $sth->finish;
 
+    my $worker = $self->fetch_by_dbID($worker_id)
+        or die "Could not fetch worker with dbID=$worker_id";
+
     if($hive_log_dir or $worker_log_dir) {
         my $dir_revhash = dir_revhash($worker_id);
         $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$worker_id;
@@ -157,13 +160,9 @@ sub create_new_worker {
             1;
         } or die "Could not create '$worker_log_dir' directory : $@";
 
-        my $sth_add_log = $self->prepare( "UPDATE worker SET log_dir=? WHERE worker_id=?" );
-        $sth_add_log->execute($worker_log_dir, $worker_id);
-        $sth_add_log->finish;
+        $worker->log_dir( $worker_log_dir );
+        $self->update_log_dir( $worker );   # autoloaded
     }
-
-    my $worker = $self->fetch_by_dbID($worker_id)
-        or die "Could not fetch worker with dbID=$worker_id";
 
     $worker->init;
 
@@ -288,9 +287,7 @@ sub specialize_new_worker {
 
     $worker->analysis_id( $analysis_id );
 
-    my $sth_update_analysis_id = $self->prepare( "UPDATE worker SET analysis_id=? WHERE worker_id=?" );
-    $sth_update_analysis_id->execute($worker->analysis_id, $worker->dbID);
-    $sth_update_analysis_id->finish;
+    $self->update_analysis_id( $worker );   # autoloaded
 
     if($special_batch) {
         $worker->special_batch( $special_batch );
