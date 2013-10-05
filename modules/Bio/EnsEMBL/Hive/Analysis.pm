@@ -201,12 +201,31 @@ sub stats {
 }
 
 
-sub control_rules {
+sub jobs_collection {
     my $self = shift @_;
 
-    $self->{'_control_rules'} = shift if(@_);
+    $self->{'_jobs_collection'} = shift if(@_);
 
-    return $self->{'_control_rules'} || $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
+    return $self->{'_jobs_collection'} ||= [];
+}
+
+
+sub control_rules_collection {
+    my $self = shift @_;
+
+    $self->{'_control_rules_collection'} = shift if(@_);
+
+    return $self->{'_control_rules_collection'} ||= [];
+#    $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
+}
+
+
+sub dataflow_rules_collection {
+    my $self = shift @_;
+
+    $self->{'_dataflow_rules_collection'} = shift if(@_);
+
+    return $self->{'_dataflow_rules_collection'} ||= [];
 }
 
 
