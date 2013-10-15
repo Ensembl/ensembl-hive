@@ -75,14 +75,13 @@ sub _validate_tests {
     foreach my $test (@{$self->param('tests')}) {
         die "The SQL query must be provided" unless $test->{query};
         die "The description must be provided" unless $test->{description};
-        $test->{query} = $self->param_substitute($test->{query});
+        $test->{subst_query} = $self->param_substitute($test->{query});
         my $expected_size = $test->{expected_size} || '';
         unless ($expected_size =~ /^\s*(=|==|>|>=|<|<=|<>|!=|)\s*(\d*)\s*$/) {
             die "Cannot interpret the 'expected_size' parameter: '$expected_size'";
         }
         $test->{logical_test} = $1 || '=';
         $test->{reference_size} = $2 || '0';
-        delete $test->{expected_size};
     }
 }
 
@@ -100,7 +99,7 @@ sub run {
     foreach my $test (@{$self->param('tests')}) {
         push @failures, $test unless $self->_run_test($test);
     }
-    die "The following tests have failed:\n".join('', map {sprintf(" - %s\n   > %s\n", $_->{description}, $_->{query})} @failures) if @failures;
+    die "The following tests have failed:\n".join('', map {sprintf(" - %s\n   > %s\n", $_->{description}, $_->{subst_query})} @failures) if @failures;
 }
 
 
@@ -116,7 +115,7 @@ sub _run_test {
     my $test = shift @_;
 
     my $description = $test->{description};
-    my $query = $test->{query};
+    my $query = $test->{subst_query};
     my $reference_size = $test->{reference_size};
     my $logical_test = $test->{logical_test};
 
