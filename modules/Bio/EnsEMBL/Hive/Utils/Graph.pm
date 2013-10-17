@@ -123,9 +123,10 @@ sub dba {
 
 
 sub _analysis_node_name {
-    my $analysis_id = shift @_;
+    my $analysis = shift @_;
 
-    return 'analysis_' . $analysis_id;
+#    return 'analysis_' . $analysis->dbID;
+    return 'analysis_' . $analysis->logic_name;
 }
 
 sub _table_node_name {
@@ -164,21 +165,23 @@ sub build {
 
     foreach my $rule ( @$all_dataflow_rules ) {
         my $target_object = $rule->to_analysis;
-        if(my $to_id = $target_object->can('dbID') && $target_object->dbID()) {
-            my $to_node_name = _analysis_node_name( $to_id );
-            $inflow_count{$to_node_name}++;
-            $dfr_flows_into_node{$rule->dbID()} = $to_node_name;
+        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+            my $to_node_name = _analysis_node_name( $target_object );
+            $inflow_count{ $to_node_name }++;
+            $dfr_flows_into_node{ $rule->dbID } = $to_node_name;
         }
-        push @{$outflow_rules{ _analysis_node_name($rule->from_analysis_id()) }}, $rule;
+        push @{$outflow_rules{ _analysis_node_name( $rule->from_analysis ) }}, $rule;
     }
 
     my %subgraph_allocation = ();
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis_node_name ( map { _analysis_node_name( $_->dbID ) } @$all_analyses ) {
-        unless($inflow_count{$source_analysis_node_name}) {    # if there is no dataflow into this analysis
-            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into_node, $source_analysis_node_name, \%subgraph_allocation ); # run the recursion in each component that has a non-cyclic start
+    foreach my $source_analysis ( @$all_analyses ) {
+        my $source_analysis_node_name = _analysis_node_name( $source_analysis );
+        unless( $inflow_count{$source_analysis_node_name} ) {    # if there is no dataflow into this analysis
+                # run the recursion in each component that has a non-cyclic start:
+            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into_node, $source_analysis_node_name, \%subgraph_allocation );
         }
     }
 
@@ -194,7 +197,7 @@ sub build {
         # The invisible edges will be linked to the destination analysis instead of the midpoint
         my $id_to_rule = {map { $_->dbID => $_ } @$all_dataflow_rules};
         my @all_fdr_id = grep {$_} (map {$_->funnel_dataflow_rule_id} @$all_dataflow_rules);
-        my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis->dbID ) } @all_fdr_id};
+        my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis ) } @all_fdr_id};
 
         while( my($from, $to) = each %subgraph_allocation) {
             if($to && $from=~/^analysis/) {
@@ -226,10 +229,10 @@ sub _allocate_to_subgraph {
         my $target_node_name;
 
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $target_node_name = _analysis_node_name( $rule->to_analysis->dbID() );
+            $target_node_name = _analysis_node_name( $rule->to_analysis );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = _table_node_name($target_object->table_name()) . '_' .
-                ($self->config_get('DuplicateTables') ?  $rule->from_analysis_id() : ($source_analysis_allocation||''));
+                ($self->config_get('DuplicateTables') ?  $rule->from_analysis->logic_name : ($source_analysis_allocation||''));
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
             next;
         } else {
@@ -244,7 +247,7 @@ sub _allocate_to_subgraph {
 #                $dfr_flows_into_node->{$funnel_dataflow_rule_id};   # if we do start a new semaphore, report to the new funnel (based on common funnel's analysis name)
                 _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
-            my $fan_midpoint_name = _midpoint_name( $rule->dbID() );
+            my $fan_midpoint_name = _midpoint_name( $rule->dbID );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
 
             my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule_id );
@@ -264,7 +267,7 @@ sub _allocate_to_subgraph {
             }
 
             if($funnel_dataflow_rule_id) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                my $fan_midpoint_name = _midpoint_name( $rule->dbID() );
+                my $fan_midpoint_name = _midpoint_name( $rule->dbID );
                 $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
             }
 
@@ -324,7 +327,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.$analysis->dbID().')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.$analysis->dbID.')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -361,7 +364,7 @@ sub _add_analysis_node {
     }
     $analysis_label    .= '</table>>';
   
-    $self->graph->add_node( _analysis_node_name( $analysis->dbID() ), 
+    $self->graph->add_node( _analysis_node_name( $analysis ),
         label       => $analysis_label,
         shape       => 'record',
         fontname    => $node_fontname,
@@ -377,10 +380,12 @@ sub _control_rules {
   my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
   my $graph = $self->graph();
 
-  #The control rules are always from and to an analysis so no need to search for odd cases here
+      #The control rules are always from and to an analysis so no need to search for odd cases here
   foreach my $rule ( @$all_ctrl_rules ) {
-    my ($from, $to) = ( _analysis_node_name( $rule->condition_analysis()->dbID() ), _analysis_node_name( $rule->ctrled_analysis()->dbID() ) );
-    $graph->add_edge( $from => $to, 
+    my $from_node_name = _analysis_node_name( $rule->condition_analysis );
+    my $to_node_name   = _analysis_node_name( $rule->ctrled_analysis );
+
+    $graph->add_edge( $from_node_name => $to_node_name,
       color => $control_colour,
       arrowhead => 'tee',
     );
@@ -398,45 +403,39 @@ sub _dataflow_rules {
     my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
 
     my %needs_a_midpoint = ();
-    my %aid2aid_nonsem = ();    # simply a directed graph between numerical analysis_ids, except for semaphored rules
     foreach my $rule ( @$all_dataflow_rules ) {
-        if(my $to_id = $rule->to_analysis->can('dbID') && $rule->to_analysis->dbID()) {
-            unless( $rule->funnel_dataflow_rule_id ) {
-                $aid2aid_nonsem{$rule->from_analysis_id()}{$to_id}++;
-            }
-        }
-        if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {
-            $needs_a_midpoint{$rule->dbID()}++;
-            $needs_a_midpoint{$funnel_dataflow_rule_id}++;
+        if( my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id ) {
+            $needs_a_midpoint{ $rule->dbID }++;
+            $needs_a_midpoint{ $funnel_dataflow_rule_id }++;
         }
     }
 
     foreach my $rule ( @$all_dataflow_rules ) {
     
-        my ($rule_id, $from_analysis_id, $branch_code, $funnel_dataflow_rule_id, $to) =
-            ($rule->dbID(), $rule->from_analysis_id(), $rule->branch_code(), $rule->funnel_dataflow_rule_id(), $rule->to_analysis());
-        my ($from_node, $to_id, $to_node) = ( _analysis_node_name($from_analysis_id)      );
+        my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule_id, $target_object) =
+            ($rule->dbID, $rule->from_analysis, $rule->branch_code, $rule->funnel_dataflow_rule_id, $rule->to_analysis);
+        my $from_node_name = _analysis_node_name( $from_analysis );
+        my $to_node_name;
     
             # Different treatment for analyses and tables:
-        if(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $to_id   = $to->dbID();
-            $to_node = _analysis_node_name($to_id);
-        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::NakedTable')) {
+        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+            $to_node_name = _analysis_node_name( $target_object );
+        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
-            $to_node = _table_node_name($to->table_name) . '_' .
-                ( $self->config_get('DuplicateTables') ? $rule->from_analysis_id() : ($subgraph_allocation->{$from_node}||''));
+            $to_node_name = _table_node_name($target_object->table_name) . '_' .
+                ( $self->config_get('DuplicateTables') ? $from_analysis->logic_name : ($subgraph_allocation->{$from_node_name}||''));
 
-            $self->_add_table_node($to_node, $to->table_name);
-        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
-            $to_node = $subgraph_allocation->{$from_node};
+            $self->_add_table_node($to_node_name, $target_object->table_name);
+        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
+            $to_node_name = $subgraph_allocation->{$from_node_name};
 
         } else {
-            warn('Do not know how to handle the type '.ref($to));
+            warn('Do not know how to handle the type '.ref($target_object));
             next;
         }
 
         if($needs_a_midpoint{$rule_id}) {
-            my $midpoint_name = _midpoint_name($rule_id);
+            my $midpoint_name = _midpoint_name( $rule_id );
 
             $graph->add_node( $midpoint_name,   # midpoint itself
                 color       => $dataflow_colour,
@@ -446,18 +445,18 @@ sub _dataflow_rules {
                 width       => 0.01,
                 height      => 0.01,
             );
-            $graph->add_edge( $from_node => $midpoint_name, # first half of the two-part arrow
+            $graph->add_edge( $from_node_name => $midpoint_name, # first half of the two-part arrow
                 color       => $dataflow_colour,
                 arrowhead   => 'none',
                 fontname    => $df_edge_fontname,
                 fontcolor   => $dataflow_colour,
                 label       => '#'.$branch_code,
             );
-            $graph->add_edge( $midpoint_name => $to_node,   # second half of the two-part arrow
+            $graph->add_edge( $midpoint_name => $to_node_name,   # second half of the two-part arrow
                 color     => $dataflow_colour,
             );
             if($funnel_dataflow_rule_id) {
-                $graph->add_edge( $midpoint_name => _midpoint_name($funnel_dataflow_rule_id),   # semaphore inter-rule link
+                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule_id ),   # semaphore inter-rule link
                     color     => $semablock_colour,
                     style     => 'dashed',
                     arrowhead => 'tee',
@@ -465,12 +464,12 @@ sub _dataflow_rules {
                     arrowtail => 'crow',
                 );
             }
-        } elsif(UNIVERSAL::isa($to, 'Bio::EnsEMBL::Hive::Accumulator')) {
+        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
                 # one-part dashed arrow:
-            $graph->add_edge( $from_node => $to_node,
+            $graph->add_edge( $from_node_name => $to_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => $to->struct_name().'#'.$branch_code,
+                label       => $target_object->struct_name().'#'.$branch_code,
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',
@@ -478,7 +477,7 @@ sub _dataflow_rules {
             );
         } else {
                 # one-part solid arrow:
-            $graph->add_edge( $from_node => $to_node, 
+            $graph->add_edge( $from_node_name => $to_node_name,
                 color       => $dataflow_colour,
                 fontname    => $df_edge_fontname,
                 fontcolor   => $dataflow_colour,
