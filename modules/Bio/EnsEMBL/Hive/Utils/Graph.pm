@@ -49,6 +49,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
+use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
@@ -155,48 +156,54 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $all_analyses          = $self->dba()->get_AnalysisAdaptor()->fetch_all();
-    my $all_ctrl_rules        = $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all();
-    my $all_dataflow_rules    = $self->dba()->get_DataflowRuleAdaptor()->fetch_all();
+    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_AnalysisAdaptor()->fetch_all );
+    my $all_control_rules_coll  = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all );
+    my $all_dataflow_rules_coll = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_DataflowRuleAdaptor()->fetch_all );
 
-    my %inflow_count = ();    # used to detect sources (nodes with zero inflow)
-    my %outflow_rules = ();   # maps from anlaysis_node_name to a list of all dataflow rules that flow out of it
-    my %dfr_flows_into_node = ();   # maps from dfr_id to target analysis_node_name
+    foreach my $c_rule ( $all_control_rules_coll->list ) {
+        my $ctrled_analysis = $all_analyses_coll->find_one_by('dbID', $c_rule->ctrled_analysis_id );
+        $c_rule->ctrled_analysis( $ctrled_analysis );
+        push @{$ctrled_analysis->control_rules_collection}, $c_rule;
+    }
 
-    foreach my $rule ( @$all_dataflow_rules ) {
-        my $target_object = $rule->to_analysis;
-        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            my $to_node_name = _analysis_node_name( $target_object );
-            $inflow_count{ $to_node_name }++;
-            $dfr_flows_into_node{ $rule->dbID } = $to_node_name;
-        }
-        push @{$outflow_rules{ _analysis_node_name( $rule->from_analysis ) }}, $rule;
+    foreach my $df_rule ( $all_dataflow_rules_coll->list ) {
+        my $from_analysis = $all_analyses_coll->find_one_by('dbID', $df_rule->from_analysis_id );
+        $df_rule->from_analysis( $from_analysis );
+        push @{$from_analysis->dataflow_rules_collection}, $df_rule;
+
+        if(my $target_object = $all_analyses_coll->find_one_by('logic_name', $df_rule->to_analysis_url )) {
+            $df_rule->to_analysis( $target_object );
+            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+                $target_object->{'_inflow_count'}++;
+            }
+        } # otherwise it may be a link out (unsupported at the moment)
     }
 
     my %subgraph_allocation = ();
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( @$all_analyses ) {
-        my $source_analysis_node_name = _analysis_node_name( $source_analysis );
-        unless( $inflow_count{$source_analysis_node_name} ) {    # if there is no dataflow into this analysis
+    foreach my $source_analysis ( $all_analyses_coll->list ) {
+        unless( $source_analysis->{'_inflow_count'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
-            $self->_allocate_to_subgraph(\%outflow_rules, \%dfr_flows_into_node, $source_analysis_node_name, \%subgraph_allocation );
+            $self->_allocate_to_subgraph( $source_analysis, \%subgraph_allocation );
         }
     }
 
     $self->_add_hive_details();
-    foreach my $a (@$all_analyses) {
-        $self->_add_analysis_node($a);
+    foreach my $analysis ( $all_analyses_coll->list ) {
+        $self->_add_analysis_node($analysis);
     }
-    $self->_control_rules( $all_ctrl_rules );
-    $self->_dataflow_rules( $all_dataflow_rules, \%subgraph_allocation );
+    foreach my $analysis ( $all_analyses_coll->list ) {
+        $self->_control_rules( $analysis->control_rules_collection );
+        $self->_dataflow_rules( $analysis->dataflow_rules_collection, \%subgraph_allocation );
+    }
 
     if($self->config_get('DisplayStretched') ) {
 
         # The invisible edges will be linked to the destination analysis instead of the midpoint
-        my $id_to_rule = {map { $_->dbID => $_ } @$all_dataflow_rules};
-        my @all_fdr_id = grep {$_} (map {$_->funnel_dataflow_rule_id} @$all_dataflow_rules);
+        my $id_to_rule = $all_dataflow_rules_coll->hashed_by_dbID;
+        my @all_fdr_id = grep {$_} (map {$_->funnel_dataflow_rule_id} $all_dataflow_rules_coll->list);
         my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis ) } @all_fdr_id};
 
         while( my($from, $to) = each %subgraph_allocation) {
@@ -220,19 +227,19 @@ sub build {
 
 
 sub _allocate_to_subgraph {
-    my ($self, $outflow_rules, $dfr_flows_into_node, $source_analysis_node_name, $subgraph_allocation ) = @_;
+    my ($self, $source_analysis, $subgraph_allocation ) = @_;
 
-    my $source_analysis_allocation = $subgraph_allocation->{ $source_analysis_node_name };  # for some analyses it will be undef
+    my $source_analysis_allocation  = $subgraph_allocation->{ _analysis_node_name( $source_analysis ) };  # for some analyses it will be undef
 
-    foreach my $rule ( @{ $outflow_rules->{$source_analysis_node_name} } ) {
-        my $target_object                 = $rule->to_analysis();
+    foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {    # this will only work if the analyses objects are ALL cached before loading DFRs
+        my $target_object                 = $df_rule->to_analysis();
         my $target_node_name;
 
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $target_node_name = _analysis_node_name( $rule->to_analysis );
+            $target_node_name = _analysis_node_name( $target_object );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = _table_node_name($target_object->table_name()) . '_' .
-                ($self->config_get('DuplicateTables') ?  $rule->from_analysis->logic_name : ($source_analysis_allocation||''));
+                ($self->config_get('DuplicateTables') ?  $df_rule->from_analysis->logic_name : ($source_analysis_allocation||''));
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
             next;
         } else {
@@ -241,13 +248,12 @@ sub _allocate_to_subgraph {
         }
 
         my $proposed_allocation;    # will depend on whether we start a new semaphore
-        my $funnel_dataflow_rule_id  = $rule->funnel_dataflow_rule_id();
+        my $funnel_dataflow_rule_id  = $df_rule->funnel_dataflow_rule_id();
         if( $funnel_dataflow_rule_id ) {
             $proposed_allocation =
-#                $dfr_flows_into_node->{$funnel_dataflow_rule_id};   # if we do start a new semaphore, report to the new funnel (based on common funnel's analysis name)
                 _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
-            my $fan_midpoint_name = _midpoint_name( $rule->dbID );
+            my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
 
             my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule_id );
@@ -267,7 +273,7 @@ sub _allocate_to_subgraph {
             }
 
             if($funnel_dataflow_rule_id) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                my $fan_midpoint_name = _midpoint_name( $rule->dbID );
+                my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
                 $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
             }
 
@@ -275,7 +281,9 @@ sub _allocate_to_subgraph {
             # warn "allocating analysis '$target_node_name' to '$proposed_allocation'";
             $subgraph_allocation->{ $target_node_name } = $proposed_allocation;
 
-            $self->_allocate_to_subgraph( $outflow_rules, $dfr_flows_into_node, $target_node_name, $subgraph_allocation );
+            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+                $self->_allocate_to_subgraph( $target_object, $subgraph_allocation );
+            }
         }
     }
 }
@@ -375,15 +383,15 @@ sub _add_analysis_node {
 
 
 sub _control_rules {
-  my ($self, $all_ctrl_rules) = @_;
+  my ($self, $ctrl_rules) = @_;
   
   my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
   my $graph = $self->graph();
 
       #The control rules are always from and to an analysis so no need to search for odd cases here
-  foreach my $rule ( @$all_ctrl_rules ) {
-    my $from_node_name = _analysis_node_name( $rule->condition_analysis );
-    my $to_node_name   = _analysis_node_name( $rule->ctrled_analysis );
+  foreach my $c_rule ( @$ctrl_rules ) {
+    my $from_node_name = _analysis_node_name( $c_rule->condition_analysis );
+    my $to_node_name   = _analysis_node_name( $c_rule->ctrled_analysis );
 
     $graph->add_edge( $from_node_name => $to_node_name,
       color => $control_colour,
@@ -394,7 +402,7 @@ sub _control_rules {
 
 
 sub _dataflow_rules {
-    my ($self, $all_dataflow_rules, $subgraph_allocation) = @_;
+    my ($self, $dataflow_rules, $subgraph_allocation) = @_;
 
     my $graph = $self->graph();
     my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
@@ -403,17 +411,17 @@ sub _dataflow_rules {
     my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
 
     my %needs_a_midpoint = ();
-    foreach my $rule ( @$all_dataflow_rules ) {
-        if( my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id ) {
-            $needs_a_midpoint{ $rule->dbID }++;
+    foreach my $df_rule ( @$dataflow_rules ) {
+        if( my $funnel_dataflow_rule_id = $df_rule->funnel_dataflow_rule_id ) {
+            $needs_a_midpoint{ $df_rule->dbID }++;
             $needs_a_midpoint{ $funnel_dataflow_rule_id }++;
         }
     }
 
-    foreach my $rule ( @$all_dataflow_rules ) {
+    foreach my $df_rule ( @$dataflow_rules ) {
     
         my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule_id, $target_object) =
-            ($rule->dbID, $rule->from_analysis, $rule->branch_code, $rule->funnel_dataflow_rule_id, $rule->to_analysis);
+            ($df_rule->dbID, $df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule_id, $df_rule->to_analysis);
         my $from_node_name = _analysis_node_name( $from_analysis );
         my $to_node_name;
     
@@ -484,7 +492,7 @@ sub _dataflow_rules {
                 label       => '#'.$branch_code,
             );
         } # /if($needs_a_midpoint{$rule_id})
-    } # /foreach my $rule (@$all_dataflow_rules)
+    } # /foreach my $df_rule (@$dataflow_rules)
 
 }
 
