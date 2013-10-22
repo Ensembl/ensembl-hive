@@ -178,6 +178,11 @@ sub build {
                 $target_object->{'_inflow_count'}++;
             }
         } # otherwise it may be a link out (unsupported at the moment)
+
+        if( my $funnel_dataflow_rule_id  = $df_rule->funnel_dataflow_rule_id ) {
+            my $funnel_dataflow_rule = $all_dataflow_rules_coll->find_one_by('dbID', $funnel_dataflow_rule_id );
+            $df_rule->funnel_dataflow_rule( $funnel_dataflow_rule );
+        }
     }
 
     my %subgraph_allocation = ();   # maps node names to midpoint names of the funnel dataflow rule (or null if toplevel)
@@ -242,15 +247,15 @@ sub _allocate_to_subgraph {
         }
 
         my $proposed_allocation;    # will depend on whether we start a new semaphore
-        my $funnel_dataflow_rule_id  = $df_rule->funnel_dataflow_rule_id();
-        if( $funnel_dataflow_rule_id ) {
+        my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule();
+        if( $funnel_dataflow_rule ) {
             $proposed_allocation =
-                _midpoint_name( $funnel_dataflow_rule_id );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+                _midpoint_name( $funnel_dataflow_rule->dbID );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
             my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
 
-            my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule_id );
+            my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule->dbID );
             $subgraph_allocation->{ $funnel_midpoint_name } = $source_analysis_allocation;   # draw the funnel's midpoint outside of the box
         } else {
             $proposed_allocation = $source_analysis_allocation;   # if we don't start a new semaphore, inherit the allocation of the source
@@ -267,7 +272,7 @@ sub _allocate_to_subgraph {
                 # warn "analysis '$target_node_name' has already been allocated to '$known_allocation' however this branch would allocate it to '$proposed_allocation'";
             }
 
-            if($funnel_dataflow_rule_id) {  # correction for multiple entries into the same box (probably needs re-thinking)
+            if($funnel_dataflow_rule) {  # correction for multiple entries into the same box (probably needs re-thinking)
                 my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
                 $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
             }
@@ -407,16 +412,16 @@ sub _dataflow_rules {
 
     my %needs_a_midpoint = ();
     foreach my $df_rule ( @$dataflow_rules ) {
-        if( my $funnel_dataflow_rule_id = $df_rule->funnel_dataflow_rule_id ) {
+        if( my $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {
             $needs_a_midpoint{ $df_rule->dbID }++;
-            $needs_a_midpoint{ $funnel_dataflow_rule_id }++;
+            $needs_a_midpoint{ $funnel_dataflow_rule->dbID }++;
         }
     }
 
     foreach my $df_rule ( @$dataflow_rules ) {
     
-        my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule_id, $target_object) =
-            ($df_rule->dbID, $df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule_id, $df_rule->to_analysis);
+        my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule, $target_object) =
+            ($df_rule->dbID, $df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule, $df_rule->to_analysis);
         my $from_node_name = _analysis_node_name( $from_analysis );
         my $target_node_name;
     
@@ -457,8 +462,8 @@ sub _dataflow_rules {
             $graph->add_edge( $midpoint_name => $target_node_name,   # second half of the two-part arrow
                 color     => $dataflow_colour,
             );
-            if($funnel_dataflow_rule_id) {
-                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule_id ),   # semaphore inter-rule link
+            if($funnel_dataflow_rule) {
+                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule->dbID ),   # semaphore inter-rule link
                     color     => $semablock_colour,
                     style     => 'dashed',
                     arrowhead => 'tee',
