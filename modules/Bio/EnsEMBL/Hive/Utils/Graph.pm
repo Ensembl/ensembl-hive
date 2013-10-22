@@ -124,9 +124,8 @@ sub dba {
 
 
 sub _analysis_node_name {
-    my $analysis = shift @_;
+    my ($analysis) = @_;
 
-#    return 'analysis_' . $analysis->dbID;
     return 'analysis_' . $analysis->logic_name;
 }
 
@@ -139,9 +138,9 @@ sub _table_node_name {
 
 
 sub _midpoint_name {
-    my $rule_id = shift @_;
+    my ($df_rule) = @_;
 
-    return 'dfr_'.$rule_id.'_mp';
+    return 'dfr_'.$df_rule->dbID.'_mp';
 }
 
 
@@ -250,12 +249,12 @@ sub _allocate_to_subgraph {
         my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule();
         if( $funnel_dataflow_rule ) {
             $proposed_allocation =
-                _midpoint_name( $funnel_dataflow_rule->dbID );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+                _midpoint_name( $funnel_dataflow_rule );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
-            my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
+            my $fan_midpoint_name = _midpoint_name( $df_rule );
             $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
 
-            my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule->dbID );
+            my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule );
             $subgraph_allocation->{ $funnel_midpoint_name } = $source_analysis_allocation;   # draw the funnel's midpoint outside of the box
         } else {
             $proposed_allocation = $source_analysis_allocation;   # if we don't start a new semaphore, inherit the allocation of the source
@@ -273,7 +272,7 @@ sub _allocate_to_subgraph {
             }
 
             if($funnel_dataflow_rule) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                my $fan_midpoint_name = _midpoint_name( $df_rule->dbID );
+                my $fan_midpoint_name = _midpoint_name( $df_rule );
                 $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
             }
 
@@ -413,15 +412,15 @@ sub _dataflow_rules {
     my %needs_a_midpoint = ();
     foreach my $df_rule ( @$dataflow_rules ) {
         if( my $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {
-            $needs_a_midpoint{ $df_rule->dbID }++;
-            $needs_a_midpoint{ $funnel_dataflow_rule->dbID }++;
+            $df_rule->{'_needs_a_midpoint'}++;
+            $funnel_dataflow_rule->{'_needs_a_midpoint'}++;
         }
     }
 
     foreach my $df_rule ( @$dataflow_rules ) {
     
-        my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule, $target_object) =
-            ($df_rule->dbID, $df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule, $df_rule->to_analysis);
+        my ($from_analysis, $branch_code, $funnel_dataflow_rule, $target_object) =
+            ($df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule, $df_rule->to_analysis);
         my $from_node_name = _analysis_node_name( $from_analysis );
         my $target_node_name;
     
@@ -441,8 +440,8 @@ sub _dataflow_rules {
             next;
         }
 
-        if($needs_a_midpoint{$rule_id}) {
-            my $midpoint_name = _midpoint_name( $rule_id );
+        if( $df_rule->{'_needs_a_midpoint'} ) {
+            my $midpoint_name = _midpoint_name( $df_rule );
 
             $graph->add_node( $midpoint_name,   # midpoint itself
                 color       => $dataflow_colour,
@@ -463,7 +462,7 @@ sub _dataflow_rules {
                 color     => $dataflow_colour,
             );
             if($funnel_dataflow_rule) {
-                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule->dbID ),   # semaphore inter-rule link
+                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule ),   # semaphore inter-rule link
                     color     => $semablock_colour,
                     style     => 'dashed',
                     arrowhead => 'tee',
