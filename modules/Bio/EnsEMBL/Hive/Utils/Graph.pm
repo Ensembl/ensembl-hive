@@ -131,9 +131,10 @@ sub _analysis_node_name {
 }
 
 sub _table_node_name {
-    my $table_name = shift @_;
+    my ($self, $df_rule) = @_;
 
-    return 'table_' . $table_name;
+    return 'table_' . $df_rule->to_analysis->table_name .
+                ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
 }
 
 
@@ -179,7 +180,7 @@ sub build {
         } # otherwise it may be a link out (unsupported at the moment)
     }
 
-    my %subgraph_allocation = ();
+    my %subgraph_allocation = ();   # maps node names to midpoint names of the funnel dataflow rule (or null if toplevel)
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
@@ -200,12 +201,6 @@ sub build {
     }
 
     if($self->config_get('DisplayStretched') ) {
-
-        # The invisible edges will be linked to the destination analysis instead of the midpoint
-        my $id_to_rule = $all_dataflow_rules_coll->hashed_by_dbID;
-        my @all_fdr_id = grep {$_} (map {$_->funnel_dataflow_rule_id} $all_dataflow_rules_coll->list);
-        my $midpoint_to_analysis = {map { _midpoint_name( $_ ) => _analysis_node_name( $id_to_rule->{$_}->to_analysis ) } @all_fdr_id};
-
         while( my($from, $to) = each %subgraph_allocation) {
             if($to && $from=~/^analysis/) {
                 $self->graph->add_edge( $from => $to,
@@ -232,14 +227,13 @@ sub _allocate_to_subgraph {
     my $source_analysis_allocation  = $subgraph_allocation->{ _analysis_node_name( $source_analysis ) };  # for some analyses it will be undef
 
     foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {    # this will only work if the analyses objects are ALL cached before loading DFRs
-        my $target_object                 = $df_rule->to_analysis();
+        my $target_object       = $df_rule->to_analysis();
         my $target_node_name;
 
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
             $target_node_name = _analysis_node_name( $target_object );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
-            $target_node_name = _table_node_name($target_object->table_name()) . '_' .
-                ($self->config_get('DuplicateTables') ?  $df_rule->from_analysis->logic_name : ($source_analysis_allocation||''));
+            $target_node_name = $self->_table_node_name( $df_rule );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
             next;
         } else {
@@ -261,6 +255,7 @@ sub _allocate_to_subgraph {
         } else {
             $proposed_allocation = $source_analysis_allocation;   # if we don't start a new semaphore, inherit the allocation of the source
         }
+
             # we allocate on first-come basis at the moment:
         if( exists $subgraph_allocation->{ $target_node_name } ) {  # already allocated?
             my $known_allocation = $subgraph_allocation->{ $target_node_name } || '';
@@ -423,19 +418,18 @@ sub _dataflow_rules {
         my ($rule_id, $from_analysis, $branch_code, $funnel_dataflow_rule_id, $target_object) =
             ($df_rule->dbID, $df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule_id, $df_rule->to_analysis);
         my $from_node_name = _analysis_node_name( $from_analysis );
-        my $to_node_name;
+        my $target_node_name;
     
             # Different treatment for analyses and tables:
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $to_node_name = _analysis_node_name( $target_object );
+            $target_node_name = _analysis_node_name( $target_object );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
-            $to_node_name = _table_node_name($target_object->table_name) . '_' .
-                ( $self->config_get('DuplicateTables') ? $from_analysis->logic_name : ($subgraph_allocation->{$from_node_name}||''));
+            $target_node_name = $self->_table_node_name( $df_rule );
 
-            $self->_add_table_node($to_node_name, $target_object->table_name);
+            $self->_add_table_node($target_node_name, $target_object->table_name);
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-            $to_node_name = $subgraph_allocation->{$from_node_name};
+            $target_node_name = $subgraph_allocation->{$from_node_name};
 
         } else {
             warn('Do not know how to handle the type '.ref($target_object));
@@ -460,7 +454,7 @@ sub _dataflow_rules {
                 fontcolor   => $dataflow_colour,
                 label       => '#'.$branch_code,
             );
-            $graph->add_edge( $midpoint_name => $to_node_name,   # second half of the two-part arrow
+            $graph->add_edge( $midpoint_name => $target_node_name,   # second half of the two-part arrow
                 color     => $dataflow_colour,
             );
             if($funnel_dataflow_rule_id) {
@@ -474,7 +468,7 @@ sub _dataflow_rules {
             }
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
                 # one-part dashed arrow:
-            $graph->add_edge( $from_node_name => $to_node_name,
+            $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
                 label       => $target_object->struct_name().'#'.$branch_code,
@@ -485,7 +479,7 @@ sub _dataflow_rules {
             );
         } else {
                 # one-part solid arrow:
-            $graph->add_edge( $from_node_name => $to_node_name,
+            $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $dataflow_colour,
                 fontname    => $df_edge_fontname,
                 fontcolor   => $dataflow_colour,
@@ -498,7 +492,7 @@ sub _dataflow_rules {
 
 
 sub _add_table_node {
-    my ($self, $table_node, $table_name) = @_;
+    my ($self, $table_node_name, $table_name) = @_;
 
     my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
@@ -531,7 +525,7 @@ sub _add_table_node {
     }
     $table_label .= '</table>>';
 
-    $self->graph()->add_node( $table_node, 
+    $self->graph()->add_node( $table_node_name, 
         label => $table_label,
         shape => 'record',
         fontname => $node_fontname,
