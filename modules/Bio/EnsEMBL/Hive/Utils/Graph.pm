@@ -180,18 +180,17 @@ sub build {
 
         if( my $funnel_dataflow_rule_id  = $df_rule->funnel_dataflow_rule_id ) {
             my $funnel_dataflow_rule = $all_dataflow_rules_coll->find_one_by('dbID', $funnel_dataflow_rule_id );
+            $funnel_dataflow_rule->{'_is_a_funnel'}++;
             $df_rule->funnel_dataflow_rule( $funnel_dataflow_rule );
         }
     }
-
-    my %subgraph_allocation = ();   # maps node names to midpoint names of the funnel dataflow rule (or null if toplevel)
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( $all_analyses_coll->list ) {
         unless( $source_analysis->{'_inflow_count'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
-            $self->_allocate_to_subgraph( $source_analysis, \%subgraph_allocation );
+            $self->_propagate_allocation( $source_analysis );
         }
     }
 
@@ -201,12 +200,14 @@ sub build {
     }
     foreach my $analysis ( $all_analyses_coll->list ) {
         $self->_control_rules( $analysis->control_rules_collection );
-        $self->_dataflow_rules( $analysis->dataflow_rules_collection, \%subgraph_allocation );
+        $self->_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
-    if($self->config_get('DisplayStretched') ) {
-        while( my($from, $to) = each %subgraph_allocation) {
-            if($to && $from=~/^analysis/) {
+    if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
+        foreach my $analysis ( $all_analyses_coll->list ) {
+            if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
+                my $from = _analysis_node_name( $analysis );
+                my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
                 $self->graph->add_edge( $from => $to,
                     color     => 'black',
                     style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
@@ -216,7 +217,26 @@ sub build {
     }
 
     if($self->config_get('DisplaySemaphoreBoxes') ) {
-        $self->graph->subgraphs( \%subgraph_allocation );
+        my %cluster_2_nodes = ( # initialize with top clusters
+            '' => [ map { _midpoint_name( $_ ) } grep { $_->{'_is_a_funnel'} and ! $_->{'_funnel_dfr'} } $all_dataflow_rules_coll->list ]
+        );
+        foreach ($all_analyses_coll->list) {
+            if(my $funnel = $_->{'_funnel_dfr'}) {
+                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $_ );
+            }
+        }
+        foreach ( grep { UNIVERSAL::isa($_->to_analysis,'Bio::EnsEMBL::Hive::NakedTable') } $all_dataflow_rules_coll->list ) {
+            if(my $funnel = $_->to_analysis->{'_funnel_dfr'}) {
+                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $_ );
+            }
+        }
+        foreach ( $all_dataflow_rules_coll->list ) {
+            if(my $funnel = $_->{'_funnel_dfr'}) {
+                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _midpoint_name( $_ );
+            }
+        }
+
+        $self->graph->cluster_2_nodes( \%cluster_2_nodes );
         $self->graph->colour_scheme( $self->config_get('Box', 'ColourScheme') );
         $self->graph->colour_offset( $self->config_get('Box', 'ColourOffset') );
     }
@@ -225,10 +245,8 @@ sub build {
 }
 
 
-sub _allocate_to_subgraph {
-    my ($self, $source_analysis, $subgraph_allocation ) = @_;
-
-    my $source_analysis_allocation  = $subgraph_allocation->{ _analysis_node_name( $source_analysis ) };  # for some analyses it will be undef
+sub _propagate_allocation {
+    my ($self, $source_analysis ) = @_;
 
     foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {    # this will only work if the analyses objects are ALL cached before loading DFRs
         my $target_object       = $df_rule->to_analysis();
@@ -245,43 +263,40 @@ sub _allocate_to_subgraph {
             next;
         }
 
-        my $proposed_allocation;    # will depend on whether we start a new semaphore
+        my $proposed_funnel_dfr;    # will depend on whether we start a new semaphore
+
         my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule();
-        if( $funnel_dataflow_rule ) {
-            $proposed_allocation =
-                _midpoint_name( $funnel_dataflow_rule );       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+        if( $funnel_dataflow_rule ) {   # if there is a new semaphore, the dfrs involved (their midpoints) will also have to be allocated
+            $proposed_funnel_dfr = $funnel_dataflow_rule;       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
 
-            my $fan_midpoint_name = _midpoint_name( $df_rule );
-            $subgraph_allocation->{ $fan_midpoint_name } = $proposed_allocation;
+            $df_rule->{'_funnel_dfr'} = $proposed_funnel_dfr;
 
-            my $funnel_midpoint_name = _midpoint_name( $funnel_dataflow_rule );
-            $subgraph_allocation->{ $funnel_midpoint_name } = $source_analysis_allocation;   # draw the funnel's midpoint outside of the box
+            $funnel_dataflow_rule->{'_funnel_dfr'} = $source_analysis->{'_funnel_dfr'}; # draw the funnel's midpoint outside of the box
         } else {
-            $proposed_allocation = $source_analysis_allocation;   # if we don't start a new semaphore, inherit the allocation of the source
+            $proposed_funnel_dfr = $source_analysis->{'_funnel_dfr'} || ''; # if we don't start a new semaphore, inherit the allocation of the source
         }
 
             # we allocate on first-come basis at the moment:
-        if( exists $subgraph_allocation->{ $target_node_name } ) {  # already allocated?
-            my $known_allocation = $subgraph_allocation->{ $target_node_name } || '';
-            $proposed_allocation ||= '';
+        if( exists $target_object->{'_funnel_dfr'} ) {  # node is already allocated?
 
-            if( $known_allocation eq $proposed_allocation) {
-                # warn "analysis '$target_node_name' has already been allocated to the same '$known_allocation' by another branch";
+            my $known_funnel_dfr = $target_object->{'_funnel_dfr'};
+
+            if( $known_funnel_dfr eq $proposed_funnel_dfr) {
+                # warn "analysis '$target_node_name' has already been allocated to the same '$known_funnel_dfr' by another branch";
             } else {
-                # warn "analysis '$target_node_name' has already been allocated to '$known_allocation' however this branch would allocate it to '$proposed_allocation'";
+                # warn "analysis '$target_node_name' has already been allocated to '$known_funnel_dfr' however this branch would allocate it to '$proposed_funnel_dfr'";
             }
 
             if($funnel_dataflow_rule) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                my $fan_midpoint_name = _midpoint_name( $df_rule );
-                $subgraph_allocation->{ $fan_midpoint_name } = $subgraph_allocation->{ $target_node_name };
+                $df_rule->{'_funnel_dfr'} = $target_object->{'_funnel_dfr'};
             }
 
         } else {
-            # warn "allocating analysis '$target_node_name' to '$proposed_allocation'";
-            $subgraph_allocation->{ $target_node_name } = $proposed_allocation;
+            # warn "allocating analysis '$target_node_name' to '$proposed_funnel_dfr'";
+            $target_object->{'_funnel_dfr'} = $proposed_funnel_dfr;
 
             if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-                $self->_allocate_to_subgraph( $target_object, $subgraph_allocation );
+                $self->_propagate_allocation( $target_object );
             }
         }
     }
@@ -401,21 +416,13 @@ sub _control_rules {
 
 
 sub _dataflow_rules {
-    my ($self, $dataflow_rules, $subgraph_allocation) = @_;
+    my ($self, $dataflow_rules) = @_;
 
     my $graph = $self->graph();
     my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
     my $semablock_colour    = $self->config_get('Edge', 'Semablock', 'Colour');
     my $accu_colour         = $self->config_get('Edge', 'Accu', 'Colour');
     my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
-
-    my %needs_a_midpoint = ();
-    foreach my $df_rule ( @$dataflow_rules ) {
-        if( my $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {
-            $df_rule->{'_needs_a_midpoint'}++;
-            $funnel_dataflow_rule->{'_needs_a_midpoint'}++;
-        }
-    }
 
     foreach my $df_rule ( @$dataflow_rules ) {
     
@@ -426,21 +433,25 @@ sub _dataflow_rules {
     
             # Different treatment for analyses and tables:
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+
             $target_node_name = _analysis_node_name( $target_object );
+
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
             $target_node_name = $self->_table_node_name( $df_rule );
-
             $self->_add_table_node($target_node_name, $target_object->table_name);
+
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-            $target_node_name = $subgraph_allocation->{$from_node_name};
+
+            $target_node_name = _midpoint_name( $from_analysis->{'_funnel_dfr'} );
 
         } else {
             warn('Do not know how to handle the type '.ref($target_object));
             next;
         }
 
-        if( $df_rule->{'_needs_a_midpoint'} ) {
+            # a rule needs a midpoint either if it HAS a funnel or if it IS a funnel
+        if( $funnel_dataflow_rule or $df_rule->{'_is_a_funnel'} ) {
             my $midpoint_name = _midpoint_name( $df_rule );
 
             $graph->add_node( $midpoint_name,   # midpoint itself
@@ -489,7 +500,7 @@ sub _dataflow_rules {
                 fontcolor   => $dataflow_colour,
                 label       => '#'.$branch_code,
             );
-        } # /if($needs_a_midpoint{$rule_id})
+        } # /if( "$df_rule needs a midpoint" )
     } # /foreach my $df_rule (@$dataflow_rules)
 
 }

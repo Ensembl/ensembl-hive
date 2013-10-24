@@ -39,12 +39,12 @@ use warnings;
 use base ('GraphViz');
 
 
-sub subgraphs {
+sub cluster_2_nodes {
     my $self = shift @_;
     if(@_) {
-        $self->{_subgraphs} = shift @_;
+        $self->{_cluster_2_nodes} = shift @_;
     }
-    return $self->{_subgraphs};
+    return $self->{_cluster_2_nodes};
 }
 
 
@@ -66,35 +66,6 @@ sub colour_offset {
 }
 
 
-sub get_top_clusters {
-    my $self = shift @_;
-
-    my $subgraphs = $self->subgraphs();
-
-    my %set = ();
-    foreach my $potential_top_cluster (values %$subgraphs) {
-        if( $potential_top_cluster and !$subgraphs->{ $potential_top_cluster } ) {  # if it's a valid node not mentioned in the keys, it is a top cluster
-            $set{$potential_top_cluster}++;
-        }
-    }
-    return [ keys %set ];
-}
-
-
-sub get_nodes_that_point_at {
-    my ($self, $node) = @_;
-
-    my $subgraphs = $self->subgraphs();
-    my %set = ();
-    while( my ($key,$value) = each %$subgraphs) {
-        if($value and ($value eq $node)) {
-            $set{$key}++;
-        }
-    }
-    return [ keys %set ];
-}
-
-
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
@@ -106,15 +77,18 @@ sub display_subgraph {
     my $text = '';
 
     $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
+
+        # uncomment the following line to see the cluster names:
 #     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
+
     $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
     $text .= $prefix . "\tstyle=filled;\n";
     $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
 
-    foreach my $node_name ( @{ $self->get_nodes_that_point_at( $cluster_name ) } ) {
+    foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 
         $text .= $prefix . "\t${node_name};\n";
-        if( @{ $self->get_nodes_that_point_at( $node_name ) } ) {
+        if( @{ $self->cluster_2_nodes->{ $node_name } || [] } ) {
             $text .= $self->display_subgraph( $node_name, $depth+1 );
         }
     }
@@ -131,7 +105,7 @@ sub _as_debug {
 
     $text=~s/^}$//m;
 
-    foreach my $node_name ( @{ $self->get_top_clusters() } ) {
+    foreach my $node_name ( sort @{ $self->cluster_2_nodes->{''} } ) {
         $text .= $self->display_subgraph( $node_name, 1);
     }
     $text .= "}\n";
