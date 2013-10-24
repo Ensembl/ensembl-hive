@@ -76,7 +76,7 @@ sub _validate_tests {
         die "The SQL query must be provided" unless $test->{query};
         die "The description must be provided" unless $test->{description};
         $test->{subst_query} = $self->param_substitute($test->{query});
-        my $expected_size = $test->{expected_size} || '';
+        my $expected_size = $self->param_substitute($test->{expected_size} || '');
         unless ($expected_size =~ /^\s*(=|==|>|>=|<|<=|<>|!=|)\s*(\d*)\s*$/) {
             die "Cannot interpret the 'expected_size' parameter: '$expected_size'";
         }
