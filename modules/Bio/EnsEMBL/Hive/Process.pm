@@ -450,7 +450,13 @@ sub param {
 sub param_required {
     my $self = shift @_;
 
-    return $self->input_job->param_required(@_);
+    my $prev_transient_error = $self->input_job->transient_error(); # make a note of previously set transience status
+    $self->input_job->transient_error(0);                           # make sure if we die in param_required it is not transient
+
+    my $value = $self->input_job->param_required(@_);
+
+    $self->input_job->transient_error($prev_transient_error);       # restore the previous transience status
+    return $value;
 }
 
 sub param_is_defined {
