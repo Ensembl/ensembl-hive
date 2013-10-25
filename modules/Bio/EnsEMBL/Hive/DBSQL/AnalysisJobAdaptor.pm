@@ -707,14 +707,25 @@ sub gc_dataflow {
 =cut
 
 sub reset_jobs_for_analysis_id {
-    my ($self, $analysis_id, $all) = @_;
+    my ($self, $analysis_id, $input_statuses) = @_;
+
+    my $status_filter = '';
+
+    if(ref($input_statuses) eq 'ARRAY') {
+        $status_filter = 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')';
+    } elsif(!$input_statuses) {
+        $status_filter = "AND status='FAILED'"; # temporarily keep it here for compatibility
+    }
 
     my $sql = qq{
-        UPDATE job
-           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END
-             , status='READY'
-        WHERE analysis_id=?
-    } . ($all ? "" : " AND status='FAILED'");
+            UPDATE job
+           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
+        }. ( ($self->dbc->driver eq 'pgsql')
+        ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
+        : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        ).qq{
+            WHERE analysis_id=?
+        } . $status_filter;
 
     my $sth = $self->prepare($sql);
     $sth->execute($analysis_id);
