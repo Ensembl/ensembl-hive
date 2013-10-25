@@ -1,0 +1,8 @@
+    -- extend all VARCHAR fields to 255
+
+    -- (since according to the manual SQLite does not impose any size restrictions on VARCHAR
+    -- there is actually nothing to patch except for the schema version)
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=53 WHERE meta_key='hive_sql_schema_version' AND meta_value='52';
+

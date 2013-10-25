@@ -40,7 +40,7 @@
 
 CREATE TABLE analysis_base (
     analysis_id             INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
-    logic_name              VARCHAR(40) NOT NULL,
+    logic_name              VARCHAR(255) NOT NULL,
     module                  VARCHAR(255),
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE analysis_base (
     max_retry_count         INTEGER     NOT NULL DEFAULT 3,
     can_be_empty            SMALLINT    NOT NULL DEFAULT 0,
     priority                SMALLINT    NOT NULL DEFAULT 0,
-    meadow_type             VARCHAR(40)          DEFAULT NULL,
+    meadow_type             VARCHAR(255)         DEFAULT NULL,
     analysis_capacity       INTEGER              DEFAULT NULL
 );
 CREATE UNIQUE INDEX analysis_base_logic_name_idx ON analysis_base (logic_name);
@@ -199,7 +199,7 @@ CREATE UNIQUE INDEX condition_ctrled_idx ON analysis_ctrl_rule (condition_analys
 
 CREATE TABLE resource_class (
     resource_class_id       INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
-    name                    VARCHAR(40) NOT NULL
+    name                    VARCHAR(255) NOT NULL
 
 );
 CREATE UNIQUE INDEX resource_class_name_idx ON resource_class (name);
@@ -219,7 +219,7 @@ CREATE UNIQUE INDEX resource_class_name_idx ON resource_class (name);
 
 CREATE TABLE resource_description (
     resource_class_id       INTEGER     NOT NULL,
-    meadow_type             VARCHAR(40) NOT NULL,
+    meadow_type             VARCHAR(255) NOT NULL,
     parameters              VARCHAR(255) NOT NULL DEFAULT '',
 
     PRIMARY KEY(resource_class_id, meadow_type)
@@ -367,7 +367,7 @@ CREATE        INDEX analysis_data_idx ON analysis_data (data);
 */
 
 CREATE TABLE hive_meta (
-    meta_key                VARCHAR(80) NOT NULL PRIMARY KEY,
+    meta_key                VARCHAR(255) NOT NULL PRIMARY KEY,
     meta_value              TEXT
 
 );
@@ -394,7 +394,7 @@ CREATE TABLE hive_meta (
 CREATE TABLE IF NOT EXISTS meta (
     meta_id                 INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     species_id              INTEGER              DEFAULT 1,
-    meta_key                VARCHAR(40) NOT NULL,
+    meta_key                VARCHAR(255) NOT NULL,
     meta_value              TEXT        NOT NULL
 );
 CREATE UNIQUE INDEX meta_species_key_value_idx ON meta (species_id, meta_key, meta_value);
@@ -434,10 +434,10 @@ CREATE        INDEX meta_species_value_idx     ON meta (species_id, meta_value);
 
 CREATE TABLE worker (
     worker_id               INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
-    meadow_type             VARCHAR(40) NOT NULL,
-    meadow_name             VARCHAR(40) NOT NULL,
-    host                    VARCHAR(40) NOT NULL,
-    process_id              VARCHAR(40) NOT NULL,
+    meadow_type             VARCHAR(255) NOT NULL,
+    meadow_name             VARCHAR(255) NOT NULL,
+    host                    VARCHAR(255) NOT NULL,
+    process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
 
     analysis_id             INTEGER              DEFAULT NULL,

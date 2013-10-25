@@ -1,0 +1,16 @@
+    -- extend all VARCHAR fields to 255 (this will not affect neither storage nor performance) :
+
+ALTER TABLE analysis_base           MODIFY COLUMN logic_name              VARCHAR(255) NOT NULL;
+ALTER TABLE analysis_base           MODIFY COLUMN meadow_type             VARCHAR(255)          DEFAULT NULL;
+ALTER TABLE resource_class          MODIFY COLUMN name                    VARCHAR(255) NOT NULL;
+ALTER TABLE resource_description    MODIFY COLUMN meadow_type             VARCHAR(255) NOT NULL;
+ALTER TABLE hive_meta               MODIFY COLUMN meta_key                VARCHAR(255) NOT NULL;
+ALTER TABLE meta                    MODIFY COLUMN meta_key                VARCHAR(255) NOT NULL;
+ALTER TABLE worker                  MODIFY COLUMN meadow_type             VARCHAR(255) NOT NULL;
+ALTER TABLE worker                  MODIFY COLUMN meadow_name             VARCHAR(255) NOT NULL;
+ALTER TABLE worker                  MODIFY COLUMN host                    VARCHAR(255) NOT NULL;
+ALTER TABLE worker                  MODIFY COLUMN process_id              VARCHAR(255) NOT NULL;
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=53 WHERE meta_key='hive_sql_schema_version' AND meta_value='52';
+

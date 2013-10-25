@@ -41,7 +41,7 @@
 
 CREATE TABLE analysis_base (
     analysis_id             SERIAL PRIMARY KEY,
-    logic_name              VARCHAR(40) NOT NULL,
+    logic_name              VARCHAR(255) NOT NULL,
     module                  VARCHAR(255),
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE analysis_base (
     max_retry_count         INTEGER     NOT NULL DEFAULT 3,
     can_be_empty            SMALLINT    NOT NULL DEFAULT 0,
     priority                SMALLINT    NOT NULL DEFAULT 0,
-    meadow_type             VARCHAR(40)          DEFAULT NULL,
+    meadow_type             VARCHAR(255)          DEFAULT NULL,
     analysis_capacity       INTEGER              DEFAULT NULL,
 
     UNIQUE  (logic_name)
@@ -205,7 +205,7 @@ CREATE TABLE analysis_ctrl_rule (
 
 CREATE TABLE resource_class (
     resource_class_id       SERIAL PRIMARY KEY,
-    name                    VARCHAR(40) NOT NULL,
+    name                    VARCHAR(255) NOT NULL,
 
     UNIQUE  (name)
 );
@@ -225,7 +225,7 @@ CREATE TABLE resource_class (
 
 CREATE TABLE resource_description (
     resource_class_id       INTEGER     NOT NULL,
-    meadow_type             VARCHAR(40) NOT NULL,
+    meadow_type             VARCHAR(255) NOT NULL,
     parameters              VARCHAR(255) NOT NULL DEFAULT '',
 
     PRIMARY KEY(resource_class_id, meadow_type)
@@ -377,7 +377,7 @@ CREATE INDEX ON analysis_data (data);
 */
 
 CREATE TABLE hive_meta (
-    meta_key                VARCHAR(80) NOT NULL PRIMARY KEY,
+    meta_key                VARCHAR(255) NOT NULL PRIMARY KEY,
     meta_value              TEXT
 
 );
@@ -404,7 +404,7 @@ CREATE TABLE hive_meta (
 CREATE TABLE IF NOT EXISTS meta (
     meta_id                 SERIAL PRIMARY KEY,
     species_id              INTEGER              DEFAULT 1,
-    meta_key                VARCHAR(40) NOT NULL,
+    meta_key                VARCHAR(255) NOT NULL,
     meta_value              TEXT        NOT NULL,
 
     UNIQUE (species_id, meta_key, meta_value)
@@ -446,10 +446,10 @@ CREATE INDEX ON meta (species_id, meta_value);
 CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
 CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
-    meadow_type             VARCHAR(40) NOT NULL,
-    meadow_name             VARCHAR(40) NOT NULL,
-    host                    VARCHAR(40) NOT NULL,
-    process_id              VARCHAR(40) NOT NULL,
+    meadow_type             VARCHAR(255) NOT NULL,
+    meadow_name             VARCHAR(255) NOT NULL,
+    host                    VARCHAR(255) NOT NULL,
+    process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
 
     analysis_id             INTEGER              DEFAULT NULL,
