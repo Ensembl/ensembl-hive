@@ -129,6 +129,7 @@ sub _analysis_node_name {
     return 'analysis_' . $analysis->logic_name;
 }
 
+
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
@@ -140,7 +141,11 @@ sub _table_node_name {
 sub _midpoint_name {
     my ($df_rule) = @_;
 
-    return 'dfr_'.$df_rule->dbID.'_mp';
+    if(scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
+        return 'dfr_'.$1.'_mp';
+    } else {
+        die "Wrong argument to _midpoint_name";
+    }
 }
 
 
