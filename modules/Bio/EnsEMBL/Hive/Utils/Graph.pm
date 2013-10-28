@@ -199,7 +199,9 @@ sub build {
         }
     }
 
-    $self->_add_hive_details();
+    if( $self->config_get('DisplayDetails') ) {
+        $self->_add_hive_details();
+    }
     foreach my $analysis ( $all_analyses_coll->list ) {
         $self->_add_analysis_node($analysis);
     }
@@ -309,19 +311,16 @@ sub _propagate_allocation {
 
 
 sub _add_hive_details {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
-
-  if( $self->config_get('DisplayDetails') ) {
+    my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
     my $dbc = $self->dba()->dbc();
     my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
     $self->graph()->add_node( 'Details',
-      label     => $label,
-      fontname  => $node_fontname,
-      shape     => 'plaintext',
+        label     => $label,
+        fontname  => $node_fontname,
+        shape     => 'plaintext',
     );
-  }
 }
 
 
