@@ -181,9 +181,7 @@ sub url {
 
   Arg [1]    : none
   Example    : $stats = $analysis->stats;
-  Description: returns the AnalysisStats object associated with this Analysis
-               object.  Does not cache, but pull from database by using the
-               Analysis objects adaptor->db.
+  Description: returns either the previously cached AnalysisStats object, or if it is missing - pulls a fresh one from the DB.
   Returntype : Bio::EnsEMBL::Hive::AnalysisStats object
   Exceptions : none
   Caller     : general
@@ -191,13 +189,12 @@ sub url {
 =cut
 
 sub stats {
-    my $self = shift;
+    my $self = shift @_;
 
-    # Not cached internally since we want it to always be in sync with the database.
-    # Otherwise the user application would need to be aware of the sync state and send explicit 'sync' calls.
-
-    my $stats = $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
-    return $stats;
+    if(@_) {    # set for caching
+        $self->{'_stats'} = shift @_;
+    }
+    return $self->{'_stats'} || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
 }
 
 

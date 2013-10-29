@@ -60,6 +60,7 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
@@ -516,7 +517,7 @@ sub run {
 
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
-    my @analysis_stats_collection = (); # a list of AnalysisStats objects, initially un-stored
+    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new();
 
     my %seen_logic_name = ();
 
@@ -597,7 +598,9 @@ sub run {
                 'sync_lock'             => 0,
             );
 
-            push @analysis_stats_collection, $stats;
+            $analysis->stats( $stats );     # link stats to the analysis
+
+            push @{ $all_analyses_coll->listref }, $analysis;
         }
 
             # now create the corresponding jobs (if there are any):
@@ -618,8 +621,7 @@ sub run {
             my ($logic_name, $wait_for, $flow_into)
                  = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-#            my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name); # TODO: this should become internal "find" of the Pipeline_object:
-            my ($analysis) = grep { $_->logic_name eq $logic_name } map { $_->analysis } @analysis_stats_collection;
+            my $analysis = $all_analyses_coll->find_one_by('logic_name', $logic_name);  # TODO: make sure it works for pre-stored analyses ("analysis_topup")
 
             $wait_for ||= [];
             $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -627,9 +629,8 @@ sub run {
                 # create control rules:
             foreach my $condition_url (@$wait_for) {
                 unless ($condition_url =~ m{^\w*://}) {
-                        # TODO: this should become a call to Pipeline_object:
-#                    my $condition_analysis = $analysis_adaptor->fetch_by_logic_name($condition_url)
-#                        or die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
+                    my $condition_analysis = $all_analyses_coll->find_one_by('logic_name', $condition_url)
+                        or die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
                 }
                 my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
                         'condition_analysis_url'    => $condition_url,
@@ -677,9 +678,8 @@ sub run {
                 while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
                     unless ($heir_url =~ m{^\w*://}) {
-                            # TODO: this should become a call to Pipeline_object:
-#                        my $heir_analysis = $analysis_adaptor->fetch_by_logic_name($heir_url)
-#                            or die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
+                        my $heir_analysis = $all_analyses_coll->find_one_by('logic_name', $heir_url)
+                            or die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                     }
                     
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
@@ -714,8 +714,8 @@ sub run {
     my $ctrl_rule_adaptor           = $hive_dba->get_AnalysisCtrlRuleAdaptor;
     my $dataflow_rule_adaptor       = $hive_dba->get_DataflowRuleAdaptor;
 
-    foreach my $stats (@analysis_stats_collection) {
-        my $analysis = $stats->analysis;
+    foreach my $analysis ( $all_analyses_coll->list ) {
+        my $stats = $analysis->stats;   # should be taking the value cached previously
 
         $analysis_adaptor->store( $analysis );
         $analysis_stats_adaptor->store( $stats );
@@ -725,8 +725,7 @@ sub run {
         }
     }
 
-    foreach my $stats (@analysis_stats_collection) {
-        my $analysis = $stats->analysis;
+    foreach my $analysis ( $all_analyses_coll->list ) {
 
         foreach my $c_rule (@{ $analysis->control_rules_collection }) {
             $ctrl_rule_adaptor->store( $c_rule, 1 );
