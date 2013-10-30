@@ -224,22 +224,28 @@ sub build {
     }
 
     if($self->config_get('DisplaySemaphoreBoxes') ) {
-        my %cluster_2_nodes = ( # initialize with top clusters
-            '' => [ map { _midpoint_name( $_ ) } grep { $_->{'_is_a_funnel'} and ! $_->{'_funnel_dfr'} } $all_dataflow_rules_coll->list ]
-        );
-        foreach ($all_analyses_coll->list) {
-            if(my $funnel = $_->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $_ );
+        my %cluster_2_nodes = ();
+
+        foreach my $analysis ($all_analyses_coll->list) {
+            if(my $funnel = $analysis->{'_funnel_dfr'}) {
+                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $analysis );
             }
-        }
-        foreach ( grep { UNIVERSAL::isa($_->to_analysis,'Bio::EnsEMBL::Hive::NakedTable') } $all_dataflow_rules_coll->list ) {
-            if(my $funnel = $_->to_analysis->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $_ );
-            }
-        }
-        foreach ( $all_dataflow_rules_coll->list ) {
-            if(my $funnel = $_->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _midpoint_name( $_ );
+
+            foreach my $df_rule ( @{ $analysis->dataflow_rules_collection } ) {
+                if( $df_rule->{'_is_a_funnel'} and ! $df_rule->{'_funnel_dfr'} ) {
+
+                    push @{$cluster_2_nodes{ '' }}, _midpoint_name( $df_rule );     # top-level funnels define clusters (top-level "boxes")
+
+                } elsif( UNIVERSAL::isa($df_rule->to_analysis,'Bio::EnsEMBL::Hive::NakedTable') ) {
+
+                    if(my $funnel = $df_rule->to_analysis->{'_funnel_dfr'}) {
+                        push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $df_rule );    # table belongs to the same "box" as the dataflow source
+                    }
+                }
+
+                if(my $funnel = $df_rule->{'_funnel_dfr'}) {
+                    push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _midpoint_name( $df_rule ); # midpoints of rules that have a funnel live inside "boxes"
+                }
             }
         }
 
