@@ -206,8 +206,8 @@ sub build {
         $self->_add_analysis_node($analysis);
     }
     foreach my $analysis ( $all_analyses_coll->list ) {
-        $self->_control_rules( $analysis->control_rules_collection );
-        $self->_dataflow_rules( $analysis->dataflow_rules_collection );
+        $self->_add_control_rules( $analysis->control_rules_collection );
+        $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
@@ -400,7 +400,7 @@ sub _add_analysis_node {
 }
 
 
-sub _control_rules {
+sub _add_control_rules {
   my ($self, $ctrl_rules) = @_;
   
   my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
@@ -419,7 +419,7 @@ sub _control_rules {
 }
 
 
-sub _dataflow_rules {
+sub _add_dataflow_rules {
     my ($self, $dataflow_rules) = @_;
 
     my $graph = $self->graph();
