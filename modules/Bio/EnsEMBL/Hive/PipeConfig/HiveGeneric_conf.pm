@@ -505,7 +505,7 @@ sub run {
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
                 $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
-         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked batch_size -hive_capacity -failed_job_tolerance
+         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
                  -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
 
         unless($logic_name) {
