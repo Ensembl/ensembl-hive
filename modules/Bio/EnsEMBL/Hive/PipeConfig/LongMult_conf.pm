@@ -70,8 +70,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
             # additional tables needed for long multiplication pipeline's operation:
-        'db_cmd.pl -url '.$self->pipeline_url().' -sql '
-            ."'CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'",
+        $self->db_cmd('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
     ];
 }
 

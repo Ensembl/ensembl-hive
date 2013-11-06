@@ -129,23 +129,21 @@ sub pipeline_create_commands {
     my $parsed_url      = Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
     my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
 
-    my $db_cmd_prefix   = "db_cmd.pl -url $pipeline_url";
-
     return [
-            $self->o('hive_force_init') ? ( $db_cmd_prefix." -sql 'DROP DATABASE IF EXISTS'" ) : (),
-            $db_cmd_prefix." -sql 'CREATE DATABASE'",
+            $self->o('hive_force_init') ? $self->db_cmd('DROP DATABASE IF EXISTS') : (),
+            $self->db_cmd('CREATE DATABASE'),
 
                 # we got table definitions for all drivers:
-            $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
+            $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
                 # auto-sync'ing triggers are off by default and not yet available in pgsql:
-            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
 
                 # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
-                                             ($driver ne 'sqlite') ? ( $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
+                                             ($driver ne 'sqlite') ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
 
                 # we got procedure definitions for all drivers:
-            $db_cmd_prefix.' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+            $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
     ];
 }
 
@@ -241,14 +239,14 @@ sub pre_options {
 
 =head2 dbconn_2_mysql
 
-    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
+    Description : Deprecated method. Please use $self->db_cmd() instead.
 
 =cut
 
 sub dbconn_2_mysql {    # will save you a lot of typing
     my ($self, $db_conn, $with_db) = @_;
 
-    warn "\nDEPRECATED: dbconn_2_mysql() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+    warn "\nDEPRECATED: dbconn_2_mysql() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
 
     my $port = $self->o($db_conn,'-port');
 
@@ -262,14 +260,14 @@ sub dbconn_2_mysql {    # will save you a lot of typing
 
 =head2 dbconn_2_pgsql
 
-    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
+    Description : Deprecated method. Please use $self->db_cmd() instead.
 
 =cut
 
 sub dbconn_2_pgsql {    # will save you a lot of typing
     my ($self, $db_conn, $with_db) = @_;
 
-    warn "\nDEPRECATED: dbconn_2_pgsql() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+    warn "\nDEPRECATED: dbconn_2_pgsql() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
 
     my $port = $self->o($db_conn,'-port');
 
@@ -281,14 +279,14 @@ sub dbconn_2_pgsql {    # will save you a lot of typing
 
 =head2 db_connect_command
 
-    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
+    Description : Deprecated method. Please use $self->db_cmd() instead.
 
 =cut
 
 sub db_connect_command {
     my ($self, $db_conn) = @_;
 
-    warn "\nDEPRECATED: db_connect_command() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+    warn "\nDEPRECATED: db_connect_command() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
 
     my $driver = $self->o($db_conn, '-driver');
 
@@ -302,14 +300,14 @@ sub db_connect_command {
 
 =head2 db_execute_command
 
-    Description : Deprecated method. Please use db_cmd.pl with a pipeline_url
+    Description : Deprecated method. Please use $self->db_cmd() instead.
 
 =cut
 
 sub db_execute_command {
     my ($self, $db_conn, $sql_command, $with_db) = @_;
 
-    warn "\nDEPRECATED: db_execute_command() method is no longer supported, please use 'db_cmd.pl -url '.\$self->pipeline_url().' -sql ...' instead, it will be more portable\n\n";
+    warn "\nDEPRECATED: db_execute_command() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
 
     $with_db = 1 unless(defined($with_db));
 
@@ -353,6 +351,22 @@ sub pipeline_url {
     my $self = shift @_;
 
     return $self->root()->{'pipeline_url'} || $self->dbconn_2_url('pipeline_db', 1); # used to force vivification of the whole 'pipeline_db' structure (used in run() )
+}
+
+
+=head2 db_cmd
+
+    Description :  Returns a db_cmd.pl-based command line that should execute by any supported driver (mysql/pgsql/sqlite)
+
+=cut
+
+sub db_cmd {
+    my ($self, $sql_command, $db_url) = @_;
+
+    $db_url //= $self->pipeline_url();
+    my $db_cmd_path = $self->o('hive_root_dir').'/scripts/db_cmd.pl';
+
+    return "$db_cmd_path -url $db_url".($sql_command ? " -sql '$sql_command'" : '');
 }
 
 
