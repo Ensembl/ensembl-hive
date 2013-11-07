@@ -165,6 +165,14 @@ sub build {
     my $all_control_rules_coll  = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all );
     my $all_dataflow_rules_coll = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_DataflowRuleAdaptor()->fetch_all );
 
+    if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        my $job_adaptor = $self->dba->get_AnalysisJobAdaptor();
+        foreach my $analysis ( $all_analyses_coll->list ) {
+            my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+            $analysis->jobs_collection( \@jobs );
+        }
+    }
+
     foreach my $c_rule ( $all_control_rules_coll->list ) {
         my $ctrled_analysis = $all_analyses_coll->find_one_by('dbID', $c_rule->ctrled_analysis_id );
         $c_rule->ctrled_analysis( $ctrled_analysis );
@@ -370,8 +378,7 @@ sub _add_analysis_node {
     }
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
-        my $adaptor = $self->dba->get_AnalysisJobAdaptor();
-        my @jobs = sort {$a->dbID <=> $b->dbID} @{ $adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+        my @jobs = @{ $analysis->jobs_collection };
 
         my $hit_limit;
         if(scalar(@jobs)>$job_limit) {
