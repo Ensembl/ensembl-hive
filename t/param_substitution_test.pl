@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Params;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 my $params = Bio::EnsEMBL::Hive::Params->new();
 
@@ -17,6 +18,9 @@ $params->param_init(1, {
 
     'age' => { 'Alice' => 17, 'Bob' => 20, 'Chloe' => 21},
     'age_prime' => '#expr( { %{#age#} } )expr#',
+
+    'csv' => '123,456,789',
+    'listref' => '#expr([eval #csv#])expr#',
 });
 
 print $params->param_substitute( "Substituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#\n" );
@@ -31,4 +35,8 @@ print $params->param_substitute( 'joined gamma_prime: #expr( join(", ", @{#gamma
 
 print $params->param_substitute( 'complex fold of age: #expr( join("\t", map { $ _.":".#age#->{$ _}} keys %{#age#}) )expr#' )."\n";
 print $params->param_substitute( 'complex fold of age_prime: #expr( join("\t", map { $ _.":".#age_prime#->{$ _}} keys %{#age_prime#}) )expr#' )."\n";
+
+print "\ncsv = '".$params->param('csv')."'\n";
+my $listref = $params->param_substitute( '#listref#' );
+print "list reference produced by evaluating csv: ".stringify($listref)."\n";
 
