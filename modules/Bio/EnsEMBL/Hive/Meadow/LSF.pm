@@ -137,17 +137,17 @@ sub find_out_causes {
 
 
 sub submit_workers {
-    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_parameters, $submit_stdout_file, $submit_stderr_file) = @_;
+    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_stdout_file, $submit_stderr_file) = @_;
 
-    my $job_name       = $self->generate_job_name($required_worker_count, $iteration, $rc_name);
-    my $submission_options = $self->config_get('SubmissionOptions');
+    my $job_name                            = $self->generate_job_name($required_worker_count, $iteration, $rc_name);
+    my $meadow_specific_submission_cmd_args = $self->config_get('SubmissionOptions');
 
-    $submit_stdout_file ||= '/dev/null';
-    $submit_stderr_file ||= '/dev/null';
+    $submit_stdout_file ||= '/dev/null';    # a value is required
+    $submit_stderr_file ||= '/dev/null';    # a value is required
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_parameters $submission_options $worker_cmd};
+    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
 
     print "SUBMITTING_CMD:\t\t$cmd\n";
     system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax

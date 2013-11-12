@@ -494,11 +494,14 @@ sub run {
                 warn "Attempt to re-create and potentially redefine resource_class $rc_name($rc_id). NB: This may affect already created analyses!\n";
             }
 
-            while( my($meadow_type, $xparams) = each %$mt2param ) {
+            while( my($meadow_type, $resource_param_list) = each %$mt2param ) {
+                $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
+
                 $resource_description_adaptor->create_new(
-                    -RESOURCE_CLASS_ID  => $rc_id,
-                    -MEADOW_TYPE        => $meadow_type,
-                    -PARAMETERS         => $xparams,
+                    -resource_class_id      => $rc_id,
+                    -meadow_type            => $meadow_type,
+                    -submission_cmd_args    => $resource_param_list->[0],
+                    -worker_cmd_args        => $resource_param_list->[1],
                 );
             }
         }

@@ -323,13 +323,13 @@ sub generate_worker_cmd {
 sub run_autonomously {
     my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id, $force) = @_;
 
-    my $worker_cmd      = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
-    my $special_task    = $run_analysis || $run_job_id;
+    my $resourceless_worker_cmd = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
+    my $special_task            = $run_analysis || $run_job_id;
 
     my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
-    my %meadow_type_rc_name2xparams = ();
+    my %meadow_type_rc_name2resource_param_list = ();
     foreach my $rd (@{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all() }) {
-        $meadow_type_rc_name2xparams{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = $rd->parameters();
+        $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
     }
 
     my $iteration=0;
@@ -363,8 +363,14 @@ sub run_autonomously {
 
                     print "Submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
 
-                    $this_meadow->submit_workers($worker_cmd.($special_task ? '' : " -rc_name $rc_name"), $this_meadow_rc_worker_count, $iteration,
-                                                    $rc_name, $meadow_type_rc_name2xparams{ $meadow_type }{ $rc_name } || '',
+                    my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
+
+                    my $specific_worker_cmd = $resourceless_worker_cmd
+                                            . ($special_task ? '' : " -rc_name $rc_name")
+                                            . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
+
+                    $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
+                                                    $rc_name, $submission_cmd_args || '',
                                                     $self->{'submit_stdout_file'}, $self->{'submit_stderr_file'});
                 }
             }

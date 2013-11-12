@@ -217,13 +217,15 @@ CREATE TABLE resource_class (
 
 @column resource_class_id   foreign-keyed to the ResourceClass entry
 @column meadow_type         if the Worker is about to be executed on the given Meadow...
-@column parameters          ... the following resource line should be given to it.
+@column submission_cmd_args ... these are the resource arguments (queue, memory,...) to give to the submission command
+@column worker_cmd_args     ... and these are the arguments that are given to the worker command being submitted
 */
 
 CREATE TABLE resource_description (
     resource_class_id       INTEGER      NOT NULL,
     meadow_type             VARCHAR(255) NOT NULL,
-    parameters              VARCHAR(255) NOT NULL DEFAULT '',
+    submission_cmd_args     VARCHAR(255) NOT NULL DEFAULT '',
+    worker_cmd_args         VARCHAR(255) NOT NULL DEFAULT '',
 
     PRIMARY KEY(resource_class_id, meadow_type)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;

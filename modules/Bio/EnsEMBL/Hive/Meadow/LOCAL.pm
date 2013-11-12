@@ -94,12 +94,12 @@ sub kill_worker {
 
 
 sub submit_workers {
-    my ($self, $worker_cmd, $worker_count, $iteration, $rc_name, $rc_parameters) = @_;
+    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_stdout_file, $submit_stderr_file) = @_;
 
     my $cmd = "$worker_cmd &";
 
-    foreach (1..$worker_count) {
-        print "SUBMITTING_CMD:\t\t$cmd\n";
+    foreach (1..$required_worker_count) {
+        print "SUBMITTING_CMD:\t\t$rc_specific_submission_cmd_args $cmd\n";
         system( $cmd );
     }
 }
