@@ -6,7 +6,7 @@
     "Meadow" : {
         "LSF" : {
             "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 1000,
+            "TotalRunningWorkersMax"    : 2000,
             "farm2" : {
                 "SubmissionOptions"  : ""
             },
