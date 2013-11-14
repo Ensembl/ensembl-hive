@@ -15,9 +15,7 @@ BEGIN {
 
 
 use Getopt::Long;
-use DateTime;
-use DateTime::Format::ISO8601;
-use List::Util qw(sum max);
+use List::Util qw(sum);
 use POSIX;
 use Data::Dumper;
 
@@ -91,25 +89,16 @@ sub main {
 
     }
 
-    my $nothing_title = 'NOTHING';
+    my $activity_title = 'ACTIVITY';
 
     my $dbh = $hive_dba->dbc->db_handle();
 
-    # really needed ?
-    #my $sql_index = 'ALTER TABLE worker ADD KEY date_stats (analysis_id, born, died);';
+    my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id, 1 FROM worker WHERE analysis_id IS NOT NULL')};
+    push @tmp_dates, @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, -1 FROM worker WHERE analysis_id IS NOT NULL')};
+    my @birth_death_dates = sort {$a->[0] cmp $b->[0]} @tmp_dates;
 
-    my $sql_limits = 'SELECT DATE_FORMAT(MIN(born), "%Y-%m-%dT%T"), DATE_FORMAT(MAX(died), "%Y-%m-%dT%T") FROM worker;';
-    my $worker_limits = $dbh->selectall_arrayref($sql_limits);
-    $start_date = $worker_limits->[0]->[0] unless $start_date;
-    warn $start_date;
-    $end_date   = $worker_limits->[0]->[1] unless $end_date;
-    warn $end_date;
-
-    my $sql_analysis_in_interval = '
-        SELECT analysis_id, SUM(TIME_TO_SEC(TIMEDIFF( LEAST(IFNULL(died, "2100-01-01 00:00:00"), ?), GREATEST(born, ?) ))) / (60*?)
-        FROM worker
-        WHERE analysis_id IS NOT NULL AND born < ? AND (died is NULL OR died >= ?)
-        GROUP BY analysis_id';
+    warn scalar(@birth_death_dates), " events\n";
+    #die Dumper $birth_death_dates[0];
 
     my $sql_analysis_names = 'SELECT analysis_id, logic_name FROM analysis_base';
     my $data = $dbh->selectall_arrayref($sql_analysis_names);
@@ -117,42 +106,46 @@ sub main {
 
     #die Dumper \%name;
 
-    $start_date = DateTime::Format::ISO8601->parse_datetime($start_date);
-    $end_date   = DateTime::Format::ISO8601->parse_datetime($end_date);
-
     my $max_workers = 0;
     my @data_timings = ();
     my %tot_analysis = ();
 
-    my $curr_date = $start_date;
-    while ($curr_date < $end_date) {
-        my $next_date = $curr_date->clone();
-        $next_date->add(minutes => $granularity);
+    my $sum_a = 0;
+    my %tmp_interval;
+    my @activity;
+    while (scalar(@birth_death_dates)) {
 
-        my $d1 = $curr_date->datetime;
-        my $d2 = $next_date->datetime;
-        $d1 =~ s/T/ /;
-        $d2 =~ s/T/ /;
-        my $timings_interval = $dbh->selectall_arrayref($sql_analysis_in_interval, undef, $d2, $d1, $granularity, $d2, $d1);
-        my %hash_interval = (map {$_->[0] => $_->[1] } @$timings_interval);
+        my ($event_date, $analysis_id, $offset) = @{shift @birth_death_dates};
+        last if $event_date gt $end_date;
 
-        my $sum_a = sum(0, values %hash_interval);
+        $tmp_interval{$analysis_id} += $offset;
+        $sum_a += $offset;
+        my %hash_interval = %tmp_interval;
         map {$tot_analysis{$_} += $hash_interval{$_}} keys %hash_interval;
 
         $max_workers = $sum_a if ($sum_a > $max_workers);
-        push @data_timings, [$curr_date->datetime, $sum_a, \%hash_interval];
-        #warn $d1, ' ', $sum_a, ' ', $max_workers;
+        next if $event_date lt $start_date;
 
-        $curr_date = $next_date;
+        # We can store the data
+        push @data_timings, [$event_date, \%hash_interval];
+        unless ($sum_a) {
+            push @activity, [$event_date, 1];
+            push @activity, [$event_date, 0];
+            push @activity, [$birth_death_dates[0]->[0], 0] if scalar(@birth_death_dates);
+            push @activity, [$birth_death_dates[0]->[0], 1] if scalar(@birth_death_dates);
+        }
     }
     warn $max_workers;
+    warn Dumper \%tot_analysis;
 
     my $total_total = sum(values %tot_analysis);
 
     my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $name{$a} cmp lc $name{$b})} keys %tot_analysis;
-    #warn Dumper \@sorted_analysis_ids;
+    warn Dumper \@sorted_analysis_ids;
+    warn Dumper([map {$name{$_}} @sorted_analysis_ids]);
+
     if (not $gnuplot_terminal) {
-        print join("\t", 'analysis', $nothing_title, map {$name{$_}} @sorted_analysis_ids), "\n";
+        print join("\t", 'analysis', $activity_title, map {$name{$_}} @sorted_analysis_ids), "\n";
         print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_analysis_ids), "\n";
         print join("\t", 'proportion', '0', map {$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
         my $s = 0;
@@ -160,7 +153,7 @@ sub main {
 
         my @buffer = ();
         foreach my $row (@data_timings) {
-            my $str = join("\t", $row->[0], $row->[1] ? 0 : $max_workers / 2, map {$row->[2]->{$_} || 0} @sorted_analysis_ids)."\n";
+            my $str = join("\t", $row->[0], sum(values %{$row->[1]}), map {$row->[1]->{$_} || 0} @sorted_analysis_ids)."\n";
             if ($row->[1]) {
                 if (@buffer) {
                     my $n = scalar(@buffer);
@@ -192,36 +185,36 @@ sub main {
     } else {
         $n_relevant_analysis = scalar(@sorted_analysis_ids);
     }
-    #warn Dumper(\@sorted_analysis_ids);
-    #warn Dumper([map {$name{$_}} @sorted_analysis_ids]);
+
+    warn $n_relevant_analysis;
 
     my @xdata = map {$_->[0]} @data_timings;
 
     my @datasets = ();
 
     {
-        my @ydata = map {$_->[1] ? 0 : $max_workers / 2} @data_timings;
         push @datasets, Chart::Gnuplot::DataSet->new(
-            xdata => \@xdata,
-            ydata => \@ydata,
+            xdata => [map {$_->[0]} @activity],
+            ydata => [map {$max_workers*(1-0.03*$_->[1])} @activity],
             timefmt => '%Y-%m-%dT%H:%M:%S',
-            title => $nothing_title,
-            style => sprintf('filledcurves above y1=%d', int(.47*$max_workers)),
-            linetype => '0',
+            title => $activity_title,
+            style => sprintf('filledcurves below y1=%d', int($max_workers)),
+            linetype => '2',
+            linewidth => '0',
             color => '#2F4F4F',
         );
     }
     {
         my @ydata = ();
         foreach my $row (@data_timings) {
-            push @ydata, sum(map {$row->[2]->{$_} || 0} @sorted_analysis_ids );
+            push @ydata, sum(map {$row->[1]->{$_} || 0} @sorted_analysis_ids );
         }
         push @datasets, Chart::Gnuplot::DataSet->new(
             xdata => \@xdata,
             ydata => \@ydata,
             timefmt => '%Y-%m-%dT%H:%M:%S',
             title => 'OTHER',
-            style => 'filledcurves x1',
+            style => 'filledcurves',
             linewidth => '0',
             color => $palette[$n_relevant_analysis],
         );
@@ -230,23 +223,22 @@ sub main {
     foreach my $i (reverse 1..$n_relevant_analysis) {
         my @ydata;
         foreach my $row (@data_timings) {
-            push @ydata, sum(map {$row->[2]->{$_} || 0} @sorted_analysis_ids[0..($i-1)] );
+            push @ydata, sum(map {$row->[1]->{$_} || 0} @sorted_analysis_ids[0..($i-1)] );
         }
         my $dataset = Chart::Gnuplot::DataSet->new(
             xdata => \@xdata,
             ydata => \@ydata,
             timefmt => '%Y-%m-%dT%H:%M:%S',
             title => $name{$sorted_analysis_ids[$i-1]},
-            style => 'filledcurves x1',
+            style => 'filledcurves',
             linewidth => '0',
-            #linetype => $i
             color => $palette[$i-1],
         );
         push @datasets, $dataset;
     }
 
     my $chart = Chart::Gnuplot->new(
-        title => sprintf('Profile of %s from %s to %s', $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url, $start_date, $end_date),
+        title => sprintf('Profile of %s', $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url).($start_date ? " from $start_date" : "").($end_date ? " until $end_date" : ""),
         timeaxis => 'x',
         legend => {
             position => 'outside right',
