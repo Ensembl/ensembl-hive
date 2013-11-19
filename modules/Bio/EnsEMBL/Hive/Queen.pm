@@ -692,18 +692,14 @@ sub get_hive_current_load {
 sub count_running_workers {
     my ($self, $analysis_id) = @_;
 
-    my $sql = qq{
-            SELECT count(*)
-            FROM worker
-            WHERE status!='DEAD'
-        } . ($analysis_id ? " AND analysis_id='$analysis_id'" : '');
+    return $self->count_all( "status!='DEAD'".($analysis_id ? " AND analysis_id=$analysis_id" : '') );
+}
 
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    (my $queen_running_workers)=$sth->fetchrow_array();
-    $sth->finish();
 
-    return $queen_running_workers || 0;
+sub get_workers_rank {
+    my ($self, $worker) = @_;
+
+    return $self->count_all( "status!='DEAD' AND analysis_id=".$worker->analysis_id." AND worker_id<".$worker->dbID );
 }
 
 

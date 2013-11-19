@@ -545,30 +545,35 @@ sub reset_or_grab_job_by_dbID {
 =cut
 
 sub grab_jobs_for_worker {
-    my ($self, $worker, $how_many_this_batch) = @_;
+    my ($self, $worker, $how_many_this_batch, $workers_rank) = @_;
   
-  my $analysis_id = $worker->analysis_id();
-  my $worker_id   = $worker->dbID();
+    my $analysis_id = $worker->analysis_id();
+    my $worker_id   = $worker->dbID();
+    my $offset      = $how_many_this_batch*$workers_rank;
 
-  my $update_sql            = "UPDATE job SET worker_id='$worker_id', status='CLAIMED'";
-  my $selection_start_sql   = " WHERE analysis_id='$analysis_id' AND status='READY'";
+    my $prefix_sql = qq{
+         UPDATE job j
+           JOIN (
+                            SELECT job_id
+                              FROM job
+                             WHERE analysis_id='$analysis_id'
+                               AND status='READY'
+    };
+    my $suffix_sql = qq{
+                             LIMIT $how_many_this_batch
+                            OFFSET $offset
+                 ) as x
+         USING (job_id)
+           SET j.worker_id='$worker_id', j.status='CLAIMED'
+           WHERE j.status='READY'
+    };
 
-  my $virgin_selection_sql  = $selection_start_sql . " AND retry_count=0 LIMIT $how_many_this_batch";
-  my $any_selection_sql     = $selection_start_sql . " LIMIT $how_many_this_batch";
+        # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
+    if( (my $claim_count = $self->dbc->do( $prefix_sql . ' AND retry_count=0 '. $suffix_sql)) == 0 ) {
+        $claim_count = $self->dbc->do( $prefix_sql . $suffix_sql);
+    }
 
-  if($self->dbc->driver eq 'mysql') {
-            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-      if( (my $claim_count = $self->dbc->do( $update_sql . $virgin_selection_sql )) == 0 ) {
-            $claim_count = $self->dbc->do( $update_sql . $any_selection_sql );
-      }
-  } else {
-            # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-      if( (my $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $virgin_selection_sql) AND status='READY'" )) == 0 ) {
-            $claim_count = $self->dbc->do( $update_sql . " WHERE job_id IN (SELECT job_id FROM job $any_selection_sql) AND status='READY'" );
-      }
-  }
-
-#  my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
+#   my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
     my $constraint = "j.worker_id='$worker_id' AND j.status='CLAIMED'";
     return $self->_generic_fetch($constraint);
 }

@@ -523,7 +523,8 @@ sub run {
                     my $desired_batch_size = $self->analysis->stats->get_or_estimate_batch_size();
                     $desired_batch_size = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
-                    my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size );
+                    my $workers_rank = $self->adaptor->get_workers_rank( $self );
+                    my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size, $workers_rank );
                     if(scalar(@$actual_batch)) {
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
                         $jobs_done_by_batches_loop += $jobs_done_by_this_batch;
