@@ -559,18 +559,21 @@ sub grab_jobs_for_worker {
                              WHERE analysis_id='$analysis_id'
                                AND status='READY'
     };
+    my $virgin_sql = qq{       AND retry_count=0 };
+    my $limit_sql  = qq{     LIMIT $how_many_this_batch };
+    my $offset_sql = qq{    OFFSET $offset };
     my $suffix_sql = qq{
-                             LIMIT $how_many_this_batch
-                            OFFSET $offset
                  ) as x
          USING (job_id)
            SET j.worker_id='$worker_id', j.status='CLAIMED'
-           WHERE j.status='READY'
+         WHERE j.status='READY'
     };
 
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-    if( (my $claim_count = $self->dbc->do( $prefix_sql . ' AND retry_count=0 '. $suffix_sql)) == 0 ) {
-        $claim_count = $self->dbc->do( $prefix_sql . $suffix_sql);
+    if(  (my $claim_count = $self->dbc->do( $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
+        if( ($claim_count = $self->dbc->do( $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
+             $claim_count = $self->dbc->do( $prefix_sql .               $limit_sql .               $suffix_sql);
+        }
     }
 
 #   my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
