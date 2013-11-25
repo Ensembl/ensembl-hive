@@ -341,14 +341,15 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $queen_worker_list           = $self->fetch_overdue_workers(0);
+    my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
+    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     my %mt_and_pid_to_worker_status = ();
     my %worker_status_counts        = ();
     my %mt_and_pid_to_lost_worker   = ();
 
-    warn "GarbageCollector:\t[Queen:] we have ".scalar(@$queen_worker_list)." Workers alive.\n";
+    warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
-    foreach my $worker (@$queen_worker_list) {
+    foreach my $worker (@$queen_overdue_workers) {
 
         my $meadow_type = $worker->meadow_type;
         if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
@@ -809,8 +810,8 @@ sub monitor {
 sub register_all_workers_dead {
     my $self = shift;
 
-    my $overdueWorkers = $self->fetch_overdue_workers(0);
-    foreach my $worker (@{$overdueWorkers}) {
+    my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
+    foreach my $worker (@{$all_workers_considered_alive}) {
         $worker->cause_of_death( 'UNKNOWN' );  # well, maybe we could have investigated further...
         $self->register_worker_death($worker);
     }
