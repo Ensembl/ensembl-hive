@@ -446,7 +446,7 @@ CREATE INDEX ON meta (species_id, meta_value);
 @column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
 
-CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
+CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
 CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
     meadow_type             VARCHAR(255) NOT NULL,

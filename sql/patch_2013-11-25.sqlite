@@ -1,0 +1,8 @@
+
+    -- Add 'RELOCATED' to the possible values of cause_of_death:
+
+    -- (since SQLite uses TEXT instead of ENUM types, our change here is trivial)
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=55 WHERE meta_key='hive_sql_schema_version' AND meta_value='54';
+

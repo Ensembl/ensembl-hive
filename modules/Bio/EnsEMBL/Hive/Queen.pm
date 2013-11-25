@@ -114,6 +114,18 @@ sub create_new_worker {
     rearrange([qw(meadow_type meadow_name process_id exec_host resource_class_id resource_class_name
                 no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs can_respecialize) ], @args);
 
+    foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
+            # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
+            # Since I don't know how to avoid them, I am trying to register them when they happen.
+            # The following snippet buries the previous incarnation of the Worker before starting a new one.
+            #
+            # FIXME: if GarabageCollector (beekeeper -dead) gets to these processes first, it will register them as DEAD/UNKNOWN.
+            #       LSF 9.0 does not report "rescheduling" events in the output of 'bacct', but does mention them in 'bhist'.
+            #       So parsing 'bhist' output would probably yield the most accurate & confident registration of these events.
+        $prev_worker_incarnation->cause_of_death( 'RELOCATED' );
+        $self->register_worker_death( $prev_worker_incarnation );
+    }
+
     if( defined($resource_class_name) ) {
         my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
             or die "resource_class with name='$resource_class_name' could not be fetched from the database";
