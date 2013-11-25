@@ -296,14 +296,15 @@ sub specialize_new_worker {
 
 
 sub register_worker_death {
-    my ($self, $worker) = @_;
+    my ($self, $worker, $self_burial) = @_;
 
     return unless($worker);
 
     my $cod = $worker->cause_of_death() || 'UNKNOWN';    # make sure we do not attempt to insert a void
 
+                    # FIXME: make it possible to set the 'died' timestamp if we have detected it from logs:
     my $sql = qq{UPDATE worker SET died=CURRENT_TIMESTAMP
-                    ,last_check_in=CURRENT_TIMESTAMP
+    } . ( $self_burial ? ',last_check_in=CURRENT_TIMESTAMP ' : '') . qq{
                     ,status='DEAD'
                     ,work_done='}. $worker->work_done . qq{'
                     ,cause_of_death='$cod'

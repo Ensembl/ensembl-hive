@@ -582,7 +582,7 @@ sub run {
         }
     }
 
-    $self->adaptor->register_worker_death($self);
+    $self->adaptor->register_worker_death($self, 1);
 
     if($self->debug) {
         $self->worker_say( 'AnalysisStats :'.$self->analysis->stats->toString ) if($self->analysis_id());
