@@ -551,9 +551,17 @@ sub grab_jobs_for_worker {
     my $worker_id   = $worker->dbID();
     my $offset      = $how_many_this_batch*$workers_rank;
 
-    my $prefix_sql = qq{
+    my $prefix_sql = ($self->dbc->driver eq 'mysql') ? qq{
          UPDATE job j
            JOIN (
+                            SELECT job_id
+                              FROM job
+                             WHERE analysis_id='$analysis_id'
+                               AND status='READY'
+    } : qq{
+         UPDATE job
+           SET worker_id='$worker_id', status='CLAIMED'
+         WHERE job_id in (
                             SELECT job_id
                               FROM job
                              WHERE analysis_id='$analysis_id'
@@ -562,11 +570,14 @@ sub grab_jobs_for_worker {
     my $virgin_sql = qq{       AND retry_count=0 };
     my $limit_sql  = qq{     LIMIT $how_many_this_batch };
     my $offset_sql = qq{    OFFSET $offset };
-    my $suffix_sql = qq{
+    my $suffix_sql = ($self->dbc->driver eq 'mysql') ? qq{
                  ) as x
          USING (job_id)
            SET j.worker_id='$worker_id', j.status='CLAIMED'
          WHERE j.status='READY'
+    } : qq{
+                 )
+           AND status='READY'
     };
 
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
