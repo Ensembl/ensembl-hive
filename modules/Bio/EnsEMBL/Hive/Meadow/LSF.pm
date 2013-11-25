@@ -8,9 +8,12 @@ use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
 sub name {  # also called to check for availability; assume LSF is available if LSF cluster_name can be established
-
     my $mcni = 'My cluster name is';
-    if(my $name = `lsid 2>/dev/null | grep '$mcni' `) {
+    my $cmd = "lsid 2>/dev/null | grep '$mcni'";
+
+#    warn "LSF::name() running cmd:\n\t$cmd\n";
+
+    if(my $name = `$cmd`) {
         $name=~/^$mcni\s+(\S+)/;
         return $1;
     }
@@ -41,6 +44,8 @@ sub count_pending_workers_by_rc_name {
     my $jnp = $self->job_name_prefix();
     my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND";
 
+#    warn "LSF::count_pending_workers_by_rc_name() running cmd:\n\t$cmd\n";
+
     my %pending_this_meadow_by_rc_name = ();
     my $total_pending_this_meadow = 0;
 
@@ -61,6 +66,8 @@ sub count_running_workers {
     my $jnp = $self->job_name_prefix();
     my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep RUN | wc -l";
 
+#    warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
+
     my $run_count = qx/$cmd/;
     chomp($run_count);
 
@@ -73,6 +80,8 @@ sub status_of_all_our_workers { # returns a hashref
 
     my $jnp = $self->job_name_prefix();
     my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null";
+
+#    warn "LSF::status_of_all_our_workers() running cmd:\n\t$cmd\n";
 
     my %status_hash = ();
     foreach my $line (`$cmd`) {
@@ -98,6 +107,8 @@ sub check_worker_is_alive_and_mine {
     my $this_user = $ENV{'USER'};
     my $cmd = qq{bjobs $wpid -u $this_user 2>&1 | grep -v 'not found' | grep -v JOBID | grep -v EXIT};
 
+#    warn "LSF::check_worker_is_alive_and_mine() running cmd:\n\t$cmd\n";
+
     my $is_alive_and_mine = qx/$cmd/;
     return $is_alive_and_mine;
 }
@@ -107,6 +118,9 @@ sub kill_worker {
     my $worker = pop @_;
 
     my $cmd = 'bkill '.$worker->process_id();
+
+#    warn "LSF::kill_worker() running cmd:\n\t$cmd\n";
+
     system($cmd);
 }
 
@@ -123,9 +137,11 @@ sub find_out_causes {
     my %cod = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-        my $bacct_output = `bacct -l $pid_batch`;
+        my $cmd = "bacct -l $pid_batch";
 
-        foreach my $section (split(/\-{10,}\s+/, $bacct_output)) {
+#        warn "LSF::find_out_causes() running cmd:\n\t$cmd\n";
+
+        foreach my $section (split(/\-{10,}\s+/, `$cmd`)) {
             if($section=~/^Job <(\d+(?:\[\d+\])?)>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
                 $cod{$1} = $lsf_2_hive{$2};
             }
@@ -149,7 +165,8 @@ sub submit_workers {
 
     my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
 
-    print "SUBMITTING_CMD:\t\t$cmd\n";
+    warn "LSF::submit_workers() running cmd:\n\t$cmd\n";
+
     system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
 }
 
