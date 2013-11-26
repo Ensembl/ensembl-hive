@@ -13,6 +13,7 @@ BEGIN {
 
 
 use Getopt::Long;
+use File::Path 'make_path';
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -68,6 +69,7 @@ sub main {
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_stdout_file'}   = undef;
     $self->{'submit_stderr_file'}   = undef;
+    $self->{'submit_log_dir'}       = undef;
 
     GetOptions(
                     # connection parameters
@@ -103,6 +105,7 @@ sub main {
                'debug=i'                => \$self->{'debug'},
                'submit_stdout_file=s'   => \$self->{'submit_stdout_file'},
                'submit_stderr_file=s'   => \$self->{'submit_stderr_file'},
+               'submit_log_dir=s'       => \$self->{'submit_log_dir'},
 
                     # other commands/options
                'h|help'            => \$help,
@@ -332,6 +335,11 @@ sub run_autonomously {
         $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
     }
 
+    if( $self->{'submit_log_dir'} ) {
+        make_path( $self->{'submit_log_dir'} );
+    }
+    my $beekeeper_pid = $$;
+
     my $iteration=0;
     my $num_of_remaining_jobs=0;
     my $failed_analyses=0;
@@ -368,6 +376,11 @@ sub run_autonomously {
                     my $specific_worker_cmd = $resourceless_worker_cmd
                                             . ($special_task ? '' : " -rc_name $rc_name")
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
+
+                    if( $self->{'submit_log_dir'} ) {
+                        $self->{'submit_stdout_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}.out";
+                        $self->{'submit_stderr_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}.err";
+                    }
 
                     $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
                                                     $rc_name, $submission_cmd_args || '',
