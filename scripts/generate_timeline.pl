@@ -251,7 +251,7 @@ __DATA__
 
 =head1 NAME
 
-    generate_profile.pl
+    generate_timeline.pl
 
 =head1 DESCRIPTION
 
@@ -268,13 +268,13 @@ __DATA__
 =head1 USAGE EXAMPLES
 
         # Just run it the usual way: only the top 20 analysis will be reported in CSV format
-    generate_profile.pl -url mysql://username:secret@hostname:port/database > profile.csv
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database > timeline.csv
 
         # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
-    generate_profile.pl -url mysql://username:secret@hostname:port/database -top .995 -output profile.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline.png
 
         # Assuming you are only interested in a precise interval (in a PNG file)
-    generate_profile.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output profile.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline.png
 
 =head1 OPTIONS
 
