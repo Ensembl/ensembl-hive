@@ -448,6 +448,7 @@ my $col_count = 1;
 #========================================#
 # Display the detailled tables by header #
 #========================================#
+my $header_id = 1;
 foreach my $header_name (@header_names) {
   my $tables = $tables_names->{$header_name};
   my $hcolour = $documentation->{$header_name}{'colour'};
@@ -458,8 +459,9 @@ foreach my $header_name (@header_names) {
   if ($header_flag == 1 and $header_name ne 'default') {
     $html_content .= qq{\n<br /><br />
 <div style="$list_bg;padding:5px;margin:5px 0px;border-top:2px solid $hcolour">
-  <h2 style="display:inline;color:#000">$header_name</h2>
+  <h2 id="$header_id" style="display:inline;color:#000">$header_name</h2>
 </div>\n};
+    $header_id ++;
     my $header_desc = $documentation->{$header_name}{'desc'};    
     $html_content .= qq{<p style="width:800px">$header_desc</p>} if (defined($header_desc));
   }
