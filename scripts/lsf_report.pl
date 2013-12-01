@@ -139,6 +139,8 @@ sub main {
     my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (process_id, status, mem_megs, swap_megs, exception_status) VALUES (?, ?, ?, ?, ?)' );
     {
         local $/ = "------------------------------------------------------------------------------\n\n";
+        my %units_converter = ( 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 );
+
         open(my $bacct_fh, $bacct_source_line);
         my $record = <$bacct_fh>; # skip the header
 
@@ -165,8 +167,8 @@ sub main {
                 my ($mem_in_units, $mem_unit)   = $usage{'MEM'}  =~ /^([\d\.]+)([KMGT])$/;
                 my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMGT])$/;
 
-                my $mem_megs    = $mem_in_units  * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 }->{$mem_unit};
-                my $swap_megs   = $swap_in_units * { 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 }->{$swap_unit};
+                my $mem_megs    = $mem_in_units  * $units_converter{$mem_unit};
+                my $swap_megs   = $swap_in_units * $units_converter{$swap_unit};
 
                 # warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$mem_megs, SWAP=$swap_megs, EXC_STATUS='$exception_status'\n";
                 $sth_replace->execute( $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
