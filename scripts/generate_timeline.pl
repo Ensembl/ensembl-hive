@@ -29,7 +29,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $start_date, $end_date, $output, $top, $logscale);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory);
 
     GetOptions(
                 # connect to the database:
@@ -41,8 +41,10 @@ sub main {
 
             'start_date=s'               => \$start_date,
             'end_date=s'                 => \$end_date,
+            'mode=s'                     => \$mode,
             'top=f'                      => \$top,
             'log=i'                      => \$logscale,
+            'mem=i'                      => \$default_memory,
             'output=s'                   => \$output,
             'h|help'                     => \$help,
     );
@@ -61,6 +63,18 @@ sub main {
     } else {
         warn "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
         script_usage(1);
+    }
+
+    # Check whether $mode is valid
+    my %allowed_modes = (
+        workers => 'Number of workers',
+        memory => 'Memory asked (Gb)',
+    );
+    if ($mode) {
+        die "Unknown mode '$mode'. Allowed modes are: ".join(", ", keys %allowed_modes) unless exists $allowed_modes{$mode};
+        $default_memory = 100 unless $default_memory;
+    } else {
+        $mode = 'workers';
     }
 
     # Palette generated with R: c(brewer.pal(9, "Set1"), brewer.pal(12, "Set3")). #FFFFB3 is removed because it is too close to white
@@ -86,32 +100,59 @@ sub main {
 
     my $dbh = $hive_dba->dbc->db_handle();
 
+    # Get the memory usage from each resource_class
+    my %mem_resources = ();
+    {
+        my $sql_resource_descriptions = 'SELECT resource_class_id, meadow_type, submission_cmd_args FROM resource_description';
+        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_resource_descriptions)}) {
+            my ($resource_class_id, $meadow_type, $submission_cmd_args) = @$db_entry;
+            if ($meadow_type eq 'LSF') {
+                $mem_resources{$resource_class_id} = $1 if $submission_cmd_args =~ m/mem=(\d+)/;
+            }
+        }
+    }
+
+    # Get the info about the analysis
+    my %default_resource_class = ();
+    my %analysis_name = ();
+    {
+        my $sql_analysis_info = 'SELECT analysis_id, logic_name, resource_class_id FROM analysis_base';
+        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_analysis_info)}) {
+            my ($analysis_id, $logic_name, $resource_class_id) = @$db_entry;
+            $analysis_name{$analysis_id} = $logic_name;
+            $default_resource_class{$analysis_id} = $resource_class_id;
+        }
+    }
+    warn "default_resource_class: ", Dumper \%default_resource_class;
+    warn "analysis_name: ", Dumper \%analysis_name;
+    warn scalar(keys %analysis_name), " analysis\n";
+
     # Get the events from the database
     my %events = ();
     {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id, 1 FROM worker WHERE analysis_id IS NOT NULL')};
-        push @tmp_dates, @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, -1 FROM worker WHERE analysis_id IS NOT NULL')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id, resource_class_id, 1 FROM worker WHERE analysis_id IS NOT NULL')};
+        push @tmp_dates, @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, resource_class_id, -1 FROM worker WHERE analysis_id IS NOT NULL')};
         warn scalar(@tmp_dates), " events\n";
 
         foreach my $db_entry (@tmp_dates) {
-            my ($event_date, $analysis_id, $offset) = @$db_entry;
-            $events{$event_date}{$analysis_id} += $offset;
+            my ($event_date, $analysis_id, $resource_class_id, $offset) = @$db_entry;
+            $resource_class_id = $default_resource_class{$analysis_id} unless $resource_class_id;
+            if ($mode eq 'workers') {
+                $events{$event_date}{$analysis_id} += $offset;
+            } else {
+                $events{$event_date}{$analysis_id} += $offset * ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
+            }
         }
     }
     my @event_dates = sort {$a cmp $b} (keys %events);
     warn scalar(@event_dates), " dates\n";
-
-    my $sql_analysis_names = 'SELECT analysis_id, logic_name FROM analysis_base';
-    my @analysis_data = @{$dbh->selectall_arrayref($sql_analysis_names)};
-    my %name = (map {$_->[0] => $_->[1] } @analysis_data);
-    warn scalar(@analysis_data), " analysis\n";
 
     my $max_workers = 0;
     my @data_timings = ();
     my %tot_analysis = ();
 
     my $num_curr_workers = 0;
-    my %hash_curr_workers = (map {$_->[0] => 0 } @analysis_data);
+    my %hash_curr_workers = (map {$_ => 0 } (keys %analysis_name));
 
     foreach my $event_date (@event_dates) {
 
@@ -141,12 +182,12 @@ sub main {
 
     my $total_total = sum(values %tot_analysis);
 
-    my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $name{$a} cmp lc $name{$b})} (grep {$tot_analysis{$_}} keys %tot_analysis);
+    my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $analysis_name{$a} cmp lc $analysis_name{$b})} (grep {$tot_analysis{$_}} keys %tot_analysis);
     warn Dumper \@sorted_analysis_ids;
-    warn Dumper([map {$name{$_}} @sorted_analysis_ids]);
+    warn Dumper([map {$analysis_name{$_}} @sorted_analysis_ids]);
 
     if (not $gnuplot_terminal) {
-        print join("\t", 'date', 'OVERALL', map {$name{$_}} @sorted_analysis_ids), "\n";
+        print join("\t", 'date', "OVERALL_$mode", map {$analysis_name{$_}} @sorted_analysis_ids), "\n";
         print join("\t", 'total', $total_total, map {$tot_analysis{$_}} @sorted_analysis_ids), "\n";
         print join("\t", 'proportion', 'NA', map {$tot_analysis{$_}/$total_total} @sorted_analysis_ids), "\n";
         my $s = 0;
@@ -211,7 +252,7 @@ sub main {
             xdata => \@xdata,
             ydata => \@ydata,
             timefmt => '%Y-%m-%dT%H:%M:%S',
-            title => $name{$sorted_analysis_ids[$i-1]},
+            title => $analysis_name{$sorted_analysis_ids[$i-1]},
             style => 'filledcurves x1',
             linewidth => '0',
             color => $palette[$i-1],
@@ -235,7 +276,7 @@ sub main {
         imagesize => '1400, 800',
         output => $output,
         terminal => $terminal_mapping{$gnuplot_terminal},
-        ylabel => 'Number of workers',
+        ylabel => $allowed_modes{$mode},
         yrange => [$pseudo_zero_value, undef],
         $logscale ? (logscale => 'y') : (),
     );
@@ -260,7 +301,7 @@ __DATA__
     Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
     worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
     of the 'worker' table for accurate timing.
-    By default, the output is in CSV format, to allow extra analaysis to be carried.
+    By default, the output is in CSV format, to allow extra analysis to be carried.
 
     You can optionally ask the script to generate an image with Gnuplot.
 
