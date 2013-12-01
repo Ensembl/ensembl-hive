@@ -130,7 +130,7 @@ sub dbc_hash_to_cmd {
               .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port} " : '')
               ."--user=$dbc_hash->{user} --pass='$dbc_hash->{pass}' "
               .(defined($extra) ? "$extra " : '')
-              .$dbc_hash->{dbname}
+              .($dbc_hash->{dbname} || '')
               .(defined($sqlcmd) ? " -e '$sqlcmd'" : '');
     } elsif($driver eq 'pgsql') {
 
@@ -140,9 +140,10 @@ sub dbc_hash_to_cmd {
               ."--username=$dbc_hash->{user} "
               .(defined($sqlcmd) ? "--command='$sqlcmd' " : '')
               .(defined($extra) ? "$extra " : '')
-              .$dbc_hash->{dbname};
+              .($dbc_hash->{dbname} || '');
     } elsif($driver eq 'sqlite') {
 
+        die "sqlite requires a database (file) name\n";
         $cmd = "sqlite3 "
               .(defined($extra) ? "$extra " : '')
               .$dbc_hash->{dbname}
