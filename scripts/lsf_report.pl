@@ -17,6 +17,7 @@ BEGIN {
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Meadow::LSF;
 
 main();
 exit(0);
@@ -62,13 +63,14 @@ sub main {
     warn "Creating the 'lsf_report' table if it doesn't exist...\n";
     $dbc->do (qq{
         CREATE TABLE IF NOT EXISTS lsf_report (
-            process_id       varchar(40) NOT NULL,
+            meadow_name      varchar(255) NOT NULL,
+            process_id       varchar(255) NOT NULL,
             status           varchar(20) NOT NULL,
             mem_megs         float NOT NULL,
             swap_megs        float NOT NULL,
             exception_status varchar(40) NOT NULL,
 
-            PRIMARY KEY (process_id)
+            PRIMARY KEY (meadow_name,process_id)
 
         ) ENGINE=InnoDB;
     });
@@ -84,11 +86,14 @@ sub main {
             FROM analysis_base
             JOIN resource_class rc USING(resource_class_id)
             LEFT JOIN worker w USING(analysis_id)
-            LEFT JOIN lsf_report USING (process_id)
+            LEFT JOIN lsf_report USING (meadow_name, process_id)
             WHERE w.meadow_type='LSF'
             GROUP BY analysis_id
             ORDER BY analysis_id;
     });
+
+    my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name();
+    die "Cannot find the name of the current farm.\n" unless $this_lsf_farm;
 
     if( $bacct_source_line && -r $bacct_source_line ) {
 
@@ -96,13 +101,13 @@ sub main {
 
     } else {
 
-        warn "No bacct information given, finding out the time interval when the pipeline was run...\n";
+        warn "No bacct information given, finding out the time interval when the pipeline was run on '$this_lsf_farm' ...\n";
 
         my $offset_died_expression = ($dbc->driver eq 'sqlite')
                         ? "datetime(max(died), '+1 minute')"
                         : "FROM_UNIXTIME(UNIX_TIMESTAMP(max(died))+60)";
 
-        my $sth_times = $dbc->prepare( "SELECT min(born), $offset_died_expression FROM worker WHERE meadow_type='LSF' AND status='DEAD'" );
+        my $sth_times = $dbc->prepare( "SELECT min(born), $offset_died_expression FROM worker WHERE meadow_type='LSF' AND meadow_name='$this_lsf_farm' AND status='DEAD'" );
         $sth_times->execute();
         my ($from_time, $to_time) = $sth_times->fetchrow_array();
         $sth_times->finish();
@@ -136,7 +141,7 @@ sub main {
         warn 'Will run the following command to obtain '.($tee ? 'and dump ' : '')."bacct information: '$bacct_source_line' (may take a few minutes)\n";
     }
 
-    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (process_id, status, mem_megs, swap_megs, exception_status) VALUES (?, ?, ?, ?, ?)' );
+    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (meadow_name, process_id, status, mem_megs, swap_megs, exception_status) VALUES (?, ?, ?, ?, ?, ?)' );
     {
         local $/ = "------------------------------------------------------------------------------\n\n";
         my %units_converter = ( 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 );
@@ -171,7 +176,7 @@ sub main {
                 my $swap_megs   = $swap_in_units * $units_converter{$swap_unit};
 
                 # warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$mem_megs, SWAP=$swap_megs, EXC_STATUS='$exception_status'\n";
-                $sth_replace->execute( $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
+                $sth_replace->execute( $this_lsf_farm, $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
             }
         }
 
@@ -198,7 +203,7 @@ __DATA__
     Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
     worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
     of LSF's 'bacct' database, parses it and stores in 'lsf_report' table.
-    You can join this table to 'worker' table USING(process_id) in the usual MySQL way
+    You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
     to filter by analysis_id, do various stats, etc.
 
     You can optionally ask the script to dump the 'bacct' database in a dump file,
