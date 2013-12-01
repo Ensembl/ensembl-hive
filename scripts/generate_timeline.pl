@@ -29,7 +29,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory, $default_cores);
 
     GetOptions(
                 # connect to the database:
@@ -45,6 +45,7 @@ sub main {
             'top=f'                      => \$top,
             'log=i'                      => \$logscale,
             'mem=i'                      => \$default_memory,
+            'n_core=i'                     => \$default_cores,
             'output=s'                   => \$output,
             'h|help'                     => \$help,
     );
@@ -69,10 +70,12 @@ sub main {
     my %allowed_modes = (
         workers => 'Number of workers',
         memory => 'Memory asked (Gb)',
+        cores => 'Number of CPU cores',
     );
     if ($mode) {
         die "Unknown mode '$mode'. Allowed modes are: ".join(", ", keys %allowed_modes) unless exists $allowed_modes{$mode};
         $default_memory = 100 unless $default_memory;
+        $default_cores = 1 unless $default_cores;
     } else {
         $mode = 'workers';
     }
@@ -102,12 +105,14 @@ sub main {
 
     # Get the memory usage from each resource_class
     my %mem_resources = ();
+    my %cpu_resources = ();
     {
         my $sql_resource_descriptions = 'SELECT resource_class_id, meadow_type, submission_cmd_args FROM resource_description';
         foreach my $db_entry (@{$dbh->selectall_arrayref($sql_resource_descriptions)}) {
             my ($resource_class_id, $meadow_type, $submission_cmd_args) = @$db_entry;
             if ($meadow_type eq 'LSF') {
                 $mem_resources{$resource_class_id} = $1 if $submission_cmd_args =~ m/mem=(\d+)/;
+                $cpu_resources{$resource_class_id} = $1 if $submission_cmd_args =~ m/-n\s*(\d+)/;
             }
         }
     }
@@ -139,8 +144,10 @@ sub main {
             $resource_class_id = $default_resource_class{$analysis_id} unless $resource_class_id;
             if ($mode eq 'workers') {
                 $events{$event_date}{$analysis_id} += $offset;
-            } else {
+            } elsif ($mode eq 'memory') {
                 $events{$event_date}{$analysis_id} += $offset * ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
+            } else {
+                $events{$event_date}{$analysis_id} += $offset * ($cpu_resources{$resource_class_id} || $default_cores);
             }
         }
     }
