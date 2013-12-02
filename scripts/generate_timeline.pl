@@ -29,7 +29,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory, $default_cores);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory, $default_cores);
 
     GetOptions(
                 # connect to the database:
@@ -39,15 +39,17 @@ sub main {
             'reg_alias|regname=s'        => \$reg_alias,
             'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+            'verbose!'                   => \$verbose,
+            'h|help'                     => \$help,
+
             'start_date=s'               => \$start_date,
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'top=f'                      => \$top,
             'log=i'                      => \$logscale,
             'mem=i'                      => \$default_memory,
-            'n_core=i'                     => \$default_cores,
+            'n_core=i'                   => \$default_cores,
             'output=s'                   => \$output,
-            'h|help'                     => \$help,
     );
 
     if ($help) { script_usage(0); }
@@ -117,8 +119,8 @@ sub main {
             }
         }
     }
-    warn "mem_resources: ", Dumper \%mem_resources;
-    warn "cpu_resources: ", Dumper \%cpu_resources;
+    warn "mem_resources: ", Dumper \%mem_resources if $verbose;
+    warn "cpu_resources: ", Dumper \%cpu_resources if $verbose;
 
     # Get the memory used by each worker
     my %used_mem = ();
@@ -128,7 +130,7 @@ sub main {
             my ($meadow_name, $process_id, $mem_megs) = @$db_entry;
             $used_mem{$meadow_name."_____".$process_id} = $mem_megs;
         }
-        warn scalar(keys %used_mem), " process info loaded from lsf_report\n";
+        warn scalar(keys %used_mem), " process info loaded from lsf_report\n" if $verbose;
     }
 
     # Get the info about the analysis
@@ -142,16 +144,16 @@ sub main {
             $default_resource_class{$analysis_id} = $resource_class_id;
         }
     }
-    warn "default_resource_class: ", Dumper \%default_resource_class;
-    warn "analysis_name: ", Dumper \%analysis_name;
-    warn scalar(keys %analysis_name), " analysis\n";
+    warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
+    warn "analysis_name: ", Dumper \%analysis_name if $verbose;
+    warn scalar(keys %analysis_name), " analysis\n" if $verbose;
 
     # Get the events from the database
     my %events = ();
     {
         my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id, 1 FROM worker WHERE analysis_id IS NOT NULL')};
         push @tmp_dates, @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id, -1 FROM worker WHERE analysis_id IS NOT NULL')};
-        warn scalar(@tmp_dates), " events\n";
+        warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
             my ($event_date, $analysis_id, $meadow_name, $process_id, $resource_class_id, $offset) = @$db_entry;
@@ -172,7 +174,7 @@ sub main {
         }
     }
     my @event_dates = sort {$a cmp $b} (keys %events);
-    warn scalar(@event_dates), " dates\n";
+    warn scalar(@event_dates), " dates\n" if $verbose;
 
     my $max_workers = 0;
     my @data_timings = ();
@@ -204,14 +206,14 @@ sub main {
         push @data_timings, [$event_date, $data_timings[-1]->[1]] if @data_timings;
         push @data_timings, [$event_date, \%hash_interval];
     }
-    warn $max_workers;
-    warn Dumper \%tot_analysis;
+    warn $max_workers if $verbose;
+    warn Dumper \%tot_analysis if $verbose;
 
     my $total_total = sum(values %tot_analysis);
 
     my @sorted_analysis_ids = sort {($tot_analysis{$b} <=> $tot_analysis{$a}) || (lc $analysis_name{$a} cmp lc $analysis_name{$b})} (grep {$tot_analysis{$_}} keys %tot_analysis);
-    warn Dumper \@sorted_analysis_ids;
-    warn Dumper([map {$analysis_name{$_}} @sorted_analysis_ids]);
+    warn Dumper \@sorted_analysis_ids if $verbose;
+    warn Dumper([map {$analysis_name{$_}} @sorted_analysis_ids]) if $verbose;
 
     if (not $gnuplot_terminal) {
         print join("\t", 'date', "OVERALL_$mode", map {$analysis_name{$_}} @sorted_analysis_ids), "\n";
@@ -244,7 +246,7 @@ sub main {
         $need_other_analysis = 1;
     }
     $top = $n_relevant_analysis unless $top;
-    warn $n_relevant_analysis;
+    warn "$n_relevant_analysis relevant analysis\n" if $verbose;
 
     my @xdata = map {$_->[0]} @data_timings;
 
