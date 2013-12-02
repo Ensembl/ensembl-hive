@@ -210,7 +210,8 @@ sub main {
             $hash_curr_workers{$analysis_id} += $topup_hash->{$analysis_id};
             $num_curr_workers += $topup_hash->{$analysis_id};
         }
-        #die sum(values %hash_curr_workers)."!=$num_curr_workers" if sum(values %hash_curr_workers) != $num_curr_workers;
+        # Due to rounding errors, the sums may be slightly different
+        die sum(values %hash_curr_workers)."!=$num_curr_workers" if abs(sum(values %hash_curr_workers) - $num_curr_workers) > 0.05;
 
         next if $start_date and ($event_date lt $start_date);
 
@@ -277,6 +278,8 @@ sub main {
         my @ydata = ();
         foreach my $row (@data_timings) {
             push @ydata, sum(map {$row->[1]->{$_}} @sorted_analysis_ids ) || $pseudo_zero_value;
+            # Due to rounding errors, values are not always decreased to 0
+            $ydata[-1] = $pseudo_zero_value if $ydata[-1] < 0.05;
         }
         push @datasets, Chart::Gnuplot::DataSet->new(
             xdata => \@xdata,
@@ -294,6 +297,8 @@ sub main {
         my @ydata;
         foreach my $row (@data_timings) {
             push @ydata, sum(map {$row->[1]->{$_} || 0} @sorted_analysis_ids[0..($i-1)] ) || $pseudo_zero_value;
+            # Due to rounding errors, values are not always decreased to 0
+            $ydata[-1] = $pseudo_zero_value if $ydata[-1] < 0.05;
         }
         my $dataset = Chart::Gnuplot::DataSet->new(
             xdata => \@xdata,
