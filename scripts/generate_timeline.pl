@@ -152,31 +152,33 @@ sub main {
     # Get the events from the database
     my %events = ();
     {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id, 1 FROM worker WHERE analysis_id IS NOT NULL')};
-        push @tmp_dates, @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id, -1 FROM worker WHERE analysis_id IS NOT NULL')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id FROM worker WHERE analysis_id IS NOT NULL')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($event_date, $analysis_id, $meadow_name, $process_id, $resource_class_id, $offset) = @$db_entry;
+            my ($birth_date, $death_date, $analysis_id, $meadow_name, $process_id, $resource_class_id) = @$db_entry;
             $resource_class_id = $default_resource_class{$analysis_id} unless $resource_class_id;
+            my $offset = 0;
+
             if ($mode eq 'workers') {
-                $events{$event_date}{$analysis_id} += $offset;
+                $offset = 1;
             } elsif ($mode eq 'memory') {
-                $events{$event_date}{$analysis_id} += $offset * ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
+                $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
             } elsif ($mode eq 'cores') {
-                $events{$event_date}{$analysis_id} += $offset * ($cpu_resources{$resource_class_id} || $default_cores);
+                $offset = ($cpu_resources{$resource_class_id} || $default_cores);
             } elsif ($mode eq 'unused_memory') {
                 my $process_signature = $meadow_name."_____".$process_id;
                 if (exists $used_res{$process_signature}) {
-                    $events{$event_date}{$analysis_id} += $offset * (($mem_resources{$resource_class_id} || $default_memory) - $used_res{$process_signature}->[0]) / 1024.;
+                    $offset = (($mem_resources{$resource_class_id} || $default_memory) - $used_res{$process_signature}->[0]) / 1024.;
                 }
             } else {
                 my $process_signature = $meadow_name."_____".$process_id;
                 if (exists $used_res{$process_signature}) {
-                    my $unused_cores = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$process_signature}->[1];
-                    $events{$event_date}{$analysis_id} += $offset * $unused_cores if $unused_cores > 0;
+                    $offset = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$process_signature}->[1];
                 }
             }
+            $events{$birth_date}{$analysis_id} += $offset if $offset > 0;
+            $events{$death_date}{$analysis_id} -= $offset if $offset > 0;
         }
     }
     my @event_dates = sort {$a cmp $b} (keys %events);
