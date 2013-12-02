@@ -73,7 +73,7 @@ sub main {
         workers => 'Number of workers',
         memory => 'Memory asked (Gb)',
         cores => 'Number of CPU cores',
-        wasted_memory => 'Wasted memory (Gb)',
+        unused_memory => 'Unused memory (Gb)',
     );
     if ($mode) {
         die "Unknown mode '$mode'. Allowed modes are: ".join(", ", keys %allowed_modes) unless exists $allowed_modes{$mode};
@@ -124,7 +124,7 @@ sub main {
 
     # Get the memory used by each worker
     my %used_mem = ();
-    if ($mode eq 'wasted_memory') {
+    if ($mode eq 'unused_memory') {
         my $sql_used_mem = 'SELECT meadow_name, process_id, mem_megs FROM lsf_report';
         foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_mem)}) {
             my ($meadow_name, $process_id, $mem_megs) = @$db_entry;
@@ -167,8 +167,8 @@ sub main {
             } else {
                 my $process_signature = $meadow_name."_____".$process_id;
                 if (exists $used_mem{$process_signature}) {
-                    my $wasted_memory = ($mem_resources{$resource_class_id} || $default_memory) - $used_mem{$process_signature};
-                    $events{$event_date}{$analysis_id} += $offset * $wasted_memory / 1024. if $wasted_memory > 0;
+                    my $unused_memory = ($mem_resources{$resource_class_id} || $default_memory) - $used_mem{$process_signature};
+                    $events{$event_date}{$analysis_id} += $offset * $unused_memory / 1024. if $unused_memory > 0;
                 }
             }
         }
@@ -328,7 +328,7 @@ __DATA__
     generate_timeline.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] }
                          [-start_date <start_date>] [-end_date <end_date>]
                          [-top <float>]
-                         [-mode [workers | memory | cores | wasted_memory]]
+                         [-mode [workers | memory | cores | unused_memory]]
                          [-n_core <int>] [-mem <int>]
 
 =head1 DESCRIPTION
@@ -371,7 +371,7 @@ __DATA__
     -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
     -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
     -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'wasted_memory'
+    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'unused_memory'
 
     -n_core <int>           : the default number of cores allocated to a worker (default: 1)
     -mem <int>              : the default memory allocated to a worker (default: 100Mb)
