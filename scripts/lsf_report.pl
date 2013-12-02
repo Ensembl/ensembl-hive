@@ -68,6 +68,9 @@ sub main {
             status           varchar(20) NOT NULL,
             mem_megs         float NOT NULL,
             swap_megs        float NOT NULL,
+            pending_sec      integer NOT NULL,
+            cpu_sec          float NOT NULL,
+            lifespan_sec     integer NOT NULL,
             exception_status varchar(40) NOT NULL,
 
             PRIMARY KEY (meadow_name,process_id)
@@ -141,7 +144,7 @@ sub main {
         warn 'Will run the following command to obtain '.($tee ? 'and dump ' : '')."bacct information: '$bacct_source_line' (may take a few minutes)\n";
     }
 
-    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (meadow_name, process_id, status, mem_megs, swap_megs, exception_status) VALUES (?, ?, ?, ?, ?, ?)' );
+    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (meadow_name, process_id, status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' );
     {
         local $/ = "------------------------------------------------------------------------------\n\n";
         my %units_converter = ( 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 );
@@ -175,8 +178,8 @@ sub main {
                 my $mem_megs    = $mem_in_units  * $units_converter{$mem_unit};
                 my $swap_megs   = $swap_in_units * $units_converter{$swap_unit};
 
-                # warn "PROC_ID=$process_id, STATUS=$usage{STATUS}, MEM=$mem_megs, SWAP=$swap_megs, EXC_STATUS='$exception_status'\n";
-                $sth_replace->execute( $this_lsf_farm, $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $exception_status );
+                #warn join(', ', map {sprintf('%s=%s', $_, $usage{$_})} (sort keys %usage)), "\n";
+                $sth_replace->execute( $this_lsf_farm, $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $usage{WAIT}, $usage{CPU_T}, $usage{TURNAROUND}, $exception_status );
             }
         }
 
