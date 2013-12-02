@@ -323,6 +323,14 @@ __DATA__
 
     generate_timeline.pl
 
+=head1 SYNOPSIS
+
+    generate_timeline.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] }
+                         [-start_date <start_date>] [-end_date <end_date>]
+                         [-top <float>]
+                         [-mode [workers | memory | cores | wasted_memory]]
+                         [-n_core <int>] [-mem <int>]
+
 =head1 DESCRIPTION
 
     This script is used for offline examination of the allocation of workers.
@@ -341,19 +349,32 @@ __DATA__
     generate_timeline.pl -url mysql://username:secret@hostname:port/database > timeline.csv
 
         # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline_top995.png
 
         # Assuming you are only interested in a precise interval (in a PNG file)
-    generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline.png
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline_June15.png
+
+        # Get the required memory instead of the number of workers
+    generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
+
 
 =head1 OPTIONS
 
     -help                   : print this help
     -url <url string>       : url defining where hive database is located
+    -reg_cong, -reg_type, -reg_alias    : alternative connection details
+    -nosqlvc                : Do not restrict the usage of this script to the current version of eHive
+                              Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
+    -verbose                : Print some info about the data loaded from the database
+
     -start_date <date>      : minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
     -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
     -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
     -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
+    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'wasted_memory'
+
+    -n_core <int>           : the default number of cores allocated to a worker (default: 1)
+    -mem <int>              : the default memory allocated to a worker (default: 100Mb)
 
 =head1 CONTACT
 
