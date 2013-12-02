@@ -74,6 +74,7 @@ sub main {
         memory => 'Memory asked (Gb)',
         cores => 'Number of CPU cores',
         unused_memory => 'Unused memory (Gb)',
+        unused_cores => 'Number of unused CPU cores',
     );
     if ($mode) {
         die "Unknown mode '$mode'. Allowed modes are: ".join(", ", keys %allowed_modes) unless exists $allowed_modes{$mode};
@@ -123,14 +124,14 @@ sub main {
     warn "cpu_resources: ", Dumper \%cpu_resources if $verbose;
 
     # Get the memory used by each worker
-    my %used_mem = ();
-    if ($mode eq 'unused_memory') {
-        my $sql_used_mem = 'SELECT meadow_name, process_id, mem_megs FROM lsf_report';
-        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_mem)}) {
-            my ($meadow_name, $process_id, $mem_megs) = @$db_entry;
-            $used_mem{$meadow_name."_____".$process_id} = $mem_megs;
+    my %used_res = ();
+    if (($mode eq 'unused_memory') or ($mode eq 'unused_cores')) {
+        my $sql_used_res = 'SELECT meadow_name, process_id, mem_megs, cpu_sec/lifespan_sec FROM lsf_report';
+        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
+            my ($meadow_name, $process_id, $mem_megs, $cpu_usage) = @$db_entry;
+            $used_res{$meadow_name."_____".$process_id} = [$mem_megs, $cpu_usage];
         }
-        warn scalar(keys %used_mem), " process info loaded from lsf_report\n" if $verbose;
+        warn scalar(keys %used_res), " process info loaded from lsf_report\n" if $verbose;
     }
 
     # Get the info about the analysis
@@ -164,11 +165,16 @@ sub main {
                 $events{$event_date}{$analysis_id} += $offset * ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
             } elsif ($mode eq 'cores') {
                 $events{$event_date}{$analysis_id} += $offset * ($cpu_resources{$resource_class_id} || $default_cores);
+            } elsif ($mode eq 'unused_memory') {
+                my $process_signature = $meadow_name."_____".$process_id;
+                if (exists $used_res{$process_signature}) {
+                    $events{$event_date}{$analysis_id} += $offset * (($mem_resources{$resource_class_id} || $default_memory) - $used_res{$process_signature}->[0]) / 1024.;
+                }
             } else {
                 my $process_signature = $meadow_name."_____".$process_id;
-                if (exists $used_mem{$process_signature}) {
-                    my $unused_memory = ($mem_resources{$resource_class_id} || $default_memory) - $used_mem{$process_signature};
-                    $events{$event_date}{$analysis_id} += $offset * $unused_memory / 1024. if $unused_memory > 0;
+                if (exists $used_res{$process_signature}) {
+                    my $unused_cores = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$process_signature}->[1];
+                    $events{$event_date}{$analysis_id} += $offset * $unused_cores if $unused_cores > 0;
                 }
             }
         }
@@ -328,7 +334,7 @@ __DATA__
     generate_timeline.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] }
                          [-start_date <start_date>] [-end_date <end_date>]
                          [-top <float>]
-                         [-mode [workers | memory | cores | unused_memory]]
+                         [-mode [workers | memory | cores | unused_memory | unused_cores]]
                          [-n_core <int>] [-mem <int>]
 
 =head1 DESCRIPTION
@@ -371,7 +377,7 @@ __DATA__
     -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
     -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
     -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'unused_memory'
+    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'unused_memory', 'unused_cores'
 
     -n_core <int>           : the default number of cores allocated to a worker (default: 1)
     -mem <int>              : the default memory allocated to a worker (default: 100Mb)
