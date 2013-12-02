@@ -75,6 +75,7 @@ sub main {
         cores => 'Number of CPU cores',
         unused_memory => 'Unused memory (Gb)',
         unused_cores => 'Number of unused CPU cores',
+        pending_workers => 'Number of pending workers',
     );
     if ($mode) {
         die "Unknown mode '$mode'. Allowed modes are: ".join(", ", keys %allowed_modes) unless exists $allowed_modes{$mode};
@@ -151,7 +152,7 @@ sub main {
 
     # Get the events from the database
     my %events = ();
-    {
+    if ($mode ne 'pending_workers') {
         my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id FROM worker WHERE analysis_id IS NOT NULL')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
@@ -179,6 +180,15 @@ sub main {
             }
             $events{$birth_date}{$analysis_id} += $offset if $offset > 0;
             $events{$death_date}{$analysis_id} -= $offset if $offset > 0;
+        }
+    } else {
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(born, INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id FROM worker JOIN lsf_report USING (meadow_name, process_id) WHERE analysis_id IS NOT NULL AND meadow_type = "LSF" AND pending_sec > 0')};
+        warn scalar(@tmp_dates), " events\n" if $verbose;
+
+        foreach my $db_entry (@tmp_dates) {
+            my ($start_pending, $start_running, $analysis_id) = @$db_entry;
+            $events{$start_pending}{$analysis_id} += 1;
+            $events{$start_running}{$analysis_id} -= 1;
         }
     }
     my @event_dates = sort {$a cmp $b} (keys %events);
@@ -336,7 +346,7 @@ __DATA__
     generate_timeline.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] }
                          [-start_date <start_date>] [-end_date <end_date>]
                          [-top <float>]
-                         [-mode [workers | memory | cores | unused_memory | unused_cores]]
+                         [-mode [workers | memory | cores | unused_memory | unused_cores | pending_workers]]
                          [-n_core <int>] [-mem <int>]
 
 =head1 DESCRIPTION
@@ -379,7 +389,7 @@ __DATA__
     -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
     -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
     -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'unused_memory', 'unused_cores'
+    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'unused_memory', 'unused_cores', 'pending_workers'
 
     -n_core <int>           : the default number of cores allocated to a worker (default: 1)
     -mem <int>              : the default memory allocated to a worker (default: 100Mb)
