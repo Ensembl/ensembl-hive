@@ -190,7 +190,7 @@ sub main {
             $hash_curr_workers{$analysis_id} += $topup_hash->{$analysis_id};
             $num_curr_workers += $topup_hash->{$analysis_id};
         }
-        die if sum(values %hash_curr_workers) != $num_curr_workers;
+        #die sum(values %hash_curr_workers)."!=$num_curr_workers" if sum(values %hash_curr_workers) != $num_curr_workers;
 
         next if $start_date and ($event_date lt $start_date);
 
