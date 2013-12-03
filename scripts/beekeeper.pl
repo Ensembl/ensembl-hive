@@ -335,9 +335,6 @@ sub run_autonomously {
         $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
     }
 
-    if( $self->{'submit_log_dir'} ) {
-        make_path( $self->{'submit_log_dir'} );
-    }
     my $beekeeper_pid = $$;
 
     my $iteration=0;
@@ -362,6 +359,14 @@ sub run_autonomously {
             = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $run_analysis);
 
         if( keys %$workers_to_submit_by_meadow_type_rc_name ) {
+
+            my $submit_log_subdir;
+
+            if( $self->{'submit_log_dir'} ) {
+                $submit_log_subdir = $self->{'submit_log_dir'}."/submit_bk${beekeeper_pid}_iter${iteration}";
+                make_path( $submit_log_subdir );
+            }
+
             foreach my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {
 
                 my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
@@ -378,8 +383,8 @@ sub run_autonomously {
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
                     if( $self->{'submit_log_dir'} ) {
-                        $self->{'submit_stdout_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}_%J_%I.out";
-                        $self->{'submit_stderr_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}_%J_%I.err";
+                        $self->{'submit_stdout_file'} = $submit_log_subdir . "/log_${rc_name}_%J_%I.out";
+                        $self->{'submit_stderr_file'} = $submit_log_subdir . "/log_${rc_name}_%J_%I.err";
                     }
 
                     $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
@@ -471,8 +476,7 @@ __DATA__
     -total_running_workers_max <num>    : max # workers to be running in parallel
     -submit_workers_max <num>           : max # workers to create per loop iteration
     -submission_options <string>        : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
-    -submit_stdout_file <file>          : record submission output stream in a file (to see why workers fail to run after submission). Use with -run instead of -loop.
-    -submit_stderr_file <file>          : record submission error stream in a file (to see why workers fail to run after submission). Use with -run instead of -loop.
+    -submit_log_dir <dir>               : record submission output+error streams into files under the given directory (to see why some workers fail after submission)
 
 =head2 Worker control
 
