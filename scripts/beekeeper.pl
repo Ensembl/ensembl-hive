@@ -378,8 +378,8 @@ sub run_autonomously {
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
                     if( $self->{'submit_log_dir'} ) {
-                        $self->{'submit_stdout_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}.out";
-                        $self->{'submit_stderr_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}.err";
+                        $self->{'submit_stdout_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}_%J_%I.out";
+                        $self->{'submit_stderr_file'} = $self->{'submit_log_dir'} . "/submit_${beekeeper_pid}_iter${iteration}_${rc_name}_%J_%I.err";
                     }
 
                     $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
