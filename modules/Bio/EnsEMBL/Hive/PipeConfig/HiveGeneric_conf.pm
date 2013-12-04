@@ -724,6 +724,12 @@ sub run {
     print " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n";
     print "\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png\n";
     print "\n";
+    print " # If you are running the pipeline on LSF, you can collect actual resource usage statistics :\n";
+    print "\tlsf_report.pl -url $pipeline_url\n";
+    print "\n";
+    print " # After having run lsf_report.pl, you can request a resource usage timeline in an image file (desired format is set via extension) :\n";
+    print "\tgenerate_timeline.pl -url $pipeline_url -out timeline_$pipeline_name.png\n";
+    print "\n";
     print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
     print "\tdb_cmd.pl -url $pipeline_url\n\n";
 }
