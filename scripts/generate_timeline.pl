@@ -29,7 +29,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $logscale, $default_memory, $default_cores);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores);
 
     GetOptions(
                 # connect to the database:
@@ -46,7 +46,6 @@ sub main {
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'top=f'                      => \$top,
-            'log=i'                      => \$logscale,
             'mem=i'                      => \$default_memory,
             'n_core=i'                   => \$default_cores,
             'output=s'                   => \$output,
@@ -271,7 +270,7 @@ sub main {
 
     my @datasets = ();
 
-    my $pseudo_zero_value = $logscale ? .8 : -$max_workers / 50;
+    my $pseudo_zero_value = -$max_workers / 50;
 
     # The background plot: the sum of all the analysis
     if ($need_other_analysis) {
@@ -321,16 +320,17 @@ sub main {
         },
         xtics => {
             labelfmt => '%b %d\n %H:00',
+            along => 'out nomirror',
         },
         bg => {
             color => 'white',
         },
+        grid => 'on',
         imagesize => '1400, 800',
         output => $output,
         terminal => $terminal_mapping{$gnuplot_terminal},
         ylabel => $allowed_modes{$mode},
         yrange => [$pseudo_zero_value, undef],
-        $logscale ? (logscale => 'y') : (),
     );
     $chart->plot2d(@datasets);
 
