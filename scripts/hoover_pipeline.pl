@@ -62,16 +62,12 @@ sub main {
     }
 
     my $sql = qq{
-        DELETE m,f,j
-          FROM job j
-     LEFT JOIN job_file f ON(f.job_id=j.job_id)
-     LEFT JOIN log_message m ON(m.job_id=j.job_id)
+    DELETE j FROM job j
      WHERE j.status='DONE'
        AND j.completed < $threshold_datetime_expression
     };
 
     my $dbc = $hive_dba->dbc();
-    $dbc->do( "SET FOREIGN_KEY_CHECKS=0" );
     $dbc->do( $sql );
 }
 

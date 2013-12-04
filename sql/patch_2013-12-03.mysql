@@ -1,9 +1,20 @@
-/*
-    FOREIGN KEY constraints are listed in a separate file so that they could be optionally switched on or off.
 
-    A nice surprise is that the syntax for defining them is the same for MySQL and PostgreSQL.
-*/
+-- drop all foreign keys and re-create some of them with "ON DELETE CASCADE" rule:
 
+ALTER TABLE accu                    DROP FOREIGN KEY accu_ibfk_1, DROP FOREIGN KEY accu_ibfk_2;
+ALTER TABLE analysis_base           DROP FOREIGN KEY analysis_base_ibfk_1;
+ALTER TABLE analysis_ctrl_rule      DROP FOREIGN KEY analysis_ctrl_rule_ibfk_1;
+ALTER TABLE analysis_stats          DROP FOREIGN KEY analysis_stats_ibfk_1;
+ALTER TABLE analysis_stats_monitor  DROP FOREIGN KEY analysis_stats_monitor_ibfk_1;
+ALTER TABLE dataflow_rule           DROP FOREIGN KEY dataflow_rule_ibfk_1, DROP FOREIGN KEY dataflow_rule_ibfk_2;
+ALTER TABLE job                     DROP FOREIGN KEY job_ibfk_1, DROP FOREIGN KEY job_ibfk_2, DROP FOREIGN KEY job_ibfk_3, DROP FOREIGN KEY job_ibfk_4;
+ALTER TABLE job_file                DROP FOREIGN KEY job_file_ibfk_1, DROP FOREIGN KEY job_file_ibfk_2;
+ALTER TABLE log_message             DROP FOREIGN KEY log_message_ibfk_1, DROP FOREIGN KEY log_message_ibfk_2;
+ALTER TABLE resource_description    DROP FOREIGN KEY resource_description_ibfk_1;
+ALTER TABLE worker                  DROP FOREIGN KEY worker_ibfk_1, DROP FOREIGN KEY worker_ibfk_2;
+
+
+-- now just replay foreign_keys.sql :
 
 ALTER TABLE worker                  ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id)          REFERENCES analysis_base(analysis_id);
@@ -28,3 +39,7 @@ ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    
 ALTER TABLE job_file                ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE accu                    ADD FOREIGN KEY (sending_job_id)            REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE accu                    ADD FOREIGN KEY (receiving_job_id)          REFERENCES job(job_id)                          ON DELETE CASCADE;
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=56 WHERE meta_key='hive_sql_schema_version' AND meta_value='55';
+
