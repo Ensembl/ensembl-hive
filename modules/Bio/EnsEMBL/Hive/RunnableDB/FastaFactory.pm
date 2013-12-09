@@ -1,9 +1,8 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::FastaFactory
+    Bio::EnsEMBL::Hive::RunnableDB::FastaFactory
 
 =head1 SYNOPSIS
 
@@ -17,22 +16,35 @@ Bio::EnsEMBL::Hive::RunnableDB::FastaFactory
 
 =head1 DESCRIPTION
 
-This is a Bioinformatics-specific "Factory" Runnable that splits a given Fasta file into smaller chunks
-and dataflows one job per chunk.
+    This is a Bioinformatics-specific "Factory" Runnable that splits a given Fasta file into smaller chunks
+    and dataflows one job per chunk.
 
-The following parameters are supported:
+    The following parameters are supported:
 
-    param('inputfile');         # The original Fasta file: 'inputfile' => 'my_sequences.fasta'
+        param('inputfile');         # The original Fasta file: 'inputfile' => 'my_sequences.fasta'
 
-    param('max_chunk_length');  # Maximum total length of sequences in a chunk: 'max_chunk_length' => '200000'
+        param('max_chunk_length');  # Maximum total length of sequences in a chunk: 'max_chunk_length' => '200000'
 
-    param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
+        param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
 
-    param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
+        param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

@@ -1,44 +1,56 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
+    Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
 
 =head1 SYNOPSIS
 
-    # Example 1: specifying only the mandatory option:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <mypass>
+        # Example 1: specifying only the mandatory option:
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <mypass>
 
-    # Example 2: specifying the mandatory options as well as overriding some defaults:
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -host <myhost> -dbname <mydbname> -password <mypass>
+        # Example 2: specifying the mandatory options as well as overriding some defaults:
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -host <myhost> -dbname <mydbname> -password <mypass>
 
 =head1 DESCRIPTION
 
-Generic configuration module for all Hive pipelines with loader functionality.
-All other Hive PipeConfig modules should inherit from this module and will probably need to redefine some or all of the following interface methods:
+    Generic configuration module for all Hive pipelines with loader functionality.
+    All other Hive PipeConfig modules should inherit from this module and will probably need to redefine some or all of the following interface methods:
 
-    * default_options:                  returns a hash of (possibly multilevel) defaults for the options on which depend the rest of the configuration
+        * default_options:                  returns a hash of (possibly multilevel) defaults for the options on which depend the rest of the configuration
 
-    * pipeline_create_commands:         returns a list of strings that will be executed as system commands needed to create and set up the pipeline database
+        * pipeline_create_commands:         returns a list of strings that will be executed as system commands needed to create and set up the pipeline database
 
-    * pipeline_wide_parameters:         returns a hash of pipeline-wide parameter names and their values
+        * pipeline_wide_parameters:         returns a hash of pipeline-wide parameter names and their values
 
-    * resource_classes:                 returns a hash of resource class definitions
+        * resource_classes:                 returns a hash of resource class definitions
 
-    * pipeline_analyses:                returns a list of hash structures that define analysis objects bundled with definitions of corresponding jobs, rules and resources
+        * pipeline_analyses:                returns a list of hash structures that define analysis objects bundled with definitions of corresponding jobs, rules and resources
 
-    * beekeeper_extra_cmdline_options   returns a string with command line options that you want to be passed to the beekeeper.pl
+        * beekeeper_extra_cmdline_options   returns a string with command line options that you want to be passed to the beekeeper.pl
 
-When defining anything except the keys of default_options() a call to $self->o('myoption') can be used.
-This call means "substitute this call for the value of 'myoption' at the time of configuring the pipeline".
-All option names mentioned in $self->o() calls within the five interface methods above can be given non-default values from the command line.
+    When defining anything except the keys of default_options() a call to $self->o('myoption') can be used.
+    This call means "substitute this call for the value of 'myoption' at the time of configuring the pipeline".
+    All option names mentioned in $self->o() calls within the five interface methods above can be given non-default values from the command line.
 
-Please make sure you have studied the pipeline configuraton examples in Bio::EnsEMBL::Hive::PipeConfig before creating your own PipeConfig modules.
+    Please make sure you have studied the pipeline configuraton examples in Bio::EnsEMBL::Hive::PipeConfig before creating your own PipeConfig modules.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

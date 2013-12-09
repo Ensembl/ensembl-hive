@@ -1,9 +1,8 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Params
+    Bio::EnsEMBL::Hive::Params
 
 =head1 SYNOPSIS
 
@@ -36,22 +35,35 @@ By inheriting from this module you make your module able to deal with parameters
 
 =head1 DESCRIPTION
 
-Most of Compara RunnableDB methods work under assumption
-that both analysis.parameters and job.input_id fields contain a Perl-style parameter hashref as a string.
+    Most of Compara RunnableDB methods work under assumption
+    that both analysis.parameters and job.input_id fields contain a Perl-style parameter hashref as a string.
 
-This module implements a generic param() method that allows to set parameters according to the following parameter precedence rules:
+    This module implements a generic param() method that allows to set parameters according to the following parameter precedence rules:
 
-    (1) Job-Specific parameters defined in job.input_id hash, they have the highest priority and override everything else.
+        (1) Job-Specific parameters defined in job.input_id hash, they have the highest priority and override everything else.
 
-    (2) Analysis-Wide parameters defined in analysis.parameters hash. Can be overridden by (1).
+        (2) Analysis-Wide parameters defined in analysis.parameters hash. Can be overridden by (1).
 
-    (3) Pipeline-Wide parameters defined in the 'meta' table. Can be overridden by (1) and (2).
+        (3) Pipeline-Wide parameters defined in the 'meta' table. Can be overridden by (1) and (2).
 
-    (4) Module_Defaults that are hard-coded into modules have the lowest precedence. Can be overridden by (1), (2) and (3).
+        (4) Module_Defaults that are hard-coded into modules have the lowest precedence. Can be overridden by (1), (2) and (3).
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
 

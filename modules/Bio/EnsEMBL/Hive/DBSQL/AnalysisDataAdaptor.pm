@@ -1,40 +1,41 @@
-# Perl module for Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor
-#
-# Date of creation: 22.03.2004
-# Original Creator : Jessica Severin <jessica@ebi.ac.uk>
-#
-# Copyright EMBL-EBI 2004
-#
-# You may distribute this module under the same terms as perl itself
-
 =pod
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor
+    Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor
 
 =head1 SYNOPSIS
 
-  $dataDBA = $db_adaptor->get_AnalysisDataAdaptor;
+    $dataDBA = $db_adaptor->get_AnalysisDataAdaptor;
 
 =head1 DESCRIPTION
 
-   analysis_data table holds LONGTEXT data for use by the analysis system.
-   This data is general purpose and it's up to each analysis to
-   determine how to use it.
-   This Adaptor module is used to access/store this data.
+   analysis_data table holds LONGTEXT data that is currently used as an extension of some fixed-width fields of 'job' table.
+   It is no longer general-purpose. Please avoid accessing this table directly or via the adaptor.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods.
-  Internal methods are preceded with a _
+    The rest of the documentation details each of the object methods.
+    Internal methods are preceded with a _
 
 =cut
-
 
 
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;

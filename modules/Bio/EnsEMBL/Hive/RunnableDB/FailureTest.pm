@@ -1,43 +1,55 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::FailureTest
+    Bio::EnsEMBL::Hive::RunnableDB::FailureTest
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
+    This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+    and is ran by Workers during the execution of eHive pipelines.
+    It is not generally supposed to be instantiated and used outside of this framework.
 
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+    Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-This RunnableDB module is used to test failure of jobs in the hive system.
+    This RunnableDB module is used to test failure of jobs in the hive system.
 
-It is intended for development/training purposes only.
+    It is intended for development/training purposes only.
 
-Available parameters:
+    Available parameters:
 
-    param('value'):         is essentially your job's number.
-                            If you are intending to create 100 jobs, let the param('value') take consecutive values from 1 to 100.
+        param('value'):         is essentially your job's number.
+                                If you are intending to create 100 jobs, let the param('value') take consecutive values from 1 to 100.
 
-    param('divisor'):       defines the failure rate for this particular analysis. If the modulo (value % divisor) is 0, the job will fail.
-                            For example, if param('divisor')==5, jobs with 5, 10, 15, 20, 25,... param('value') will fail.
+        param('divisor'):       defines the failure rate for this particular analysis. If the modulo (value % divisor) is 0, the job will fail.
+                                For example, if param('divisor')==5, jobs with 5, 10, 15, 20, 25,... param('value') will fail.
 
-    param('state'):         defines the state in which the jobs of this analysis may be failing.
+        param('state'):         defines the state in which the jobs of this analysis may be failing.
 
-    param('lethal_after'):  makes jobs' failures lethal when 'value' is greater than this parameter
+        param('lethal_after'):  makes jobs' failures lethal when 'value' is greater than this parameter
 
-    param('time_FETCH_INPUT'):  time in seconds that the job will spend sleeping in FETCH_INPUT state.
+        param('time_FETCH_INPUT'):  time in seconds that the job will spend sleeping in FETCH_INPUT state.
 
-    param('time_RUN'):          time in seconds that the job will spend sleeping in RUN state.
+        param('time_RUN'):          time in seconds that the job will spend sleeping in RUN state.
 
-    param('time_WRITE_OUTPUT'): time in seconds that the job will spend sleeping in WRITE_OUTPUT state.
+        param('time_WRITE_OUTPUT'): time in seconds that the job will spend sleeping in WRITE_OUTPUT state.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 

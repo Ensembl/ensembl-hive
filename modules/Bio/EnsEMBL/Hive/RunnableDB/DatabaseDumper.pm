@@ -1,9 +1,13 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper
+    Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper
+
+=head1 SYNOPSIS
+
+    standaloneJob.pl RunnableDB/DatabaseDumper.pm -exclude_ehive 1 -exclude_list 1 \
+        -table_list "['peptide_align_%']" -src_db_conn mysql://ensro@127.0.0.1:4313/mm14_compara_homology_67 -output_file ~/dump1.sql
 
 =head1 DESCRIPTION
 
@@ -41,11 +45,25 @@ T EL EH      l+  l-
 0  0  1      0   H  = all except H
 0  1  1      0   0  = nothing
 
-=head1 SYNOPSIS
+=head1 LICENSE
 
-standaloneJob.pl RunnableDB/DatabaseDumper.pm -exclude_ehive 1 -exclude_list 1 -table_list "['peptide_align_%']" -src_db_conn mysql://ensro@127.0.0.1:4313/mm14_compara_homology_67 -output_file ~/dump1.sql
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
+
+=head1 CONTACT
+
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper;
 

@@ -1,58 +1,64 @@
-#
-# You may distribute this module under the same terms as perl itself
-
 =pod 
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::Queen
-
-=head1 SYNOPSIS
-
-  The Queen of the Hive based job control system
+    Bio::EnsEMBL::Hive::Queen
 
 =head1 DESCRIPTION
 
-  The Queen of the Hive based job control system is responsible to 'birthing' the
-  correct number of workers of the right type so that they can find jobs to do.
-  It will also free up jobs of Workers that died unexpectantly so that other workers
-  can claim them to do.
+    The Queen of the Hive based job control system is responsible to 'birthing' the
+    correct number of workers of the right type so that they can find jobs to do.
+    It will also free up jobs of Workers that died unexpectantly so that other workers
+    can claim them to do.
 
-  Hive based processing is a concept based on a more controlled version
-  of an autonomous agent type system.  Each worker is not told what to do
-  (like a centralized control system - like the current pipeline system)
-  but rather queries a central database for jobs (give me jobs).
+    Hive based processing is a concept based on a more controlled version
+    of an autonomous agent type system.  Each worker is not told what to do
+    (like a centralized control system - like the current pipeline system)
+    but rather queries a central database for jobs (give me jobs).
 
-  Each worker is linked to an analysis_id, registers its self on creation
-  into the Hive, creates a RunnableDB instance of the Analysis->module,
-  gets $analysis->stats->batch_size jobs from the job table, does its work,
-  creates the next layer of job entries by interfacing to
-  the DataflowRuleAdaptor to determine the analyses it needs to pass its
-  output data to and creates jobs on the next analysis database.
-  It repeats this cycle until it has lived its lifetime or until there are no
-  more jobs left.
-  The lifetime limit is just a safety limit to prevent these from 'infecting'
-  a system.
+    Each worker is linked to an analysis_id, registers its self on creation
+    into the Hive, creates a RunnableDB instance of the Analysis->module,
+    gets $analysis->stats->batch_size jobs from the job table, does its work,
+    creates the next layer of job entries by interfacing to
+    the DataflowRuleAdaptor to determine the analyses it needs to pass its
+    output data to and creates jobs on the next analysis database.
+    It repeats this cycle until it has lived its lifetime or until there are no
+    more jobs left.
+    The lifetime limit is just a safety limit to prevent these from 'infecting'
+    a system.
 
-  The Queens job is to simply birth Workers of the correct analysis_id to get the
-  work down.  The only other thing the Queen does is free up jobs that were
-  claimed by Workers that died unexpectantly so that other workers can take
-  over the work.
+    The Queens job is to simply birth Workers of the correct analysis_id to get the
+    work down.  The only other thing the Queen does is free up jobs that were
+    claimed by Workers that died unexpectantly so that other workers can take
+    over the work.
 
-  The Beekeeper is in charge of interfacing between the Queen and a compute resource
-  or 'compute farm'.  Its job is to query Queens if they need any workers and to
-  send the requested number of workers to open machines via the runWorker.pl script.
-  It is also responsible for interfacing with the Queen to identify worker which died
-  unexpectantly.
+    The Beekeeper is in charge of interfacing between the Queen and a compute resource
+    or 'compute farm'.  Its job is to query Queens if they need any workers and to
+    send the requested number of workers to open machines via the runWorker.pl script.
+    It is also responsible for interfacing with the Queen to identify worker which died
+    unexpectantly.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods. 
-  Internal methods are usually preceded with a _
+    The rest of the documentation details each of the object methods. 
+    Internal methods are usually preceded with a _
 
 =cut
 
@@ -846,6 +852,5 @@ sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
 
     return undef;
 }
-
 
 1;

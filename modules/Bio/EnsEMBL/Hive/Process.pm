@@ -1,83 +1,95 @@
-
 =pod 
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::Process
+    Bio::EnsEMBL::Hive::Process
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
-  Abstract superclass.  Each Process makes up the individual building blocks 
-  of the system.  Instances of these processes are created in a hive workflow 
-  graph of Analysis entries that are linked together with dataflow and 
-  AnalysisCtrl rules.
+    Abstract superclass.  Each Process makes up the individual building blocks 
+    of the system.  Instances of these processes are created in a hive workflow 
+    graph of Analysis entries that are linked together with dataflow and 
+    AnalysisCtrl rules.
   
-  Instances of these Processes are created by the system as work is done.
-  The newly created Process will have preset $self->db, $self->dbc, 
-  $self->input_id, $self->analysis and several other variables. 
-  From this input and configuration data, each Process can then proceed to 
-  do something.  The flow of execution within a Process is:
-    pre_cleanup() if($retry_count>0);   # clean up databases/filesystem before subsequent attempts
-    fetch_input();                      # fetch the data from databases/filesystems
-    run();                              # perform the main computation 
-    write_output();                     # record the results in databases/filesystems
-    post_cleanup();                     # destroy all non-trivial data structures after the job is done
-  The developer can implement their own versions of
-  pre_cleanup, fetch_input, run, write_output, and post_cleanup to do what they need.  
+    Instances of these Processes are created by the system as work is done.
+    The newly created Process will have preset $self->db, $self->dbc, 
+    $self->input_id, $self->analysis and several other variables. 
+    From this input and configuration data, each Process can then proceed to 
+    do something.  The flow of execution within a Process is:
+        pre_cleanup() if($retry_count>0);   # clean up databases/filesystem before subsequent attempts
+        fetch_input();                      # fetch the data from databases/filesystems
+        run();                              # perform the main computation 
+        write_output();                     # record the results in databases/filesystems
+        post_cleanup();                     # destroy all non-trivial data structures after the job is done
+    The developer can implement their own versions of
+    pre_cleanup, fetch_input, run, write_output, and post_cleanup to do what they need.  
+
+    The entire system is based around the concept of a workflow graph which
+    can split and loop back on itself.  This is accomplished by dataflow
+    rules (similar to Unix pipes) that connect one Process (or analysis) to others.
+    Where a Unix command line program can send output on STDOUT STDERR pipes, 
+    a hive Process has access to unlimited pipes referenced by numerical 
+    branch_codes. This is accomplished within the Process via 
+    $self->dataflow_output_id(...);  
   
-  The entire system is based around the concept of a workflow graph which
-  can split and loop back on itself.  This is accomplished by dataflow
-  rules (similar to Unix pipes) that connect one Process (or analysis) to others.
-  Where a Unix command line program can send output on STDOUT STDERR pipes, 
-  a hive Process has access to unlimited pipes referenced by numerical 
-  branch_codes. This is accomplished within the Process via 
-  $self->dataflow_output_id(...);  
-  
-  The design philosophy is that each Process does its work and creates output, 
-  but it doesn't worry about where the input came from, or where its output 
-  goes. If the system has dataflow pipes connected, then the output jobs 
-  have purpose, if not - the output work is thrown away.  The workflow graph 
-  'controls' the behaviour of the system, not the processes.  The processes just 
-  need to do their job.  The design of the workflow graph is based on the knowledge 
-  of what each Process does so that the graph can be correctly constructed.
-  The workflow graph can be constructed a priori or can be constructed and 
-  modified by intelligent Processes as the system runs.
-  
-  
-  The Hive is based on AI concepts and modeled on the social structure and 
-  behaviour of a honey bee hive. So where a worker honey bee's purpose is
-  (go find pollen, bring back to hive, drop off pollen, repeat), an ensembl-hive 
-  worker's purpose is (find a job, create a Process for that job, run it,
-  drop off output job(s), repeat).  While most workflow systems are based 
-  on 'smart' central controllers and external control of 'dumb' processes, 
-  the Hive is based on 'dumb' workflow graphs and job kiosk, and 'smart' workers 
-  (autonomous agents) who are self configuring and figure out for themselves what 
-  needs to be done, and then do it.  The workers are based around a set of 
-  emergent behaviour rules which allow a predictible system behaviour to emerge 
-  from what otherwise might appear at first glance to be a chaotic system. There 
-  is an inherent asynchronous disconnect between one worker and the next.  
-  Work (or jobs) are simply 'posted' on a blackboard or kiosk within the hive 
-  database where other workers can find them.  
-  The emergent behaviour rules of a worker are:
-     1) If a job is posted, someone needs to do it.
-     2) Don't grab something that someone else is working on
-     3) Don't grab more than you can handle
-     4) If you grab a job, it needs to be finished correctly
-     5) Keep busy doing work
-     6) If you fail, do the best you can to report back
-  For further reading on the AI principles employed in this design see:
-     http://en.wikipedia.org/wiki/Autonomous_Agent
-     http://en.wikipedia.org/wiki/Emergence
-  
+    The design philosophy is that each Process does its work and creates output, 
+    but it doesn't worry about where the input came from, or where its output 
+    goes. If the system has dataflow pipes connected, then the output jobs 
+    have purpose, if not - the output work is thrown away.  The workflow graph 
+    'controls' the behaviour of the system, not the processes.  The processes just 
+    need to do their job.  The design of the workflow graph is based on the knowledge 
+    of what each Process does so that the graph can be correctly constructed.
+    The workflow graph can be constructed a priori or can be constructed and 
+    modified by intelligent Processes as the system runs.
+
+
+    The Hive is based on AI concepts and modeled on the social structure and 
+    behaviour of a honey bee hive. So where a worker honey bee's purpose is
+    (go find pollen, bring back to hive, drop off pollen, repeat), an ensembl-hive 
+    worker's purpose is (find a job, create a Process for that job, run it,
+    drop off output job(s), repeat).  While most workflow systems are based 
+    on 'smart' central controllers and external control of 'dumb' processes, 
+    the Hive is based on 'dumb' workflow graphs and job kiosk, and 'smart' workers 
+    (autonomous agents) who are self configuring and figure out for themselves what 
+    needs to be done, and then do it.  The workers are based around a set of 
+    emergent behaviour rules which allow a predictible system behaviour to emerge 
+    from what otherwise might appear at first glance to be a chaotic system. There 
+    is an inherent asynchronous disconnect between one worker and the next.  
+    Work (or jobs) are simply 'posted' on a blackboard or kiosk within the hive 
+    database where other workers can find them.  
+    The emergent behaviour rules of a worker are:
+    1) If a job is posted, someone needs to do it.
+    2) Don't grab something that someone else is working on
+    3) Don't grab more than you can handle
+    4) If you grab a job, it needs to be finished correctly
+    5) Keep busy doing work
+    6) If you fail, do the best you can to report back
+
+    For further reading on the AI principles employed in this design see:
+        http://en.wikipedia.org/wiki/Autonomous_Agent
+        http://en.wikipedia.org/wiki/Emergence
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods. 
-  Internal methods are usually preceded with a _
+    The rest of the documentation details each of the object methods. 
+    Internal methods are usually preceded with a _
 
 =cut
 

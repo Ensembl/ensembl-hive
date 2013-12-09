@@ -1,28 +1,49 @@
-package Bio::EnsEMBL::Hive::Utils::Graph;
+=pod
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Utils::Graph
+    Bio::EnsEMBL::Hive::Utils::Graph
 
 =head1 SYNOPSIS
 
-  my $dba = get_hive_dba();
-  my $g = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $dba);
-  my $graphviz = $g->build();
-  $graphviz->as_png('location.png');
+    my $dba = get_hive_dba();
+    my $g = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $dba);
+    my $graphviz = $g->build();
+    $graphviz->as_png('location.png');
 
 =head1 DESCRIPTION
 
-This is a module for converting a hive database's flow of analyses, control 
-rules and dataflows into the GraphViz model language. This information can
-then be converted to an image or to the dot language for further manipulation
-in GraphViz.
+    This is a module for converting a hive database's flow of analyses, control 
+    rules and dataflows into the GraphViz model language. This information can
+    then be converted to an image or to the dot language for further manipulation
+    in GraphViz.
 
-=head1 METHODS/SUBROUTINES
+=head1 LICENSE
 
-See inline
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
+
+=head1 CONTACT
+
+  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+
+=head1 APPENDIX
+
+    The rest of the documentation details each of the object methods.
+    Internal methods are usually preceded with a _
 
 =cut
+
+
+package Bio::EnsEMBL::Hive::Utils::Graph;
 
 use strict;
 use warnings;

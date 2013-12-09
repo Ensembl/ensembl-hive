@@ -1,25 +1,35 @@
-#
-# You may distribute this module under the same terms as perl itself
-
 =pod 
 
 =head1 NAME
 
-  Bio::EnsEMBL::Hive::AnalysisJob
+    Bio::EnsEMBL::Hive::AnalysisJob
 
 =head1 DESCRIPTION
 
-  An AnalysisJob is the link between the input_id control data, the analysis and
-  the rule system.  It also tracks the state of the job as it is processed
+    An AnalysisJob is the link between the input_id control data, the analysis and
+    the rule system.  It also tracks the state of the job as it is processed
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods.
-  Internal methods are usually preceded with a _
+    The rest of the documentation details each of the object methods.
+    Internal methods are usually preceded with a _
 
 =cut
 

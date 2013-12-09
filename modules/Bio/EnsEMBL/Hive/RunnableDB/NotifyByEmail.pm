@@ -1,34 +1,47 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail
+    Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail
 
 =head1 SYNOPSIS
 
-This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-and is ran by Workers during the execution of eHive pipelines.
-It is not generally supposed to be instantiated and used outside of this framework.
+    This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+    and is ran by Workers during the execution of eHive pipelines.
+    It is not generally supposed to be instantiated and used outside of this framework.
 
-Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+    Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-This RunnableDB module will send you a short notification email message per each job.
-You can either dataflow into it, or simply create standalone jobs.
+    This RunnableDB module will send you a short notification email message per each job.
+    You can either dataflow into it, or simply create standalone jobs.
 
-Note: this module depends heavily on the implementation of your compute farm.
-Sendmail may be unsupported, or supported differently.
-Please make sure it works as intended before using this module in complex pipelines.
+    Note: this module depends heavily on the implementation of your compute farm.
+    Sendmail may be unsupported, or supported differently.
+    Please make sure it works as intended before using this module in complex pipelines.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail;
 

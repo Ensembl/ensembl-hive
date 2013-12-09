@@ -1,4 +1,3 @@
-
 =pod 
 
 =head1 NAME
@@ -7,15 +6,14 @@
 
 =head1 SYNOPSIS
 
-   # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
+       # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
 
-    # optionally also seed it with your specific values:
-seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
+        # optionally also seed it with your specific values:
+    seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
 
-    # run the pipeline:
-beekeeper.pl -url $EHIVE_URL -loop
-
+        # run the pipeline:
+    beekeeper.pl -url $EHIVE_URL -loop
 
 =head1 DESCRIPTION
 
@@ -41,6 +39,19 @@ beekeeper.pl -url $EHIVE_URL -loop
           takes in 'a_multiplier', 'b_multiplier' and 'partial_product' hash and produces the final result in 'final_result' table.
 
     Please see the implementation details in Runnable modules themselves.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
 
 =head1 CONTACT
 

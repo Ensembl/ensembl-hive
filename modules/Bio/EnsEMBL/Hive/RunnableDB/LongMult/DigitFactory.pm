@@ -1,26 +1,43 @@
-
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory
+    Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory
 
 =head1 SYNOPSIS
 
-Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
-to understand how this particular example pipeline is configured and ran.
+    Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
+    to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
 
-'LongMult::DigitFactory' is the first step of the LongMult example pipeline that multiplies two long numbers.
+    'LongMult::DigitFactory' is the first step of the LongMult example pipeline that multiplies two long numbers.
 
-It takes apart the second multiplier and creates several 'LongMult::PartMultiply' jobs
-that correspond to the different digits of the second multiplier.
+    It takes apart the second multiplier and creates several 'LongMult::PartMultiply' jobs
+    that correspond to the different digits of the second multiplier.
 
-It also "flows into" one 'LongMult::AddTogether' job that will wait until 'LongMult::PartMultiply' jobs
-complete and will arrive at the final result.
+    It also "flows into" one 'LongMult::AddTogether' job that will wait until 'LongMult::PartMultiply' jobs
+    complete and will arrive at the final result.
+
+=head1 LICENSE
+
+    Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
+
+=head1 CONTACT
+
+    Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
 
 =cut
+
 
 package Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory;
 
