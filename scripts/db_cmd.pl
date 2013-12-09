@@ -143,7 +143,7 @@ sub dbc_hash_to_cmd {
               .($dbc_hash->{dbname} || '');
     } elsif($driver eq 'sqlite') {
 
-        die "sqlite requires a database (file) name\n";
+        die "sqlite requires a database (file) name\n" unless $dbc_hash->{dbname};
         $cmd = "sqlite3 "
               .(defined($extra) ? "$extra " : '')
               .$dbc_hash->{dbname}
