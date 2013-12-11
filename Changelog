@@ -1,3 +1,60 @@
+---------------------[before EnsEMBL rel.75]---------------------------------------------------------------------------
+
+* Wed Dec 11 12:55:58 2013 +0000 | Leo Gordon | updated schema diagram (PNG) and description (HTML)
+* Mon Dec 9 14:19:48 2013 +0000 | Leo Gordon | bugfix: sqlite mode now works again
+* Mon Dec 9 14:01:27 2013 +0000 | Leo Gordon | added Apache 2.0 license to all files
+* Wed Dec 4 11:26:09 2013 +0000 | Leo Gordon | schema_change: switched some foreign keys to ON DELETE CASCADE (thanks, Harpreet!)
+* Wed Dec 4 11:04:14 2013 +0000 | Matthieu Muffato | Updated the list of dependencies
+* Wed Dec 4 10:53:17 2013 +0000 | Matthieu Muffato | Added info on how to run lsf_report.pl and generate_timeline.pl
+* Wed Dec 4 10:31:51 2013 +0000 | Matthieu Muffato | Removed the option to use a logscale axis, and added a grid in the background
+* Mon Dec 2 18:13:29 2013 +0000 | Matthieu Muffato | Another set of rounding errors
+* Mon Dec 2 18:01:59 2013 +0000 | Matthieu Muffato | Added a mode to plot the number of pending workers for each analysis
+* Mon Dec 2 18:01:30 2013 +0000 | Matthieu Muffato | Neater way to add/substract a worker
+* Mon Dec 2 18:00:02 2013 +0000 | Matthieu Muffato | Added a mode to plot the amount of unused CPU cores each analysis
+* Mon Dec 2 17:55:13 2013 +0000 | Matthieu Muffato | "Unused memory" instead of "Wasted memory"
+* Mon Dec 2 17:01:52 2013 +0000 | Matthieu Muffato | Pulls in the time information (pending time, cpu usage, lifespan)
+* Mon Dec 2 09:56:07 2013 +0000 | Matthieu Muffato | Improved the documentation
+* Mon Dec 2 09:53:53 2013 +0000 | Matthieu Muffato | Added "verbose" mode
+* Mon Dec 2 08:35:35 2013 +0000 | Matthieu Muffato | Not valid any more when counting the wasted memory (rounding errors)
+* Sun Dec 1 23:20:35 2013 +0000 | Matthieu Muffato | Added a mode to plot the amount of wasted memory by each analysis
+* Sun Dec 1 23:11:11 2013 +0000 | Matthieu Muffato | Also store the meadow_name in lsf_report
+* Sun Dec 1 23:10:21 2013 +0000 | Matthieu Muffato | The unit conversion table is constant
+* Sun Dec 1 23:03:56 2013 +0000 | Matthieu Muffato | dbname may be undefined
+* Sun Dec 1 22:17:37 2013 +0000 | Matthieu Muffato | Added a mode to plot the number of CPU cores used by each analysis
+* Sun Dec 1 22:13:24 2013 +0000 | Matthieu Muffato | Added a mode to plot the RAM used by each analysis
+* Tue Dec 3 12:19:20 2013 +0000 | Leo Gordon | create a separate directory layer to group log files of the same iteration
+* Tue Dec 3 11:56:07 2013 +0000 | Leo Gordon | separate output files by LSF_job_id and LSF_jobarray_index
+* Tue Nov 26 11:08:31 2013 +0000 | Leo Gordon | simplify logging of submission output/error streams
+* Wed Nov 27 12:19:20 2013 +0000 | Matthieu Muffato | s/profile/timeline/g
+* Wed Nov 27 11:46:31 2013 +0000 | Matthieu Muffato | Gets the birth/death events instead of sampling the database. The "NOTHING" curve is not needed any more
+* Thu Nov 14 01:01:33 2013 +0000 | Matthieu Muffato | Reads the data from the database once at the beginning, and process it offline
+* Wed Sep 11 00:17:51 2013 +0100 | Matthieu Muffato | "DarkSlateGray" looks better for the "NOTHING" curve
+* Wed Sep 11 00:09:00 2013 +0100 | Matthieu Muffato | Added documentation
+* Wed Sep 11 00:08:42 2013 +0100 | Matthieu Muffato | GNUplot is now controlled via Chart::Gnuplot
+* Tue Sep 10 14:31:15 2013 +0100 | Matthieu Muffato | Improved the GNU-plot output
+* Tue Sep 10 01:20:28 2013 +0100 | Matthieu Muffato | Only gnuplot has to know about the filtered analysis, the CSV file should still contain all the data
+* Tue Sep 10 00:51:55 2013 +0100 | Matthieu Muffato | First version of a script to generate the analysis profile of a pipeline
+* Mon Nov 25 16:57:37 2013 +0000 | Leo Gordon | schema_change: detect and register RELOCATED events that used to mess up things on LSF 9.0 ("job rescheduled" in LSF parlance)
+* Mon Nov 25 16:54:11 2013 +0000 | Leo Gordon | be more careful with fetch_overdue_workers (Use 5sec threshold to avoid checking recently active Workers. Do not use it at all when perf
+orming -all_dead.)
+* Mon Nov 25 16:47:35 2013 +0000 | Leo Gordon | bugfix:  last_check_in should only be updated by register_worker_death if the Worker is burying itself
+* Mon Nov 25 16:35:16 2013 +0000 | Leo Gordon | cosmetic: added (commented out) warning messages for every external system() call that LSF module runs - simplifies debugging a lot
+* Mon Nov 25 14:08:52 2013 +0000 | Leo Gordon | ranked claiming technology: added support for both sqlite and pgsql drivers
+* Thu Nov 21 15:40:31 2013 +0000 | Leo Gordon | The last resort: try claiming without an offset (risking a collision)
+* Tue Nov 19 11:17:38 2013 +0000 | Leo Gordon | use OFFSET to separate jobs being claimed into ranges
+* Mon Nov 18 14:55:11 2013 +0000 | Leo Gordon | No need to left join into worker table - thanks, Javier!
+* Tue Nov 12 16:42:32 2013 +0000 | Leo Gordon | ResourceDescription expanded to include both submission_cmd_args and worker_cmd_args. Both args can be specified in a PipeConfig file.
+* Tue Nov 12 11:15:56 2013 +0000 | Leo Gordon | increase TotalRunningWorkersMax to 2000
+* Mon Nov 11 14:32:04 2013 +0000 | Leo Gordon | added an example of how to turn a csv into a list by param_substitute
+* Wed Nov 6 11:13:35 2013 +0000 | Leo Gordon | introducing db_cmd() interface method that takes care of the path to db_cmd.pl
+* Tue Nov 5 09:33:37 2013 +0000 | Matthieu Muffato | bugfix: the batch_size parameter should have a hyphen in front of it
+* Fri Oct 25 15:28:42 2013 +0100 | Leo Gordon | (1) do not change SEMAPHORED jobs to READY and (2) support more flexibility in choosing which statuses to reset
+* Fri Oct 25 11:35:57 2013 +0100 | Leo Gordon | schema change: turned all VARCHAR(<255) into VARCHAR(255) -- should improve experience with long host namest (thanks, MichaelP!)
+* Fri Oct 25 10:24:45 2013 +0100 | Leo Gordon | param_required() now automatically sets transient_error(0) before dying, to avoid unnecessary retries (thanks, Matthieu!)
+* Thu Oct 24 15:37:36 2013 +0100 | Matthieu Muffato | "expected_size" has to be substituted as well
+* Tue Oct 15 11:21:16 2013 +0100 | Matthieu Muffato | bugfix: the query has to be re-substituted for each job
+* Tue Oct 8 10:58:22 2013 +0100 | Matthieu Muffato | The SqlHealthcheck runnable can now perform multiple tests
+* Fri Sep 27 18:16:11 2013 +0100 | Matthieu Muffato | -reg_conf and -reg_type can be ommitted in db_cmd.pl
 
 ---------------------[after Sept'2013 workshops]------------------------------------------------------------------------
 
