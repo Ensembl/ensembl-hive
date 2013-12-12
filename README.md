@@ -31,19 +31,18 @@ PipeConfig file defines Analyses and dependency rules of the pipeline
 Hive pipeline databases are molded according to PipeConfig files which are Perl modules conforming to a special interface.
 A PipeConfig file defines the stucture of the pipeline, which is a graph whose nodes are Analyses
 (with their code, parameters and resource requirements) and edges are various dependency rules:
-    * Dataflow rules define how data that flows out of an Analysis can be used to trigger creation of Jobs in other Analyses
-        [creation depenency]
-    * Control rules define dependencies between Analyses as Jobs' containers
-        ("Jobs of Analysis Y can only start when all Jobs of Analysis X are done")
-        [execution dependency]
-    * Semaphore rules define dependencies between individual Jobs on a more fine-grained level
-        [combined creation and execution dependency]
+* Dataflow rules define how data that flows out of an Analysis can be used to trigger creation of Jobs in other Analyses
+
+* Control rules define dependencies between Analyses as Jobs' containers ("Jobs of Analysis Y can only start when all Jobs of Analysis X are done")
+
+* Semaphore rules define dependencies between individual Jobs on a more fine-grained level
+
 
 There are also other parameters of Analyses that control, for example:
-    * how many Workers can simultaneously work on a given Analysis,
-    * how many times a Job should be tried until it is considered failed,
-    * what should be autimatically done with a Job if it needs more memory/time,
-    etc.
+* how many Workers can simultaneously work on a given Analysis,
+* how many times a Job should be tried until it is considered failed,
+* what should be autimatically done with a Job if it needs more memory/time,
+etc.
 
 Contact us (mailing list)
 -------------------------
@@ -52,9 +51,9 @@ for running Comparative Genomics pipelines, but since then it has been separated
 into a separate software tool and is used in many projects both in Genome Campus, Cambridge and outside.
 There is a Hive users' mailing list for questions, suggestions, discussions and announcements.
 
-    To subscribe to it please visit:
+To subscribe to it please visit:
         http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users
 
-    After subscribing  you will be able to post to:
+After subscribing  you will be able to post to:
         ehive-users@ebi.ac.uk
 
