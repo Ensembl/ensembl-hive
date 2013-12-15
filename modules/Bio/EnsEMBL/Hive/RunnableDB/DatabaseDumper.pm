@@ -28,7 +28,8 @@ The following parameters are accepted:
  - exclude_list [boolean=0] : do we consider 'table_list' as a list
     of tables to be excluded from the dump (instead of included)
 
- - output_file [string] : the file to write the dump to
+ - output_file [string] : the file to write the dump to. If the filename
+    ends with ".gz", the file is compressed with "gzip" (default parameters)
 
  - output_db [string] : URL of a database to write the dump to. In this
     mode, the Runnable acts like MySQLTransfer
@@ -170,13 +171,24 @@ sub run {
     return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
 
     # mysqldump command
+    my $output = "";
+    if ($self->param('output_file')) {
+        if (lc $self->param('output_file') =~ /\.gz$/) {
+            $output = sprintf(' | gzip > %s', $self->param('output_file'));
+        } else {
+            $output = sprintf('> %s', $self->param('output_file'));
+        }
+    } else {
+        $output = sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db')));
+    };
+
     my $cmd = join(' ', 
         'mysqldump',
         $self->mysql_conn_from_dbc($src_dbc),
         '--skip-lock-tables',
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
-        $self->param('output_file') ? sprintf('> %s', $self->param('output_file')) : sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db'))),
+        $output
     );
     print "$cmd\n" if $self->debug;
 
