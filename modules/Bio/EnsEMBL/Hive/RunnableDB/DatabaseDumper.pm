@@ -30,6 +30,8 @@ The following parameters are accepted:
 
  - output_file [string] : the file to write the dump to
 
+ - output_db [string] : URL of a database to write the dump to. In this
+    mode, the Runnable acts like MySQLTransfer
 
 If "table_list" is undefined or maps to an empty list, the list
 of tables to be dumped is decided accordingly to "exclude_list" (EL)
