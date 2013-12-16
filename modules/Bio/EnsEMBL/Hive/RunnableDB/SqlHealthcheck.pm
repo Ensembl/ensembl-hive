@@ -136,6 +136,11 @@ sub _run_test {
     my $reference_size = $test->{reference_size};
     my $logical_test = $test->{logical_test};
 
+    # Final semicolons are removed if present
+    if ($query =~ /(;\s*$)/) {
+        $query =~ s/$1//;
+    }
+
     print "Test description: $description\n";
     print "Checking whether the number of rows $logical_test $reference_size\n";
 
