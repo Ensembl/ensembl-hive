@@ -183,9 +183,9 @@ sub count_all {
 
 
 sub fetch_all {
-    my ($self, $constraint, $one_per_key, $key_list, $value_column) = @_;
+  my ($self, $constraint, $one_per_key, $key_list, $value_column) = @_;
     
-    my $table_name      = $self->table_name();
+  my $table_name = $self->table_name();
 
     my $sql = 'SELECT ' . join(', ', keys %{$self->column_set()}) . " FROM $table_name";
 
@@ -398,16 +398,28 @@ sub DESTROY { }   # to simplify AUTOLOAD
 sub AUTOLOAD {
     our $AUTOLOAD;
 
-    if($AUTOLOAD =~ /::fetch(_all)?(?:_by_(\w+?))?(?:_HASHED_FROM_(\w+?))?(?:_TO_(\w+?))?$/) {
+    if($AUTOLOAD =~ /::fetch(_all)?(?:_(by|like)_(\w+?))?(?:_HASHED_FROM_(\w+?))?(?:_TO_(\w+?))?$/) {
         my $all             = $1;
-        my $filter_string   = $2;
-        my $key_string      = $3;
-        my $value_column    = $4;
+        my $like            = ($2 eq 'like') ? 1 : 0;
+        my $filter_string   = $3;
+        my $key_string      = $4;
+        my $value_column    = $5;
+  
+        if($like && ! $all){
+          die('Methods using \'like\' must also use the \'fetch_all\' pragma'.
+              ' i.e. fetch_all_like, not fetch_like');  
+        } 
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
         my $filter_components = $filter_string && [ split('_and_', $filter_string) ];
+        
+        if($like && 
+           ( scalar (@$filter_components) != 1) ){
+          die('Methods using \'like\' must have 1 filter component');     
+        }
+        
         foreach my $column_name ( @$filter_components ) {
             unless($column_set->{$column_name}) {
                 die "unknown column '$column_name'";
@@ -423,14 +435,16 @@ sub AUTOLOAD {
             die "unknown column '$value_column'";
         }
 
-#        print "Setting up '$AUTOLOAD' method\n";
+        my $match_type = ($like) ? ' LIKE ' : '='; 
+
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
-                join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                join(' AND ', map { "$filter_components->[$_] $match_type '$_[$_]'" } 0..scalar(@$filter_components)-1),
                 !$all,
                 $key_components,
-                $value_column
+                $value_column,
+                $like
             );
         };
         goto &$AUTOLOAD;    # restart the new method
