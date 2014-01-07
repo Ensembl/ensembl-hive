@@ -178,7 +178,7 @@ sub main {
                 }
             }
             $events{$birth_date}{$analysis_id} += $offset if $offset > 0;
-            $events{$death_date}{$analysis_id} -= $offset if $offset > 0;
+            $events{$death_date}{$analysis_id} -= $offset if ($offset > 0) and $death_date;
         }
     } else {
         my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(born, INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id FROM worker JOIN lsf_report USING (meadow_name, process_id) WHERE analysis_id IS NOT NULL AND meadow_type = "LSF" AND pending_sec > 0')};
