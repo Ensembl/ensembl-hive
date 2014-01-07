@@ -593,7 +593,7 @@ sub run {
     $self->adaptor->register_worker_death($self, 1);
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats :'.$self->analysis->stats->toString ) if($self->analysis_id());
+        $self->worker_say( 'AnalysisStats : '.$self->analysis->stats->toString ) if($self->analysis_id());
         $self->worker_say( 'dbc '.$self->adaptor->db->dbc->disconnect_count. ' disconnect cycles' );
     }
 
@@ -669,7 +669,7 @@ sub run_one_batch {
     $self->adaptor->safe_synchronize_AnalysisStats($self->analysis->stats);
 
     if($self->debug) {
-        $self->worker_say( "Stats : ".$self->analysis->stats->toString );
+        $self->worker_say( 'AnalysisStats : '.$self->analysis->stats->toString );
         $self->worker_say( 'claimed '.scalar(@{$jobs}).' jobs to process' );
     }
 

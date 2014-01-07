@@ -748,7 +748,7 @@ sub print_analysis_status {
 
     my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
-        $analysis->stats->print_stats();
+        print $analysis->stats->toString . "\n";
     }
 }
 

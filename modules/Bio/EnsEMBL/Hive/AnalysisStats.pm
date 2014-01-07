@@ -299,20 +299,15 @@ sub job_count_breakout {
 }
 
 
-sub print_stats {
-    my $self = shift @_;
-
-    printf("%-27s(%2d) ",  $self->get_analysis->logic_name, $self->analysis_id );
-    print $self->toString."\n";
-}
-
-
 sub toString {
     my $self = shift @_;
 
     my $analysis = $self->get_analysis;
 
-    my $output = sprintf("%11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+        $analysis->logic_name,
+        $self->analysis_id,
+
         $self->status,
 
         $self->semaphored_job_count,
@@ -329,7 +324,7 @@ sub toString {
     );
     $output .=  '  h.cap:'    .( defined($self->hive_capacity) ? $self->hive_capacity : '-' )
                .'  a.cap:'    .( defined($analysis->analysis_capacity) ? $analysis->analysis_capacity : '-')
-               ."  (sync'd "  .$self->seconds_since_last_update." sec ago)",
+               ."  (sync'd "  .$self->seconds_since_last_update." sec ago)";
 
     return $output;
 }

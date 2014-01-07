@@ -53,8 +53,9 @@ sub schedule_workers_resync_if_necessary {
         # combined mapping:
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
-    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required)
+    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer)
         = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
+    print $log_buffer;
 
     unless( $total_workers_required ) {
         print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
@@ -68,8 +69,9 @@ sub schedule_workers_resync_if_necessary {
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 
-        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required)
+        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer)
             = schedule_workers($queen, $valley, $filter_analysis, $meadow_capacity_by_type, $analysis_id2rc_name);
+        print $log_buffer;
     }
 
         # adjustment for pending workers:
@@ -110,18 +112,15 @@ sub schedule_workers {
                                 : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type() };
 
     unless(@suitable_analyses) {
-        print "Scheduler could not find any suitable analyses to start with\n";
-        return ({}, 0);
+        return ({}, 0, "Scheduler could not find any suitable analyses to start with\n");
     }
 
         # the pre-pending-adjusted outcome will be stored here:
     my %workers_to_submit_by_meadow_type_rc_name    = ();
-
     my $total_workers_required                      = 0;
+    my $log_buffer                                  = '';
 
     my $default_meadow_type                         = $valley->get_default_meadow()->type;
-
-    my $available_submit_limit                      = $valley->config_get('SubmitWorkersMax');
 
     my $submit_capacity                             = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers submitted this iteration', $valley->config_get('SubmitWorkersMax') );
     my $queen_capacity                              = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->get_hive_current_load() );
@@ -175,14 +174,14 @@ sub schedule_workers {
 
         my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
         $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-        $analysis_stats->print_stats();
-        printf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
+        $log_buffer .= $analysis_stats->toString . "\n";
+        $log_buffer .= sprintf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
             $analysis->logic_name,
             $queen_capacity->available_capacity,
         );
     }
 
-    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_required);
+    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer);
 }
 
 
