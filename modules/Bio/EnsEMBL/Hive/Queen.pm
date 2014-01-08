@@ -74,6 +74,7 @@ use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Hive::Scheduler;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -274,7 +275,7 @@ sub specialize_new_worker {
             }
         }
             # probably scheduled by beekeeper.pl:
-    } elsif( $stats = $self->suggest_analysis_to_specialize_by_rc_id_meadow_type($worker->resource_class_id, $worker->meadow_type) ) {
+    } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_by_rc_id_meadow_type($self, $worker->resource_class_id, $worker->meadow_type) ) {
 
         $worker->analysis( undef ); # make sure we reset anything that was there before
         $analysis_id = $stats->analysis_id;
@@ -832,22 +833,5 @@ sub register_all_workers_dead {
     }
 }
 
-
-sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
-    my $self                = shift;
-    my $rc_id               = shift;
-    my $meadow_type         = shift;
-
-    my @suitable_analyses = @{ $self->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type( $rc_id, $meadow_type ) };
-
-    foreach my $stats (@suitable_analyses) {
-
-            #synchronize and double check that it can be run:
-        $self->safe_synchronize_AnalysisStats($stats);
-        return $stats if( ($stats->status ne 'BLOCKED') and ($stats->status ne 'SYNCHING') and ($stats->num_required_workers > 0) );
-    }
-
-    return undef;
-}
 
 1;
