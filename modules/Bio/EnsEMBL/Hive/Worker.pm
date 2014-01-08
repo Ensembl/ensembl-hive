@@ -564,15 +564,14 @@ sub run {
         # FIXME: The following check is not *completely* correct, as it assumes hive_capacity is "local" to the analysis:
         if (!$self->cause_of_death) {
             my $stats = $self->analysis->stats;
-            if( defined($stats->hive_capacity)
-            and 0 <= $stats->hive_capacity
-            and $stats->hive_capacity < $stats->num_running_workers
+            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_capacity < $stats->num_running_workers)
+             or defined($self->analysis->analysis_capacity) && (0 <= $self->analysis->analysis_capacity) && ($self->analysis->analysis_capacity < $stats->num_running_workers)
             ) {
                 $self->cause_of_death('HIVE_OVERLOAD');
             }
         }
 
-        if( $self->cause_of_death() eq 'NO_WORK') {
+        if( $self->cause_of_death() =~ /^(NO_WORK|HIVE_OVERLOAD)$/ ) {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status($self->analysis_id, 'ALL_CLAIMED');
             
             if( $self->can_respecialize and !$specialization_arglist ) {
