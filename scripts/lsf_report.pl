@@ -73,7 +73,8 @@ sub main {
             lifespan_sec     integer NOT NULL,
             exception_status varchar(40) NOT NULL,
 
-            PRIMARY KEY (meadow_name,process_id)
+            PRIMARY KEY (meadow_name,process_id),
+            KEY process_id_idx (process_id)
 
         ) ENGINE=InnoDB;
     });
