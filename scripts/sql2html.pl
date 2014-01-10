@@ -132,11 +132,13 @@ my $link_text = 'columns';
 ##############
 ### Header ###
 ##############
+my $title  = (defined($db_team)) ? "$db_team " : '';
+   $title .= 'Schema Documentation';
 
 my $html_header = qq{
 <html>
 <head>
-<title>$db_team Schema Documentation</title>
+<title>$title</title>
 <meta name="order" content="2" />
 
 <script language="Javascript" type="text/javascript">
