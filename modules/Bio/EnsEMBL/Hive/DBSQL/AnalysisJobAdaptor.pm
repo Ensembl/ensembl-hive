@@ -355,15 +355,15 @@ sub _objs_from_sth {
   while ($sth->fetch()) {
 
     my $input_id = ($column{'input_id'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
             : $column{'input_id'};
 
     my $param_id_stack = ($column{'param_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
             : $column{'param_id_stack'};
 
     my $accu_id_stack = ($column{'accu_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1)
+            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
             : $column{'accu_id_stack'};
 
 
@@ -815,7 +815,7 @@ sub fetch_input_ids_for_job_ids {
 
         while(my ($job_id, $input_id) = $sth->fetchrow_array() ) {
             if($input_id =~ /^_ext(?:\w+)_data_id (\d+)$/) {
-                $input_id = $self->db->get_AnalysisDataAdaptor->fetch_by_dbID($1);
+                $input_id = $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1);
             }
             $input_ids{$job_id * $id_scale + $id_offset} = $input_id;
         }
