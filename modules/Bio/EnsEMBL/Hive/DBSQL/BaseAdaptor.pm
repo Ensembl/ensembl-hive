@@ -52,6 +52,24 @@ sub default_insertion_method {
 }
 
 
+sub default_overflow_limit {
+    return {
+        # 'overflow_column1_name' => column1_size,
+        # 'overflow_column2_name' => column2_size,
+    };
+}
+
+
+sub overflow_limit {
+    my $self = shift @_;
+
+    if(@_) {    # setter
+        $self->{_overflow_limit} = shift @_;
+    }
+    return $self->{_overflow_limit} || $self->default_overflow_limit();
+}
+
+
 sub table_name {
     my $self = shift @_;
 
@@ -205,9 +223,19 @@ sub fetch_all {
     my $sth = $self->prepare($sql);
     $sth->execute;  
 
+    my @overflow_columns = keys %{ $self->overflow_limit() };
+    my $overflow_adaptor = scalar(@overflow_columns) && $self->db->get_AnalysisDataAdaptor();
+
     my $result_struct;  # will be autovivified to the correct data structure
 
     while(my $hashref = $sth->fetchrow_hashref) {
+
+        foreach my $overflow_key (@overflow_columns) {
+            if($hashref->{$overflow_key} =~ /^_ext(?:\w+)_data_id (\d+)$/) {
+                $hashref->{$overflow_key} = $overflow_adaptor->fetch_by_analysis_data_id_TO_data($1);
+            }
+        }
+
         my $pptr = \$result_struct;
         if($key_list) {
             foreach my $syll (@$key_list) {
