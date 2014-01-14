@@ -50,7 +50,28 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
+
+
+sub default_table_name {
+    return 'job';
+}
+
+
+sub object_class {
+    return 'Bio::EnsEMBL::Hive::AnalysisJob';
+}
+
+
+sub default_overflow_limit {
+    return {
+        'input_id'          => 255,
+        'param_id_stack'    =>  64,
+        'accu_id_stack'     =>  64,
+    };
+}
+
+
 
 ###############################################################################
 #
@@ -174,37 +195,6 @@ sub CreateNewJob {
 #
 ###############################################################################
 
-=head2 fetch_by_dbID
-
-  Arg [1]    : int $id
-               the unique database identifier for the feature to be obtained
-  Example    : $feat = $adaptor->fetch_by_dbID(1234);
-  Description: Returns the AnalysisJob defined by the job_id $id.
-  Returntype : Bio::EnsEMBL::Hive::AnalysisJob
-  Exceptions : thrown if $id is not defined
-  Caller     : general
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self,$id) = @_;
-
-  unless(defined $id) {
-    throw("fetch_by_dbID must have an id");
-  }
-
-  my @tabs = $self->_tables;
-
-  my ($name, $syn) = @{$tabs[0]};
-
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "${syn}.${name}_id = $id";
-
-  #return first element of _generic_fetch list
-  my ($obj) = @{$self->_generic_fetch($constraint)};
-  return $obj;
-}
-
 
 =head2 fetch_all_by_analysis_id_status
 
@@ -222,25 +212,26 @@ sub fetch_all_by_analysis_id_status {
     my ($self, $analysis_id, $status, $retry_count_at_least) = @_;
 
     my @constraints = ();
-    push @constraints, "j.analysis_id=$analysis_id"             if ($analysis_id);
-    push @constraints, "j.status='$status'"                     if ($status);
-    push @constraints, "j.retry_count >= $retry_count_at_least" if ($retry_count_at_least);
-    return $self->_generic_fetch( join(" AND ", @constraints) );
+    push @constraints, "analysis_id=$analysis_id"             if ($analysis_id);
+    push @constraints, "status='$status'"                     if ($status);
+    push @constraints, "retry_count >= $retry_count_at_least" if ($retry_count_at_least);
+
+    return $self->fetch_all( join(" AND ", @constraints) );
 }
 
 
 sub fetch_some_by_analysis_id_limit {
     my ($self, $analysis_id, $limit) = @_;
 
-    return $self->_generic_fetch( "j.analysis_id = '$analysis_id'", undef, "LIMIT $limit" );
+    return $self->fetch_all( "analysis_id = '$analysis_id' LIMIT $limit" );
 }
 
 
 sub fetch_all_incomplete_jobs_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    my $constraint = "j.status IN ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND j.worker_id='$worker_id'";
-    return $self->_generic_fetch($constraint);
+    my $constraint = "status IN ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND worker_id='$worker_id'";
+    return $self->fetch_all($constraint);
 }
 
 
@@ -258,144 +249,11 @@ sub fetch_by_url_query {
     }
 }
 
-#
-# INTERNAL METHODS
-#
-###################
-
-sub _generic_fetch {
-  my ($self, $constraint, $join, $final_clause) = @_;
-  
-  my @tables = $self->_tables;
-  my $columns = join(', ', $self->_columns());
-  
-  if ($join) {
-    foreach my $single_join (@{$join}) {
-      my ($tablename, $condition, $extra_columns) = @{$single_join};
-      if ($tablename && $condition) {
-        push @tables, $tablename;
-        
-        if($constraint) {
-          $constraint .= " AND $condition";
-        } else {
-          $constraint = " $condition";
-        }
-      } 
-      if ($extra_columns) {
-        $columns .= ", " . join(', ', @{$extra_columns});
-      }
-    }
-  }
-      
-  #construct a nice table string like 'table1 t1, table2 t2'
-  my $tablenames = join(', ', map({ join(' ', @$_) } @tables));
-
-  my $sql = "SELECT $columns FROM $tablenames";
-
-  my $default_where = $self->_default_where_clause;
-
-  #append a where clause if it was defined
-  if($constraint) { 
-    $sql .= " WHERE $constraint ";
-    if($default_where) {
-      $sql .= " AND $default_where ";
-    }
-  } elsif($default_where) {
-    $sql .= " WHERE $default_where ";
-  }
-
-  #append additional clauses which may have been defined
-  $sql .= " $final_clause" if($final_clause);
-
-  my $sth = $self->prepare($sql);
-  $sth->execute;  
-
-  #print STDOUT $sql,"\n";
-
-  return $self->_objs_from_sth($sth);
-}
-
-
-sub _tables {
-  my $self = shift;
-
-  return (['job', 'j']);
-}
-
-
-sub _columns {
-  my $self = shift;
-
-  return qw (j.job_id  
-             j.prev_job_id
-             j.analysis_id	      
-             j.input_id 
-             j.param_id_stack 
-             j.accu_id_stack 
-             j.worker_id	      
-             j.status 
-             j.retry_count          
-             j.completed
-             j.runtime_msec
-             j.query_count
-             j.semaphore_count
-             j.semaphored_job_id
-            );
-}
-
-
-sub _objs_from_sth {
-  my ($self, $sth) = @_;
-  
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
-  my @jobs = ();
-    
-  while ($sth->fetch()) {
-
-    my $input_id = ($column{'input_id'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
-            : $column{'input_id'};
-
-    my $param_id_stack = ($column{'param_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
-            : $column{'param_id_stack'};
-
-    my $accu_id_stack = ($column{'accu_id_stack'} =~ /^_ext(?:\w+)_data_id (\d+)$/)
-            ? $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1)
-            : $column{'accu_id_stack'};
-
-
-    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        -dbID               => $column{'job_id'},
-        -analysis_id        => $column{'analysis_id'},
-        -input_id           => $input_id,
-        -param_id_stack     => $param_id_stack,
-        -accu_id_stack      => $accu_id_stack,
-        -worker_id          => $column{'worker_id'},
-        -status             => $column{'status'},
-        -retry_count        => $column{'retry_count'},
-        -completed          => $column{'completed'},
-        -runtime_msec       => $column{'runtime_msec'},
-        -query_count        => $column{'query_count'},
-        -semaphore_count    => $column{'semaphore_count'},
-        -semaphored_job_id  => $column{'semaphored_job_id'},
-        -adaptor            => $self,
-    );
-
-    push @jobs, $job;    
-  }
-  $sth->finish;
-  
-  return \@jobs
-}
-
-
+########################
 #
 # STORE / UPDATE METHODS
 #
-################
+########################
 
 
 sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or unsuccessful creation
@@ -525,8 +383,7 @@ sub reset_or_grab_job_by_dbID {
         or die "Could not run\n\t$sql\nwith data:\n\t(".join(',', @values).')';
     $sth->finish;
 
-    my $constraint = "j.job_id='$job_id' AND j.status='$new_status'";
-    my ($job) = @{ $self->_generic_fetch($constraint) };
+    my $job = $self->fetch_by_job_id_AND_status($job_id, $new_status) ;
 
     return $job;
 }
@@ -590,9 +447,7 @@ sub grab_jobs_for_worker {
         }
     }
 
-#   my $constraint = "j.analysis_id='$analysis_id' AND j.worker_id='$worker_id' AND j.status='CLAIMED'";
-    my $constraint = "j.worker_id='$worker_id' AND j.status='CLAIMED'";
-    return $self->_generic_fetch($constraint);
+    return $self->fetch_all_by_worker_id_AND_status($worker_id, 'CLAIMED') ;
 }
 
 
