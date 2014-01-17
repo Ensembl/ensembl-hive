@@ -43,6 +43,10 @@ if($reg_conf) {
 }
 
 my $runnable_object = $runnable_module->new();
+$runnable_object->debug($debug) if($debug);
+$runnable_object->execute_writes(not $no_write);
+
+
 my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( -dbID => -1 );
 unless($input_id) {
     my ($param_hash, $param_list) = parse_cmdline_options();
@@ -79,17 +83,11 @@ foreach my $branch_code (keys %$flow_into) {
     $job->dataflow_rules( $branch_code, \@dataflow_rules );
 }
 
-$runnable_object->input_job($job);
-if($debug) {
-    $runnable_object->debug($debug);
-}
-$runnable_object->execute_writes( not $no_write );
 
+$runnable_object->input_job($job);
 $runnable_object->life_cycle();
 
-unless($no_cleanup) {
-    $runnable_object->cleanup_worker_temp_directory();
-}
+$runnable_object->cleanup_worker_temp_directory() unless($no_cleanup);
 
 __DATA__
 
