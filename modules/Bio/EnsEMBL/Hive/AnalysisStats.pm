@@ -39,8 +39,10 @@ use strict;
 use Scalar::Util ('weaken');
 
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
-
+use Bio::EnsEMBL::Utils::Exception ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
+
+use base ( 'Bio::EnsEMBL::Storable' );  # inherit dbID(), adaptor() and new() methods
 
 
     ## Minimum amount of time in msec that a worker should run before reporting
@@ -52,15 +54,37 @@ sub min_batch_time {
 
 sub new {
     my $class = shift;
-    my $self = bless {}, $class;
 
-    my ($analysis_id, $batch_size, $hive_capacity, $status) = 
-      rearrange([qw(analysis_id batch_size hive_capacity status) ], @_);
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    $self->analysis_id($analysis_id)                    if(defined($analysis_id));
-    $self->batch_size($batch_size)                      if(defined($batch_size));
-    $self->hive_capacity($hive_capacity)                if(defined($hive_capacity));
-    $self->status($status)                              if(defined($status));
+    my ( $analysis_id, $batch_size, $hive_capacity, $status,
+        $total_job_count, $semaphored_job_count, $ready_job_count, $done_job_count, $failed_job_count, $num_running_workers, $num_required_workers,
+        $behaviour, $input_capacity, $output_capacity, $avg_msec_per_job, $avg_input_msec_per_job, $avg_run_msec_per_job, $avg_output_msec_per_job,
+        $seconds_since_last_update, $sync_lock) =
+      rearrange([qw(analysis_id batch_size hive_capacity status
+                total_job_count semaphored_job_count ready_job_count done_job_count failed_job_count num_running_workers num_required_workers
+                behaviour input_capacity output_capacity avg_msec_per_job avg_input_msec_per_job avg_run_msec_per_job avg_output_msec_per_job
+                seconds_since_last_update sync_lock ) ], @_);
+    $self->analysis_id($analysis_id)                            if(defined($analysis_id));
+    $self->batch_size($batch_size)                              if(defined($batch_size));
+    $self->hive_capacity($hive_capacity)                        if(defined($hive_capacity));
+    $self->status($status)                                      if(defined($status));
+    $self->total_job_count($total_job_count)                    if(defined($total_job_count));
+    $self->semaphored_job_count($semaphored_job_count)          if(defined($semaphored_job_count));
+    $self->ready_job_count($ready_job_count)                    if(defined($ready_job_count));
+    $self->done_job_count($done_job_count)                      if(defined($done_job_count));
+    $self->failed_job_count($failed_job_count)                  if(defined($failed_job_count));
+    $self->num_running_workers($num_running_workers)            if(defined($num_running_workers));
+    $self->num_required_workers($num_required_workers)          if(defined($num_required_workers));
+    $self->behaviour($behaviour)                                if(defined($behaviour));
+    $self->input_capacity($input_capacity)                      if(defined($input_capacity));
+    $self->output_capacity($output_capacity)                    if(defined($output_capacity));
+    $self->avg_msec_per_job($avg_msec_per_job)                  if(defined($avg_msec_per_job));
+    $self->avg_input_msec_per_job($avg_input_msec_per_job)      if(defined($avg_input_msec_per_job));
+    $self->avg_run_msec_per_job($avg_run_msec_per_job)          if(defined($avg_run_msec_per_job));
+    $self->avg_output_msec_per_job($avg_output_msec_per_job)    if(defined($avg_output_msec_per_job));
+    $self->seconds_since_last_update($seconds_since_last_update)if(defined($seconds_since_last_update));    # NB: this is an input_column_mapped field
+    $self->sync_lock($sync_lock)                                if(defined($sync_lock));
 
     return $self;
 }
@@ -68,21 +92,9 @@ sub new {
 
 ## pre-settable storable object's getters/setters:
 
-
-sub adaptor {
+sub analysis_id {   # an alias
     my $self = shift;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift;
-        weaken $self->{'_adaptor'};
-    }
-    return $self->{'_adaptor'};
-}
-
-sub analysis_id {
-    my $self = shift;
-    $self->{'_analysis_id'} = shift if(@_);
-    return $self->{'_analysis_id'};
+    return $self->dbID(@_);
 }
 
 sub batch_size {
@@ -206,10 +218,15 @@ sub avg_output_msec_per_job {
 }
 
 
-## other storable ttributes:
+## other storable attributes:
 
+sub last_update {                   # this method is called by the initial store() [at which point it returns undef]
+    my $self = shift;
+    $self->{'_last_update'} = shift if(@_);
+    return $self->{'_last_update'};
+}
 
-sub seconds_since_last_update {
+sub seconds_since_last_update {     # this method is mostly used to convert between server time and local time
     my( $self, $value ) = @_;
     $self->{'_last_update'} = time() - $value if(defined($value));
     return time() - $self->{'_last_update'};
@@ -247,6 +264,9 @@ sub update_status {
 sub get_analysis {
     my $self = shift;
     unless($self->{'_analysis'}) {
+        unless($self->analysis_id) {
+            throw("self->analysis_id undefined, please investigate");
+        }
         $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id);
     }
     return $self->{'_analysis'};
