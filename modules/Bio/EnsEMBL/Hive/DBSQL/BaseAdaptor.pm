@@ -56,6 +56,15 @@ sub default_overflow_limit {
     return {
         # 'overflow_column1_name' => column1_size,
         # 'overflow_column2_name' => column2_size,
+        # ...
+    };
+}
+
+sub default_input_column_mapping {
+    return {
+        # 'original_column1' => "original_column1*10 AS c1_times_ten",
+        # 'original_column2' => "original_column2+1 AS c2_plus_one",
+        # ...
     };
 }
 
@@ -67,6 +76,16 @@ sub overflow_limit {
         $self->{_overflow_limit} = shift @_;
     }
     return $self->{_overflow_limit} || $self->default_overflow_limit();
+}
+
+
+sub input_column_mapping {
+    my $self = shift @_;
+
+    if(@_) {    # setter
+        $self->{_input_column_mapping} = shift @_;
+    }
+    return $self->{_input_column_mapping} || $self->default_input_column_mapping();
 }
 
 
@@ -203,19 +222,14 @@ sub count_all {
 sub fetch_all {
     my ($self, $constraint, $one_per_key, $key_list, $value_column) = @_;
     
-    my $table_name      = $self->table_name();
+    my $table_name              = $self->table_name();
+    my $input_column_mapping    = $self->input_column_mapping();
 
-    my $sql = 'SELECT ' . join(', ', keys %{$self->column_set()}) . " FROM $table_name";
+    my $sql = 'SELECT ' . join(', ', map { $input_column_mapping->{$_} // "$table_name.$_" } keys %{$self->column_set()}) . " FROM $table_name";
 
     if($constraint) { 
             # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
-        if($constraint=~/\bJOIN\b/i) {
-            $sql = 'SELECT ' . join(', ', map { "$table_name.$_" } keys %{$self->column_set()}) . " FROM $table_name $constraint";
-        } elsif($constraint=~/^LIMIT|ORDER|GROUP/) {
-            $sql .= ' '.$constraint;
-        } else {
-            $sql .= ' WHERE '.$constraint;
-        }
+        $sql .= (($constraint=~/\bJOIN\b/i or $constraint=~/^LIMIT|ORDER|GROUP/) ? ' ' : ' WHERE ') . $constraint;
     }
 
     # warn "SQL: $sql\n";
