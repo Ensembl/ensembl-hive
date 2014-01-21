@@ -39,8 +39,6 @@ use strict;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
 use DBI 1.6;        # the 1.6 functionality is important for detecting autoincrement fields and other magic.
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
-
 
 sub default_table_name {
     die "Please define table_name either by setting it via table_name() method or by redefining default_table_name() in your adaptor class";
@@ -66,6 +64,60 @@ sub default_input_column_mapping {
         # 'original_column2' => "original_column2+1 AS c2_plus_one",
         # ...
     };
+}
+
+# ---------------------------------------------------------------------------
+
+sub new {
+    my ( $class, $dbobj ) = @_;
+
+    my $self = bless {}, $class;
+
+    if ( !defined $dbobj || !ref $dbobj ) {
+        throw("Don't have a db [$dbobj] for new adaptor");
+    }
+
+    if ( ref($dbobj) =~ /DBConnection$/ ) {
+        $self->dbc($dbobj);
+    } elsif( UNIVERSAL::can($dbobj, 'dbc') ) {
+        $self->dbc( $dbobj->dbc );
+        $self->db( $dbobj );
+    } else {
+        throw("I was given [$dbobj] for a new adaptor");
+    }
+
+    return $self;
+}
+
+
+sub db {
+    my $self = shift @_;
+
+    if(@_) {    # setter
+        $self->{_db} = shift @_;
+    }
+    return $self->{_db};
+}
+
+
+sub dbc {
+    my $self = shift @_;
+
+    if(@_) {    # setter
+        $self->{_dbc} = shift @_;
+    }
+    return $self->{_dbc};
+}
+
+
+sub prepare {
+    my ( $self, $sql ) = @_;
+
+    # Uncomment next line to cancel caching on the SQL side.
+    # Needed for timing comparisons etc.
+    #$sql =~ s/SELECT/SELECT SQL_NO_CACHE/i;
+
+    return $self->dbc->prepare($sql);
 }
 
 

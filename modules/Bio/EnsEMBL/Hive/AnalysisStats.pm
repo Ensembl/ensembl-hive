@@ -42,7 +42,7 @@ use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Utils::Exception ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
 
-use base ( 'Bio::EnsEMBL::Storable' );  # inherit dbID(), adaptor() and new() methods
+use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
 
 
     ## Minimum amount of time in msec that a worker should run before reporting

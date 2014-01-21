@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Utils::Exception ('throw');
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
-use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Hive::Storable',       # inherit dbID(), adaptor() and new() methods
          );
 
 

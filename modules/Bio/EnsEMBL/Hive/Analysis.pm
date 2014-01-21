@@ -41,7 +41,7 @@ use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base (  'Bio::EnsEMBL::Storable',       # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Hive::Storable',       # inherit dbID(), adaptor() and new() methods
          );
  
 

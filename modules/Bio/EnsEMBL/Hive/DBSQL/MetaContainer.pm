@@ -37,7 +37,7 @@ package Bio::EnsEMBL::Hive::DBSQL::MetaContainer;
 use strict;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 
-use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor', 'Bio::EnsEMBL::DBSQL::BaseMetaContainer');
+use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
 sub default_table_name {
