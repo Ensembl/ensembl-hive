@@ -40,37 +40,25 @@
 package Bio::EnsEMBL::Hive::ResourceDescription;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
+use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
+
 
 sub new {
     my $class = shift @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($adaptor, $resource_class_id, $meadow_type, $submission_cmd_args, $worker_cmd_args) =
-         rearrange([qw(adaptor resource_class_id meadow_type submission_cmd_args worker_cmd_args) ], @_);
+    my ($resource_class_id, $meadow_type, $submission_cmd_args, $worker_cmd_args) =
+         rearrange([qw(resource_class_id meadow_type submission_cmd_args worker_cmd_args) ], @_);
 
-    $self->adaptor($adaptor) if(defined($adaptor));
     $self->resource_class_id($resource_class_id);
     $self->meadow_type($meadow_type);
     $self->submission_cmd_args($submission_cmd_args);
     $self->worker_cmd_args($worker_cmd_args);
 
     return $self;
-}
-
-
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
 }
 
 

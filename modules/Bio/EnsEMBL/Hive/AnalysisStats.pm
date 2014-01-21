@@ -36,7 +36,6 @@
 package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
-use Scalar::Util ('weaken');
 
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Utils::Exception ('throw');

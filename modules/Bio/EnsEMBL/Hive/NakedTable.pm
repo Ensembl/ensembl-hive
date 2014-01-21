@@ -32,35 +32,23 @@
 package Bio::EnsEMBL::Hive::NakedTable;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
+use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
+
 
 sub new {
     my $class = shift @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($adaptor, $table_name, $insertion_method) = 
-         rearrange([qw(adaptor table_name insertion_method) ], @_);
+    my ($table_name, $insertion_method) = 
+         rearrange([qw(table_name insertion_method) ], @_);
 
-    $self->adaptor($adaptor)                    if(defined($adaptor));
     $self->table_name($table_name)              if(defined($table_name));
     $self->insertion_method($insertion_method)  if(defined($insertion_method));
 
     return $self;
-}
-
-
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
 }
 
 
@@ -73,6 +61,7 @@ sub table_name {
     return $self->{'_table_name'};
 }
 
+
 sub insertion_method {
     my $self = shift @_;
 
@@ -81,6 +70,7 @@ sub insertion_method {
     }
     return $self->{'_insertion_method'} || 'INSERT_IGNORE';
 }
+
 
 sub url {
     my $self    = shift @_;
@@ -93,6 +83,7 @@ sub url {
         return;
     }
 }
+
 
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
@@ -116,7 +107,6 @@ sub dataflow {
     }
     $adaptor->store( \@rows );
 }
-
 
 1;
 

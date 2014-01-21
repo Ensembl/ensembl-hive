@@ -32,36 +32,24 @@
 package Bio::EnsEMBL::Hive::Accumulator;
 
 use strict;
-use Scalar::Util ('weaken');
-
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Hive::Utils ('stringify');
+
+use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
+
 
 sub new {
     my $class = shift @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my ($adaptor, $struct_name, $signature_template) = 
-         rearrange([qw(adaptor struct_name signature_template) ], @_);
+    my ($struct_name, $signature_template) = 
+         rearrange([qw(struct_name signature_template) ], @_);
 
-    $self->adaptor($adaptor)                        if(defined($adaptor));
     $self->struct_name($struct_name)                if(defined($struct_name));
     $self->signature_template($signature_template)  if(defined($signature_template));
 
     return $self;
-}
-
-
-sub adaptor {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_adaptor'} = shift @_;
-        weaken $self->{'_adaptor'};
-    }
-
-    return $self->{'_adaptor'};
 }
 
 
@@ -125,7 +113,6 @@ sub dataflow {
 
     $self->adaptor->store( \@rows );
 }
-
 
 1;
 
