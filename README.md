@@ -54,6 +54,3 @@ There is a Hive users' mailing list for questions, suggestions, discussions and 
 To subscribe to it please visit:
         http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users
 
-After subscribing  you will be able to post to:
-        ehive-users@ebi.ac.uk
-
