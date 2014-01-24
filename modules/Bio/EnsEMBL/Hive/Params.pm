@@ -310,10 +310,10 @@ sub mysql_conn { # an example stringification formatter (others can be defined h
     my ($self, $db_conn) = @_;
 
     if(ref($db_conn) eq 'HASH') {
-        return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --pass='$db_conn->{-pass}' $db_conn->{-dbname}";
+        return "--host=$db_conn->{-host} --port=$db_conn->{-port} --user='$db_conn->{-user}' --password='$db_conn->{-pass}' $db_conn->{-dbname}";
     } else {
         my $dbc = go_figure_dbc( $db_conn );
-        return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --pass='".$dbc->password."' ".$dbc->dbname;
+        return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --password='".$dbc->password."' ".$dbc->dbname;
     }
 }
 

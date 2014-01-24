@@ -264,7 +264,7 @@ sub dbconn_2_mysql {    # will save you a lot of typing
     return '--host='.$self->o($db_conn,'-host').' '
           .($port ? '--port='.$self->o($db_conn,'-port').' ' : '')
           .'--user="'.$self->o($db_conn,'-user').'" '
-          .'--pass="'.$self->o($db_conn,'-pass').'" '
+          .'--password="'.$self->o($db_conn,'-pass').'" '
           .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
 }
 

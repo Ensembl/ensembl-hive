@@ -196,7 +196,7 @@ sub get_row_count {
 sub mysql_conn_from_dbc {
     my ($self, $dbc) = @_;
 
-    return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --pass='".$dbc->password."' ".$dbc->dbname;
+    return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --password='".$dbc->password."' ".$dbc->dbname;
 }
 
 1;

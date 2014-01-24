@@ -128,7 +128,7 @@ sub dbc_hash_to_cmd {
         $cmd = ($to_params ? '' : 'mysql ')
               ."--host=$dbc_hash->{host} "
               .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port} " : '')
-              ."--user=$dbc_hash->{user} --pass='$dbc_hash->{pass}' "
+              ."--user=$dbc_hash->{user} --password='$dbc_hash->{pass}' "
               .(defined($extra) ? "$extra " : '')
               .($dbc_hash->{dbname} || '')
               .(defined($sqlcmd) ? " -e '$sqlcmd'" : '');
