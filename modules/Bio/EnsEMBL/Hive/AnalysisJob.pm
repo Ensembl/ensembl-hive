@@ -54,9 +54,10 @@ sub new {
 
     my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
 
-    my($analysis_id, $input_id, $param_id_stack, $accu_id_stack, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id) =
-        rearrange([qw(analysis_id input_id param_id_stack accu_id_stack worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id) ], @_);
+    my($prev_job_id, $analysis_id, $input_id, $param_id_stack, $accu_id_stack, $worker_id, $status, $retry_count, $completed, $runtime_msec, $query_count, $semaphore_count, $semaphored_job_id) =
+        rearrange([qw(prev_job_id analysis_id input_id param_id_stack accu_id_stack worker_id status retry_count completed runtime_msec query_count semaphore_count semaphored_job_id) ], @_);
 
+    $self->prev_job_id($prev_job_id)            if(defined($prev_job_id));
     $self->analysis_id($analysis_id)            if(defined($analysis_id));
     $self->input_id($input_id)                  if(defined($input_id));
     $self->param_id_stack($param_id_stack)      if(defined($param_id_stack));
@@ -73,6 +74,12 @@ sub new {
     return $self;
 }
 
+
+sub prev_job_id {
+    my $self = shift;
+    $self->{'_prev_job_id'} = shift if(@_);
+    return $self->{'_prev_job_id'};
+}
 
 sub analysis_id {
     my $self = shift;
