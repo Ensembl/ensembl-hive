@@ -338,9 +338,9 @@ sub update {    # update (some or all) non_primary columns from the primary
     }
 
     my $sql = "UPDATE $table_name SET ".join(', ', map { "$_=?" } @$columns_to_update)." WHERE $primary_key_constraint";
-    # print "SQL: $sql\n";
+    # warn "SQL: $sql\n";
     my $sth = $self->prepare($sql);
-    # print "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
+    # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
     $sth->execute( @$values_to_update);
 
     $sth->finish();
@@ -400,7 +400,7 @@ sub store {
             $self->mark_stored($object, $present);
         } else {
             my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? $self->keys_to_columns($object) : ($all_storable_columns, '*all*');
-            # print "COLUMN_KEY='$column_key'\n";
+            # warn "COLUMN_KEY='$column_key'\n";
 
             my $this_sth;
 
@@ -408,13 +408,13 @@ sub store {
             unless($this_sth = $hashed_sth{$column_key}) {
                     # By using question marks we can insert true NULLs by setting corresponding values to undefs:
                 my $sql = "$insertion_method INTO $table_name (".join(', ', @$columns_being_stored).') VALUES ('.join(',', (('?') x scalar(@$columns_being_stored))).')';
-                # print "STORE: $sql\n";
+                # warn "STORE: $sql\n";
                 $this_sth = $hashed_sth{$column_key} = $self->prepare( $sql ) or die "Could not prepare statement: $sql";
             }
 
-            # print "STORED_COLUMNS: ".join(', ', map { "`$_`" } @$columns_being_stored)."\n";
+            # warn "STORED_COLUMNS: ".join(', ', map { "`$_`" } @$columns_being_stored)."\n";
             my $values_being_stored = $self->slicer( $object, $columns_being_stored );
-            # print "STORED_VALUES: ".join(', ', map { "'$_'" } @$values_being_stored)."\n";
+            # warn "STORED_VALUES: ".join(', ', map { "'$_'" } @$values_being_stored)."\n";
 
             my $return_code = $this_sth->execute( @$values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
@@ -465,7 +465,7 @@ sub AUTOLOAD {
             die "unknown column '$value_column'";
         }
 
-#        print "Setting up '$AUTOLOAD' method\n";
+#        warn "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
@@ -490,7 +490,7 @@ sub AUTOLOAD {
             }
         }
 
-#        print "Setting up '$AUTOLOAD' method\n";
+#        warn "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->count_all(
@@ -506,7 +506,7 @@ sub AUTOLOAD {
         my $column_set = $self->column_set();
 
         if($column_set->{$filter_name}) {
-#            print "Setting up '$AUTOLOAD' method\n";
+#            warn "Setting up '$AUTOLOAD' method\n";
             *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->remove_all("$filter_name='$filter_value'"); };
             goto &$AUTOLOAD;    # restart the new method
         } else {
@@ -514,11 +514,11 @@ sub AUTOLOAD {
         }
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
         my @columns_to_update = split(/_AND_/i, $1);
-#        print "Setting up '$AUTOLOAD' method\n";
+#        warn "Setting up '$AUTOLOAD' method\n";
         *$AUTOLOAD = sub { my ($self, $object) = @_; return $self->update($object, @columns_to_update); };
         goto &$AUTOLOAD;    # restart the new method
     } else {
-        print "sub '$AUTOLOAD' not implemented";
+        warn "sub '$AUTOLOAD' not implemented";
     }
 }
 
