@@ -175,20 +175,18 @@ sub _table_info_loader {
     my $sth = $dbh->column_info(undef, undef, $table_name, '%');
     $sth->execute();
     while (my $row = $sth->fetchrow_hashref()) {
-        my ($position, $name, $type, $is_ai) = @$row{'ORDINAL_POSITION','COLUMN_NAME', 'TYPE_NAME', 'mysql_is_auto_increment'};
+        my ($position, $column_name, $column_type, $is_ai) = @$row{'ORDINAL_POSITION','COLUMN_NAME', 'TYPE_NAME', 'mysql_is_auto_increment'};
 
-        $column_set{$name}  = 1;
-        $name2type{$name}   = $type;
-        if($is_ai) {
-            $autoinc_id = $name;
+        $column_set{$column_name}  = 1;
+        $name2type{$column_name}   = $column_type;
+
+        if( $is_ai  # careful! This is only supported by DBD::mysql and will not work with other drivers
+         or ($column_name eq $table_name.'_id')
+         or ($table_name eq 'analysis_base' and $column_name eq 'analysis_id') ) {    # a special case (historical)
+            $autoinc_id = $column_name;    # careful! This is only supported by DBD::mysql and will not work with other drivers
         }
     }
     $sth->finish;
-
-    if( ($driver ne 'mysql')
-     and scalar(@primary_key)==1 and (uc($name2type{$primary_key[0]}) eq 'INTEGER') ) {
-        $autoinc_id = $primary_key[0];
-    }
 
     $self->column_set(  \%column_set );
     $self->primary_key( \@primary_key );

@@ -595,6 +595,17 @@ sub run {
                 -batch_size             => $batch_size,
                 -hive_capacity          => $hive_capacity,
                 -status                 => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
+                -total_job_count        => 0,
+                -semaphored_job_count   => 0,
+                -ready_job_count        => 0,
+                -done_job_count         => 0,
+                -failed_job_count       => 0,
+                -num_running_workers    => 0,
+                -num_required_workers   => 0,
+                -behaviour              => 'STATIC',
+                -input_capacity         => 4,
+                -output_capacity        => 4,
+                -sync_lock              => 0,
             );
             $analysis_stats_adaptor->store($stats);
         }
