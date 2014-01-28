@@ -40,7 +40,7 @@ use strict;
 
 use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
-use Bio::EnsEMBL::Hive::Utils ('destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
@@ -89,7 +89,11 @@ sub analysis_id {
 
 sub input_id {
     my $self = shift;
-    $self->{'_input_id'} = shift if(@_);
+    if(@_) {
+        my $input_id = shift @_;
+        $self->{'_input_id'} = ref($input_id) ? stringify($input_id) : $input_id;
+    }
+
     return $self->{'_input_id'};
 }
 
