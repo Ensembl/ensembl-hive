@@ -122,21 +122,15 @@ sub CreateNewJob {
     }
 
     if(length($input_id) >= 255) {
-        print "input_id is '$input_id', length = ".length($input_id)."\n";
-        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
-        $input_id = "_extended_data_id $extended_data_id";
+        $input_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($input_id);
     }
 
     if(length($param_id_stack) >= 64) {
-        print "param_id_stack is '$param_id_stack', length = ".length($param_id_stack)."\n";
-        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($param_id_stack);
-        $param_id_stack = "_extended_data_id $extended_data_id";
+        $param_id_stack = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($param_id_stack);
     }
 
     if(length($accu_id_stack) >= 64) {
-        print "accu_id_stack is '$accu_id_stack', length = ".length($accu_id_stack)."\n";
-        my $extended_data_id = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($accu_id_stack);
-        $accu_id_stack = "_extended_data_id $extended_data_id";
+        $accu_id_stack = $analysis->adaptor->db->get_AnalysisDataAdaptor->store_if_needed($accu_id_stack);
     }
 
 

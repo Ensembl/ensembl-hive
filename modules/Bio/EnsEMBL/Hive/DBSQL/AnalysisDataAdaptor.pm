@@ -55,7 +55,7 @@ sub store_if_needed {
 
     my ($stored_hash) = $self->store({'data'=> $data}, 1);
 
-    return $stored_hash->{'analysis_data_id'};
+    return '_extended_data_id ' . $stored_hash->{'analysis_data_id'};
 }
 
 1;
