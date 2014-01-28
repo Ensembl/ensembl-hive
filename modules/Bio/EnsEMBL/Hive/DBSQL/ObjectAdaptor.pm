@@ -49,9 +49,18 @@ sub object_class {
 sub slicer {    # take a slice of the object (if only we could inline in Perl!)
     my ($self, $object, $fields) = @_;
 
-    my $autoinc_id = $self->autoinc_id();
+    my $autoinc_id      = $self->autoinc_id();
+    my $overflow_limit  = $self->overflow_limit();
 
-    return [ map { ($_ eq $autoinc_id) ? $object->dbID() : $object->$_() } @$fields ];
+    return [ map { ($_ eq $autoinc_id)
+                    ? $object->dbID()
+                    : eval { my $value  = $object->$_();
+                             my $ol     = $overflow_limit->{$_};
+                             (defined($ol) and length($value)>$ol)
+                                ? $self->db->get_AnalysisDataAdaptor()->store_if_needed( $value )
+                                : $value
+                      }
+                 } @$fields ];
 }
 
 
