@@ -13,6 +13,7 @@ BEGIN {
 
 
 use Getopt::Long;
+use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
@@ -89,22 +90,21 @@ sub main {
         warn "Since -input_id has not been set, assuming input_id='$input_id'\n";
     }
 
-        # Make sure all job creations undergo re-stringification
-        # to avoid alternative "spellings" of the same input_id hash:
-    $input_id = stringify( destringify( $input_id ) ); 
+    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+        -prev_job_id    => undef,   # this job has been created by the initialization script, not by another job
+        -analysis_id    => $analysis->dbID,
+        -input_id       => destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
+    );
 
-    if( my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-        -analysis       => $analysis,
-        -input_id       => $input_id,
-        -prev_job_id    => undef,       # this job has been created by the initialization script, not by another job
-    ) ) {
+    my ($job_id) = @{ $hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+
+    if($job_id) {
 
         print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
 
     } else {
 
         warn "Could not create job '$input_id' (it may have been created already)\n";
-
     }
 }
 

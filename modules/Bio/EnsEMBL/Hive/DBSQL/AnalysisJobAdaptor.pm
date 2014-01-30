@@ -125,7 +125,9 @@ sub CreateNewJob {
         -semaphored_job_id  => $semaphored_job_id,
     );
     
-    return $analysis->adaptor->db->get_AnalysisJobAdaptor->store_job_and_adjust_counters( $job, $push_new_semaphore );
+    my ($job_id) = @{ $analysis->adaptor->db->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ], $push_new_semaphore ) };
+
+    return $job_id;
 }
 
 
@@ -136,41 +138,58 @@ sub CreateNewJob {
 ###############################################################################
 
 
-sub store_job_and_adjust_counters {
-    my ($self, $job, $push_new_semaphore) = @_;
+sub store_jobs_and_adjust_counters {
+    my ($self, $jobs, $push_new_semaphore) = @_;
 
-    my $semaphored_job_id                   = $job->semaphored_job_id();
+    my $dbc                                 = $self->dbc;
+
+        # assume all jobs from the same storing batch share the same semaphored_job_id:
+    my $semaphored_job_id                   = scalar(@$jobs) && $jobs->[0]->semaphored_job_id();
     my $need_to_increase_semaphore_count    = ($semaphored_job_id && !$push_new_semaphore);
 
-    my $dbc = $self->dbc;
-        # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
-    $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($need_to_increase_semaphore_count and ($dbc->driver ne 'sqlite'));
+    my @output_job_ids  = ();
+    my $failed_to_store = 0;
 
-    my ($job, $stored_this_time) = $self->store( $job, 0 );
+    foreach my $job (@$jobs) {
+            # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
+        $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($need_to_increase_semaphore_count and ($dbc->driver ne 'sqlite'));
 
-    if($stored_this_time) {
-        if($need_to_increase_semaphore_count) { # if we are not creating a new semaphore (where dependent jobs have already been counted),
-                                                # but rather propagating an existing one (same or other level), we have to up-adjust the counter
-            $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
+        my ($job, $stored_this_time) = $self->store( $job, 0 );
+
+        if($stored_this_time) {
+            if($need_to_increase_semaphore_count) { # if we are not creating a new semaphore (where dependent jobs have already been counted),
+                                                    # but rather propagating an existing one (same or other level), we have to up-adjust the counter
+                $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
+            }
+
+            unless($self->db->hive_use_triggers()) {
+                $dbc->do(qq{
+                        UPDATE analysis_stats
+                        SET total_job_count=total_job_count+1
+                    }
+                    .(($job->status eq 'READY')
+                        ? " ,ready_job_count=ready_job_count+1 "
+                        : " ,semaphored_job_count=semaphored_job_count+1 "
+                    ).(($dbc->driver eq 'pgsql')
+                        ? " ,status = CAST(CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END AS analysis_status) "
+                        : " ,status =      CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END "
+                    )." WHERE analysis_id=".$job->analysis_id
+                );
+            }
+
+            push @output_job_ids, $job->dbID();
+
+        } else {
+            $failed_to_store++;
         }
-
-        unless($self->db->hive_use_triggers()) {
-            $dbc->do(qq{
-                    UPDATE analysis_stats
-                    SET total_job_count=total_job_count+1
-                }
-                .(($job->status eq 'READY')
-                    ? " ,ready_job_count=ready_job_count+1 "
-                    : " ,semaphored_job_count=semaphored_job_count+1 "
-                ).(($dbc->driver eq 'pgsql')
-                    ? " ,status = CAST(CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END AS analysis_status) "
-                    : " ,status =      CASE WHEN status!='BLOCKED' THEN 'LOADING' ELSE 'BLOCKED' END "
-                )." WHERE analysis_id=".$job->analysis_id
-            );
-        }
-
-        return $job->dbID();
     }
+
+        # adjust semaphore_count for jobs that failed to be stored (but have been pre-counted during funnel's creation):
+    if($push_new_semaphore and $failed_to_store) {
+        $self->decrease_semaphore_count_for_jobid( $semaphored_job_id, $failed_to_store );
+    }
+
+    return \@output_job_ids;
 }
 
 

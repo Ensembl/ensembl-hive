@@ -303,7 +303,8 @@ sub dataflow_output_id {
     my $param_id_stack          = $self->param_id_stack();
     my $accu_id_stack           = $self->accu_id_stack();
 
-    my $hive_use_param_stack    = $self->adaptor() && $self->adaptor->db->hive_use_param_stack();
+    my $job_adaptor             = $self->adaptor();
+    my $hive_use_param_stack    = $job_adaptor && $job_adaptor->db->hive_use_param_stack();
 
     if($hive_use_param_stack) {
         if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
@@ -347,80 +348,63 @@ sub dataflow_output_id {
 
             $target_analysis_or_table->dataflow( $output_ids_for_this_rule, $self );
 
-        } else {
-
-            if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {    # members of a semaphored fan will have to wait in cache until the funnel is created:
+        } elsif(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {    # members of a semaphored fan will have to wait in cache until the funnel is created:
 
                 my $fan_cache_this_branch = $self->fan_cache()->{$funnel_dataflow_rule_id} ||= [];
-                push @$fan_cache_this_branch, map { [$_, $target_analysis_or_table] } @$output_ids_for_this_rule;
+                push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
+                                                        -prev_job_id        => $self->dbID,
+                                                        -analysis_id        => $target_analysis_or_table->dbID, # expecting an Analysis
+                                                        -input_id           => $_,
+                                                        -param_id_stack     => $param_id_stack,
+                                                        -accu_id_stack      => $accu_id_stack,
+                                                        # -semaphored_job_id  => to be set when the $funnel_job has been stored
+                                                    ) } @$output_ids_for_this_rule;
 
-            } else {    # either a semaphored funnel or a non-semaphored dataflow:
+        } else {    # either a semaphored funnel or a non-semaphored dataflow:
 
-                my $fan_cache = delete $self->fan_cache()->{$rule->dbID};   # clear the cache at the same time
+                my $fan_jobs = delete $self->fan_cache()->{$rule->dbID};   # clear the cache at the same time
 
-                if($fan_cache && @$fan_cache) { # a semaphored funnel
-                    my $funnel_job_id;
+                if($fan_jobs && @$fan_jobs) { # a semaphored funnel
+
                     if( (my $funnel_job_count = scalar(@$output_ids_for_this_rule)) !=1 ) {
 
                         $self->transient_error(0);
                         die "Asked to dataflow into $funnel_job_count funnel jobs instead of 1";
 
-                    } elsif($funnel_job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(   # if a semaphored funnel job creation succeeded, ...
+                    } else {
+                        my $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+                                            -prev_job_id        => $self->dbID,
+                                            -analysis_id        => $target_analysis_or_table->dbID, # expecting an Analysis
                                             -input_id           => $output_ids_for_this_rule->[0],
                                             -param_id_stack     => $param_id_stack,
                                             -accu_id_stack      => $accu_id_stack,
-                                            -analysis           => $target_analysis_or_table,
-                                            -prev_job           => $self,
-                                            -semaphore_count    => scalar(@$fan_cache),         # "pre-increase" the semaphore count before creating the dependent jobs
+                                            -semaphore_count    => scalar(@$fan_jobs),          # "pre-increase" the semaphore count before creating the dependent jobs
                                             -semaphored_job_id  => $self->semaphored_job_id(),  # propagate parent's semaphore if any
-                    )) {                                                                                    # ... then create the fan out of the cache:
-                        push @output_job_ids, $funnel_job_id;
+                        );
 
-                        my $failed_to_create = 0;
+                        my ($funnel_job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $funnel_job ], 0) };
+                        if($funnel_job_id) {    # if a semaphored funnel job creation succeeded, then store the fan out of the cache:
 
-                        foreach my $pair ( @$fan_cache ) {
-                            my ($output_id, $fan_analysis) = @$pair;
-                            if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                                -input_id           => $output_id,
-                                -param_id_stack     => $param_id_stack,
-                                -accu_id_stack      => $accu_id_stack,
-                                -analysis           => $fan_analysis,
-                                -prev_job           => $self,
-                                -semaphored_job_id  => $funnel_job_id,      # by passing this parameter we request not to propagate semaphores
-                                -push_new_semaphore => 1,                   # inform the adaptor that semaphore count doesn't need up-adjustment
-                            )) {
-                                push @output_job_ids, $job_id;
-                            } else {                                        # count all dependent jobs that failed to create
-                                $failed_to_create++;
+                            foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
+                                $fan_job->semaphored_job_id( $funnel_job_id );
                             }
+                            push @output_job_ids, $funnel_job_id, @{ $job_adaptor->store_jobs_and_adjust_counters( $fan_jobs, 1) };
                         }
-                        if($failed_to_create) { # adjust semaphore_count for jobs that failed to create:
-                            $self->adaptor->decrease_semaphore_count_for_jobid( $funnel_job_id, $failed_to_create );
-                        }
-                    } else {    # assume the whole semaphored group of jobs has been created already
                     }
-
                 } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
+                    my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
+                                                        -prev_job_id        => $self->dbID,
+                                                        -analysis_id        => $target_analysis_or_table->dbID, # expecting an Analysis
+                                                        -input_id           => $_,
+                                                        -param_id_stack     => $param_id_stack,
+                                                        -accu_id_stack      => $accu_id_stack,
+                                                        -semaphored_job_id  => $self->semaphored_job_id(),  # propagate parent's semaphore if any
+                    ) } @$output_ids_for_this_rule;
 
-                    foreach my $output_id ( @$output_ids_for_this_rule ) {
-
-                        if(my $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                            -input_id           => $output_id,
-                            -param_id_stack     => $param_id_stack,
-                            -accu_id_stack      => $accu_id_stack,
-                            -analysis           => $target_analysis_or_table,
-                            -prev_job           => $self,
-                            -semaphored_job_id  => $self->semaphored_job_id(),  # propagate parent's semaphore if any
-                        )) {
-                                # only add the ones that were indeed created:
-                            push @output_job_ids, $job_id;
-                        }
-                    }
+                    push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0) };
                 }
-
-            }
-        }
-    }
+        } # /if
+    } # /foreach my $rule
 
     return \@output_job_ids;
 }

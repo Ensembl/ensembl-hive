@@ -68,6 +68,7 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
+use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Valley;
 
@@ -523,8 +524,9 @@ sub run {
         warn "Done.\n\n";
     }
 
-    my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
-    my $analysis_stats_adaptor       = $hive_dba->get_AnalysisStatsAdaptor;
+    my $analysis_adaptor            = $hive_dba->get_AnalysisAdaptor;
+    my $analysis_stats_adaptor      = $hive_dba->get_AnalysisStatsAdaptor;
+    my $job_adaptor                 = $hive_dba->get_AnalysisJobAdaptor;
 
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
@@ -611,13 +613,14 @@ sub run {
         }
 
             # now create the corresponding jobs (if there are any):
-        foreach my $input_id_hash (@{$input_ids || []}) {
+        if($input_ids) {
+            my @jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
+                -prev_job_id    => undef,           # these jobs are created by the initialization script, not by another job
+                -analysis_id    => $analysis->dbID,
+                -input_id       => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
+            ) } @$input_ids;
 
-            Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                -input_id       => $input_id_hash,  # input_ids are now centrally stringified in the AnalysisJobAdaptor
-                -analysis       => $analysis,
-                -prev_job_id    => undef, # these jobs are created by the initialization script, not by another job
-            );
+            $job_adaptor->store_jobs_and_adjust_counters( \@jobs );
         }
     }
 
