@@ -100,12 +100,14 @@ sub input_id {
 sub param_id_stack {
     my $self = shift;
     $self->{'_param_id_stack'} = shift if(@_);
+    $self->{'_param_id_stack'} = '' unless(defined($self->{'_param_id_stack'}));
     return $self->{'_param_id_stack'};
 }
 
 sub accu_id_stack {
     my $self = shift;
     $self->{'_accu_id_stack'} = shift if(@_);
+    $self->{'_accu_id_stack'} = '' unless(defined($self->{'_accu_id_stack'}));
     return $self->{'_accu_id_stack'};
 }
 
@@ -118,6 +120,7 @@ sub worker_id {
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
+    $self->{'_status'} = ( ($self->semaphore_count>0) ? 'SEMAPHORED' : 'READY' ) unless(defined($self->{'_status'}));
     return $self->{'_status'};
 }
 
