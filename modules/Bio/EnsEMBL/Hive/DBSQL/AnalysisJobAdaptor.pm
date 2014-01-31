@@ -98,22 +98,23 @@ sub default_overflow_limit {
   Returntype : int job_id on database analysis is from.
   Exceptions : thrown if either -input_id or -analysis are not properly defined
   Caller     : general
+  Status     : DEPRECATED. Please use $job_adaptor->store_jobs_and_adjust_counters( \@jobs_to_store ) instead
 
 =cut
 
 sub CreateNewJob {
-  my ($class, @args) = @_;
+    my ($class, @args) = @_;
 
-  my ($prev_job, $prev_job_id, $analysis, $input_id, $param_id_stack, $accu_id_stack, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-     rearrange([qw(prev_job prev_job_id analysis input_id param_id_stack accu_id_stack semaphore_count semaphored_job_id push_new_semaphore)], @args);
+    my ($prev_job, $prev_job_id, $analysis, $input_id, $param_id_stack, $accu_id_stack, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
+        rearrange([qw(prev_job prev_job_id analysis input_id param_id_stack accu_id_stack semaphore_count semaphored_job_id push_new_semaphore)], @args);
 
-  throw("must define input_id") unless($input_id);
-  throw("must define analysis") unless($analysis);
-  throw("analysis must be [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")
-    unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
-  throw("analysis must have adaptor connected to database")
-    unless($analysis->adaptor and $analysis->adaptor->db);
-  throw("Please specify prev_job object instead of prev_job_id if available") if ($prev_job_id);   # 'obsolete' message
+    warn "CreateNewJob() method is deprecated. Please use \$job_adaptor->store_jobs_and_adjust_counters() instead.\n";
+
+    throw("must define input_id") unless($input_id);
+    throw("must define analysis") unless($analysis);
+    throw("analysis must be [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")  unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
+    throw("analysis must have adaptor connected to database")                   unless($analysis->adaptor and $analysis->adaptor->db);
+    throw("Please specify prev_job object instead of prev_job_id if available") if ($prev_job_id);   # 'obsolete' message
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
         -prev_job_id        => $prev_job && $prev_job->dbID,
@@ -138,12 +139,22 @@ sub CreateNewJob {
 ###############################################################################
 
 
+=head2 store_jobs_and_adjust_counters
+
+  Arg [1]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $jobs_to_store
+  Arg [2]    : (optional) boolean $push_new_semaphore
+  Example    : my @output_job_ids = @{ $job_adaptor->store_jobs_and_adjust_counters( \@jobs_to_store ) };
+  Description: Attempts to store a list of jobs, returns an arrayref of successfully stored job_ids
+  Returntype : Reference to list of job_dbIDs
+
+=cut
+
 sub store_jobs_and_adjust_counters {
     my ($self, $jobs, $push_new_semaphore) = @_;
 
     my $dbc                                 = $self->dbc;
 
-        # assume all jobs from the same storing batch share the same semaphored_job_id:
+        # NB: our use patterns assume all jobs from the same storing batch share the same semaphored_job_id:
     my $semaphored_job_id                   = scalar(@$jobs) && $jobs->[0]->semaphored_job_id();
     my $need_to_increase_semaphore_count    = ($semaphored_job_id && !$push_new_semaphore);
 
