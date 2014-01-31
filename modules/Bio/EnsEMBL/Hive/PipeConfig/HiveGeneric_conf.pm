@@ -61,6 +61,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
+use Bio::EnsEMBL::Registry;
 
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
