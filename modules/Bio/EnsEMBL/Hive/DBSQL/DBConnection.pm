@@ -37,8 +37,38 @@ package Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Utils::Argument ('rearrange');
+use Bio::EnsEMBL::Hive::Utils::URL;
+
 use base ('Bio::EnsEMBL::DBSQL::DBConnection');
 
+
+sub new {
+    my $class = shift;
+
+    my ($url) = rearrange( ['URL'], @_ );
+
+    if($url) {
+        if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
+
+            return $class->SUPER::new(
+                -driver => $parsed_url->{'driver'},
+                -host   => $parsed_url->{'host'},
+                -port   => $parsed_url->{'port'},
+                -user   => $parsed_url->{'user'},
+                -pass   => $parsed_url->{'pass'},
+                -dbname => $parsed_url->{'dbname'},
+                -disconnect_when_inactive       => $parsed_url->{'conn_params'}->{'discon'},
+                -reconnect_when_connection_lost => $parsed_url->{'conn_params'}->{'recon'},
+            );
+
+        } else {
+            die "Could not create DBC because could not parse the URL '$url'";
+        }
+    } else {
+        return $class->SUPER::new( @_ );
+    }
+}
 
 =head2 url
 
