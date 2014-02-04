@@ -69,7 +69,7 @@ sub objectify { # turn the hashref into an object (if only we could inline in Pe
 
     my $autoinc_id = $self->autoinc_id();
 
-    return $self->object_class()->new( -adaptor => $self, map { ('-'.uc( ($_ eq $autoinc_id) ? 'dbID' : $_ ) => $hashref->{$_}) } keys %$hashref );
+    return $self->object_class()->new( 'adaptor' => $self, map { ( ($_ eq $autoinc_id) ? 'dbID' : $_ ) => $hashref->{$_} } keys %$hashref );
 }
 
 
@@ -90,7 +90,7 @@ sub create_new {
         ? pop @_    # extra 'odd' parameter that would disrupt the hash integrity anyway
         : 0;        # do not check by default
 
-    my $object = $self->object_class()->new( -adaptor => $self, @_ );
+    my $object = $self->object_class()->new( 'adaptor' => $self, @_ );
 
     return $self->store( $object, $check_presence_in_db_first );
 }

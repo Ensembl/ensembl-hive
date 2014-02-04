@@ -74,8 +74,6 @@ package Bio::EnsEMBL::Hive::Worker;
 use strict;
 use POSIX;
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
-
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Extensions;
@@ -89,34 +87,7 @@ use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base (  'Bio::EnsEMBL::Hive::Storable',       # inherit dbID(), adaptor() and new() methods
-         );
-
-
-sub new {
-    my $class = shift @_;
-
-    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
-
-    my($analysis_id, $meadow_type, $meadow_name, $host, $process_id, $resource_class_id, $work_done, $status, $born, $last_check_in, $died, $cause_of_death, $log_dir) =
-        rearrange([qw(analysis_id meadow_type meadow_name host process_id resource_class_id work_done status born last_check_in died cause_of_death log_dir) ], @_);
-
-    $self->analysis_id($analysis_id)                if(defined($analysis_id));
-    $self->meadow_type($meadow_type)                if(defined($meadow_type));
-    $self->meadow_name($meadow_name)                if(defined($meadow_name));
-    $self->host($host)                              if(defined($host));
-    $self->process_id($process_id)                  if(defined($process_id));
-    $self->resource_class_id($resource_class_id)    if(defined($resource_class_id));
-    $self->work_done($work_done)                    if(defined($work_done));
-    $self->status($status)                          if(defined($status));
-    $self->born($born)                              if(defined($born));
-    $self->last_check_in($last_check_in)            if(defined($last_check_in));
-    $self->died($died)                              if(defined($died));
-    $self->cause_of_death($cause_of_death)          if(defined($cause_of_death));
-    $self->log_dir($log_dir)                        if(defined($log_dir));
-
-    return $self;
-}
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub init {

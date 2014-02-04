@@ -44,15 +44,13 @@ package Bio::EnsEMBL::Hive::Storable;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Scalar::Util qw(weaken);
 
 
 =head2 new
 
-  Arg [-ADAPTOR] : Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor
-  Arg [-dbID]    : database internal id
-  Caller         : internal calls
+  Args           : pairs of ($method_name, $value)
+  Caller         : ObjectAdaptor, AnalysisJob, URLFactory.pm, HiveGeneric_conf, seed_pipeline.pl, standaloneJob.pl
   Description    : create a new Storable object 
   Returntype     : Bio::EnsEMBL::Hive::Storable
   Exceptions     : Adaptor not a Bio::EnsEMBL::DBSQL::BaseAdaptor
@@ -61,14 +59,15 @@ use Scalar::Util qw(weaken);
 =cut
 
 sub new {
-    my $caller = shift;
-    my $class = ref($caller) || $caller;
+    my $class = shift @_;
 
     my $self = bless {}, $class;
 
-    my ($adaptor, $dbID) = rearrange(['ADAPTOR', 'dbID'], @_);
-    $self->dbID( $dbID )        if defined( $dbID );
-    $self->adaptor($adaptor)    if defined( $adaptor );
+    while(my ($method,$value) = splice(@_,0,2)) {
+        if(defined($value)) {
+            $self->$method($value);
+        }
+    }
 
     return $self;
 }

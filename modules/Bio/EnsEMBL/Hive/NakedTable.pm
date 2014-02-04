@@ -32,24 +32,8 @@
 package Bio::EnsEMBL::Hive::NakedTable;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
-
-
-sub new {
-    my $class = shift @_;
-
-    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
-
-    my ($table_name, $insertion_method) = 
-         rearrange([qw(table_name insertion_method) ], @_);
-
-    $self->table_name($table_name)              if(defined($table_name));
-    $self->insertion_method($insertion_method)  if(defined($insertion_method));
-
-    return $self;
-}
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub table_name {

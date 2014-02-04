@@ -91,9 +91,9 @@ sub main {
     }
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        -prev_job_id    => undef,   # this job has been created by the initialization script, not by another job
-        -analysis_id    => $analysis->dbID,
-        -input_id       => destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
+        'prev_job_id'   => undef,   # this job has been created by the initialization script, not by another job
+        'analysis_id'   => $analysis->dbID,
+        'input_id'      => destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
     );
 
     my ($job_id) = @{ $hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };

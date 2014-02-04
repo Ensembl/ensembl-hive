@@ -42,39 +42,13 @@
 package Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::URLFactory;
 use Bio::EnsEMBL::Hive::Extensions;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
-
-
-=head2 new
-
-  Title   : new
-  Usage   : ...AnalysisCtrlRule->new;
-  Function: Constructor for empty AnalysisCtrlRule object
-  Returns : Bio::EnsEMBL::Hive::AnalysisCtrlRule
-  Args    : none
-  
-=cut
-
-sub new {
-    my $class   = shift @_;
-
-    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
-
-    my ( $condition_analysis_url, $ctrled_analysis_id ) =
-    rearrange( [ qw (CONDITION_ANALYSIS_URL CTRLED_ANALYSIS_ID) ], @_ );
-
-        # simple scalars:
-    $self->condition_analysis_url( $condition_analysis_url )    if(defined($condition_analysis_url));
-    $self->ctrled_analysis_id( $ctrled_analysis_id )            if(defined($ctrled_analysis_id));
-
-    return $self;
-}
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 =head2 ctrled_analysis_id

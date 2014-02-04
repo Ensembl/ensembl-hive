@@ -495,8 +495,8 @@ sub run {
             }
 
             my ($rc, $rc_newly_created) = $resource_class_adaptor->create_new(
-                defined($rc_id) ? (-DBID   => $rc_id) : (),
-                -NAME   => $rc_name,
+                defined($rc_id) ? ('dbID'   => $rc_id) : (),
+                'name'   => $rc_name,
                 1   # check whether this ResourceClass was already present in the database
             );
             $rc_id = $rc->dbID();
@@ -511,16 +511,16 @@ sub run {
                 $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
                 $resource_description_adaptor->create_new(
-                    -resource_class_id      => $rc_id,
-                    -meadow_type            => $meadow_type,
-                    -submission_cmd_args    => $resource_param_list->[0],
-                    -worker_cmd_args        => $resource_param_list->[1],
+                    resource_class_id      => $rc_id,
+                    meadow_type            => $meadow_type,
+                    submission_cmd_args    => $resource_param_list->[0],
+                    worker_cmd_args        => $resource_param_list->[1],
                 );
             }
         }
         unless(my $default_rc = $resource_class_adaptor->fetch_by_name('default')) {
             warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
-            $resource_class_adaptor->create_new(-NAME => 'default');
+            $resource_class_adaptor->create_new('name' => 'default');
         }
         warn "Done.\n\n";
     }
@@ -579,36 +579,36 @@ sub run {
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
             $analysis = Bio::EnsEMBL::Hive::Analysis->new(
-                -logic_name             => $logic_name,
-                -module                 => $module,
-                -parameters             => $parameters_hash,
-                -resource_class_id      => $rc_id,
-                -failed_job_tolerance   => $failed_job_tolerance,
-                -max_retry_count        => $max_retry_count,
-                -can_be_empty           => $can_be_empty,
-                -priority               => $priority,
-                -meadow_type            => $meadow_type,
-                -analysis_capacity      => $analysis_capacity,
+                'logic_name'            => $logic_name,
+                'module'                => $module,
+                'parameters'            => $parameters_hash,
+                'resource_class_id'     => $rc_id,
+                'failed_job_tolerance'  => $failed_job_tolerance,
+                'max_retry_count'       => $max_retry_count,
+                'can_be_empty'          => $can_be_empty,
+                'priority'              => $priority,
+                'meadow_type'           => $meadow_type,
+                'analysis_capacity'     => $analysis_capacity,
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
             $analysis_adaptor->store($analysis);
 
             my $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
-                -analysis_id            => $analysis->dbID,
-                -batch_size             => $batch_size,
-                -hive_capacity          => $hive_capacity,
-                -status                 => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
-                -total_job_count        => 0,
-                -semaphored_job_count   => 0,
-                -ready_job_count        => 0,
-                -done_job_count         => 0,
-                -failed_job_count       => 0,
-                -num_running_workers    => 0,
-                -num_required_workers   => 0,
-                -behaviour              => 'STATIC',
-                -input_capacity         => 4,
-                -output_capacity        => 4,
-                -sync_lock              => 0,
+                'analysis_id'           => $analysis->dbID,
+                'batch_size'            => $batch_size,
+                'hive_capacity'         => $hive_capacity,
+                'status'                => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
+                'total_job_count'       => 0,
+                'semaphored_job_count'  => 0,
+                'ready_job_count'       => 0,
+                'done_job_count'        => 0,
+                'failed_job_count'      => 0,
+                'num_running_workers'   => 0,
+                'num_required_workers'  => 0,
+                'behaviour'             => 'STATIC',
+                'input_capacity'        => 4,
+                'output_capacity'       => 4,
+                'sync_lock'             => 0,
             );
             $analysis_stats_adaptor->store($stats);
         }
@@ -616,9 +616,9 @@ sub run {
             # now create the corresponding jobs (if there are any):
         if($input_ids) {
             my @jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
-                -prev_job_id    => undef,           # these jobs are created by the initialization script, not by another job
-                -analysis_id    => $analysis->dbID,
-                -input_id       => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
+                'prev_job_id'   => undef,           # these jobs are created by the initialization script, not by another job
+                'analysis_id'   => $analysis->dbID,
+                'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;
 
             $job_adaptor->store_jobs_and_adjust_counters( \@jobs );
@@ -648,8 +648,8 @@ sub run {
                     die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n" unless defined $condition_analysis;
                 }
                 my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
-                        -condition_analysis_url => $condition_url,
-                        -ctrled_analysis_id     => $analysis->dbID,
+                        'condition_analysis_url'    => $condition_url,
+                        'ctrled_analysis_id'        => $analysis->dbID,
                 );
                 $ctrl_rule_adaptor->store( $c_rule, 1 );
 
@@ -704,11 +704,11 @@ sub run {
                     foreach my $input_id_template (@$input_id_template_list) {
 
                         my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
-                            -from_analysis              => $analysis,
-                            -to_analysis_url            => $heir_url,
-                            -branch_code                => $branch_name_or_code,
-                            -input_id_template          => $input_id_template,
-                            -funnel_dataflow_rule_id    => $funnel_dataflow_rule_id,
+                            'from_analysis'             => $analysis,
+                            'to_analysis_url'           => $heir_url,
+                            'branch_code'               => $branch_name_or_code,
+                            'input_id_template'         => $input_id_template,
+                            'funnel_dataflow_rule_id'   => $funnel_dataflow_rule_id,
                         );
                         $dataflow_rule_adaptor->store( $df_rule, 1 );
 

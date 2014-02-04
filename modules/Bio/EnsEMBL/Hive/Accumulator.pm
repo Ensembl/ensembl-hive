@@ -32,25 +32,10 @@
 package Bio::EnsEMBL::Hive::Accumulator;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
+
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );  # inherit dbID(), adaptor() and new() methods
-
-
-sub new {
-    my $class = shift @_;
-
-    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
-
-    my ($struct_name, $signature_template) = 
-         rearrange([qw(struct_name signature_template) ], @_);
-
-    $self->struct_name($struct_name)                if(defined($struct_name));
-    $self->signature_template($signature_template)  if(defined($signature_template));
-
-    return $self;
-}
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub struct_name {

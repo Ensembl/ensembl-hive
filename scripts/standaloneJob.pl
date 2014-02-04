@@ -47,7 +47,7 @@ $runnable_object->debug($debug) if($debug);
 $runnable_object->execute_writes(not $no_write);
 
 
-my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( -dbID => -1 );
+my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
 unless($input_id) {
     my ($param_hash, $param_list) = parse_cmdline_options();
     $input_id = stringify($param_hash);
@@ -74,8 +74,8 @@ foreach my $branch_code (keys %$flow_into) {
         foreach my $input_id_template (@$input_id_template_list) {
 
             push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule->new(
-                -to_analysis_url            => $heir_url,
-                -input_id_template          => $input_id_template,
+                'to_analysis_url'   => $heir_url,
+                'input_id_template' => $input_id_template,
             );
         }
     }

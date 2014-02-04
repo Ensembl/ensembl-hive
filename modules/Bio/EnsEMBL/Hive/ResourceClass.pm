@@ -39,25 +39,8 @@ package Bio::EnsEMBL::Hive::ResourceClass;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
-
-use base (  'Bio::EnsEMBL::Hive::Storable',       # inherit dbID(), adaptor() and new() methods
-         );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
  
-
-sub new {
-    my $class = shift @_;
-
-    my $self = $class->SUPER::new( @_ );    # deal with Storable stuff
-
-    my ($name) =
-         rearrange([qw(name) ], @_);
-
-    $self->name($name) if($name);
-
-    return $self;
-}
-
 
 sub name {
     my $self = shift @_;
