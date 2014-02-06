@@ -46,7 +46,6 @@ use strict;
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::URLFactory;
-use Bio::EnsEMBL::Hive::Extensions;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 

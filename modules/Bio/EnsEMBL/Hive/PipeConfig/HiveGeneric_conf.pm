@@ -69,7 +69,6 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Valley;
 
 use base ('Bio::EnsEMBL::Hive::DependentOptions');

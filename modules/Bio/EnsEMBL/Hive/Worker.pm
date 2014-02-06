@@ -76,7 +76,6 @@ use POSIX;
 
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
-use Bio::EnsEMBL::Hive::Extensions;
 use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
