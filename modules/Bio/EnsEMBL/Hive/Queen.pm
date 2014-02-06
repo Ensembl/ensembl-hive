@@ -69,8 +69,6 @@ use strict;
 use POSIX;
 use File::Path 'make_path';
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
-
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Worker;
@@ -113,13 +111,13 @@ sub object_class {
 =cut
 
 sub create_new_worker {
-    my ($self, @args) = @_;
+    my $self    = shift @_;
+    my %flags   = @_;
 
     my ($meadow_type, $meadow_name, $process_id, $exec_host, $resource_class_id, $resource_class_name,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize) =
-
-    rearrange([qw(meadow_type meadow_name process_id exec_host resource_class_id resource_class_name
-                no_write debug worker_log_dir hive_log_dir job_limit life_span no_cleanup retry_throwing_jobs can_respecialize) ], @args);
+        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
+     = @flags{qw(-meadow_type -meadow_name -process_id -exec_host -resource_class_id -resource_class_name
+            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
             # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
@@ -197,10 +195,12 @@ sub create_new_worker {
 =cut
 
 sub specialize_new_worker {
-    my ($self, $worker, @args) = @_;
+    my $self    = shift @_;
+    my $worker  = shift @_;
+    my %flags   = @_;
 
-    my ($analysis_id, $logic_name, $job_id, $force) =
-        rearrange([qw(analysis_id logic_name job_id force) ], @args);
+    my ($analysis_id, $logic_name, $job_id, $force)
+     = @flags{qw(-analysis_id -logic_name -job_id -force)};
 
     if( scalar( grep {defined($_)} ($analysis_id, $logic_name, $job_id) ) > 1) {
         die "At most one of the options {-analysis_id, -logic_name, -job_id} can be set to pre-specialize a Worker";
