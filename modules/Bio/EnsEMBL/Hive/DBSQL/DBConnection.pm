@@ -37,7 +37,6 @@ package Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 use base ('Bio::EnsEMBL::DBSQL::DBConnection');
@@ -45,10 +44,9 @@ use base ('Bio::EnsEMBL::DBSQL::DBConnection');
 
 sub new {
     my $class = shift;
+    my %flags = @_;
 
-    my ($url) = rearrange( ['URL'], @_ );
-
-    if($url) {
+    if(my $url = $flags{'-url'}) {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
             return $class->SUPER::new(
