@@ -313,6 +313,7 @@ sub go_figure_dbc {
             my $dba;
             eval {
                 $schema_type ||= 'hive';
+                require Bio::EnsEMBL::Registry;
                 $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
             };
             if(UNIVERSAL::can($dba, 'dbc')) {

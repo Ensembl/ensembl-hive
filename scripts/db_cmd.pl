@@ -12,7 +12,6 @@ BEGIN {
 }
 
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
@@ -43,6 +42,8 @@ sub main {
 
     } elsif($reg_alias) {
         script_usage(1) if $url;
+
+        require Bio::EnsEMBL::Registry;
         Bio::EnsEMBL::Registry->load_all($reg_conf);
 
         my $species = Bio::EnsEMBL::Registry->get_alias($reg_alias)

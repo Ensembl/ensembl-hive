@@ -13,7 +13,6 @@ BEGIN {
 
 
 use Getopt::Long;
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');

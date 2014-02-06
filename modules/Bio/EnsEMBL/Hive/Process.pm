@@ -99,7 +99,6 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;

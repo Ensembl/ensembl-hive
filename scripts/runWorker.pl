@@ -14,12 +14,9 @@ BEGIN {
 
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
-
-Bio::EnsEMBL::Registry->no_version_check(1);
 
 my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
@@ -59,10 +56,6 @@ GetOptions(
 );
 
 if ($help) { script_usage(0); }
-
-if($reg_conf) {     # if reg_conf is defined, we load it regardless of whether it is used to connect to the Hive database or not:
-    Bio::EnsEMBL::Registry->load_all($reg_conf);
-}
 
 my $hive_dba;
 

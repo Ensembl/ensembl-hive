@@ -25,7 +25,6 @@ main();
 
 sub main {
     $| = 1;
-    Bio::EnsEMBL::Registry->no_version_check(1);
 
         # ok this is a hack, but I'm going to pretend I've got an object here
         # by creating a hash ref and passing it around like an object

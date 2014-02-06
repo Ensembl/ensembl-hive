@@ -13,7 +13,6 @@ BEGIN {
 
 
 use Getopt::Long qw(:config pass_through);
-use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
@@ -39,6 +38,7 @@ if ($help or !$module_or_file) {
 my $runnable_module = load_file_or_module( $module_or_file );
 
 if($reg_conf) {
+    require Bio::EnsEMBL::Registry;
     Bio::EnsEMBL::Registry->load_all($reg_conf);
 }
 

@@ -61,7 +61,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::ApiVersion ();
-use Bio::EnsEMBL::Registry;
 
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -450,7 +449,6 @@ sub run {
         }
     }
 
-    Bio::EnsEMBL::Registry->no_version_check(1);
     my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
     my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
 
