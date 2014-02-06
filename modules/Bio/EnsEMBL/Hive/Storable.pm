@@ -49,12 +49,11 @@ use Scalar::Util qw(weaken);
 
 =head2 new
 
-  Args           : pairs of ($method_name, $value)
-  Caller         : ObjectAdaptor, AnalysisJob, URLFactory.pm, HiveGeneric_conf, seed_pipeline.pl, standaloneJob.pl
-  Description    : create a new Storable object 
-  Returntype     : Bio::EnsEMBL::Hive::Storable
-  Exceptions     : Adaptor not a Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Status         : Stable
+    Args            : pairs of ($method_name, $value)
+    Caller          : ObjectAdaptor, AnalysisJob, URLFactory.pm, HiveGeneric_conf, seed_pipeline.pl, standaloneJob.pl
+    Description     : create a new Storable object 
+    Returntype      : Bio::EnsEMBL::Hive::Storable
+    Status          : stable
 
 =cut
 
@@ -75,12 +74,11 @@ sub new {
 
 =head2 dbID
 
-  Arg [1]    : int $dbID
-  Description: getter/setter for the database internal id
-  Returntype : int
-  Exceptions : none
-  Caller     : general, set from adaptor on store
-  Status     : Stable
+    Arg [1]         : int $dbID
+    Description     : getter/setter for the database internal id
+    Returntype      : int
+    Caller          : general, set from adaptor on store
+    Status          : stable
 
 =cut
 
@@ -93,12 +91,11 @@ sub dbID {
 
 =head2 adaptor
 
-  Arg [1]    : Bio::EnsEMBL::DBSQL::BaseAdaptor $adaptor
-  Description: get/set for this objects Adaptor
-  Returntype : Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Exceptions : none
-  Caller     : general, set from adaptor on store
-  Status     : Stable
+    Arg [1]         : Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor $adaptor
+    Description     : getter/setter for this objects Adaptor
+    Returntype      : Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor
+    Caller          : general, set from adaptor on store
+    Status          : stable
 
 =cut
 
