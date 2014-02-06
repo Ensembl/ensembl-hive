@@ -60,8 +60,6 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::ApiVersion ();
-
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
@@ -87,27 +85,16 @@ use base ('Bio::EnsEMBL::Hive::DependentOptions');
 sub default_options {
     my ($self) = @_;
     return {
-            # Please note: ENVironment variables may be "exported" to inherit from enclosing shell,
-            # but if you want to *prevent* that you need to specifically say so
-            #  (setting a password to empty string does exactly that - sets it to an empty string)
-            #
-            #   [bash]      export -n ENSEMBL_CVS_ROOT_DIR  # will stop exporting, but the value in current shell stays as it was
-            #   [tcsh]      unsetenv ENSEMBL_CVS_ROOT_DIR   # will destroy the variable even in current shell, and stop exporting
-
-        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'} || $self->o('ensembl_cvs_root_dir'),    # it will make sense to set this variable if you are going to use ehive with ensembl
-        'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
-
-        'hive_root_dir'         => $ENV{'EHIVE_ROOT_DIR'}                                               # this value is set up automatically if this code is run by init_pipeline.pl
-                                    || $self->o('ensembl_cvs_root_dir').'/ensembl-hive',                # otherwise we have to rely on other means
+        'hive_root_dir'         => $ENV{'EHIVE_ROOT_DIR'},                                      # this value is set up automatically if this code is run by init_pipeline.pl
 
         'hive_driver'           => 'mysql',
-        'host'                  => $ENV{'EHIVE_HOST'} || 'localhost',                                   # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
-                                                                                                        # If you need to connect to TCPIP socket, set  -host => '127.0.0.1' instead.
+        'host'                  => $ENV{'EHIVE_HOST'} || 'localhost',                           # BEWARE that 'localhost' for mysql driver usually means a UNIX socket, not a TCPIP socket!
+                                                                                                # If you need to connect to TCPIP socket, set  -host => '127.0.0.1' instead.
 
-        'port'                  => $ENV{'EHIVE_PORT'},                                                  # or remain undef, which means default for the driver
-        'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
-        'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
-        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'}         || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
+        'port'                  => $ENV{'EHIVE_PORT'},                                          # or remain undef, which means default for the driver
+        'user'                  => $ENV{'EHIVE_USER'} // $self->o('user'),
+        'password'              => $ENV{'EHIVE_PASS'} // $self->o('password'),                  # people will have to make an effort NOT to insert it into config files like .bashrc etc
+        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'} || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
         'pipeline_name'         => $self->pipeline_name(),
 
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
@@ -170,7 +157,8 @@ sub pipeline_create_commands {
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-        'schema_version' => $self->o('ensembl_release'),    # keep compatibility with core API
+        # 'variable1'   => 'value1',
+        # 'variable2'   => 'value2',
     };
 }
 
