@@ -36,7 +36,6 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
@@ -44,10 +43,11 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 
 
 sub new {
-    my ($class, @args) = @_;
+    my $class = shift @_;
+    my %flags = @_;
 
-    my ($dbconn, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)
-        = rearrange(['DBCONN', 'URL', 'REG_CONF', 'REG_TYPE', 'REG_ALIAS', 'SPECIES', 'NO_SQL_SCHEMA_VERSION_CHECK'], @args);
+    my ($dbc, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)
+        = @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};
 
     $url .= ';nosqlvc=1' if($url && $no_sql_schema_version_check);
 
@@ -55,7 +55,7 @@ sub new {
 
     if($url) {
 
-        $dbconn = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $url)
+        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $url)
             or die "Unable to create a DBC using url='$url'";
 
     } elsif($reg_alias) {
@@ -69,14 +69,14 @@ sub new {
             or die "Unable to connect to DBA using reg_conf='$reg_conf', reg_type='$reg_type', reg_alias='$reg_alias'\n";
 
         if($reg_type ne 'hive') {   # ensure we are getting a Hive adaptor even from a non-Hive Registry entry:
-            $dbconn = $self->dbc;
+            $dbc = $self->dbc;
             $self = undef;
         }
     }
 
-    if($dbconn && !$self) {
+    if($dbc && !$self) {
         $self = bless {}, $class;
-        $self->dbc( $dbconn );
+        $self->dbc( $dbc );
     }
 
     unless($no_sql_schema_version_check) {
