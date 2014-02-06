@@ -148,7 +148,8 @@ sub get_compiled_module_name {
 sub process {
     my $self = shift;
 
-    my $runnable_object = $self->get_compiled_module_name->new( -analysis => $self );
+    my $runnable_object = $self->get_compiled_module_name->new();
+    $runnable_object->analysis( $self );
 
     return $runnable_object;
 }

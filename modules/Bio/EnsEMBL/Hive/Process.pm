@@ -100,7 +100,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
 use Bio::EnsEMBL::Utils::Exception ('throw');
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
@@ -111,12 +110,9 @@ use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriv
 
 
 sub new {
-    my ($class, @args) = @_;
+    my $class = shift @_;
 
     my $self = bless {}, $class;
-
-    my ($analysis) = rearrange([qw( ANALYSIS )], @args);
-    $self->analysis($analysis) if($analysis);
 
     return $self;
 }
