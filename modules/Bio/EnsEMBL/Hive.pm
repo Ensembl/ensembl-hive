@@ -6,12 +6,6 @@
 
 =head1 DESCRIPTION
 
-  Object which encapsulates the details of how to find jobs, how to run those
-  jobs, and then check the rules to create the next jobs in the chain.
-  Essentially knows where to find data, how to process data, and where to
-  put it when it's done (put in next person's INBOX) so the next Worker
-  in the chain can find data to work on.
-
   Hive based processing is a concept based on a more controlled version
   of an autonomous agent type system.  Each worker is not told what to do
   (like a centralized control system - like the current pipeline system)
@@ -30,19 +24,19 @@
   This is primarily needed on compute resources like an LSF system where jobs
   are not preempted and run until they are done.
 
-  The Queen's primary job is to create Workers to get the work down.
+  The Queen's primary job is to create Workers to get the work done.
   As part of this, she is also responsible for summarizing the status of the
   analyses by querying the jobs, summarizing, and updating the
   analysis_stats table.  From this she is also responsible for monitoring and
   'unblocking' analyses via the analysis_ctrl_rules.
   The Queen is also responsible for freeing up jobs that were claimed by Workers
-  that died unexpectantly so that other workers can take over the work.  
+  that died unexpectedly so that other workers can take over the work.  
 
   The Beekeeper is in charge of interfacing between the Queen and a compute resource
   or 'compute farm'.  Its job is to query Queens if they need any workers and to
   send the requested number of workers to open machines via the runWorker.pl script.
   It is also responsible for interfacing with the Queen to identify workers which died
-  unexpectantly so that she can free the dead workers unfinished jobs.
+  unexpectedly so that she can free the dead workers unfinished jobs.
 
 =head1 LICENSE
 
@@ -64,20 +58,7 @@
 =cut
 
 use strict;
-use Sys::Hostname;
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Utils::Exception;
-
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
-use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::Hive::Extensions;
-use Bio::EnsEMBL::Hive::Queen;
-use Bio::EnsEMBL::Hive::URLFactory;
+use warnings;
 
 1;
 
