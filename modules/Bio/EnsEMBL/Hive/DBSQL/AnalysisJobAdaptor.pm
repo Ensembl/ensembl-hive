@@ -43,9 +43,6 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Argument ('rearrange');
-use Bio::EnsEMBL::Utils::Exception ('throw');
-
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
@@ -71,72 +68,6 @@ sub default_overflow_limit {
         'accu_id_stack'     =>  64,
     };
 }
-
-
-
-###############################################################################
-#
-#  CLASS method
-#
-###############################################################################
-
-=head2 CreateNewJob
-
-  Args       : -input_id => string of input_id which will be passed to run the job (or a Perl hash that will be automagically stringified)
-               -analysis => Bio::EnsEMBL::Hive::Analysis object stored in the database
-               -prev_job_id => (optional) job_id of job that is creating this job.
-                               Used purely for book keeping.
-  Example    : $job_id = Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor->CreateNewJob(
-                                    -input_id => 'my input data',
-                                    -analysis => $myAnalysis);
-  Description: uses the analysis object to get the db connection from the adaptor to store a new
-               job in a hive.  This is a class level method since it does not have any state.
-               Also updates corresponding analysis_stats by incrementing total_job_count,
-               ready_job_count and flagging the incremental update by changing the status
-               to 'LOADING' (but only if the analysis is not blocked).
-               NOTE: no AnalysisJob object is created in memory as the result of this call; it is simply a "fast store".
-  Returntype : int job_id on database analysis is from.
-  Exceptions : thrown if either -input_id or -analysis are not properly defined
-  Caller     : general
-  Status     : DEPRECATED. Please use $job_adaptor->store_jobs_and_adjust_counters( \@jobs_to_store ) instead
-
-=cut
-
-sub CreateNewJob {
-    my ($class, @args) = @_;
-
-    my ($prev_job, $prev_job_id, $analysis, $input_id, $param_id_stack, $accu_id_stack, $semaphore_count, $semaphored_job_id, $push_new_semaphore) =
-        rearrange([qw(prev_job prev_job_id analysis input_id param_id_stack accu_id_stack semaphore_count semaphored_job_id push_new_semaphore)], @args);
-
-    warn "CreateNewJob() method is deprecated. Please use \$job_adaptor->store_jobs_and_adjust_counters() instead.\n";
-
-    throw("must define input_id") unless($input_id);
-    throw("must define analysis") unless($analysis);
-    throw("analysis must be [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]")  unless($analysis->isa('Bio::EnsEMBL::Hive::Analysis'));
-    throw("analysis must have adaptor connected to database")                   unless($analysis->adaptor and $analysis->adaptor->db);
-    throw("Please specify prev_job object instead of prev_job_id if available") if ($prev_job_id);   # 'obsolete' message
-
-    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        -prev_job_id        => $prev_job && $prev_job->dbID,
-        -analysis_id        => $analysis->dbID,
-        -input_id           => $input_id,
-        -param_id_stack     => $param_id_stack,
-        -accu_id_stack      => $accu_id_stack,
-        -semaphore_count    => $semaphore_count,
-        -semaphored_job_id  => $semaphored_job_id,
-    );
-    
-    my ($job_id) = @{ $analysis->adaptor->db->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ], $push_new_semaphore ) };
-
-    return $job_id;
-}
-
-
-###############################################################################
-#
-#  INSTANCE methods
-#
-###############################################################################
 
 
 =head2 store_jobs_and_adjust_counters
