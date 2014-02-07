@@ -54,7 +54,7 @@ use strict;
 use warnings;
 use Carp ('confess');
 use Data::Dumper;
-use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+#use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
 our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc throw);
@@ -296,15 +296,18 @@ sub url2dbconn_hash {
 sub go_figure_dbc {
     my ($foo, $schema_type) = @_;
 
-    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
+#    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
+    if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, return it:
 
         return $foo;
 
-    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
+#    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
+    } elsif(UNIVERSAL::can($foo, 'dbc') and ref($foo->dbc) =~ /DBConnection$/) {
 
         return $foo->dbc;
 
-    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
+#    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
+    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and ref($foo->db->dbc) =~ /DBConnection$/) { # another data adaptor or Runnable:
 
         return $foo->db->dbc;
 

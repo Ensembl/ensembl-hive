@@ -10,7 +10,7 @@
 
 =head1 DESCRIPTION
 
-    Extends the functionality of Bio::EnsEMBL::DBSQL::DBConnection with things needed by the Hive
+    Extends the functionality of Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection with things needed by the Hive
 
 =head1 LICENSE
 
@@ -39,7 +39,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils::URL;
 
-use base ('Bio::EnsEMBL::DBSQL::DBConnection');
+use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
 
 
 sub new {
