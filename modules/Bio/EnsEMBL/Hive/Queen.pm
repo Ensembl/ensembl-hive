@@ -212,7 +212,7 @@ sub specialize_new_worker {
     if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized from command-line
 
         if($job_id) {
-            print "resetting and fetching job for job_id '$job_id'\n";
+            warn "resetting and fetching job for job_id '$job_id'\n";
 
             my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
@@ -677,9 +677,9 @@ sub get_num_failed_analyses {
     my $filter_analysis_failed = 0;
 
     foreach my $failed_analysis (@$failed_analyses) {
-        print "\t##########################################################\n";
-        print "\t# Too many jobs in analysis '".$failed_analysis->logic_name."' FAILED #\n";
-        print "\t##########################################################\n\n";
+        warn "\t##########################################################\n";
+        warn "\t# Too many jobs in analysis '".$failed_analysis->logic_name."' FAILED #\n";
+        warn "\t##########################################################\n\n";
         if($filter_analysis and ($filter_analysis->dbID == $failed_analysis)) {
             $filter_analysis_failed = 1;
         }

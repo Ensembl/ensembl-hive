@@ -36,8 +36,7 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception ('throw');
-
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 
@@ -190,7 +189,7 @@ sub get_adaptor {
 
     unless( $self->{'_cached_adaptor'}{$signature} ) {
         my $adaptor_package_name = $self->get_available_adaptors()->{$type}
-        or throw("Could not find a module corresponding to '$type'");
+            or throw("Could not find a module corresponding to '$type'");
 
         eval "require $adaptor_package_name"
         or throw("Could not load or compile module '$adaptor_package_name'");

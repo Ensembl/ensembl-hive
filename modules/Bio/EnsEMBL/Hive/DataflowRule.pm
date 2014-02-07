@@ -53,9 +53,7 @@ package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception ('throw');
-
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );

@@ -37,7 +37,7 @@ package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception ('throw');
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );

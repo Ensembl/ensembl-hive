@@ -43,8 +43,7 @@ package Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception ('throw');
-
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::URLFactory;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );

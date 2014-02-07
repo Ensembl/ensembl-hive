@@ -52,11 +52,15 @@ package Bio::EnsEMBL::Hive::Utils;
 
 use strict;
 use warnings;
+use Carp ('confess');
 use Data::Dumper;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc throw);
+
+no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
+$Carp::Internal{ (__PACKAGE__) }++;
 
 
 =head2 stringify
@@ -322,6 +326,15 @@ sub go_figure_dbc {
         }
         die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
     }
+}
+
+
+sub throw {
+    my $msg = pop @_;
+
+        # TODO: newer versions of Carp are much more tunable, but I am stuck with v1.08 .
+        #       Alternatively, we could implement our own stack reporter instead of Carp::confess.
+    confess $msg;
 }
 
 1;

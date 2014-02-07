@@ -99,11 +99,10 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception ('throw');
-
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
+
 
 use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
 
@@ -488,6 +487,13 @@ sub dataflow_output_id {
     my $self = shift @_;
 
     return $self->input_job->dataflow_output_id(@_);
+}
+
+
+sub throw {
+    my $msg = pop @_;
+
+    Bio::EnsEMBL::Hive::Utils::throw( $msg );   # this module doesn't import 'throw' to avoid namespace clash
 }
 
 
