@@ -104,9 +104,6 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 
-use base ('Bio::EnsEMBL::Utils::Exception');   # provide these methods for deriving classes
-
-
 sub new {
     my $class = shift @_;
 
@@ -378,7 +375,7 @@ sub dbc {
     Title   :   data_dbc
     Usage   :   my $data_dbc = $self->data_dbc;
     Function:   returns a Bio::EnsEMBL::Hive::DBSQL::DBConnection object (the "current" one by default, but can be set up otherwise)
-    Returns :   Bio::EnsEMBL::DBSQL::DBConnection
+    Returns :   Bio::EnsEMBL::Hive::DBSQL::DBConnection
 
 =cut
 

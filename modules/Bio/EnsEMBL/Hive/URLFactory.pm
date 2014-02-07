@@ -45,7 +45,6 @@ my $_URLFactory_global_instance;
 package Bio::EnsEMBL::Hive::URLFactory;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
