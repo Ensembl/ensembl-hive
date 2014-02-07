@@ -61,23 +61,15 @@ sub default_options {
             #   [tcsh]      unsetenv ENSEMBL_CVS_ROOT_DIR   # will destroy the variable even in current shell, and stop exporting
 
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'} || $self->o('ensembl_cvs_root_dir'),    # it will make sense to set this variable if you are going to use ehive with ensembl
+
         'ensembl_release'       => Bio::EnsEMBL::ApiVersion::software_version(),                        # snapshot of EnsEMBL Core API version. Please do not change if not sure.
         'rel_suffix'            => '',                                                                  # an empty string by default, a letter otherwise
         'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
 
-        'user'                  => 'ensadmin',
-        'password'              => $ENV{'ENSADMIN_PSW'} // $self->o('password'),                        # people will have to make an effort NOT to insert it into config files like .bashrc etc
-        'dbowner'               => $ENV{'USER'} // $self->o('dbowner'),                                 # although it is very unlikely $ENV{USER} is not set
-        'pipeline_name'         => $self->pipeline_name(),
+        'pipeline_name'         => $self->pipeline_name().'_'.$self->o('rel_with_suffix'),
 
-        'pipeline_db'   => {
-            -driver => $self->o('hive_driver'),
-            -host   => $self->o('host'),
-            -port   => $self->o('port'),
-            -user   => $self->o('user'),
-            -pass   => $self->o('password'),
-            -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name').'_'.$self->o('rel_with_suffix'),   # example of a linked definition (resolved via saturation)
-        },
+        'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
+        'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
     };
 }
 
@@ -93,9 +85,9 @@ sub default_options {
 sub pipeline_wide_parameters {
     my ($self) = @_;
     return {
-        %{ $self->SUPER::pipeline_wide_parameters() },   # inherit from parent
+        %{ $self->SUPER::pipeline_wide_parameters() },      # inherit from parent
 
-        'schema_version' => $self->o('ensembl_release'),    # keep compatibility with core API
+#        'schema_version' => $self->o('ensembl_release'),   # commented out to avoid duplicating 'schema_version' inserted by the schema mysql file
     };
 }
 
