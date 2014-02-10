@@ -738,7 +738,7 @@ sub get_remaining_jobs_show_hive_progress {
     ? ((100.0 * ($done+$failed))/$total)
     : 0.0;
   my $remaining = $total - $done - $failed;
-  printf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n", 
+  warn sprintf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n",
           $completed, $cpuhrs, $remaining, $done, $failed, $total);
   return $remaining;
 }

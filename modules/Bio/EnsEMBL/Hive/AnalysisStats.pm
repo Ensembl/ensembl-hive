@@ -403,10 +403,10 @@ sub determine_status {
             my $absolute_tolerance = $analysis->failed_job_tolerance * $self->total_job_count / 100.0;
             if ($self->failed_job_count > $absolute_tolerance) {
                 $self->status('FAILED');
-                print "\n##################################################\n";
-                printf("##   ERROR: %-35s ##\n", $analysis->logic_name." failed!");
-                printf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $analysis->failed_job_tolerance);
-                print "##################################################\n\n";
+                warn       "\n##################################################\n";
+                warn sprintf("##   ERROR: %-35s ##\n", $analysis->logic_name." failed!");
+                warn sprintf("##     %d jobs failed (tolerance: %d (%3d%%)) ##\n", $self->failed_job_count, $absolute_tolerance, $analysis->failed_job_tolerance);
+                warn         "##################################################\n\n";
             } else {
                 $self->status('DONE');
             }
