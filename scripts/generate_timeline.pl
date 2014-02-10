@@ -319,7 +319,7 @@ sub main {
             align => 'left',
         },
         xtics => {
-            labelfmt => '%b %d\n %H:00',
+            labelfmt => '%b %d\n %H:%M',
             along => 'out nomirror',
         },
         bg => {
