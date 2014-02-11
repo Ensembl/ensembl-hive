@@ -4,19 +4,6 @@
         "SubmitWorkersMax"  : 50
     },
     "Meadow" : {
-        "LSF" : {
-            "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 2000,
-            "farm2" : {
-                "SubmissionOptions"  : ""
-            },
-            "pcs4" : {
-                "SubmissionOptions"  : ""
-            },
-            "EBI" : {
-                "SubmissionOptions"  : ""
-            }
-        },
         "LOCAL" : {
             "TotalRunningWorkersMax"   : 2,
             "my-quadcore-desktop" : {
@@ -25,6 +12,24 @@
             "your-weak-laptop" : {
                 "TotalRunningWorkersMax"   : 1
             }
+        },
+        "LSF" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 2000,
+            "farm3" : {
+                "SubmissionOptions"  : ""
+            },
+            "EBI" : {
+                "SubmissionOptions"  : ""
+            }
+        },
+        "SGE" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 2000,
+        },
+        "CONDOR" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 500,
         }
     },
     "Graph" : {
