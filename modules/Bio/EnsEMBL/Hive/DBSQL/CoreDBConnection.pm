@@ -75,6 +75,16 @@ use Bio::EnsEMBL::Hive::DBSQL::StatementHandle;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 
 
+use vars qw(@ISA);      # If Ensembl Core code is available, inherit from its' DBConnection for compatibility.
+BEGIN {
+    if (eval { require Bio::EnsEMBL::DBSQL::DBConnection; 1 }) {
+        @ISA = ('Bio::EnsEMBL::DBSQL::DBConnection');
+    } else {
+        @ISA = ();
+    }
+}
+
+
 =head2 new
 
   Arg [DBNAME] : (optional) string
