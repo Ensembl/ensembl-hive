@@ -181,6 +181,30 @@ sub get_available_adaptors {
 }
 
 
+sub parse_underscored_id_name {
+    my ($self, $underscored_id_name) = @_;
+
+    my ($is_an_id, $foo_id_method_name, $foo_obj_method_name);
+
+    my @syll = split(/_/, $underscored_id_name);
+    if($syll[scalar(@syll)-1] eq 'id') {
+        pop @syll;
+        ($is_an_id, $foo_id_method_name, $foo_obj_method_name) = ( 1, $underscored_id_name, join('_', @syll) );
+    } else {
+        ($is_an_id, $foo_id_method_name, $foo_obj_method_name) = ( 0, $underscored_id_name .'_id' , $underscored_id_name );
+    }
+
+    my $AdaptorType = '';   # will be growing from right to left
+    while(@syll) {
+        $AdaptorType = ucfirst(pop @syll) . $AdaptorType;
+        if(exists( $self->get_available_adaptors->{ $AdaptorType })) {
+            return ($AdaptorType, $is_an_id, $foo_id_method_name, $foo_obj_method_name);
+        }
+    }
+    return;   # could not parse
+}
+
+
 sub get_adaptor {
     my $self = shift;
     my $type = shift;
