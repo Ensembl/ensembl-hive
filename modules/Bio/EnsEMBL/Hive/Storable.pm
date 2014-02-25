@@ -45,6 +45,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(weaken);
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 
 =head2 new
@@ -108,6 +109,62 @@ sub adaptor {
     }
 
     return $self->{'adaptor'};
+}
+
+
+sub DESTROY { }     # "If you define an AUTOLOAD in your class,
+                    # then Perl will call your AUTOLOAD to handle the DESTROY method.
+                    # You can prevent this by defining an empty DESTROY (...)" -- perlobj
+
+sub AUTOLOAD {
+    our $AUTOLOAD;
+
+#print "Storable::AUTOLOAD : attempting to run '$AUTOLOAD' (".join(', ', @_).")\n";
+
+    my $self = shift @_;
+
+    if($AUTOLOAD =~ /::(\w+)$/) {
+        my $name_to_parse = $1;
+        my ($AdaptorType, $is_an_id, $foo_id_method_name, $foo_obj_method_name)
+            = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->parse_underscored_id_name( $name_to_parse );
+
+        unless($AdaptorType) {
+            die "Storable::AUTOLOAD : could not parse '$name_to_parse'";
+        } elsif ($is_an_id) {  # $name_to_parse was something like foo_dataflow_rule_id
+
+            if(@_) {
+                $self->{$foo_id_method_name} = shift @_;
+                if( $self->{$foo_obj_method_name} ) {
+                    warn "setting $foo_id_method_name in an object that had $foo_obj_method_name defined";
+                    $self->{$foo_obj_method_name} = undef;
+                }
+
+                # attempt to lazy-load:
+            } elsif( !$self->{$foo_id_method_name} and my $foo_object=$self->{$foo_obj_method_name}) {
+                $self->{$foo_id_method_name} = $foo_object->dbID;
+            }
+
+            return $self->{$foo_id_method_name};
+
+        } else {                # $name_to_parse was something like foo_dataflow_rule
+
+            if(@_) {    # setter of the object itself
+                $self->{$foo_obj_method_name} = shift @_;
+
+                # attempt to lazy-load:
+            } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
+                if(my $adaptor = $self->adaptor) {
+                    $self->{$foo_obj_method_name} = $adaptor->db->get_adaptor( $AdaptorType )->fetch_by_dbID( $foo_object_id );
+                } else {
+                    warn "Cannot lazy-load $foo_obj_method_name because the ".ref($self)." is not attached to an adaptor";
+                }
+            }
+
+            return $self->{$foo_obj_method_name};
+
+        }   # choice of autoloadable functions
+
+    }
 }
 
 1;
