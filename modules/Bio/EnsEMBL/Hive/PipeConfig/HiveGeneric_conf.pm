@@ -644,7 +644,7 @@ sub run {
             $flow_into ||= {};
             $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
-            my %group_tag_to_funnel_dataflow_rule_id = ();
+            my %group_tag_to_funnel_dataflow_rule = ();
 
             my $semaphore_sign = '->';
 
@@ -665,10 +665,10 @@ sub run {
                     die "Error parsing the group tag '$branch_tag'\n";
                 }
 
-                my $funnel_dataflow_rule_id = undef;    # NULL by default
+                my $funnel_dataflow_rule = undef;    # NULL by default
 
                 if($group_role eq 'fan') {
-                    unless($funnel_dataflow_rule_id = $group_tag_to_funnel_dataflow_rule_id{$group_tag}) {
+                    unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {
                         die "No funnel dataflow_rule defined for group '$group_tag'\n";
                     }
                 }
@@ -692,25 +692,25 @@ sub run {
                             'from_analysis'             => $analysis,
                             'to_analysis_url'           => $heir_url,
                             'branch_code'               => $branch_name_or_code,
+                            'funnel_dataflow_rule'      => $funnel_dataflow_rule,
                             'input_id_template'         => $input_id_template,
-                            'funnel_dataflow_rule_id'   => $funnel_dataflow_rule_id,
                         );
                         $dataflow_rule_adaptor->store( $df_rule, 1 );
 
                         warn $df_rule->toString."\n";
 
                         if($group_role eq 'funnel') {
-                            if($group_tag_to_funnel_dataflow_rule_id{$group_tag}) {
+                            if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
                                 die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
                             } else {
-                                $group_tag_to_funnel_dataflow_rule_id{$group_tag} = $df_rule->dbID();
+                                $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
                             }
                         }
                     } # /for all templates
                 } # /for all heirs
             } # /for all branch_tags
-        }
-    }
+        } # /for all pipeline_analyses
+    } # /unless($job_topup)
 
     print "\n\n# --------------------[Useful commands]--------------------------\n";
     print "\n";
