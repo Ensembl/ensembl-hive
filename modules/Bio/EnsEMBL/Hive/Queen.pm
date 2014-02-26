@@ -256,7 +256,7 @@ sub specialize_new_worker {
                 die "resource_class of analysis ".$analysis->logic_name." is incompatible with this Worker's resource_class";
         }
 
-        $stats = $analysis_stats_adaptor->fetch_by_analysis_id($analysis_id);
+        $stats = $analysis->stats;
         $self->safe_synchronize_AnalysisStats($stats);
 
         unless($special_batch or $force) {    # do we really need to run this analysis?
@@ -461,10 +461,10 @@ sub check_in_worker {
 sub reset_job_by_dbID_and_sync {
     my ($self, $job_id) = @_;
 
-    my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
-    my $job = $job_adaptor->reset_or_grab_job_by_dbID($job_id); 
+    my $job     = $self->db->get_AnalysisJobAdaptor->reset_or_grab_job_by_dbID($job_id);
 
-    my $stats = $self->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id($job->analysis_id);
+    my $stats   = $job->analysis->stats;
+
     $self->synchronize_AnalysisStats($stats);
 }
 
