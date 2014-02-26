@@ -159,25 +159,31 @@ sub hive_use_param_stack {  # getter only, not setter
 }
 
 
+our %adaptor_type_2_package_name = (
+    'Accumulator'           => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',
+    'Analysis'              => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
+    'AnalysisCtrlRule'      => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
+    'AnalysisData'          => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
+    'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
+    'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+    'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
+    'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
+    'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
+    'MetaContainer'         => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
+    'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
+    'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
+    'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
+    'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
+
+        # aliases:
+    'Job'                   => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
+    'Worker'                => 'Bio::EnsEMBL::Hive::Queen',
+);
+
+
 sub get_available_adaptors {
- 
-    my %pairs =  (
-        'Accumulator'           => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',
-        'Analysis'              => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor',
-        'AnalysisCtrlRule'      => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor',
-        'AnalysisData'          => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
-        'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
-        'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
-        'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
-        'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
-        'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
-        'MetaContainer'         => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
-        'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
-        'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
-        'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
-        'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
-    );
-    return \%pairs;
+
+    return \%adaptor_type_2_package_name;
 }
 
 
@@ -207,13 +213,14 @@ sub parse_underscored_id_name {
 
 sub get_adaptor {
     my $self = shift;
-    my $type = shift;
+    my $AdaptorType = shift;
 
-    my $signature = join(':', $type, @_);
+    my $adaptor_package_name = $self->get_available_adaptors()->{$AdaptorType}
+        or throw("Could not find a module corresponding to '$AdaptorType'");
+
+    my $signature = join(':', $adaptor_package_name, @_);
 
     unless( $self->{'_cached_adaptor'}{$signature} ) {
-        my $adaptor_package_name = $self->get_available_adaptors()->{$type}
-            or throw("Could not find a module corresponding to '$type'");
 
         eval "require $adaptor_package_name"
         or throw("Could not load or compile module '$adaptor_package_name'");
