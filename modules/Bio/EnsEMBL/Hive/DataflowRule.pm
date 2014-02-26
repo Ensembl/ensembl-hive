@@ -59,6 +59,15 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
+=head1 AUTOLOADED
+
+    from_analysis_id / from_analysis
+
+    funnel_dataflow_rule_id / funnel_dataflow_rule
+
+=cut
+
+
 =head2 branch_code
 
     Function: getter/setter method for the branch_code of the dataflow rule
@@ -73,22 +82,6 @@ sub branch_code {
         $self->{'_branch_code'} = $branch_name_or_code && Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code( $branch_name_or_code );
     }
     return $self->{'_branch_code'};
-}
-
-
-=head2 funnel_dataflow_rule_id
-
-    Function: getter/setter method for the funnel_dataflow_rule_id of the dataflow rule
-
-=cut
-
-sub funnel_dataflow_rule_id {
-    my $self = shift @_;
-
-    if(@_) { # setter mode
-        $self->{'_funnel_dataflow_rule_id'} = shift @_;
-    }
-    return $self->{'_funnel_dataflow_rule_id'};
 }
 
 
@@ -109,129 +102,75 @@ sub input_id_template {
 }
 
 
-=head2 from_analysis_id
-
-  Arg[1]  : (optional) int $dbID
-  Usage   : $self->from_analysis_id($dbID);
-  Function: Get/set method for the 'from' analysis objects dbID of this rule.
-  Returns : integer
-  
-=cut
-
-sub from_analysis_id {
-  my ($self,$analysis_id) = @_;
-  if($analysis_id) {
-    $self->{'_from_analysis_id'} = $analysis_id;
-    $self->{'_from_analysis'} = undef;
-  }
-  return $self->{'_from_analysis_id'};
-}
-
-
 =head2 to_analysis_url
 
-  Arg[1]  : (optional) string $url
-  Usage   : $self->to_analysis_url($url);
-  Function: Get/set method for the 'to' analysis objects URL for this rule
-  Returns : string
+    Arg[1]  : (optional) string $url
+    Usage   : $self->to_analysis_url($url);
+    Function: Get/set method for the 'to' analysis objects URL for this rule
+    Returns : string
   
 =cut
 
 sub to_analysis_url {
-  my ($self,$url) = @_;
-  if($url) {
-    $self->{'_to_analysis_url'} = $url;
-    $self->{'_to_analysis'} = undef;
-  }
-  return $self->{'_to_analysis_url'};
-}
-
-
-=head2 from_analysis
-
-  Usage   : $self->from_analysis($analysis);
-  Function: Get/set method for the condition analysis object of this rule.
-  Returns : Bio::EnsEMBL::Hive::Analysis
-  Args    : Bio::EnsEMBL::Hive::Analysis
-  
-=cut
-
-sub from_analysis {
-  my ($self,$analysis) = @_;
-
-  # setter mode
-  if( defined $analysis ) {
-    unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
-      throw(
-        "from_analysis arg must be a [Bio::EnsEMBL::Hive::Analysis]".
-        "not a [$analysis]");
+    my ($self,$url) = @_;
+    if($url) {
+        $self->{'_to_analysis_url'} = $url;
+        $self->{'_to_analysis'} = undef;
     }
-    $self->{'_from_analysis'} = $analysis;
-    $self->{'_from_analysis_id'} = $analysis->dbID;
-  }
-  
-  # lazy load the analysis object if I can
-  if(!defined($self->{'_from_analysis'})
-     and defined($self->from_analysis_id)
-     and defined($self->adaptor))
-  {
-    $self->{'_from_analysis'} =
-      $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->from_analysis_id);
-  }
-  return $self->{'_from_analysis'};
+    return $self->{'_to_analysis_url'};
 }
 
 
 =head2 to_analysis
 
-  Usage   : $self->to_analysis($analysis);
-  Function: Get/set method for the goal analysis object of this rule.
-  Returns : Bio::EnsEMBL::Hive::Analysis
-  Args    : Bio::EnsEMBL::Hive::Analysis
+    Usage   : $self->to_analysis($analysis);
+    Function: Get/set method for the goal analysis object of this rule.
+    Returns : Bio::EnsEMBL::Hive::Analysis
+    Args    : Bio::EnsEMBL::Hive::Analysis
   
 =cut
 
 sub to_analysis {
-  my ($self, $analysis_or_nt) = @_;
+    my ($self, $analysis_or_nt) = @_;
 
-  if( defined $analysis_or_nt ) {
-    unless ($analysis_or_nt->can('url')) {
-      throw( "to_analysis arg must support 'url' method, '$analysis_or_nt' does not know how to do it");
+    if( defined $analysis_or_nt ) {
+        unless ($analysis_or_nt->can('url')) {
+            throw( "to_analysis arg must support 'url' method, '$analysis_or_nt' does not know how to do it");
+        }
+        $self->{'_to_analysis'} = $analysis_or_nt;
+
+        #if the 'from' and 'to' share the same adaptor, then use a simple logic_name
+        #for the URL rather than a full network distributed URL
+
+        my $ref_rule_adaptor = $self->from_analysis && $self->from_analysis->adaptor;
+
+        if($analysis_or_nt->can('logic_name') and $ref_rule_adaptor and ($ref_rule_adaptor == $analysis_or_nt->adaptor)) {
+            $self->{'_to_analysis_url'} = $analysis_or_nt->logic_name;
+        } else {
+            $self->{'_to_analysis_url'} = $analysis_or_nt->url($ref_rule_adaptor->db);
+        }
     }
-    $self->{'_to_analysis'} = $analysis_or_nt;
+        # lazy load the analysis object if I can
+    if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
 
-    #if the 'from' and 'to' share the same adaptor, then use a simple logic_name
-    #for the URL rather than a full network distributed URL
+        my $url = $self->to_analysis_url;
 
-    my $ref_rule_adaptor = $self->from_analysis && $self->from_analysis->adaptor;
+        $self->{'_to_analysis'} = $self->adaptor
+            ?  $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($url)
+            :  Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($url)
+        or die "Cannot fetch analysis from logic_name or url '$url' for dataflow rule with id='".$self->dbID."'\n";
 
-    if($analysis_or_nt->can('logic_name') and $ref_rule_adaptor and ($ref_rule_adaptor == $analysis_or_nt->adaptor)) {
-      $self->{'_to_analysis_url'} = $analysis_or_nt->logic_name;
-    } else {
-      $self->{'_to_analysis_url'} = $analysis_or_nt->url($ref_rule_adaptor->db);
     }
-  }
-  # lazy load the analysis object if I can
-  if(!defined($self->{'_to_analysis'}) and defined($self->to_analysis_url)) {
-
-    my $url = $self->to_analysis_url;
-
-    $self->{'_to_analysis'} = $self->adaptor
-        ?  $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($url)
-        :  Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($url)
-    or die "Cannot fetch analysis from logic_name or url '$url' for dataflow rule with id='".$self->dbID."'\n";
-
-  }
-  return $self->{'_to_analysis'};
+    return $self->{'_to_analysis'};
 }
 
 
 =head2 toString
 
-  Args       : (none)
-  Example    : print $df_rule->toString()."\n";
-  Description: returns a stringified representation of the rule
-  Returntype : string
+    Args       : (none)
+    Example    : print $df_rule->toString()."\n";
+    Description: returns a stringified representation of the rule
+    Returntype : string
 
 =cut
 
@@ -251,7 +190,6 @@ sub toString {
             ($self->input_id_template ? (' WITH TEMPLATE: '.$self->input_id_template) : ''),
     );
 }
-
 
 1;
 

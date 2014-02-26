@@ -634,7 +634,7 @@ sub run {
                 }
                 my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
                         'condition_analysis_url'    => $condition_url,
-                        'ctrled_analysis_id'        => $analysis->dbID,
+                        'ctrled_analysis'           => $analysis,
                 );
                 $ctrl_rule_adaptor->store( $c_rule, 1 );
 
