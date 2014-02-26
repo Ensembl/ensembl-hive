@@ -47,16 +47,17 @@ use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new(
          );
 
 
+=head1 AUTOLOADED
+
+    analysis_id / analysis
+
+=cut
+
+
 sub prev_job_id {
     my $self = shift;
     $self->{'_prev_job_id'} = shift if(@_);
     return $self->{'_prev_job_id'};
-}
-
-sub analysis_id {
-    my $self = shift;
-    $self->{'_analysis_id'} = shift if(@_);
-    return $self->{'_analysis_id'};
 }
 
 sub input_id {
@@ -325,7 +326,7 @@ sub dataflow_output_id {
                 my $fan_cache_this_branch = $self->fan_cache()->{$funnel_dataflow_rule_id} ||= [];
                 push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                         'prev_job_id'       => $self->dbID,
-                                                        'analysis_id'       => $target_analysis_or_table->dbID, # expecting an Analysis
+                                                        'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                                         'input_id'          => $_,
                                                         'param_id_stack'    => $param_id_stack,
                                                         'accu_id_stack'     => $accu_id_stack,
@@ -346,7 +347,7 @@ sub dataflow_output_id {
                     } else {
                         my $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
                                             'prev_job_id'       => $self->dbID,
-                                            'analysis_id'       => $target_analysis_or_table->dbID, # expecting an Analysis
+                                            'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                             'input_id'          => $output_ids_for_this_rule->[0],
                                             'param_id_stack'    => $param_id_stack,
                                             'accu_id_stack'     => $accu_id_stack,
@@ -366,7 +367,7 @@ sub dataflow_output_id {
                 } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
                     my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                         'prev_job_id'       => $self->dbID,
-                                                        'analysis_id'       => $target_analysis_or_table->dbID, # expecting an Analysis
+                                                        'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                                         'input_id'          => $_,
                                                         'param_id_stack'    => $param_id_stack,
                                                         'accu_id_stack'     => $accu_id_stack,
@@ -385,22 +386,13 @@ sub dataflow_output_id {
 sub toString {
     my $self = shift @_;
 
-    return 'Job '.$self->dbID." input_id='".$self->input_id."', retry=".$self->retry_count;
+    my $analysis_label = $self->analysis
+        ? ( $self->analysis->logic_name.'('.$self->analysis_id.')' )
+        : '(NULL)';
+
+    return 'Job '.$self->dbID." analysis=$analysis_label, input_id='".$self->input_id."', status=".$self->status.", retry_count=".$self->retry_count;
 }
 
-
-sub print_job {
-  my $self = shift;
-  my $logic_name = $self->adaptor()
-      ? $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID($self->analysis_id)->logic_name()
-      : '';
-
-  printf("job_id=%d %35s(%5d) retry=%d input_id='%s'\n", 
-       $self->dbID,
-       $logic_name,
-       $self->analysis_id,
-       $self->retry_count,
-       $self->input_id);
-}
 
 1;
+

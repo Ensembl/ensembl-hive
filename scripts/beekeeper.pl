@@ -206,7 +206,7 @@ sub main {
     if($job_id_for_output) {
         printf("===== job output\n");
         my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($job_id_for_output);
-        $job->print_job();
+        print $job->toString. "\n";
     }
 
     if(my $reset_logic_name = $reset_all_jobs_for_analysis || $reset_failed_jobs_for_analysis) {
@@ -280,7 +280,7 @@ sub main {
             my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_by_analysis_id_status($analysis && $analysis->dbID, 'FAILED');
 
             foreach my $job (@{$failed_job_list}) {
-                $job->print_job();
+                print $job->toString. "\n";
             }
         }
     }
