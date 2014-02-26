@@ -602,7 +602,7 @@ sub run {
             # now create the corresponding jobs (if there are any):
         if($input_ids) {
             my @jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
-                'prev_job_id'   => undef,           # these jobs are created by the initialization script, not by another job
+                'prev_job'      => undef,           # these jobs are created by the initialization script, not by another job
                 'analysis'      => $analysis,
                 'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;

@@ -49,16 +49,12 @@ use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new(
 
 =head1 AUTOLOADED
 
+    prev_job_id / prev_job
+
     analysis_id / analysis
 
 =cut
 
-
-sub prev_job_id {
-    my $self = shift;
-    $self->{'_prev_job_id'} = shift if(@_);
-    return $self->{'_prev_job_id'};
-}
 
 sub input_id {
     my $self = shift;
@@ -325,7 +321,7 @@ sub dataflow_output_id {
 
                 my $fan_cache_this_branch = $self->fan_cache()->{$funnel_dataflow_rule_id} ||= [];
                 push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
-                                                        'prev_job_id'       => $self->dbID,
+                                                        'prev_job'          => $self,
                                                         'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                                         'input_id'          => $_,
                                                         'param_id_stack'    => $param_id_stack,
@@ -346,7 +342,7 @@ sub dataflow_output_id {
 
                     } else {
                         my $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-                                            'prev_job_id'       => $self->dbID,
+                                            'prev_job'          => $self,
                                             'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                             'input_id'          => $output_ids_for_this_rule->[0],
                                             'param_id_stack'    => $param_id_stack,
@@ -366,7 +362,7 @@ sub dataflow_output_id {
                     }
                 } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
                     my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
-                                                        'prev_job_id'       => $self->dbID,
+                                                        'prev_job'          => $self,
                                                         'analysis'          => $target_analysis_or_table,   # expecting an Analysis
                                                         'input_id'          => $_,
                                                         'param_id_stack'    => $param_id_stack,
