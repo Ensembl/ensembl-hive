@@ -42,6 +42,13 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 use base (  'Bio::EnsEMBL::Hive::Storable' );
  
 
+=head1 AUTOLOADED
+
+    resource_class_id / resource_class
+
+=cut
+
+
 sub logic_name {
     my $self = shift;
     $self->{'_logic_name'} = shift if(@_);
@@ -63,13 +70,6 @@ sub parameters {
         $self->{'_parameters'} = ref($parameters) ? stringify($parameters) : $parameters;
     }
     return $self->{'_parameters'};
-}
-
-
-sub resource_class_id {
-    my $self = shift;
-    $self->{'_resource_class_id'} = shift if(@_);
-    return $self->{'_resource_class_id'};
 }
 
 

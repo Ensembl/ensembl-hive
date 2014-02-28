@@ -44,14 +44,11 @@ use strict;
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
-sub resource_class_id {
-    my $self = shift @_;
+=head1 AUTOLOADED
 
-    if(@_) {
-        $self->{'_resource_class_id'} = shift @_;
-    }
-    return $self->{'_resource_class_id'};
-}
+    resource_class_id / resource_class
+
+=cut
 
 
 sub meadow_type {

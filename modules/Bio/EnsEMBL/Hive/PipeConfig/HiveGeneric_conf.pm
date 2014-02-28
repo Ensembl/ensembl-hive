@@ -176,10 +176,10 @@ sub pipeline_wide_parameters {
 sub resource_classes {
     my ($self) = @_;
     return {
-## Old style:
+## No longer supported resource declaration syntax:
 #        1 => { -desc => 'default',  'LSF' => '' },
 #        2 => { -desc => 'urgent',   'LSF' => '-q yesterday' },
-## New style:
+## Currently supported resource declaration syntax:
         'default' => { 'LSF' => '' },
         'urgent'  => { 'LSF' => '-q yesterday' },
     };
@@ -439,8 +439,10 @@ sub run {
         }
     }
 
-    my $hive_dba                     = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
-    my $resource_class_adaptor       = $hive_dba->get_ResourceClassAdaptor;
+    my $hive_dba                = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
+
+    my $resource_class_adaptor  = $hive_dba->get_ResourceClassAdaptor;
+    my $all_resources_coll      = Bio::EnsEMBL::Hive::Utils::Collection->new( $resource_class_adaptor->fetch_all );   # load all previously stored resources
 
     unless($job_topup) {
         my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
@@ -468,38 +470,29 @@ sub run {
 
         my $resource_classes_hash = $self->resource_classes;
         my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
-        my %seen_resource_name = ();
-        foreach my $rc_id (@resource_classes_order) {
-            my $mt2param = $resource_classes_hash->{$rc_id};
-
-            my $rc_name = delete $mt2param->{-desc};
-            if($rc_id!~/^\d+$/) {
-                $rc_name  = $rc_id;
-                $rc_id = undef;
+        foreach my $rc_name (@resource_classes_order) {
+            if($rc_name=~/^\d+$/) {
+                die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
             }
 
-            if(!$rc_name or $seen_resource_name{lc($rc_name)}++) {
-                die "Every resource has to have a unique description, please fix the PipeConfig file";
-            }
-
-            my ($rc, $rc_newly_created) = $resource_class_adaptor->create_new(
-                defined($rc_id) ? ('dbID'   => $rc_id) : (),
+            my ($resource_class, $rc_newly_created) = $resource_class_adaptor->create_new(
                 'name'   => $rc_name,
                 1   # check whether this ResourceClass was already present in the database
             );
-            $rc_id = $rc->dbID();
+            my $rc_id = $resource_class->dbID();
 
             if($rc_newly_created) {
                 warn "Creating resource_class $rc_name($rc_id).\n";
+                push @{ $all_resources_coll->listref }, $resource_class;
             } else {
                 warn "Attempt to re-create and potentially redefine resource_class $rc_name($rc_id). NB: This may affect already created analyses!\n";
             }
 
-            while( my($meadow_type, $resource_param_list) = each %$mt2param ) {
+            while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
                 $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
                 $resource_description_adaptor->create_new(
-                    resource_class_id      => $rc_id,
+                    resource_class         => $resource_class,
                     meadow_type            => $meadow_type,
                     submission_cmd_args    => $resource_param_list->[0],
                     worker_cmd_args        => $resource_param_list->[1],
@@ -508,16 +501,16 @@ sub run {
         }
         unless(my $default_rc = $resource_class_adaptor->fetch_by_name('default')) {
             warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
-            $resource_class_adaptor->create_new('name' => 'default');
+            my ($resource_class) = $resource_class_adaptor->create_new('name' => 'default');
+            push @{ $all_resources_coll->listref }, $resource_class;
         }
         warn "Done.\n\n";
     }
 
-    my $analysis_adaptor             = $hive_dba->get_AnalysisAdaptor;
-
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
-    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $analysis_adaptor->fetch_all );   # load all previously stored analyses for analysis_topup
+    my $analysis_adaptor        = $hive_dba->get_AnalysisAdaptor;
+    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $analysis_adaptor->fetch_all );   # load all previously stored analyses
 
     my %seen_logic_name = ();
 
@@ -535,6 +528,10 @@ sub run {
             die "an entry with logic_name '$logic_name' appears at least twice in the configuration file, can't continue";
         }
 
+        if($rc_id) {
+            die "(-rc_id => $rc_id) syntax is deprecated, please use (-rc_name => 'your_resource_class_name')";
+        }
+
         my $analysis = $all_analyses_coll->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
         if( $analysis ) {
 
@@ -546,18 +543,14 @@ sub run {
         } else {
 
             if($job_topup) {
-                die "Could not fetch analysis '$logic_name'";
+                die "Could not find local analysis '$logic_name'";
             }
 
             warn "Creating analysis '$logic_name'.\n";
 
-            if($rc_id) {
-                warn "(-rc_id => $rc_id) syntax is deprecated, please start using (-rc_name => 'your_resource_class_name')";
-            } else {
-                $rc_name ||= 'default';
-                my $rc = $resource_class_adaptor->fetch_by_name($rc_name ) or die "Could not fetch resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contain it or inherit from the parent class";
-                $rc_id = $rc->dbID();
-            }
+            $rc_name ||= 'default';
+            my $resource_class = $all_resources_coll->find_one_by('name', $rc_name)
+                or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
             if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
                 die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
@@ -570,7 +563,7 @@ sub run {
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'parameters'            => $parameters_hash,
-                'resource_class_id'     => $rc_id,
+                'resource_class'        => $resource_class,
                 'failed_job_tolerance'  => $failed_job_tolerance,
                 'max_retry_count'       => $max_retry_count,
                 'can_be_empty'          => $can_be_empty,
