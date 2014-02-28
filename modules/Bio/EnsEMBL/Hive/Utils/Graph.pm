@@ -161,12 +161,14 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_AnalysisAdaptor()->fetch_all );
-    my $all_control_rules_coll  = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_AnalysisCtrlRuleAdaptor()->fetch_all );
-    my $all_dataflow_rules_coll = Bio::EnsEMBL::Hive::Utils::Collection->new( $self->dba()->get_DataflowRuleAdaptor()->fetch_all );
+    my $dba = $self->dba();
+
+    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_AnalysisAdaptor()->fetch_all );
+    my $all_control_rules_coll  = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_AnalysisCtrlRuleAdaptor()->fetch_all );
+    my $all_dataflow_rules_coll = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_DataflowRuleAdaptor()->fetch_all );
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
-        my $job_adaptor = $self->dba->get_AnalysisJobAdaptor();
+        my $job_adaptor = $dba->get_AnalysisJobAdaptor();
         foreach my $analysis ( $all_analyses_coll->list ) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
@@ -208,7 +210,9 @@ sub build {
     }
 
     if( $self->config_get('DisplayDetails') ) {
-        $self->_add_hive_details();
+        my $dbc = $dba->dbc();
+        my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
+        $self->_add_pipeline_label( $pipeline_label );
     }
     foreach my $analysis ( $all_analyses_coll->list ) {
         $self->_add_analysis_node($analysis);
@@ -324,14 +328,12 @@ sub _propagate_allocation {
 }
 
 
-sub _add_hive_details {
-    my ($self) = @_;
+sub _add_pipeline_label {
+    my ($self, $pipeline_label) = @_;
 
     my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
-    my $dbc = $self->dba()->dbc();
-    my $label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
     $self->graph()->add_node( 'Details',
-        label     => $label,
+        label     => $pipeline_label,
         fontname  => $node_fontname,
         shape     => 'plaintext',
     );
