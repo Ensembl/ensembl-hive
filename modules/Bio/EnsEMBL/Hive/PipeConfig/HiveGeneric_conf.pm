@@ -517,7 +517,7 @@ sub run {
 
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
-    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new();
+    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $analysis_adaptor->fetch_all );   # load all previously stored analyses for analysis_topup
 
     my %seen_logic_name = ();
 
@@ -535,7 +535,7 @@ sub run {
             die "an entry with logic_name '$logic_name' appears at least twice in the configuration file, can't continue";
         }
 
-        my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
+        my $analysis = $all_analyses_coll->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
         if( $analysis ) {
 
             if($analysis_topup) {
@@ -621,7 +621,7 @@ sub run {
             my ($logic_name, $wait_for, $flow_into)
                  = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-            my $analysis = $all_analyses_coll->find_one_by('logic_name', $logic_name);  # TODO: make sure it works for pre-stored analyses ("analysis_topup")
+            my $analysis = $all_analyses_coll->find_one_by('logic_name', $logic_name);
 
             $wait_for ||= [];
             $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -630,7 +630,7 @@ sub run {
             foreach my $condition_url (@$wait_for) {
                 unless ($condition_url =~ m{^\w*://}) {
                     my $condition_analysis = $all_analyses_coll->find_one_by('logic_name', $condition_url)
-                        or die "Could not fetch analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
+                        or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
                 }
                 my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
                         'condition_analysis_url'    => $condition_url,
@@ -679,7 +679,7 @@ sub run {
 
                     unless ($heir_url =~ m{^\w*://}) {
                         my $heir_analysis = $all_analyses_coll->find_one_by('logic_name', $heir_url)
-                            or die "No analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
+                            or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                     }
                     
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
@@ -717,8 +717,10 @@ sub run {
     foreach my $analysis ( $all_analyses_coll->list ) {
         my $stats = $analysis->stats;   # should be taking the value cached previously
 
-        $analysis_adaptor->store( $analysis );
-        $analysis_stats_adaptor->store( $stats );
+        unless( $analysis->adaptor ) {  # TODO: check a more thorough condition if moving analyses around, etc
+            $analysis_adaptor->store( $analysis );
+            $analysis_stats_adaptor->store( $stats );
+        }
 
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store_jobs_and_adjust_counters( $our_jobs );
