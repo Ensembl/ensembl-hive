@@ -53,9 +53,11 @@ sub default_table_name {
 sub store_if_needed {
     my ($self, $data) = @_;
 
-    my ($stored_hash) = $self->store({'data'=> $data}, 1);
+    my $storable_hash = {'data'=> $data};
 
-    return '_extended_data_id ' . $stored_hash->{'analysis_data_id'};
+    $self->store_or_update_one( $storable_hash  );
+
+    return '_extended_data_id ' . $storable_hash->{'analysis_data_id'};
 }
 
 1;

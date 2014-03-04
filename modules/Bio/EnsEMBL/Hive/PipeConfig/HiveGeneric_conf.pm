@@ -727,21 +727,15 @@ sub run {
     my $dataflow_rule_adaptor       = $hive_dba->get_DataflowRuleAdaptor;
 
     foreach my $resource_class ( $all_rc_coll->list ) {
-        unless( $resource_class->adaptor ) {
-            $resource_class_adaptor->store( $resource_class );
-        }
-        foreach my $resource_description ( $all_rd_coll->find_all_by('resource_class', $resource_class) ) { # code is simplified due to 'REPLACE' mode of the adaptor (NB: not portable!)
-            $resource_description_adaptor->store( $resource_description );
+        $resource_class_adaptor->store_or_update_one( $resource_class );
+        foreach my $resource_description (@{ $all_rd_coll->find_all_by('resource_class', $resource_class) }) {
+            $resource_description_adaptor->store_or_update_one( $resource_description );
         }
     }
 
     foreach my $analysis ( $all_analyses_coll->list ) {
-        my $stats = $analysis->stats;   # should be taking the value cached previously
-
-        unless( $analysis->adaptor ) {  # TODO: check a more thorough condition if moving analyses around, etc
-            $analysis_adaptor->store( $analysis );
-            $analysis_stats_adaptor->store( $stats );
-        }
+        $analysis_adaptor->store_or_update_one( $analysis );
+        $analysis_stats_adaptor->store_or_update_one( $analysis->stats );   # should be taking the value cached previously
 
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store_jobs_and_adjust_counters( $our_jobs );
@@ -751,11 +745,11 @@ sub run {
     foreach my $analysis ( $all_analyses_coll->list ) {
 
         foreach my $c_rule (@{ $analysis->control_rules_collection }) {
-            $ctrl_rule_adaptor->store( $c_rule, 1 );
+            $ctrl_rule_adaptor->store_or_update_one( $c_rule );
             warn $c_rule->toString."\n";
         }
         foreach my $df_rule (@{ $analysis->dataflow_rules_collection }) {
-            $dataflow_rule_adaptor->store( $df_rule, 1 );
+            $dataflow_rule_adaptor->store_or_update_one( $df_rule );
             warn $df_rule->toString."\n";
         }
     }

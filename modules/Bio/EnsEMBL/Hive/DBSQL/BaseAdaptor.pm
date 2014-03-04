@@ -235,7 +235,7 @@ sub _table_info_loader {
         if( $is_ai  # careful! This is only supported by DBD::mysql and will not work with other drivers
          or ($column_name eq $table_name.'_id')
          or ($table_name eq 'analysis_base' and $column_name eq 'analysis_id') ) {    # a special case (historical)
-            $autoinc_id = $column_name;    # careful! This is only supported by DBD::mysql and will not work with other drivers
+            $autoinc_id = $column_name;
         }
     }
     $sth->finish;
@@ -396,6 +396,23 @@ sub update {    # update (some or all) non_primary columns from the primary
     $sth->finish();
 }
 
+sub store_or_update_one {
+    my ($self, $object) = @_;
+
+    if(UNIVERSAL::can($object, 'adaptor') and $object->adaptor and $object->adaptor==$self) {  # looks like it has been previously stored
+        if(@{ $self->primary_key() }) { # updatable ?
+            $self->update( $object );
+            # warn "store_or_update_one: updated [".$object->toString."]\n";
+        }
+    } elsif( my $present = $self->check_object_present_in_db( $object ) ) {
+        $self->mark_stored($object, $present);
+        # warn "store_or_update_one: found [".$object->toString."] in db by content\n";
+    } else {
+        $self->store( $object );
+        # warn "store_or_update_one: stored [".$object->toString."]\n";
+    }
+}
+
 
 sub check_object_present_in_db {    # return autoinc_id/undef if the table has autoinc_id or just 1/undef if not
     my ( $self, $object ) = @_;
@@ -422,7 +439,7 @@ sub check_object_present_in_db {    # return autoinc_id/undef if the table has a
 
 
 sub store {
-    my ($self, $object_or_list, $check_presence_in_db_first) = @_;
+    my ($self, $object_or_list) = @_;
 
     my $objects = (ref($object_or_list) eq 'ARRAY')     # ensure we get an array of objects to store
         ? $object_or_list
@@ -446,9 +463,6 @@ sub store {
     my $stored_this_time        = 0;
 
     foreach my $object (@$objects) {
-        if($check_presence_in_db_first and my $present = $self->check_object_present_in_db($object)) {
-            $self->mark_stored($object, $present);
-        } else {
             my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? $self->keys_to_columns($object) : ($all_storable_columns, '*all*');
             # warn "COLUMN_KEY='$column_key'\n";
 
@@ -474,7 +488,6 @@ sub store {
                 $self->mark_stored($object, $liid );
                 ++$stored_this_time;
             }
-        }
     }
 
     foreach my $sth (values %hashed_sth) {

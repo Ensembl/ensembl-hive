@@ -96,7 +96,7 @@ sub store_jobs_and_adjust_counters {
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
         $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($need_to_increase_semaphore_count and ($dbc->driver ne 'sqlite'));
 
-        my ($job, $stored_this_time) = $self->store( $job, 0 );
+        my ($job, $stored_this_time) = $self->store( $job );
 
         if($stored_this_time) {
             if($need_to_increase_semaphore_count) { # if we are not creating a new semaphore (where dependent jobs have already been counted),
