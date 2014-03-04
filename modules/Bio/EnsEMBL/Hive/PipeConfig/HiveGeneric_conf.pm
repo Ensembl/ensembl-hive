@@ -70,6 +70,8 @@ use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::ResourceClass;
+use Bio::EnsEMBL::Hive::ResourceDescription;
 use Bio::EnsEMBL::Hive::Valley;
 
 use base ('Bio::EnsEMBL::Hive::DependentOptions');
@@ -442,7 +444,14 @@ sub run {
     my $hive_dba                = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
 
     my $resource_class_adaptor  = $hive_dba->get_ResourceClassAdaptor;
-    my $all_resources_coll      = Bio::EnsEMBL::Hive::Utils::Collection->new( $resource_class_adaptor->fetch_all );   # load all previously stored resources
+    my $all_rc_coll     = Bio::EnsEMBL::Hive::Utils::Collection->new( $resource_class_adaptor->fetch_all );         # load all previously stored RCs
+
+    my $resource_description_adaptor    = $hive_dba->get_ResourceDescriptionAdaptor;
+    my $all_rd_coll     = Bio::EnsEMBL::Hive::Utils::Collection->new( $resource_description_adaptor->fetch_all );   # load all previously stored RDs
+
+    foreach my $resource_description ( $all_rd_coll->list ) {     # pre-mating of RC and RD objects
+        $resource_description->resource_class( $all_rc_coll->find_one_by('dbID', $resource_description->resource_class_id ) );
+    }
 
     unless($job_topup) {
         my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
@@ -465,7 +474,6 @@ sub run {
         warn "Done.\n\n";
 
             # pre-load resource_class and resource_description tables:
-        my $resource_description_adaptor    = $hive_dba->get_ResourceDescriptionAdaptor;
         warn "Loading the Resources ...\n";
 
         my $resource_classes_hash = $self->resource_classes;
@@ -475,34 +483,36 @@ sub run {
                 die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
             }
 
-            my ($resource_class, $rc_newly_created) = $resource_class_adaptor->create_new(
-                'name'   => $rc_name,
-                1   # check whether this ResourceClass was already present in the database
-            );
-            my $rc_id = $resource_class->dbID();
+            my $resource_class;
 
-            if($rc_newly_created) {
-                warn "Creating resource_class $rc_name($rc_id).\n";
-                push @{ $all_resources_coll->listref }, $resource_class;
+            if( $resource_class = $all_rc_coll->find_one_by('name', $rc_name) ) {
+                warn "Attempt to re-create and potentially redefine resource_class '$rc_name'. NB: This may affect already created analyses!\n";
             } else {
-                warn "Attempt to re-create and potentially redefine resource_class $rc_name($rc_id). NB: This may affect already created analyses!\n";
+                warn "Creating a new resource_class '$rc_name'.\n";
+                $resource_class = Bio::EnsEMBL::Hive::ResourceClass->new(
+                    'name' => $rc_name,
+                );
+                push @{ $all_rc_coll->listref }, $resource_class;
             }
 
             while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
                 $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-                $resource_description_adaptor->create_new(
-                    resource_class         => $resource_class,
-                    meadow_type            => $meadow_type,
-                    submission_cmd_args    => $resource_param_list->[0],
-                    worker_cmd_args        => $resource_param_list->[1],
+                my $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
+                    'resource_class'        => $resource_class,
+                    'meadow_type'           => $meadow_type,
+                    'submission_cmd_args'   => $resource_param_list->[0],
+                    'worker_cmd_args'       => $resource_param_list->[1],
                 );
+                push @{ $all_rd_coll->listref }, $resource_description;
             }
         }
-        unless(my $default_rc = $resource_class_adaptor->fetch_by_name('default')) {
+        unless(my $default_rc = $all_rc_coll->find_one_by('name', 'default') ) {
             warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
-            my ($resource_class) = $resource_class_adaptor->create_new('name' => 'default');
-            push @{ $all_resources_coll->listref }, $resource_class;
+            $default_rc = Bio::EnsEMBL::Hive::ResourceClass->new(
+                'name' => 'default',
+            );
+            push @{ $all_rc_coll->listref }, $default_rc;
         }
         warn "Done.\n\n";
     }
@@ -525,7 +535,7 @@ sub run {
         }
 
         if($seen_logic_name{$logic_name}++) {
-            die "an entry with logic_name '$logic_name' appears at least twice in the configuration file, can't continue";
+            die "an entry with logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
         }
 
         if($rc_id) {
@@ -549,7 +559,7 @@ sub run {
             warn "Creating analysis '$logic_name'.\n";
 
             $rc_name ||= 'default';
-            my $resource_class = $all_resources_coll->find_one_by('name', $rc_name)
+            my $resource_class = $all_rc_coll->find_one_by('name', $rc_name)
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
             if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
@@ -706,6 +716,15 @@ sub run {
     my $job_adaptor                 = $hive_dba->get_AnalysisJobAdaptor;
     my $ctrl_rule_adaptor           = $hive_dba->get_AnalysisCtrlRuleAdaptor;
     my $dataflow_rule_adaptor       = $hive_dba->get_DataflowRuleAdaptor;
+
+    foreach my $resource_class ( $all_rc_coll->list ) {
+        unless( $resource_class->adaptor ) {
+            $resource_class_adaptor->store( $resource_class );
+        }
+        foreach my $resource_description ( $all_rd_coll->find_all_by('resource_class', $resource_class) ) { # code is simplified due to 'REPLACE' mode of the adaptor (NB: not portable!)
+            $resource_description_adaptor->store( $resource_description );
+        }
+    }
 
     foreach my $analysis ( $all_analyses_coll->list ) {
         my $stats = $analysis->stats;   # should be taking the value cached previously
