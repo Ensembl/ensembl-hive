@@ -83,18 +83,5 @@ sub mark_stored {
 }
 
 
-sub create_new {
-    my $self = shift @_;
-
-    my $check_presence_in_db_first = (scalar(@_)%2)
-        ? pop @_    # extra 'odd' parameter that would disrupt the hash integrity anyway
-        : 0;        # do not check by default
-
-    my $object = $self->object_class()->new( 'adaptor' => $self, @_ );
-
-    return $self->store( $object, $check_presence_in_db_first );
-}
-
-
 1;
 
