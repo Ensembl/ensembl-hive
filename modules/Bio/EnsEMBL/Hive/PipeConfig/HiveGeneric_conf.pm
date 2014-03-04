@@ -486,7 +486,7 @@ sub run {
             my $resource_class;
 
             if( $resource_class = $all_rc_coll->find_one_by('name', $rc_name) ) {
-                warn "Attempt to re-create and potentially redefine resource_class '$rc_name'. NB: This may affect already created analyses!\n";
+                warn "Found an already existing resource_class '$rc_name'.\n";
             } else {
                 warn "Creating a new resource_class '$rc_name'.\n";
                 $resource_class = Bio::EnsEMBL::Hive::ResourceClass->new(
@@ -498,13 +498,22 @@ sub run {
             while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
                 $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-                my $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
-                    'resource_class'        => $resource_class,
-                    'meadow_type'           => $meadow_type,
-                    'submission_cmd_args'   => $resource_param_list->[0],
-                    'worker_cmd_args'       => $resource_param_list->[1],
-                );
-                push @{ $all_rd_coll->listref }, $resource_description;
+                my $resource_description;
+
+                if( $resource_description = $all_rd_coll->find_one_by('resource_class', $resource_class, 'meadow_type', $meadow_type) ) {
+                    warn "Attempting to redefine an existing description for '$rc_name/$meadow_type' resource class\n";
+                    $resource_description->submission_cmd_args( $resource_param_list->[0] );
+                    $resource_description->worker_cmd_args( $resource_param_list->[1] );
+                } else {
+                    warn "Creating a new description for '$rc_name/$meadow_type' resource class\n";
+                    $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
+                        'resource_class'        => $resource_class,
+                        'meadow_type'           => $meadow_type,
+                        'submission_cmd_args'   => $resource_param_list->[0],
+                        'worker_cmd_args'       => $resource_param_list->[1],
+                    );
+                    push @{ $all_rd_coll->listref }, $resource_description;
+                }
             }
         }
         unless(my $default_rc = $all_rc_coll->find_one_by('name', 'default') ) {
