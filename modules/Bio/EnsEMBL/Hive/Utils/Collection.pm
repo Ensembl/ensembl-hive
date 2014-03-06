@@ -32,6 +32,13 @@ sub list {
 }
 
 
+sub add {
+    my $self = shift @_;
+
+    push @{ $self->listref }, @_;
+}
+
+
 sub hashed_by_dbID {
     my $self = shift @_;
 
