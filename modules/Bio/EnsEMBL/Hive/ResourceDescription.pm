@@ -84,7 +84,7 @@ sub worker_cmd_args {
 sub toString {
     my $self = shift @_;
 
-    return (ref($self).': '.join(', ', map { $_.'="'.$self->$_().'"' } qw(resource_class_id meadow_type submission_cmd_args worker_cmd_args) ));
+    return ('ResourceDescription: '.join(', ', map { $_.'="'.$self->$_().'"' } qw(resource_class_id meadow_type submission_cmd_args worker_cmd_args) ));
 }
 
 1;
