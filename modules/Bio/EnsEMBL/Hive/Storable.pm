@@ -45,6 +45,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(weaken);
+use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 
@@ -135,13 +136,14 @@ sub AUTOLOAD {
             if(@_) {
                 $self->{$foo_id_method_name} = shift @_;
                 if( $self->{$foo_obj_method_name} ) {
-                    warn "setting $foo_id_method_name in an object that had $foo_obj_method_name defined";
+#                    warn "setting $foo_id_method_name in an object that had $foo_obj_method_name defined";
                     $self->{$foo_obj_method_name} = undef;
                 }
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_id_method_name} and my $foo_object=$self->{$foo_obj_method_name}) {
                 $self->{$foo_id_method_name} = $foo_object->dbID;
+#                warn "Lazy-loaded dbID (".$self->{$foo_id_method_name}.") from $AdaptorType object\n";
             }
 
             return $self->{$foo_id_method_name};
@@ -153,10 +155,13 @@ sub AUTOLOAD {
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                if(my $adaptor = $self->adaptor) {
+                if( $self->{$foo_obj_method_name} = Bio::EnsEMBL::Hive->collection($AdaptorType)->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
+#                    warn "Lazy-loading object from $AdaptorType collection\n";
+                } elsif(my $adaptor = $self->adaptor) {
+#                    warn "Lazy-loading object from $AdaptorType adaptor\n";
                     $self->{$foo_obj_method_name} = $adaptor->db->get_adaptor( $AdaptorType )->fetch_by_dbID( $foo_object_id );
                 } else {
-                    warn "Cannot lazy-load $foo_obj_method_name because the ".ref($self)." is not attached to an adaptor";
+#                    warn "Cannot lazy-load $foo_obj_method_name because the ".ref($self)." is not attached to an adaptor";
                 }
             }
 
