@@ -6,8 +6,8 @@
 
 =head1 SYNOPSIS
 
-    my $dba = get_hive_dba();
-    my $g = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $dba);
+    my $hive_dba = get_hive_dba();
+    my $g = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $hive_dba);
     my $graphviz = $g->build();
     $graphviz->as_png('location.png');
 
@@ -48,6 +48,7 @@ package Bio::EnsEMBL::Hive::Utils::Graph;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -57,7 +58,7 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 
 =head2 new()
 
-  Arg [1] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor $dba;
+  Arg [1] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor $hive_dba;
               The adaptor to get information from
   Arg [2] : (optional) string $config_file_name;
                   A JSON file name to initialize the Config object with.
@@ -70,11 +71,11 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 =cut
 
 sub new {
-  my ($class, $dba, $config_file_name) = @_;
+  my ($class, $hive_dba, $config_file_name) = @_;
 
   my $self = bless({}, ref($class) || $class);
 
-  $self->dba($dba);
+  $self->dba($hive_dba);
   my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file_name ? $config_file_name : () );
   $self->config($config);
   $self->context( [ 'Graph' ] );
@@ -161,69 +162,54 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $dba = $self->dba();
+    my $hive_dba = $self->dba;
 
-    my $all_analyses_coll       = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_AnalysisAdaptor()->fetch_all );
-    my $all_control_rules_coll  = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_AnalysisCtrlRuleAdaptor()->fetch_all );
-    my $all_dataflow_rules_coll = Bio::EnsEMBL::Hive::Utils::Collection->new( $dba->get_DataflowRuleAdaptor()->fetch_all );
+    Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
 
-    if( my $job_limit = $self->config_get('DisplayJobs') ) {
-        my $job_adaptor = $dba->get_AnalysisJobAdaptor();
-        foreach my $analysis ( $all_analyses_coll->list ) {
+    if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
+        foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
         }
     }
 
-    foreach my $c_rule ( $all_control_rules_coll->list ) {
-        my $ctrled_analysis = $all_analyses_coll->find_one_by('dbID', $c_rule->ctrled_analysis_id );
-        $c_rule->ctrled_analysis( $ctrled_analysis );
-        push @{$ctrled_analysis->control_rules_collection}, $c_rule;
-    }
+    foreach my $df_rule ( Bio::EnsEMBL::Hive->collection('DataflowRule')->list ) {
 
-    foreach my $df_rule ( $all_dataflow_rules_coll->list ) {
-        my $from_analysis = $all_analyses_coll->find_one_by('dbID', $df_rule->from_analysis_id );
-        $df_rule->from_analysis( $from_analysis );
-        push @{$from_analysis->dataflow_rules_collection}, $df_rule;
-
-        if(my $target_object = $all_analyses_coll->find_one_by('logic_name', $df_rule->to_analysis_url )) {
+        if(my $target_object = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
             $df_rule->to_analysis( $target_object );
             if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
                 $target_object->{'_inflow_count'}++;
             }
         } # otherwise it may be a link out (unsupported at the moment)
 
-        if( my $funnel_dataflow_rule_id  = $df_rule->funnel_dataflow_rule_id ) {
-            my $funnel_dataflow_rule = $all_dataflow_rules_coll->find_one_by('dbID', $funnel_dataflow_rule_id );
+        if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
             $funnel_dataflow_rule->{'_is_a_funnel'}++;
-            $df_rule->funnel_dataflow_rule( $funnel_dataflow_rule );
         }
     }
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( $all_analyses_coll->list ) {
+    foreach my $source_analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
         unless( $source_analysis->{'_inflow_count'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
         }
     }
 
-    if( $self->config_get('DisplayDetails') ) {
-        my $dbc = $dba->dbc();
+    if( $self->config_get('DisplayDetails') and my $dbc = $hive_dba && $hive_dba->dbc ) {
         my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
         $self->_add_pipeline_label( $pipeline_label );
     }
-    foreach my $analysis ( $all_analyses_coll->list ) {
+    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
         $self->_add_analysis_node($analysis);
     }
-    foreach my $analysis ( $all_analyses_coll->list ) {
+    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
         $self->_add_control_rules( $analysis->control_rules_collection );
         $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
-        foreach my $analysis ( $all_analyses_coll->list ) {
+        foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
             if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
                 my $from = _analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
@@ -238,7 +224,7 @@ sub build {
     if($self->config_get('DisplaySemaphoreBoxes') ) {
         my %cluster_2_nodes = ();
 
-        foreach my $analysis ($all_analyses_coll->list) {
+        foreach my $analysis (Bio::EnsEMBL::Hive->collection('Analysis')->list) {
             if(my $funnel = $analysis->{'_funnel_dfr'}) {
                 push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $analysis );
             }
@@ -531,13 +517,14 @@ sub _add_table_node {
     my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    if( $data_limit = $self->config_get('DisplayData') ) {
-        my $adaptor = $self->dba->get_NakedTableAdaptor();
-        $adaptor->table_name( $table_name );
+    my $hive_dba = $self->dba;
 
-        @column_names = sort keys %{$adaptor->column_set};
+    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor ) {
+        $naked_table_adaptor->table_name( $table_name );
+
+        @column_names = sort keys %{$naked_table_adaptor->column_set};
         $columns = scalar(@column_names);
-        $table_data = $adaptor->fetch_all( 'LIMIT '.($data_limit+1) );
+        $table_data = $naked_table_adaptor->fetch_all( 'LIMIT '.($data_limit+1) );
 
         if(scalar(@$table_data)>$data_limit) {
             pop @$table_data;
