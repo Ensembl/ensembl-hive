@@ -13,7 +13,7 @@ use warnings;
 use Cwd            ();
 use File::Basename ();
 BEGIN {
-    $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
