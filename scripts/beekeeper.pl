@@ -14,7 +14,7 @@ BEGIN {
 
 use Getopt::Long;
 use File::Path 'make_path';
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
@@ -33,7 +33,8 @@ sub main {
         # the globals into a nice '$self' package
     my $self = {};
 
-    my $help;
+    my $help                        = 0;
+    my $report_versions             = 0;
     my $loopit                      = 0;
     my $sync                        = 0;
     my $local                       = 0;
@@ -108,11 +109,12 @@ sub main {
                'submit_log_dir=s'       => \$self->{'submit_log_dir'},
 
                     # other commands/options
-               'h|help'            => \$help,
-               'sync'              => \$sync,
-               'dead'              => \$check_for_dead,
+               'h|help!'           => \$help,
+               'v|versions!'       => \$report_versions,
+               'sync!'             => \$sync,
+               'dead!'             => \$check_for_dead,
                'killworker=i'      => \$kill_worker_id,
-               'alldead'           => \$all_dead,
+               'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
                'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'worker_stats'      => \$show_worker_stats,
@@ -125,6 +127,11 @@ sub main {
     );
 
     if ($help) { script_usage(0); }
+
+    if($report_versions) {
+        report_versions();
+        exit(0);
+    }
 
     my $config = Bio::EnsEMBL::Hive::Utils::Config->new();      # will probably add a config_file option later
 
@@ -491,6 +498,7 @@ __DATA__
 =head2 Other commands/options
 
     -help                  : print this help
+    -versions              : report both Hive code version and Hive database schema version
     -dead                  : detect all unaccounted dead workers and reset their jobs for resubmission
     -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
     -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)

@@ -53,10 +53,12 @@ package Bio::EnsEMBL::Hive::Utils;
 use strict;
 use warnings;
 use Data::Dumper;
+use Bio::EnsEMBL::Hive::Version;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions);
 
 
 =head2 stringify
@@ -321,6 +323,12 @@ sub go_figure_dbc {
         }
         die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
     }
+}
+
+
+sub report_versions {
+    print "CodeVersion\t".Bio::EnsEMBL::Hive::Version->get_code_version()."\n";
+    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
 }
 
 1;

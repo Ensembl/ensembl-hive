@@ -13,7 +13,7 @@ BEGIN {
 
 
 use Getopt::Long;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
@@ -24,7 +24,7 @@ Bio::EnsEMBL::Registry->no_version_check(1);
 my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
 my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
-my ($help, $debug);
+my ($help, $report_versions, $debug);
 
 GetOptions(
 
@@ -55,10 +55,17 @@ GetOptions(
 
 # Other commands
            'h|help'                     => \$help,
+           'v|versions'                 => \$report_versions,
            'debug=i'                    => \$debug,
 );
 
 if ($help) { script_usage(0); }
+
+if($report_versions) {
+    report_versions();
+    exit(0);
+}
+
 
 if($reg_conf) {     # if reg_conf is defined, we load it regardless of whether it is used to connect to the Hive database or not:
     Bio::EnsEMBL::Registry->load_all($reg_conf);
@@ -195,6 +202,7 @@ __DATA__
 =head2 Other options:
 
     -help                       : print this help
+    -versions                   : report both Hive code version and Hive database schema version
     -debug <level>              : turn on debug messages at <level>
     -analysis_stats             : show status of each analysis in hive
 

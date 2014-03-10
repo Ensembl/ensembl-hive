@@ -14,11 +14,11 @@ BEGIN {
 use Getopt::Long;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Hive::Utils::URL;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 
 
 sub main {
-    my ($reg_conf, $reg_type, $reg_alias, $url, $sqlcmd, $extra, $to_params, $verbose, $help);
+    my ($reg_conf, $reg_type, $reg_alias, $url, $sqlcmd, $extra, $to_params, $verbose, $help, $report_versions);
 
     GetOptions(
                 # connect to the database:
@@ -34,12 +34,19 @@ sub main {
 
             'verbose!'          => \$verbose,
             'help!'             => \$help,
+            'v|versions!'       => \$report_versions,
     );
 
     my $dbc_hash;
 
     if($help) {
+
         script_usage(0);
+
+    } elsif($report_versions) {
+
+        report_versions();
+        exit(0);
 
     } elsif($reg_alias) {
         script_usage(1) if $url;
