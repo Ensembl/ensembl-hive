@@ -1,3 +1,25 @@
+Version 2.0     - a major 'coreless' release of Hive code
+===========
+
+* Removed dependencies from EnsEMBL core code. You don't need to install Ensembl core to run non-Ensembl pipelines.
+
+* Moved Ensembl-specific configuration to EnsemblGeneric_conf, from which all Ensembl pipelines should now inherit.
+
+
+Version 1.9     - largely a maintenance release + preparations for separation from Ensembl core
+===========
+
+* Various preparations to make the code more GitHub-friendly
+
+* A better class hierarchy with less depenencies from Ensembl core code
+
+* At last we have a proper code version test: "use Bio::EnsEMBL::Hive::Version 1.9;" works, but "use Bio::EnsEMBL::Hive::Version 2.0" currently fails.
+
+* "beekeeper --version", "runWorker.pl --version" and "db_cmd.pl --version" report both code version and Hive database schema version
+
+* Multiple bug fixes
+
+
 ---------------------[before EnsEMBL rel.75]---------------------------------------------------------------------------
 
 * Wed Dec 11 12:55:58 2013 +0000 | Leo Gordon | updated schema diagram (PNG) and description (HTML)
@@ -35,8 +57,7 @@
 * Tue Sep 10 01:20:28 2013 +0100 | Matthieu Muffato | Only gnuplot has to know about the filtered analysis, the CSV file should still contain all the data
 * Tue Sep 10 00:51:55 2013 +0100 | Matthieu Muffato | First version of a script to generate the analysis profile of a pipeline
 * Mon Nov 25 16:57:37 2013 +0000 | Leo Gordon | schema_change: detect and register RELOCATED events that used to mess up things on LSF 9.0 ("job rescheduled" in LSF parlance)
-* Mon Nov 25 16:54:11 2013 +0000 | Leo Gordon | be more careful with fetch_overdue_workers (Use 5sec threshold to avoid checking recently active Workers. Do not use it at all when perf
-orming -all_dead.)
+* Mon Nov 25 16:54:11 2013 +0000 | Leo Gordon | be more careful with fetch_overdue_workers (Use 5sec threshold to avoid checking recently active Workers. Do not use it at all when performing -all_dead.)
 * Mon Nov 25 16:47:35 2013 +0000 | Leo Gordon | bugfix:  last_check_in should only be updated by register_worker_death if the Worker is burying itself
 * Mon Nov 25 16:35:16 2013 +0000 | Leo Gordon | cosmetic: added (commented out) warning messages for every external system() call that LSF module runs - simplifies debugging a lot
 * Mon Nov 25 14:08:52 2013 +0000 | Leo Gordon | ranked claiming technology: added support for both sqlite and pgsql drivers

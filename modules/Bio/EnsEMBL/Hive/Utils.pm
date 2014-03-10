@@ -54,10 +54,12 @@ use strict;
 use warnings;
 use Carp ('confess');
 use Data::Dumper;
+use Bio::EnsEMBL::Hive::Version;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc throw);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -332,6 +334,12 @@ sub go_figure_dbc {
 }
 
 
+sub report_versions {
+    print "CodeVersion\t".Bio::EnsEMBL::Hive::Version->get_code_version()."\n";
+    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
+}
+
+
 sub throw {
     my $msg = pop @_;
 
@@ -339,6 +347,7 @@ sub throw {
         #       Alternatively, we could implement our own stack reporter instead of Carp::confess.
     confess $msg;
 }
+
 
 1;
 
