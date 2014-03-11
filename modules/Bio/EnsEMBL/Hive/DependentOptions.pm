@@ -32,7 +32,7 @@ package Bio::EnsEMBL::Hive::DependentOptions;
 
 use strict;
 use warnings;
-use Getopt::Long qw(:config pass_through);
+use Getopt::Long qw(:config pass_through no_auto_abbrev);
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
