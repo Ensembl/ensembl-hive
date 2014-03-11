@@ -18,16 +18,31 @@ BEGIN {
 }
 
 
+use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 
 sub main {
+    my %deprecated_option = ();
+    GetOptions( \%deprecated_option,
+        'analysis_topup!',  # always on
+        'job_topup!',       # never, use seed_pipeline.pl
+    );
+
+    if($deprecated_option{'job_topup'}) {
+        die "-job_topup mode has been discontinued. Please use seed_pipeline.pl instead.\n";
+    }
+    if($deprecated_option{'analysis_topup'}) {
+        die "-analysis_topup has been deprecated. Please note this script now *always* runs in -analysis_topup mode.\n";
+    }
+
     my $file_or_module = shift @ARGV or script_usage(0);
 
-    my $config_module = load_file_or_module( $file_or_module );
+    my $pipeconfig_package_name = load_file_or_module( $file_or_module );
 
-    my $config_object = $config_module->new();
-    $config_object->process_options();
-    $config_object->run();
+    my $pipeconfig_object = $pipeconfig_package_name->new();
+    $pipeconfig_object->process_options();
+    $pipeconfig_object->run();
+    $pipeconfig_object->show_useful_commands();
 }
 
 main();

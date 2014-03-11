@@ -234,10 +234,7 @@ sub pre_options {
 
     return {
         'help!' => '',
-        'job_topup!' => '',
-        'analysis_topup!' => '',
         'pipeline_url' => '',
-#        'hive_use_triggers' => '',
     };
 }
 
@@ -416,6 +413,20 @@ sub process_options {
 }
 
 
+sub run_pipeline_create_commands {
+    my $self                = shift @_;
+
+    foreach my $cmd (@{$self->pipeline_create_commands}) {
+        warn "Running the command:\n\t$cmd\n";
+        if(my $retval = system($cmd)) {
+            die "Return value = $retval, possibly an error\n";
+        } else {
+            warn "Done.\n\n";
+        }
+    }
+}
+
+
 =head2 run
 
     Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.
@@ -425,99 +436,85 @@ sub process_options {
 =cut
 
 sub run {
-    my $self  = shift @_;
-    my $analysis_topup  = $self->{'_extra_options'}{'analysis_topup'};
-    my $job_topup       = $self->{'_extra_options'}{'job_topup'};
-    my $pipeline_url    = $self->pipeline_url();
-    my $pipeline_name   = $self->o('pipeline_name');
+    my $self                = shift @_;
 
-    unless($analysis_topup || $job_topup) {
-        foreach my $cmd (@{$self->pipeline_create_commands}) {
-            warn "Running the command:\n\t$cmd\n";
-            if(my $retval = system($cmd)) {
-                die "Return value = $retval, possibly an error\n";
-            } else {
-                warn "Done.\n\n";
-            }
-        }
-    }
+    $self->run_pipeline_create_commands();  # now do it at all times (strictly topping-up configs will have to mask pipeline_create_commands() )
 
-    my $hive_dba                = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
+    my $pipeline_url        = $self->pipeline_url();
+    my $hive_dba            = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
 
     Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
 
-    unless($job_topup) {
-        my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
-        warn "Loading hive_meta table ...\n";
-        my $hive_meta_table = $self->hive_meta_table;
-        while( my($meta_key, $meta_value) = each %$hive_meta_table ) {
-            $meta_adaptor->store_pair( $meta_key, $meta_value );
-        }
-
-        my $meta_container = $hive_dba->get_MetaContainer;  # adaptor over core's 'meta' table for compatibility with core API
-        warn "Loading pipeline-wide parameters ...\n";
-
-        my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
-        while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
-            if($analysis_topup) {
-                $meta_container->remove_all_by_meta_key($meta_key);
-            }
-            $meta_container->store_pair($meta_key, $meta_value);
-        }
-        warn "Done.\n\n";
-
-            # pre-load resource_class and resource_description tables:
-        warn "Loading the Resources ...\n";
-
-        my $resource_classes_hash = $self->resource_classes;
-        my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
-        foreach my $rc_name (@resource_classes_order) {
-            if($rc_name=~/^\d+$/) {
-                die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
-            }
-
-            my $resource_class;
-
-            if( $resource_class = Bio::EnsEMBL::Hive->collection('ResourceClass')->find_one_by('name', $rc_name) ) {
-                warn "Found an already existing resource_class '$rc_name'.\n";
-            } else {
-                warn "Creating a new resource_class '$rc_name'.\n";
-                $resource_class = Bio::EnsEMBL::Hive::ResourceClass->new(
-                    'name' => $rc_name,
-                );
-                Bio::EnsEMBL::Hive->collection('ResourceClass')->add( $resource_class );
-            }
-
-            while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
-                $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
-
-                my $resource_description;
-
-                if( $resource_description = Bio::EnsEMBL::Hive->collection('ResourceDescription')->find_one_by('resource_class', $resource_class, 'meadow_type', $meadow_type) ) {
-                    warn "Attempting to redefine an existing description for '$rc_name/$meadow_type' resource class\n";
-                    $resource_description->submission_cmd_args( $resource_param_list->[0] );
-                    $resource_description->worker_cmd_args( $resource_param_list->[1] );
-                } else {
-                    warn "Creating a new description for '$rc_name/$meadow_type' resource class\n";
-                    $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
-                        'resource_class'        => $resource_class,
-                        'meadow_type'           => $meadow_type,
-                        'submission_cmd_args'   => $resource_param_list->[0],
-                        'worker_cmd_args'       => $resource_param_list->[1],
-                    );
-                    Bio::EnsEMBL::Hive->collection('ResourceDescription')->add( $resource_description );
-                }
-            }
-        }
-        unless(my $default_rc = Bio::EnsEMBL::Hive->collection('ResourceClass')->find_one_by('name', 'default') ) {
-            warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
-            $default_rc = Bio::EnsEMBL::Hive::ResourceClass->new(
-                'name' => 'default',
-            );
-            Bio::EnsEMBL::Hive->collection('ResourceClass')->add( $default_rc );
-        }
-        warn "Done.\n\n";
+    my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
+    warn "Loading hive_meta table ...\n";
+    my $hive_meta_table = $self->hive_meta_table;
+    while( my($meta_key, $meta_value) = each %$hive_meta_table ) {
+        $meta_adaptor->remove_all_by_meta_key($meta_key);     # make sure there previous values are gone
+        $meta_adaptor->store_pair( $meta_key, $meta_value );
     }
+
+    my $meta_container = $hive_dba->get_MetaContainer;  # adaptor over core's 'meta' table for compatibility with core API
+    warn "Loading pipeline-wide parameters ...\n";
+
+    my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
+    while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
+        $meta_container->remove_all_by_meta_key($meta_key);     # make sure there previous values are gone
+        $meta_container->store_pair($meta_key, $meta_value);
+    }
+    warn "Done.\n\n";
+
+        # pre-load resource_class and resource_description tables:
+    warn "Loading the Resources ...\n";
+
+    my $resource_classes_hash = $self->resource_classes;
+    my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
+    foreach my $rc_name (@resource_classes_order) {
+        if($rc_name=~/^\d+$/) {
+            die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
+        }
+
+        my $resource_class;
+
+        if( $resource_class = Bio::EnsEMBL::Hive->collection('ResourceClass')->find_one_by('name', $rc_name) ) {
+            warn "Found an already existing resource_class '$rc_name'.\n";
+        } else {
+            warn "Creating a new resource_class '$rc_name'.\n";
+            $resource_class = Bio::EnsEMBL::Hive::ResourceClass->new(
+                'name' => $rc_name,
+            );
+            Bio::EnsEMBL::Hive->collection('ResourceClass')->add( $resource_class );
+        }
+
+        while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
+            $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
+
+            my $resource_description;
+
+            if( $resource_description = Bio::EnsEMBL::Hive->collection('ResourceDescription')->find_one_by('resource_class', $resource_class, 'meadow_type', $meadow_type) ) {
+                warn "Attempting to redefine an existing description for '$rc_name/$meadow_type' resource class\n";
+                $resource_description->submission_cmd_args( $resource_param_list->[0] );
+                $resource_description->worker_cmd_args( $resource_param_list->[1] );
+            } else {
+                warn "Creating a new description for '$rc_name/$meadow_type' resource class\n";
+                $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
+                    'resource_class'        => $resource_class,
+                    'meadow_type'           => $meadow_type,
+                    'submission_cmd_args'   => $resource_param_list->[0],
+                    'worker_cmd_args'       => $resource_param_list->[1],
+                );
+                Bio::EnsEMBL::Hive->collection('ResourceDescription')->add( $resource_description );
+            }
+        }
+    }
+    unless(my $default_rc = Bio::EnsEMBL::Hive->collection('ResourceClass')->find_one_by('name', 'default') ) {
+        warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
+        $default_rc = Bio::EnsEMBL::Hive::ResourceClass->new(
+            'name' => 'default',
+        );
+        Bio::EnsEMBL::Hive->collection('ResourceClass')->add( $default_rc );
+    }
+    warn "Done.\n\n";
+
 
     my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
 
@@ -544,16 +541,10 @@ sub run {
         my $analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
         if( $analysis ) {
 
-            if($analysis_topup) {
-                warn "Skipping creation of already existing analysis '$logic_name'.\n";
-                next;
-            }
+            warn "Skipping creation of already existing analysis '$logic_name'.\n";
+            next;
 
         } else {
-
-            if($job_topup) {
-                die "Could not find local analysis '$logic_name'";
-            }
 
             warn "Creating analysis '$logic_name'.\n";
 
@@ -614,102 +605,106 @@ sub run {
         }
     }
 
-    unless($job_topup) {
+        # Now, run separately through the already created analyses and link them together:
+        #
+    foreach my $aha (@{$self->pipeline_analyses}) {
+        my ($logic_name, $wait_for, $flow_into)
+             = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-            # Now, run separately through the already created analyses and link them together:
-            #
-        foreach my $aha (@{$self->pipeline_analyses}) {
-            my ($logic_name, $wait_for, $flow_into)
-                 = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
+        my $analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $logic_name);
 
-            my $analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $logic_name);
+        $wait_for ||= [];
+        $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
 
-            $wait_for ||= [];
-            $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
+            # create control rules:
+        foreach my $condition_url (@$wait_for) {
+            unless ($condition_url =~ m{^\w*://}) {
+                my $condition_analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $condition_url)
+                    or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
+            }
+            my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
+                    'condition_analysis_url'    => $condition_url,
+                    'ctrled_analysis'           => $analysis,
+            );
+            Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->add( $c_rule );
+        }
 
-                # create control rules:
-            foreach my $condition_url (@$wait_for) {
-                unless ($condition_url =~ m{^\w*://}) {
-                    my $condition_analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $condition_url)
-                        or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
-                }
-                my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
-                        'condition_analysis_url'    => $condition_url,
-                        'ctrled_analysis'           => $analysis,
-                );
-                Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->add( $c_rule );
+        $flow_into ||= {};
+        $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
+
+        my %group_tag_to_funnel_dataflow_rule = ();
+
+        my $semaphore_sign = '->';
+
+        my @all_branch_tags = keys %$flow_into;
+        foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {
+
+            my ($branch_name_or_code, $group_role, $group_tag);
+
+            if($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {
+                ($branch_name_or_code, $group_role, $group_tag) = ($2, 'funnel', $1);
+            } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {
+                ($branch_name_or_code, $group_role, $group_tag) = ($1, 'fan', $2);
+            } elsif($branch_tag=~/^(-?\w+)$/) {
+                ($branch_name_or_code, $group_role, $group_tag) = ($1, '');
+            } elsif($branch_tag=~/:/) {
+                die "Please use newer '2${semaphore_sign}A' and 'A${semaphore_sign}1' notation instead of '2:1' and '1'\n";
+            } else {
+                die "Error parsing the group tag '$branch_tag'\n";
             }
 
-            $flow_into ||= {};
-            $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
+            my $funnel_dataflow_rule = undef;    # NULL by default
 
-            my %group_tag_to_funnel_dataflow_rule = ();
+            if($group_role eq 'fan') {
+                unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {
+                    die "No funnel dataflow_rule defined for group '$group_tag'\n";
+                }
+            }
 
-            my $semaphore_sign = '->';
+            my $heirs = $flow_into->{$branch_tag};
+            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
+            $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
-            my @all_branch_tags = keys %$flow_into;
-            foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {
+            while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
-                my ($branch_name_or_code, $group_role, $group_tag);
-
-                if($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {
-                    ($branch_name_or_code, $group_role, $group_tag) = ($2, 'funnel', $1);
-                } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {
-                    ($branch_name_or_code, $group_role, $group_tag) = ($1, 'fan', $2);
-                } elsif($branch_tag=~/^(-?\w+)$/) {
-                    ($branch_name_or_code, $group_role, $group_tag) = ($1, '');
-                } elsif($branch_tag=~/:/) {
-                    die "Please use newer '2${semaphore_sign}A' and 'A${semaphore_sign}1' notation instead of '2:1' and '1'\n";
-                } else {
-                    die "Error parsing the group tag '$branch_tag'\n";
+                unless ($heir_url =~ m{^\w*://}) {
+                    my $heir_analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $heir_url)
+                        or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                 }
 
-                my $funnel_dataflow_rule = undef;    # NULL by default
+                $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
 
-                if($group_role eq 'fan') {
-                    unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                        die "No funnel dataflow_rule defined for group '$group_tag'\n";
-                    }
-                }
+                foreach my $input_id_template (@$input_id_template_list) {
 
-                my $heirs = $flow_into->{$branch_tag};
-                $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
-                $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
+                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
+                        'from_analysis'             => $analysis,
+                        'to_analysis_url'           => $heir_url,
+                        'branch_code'               => $branch_name_or_code,
+                        'funnel_dataflow_rule'      => $funnel_dataflow_rule,
+                        'input_id_template'         => $input_id_template,
+                    );
+                    Bio::EnsEMBL::Hive->collection('DataflowRule')->add( $df_rule );
 
-                while(my ($heir_url, $input_id_template_list) = each %$heirs) {
-
-                    unless ($heir_url =~ m{^\w*://}) {
-                        my $heir_analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $heir_url)
-                            or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
-                    }
-                    
-                    $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
-
-                    foreach my $input_id_template (@$input_id_template_list) {
-
-                        my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
-                            'from_analysis'             => $analysis,
-                            'to_analysis_url'           => $heir_url,
-                            'branch_code'               => $branch_name_or_code,
-                            'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-                            'input_id_template'         => $input_id_template,
-                        );
-                        Bio::EnsEMBL::Hive->collection('DataflowRule')->add( $df_rule );
-
-                        if($group_role eq 'funnel') {
-                            if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                                die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
-                            } else {
-                                $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
-                            }
+                    if($group_role eq 'funnel') {
+                        if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
+                            die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
+                        } else {
+                            $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
                         }
-                    } # /for all templates
-                } # /for all heirs
-            } # /for all branch_tags
-        } # /for all pipeline_analyses
-    } # /unless($job_topup)
+                    }
+                } # /for all templates
+            } # /for all heirs
+        } # /for all branch_tags
+    } # /for all pipeline_analyses
 
     Bio::EnsEMBL::Hive->save_collections_to_dba( $hive_dba );
+}
+
+
+sub show_useful_commands {
+    my $self  = shift @_;
+    my $pipeline_url    = $self->pipeline_url();
+    my $pipeline_name   = $self->o('pipeline_name');
 
     print "\n\n# --------------------[Useful commands]--------------------------\n";
     print "\n";
