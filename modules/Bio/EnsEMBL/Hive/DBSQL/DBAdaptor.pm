@@ -50,6 +50,11 @@ sub new {
 
     $url .= ';nosqlvc=1' if($url && $no_sql_schema_version_check);
 
+    if($reg_conf or $reg_alias) {   # need to initialize Registry even if $reg_conf is not really given
+        require Bio::EnsEMBL::Registry;
+        Bio::EnsEMBL::Registry->load_all($reg_conf);    # if undefined, default reg_conf will be used
+    }
+
     my $self;
 
     if($url) {
@@ -58,9 +63,6 @@ sub new {
             or die "Unable to create a DBC using url='$url'";
 
     } elsif($reg_alias) {
-
-        require Bio::EnsEMBL::Registry;
-        Bio::EnsEMBL::Registry->load_all($reg_conf);    # if undefined, default reg_conf will be used
 
         $reg_type ||= 'hive';
 
