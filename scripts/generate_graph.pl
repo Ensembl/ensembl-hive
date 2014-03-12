@@ -1,7 +1,5 @@
 #!/usr/bin/env perl
 
-package Script;
-
 use strict;
 use warnings;
 
@@ -20,20 +18,13 @@ use Pod::Usage;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils::Graph;
 
-my $self = bless({}, __PACKAGE__);
+main();
 
-$self->main();
 
 sub main {
-    my ($self) = @_;
 
-    $self->_options();
-    $self->_process_options();
-    $self->_write_graph();
-}
+    my $self = {};
 
-sub _options {
-    my ($self) = @_;
     GetOptions(
             # connection parameters
         'url=s'                 => \$self->{'url'},
@@ -47,12 +38,7 @@ sub _options {
 
         'h|help'                => \$self->{'help'},
     );
-}
 
-sub _process_options {
-    my ($self) = @_;
-
-    #Check for help
     if($self->{'help'}) {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
@@ -85,18 +71,14 @@ sub _process_options {
         if($self->{'output'}=~/\.(\w+)$/) {
             $self->{'format'} = $1;
         } else {
-            die "Format was not set and could not guess from ".$self->output().". Please use either way to select it.\n";
+            die "Format was not set and could not guess from ".$self->{'output'}.". Please use either way to select it.\n";
         }
     }
-}
-
-sub _write_graph {
-    my ($self) = @_;
 
     my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{'dba'} );
     my $graphviz = $graph->build();
 
-    my $call = q{as_}.$self->{'format'};
+    my $call = 'as_'.$self->{'format'};
 
     eval {$graphviz->$call($self->{'output'});};
     if($@) {
