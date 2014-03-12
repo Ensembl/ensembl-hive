@@ -76,6 +76,11 @@ sub collection {
 sub load_collections_from_dba {
     my $hive_dba = pop @_;
 
+    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
+        $hash_of_collections{$AdaptorType} = $adaptor->get_param_hash();
+    }
+
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
         $hash_of_collections{$AdaptorType} = Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all );
@@ -85,6 +90,14 @@ sub load_collections_from_dba {
 
 sub save_collections_to_dba {
     my $hive_dba = pop @_;
+
+    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
+        while(my ($meta_key, $meta_value) = each %{ $hash_of_collections{$AdaptorType} } ) {
+            $adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
+            $adaptor->store_pair( $meta_key, $meta_value );
+        }
+    }
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );

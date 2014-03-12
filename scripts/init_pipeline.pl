@@ -41,7 +41,17 @@ sub main {
 
     my $pipeconfig_object = $pipeconfig_package_name->new();
     $pipeconfig_object->process_options();
-    $pipeconfig_object->run();
+
+    $pipeconfig_object->run_pipeline_create_commands();
+
+    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
+
+    Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
+
+    $pipeconfig_object->add_objects_from_config();
+
+    Bio::EnsEMBL::Hive->save_collections_to_dba( $hive_dba );
+
     $pipeconfig_object->show_useful_commands();
 }
 

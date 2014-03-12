@@ -427,7 +427,7 @@ sub run_pipeline_create_commands {
 }
 
 
-=head2 run
+=head2 add_objects_from_config
 
     Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.
 
@@ -435,37 +435,20 @@ sub run_pipeline_create_commands {
 
 =cut
 
-sub run {
+sub add_objects_from_config {
     my $self                = shift @_;
 
-    $self->run_pipeline_create_commands();  # now do it at all times (strictly topping-up configs will have to mask pipeline_create_commands() )
-
-    my $pipeline_url        = $self->pipeline_url();
-    my $hive_dba            = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url, -no_sql_schema_version_check => 1 );
-
-    Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
-
-    my $meta_adaptor = $hive_dba->get_MetaAdaptor;      # the new adaptor for 'hive_meta' table
-    warn "Loading hive_meta table ...\n";
-    my $hive_meta_table = $self->hive_meta_table;
-    while( my($meta_key, $meta_value) = each %$hive_meta_table ) {
-        $meta_adaptor->remove_all_by_meta_key($meta_key);     # make sure there previous values are gone
-        $meta_adaptor->store_pair( $meta_key, $meta_value );
-    }
-
-    my $meta_container = $hive_dba->get_MetaContainer;  # adaptor over core's 'meta' table for compatibility with core API
-    warn "Loading pipeline-wide parameters ...\n";
-
-    my $pipeline_wide_parameters = $self->pipeline_wide_parameters;
-    while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {
-        $meta_container->remove_all_by_meta_key($meta_key);     # make sure there previous values are gone
-        $meta_container->store_pair($meta_key, $meta_value);
-    }
+    warn "Adding hive_meta table entries ...\n";
+    my $hm_coll = Bio::EnsEMBL::Hive->collection('Meta');
+    %$hm_coll = (%$hm_coll, %{$self->hive_meta_table()} );
     warn "Done.\n\n";
 
-        # pre-load resource_class and resource_description tables:
-    warn "Loading the Resources ...\n";
+    warn "Adding pipeline-wide parameters ...\n";
+    my $mc_coll = Bio::EnsEMBL::Hive->collection('MetaContainer');
+    %$mc_coll = (%$mc_coll, %{$self->pipeline_wide_parameters()} );
+    warn "Done.\n\n";
 
+    warn "Adding Resources ...\n";
     my $resource_classes_hash = $self->resource_classes;
     my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
     foreach my $rc_name (@resource_classes_order) {
@@ -520,6 +503,7 @@ sub run {
 
     my %seen_logic_name = ();
 
+    warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
                 $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
@@ -604,9 +588,9 @@ sub run {
             ) } @$input_ids;
         }
     }
+    warn "Done.\n\n";
 
-        # Now, run separately through the already created analyses and link them together:
-        #
+    warn "Adding Control and Dataflow Rules ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $wait_for, $flow_into)
              = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
@@ -696,8 +680,7 @@ sub run {
             } # /for all heirs
         } # /for all branch_tags
     } # /for all pipeline_analyses
-
-    Bio::EnsEMBL::Hive->save_collections_to_dba( $hive_dba );
+    warn "Done.\n\n";
 }
 
 
