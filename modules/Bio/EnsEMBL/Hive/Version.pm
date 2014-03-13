@@ -37,7 +37,7 @@ package Bio::EnsEMBL::Hive::Version;
 use strict;
 use warnings;
 
-our $VERSION = '2.0';
+our $VERSION = '2.1';
 
 sub get_code_version {
 
