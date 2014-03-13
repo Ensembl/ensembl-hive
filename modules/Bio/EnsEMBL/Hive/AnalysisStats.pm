@@ -36,6 +36,8 @@
 package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
+use List::Util 'sum';
+use POSIX;
 
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
@@ -368,6 +370,32 @@ sub determine_status {
             $self->status('WORKING');
         }
     }
+}
+
+
+sub recalculate_from_job_counts {
+    my ($self, $job_counts) = @_;
+
+        # only update job_counts if given the hash:
+    if($job_counts) {
+        $self->semaphored_job_count( $job_counts->{'SEMAPHORED'} || 0 );
+        $self->ready_job_count(      $job_counts->{'READY'} || 0 );
+        $self->failed_job_count(     $job_counts->{'FAILED'} || 0 );
+        $self->done_job_count(       $job_counts->{'DONE'} + $job_counts->{'PASSED_ON'} || 0 ); # done here or potentially done elsewhere
+        $self->total_job_count(      sum( values %$job_counts ) || 0 );
+    }
+
+        # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
+    my $analysis              = $self->analysis();
+    my $scheduling_allowed    =  ( !defined( $self->hive_capacity ) or $self->hive_capacity )
+                              && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
+    my $required_workers    = $scheduling_allowed
+                            && POSIX::ceil( $self->ready_job_count() / $self->get_or_estimate_batch_size() );
+    $self->num_required_workers( $required_workers );
+
+    $self->check_blocking_control_rules();
+
+    $self->determine_status();
 }
 
 

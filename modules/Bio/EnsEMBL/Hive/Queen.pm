@@ -66,9 +66,7 @@
 package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
-use POSIX;
 use File::Path 'make_path';
-use List::Util 'sum';
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -594,30 +592,9 @@ sub synchronize_AnalysisStats {
 
     $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
-    unless($self->db->hive_use_triggers()) {
+    my $job_counts = $self->db->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $analysisStats->analysis_id );
 
-        my $job_counts = $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $analysisStats->analysis_id );
-
-        $analysisStats->semaphored_job_count( $job_counts->{'SEMAPHORED'} || 0 );
-        $analysisStats->ready_job_count(      $job_counts->{'READY'} || 0 );
-        $analysisStats->failed_job_count(     $job_counts->{'FAILED'} || 0 );
-        $analysisStats->done_job_count(       $job_counts->{'DONE'} + $job_counts->{'PASSED_ON'} || 0 ); # done here or potentially done elsewhere
-        $analysisStats->total_job_count(      sum( values %$job_counts ) || 0 );
-
-    } # unless($self->db->hive_use_triggers())
-
-        # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
-    my $analysis              = $analysisStats->analysis();
-    my $scheduling_allowed    =  ( !defined( $analysisStats->hive_capacity ) or $analysisStats->hive_capacity )
-                              && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
-    my $required_workers    = $scheduling_allowed
-                            && POSIX::ceil( $analysisStats->ready_job_count() / $analysisStats->get_or_estimate_batch_size() );
-    $analysisStats->num_required_workers( $required_workers );
-
-
-    $analysisStats->check_blocking_control_rules();
-
-    $analysisStats->determine_status();
+    $analysisStats->recalculate_from_job_counts( $job_counts );
 
     # $analysisStats->sync_lock(0); ## do we perhaps need it here?
     $analysisStats->update;  #update and release sync_lock
