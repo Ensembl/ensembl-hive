@@ -67,13 +67,32 @@ use base ( 'Bio::EnsEMBL::Hive::Storable' );
 =cut
 
 sub condition_analysis_url {
-    my ($self,$url) = @_;
-    if($url) {
-        $self->{'_condition_analysis_url'} = $url;
-        $self->{'_condition_analysis'} = undef;
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_condition_analysis_url'} = shift @_;
+        if( $self->{'_condition_analysis'} ) {
+#            warn "setting condition_analysis_url() in an object that had to_analysis() defined";
+            $self->{'_condition_analysis'} = undef;
+        }
+    } elsif( !$self->{'_condition_analysis_url'} and my $condition_analysis=$self->{'_condition_analysis'} ) {
+
+        # if the 'condition' and 'ctrled' share the same adaptor, then use a simple logic_name
+        # for the URL rather than a full network distributed URL
+
+            # FIXME: the following block could be incapsulated in Analysis->url() and NakedTable->url()
+        my $ref_analysis_adaptor = $self->ctrled_analysis && $self->ctrled_analysis->adaptor;
+        if( $ref_analysis_adaptor and ($ref_analysis_adaptor == $condition_analysis->adaptor)) {
+            $self->{'_condition_analysis_url'} = $condition_analysis->logic_name;
+        } else {
+            $self->{'_condition_analysis_url'} = $condition_analysis->url($ref_analysis_adaptor->db);
+        }
+#        warn "Lazy-loaded condition_analysis_url\n";
     }
+
     return $self->{'_condition_analysis_url'};
 }
+
 
 
 =head2 condition_analysis
@@ -94,22 +113,20 @@ sub condition_analysis {
             throw( "condition_analysis arg must be a [Bio::EnsEMBL::Hive::Analysis] not a [$analysis]");
         }
         $self->{'_condition_analysis'} = $analysis;
-
-            #if the 'condition' and 'ctrled' share the same adaptor, then use a simple logic_name
-            #for the URL rather than a full network distributed URL
-        if($self->ctrled_analysis and ($self->ctrled_analysis->adaptor == $analysis->adaptor)) {
-            $self->{'_condition_analysis_url'} = $analysis->logic_name;
-        } else {
-            $self->{'_condition_analysis_url'} = $analysis->url;
-        }
     }
+
         # lazy load the analysis object if I can
-    if(!defined($self->{'_condition_analysis'}) and defined($self->condition_analysis_url)) {
-        $analysis =  Bio::EnsEMBL::Hive::URLFactory->fetch($self->condition_analysis_url);
-        unless($analysis) {
-            $analysis = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name($self->condition_analysis_url);
+    if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {
+
+        if( $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $condition_analysis_url) ) {
+#            warn "Lazy-loading object from 'Analysis' collection\n";
+        } elsif(my $adaptor = $self->adaptor) {
+#            warn "Lazy-loading object from AnalysisAdaptor\n";
+            $self->{'_condition_analysis'} = $adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($condition_analysis_url);
+        } else {
+#            warn "Lazy-loading object from full URL\n";
+            $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($condition_analysis_url);
         }
-        $self->{'_condition_analysis'} = $analysis;
     }
 
     return $self->{'_condition_analysis'};
