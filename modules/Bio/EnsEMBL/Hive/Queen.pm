@@ -295,7 +295,7 @@ sub specialize_new_worker {
         $worker->special_batch( $special_batch );
     } else {    # count it as autonomous worker sharing the load of that analysis:
 
-        $stats->update_status('WORKING');
+        $analysis_stats_adaptor->update_status($analysis_id, 'WORKING');
 
         $analysis_stats_adaptor->decrease_required_workers($worker->analysis_id);
     }
@@ -617,9 +617,7 @@ sub synchronize_AnalysisStats {
 
     $analysisStats->check_blocking_control_rules();
 
-    if($analysisStats->status ne 'BLOCKED') {
-        $analysisStats->determine_status();
-    }
+    $analysisStats->determine_status();
 
     # $analysisStats->sync_lock(0); ## do we perhaps need it here?
     $analysisStats->update;  #update and release sync_lock

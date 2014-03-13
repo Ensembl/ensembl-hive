@@ -216,15 +216,6 @@ sub update {
     }
 }
 
-sub update_status {
-    my ($self, $status ) = @_;
-
-    $self->status($status);
-    if($self->adaptor) {
-        $self->adaptor->update_status($self->analysis_id, $status);
-    }
-}
-
 
 sub get_or_estimate_batch_size {
     my $self = shift;
@@ -333,10 +324,10 @@ sub check_blocking_control_rules {
 
         if($all_conditions_satisfied) {
             if($self->status eq 'BLOCKED') {    # unblock, since all conditions are met
-                $self->update_status('LOADING'); # trigger sync
+                $self->status('LOADING');       # anything that is not 'BLOCKED' will do, it will be redefined in the following subroutine
             }
         } else {    # (re)block
-            $self->update_status('BLOCKED');
+            $self->status('BLOCKED');
         }
     }
 
