@@ -210,15 +210,19 @@ sub refresh {
 
 sub update {
     my $self = shift;
-    return unless($self->adaptor);
-    $self->adaptor->update($self);
+
+    if($self->adaptor) {
+        $self->adaptor->update($self);
+    }
 }
 
 sub update_status {
     my ($self, $status ) = @_;
-    return unless($self->adaptor);
-    $self->adaptor->update_status($self->analysis_id, $status);
+
     $self->status($status);
+    if($self->adaptor) {
+        $self->adaptor->update_status($self->analysis_id, $status);
+    }
 }
 
 
