@@ -192,10 +192,8 @@ sub url {
 sub stats {
     my $self = shift @_;
 
-    if(@_) {    # set for caching
-        $self->{'_stats'} = shift @_;
-    }
-    return $self->{'_stats'} || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
+    return Bio::EnsEMBL::Hive->collection('AnalysisStats')->find_one_by('analysis', $self)
+        || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
 }
 
 
@@ -223,7 +221,6 @@ sub dataflow_rules_collection {
     $self->{'_dataflow_rules_collection'} = shift if(@_);
 
     return $self->{'_dataflow_rules_collection'} || Bio::EnsEMBL::Hive->collection('DataflowRule')->find_all_by('from_analysis', $self);
-#    return $self->{'_dataflow_rules_collection'} ||= [];
 }
 
 
