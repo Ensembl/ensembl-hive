@@ -68,6 +68,7 @@ package Bio::EnsEMBL::Hive::Queen;
 use strict;
 use POSIX;
 use File::Path 'make_path';
+use List::Util 'sum';
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -585,53 +586,25 @@ sub safe_synchronize_AnalysisStats {
 =cut
 
 sub synchronize_AnalysisStats {
-  my $self = shift;
-  my $analysisStats = shift;
+    my $self = shift;
+    my $analysisStats = shift;
 
-  return $analysisStats unless($analysisStats);
-  return $analysisStats unless($analysisStats->analysis_id);
+    return $analysisStats unless($analysisStats);
+    return $analysisStats unless($analysisStats->analysis_id);
 
-  $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
+    $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
+    unless($self->db->hive_use_triggers()) {
 
-  unless($self->db->hive_use_triggers()) {
-      $analysisStats->total_job_count(0);
-      $analysisStats->semaphored_job_count(0);
-      $analysisStats->ready_job_count(0);
-      $analysisStats->done_job_count(0);
-      $analysisStats->failed_job_count(0);
+        my $job_counts = $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $analysisStats->analysis_id );
 
-            # ask for analysis_id to force MySQL to use existing index on (analysis_id, status)
-      my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY analysis_id, status";
-      my $sth = $self->prepare($sql);
-      $sth->execute($analysisStats->analysis_id);
+        $analysisStats->semaphored_job_count( $job_counts->{'SEMAPHORED'} || 0 );
+        $analysisStats->ready_job_count(      $job_counts->{'READY'} || 0 );
+        $analysisStats->failed_job_count(     $job_counts->{'FAILED'} || 0 );
+        $analysisStats->done_job_count(       $job_counts->{'DONE'} + $job_counts->{'PASSED_ON'} || 0 ); # done here or potentially done elsewhere
+        $analysisStats->total_job_count(      sum( values %$job_counts ) || 0 );
 
-      my $done_here       = 0;
-      my $done_elsewhere  = 0;
-      my $total_job_count = 0;
-      while (my ($dummy_analysis_id, $status, $job_count)=$sth->fetchrow_array()) {
-    # print STDERR "$status: $job_count\n";
-
-        $total_job_count += $job_count;
-
-        if($status eq 'READY') {
-            $analysisStats->ready_job_count($job_count);
-        } elsif($status eq 'SEMAPHORED') {
-            $analysisStats->semaphored_job_count($job_count);
-        } elsif($status eq 'DONE') {
-            $done_here = $job_count;
-        } elsif($status eq 'PASSED_ON') {
-            $done_elsewhere = $job_count;
-        } elsif ($status eq 'FAILED') {
-            $analysisStats->failed_job_count($job_count);
-        }
-      } # /while
-      $sth->finish;
-
-      $analysisStats->total_job_count( $total_job_count );
-      $analysisStats->done_job_count( $done_here + $done_elsewhere );
-  } # unless($self->db->hive_use_triggers())
-
+    } # unless($self->db->hive_use_triggers())
 
         # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
     my $analysis              = $analysisStats->analysis();

@@ -188,6 +188,27 @@ sub fetch_by_url_query {
     }
 }
 
+
+sub fetch_job_counts_hashed_by_status {
+    my ($self, $requested_analysis_id) = @_;
+
+    my %job_counts = ();
+
+        # Note: this seemingly useless dummy_analysis_id is here to force MySQL use existing index on (analysis_id, status)
+    my $sql = "SELECT analysis_id, status, count(*) FROM job WHERE analysis_id=? GROUP BY analysis_id, status";
+    my $sth = $self->prepare($sql);
+    $sth->execute( $requested_analysis_id );
+
+    while (my ($dummy_analysis_id, $status, $job_count)=$sth->fetchrow_array()) {
+        $job_counts{ $status } = $job_count;
+    }
+
+    $sth->finish;
+
+    return \%job_counts;
+}
+
+
 ########################
 #
 # STORE / UPDATE METHODS
