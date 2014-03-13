@@ -209,9 +209,8 @@ sub jobs_collection {
 sub control_rules_collection {
     my $self = shift @_;
 
-    $self->{'_control_rules_collection'} = shift if(@_);
-
-    return $self->{'_control_rules_collection'} || Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->find_all_by('ctrled_analysis', $self);
+    return Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->find_all_by('ctrled_analysis', $self)
+        || $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
 }
 
 

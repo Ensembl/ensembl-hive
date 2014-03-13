@@ -307,7 +307,7 @@ sub toString {
 sub check_blocking_control_rules {
     my $self = shift;
   
-    my $ctrl_rules = $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id($self->analysis_id);
+    my $ctrl_rules = $self->analysis->control_rules_collection();
 
     my $all_conditions_satisfied = 1;
 
