@@ -115,7 +115,7 @@ sub fetch {
         } elsif($table_name eq 'accu') {
 
             return Bio::EnsEMBL::Hive::Accumulator->new(
-                    adaptor            => $dba->get_AccumulatorAdaptor,
+                    $dba ? (adaptor => $dba->get_AccumulatorAdaptor) : (),
                     struct_name        => $tparam_name,
                     signature_template => $tparam_value,
             );
@@ -123,9 +123,9 @@ sub fetch {
         } else {
 
             return Bio::EnsEMBL::Hive::NakedTable->new(
-                adaptor    => $dba->get_NakedTableAdaptor,
+                $dba ? (adaptor => $dba->get_NakedTableAdaptor) : (),
                 table_name => $table_name,
-                $tparam_value ? (insertion_method => $tparam_value) : ()
+                $tparam_value ? (insertion_method => $tparam_value) : (),
             );
         }
     }

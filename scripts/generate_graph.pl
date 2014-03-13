@@ -12,10 +12,12 @@ BEGIN {
 }
 
 
-use Getopt::Long;
+use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
+use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::Graph;
 
 main();
@@ -33,8 +35,10 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+        'pipeconfig|pc=s'       => \$self->{'pipeconfig'},
+
         'f|format=s'            => \$self->{'format'},
-        'o|output=s'            => \$self->{'output'},
+        'o|out|output=s'        => \$self->{'output'},
 
         'h|help'                => \$self->{'help'},
     );
@@ -43,22 +47,6 @@ sub main {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
 
-    if($self->{'url'} or $self->{'reg_alias'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
-            -url                            => $self->{'url'},
-            -reg_conf                       => $self->{'reg_conf'},
-            -reg_type                       => $self->{'reg_type'},
-            -reg_alias                      => $self->{'reg_alias'},
-            -no_sql_schema_version_check    => $self->{'nosqlvc'},
-        );
-    } else {
-        pod2usage({
-            -message => 'ERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified',
-            -exitvalue => 1,
-            -verbose => 2
-        });
-    }
-  
     if(! $self->{'output'}) {
         pod2usage({
             -message => 'ERROR: No -output flag given',
@@ -73,6 +61,27 @@ sub main {
         } else {
             die "Format was not set and could not guess from ".$self->{'output'}.". Please use either way to select it.\n";
         }
+    }
+
+    if($self->{'url'} or $self->{'reg_alias'}) {
+        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+            -url                            => $self->{'url'},
+            -reg_conf                       => $self->{'reg_conf'},
+            -reg_type                       => $self->{'reg_type'},
+            -reg_alias                      => $self->{'reg_alias'},
+            -no_sql_schema_version_check    => $self->{'nosqlvc'},
+        );
+
+        Bio::EnsEMBL::Hive->load_collections_from_dba( $self->{'dba'} );
+    }
+
+    if($self->{'pipeconfig'}) {
+        my $pipeconfig_package_name = load_file_or_module( $self->{'pipeconfig'} );
+
+        my $pipeconfig_object = $pipeconfig_package_name->new();
+        $pipeconfig_object->process_options();
+
+        $pipeconfig_object->add_objects_from_config();
     }
 
     my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{'dba'} );

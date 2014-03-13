@@ -75,7 +75,7 @@ sub new {
 
   my $self = bless({}, ref($class) || $class);
 
-  $self->dba($hive_dba);
+  $self->hive_dba($hive_dba);
   my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file_name ? $config_file_name : () );
   $self->config($config);
   $self->context( [ 'Graph' ] );
@@ -104,7 +104,7 @@ sub graph {
 }
 
 
-=head2 dba()
+=head2 hive_dba()
 
   Arg [1] : The DBAdaptor instance
   Returntype : DBAdaptor
@@ -113,14 +113,14 @@ sub graph {
 
 =cut
 
-sub dba {
+sub hive_dba {
     my $self = shift @_;
 
     if(@_) {
-        $self->{dba} = shift @_;
+        $self->{'hive_dba'} = shift @_;
     }
 
-    return $self->{dba};
+    return $self->{'hive_dba'};
 }
 
 
@@ -162,9 +162,7 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $hive_dba = $self->dba;
-
-    Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
+    my $hive_dba = $self->hive_dba;
 
     if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
         foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
@@ -234,7 +232,7 @@ sub build {
 
                     push @{$cluster_2_nodes{ '' }}, _midpoint_name( $df_rule );     # top-level funnels define clusters (top-level "boxes")
 
-                } elsif( UNIVERSAL::isa($df_rule->to_analysis,'Bio::EnsEMBL::Hive::NakedTable') ) {
+                } elsif( UNIVERSAL::isa($df_rule->to_analysis, 'Bio::EnsEMBL::Hive::NakedTable') ) {
 
                     if(my $funnel = $df_rule->to_analysis->{'_funnel_dfr'}) {
                         push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $df_rule );    # table belongs to the same "box" as the dataflow source
@@ -355,7 +353,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.$analysis->dbID.')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.($analysis->dbID || '?').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -517,7 +515,7 @@ sub _add_table_node {
     my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    my $hive_dba = $self->dba;
+    my $hive_dba = $self->hive_dba;
 
     if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor ) {
         $naked_table_adaptor->table_name( $table_name );
