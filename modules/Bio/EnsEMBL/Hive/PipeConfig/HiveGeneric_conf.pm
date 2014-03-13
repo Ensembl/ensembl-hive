@@ -523,6 +523,7 @@ sub add_objects_from_config {
         }
 
         my $analysis = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
+        my $stats;
         if( $analysis ) {
 
             warn "Skipping creation of already existing analysis '$logic_name'.\n";
@@ -557,7 +558,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            my $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
+            $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
@@ -586,6 +587,8 @@ sub add_objects_from_config {
                 'analysis'      => $analysis,
                 'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;
+
+            $stats->recalculate_from_job_counts( { 'READY' => scalar(@$input_ids) } );
         }
     }
     warn "Done.\n\n";

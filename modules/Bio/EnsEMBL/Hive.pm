@@ -110,7 +110,7 @@ sub save_collections_to_dba {
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
     foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
         if(my $our_jobs = $analysis->jobs_collection ) {
-            $job_adaptor->store_jobs_and_adjust_counters( $our_jobs );
+            $job_adaptor->store( $our_jobs );
             foreach my $job (@$our_jobs) {
 #                warn "Stored ".$job->toString()."\n";
             }
