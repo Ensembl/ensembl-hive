@@ -170,20 +170,19 @@ sub process {
 =cut
 
 sub url {
-    my $self = shift;
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter url is generated
 
-    return undef unless($self->adaptor);
-
-    return $self->adaptor->db->dbc->url . '/analysis?logic_name=' . $self->logic_name;
+    my $adaptor = $self->adaptor;
+    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->url . '/analysis?logic_name=' : '') . $self->logic_name;
 }
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter display_name is generated
 
-    return ($self->adaptor and $self->adaptor->db ne ($ref_dba//'') ) ? $self->adaptor->db->dbc->dbname.'/'.$self->logic_name : $self->logic_name;
+    my $adaptor = $self->adaptor;
+    return ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->dbname.'/'.$self->logic_name : $self->logic_name;
 }
-
 
 
 =head2 stats

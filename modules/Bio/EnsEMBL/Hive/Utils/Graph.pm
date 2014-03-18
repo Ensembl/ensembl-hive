@@ -182,17 +182,29 @@ sub build {
             if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
                 $target_object->{'_inflow_count'}++;
             }
-        } # otherwise it may be a link out (unsupported at the moment)
+        } elsif( $df_rule->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
+            $target_object = $df_rule->to_analysis();
+            $target_object->{'_foreign'}=1;
+            Bio::EnsEMBL::Hive->collection('Analysis')->add( $target_object );  # add it to the collection
+        }
 
         if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
             $funnel_dataflow_rule->{'_is_a_funnel'}++;
         }
     }
 
+    foreach my $c_rule ( Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
+        unless( Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
+            my $condition_analysis = $c_rule->condition_analysis();
+            $condition_analysis->{'_foreign'}=1;
+            Bio::EnsEMBL::Hive->collection('Analysis')->add( $condition_analysis ); # add it to the collection
+        }
+    }
+
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
-        unless( $source_analysis->{'_inflow_count'} ) {    # if there is no dataflow into this analysis
+        unless( $source_analysis->{'_inflow_count'} or $source_analysis->{'_foreign'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
         }
@@ -339,6 +351,7 @@ sub _add_analysis_node {
     my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
+    my $hive_dba                                          = $self->hive_dba;
 
     my $colspan = 0;
     my $bar_chart = '';
@@ -357,7 +370,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->logic_name().' ('.($analysis->dbID || '?').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_dba ).' ('.($analysis->dbID || '?').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
