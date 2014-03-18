@@ -40,7 +40,7 @@ sub main {
     my $pipeconfig_package_name = load_file_or_module( $file_or_module );
 
     my $pipeconfig_object = $pipeconfig_package_name->new();
-    $pipeconfig_object->process_options();
+    $pipeconfig_object->process_options( 1 );
 
     $pipeconfig_object->run_pipeline_create_commands();
 

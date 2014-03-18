@@ -79,7 +79,7 @@ sub main {
         my $pipeconfig_package_name = load_file_or_module( $self->{'pipeconfig'} );
 
         my $pipeconfig_object = $pipeconfig_package_name->new();
-        $pipeconfig_object->process_options();
+        $pipeconfig_object->process_options( 0 );
 
         $pipeconfig_object->add_objects_from_config();
     }

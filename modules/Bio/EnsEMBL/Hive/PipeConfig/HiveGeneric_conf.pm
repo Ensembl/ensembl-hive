@@ -402,13 +402,18 @@ sub pipeline_name {
 =cut
 
 sub process_options {
-    my $self = shift @_;
+    my ($self, $include_pcc_use_case) = @_;
 
         # pre-patch definitely_used_options:
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
     $self->root()->{'pipeline_url'} = $self->{'_extra_options'}{'pipeline_url'};
 
-    $self->use_cases( [ 'pipeline_create_commands', 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'pipeline_url', 'hive_meta_table' ] );
+    my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
+    if($include_pcc_use_case) {
+        unshift @use_cases, 'pipeline_create_commands';
+    }
+    $self->use_cases( \@use_cases );
+
     return $self->SUPER::process_options();
 }
 
