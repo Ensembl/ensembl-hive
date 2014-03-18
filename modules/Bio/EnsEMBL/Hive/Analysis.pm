@@ -178,6 +178,14 @@ sub url {
 }
 
 
+sub display_name {
+    my ($self, $ref_dba) = @_;
+
+    return ($self->adaptor and $self->adaptor->db ne ($ref_dba//'') ) ? $self->adaptor->db->dbc->dbname.'/'.$self->logic_name : $self->logic_name;
+}
+
+
+
 =head2 stats
 
   Arg [1]    : none

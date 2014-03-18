@@ -127,15 +127,19 @@ sub hive_dba {
 sub _analysis_node_name {
     my ($analysis) = @_;
 
-    return 'analysis_' . $analysis->logic_name;
+    my $analysis_node_name = 'analysis_' . $analysis->display_name;
+    $analysis_node_name=~s/\W/__/g;
+    return $analysis_node_name;
 }
 
 
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
-    return 'table_' . $df_rule->to_analysis->table_name .
+    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name .
                 ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
+    $table_node_name=~s/\W/__/g;
+    return $table_node_name;
 }
 
 
@@ -442,7 +446,7 @@ sub _add_dataflow_rules {
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
             $target_node_name = $self->_table_node_name( $df_rule );
-            $self->_add_table_node($target_node_name, $target_object->table_name);
+            $self->_add_table_node($target_node_name, $target_object);
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
 
@@ -510,7 +514,7 @@ sub _add_dataflow_rules {
 
 
 sub _add_table_node {
-    my ($self, $table_node_name, $table_name) = @_;
+    my ($self, $table_node_name, $naked_table) = @_;
 
     my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
@@ -518,7 +522,7 @@ sub _add_table_node {
     my $hive_dba = $self->hive_dba;
 
     if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor ) {
-        $naked_table_adaptor->table_name( $table_name );
+        $naked_table_adaptor->table_name( $naked_table->table_name );
 
         @column_names = sort keys %{$naked_table_adaptor->column_set};
         $columns = scalar(@column_names);
@@ -530,7 +534,7 @@ sub _add_table_node {
         }
     }
 
-    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'.$table_name.'</td></tr>';
+    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_dba ) .'</td></tr>';
 
     if( $self->config_get('DisplayData') ) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
