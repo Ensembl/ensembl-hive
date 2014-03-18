@@ -46,6 +46,7 @@ use warnings;
 
 use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 
@@ -130,7 +131,7 @@ sub AUTOLOAD {
             = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->parse_underscored_id_name( $name_to_parse );
 
         unless($AdaptorType) {
-            die "Storable::AUTOLOAD : could not parse '$name_to_parse'";
+            throw("Storable::AUTOLOAD : could not parse '$name_to_parse'");
         } elsif ($is_an_id) {  # $name_to_parse was something like foo_dataflow_rule_id
 
             if(@_) {

@@ -128,6 +128,8 @@ sub fetch {
                 $tparam_value ? (insertion_method => $tparam_value) : (),
             );
         }
+    } else {
+        warn "Could not parse URL '$url'";
     }
     return;
 }
