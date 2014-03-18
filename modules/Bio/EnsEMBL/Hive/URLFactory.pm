@@ -94,7 +94,7 @@ sub fetch {
 
         my $dba = ($parsed_url->{'dbconn_part'} =~ m{^\w*:///$} )
             ? $default_dba
-            : $class->create_cached_dba( @$parsed_url{qw(driver user pass host port dbname conn_params)} );
+            : $class->create_cached_dba( @$parsed_url{qw(dbconn_part driver user pass host port dbname conn_params)} );
 
         my $table_name      = $parsed_url->{'table_name'};
         my $tparam_name     = $parsed_url->{'tparam_name'};
@@ -133,7 +133,7 @@ sub fetch {
 }
 
 sub create_cached_dba {
-    my ($class, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
+    my ($class, $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
 
     if($driver eq 'mysql') {
         $user ||= 'ensro';
@@ -160,7 +160,13 @@ sub create_cached_dba {
 
         eval "require $module";
 
-        $_URLFactory_global_instance->{$connectionKey} = $dba = $module->new (
+        $_URLFactory_global_instance->{$connectionKey} = $dba =
+        $type eq 'hive'
+          ? $module->new(
+            -url    => $dbconn_part,
+            -disconnect_when_inactive => $discon,
+            -no_sql_schema_version_check => $nosqlvc,
+        ) : $module->new(
             -driver => $driver,
             -host   => $host,
             -port   => $port,
@@ -169,7 +175,6 @@ sub create_cached_dba {
             -dbname => $dbname,
             -species => $dbname,
             -disconnect_when_inactive => $discon,
-            -no_sql_schema_version_check => $nosqlvc,
         );
     }
     return $dba;
