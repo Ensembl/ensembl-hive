@@ -42,11 +42,11 @@ sub main {
 
     my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
 
-    Bio::EnsEMBL::Hive->load_collections_from_dba( $hive_dba );
+    $hive_dba->load_collections();
 
     $pipeconfig_object->add_objects_from_config();
 
-    Bio::EnsEMBL::Hive->save_collections_to_dba( $hive_dba );
+    $hive_dba->save_collections();
 
     $pipeconfig_object->show_useful_commands();
 }

@@ -67,55 +67,14 @@ use Bio::EnsEMBL::Hive::Utils::Collection;
 our %hash_of_collections;
 
 sub collection {
-    my $key = pop @_;
+    my $class = shift @_;
+    my $key   = shift @_;
+
+    if(@_) {
+        $hash_of_collections{$key} = shift @_;
+    }
 
     return $hash_of_collections{$key} ||= Bio::EnsEMBL::Hive::Utils::Collection->new();
-}
-
-
-sub load_collections_from_dba {
-    my $hive_dba = pop @_;
-
-    foreach my $AdaptorType ('Meta', 'MetaContainer') {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        $hash_of_collections{$AdaptorType} = $adaptor->get_param_hash();
-    }
-
-    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        $hash_of_collections{$AdaptorType} = Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all );
-    }
-}
-
-
-sub save_collections_to_dba {
-    my $hive_dba = pop @_;
-
-    foreach my $AdaptorType ('Meta', 'MetaContainer') {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        while(my ($meta_key, $meta_value) = each %{ $hash_of_collections{$AdaptorType} } ) {
-            $adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
-            $adaptor->store_pair( $meta_key, $meta_value );
-        }
-    }
-
-    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        foreach my $storable_object ( Bio::EnsEMBL::Hive->collection( $AdaptorType )->list ) {
-            $adaptor->store_or_update_one( $storable_object );
-#            warn "Stored/updated ".$storable_object->toString()."\n";
-        }
-    }
-
-    my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
-    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
-        if(my $our_jobs = $analysis->jobs_collection ) {
-            $job_adaptor->store( $our_jobs );
-            foreach my $job (@$our_jobs) {
-#                warn "Stored ".$job->toString()."\n";
-            }
-        }
-    }
 }
 
 1;

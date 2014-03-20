@@ -36,9 +36,11 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
 
-use Bio::EnsEMBL::Hive::Utils ('throw');
+use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
+use Bio::EnsEMBL::Hive::Utils ('throw');
+use Bio::EnsEMBL::Hive::Utils::Collection;
 
 
 sub new {
@@ -251,6 +253,52 @@ sub AUTOLOAD {
     my $self = shift;
 
     return $self->get_adaptor($type, @_);
+}
+
+
+sub load_collections {
+    my $self = shift @_;
+
+    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+        my $adaptor = $self->get_adaptor( $AdaptorType );
+        Bio::EnsEMBL::Hive->collection( $AdaptorType, $adaptor->get_param_hash() );
+    }
+
+    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+        my $adaptor = $self->get_adaptor( $AdaptorType );
+        Bio::EnsEMBL::Hive->collection( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
+    }
+}
+
+
+sub save_collections {
+    my $self = shift @_;
+
+    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+        my $adaptor = $self->get_adaptor( $AdaptorType );
+        while(my ($meta_key, $meta_value) = each %{ Bio::EnsEMBL::Hive->collection( $AdaptorType ) } ) {
+            $adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
+            $adaptor->store_pair( $meta_key, $meta_value );
+        }
+    }
+
+    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+        my $adaptor = $self->get_adaptor( $AdaptorType );
+        foreach my $storable_object ( Bio::EnsEMBL::Hive->collection( $AdaptorType )->list ) {
+            $adaptor->store_or_update_one( $storable_object );
+#            warn "Stored/updated ".$storable_object->toString()."\n";
+        }
+    }
+
+    my $job_adaptor = $self->get_AnalysisJobAdaptor;
+    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+        if(my $our_jobs = $analysis->jobs_collection ) {
+            $job_adaptor->store( $our_jobs );
+            foreach my $job (@$our_jobs) {
+#                warn "Stored ".$job->toString()."\n";
+            }
+        }
+    }
 }
 
 1;

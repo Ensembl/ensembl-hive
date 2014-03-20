@@ -15,7 +15,6 @@ BEGIN {
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
-use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::Graph;
@@ -72,7 +71,7 @@ sub main {
             -no_sql_schema_version_check    => $self->{'nosqlvc'},
         );
 
-        Bio::EnsEMBL::Hive->load_collections_from_dba( $self->{'dba'} );
+        $self->{'dba'}->load_collections();
     }
 
     if($self->{'pipeconfig'}) {
