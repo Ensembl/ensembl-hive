@@ -48,10 +48,13 @@ package Bio::EnsEMBL::Hive::Utils::Graph;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Analysis;
+use Bio::EnsEMBL::Hive::AnalysisStats;
+use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
+use Bio::EnsEMBL::Hive::DataflowRule;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -169,15 +172,15 @@ sub build {
     my $hive_dba = $self->hive_dba;
 
     if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
-        foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
         }
     }
 
-    foreach my $df_rule ( Bio::EnsEMBL::Hive->collection('DataflowRule')->list ) {
+    foreach my $df_rule ( Bio::EnsEMBL::Hive::DataflowRule->collection()->list ) {
 
-        if(my $target_object = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
+        if(my $target_object = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $df_rule->to_analysis_url )) {
             $df_rule->to_analysis( $target_object );
             if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
                 $target_object->{'_inflow_count'}++;
@@ -185,7 +188,7 @@ sub build {
         } elsif( $df_rule->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
             $target_object = $df_rule->to_analysis();
             $target_object->{'_foreign'}=1;
-            Bio::EnsEMBL::Hive->collection('Analysis')->add( $target_object );  # add it to the collection
+            Bio::EnsEMBL::Hive::Analysis->collection()->add( $target_object );  # add it to the collection
         }
 
         if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
@@ -193,17 +196,17 @@ sub build {
         }
     }
 
-    foreach my $c_rule ( Bio::EnsEMBL::Hive->collection('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
-        unless( Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
+    foreach my $c_rule ( Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection()->list ) {   # control rule's condition is a foreign Analysis
+        unless( Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
             $condition_analysis->{'_foreign'}=1;
-            Bio::EnsEMBL::Hive->collection('Analysis')->add( $condition_analysis ); # add it to the collection
+            Bio::EnsEMBL::Hive::Analysis->collection()->add( $condition_analysis ); # add it to the collection
         }
     }
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+    foreach my $source_analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
         unless( $source_analysis->{'_inflow_count'} or $source_analysis->{'_foreign'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
@@ -214,16 +217,16 @@ sub build {
         my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
         $self->_add_pipeline_label( $pipeline_label );
     }
-    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
         $self->_add_analysis_node($analysis);
     }
-    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
         $self->_add_control_rules( $analysis->control_rules_collection );
         $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
-        foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
             if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
                 my $from = _analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
@@ -238,7 +241,7 @@ sub build {
     if($self->config_get('DisplaySemaphoreBoxes') ) {
         my %cluster_2_nodes = ();
 
-        foreach my $analysis (Bio::EnsEMBL::Hive->collection('Analysis')->list) {
+        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
             if(my $funnel = $analysis->{'_funnel_dfr'}) {
                 push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $analysis );
             }

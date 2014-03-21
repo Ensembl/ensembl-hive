@@ -46,7 +46,7 @@ use strict;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::URLFactory;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 =head1 AUTOLOADED
@@ -118,7 +118,7 @@ sub condition_analysis {
         # lazy load the analysis object if I can
     if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {
 
-        if( $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $condition_analysis_url) ) {
+        if( $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $condition_analysis_url) ) {
 #            warn "Lazy-loading object from 'Analysis' collection\n";
         } elsif(my $adaptor = $self->adaptor) {
 #            warn "Lazy-loading object from AnalysisAdaptor\n";

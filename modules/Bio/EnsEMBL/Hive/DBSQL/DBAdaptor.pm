@@ -266,7 +266,8 @@ sub load_collections {
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
-        Bio::EnsEMBL::Hive->collection( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
     }
 }
 
@@ -284,14 +285,15 @@ sub save_collections {
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
-        foreach my $storable_object ( Bio::EnsEMBL::Hive->collection( $AdaptorType )->list ) {
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        foreach my $storable_object ( $class->collection()->list ) {
             $adaptor->store_or_update_one( $storable_object );
 #            warn "Stored/updated ".$storable_object->toString()."\n";
         }
     }
 
     my $job_adaptor = $self->get_AnalysisJobAdaptor;
-    foreach my $analysis ( Bio::EnsEMBL::Hive->collection('Analysis')->list ) {
+    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store( $our_jobs );
             foreach my $job (@$our_jobs) {

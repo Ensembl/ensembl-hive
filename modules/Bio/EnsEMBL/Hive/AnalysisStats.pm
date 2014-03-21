@@ -42,7 +42,7 @@ use POSIX;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
     ## Minimum amount of time in msec that a worker should run before reporting

@@ -56,7 +56,7 @@ use strict;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 =head1 AUTOLOADED
@@ -161,7 +161,7 @@ sub to_analysis {
         # lazy load the analysis object if I can
     if( !$self->{'_to_analysis'} and my $to_analysis_url = $self->to_analysis_url ) {
 
-        if( $self->{'_to_analysis'} = Bio::EnsEMBL::Hive->collection('Analysis')->find_one_by('logic_name', $to_analysis_url) ) {
+        if( $self->{'_to_analysis'} = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $to_analysis_url) ) {
 #            warn "Lazy-loading object from 'Analysis' collection\n";
         } elsif(my $adaptor = $self->adaptor) {
 #            warn "Lazy-loading object from AnalysisAdaptor\n";

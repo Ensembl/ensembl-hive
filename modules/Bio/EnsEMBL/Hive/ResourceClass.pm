@@ -39,7 +39,7 @@ package Bio::EnsEMBL::Hive::ResourceClass;
 
 use strict;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
  
 
 sub name {

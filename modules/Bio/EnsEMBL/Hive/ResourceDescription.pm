@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::ResourceDescription;
 
 use strict;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 =head1 AUTOLOADED

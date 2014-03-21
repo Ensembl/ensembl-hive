@@ -45,7 +45,6 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(weaken);
-use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
@@ -156,7 +155,8 @@ sub AUTOLOAD {
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                if( $self->{$foo_obj_method_name} = Bio::EnsEMBL::Hive->collection($AdaptorType)->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
+                my $foo_class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+                if( $self->{$foo_obj_method_name} = $foo_class->collection()->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {
 #                    warn "Lazy-loading object from $AdaptorType adaptor\n";
