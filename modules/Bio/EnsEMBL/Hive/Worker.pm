@@ -666,7 +666,7 @@ sub run_one_batch {
 
             my @params_precedence = (
                 $runnable_object->param_defaults(),
-                $self->adaptor->db->get_MetaContainer->get_param_hash(),
+                $self->adaptor->db->get_PipelineWideParametersAdaptor->get_param_hash(),
                 $self->analysis->parameters(),
             );
 

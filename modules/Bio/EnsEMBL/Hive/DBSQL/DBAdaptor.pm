@@ -173,7 +173,7 @@ our %adaptor_type_2_package_name = (
     'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
     'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
-    'MetaContainer'         => 'Bio::EnsEMBL::Hive::DBSQL::MetaContainer',
+    'PipelineWideParameters'=> 'Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor',
     'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
     'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
     'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
@@ -259,7 +259,7 @@ sub AUTOLOAD {
 sub load_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         Bio::EnsEMBL::Hive->collection( $AdaptorType, $adaptor->get_param_hash() );
     }
@@ -275,7 +275,7 @@ sub load_collections {
 sub save_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('Meta', 'MetaContainer') {
+    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         while(my ($meta_key, $meta_value) = each %{ Bio::EnsEMBL::Hive->collection( $AdaptorType ) } ) {
             $adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone

@@ -449,7 +449,7 @@ sub add_objects_from_config {
     warn "Done.\n\n";
 
     warn "Adding pipeline-wide parameters ...\n";
-    my $mc_coll = Bio::EnsEMBL::Hive->collection('MetaContainer');
+    my $mc_coll = Bio::EnsEMBL::Hive->collection('PipelineWideParameters');
     %$mc_coll = (%$mc_coll, %{$self->pipeline_wide_parameters()} );
     warn "Done.\n\n";
 

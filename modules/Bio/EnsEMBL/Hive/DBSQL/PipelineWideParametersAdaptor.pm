@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::DBSQL::MetaContainer
+    Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor
 
 =head1 SYNOPSIS
 
-    $meta_container = $db_adaptor->get_MetaContainer;
+    $meta_container = $db_adaptor->get_PipelineWideParametersAdaptor;
 
 =head1 DESCRIPTION
 
@@ -32,7 +32,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::DBSQL::MetaContainer;
+package Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor;
 
 use strict;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');

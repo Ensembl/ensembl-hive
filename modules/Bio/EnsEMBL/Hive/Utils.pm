@@ -95,8 +95,8 @@ sub stringify {
                  If it seems to contain a hash/array/quoted_string, the contents is evaluated, otherwise it is returned "as is".
                  This function is mainly used to read values from 'meta' table that may represent Perl structures, but generally don't have to.
 
-    Callers    : Bio::EnsEMBL::Hive::DBSQL::MetaContainer           # destringification of general 'meta' params
-                 beekeeper.pl script                                # destringification of the 'pipeline_name' meta param
+    Callers    : Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor   # destringification of general 'meta' params
+                 beekeeper.pl script                                        # destringification of the 'pipeline_name' meta param
 
 =cut
 
