@@ -105,7 +105,7 @@ sub _as_debug {
 
     $text=~s/^}$//m;
 
-    foreach my $node_name ( sort @{ $self->cluster_2_nodes->{''} } ) {
+    foreach my $node_name ( sort @{ $self->cluster_2_nodes->{''} || [] } ) {
         $text .= $self->display_subgraph( $node_name, 1);
     }
     $text .= "}\n";
