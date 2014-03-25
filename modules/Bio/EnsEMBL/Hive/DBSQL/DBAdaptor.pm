@@ -41,6 +41,10 @@ use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
+use Bio::EnsEMBL::Hive::ResourceClass;
+use Bio::EnsEMBL::Hive::ResourceDescription;
+use Bio::EnsEMBL::Hive::Analysis;
+use Bio::EnsEMBL::Hive::AnalysisStats;
 
 
 sub new {
@@ -253,6 +257,19 @@ sub AUTOLOAD {
     my $self = shift;
 
     return $self->get_adaptor($type, @_);
+}
+
+
+sub init_collections {  # should not really belong to DBAdaptor, temporarily squatting here...
+
+    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
+        Bio::EnsEMBL::Hive->collection( $AdaptorType, {} );
+    }
+
+    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new() );
+    }
 }
 
 

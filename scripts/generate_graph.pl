@@ -72,6 +72,9 @@ sub main {
         );
 
         $self->{'dba'}->load_collections();
+    } else {
+
+        Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->init_collections();
     }
 
     if($self->{'pipeconfig'}) {

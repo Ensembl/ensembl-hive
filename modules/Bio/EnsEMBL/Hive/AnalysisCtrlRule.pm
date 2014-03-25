@@ -118,7 +118,9 @@ sub condition_analysis {
         # lazy load the analysis object if I can
     if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {
 
-        if( $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $condition_analysis_url) ) {
+        my $collection = Bio::EnsEMBL::Hive::Analysis->collection();
+
+        if( $collection and $self->{'_condition_analysis'} = $collection->find_one_by('logic_name', $condition_analysis_url) ) {
 #            warn "Lazy-loading object from 'Analysis' collection\n";
         } elsif(my $adaptor = $self->adaptor) {
 #            warn "Lazy-loading object from AnalysisAdaptor\n";

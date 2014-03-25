@@ -13,7 +13,7 @@ sub collection {
         $cache_by_class{$class} = shift @_;
     }
 
-    return $cache_by_class{$class} ||= Bio::EnsEMBL::Hive::Utils::Collection->new();
+    return $cache_by_class{$class};
 }
 
 

@@ -200,8 +200,11 @@ sub display_name {
 sub stats {
     my $self = shift @_;
 
-    return Bio::EnsEMBL::Hive::AnalysisStats->collection()->find_one_by('analysis', $self)
-        || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
+    my $collection = Bio::EnsEMBL::Hive::AnalysisStats->collection();
+
+    return $collection
+        ? $collection->find_one_by('analysis', $self)
+        : $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
 }
 
 
@@ -217,17 +220,18 @@ sub jobs_collection {
 sub control_rules_collection {
     my $self = shift @_;
 
-    return Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection()->find_all_by('ctrled_analysis', $self)
-        || $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
+    my $collection = Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection();
+
+    return $collection
+        ? $collection->find_all_by('ctrled_analysis', $self)
+        : $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
 }
 
 
 sub dataflow_rules_collection {
     my $self = shift @_;
 
-    $self->{'_dataflow_rules_collection'} = shift if(@_);
-
-    return $self->{'_dataflow_rules_collection'} || Bio::EnsEMBL::Hive::DataflowRule->collection()->find_all_by('from_analysis', $self);
+    return Bio::EnsEMBL::Hive::DataflowRule->collection()->find_all_by('from_analysis', $self);
 }
 
 
