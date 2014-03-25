@@ -50,9 +50,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
 
     return {
-        'partial_product' => { },   # to be used when b_multiplier only contains digits '0' and '1'
-
-        'take_time' => 0,           # how much time run() method will spend in sleeping state
+        'intermediate_table_name'   => undef,   # if defined, take data from there rather than from accu
+        'partial_product'           => { },     # to be used when b_multiplier only contains digits '0' and '1'
+        'take_time'                 => 0,       # how much time run() method will spend in sleeping state
     };
 }
 
@@ -73,8 +73,17 @@ sub param_defaults {
 sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
 
-    my $a_multiplier    = $self->param_required('a_multiplier');
-    my $partial_product = $self->param('partial_product');
+    my $a_multiplier            = $self->param_required('a_multiplier');
+    my $intermediate_table_name = $self->param('intermediate_table_name');
+    my $partial_product;
+
+    if($intermediate_table_name) {      # special compatibility mode, where data is fetched from a given table
+        my $adaptor = $self->db->get_NakedTableAdaptor();
+        $adaptor->table_name( $intermediate_table_name );
+        $partial_product = $self->param('partial_product', $adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_partial_product( $a_multiplier ) );
+    } else {
+        $partial_product = $self->param('partial_product');
+    }
 
     $partial_product->{1} = $a_multiplier;
     $partial_product->{0} = 0;
@@ -113,6 +122,7 @@ sub write_output {  # store and dataflow
         'result'       => $self->param('result'),
     }, 1);
 }
+
 
 =head2 _add_together
 
