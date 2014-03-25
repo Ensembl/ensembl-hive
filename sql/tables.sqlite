@@ -395,31 +395,23 @@ CREATE TABLE hive_meta (
 
 
 /**
-@table  meta
+@table  pipeline_wide_parameters
 
 @colour #000000
 
-@desc This table comes from the Ensembl core schema.
-        It is created here with the 'IF NOT EXISTS' option to avoid a potential clash
-         if we are dealing with core-hive hybrid that is created in the wrong order.
-        At the moment meta table is used
-            (1) for compatibility with the Core API ('schema_version'),
-            (2) to keep pipeline-wide parameters.
+@desc This table contains a simple hash between pipeline_wide_parameter names and their values.
+      The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
 
-@column meta_id         auto-incrementing primary key, not really used per se
-@column species_id      always 1, kept for compatibility with the Core API
-@column meta_key        the KEY of KEY-VALUE pairs
-@column meta_value      the VALUE of KEY-VALUE pairs
+@column param_name      the KEY of KEY-VALUE pairs (primary key)
+@column param_value     the VALUE of KEY-VALUE pairs
 */
 
-CREATE TABLE IF NOT EXISTS meta (
-    meta_id                 INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
-    species_id              INTEGER              DEFAULT 1,
-    meta_key                VARCHAR(255) NOT NULL,
-    meta_value              TEXT        NOT NULL
+CREATE TABLE pipeline_wide_parameters (
+    param_name              VARCHAR(255) NOT NULL PRIMARY KEY,
+    param_value             TEXT
+
 );
-CREATE UNIQUE INDEX meta_species_key_value_idx ON meta (species_id, meta_key, meta_value);
-CREATE        INDEX meta_species_value_idx     ON meta (species_id, meta_value);
+CREATE        INDEX pipeline_wide_parameters_value_idx     ON pipeline_wide_parameters (param_value);
 
 
 /**

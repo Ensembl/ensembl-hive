@@ -292,12 +292,16 @@ sub load_collections {
 sub save_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
-        my $adaptor = $self->get_adaptor( $AdaptorType );
-        while(my ($meta_key, $meta_value) = each %{ Bio::EnsEMBL::Hive->collection( $AdaptorType ) } ) {
-            $adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
-            $adaptor->store_pair( $meta_key, $meta_value );
-        }
+    my $meta_adaptor = $self->get_adaptor( 'Meta' );
+    while(my ($meta_key, $meta_value) = each %{ Bio::EnsEMBL::Hive->collection( 'Meta' ) } ) {
+        $meta_adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
+        $meta_adaptor->store_pair( $meta_key, $meta_value );
+    }
+
+    my $pwp_adaptor = $self->get_adaptor( 'PipelineWideParameters' );
+    while(my ($param_name, $param_value) = each %{ Bio::EnsEMBL::Hive->collection( 'PipelineWideParameters' ) } ) {
+        $pwp_adaptor->remove_all_by_param_name($param_name);     # make sure the previous values are gone
+        $pwp_adaptor->store_pair( $param_name, $param_value );
     }
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {

@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    $meta_container = $db_adaptor->get_PipelineWideParametersAdaptor;
+    $pipeline_wide_parameters_adaptor = $db_adaptor->get_PipelineWideParametersAdaptor;
 
 =head1 DESCRIPTION
 
@@ -41,14 +41,14 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
 sub default_table_name {
-    return 'meta';
+    return 'pipeline_wide_parameters';
 }
 
 
 sub store_pair {
-    my ($self, $meta_key, $meta_value) = @_;
+    my ($self, $param_name, $param_value) = @_;
 
-    return $self->store( { 'meta_key' => $meta_key, 'meta_value' => stringify( $meta_value ), 'species_id' => undef } );
+    return $self->store( { 'param_name' => $param_name, 'param_value' => stringify( $param_value ) } );
 }
 
 
@@ -61,8 +61,8 @@ sub store_pair {
 sub get_param_hash {
     my $self = shift @_;
 
-    my $original_value      = $self->fetch_all_HASHED_FROM_meta_key_TO_meta_value();
-    my %destringified_hash  = map { $_, destringify($original_value->{$_}[0]) } keys %$original_value;
+    my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();
+    my %destringified_hash  = map { $_, destringify($original_value->{$_}) } keys %$original_value;
 
     return \%destringified_hash;
 }
