@@ -88,15 +88,7 @@ sub main {
 
     my $call = 'as_'.$self->{'format'};
 
-    eval {$graphviz->$call($self->{'output'});};
-    if($@) {
-        warn $@;
-        pod2usage({
-            -message => 'Error detected. Check '.$self->{'format'}.' is a valid format. Use a format name as supported by graphviz',
-            -exitvalue => 1,
-            -verbose => 2
-        });
-    }
+    $graphviz->$call($self->{'output'});
 }
 
 __END__
