@@ -727,41 +727,6 @@ sub print_running_worker_counts {
 }
 
 
-=head2 monitor
-
-  Arg[1]     : --none--
-  Example    : $queen->monitor();
-  Description: Monitors current throughput and store the result in the monitor
-               table
-  Exceptions : none
-  Caller     : beekeepers and other external processes
-
-=cut
-
-sub monitor {
-    my $self = shift;
-    my $sql = qq{
-        INSERT INTO monitor
-        SELECT CURRENT_TIMESTAMP, count(*),
-    } . {
-        'mysql'     =>  qq{ sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born))),
-                            sum(work_done/(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(born)))/count(*), },
-        'sqlite'    =>  qq{ sum(work_done/(strftime('%s','now')-strftime('%s',born))),
-                            sum(work_done/(strftime('%s','now')-strftime('%s',born)))/count(*), },
-        'pgsql'     =>  qq{ sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born))),
-                            sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born)))/count(*), },
-    }->{ $self->dbc->driver }. qq{
-        group_concat(DISTINCT logic_name)
-        FROM worker w
-        LEFT JOIN analysis_base USING (analysis_id)
-        WHERE w.status!='DEAD'
-    };
-      
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-}
-
-
 =head2 register_all_workers_dead
 
   Example    : $queen->register_all_workers_dead();

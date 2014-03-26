@@ -578,29 +578,3 @@ CREATE TABLE analysis_stats_monitor (
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
-
-/**
-@table  monitor
-
-@colour #F4D20C
-
-@desc   A regular collated snapshot of the Worker table.
-
-@column time            when this snapshot was taken
-@column workers         number of running workers
-@column throughput      average numb of completed Jobs per sec. of the hive (this number is calculated using running workers only)
-@column per_worker      average numb of completed Jobs per sec. per Worker (this number is calculated using running workers only)
-@column analysis        a comma-separated list of analyses running at the time of snapshot
-
-*/
-
-CREATE TABLE monitor (
-    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    workers                 INTEGER     NOT NULL DEFAULT 0,
-    throughput              FLOAT                DEFAULT NULL,
-    per_worker              FLOAT                DEFAULT NULL,
-    analysis                TEXT                 DEFAULT NULL   -- not just one, but a list of logic_names
-
-) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
-
-

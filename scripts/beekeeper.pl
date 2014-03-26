@@ -122,7 +122,6 @@ sub main {
                'reset_failed|reset_failed_jobs_for_analysis=s' => \$reset_failed_jobs_for_analysis,
                'reset_all|reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
                'job_output=i'      => \$job_id_for_output,
-               'monitor!'          => \$self->{'monitor'},
     );
 
     if ($help) { script_usage(0); }
@@ -139,9 +138,6 @@ sub main {
     } elsif ($loopit or $keep_alive) {
         unless($max_loops) {
             $max_loops = -1; # unlimited
-        }
-        unless(defined($self->{'monitor'})) {
-            $self->{'monitor'} = 1;
         }
     }
 
@@ -285,10 +281,6 @@ sub main {
         }
     }
 
-    if ($self->{'monitor'}) {
-        $queen->monitor();
-    }
-
     exit(0);
 }
 
@@ -348,7 +340,6 @@ sub run_autonomously {
     my $failed_analyses=0;
     do {
         if($iteration++) {
-            $queen->monitor();
             $self->{'dba'}->dbc->disconnect_if_idle;
             printf("sleep %.2f minutes. Next loop at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
             sleep($self->{'sleep_minutes'}*60);  
