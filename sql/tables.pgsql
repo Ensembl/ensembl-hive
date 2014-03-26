@@ -3,11 +3,14 @@
 
     It has been annotated with @-tags.
     The following command is used to create HTML documentation:
-        perl $ENSEMBL_CVS_ROOT_DIR/ensembl-production/scripts/sql2html.pl -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.pgsql \
-             -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html -d Hive -sort_headers 0 -sort_tables 0
+        perl $ENSEMBL_CVS_ROOT_DIR/ensembl-production/scripts/sql2html.pl \
+            -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.pgsql -d Hive -intro $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.inc \
+            -sort_headers 0 -sort_tables 0 -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html
 
-    Adding the following line into the header of the previous output will make it look prettier (valid in rel.72):
-        <link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/eb8658698ad4d45258b954c2d3f35bad.css" />
+
+    Adding the following line into the header of the previous output will make it look prettier (valid in rel.75):
+        <link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/fb4f89868f04f558d1d4421999719047.css" />
+
 
 
 LICENSE
@@ -34,6 +37,45 @@ CONTACT
 @header Pipeline structure
 @colour #C70C09
 */
+
+/**
+@table  hive_meta
+
+@colour #000000
+
+@desc This table keeps several important hive-specific pipeline-wide key-value pairs
+        such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
+
+@column meta_key        the KEY of KEY-VALUE pairs (primary key)
+@column meta_value      the VALUE of KEY-VALUE pairs
+*/
+
+CREATE TABLE hive_meta (
+    meta_key                VARCHAR(255) NOT NULL PRIMARY KEY,
+    meta_value              TEXT
+
+);
+
+
+/**
+@table  pipeline_wide_parameters
+
+@colour #000000
+
+@desc This table contains a simple hash between pipeline_wide_parameter names and their values.
+      The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
+
+@column param_name      the KEY of KEY-VALUE pairs (primary key)
+@column param_value     the VALUE of KEY-VALUE pairs
+*/
+
+CREATE TABLE pipeline_wide_parameters (
+    param_name              VARCHAR(255) NOT NULL PRIMARY KEY,
+    param_value             TEXT
+
+);
+CREATE        INDEX ON pipeline_wide_parameters (param_value);
+
 
 /**
 @table  analysis_base
@@ -238,7 +280,6 @@ CREATE TABLE resource_class (
 
 @column resource_class_id   foreign-keyed to the ResourceClass entry
 @column meadow_type         if the Worker is about to be executed on the given Meadow...
-@column parameters          ... the following resource line should be given to it.
 @column submission_cmd_args ... these are the resource arguments (queue, memory,...) to give to the submission command
 @column worker_cmd_args     ... and these are the arguments that are given to the worker command being submitted
 */
@@ -383,45 +424,6 @@ CREATE TABLE analysis_data (
     data                    TEXT
 );
 CREATE INDEX ON analysis_data (data);
-
-
-/**
-@table  hive_meta
-
-@colour #000000
-
-@desc This table keeps several important hive-specific pipeline-wide key-value pairs
-        such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
-
-@column meta_key        the KEY of KEY-VALUE pairs (primary key)
-@column meta_value      the VALUE of KEY-VALUE pairs
-*/
-
-CREATE TABLE hive_meta (
-    meta_key                VARCHAR(255) NOT NULL PRIMARY KEY,
-    meta_value              TEXT
-
-);
-
-
-/**
-@table  pipeline_wide_parameters
-
-@colour #000000
-
-@desc This table contains a simple hash between pipeline_wide_parameter names and their values.
-      The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
-
-@column param_name      the KEY of KEY-VALUE pairs (primary key)
-@column param_value     the VALUE of KEY-VALUE pairs
-*/
-
-CREATE TABLE pipeline_wide_parameters (
-    param_name              VARCHAR(255) NOT NULL PRIMARY KEY,
-    param_value             TEXT
-
-);
-CREATE        INDEX ON pipeline_wide_parameters (param_value);
 
 
 /**

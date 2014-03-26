@@ -1,9 +1,11 @@
 
 <html>
 <head>
+
+<link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/fb4f89868f04f558d1d4421999719047.css" />
+
 <title>Hive Schema Documentation</title>
 <meta name="order" content="2" />
-<link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/9256d71d74fd7c3e9e2b7815edb7812b.css" />
 
 <script language="Javascript" type="text/javascript">
   var img_plus   = '<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>';
@@ -71,7 +73,14 @@
 </head>
 <body>
 
-<h1>Ensembl Hive Schema Documentation</h1>
+<P>
+This document describes the tables that make up the Hive schema. Tables are grouped into categories, and the purpose of each table is explained.<BR>
+You can toggle the display of individual columns using [Show/Hide columns] buttons.
+</P>
+<P>
+<A HREF=hive_schema.png>Hive schema diagram</A> links the tables together.
+</P>
+
 
 <h3 id="top">List of the tables:</h3>
 <div>
@@ -82,6 +91,8 @@
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Pipeline structure</h2>
     </div>
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#hive_meta"><b>hive_meta</b></a></li>
+        <li><a href="#pipeline_wide_parameters"><b>pipeline_wide_parameters</b></a></li>
         <li><a href="#analysis_base"><b>analysis_base</b></a></li>
         <li><a href="#analysis_stats"><b>analysis_stats</b></a></li>
         <li><a href="#dataflow_rule"><b>dataflow_rule</b></a></li>
@@ -112,8 +123,6 @@
         <li><a href="#job_file"><b>job_file</b></a></li>
         <li><a href="#accu"><b>accu</b></a></li>
         <li><a href="#analysis_data"><b>analysis_data</b></a></li>
-        <li><a href="#hive_meta"><b>hive_meta</b></a></li>
-        <li><a href="#meta"><b>meta</b></a></li>
 
       </ul>
     </div>
@@ -140,7 +149,6 @@
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#log_message"><b>log_message</b></a></li>
         <li><a href="#analysis_stats_monitor"><b>analysis_stats_monitor</b></a></li>
-        <li><a href="#monitor"><b>monitor</b></a></li>
 
       </ul>
     </div>
@@ -154,6 +162,48 @@
 <div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #C70C09">
   <h2 id="1" style="display:inline;color:#000">Pipeline structure</h2>
 </div>
+
+  <div id="hive_meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">hive_meta</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_hive_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('hive_meta')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table keeps several important hive-specific pipeline-wide key-value pairs such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.</p>
+
+  <div id="div_hive_meta" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(255)</td><td></td><td>the KEY of KEY-VALUE pairs (primary key)</td><td></td></tr>
+      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
+    </table>
+  </div>
+
+  <div id="pipeline_wide_parameters" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">pipeline_wide_parameters</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_pipeline_wide_parameters" style="cursor:pointer;text-decoration:none" onclick="show_hide('pipeline_wide_parameters')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains a simple hash between pipeline_wide_parameter names and their values. The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.</p>
+
+  <div id="div_pipeline_wide_parameters" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>param_name</b></td><td>VARCHAR(255)</td><td></td><td>the KEY of KEY-VALUE pairs (primary key)</td><td>key: value_idx</td></tr>
+      <tr class="bg2"><td><b>param_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
+    </table>
+  </div>
 
   <div id="analysis_base" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
         <div style="float:left;padding:0px;height:20px;width:10px;background-color:#C70C09;margin-right:10px"></div>
@@ -426,50 +476,6 @@
     </table>
   </div>
 
-  <div id="hive_meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">hive_meta</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_hive_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('hive_meta')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table keeps several important hive-specific pipeline-wide key-value pairs such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.</p>
-
-  <div id="div_hive_meta" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(255)</td><td></td><td>the KEY of KEY-VALUE pairs (primary key)</td><td></td></tr>
-      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
-    </table>
-  </div>
-
-  <div id="meta" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#1D73DA;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">meta</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_meta" style="cursor:pointer;text-decoration:none" onclick="show_hide('meta')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table comes from the Ensembl core schema. It is created here with the 'IF NOT EXISTS' option to avoid a potential clash if we are dealing with core-hive hybrid that is created in the wrong order. At the moment meta table is used (1) for compatibility with the Core API ('schema_version'), (2) to keep pipeline-wide parameters.</p>
-
-  <div id="div_meta" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>meta_id</b></td><td>INTEGER</td><td></td><td>auto-incrementing primary key, not really used per se</td><td></td></tr>
-      <tr class="bg2"><td><b>species_id</b></td><td>INTEGER</td><td>1</td><td>always 1, kept for compatibility with the Core API</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
-      <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(255)</td><td></td><td>the KEY of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx</td></tr>
-      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td></td><td>the VALUE of KEY-VALUE pairs</td><td>unique    key: species_key_value_idx<br />key: species_value_idx</td></tr>
-    </table>
-  </div>
-
 <br /><br />
 <div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #24DA06">
   <h2 id="4" style="display:inline;color:#000">worker table</h2>
@@ -577,30 +583,6 @@
       <tr class="bg1"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
       <tr class="bg2"><td><b>last_update</b></td><td>TIMESTAMP</td><td></td><td>when this entry was last updated</td><td></td></tr>
       <tr class="bg1"><td><b>sync_lock</b></td><td>SMALLINT</td><td></td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
-    </table>
-  </div>
-
-  <div id="monitor" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">monitor</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_monitor" style="cursor:pointer;text-decoration:none" onclick="show_hide('monitor')">
-        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
-        <span style="vertical-align:middle">Show columns</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
-    </div>
-  </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A regular collated snapshot of the Worker table.</p>
-
-  <div id="div_monitor" style="display:none">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when this snapshot was taken</td><td></td></tr>
-      <tr class="bg2"><td><b>workers</b></td><td>INTEGER</td><td>0</td><td>number of running workers</td><td></td></tr>
-      <tr class="bg1"><td><b>throughput</b></td><td>FLOAT</td><td>NULL</td><td>average numb of completed Jobs per sec. of the hive (this number is calculated using running workers only)</td><td></td></tr>
-      <tr class="bg2"><td><b>per_worker</b></td><td>FLOAT</td><td>NULL</td><td>average numb of completed Jobs per sec. per Worker (this number is calculated using running workers only)</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis</b></td><td>TEXT</td><td>NULL</td><td>a comma-separated list of analyses running at the time of snapshot</td><td></td></tr>
     </table>
   </div>
 
