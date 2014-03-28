@@ -62,20 +62,5 @@ package Bio::EnsEMBL::Hive;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils::Collection;
-
-our %hash_of_collections;
-
-sub collection {
-    my $class = shift @_;
-    my $key   = shift @_;
-
-    if(@_) {
-        $hash_of_collections{$key} = shift @_;
-    }
-
-    return $hash_of_collections{$key} ||= Bio::EnsEMBL::Hive::Utils::Collection->new();
-}
-
 1;
 

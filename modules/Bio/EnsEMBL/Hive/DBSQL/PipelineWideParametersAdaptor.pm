@@ -45,20 +45,21 @@ sub default_table_name {
 }
 
 
-sub store_pair {
+sub replace_pair {
     my ($self, $param_name, $param_value) = @_;
 
+    $self->remove_all_by_param_name($param_name);   # make sure the previous values are gone
     return $self->store( { 'param_name' => $param_name, 'param_value' => stringify( $param_value ) } );
 }
 
 
-=head2 get_param_hash
+=head2 fetch_param_hash
 
     Description: returns the content of the 'meta' table as a hash
 
 =cut
 
-sub get_param_hash {
+sub fetch_param_hash {
     my $self = shift @_;
 
     my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();

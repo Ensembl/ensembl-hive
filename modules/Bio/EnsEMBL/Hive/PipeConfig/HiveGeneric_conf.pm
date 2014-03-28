@@ -444,12 +444,12 @@ sub add_objects_from_config {
     my $self                = shift @_;
 
     warn "Adding hive_meta table entries ...\n";
-    my $hm_coll = Bio::EnsEMBL::Hive->collection('Meta');
+    my $hm_coll = Bio::EnsEMBL::Hive::MetaParameters->collection();
     %$hm_coll = (%$hm_coll, %{$self->hive_meta_table()} );
     warn "Done.\n\n";
 
     warn "Adding pipeline-wide parameters ...\n";
-    my $mc_coll = Bio::EnsEMBL::Hive->collection('PipelineWideParameters');
+    my $mc_coll = Bio::EnsEMBL::Hive::PipelineWideParameters->collection();
     %$mc_coll = (%$mc_coll, %{$self->pipeline_wide_parameters()} );
     warn "Done.\n\n";
 

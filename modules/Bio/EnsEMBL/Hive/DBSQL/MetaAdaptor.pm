@@ -35,6 +35,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor;
 
 use strict;
+use Bio::EnsEMBL::Hive::MetaParameters;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
@@ -44,25 +45,33 @@ sub default_table_name {
 }
 
 
-sub store_pair {
+sub replace_pair {
     my ($self, $meta_key, $meta_value) = @_;
 
+    $self->remove_all_by_meta_key($meta_key);   # make sure the previous values are gone
     return $self->store( { 'meta_key' => $meta_key, 'meta_value' => $meta_value } );
 }
 
 
-sub get_param_hash {
+sub fetch_param_hash {
     my $self = shift @_;
 
     return $self->fetch_HASHED_FROM_meta_key_TO_meta_value();
 }
 
 
-sub fetch_value_by_key {
+sub get_value_by_key {
     my ($self, $meta_key) = @_;
 
-    my $pair = $self->fetch_by_meta_key( $meta_key );
-    return $pair && $pair->{'meta_value'};
+    if( my $collection = Bio::EnsEMBL::Hive::MetaParameters->collection() ) {
+
+        return $collection->{ $meta_key };
+
+    } else {
+
+        my $pair = $self->fetch_by_meta_key( $meta_key );
+        return $pair && $pair->{'meta_value'};
+    }
 }
 
 1;

@@ -158,7 +158,7 @@ sub main {
 
     my $queen = $self->{'dba'}->get_Queen;
 
-    my $pipeline_name = $self->{'dba'}->get_MetaAdaptor->fetch_value_by_key( 'hive_pipeline_name' );
+    my $pipeline_name = $self->{'dba'}->get_MetaAdaptor->get_value_by_key( 'hive_pipeline_name' );
 
     if($pipeline_name) {
         warn "Pipeline name: $pipeline_name\n";

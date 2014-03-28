@@ -41,6 +41,9 @@ use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
+
+use Bio::EnsEMBL::Hive::MetaParameters;
+use Bio::EnsEMBL::Hive::PipelineWideParameters;
 use Bio::EnsEMBL::Hive::ResourceClass;
 use Bio::EnsEMBL::Hive::ResourceDescription;
 use Bio::EnsEMBL::Hive::Analysis;
@@ -94,7 +97,7 @@ sub new {
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
             || die "DB($url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
 
-        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_value_by_key( 'hive_sql_schema_version' ); };
+        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->get_value_by_key( 'hive_sql_schema_version' ); };
         if($@) {
             if($@ =~ /hive_meta.*doesn't exist/) {
 
@@ -149,7 +152,7 @@ sub hive_use_triggers {  # getter only, not setter
     my $self = shift @_;
 
     unless( defined($self->{'_hive_use_triggers'}) ) {
-        my $hive_use_triggers = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_use_triggers' );
+        my $hive_use_triggers = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_triggers' );
         $self->{'_hive_use_triggers'} = $hive_use_triggers || 0;
     } 
     return $self->{'_hive_use_triggers'};
@@ -160,7 +163,7 @@ sub hive_use_param_stack {  # getter only, not setter
     my $self = shift @_;
 
     unless( defined($self->{'_hive_use_param_stack'}) ) {
-        my $hive_use_param_stack = $self->get_MetaAdaptor->fetch_value_by_key( 'hive_use_param_stack' );
+        my $hive_use_param_stack = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_param_stack' );
         $self->{'_hive_use_param_stack'} = $hive_use_param_stack || 0;
     } 
     return $self->{'_hive_use_param_stack'};
@@ -186,6 +189,7 @@ our %adaptor_type_2_package_name = (
         # aliases:
     'Job'                   => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
     'Worker'                => 'Bio::EnsEMBL::Hive::Queen',
+    'MetaParameters'        => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
 );
 
 
@@ -262,8 +266,9 @@ sub AUTOLOAD {
 
 sub init_collections {  # should not really belong to DBAdaptor, temporarily squatting here...
 
-    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
-        Bio::EnsEMBL::Hive->collection( $AdaptorType, {} );
+    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        $class->collection( {} );
     }
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
@@ -276,9 +281,10 @@ sub init_collections {  # should not really belong to DBAdaptor, temporarily squ
 sub load_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('Meta', 'PipelineWideParameters') {
+    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
-        Bio::EnsEMBL::Hive->collection( $AdaptorType, $adaptor->get_param_hash() );
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        $class->collection( $adaptor->fetch_param_hash() );
     }
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
@@ -292,16 +298,13 @@ sub load_collections {
 sub save_collections {
     my $self = shift @_;
 
-    my $meta_adaptor = $self->get_adaptor( 'Meta' );
-    while(my ($meta_key, $meta_value) = each %{ Bio::EnsEMBL::Hive->collection( 'Meta' ) } ) {
-        $meta_adaptor->remove_all_by_meta_key($meta_key);        # make sure the previous values are gone
-        $meta_adaptor->store_pair( $meta_key, $meta_value );
-    }
-
-    my $pwp_adaptor = $self->get_adaptor( 'PipelineWideParameters' );
-    while(my ($param_name, $param_value) = each %{ Bio::EnsEMBL::Hive->collection( 'PipelineWideParameters' ) } ) {
-        $pwp_adaptor->remove_all_by_param_name($param_name);     # make sure the previous values are gone
-        $pwp_adaptor->store_pair( $param_name, $param_value );
+    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
+        my $adaptor = $self->get_adaptor( $AdaptorType );
+        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        while( my ($hash_key,$hash_value) = each %{ $class->collection() } ) {
+            $adaptor->replace_pair( $hash_key, $hash_value );
+#            warn "Stored/updated '$hash_key' => '$hash_value'\n";
+        }
     }
 
     foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
