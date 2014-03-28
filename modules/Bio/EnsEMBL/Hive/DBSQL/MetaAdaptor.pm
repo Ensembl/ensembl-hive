@@ -54,7 +54,7 @@ sub store_pair {
 sub get_param_hash {
     my $self = shift @_;
 
-    return $self->fetch_all_HASHED_FROM_meta_key_TO_meta_value();
+    return $self->fetch_HASHED_FROM_meta_key_TO_meta_value();
 }
 
 
