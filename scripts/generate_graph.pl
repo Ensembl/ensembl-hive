@@ -34,7 +34,7 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-        'pipeconfig|pc=s'       => \$self->{'pipeconfig'},
+        'pipeconfig|pc=s@'      => \$self->{'pipeconfigs'}, # now an array
 
         'f|format=s'            => \$self->{'format'},
         'o|out|output=s'        => \$self->{'output'},
@@ -77,13 +77,15 @@ sub main {
         Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->init_collections();
     }
 
-    if($self->{'pipeconfig'}) {
-        my $pipeconfig_package_name = load_file_or_module( $self->{'pipeconfig'} );
+    if($self->{'pipeconfigs'}) {
+        foreach my $pipeconfig (@{ $self->{'pipeconfigs'} }) {
+            my $pipeconfig_package_name = load_file_or_module( $pipeconfig );
 
-        my $pipeconfig_object = $pipeconfig_package_name->new();
-        $pipeconfig_object->process_options( 0 );
+            my $pipeconfig_object = $pipeconfig_package_name->new();
+            $pipeconfig_object->process_options( 0 );
 
-        $pipeconfig_object->add_objects_from_config();
+            $pipeconfig_object->add_objects_from_config();
+        }
     }
 
     my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{'dba'} );
@@ -104,7 +106,7 @@ __END__
 
 =head1 SYNOPSIS
 
-    ./generate_graph.pl -url mysql://user:pass@server:port/dbname -output OUTPUT_LOC [-help]
+    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC [-help]
 
 =head1 DESCRIPTION
 
@@ -127,6 +129,11 @@ B<--reg_conf>
 B<--reg_alias>
 
     species/alias name for the Hive DBAdaptor
+
+B<--pipeconfig>
+
+    A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
+    This option can now be used multiple times for multiple top-ups.
 
 B<--output>
 
