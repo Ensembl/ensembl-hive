@@ -411,6 +411,7 @@ sub process_options {
     my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
     if($include_pcc_use_case) {
         unshift @use_cases, 'pipeline_create_commands';
+        push @use_cases, 'show_useful_commands';
     }
     $self->use_cases( \@use_cases );
 
