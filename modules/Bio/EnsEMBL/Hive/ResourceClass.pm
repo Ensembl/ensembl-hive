@@ -42,6 +42,11 @@ use strict;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
  
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'name' ];
+}
+
+
 sub name {
     my $self = shift @_;
 

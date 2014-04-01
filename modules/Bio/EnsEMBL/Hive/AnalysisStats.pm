@@ -45,6 +45,11 @@ use Bio::EnsEMBL::Hive::Analysis;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'analysis' ];
+}
+
+
     ## Minimum amount of time in msec that a worker should run before reporting
     ## back to the hive. This is used when setting the batch_size automatically.
 sub min_batch_time {

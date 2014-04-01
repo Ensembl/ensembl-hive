@@ -44,6 +44,11 @@ use Bio::EnsEMBL::Hive::DataflowRule;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
  
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'logic_name' ];
+}
+
+
 =head1 AUTOLOADED
 
     resource_class_id / resource_class

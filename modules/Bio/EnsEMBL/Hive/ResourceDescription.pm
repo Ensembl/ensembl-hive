@@ -44,6 +44,11 @@ use strict;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'resource_class', 'meadow_type' ];
+}
+
+
 =head1 AUTOLOADED
 
     resource_class_id / resource_class

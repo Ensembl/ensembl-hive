@@ -59,6 +59,11 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'from_analysis', 'to_analysis_url', 'branch_code', 'funnel_dataflow_rule', 'input_id_template' ];
+} 
+
+
 =head1 AUTOLOADED
 
     from_analysis_id / from_analysis

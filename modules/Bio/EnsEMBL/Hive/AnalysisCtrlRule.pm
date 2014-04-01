@@ -49,6 +49,11 @@ use Bio::EnsEMBL::Hive::URLFactory;
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
+sub unikey {    # override the default from Cacheable parent
+    return [ 'condition_analysis_url', 'ctrled_analysis' ];
+}   
+
+
 =head1 AUTOLOADED
 
     ctrled_analysis_id / ctrled_analysis

@@ -456,51 +456,31 @@ sub add_objects_from_config {
 
     warn "Adding Resources ...\n";
     my $resource_classes_hash = $self->resource_classes;
+    unless( exists $resource_classes_hash->{'default'} ) {
+        warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
+        $resource_classes_hash->{'default'} = {};
+    }
     my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
     foreach my $rc_name (@resource_classes_order) {
         if($rc_name=~/^\d+$/) {
             die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
         }
 
-        my $resource_class;
-
-        if( $resource_class = Bio::EnsEMBL::Hive::ResourceClass->collection()->find_one_by('name', $rc_name) ) {
-            warn "Found an already existing resource_class '$rc_name'.\n";
-        } else {
-            warn "Creating a new resource_class '$rc_name'.\n";
-            $resource_class = Bio::EnsEMBL::Hive::ResourceClass->new(
-                'name' => $rc_name,
-            );
-            Bio::EnsEMBL::Hive::ResourceClass->collection()->add( $resource_class );
-        }
+        my $resource_class = Bio::EnsEMBL::Hive::ResourceClass->add_new_or_update(
+            'name'  => $rc_name,
+        );
 
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-            my $resource_description;
+            my $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->add_new_or_update(
+                'resource_class'        => $resource_class,
+                'meadow_type'           => $meadow_type,
+                'submission_cmd_args'   => $resource_param_list->[0],
+                'worker_cmd_args'       => $resource_param_list->[1],
+            );
 
-            if( $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->collection()->find_one_by('resource_class', $resource_class, 'meadow_type', $meadow_type) ) {
-                warn "Attempting to redefine an existing description for '$rc_name/$meadow_type' resource class\n";
-                $resource_description->submission_cmd_args( $resource_param_list->[0] );
-                $resource_description->worker_cmd_args( $resource_param_list->[1] );
-            } else {
-                warn "Creating a new description for '$rc_name/$meadow_type' resource class\n";
-                $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->new(
-                    'resource_class'        => $resource_class,
-                    'meadow_type'           => $meadow_type,
-                    'submission_cmd_args'   => $resource_param_list->[0],
-                    'worker_cmd_args'       => $resource_param_list->[1],
-                );
-                Bio::EnsEMBL::Hive::ResourceDescription->collection()->add( $resource_description );
-            }
         }
-    }
-    unless(my $default_rc = Bio::EnsEMBL::Hive::ResourceClass->collection()->find_one_by('name', 'default') ) {
-        warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
-        $default_rc = Bio::EnsEMBL::Hive::ResourceClass->new(
-            'name' => 'default',
-        );
-        Bio::EnsEMBL::Hive::ResourceClass->collection()->add( $default_rc );
     }
     warn "Done.\n\n";
 
@@ -537,8 +517,6 @@ sub add_objects_from_config {
 
         } else {
 
-            warn "Creating analysis '$logic_name'.\n";
-
             $rc_name ||= 'default';
             my $resource_class = Bio::EnsEMBL::Hive::ResourceClass->collection()->find_one_by('name', $rc_name)
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
@@ -550,7 +528,7 @@ sub add_objects_from_config {
             $parameters_hash ||= {};    # in case nothing was given
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
-            $analysis = Bio::EnsEMBL::Hive::Analysis->new(
+            $analysis = Bio::EnsEMBL::Hive::Analysis->add_new_or_update(
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'parameters'            => $parameters_hash,
@@ -564,7 +542,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            $stats = Bio::EnsEMBL::Hive::AnalysisStats->new(
+            $stats = Bio::EnsEMBL::Hive::AnalysisStats->add_new_or_update(
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
@@ -581,9 +559,6 @@ sub add_objects_from_config {
                 'output_capacity'       => 4,
                 'sync_lock'             => 0,
             );
-
-            Bio::EnsEMBL::Hive::Analysis->collection()->add( $analysis );
-            Bio::EnsEMBL::Hive::AnalysisStats->collection()->add( $stats );
         }
 
             # now create the corresponding jobs (if there are any):
@@ -615,11 +590,10 @@ sub add_objects_from_config {
                 my $condition_analysis = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $condition_url)
                     or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
             }
-            my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->new(
+            my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->add_new_or_update(
                     'condition_analysis_url'    => $condition_url,
                     'ctrled_analysis'           => $analysis,
             );
-            Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection()->add( $c_rule );
         }
 
         $flow_into ||= {};
@@ -669,14 +643,13 @@ sub add_objects_from_config {
 
                 foreach my $input_id_template (@$input_id_template_list) {
 
-                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->new(
+                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->add_new_or_update(
                         'from_analysis'             => $analysis,
                         'to_analysis_url'           => $heir_url,
                         'branch_code'               => $branch_name_or_code,
                         'funnel_dataflow_rule'      => $funnel_dataflow_rule,
                         'input_id_template'         => $input_id_template,
                     );
-                    Bio::EnsEMBL::Hive::DataflowRule->collection()->add( $df_rule );
 
                     if($group_role eq 'funnel') {
                         if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
