@@ -52,7 +52,10 @@ sub find_one_by {
     ELEMENT: foreach my $element (@{ $self->listref }) {
         keys %method_to_filter_value;   # sic! This is to "rewind" the each% operator to the beginning each time
         while(my ($method, $filter_value) = each %method_to_filter_value) {
-            next ELEMENT unless($element->$method() eq $filter_value);
+            next ELEMENT unless( defined($element->$method())   # either both defined and equal or neither defined
+                                    ? defined($filter_value) && ($element->$method() eq $filter_value)
+                                    : !defined($filter_value)
+                               );
         }
         return $element;
     }
