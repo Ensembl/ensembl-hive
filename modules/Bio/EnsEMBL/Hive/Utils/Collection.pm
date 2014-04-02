@@ -39,13 +39,6 @@ sub add {
 }
 
 
-sub hashed_by_dbID {
-    my $self = shift @_;
-
-    return { map { $_->dbID => $_ } $self->list };
-}
-
-
 sub find_one_by {
     my ($self, %method_to_filter_value) = @_;
 
