@@ -106,6 +106,7 @@ sub default_options {
         'hive_use_triggers'     => 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'  => 0,                   # do not reconstruct the calling stack of parameters by default (yet)
         'hive_force_init'       => 0,                   # setting it to 1 will drop the database prior to creation (use with care!)
+        'hive_no_init'          => 0,                   # setting it to 1 will skip pipeline_create_commands (useful for topping up)
 
         'pipeline_db'   => {
             -driver => $self->o('hive_driver'),
@@ -132,9 +133,10 @@ sub pipeline_create_commands {
     my $pipeline_url    = $self->pipeline_url();
     my $parsed_url      = Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
     my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
+    my $hive_force_init = $self->o('hive_force_init');
 
     return [
-            $self->o('hive_force_init') ? $self->db_cmd('DROP DATABASE IF EXISTS') : (),
+            $hive_force_init ? $self->db_cmd('DROP DATABASE IF EXISTS') : (),
             $self->db_cmd('CREATE DATABASE'),
 
                 # we got table definitions for all drivers:
@@ -410,7 +412,7 @@ sub process_options {
 
     my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
     if($include_pcc_use_case) {
-        unshift @use_cases, 'pipeline_create_commands';
+        unshift @use_cases, 'overridable_pipeline_create_commands';
         push @use_cases, 'useful_commands_legend';
     }
     $self->use_cases( \@use_cases );
@@ -419,10 +421,18 @@ sub process_options {
 }
 
 
-sub run_pipeline_create_commands {
-    my $self                = shift @_;
+sub overridable_pipeline_create_commands {
+    my $self                        = shift @_;
+    my $pipeline_create_commands    = $self->pipeline_create_commands();
 
-    foreach my $cmd (@{$self->pipeline_create_commands}) {
+    return $self->o('hive_no_init') ? [] : $pipeline_create_commands;
+}
+
+
+sub run_pipeline_create_commands {
+    my $self            = shift @_;
+
+    foreach my $cmd (@{$self->overridable_pipeline_create_commands}) {
         warn "Running the command:\n\t$cmd\n";
         if(my $retval = system($cmd)) {
             die "Return value = $retval, possibly an error\n";
