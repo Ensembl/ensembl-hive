@@ -48,7 +48,7 @@ sub main {
 
     $hive_dba->save_collections();
 
-    $pipeconfig_object->show_useful_commands();
+    print $pipeconfig_object->useful_commands_legend();
 }
 
 main();

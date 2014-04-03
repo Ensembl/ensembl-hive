@@ -411,7 +411,7 @@ sub process_options {
     my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
     if($include_pcc_use_case) {
         unshift @use_cases, 'pipeline_create_commands';
-        push @use_cases, 'show_useful_commands';
+        push @use_cases, 'useful_commands_legend';
     }
     $self->use_cases( \@use_cases );
 
@@ -666,42 +666,50 @@ sub add_objects_from_config {
 }
 
 
-sub show_useful_commands {
+sub useful_commands_legend {
     my $self  = shift @_;
+
     my $pipeline_url    = $self->pipeline_url();
     my $pipeline_name   = $self->o('pipeline_name');
+    my $extra_cmdline   = $self->beekeeper_extra_cmdline_options();
 
-    print "\n\n# --------------------[Useful commands]--------------------------\n";
-    print "\n";
-    print " # It is convenient to store the pipeline url in a variable:\n";
-    print "\texport EHIVE_URL=$pipeline_url\t\t\t# bash version\n";
-    print "(OR)\n";
-    print "\tsetenv EHIVE_URL $pipeline_url\t\t\t# [t]csh version\n";
-    print "\n";
-    print " # Add a new job to the pipeline (usually done once before running, but pipeline can be \"topped-up\" at any time) :\n";
-    print "\tseed_pipeline.pl -url $pipeline_url -logic_name <analysis_name> -input_id <param_hash>\n";
-    print "\n";
-    print " # Synchronize the Hive (should be done before [re]starting a pipeline) :\n";
-    print "\tbeekeeper.pl -url $pipeline_url -sync\n";
-    print "\n";
-    print " # Run the pipeline (can be interrupted and restarted) :\n";
-    print "\tbeekeeper.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()." -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)\n";
-    print "(OR)\n";
-    print "\tbeekeeper.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()." -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)\n";
-    print "(OR)\n";
-    print "\trunWorker.pl -url $pipeline_url ".$self->beekeeper_extra_cmdline_options()."      \t\t# run exactly one Worker locally (useful for debugging/learning)\n";
-    print "\n";
-    print " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n";
-    print "\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png\n";
-    print "\n";
-    print " # If you are running the pipeline on LSF, you can collect actual resource usage statistics :\n";
-    print "\tlsf_report.pl -url $pipeline_url\n";
-    print "\n";
-    print " # After having run lsf_report.pl, you can request a resource usage timeline in an image file (desired format is set via extension) :\n";
-    print "\tgenerate_timeline.pl -url $pipeline_url -out timeline_$pipeline_name.png\n";
-    print "\n";
-    print " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n";
-    print "\tdb_cmd.pl -url $pipeline_url\n\n";
+    my @output_lines = (
+        '','',
+        "# --------------------[Useful commands]--------------------------",
+        '',
+        " # It is convenient to store the pipeline url in a variable:",
+        "\texport EHIVE_URL=$pipeline_url\t\t\t# bash version",
+        "(OR)",
+        "\tsetenv EHIVE_URL $pipeline_url\t\t\t# [t]csh version",
+        '',
+        " # Add a new job to the pipeline (usually done once before running, but pipeline can be \"topped-up\" at any time) :",
+        "\tseed_pipeline.pl -url $pipeline_url -logic_name <analysis_name> -input_id <param_hash>",
+        '',
+        " # Synchronize the Hive (should be done before [re]starting a pipeline) :",
+        "\tbeekeeper.pl -url $pipeline_url -sync",
+        '',
+        " # Run the pipeline (can be interrupted and restarted) :",
+        "\tbeekeeper.pl -url $pipeline_url $extra_cmdline -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)",
+        "(OR)",
+        "\tbeekeeper.pl -url $pipeline_url $extra_cmdline -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)",
+        "(OR)",
+        "\trunWorker.pl -url $pipeline_url $extra_cmdline      \t\t# run exactly one Worker locally (useful for debugging/learning)",
+        '',
+        " # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :",
+        "\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png",
+        '',
+        " # If you are running the pipeline on LSF, you can collect actual resource usage statistics :",
+        "\tlsf_report.pl -url $pipeline_url",
+        '',
+        " # After having run lsf_report.pl, you can request a resource usage timeline in an image file (desired format is set via extension) :",
+        "\tgenerate_timeline.pl -url $pipeline_url -out timeline_$pipeline_name.png",
+        '',
+        " # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :",
+        "\tdb_cmd.pl -url $pipeline_url",
+        '',
+    );
+
+    return join("\n", @output_lines);
 }
 
 1;
