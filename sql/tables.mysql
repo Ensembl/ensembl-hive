@@ -513,7 +513,7 @@ CREATE TABLE log_message (
     worker_id               INTEGER              DEFAULT NULL,
     time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
-    status                  ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
+    status                  ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
     msg                     TEXT,
     is_error                SMALLINT,
 
