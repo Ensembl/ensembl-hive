@@ -266,12 +266,12 @@ sub AUTOLOAD {
 
 sub init_collections {  # should not really belong to DBAdaptor, temporarily squatting here...
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
+    foreach my $AdaptorType ('PipelineWideParameters') {
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         $class->collection( {} );
     }
 
-    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+    foreach my $AdaptorType ('MetaParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new() );
     }
@@ -281,13 +281,13 @@ sub init_collections {  # should not really belong to DBAdaptor, temporarily squ
 sub load_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
+    foreach my $AdaptorType ('PipelineWideParameters') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         $class->collection( $adaptor->fetch_param_hash() );
     }
 
-    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+    foreach my $AdaptorType ('MetaParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
@@ -298,7 +298,7 @@ sub load_collections {
 sub save_collections {
     my $self = shift @_;
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters') {
+    foreach my $AdaptorType ('PipelineWideParameters') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         while( my ($hash_key,$hash_value) = each %{ $class->collection() } ) {
@@ -307,11 +307,11 @@ sub save_collections {
         }
     }
 
-    foreach my $AdaptorType ('ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+    foreach my $AdaptorType ('MetaParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         my $adaptor = $self->get_adaptor( $AdaptorType );
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         foreach my $storable_object ( $class->collection()->list ) {
-            $adaptor->store_or_update_one( $storable_object );
+            $adaptor->store_or_update_one( $storable_object, $class->unikey() );
 #            warn "Stored/updated ".$storable_object->toString()."\n";
         }
     }

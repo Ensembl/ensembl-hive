@@ -33,6 +33,11 @@ package Bio::EnsEMBL::Hive::MetaParameters;
 use strict;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable' );
- 
+
+
+sub unikey {    # override the default from Cacheable parent
+    return [ 'meta_key' ];
+}
+
 1;
 

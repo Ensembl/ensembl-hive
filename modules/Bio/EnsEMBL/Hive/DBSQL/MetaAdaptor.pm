@@ -45,27 +45,12 @@ sub default_table_name {
 }
 
 
-sub replace_pair {
-    my ($self, $meta_key, $meta_value) = @_;
-
-    $self->remove_all_by_meta_key($meta_key);   # make sure the previous values are gone
-    return $self->store( { 'meta_key' => $meta_key, 'meta_value' => $meta_value } );
-}
-
-
-sub fetch_param_hash {
-    my $self = shift @_;
-
-    return $self->fetch_HASHED_FROM_meta_key_TO_meta_value();
-}
-
-
 sub get_value_by_key {
     my ($self, $meta_key) = @_;
 
     if( my $collection = Bio::EnsEMBL::Hive::MetaParameters->collection() ) {
 
-        return $collection->{ $meta_key };
+        return $collection->find_one_by( 'meta_key', $meta_key );
 
     } else {
 

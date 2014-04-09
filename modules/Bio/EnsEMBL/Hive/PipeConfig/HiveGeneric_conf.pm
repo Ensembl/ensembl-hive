@@ -455,8 +455,13 @@ sub add_objects_from_config {
     my $self                = shift @_;
 
     warn "Adding hive_meta table entries ...\n";
-    my $hm_coll = Bio::EnsEMBL::Hive::MetaParameters->collection();
-    %$hm_coll = (%$hm_coll, %{$self->hive_meta_table()} );
+    my $new_meta_entries = $self->hive_meta_table();
+    while( my ($meta_key, $meta_value) = each %$new_meta_entries ) {
+        Bio::EnsEMBL::Hive::MetaParameters->add_new_or_update(
+            'meta_key'      => $meta_key,
+            'meta_value'    => $meta_value,
+        );
+    }
     warn "Done.\n\n";
 
     warn "Adding pipeline-wide parameters ...\n";
