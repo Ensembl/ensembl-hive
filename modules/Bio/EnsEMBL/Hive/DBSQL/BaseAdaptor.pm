@@ -396,40 +396,52 @@ sub update {    # update (some or all) non_primary columns from the primary
     $sth->finish();
 }
 
-sub store_or_update_one {
-    my ($self, $object) = @_;
 
+sub store_or_update_one {
+    my ($self, $object, $filter_columns) = @_;
+
+    #use Data::Dumper;
     if(UNIVERSAL::can($object, 'adaptor') and $object->adaptor and $object->adaptor==$self) {  # looks like it has been previously stored
-        if(@{ $self->primary_key() }) { # updatable ?
+        if( @{ $self->primary_key() } and @{ $self->updatable_column_list() } ) {
             $self->update( $object );
-            # warn "store_or_update_one: updated [".$object->toString."]\n";
+            #warn "store_or_update_one: updated [".(UNIVERSAL::can($object, 'toString') ? $object->toString : Dumper($object))."]\n";
+        } else {
+            #warn "store_or_update_one: non-updatable [".(UNIVERSAL::can($object, 'toString') ? $object->toString : Dumper($object))."]\n";
         }
-    } elsif( my $present = $self->check_object_present_in_db( $object ) ) {
+    } elsif( my $present = $self->check_object_present_in_db_by_content( $object, $filter_columns ) ) {
         $self->mark_stored($object, $present);
-        # warn "store_or_update_one: found [".$object->toString."] in db by content\n";
+        #warn "store_or_update_one: found [".(UNIVERSAL::can($object, 'toString') ? $object->toString : Dumper($object))."] in db by content of (".join(', ', @$filter_columns).")\n";
+        if( @{ $self->primary_key() } and @{ $self->updatable_column_list() } ) {
+            #warn "store_or_update_one: updating the columns (".join(', ', @{ $self->updatable_column_list() }).")\n";
+            $self->update( $object );
+        }
     } else {
         $self->store( $object );
-        # warn "store_or_update_one: stored [".$object->toString."]\n";
+        #warn "store_or_update_one: stored [".(UNIVERSAL::can($object, 'toString') ? $object->toString : Dumper($object))."]\n";
     }
 }
 
 
-sub check_object_present_in_db {    # return autoinc_id/undef if the table has autoinc_id or just 1/undef if not
-    my ( $self, $object ) = @_;
+sub check_object_present_in_db_by_content {    # return autoinc_id/undef if the table has autoinc_id or just 1/undef if not
+    my ( $self, $object, $filter_columns ) = @_;
 
     my $table_name  = $self->table_name();
     my $column_set  = $self->column_set();
     my $autoinc_id  = $self->autoinc_id();
 
-        # we look for identical contents, so must skip the autoinc_id columns when fetching:
-    my $non_autoinc_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
-    my $non_autoinc_values  = $self->slicer( $object, $non_autoinc_columns );
+    if($filter_columns) {
+            # make sure all fields exist in the database as columns:
+        $filter_columns = [ map { $column_set->{$_} ? $_ : $_.'_id' } @$filter_columns ];
+    } else {
+            # we look for identical contents, so must skip the autoinc_id columns when fetching:
+        $filter_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
+    }
+    my %filter_hash;
+    @filter_hash{ @$filter_columns } = @{ $self->slicer( $object, $filter_columns ) };
 
     my @constraints = ();
     my @values = ();
-    foreach my $idx (0..scalar(@$non_autoinc_columns)-1) {
-        my $column = $non_autoinc_columns->[$idx];
-        my $value  = $non_autoinc_values->[$idx];
+    while(my ($column, $value) = each %filter_hash ) {
         if( defined($value) ) {
             push @constraints, "$column = ?";
             push @values, $value;
@@ -439,6 +451,7 @@ sub check_object_present_in_db {    # return autoinc_id/undef if the table has a
     }
 
     my $sql = 'SELECT '.($autoinc_id or 1)." FROM $table_name WHERE ".  join(' AND ', @constraints);
+#warn "check_object_present_in_db_by_content: sql= $sql WITH VALUES (".join(', ', @values).")\n";
     my $sth = $self->prepare( $sql );
     $sth->execute( @values );
 
