@@ -44,9 +44,10 @@ sub find_one_by {
 
     ELEMENT: foreach my $element (@{ $self->listref }) {
         keys %method_to_filter_value;   # sic! This is to "rewind" the each% operator to the beginning each time
-        while(my ($method, $filter_value) = each %method_to_filter_value) {
-            next ELEMENT unless( defined($element->$method())   # either both defined and equal or neither defined
-                                    ? defined($filter_value) && ($element->$method() eq $filter_value)
+        while(my ($filter_name, $filter_value) = each %method_to_filter_value) {
+            my $actual_value = (ref($element) eq 'HASH') ? $element->{$filter_name} : $element->$filter_name();
+            next ELEMENT unless( defined($actual_value)   # either both defined and equal or neither defined
+                                    ? defined($filter_value) && ($actual_value eq $filter_value)
                                     : !defined($filter_value)
                                );
         }
@@ -62,8 +63,12 @@ sub find_all_by {
 
     ELEMENT: foreach my $element (@{ $self->listref }) {
         keys %method_to_filter_value;   # sic! This is to "rewind" the each% operator to the beginning each time
-        while(my ($method, $filter_value) = each %method_to_filter_value) {
-            next ELEMENT unless($element->$method() eq $filter_value);
+        while(my ($filter_name, $filter_value) = each %method_to_filter_value) {
+            my $actual_value = (ref($element) eq 'HASH') ? $element->{$filter_name} : $element->$filter_name();
+            next ELEMENT unless( defined($actual_value)   # either both defined and equal or neither defined
+                                    ? defined($filter_value) && ($actual_value eq $filter_value)
+                                    : !defined($filter_value)
+                               );
         }
         push @filtered_elements, $element;
     }

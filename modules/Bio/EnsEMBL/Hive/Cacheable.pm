@@ -29,21 +29,26 @@ sub add_new_or_update {
     my $self;
 
     if( my $unikey_keys = $class->unikey() ) {
-        my %all_pairs = @_;
+        my %other_pairs = @_;
         my %unikey_pairs;
-        @unikey_pairs{ @$unikey_keys} = @all_pairs{ @$unikey_keys };
+        @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
         use Data::Dumper;
         local $Data::Dumper::Indent    = 0;         # we want everything on one line
         local $Data::Dumper::Terse     = 1;         # and we want it without dummy variable names
         local $Data::Dumper::Maxdepth  = 1;
 
         if( $self = $class->collection()->find_one_by( %unikey_pairs ) ) {
-            # update the rest of the fields
-            warn "Updating $class (".Dumper(\%unikey_pairs).")\n";
-            while( my ($method, $value) = each %all_pairs ) {
-                unless( exists( $unikey_pairs{$method} ) ) {
-                    $self->$method($value);
+            if(keys %other_pairs) {
+                warn "Updating $class (".Dumper(\%unikey_pairs).") with (".Dumper(\%other_pairs).")\n";
+                if( ref($self) eq 'HASH' ) {
+                    @$self{ keys %other_pairs } = values %other_pairs;
+                } else {
+                    while( my ($key, $value) = each %other_pairs ) {
+                        $self->$key($value);
+                    }
                 }
+            } else {
+                warn "Found a matching $class (".Dumper(\%unikey_pairs).")\n";
             }
         } else {
             warn "Creating a new $class (".Dumper(\%unikey_pairs).")\n";
@@ -53,7 +58,12 @@ sub add_new_or_update {
     }
 
     unless( $self ) {
-        $self = $class->new( @_ );
+        if( $class->can('new') ) {
+            $self = $class->new( @_ );
+        } else {
+            $self = { @_ };
+        }
+
         $class->collection()->add( $self );
     }
 
