@@ -465,8 +465,13 @@ sub add_objects_from_config {
     warn "Done.\n\n";
 
     warn "Adding pipeline-wide parameters ...\n";
-    my $mc_coll = Bio::EnsEMBL::Hive::PipelineWideParameters->collection();
-    %$mc_coll = (%$mc_coll, %{$self->pipeline_wide_parameters()} );
+    my $new_pwp_entries = $self->pipeline_wide_parameters();
+    while( my ($param_name, $param_value) = each %$new_pwp_entries ) {
+        Bio::EnsEMBL::Hive::PipelineWideParameters->add_new_or_update(
+            'param_name'    => $param_name,
+            'param_value'   => $param_value,
+        );
+    }
     warn "Done.\n\n";
 
     warn "Adding Resources ...\n";

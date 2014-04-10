@@ -45,27 +45,26 @@ sub default_table_name {
 }
 
 
-sub replace_pair {
-    my ($self, $param_name, $param_value) = @_;
-
-    $self->remove_all_by_param_name($param_name);   # make sure the previous values are gone
-    return $self->store( { 'param_name' => $param_name, 'param_value' => stringify( $param_value ) } );
-}
-
-
 =head2 fetch_param_hash
 
-    Description: returns the content of the 'meta' table as a hash
+    Description: returns the contents of the 'pipeline_wide_parameters' table as a hash
 
 =cut
 
 sub fetch_param_hash {
     my $self = shift @_;
 
-    my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();
-    my %destringified_hash  = map { $_, destringify($original_value->{$_}) } keys %$original_value;
+    if( my $collection = Bio::EnsEMBL::Hive::PipelineWideParameters->collection() ) {
 
-    return \%destringified_hash;
+        return { map { $_->{'param_name'} => destringify($->{'param_value'}) } $collection->list() };
+
+    } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
+
+        my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();
+        my %destringified_hash  = map { $_, destringify($original_value->{$_}) } keys %$original_value;
+
+        return \%destringified_hash;
+    }
 }
 
 1;

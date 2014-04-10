@@ -52,7 +52,7 @@ sub get_value_by_key {
 
         return $collection->find_one_by( 'meta_key', $meta_key );
 
-    } else {
+    } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
 
         my $pair = $self->fetch_by_meta_key( $meta_key );
         return $pair && $pair->{'meta_value'};

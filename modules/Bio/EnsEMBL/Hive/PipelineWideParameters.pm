@@ -34,5 +34,10 @@ use strict;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable' );
  
+
+sub unikey {    # override the default from Cacheable parent
+    return [ 'param_name' ];
+}
+
 1;
 
