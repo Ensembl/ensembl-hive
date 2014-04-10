@@ -535,21 +535,37 @@ sub worker_temp_directory {
     my $self = shift @_;
 
     unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
-        my $username = $ENV{'USER'};
-        my $worker_id = $self->worker ? $self->worker->dbID : 'standalone';
-        $self->{'_tmp_dir'} = "/tmp/worker_${username}.${worker_id}/";
+        $self->{'_tmp_dir'} = $self->worker_temp_directory_name();
         mkdir($self->{'_tmp_dir'}, 0777);
         throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
     }
     return $self->{'_tmp_dir'};
 }
 
+sub worker_temp_directory_name {
+    my $self = shift @_;
+
+    my $username = $ENV{'USER'};
+    my $worker_id = $self->worker ? $self->worker->dbID : 'standalone';
+    return "/tmp/worker_${username}.${worker_id}/";
+}
+
+
+=head2 cleanup_worker_temp_directory
+
+    Title   :  cleanup_worker_temp_directory
+    Function:  Cleans up the directory on the local /tmp disk that is used for the
+               worker. It can be used to remove files left there by previous jobs.
+    Usage   :  $self->cleanup_worker_temp_directory;
+
+=cut
 
 sub cleanup_worker_temp_directory {
     my $self = shift @_;
 
-    if($self->{'_tmp_dir'} and (-e $self->{'_tmp_dir'}) ) {
-        my $cmd = "rm -r ". $self->{'_tmp_dir'};
+    my $tmp_dir = $self->worker_temp_directory_name();
+    if(-e $tmp_dir) {
+        my $cmd = "rm -r $tmp_dir";
         system($cmd);
     }
 }
