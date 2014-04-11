@@ -243,7 +243,7 @@ sub dataflow_rules_collection {
 sub toString {
     my $self = shift @_;
 
-    return ('Analysis: '.join(', ', map { $_.'="'.$self->$_().'"' } qw(dbID logic_name module parameters) ));
+    return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', $self->module, $self->parameters, $self->resource_class->name).')';
 }
 
 1;

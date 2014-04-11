@@ -60,7 +60,7 @@ sub name {
 sub toString {
     my $self = shift @_;
 
-    return ('ResourceClass: '.join(', ', map { $_.'="'.$self->$_().'"' } qw(dbID name) ));
+    return 'ResourceClass['.($self->dbID // '').']: '.$self->name;
 }
 
 1;

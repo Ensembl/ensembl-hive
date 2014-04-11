@@ -50,8 +50,6 @@ sub add_new_or_update {
             } else {
                 warn "Found a matching $class (".Dumper(\%unikey_pairs).")\n";
             }
-        } else {
-            warn "Creating a new $class (".Dumper(\%unikey_pairs).")\n";
         }
     } else {
         warn "$class doesn't redefine unikey(), so unique objects cannot be identified";
@@ -60,8 +58,10 @@ sub add_new_or_update {
     unless( $self ) {
         if( $class->can('new') ) {
             $self = $class->new( @_ );
+            warn "Created a new ".$self->toString."\n";
         } else {
             $self = { @_ };
+            warn "Created a new naked entry ".stringify($self)."\n";
         }
 
         $class->collection()->add( $self );

@@ -192,19 +192,22 @@ sub to_analysis {
 =cut
 
 sub toString {
-    my $self = shift;
+    my $self    = shift @_;
+    my $short   = shift @_;
 
     return join('',
-            'DataflowRule(dbID=',
-            ($self->dbID || '?'),
-            ($self->funnel_dataflow_rule_id ? ' --|| '.$self->funnel_dataflow_rule_id : ''),
-            '): [#',
+            $short ? () : (
+                'DataflowRule[',
+                ($self->dbID // ''),
+                ']: ',
+                $self->from_analysis->logic_name,
+            ),
+            ' --#',
             $self->branch_code,
-            '] ',
-            $self->from_analysis->logic_name,
-            ' -> ',
+            '--> ',
             $self->to_analysis_url,
             ($self->input_id_template ? (' WITH TEMPLATE: '.$self->input_id_template) : ''),
+            ($self->funnel_dataflow_rule ? ' ---|| ('.$self->funnel_dataflow_rule->toString(1).' )'  : ''),
     );
 }
 

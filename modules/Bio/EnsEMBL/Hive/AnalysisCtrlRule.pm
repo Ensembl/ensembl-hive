@@ -153,11 +153,9 @@ sub toString {
     my $self = shift;
 
     return join('',
-            'AnalysisCtrlRule',
-#            '(dbID=', ($self->dbID || '?'), ')',   # this object doesn't have a dbID
-            ': ',
+            'AnalysisCtrlRule: ',
             $self->condition_analysis_url,
-            ' -| ',
+            ' ---| ',
             $self->ctrled_analysis->logic_name,
     );
 }
