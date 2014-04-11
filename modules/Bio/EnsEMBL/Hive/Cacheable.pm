@@ -1,6 +1,5 @@
 package Bio::EnsEMBL::Hive::Cacheable;
 
-use Data::Dumper;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
@@ -32,14 +31,11 @@ sub add_new_or_update {
         my %other_pairs = @_;
         my %unikey_pairs;
         @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
-        use Data::Dumper;
-        local $Data::Dumper::Indent    = 0;         # we want everything on one line
-        local $Data::Dumper::Terse     = 1;         # and we want it without dummy variable names
-        local $Data::Dumper::Maxdepth  = 1;
 
         if( $self = $class->collection()->find_one_by( %unikey_pairs ) ) {
+            my $found_display = UNIVERSAL::can($self, 'toString') ? $self->toString : stringify($self);
             if(keys %other_pairs) {
-                warn "Updating $class (".Dumper(\%unikey_pairs).") with (".Dumper(\%other_pairs).")\n";
+                warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
                 if( ref($self) eq 'HASH' ) {
                     @$self{ keys %other_pairs } = values %other_pairs;
                 } else {
@@ -48,7 +44,7 @@ sub add_new_or_update {
                     }
                 }
             } else {
-                warn "Found a matching $class (".Dumper(\%unikey_pairs).")\n";
+                warn "Found a matching $found_display\n";
             }
         }
     } else {
@@ -56,13 +52,10 @@ sub add_new_or_update {
     }
 
     unless( $self ) {
-        if( $class->can('new') ) {
-            $self = $class->new( @_ );
-            warn "Created a new ".$self->toString."\n";
-        } else {
-            $self = { @_ };
-            warn "Created a new naked entry ".stringify($self)."\n";
-        }
+        $self = $class->can('new') ? $class->new( @_ ) : { @_ };
+
+        my $found_display = UNIVERSAL::can($self, 'toString') ? $self->toString : 'naked entry '.stringify($self);
+        warn "Created a new $found_display\n";
 
         $class->collection()->add( $self );
     }
