@@ -147,6 +147,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Logging and monitoring</h2>
     </div>
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
+        <li><a href="#worker_resource_usage"><b>worker_resource_usage</b></a></li>
         <li><a href="#log_message"><b>log_message</b></a></li>
         <li><a href="#analysis_stats_monitor"><b>analysis_stats_monitor</b></a></li>
 
@@ -498,10 +499,10 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td></td><td>unique ID of the Worker</td><td></td></tr>
-      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(255)</td><td></td><td>type of the Meadow it is running on</td><td></td></tr>
-      <tr class="bg1"><td><b>meadow_name</b></td><td>VARCHAR(255)</td><td></td><td>name of the Meadow it is running on (for 'LOCAL' type is the same as host)</td><td></td></tr>
+      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(255)</td><td></td><td>type of the Meadow it is running on</td><td>key: meadow_process</td></tr>
+      <tr class="bg1"><td><b>meadow_name</b></td><td>VARCHAR(255)</td><td></td><td>name of the Meadow it is running on (for 'LOCAL' type is the same as host)</td><td>key: meadow_process</td></tr>
       <tr class="bg2"><td><b>host</b></td><td>VARCHAR(255)</td><td></td><td>execution host name</td><td></td></tr>
-      <tr class="bg1"><td><b>process_id</b></td><td>VARCHAR(255)</td><td></td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td></td></tr>
+      <tr class="bg1"><td><b>process_id</b></td><td>VARCHAR(255)</td><td></td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td>key: meadow_process</td></tr>
       <tr class="bg2"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
       <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td>NULL</td><td>Analysis the Worker is specified into</td><td>key: analysis_status</td></tr>
       <tr class="bg2"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
@@ -518,6 +519,33 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
 <div style="background-color:#F2F2F2;padding:5px;margin:5px 0px;border-top:2px solid #F4D20C">
   <h2 id="5" style="display:inline;color:#000">Logging and monitoring</h2>
 </div>
+
+  <div id="worker_resource_usage" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
+        <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">worker_resource_usage</div>
+    <div style="float:right;text-align:right;padding-right:1px">
+      <a id="a_worker_resource_usage" style="cursor:pointer;text-decoration:none" onclick="show_hide('worker_resource_usage')">
+        <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
+        <span style="vertical-align:middle">Show columns</span>
+      </a> 
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A table with post-mortem resource usage statistics of a Worker.</p>
+
+  <div id="div_worker_resource_usage" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td></td><td>links to the worker table</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>exit_status</b></td><td>VARCHAR(255)</td><td></td><td>meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)</td><td></td></tr>
+      <tr class="bg1"><td><b>mem_megs</b></td><td>FLOAT</td><td></td><td>how much memory the Worker process used</td><td></td></tr>
+      <tr class="bg2"><td><b>swap_megs</b></td><td>FLOAT</td><td></td><td>how much swap the Worker process used</td><td></td></tr>
+      <tr class="bg1"><td><b>pending_sec</b></td><td>INTEGER</td><td></td><td>time spent by the process in the queue before it became a Worker</td><td></td></tr>
+      <tr class="bg2"><td><b>cpu_sec</b></td><td>FLOAT</td><td></td><td>cpu time used by the Worker process</td><td></td></tr>
+      <tr class="bg1"><td><b>lifespan_sec</b></td><td>INTEGER</td><td></td><td>walltime used by the Worker process</td><td></td></tr>
+      <tr class="bg2"><td><b>exception_status</b></td><td>VARCHAR(255)</td><td></td><td>meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'</td><td></td></tr>
+    </table>
+  </div>
 
   <div id="log_message" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
         <div style="float:left;padding:0px;height:20px;width:10px;background-color:#F4D20C;margin-right:10px"></div>
@@ -540,7 +568,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>the 'current' worker</td><td>key: worker_id</td></tr>
       <tr class="bg2"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
       <tr class="bg1"><td><b>retry</b></td><td>INTEGER</td><td>NULL</td><td>retry_count of the job when the message was thrown (or NULL if no job)</td><td></td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
       <tr class="bg1"><td><b>msg</b></td><td>TEXT</td><td></td><td>string that contains the message</td><td></td></tr>
       <tr class="bg2"><td><b>is_error</b></td><td>SMALLINT</td><td></td><td>binary flag</td><td></td></tr>
     </table>
