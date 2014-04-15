@@ -133,8 +133,8 @@ sub main {
         warn "No bacct information given, finding out the time interval when the pipeline was run on '$this_lsf_farm' ...\n";
 
         my $offset_died_expression = ($dbc->driver eq 'sqlite')
-                        ? "datetime(max(died), '+1 minute')"
-                        : "FROM_UNIXTIME(UNIX_TIMESTAMP(max(died))+60)";
+                        ? "datetime(max(died), '+2 minutes')"
+                        : "FROM_UNIXTIME(UNIX_TIMESTAMP(max(died))+120)";
 
         my $sth_times = $dbc->prepare( "SELECT min(born), $offset_died_expression FROM worker WHERE meadow_type='LSF' AND meadow_name='$this_lsf_farm' AND status='DEAD'" );
         $sth_times->execute();
