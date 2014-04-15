@@ -153,25 +153,93 @@ sub kill_worker {
 }
 
 
-sub find_out_causes {
-    my $self = shift @_;
+sub parse_report_source_line {
+    my $bacct_source_line = shift @_;
 
-    my %lsf_2_hive = (
+    my %status_2_cod = (
         'TERM_MEMLIMIT' => 'MEMLIMIT',
         'TERM_RUNLIMIT' => 'RUNLIMIT',
         'TERM_OWNER'    => 'KILLED_BY_USER',
     );
 
+    my %units_2_megs = (
+        'K' => 1.0/1024,
+        'M' => 1,
+        'G' => 1024,
+        'T' => 1024*1024,
+    );
+
+    local $/ = "------------------------------------------------------------------------------\n\n";
+    open(my $bacct_fh, $bacct_source_line);
+    my $record = <$bacct_fh>; # skip the header
+
+    my %report_entry = ();
+
+    for my $record (<$bacct_fh>) {
+        chomp $record;
+
+        # warn "RECORD:\n$record";
+
+        my @lines = split(/\n/, $record);
+        if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
+
+            my ($exit_status, $exception_status) = ('' x 2);
+            my ($completion_datetime, $cod);
+            foreach (@lines) {
+                if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                    $completion_datetime = $1;
+                    $cod = $status_2_cod{$3};
+                    $exit_status = $2 . ($3 ? "/$3" : '');
+                }
+                elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
+                    $exception_status = $1;
+                    $exception_status =~s/\s+/;/g;
+                }
+            }
+
+            my (@keys)   = split(/\s+/, ' '.$lines[@lines-2]);
+            my (@values) = split(/\s+/, ' '.$lines[@lines-1]);
+            my %usage;  @usage{@keys} = @values;
+
+            #warn join(', ', map {sprintf('%s=%s', $_, $usage{$_})} (sort keys %usage)), "\n";
+
+            my ($mem_in_units, $mem_unit)   = $usage{'MEM'}  =~ /^([\d\.]+)([KMGT])$/;
+            my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMGT])$/;
+
+            $report_entry{ $process_id } = {
+                'completion_datetime'   => $completion_datetime,
+                'cod'                   => $cod,
+                'exit_status'           => $exit_status,
+                'exception_status'      => $exception_status,
+                'mem_megs'              => $mem_in_units  * $units_2_megs{$mem_unit},
+                'swap_megs'             => $swap_in_units * $units_2_megs{$swap_unit},
+                'pending_sec'           => $usage{'WAIT'},
+                'cpu_sec'               => $usage{'CPU_T'},
+                'lifespan_sec'          => $usage{'TURNAROUND'},
+            };
+        }
+    }
+    close $bacct_fh;
+
+    return \%report_entry;
+}
+
+
+sub find_out_causes {
+    my $self = shift @_;
+
     my %cod = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-        my $cmd = "bacct -l $pid_batch";
+        my $cmd = "bacct -l $pid_batch |";
 
 #        warn "LSF::find_out_causes() running cmd:\n\t$cmd\n";
 
-        foreach my $section (split(/\-{10,}\s+/, `$cmd`)) {
-            if($section=~/^Job <(\d+(?:\[\d+\])?)>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
-                $cod{$1} = $lsf_2_hive{$2};
+        my $report_entries = parse_report_source_line( $cmd );
+
+        while( my ($process_id, $report_entry) = each %$report_entries ) {
+            if(my $entry_cod = $report_entry->{'cod'}) {
+                $cod{ $process_id } = $entry_cod;
             }
         }
     }
