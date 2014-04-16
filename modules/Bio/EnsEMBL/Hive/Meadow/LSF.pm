@@ -31,6 +31,7 @@
 package Bio::EnsEMBL::Hive::Meadow::LSF;
 
 use strict;
+use Time::Piece;
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
@@ -153,6 +154,22 @@ sub kill_worker {
 }
 
 
+sub _yearless_2_datetime {      # a private subroutine that recovers missing year from a date and transforms it into SQL's datetime for storage
+    my $wd_yearless = shift @_;
+
+    my ($wd, $yearless) = split(' ', $wd_yearless, 2);
+    my $curr_year = Time::Piece->new->year();
+
+    foreach my $year ($curr_year, $curr_year-1) {
+        my $datetime = Time::Piece->strptime("$yearless $year", '%b %d %T %Y');
+        if($datetime->wdayname eq $wd) {
+            return $datetime->date.' '.$datetime->hms;
+        }
+    }
+    return; # could not guess the year
+}
+
+
 sub parse_report_source_line {
     my $bacct_source_line = shift @_;
 
@@ -184,11 +201,11 @@ sub parse_report_source_line {
         if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
 
             my ($exit_status, $exception_status) = ('' x 2);
-            my ($completion_datetime, $cod);
+            my ($completion_datetime, $cause_of_death);
             foreach (@lines) {
                 if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
-                    $completion_datetime = $1;
-                    $cod = $status_2_cod{$3};
+                    $completion_datetime = _yearless_2_datetime($1);
+                    $cause_of_death = $status_2_cod{$3};
                     $exit_status = $2 . ($3 ? "/$3" : '');
                 }
                 elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
@@ -208,7 +225,7 @@ sub parse_report_source_line {
 
             $report_entry{ $process_id } = {
                 'completion_datetime'   => $completion_datetime,
-                'cod'                   => $cod,
+                'cause_of_death'        => $cause_of_death,
                 'exit_status'           => $exit_status,
                 'exception_status'      => $exception_status,
                 'mem_megs'              => $mem_in_units  * $units_2_megs{$mem_unit},
@@ -228,7 +245,7 @@ sub parse_report_source_line {
 sub find_out_causes {
     my $self = shift @_;
 
-    my %cod = ();
+    my %causes_of_death = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
         my $cmd = "bacct -l $pid_batch |";
@@ -238,13 +255,13 @@ sub find_out_causes {
         my $report_entries = parse_report_source_line( $cmd );
 
         while( my ($process_id, $report_entry) = each %$report_entries ) {
-            if(my $entry_cod = $report_entry->{'cod'}) {
-                $cod{ $process_id } = $entry_cod;
+            if(my $cause_of_death = $report_entry->{'cause_of_death'}) {
+                $causes_of_death{ $process_id } = $cause_of_death;
             }
         }
     }
 
-    return \%cod;
+    return \%causes_of_death;
 }
 
 
