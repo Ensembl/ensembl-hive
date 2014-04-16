@@ -43,6 +43,7 @@ ALTER TABLE worker                  ADD FOREIGN KEY (resource_class_id)         
 ALTER TABLE job                     ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 ALTER TABLE job_file                ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
+ALTER TABLE worker_resource_usage   ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 
 ALTER TABLE job                     ADD FOREIGN KEY (prev_job_id)               REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE job                     ADD FOREIGN KEY (semaphored_job_id)         REFERENCES job(job_id)                          ON DELETE CASCADE;

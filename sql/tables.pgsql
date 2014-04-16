@@ -484,9 +484,40 @@ CREATE INDEX ON worker (analysis_id, status);
 */
 
 /**
+@table  worker_resource_usage
+
+@colour #F4D20C
+
+@desc   A table with post-mortem resource usage statistics of a Worker.
+
+@column          worker_id  links to the worker table
+@column        exit_status  meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)
+@column           mem_megs  how much memory the Worker process used
+@column          swap_megs  how much swap the Worker process used
+@column        pending_sec  time spent by the process in the queue before it became a Worker
+@column            cpu_sec  cpu time used by the Worker process
+@column       lifespan_sec  walltime used by the Worker process
+@column   exception_status  meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'
+*/
+
+CREATE TABLE worker_resource_usage (
+    worker_id               INTEGER         NOT NULL,
+    exit_status             VARCHAR(255)    DEFAULT NULL,
+    mem_megs                FLOAT           DEFAULT NULL,
+    swap_megs               FLOAT           DEFAULT NULL,
+    pending_sec             INTEGER         DEFAULT NULL,
+    cpu_sec                 FLOAT           DEFAULT NULL,
+    lifespan_sec            INTEGER         DEFAULT NULL,
+    exception_status        VARCHAR(255)    DEFAULT NULL,
+
+    PRIMARY KEY (worker_id)
+);
+
+
+/**
 @table  log_message
 
-@colour #08DAD8
+@colour #F4D20C
 
 @desc   When a Job or a job-less Worker (job_id=NULL) throws a "die" message
         for any reason, the message is recorded in this table.

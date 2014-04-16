@@ -61,3 +61,24 @@ CREATE OR REPLACE VIEW msg AS
     LEFT JOIN job j ON (j.job_id=m.job_id)
     LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
 
+
+-- show statistics of Workers' real resource usage by analysis -------------------------------------------
+--
+-- Usage:
+--       select * from resource_usage_stats;
+--       select * from resource_usage_stats where logic_name like 'family_blast%';
+
+CREATE OR REPLACE VIEW resource_usage_stats AS
+    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis,
+           w.meadow_type,
+           rc.name || '(' || rc.resource_class_id || ')' resource_class,
+           count(*) workers,
+           min(mem_megs) AS min_mem_megs, avg(mem_megs) AS avg_mem_megs, max(mem_megs) AS max_mem_megs,
+           min(swap_megs) AS min_swap_megs, avg(swap_megs) AS avg_swap_megs, max(swap_megs) AS max_swap_megs
+    FROM analysis_base a
+    JOIN resource_class rc USING(resource_class_id)
+    LEFT JOIN worker w USING(analysis_id)
+    LEFT JOIN worker_resource_usage USING (worker_id)
+    GROUP BY analysis_id, w.meadow_type, rc.resource_class_id
+    ORDER BY analysis_id, w.meadow_type;
+

@@ -60,42 +60,6 @@ sub main {
 
     my $dbc = $hive_dba->dbc();
 
-    warn "Creating the 'lsf_report' table if it doesn't exist...\n";
-    $dbc->do (qq{
-        CREATE TABLE IF NOT EXISTS lsf_report (
-            meadow_name      varchar(255) NOT NULL,
-            process_id       varchar(255) NOT NULL,
-            status           varchar(20) NOT NULL,
-            mem_megs         float NOT NULL,
-            swap_megs        float NOT NULL,
-            pending_sec      integer NOT NULL,
-            cpu_sec          float NOT NULL,
-            lifespan_sec     integer NOT NULL,
-            exception_status varchar(40) NOT NULL,
-
-            PRIMARY KEY (meadow_name,process_id),
-            KEY process_id_idx (process_id)
-
-        ) ENGINE=InnoDB;
-    });
-
-    warn "Creating the 'lsf_usage' view if it doesn't exist...\n";
-    $dbc->do (qq{
-        CREATE OR REPLACE VIEW lsf_usage AS
-            SELECT CONCAT(logic_name,'(',analysis_id,')') analysis,
-                   CONCAT(rc.name,'(',rc.resource_class_id,')') resource_class,
-                   count(*) workers,
-                   min(mem_megs), avg(mem_megs), max(mem_megs),
-                   min(swap_megs), avg(swap_megs), max(swap_megs)
-            FROM analysis_base
-            JOIN resource_class rc USING(resource_class_id)
-            LEFT JOIN worker w USING(analysis_id)
-            LEFT JOIN lsf_report USING (meadow_name, process_id)
-            WHERE w.meadow_type='LSF'
-            GROUP BY analysis_id
-            ORDER BY analysis_id;
-    });
-
     my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name();
     die "Cannot find the name of the current farm.\n" unless $this_lsf_farm;
 
@@ -144,8 +108,10 @@ sub main {
 
         warn 'Will run the following command to obtain '.($tee ? 'and dump ' : '')."bacct information: '$bacct_source_line' (may take a few minutes)\n";
     }
+    
+    my $processid_2_workerid = $hive_dba->get_WorkerAdaptor()->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
 
-    my $sth_replace = $dbc->prepare( 'REPLACE INTO lsf_report (meadow_name, process_id, status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)' );
+    my $sth_replace = $dbc->prepare( 'REPLACE INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)' );
     {
         local $/ = "------------------------------------------------------------------------------\n\n";
         my %units_converter = ( 'K' => 1.0/1024, 'M' => 1, 'G' => 1024, 'T' => 1024*1024 );
@@ -180,7 +146,12 @@ sub main {
                 my $swap_megs   = $swap_in_units * $units_converter{$swap_unit};
 
                 #warn join(', ', map {sprintf('%s=%s', $_, $usage{$_})} (sort keys %usage)), "\n";
-                $sth_replace->execute( $this_lsf_farm, $process_id, $usage{STATUS}, $mem_megs, $swap_megs, $usage{WAIT}, $usage{CPU_T}, $usage{TURNAROUND}, $exception_status );
+
+                if( my $worker_id = $processid_2_workerid->{$process_id} ) {
+                    $sth_replace->execute( $worker_id, $usage{STATUS}, $mem_megs, $swap_megs, $usage{WAIT}, $usage{CPU_T}, $usage{TURNAROUND}, $exception_status );
+                } else {
+                    warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
+                }
             }
         }
 

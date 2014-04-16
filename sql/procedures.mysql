@@ -62,6 +62,27 @@ CREATE OR REPLACE VIEW msg AS
     LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
 
 
+-- show statistics of Workers' real resource usage by analysis -------------------------------------------
+--
+-- Usage:
+--       select * from resource_usage_stats;
+--       select * from resource_usage_stats where logic_name like 'family_blast%';
+
+CREATE OR REPLACE VIEW resource_usage_stats AS
+    SELECT CONCAT(logic_name,'(',analysis_id,')') analysis,
+           w.meadow_type,
+           CONCAT(rc.name,'(',rc.resource_class_id,')') resource_class,
+           count(*) workers,
+           min(mem_megs), avg(mem_megs), max(mem_megs),
+           min(swap_megs), avg(swap_megs), max(swap_megs)
+    FROM analysis_base
+    JOIN resource_class rc USING(resource_class_id)
+    LEFT JOIN worker w USING(analysis_id)
+    LEFT JOIN worker_resource_usage USING (worker_id)
+    GROUP BY analysis_id, w.meadow_type
+    ORDER BY analysis_id, w.meadow_type;
+
+
 #### time an analysis or group of analyses (given by a name pattern) ######################################
 # You'll get better precision when the analyses involved have been done or failed rather than still running.
 #
