@@ -201,10 +201,10 @@ sub parse_report_source_line {
         if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
 
             my ($exit_status, $exception_status) = ('' x 2);
-            my ($completion_datetime, $cause_of_death);
+            my ($died, $cause_of_death);
             foreach (@lines) {
                 if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
-                    $completion_datetime = _yearless_2_datetime($1);
+                    $died           = _yearless_2_datetime($1);
                     $cause_of_death = $status_2_cod{$3};
                     $exit_status = $2 . ($3 ? "/$3" : '');
                 }
@@ -224,15 +224,18 @@ sub parse_report_source_line {
             my ($swap_in_units, $swap_unit) = $usage{'SWAP'} =~ /^([\d\.]+)([KMGT])$/;
 
             $report_entry{ $process_id } = {
-                'completion_datetime'   => $completion_datetime,
-                'cause_of_death'        => $cause_of_death,
-                'exit_status'           => $exit_status,
-                'exception_status'      => $exception_status,
-                'mem_megs'              => $mem_in_units  * $units_2_megs{$mem_unit},
-                'swap_megs'             => $swap_in_units * $units_2_megs{$swap_unit},
-                'pending_sec'           => $usage{'WAIT'},
-                'cpu_sec'               => $usage{'CPU_T'},
-                'lifespan_sec'          => $usage{'TURNAROUND'},
+                    # entries for 'worker' table:
+                'died'              => $died,
+                'cause_of_death'    => $cause_of_death,
+
+                    # entries for 'worker_resource_usage' table:
+                'exit_status'       => $exit_status,
+                'exception_status'  => $exception_status,
+                'mem_megs'          => $mem_in_units  * $units_2_megs{$mem_unit},
+                'swap_megs'         => $swap_in_units * $units_2_megs{$swap_unit},
+                'pending_sec'       => $usage{'WAIT'},
+                'cpu_sec'           => $usage{'CPU_T'},
+                'lifespan_sec'      => $usage{'TURNAROUND'},
             };
         }
     }
@@ -242,26 +245,22 @@ sub parse_report_source_line {
 }
 
 
-sub find_out_causes {
+sub get_report_entries_for_process_ids {
     my $self = shift @_;
 
-    my %causes_of_death = ();
+    my %combined_report_entries = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
         my $cmd = "bacct -l $pid_batch |";
 
-#        warn "LSF::find_out_causes() running cmd:\n\t$cmd\n";
+#        warn "LSF::get_combined_report() running cmd:\n\t$cmd\n";
 
-        my $report_entries = parse_report_source_line( $cmd );
+        my $batch_of_report_entries = parse_report_source_line( $cmd );
 
-        while( my ($process_id, $report_entry) = each %$report_entries ) {
-            if(my $cause_of_death = $report_entry->{'cause_of_death'}) {
-                $causes_of_death{ $process_id } = $cause_of_death;
-            }
-        }
+        %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
     }
 
-    return \%causes_of_death;
+    return \%combined_report_entries;
 }
 
 

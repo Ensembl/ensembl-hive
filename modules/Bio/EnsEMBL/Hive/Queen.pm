@@ -315,15 +315,16 @@ sub register_worker_death {
 
     return unless($worker);
 
-    my $cod = $worker->cause_of_death() || 'UNKNOWN';    # make sure we do not attempt to insert a void
+    my $worker_id       = $worker->dbID;
+    my $work_done       = $worker->work_done;
+    my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void
+    my $died            = $worker->died;
 
-                    # FIXME: make it possible to set the 'died' timestamp if we have detected it from logs:
-    my $sql = qq{UPDATE worker SET died=CURRENT_TIMESTAMP
-    } . ( $self_burial ? ',last_check_in=CURRENT_TIMESTAMP ' : '') . qq{
-                    ,status='DEAD'
-                    ,work_done='}. $worker->work_done . qq{'
-                    ,cause_of_death='$cod'
-                WHERE worker_id='}. $worker->dbID . qq{'};
+    my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
+            . ( $self_burial ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
+            . ( $died ? ", died='$died'" : ', died=CURRENT_TIMESTAMP' )
+            . " WHERE worker_id='$worker_id' ";
+
     $self->dbc->do( $sql );
 
     if(my $analysis_id = $worker->analysis_id) {
@@ -333,10 +334,10 @@ sub register_worker_death {
             $analysis_stats_adaptor->decrease_running_workers($worker->analysis_id);
         }
 
-        unless( $cod eq 'NO_WORK'
-            or  $cod eq 'JOB_LIMIT'
-            or  $cod eq 'HIVE_OVERLOAD'
-            or  $cod eq 'LIFESPAN'
+        unless( $cause_of_death eq 'NO_WORK'
+            or  $cause_of_death eq 'JOB_LIMIT'
+            or  $cause_of_death eq 'HIVE_OVERLOAD'
+            or  $cause_of_death eq 'LIFESPAN'
         ) {
                 $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
         }
@@ -351,7 +352,7 @@ sub register_worker_death {
 }
 
 
-sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachagle ones)
+sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachable ones)
     my ($self, $valley, $check_buried_in_haste) = @_;
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
@@ -396,10 +397,14 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         if(my $lost_this_meadow = scalar(keys %$pid_to_lost_worker) ) {
             warn "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
 
-            my $wpid_to_cod = {};
+            my $report_entries = {};
+
             if($this_meadow->can('find_out_causes')) {
-                $wpid_to_cod = $this_meadow->find_out_causes( keys %$pid_to_lost_worker );
-                my $lost_with_known_cod = scalar(keys %$wpid_to_cod);
+                die "Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n";
+
+            } elsif($this_meadow->can('get_report_entries_for_process_ids')) {
+                $report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker );
+                my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
             } else {
                 warn "GarbageCollector:\t$meadow_type meadow does not support post-mortem examination\n";
@@ -407,8 +412,9 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             warn "GarbageCollector:\tReleasing the jobs\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->cause_of_death( $wpid_to_cod->{$process_id} || 'UNKNOWN');
-                $self->register_worker_death($worker);
+                $worker->died(              $report_entries->{$process_id}{'died'} );
+                $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
+                $self->register_worker_death( $worker );
             }
         }
     }
@@ -741,8 +747,7 @@ sub register_all_workers_dead {
 
     my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
     foreach my $worker (@{$all_workers_considered_alive}) {
-        $worker->cause_of_death( 'UNKNOWN' );  # well, maybe we could have investigated further...
-        $self->register_worker_death($worker);
+        $self->register_worker_death( $worker );
     }
 }
 
