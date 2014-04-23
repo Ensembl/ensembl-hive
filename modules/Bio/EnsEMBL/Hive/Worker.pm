@@ -477,8 +477,9 @@ sub run {
         $self->{'_interval_partial_timing'} = {};
 
         if( my $special_batch = $self->special_batch() ) {
+            my $special_batch_length = scalar(@$special_batch);     # has to be recorded because the list is gradually destroyed
             $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
-            $self->cause_of_death('JOB_LIMIT');
+            $self->cause_of_death( $jobs_done_by_batches_loop == $special_batch_length ? 'JOB_LIMIT' : 'CONTAMINATED');
         } else {    # a proper "BATCHES" loop
 
             while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {

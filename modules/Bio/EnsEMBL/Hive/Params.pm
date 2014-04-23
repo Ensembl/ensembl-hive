@@ -110,6 +110,9 @@ sub param_init {
             if($strict_hash_format or $source=~/^\{.*\}$/) {
                 my $param_hash = eval($source) || {};
                 if($@ or (ref($param_hash) ne 'HASH')) {
+                    if($self->can('transient_error')) {
+                        $self->transient_error(0);
+                    }
                     die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
                 }
                 $source = $param_hash;
