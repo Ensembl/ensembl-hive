@@ -169,7 +169,7 @@ sub fetch_some_by_analysis_id_limit {
 sub fetch_all_incomplete_jobs_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    my $constraint = "status IN ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND worker_id='$worker_id'";
+    my $constraint = "status IN ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND worker_id='$worker_id'";
     return $self->fetch_all($constraint);
 }
 
@@ -292,7 +292,7 @@ sub store_out_files {
 
   Arg [1]    : int $job_id
   Arg [2]    : int $worker_id (optional)
-  Description: resets a job to to 'READY' (if no $worker_id given) or directly to 'CLAIMED' so it can be run again, and fetches it..
+  Description: resets a job to to 'READY' (if no $worker_id given) or directly to 'CLAIMED' so it can be run again, and fetches it.
                NB: Will also reset a previously 'SEMAPHORED' job to READY.
                The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
                but will not change retry_count if a job has never *really* started.
@@ -310,7 +310,7 @@ sub reset_or_grab_job_by_dbID {
         # Note: the order of the fields being updated is critical!
     my $sql = qq{
         UPDATE job
-           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
+           SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
              , status=?
              , worker_id=?
          WHERE job_id=?
@@ -398,7 +398,7 @@ sub grab_jobs_for_worker {
   Description: If a worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
-               If jobs was 'in progress' (COMPILATION, PRE_CLEANUP, FETCH_INPUT, RUN, WRITE_OUTPUT, POST_CLEANUP) 
+               If jobs was 'in progress' (PRE_CLEANUP, FETCH_INPUT, RUN, WRITE_OUTPUT, POST_CLEANUP) 
                the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
@@ -427,7 +427,7 @@ sub release_undone_jobs_from_worker {
         SELECT job_id
           FROM job
          WHERE worker_id='$worker_id'
-           AND status in ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+           AND status in ('PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
     $sth->execute();
 
@@ -478,7 +478,7 @@ sub release_and_age_job {
                retry_count=retry_count+1,
                runtime_msec=$runtime_msec
          WHERE job_id=$job_id
-           AND status in ('COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+           AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
 }
 
@@ -537,7 +537,7 @@ sub reset_jobs_for_analysis_id {
 
     my $sql = qq{
             UPDATE job
-           SET retry_count = CASE WHEN (status='COMPILATION' OR status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
+           SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
         }. ( ($self->dbc->driver eq 'pgsql')
         ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
         : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
