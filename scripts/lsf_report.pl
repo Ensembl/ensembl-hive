@@ -111,20 +111,11 @@ sub main {
 
     my $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF::parse_report_source_line( $bacct_source_line );
 
-    my $processid_2_workerid = $hive_dba->get_WorkerAdaptor()->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
+    my $queen = $hive_dba->get_Queen;
 
-    my $sth_replace = $dbc->prepare( 'REPLACE INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)' );
+    my $processid_2_workerid = $queen->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
 
-    while( my ($process_id, $report_entry) = each %$report_entries ) {
-
-        if( my $worker_id = $processid_2_workerid->{$process_id} ) {
-            $sth_replace->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
-        } else {
-            warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
-        }
-    }
-    $sth_replace->finish();
-    warn "\nReport has been loaded into pipeline's 'worker_resource_usage' table. Enjoy.\n";
+    $queen->store_resource_usage( $report_entries, $processid_2_workerid );
 }
 
 __DATA__

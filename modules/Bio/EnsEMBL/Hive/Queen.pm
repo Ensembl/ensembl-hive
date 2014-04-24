@@ -416,6 +416,11 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
             }
+
+            if( %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:
+                my $processid_2_workerid = { map { $_ => $pid_to_lost_worker->{$_}->dbID } keys %$pid_to_lost_worker };
+                $self->store_resource_usage( $report_entries, $processid_2_workerid );
+            }
         }
     }
 
@@ -749,6 +754,27 @@ sub register_all_workers_dead {
     foreach my $worker (@{$all_workers_considered_alive}) {
         $self->register_worker_death( $worker );
     }
+}
+
+
+sub store_resource_usage {
+    my ($self, $report_entries, $processid_2_workerid) = @_;
+
+    my $sql_replace = 'REPLACE INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    my $sth_replace = $self->prepare( $sql_replace );
+
+    my @not_ours = ();
+
+    while( my ($process_id, $report_entry) = each %$report_entries ) {
+
+        if( my $worker_id = $processid_2_workerid->{$process_id} ) {
+            $sth_replace->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+        } else {
+            push @not_ours, $process_id;
+            #warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
+        }
+    }
+    $sth_replace->finish();
 }
 
 
