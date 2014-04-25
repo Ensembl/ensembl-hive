@@ -757,6 +757,34 @@ sub register_all_workers_dead {
 }
 
 
+sub interval_workers_with_unknown_usage {
+    my $self = shift @_;
+
+    my %meadow_to_interval = ();
+
+    my $sql_times = qq{
+        SELECT meadow_type, meadow_name, min(born), max(died), count(*)
+        FROM worker w
+        LEFT JOIN worker_resource_usage u
+        USING(worker_id)
+        WHERE u.worker_id IS NULL
+        GROUP BY meadow_type, meadow_name
+    };
+    my $sth_times = $self->prepare( $sql_times );
+    $sth_times->execute();
+    while( my ($meadow_type, $meadow_name, $min_born, $max_died, $workers_count) = $sth_times->fetchrow_array() ) {
+        $meadow_to_interval{$meadow_type}{$meadow_name} = {
+            'min_born'      => $min_born,
+            'max_died'      => $max_died,
+            'workers_count' => $workers_count,
+        };
+    }
+    $sth_times->finish();
+
+    return \%meadow_to_interval;
+}
+
+
 sub store_resource_usage {
     my ($self, $report_entries, $processid_2_workerid) = @_;
 

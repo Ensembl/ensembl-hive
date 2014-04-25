@@ -58,7 +58,7 @@ sub main {
         script_usage(1);
     }
 
-    my $dbc = $hive_dba->dbc();
+    my $queen = $hive_dba->get_Queen;
 
     my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name();
     die "Cannot find the name of the current farm.\n" unless $this_lsf_farm;
@@ -71,17 +71,15 @@ sub main {
 
         warn "No bacct information given, finding out the time interval when the pipeline was run on '$this_lsf_farm' ...\n";
 
-        my $offset_died_expression = ($dbc->driver eq 'sqlite')
-                        ? "datetime(max(died), '+2 minutes')"
-                        : "FROM_UNIXTIME(UNIX_TIMESTAMP(max(died))+120)";
+        my $meadow_to_interval = $queen->interval_workers_with_unknown_usage();
+        my $our_interval = $meadow_to_interval->{ 'LSF' }{ $this_lsf_farm };
 
-        my $sth_times = $dbc->prepare( "SELECT min(born), $offset_died_expression FROM worker WHERE meadow_type='LSF' AND meadow_name='$this_lsf_farm' AND status='DEAD'" );
-        $sth_times->execute();
-        my ($from_time, $to_time) = $sth_times->fetchrow_array();
-        $sth_times->finish();
+        my ($from_time, $to_time, $workers_count);
 
-        unless(defined($from_time) and defined($to_time)) {
-            die "There seems to be no information on workers, exiting...\n";
+        if( $our_interval ) {
+            ($from_time, $to_time, $workers_count) = @$our_interval{ 'min_born', 'max_died', 'workers_count' }; # TODO: increase $to_time by 2 minutes using Time::Piece
+        } else {
+            die "Usage information for this meadow has already been loaded, exiting...\n";
         }
 
         if (defined $start_date) {
@@ -110,8 +108,6 @@ sub main {
     }
 
     my $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF::parse_report_source_line( $bacct_source_line );
-
-    my $queen = $hive_dba->get_Queen;
 
     my $processid_2_workerid = $queen->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
 
