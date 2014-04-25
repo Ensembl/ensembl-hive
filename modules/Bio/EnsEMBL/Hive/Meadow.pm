@@ -112,4 +112,22 @@ sub kill_worker {
     die "Please use a derived method";
 }
 
+
+sub parse_report_source_line {
+    my $self = shift @_;
+
+    warn "\t".ref($self)." does not support resource usage logs\n";
+
+    return;
+}
+
+
+sub get_report_entries_for_time_interval {
+    my $self = shift @_;
+
+    warn "\t".ref($self)." does not support resource usage logs\n";
+
+    return;
+}
+
 1;

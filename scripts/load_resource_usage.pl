@@ -1,7 +1,5 @@
 #!/usr/bin/env perl
 
-# Obtain bacct data for your pipeline from the LSF and store it in 'worker_resource_usage' table
-
 use strict;
 use warnings;
 
@@ -17,7 +15,7 @@ BEGIN {
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
-use Bio::EnsEMBL::Hive::Meadow::LSF;
+use Bio::EnsEMBL::Hive::Valley;
 
 main();
 exit(0);
@@ -57,38 +55,36 @@ sub main {
     }
 
     my $queen = $hive_dba->get_Queen;
+    my $meadow_2_pid_wid = $queen->fetch_HASHED_FROM_meadow_type_AND_meadow_name_AND_process_id_TO_worker_id();
 
-    my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name()
-        or die "Cannot find the name of the current farm.\n";
-
-    my $report_entries;
+    my $valley = Bio::EnsEMBL::Hive::Valley->new();
 
     if( $source_line ) {
 
-        $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF->parse_report_source_line( $source_line );
+        my $meadow = $valley->get_available_meadow_list()->[0];
+        warn "Taking the resource_usage data from the source ( $source_line ), assuming Meadow ".$meadow->signature."\n";
+
+        if(my $report_entries = $meadow->parse_report_source_line( $source_line ) ) {
+            $queen->store_resource_usage( $report_entries, $meadow_2_pid_wid->{$meadow->type}{$meadow->name} );
+        }
 
     } else {
+        warn "Searching for Workers without known resource_usage...\n";
 
-        warn "No bacct information given, finding out the time interval when the pipeline was run on '$this_lsf_farm' ...\n";
+        my $meadow_2_interval = $queen->interval_workers_with_unknown_usage();
 
-        my $meadow_to_interval = $queen->interval_workers_with_unknown_usage();
-        my $our_interval = $meadow_to_interval->{ 'LSF' }{ $this_lsf_farm };
+        foreach my $meadow (@{ $valley->get_available_meadow_list() }) {
 
-        my ($from_time, $to_time);
+            warn "\nFinding out the time interval when the pipeline was run on Meadow ".$meadow->signature."\n";
 
-        if( $our_interval ) {
-            ($from_time, $to_time) = @$our_interval{ 'min_born', 'max_died' };
-
-            $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF->get_report_entries_for_time_interval( $from_time, $to_time, $username );
-        } else {
-            die "Usage information for this meadow has already been loaded, exiting...\n";
+            if(my $our_interval = $meadow_2_interval->{ $meadow->type }{ $meadow->name } ) {
+                if(my $report_entries = $meadow->get_report_entries_for_time_interval( $our_interval->{'min_born'}, $our_interval->{'max_died'}, $username ) ) {
+                    $queen->store_resource_usage( $report_entries, $meadow_2_pid_wid->{$meadow->type}{$meadow->name} );
+                }
+            } else {
+                warn "\tNothing new to store for Meadow ".$meadow->signature."\n";
+            }
         }
-    }
-
-    if($report_entries and %$report_entries) {
-        my $processid_2_workerid = $queen->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
-
-        $queen->store_resource_usage( $report_entries, $processid_2_workerid );
     }
 }
 
@@ -98,15 +94,15 @@ __DATA__
 
 =head1 NAME
 
-    lsf_report.pl
+    load_resource_usage.pl
 
 =head1 DESCRIPTION
 
-    This script is used for offline examination of resources used by a Hive pipeline running on LSF
-    (the script is [Pp]latform-dependent).
+    This script obtains resource usage data for your pipeline from the Meadow and stores it in 'worker_resource_usage' table.
+    Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
 
     Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
-    it pulls the relevant data out of LSF's 'bacct' database, parses it and stores in 'worker_resource_usage' table.
+    it pulls the relevant data out of your Meadow (runs 'bacct' script in case of LSF), parses the report and stores in 'worker_resource_usage' table.
     You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
     to filter by analysis_id, do various stats, etc.
 
@@ -115,23 +111,23 @@ __DATA__
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: query 'bacct' and load the relevant data into 'worker_resource_usage' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test
+        # Just run it the usual way: query and store the relevant data into 'worker_resource_usage' table:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test
 
-        # The same, but assuming LSF user someone_else ran the pipeline:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
+        # The same, but assuming another user 'someone_else' ran the pipeline:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
 
         # Assuming the dump file existed. Load the dumped bacct data into 'worker_resource_usage' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
         # Provide your own command to fetch and parse the worker_resource_usage data from:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |"
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |"
 
 =head1 OPTIONS
 
     -help                   : print this help
     -url <url string>       : url defining where hive database is located
-    -username <username>    : if it wasn't you who ran the pipeline, LSF user name of that user can be provided
+    -username <username>    : if it wasn't you who ran the pipeline, the name of that user can be provided
     -source <filename>      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
 
 =head1 LICENSE
