@@ -15,8 +15,6 @@ BEGIN {
 
 
 use Getopt::Long;
-use Time::Piece;
-use Time::Seconds;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 use Bio::EnsEMBL::Hive::Meadow::LSF;
@@ -27,21 +25,19 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $bacct_source_line, $lsf_user, $help, $start_date, $end_date);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $source_line, $username, $help);
 
     GetOptions(
                 # connect to the database:
-            'url=s'                      => \$url,
-            'reg_conf|regfile=s'         => \$reg_conf,
-            'reg_type=s'                 => \$reg_type,
-            'reg_alias|regname=s'        => \$reg_alias,
-            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'url=s'                 => \$url,
+            'reg_conf|regfile=s'    => \$reg_conf,
+            'reg_type=s'            => \$reg_type,
+            'reg_alias|regname=s'   => \$reg_alias,
+            'nosqlvc=i'             => \$nosqlvc,       # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-            'dump|file=s'                => \$bacct_source_line,
-            'lu|lsf_user=s'              => \$lsf_user,
-            'sd|start_date=s'            => \$start_date,
-            'ed|end_date=s'              => \$end_date,
-            'h|help'                     => \$help,
+            'username=s'            => \$username,      # say "-user all" if the pipeline was run by several people
+            'source_line=s'         => \$source_line,
+            'h|help'                => \$help,
     );
 
     if ($help) { script_usage(0); }
@@ -62,12 +58,14 @@ sub main {
 
     my $queen = $hive_dba->get_Queen;
 
-    my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name();
-    die "Cannot find the name of the current farm.\n" unless $this_lsf_farm;
+    my $this_lsf_farm = Bio::EnsEMBL::Hive::Meadow::LSF::name()
+        or die "Cannot find the name of the current farm.\n";
 
-    if( $bacct_source_line && -r $bacct_source_line ) {
+    my $report_entries;
 
-        warn "Parsing given bacct file '$bacct_source_line'...\n";
+    if( $source_line ) {
+
+        $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF->parse_report_source_line( $source_line );
 
     } else {
 
@@ -76,43 +74,22 @@ sub main {
         my $meadow_to_interval = $queen->interval_workers_with_unknown_usage();
         my $our_interval = $meadow_to_interval->{ 'LSF' }{ $this_lsf_farm };
 
-        my ($from_time, $to_time, $workers_count);
+        my ($from_time, $to_time);
 
         if( $our_interval ) {
-            ($from_time, $to_time, $workers_count) = @$our_interval{ 'min_born', 'max_died', 'workers_count' };
-            my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
-            $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
+            ($from_time, $to_time) = @$our_interval{ 'min_born', 'max_died' };
+
+            $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF->get_report_entries_for_time_interval( $from_time, $to_time, $username );
         } else {
             die "Usage information for this meadow has already been loaded, exiting...\n";
         }
-
-        if (defined $start_date) {
-            die "start_date must be in a format like '2012/01/25/13:46'" unless $start_date =~ /^\d{4}\/\d{2}\/\d{2}\/\d{2}:\d{2}$/;
-            $from_time = $start_date;
-        } else {
-            $from_time=~s/[- ]/\//g;
-            $from_time=~s/:\d\d$//;
-        }
-
-        if (defined $end_date) {
-            die "end_date must be in a format like '2012/01/25/13:46'" unless $end_date =~ /^\d{4}\/\d{2}\/\d{2}\/\d{2}:\d{2}$/;
-            $to_time = $end_date;
-        }
-
-        warn "\tfrom=$from_time, to=$to_time\n";
-
-        $lsf_user = $lsf_user           ? "-u $lsf_user"                : '';
-        my $tee   = $bacct_source_line  ? "| tee $bacct_source_line"    : '';
-        $bacct_source_line = "bacct -l -C $from_time,$to_time $lsf_user $tee |";
-
-        warn 'Will run the following command to obtain '.($tee ? 'and dump ' : '')."bacct information: '$bacct_source_line' (may take a few minutes)\n";
     }
 
-    my $report_entries = Bio::EnsEMBL::Hive::Meadow::LSF::parse_report_source_line( $bacct_source_line );
+    if($report_entries and %$report_entries) {
+        my $processid_2_workerid = $queen->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
 
-    my $processid_2_workerid = $queen->fetch_by_meadow_type_AND_meadow_name_HASHED_FROM_process_id_TO_worker_id( 'LSF', $this_lsf_farm );
-
-    $queen->store_resource_usage( $report_entries, $processid_2_workerid );
+        $queen->store_resource_usage( $report_entries, $processid_2_workerid );
+    }
 }
 
 __DATA__
@@ -128,17 +105,13 @@ __DATA__
     This script is used for offline examination of resources used by a Hive pipeline running on LSF
     (the script is [Pp]latform-dependent).
 
-    Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
-    worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-    of LSF's 'bacct' database, parses it and stores in 'worker_resource_usage' table.
+    Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
+    it pulls the relevant data out of LSF's 'bacct' database, parses it and stores in 'worker_resource_usage' table.
     You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
     to filter by analysis_id, do various stats, etc.
 
-    You can optionally ask the script to dump the 'bacct' database in a dump file,
-    or fill in the 'worker_resource_usage' table from an existing dump file (most time is taken by querying bacct).
-
-    Please note the script may additionally pull information about LSF processes that you ran simultaneously
-    with running the pipeline. It is easy to ignore them by joining into 'worker' table.
+    You can optionally provide an an external filename or command to get the data from it (don't forget to append a '|' to the end!)
+    and then the data will be taken from your source and parsed from there.
 
 =head1 USAGE EXAMPLES
 
@@ -146,22 +119,20 @@ __DATA__
     lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test
 
         # The same, but assuming LSF user someone_else ran the pipeline:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -lsf_user someone_else
+    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
 
         # Assuming the dump file existed. Load the dumped bacct data into 'worker_resource_usage' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -dump long_mult.bacct
+    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
-        # Assuming the dump file did not exist. Query 'bacct', dump the data into a file and load it into 'worker_resource_usage' table:
-    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -dump long_mult_again.bacct
+        # Provide your own command to fetch and parse the worker_resource_usage data from:
+    lsf_report.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |"
 
 =head1 OPTIONS
 
     -help                   : print this help
     -url <url string>       : url defining where hive database is located
-    -dump <filename>        : a filename for bacct dump. It will be read from if the file exists, and written to otherwise.
-    -lsf_user <username>    : if it wasn't you who ran the pipeline, LSF user name of that user can be provided
-    -start_date <date>      : minimal start date of a job (the format is '2012/01/25/13:46')
-    -end_date <date>        : maximal end date of a job (the format is '2012/01/25/13:46')
+    -username <username>    : if it wasn't you who ran the pipeline, LSF user name of that user can be provided
+    -source <filename>      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
 
 =head1 LICENSE
 

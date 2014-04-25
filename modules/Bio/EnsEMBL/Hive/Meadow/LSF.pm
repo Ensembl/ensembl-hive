@@ -32,6 +32,7 @@ package Bio::EnsEMBL::Hive::Meadow::LSF;
 
 use strict;
 use Time::Piece;
+use Time::Seconds;
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
@@ -171,7 +172,9 @@ sub _yearless_2_datetime {      # a private subroutine that recovers missing yea
 
 
 sub parse_report_source_line {
-    my $bacct_source_line = shift @_;
+    my ($self, $bacct_source_line) = @_;
+
+    warn "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
 
     my %status_2_cod = (
         'TERM_MEMLIMIT' => 'MEMLIMIT',
@@ -246,21 +249,40 @@ sub parse_report_source_line {
 
 
 sub get_report_entries_for_process_ids {
-    my $self = shift @_;
+    my $self = shift @_;    # make sure we get if off the way before splicing
 
     my %combined_report_entries = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
         my $cmd = "bacct -l $pid_batch |";
 
-#        warn "LSF::get_combined_report() running cmd:\n\t$cmd\n";
+#        warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
-        my $batch_of_report_entries = parse_report_source_line( $cmd );
+        my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
 
         %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
     }
 
     return \%combined_report_entries;
+}
+
+
+sub get_report_entries_for_time_interval {
+    my ($self, $from_time, $to_time, $username) = @_;
+
+    my $from_timepiece = Time::Piece->strptime($from_time, '%Y-%m-%d %H:%M:%S');
+    $from_time = $from_timepiece->strftime('%Y/%m/%d/%H:%M');
+
+    my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
+    $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
+
+    my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '') . ' |';
+
+#        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
+
+    my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
+
+    return $batch_of_report_entries;
 }
 
 
