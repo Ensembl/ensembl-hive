@@ -15,6 +15,8 @@ BEGIN {
 
 
 use Getopt::Long;
+use Time::Piece;
+use Time::Seconds;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 use Bio::EnsEMBL::Hive::Meadow::LSF;
@@ -77,7 +79,9 @@ sub main {
         my ($from_time, $to_time, $workers_count);
 
         if( $our_interval ) {
-            ($from_time, $to_time, $workers_count) = @$our_interval{ 'min_born', 'max_died', 'workers_count' }; # TODO: increase $to_time by 2 minutes using Time::Piece
+            ($from_time, $to_time, $workers_count) = @$our_interval{ 'min_born', 'max_died', 'workers_count' };
+            my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
+            $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
         } else {
             die "Usage information for this meadow has already been loaded, exiting...\n";
         }
@@ -93,9 +97,6 @@ sub main {
         if (defined $end_date) {
             die "end_date must be in a format like '2012/01/25/13:46'" unless $end_date =~ /^\d{4}\/\d{2}\/\d{2}\/\d{2}:\d{2}$/;
             $to_time = $end_date;
-        } else {
-            $to_time=~s/[- ]/\//g;
-            $to_time=~s/:\d\d$//;
         }
 
         warn "\tfrom=$from_time, to=$to_time\n";
