@@ -44,9 +44,25 @@ sub new {
     my $self = bless {}, $class;
 
     $self->config( $config );
-    $self->context( [ 'Meadow', $self->type, $self->name ] );
+    $self->context( [ 'Meadow', $self->type, $self->cached_name ] );
 
     return $self;
+}
+
+
+sub cached_name {
+    my ($self) = @_;
+
+    my $name;
+
+    unless( ref($self) and $name = $self->{'_name'} ) {
+
+        if($name = $self->name() and ref($self) ) {
+            $self->{'_name'} = $name;
+        }
+    }
+
+    return $name;
 }
 
 
@@ -62,7 +78,7 @@ sub type { # should return 'LOCAL' or 'LSF'
 sub signature {
     my $self = shift @_;
 
-    return $self->type.'/'.$self->name;
+    return $self->type.'/'.$self->cached_name;
 }
 
 
@@ -95,7 +111,7 @@ sub generate_job_name {
 sub responsible_for_worker {
     my ($self, $worker) = @_;
 
-    return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->name);
+    return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->cached_name);
 }
 
 

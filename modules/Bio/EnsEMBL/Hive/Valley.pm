@@ -61,7 +61,7 @@ sub new {
         # make sure modules are loaded and available ones are checked prior to setting the current one
     foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
         eval "require $meadow_class";
-        if($meadow_class->name) {
+        if( $meadow_class->name ) {
             my $meadow_object            = $meadow_class->new( $config );
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
@@ -121,7 +121,7 @@ sub find_available_meadow_responsible_for_worker {
     my ($self, $worker) = @_;
 
     if( my $meadow = $self->available_meadow_hash->{$worker->meadow_type} ) {
-        if($meadow->name eq $worker->meadow_name) {
+        if($meadow->cached_name eq $worker->meadow_name) {
             return $meadow;
         }
     }
@@ -137,7 +137,7 @@ sub whereami {
         eval {
             $pid         = $meadow->get_current_worker_process_id();
             $meadow_type = $meadow->type();
-            $meadow_name = $meadow->name();
+            $meadow_name = $meadow->cached_name();
         };
         unless($@) {
             last;
