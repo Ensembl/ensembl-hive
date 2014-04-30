@@ -120,40 +120,59 @@ sub life_cycle {
     my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
     my %job_partial_timing = ();
 
+    $job->incomplete(1);    # reinforce, in case the life_cycle is not run by a Worker
     $job->autoflow(1);
 
-    if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
-        $self->enter_status('PRE_CLEANUP');
-        $self->pre_cleanup;
-    }
-
-    $self->enter_status('FETCH_INPUT');
-    $partial_stopwatch->restart();
-    $self->fetch_input;
-    $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->get_elapsed();
-
-    $self->enter_status('RUN');
-    $partial_stopwatch->restart();
-    $self->run;
-    $job_partial_timing{'RUN'} = $partial_stopwatch->get_elapsed();
-
-    if($self->execute_writes) {
-        $self->enter_status('WRITE_OUTPUT');
-        $partial_stopwatch->restart();
-        $self->write_output;
-        $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
-
-        if( $job->autoflow ) {
-            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
-            $job->dataflow_output_id();
+    eval {
+        if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
+            $self->enter_status('PRE_CLEANUP');
+            $self->pre_cleanup;
         }
-    } else {
-        print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
+
+        $self->enter_status('FETCH_INPUT');
+        $partial_stopwatch->restart();
+        $self->fetch_input;
+        $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->get_elapsed();
+
+        $self->enter_status('RUN');
+        $partial_stopwatch->restart();
+        $self->run;
+        $job_partial_timing{'RUN'} = $partial_stopwatch->get_elapsed();
+
+        if($self->execute_writes) {
+            $self->enter_status('WRITE_OUTPUT');
+            $partial_stopwatch->restart();
+            $self->write_output;
+            $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
+        } else {
+            print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
+        }
+    };
+
+    my $error_msg = $@;
+
+    if( $self->can('post_cleanup') ) {   # may be run to clean up memory even after partially failed attempts
+        eval {
+            $self->enter_status('POST_CLEANUP');
+            $self->post_cleanup;
+        };
+        if($@) {
+            $error_msg .= $@;
+            $job->incomplete(1);
+        }
     }
 
-    if( $self->can('post_cleanup') ) {   # Todo: may need to run it after the eval, to clean up the memory even after partially failed attempts?
-        $self->enter_status('POST_CLEANUP');
-        $self->post_cleanup;
+    if( $error_msg ) {
+        if( $job->incomplete ) {    # retransmit the death message if it was not a suicide, continue otherwise
+            die $error_msg;
+        } else {
+            $self->warning( $error_msg );
+        }
+    }
+
+    if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
+        print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
+        $job->dataflow_output_id();
     }
 
     my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};

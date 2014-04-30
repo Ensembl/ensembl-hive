@@ -696,10 +696,9 @@ sub run_one_batch {
 
         my $job_completion_line = "Job $job_id : complete";
 
-        if($msg_thrown) {   # record the message - whether it was a success or failure:
+        if($msg_thrown) {   # record the death message
             my $job_status_at_the_moment = $job->status();
-            my $action = $job->incomplete ? 'died' : 'exited';
-            $job_completion_line = "Job $job_id : $action in status '$job_status_at_the_moment' for the following reason: $msg_thrown";
+            $job_completion_line = "Job $job_id : died in status '$job_status_at_the_moment' for the following reason: $msg_thrown";
             $self->adaptor->db->get_LogMessageAdaptor()->store_job_message($job_id, $msg_thrown, $job->incomplete );
         }
 
