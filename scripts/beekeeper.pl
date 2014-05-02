@@ -376,7 +376,7 @@ sub run_autonomously {
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
                     my $specific_worker_cmd = $resourceless_worker_cmd
-                                            . ($special_task ? '' : " -rc_name $rc_name")
+                                            . " -rc_name $rc_name"
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
                     if( $self->{'submit_log_dir'} ) {
