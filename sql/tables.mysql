@@ -502,9 +502,9 @@ CREATE TABLE worker_resource_usage (
     exit_status             VARCHAR(255)    DEFAULT NULL,
     mem_megs                FLOAT           DEFAULT NULL,
     swap_megs               FLOAT           DEFAULT NULL,
-    pending_sec             INTEGER         DEFAULT NULL,
+    pending_sec             FLOAT           DEFAULT NULL,
     cpu_sec                 FLOAT           DEFAULT NULL,
-    lifespan_sec            INTEGER         DEFAULT NULL,
+    lifespan_sec            FLOAT           DEFAULT NULL,
     exception_status        VARCHAR(255)    DEFAULT NULL,
 
     PRIMARY KEY (worker_id)
