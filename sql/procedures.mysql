@@ -69,19 +69,20 @@ CREATE OR REPLACE VIEW msg AS
 --       select * from resource_usage_stats where logic_name like 'family_blast%';
 
 CREATE OR REPLACE VIEW resource_usage_stats AS
-    SELECT CONCAT(logic_name,'(',analysis_id,')') analysis,
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis,
            w.meadow_type,
            CONCAT(rc.name,'(',rc.resource_class_id,')') resource_class,
            u.exit_status,
            count(*) workers,
            min(mem_megs), avg(mem_megs), max(mem_megs),
            min(swap_megs), avg(swap_megs), max(swap_megs)
-    FROM analysis_base
-    JOIN resource_class rc USING(resource_class_id)
-    LEFT JOIN worker w USING(analysis_id)
+    FROM resource_class rc
+    JOIN analysis_base a USING(resource_class_id)
+    LEFT JOIN role r USING(analysis_id)
+    LEFT JOIN worker w USING(worker_id)
     LEFT JOIN worker_resource_usage u USING (worker_id)
-    GROUP BY analysis_id, w.meadow_type, u.exit_status
-    ORDER BY analysis_id, w.meadow_type, u.exit_status;
+    GROUP BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status
+    ORDER BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status;
 
 
 #### time an analysis or group of analyses (given by a name pattern) ######################################
@@ -96,10 +97,10 @@ DROP PROCEDURE IF EXISTS time_analysis;
 CREATE PROCEDURE time_analysis(IN param_logic_name_pattern char(64))
 READS SQL DATA
     SELECT
-        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/60 AS measured_in_minutes,
-        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600 AS measured_in_hours,
-        (UNIX_TIMESTAMP(max(last_check_in))-UNIX_TIMESTAMP(min(born)))/3600/24 AS measured_in_days
-        FROM worker JOIN analysis_base USING (analysis_id)
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/60 AS measured_in_minutes,
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/3600 AS measured_in_hours,
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/3600/24 AS measured_in_days
+        FROM role JOIN analysis_base USING (analysis_id)
         WHERE logic_name like param_logic_name_pattern;
 
 
@@ -150,7 +151,7 @@ CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
     DROP VIEW IF EXISTS msg, progress;
-    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, resource_description, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class, hive_meta;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, resource_description, analysis_data, role, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class, hive_meta;
 END; //
 DELIMITER ;
 

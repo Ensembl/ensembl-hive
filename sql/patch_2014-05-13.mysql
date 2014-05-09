@@ -1,0 +1,67 @@
+
+    -- Adding a new table for tracking Roles of multirole Workers:
+CREATE TABLE role (
+    role_id                 INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    worker_id               INTEGER     NOT NULL,
+    analysis_id             INTEGER     NOT NULL,
+    when_started            TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_finished           TIMESTAMP                    NULL,  -- mysql's special for "TIMESTAMP DEFAULT NULL"
+    attempted_jobs          INTEGER     NOT NULL DEFAULT 0,
+    done_jobs               INTEGER     NOT NULL DEFAULT 0,
+
+    KEY worker   (worker_id),
+    KEY analysis (analysis_id)
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+    -- new column in log_message to log the role_id:
+ALTER TABLE log_message ADD COLUMN role_id INTEGER DEFAULT NULL AFTER job_id;
+
+    -- add foreign keys linking the new table to the existing ones:
+ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
+ALTER TABLE role                    ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
+ALTER TABLE log_message             ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
+
+
+    -- replace affected views and procedures:
+CREATE OR REPLACE VIEW resource_usage_stats AS
+    SELECT CONCAT(a.logic_name,'(',a.analysis_id,')') analysis,
+           w.meadow_type,
+           CONCAT(rc.name,'(',rc.resource_class_id,')') resource_class,
+           u.exit_status,
+           count(*) workers,
+           min(mem_megs), avg(mem_megs), max(mem_megs),
+           min(swap_megs), avg(swap_megs), max(swap_megs)
+    FROM analysis_base a
+    JOIN resource_class rc USING(resource_class_id)
+    LEFT JOIN role r USING(analysis_id)
+    LEFT JOIN worker w USING(worker_id)
+    LEFT JOIN worker_resource_usage u USING (worker_id)
+    GROUP BY a.analysis_id, w.meadow_type, u.exit_status
+    ORDER BY a.analysis_id, w.meadow_type, u.exit_status;
+
+
+DROP PROCEDURE IF EXISTS time_analysis;
+CREATE PROCEDURE time_analysis(IN param_logic_name_pattern char(64))
+READS SQL DATA
+    SELECT
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/60 AS measured_in_minutes,
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/3600 AS measured_in_hours,
+        (UNIX_TIMESTAMP(max(when_finished))-UNIX_TIMESTAMP(min(when_started)))/3600/24 AS measured_in_days
+        FROM role JOIN analysis_base USING (analysis_id)
+        WHERE logic_name like param_logic_name_pattern;
+
+
+DROP PROCEDURE IF EXISTS drop_hive_tables;
+DELIMITER //
+CREATE PROCEDURE drop_hive_tables()
+MODIFIES SQL DATA
+BEGIN
+    DROP VIEW IF EXISTS msg, progress;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, resource_description, analysis_data, role, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class, hive_meta;
+END; //
+DELIMITER ;
+
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=60 WHERE meta_key='hive_sql_schema_version' AND meta_value='59';
+

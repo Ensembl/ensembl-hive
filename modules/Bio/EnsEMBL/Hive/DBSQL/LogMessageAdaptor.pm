@@ -8,7 +8,7 @@
 
     $dba->get_LogMessageAdaptor->store_job_message($job_id, $msg, $is_error);
 
-    $dba->get_LogMessageAdaptor->store_worker_message($worker_id, $msg, $is_error);
+    $dba->get_LogMessageAdaptor->store_worker_message($worker, $msg, $is_error);
 
 =head1 DESCRIPTION
 
@@ -67,7 +67,10 @@ sub store_job_message {
 
 
 sub store_worker_message {
-    my ($self, $worker_id, $msg, $is_error) = @_;
+    my ($self, $worker, $msg, $is_error) = @_;
+
+    my $worker_id = $worker->dbID;
+    my $role_id   = $worker->current_role && $worker->current_role->dbID;
 
     chomp $msg;   # we don't want that last "\n" in the database
 
@@ -75,12 +78,12 @@ sub store_worker_message {
 
         # Note: the timestamp 'time' column will be set automatically
     my $sql = qq{
-        INSERT INTO $table_name (worker_id, status, msg, is_error)
-                           SELECT worker_id, status, ?, ?
+        INSERT INTO $table_name (worker_id, role_id, status, msg, is_error)
+                           SELECT worker_id, ?, status, ?, ?
                              FROM worker WHERE worker_id=?
     };
     my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $is_error ? 1 : 0, $worker_id );
+    $sth->execute( $role_id, $msg, $is_error ? 1 : 0, $worker_id );
     $sth->finish();
 }
 

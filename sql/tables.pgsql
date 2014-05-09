@@ -427,7 +427,7 @@ CREATE INDEX ON analysis_data (data);
 
 
 /**
-@header worker table
+@header execution tables
 @colour #24DA06
 */
 
@@ -479,6 +479,38 @@ CREATE INDEX ON worker (analysis_id, status);
 
 
 /**
+@table  role
+
+@colour #24DA06
+
+@desc Entries of this table correspond to Role objects of the API.
+        When a Worker specializes, it acquires a Role,
+        which is a temporary link between the Worker and a resource-compatible Analysis.
+
+@column role_id             unique ID of the Role
+@column worker_id           the specialized Worker
+@column analysis_id         the Analysis into which the Worker specialized
+@column when_started        when this Role started
+@column when_finished       when this Role finished. NULL may either indicate it is still running or was killed by an external force.
+@column attempted_jobs      counter of the number of attempts
+@column done_jobs           counter of the number of successful attempts
+*/
+
+CREATE TABLE role (
+    role_id                 SERIAL PRIMARY KEY,
+    worker_id               INTEGER     NOT NULL,
+    analysis_id             INTEGER     NOT NULL,
+    when_started            TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_finished           TIMESTAMP            DEFAULT NULL,
+    attempted_jobs          INTEGER     NOT NULL DEFAULT 0,
+    done_jobs               INTEGER     NOT NULL DEFAULT 0
+);
+CREATE        INDEX role_worker_id_idx ON role (worker_id);
+CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
+
+
+
+/**
 @header Logging and monitoring
 @colour #F4D20C
 */
@@ -526,6 +558,7 @@ CREATE TABLE worker_resource_usage (
 
 @column log_message_id  an autoincremented primary id of the message
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
+@column        role_id  the 'current' role
 @column      worker_id  the 'current' worker
 @column           time  when the message was thrown
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
@@ -537,6 +570,7 @@ CREATE TABLE worker_resource_usage (
 CREATE TABLE log_message (
     log_message_id          SERIAL PRIMARY KEY,
     job_id                  INTEGER              DEFAULT NULL,
+    role_id                 INTEGER              DEFAULT NULL,
     worker_id               INTEGER              DEFAULT NULL,
     time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,

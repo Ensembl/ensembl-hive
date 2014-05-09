@@ -184,6 +184,7 @@ our %adaptor_type_2_package_name = (
     'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
     'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
     'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
+    'Role'                  => 'Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor',
     'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
 
         # aliases:

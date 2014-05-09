@@ -210,6 +210,13 @@ sub log_dir {
 
 ## Non-Storable attributes:
 
+sub current_role {
+      my $self = shift;
+      $self->{'_current_role'} = shift if(@_);
+      return $self->{'_current_role'};
+}
+
+
 sub debug {
   my $self = shift;
   $self->{'_debug'} = shift if(@_);
@@ -404,9 +411,12 @@ sub get_stderr_redirector {
 sub worker_say {
     my ($self, $msg) = @_;
 
-    my $worker_id     = $self->dbID();
-    my $analysis_name = $self->analysis_id ? $self->analysis->logic_name.'('.$self->analysis_id.')' : '';
-    print "Worker $worker_id [ $analysis_name ] $msg\n";
+    my $worker_id       = $self->dbID();
+    my $current_role    = $self->current_role;
+    print "Worker $worker_id [ ". ( $current_role
+                                    ? ('Role '.$current_role->dbID.' , '.$current_role->analysis->logic_name.'('.$current_role->analysis_id.')')
+                                    : 'UNSPECIALIZED'
+                                  )." ] $msg\n";
 }
 
 
@@ -414,12 +424,12 @@ sub toString {
     my $self = shift @_;
 
     return join(', ',
-            'analysis='.($self->analysis_id ? $self->analysis->logic_name.'('.$self->analysis_id.')' : 'UNSPECIALIZED'),
+            'analysis='.($self->current_role ? $self->current_role->analysis->logic_name.'('.$self->current_role->analysis_id.')' : 'UNSPECIALIZED'),
             'resource_class_id='.($self->resource_class_id || 'NULL'),
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
             'process='.$self->process_id.'@'.$self->host,
             'last_check_in='.$self->last_check_in,
-            'batch_size='.($self->analysis_id ? $self->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
+            'batch_size='.($self->current_role ? $self->current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
             'job_limit='.($self->job_limiter->available_capacity() || 'NONE'),
             'life_span='.($self->life_span || 'UNLIM'),
             'worker_log_dir='.($self->log_dir || 'STDOUT/STDERR'),
@@ -499,7 +509,7 @@ sub run {
                     $self->cause_of_death('LIFESPAN');
 
                 } else {
-                    my $desired_batch_size = $self->analysis->stats->get_or_estimate_batch_size();
+                    my $desired_batch_size = $self->current_role->analysis->stats->get_or_estimate_batch_size();
                     $desired_batch_size = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
                     my $workers_rank = $self->adaptor->get_workers_rank( $self );
@@ -521,7 +531,7 @@ sub run {
         if($jobs_done_by_batches_loop) {
 
             $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_work_done(
-                $self->analysis->dbID,
+                $self->current_role->analysis->dbID,
                 $jobs_done_by_batches_loop,
                 $batches_stopwatch->get_elapsed,
                 $self->{'_interval_partial_timing'}{'FETCH_INPUT'}  || 0,
@@ -532,9 +542,10 @@ sub run {
 
             # A mechanism whereby workers can be caused to exit even if they were doing fine:
         if (!$self->cause_of_death) {
-            my $stats = $self->analysis->stats;     # make sure it is fresh from the DB
+            my $analysis = $self->current_role->analysis;
+            my $stats = $analysis->stats;     # make sure it is fresh from the DB
             if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($self->adaptor->get_hive_current_load >= 1.1)
-             or defined($self->analysis->analysis_capacity) && (0 <= $self->analysis->analysis_capacity) && ($self->analysis->analysis_capacity < $stats->num_running_workers)
+             or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
             ) {
                 $self->cause_of_death('HIVE_OVERLOAD');
             }
@@ -542,12 +553,12 @@ sub run {
 
         if( $self->cause_of_death() =~ /^(NO_WORK|HIVE_OVERLOAD)$/ ) {
             if( $self->cause_of_death() eq 'NO_WORK') {
-                $self->adaptor->db->get_AnalysisStatsAdaptor->update_status($self->analysis_id, 'ALL_CLAIMED');
+                $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
             }
             
             if( $self->can_respecialize and !$specialization_arglist ) {
                 $self->cause_of_death(undef);
-                $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers($self->analysis->dbID);  # FIXME: tidy up this counting of active roles
+                $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers( $self->current_role->analysis->dbID );  # FIXME: tidy up this counting of active roles
                 $self->specialize_and_compile_wrapper();
             }
         }
@@ -564,7 +575,7 @@ sub run {
     $self->adaptor->register_worker_death($self, 1);
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats : '.$self->analysis->stats->toString ) if($self->analysis_id());
+        $self->worker_say( 'AnalysisStats : '.$self->current_role->analysis->stats->toString ) if( $self->current_role );
         $self->worker_say( 'dbc '.$self->adaptor->db->dbc->disconnect_count. ' disconnect cycles' );
     }
 
@@ -582,22 +593,24 @@ sub specialize_and_compile_wrapper {
 
     eval {
         $self->enter_status('SPECIALIZATION');
-        my $respecialization_from = $self->analysis_id && $self->analysis->logic_name.'('.$self->analysis_id.')';
+        my $old_role = $self->current_role();
         $self->adaptor->specialize_new_worker( $self, $specialization_arglist ? @$specialization_arglist : () );
-        my $specialization_to = $self->analysis->logic_name.'('.$self->analysis_id.')';
-        if($respecialization_from) {
-            my $msg = "respecializing from $respecialization_from to $specialization_to";
-            $self->worker_say( $msg );
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 0 );
+        my $new_role = $self->current_role();
+
+        my $specialization_to = $new_role->analysis->logic_name.'('.$new_role->analysis_id.')';
+        if($old_role) {
+            my $respecialization_from = $old_role->analysis->logic_name.'('.$old_role->analysis_id.')';
+            $self->worker_say( "respecializing from $respecialization_from to $specialization_to" );
         } else {
             $self->worker_say( "specializing to $specialization_to" );
         }
+
         1;
     } or do {
         my $msg = $@;
         chomp $msg;
         $self->worker_say( "[re]specialization failed:\t$msg" );
-        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
     };
@@ -605,7 +618,7 @@ sub specialize_and_compile_wrapper {
     if( !$self->cause_of_death() ) {
         eval {
             $self->enter_status('COMPILATION');
-            my $runnable_object = $self->analysis->process or die "Unknown compilation error";
+            my $runnable_object = $self->current_role->analysis->process or die "Unknown compilation error";
             $runnable_object->db( $self->adaptor->db );
             $runnable_object->worker( $self );
             $runnable_object->debug( $self->debug );
@@ -618,8 +631,8 @@ sub specialize_and_compile_wrapper {
             1;
         } or do {
             my $msg = $@;
-            $self->worker_say( "runnable '".$self->analysis->module."' compilation failed :\t$msg" );
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self->dbID, $msg, 1 );
+            $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
+            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
 
             $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
         };
@@ -632,15 +645,16 @@ sub run_one_batch {
 
     my $jobs_done_here = 0;
 
+    my $current_role            = $self->current_role;
     my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
     my $accu_adaptor            = $self->adaptor->db->get_AccumulatorAdaptor;
-    my $max_retry_count         = $self->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+    my $max_retry_count         = $current_role->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
 
     $self->adaptor->check_in_worker( $self );
-    $self->adaptor->safe_synchronize_AnalysisStats($self->analysis->stats);
+    $self->adaptor->safe_synchronize_AnalysisStats( $current_role->analysis->stats );
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats : '.$self->analysis->stats->toString );
+        $self->worker_say( 'AnalysisStats : ' . $current_role->analysis->stats->toString );
         $self->worker_say( 'claimed '.scalar(@{$jobs}).' jobs to process' );
     }
 
@@ -668,7 +682,7 @@ sub run_one_batch {
             my @params_precedence = (
                 $runnable_object->param_defaults(),
                 $self->adaptor->db->get_PipelineWideParametersAdaptor->fetch_param_hash(),
-                $self->analysis->parameters(),
+                $current_role->analysis->parameters(),
             );
 
             if( $hive_use_param_stack ) {
@@ -705,6 +719,8 @@ sub run_one_batch {
         print STDERR "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->incomplete));      # one copy goes to the job's STDERR
         $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
         $self->worker_say( $job_completion_line );                                                              # one copy goes to the worker's STDERR
+
+        $self->current_role->register_attempt( ! $job->incomplete );
 
         if($job->incomplete) {
                 # If the job specifically said what to do next, respect that last wish.

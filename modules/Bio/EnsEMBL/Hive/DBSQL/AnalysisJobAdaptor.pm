@@ -367,9 +367,10 @@ sub reset_or_grab_job_by_dbID {
 sub grab_jobs_for_worker {
     my ($self, $worker, $how_many_this_batch, $workers_rank) = @_;
   
-    my $analysis_id = $worker->analysis_id();
-    my $worker_id   = $worker->dbID();
-    my $offset      = $how_many_this_batch*$workers_rank;
+    my $current_role    = $worker->current_role;
+    my $analysis_id     = $current_role->analysis_id();
+    my $worker_id       = $worker->dbID();
+    my $offset          = $how_many_this_batch*$workers_rank;
 
     my $prefix_sql = ($self->dbc->driver eq 'mysql') ? qq{
          UPDATE job j
@@ -431,9 +432,10 @@ sub grab_jobs_for_worker {
 sub release_undone_jobs_from_worker {
     my ($self, $worker, $msg) = @_;
 
-    my $max_retry_count = $worker->analysis->max_retry_count();
+    my $current_role    = $worker->current_role;
+    my $analysis        = $current_role->analysis;
+    my $max_retry_count = $analysis->max_retry_count();
     my $worker_id       = $worker->dbID();
-    my $analysis        = $worker->analysis();
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
         # (previous worker_id does not matter, because that worker has never had a chance to run the job)

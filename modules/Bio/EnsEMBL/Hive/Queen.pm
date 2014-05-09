@@ -70,8 +70,9 @@ use File::Path 'make_path';
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Hive::Worker;
+use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
+use Bio::EnsEMBL::Hive::Worker;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -283,11 +284,20 @@ sub specialize_new_worker {
         die "No analysis suitable for the worker was found\n";
     }
 
-        # now set it in the $worker:
-
+        # TODO: remove setting this in the Worker once it works well via Role:
     $worker->analysis_id( $analysis_id );
-
     $self->update_analysis_id( $worker );   # autoloaded
+
+    my $role_adaptor = $self->db->get_RoleAdaptor;
+    if( my $old_role = $worker->current_role ) {
+        $role_adaptor->finalize_role( $old_role );
+    }
+    my $new_role = Bio::EnsEMBL::Hive::Role->new(
+        'worker'        => $worker,
+        'analysis_id'   => $analysis_id,
+    );
+    $role_adaptor->store( $new_role );
+    $worker->current_role( $new_role );
 
     if($special_batch) {
         $worker->special_batch( $special_batch );
@@ -295,7 +305,7 @@ sub specialize_new_worker {
 
         $analysis_stats_adaptor->update_status($analysis_id, 'WORKING');
 
-        $analysis_stats_adaptor->decrease_required_workers($worker->analysis_id);
+        $analysis_stats_adaptor->decrease_required_workers( $new_role->analysis_id );
     }
 
         # The following increment used to be done only when no specific task was given to the worker,
@@ -305,7 +315,7 @@ sub specialize_new_worker {
         # so I am (temporarily?) simplifying the accounting algorithm.
         #
     unless( $self->db->hive_use_triggers() ) {
-        $analysis_stats_adaptor->increase_running_workers($worker->analysis_id);
+        $analysis_stats_adaptor->increase_running_workers( $new_role->analysis_id );
     }
 }
 
@@ -315,26 +325,33 @@ sub register_worker_death {
 
     return unless($worker);
 
+    my $current_role    = $worker->current_role;
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
     my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void
-    my $died            = $worker->died;
+    my $worker_died     = $worker->died;
+
+    if( $current_role ) {
+        $current_role->when_finished( $worker_died );
+        $self->db->get_RoleAdaptor->finalize_role( $current_role );
+    }
 
     my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
             . ( $self_burial ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
-            . ( $died ? ", died='$died'" : ', died=CURRENT_TIMESTAMP' )
+            . ( $worker_died ? ", died='$worker_died'" : ', died=CURRENT_TIMESTAMP' )
             . " WHERE worker_id='$worker_id' ";
 
     $self->dbc->do( $sql );
 
-    if(my $analysis_id = $worker->analysis_id) {
+    if( my $analysis_id = $current_role && $current_role->analysis_id ) {
         my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
         unless( $self->db->hive_use_triggers() ) {
-            $analysis_stats_adaptor->decrease_running_workers($worker->analysis_id);
+            $analysis_stats_adaptor->decrease_running_workers( $analysis_id );
         }
 
-        unless( $cause_of_death eq 'NO_WORK'
+        unless( $cause_of_death eq 'NO_ROLE'
+            or  $cause_of_death eq 'NO_WORK'
             or  $cause_of_death eq 'JOB_LIMIT'
             or  $cause_of_death eq 'HIVE_OVERLOAD'
             or  $cause_of_death eq 'LIFESPAN'
@@ -343,10 +360,10 @@ sub register_worker_death {
         }
 
             # re-sync the analysis_stats when a worker dies as part of dynamic sync system
-        if($self->safe_synchronize_AnalysisStats($worker->analysis->stats)->status ne 'DONE') {
+        if($self->safe_synchronize_AnalysisStats( $current_role->analysis->stats )->status ne 'DONE') {
             # since I'm dying I should make sure there is someone to take my place after I'm gone ...
             # above synch still sees me as a 'living worker' so I need to compensate for that
-            $analysis_stats_adaptor->increase_required_workers($worker->analysis_id);
+            $analysis_stats_adaptor->increase_required_workers( $analysis_id );
         }
     }
 }
@@ -372,14 +389,14 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers;  # only run this once per reachable Meadow
 
-        my $process_id = $worker->process_id;
-        if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) { # can be RUN|PEND|xSUSP
-            $worker_status_counts{$meadow_type}{$status}++;
-        } else {
-            $worker_status_counts{$meadow_type}{'LOST'}++;
+            my $process_id = $worker->process_id;
+            if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) {  # can be RUN|PEND|xSUSP
+                $worker_status_counts{$meadow_type}{$status}++;
+            } else {
+                $worker_status_counts{$meadow_type}{'LOST'}++;
 
-            $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
-        }
+                $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
+            }
         } else {
             $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
         }
@@ -389,6 +406,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     foreach my $meadow_type (keys %worker_status_counts) {
         warn "GarbageCollector:\t[$meadow_type Meadow:]\t".join(', ', map { "$_:$worker_status_counts{$meadow_type}{$_}" } keys %{$worker_status_counts{$meadow_type}})."\n\n";
     }
+
+    my $role_adaptor = $self->db->get_RoleAdaptor;
 
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {
         my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
@@ -413,6 +432,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
                 $worker->died(              $report_entries->{$process_id}{'died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
+                $worker->current_role( $role_adaptor->fetch_last_by_worker_id( $worker->dbID ) );
                 $self->register_worker_death( $worker );
             }
 
@@ -675,7 +695,7 @@ sub count_running_workers {
 sub get_workers_rank {
     my ($self, $worker) = @_;
 
-    return $self->count_all( "status!='DEAD' AND analysis_id=".$worker->analysis_id." AND worker_id<".$worker->dbID );
+    return $self->count_all( "status!='DEAD' AND analysis_id=" . $worker->current_role->analysis_id . " AND worker_id<" . $worker->dbID );
 }
 
 
