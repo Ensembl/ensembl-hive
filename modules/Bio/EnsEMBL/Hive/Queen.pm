@@ -369,12 +369,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         my $meadow_type = $worker->meadow_type;
         if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
-            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers;
-        } else {
-            $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;
 
-            next;   # Worker is unreachable from this Valley
-        }
+            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers;  # only run this once per reachable Meadow
 
         my $process_id = $worker->process_id;
         if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) { # can be RUN|PEND|xSUSP
@@ -384,9 +380,12 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
         }
+        } else {
+            $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
+        }
     }
 
-        # just a quick summary report:
+        # print a quick summary report:
     foreach my $meadow_type (keys %worker_status_counts) {
         warn "GarbageCollector:\t[$meadow_type Meadow:]\t".join(', ', map { "$_:$worker_status_counts{$meadow_type}{$_}" } keys %{$worker_status_counts{$meadow_type}})."\n\n";
     }
