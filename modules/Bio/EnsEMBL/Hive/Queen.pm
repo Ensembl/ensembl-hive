@@ -281,16 +281,11 @@ sub specialize_new_worker {
             # probably scheduled by beekeeper.pl:
     } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_by_rc_id_meadow_type($self, $worker->resource_class_id, $worker->meadow_type) ) {
 
-        $worker->analysis( undef ); # make sure we reset anything that was there before
         $analysis_id = $stats->analysis_id;
     } else {
         $worker->cause_of_death('NO_ROLE');
         die "No analysis suitable for the worker was found\n";
     }
-
-        # TODO: remove setting this in the Worker once it works well via Role:
-    $worker->analysis_id( $analysis_id );
-    $self->update_analysis_id( $worker );   # autoloaded
 
     my $role_adaptor = $self->db->get_RoleAdaptor;
     if( my $old_role = $worker->current_role ) {

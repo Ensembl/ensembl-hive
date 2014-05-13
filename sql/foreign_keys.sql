@@ -33,7 +33,6 @@ ALTER TABLE analysis_stats_monitor  ADD FOREIGN KEY (analysis_id)               
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id)          REFERENCES analysis_base(analysis_id);
 ALTER TABLE job                     ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
-ALTER TABLE worker                  ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (funnel_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 

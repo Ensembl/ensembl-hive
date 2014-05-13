@@ -84,7 +84,7 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
@@ -102,13 +102,6 @@ sub init {
 
 
 ## Storable object's getters/setters:
-
-
-sub analysis_id {
-    my $self = shift;
-    $self->{'_analysis_id'} = shift if(@_);
-    return $self->{'_analysis_id'};
-}
 
 
 sub meadow_type {
@@ -262,36 +255,6 @@ sub can_respecialize {
     my $self = shift;
     $self->{'_can_respecialize'} = shift if(@_);
     return $self->{'_can_respecialize'};
-}
-
-
-=head2 analysis
-
-  Arg [1] : (optional) Bio::EnsEMBL::Hive::Analysis $value
-  Title   :   analysis
-  Usage   :   $analysis = $self->analysis;
-              $self->analysis($analysis);
-  Description: Get/Set analysis object of this Worker
-  DefaultValue : undef
-  Returntype : Bio::EnsEMBL::Hive::Analysis object
-
-=cut
-
-sub analysis {
-    my $self = shift @_;
-
-    if(@_) {    # setter mode
-        $self->{'_analysis'} = shift @_;
-    } elsif(! $self->{'_analysis'} ) {
-        if(my $analysis_id = $self->analysis_id()) {
-            $self->{'_analysis'} = $self->adaptor->db->get_AnalysisAdaptor->fetch_by_dbID( $analysis_id )
-                or die "Could not fetch analysis for analysis_id=$analysis_id";
-        } else {
-            die "analysis_id not defined, could not fetch Hive::Analysis object";
-        }
-    }
-
-    return $self->{'_analysis'};
 }
 
 

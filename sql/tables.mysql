@@ -443,7 +443,6 @@ CREATE TABLE analysis_data (
 @column host                execution host name
 @column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
 @column resource_class_id   links to Worker's resource class
-@column analysis_id         Analysis the Worker is specified into
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
 @column born                when the Worker process was started
@@ -461,7 +460,6 @@ CREATE TABLE worker (
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
 
-    analysis_id             INTEGER              DEFAULT NULL,
     work_done               INTEGER     NOT NULL DEFAULT 0,
     status                  ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL,
     born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -470,7 +468,6 @@ CREATE TABLE worker (
     cause_of_death          ENUM('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN') DEFAULT NULL,
     log_dir                 VARCHAR(255)         DEFAULT NULL,
 
-    KEY analysis_status (analysis_id, status),
     KEY meadow_process (meadow_type, meadow_name, process_id)   
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 

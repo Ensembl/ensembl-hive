@@ -1,0 +1,17 @@
+
+    -- bugfix [to 6d6edeb] : make sure the default timestamp is auto-initialized to NULL:
+ALTER TABLE worker ALTER COLUMN last_check_in TIMESTAMP   NULL;
+
+
+    -- First remove the foreign key from worker.analysis_id:
+ALTER TABLE worker DROP FOREIGN KEY worker_ibfk_1;
+
+    -- And an index from the same column:
+ALTER TABLE worker DROP INDEX analysis_status;
+
+    -- Now we can drop the column itself:
+ALTER TABLE worker DROP COLUMN analysis_id;
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=61 WHERE meta_key='hive_sql_schema_version' AND meta_value='60';
+

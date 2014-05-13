@@ -447,7 +447,6 @@ CREATE INDEX ON analysis_data (data);
 @column host                execution host name
 @column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
 @column resource_class_id   links to Worker's resource class
-@column analysis_id         Analysis the Worker is specified into
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
 @column born                when the Worker process was started
@@ -465,8 +464,6 @@ CREATE TABLE worker (
     host                    VARCHAR(255) NOT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
-
-    analysis_id             INTEGER              DEFAULT NULL,
     work_done               INTEGER     NOT NULL DEFAULT 0,
     status                  jw_status   NOT NULL DEFAULT 'READY',
     born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -475,7 +472,7 @@ CREATE TABLE worker (
     cause_of_death          worker_cod           DEFAULT NULL,
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
-CREATE INDEX ON worker (analysis_id, status);
+CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
 
 
 /**
