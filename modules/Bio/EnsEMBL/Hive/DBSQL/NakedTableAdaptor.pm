@@ -43,9 +43,9 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
 
 
 sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
-    my ($self, $object, $fields) = @_;
+    my ($self, $hashref, $fields) = @_;
 
-    return [ @$object{@$fields} ];
+    return [ @$hashref{@$fields} ];
 }
 
 
@@ -64,9 +64,9 @@ sub mark_stored {
 
 
 sub keys_to_columns {
-    my ($self, $object) = @_;
+    my ($self, $hashref) = @_;
 
-    my $sorted_keys = [ sort keys %$object ];
+    my $sorted_keys = [ sort keys %$hashref ];
 
     return ( $sorted_keys, join(', ', @$sorted_keys) );
 }

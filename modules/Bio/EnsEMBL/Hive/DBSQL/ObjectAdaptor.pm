@@ -83,5 +83,16 @@ sub mark_stored {
 }
 
 
+sub keys_to_columns {
+    my ($self, $object) = @_;
+
+    my $autoinc_id  = $self->autoinc_id();
+    my $sorted_keys = [ sort grep { ($_ ne $autoinc_id) and defined($object->$_()) } keys %{ $self->column_set() } ];
+
+    return ( $sorted_keys, join(', ', @$sorted_keys) );
+}
+
+
+
 1;
 

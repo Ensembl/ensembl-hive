@@ -39,6 +39,8 @@ use strict;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
 use DBI 1.6;        # the 1.6 functionality is important for detecting autoincrement fields and other magic.
 
+use Bio::EnsEMBL::Hive::Utils ('stringify');
+
 
 sub default_table_name {
     die "Please define table_name either by setting it via table_name() method or by redefining default_table_name() in your adaptor class";
@@ -220,20 +222,19 @@ sub _table_info_loader {
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
-    my %name2type   = ();
     my $autoinc_id  = '';
     my @primary_key = $dbh->primary_key(undef, undef, $table_name);
 
     my $sth = $dbh->column_info(undef, undef, $table_name, '%');
     $sth->execute();
     while (my $row = $sth->fetchrow_hashref()) {
-        my ($position, $column_name, $column_type, $is_ai) = @$row{'ORDINAL_POSITION','COLUMN_NAME', 'TYPE_NAME', 'mysql_is_auto_increment'};
+        my ( $column_name, $column_type ) = @$row{'COLUMN_NAME', 'TYPE_NAME'};
 
-        $column_set{$column_name}  = 1;
-        $name2type{$column_name}   = $column_type;
+        # warn "ColumnInfo [$table_name/$column_name] = $column_type\n";
 
-        if( $is_ai  # careful! This is only supported by DBD::mysql and will not work with other drivers
-         or ($column_name eq $table_name.'_id')
+        $column_set{$column_name}  = $column_type;
+
+        if( ($column_name eq $table_name.'_id')
          or ($table_name eq 'analysis_base' and $column_name eq 'analysis_id') ) {    # a special case (historical)
             $autoinc_id = $column_name;
         }
@@ -488,6 +489,7 @@ sub store {
 
     foreach my $object (@$objects) {
             my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? $self->keys_to_columns($object) : ($all_storable_columns, '*all*');
+            my ($columns_being_stored, $column_key) = $self->keys_to_columns($object);
             # warn "COLUMN_KEY='$column_key'\n";
 
             my $this_sth;
@@ -500,9 +502,9 @@ sub store {
                 $this_sth = $hashed_sth{$column_key} = $self->prepare( $sql ) or die "Could not prepare statement: $sql";
             }
 
-            # warn "STORED_COLUMNS: ".join(', ', map { "`$_`" } @$columns_being_stored)."\n";
+            # warn "STORED_COLUMNS: ".stringify($columns_being_stored)."\n";
             my $values_being_stored = $self->slicer( $object, $columns_being_stored );
-            # warn "STORED_VALUES: ".join(', ', map { "'$_'" } @$values_being_stored)."\n";
+            # warn "STORED_VALUES: ".stringify($values_being_stored)."\n";
 
             my $return_code = $this_sth->execute( @$values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
