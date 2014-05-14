@@ -102,5 +102,30 @@ sub count_active_roles {
 }
 
 
+sub print_active_role_counts {
+    my $self = shift;
+
+    my $sql = qq{
+        SELECT logic_name, count(*)
+        FROM role
+        JOIN analysis_base a USING(analysis_id)
+        WHERE when_finished IS NULL
+        GROUP BY a.analysis_id
+    };
+
+    my $total_roles = 0;
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+
+    print "\n===== Stats of active Roles as recorded in the pipeline database: ======\n";
+    while(my ($logic_name, $active_role_count) = $sth->fetchrow_array()) {
+        printf("%30s : %d active Roles\n", $logic_name, $active_role_count);
+        $total_roles += $active_role_count;
+    }
+    $sth->finish;
+    printf("%30s : %d active Roles\n\n", '======= TOTAL =======', $total_roles);
+}
+
+
 1;
 

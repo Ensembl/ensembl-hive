@@ -707,31 +707,6 @@ sub print_analysis_status {
 }
 
 
-sub print_running_worker_counts {
-    my $self = shift;
-
-    my $sql = qq{
-        SELECT logic_name, count(*)
-        FROM worker w
-        JOIN analysis_base a USING(analysis_id)
-        WHERE w.status!='DEAD'
-        GROUP BY a.analysis_id
-    };
-
-    my $total_workers = 0;
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-
-    print "\n===== Stats of live Workers according to the Queen: ======\n";
-    while((my $logic_name, my $worker_count)=$sth->fetchrow_array()) {
-        printf("%30s : %d workers\n", $logic_name, $worker_count);
-        $total_workers += $worker_count;
-    }
-    $sth->finish;
-    printf("%30s : %d workers\n\n", '======= TOTAL =======', $total_workers);
-}
-
-
 =head2 register_all_workers_dead
 
   Example    : $queen->register_all_workers_dead();

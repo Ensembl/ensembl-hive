@@ -266,7 +266,7 @@ sub main {
                 print $worker->toString()."\n";
             }
         }
-        $queen->print_running_worker_counts;
+        $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $analysis);   # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress();
@@ -350,7 +350,7 @@ sub run_autonomously {
         $queen->check_for_dead_workers($valley, 0);
 
         $queen->print_analysis_status unless($self->{'no_analysis_stats'});
-        $queen->print_running_worker_counts;
+        $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         my $workers_to_submit_by_meadow_type_rc_name
             = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $run_analysis);
