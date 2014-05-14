@@ -667,13 +667,6 @@ sub get_num_failed_analyses {
 }
 
 
-sub count_running_workers {
-    my ($self, $analysis_id) = @_;
-
-    return $self->count_all( "status!='DEAD'".($analysis_id ? " AND analysis_id=$analysis_id" : '') );
-}
-
-
 sub get_workers_rank {
     my ($self, $worker) = @_;
 

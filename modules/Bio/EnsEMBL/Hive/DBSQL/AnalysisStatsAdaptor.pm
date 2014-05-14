@@ -167,7 +167,7 @@ sub update {
       $sql .= ",done_job_count=" . $stats->done_job_count();
       $sql .= ",failed_job_count=" . $stats->failed_job_count();
 
-      $stats->num_running_workers( $self->db->get_Queen->count_running_workers( $stats->analysis_id() ) );
+      $stats->num_running_workers( $self->db->get_RoleAdaptor->count_active_roles( $stats->analysis_id() ) );
       $sql .= ",num_running_workers=" . $stats->num_running_workers();
   }
 

@@ -61,9 +61,9 @@ sub schedule_workers_resync_if_necessary {
     unless( $total_workers_required ) {
         print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
 
-            # FIXME: here is an (optimistic) assumption all Workers the Queen can see are reachable from the Valley:
-        if( $queen->count_running_workers() != $valley->count_running_workers ) {
-            print "Scheduler: mismatch between Queen's workers and Valley's workers detected, checking for dead workers...\n";
+            # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
+        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley->count_running_workers ) {
+            print "Scheduler: mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers...\n";
             $queen->check_for_dead_workers($valley, 1);
         }
         print "Scheduler: re-balancing of semaphore_counts...\n";

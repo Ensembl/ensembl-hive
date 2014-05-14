@@ -95,5 +95,12 @@ sub get_hive_current_load {
 }
 
 
+sub count_active_roles {
+    my ($self, $analysis_id) = @_;
+
+    return $self->count_all( "when_finished IS NULL".($analysis_id ? " AND analysis_id=$analysis_id" : '') );
+}
+
+
 1;
 
