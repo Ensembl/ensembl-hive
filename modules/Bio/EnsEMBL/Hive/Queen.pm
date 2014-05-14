@@ -131,23 +131,27 @@ sub create_new_worker {
         $self->register_worker_death( $prev_worker_incarnation );
     }
 
-    if( defined($resource_class_name) ) {
-        my $rc = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
-            or die "resource_class with name='$resource_class_name' could not be fetched from the database";
+    my $resource_class;
 
-        $resource_class_id = $rc->dbID;
+    if( defined($resource_class_name) ) {
+        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
+            or die "resource_class with name='$resource_class_name' could not be fetched from the database";
+    } elsif( defined($resource_class_id) ) {
+        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_dbID($resource_class_id)
+            or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
     }
 
-    my $sql = q{INSERT INTO worker (born, last_check_in, meadow_type, meadow_name, host, process_id, resource_class_id)
-              VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?)};
+    my $worker = Bio::EnsEMBL::Hive::Worker->new(
+        'meadow_type'       => $meadow_type,
+        'meadow_name'       => $meadow_name,
+        'host'              => $exec_host,
+        'process_id'        => $process_id,
+        'resource_class'    => $resource_class,
+    );
+    $self->store( $worker );
+    my $worker_id = $worker->dbID;
 
-    my $sth = $self->prepare($sql);
-    $sth->execute($meadow_type, $meadow_name, $exec_host, $process_id, $resource_class_id);
-    my $worker_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'worker', 'worker_id')
-        or die "Could not insert a new worker";
-    $sth->finish;
-
-    my $worker = $self->fetch_by_dbID($worker_id)
+    $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
         or die "Could not fetch worker with dbID=$worker_id";
 
     if($hive_log_dir or $worker_log_dir) {
@@ -727,8 +731,7 @@ sub interval_workers_with_unknown_usage {
     my $sql_times = qq{
         SELECT meadow_type, meadow_name, min(born), max(died), count(*)
         FROM worker w
-        LEFT JOIN worker_resource_usage u
-        USING(worker_id)
+        LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL
         GROUP BY meadow_type, meadow_name
     };
