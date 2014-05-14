@@ -95,10 +95,17 @@ sub get_hive_current_load {
 }
 
 
+sub get_role_rank {
+    my ($self, $role) = @_;
+
+    return $self->count_all( 'analysis_id=' . $role->analysis_id . ' AND when_finished IS NULL AND role_id<' . $role->dbID );
+}
+
+
 sub count_active_roles {
     my ($self, $analysis_id) = @_;
 
-    return $self->count_all( "when_finished IS NULL".($analysis_id ? " AND analysis_id=$analysis_id" : '') );
+    return $self->count_all( ($analysis_id ? "analysis_id=$analysis_id AND " : '') . 'when_finished IS NULL' );
 }
 
 

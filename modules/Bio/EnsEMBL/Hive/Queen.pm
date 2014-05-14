@@ -667,13 +667,6 @@ sub get_num_failed_analyses {
 }
 
 
-sub get_workers_rank {
-    my ($self, $worker) = @_;
-
-    return $self->count_all( "status!='DEAD' AND analysis_id=" . $worker->current_role->analysis_id . " AND worker_id<" . $worker->dbID );
-}
-
-
 sub get_remaining_jobs_show_hive_progress {
   my $self = shift;
   my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
