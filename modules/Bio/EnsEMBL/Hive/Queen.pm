@@ -260,7 +260,7 @@ sub specialize_new_worker {
         $self->safe_synchronize_AnalysisStats($stats);
 
         unless($special_batch or $force) {    # do we really need to run this analysis?
-            if($self->get_hive_current_load() >= 1.1) {
+            if($self->db->get_RoleAdaptor->get_hive_current_load() >= 1.1) {
                 $worker->cause_of_death('HIVE_OVERLOAD');
                 die "Hive is overloaded, can't specialize a worker";
             }
@@ -664,24 +664,6 @@ sub get_num_failed_analyses {
     }
 
     return $filter_analysis ? $filter_analysis_failed : scalar(@$failed_analyses);
-}
-
-
-sub get_hive_current_load {
-    my $self = shift;
-    my $sql = qq{
-        SELECT sum(1/hive_capacity)
-        FROM worker w
-        JOIN analysis_stats USING(analysis_id)
-        WHERE w.status!='DEAD'
-        AND hive_capacity IS NOT NULL
-        AND hive_capacity>0
-    };
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my ($load)=$sth->fetchrow_array();
-    $sth->finish;
-    return ($load || 0);
 }
 
 

@@ -76,5 +76,24 @@ sub fetch_last_by_worker_id {
     return $self->fetch_all( "WHERE worker_id=$worker_id ORDER BY when_started DESC LIMIT 1", 1 );
 }
 
+
+sub get_hive_current_load {
+    my $self = shift;
+    my $sql = qq{
+        SELECT sum(1/hive_capacity)
+        FROM role
+        JOIN analysis_stats USING(analysis_id)
+        WHERE when_finished IS NULL
+        AND hive_capacity IS NOT NULL
+        AND hive_capacity>0
+    };
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    my ($current_load)=$sth->fetchrow_array();
+    $sth->finish;
+    return ($current_load || 0);
+}
+
+
 1;
 

@@ -544,7 +544,7 @@ sub run {
         if (!$self->cause_of_death) {
             my $analysis = $self->current_role->analysis;
             my $stats = $analysis->stats;     # make sure it is fresh from the DB
-            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($self->adaptor->get_hive_current_load >= 1.1)
+            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($self->adaptor->db->get_RoleAdaptor->get_hive_current_load >= 1.1)
              or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
             ) {
                 $self->cause_of_death('HIVE_OVERLOAD');
