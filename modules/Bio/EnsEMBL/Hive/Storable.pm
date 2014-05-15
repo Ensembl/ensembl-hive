@@ -156,7 +156,7 @@ sub AUTOLOAD {
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
                 my $foo_class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-                my $collection = $foo_class->collection();
+                my $collection = $foo_class->can('collection') && $foo_class->collection();
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {

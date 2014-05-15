@@ -456,12 +456,13 @@ sub run {
         } else {    # a proper "BATCHES" loop
 
             while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {
+                my $current_role        = $self->current_role;
 
-                if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_worker_id( $self->dbID ) }) ) {
+                if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_role_id( $current_role->dbID ) }) ) {
                     my $msg = "Lost control. Check your Runnable for loose 'next' statements that are not part of a loop";
                     $self->worker_say( $msg );
                     $self->cause_of_death('CONTAMINATED');
-                    $job_adaptor->release_undone_jobs_from_worker($self, $msg);
+                    $job_adaptor->release_undone_jobs_from_role($current_role, $msg);
 
                 } elsif( $self->job_limiter->reached()) {
                     $self->worker_say( "job_limit reached (".$self->work_done." jobs completed)" );
@@ -472,12 +473,10 @@ sub run {
                     $self->cause_of_death('LIFESPAN');
 
                 } else {
-                    my $current_role        = $self->current_role;
                     my $desired_batch_size  = $current_role->analysis->stats->get_or_estimate_batch_size();
                     $desired_batch_size     = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
-                    my $role_rank = $self->adaptor->db->get_RoleAdaptor->get_role_rank( $current_role );
-                    my $actual_batch = $job_adaptor->grab_jobs_for_worker( $self, $desired_batch_size, $role_rank );
+                    my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
                     if(scalar(@$actual_batch)) {
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
                         $jobs_done_by_batches_loop += $jobs_done_by_this_batch;

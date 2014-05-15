@@ -134,5 +134,12 @@ sub print_active_role_counts {
 }
 
 
+sub fetch_all_finished_roles_with_unfinished_jobs {
+    my $self = shift;
+
+    return $self->fetch_all( "JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY role_id" );
+}
+
+
 1;
 

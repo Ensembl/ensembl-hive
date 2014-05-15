@@ -80,10 +80,10 @@ sub accu_id_stack {
     return $self->{'_accu_id_stack'};
 }
 
-sub worker_id {
+sub role_id {
     my $self = shift;
-    $self->{'_worker_id'} = shift if(@_);
-    return $self->{'_worker_id'};
+    $self->{'_role_id'} = shift if(@_);
+    return $self->{'_role_id'};
 }
 
 sub status {

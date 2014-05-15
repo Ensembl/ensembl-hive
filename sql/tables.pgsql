@@ -315,7 +315,7 @@ CREATE TABLE resource_description (
 @column input_id                input data passed into Analysis:RunnableDB to control the work
 @column param_id_stack          a CSV of job_ids whose input_ids contribute to the stack of local variables for the job
 @column accu_id_stack           a CSV of job_ids whose accu's contribute to the stack of local variables for the job
-@column worker_id               link to worker table to define which worker claimed this job
+@column role_id                 links to the Role that claimed this job (NULL means it has never been claimed)
 @column status                  state the job is in
 @column retry_count             number times job had to be reset when worker failed to run it
 @column completed               when the job was completed
@@ -335,7 +335,7 @@ CREATE TABLE job (
     input_id                TEXT        NOT NULL,
     param_id_stack          TEXT        NOT NULL DEFAULT '',
     accu_id_stack           TEXT        NOT NULL DEFAULT '',
-    worker_id               INTEGER              DEFAULT NULL,
+    role_id                 INTEGER              DEFAULT NULL,
     status                  jw_status   NOT NULL DEFAULT 'READY',
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     completed               TIMESTAMP            DEFAULT NULL,
@@ -348,7 +348,7 @@ CREATE TABLE job (
     UNIQUE (input_id, param_id_stack, accu_id_stack, analysis_id)   -- to avoid repeating tasks
 );
 CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
-CREATE INDEX ON job (worker_id, status);                -- for fetching and releasing claimed jobs
+CREATE INDEX ON job (role_id, status);                  -- for fetching and releasing claimed jobs
 
 
 /**
@@ -362,7 +362,7 @@ CREATE INDEX ON job (worker_id, status);                -- for fetching and rele
         There is max one entry per job_id and retry.
 
 @column job_id             foreign key
-@column worker_id          link to worker table to define which worker claimed this job
+@column role_id            links to the Role that claimed this job
 @column retry              copy of retry_count of job as it was run
 @column stdout_file        path to the job's STDOUT log
 @column stderr_file        path to the job's STDERR log
@@ -371,13 +371,13 @@ CREATE INDEX ON job (worker_id, status);                -- for fetching and rele
 CREATE TABLE job_file (
     job_id                  INTEGER     NOT NULL,
     retry                   INTEGER     NOT NULL,
-    worker_id               INTEGER     NOT NULL,
+    role_id                 INTEGER     NOT NULL,
     stdout_file             VARCHAR(255),
     stderr_file             VARCHAR(255),
 
     PRIMARY KEY (job_id, retry)
 );
-CREATE INDEX ON job_file (worker_id);
+CREATE INDEX ON job_file (role_id);
 
 
 /**

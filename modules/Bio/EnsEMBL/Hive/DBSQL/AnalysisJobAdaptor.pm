@@ -166,10 +166,10 @@ sub fetch_some_by_analysis_id_limit {
 }
 
 
-sub fetch_all_incomplete_jobs_by_worker_id {
-    my ($self, $worker_id) = @_;
+sub fetch_all_incomplete_jobs_by_role_id {
+    my ($self, $role_id) = @_;
 
-    my $constraint = "status IN ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND worker_id='$worker_id'";
+    my $constraint = "status IN ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND role_id='$role_id'";
     return $self->fetch_all($constraint);
 }
 
@@ -298,12 +298,12 @@ sub store_out_files {
     my ($self, $job) = @_;
 
     if($job->stdout_file or $job->stderr_file) {
-        my $insert_sql = 'REPLACE INTO job_file (job_id, retry, worker_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
+        my $insert_sql = 'REPLACE INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
         my $sth = $self->dbc()->prepare($insert_sql);
-        $sth->execute($job->dbID(), $job->retry_count(), $job->worker_id(), $job->stdout_file(), $job->stderr_file());
+        $sth->execute($job->dbID(), $job->retry_count(), $job->role_id(), $job->stdout_file(), $job->stderr_file());
         $sth->finish();
     } else {
-        my $sql = 'DELETE from job_file WHERE worker_id='.$job->worker_id.' AND job_id='.$job->dbID;
+        my $sql = 'DELETE from job_file WHERE role_id='.$job->role_id.' AND job_id='.$job->dbID;
         $self->dbc->do($sql);
     }
 }
@@ -312,8 +312,8 @@ sub store_out_files {
 =head2 reset_or_grab_job_by_dbID
 
   Arg [1]    : int $job_id
-  Arg [2]    : int $worker_id (optional)
-  Description: resets a job to to 'READY' (if no $worker_id given) or directly to 'CLAIMED' so it can be run again, and fetches it.
+  Arg [2]    : int $role_id (optional)
+  Description: resets a job to to 'READY' (if no $role_id given) or directly to 'CLAIMED' so it can be run again, and fetches it.
                NB: Will also reset a previously 'SEMAPHORED' job to READY.
                The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
                but will not change retry_count if a job has never *really* started.
@@ -322,21 +322,19 @@ sub store_out_files {
 =cut
 
 sub reset_or_grab_job_by_dbID {
-    my $self        = shift;
-    my $job_id      = shift;
-    my $worker_id   = shift;
+    my ($self, $job_id, $role_id) = @_;
 
-    my $new_status  = ($worker_id?'CLAIMED':'READY');
+    my $new_status  = $role_id ? 'CLAIMED' : 'READY';
 
         # Note: the order of the fields being updated is critical!
     my $sql = qq{
         UPDATE job
            SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
              , status=?
-             , worker_id=?
+             , role_id=?
          WHERE job_id=?
     };
-    my @values = ($new_status, $worker_id, $job_id);
+    my @values = ($new_status, $role_id, $job_id);
 
     my $sth = $self->prepare( $sql );
     my $return_code = $sth->execute( @values )
@@ -349,13 +347,14 @@ sub reset_or_grab_job_by_dbID {
 }
 
 
-=head2 grab_jobs_for_worker
+=head2 grab_jobs_for_role
 
-  Arg [1]           : Bio::EnsEMBL::Hive::Worker object $worker
+  Arg [1]           : Bio::EnsEMBL::Hive::Role object $role
+  Arg [2]           : int $how_many_this_role
   Example: 
-    my $jobs  = $job_adaptor->grab_jobs_for_worker( $worker );
+    my $jobs  = $job_adaptor->grab_jobs_for_role( $role, $how_many );
   Description: 
-    For the specified worker, it will search available jobs, 
+    For the specified Role, it will search available jobs, 
     and using the how_many_this_batch parameter, claim/fetch that
     number of jobs, and then return them.
   Returntype : 
@@ -364,13 +363,13 @@ sub reset_or_grab_job_by_dbID {
 
 =cut
 
-sub grab_jobs_for_worker {
-    my ($self, $worker, $how_many_this_batch, $workers_rank) = @_;
+sub grab_jobs_for_role {
+    my ($self, $role, $how_many_this_batch) = @_;
   
-    my $current_role    = $worker->current_role;
-    my $analysis_id     = $current_role->analysis_id();
-    my $worker_id       = $worker->dbID();
-    my $offset          = $how_many_this_batch*$workers_rank;
+    my $analysis_id     = $role->analysis_id;
+    my $role_id         = $role->dbID;
+    my $role_rank       = $self->db->get_RoleAdaptor->get_role_rank( $role );
+    my $offset          = $how_many_this_batch * $role_rank;
 
     my $prefix_sql = ($self->dbc->driver eq 'mysql') ? qq{
          UPDATE job j
@@ -381,7 +380,7 @@ sub grab_jobs_for_worker {
                                AND status='READY'
     } : qq{
          UPDATE job
-           SET worker_id='$worker_id', status='CLAIMED'
+           SET role_id='$role_id', status='CLAIMED'
          WHERE job_id in (
                             SELECT job_id
                               FROM job
@@ -394,7 +393,7 @@ sub grab_jobs_for_worker {
     my $suffix_sql = ($self->dbc->driver eq 'mysql') ? qq{
                  ) as x
          USING (job_id)
-           SET j.worker_id='$worker_id', j.status='CLAIMED'
+           SET j.role_id='$role_id', j.status='CLAIMED'
          WHERE j.status='READY'
     } : qq{
                  )
@@ -408,48 +407,48 @@ sub grab_jobs_for_worker {
         }
     }
 
-    return $self->fetch_all_by_worker_id_AND_status($worker_id, 'CLAIMED') ;
+    return $self->fetch_all_by_role_id_AND_status($role_id, 'CLAIMED') ;
 }
 
 
-=head2 release_undone_jobs_from_worker
+=head2 release_undone_jobs_from_role
 
-  Arg [1]    : Bio::EnsEMBL::Hive::Worker object
+  Arg [1]    : Bio::EnsEMBL::Hive::Role object
   Arg [2]    : optional message to be recorded in 'job_message' table
   Example    :
-  Description: If a worker has died some of its jobs need to be reset back to 'READY'
+  Description: If a Worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
                If jobs was 'in progress' (PRE_CLEANUP, FETCH_INPUT, RUN, WRITE_OUTPUT, POST_CLEANUP) 
                the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
-  Exceptions : $worker must be defined
+  Exceptions : $role must be defined
   Caller     : Bio::EnsEMBL::Hive::Queen
 
 =cut
 
-sub release_undone_jobs_from_worker {
-    my ($self, $worker, $msg) = @_;
+sub release_undone_jobs_from_role {
+    my ($self, $role, $msg) = @_;
 
-    my $current_role    = $worker->current_role;
-    my $analysis        = $current_role->analysis;
-    my $max_retry_count = $analysis->max_retry_count();
-    my $worker_id       = $worker->dbID();
+    my $role_id         = $role->dbID;
+    my $analysis        = $role->analysis;
+    my $max_retry_count = $analysis->max_retry_count;
+    my $worker          = $role->worker;
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
-        # (previous worker_id does not matter, because that worker has never had a chance to run the job)
+        # (previous role_id does not matter, because that Role has never had a chance to run the job)
     $self->dbc->do( qq{
         UPDATE job
-           SET status='READY', worker_id=NULL
-         WHERE worker_id='$worker_id'
+           SET status='READY', role_id=NULL
+         WHERE role_id='$role_id'
            AND status='CLAIMED'
     } );
 
     my $sth = $self->prepare( qq{
         SELECT job_id
           FROM job
-         WHERE worker_id='$worker_id'
+         WHERE role_id='$role_id'
            AND status in ('PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
     $sth->execute();
@@ -490,7 +489,7 @@ sub release_and_age_job {
     $runtime_msec = "NULL" unless(defined $runtime_msec);
         # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
         #
-        # FIXME: would it be possible to retain worker_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
+        # FIXME: would it be possible to retain role_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
         #
     $self->dbc->do( 
         "UPDATE job "

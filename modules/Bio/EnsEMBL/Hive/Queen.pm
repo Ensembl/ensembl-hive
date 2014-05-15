@@ -210,7 +210,7 @@ sub specialize_new_worker {
         die "At most one of the options {-analysis_id, -logic_name, -job_id} can be set to pre-specialize a Worker";
     }
 
-    my ($analysis, $stats, $special_batch);
+    my ($analysis, $stats);
     my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
     if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized from command-line
@@ -234,14 +234,7 @@ sub specialize_new_worker {
                 warn "Increasing the semaphore count of the dependent job";
                 $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
             }
-
-            my $worker_id = $worker->dbID;
-            if($job = $job_adaptor->reset_or_grab_job_by_dbID($job_id, $worker_id)) {
-                $special_batch = [ $job ];
-                $analysis_id = $job->analysis_id;
-            } else {
-                die "Could not claim job with dbID='$job_id' for worker with dbID='$worker_id'";
-            }
+            $analysis_id = $job->analysis_id;
         }
 
         if($logic_name) {
@@ -263,7 +256,7 @@ sub specialize_new_worker {
         $stats = $analysis->stats;
         $self->safe_synchronize_AnalysisStats($stats);
 
-        unless($special_batch or $force) {    # do we really need to run this analysis?
+        unless($job_id or $force) {    # do we really need to run this analysis?
             if($self->db->get_RoleAdaptor->get_hive_current_load() >= 1.1) {
                 $worker->cause_of_death('HIVE_OVERLOAD');
                 die "Hive is overloaded, can't specialize a worker";
@@ -298,8 +291,15 @@ sub specialize_new_worker {
     $role_adaptor->store( $new_role );
     $worker->current_role( $new_role );
 
-    if($special_batch) {
-        $worker->special_batch( $special_batch );
+    if($job_id) {
+        my $role_id = $new_role->dbID;
+        if( my $job = $self->db->get_AnalysisJobAdaptor->reset_or_grab_job_by_dbID($job_id, $role_id) ) {
+
+            $worker->special_batch( [ $job ] );
+        } else {
+            die "Could not claim job with dbID='$job_id' for Role with dbID='$role_id'";
+        }
+
     } else {    # count it as autonomous worker sharing the load of that analysis:
 
         $analysis_stats_adaptor->update_status($analysis_id, 'WORKING');
@@ -355,7 +355,7 @@ sub register_worker_death {
             or  $cause_of_death eq 'HIVE_OVERLOAD'
             or  $cause_of_death eq 'LIFESPAN'
         ) {
-                $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_worker($worker);
+                $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $current_role );
         }
 
             # re-sync the analysis_stats when a worker dies as part of dynamic sync system
@@ -444,14 +444,14 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         # the following bit is completely Meadow-agnostic and only restores database integrity:
     if($check_buried_in_haste) {
-        warn "GarbageCollector:\tChecking for Workers buried in haste...\n";
-        my $buried_in_haste_list = $self->fetch_all_dead_workers_with_jobs();
+        warn "GarbageCollector:\tChecking for Workers/Roles buried in haste...\n";
+        my $buried_in_haste_list = $self->db->get_RoleAdaptor->fetch_all_finished_roles_with_unfinished_jobs();
         if(my $bih_number = scalar(@$buried_in_haste_list)) {
             warn "GarbageCollector:\tfound $bih_number jobs, reclaiming.\n\n";
             if($bih_number) {
-                my $job_adaptor = $self->db->get_AnalysisJobAdaptor();
-                foreach my $worker (@$buried_in_haste_list) {
-                    $job_adaptor->release_undone_jobs_from_worker($worker);
+                my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+                foreach my $role (@$buried_in_haste_list) {
+                    $job_adaptor->release_undone_jobs_from_role( $role );
                 }
             }
         } else {
@@ -519,13 +519,6 @@ sub fetch_overdue_workers {
         }->{ $self->dbc->driver };
 
     return $self->fetch_all( $constraint );
-}
-
-
-sub fetch_all_dead_workers_with_jobs {
-    my $self = shift;
-
-    return $self->fetch_all( "JOIN job j USING(worker_id) WHERE worker.status='DEAD' AND j.status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON') GROUP BY worker_id" );
 }
 
 

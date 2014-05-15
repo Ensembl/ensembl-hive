@@ -1,0 +1,33 @@
+
+    -- First remove the ForeignKeys from job.worker_id and job_file.worker_id:
+ALTER TABLE job DROP FOREIGN KEY job_ibfk_4;
+ALTER TABLE job_file DROP FOREIGN KEY job_file_ibfk_2;
+
+    -- Also remove Indices from the old columns:
+ALTER TABLE job DROP INDEX worker_id;
+ALTER TABLE job_file DROP INDEX worker_id;
+
+    -- Use the existing worker_id columns as reference to add role_id columns:
+ALTER TABLE job ADD COLUMN role_id INTEGER DEFAULT NULL AFTER worker_id;
+ALTER TABLE job_file ADD COLUMN role_id INTEGER DEFAULT NULL AFTER worker_id;
+
+    -- Pretend we had role entries from the very beginning (the data is very approximately correct!):
+UPDATE job j, role r SET j.role_id=r.role_id WHERE r.worker_id=j.worker_id AND CASE WHEN completed IS NOT NULL THEN when_started<=completed AND (when_finished IS NULL OR completed<=when_finished) ELSE when_finished IS NULL END;
+UPDATE job_file jf, job j SET jf.role_id=j.role_id WHERE jf.job_id=j.job_id;
+
+    -- Now we can drop the columns themselves:
+ALTER TABLE job DROP COLUMN worker_id;
+ALTER TABLE job_file DROP COLUMN worker_id;
+
+    -- Add new Indices:
+ALTER TABLE job ADD INDEX role_status (role_id, status);
+ALTER TABLE job_file ADD INDEX role (role_id);
+
+
+    -- Add ForeignKeys on the new columns:
+ALTER TABLE job                     ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
+ALTER TABLE job_file                ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=62 WHERE meta_key='hive_sql_schema_version' AND meta_value='61';
+
