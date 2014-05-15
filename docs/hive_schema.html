@@ -398,8 +398,8 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>input_id</b></td><td>CHAR(255)</td><td></td><td>input data passed into Analysis:RunnableDB to control the work</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg1"><td><b>param_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose input_ids contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg2"><td><b>accu_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose accu's contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
-      <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: worker_id</td></tr>
+      <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td>NULL</td><td>links to the Role that claimed this job (NULL means it has never been claimed)</td><td>key: role_status</td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
       <tr class="bg1"><td><b>retry_count</b></td><td>INTEGER</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
       <tr class="bg2"><td><b>completed</b></td><td>TIMESTAMP</td><td></td><td>when the job was completed</td><td></td></tr>
       <tr class="bg1"><td><b>runtime_msec</b></td><td>INTEGER</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
@@ -426,8 +426,8 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>job_id</b></td><td>INTEGER</td><td></td><td>foreign key</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>worker_id</b></td><td>INTEGER</td><td></td><td>link to worker table to define which worker claimed this job</td><td>key: worker_id</td></tr>
-      <tr class="bg1"><td><b>retry</b></td><td>INTEGER</td><td></td><td>copy of retry_count of job as it was run</td><td>primary key</td></tr>
+      <tr class="bg2"><td><b>retry</b></td><td>INTEGER</td><td></td><td>copy of retry_count of job as it was run</td><td>primary key</td></tr>
+      <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td></td><td>links to the Role that claimed this job</td><td>key: role</td></tr>
       <tr class="bg2"><td><b>stdout_file</b></td><td>VARCHAR(255)</td><td></td><td>path to the job's STDOUT log</td><td></td></tr>
       <tr class="bg1"><td><b>stderr_file</b></td><td>VARCHAR(255)</td><td></td><td>path to the job's STDERR log</td><td></td></tr>
     </table>
@@ -505,14 +505,13 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>host</b></td><td>VARCHAR(255)</td><td></td><td>execution host name</td><td></td></tr>
       <tr class="bg1"><td><b>process_id</b></td><td>VARCHAR(255)</td><td></td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td>key: meadow_process</td></tr>
       <tr class="bg2"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td>NULL</td><td>Analysis the Worker is specified into</td><td>key: analysis_status</td></tr>
-      <tr class="bg2"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
-      <tr class="bg1"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td>key: analysis_status</td></tr>
-      <tr class="bg2"><td><b>born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
-      <tr class="bg1"><td><b>last_check_in</b></td><td>TIMESTAMP</td><td></td><td>when the Worker last checked into the database</td><td></td></tr>
-      <tr class="bg2"><td><b>died</b></td><td>TIMESTAMP</td><td></td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
-      <tr class="bg1"><td><b>cause_of_death</b></td><td>ENUM('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN')</td><td>NULL</td><td>if defined, why did the Worker exit (or why it was killed)</td><td></td></tr>
-      <tr class="bg2"><td><b>log_dir</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, a filesystem directory where this Worker's output is logged</td><td></td></tr>
+      <tr class="bg1"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td></td></tr>
+      <tr class="bg1"><td><b>born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
+      <tr class="bg2"><td><b>last_check_in</b></td><td>TIMESTAMP</td><td></td><td>when the Worker last checked into the database</td><td></td></tr>
+      <tr class="bg1"><td><b>died</b></td><td>TIMESTAMP</td><td></td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
+      <tr class="bg2"><td><b>cause_of_death</b></td><td>ENUM('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN')</td><td>NULL</td><td>if defined, why did the Worker exit (or why it was killed)</td><td></td></tr>
+      <tr class="bg1"><td><b>log_dir</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, a filesystem directory where this Worker's output is logged</td><td></td></tr>
     </table>
   </div>
 
