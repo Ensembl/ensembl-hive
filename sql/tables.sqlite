@@ -460,7 +460,7 @@ CREATE TABLE worker (
     work_done               INTEGER     NOT NULL DEFAULT 0,
     status                  TEXT        NOT NULL DEFAULT 'READY', /* enum('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL */
     born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_check_in           TIMESTAMP   NOT NULL,
+    last_check_in           TIMESTAMP            DEFAULT NULL,
     died                    TIMESTAMP            DEFAULT NULL,
     cause_of_death          TEXT                 DEFAULT NULL, /* enum('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN') DEFAULT NULL */
     log_dir                 VARCHAR(255)         DEFAULT NULL

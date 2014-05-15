@@ -470,7 +470,7 @@ CREATE TABLE worker (
     work_done               INTEGER     NOT NULL DEFAULT 0,
     status                  jw_status   NOT NULL DEFAULT 'READY',
     born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_check_in           TIMESTAMP   NOT NULL,
+    last_check_in           TIMESTAMP            DEFAULT NULL,
     died                    TIMESTAMP            DEFAULT NULL,
     cause_of_death          worker_cod           DEFAULT NULL,
     log_dir                 VARCHAR(255)         DEFAULT NULL
