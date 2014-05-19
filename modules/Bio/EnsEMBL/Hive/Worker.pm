@@ -581,7 +581,10 @@ sub specialize_and_compile_wrapper {
     if( !$self->cause_of_death() ) {
         eval {
             $self->enter_status('COMPILATION');
-            my $runnable_object = $self->current_role->analysis->process or die "Unknown compilation error";
+
+            my $runnable_object = $self->current_role->analysis->get_compiled_module_name->new()
+                or die "Unknown compilation error";
+
             $runnable_object->db( $self->adaptor->db );
             $runnable_object->worker( $self );
             $runnable_object->debug( $self->debug );

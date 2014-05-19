@@ -12,8 +12,8 @@
     AnalysisCtrl rules.
   
     Instances of these Processes are created by the system as work is done.
-    The newly created Process will have preset $self->db, $self->dbc, 
-    $self->input_id, $self->analysis and several other variables. 
+    The newly created Process will have preset $self->db, $self->dbc, $self->input_id
+    and several other variables. 
     From this input and configuration data, each Process can then proceed to 
     do something.  The flow of execution within a Process is:
         pre_cleanup() if($retry_count>0);   # clean up databases/filesystem before subsequent attempts
@@ -252,10 +252,9 @@ sub param_defaults {
 
     Title   :  fetch_input
     Function:  sublcass can implement functions related to data fetching.
-               Typical acivities would be to parse $self->input_id and read
-               configuration information from $self->analysis.  Subclasses
-               may also want to fetch data from databases or from files 
-               within this function.
+               Typical acivities would be to parse $self->input_id .
+               Subclasses may also want to fetch data from databases
+               or from files within this function.
 
 =cut
 
@@ -413,27 +412,6 @@ sub data_dbc {
     return $self->{'_cached_data_dbc'};
 }
 
-
-=head2 analysis
-
-    Title   :  analysis
-    Usage   :  $self->analysis;
-    Function:  Returns the Analysis object associated with this
-               instance of the Process.
-    Returns :  Bio::EnsEMBL::Hive::Analysis object
-
-=cut
-
-sub analysis {
-  my ($self, $analysis) = @_;
-
-  if($analysis) {
-    throw("Not a Bio::EnsEMBL::Hive::Analysis object")
-      unless ($analysis->isa("Bio::EnsEMBL::Hive::Analysis"));
-    $self->{'_analysis'} = $analysis;
-  }
-  return $self->{'_analysis'};
-}
 
 =head2 input_job
 

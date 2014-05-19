@@ -141,27 +141,6 @@ sub get_compiled_module_name {
 }
 
 
-=head2 process
-
-  Arg [1]    : none
-  Example    : $process = $analysis->process;
-  Description: construct a Process object from the $analysis->module name
-  Returntype : Bio::EnsEMBL::Hive::Process subclass 
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub process {
-    my $self = shift;
-
-    my $runnable_object = $self->get_compiled_module_name->new();
-    $runnable_object->analysis( $self );
-
-    return $runnable_object;
-}
-
-
 =head2 url
 
   Arg [1]    : none
