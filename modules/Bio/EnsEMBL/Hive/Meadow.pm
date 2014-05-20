@@ -99,12 +99,10 @@ sub job_name_prefix {
 }
 
 
-sub generate_job_name {
-    my ($self, $worker_count, $iteration, $rc_name) = @_;
+sub job_array_common_name {
+    my ($self, $rc_name, $iteration) = @_;
 
-    return $self->job_name_prefix()
-        ."${rc_name}-${iteration}"
-        . (($worker_count > 1) ? "[1-${worker_count}]" : '');
+    return $self->job_name_prefix() ."${rc_name}-${iteration}";
 }
 
 

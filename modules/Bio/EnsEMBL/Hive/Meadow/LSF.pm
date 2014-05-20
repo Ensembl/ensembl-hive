@@ -289,7 +289,8 @@ sub get_report_entries_for_time_interval {
 sub submit_workers {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_stdout_file, $submit_stderr_file) = @_;
 
-    my $job_name                            = $self->generate_job_name($required_worker_count, $iteration, $rc_name);
+    my $job_array_common_name               = $self->job_array_common_name($rc_name, $iteration);
+    my $job_array_name_with_indices         = $job_array_common_name . (($required_worker_count > 1) ? "[1-${required_worker_count}]" : '');
     my $meadow_specific_submission_cmd_args = $self->config_get('SubmissionOptions');
 
     $submit_stdout_file ||= '/dev/null';    # a value is required
@@ -297,7 +298,7 @@ sub submit_workers {
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
+    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_array_name_with_indices}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
 
     warn "LSF::submit_workers() running cmd:\n\t$cmd\n";
 
