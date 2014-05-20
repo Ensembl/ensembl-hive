@@ -287,14 +287,21 @@ sub get_report_entries_for_time_interval {
 
 
 sub submit_workers {
-    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_stdout_file, $submit_stderr_file) = @_;
+    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     my $job_array_common_name               = $self->job_array_common_name($rc_name, $iteration);
     my $job_array_name_with_indices         = $job_array_common_name . (($required_worker_count > 1) ? "[1-${required_worker_count}]" : '');
     my $meadow_specific_submission_cmd_args = $self->config_get('SubmissionOptions');
 
-    $submit_stdout_file ||= '/dev/null';    # a value is required
-    $submit_stderr_file ||= '/dev/null';    # a value is required
+    my ($submit_stdout_file, $submit_stderr_file);
+
+    if($submit_log_subdir) {
+        $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_%J_%I.out";
+        $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_%J_%I.err";
+    } else {
+        $submit_stdout_file = '/dev/null';
+        $submit_stderr_file = '/dev/null';
+    }
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 

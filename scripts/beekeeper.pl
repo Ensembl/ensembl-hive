@@ -67,8 +67,6 @@ sub main {
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'can_respecialize'}     = undef;
     $self->{'hive_log_dir'}         = undef;
-    $self->{'submit_stdout_file'}   = undef;
-    $self->{'submit_stderr_file'}   = undef;
     $self->{'submit_log_dir'}       = undef;
 
     GetOptions(
@@ -103,8 +101,6 @@ sub main {
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
                'can_respecialize=i'     => \$self->{'can_respecialize'},
                'debug=i'                => \$self->{'debug'},
-               'submit_stdout_file=s'   => \$self->{'submit_stdout_file'},
-               'submit_stderr_file=s'   => \$self->{'submit_stderr_file'},
                'submit_log_dir=s'       => \$self->{'submit_log_dir'},
 
                     # other commands/options
@@ -379,14 +375,8 @@ sub run_autonomously {
                                             . " -rc_name $rc_name"
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
-                    if( $self->{'submit_log_dir'} ) {
-                        $self->{'submit_stdout_file'} = $submit_log_subdir . "/log_${rc_name}_%J_%I.out";
-                        $self->{'submit_stderr_file'} = $submit_log_subdir . "/log_${rc_name}_%J_%I.err";
-                    }
-
                     $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
-                                                    $rc_name, $submission_cmd_args || '',
-                                                    $self->{'submit_stdout_file'}, $self->{'submit_stderr_file'});
+                                                    $rc_name, $submission_cmd_args || '', $submit_log_subdir);
                 }
             }
         } else {
