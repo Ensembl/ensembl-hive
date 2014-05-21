@@ -13,6 +13,48 @@ CREATE TABLE role (
     KEY analysis (analysis_id)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
+
+    -- our main source are the parsed messages about Workers' respecialization:
+CREATE TEMPORARY TABLE respec_main
+    SELECT log_message_id sort_idx, worker_id, time, SUBSTRING_INDEX( SUBSTRING_INDEX(msg,') to ',1), '(',-1) from_analysis_id, SUBSTRING_INDEX( SUBSTRING_INDEX(msg,'(',-1), ')', 1) to_analysis_id
+    FROM log_message
+    WHERE msg LIKE 'respecializing from %';
+
+    -- we also take in the events of Workers' births (in case of non-specializing Workers):
+CREATE TEMPORARY TABLE respec_first
+    SELECT 0 sort_idx, worker_id, born time, NULL from_analysis_id, COALESCE(
+            (SELECT from_analysis_id FROM respec_main WHERE worker_id=ow.worker_id ORDER BY sort_idx limit 1),
+            (SELECT analysis_id FROM worker iw WHERE iw.worker_id=ow.worker_id)
+           ) to_analysis_id
+    FROM worker ow;
+
+    -- and the events of Workers' deaths:
+CREATE TEMPORARY TABLE respec_last
+    SELECT 2000000000 sort_idx, worker_id, died time, (SELECT analysis_id FROM worker iw WHERE iw.worker_id=ow.worker_id) from_analysis_id, NULL to_analysis_id
+    FROM worker ow;
+
+    -- merge all the tree together:
+CREATE TEMPORARY TABLE respec_merged SELECT * FROM respec_first UNION SELECT * FROM respec_main UNION SELECT * FROM respec_last ORDER BY worker_id, sort_idx;
+
+    -- cannot join a temporary table to itself, so need another copy:
+CREATE TEMPORARY TABLE respec_merged2 SELECT * FROM respec_merged;
+
+    -- shift two copies of the same table to transform timestamps into ranges:
+CREATE TEMPORARY TABLE pre_role
+    SELECT t1.worker_id, t1.to_analysis_id analysis_id, t1.time when_started, min(t2.time) when_finished
+    FROM respec_merged t1
+    JOIN respec_merged2 t2 ON t1.worker_id=t2.worker_id AND t1.sort_idx<t2.sort_idx
+    GROUP BY worker_id, t1.sort_idx;
+
+    -- add approximate job counts:
+INSERT INTO role (worker_id, analysis_id, when_started, when_finished, attempted_jobs, done_jobs)
+    SELECT p.*, COUNT(*), COUNT(status='DONE')
+    FROM pre_role p
+    JOIN job USING(worker_id, analysis_id)
+    WHERE completed BETWEEN when_started AND when_finished GROUP BY worker_id, analysis_id;
+
+
+
     -- new column in log_message to log the role_id:
 ALTER TABLE log_message ADD COLUMN role_id INTEGER DEFAULT NULL AFTER job_id;
 
