@@ -410,6 +410,11 @@ sub get_stderr_redirector {
 sub worker_say {
     my ($self, $msg) = @_;
 
+    unless ($self->adaptor) {
+        print "Standalone worker $$ : $msg\n";
+        return;
+    }
+
     my $worker_id       = $self->dbID();
     my $current_role    = $self->current_role;
     my $job_id          = $self->runnable_object && $self->runnable_object->input_job && $self->runnable_object->input_job->dbID;
