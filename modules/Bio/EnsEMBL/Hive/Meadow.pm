@@ -323,4 +323,17 @@ sub submit_workers {
     die "Please use a derived method";
 }
 
+
+=head2 run_on_host
+
+    Title   :  run_on_host
+    Function:  Runs an arbitrary commands on the given host. The host is expected to belong to the meadow and be reachable
+
+=cut
+
+sub run_on_host {
+    my ($self, $meadow_host, $meadow_user, $command) = @_;
+    return system('ssh', '-o', 'BatchMode=yes', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
+}
+
 1;

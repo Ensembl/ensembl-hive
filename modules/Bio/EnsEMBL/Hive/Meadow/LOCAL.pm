@@ -164,4 +164,11 @@ sub submit_workers_return_meadow_pids {
     return \@children_pids;
 }
 
+
+sub run_on_host {   # Overrides Meadow::run_on_host
+    my ($self, $meadow_host, $meadow_user, $command) = @_;
+    # We can assume the current host is $meadow_host and bypass ssh
+    return system(@$command);
+}
+
 1;

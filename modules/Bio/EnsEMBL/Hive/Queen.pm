@@ -442,6 +442,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
+                $valley->cleanup_left_temp_directory( $worker );
             }
 
             if( %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:

@@ -247,5 +247,17 @@ sub status_of_all_our_workers_by_meadow_signature {
     return \%worker_statuses;
 }
 
+sub cleanup_left_temp_directory {
+    my ($self, $worker) = @_;
+
+    # cleanup_left_temp_directory is called when garbage-collecting dead-workers,
+    # which is only possible for reachable meadows.
+    # This guarantees that $meadow is defined.
+    my $meadow = $self->available_meadow_hash->{$worker->meadow_type};
+
+    my $rc = $meadow->run_on_host($worker->meadow_host, $worker->meadow_user, ['rm', '-rf', $worker->temp_directory_name]);
+    $worker->worker_say(sprintf("Error: could not clean %s's temp directory '%s': %s\n", $worker->meadow_host, $worker->temp_directory_name, $@)) if $rc;
+}
+
 
 1;
