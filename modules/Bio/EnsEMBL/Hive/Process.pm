@@ -112,8 +112,6 @@ sub new {
 
     my $self = bless {}, $class;
 
-    $self->debug(shift @_) if @_;
-
     return $self;
 }
 
@@ -576,9 +574,7 @@ sub complete_early {
 sub debug {
     my $self = shift;
 
-    $self->{'_debug'} = shift if(@_);
-    $self->{'_debug'}=0 unless(defined($self->{'_debug'}));  
-    return $self->{'_debug'};
+    return $self->worker->debug(@_);
 }
 
 

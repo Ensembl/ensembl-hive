@@ -174,6 +174,7 @@ sub new {
     pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
     pipe($CHILD_RDR,  $PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
 
+    $debug = ($debug && ($debug > 1));  # Only advanced levels of debug will show the GuestProcess protocol messages
     if ($debug) {
         print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
         print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
@@ -214,6 +215,7 @@ sub new {
     $self->child_in($CHILD_WTR);
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
+    $self->{'_protocol_debug'} = $debug; # controls the GuestProcess protocol, not the worker
 
     $self->print_debug('CHECK VERSION NUMBER');
     my $other_version = $self->read_message()->{content};
@@ -277,14 +279,14 @@ sub DESTROY {
 =head2 print_debug
 
   Example     : $process->print_debug("debug message");
-  Description : Prints a message if $self->debug is 2 or above
+  Description : Prints a message if $self->{'_protocol_debug'} is set
   Returntype  : none
 
 =cut
 
 sub print_debug {
     my ($self, $msg) = @_;
-    print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->debug > 1;
+    print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->{'_protocol_debug'};
 }
 
 ##############
