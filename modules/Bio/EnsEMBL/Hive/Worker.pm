@@ -644,7 +644,6 @@ sub specialize_and_compile_wrapper {
             my $runnable_object     = $current_analysis->get_compiled_module_name->new($self->debug, $current_analysis->language, $current_analysis->module) # Only GuestProcess will read the arguments
                 or die "Unknown compilation error";
 
-            $runnable_object->db( $self->adaptor->db );
             $runnable_object->worker( $self );
 
             $self->runnable_object( $runnable_object );

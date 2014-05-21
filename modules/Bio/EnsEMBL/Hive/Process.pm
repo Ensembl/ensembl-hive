@@ -381,8 +381,7 @@ sub execute_writes {
 sub db {
     my $self = shift;
 
-    $self->{'_db'} = shift if(@_);
-    return $self->{'_db'};
+    return $self->worker->adaptor && $self->worker->adaptor->db(@_);
 }
 
 
