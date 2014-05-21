@@ -137,8 +137,8 @@ sub semaphored_job_id {
 
 sub update_status {
     my ($self, $status ) = @_;
-    return unless($self->adaptor);
     $self->status($status);
+    return unless($self->adaptor);
     $self->adaptor->update_status($self);
 }
 
