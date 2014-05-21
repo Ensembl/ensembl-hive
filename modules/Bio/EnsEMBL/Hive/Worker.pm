@@ -80,7 +80,7 @@ use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash', 'stringify', 'throw');
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
@@ -869,8 +869,8 @@ sub set_log_directory_name {
 
     return unless ($hive_log_dir or $worker_log_dir);
 
-    my $dir_revhash = dir_revhash($self->dbID);
-    $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$self->dbID;
+    my $dir_revhash = dir_revhash($self->dbID // '');  # Database-less workers are not hashed
+    $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') . ($self->adaptor ? 'worker_id_' . $self->dbID : 'standalone/worker_pid_' . $self->process_id);
 
     eval {
         make_path( $worker_log_dir );
@@ -878,7 +878,7 @@ sub set_log_directory_name {
     } or die "Could not create '$worker_log_dir' directory : $@";
 
     $self->log_dir( $worker_log_dir );
-    $self->adaptor->update_log_dir( $self );   # autoloaded
+    $self->adaptor->update_log_dir( $self ) if $self->adaptor;   # autoloaded
 }
 
 

@@ -153,11 +153,13 @@ sub create_new_worker {
         'resource_class'    => $resource_class,
         'beekeeper_id'      => $beekeeper_id,
     );
-    $self->store( $worker );
-    my $worker_id = $worker->dbID;
 
-    $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
-        or die "Could not fetch worker with dbID=$worker_id";
+    if (ref($self)) {
+        $self->store( $worker );
+        my $worker_id = $worker->dbID;
+        $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
+            or die "Could not fetch worker with dbID=$worker_id";
+    }
 
     $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
 
@@ -469,6 +471,9 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     # To tackle the RELOCATED event: this method checks whether there are already workers with these attributes
 sub find_previous_worker_incarnations {
     my ($self, $meadow_type, $meadow_name, $process_id) = @_;
+
+    # This happens in standalone mode, when there is no database
+    return [] unless ref($self);
 
     return $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" );
 }
