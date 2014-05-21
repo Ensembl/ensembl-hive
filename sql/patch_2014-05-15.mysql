@@ -1,6 +1,6 @@
 
     -- bugfix [to 6d6edeb] : make sure the default timestamp is auto-initialized to NULL:
-ALTER TABLE worker ALTER COLUMN last_check_in TIMESTAMP   NULL;
+ALTER TABLE worker MODIFY COLUMN last_check_in TIMESTAMP NULL DEFAULT NULL;
 
 
     -- First remove the foreign key from worker.analysis_id:
