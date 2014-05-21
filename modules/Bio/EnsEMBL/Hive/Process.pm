@@ -114,7 +114,7 @@ sub new {
 
 
 sub life_cycle {
-    my ($self, $worker) = @_;
+    my ($self) = @_;
 
     my $job = $self->input_job();
     my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
