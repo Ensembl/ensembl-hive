@@ -142,7 +142,7 @@ sub life_cycle {
         $self->run;
         $job_partial_timing{'RUN'} = $partial_stopwatch->pause->get_elapsed;
 
-        if($self->execute_writes) {
+        if($self->worker->execute_writes) {
             $self->enter_status('WRITE_OUTPUT');
             $partial_stopwatch->restart();
             $self->write_output;
@@ -362,20 +362,10 @@ sub worker {
 }
 
 
-=head2 execute_writes
-
-    Title   :   execute_writes
-    Usage   :   $self->execute_writes( 1 );
-    Function:   getter/setter for whether we want the 'write_output' method to be run
-    Returns :   boolean
-
-=cut
-
 sub execute_writes {
     my $self = shift;
 
-    $self->{'_execute_writes'} = shift if(@_);
-    return $self->{'_execute_writes'};
+    return $self->worker->execute_writes(@_);
 }
 
 

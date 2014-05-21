@@ -55,7 +55,6 @@ sub standaloneJob {
 
     my $runnable_object = $runnable_module->new($flags->{debug}, $language, $module_or_file);    # Only GuestProcess will read the arguments
     die "Runnable $module_or_file not created\n" unless $runnable_object;
-    $runnable_object->execute_writes(not $flags->{no_write});
     $runnable_object->worker($worker);
 
     my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();

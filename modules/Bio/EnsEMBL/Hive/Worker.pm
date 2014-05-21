@@ -646,7 +646,6 @@ sub specialize_and_compile_wrapper {
 
             $runnable_object->db( $self->adaptor->db );
             $runnable_object->worker( $self );
-            $runnable_object->execute_writes( $self->execute_writes );
 
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
