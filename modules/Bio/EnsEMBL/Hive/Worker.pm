@@ -885,4 +885,12 @@ sub set_log_directory_name {
 }
 
 
+sub temp_directory_name {
+    my $self = shift @_;
+
+    my $worker_id = $self->adaptor ? $self->dbID : 'standalone.'.$self->process_id;
+    return sprintf('/tmp/worker_%s_%s.%s', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $worker_id);
+}
+
+
 1;

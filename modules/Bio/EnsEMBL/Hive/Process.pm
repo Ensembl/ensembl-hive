@@ -600,9 +600,7 @@ sub worker_temp_directory {
 sub worker_temp_directory_name {
     my $self = shift @_;
 
-    my $username = $ENV{'USER'};
-    my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
-    return "/tmp/worker_${username}.${worker_id}/";
+    return $self->worker->temp_directory_name;
 }
 
 
