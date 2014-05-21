@@ -36,14 +36,20 @@ sub standaloneJob {
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
+    my $dummy_analysis = Bio::EnsEMBL::Hive::Analysis->new(
+        'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
+        'dbID'          => -1,
+    );
+
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+        'analysis'  => $dummy_analysis,
         'input_id'  => $input_id,
         'dbID'      => -1,
     );
 
-    $job->dataflow_rules(1, []);
-
     $job->load_parameters( $runnable_object );
+
+    Bio::EnsEMBL::Hive::DataflowRule->collection( Bio::EnsEMBL::Hive::Utils::Collection->new() );
 
     $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
     $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
@@ -53,21 +59,20 @@ sub standaloneJob {
         $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
         $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
 
-        my @dataflow_rules = ();
-
         while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
             $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
 
             foreach my $input_id_template (@$input_id_template_list) {
 
-                push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule->new(
+                Bio::EnsEMBL::Hive::DataflowRule->add_new_or_update(
+                    'from_analysis'     => $dummy_analysis,
                     'to_analysis_url'   => $heir_url,
+                    'branch_code'       => $branch_code,
                     'input_id_template' => $input_id_template,
                 );
             }
         }
-        $job->dataflow_rules( $branch_code, \@dataflow_rules );
     }
 
     $runnable_object->input_job($job);

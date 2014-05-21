@@ -218,7 +218,28 @@ sub control_rules_collection {
 sub dataflow_rules_collection {
     my $self = shift @_;
 
-    return Bio::EnsEMBL::Hive::DataflowRule->collection()->find_all_by('from_analysis', $self);
+    my $collection = Bio::EnsEMBL::Hive::DataflowRule->collection();
+
+    return $collection
+        ? $collection->find_all_by('from_analysis', $self)
+        : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id( $self->dbID );
+}
+
+
+sub dataflow_rules_by_branch {
+    my $self = shift @_;
+
+    $self->{'_dataflow_rules_by_branch'} = shift if(@_);
+
+    if (not $self->{'_dataflow_rules_by_branch'}) {
+        my %dataflow_rules_by_branch = ();
+        foreach my $dataflow (@{$self->dataflow_rules_collection}) {
+            push @{$dataflow_rules_by_branch{$dataflow->branch_code}}, $dataflow;
+        }
+        $self->{'_dataflow_rules_by_branch'} = \%dataflow_rules_by_branch;
+    }
+
+    return $self->{'_dataflow_rules_by_branch'};
 }
 
 

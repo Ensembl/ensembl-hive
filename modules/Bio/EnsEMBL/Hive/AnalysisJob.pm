@@ -145,21 +145,6 @@ sub set_and_update_status {
     }
 }
 
-sub dataflow_rules {    # if ever set will prevent the Job from fetching rules from the DB
-    my $self                = shift @_;
-    my $branch_name_or_code = shift @_;
-
-    my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
-
-    if(@_) {
-        $self->{'_dataflow_rules'}{$branch_code} = shift @_;
-    }
-
-    $self->{'_dataflow_rules'} ||= $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id_HASHED_FROM_branch_code( $self->analysis_id );
-
-    return $self->{'_dataflow_rules'}{$branch_code} || [];
-}
-
 sub stdout_file {
   my $self = shift;
   $self->{'_stdout_file'} = shift if(@_);
@@ -253,7 +238,6 @@ sub load_parameters {
 
         $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
 
-
         push @params_precedence, $job_adaptor->db->get_PipelineWideParametersAdaptor->fetch_param_hash;
 
         push @params_precedence, $self->analysis->parameters if($self->analysis);
@@ -264,8 +248,8 @@ sub load_parameters {
             my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
             push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
         }
-
     }
+
     push @params_precedence, $self->input_id, $self->accu_hash;
 
     $self->param_init( @params_precedence );
@@ -329,7 +313,7 @@ sub dataflow_output_id {
     my @output_job_ids = ();
 
         # sort rules to make sure the fan rules come before funnel rules for the same branch_code:
-    foreach my $rule (sort {($b->funnel_dataflow_rule_id||0) <=> ($a->funnel_dataflow_rule_id||0)} @{ $self->dataflow_rules( $branch_code ) }) {
+    foreach my $rule (sort {($b->funnel_dataflow_rule_id||0) <=> ($a->funnel_dataflow_rule_id||0)} @{ $self->analysis->dataflow_rules_by_branch->{$branch_code} || [] }) {
 
             # parameter substitution into input_id_template is rule-specific
         my $output_ids_for_this_rule;
@@ -357,7 +341,7 @@ sub dataflow_output_id {
 
             if(my $funnel_dataflow_rule_id = $rule->funnel_dataflow_rule_id()) {    # members of a semaphored fan will have to wait in cache until the funnel is created:
 
-                my $fan_cache_this_branch = $self->fan_cache()->{$funnel_dataflow_rule_id} ||= [];
+                my $fan_cache_this_branch = $self->fan_cache->{$funnel_dataflow_rule_id} ||= [];
                 push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                         @common_params,
                                                         'input_id'          => $_,
@@ -366,9 +350,9 @@ sub dataflow_output_id {
 
             } else {    # either a semaphored funnel or a non-semaphored dataflow:
 
-                my $fan_jobs = delete $self->fan_cache()->{$rule->dbID};   # clear the cache at the same time
+                my $fan_jobs = delete $self->fan_cache->{$rule->dbID} if( $rule->dbID );   # clear the cache at the same time
 
-                if($fan_jobs && @$fan_jobs) { # a semaphored funnel
+                if( $fan_jobs && @$fan_jobs ) { # a semaphored funnel
 
                     if( (my $funnel_job_count = scalar(@$output_ids_for_this_rule)) !=1 ) {
 
