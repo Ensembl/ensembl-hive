@@ -74,8 +74,8 @@ CREATE OR REPLACE VIEW resource_usage_stats AS
            rc.name || '(' || rc.resource_class_id || ')' resource_class,
            u.exit_status,
            count(*) workers,
-           min(mem_megs) AS min_mem_megs, round(avg(mem_megs),2) AS avg_mem_megs, max(mem_megs) AS max_mem_megs,
-           min(swap_megs) AS min_swap_megs, round(avg(swap_megs),2) AS avg_swap_megs, max(swap_megs) AS max_swap_megs
+           min(mem_megs) AS min_mem_megs, round(avg(mem_megs)*100)/100 AS avg_mem_megs, max(mem_megs) AS max_mem_megs,
+           min(swap_megs) AS min_swap_megs, round(avg(swap_megs)*100)/100 AS avg_swap_megs, max(swap_megs) AS max_swap_megs
     FROM resource_class rc
     JOIN analysis_base a USING(resource_class_id)
     LEFT JOIN role r USING(analysis_id)
