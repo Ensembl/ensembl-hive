@@ -1,6 +1,10 @@
 
-    -- First remove the ForeignKeys from job.worker_id and job_file.worker_id:
+    -- First remove ALL ForeignKeys from job & job_file tables:
+ALTER TABLE job DROP FOREIGN KEY job_ibfk_1;
+ALTER TABLE job DROP FOREIGN KEY job_ibfk_2;
+ALTER TABLE job DROP FOREIGN KEY job_ibfk_3;
 ALTER TABLE job DROP FOREIGN KEY job_ibfk_4;
+ALTER TABLE job_file DROP FOREIGN KEY job_file_ibfk_1;
 ALTER TABLE job_file DROP FOREIGN KEY job_file_ibfk_2;
 
     -- Also remove Indices from the old columns:
@@ -24,9 +28,14 @@ ALTER TABLE job ADD INDEX role_status (role_id, status);
 ALTER TABLE job_file ADD INDEX role (role_id);
 
 
-    -- Add ForeignKeys on the new columns:
-ALTER TABLE job                     ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
-ALTER TABLE job_file                ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
+    -- Add NAMED ForeignKeys on job & job_file tables:
+ALTER TABLE job                     ADD CONSTRAINT  job_analysis_id_fkey        FOREIGN KEY (analysis_id)           REFERENCES analysis_base(analysis_id);
+ALTER TABLE job                     ADD CONSTRAINT  job_prev_job_id_fkey        FOREIGN KEY (prev_job_id)           REFERENCES job(job_id)                  ON DELETE CASCADE;
+ALTER TABLE job                     ADD CONSTRAINT  job_role_id_fkey            FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
+ALTER TABLE job                     ADD CONSTRAINT  job_semaphored_job_id_fkey  FOREIGN KEY (semaphored_job_id)     REFERENCES job(job_id)                  ON DELETE CASCADE;
+ALTER TABLE job_file                ADD CONSTRAINT  job_file_job_id_fkey        FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
+ALTER TABLE job_file                ADD CONSTRAINT  job_file_role_id_fkey       FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
+
 
     -- UPDATE hive_sql_schema_version
 UPDATE hive_meta SET meta_value=62 WHERE meta_key='hive_sql_schema_version' AND meta_value='61';
