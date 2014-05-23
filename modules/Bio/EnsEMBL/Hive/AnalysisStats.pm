@@ -197,7 +197,7 @@ sub last_update {                   # this method is called by the initial store
 sub seconds_since_last_update {     # this method is mostly used to convert between server time and local time
     my( $self, $value ) = @_;
     $self->{'_last_update'} = time() - $value if(defined($value));
-    return time() - $self->{'_last_update'};
+    return defined($self->{'_last_update'}) ? time() - $self->{'_last_update'} : undef;
 }
 
 sub sync_lock {
@@ -279,7 +279,7 @@ sub toString {
 
     my $output .= sprintf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
-        $self->analysis_id,
+        $self->analysis_id // 0,
 
         $self->status,
 
@@ -295,9 +295,9 @@ sub toString {
         $self->num_running_workers,
         $self->num_required_workers,
     );
-    $output .=  '  h.cap:'    .( defined($self->hive_capacity) ? $self->hive_capacity : '-' )
-               .'  a.cap:'    .( defined($analysis->analysis_capacity) ? $analysis->analysis_capacity : '-')
-               ."  (sync'd "  .$self->seconds_since_last_update." sec ago)";
+    $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
+               .'  a.cap:'    .( $analysis->analysis_capacity // '-')
+               ."  (sync'd "  .($self->seconds_since_last_update // 0)." sec ago)";
 
     return $output;
 }
@@ -387,7 +387,7 @@ sub recalculate_from_job_counts {
         $self->semaphored_job_count( $job_counts->{'SEMAPHORED'} || 0 );
         $self->ready_job_count(      $job_counts->{'READY'} || 0 );
         $self->failed_job_count(     $job_counts->{'FAILED'} || 0 );
-        $self->done_job_count(       $job_counts->{'DONE'} + $job_counts->{'PASSED_ON'} || 0 ); # done here or potentially done elsewhere
+        $self->done_job_count(       ( $job_counts->{'DONE'} // 0 ) + ($job_counts->{'PASSED_ON'} // 0 ) ); # done here or potentially done elsewhere
         $self->total_job_count(      sum( values %$job_counts ) || 0 );
     }
 
