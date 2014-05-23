@@ -238,7 +238,7 @@ sub main {
 
     my $analysis = $run_job_id
         ? $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID( $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis_id )
-        : $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'});
+        : ( $self->{'logic_name'} && $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'}) );
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
