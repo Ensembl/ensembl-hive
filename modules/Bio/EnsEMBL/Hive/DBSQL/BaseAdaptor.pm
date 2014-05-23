@@ -36,6 +36,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor;
 
 use strict;
+use warnings;
 no strict 'refs';   # needed to allow AUTOLOAD create new methods
 use DBI 1.6;        # the 1.6 functionality is important for detecting autoincrement fields and other magic.
 
@@ -488,7 +489,6 @@ sub store {
     my $stored_this_time        = 0;
 
     foreach my $object (@$objects) {
-            my ($columns_being_stored, $column_key) = (ref($object) eq 'HASH') ? $self->keys_to_columns($object) : ($all_storable_columns, '*all*');
             my ($columns_being_stored, $column_key) = $self->keys_to_columns($object);
             # warn "COLUMN_KEY='$column_key'\n";
 
