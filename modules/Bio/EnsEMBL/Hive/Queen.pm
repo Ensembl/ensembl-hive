@@ -578,6 +578,7 @@ sub safe_synchronize_AnalysisStats {
 
     return $stats if($stats->status eq 'DONE');
     return $stats if(($stats->status eq 'WORKING') and
+                   defined($stats->seconds_since_last_update) and
                    ($stats->seconds_since_last_update < 3*60));
 
         # try to claim the sync_lock
