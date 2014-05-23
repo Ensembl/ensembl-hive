@@ -52,6 +52,7 @@
 package Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 use strict;
+use warnings;
 use Time::HiRes qw(time);
 
 my $default_unit = 1000;    # milliseconds

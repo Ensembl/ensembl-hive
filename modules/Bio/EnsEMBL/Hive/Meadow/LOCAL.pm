@@ -31,6 +31,7 @@
 package Bio::EnsEMBL::Hive::Meadow::LOCAL;
 
 use strict;
+use warnings;
 use Sys::Hostname;
 
 use base ('Bio::EnsEMBL::Hive::Meadow');

@@ -38,6 +38,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::URLFactory;
 

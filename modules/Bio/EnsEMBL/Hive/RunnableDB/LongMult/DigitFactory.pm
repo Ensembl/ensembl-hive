@@ -42,6 +42,7 @@
 package Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 

@@ -37,6 +37,7 @@
 package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 

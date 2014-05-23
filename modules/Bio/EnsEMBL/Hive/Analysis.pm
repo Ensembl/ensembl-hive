@@ -36,6 +36,7 @@
 package Bio::EnsEMBL::Hive::Analysis;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;

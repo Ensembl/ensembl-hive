@@ -30,6 +30,8 @@
 
 package Bio::EnsEMBL::Hive::Utils::Config;
 
+use strict;
+use warnings;
 use JSON;
 
 sub default_config_files {  # a class method, returns a list

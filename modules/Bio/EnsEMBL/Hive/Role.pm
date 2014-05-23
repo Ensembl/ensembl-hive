@@ -36,6 +36,7 @@
 package Bio::EnsEMBL::Hive::Role;
 
 use strict;
+use warnings;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 

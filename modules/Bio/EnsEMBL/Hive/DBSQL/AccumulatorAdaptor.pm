@@ -35,6 +35,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 

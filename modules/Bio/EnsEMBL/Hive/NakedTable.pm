@@ -32,6 +32,7 @@
 package Bio::EnsEMBL::Hive::NakedTable;
 
 use strict;
+use warnings;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 

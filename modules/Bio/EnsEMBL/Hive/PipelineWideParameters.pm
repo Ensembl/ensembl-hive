@@ -31,6 +31,7 @@
 package Bio::EnsEMBL::Hive::PipelineWideParameters;
 
 use strict;
+use warnings;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable' );
  

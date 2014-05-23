@@ -41,6 +41,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 

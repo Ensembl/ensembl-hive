@@ -42,6 +42,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use Bio::EnsEMBL::Hive::AnalysisJob;

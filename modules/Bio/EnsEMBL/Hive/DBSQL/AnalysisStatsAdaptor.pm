@@ -42,6 +42,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 

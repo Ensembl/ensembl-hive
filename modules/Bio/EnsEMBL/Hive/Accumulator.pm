@@ -32,6 +32,7 @@
 package Bio::EnsEMBL::Hive::Accumulator;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 

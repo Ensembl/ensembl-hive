@@ -61,6 +61,7 @@
 package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 
 use strict;
+use warnings;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 

@@ -52,6 +52,7 @@
 package Bio::EnsEMBL::Hive::DataflowRule;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;

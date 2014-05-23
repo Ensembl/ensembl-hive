@@ -35,6 +35,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 
 use strict;
+use warnings;
 
 sub find_all_sql_schema_patches {
 

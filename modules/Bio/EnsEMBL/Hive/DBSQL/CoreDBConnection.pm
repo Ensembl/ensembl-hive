@@ -68,6 +68,7 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
 package Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection;
 
 use strict;
+use warnings;
 
 use DBI;
 use Bio::EnsEMBL::Hive::DBSQL::StatementHandle;

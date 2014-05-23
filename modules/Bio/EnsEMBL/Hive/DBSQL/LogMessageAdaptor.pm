@@ -37,6 +37,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 

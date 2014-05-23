@@ -38,6 +38,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Hive::ResourceDescription;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');

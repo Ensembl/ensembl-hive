@@ -31,6 +31,7 @@
 package Bio::EnsEMBL::Hive::Meadow::LSF;
 
 use strict;
+use warnings;
 use Time::Piece;
 use Time::Seconds;
 

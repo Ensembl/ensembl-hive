@@ -46,6 +46,7 @@
 package Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 

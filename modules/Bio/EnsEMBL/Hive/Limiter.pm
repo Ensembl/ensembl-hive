@@ -31,6 +31,9 @@
 
 package Bio::EnsEMBL::Hive::Limiter;
 
+use strict;
+use warnings;
+
 sub new {
     my ($class, $description, $available_capacity) = @_;
 

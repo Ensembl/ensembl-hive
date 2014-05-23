@@ -52,6 +52,7 @@
 package Bio::EnsEMBL::Hive::RunnableDB::FastaFactory;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::SeqIO;

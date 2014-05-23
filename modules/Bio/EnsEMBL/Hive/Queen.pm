@@ -66,6 +66,7 @@
 package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
+use warnings;
 use File::Path 'make_path';
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code

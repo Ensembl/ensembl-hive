@@ -37,6 +37,7 @@
 package Bio::EnsEMBL::Hive::AnalysisJob;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;

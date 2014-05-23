@@ -36,6 +36,7 @@
 package Bio::EnsEMBL::Hive::AnalysisStats;
 
 use strict;
+use warnings;
 use List::Util 'sum';
 use POSIX;
 

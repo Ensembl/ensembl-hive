@@ -35,6 +35,7 @@
 package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;

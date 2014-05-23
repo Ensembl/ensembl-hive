@@ -1,9 +1,12 @@
 package Bio::EnsEMBL::Hive::Cacheable;
 
+use strict;
+use warnings;
+
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
-our $cache_by_class;    # global Hash-of-Hashes
+our %cache_by_class;    # global Hash-of-Hashes
 
 
 sub collection {

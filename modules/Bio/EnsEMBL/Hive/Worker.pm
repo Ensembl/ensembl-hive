@@ -72,6 +72,7 @@
 package Bio::EnsEMBL::Hive::Worker;
 
 use strict;
+use warnings;
 use POSIX;
 
 use Bio::EnsEMBL::Hive::Analysis;
