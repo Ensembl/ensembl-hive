@@ -124,12 +124,12 @@ sub main {
     # Get the memory used by each worker
     my %used_res = ();
     if (($mode eq 'unused_memory') or ($mode eq 'unused_cores')) {
-        my $sql_used_res = 'SELECT meadow_name, process_id, mem_megs, cpu_sec/lifespan_sec FROM lsf_report';
+        my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec FROM worker_resource_usage';
         foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
-            my ($meadow_name, $process_id, $mem_megs, $cpu_usage) = @$db_entry;
-            $used_res{$meadow_name."_____".$process_id} = [$mem_megs, $cpu_usage];
+            my ($worker_id, $mem_megs, $cpu_usage) = @$db_entry;
+            $used_res{$worker_id} = [$mem_megs, $cpu_usage];
         }
-        warn scalar(keys %used_res), " process info loaded from lsf_report\n" if $verbose;
+        warn scalar(keys %used_res), " worker info loaded from worker_resource_usage\n" if $verbose;
     }
 
     # Get the info about the analysis
@@ -148,11 +148,11 @@ sub main {
     # Get the events from the database
     my %events = ();
     if ($mode ne 'pending_workers') {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, meadow_name, process_id, resource_class_id FROM worker WHERE analysis_id IS NOT NULL')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, worker_id, resource_class_id FROM worker WHERE analysis_id IS NOT NULL')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($birth_date, $death_date, $analysis_id, $meadow_name, $process_id, $resource_class_id) = @$db_entry;
+            my ($birth_date, $death_date, $analysis_id, $worker_id, $resource_class_id) = @$db_entry;
             $resource_class_id = $default_resource_class{$analysis_id} unless $resource_class_id;
             my $offset = 0;
 
@@ -163,21 +163,19 @@ sub main {
             } elsif ($mode eq 'cores') {
                 $offset = ($cpu_resources{$resource_class_id} || $default_cores);
             } elsif ($mode eq 'unused_memory') {
-                my $process_signature = $meadow_name."_____".$process_id;
-                if (exists $used_res{$process_signature}) {
-                    $offset = (($mem_resources{$resource_class_id} || $default_memory) - $used_res{$process_signature}->[0]) / 1024.;
+                if (exists $used_res{$worker_id}) {
+                    $offset = (($mem_resources{$resource_class_id} || $default_memory) - $used_res{$worker_id}->[0]) / 1024.;
                 }
             } else {
-                my $process_signature = $meadow_name."_____".$process_id;
-                if (exists $used_res{$process_signature}) {
-                    $offset = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$process_signature}->[1];
+                if (exists $used_res{$worker_id}) {
+                    $offset = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$worker_id}->[1];
                 }
             }
             $events{$birth_date}{$analysis_id} += $offset if $offset > 0;
             $events{$death_date}{$analysis_id} -= $offset if ($offset > 0) and $death_date;
         }
     } else {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(born, INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id FROM worker JOIN lsf_report USING (meadow_name, process_id) WHERE analysis_id IS NOT NULL AND meadow_type = "LSF" AND pending_sec > 0')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(born, INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id FROM worker JOIN worker_resource_usage USING (worker_id) WHERE analysis_id IS NOT NULL AND pending_sec IS NOT NULL AND pending_sec > 0')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
