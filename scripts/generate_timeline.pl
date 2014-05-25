@@ -136,11 +136,9 @@ sub main {
     my %default_resource_class = ();
     my %analysis_name = ();
     {
-        my $sql_analysis_info = 'SELECT analysis_id, logic_name, resource_class_id FROM analysis_base';
-        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_analysis_info)}) {
-            my ($analysis_id, $logic_name, $resource_class_id) = @$db_entry;
-            $analysis_name{$analysis_id} = $logic_name;
-            $default_resource_class{$analysis_id} = $resource_class_id;
+        foreach my $analysis (@{$hive_dba->get_AnalysisAdaptor->fetch_all()}) {
+            $analysis_name{$analysis->dbID} = $analysis->logic_name;
+            $default_resource_class{$analysis->dbID} = $analysis->resource_class_id;
         }
     }
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
