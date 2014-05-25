@@ -111,12 +111,10 @@ sub main {
     my %mem_resources = ();
     my %cpu_resources = ();
     {
-        my $sql_resource_descriptions = 'SELECT resource_class_id, meadow_type, submission_cmd_args FROM resource_description';
-        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_resource_descriptions)}) {
-            my ($resource_class_id, $meadow_type, $submission_cmd_args) = @$db_entry;
-            if ($meadow_type eq 'LSF') {
-                $mem_resources{$resource_class_id} = $1 if $submission_cmd_args =~ m/mem=(\d+)/;
-                $cpu_resources{$resource_class_id} = $1 if $submission_cmd_args =~ m/-n\s*(\d+)/;
+        foreach my $rd (@{$hive_dba->get_ResourceDescriptionAdaptor->fetch_all()}) {
+            if ($rd->meadow_type eq 'LSF') {
+                $mem_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
+                $cpu_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/-n\s*(\d+)/;
             }
         }
     }
