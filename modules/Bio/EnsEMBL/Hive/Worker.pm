@@ -385,18 +385,20 @@ sub worker_say {
 
 
 sub toString {
-    my $self = shift @_;
+    my ($self, $include_analysis) = @_;
+
+    my $current_role = $self->current_role;
 
     return join(', ',
-            'analysis='.($self->current_role ? $self->current_role->analysis->logic_name.'('.$self->current_role->analysis_id.')' : 'UNSPECIALIZED'),
-            'resource_class_id='.($self->resource_class_id || 'NULL'),
+            $include_analysis ? ( 'analysis='.($current_role ? $current_role->analysis->logic_name.'('.$current_role->analysis_id.')' : 'UNSPECIALIZED') ) : (),
+            'resource_class_id='.($self->resource_class_id // 'NULL'),
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
             'process='.$self->process_id.'@'.$self->host,
-            'last_check_in='.$self->last_check_in,
-            'batch_size='.($self->current_role ? $self->current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
-            'job_limit='.($self->job_limiter->available_capacity() || 'NONE'),
-            'life_span='.($self->life_span || 'UNLIM'),
-            'worker_log_dir='.($self->log_dir || 'STDOUT/STDERR'),
+            'last_check_in='.($self->last_check_in // 'NEVER'),
+            'batch_size='.($current_role ? $current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
+            'job_limit='.($self->job_limiter->available_capacity() // 'NONE'),
+            'life_span='.($self->life_span // 'UNLIM'),
+            'worker_log_dir='.($self->log_dir // 'STDOUT/STDERR'),
     );
 }
 

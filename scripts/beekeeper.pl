@@ -259,7 +259,7 @@ sub main {
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
             foreach my $worker (@{ $queen->fetch_overdue_workers(0) }) {
-                print $worker->toString()."\n";
+                print $worker->toString(1)."\n";
             }
         }
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
