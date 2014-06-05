@@ -599,7 +599,7 @@ sub balance_semaphores {
                      };
 
     my $update_sql  = "UPDATE job SET "
-        ." semaphore_count=? , "
+        ." semaphore_count=semaphore_count+? , "
         .( ($self->dbc->driver eq 'pgsql')
         ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
         : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
@@ -610,9 +610,16 @@ sub balance_semaphores {
 
     $find_sth->execute();
     while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
-        warn "Balancing semaphore: job_id=$job_id ($was -> $should)\n";
-        $update_sth->execute($should, $job_id);
-        $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "Re-balancing the semaphore_count: $was -> $should", 1 );
+        my $msg;
+        if(0<$should and $should<$was) {    # we choose not to lower the counter if it's not time to unblock yet
+            $msg = "Semaphore count may need rebalancing, but it is not critical now, so leaving it on automatic: $was -> $should";
+            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 0 );
+        } else {
+            $update_sth->execute($should-$was, $job_id);
+            $msg = "Semaphore count needed rebalancing now, so performing: $was -> $should";
+            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 1 );
+        }
+        warn "[Job $job_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
     }
     $find_sth->finish;
     $update_sth->finish;
