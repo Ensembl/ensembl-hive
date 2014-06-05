@@ -54,11 +54,11 @@ sub schedule_workers_resync_if_necessary {
         # combined mapping:
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
-    my ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer)
+    my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
     print $log_buffer;
 
-    unless( $total_workers_required ) {
+    unless( $total_extra_workers_required ) {
         print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
 
             # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
@@ -71,7 +71,7 @@ sub schedule_workers_resync_if_necessary {
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 
-        ($workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer)
+        ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
             = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
         print $log_buffer;
     }
@@ -126,7 +126,7 @@ sub schedule_workers {
 
         # the pre-pending-adjusted outcome will be stored here:
     my %workers_to_submit_by_meadow_type_rc_name    = ();
-    my $total_workers_required                      = 0;
+    my $total_extra_workers_required                = 0;
     my $log_buffer                                  = '';
 
     my $submit_capacity_limiter                     = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
@@ -152,7 +152,7 @@ sub schedule_workers {
             # if this analysis doesn't require any extra workers - just skip it:
         next if ($extra_workers_this_analysis <= 0);
 
-        $total_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
+        $total_extra_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
 
             # setting up all negotiating limiters:
         $queen_capacity_limiter->multiplier( $analysis_stats->hive_capacity );
@@ -194,7 +194,7 @@ sub schedule_workers {
         }
     }
 
-    return (\%workers_to_submit_by_meadow_type_rc_name, $total_workers_required, $log_buffer);
+    return (\%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
 }
 
 
