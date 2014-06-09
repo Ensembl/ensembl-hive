@@ -148,12 +148,12 @@ sub main {
     # Get the events from the database
     my %events = ();
     if ($mode ne 'pending_workers') {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(born, "%Y-%m-%dT%T"), DATE_FORMAT(died, "%Y-%m-%dT%T"), analysis_id, worker_id, resource_class_id FROM worker WHERE analysis_id IS NOT NULL')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(when_started, "%Y-%m-%dT%T"), DATE_FORMAT(when_finished, "%Y-%m-%dT%T"), analysis_id, worker_id FROM role')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($birth_date, $death_date, $analysis_id, $worker_id, $resource_class_id) = @$db_entry;
-            $resource_class_id = $default_resource_class{$analysis_id} unless $resource_class_id;
+            my ($birth_date, $death_date, $analysis_id, $worker_id) = @$db_entry;
+            my $resource_class_id = $default_resource_class{$analysis_id};  # ToDo: fetch it from the Worker object first, but if not available - take it from the default_resource_class hash
             my $offset = 0;
 
             if ($mode eq 'workers') {
@@ -175,7 +175,7 @@ sub main {
             $events{$death_date}{$analysis_id} -= $offset if ($offset > 0) and $death_date;
         }
     } else {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(born, INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(born, "%Y-%m-%dT%T"), analysis_id FROM worker JOIN worker_resource_usage USING (worker_id) WHERE analysis_id IS NOT NULL AND pending_sec IS NOT NULL AND pending_sec > 0')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(DATE_SUB(min(when_started), INTERVAL pending_sec SECOND), "%Y-%m-%dT%T"), DATE_FORMAT(min(when_started), "%Y-%m-%dT%T"), analysis_id FROM role JOIN worker_resource_usage USING (worker_id) WHERE pending_sec IS NOT NULL AND pending_sec > 0 GROUP BY worker_id')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
