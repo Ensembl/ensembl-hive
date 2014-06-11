@@ -128,9 +128,9 @@ sub hive_dba {
 
 
 sub _analysis_node_name {
-    my ($analysis) = @_;
+    my ($self, $analysis) = @_;
 
-    my $analysis_node_name = 'analysis_' . $analysis->display_name;
+    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->hive_dba );
     $analysis_node_name=~s/\W/__/g;
     return $analysis_node_name;
 }
@@ -139,7 +139,7 @@ sub _analysis_node_name {
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
-    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name .
+    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->hive_dba ) .
                 ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
     $table_node_name=~s/\W/__/g;
     return $table_node_name;
@@ -228,7 +228,7 @@ sub build {
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
         foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
             if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
-                my $from = _analysis_node_name( $analysis );
+                my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
                 $self->graph->add_edge( $from => $to,
                     color     => 'black',
@@ -243,7 +243,7 @@ sub build {
 
         foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
             if(my $funnel = $analysis->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _analysis_node_name( $analysis );
+                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_analysis_node_name( $analysis );
             }
 
             foreach my $df_rule ( @{ $analysis->dataflow_rules_collection } ) {
@@ -281,7 +281,7 @@ sub _propagate_allocation {
         my $target_node_name;
 
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $target_node_name = _analysis_node_name( $target_object );
+            $target_node_name = $self->_analysis_node_name( $target_object );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
             $target_node_name = $self->_table_node_name( $df_rule );
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
@@ -409,7 +409,7 @@ sub _add_analysis_node {
     }
     $analysis_label    .= '</table>>';
   
-    $self->graph->add_node( _analysis_node_name( $analysis ),
+    $self->graph->add_node( $self->_analysis_node_name( $analysis ),
         label       => $analysis_label,
         shape       => 'record',
         fontname    => $node_fontname,
@@ -427,8 +427,8 @@ sub _add_control_rules {
 
       #The control rules are always from and to an analysis so no need to search for odd cases here
   foreach my $c_rule ( @$ctrl_rules ) {
-    my $from_node_name = _analysis_node_name( $c_rule->condition_analysis );
-    my $to_node_name   = _analysis_node_name( $c_rule->ctrled_analysis );
+    my $from_node_name = $self->_analysis_node_name( $c_rule->condition_analysis );
+    my $to_node_name   = $self->_analysis_node_name( $c_rule->ctrled_analysis );
 
     $graph->add_edge( $from_node_name => $to_node_name,
       color => $control_colour,
@@ -451,13 +451,13 @@ sub _add_dataflow_rules {
     
         my ($from_analysis, $branch_code, $funnel_dataflow_rule, $target_object) =
             ($df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule, $df_rule->to_analysis);
-        my $from_node_name = _analysis_node_name( $from_analysis );
+        my $from_node_name = $self->_analysis_node_name( $from_analysis );
         my $target_node_name;
     
             # Different treatment for analyses and tables:
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
 
-            $target_node_name = _analysis_node_name( $target_object );
+            $target_node_name = $self->_analysis_node_name( $target_object );
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
