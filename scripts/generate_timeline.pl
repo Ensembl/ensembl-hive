@@ -135,14 +135,9 @@ sub main {
     }
 
     # Get the info about the analysis
-    my %default_resource_class = ();
-    my %analysis_name = ();
-    {
-        foreach my $analysis (@{$hive_dba->get_AnalysisAdaptor->fetch_all()}) {
-            $analysis_name{$analysis->dbID} = $analysis->logic_name;
-            $default_resource_class{$analysis->dbID} = $analysis->resource_class_id;
-        }
-    }
+    my $analysis_adaptor        = $hive_dba->get_AnalysisAdaptor;
+    my %analysis_name           = %{ $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_logic_name() };
+    my %default_resource_class  = %{ $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id() };
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
     warn "analysis_name: ", Dumper \%analysis_name if $verbose;
     warn scalar(keys %analysis_name), " analysis\n" if $verbose;
@@ -150,16 +145,23 @@ sub main {
     # Get the events from the database
     my %events = ();
     if ($mode ne 'pending_workers') {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT when_started, when_finished, analysis_id, worker_id FROM role JOIN worker USING (worker_id)')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT when_started, when_finished, born, died, analysis_id, worker_id, resource_class_id FROM worker LEFT JOIN role USING (worker_id)')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($when_started, $when_finished, $analysis_id, $worker_id, $resource_class_id) = @$db_entry;
-            $resource_class_id //= $default_resource_class{$analysis_id};
+            my ($when_started, $when_finished, $born, $died, $analysis_id, $worker_id, $resource_class_id) = @$db_entry;
+            unless($analysis_id) {  # in case there was no Role attached to the Worker - i.e. it has never specialized
+                $when_started               = $born;
+                $when_finished              = $died;
+                $analysis_id                = 0;
+                $analysis_name{0}           = 'UNSPECIALIZED';
+                $default_resource_class{0}  = 'UNKNOWN';
+            }
+            $resource_class_id  //= $default_resource_class{$analysis_id};
 
                 # temporary Time::Piece values
-            my $birth_datetime = Time::Piece->strptime( $when_started,  '%Y-%m-%d %H:%M:%S');
-            my $death_datetime = Time::Piece->strptime( $when_finished, '%Y-%m-%d %H:%M:%S');
+            my $birth_datetime = Time::Piece->strptime( $when_started  , '%Y-%m-%d %H:%M:%S');
+            my $death_datetime = Time::Piece->strptime( $when_finished , '%Y-%m-%d %H:%M:%S');
 
                 # string values:
             my $birth_date = $birth_datetime->date . 'T' . $birth_datetime->hms;
@@ -182,11 +184,11 @@ sub main {
                     $offset = ($cpu_resources{$resource_class_id} || $default_cores) - $used_res{$worker_id}->[1];
                 }
             }
-            $events{$birth_date}{$analysis_id} += $offset if $offset > 0;
-            $events{$death_date}{$analysis_id} -= $offset if ($offset > 0) and $death_date;
+            $events{$birth_date}{$analysis_id} += $offset if ($offset > 0);
+            $events{$death_date}{$analysis_id} -= $offset if ($offset > 0 and $when_finished);
         }
     } else {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT min(when_started), pending_sec, analysis_id FROM role JOIN worker_resource_usage USING (worker_id) WHERE pending_sec IS NOT NULL AND pending_sec > 0 GROUP BY worker_id')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT min(when_started), pending_sec, analysis_id FROM role LEFT JOIN worker_resource_usage USING (worker_id) WHERE pending_sec IS NOT NULL AND pending_sec > 0 GROUP BY worker_id')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
