@@ -148,12 +148,12 @@ sub main {
     # Get the events from the database
     my %events = ();
     if ($mode ne 'pending_workers') {
-        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(when_started, "%Y-%m-%dT%T"), DATE_FORMAT(when_finished, "%Y-%m-%dT%T"), analysis_id, worker_id FROM role')};
+        my @tmp_dates = @{$dbh->selectall_arrayref('SELECT DATE_FORMAT(when_started, "%Y-%m-%dT%T"), DATE_FORMAT(when_finished, "%Y-%m-%dT%T"), analysis_id, worker_id, resource_class_id FROM role JOIN worker USING (worker_id)')};
         warn scalar(@tmp_dates), " events\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($birth_date, $death_date, $analysis_id, $worker_id) = @$db_entry;
-            my $resource_class_id = $default_resource_class{$analysis_id};  # ToDo: fetch it from the Worker object first, but if not available - take it from the default_resource_class hash
+            my ($birth_date, $death_date, $analysis_id, $worker_id, $resource_class_id) = @$db_entry;
+            $resource_class_id //= $default_resource_class{$analysis_id};
             my $offset = 0;
 
             if ($mode eq 'workers') {
