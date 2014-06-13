@@ -90,6 +90,13 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
+=head1 AUTOLOADED
+
+    resource_class_id / resource_class
+
+=cut
+
+
 sub init {
     my $self = shift;
 
@@ -130,13 +137,6 @@ sub process_id {
     my $self = shift;
     $self->{'_process_id'} = shift if(@_);
     return $self->{'_process_id'};
-}
-
-
-sub resource_class_id {
-    my $self = shift;
-    $self->{'_resource_class_id'} = shift if(@_);
-    return $self->{'_resource_class_id'};
 }
 
 
