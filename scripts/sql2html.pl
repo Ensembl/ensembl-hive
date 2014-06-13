@@ -341,7 +341,7 @@ while (<SQLFILE>) {
       #---------#
       
       # Skip the FOREIGN KEY
-      next if ($doc =~ /^\s*foreign\s+key/i);
+      next if ($doc =~ /^\s*foreign\s+key/i || $doc =~ /^\s+$/);
       
       if ($doc =~ /^\s*(primary\s+key)\s*\w*\s*\((.+)\)/i or $doc =~ /^\s*(unique)\s*\((.+)\)/i){ # Primary or unique;
         add_column_index($1,$2);
@@ -372,7 +372,6 @@ while (<SQLFILE>) {
         $col_name = $1;
         $col_type = $2;
         if ($doc =~ /default\s+([^,\s]+)\s*.*(,|#).*/i) { $col_def = $1; } # Default value
-        add_column_type_and_default_value($col_name,$col_type,$col_def);
       }
     
       # The type is written in several lines
@@ -400,16 +399,21 @@ while (<SQLFILE>) {
           }
           if ($line =~ /default\s+([^,\s]+)\s*.*(,|#).*/i) { $col_def = $1; } # Default value
         }
-        add_column_type_and_default_value($col_name,$col_type,$col_def);
       }
     
       # All the type is contained in the same line (type without parenthesis)
       elsif ($doc =~ /^\s*\W*(\w+)\W+(\w+)/ ){
         $col_name = $1;
         $col_type = $2;
-        if ($doc =~ /default\s*([^,\s]+)\s*.*(,|#).*/i) { $col_def = $1;} # Default value
-        add_column_type_and_default_value($col_name,$col_type,$col_def);
+        if ($doc =~ /default\s*([^,\s]+)\s*.*(,|#).*/i) { $col_def = $1; } # Default value
       }
+
+      # Default value
+      if (!defined($col_def) || $col_def eq '') {
+        $col_def = ($doc =~ /not\s+null/i ) ? '-' : 'NULL';
+      }
+
+      add_column_type_and_default_value($col_name,$col_type,$col_def);
     }
   }
 }
