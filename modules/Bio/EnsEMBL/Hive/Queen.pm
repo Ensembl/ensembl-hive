@@ -662,25 +662,29 @@ sub get_num_failed_analyses {
 
 
 sub get_remaining_jobs_show_hive_progress {
-  my $self = shift;
-  my $sql = "SELECT sum(done_job_count), sum(failed_job_count), sum(total_job_count), ".
-            "sum(ready_job_count * analysis_stats.avg_msec_per_job)/1000/60/60 ".
-            "FROM analysis_stats";
-  my $sth = $self->prepare($sql);
-  $sth->execute();
-  my ($done, $failed, $total, $cpuhrs) = $sth->fetchrow_array();
-  $sth->finish;
+    my ($self, $filter_analysis) = @_;
 
-  $done   ||= 0;
-  $failed ||= 0;
-  $total  ||= 0;
-  my $completed = $total
+    my $sql =qq{    SELECT  sum(done_job_count), sum(failed_job_count), sum(total_job_count),
+                            sum(ready_job_count * analysis_stats.avg_msec_per_job)/1000/60/60
+                    FROM analysis_stats }
+            . ($filter_analysis ? " WHERE analysis_id=".$filter_analysis->dbID : '');
+
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    my ($done, $failed, $total, $cpuhrs) = $sth->fetchrow_array();
+    $sth->finish;
+
+    $done   ||= 0;
+    $failed ||= 0;
+    $total  ||= 0;
+    my $completed = $total
     ? ((100.0 * ($done+$failed))/$total)
     : 0.0;
-  my $remaining = $total - $done - $failed;
-  warn sprintf("hive %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n",
-          $completed, $cpuhrs, $remaining, $done, $failed, $total);
-  return $remaining;
+    my $remaining = $total - $done - $failed;
+    warn sprintf("%30s %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n",
+                ($filter_analysis ? "analysis '".$filter_analysis->logic_name."'" : 'hive'), $completed, $cpuhrs, $remaining, $done, $failed, $total);
+
+    return $remaining;
 }
 
 

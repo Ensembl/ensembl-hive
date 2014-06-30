@@ -265,6 +265,7 @@ sub main {
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $analysis);   # show what would be submitted, but do not actually submit
+        $queen->get_remaining_jobs_show_hive_progress( $analysis ) if ($analysis);
         $queen->get_remaining_jobs_show_hive_progress();
 
         if($show_failed_jobs) {
@@ -383,8 +384,8 @@ sub run_autonomously {
             print "Not submitting any workers this iteration\n";
         }
 
-        $failed_analyses       = $queen->get_num_failed_analyses($run_analysis);
-        $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress();
+        $failed_analyses       = $queen->get_num_failed_analyses( $run_analysis );
+        $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress( $run_analysis );
 
     } while( $keep_alive
             or (!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops) );

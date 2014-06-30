@@ -167,7 +167,7 @@ sub display_name {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter display_name is generated
 
     my $adaptor = $self->adaptor;
-    return ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->dbname.'/'.$self->logic_name : $self->logic_name;
+    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->dbname . '/' : '' ) . $self->logic_name;
 }
 
 
@@ -187,9 +187,8 @@ sub stats {
 
     my $collection = Bio::EnsEMBL::Hive::AnalysisStats->collection();
 
-    return $collection
-        ? $collection->find_one_by('analysis', $self)
-        : $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
+    return ($collection && $collection->find_one_by('analysis', $self) )
+        || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
 }
 
 

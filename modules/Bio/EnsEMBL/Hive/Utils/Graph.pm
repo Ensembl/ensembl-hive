@@ -189,6 +189,8 @@ sub build {
             $target_object = $df_rule->to_analysis();
             $target_object->{'_foreign'}=1;
             Bio::EnsEMBL::Hive::Analysis->collection()->add( $target_object );  # add it to the collection
+            my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $self->hive_dba );
+            Bio::EnsEMBL::Hive::AnalysisStats->collection()->add( $foreign_stats ); # add it to the collection
         }
 
         if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
@@ -201,6 +203,8 @@ sub build {
             my $condition_analysis = $c_rule->condition_analysis();
             $condition_analysis->{'_foreign'}=1;
             Bio::EnsEMBL::Hive::Analysis->collection()->add( $condition_analysis ); # add it to the collection
+            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $self->hive_dba );
+            Bio::EnsEMBL::Hive::AnalysisStats->collection()->add( $foreign_stats ); # add it to the collection
         }
     }
 
