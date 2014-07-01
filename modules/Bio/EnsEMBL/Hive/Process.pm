@@ -424,13 +424,14 @@ sub data_dbc {
 =cut
 
 sub input_job {
-  my( $self, $job ) = @_;
-  if($job) {
-    throw("Not a Bio::EnsEMBL::Hive::AnalysisJob object")
-        unless ($job->isa("Bio::EnsEMBL::Hive::AnalysisJob"));
-    $self->{'_input_job'} = $job;
-  }
-  return $self->{'_input_job'};
+    my $self = shift @_;
+
+    if(@_) {
+        if(my $job = $self->{'_input_job'} = shift) {
+            throw("Not a Bio::EnsEMBL::Hive::AnalysisJob object") unless ($job->isa("Bio::EnsEMBL::Hive::AnalysisJob"));
+        }
+    }
+    return $self->{'_input_job'};
 }
 
 
