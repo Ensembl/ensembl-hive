@@ -491,6 +491,14 @@ sub throw {
 }
 
 
+sub complete_early {
+    my ($self, $msg) = @_;
+
+    $self->input_job->incomplete(0);
+    die $msg;
+}
+
+
 =head2 debug
 
     Title   :  debug
