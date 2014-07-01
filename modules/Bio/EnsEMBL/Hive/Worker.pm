@@ -377,8 +377,11 @@ sub worker_say {
 
     my $worker_id       = $self->dbID();
     my $current_role    = $self->current_role;
+    my $job_id          = $self->runnable_object && $self->runnable_object->input_job && $self->runnable_object->input_job->dbID;
     print "Worker $worker_id [ ". ( $current_role
-                                    ? ('Role '.$current_role->dbID.' , '.$current_role->analysis->logic_name.'('.$current_role->analysis_id.')')
+                                    ? ('Role '.$current_role->dbID.' , '.$current_role->analysis->logic_name.'('.$current_role->analysis_id.')'
+                                        . ($job_id ? ", Job $job_id" : '')
+                                      )
                                     : 'UNSPECIALIZED'
                                   )." ] $msg\n";
 }

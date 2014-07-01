@@ -193,12 +193,10 @@ sub enter_status {
 
     $job->set_and_update_status( $status );
 
-    my $status_msg  = 'Job '.$job->dbID.' : '.$status;
-
     if(my $worker = $self->worker) {
-        $worker->enter_status( $status, $status_msg );
+        $worker->enter_status( $status );
     } elsif($self->debug) {
-        print STDERR "Standalone$status_msg\n";
+        print STDERR "StandaloneJob : $status\n";
     }
 }
 
