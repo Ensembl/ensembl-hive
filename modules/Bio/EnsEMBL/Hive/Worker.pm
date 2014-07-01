@@ -666,30 +666,26 @@ sub run_one_batch {
 
             $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();
-            $runnable_object->input_job( undef );   # release an extra reference to the job
-
-            $job->incomplete(0);
         };
-        my $msg_thrown          = $@;
-
-        $job->runtime_msec( $job_stopwatch->get_elapsed );  # whether successful or not
-        $job->query_count( $self->adaptor->db->dbc->query_count );
-
-        my $job_completion_line = "Job $job_id : complete";
-
-        if($msg_thrown) {   # record the death message
-            my $job_status_at_the_moment = $job->status();
-            $job_completion_line = "Job $job_id : died in status '$job_status_at_the_moment' for the following reason: $msg_thrown";
-            $self->adaptor->db->get_LogMessageAdaptor()->store_job_message($job_id, $msg_thrown, $job->incomplete );
+        if(my $msg = $@) {
+            $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
+            $self->runnable_object->input_job->warning( $msg, $job->incomplete );
         }
 
-        print STDERR "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->incomplete));      # one copy goes to the job's STDERR
+            # whether the job completed successfully or not:
+        $self->runnable_object->input_job( undef );   # release an extra reference to the job
+        $job->runtime_msec( $job_stopwatch->get_elapsed );
+        $job->query_count( $self->adaptor->db->dbc->query_count );
+
+        my $job_completion_line = "Job $job_id : ". ($job->died_somewhere ? 'died' : 'complete' );
+
+        print STDERR "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));  # one copy goes to the job's STDERR
         $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
         $self->worker_say( $job_completion_line );                                                              # one copy goes to the worker's STDERR
 
-        $self->current_role->register_attempt( ! $job->incomplete );
+        $self->current_role->register_attempt( ! $job->died_somewhere );
 
-        if($job->incomplete) {
+        if($job->died_somewhere) {
                 # If the job specifically said what to do next, respect that last wish.
                 # Otherwise follow the default behaviour set by the beekeeper in $worker:
                 #
@@ -724,7 +720,7 @@ sub run_one_batch {
             }
         }
 
-        $self->prev_job_error( $job->incomplete );
+        $self->prev_job_error( $job->died_somewhere );
         $self->enter_status('READY');
     } # /while(my $job = shift @$jobs)
 
@@ -767,7 +763,7 @@ sub stop_job_output_redirection {
         $self->get_stdout_redirector->pop();
         $self->get_stderr_redirector->pop();
 
-        my $force_cleanup = !($self->debug || $job->incomplete);
+        my $force_cleanup = !($self->debug || $job->died_somewhere);
 
         if($force_cleanup or -z $job->stdout_file) {
             $self->worker_say( "Deleting '".$job->stdout_file."' file" );

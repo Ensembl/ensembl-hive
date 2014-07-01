@@ -149,39 +149,40 @@ sub life_cycle {
         }
     };
 
-    my $error_msg = $@;
+    if(my $life_cycle_msg = $@) {
+        $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
+        $self->warning( $life_cycle_msg, $job->incomplete );
+    }
 
     if( $self->can('post_cleanup') ) {   # may be run to clean up memory even after partially failed attempts
         eval {
+            $job->incomplete(1);    # it could have been reset by a previous call to complete_early
             $self->enter_status('POST_CLEANUP');
             $self->post_cleanup;
         };
-        if($@) {
-            $error_msg .= $@;
-            $job->incomplete(1);
+        if(my $post_cleanup_msg = $@) {
+            $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
+            $self->warning( $post_cleanup_msg, $job->incomplete );
         }
     }
 
-    if( $error_msg ) {
-        if( $job->incomplete ) {    # retransmit the death message if it was not a suicide, continue otherwise
-            die $error_msg;
-        } else {
-            $self->warning( $error_msg );
+    unless( $job->died_somewhere ) {
+
+        if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
+            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
+            $job->dataflow_output_id();
         }
-    }
 
-    if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
-        print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
-        $job->dataflow_output_id();
-    }
+        my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
+        if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
+            $job->transient_error(0);
+            die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
+        }
 
-    my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
-    if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
-        $job->transient_error(0);
-        die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
-    }
+        $job->incomplete(0);
 
-    return \%job_partial_timing;
+        return \%job_partial_timing;
+    }
 }
 
 

@@ -161,6 +161,9 @@ sub write_output {
 =cut
 
 sub post_cleanup {
+#    my $self = shift @_;
+#
+#    $self->dangerous_math( $self->param('state') );    # uncomment to simulate failures in POST_CLEANUP
 }
 
 

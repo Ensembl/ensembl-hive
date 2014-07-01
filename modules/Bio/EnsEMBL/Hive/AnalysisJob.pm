@@ -226,6 +226,14 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
     return $self->{'_incomplete'};
 }
 
+
+sub died_somewhere {
+    my $self = shift;
+
+    $self->{'_died_somewhere'} ||= shift if(@_);    # NB: the '||=' only applies in this case - do not copy around!
+    return $self->{'_died_somewhere'} ||=0;
+}
+
 ##-----------------[/indicators to the Worker]-------------------------------
 
 =head2 warning
@@ -235,14 +243,21 @@ sub incomplete {            # Job should set this to 0 prior to throwing if the 
 =cut
 
 sub warning {
-    my ($self, $msg) = @_;
+    my ($self, $msg, $is_error) = @_;
 
-    if( my $job_adaptor = $self->adaptor ) {
-        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($self->dbID, $msg, 0);
-    } else {
-        print STDERR "Warning: $msg\n";
+    $is_error //= 0;
+    my $job_adaptor = $self->adaptor;
+
+    if( $is_error or !$job_adaptor) {
+        my $class = $is_error ? 'Error' : 'Warning';
+        print STDERR "Job${class}: $msg\n";
+    }
+
+    if( $job_adaptor ) {
+        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($self->dbID, $msg, $is_error);
     }
 }
+
 
 sub fan_cache {     # a self-initializing getter (no setting)
                     # Returns a hash-of-lists { 2 => [list of jobs waiting to be funneled into 2], 3 => [list of jobs waiting to be funneled into 3], etc}

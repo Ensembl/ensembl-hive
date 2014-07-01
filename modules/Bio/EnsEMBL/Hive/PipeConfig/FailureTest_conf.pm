@@ -66,9 +66,7 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'pipeline_name' => 'failure_test',                  # name used by the beekeeper to prefix job names on the farm
-
-        'job_count'         => 20,                          # controls the total number of FailureTest jobs
+        'job_count'         => 10,                          # controls the total number of FailureTest jobs
         'failure_rate'      =>  3,                          # controls the rate of jobs that are programmed to fail
         'state'             => 'RUN',                       # controls in which state the jobs are programmed to fail
         'lethal_after'      => 0,
