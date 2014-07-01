@@ -145,7 +145,7 @@ sub life_cycle {
             $self->write_output;
             $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
         } else {
-            print STDERR "\n!!! *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW\n" if($self->debug); 
+            $self->say_with_header( ": *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW" );
         }
     };
 
@@ -169,7 +169,7 @@ sub life_cycle {
     unless( $job->died_somewhere ) {
 
         if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
-            print STDERR "\njob ".$job->dbID." : AUTOFLOW input->output\n" if($self->debug);
+            $self->say_with_header( ': AUTOFLOW input->output' );
             $job->dataflow_output_id();
         }
 
@@ -186,6 +186,21 @@ sub life_cycle {
 }
 
 
+sub say_with_header {
+    my ($self, $msg, $important) = @_;
+
+    $important //= $self->debug();
+
+    if($important) {
+        if(my $worker = $self->worker) {
+            $worker->worker_say( $msg );
+        } else {
+            print STDERR "StandaloneJob $msg\n";
+        }
+    }
+}
+
+
 sub enter_status {
     my ($self, $status) = @_;
 
@@ -194,9 +209,25 @@ sub enter_status {
     $job->set_and_update_status( $status );
 
     if(my $worker = $self->worker) {
-        $worker->enter_status( $status );
-    } elsif($self->debug) {
-        print STDERR "StandaloneJob : $status\n";
+        $worker->set_and_update_status( $status );
+    }
+
+    $self->say_with_header( '-> '.$status );
+}
+
+
+sub warning {
+    my ($self, $msg, $is_error) = @_;
+
+    $is_error //= 0;
+    chomp $msg;
+
+    $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg" );
+
+    my $job = $self->input_job;
+
+    if(my $job_adaptor = $job->adaptor) {
+        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $is_error);
     }
 }
 
@@ -469,12 +500,6 @@ sub param_substitute {
     my $self = shift @_;
 
     return $self->input_job->param_substitute(@_);
-}
-
-sub warning {
-    my $self = shift @_;
-
-    return $self->input_job->warning(@_);
 }
 
 sub dataflow_output_id {

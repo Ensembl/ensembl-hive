@@ -743,12 +743,10 @@ sub set_and_update_status {
 
 
 sub enter_status {
-    my ($self, $status, $msg) = @_;
-
-    $msg ||= ": $status";
+    my ($self, $status) = @_;
 
     if($self->debug) {
-        $self->worker_say( $msg );
+        $self->worker_say( '-> '.$status );
     }
 
     $self->set_and_update_status( $status );

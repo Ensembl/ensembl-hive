@@ -238,28 +238,6 @@ sub died_somewhere {
 
 ##-----------------[/indicators to the Worker]-------------------------------
 
-=head2 warning
-
-    Description:    records a non-error message in 'log_message' table linked to the current job
-
-=cut
-
-sub warning {
-    my ($self, $msg, $is_error) = @_;
-
-    $is_error //= 0;
-    my $job_adaptor = $self->adaptor;
-
-    if( $is_error or !$job_adaptor) {
-        my $class = $is_error ? 'Error' : 'Warning';
-        print STDERR "Job${class}: $msg\n";
-    }
-
-    if( $job_adaptor ) {
-        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($self->dbID, $msg, $is_error);
-    }
-}
-
 
 sub fan_cache {     # a self-initializing getter (no setting)
                     # Returns a hash-of-lists { 2 => [list of jobs waiting to be funneled into 2], 3 => [list of jobs waiting to be funneled into 3], etc}
