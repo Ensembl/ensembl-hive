@@ -704,7 +704,7 @@ sub run_one_batch {
         } else {    # job successfully completed:
             $self->more_work_done( $job_partial_timing );
             $jobs_done_here++;
-            $job->update_status('DONE');
+            $job->set_and_update_status('DONE');
 
             if(my $semaphored_job_id = $job->semaphored_job_id) {
                 my $dbc = $self->adaptor->db->dbc;
@@ -728,6 +728,17 @@ sub run_one_batch {
 }
 
 
+sub set_and_update_status {
+    my ($self, $status ) = @_;
+
+    $self->status($status);
+
+    if(my $adaptor = $self->adaptor) {
+        $adaptor->check_in_worker( $self );
+    }
+}
+
+
 sub enter_status {
     my ($self, $status, $msg) = @_;
 
@@ -737,8 +748,7 @@ sub enter_status {
         $self->worker_say( $msg );
     }
 
-    $self->status( $status );
-    $self->adaptor->check_in_worker( $self );
+    $self->set_and_update_status( $status );
 }
 
 

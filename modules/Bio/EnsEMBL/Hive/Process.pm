@@ -191,7 +191,7 @@ sub enter_status {
 
     my $job = $self->input_job();
 
-    $job->update_status( $status );
+    $job->set_and_update_status( $status );
 
     my $status_msg  = 'Job '.$job->dbID.' : '.$status;
 

@@ -252,7 +252,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 }
 
 
-=head2 update_status
+=head2 check_in_job
 
   Arg [1]    : $analysis_id
   Example    :
@@ -263,7 +263,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 
 =cut
 
-sub update_status {
+sub check_in_job {
     my ($self, $job) = @_;
 
     my $sql = "UPDATE job SET status='".$job->status."' ";
@@ -527,7 +527,7 @@ sub gc_dataflow {
 
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 
-    $job->update_status('PASSED_ON');
+    $job->set_and_update_status('PASSED_ON');
 
     if(my $semaphored_job_id = $job->semaphored_job_id) {
         $self->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore

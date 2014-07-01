@@ -134,12 +134,14 @@ sub semaphored_job_id {
     return $self->{'_semaphored_job_id'};
 }
 
-
-sub update_status {
+sub set_and_update_status {
     my ($self, $status ) = @_;
+
     $self->status($status);
-    return unless($self->adaptor);
-    $self->adaptor->update_status($self);
+
+    if(my $adaptor = $self->adaptor) {
+        $adaptor->check_in_job($self);
+    }
 }
 
 sub dataflow_rules {    # if ever set will prevent the Job from fetching rules from the DB
