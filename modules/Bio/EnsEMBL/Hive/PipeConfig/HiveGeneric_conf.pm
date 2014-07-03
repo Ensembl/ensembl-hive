@@ -61,6 +61,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -469,7 +470,7 @@ sub add_objects_from_config {
     while( my ($param_name, $param_value) = each %$new_pwp_entries ) {
         Bio::EnsEMBL::Hive::PipelineWideParameters->add_new_or_update(
             'param_name'    => $param_name,
-            'param_value'   => $param_value,
+            'param_value'   => stringify($param_value),
         );
     }
     warn "Done.\n\n";
