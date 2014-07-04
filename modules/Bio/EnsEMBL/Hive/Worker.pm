@@ -520,11 +520,13 @@ sub run {
             }
         }
 
-        if( $self->cause_of_death() eq 'NO_WORK') {
+        my $cod = $self->cause_of_death() || '';
+
+        if( $cod eq 'NO_WORK') {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
         }
 
-        if( $self->cause_of_death() =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and !$specialization_arglist ) {
+        if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and !$specialization_arglist ) {
             $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers( $self->current_role->analysis->dbID );  # FIXME: tidy up this counting of active roles
             $self->cause_of_death(undef);
             $self->specialize_and_compile_wrapper();
