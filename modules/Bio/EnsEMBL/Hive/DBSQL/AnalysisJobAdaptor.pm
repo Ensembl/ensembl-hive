@@ -608,6 +608,8 @@ sub balance_semaphores {
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);
 
+    my $rebalanced_jobs_counter = 0;
+
     $find_sth->execute();
     while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
         my $msg;
@@ -618,11 +620,14 @@ sub balance_semaphores {
             $update_sth->execute($should-$was, $job_id);
             $msg = "Semaphore count needed rebalancing now, so performing: $was -> $should";
             $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 1 );
+            $rebalanced_jobs_counter++;
         }
         warn "[Job $job_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
     }
     $find_sth->finish;
     $update_sth->finish;
+
+    return $rebalanced_jobs_counter;
 }
 
 
