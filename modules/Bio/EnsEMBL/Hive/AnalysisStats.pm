@@ -244,7 +244,7 @@ sub get_or_estimate_batch_size {
 }
 
 
-sub inprogress_job_count {
+sub inprogress_job_count {      # includes CLAIMED
     my $self = shift;
     return    $self->total_job_count
             - $self->semaphored_job_count

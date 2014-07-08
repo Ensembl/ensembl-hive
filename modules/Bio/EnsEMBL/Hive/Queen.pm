@@ -359,10 +359,12 @@ sub register_worker_death {
                 $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $current_role );
         }
 
-            # re-sync the analysis_stats when a worker dies as part of dynamic sync system
-        if($self->safe_synchronize_AnalysisStats( $current_role->analysis->stats )->status ne 'DONE') {
-            # since I'm dying I should make sure there is someone to take my place after I'm gone ...
-            # above synch still sees me as a 'living worker' so I need to compensate for that
+            # re-sync the analysis_stats when a worker dies as part of dynamic sync system:
+        $self->safe_synchronize_AnalysisStats( $current_role->analysis->stats );
+
+        if( $current_role->analysis->stats->status ne 'DONE') {
+                # Since I'm dying I should make sure there is someone to take my place after I'm gone.
+                # Above sync still sees me as a 'living worker' so I need to compensate for that.
             $analysis_stats_adaptor->increase_required_workers( $analysis_id );
         }
     }
@@ -572,58 +574,52 @@ sub safe_synchronize_AnalysisStats {
 
     my $max_refresh_attempts = 5;
     while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
+            # ToDo: it would be nice to report the detected collision
         sleep(1);
         $stats->refresh();  # just try to avoid collision
     }
 
-    return $stats if($stats->status eq 'DONE');
-    return $stats if(($stats->status eq 'WORKING') and
-                   defined($stats->seconds_since_last_update) and
-                   ($stats->seconds_since_last_update < 3*60));
+    unless( ($stats->status eq 'DONE')
+         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_last_update) and ($stats->seconds_since_last_update < 3*60) ) ) {
 
-        # try to claim the sync_lock
-    my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
-              "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
-    my $row_count = $self->dbc->do($sql);  
-    return $stats unless($row_count == 1);        # return the un-updated status if locked
-  
-        # if we managed to obtain the lock, let's go and perform the sync:
-    $self->synchronize_AnalysisStats($stats);
+        my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
+                  "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
 
-    return $stats;
+        my $row_count = $self->dbc->do($sql);   # try to claim the sync_lock
+
+        if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
+            $self->synchronize_AnalysisStats($stats);   
+        } # otherwise assume it's locked and just return un-updated
+    }
 }
 
 
 =head2 synchronize_AnalysisStats
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Example    : $self->synchronize($analysisStats);
+  Example    : $self->synchronize_AnalysisStats( $stats );
   Description: Queries the job and worker tables to get summary counts
-               and rebuilds the AnalysisStats object.  Then updates the
-               analysis_stats table with the new summary info
-  Returntype : newly synced Bio::EnsEMBL::Hive::AnalysisStats object
+               and rebuilds the AnalysisStats object.
+               Then updates the analysis_stats table with the new summary info.
   Exceptions : none
   Caller     : general
 
 =cut
 
 sub synchronize_AnalysisStats {
-    my $self = shift;
-    my $analysisStats = shift;
+    my ($self, $stats) = @_;
 
-    return $analysisStats unless($analysisStats);
-    return $analysisStats unless($analysisStats->analysis_id);
+    if( $stats and $stats->analysis_id ) {
 
-    $analysisStats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
+        $stats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
-    my $job_counts = $self->db->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $analysisStats->analysis_id );
+        my $job_counts = $self->db->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 
-    $analysisStats->recalculate_from_job_counts( $job_counts );
+        $stats->recalculate_from_job_counts( $job_counts );
 
-    # $analysisStats->sync_lock(0); ## do we perhaps need it here?
-    $analysisStats->update;  #update and release sync_lock
-
-    return $analysisStats;
+        # $stats->sync_lock(0); ## do we perhaps need it here?
+        $stats->update;  #update and release sync_lock
+    }
 }
 
 
