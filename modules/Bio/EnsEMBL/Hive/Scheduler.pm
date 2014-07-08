@@ -66,8 +66,14 @@ sub schedule_workers_resync_if_necessary {
             print "Scheduler: mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers...\n";
             $queen->check_for_dead_workers($valley, 1);
         }
-        print "Scheduler: re-balancing of semaphore_counts...\n";
-        $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID);
+
+        if($queen->db->hive_auto_rebalance_semaphores) {    # make sure rebalancing only ever happens for the pipelines that asked for it
+            print "Scheduler: re-balancing of semaphore_counts...\n";
+            $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID);
+        } else {
+            print "Scheduler: automatic re-balancing of semaphore_counts is off by default. If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table.\n";
+        }
+
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 

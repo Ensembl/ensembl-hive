@@ -154,7 +154,7 @@ sub hive_use_triggers {  # getter only, not setter
 
     unless( defined($self->{'_hive_use_triggers'}) ) {
         my $hive_use_triggers = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_triggers' );
-        $self->{'_hive_use_triggers'} = $hive_use_triggers || 0;
+        $self->{'_hive_use_triggers'} = $hive_use_triggers // 0;
     } 
     return $self->{'_hive_use_triggers'};
 }
@@ -165,9 +165,20 @@ sub hive_use_param_stack {  # getter only, not setter
 
     unless( defined($self->{'_hive_use_param_stack'}) ) {
         my $hive_use_param_stack = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_param_stack' );
-        $self->{'_hive_use_param_stack'} = $hive_use_param_stack || 0;
+        $self->{'_hive_use_param_stack'} = $hive_use_param_stack // 0;
     } 
     return $self->{'_hive_use_param_stack'};
+}
+
+
+sub hive_auto_rebalance_semaphores {  # getter only, not setter
+    my $self = shift @_;
+
+    unless( defined($self->{'_hive_auto_rebalance_semaphores'}) ) {
+        my $hive_auto_rebalance_semaphores = $self->get_MetaAdaptor->get_value_by_key( 'hive_auto_rebalance_semaphores' );
+        $self->{'_hive_auto_rebalance_semaphores'} = $hive_auto_rebalance_semaphores // 0;
+    } 
+    return $self->{'_hive_auto_rebalance_semaphores'};
 }
 
 
