@@ -539,21 +539,20 @@ sub fetch_overdue_workers {
 =cut
 
 sub synchronize_hive {
-  my $self          = shift;
-  my $filter_analysis = shift; # optional parameter
+    my ($self, $filter_analysis) = @_;
 
-  my $start_time = time();
+    my $start_time = time();
 
-  my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
 
-  print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
-  foreach my $analysis (@$list_of_analyses) {
-    $self->synchronize_AnalysisStats($analysis->stats);
-    print STDERR ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
-  }
-  print STDERR "\n";
+    print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
+    foreach my $analysis (@$list_of_analyses) {
+        $self->synchronize_AnalysisStats($analysis->stats);
+        print STDERR ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
+    }
+    print STDERR "\n";
 
-  print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
+    print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
 
 
@@ -620,6 +619,25 @@ sub synchronize_AnalysisStats {
         # $stats->sync_lock(0); ## do we perhaps need it here?
         $stats->update;  #update and release sync_lock
     }
+}
+
+
+sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent sync
+    my ($self, $filter_analysis) = @_;
+
+    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+
+    my $only_semaphored_jobs_to_run = 1;
+    my $total_semaphored_job_count  = 0;
+
+    foreach my $analysis (@$list_of_analyses) {
+        my $stats = $analysis->stats;
+
+        $only_semaphored_jobs_to_run = 1 if( $stats->total_job_count != $stats->done_job_count + $stats->failed_job_count + $stats->semaphored_job_count );
+        $total_semaphored_job_count += $stats->semaphored_job_count;
+    }
+
+    return ( $total_semaphored_job_count && $only_semaphored_jobs_to_run );
 }
 
 

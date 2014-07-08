@@ -70,11 +70,17 @@ sub schedule_workers_resync_if_necessary {
         print "Scheduler: re-synchronizing the Hive...\n";
         $queen->synchronize_hive($filter_analysis);
 
-        if($queen->db->hive_auto_rebalance_semaphores) {    # make sure rebalancing only ever happens for the pipelines that asked for it
-            print "Scheduler: re-balancing of semaphore_counts...\n";
-            if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID) ) {
-                print "Scheduler: re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization of the Hive...\n";
-                $queen->synchronize_hive($filter_analysis);
+        if( $queen->db->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
+            if( $queen->check_nothing_to_run_but_semaphored ) { # and double-check on our side
+                print "Scheduler: looks like we may need re-balancing semaphore_counts...\n";
+                if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID) ) {
+                    print "Scheduler: re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization of the Hive...\n";
+                    $queen->synchronize_hive($filter_analysis);
+                } else {
+                    print "Scheduler: hmmm... managed to re-balance 0 jobs, you may need to investigate further.\n";
+                }
+            } else {
+                print "Scheduler: apparently there are no semaphored jobs that may need to be re-balanced at this time.\n";
             }
         } else {
             print "Scheduler: automatic re-balancing of semaphore_counts is off by default. If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table.\n";
