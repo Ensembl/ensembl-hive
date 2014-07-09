@@ -1,3 +1,33 @@
+Version 2.1     - 'multirole'
+===========
+
+* Improved internal API that allows implicit lazy-loading of objects associated with other objects via their dbIDs
+
+* Objects that make up pipeline's graph can be loaded into cache, which simplifies structural topup of existing pipeline databases
+
+* Diagram-drawing engine was stripped of its' dependence on dbIDs, so diagrams can now be built directly from PipeConfig file(s) using -pipeconfig option(s)
+
+* -analysis_topup removed (became the default mode of operation), -job_topup removed in favour of seed_pipeline.pl providing same functionality
+
+* pipeline_wide_parameters moved into a separate table, so hive-specific 'meta' table is no longer needed, and Ensembl's version can happily coexist
+
+* 'monitor' table removed in favour of offline generate_timeline.pl script (that does not require a constantly running beekeeper.pl for data generation)
+
+* pipeline_create_commands() is executed even on topup; redefine to return an empty list or use -hive_no_init if you don't need commands to be executed
+
+* Switched to 'worker_resource_usage' table, unified resource collection calls for other Meadows, so SGE/CONDOR/etc resources can be shown in guiHive & timeline.
+
+* Introduced 'role' table and Role objects to better track role-switching of multirole Workers
+
+* Added Process::complete_early() as the blessed way to exit the code early successfully and store a log_message
+
+* More careful semaphore rebalancing strategy that can also be switched on or off during pipeline database generation
+
+* Logging and error reporting has been improved and simplified
+
+* Multiple bugs have been fixed
+
+
 Version 2.0     - a major 'coreless' release of Hive code
 ===========
 
