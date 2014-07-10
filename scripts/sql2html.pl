@@ -99,7 +99,7 @@ if (defined($host) && !defined($skip_conn)) {
 ################
 
 my $default_colour = '#000'; # Black
-my $list_bg = "background-color:#F2F2F2";
+my $list_bg = "background-color:#F0F0F0";
 
 my %display_col = ('Show' => 'none', 'Hide' => 'inline');
 my $documentation = {};
@@ -123,17 +123,15 @@ my $header_colour;
 
 my $SQL_LIMIT = 50;
 my $img_plus  = qq{<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>};
-my $img_minus = qq{<img src="/i/16/minus-button.png" style="width:12px;height:12px;vertical-align:middle;margin-right:6px" alt="hide"/>};
+my $img_minus = qq{<img src="/i/16/minus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="hide"/>};
 my $link_text = 'columns';
-
 
 
 
 ##############
 ### Header ###
 ##############
-my $title  = (defined($db_team)) ? "$db_team " : '';
-   $title .= 'Schema Documentation';
+my $title = 'Schema Documentation';
 
 my $html_header = qq{
 <html>
@@ -144,24 +142,22 @@ my $html_header = qq{
 <script language="Javascript" type="text/javascript">
   var img_plus   = '$img_plus';
   var img_minus  = '$img_minus';
-  var link_text  = 'columns';
-  var span_open  = ' <span style="vertical-align:middle">';
+  var span_open  = ' <span style="vertical-align:middle;color:#000;font-weight:bold;padding-right:2px">';
   var span_close = '</span>';
 
   // Function to show/hide the columns table
-  function show_hide (param, type) {
-    // Example tables
-    if (type === 'example') {
-      div    = document.getElementById('ex_'+param);
-      alink  = document.getElementById('e_'+param);
-      a_text = 'query results'; 
-    } 
+  function show_hide (param, a_text) {
+  
     // Schema tables
-    else { 
-      div    = document.getElementById('div_'+param);
-      alink  = document.getElementById('a_'+param);
-      a_text = link_text;
+    if (a_text === 'columns') {
+      div   = document.getElementById('div_'+param);
+      alink = document.getElementById('a_'+param);
     }  
+    // Example tables
+    else {
+      div   = document.getElementById('ex_'+param);
+      alink = document.getElementById('e_'+param);
+    } 
     
     if (div.style.display=='inline') {
       div.style.display='none';
@@ -176,7 +172,7 @@ my $html_header = qq{
   }
   
   // Function to show/hide all the tables
-  function show_hide_all () {
+  function show_hide_all (link_text) {
     expand_flag = document.getElementById('expand');
     divs = document.getElementsByTagName('div');
     for(var i=0; i < divs.length; i++){
@@ -203,7 +199,6 @@ my $html_header = qq{
     }
   }
 </script>
-
 </head>
 <body>
 };
@@ -463,9 +458,10 @@ foreach my $header_name (@header_names) {
   # Header display #
   #----------------#  
   if ($header_flag == 1 and $header_name ne 'default') {
-    $html_content .= qq{\n<br /><br />
-<div style="$list_bg;padding:5px;margin:5px 0px;border-top:2px solid $hcolour">
-  <h2 id="$header_id" style="display:inline;color:#000">$header_name</h2>
+    $html_content .= qq{\n
+<div style="$list_bg;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
+  <div id="$header_id" style="background-color:$hcolour;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:top"></div>
+  <h2 id="$header_id" style="display:inline;color:#000;padding-top:0px;margin-left:6px">$header_name</h2>
 </div>\n};
     $header_id ++;
     my $header_desc = $documentation->{$header_name}{'desc'};    
@@ -632,7 +628,7 @@ sub display_tables_list {
     $input_margin = qq{ style="margin-left:10px;margin-bottom:5px"};
   }
   $html .= qq{
-  <input type="button" onclick="show_hide_all()" class="fbutton" value="Show/hide all"$input_margin/>
+  <input type="button" onclick="show_hide_all('$link_text')" class="fbutton" value="Show/hide all"$input_margin/>
   <input type="hidden" id="expand" value="0" />
   };
   
@@ -672,7 +668,7 @@ sub display_header {
     $html .= qq{    </div>};
   } 
   else {
-    $html .= qq{    <h2 >$header_name</h2>};
+    $html .= qq{    <h2>$header_name</h2>};
   }
   return $html;
 }
@@ -779,18 +775,18 @@ sub add_table_name {
   }
 
   my $html = qq{
-  <div id="$t_name" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
-    $c_box
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold">$t_name</div>
-    <div style="float:right;text-align:right;padding-right:1px">
-      <a id="a_$t_name" style="cursor:pointer;text-decoration:none" onclick="show_hide('$t_name')">
-        $img_plus
-        <span style="vertical-align:middle">Show $link_text</span>
-      </a> 
-      <b> | </b> <a href="#top">[Back to top]</a>
+  <div id="$t_name" style="width:850px;background-color:#F0F0F0;margin-top:50px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
+ 
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
+      <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;vertical-align:middle"></span>$t_name</div>
+    <div style="float:right;text-align:right;padding:2px 1px">
+  };
+  $html .= show_hide_button("a_$t_name", $t_name, $link_text);
+  $html .= qq{
+      <span style="margin-right:5px;border-right:1px solid #000"> </span> <a href="#top">[Back to top]</a>
     </div>
-  </div>\n};  
-  
+    <div style="clear:both"></div>
+  </div>\n}; 
   return $html;
 }
 
@@ -902,7 +898,7 @@ sub add_examples {
       my $show_hide = '';
       my $sql_table = '';
       if (!defined($skip_conn) && defined($host)) {
-        $show_hide .= qq{<a id="e_$table$nb" style="cursor:pointer;text-decoration:none" onclick="show_hide('$table$nb','example')">$img_plus<span style="vertical-align:middle"> Show query results</span></a>};
+        $show_hide .= show_hide_button("e_$table$nb", "$table$nb", 'query results');
         $sql_table = get_example_table($sql,$table,$nb);
       }
       if (defined($sql)) {
@@ -1147,6 +1143,20 @@ sub slurp_intro {
   $intro_html =~ s/####DB_VERSION####/$version/g if (defined($version));
   
   return $intro_html;
+}
+
+# Show/hide button
+sub show_hide_button {
+  my $a_id   = shift;
+  my $div_id = shift;
+  my $label  = shift;
+  
+  my $show_hide = qq{
+  <a id="$a_id" style="cursor:pointer;text-decoration:none;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px" onclick="show_hide('$div_id','$label')">
+    $img_plus
+    <span style="vertical-align:middle;color:#000;font-weight:bold"> Show $label</span>
+  </a>};
+  return $show_hide;
 }
 
 
