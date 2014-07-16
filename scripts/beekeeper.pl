@@ -63,6 +63,8 @@ sub main {
     $self->{'reg_alias'}            = undef;
     $self->{'nosqlvc'}              = undef;
 
+    $self->{'config_files'}         = [];
+
     $self->{'sleep_minutes'}        = 1;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'can_respecialize'}     = undef;
@@ -76,6 +78,9 @@ sub main {
                'reg_type=s'         => \$self->{'reg_type'},
                'reg_alias|regname=s'=> \$self->{'reg_alias'},
                'nosqlvc=i'          => \$self->{'nosqlvc'},     # can't use the binary "!" as it is a propagated option
+
+                    # json config files
+               'config_file=s@'     => $self->{'config_files'},
 
                     # loop control
                'run'                => \$run,
@@ -127,7 +132,7 @@ sub main {
         exit(0);
     }
 
-    my $config = Bio::EnsEMBL::Hive::Utils::Config->new();      # will probably add a config_file option later
+    my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@{$self->{'config_files'}});
 
     if($run or $run_job_id) {
         $max_loops = 1;
@@ -449,6 +454,10 @@ __DATA__
     -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
 
+=head2 Configs overriding
+
+    -config_file <string>  : json file (with absolute path) to override the default configurations (could be multiple)
+
 =head2 Looping control
 
     -loop                  : run autonomously, loops and sleeps
@@ -456,7 +465,7 @@ __DATA__
     -keep_alive            : do not stop when there are no more jobs to do - carry on looping
     -job_id <job_id>       : run 1 iteration for this job_id
     -run                   : run 1 iteration of automation loop
-    -sleep <num>           : when looping, sleep <num> minutes (default 2min)
+    -sleep <num>           : when looping, sleep <num> minutes (default 1 min)
 
 =head2 Current Meadow control
 

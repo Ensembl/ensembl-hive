@@ -74,16 +74,17 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 =cut
 
 sub new {
-  my ($class, $hive_dba, $config_file_name) = @_;
+    my $class       = shift @_;
+    my $hive_dba    = shift @_;
 
-  my $self = bless({}, ref($class) || $class);
+    my $self = bless({}, ref($class) || $class);
 
-  $self->hive_dba($hive_dba);
-  my $config = Bio::EnsEMBL::Hive::Utils::Config->new( $config_file_name ? $config_file_name : () );
-  $self->config($config);
-  $self->context( [ 'Graph' ] );
+    $self->hive_dba($hive_dba);
+    my $config = Bio::EnsEMBL::Hive::Utils::Config->new( @_ );
+    $self->config($config);
+    $self->context( [ 'Graph' ] );
 
-  return $self;
+    return $self;
 }
 
 
