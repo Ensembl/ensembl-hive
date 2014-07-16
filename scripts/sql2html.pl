@@ -452,7 +452,7 @@ my $col_count = 1;
 my $header_id = 1;
 foreach my $header_name (@header_names) {
   my $tables = $tables_names->{$header_name};
-  my $hcolour = $documentation->{$header_name}{'colour'};
+  my $hcolour = ($documentation->{$header_name}{'colour'}) ? $documentation->{$header_name}{'colour'} : $default_colour;
    
   #----------------#  
   # Header display #
@@ -767,7 +767,7 @@ sub add_table_name_to_list {
 # Method generating the HTML code to display the title/header of the table description block
 sub add_table_name {
   my $t_name = shift;
-  my $colour = shift || '#000';
+  my $colour = shift || $default_colour;
   
   my $c_box = '';
   if ($show_colour) {
