@@ -34,6 +34,9 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+            # json config files
+        'config_file=s@'        => \$self->{'config_files'},
+
         'pipeconfig|pc=s@'      => \$self->{'pipeconfigs'}, # now an array
 
         'f|format=s'            => \$self->{'format'},
@@ -88,7 +91,10 @@ sub main {
         }
     }
 
-    my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new( $self->{'dba'} );
+    my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
+        $self->{'dba'},
+        $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
+    );
     my $graphviz = $graph->build();
 
     my $call = 'as_'.$self->{'format'};
