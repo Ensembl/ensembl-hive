@@ -70,7 +70,8 @@ sub count_pending_workers_by_rc_name {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep PEND";
+    my $cmd = "bjobs -w -J '${jnp}*' 2>/dev/null | grep PEND";  # "-u all" has been removed to ensure one user's PEND processes
+                                                                #   do not affect another user helping to run the same pipeline.
 
 #    warn "LSF::count_pending_workers_by_rc_name() running cmd:\n\t$cmd\n";
 
