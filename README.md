@@ -46,8 +46,8 @@ etc.
 
 Available documentation
 -----------------------
-* eHive dependencies, installation and setup [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/master/docs/install.html) [(local)](docs/install.html)
-* eHive database schema [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/master/docs/hive_schema.html) [(local)](docs/hive_schema.html)
+* eHive dependencies, installation and setup [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/version/1.9/docs/install.html) [(local)](docs/install.html)
+* eHive database schema [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/version/1.9/docs/hive_schema.html) [(local)](docs/hive_schema.html)
 
 Contact us (mailing list)
 -------------------------
