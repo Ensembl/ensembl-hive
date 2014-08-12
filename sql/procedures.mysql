@@ -150,8 +150,8 @@ DELIMITER //
 CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
-    DROP VIEW IF EXISTS msg, progress;
-    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, role, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, worker, analysis_base, resource_class, hive_meta;
+    DROP VIEW IF EXISTS msg, progress, resource_usage_stats;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, role, worker, analysis_base, resource_class, hive_meta;
 END; //
 DELIMITER ;
 
