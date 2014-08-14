@@ -1,0 +1,11 @@
+<map id="Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor">
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisAdaptor" alt="" coords="664,5,843,46"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_ctrl_rule_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisCtrlRuleAdaptor" alt="" coords="640,70,867,111"/>
+<area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisJobAdaptor" alt="" coords="654,135,853,177"/>
+<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisStatsAdaptor" alt="" coords="649,201,858,242"/>
+<area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DataflowRuleAdaptor" alt="" coords="650,266,857,307"/>
+<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceClassAdaptor" alt="" coords="644,331,863,373"/>
+<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceDescription\lAdaptor" alt="" coords="651,396,856,452"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html" title="Bio::EnsEMBL::Hive\l::Queen" alt="" coords="682,475,825,517"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="217,234,375,275"/>
+</map>

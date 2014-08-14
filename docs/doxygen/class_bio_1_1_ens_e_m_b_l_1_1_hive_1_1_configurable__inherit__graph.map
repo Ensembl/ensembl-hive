@@ -1,0 +1,7 @@
+<map id="Bio::EnsEMBL::Hive::Configurable" name="Bio::EnsEMBL::Hive::Configurable">
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow.html" title="Bio::EnsEMBL::Hive\l::Meadow" alt="" coords="198,37,341,78"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph.html" title="Bio::EnsEMBL::Hive\l::Utils::Graph" alt="" coords="198,102,341,143"/>
+<area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html" title="Bio::EnsEMBL::Hive\l::Valley" alt="" coords="198,167,341,209"/>
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_o_c_a_l.html" title="Bio::EnsEMBL::Hive\l::Meadow::LOCAL" alt="" coords="390,5,533,46"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_s_f.html" title="Bio::EnsEMBL::Hive\l::Meadow::LSF" alt="" coords="390,70,533,111"/>
+</map>

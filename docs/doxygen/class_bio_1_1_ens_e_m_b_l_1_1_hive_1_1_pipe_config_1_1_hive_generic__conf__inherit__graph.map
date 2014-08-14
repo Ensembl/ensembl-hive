@@ -1,0 +1,17 @@
+<map id="Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf" name="Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf">
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_any_commands__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::AnyCommands_conf" alt="" coords="465,5,689,46"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_apply_to_databases__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::ApplyToDatabases_conf" alt="" coords="455,70,700,111"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_compress_files__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::CompressFiles_conf" alt="" coords="466,135,689,177"/>
+<area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_failure_test__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::FailureTest_conf" alt="" coords="478,201,677,242"/>
+<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_fasta_splitter__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::FastaSplitter_conf" alt="" coords="473,266,681,307"/>
+<area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::LongMult_conf" alt="" coords="484,331,671,373"/>
+<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::LongMultSt_conf" alt="" coords="477,397,677,438"/>
+<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::MemlimitTest_conf" alt="" coords="471,462,684,503"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::RunListOfCommands\lOnFarm_conf" alt="" coords="463,527,691,583"/>
+<area shape="rect" id="node12" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::TableDumperZipper_conf" alt="" coords="453,606,701,647"/>
+<area shape="rect" id="node13" href="$class_mini_pecan_multi__conf.html" title="MiniPecanMulti_conf" alt="" coords="506,672,649,699"/>
+<area shape="rect" id="node14" href="$class_mini_pecan_single2__conf.html" title="MiniPecanSingle2_conf" alt="" coords="498,723,657,749"/>
+<area shape="rect" id="node15" href="$class_mini_pecan_single3__conf.html" title="MiniPecanSingle3_conf" alt="" coords="498,773,657,800"/>
+<area shape="rect" id="node16" href="$class_mini_pecan_single__conf.html" title="MiniPecanSingle_conf" alt="" coords="502,824,653,851"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html" title="Bio::EnsEMBL::Hive\l::DependentOptions" alt="" coords="6,430,149,471"/>
+</map>
