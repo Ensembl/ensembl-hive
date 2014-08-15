@@ -111,4 +111,51 @@ sub run {
 sub write_output {
 }
 
+
+
+######################
+## Internal methods ##
+######################
+
+# Present data in a nice table, like what mySQL does.
+sub format_table {
+    my ($self, $title, $columns, $results) = @_;
+
+    my @lengths;
+    foreach (@$columns) {
+        push @lengths, length($_) + 2;
+    }
+
+    foreach (@$results) {
+        for (my $i=0; $i < scalar(@$_); $i++) {
+            my $len = length($$_[$i]) + 2;
+            $lengths[$i] = $len if $len > $lengths[$i];
+        }
+    }
+
+    my $table = "$title\n";
+    $table .= '+'.join('+', map {'-' x $_ } @lengths).'+'."\n";
+
+    for (my $i=0; $i < scalar(@lengths); $i++) {
+        my $column = $$columns[$i];
+        my $padding = $lengths[$i] - length($column) - 2;
+        $table .= '| '.$column.(' ' x $padding).' ';
+    }
+
+    $table .= '|'."\n".'+'.join('+', map {'-' x $_ } @lengths).'+'."\n";
+
+    foreach (@$results) {
+        for (my $i=0; $i < scalar(@lengths); $i++) {
+            my $value = $$_[$i];
+            my $padding = $lengths[$i] - length($value) - 2;
+            $table .= '| '.$value.(' ' x $padding).' ';
+        }
+        $table .= '|'."\n"
+    }
+
+    $table .= '+'.join('+', map {'-' x $_ } @lengths).'+'."\n";
+
+    return $table;
+}
+
 1;
