@@ -155,6 +155,7 @@ sub main {
         ? $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_logic_name()
         : $rc_adaptor->fetch_HASHED_FROM_resource_class_id_TO_name()
     };
+    $key_name{-1} = 'UNSPECIALIZED';
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
     # Get the events from the database
@@ -174,6 +175,7 @@ sub main {
             next unless $resource_class_id or $analysis_id;
             $resource_class_id  //= $default_resource_class{$analysis_id};
             my $key_value = $key eq 'analysis' ? $analysis_id : $resource_class_id;
+            $key_value = -1 if not defined $key_value;
 
             if ($mode eq 'workers') {
                 add_event(\%events, $key_value, $born, $died, 1);
