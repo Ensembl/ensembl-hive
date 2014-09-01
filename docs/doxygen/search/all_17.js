@@ -1,14 +1,15 @@
 var searchData=
 [
-  ['warning',['warning',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a00e809b1c03cf9e47212905b4284c140',1,'Bio::EnsEMBL::Hive::AnalysisJob::warning()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a5fef0ffecdd8b254a622f83baa8e03e3',1,'Bio::EnsEMBL::Hive::Process::warning()']]],
+  ['warning',['warning',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a5fef0ffecdd8b254a622f83baa8e03e3',1,'Bio::EnsEMBL::Hive::Process']]],
+  ['when_5ffinished',['when_finished',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html#a4cd96af0924783fb043721f3bc33a406',1,'Bio::EnsEMBL::Hive::Role']]],
+  ['when_5fstarted',['when_started',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html#aa779f0424f07543c0f8e9adda732cd03',1,'Bio::EnsEMBL::Hive::Role']]],
   ['whereami',['whereami',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a626d8f4a721513ef5d4e6b2172226719',1,'Bio::EnsEMBL::Hive::Valley']]],
   ['work_5fdone',['work_done',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ae34a70dcbfd02a12e20b1285adcbad1b',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['work_5fwith_5fdb_5fhandle',['work_with_db_handle',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#ac1e7d1b09012f716c7860e6eb7c71e13',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
-  ['worker',['Worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html',1,'Bio::EnsEMBL::Hive']]],
   ['worker',['worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a9d01ac47d41d31f30aca69b0220e0d9d',1,'Bio::EnsEMBL::Hive::Process']]],
+  ['worker',['Worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html',1,'Bio::EnsEMBL::Hive']]],
   ['worker_2epm',['Worker.pm',['../_worker_8pm.html',1,'']]],
   ['worker_5fcmd_5fargs',['worker_cmd_args',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html#a1b975bd9bfad96e24af7bc859a28d116',1,'Bio::EnsEMBL::Hive::ResourceDescription']]],
-  ['worker_5fid',['worker_id',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#af38047d73f933f30cde285c5dab5dffb',1,'Bio::EnsEMBL::Hive::AnalysisJob']]],
   ['worker_5fsay',['worker_say',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a91724c25ce62bea58013fd483aad3abe',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['worker_5ftemp_5fdirectory',['worker_temp_directory',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a3ee5bd7ae4938b858a48b3812814a0a1',1,'Bio::EnsEMBL::Hive::Process']]],
   ['worker_5ftemp_5fdirectory_5fname',['worker_temp_directory_name',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#ab007327305a8dc5294ff757cb3d50559',1,'Bio::EnsEMBL::Hive::Process']]],

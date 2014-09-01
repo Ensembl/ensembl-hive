@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -167,8 +167,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a194b948521dcdf1e6a8f83a4fc3b1c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16457254eff693383b5e2a9dcc5b19b2"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a16457254eff693383b5e2a9dcc5b19b2">process_options</a> ()</td></tr>
 <tr class="separator:a16457254eff693383b5e2a9dcc5b19b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adb95548d620d772327085f7bb96b8b3a"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#adb95548d620d772327085f7bb96b8b3a">run</a> ()</td></tr>
-<tr class="separator:adb95548d620d772327085f7bb96b8b3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5622cf1eeccc7c1345975862cdc2b8e5"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a5622cf1eeccc7c1345975862cdc2b8e5">overridable_pipeline_create_commands</a> ()</td></tr>
+<tr class="separator:a5622cf1eeccc7c1345975862cdc2b8e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6449dea7947a928206715abaab925a38"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6449dea7947a928206715abaab925a38">run_pipeline_create_commands</a> ()</td></tr>
+<tr class="separator:a6449dea7947a928206715abaab925a38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acae93b3218c14d788605f53dc554510a"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#acae93b3218c14d788605f53dc554510a">add_objects_from_config</a> ()</td></tr>
+<tr class="separator:acae93b3218c14d788605f53dc554510a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52e2e9e266e9673d9093ffa76a830182"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a52e2e9e266e9673d9093ffa76a830182">useful_commands_legend</a> ()</td></tr>
+<tr class="separator:a52e2e9e266e9673d9093ffa76a830182"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html">Bio::EnsEMBL::Hive::DependentOptions</a></td></tr>
 <tr class="memitem:a729f524427ef5292b7e980f134aa456f inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a729f524427ef5292b7e980f134aa456f">new</a> ()</td></tr>
 <tr class="separator:a729f524427ef5292b7e980f134aa456f inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -226,6 +232,260 @@ Description</h1>
     Please make sure you have studied the pipeline configuraton examples in Bio::EnsEMBL::Hive::PipeConfig before creating your own PipeConfig modules.
 
 </pre> </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="acae93b3218c14d788605f53dc554510a"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::add_objects_from_config </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre>
+    Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.</pre><pre>    Caller      : <a class="el" href="init__pipeline_8pl.html">init_pipeline.pl</a> or any other script that will drive this module.</pre><pre> </pre><div id="codesection-add_objects_from_config" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-add_objects_from_config-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-add_objects_from_config-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-add_objects_from_config-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#acae93b3218c14d788605f53dc554510a">add_objects_from_config</a> {</div>
+<div class="line">    my $self                = shift @_;</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;Adding hive_meta table entries ...\n&quot;</span>;</div>
+<div class="line">    my $new_meta_entries = $self-&gt;hive_meta_table();</div>
+<div class="line">    <span class="keywordflow">while</span>( my ($meta_key, $meta_value) = each %$new_meta_entries ) {</div>
+<div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html">Bio::EnsEMBL::Hive::MetaParameters</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">            <span class="stringliteral">&#39;meta_key&#39;</span>      =&gt; $meta_key,</div>
+<div class="line">            <span class="stringliteral">&#39;meta_value&#39;</span>    =&gt; $meta_value,</div>
+<div class="line">        );</div>
+<div class="line">    }</div>
+<div class="line">    warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;Adding pipeline-wide parameters ...\n&quot;</span>;</div>
+<div class="line">    my $new_pwp_entries = $self-&gt;pipeline_wide_parameters();</div>
+<div class="line">    <span class="keywordflow">while</span>( my ($param_name, $param_value) = each %$new_pwp_entries ) {</div>
+<div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html">Bio::EnsEMBL::Hive::PipelineWideParameters</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">            <span class="stringliteral">&#39;param_name&#39;</span>    =&gt; $param_name,</div>
+<div class="line">            <span class="stringliteral">&#39;param_value&#39;</span>   =&gt; stringify($param_value),</div>
+<div class="line">        );</div>
+<div class="line">    }</div>
+<div class="line">    warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;Adding Resources ...\n&quot;</span>;</div>
+<div class="line">    my $resource_classes_hash = $self-&gt;resource_classes;</div>
+<div class="line">    unless( exists $resource_classes_hash-&gt;{<span class="stringliteral">&#39;default&#39;</span>} ) {</div>
+<div class="line">        warn <span class="stringliteral">&quot;\tNB:&#39;default&#39; resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n&quot;</span>;</div>
+<div class="line">        $resource_classes_hash-&gt;{<span class="stringliteral">&#39;default&#39;</span>} = {};</div>
+<div class="line">    }</div>
+<div class="line">    my @resource_classes_order = sort { ($b eq <span class="stringliteral">&#39;default&#39;</span>) or -($a eq <span class="stringliteral">&#39;default&#39;</span>) or ($a cmp $b) } keys %$resource_classes_hash; # put <span class="stringliteral">&#39;default&#39;</span> to the front</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $rc_name (@resource_classes_order) {</div>
+<div class="line">        <span class="keywordflow">if</span>($rc_name=~/^\d+$/) {</div>
+<div class="line">            die <span class="stringliteral">&quot;-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        my $resource_class = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html">Bio::EnsEMBL::Hive::ResourceClass</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">            <span class="stringliteral">&#39;name&#39;</span>  =&gt; $rc_name,</div>
+<div class="line">        );</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">while</span>( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash-&gt;{$rc_name} } ) {</div>
+<div class="line">            $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array</div>
+<div class="line"></div>
+<div class="line">            my $resource_description = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html">Bio::EnsEMBL::Hive::ResourceDescription</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">                <span class="stringliteral">&#39;resource_class&#39;</span>        =&gt; $resource_class,</div>
+<div class="line">                <span class="stringliteral">&#39;meadow_type&#39;</span>           =&gt; $meadow_type,</div>
+<div class="line">                <span class="stringliteral">&#39;submission_cmd_args&#39;</span>   =&gt; $resource_param_list-&gt;[0],</div>
+<div class="line">                <span class="stringliteral">&#39;worker_cmd_args&#39;</span>       =&gt; $resource_param_list-&gt;[1],</div>
+<div class="line">            );</div>
+<div class="line"></div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line">    warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line">    my $valley = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html">Bio::EnsEMBL::Hive::Valley</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a51140e4714459dccef65cb34d97bfe13">new</a>( {}, <span class="stringliteral">&#39;LOCAL&#39;</span> );</div>
+<div class="line"></div>
+<div class="line">    my %seen_logic_name = ();</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;Adding Analyses ...\n&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $aha (@{$self-&gt;pipeline_analyses}) {</div>
+<div class="line">        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,</div>
+<div class="line">                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)</div>
+<div class="line">         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance</div>
+<div class="line">                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference</div>
+<div class="line"></div>
+<div class="line">        unless($logic_name) {</div>
+<div class="line">            die <span class="stringliteral">&quot;logic_name&#39; must be defined in every analysis&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>($seen_logic_name{$logic_name}++) {</div>
+<div class="line">            die <span class="stringliteral">&quot;an entry with logic_name &#39;$logic_name&#39; appears at least twice in the same configuration file, probably a typo&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>($rc_id) {</div>
+<div class="line">            die <span class="stringliteral">&quot;(-rc_id =&gt; $rc_id) syntax is deprecated, please use (-rc_name =&gt; &#39;your_resource_class_name&#39;)&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        my $analysis = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_one_by(<span class="stringliteral">&#39;logic_name&#39;</span>, $logic_name);  # the analysis with <span class="keyword">this</span> logic_name may have already been stored in the db</div>
+<div class="line">        my $stats;</div>
+<div class="line">        <span class="keywordflow">if</span>( $analysis ) {</div>
+<div class="line"></div>
+<div class="line">            warn <span class="stringliteral">&quot;Skipping creation of already existing analysis &#39;$logic_name&#39;.\n&quot;</span>;</div>
+<div class="line">            next;</div>
+<div class="line"></div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line"></div>
+<div class="line">            $rc_name ||= <span class="stringliteral">&#39;default&#39;</span>;</div>
+<div class="line">            my $resource_class = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html">Bio::EnsEMBL::Hive::ResourceClass</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_one_by(<span class="stringliteral">&#39;name&#39;</span>, $rc_name)</div>
+<div class="line">                or die <span class="stringliteral">&quot;Could not find local resource with name &#39;$rc_name&#39;, please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class&quot;</span>;</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span> ($meadow_type and not exists $valley-&gt;available_meadow_hash()-&gt;{$meadow_type}) {</div>
+<div class="line">                die <span class="stringliteral">&quot;The meadow &#39;$meadow_type&#39; is currently not registered (analysis &#39;$logic_name&#39;)\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line"></div>
+<div class="line">            $parameters_hash ||= {};    # in <span class="keywordflow">case</span> nothing was given</div>
+<div class="line">            die <span class="stringliteral">&quot;&#39;-parameters&#39; has to be a hash&quot;</span> unless(ref($parameters_hash) eq <span class="stringliteral">&#39;HASH&#39;</span>);</div>
+<div class="line"></div>
+<div class="line">            $analysis = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">                <span class="stringliteral">&#39;logic_name&#39;</span>            =&gt; $logic_name,</div>
+<div class="line">                <span class="stringliteral">&#39;module&#39;</span>                =&gt; $module,</div>
+<div class="line">                <span class="stringliteral">&#39;parameters&#39;</span>            =&gt; $parameters_hash,</div>
+<div class="line">                <span class="stringliteral">&#39;resource_class&#39;</span>        =&gt; $resource_class,</div>
+<div class="line">                <span class="stringliteral">&#39;failed_job_tolerance&#39;</span>  =&gt; $failed_job_tolerance,</div>
+<div class="line">                <span class="stringliteral">&#39;max_retry_count&#39;</span>       =&gt; $max_retry_count,</div>
+<div class="line">                <span class="stringliteral">&#39;can_be_empty&#39;</span>          =&gt; $can_be_empty,</div>
+<div class="line">                <span class="stringliteral">&#39;priority&#39;</span>              =&gt; $priority,</div>
+<div class="line">                <span class="stringliteral">&#39;meadow_type&#39;</span>           =&gt; $meadow_type,</div>
+<div class="line">                <span class="stringliteral">&#39;analysis_capacity&#39;</span>     =&gt; $analysis_capacity,</div>
+<div class="line">            );</div>
+<div class="line">            $analysis-&gt;get_compiled_module_name();  # check <span class="keywordflow">if</span> it compiles and is named correctly</div>
+<div class="line"></div>
+<div class="line">            $stats = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html">Bio::EnsEMBL::Hive::AnalysisStats</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">                <span class="stringliteral">&#39;analysis&#39;</span>              =&gt; $analysis,</div>
+<div class="line">                <span class="stringliteral">&#39;batch_size&#39;</span>            =&gt; $batch_size,</div>
+<div class="line">                <span class="stringliteral">&#39;hive_capacity&#39;</span>         =&gt; $hive_capacity,</div>
+<div class="line">                <span class="stringliteral">&#39;status&#39;</span>                =&gt; $blocked ? <span class="stringliteral">&#39;BLOCKED&#39;</span> : <span class="stringliteral">&#39;EMPTY&#39;</span>,  # be careful, as <span class="keyword">this</span> <span class="stringliteral">&quot;soft&quot;</span> way of blocking may be accidentally unblocked by deep sync</div>
+<div class="line">                <span class="stringliteral">&#39;total_job_count&#39;</span>       =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;semaphored_job_count&#39;</span>  =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;ready_job_count&#39;</span>       =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;done_job_count&#39;</span>        =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;failed_job_count&#39;</span>      =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;num_running_workers&#39;</span>   =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;num_required_workers&#39;</span>  =&gt; 0,</div>
+<div class="line">                <span class="stringliteral">&#39;behaviour&#39;</span>             =&gt; <span class="stringliteral">&#39;STATIC&#39;</span>,</div>
+<div class="line">                <span class="stringliteral">&#39;input_capacity&#39;</span>        =&gt; 4,</div>
+<div class="line">                <span class="stringliteral">&#39;output_capacity&#39;</span>       =&gt; 4,</div>
+<div class="line">                <span class="stringliteral">&#39;sync_lock&#39;</span>             =&gt; 0,</div>
+<div class="line">            );</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">            # now create the corresponding jobs (if there are any):</span></div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span>($input_ids) {</div>
+<div class="line">            push @{ $analysis-&gt;jobs_collection }, map { <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
+<div class="line">                <span class="stringliteral">&#39;prev_job&#39;</span>      =&gt; undef,           # these jobs are created by the initialization script, not by another job</div>
+<div class="line">                <span class="stringliteral">&#39;analysis&#39;</span>      =&gt; $analysis,</div>
+<div class="line">                <span class="stringliteral">&#39;input_id&#39;</span>      =&gt; $_,              # input_ids are now centrally stringified in the AnalysisJob itself</div>
+<div class="line">            ) } @$input_ids;</div>
+<div class="line"></div>
+<div class="line">            $stats-&gt;recalculate_from_job_counts( { <span class="stringliteral">&#39;READY&#39;</span> =&gt; scalar(@$input_ids) } );</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line">    warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;Adding Control and Dataflow Rules ...\n&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $aha (@{$self-&gt;pipeline_analyses}) {</div>
+<div class="line">        my ($logic_name, $wait_for, $flow_into)</div>
+<div class="line">             = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference</div>
+<div class="line"></div>
+<div class="line">        my $analysis = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_one_by(<span class="stringliteral">&#39;logic_name&#39;</span>, $logic_name);</div>
+<div class="line"></div>
+<div class="line">        $wait_for ||= [];</div>
+<div class="line">        $wait_for   = [ $wait_for ] unless(ref($wait_for) eq <span class="stringliteral">&#39;ARRAY&#39;</span>); # force scalar into an arrayref</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">            # create control rules:</span></div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">foreach</span> my $condition_url (@$wait_for) {</div>
+<div class="line">            unless ($condition_url =~ m{^\w*:<span class="comment">//}) {</span></div>
+<div class="line">                my $condition_analysis = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_one_by(<span class="stringliteral">&#39;logic_name&#39;</span>, $condition_url)</div>
+<div class="line">                    or die <span class="stringliteral">&quot;Could not find a local analysis &#39;$condition_url&#39; to create a control rule (in &#39;&quot;</span>.($analysis-&gt;logic_name).<span class="stringliteral">&quot;&#39;)\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line">            my $c_rule = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html">Bio::EnsEMBL::Hive::AnalysisCtrlRule</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a18f46c14329dee6ea0f04b259b6a1308">add_new_or_update</a>(</div>
+<div class="line">                    <span class="stringliteral">&#39;condition_analysis_url&#39;</span>    =&gt; $condition_url,</div>
+<div class="line">                    <span class="stringliteral">&#39;ctrled_analysis&#39;</span>           =&gt; $analysis,</div>
+<div class="line">            );</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        $flow_into ||= {};</div>
+<div class="line">        $flow_into   = { 1 =&gt; $flow_into } unless(ref($flow_into) eq <span class="stringliteral">&#39;HASH&#39;</span>); # force non-hash into a hash</div>
+<div class="line"></div>
+<div class="line">        my %group_tag_to_funnel_dataflow_rule = ();</div>
+<div class="line"></div>
+<div class="line">        my $semaphore_sign = <span class="stringliteral">&#39;-&gt;&#39;</span>;</div>
+<div class="line"></div>
+<div class="line">        my @all_branch_tags = keys %$flow_into;</div>
+<div class="line">        <span class="keywordflow">foreach</span> my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {</div>
+<div class="line"></div>
+<div class="line">            my ($branch_name_or_code, $group_role, $group_tag);</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span>($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {</div>
+<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($2, <span class="stringliteral">&#39;funnel&#39;</span>, $1);</div>
+<div class="line">            } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {</div>
+<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($1, <span class="stringliteral">&#39;fan&#39;</span>, $2);</div>
+<div class="line">            } elsif($branch_tag=~/^(-?\w+)$/) {</div>
+<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($1, <span class="stringliteral">&#39;&#39;</span>);</div>
+<div class="line">            } elsif($branch_tag=~/:/) {</div>
+<div class="line">                die <span class="stringliteral">&quot;Please use newer &#39;2${semaphore_sign}A&#39; and &#39;A${semaphore_sign}1&#39; notation instead of &#39;2:1&#39; and &#39;1&#39;\n&quot;</span>;</div>
+<div class="line">            } <span class="keywordflow">else</span> {</div>
+<div class="line">                die <span class="stringliteral">&quot;Error parsing the group tag &#39;$branch_tag&#39;\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line"></div>
+<div class="line">            my $funnel_dataflow_rule = undef;    # NULL by <span class="keywordflow">default</span></div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span>($group_role eq <span class="stringliteral">&#39;fan&#39;</span>) {</div>
+<div class="line">                unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {</div>
+<div class="line">                    die <span class="stringliteral">&quot;No funnel dataflow_rule defined for group &#39;$group_tag&#39;\n&quot;</span>;</div>
+<div class="line">                }</div>
+<div class="line">            }</div>
+<div class="line"></div>
+<div class="line">            my $heirs = $flow_into-&gt;{$branch_tag};</div>
+<div class="line">            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first</div>
+<div class="line">            $heirs = { map { ($_ =&gt; undef) } @$heirs } <span class="keywordflow">if</span>(ref($heirs) eq <span class="stringliteral">&#39;ARRAY&#39;</span>); # now force it into a hash <span class="keywordflow">if</span> it wasn<span class="stringliteral">&#39;t</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">            while(my ($heir_url, $input_id_template_list) = each %$heirs) {</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                unless ($heir_url =~ m{^\w*://}) {</span></div>
+<div class="line"><span class="stringliteral">                    my $heir_analysis = Bio::EnsEMBL::Hive::Analysis-&gt;collection()-&gt;find_one_by(&#39;</span>logic_name<span class="stringliteral">&#39;, $heir_url)</span></div>
+<div class="line"><span class="stringliteral">                        or die &quot;Could not find a local analysis named &#39;</span>$heir_url<span class="stringliteral">&#39; (dataflow from analysis &#39;</span><span class="stringliteral">&quot;.($analysis-&gt;logic_name).&quot;</span><span class="stringliteral">&#39;)\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">                }</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq &#39;</span>ARRAY<span class="stringliteral">&#39;);  # allow for more than one template per analysis</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                foreach my $input_id_template (@$input_id_template_list) {</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule-&gt;add_new_or_update(</span></div>
+<div class="line"><span class="stringliteral">                        &#39;</span>from_analysis<span class="stringliteral">&#39;             =&gt; $analysis,</span></div>
+<div class="line"><span class="stringliteral">                        &#39;</span>to_analysis_url<span class="stringliteral">&#39;           =&gt; $heir_url,</span></div>
+<div class="line"><span class="stringliteral">                        &#39;</span>branch_code<span class="stringliteral">&#39;               =&gt; $branch_name_or_code,</span></div>
+<div class="line"><span class="stringliteral">                        &#39;</span>funnel_dataflow_rule<span class="stringliteral">&#39;      =&gt; $funnel_dataflow_rule,</span></div>
+<div class="line"><span class="stringliteral">                        &#39;</span>input_id_template<span class="stringliteral">&#39;         =&gt; $input_id_template,</span></div>
+<div class="line"><span class="stringliteral">                    );</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                    if($group_role eq &#39;</span>funnel<span class="stringliteral">&#39;) {</span></div>
+<div class="line"><span class="stringliteral">                        if($group_tag_to_funnel_dataflow_rule{$group_tag}) {</span></div>
+<div class="line"><span class="stringliteral">                            die &quot;More than one funnel dataflow_rule defined for group &#39;</span>$group_tag<span class="stringliteral">&#39;\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">                        } else {</span></div>
+<div class="line"><span class="stringliteral">                            $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;</span></div>
+<div class="line"><span class="stringliteral">                        }</span></div>
+<div class="line"><span class="stringliteral">                    }</span></div>
+<div class="line"><span class="stringliteral">                } # /for all templates</span></div>
+<div class="line"><span class="stringliteral">            } # /for all heirs</span></div>
+<div class="line"><span class="stringliteral">        } # /for all branch_tags</span></div>
+<div class="line"><span class="stringliteral">    } # /for all pipeline_analyses</span></div>
+<div class="line"><span class="stringliteral">    warn &quot;Done.\n\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">}</span></div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="a7a8b253910f9f1bd288b4c1526353cd8"></a>
 <div class="memitem">
 <div class="memproto">
@@ -487,7 +747,7 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a28568127780ecee07cde885f1ec1a1f3">default_options</a> {</div>
 <div class="line">    my ($self) = @_;</div>
 <div class="line">    <span class="keywordflow">return</span> {</div>
-<div class="line">        <span class="stringliteral">&#39;hive_root_dir&#39;</span>         =&gt; $ENV{<span class="stringliteral">&#39;EHIVE_ROOT_DIR&#39;</span>},                                      # <span class="keyword">this</span> value is set up automatically <span class="keywordflow">if</span> <span class="keyword">this</span> code is <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#adb95548d620d772327085f7bb96b8b3a">run</a> by init_pipeline.pl</div>
+<div class="line">        <span class="stringliteral">&#39;hive_root_dir&#39;</span>         =&gt; $ENV{<span class="stringliteral">&#39;EHIVE_ROOT_DIR&#39;</span>},                                      # <span class="keyword">this</span> value is set up automatically <span class="keywordflow">if</span> <span class="keyword">this</span> code is run by init_pipeline.pl</div>
 <div class="line"></div>
 <div class="line">        <span class="stringliteral">&#39;hive_driver&#39;</span>           =&gt; <span class="stringliteral">&#39;mysql&#39;</span>,</div>
 <div class="line">        <span class="stringliteral">&#39;host&#39;</span>                  =&gt; $ENV{<span class="stringliteral">&#39;EHIVE_HOST&#39;</span>} || <span class="stringliteral">&#39;localhost&#39;</span>,                           # BEWARE that <span class="stringliteral">&#39;localhost&#39;</span> <span class="keywordflow">for</span> mysql driver usually means a UNIX socket, not a TCPIP socket!</div>
@@ -499,9 +759,11 @@ Description</h1>
 <div class="line">        <span class="stringliteral">&#39;dbowner&#39;</span>               =&gt; $ENV{<span class="stringliteral">&#39;EHIVE_USER&#39;</span>} || $ENV{<span class="stringliteral">&#39;USER&#39;</span>} || $self-&gt;o(<span class="stringliteral">&#39;dbowner&#39;</span>),   # although it is very unlikely $ENV{USER} is not set</div>
 <div class="line">        <span class="stringliteral">&#39;pipeline_name&#39;</span>         =&gt; $self-&gt;pipeline_name(),</div>
 <div class="line"></div>
-<div class="line">        <span class="stringliteral">&#39;hive_use_triggers&#39;</span>     =&gt; 0,                   # there have been a few cases of big pipelines misbehaving with triggers on, let<span class="stringliteral">&#39;s keep the default off.</span></div>
-<div class="line"><span class="stringliteral">        &#39;</span>hive_use_param_stack<span class="stringliteral">&#39;  =&gt; 0,                   # do not reconstruct the calling stack of parameters by default (yet)</span></div>
-<div class="line"><span class="stringliteral">        &#39;</span>hive_force_init<span class="stringliteral">&#39;       =&gt; 0,                   # setting it to 1 will drop the database prior to creation (use with care!)</span></div>
+<div class="line">        <span class="stringliteral">&#39;hive_use_triggers&#39;</span>                 =&gt; 0,       # there have been a few cases of big pipelines misbehaving with triggers on, let<span class="stringliteral">&#39;s keep the default off.</span></div>
+<div class="line"><span class="stringliteral">        &#39;</span>hive_use_param_stack<span class="stringliteral">&#39;              =&gt; 0,       # do not reconstruct the calling stack of parameters by default (yet)</span></div>
+<div class="line"><span class="stringliteral">        &#39;</span>hive_auto_rebalance_semaphores<span class="stringliteral">&#39;    =&gt; 0,       # do not attempt to rebalance semaphores periodically by default</span></div>
+<div class="line"><span class="stringliteral">        &#39;</span>hive_force_init<span class="stringliteral">&#39;                   =&gt; 0,       # setting it to 1 will drop the database prior to creation (use with care!)</span></div>
+<div class="line"><span class="stringliteral">        &#39;</span>hive_no_init<span class="stringliteral">&#39;                      =&gt; 0,       # setting it to 1 will skip pipeline_create_commands (useful for topping up)</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">        &#39;</span>pipeline_db<span class="stringliteral">&#39;   =&gt; {</span></div>
 <div class="line"><span class="stringliteral">            -driver =&gt; $self-&gt;o(&#39;</span>hive_driver<span class="stringliteral">&#39;),</span></div>
@@ -538,10 +800,38 @@ Description</h1>
 <div class="line">    my ($self) = @_;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> {</div>
-<div class="line">        <span class="stringliteral">&#39;hive_sql_schema_version&#39;</span>   =&gt; <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html#a0c2dc02c4e81944f9eb9fa7f670aa753">get_code_sql_schema_version</a>(),</div>
-<div class="line">        <span class="stringliteral">&#39;hive_pipeline_name&#39;</span>        =&gt; $self-&gt;o(<span class="stringliteral">&#39;pipeline_name&#39;</span>),</div>
-<div class="line">        <span class="stringliteral">&#39;hive_use_param_stack&#39;</span>      =&gt; $self-&gt;o(<span class="stringliteral">&#39;hive_use_param_stack&#39;</span>),</div>
+<div class="line">        <span class="stringliteral">&#39;hive_sql_schema_version&#39;</span>           =&gt; <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html#a0c2dc02c4e81944f9eb9fa7f670aa753">get_code_sql_schema_version</a>(),</div>
+<div class="line">        <span class="stringliteral">&#39;hive_pipeline_name&#39;</span>                =&gt; $self-&gt;o(<span class="stringliteral">&#39;pipeline_name&#39;</span>),</div>
+<div class="line">        <span class="stringliteral">&#39;hive_use_param_stack&#39;</span>              =&gt; $self-&gt;o(<span class="stringliteral">&#39;hive_use_param_stack&#39;</span>),</div>
+<div class="line">        <span class="stringliteral">&#39;hive_auto_rebalance_semaphores&#39;</span>    =&gt; $self-&gt;o(<span class="stringliteral">&#39;hive_auto_rebalance_semaphores&#39;</span>),</div>
 <div class="line">    };</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="a5622cf1eeccc7c1345975862cdc2b8e5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::overridable_pipeline_create_commands </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-overridable_pipeline_create_commands" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-overridable_pipeline_create_commands-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-overridable_pipeline_create_commands-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-overridable_pipeline_create_commands-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a5622cf1eeccc7c1345975862cdc2b8e5">overridable_pipeline_create_commands</a> {</div>
+<div class="line">    my $self                        = shift @_;</div>
+<div class="line">    my $pipeline_create_commands    = $self-&gt;pipeline_create_commands();</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;o(<span class="stringliteral">&#39;hive_no_init&#39;</span>) ? [] : $pipeline_create_commands;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -598,9 +888,10 @@ Description</h1>
 <div class="line">    my $pipeline_url    = $self-&gt;pipeline_url();</div>
 <div class="line">    my $parsed_url      = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html#ac80cc911eba215fb0ed17104861fe5f7">Bio::EnsEMBL::Hive::Utils::URL::parse</a>( $pipeline_url );</div>
 <div class="line">    my $driver          = $parsed_url ? $parsed_url-&gt;{<span class="stringliteral">&#39;driver&#39;</span>} : <span class="stringliteral">&#39;&#39;</span>;</div>
+<div class="line">    my $hive_force_init = $self-&gt;o(<span class="stringliteral">&#39;hive_force_init&#39;</span>);</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> [</div>
-<div class="line">            $self-&gt;o(<span class="stringliteral">&#39;hive_force_init&#39;</span>) ? $self-&gt;db_cmd(<span class="stringliteral">&#39;DROP DATABASE IF EXISTS&#39;</span>) : (),</div>
+<div class="line">            $hive_force_init ? $self-&gt;db_cmd(<span class="stringliteral">&#39;DROP DATABASE IF EXISTS&#39;</span>) : (),</div>
 <div class="line">            $self-&gt;db_cmd(<span class="stringliteral">&#39;CREATE DATABASE&#39;</span>),</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">                # we got table definitions for all drivers:</span></div>
@@ -675,7 +966,7 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#ab46a140ff5e2b90989979ea6cba6bf06">pipeline_url</a> {</div>
 <div class="line">    my $self = shift @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $self-&gt;root()-&gt;{<span class="stringliteral">&#39;pipeline_url&#39;</span>} || $self-&gt;dbconn_2_url(<span class="stringliteral">&#39;pipeline_db&#39;</span>, 1); # used to force vivification of the whole <span class="stringliteral">&#39;pipeline_db&#39;</span> structure (used in <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#adb95548d620d772327085f7bb96b8b3a">run</a>() )</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;root()-&gt;{<span class="stringliteral">&#39;pipeline_url&#39;</span>} || $self-&gt;dbconn_2_url(<span class="stringliteral">&#39;pipeline_db&#39;</span>, 1); # used to force vivification of the whole <span class="stringliteral">&#39;pipeline_db&#39;</span> structure (used in run() )</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -733,11 +1024,8 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> {</div>
 <div class="line">        <span class="stringliteral">&#39;help!&#39;</span> =&gt; <span class="stringliteral">&#39;&#39;</span>,</div>
-<div class="line">        <span class="stringliteral">&#39;job_topup!&#39;</span> =&gt; <span class="stringliteral">&#39;&#39;</span>,</div>
-<div class="line">        <span class="stringliteral">&#39;analysis_topup!&#39;</span> =&gt; <span class="stringliteral">&#39;&#39;</span>,</div>
 <div class="line">        <span class="stringliteral">&#39;pipeline_url&#39;</span> =&gt; <span class="stringliteral">&#39;&#39;</span>,</div>
-<div class="line"><span class="preprocessor">#        &#39;hive_use_triggers&#39; =&gt; &#39;&#39;,</span></div>
-<div class="line"><span class="preprocessor"></span>    };</div>
+<div class="line">    };</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -764,13 +1052,19 @@ Description</h1>
 <div id='codesection-process_options-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-process_options-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a16457254eff693383b5e2a9dcc5b19b2">process_options</a> {</div>
-<div class="line">    my $self = shift @_;</div>
+<div class="line">    my ($self, $include_pcc_use_case) = @_;</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # pre-patch definitely_used_options:</span></div>
 <div class="line"><span class="preprocessor"></span>    $self-&gt;{<span class="stringliteral">&#39;_extra_options&#39;</span>} = $self-&gt;load_cmdline_options( $self-&gt;pre_options() );</div>
 <div class="line">    $self-&gt;root()-&gt;{<span class="stringliteral">&#39;pipeline_url&#39;</span>} = $self-&gt;{<span class="stringliteral">&#39;_extra_options&#39;</span>}{<span class="stringliteral">&#39;pipeline_url&#39;</span>};</div>
 <div class="line"></div>
-<div class="line">    $self-&gt;use_cases( [ <span class="stringliteral">&#39;pipeline_create_commands&#39;</span>, <span class="stringliteral">&#39;pipeline_wide_parameters&#39;</span>, <span class="stringliteral">&#39;resource_classes&#39;</span>, <span class="stringliteral">&#39;pipeline_analyses&#39;</span>, <span class="stringliteral">&#39;beekeeper_extra_cmdline_options&#39;</span>, <span class="stringliteral">&#39;pipeline_url&#39;</span>, <span class="stringliteral">&#39;hive_meta_table&#39;</span> ] );</div>
+<div class="line">    my @<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a12fa6e8360e2db6bd40dc318654b9d42">use_cases</a> = ( <span class="stringliteral">&#39;pipeline_wide_parameters&#39;</span>, <span class="stringliteral">&#39;resource_classes&#39;</span>, <span class="stringliteral">&#39;pipeline_analyses&#39;</span>, <span class="stringliteral">&#39;beekeeper_extra_cmdline_options&#39;</span>, <span class="stringliteral">&#39;hive_meta_table&#39;</span> );</div>
+<div class="line">    <span class="keywordflow">if</span>($include_pcc_use_case) {</div>
+<div class="line">        unshift @<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a12fa6e8360e2db6bd40dc318654b9d42">use_cases</a>, <span class="stringliteral">&#39;overridable_pipeline_create_commands&#39;</span>;</div>
+<div class="line">        push @<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a12fa6e8360e2db6bd40dc318654b9d42">use_cases</a>, <span class="stringliteral">&#39;useful_commands_legend&#39;</span>;</div>
+<div class="line">    }</div>
+<div class="line">    $self-&gt;use_cases( \@use_cases );</div>
+<div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> $self-&gt;SUPER::process_options();</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
@@ -798,10 +1092,10 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6d9612ad9a85971bc0734cbfb26854d7">resource_classes</a> {</div>
 <div class="line">    my ($self) = @_;</div>
 <div class="line">    <span class="keywordflow">return</span> {</div>
-<div class="line"><span class="preprocessor">## Old style:</span></div>
+<div class="line"><span class="preprocessor">## No longer supported resource declaration syntax:</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">#        1 =&gt; { -desc =&gt; &#39;default&#39;,  &#39;LSF&#39; =&gt; &#39;&#39; },</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">#        2 =&gt; { -desc =&gt; &#39;urgent&#39;,   &#39;LSF&#39; =&gt; &#39;-q yesterday&#39; },</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">## New style:</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">## Currently supported resource declaration syntax:</span></div>
 <div class="line"><span class="preprocessor"></span>        <span class="stringliteral">&#39;default&#39;</span> =&gt; { <span class="stringliteral">&#39;LSF&#39;</span> =&gt; <span class="stringliteral">&#39;&#39;</span> },</div>
 <div class="line">        <span class="stringliteral">&#39;urgent&#39;</span>  =&gt; { <span class="stringliteral">&#39;LSF&#39;</span> =&gt; <span class="stringliteral">&#39;-q yesterday&#39;</span> },</div>
 <div class="line">    };</div>
@@ -809,349 +1103,101 @@ Description</h1>
 </div><!-- fragment --> </div> 
 </div>
 </div>
-<a class="anchor" id="adb95548d620d772327085f7bb96b8b3a"></a>
+<a class="anchor" id="a6449dea7947a928206715abaab925a38"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::run </td>
+          <td class="memname">public Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::run_pipeline_create_commands </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<pre>
-    Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.</pre><pre>    Caller      : <a class="el" href="init__pipeline_8pl.html">init_pipeline.pl</a> or any other script that will drive this module.</pre><pre> </pre><div id="codesection-run" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-run-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+<p>Undocumented method</p>
+<div id="codesection-run_pipeline_create_commands" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-run_pipeline_create_commands-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
-<div id='codesection-run-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-run-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#adb95548d620d772327085f7bb96b8b3a">run</a> {</div>
+<div id='codesection-run_pipeline_create_commands-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-run_pipeline_create_commands-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6449dea7947a928206715abaab925a38">run_pipeline_create_commands</a> {</div>
+<div class="line">    my $self            = shift @_;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">foreach</span> my $cmd (@{$self-&gt;overridable_pipeline_create_commands}) {</div>
+<div class="line">        warn <span class="stringliteral">&quot;Running the command:\n\t$cmd\n&quot;</span>;</div>
+<div class="line">        <span class="keywordflow">if</span>(my $retval = system($cmd)) {</div>
+<div class="line">            die <span class="stringliteral">&quot;Return value = $retval, possibly an error\n&quot;</span>;</div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line">            warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="a52e2e9e266e9673d9093ffa76a830182"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf::useful_commands_legend </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-useful_commands_legend" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-useful_commands_legend-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-useful_commands_legend-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-useful_commands_legend-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a52e2e9e266e9673d9093ffa76a830182">useful_commands_legend</a> {</div>
 <div class="line">    my $self  = shift @_;</div>
-<div class="line">    my $analysis_topup  = $self-&gt;{<span class="stringliteral">&#39;_extra_options&#39;</span>}{<span class="stringliteral">&#39;analysis_topup&#39;</span>};</div>
-<div class="line">    my $job_topup       = $self-&gt;{<span class="stringliteral">&#39;_extra_options&#39;</span>}{<span class="stringliteral">&#39;job_topup&#39;</span>};</div>
+<div class="line"></div>
 <div class="line">    my $pipeline_url    = $self-&gt;pipeline_url();</div>
 <div class="line">    my $pipeline_name   = $self-&gt;o(<span class="stringliteral">&#39;pipeline_name&#39;</span>);</div>
+<div class="line">    my $extra_cmdline   = $self-&gt;beekeeper_extra_cmdline_options();</div>
 <div class="line"></div>
-<div class="line">    unless($analysis_topup || $job_topup) {</div>
-<div class="line">        <span class="keywordflow">foreach</span> my $cmd (@{$self-&gt;pipeline_create_commands}) {</div>
-<div class="line">            warn <span class="stringliteral">&quot;Running the command:\n\t$cmd\n&quot;</span>;</div>
-<div class="line">            <span class="keywordflow">if</span>(my $retval = system($cmd)) {</div>
-<div class="line">                die <span class="stringliteral">&quot;Return value = $retval, possibly an error\n&quot;</span>;</div>
-<div class="line">            } <span class="keywordflow">else</span> {</div>
-<div class="line">                warn <span class="stringliteral">&quot;Done.\n\n&quot;</span>;</div>
-<div class="line">            }</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
+<div class="line">    my @output_lines = (</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,<span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;# --------------------[Useful commands]--------------------------&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # It is convenient to store the pipeline url in a variable:&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\texport EHIVE_URL=$pipeline_url\t\t\t# bash version&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;(OR)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tsetenv EHIVE_URL $pipeline_url\t\t\t# [t]csh version&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # Add a new job to the pipeline (usually done once before running, but pipeline can be \&quot;topped-up\&quot; at any time) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tseed_pipeline.pl -url $pipeline_url -logic_name &lt;analysis_name&gt; -input_id &lt;param_hash&gt;&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # Synchronize the Hive (should be done before [re]starting a pipeline) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url -sync&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # Run the pipeline (can be interrupted and restarted) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url $extra_cmdline -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;(OR)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url $extra_cmdline -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;(OR)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\trunWorker.pl -url $pipeline_url $extra_cmdline      \t\t# run exactly one Worker locally (useful for debugging/learning)&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # Depending on the Meadow the pipeline is running on, you may be able to collect actual resource usage statistics :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tload_resource_usage.pl -url $pipeline_url&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # After having run load_resource_usage.pl, you can request a resource usage timeline in an image file (desired format is set via extension) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tgenerate_timeline.pl -url $pipeline_url -out timeline_$pipeline_name.png&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot; # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;\tdb_cmd.pl -url $pipeline_url&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">    );</div>
 <div class="line"></div>
-<div class="line">    my $hive_dba                     = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::DBAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#abf2b541c5d7e3b124323a34356e3ace6">new</a>( -url =&gt; $pipeline_url, -no_sql_schema_version_check =&gt; 1 );</div>
-<div class="line">    my $resource_class_adaptor       = $hive_dba-&gt;get_ResourceClassAdaptor;</div>
-<div class="line"></div>
-<div class="line">    unless($job_topup) {</div>
-<div class="line">        my $meta_adaptor = $hive_dba-&gt;get_MetaAdaptor;      # the <span class="keyword">new</span> adaptor <span class="keywordflow">for</span> <span class="stringliteral">&#39;hive_meta&#39;</span> table</div>
-<div class="line">        warn <span class="stringliteral">&quot;Loading hive_meta table ...\n&quot;</span>;</div>
-<div class="line">        my $hive_meta_table = $self-&gt;hive_meta_table;</div>
-<div class="line">        <span class="keywordflow">while</span>( my($meta_key, $meta_value) = each %$hive_meta_table ) {</div>
-<div class="line">            $meta_adaptor-&gt;store_pair( $meta_key, $meta_value );</div>
-<div class="line">        }</div>
-<div class="line"></div>
-<div class="line">        my $meta_container = $hive_dba-&gt;get_MetaContainer;  # adaptor over core<span class="stringliteral">&#39;s &#39;</span>meta<span class="stringliteral">&#39; table for compatibility with core API</span></div>
-<div class="line"><span class="stringliteral">        warn &quot;Loading pipeline-wide parameters ...\n&quot;;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        my $pipeline_wide_parameters = $self-&gt;pipeline_wide_parameters;</span></div>
-<div class="line"><span class="stringliteral">        while( my($meta_key, $meta_value) = each %$pipeline_wide_parameters ) {</span></div>
-<div class="line"><span class="stringliteral">            if($analysis_topup) {</span></div>
-<div class="line"><span class="stringliteral">                $meta_container-&gt;remove_all_by_meta_key($meta_key);</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral">            $meta_container-&gt;store_pair($meta_key, $meta_value);</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">        warn &quot;Done.\n\n&quot;;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            # pre-load resource_class and resource_description tables:</span></div>
-<div class="line"><span class="stringliteral">        my $resource_description_adaptor    = $hive_dba-&gt;get_ResourceDescriptionAdaptor;</span></div>
-<div class="line"><span class="stringliteral">        warn &quot;Loading the Resources ...\n&quot;;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        my $resource_classes_hash = $self-&gt;resource_classes;</span></div>
-<div class="line"><span class="stringliteral">        my @resource_classes_order = sort { ($b eq &#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39;) or -($a eq &#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39;) or ($a cmp $b) } keys %$resource_classes_hash; # put &#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39; to the front</span></div>
-<div class="line"><span class="stringliteral">        my %seen_resource_name = ();</span></div>
-<div class="line"><span class="stringliteral">        foreach my $rc_id (@resource_classes_order) {</span></div>
-<div class="line"><span class="stringliteral">            my $mt2param = $resource_classes_hash-&gt;{$rc_id};</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $rc_name = delete $mt2param-&gt;{-desc};</span></div>
-<div class="line"><span class="stringliteral">            if($rc_id!~/^\d+$/) {</span></div>
-<div class="line"><span class="stringliteral">                $rc_name  = $rc_id;</span></div>
-<div class="line"><span class="stringliteral">                $rc_id = undef;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if(!$rc_name or $seen_resource_name{lc($rc_name)}++) {</span></div>
-<div class="line"><span class="stringliteral">                die &quot;Every resource has to have a unique description, please fix the PipeConfig file&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my ($rc, $rc_newly_created) = $resource_class_adaptor-&gt;create_new(</span></div>
-<div class="line"><span class="stringliteral">                defined($rc_id) ? (&#39;</span>dbID<span class="stringliteral">&#39;   =&gt; $rc_id) : (),</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>name<span class="stringliteral">&#39;   =&gt; $rc_name,</span></div>
-<div class="line"><span class="stringliteral">                1   # check whether this ResourceClass was already present in the database</span></div>
-<div class="line"><span class="stringliteral">            );</span></div>
-<div class="line"><span class="stringliteral">            $rc_id = $rc-&gt;dbID();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if($rc_newly_created) {</span></div>
-<div class="line"><span class="stringliteral">                warn &quot;Creating resource_class $rc_name($rc_id).\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            } else {</span></div>
-<div class="line"><span class="stringliteral">                warn &quot;Attempt to re-create and potentially redefine resource_class $rc_name($rc_id). NB: This may affect already created analyses!\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            while( my($meadow_type, $resource_param_list) = each %$mt2param ) {</span></div>
-<div class="line"><span class="stringliteral">                $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                $resource_description_adaptor-&gt;create_new(</span></div>
-<div class="line"><span class="stringliteral">                    resource_class_id      =&gt; $rc_id,</span></div>
-<div class="line"><span class="stringliteral">                    meadow_type            =&gt; $meadow_type,</span></div>
-<div class="line"><span class="stringliteral">                    submission_cmd_args    =&gt; $resource_param_list-&gt;[0],</span></div>
-<div class="line"><span class="stringliteral">                    worker_cmd_args        =&gt; $resource_param_list-&gt;[1],</span></div>
-<div class="line"><span class="stringliteral">                );</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">        unless(my $default_rc = $resource_class_adaptor-&gt;fetch_by_name(&#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39;)) {</span></div>
-<div class="line"><span class="stringliteral">            warn &quot;\tNB:&#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39; resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            $resource_class_adaptor-&gt;create_new(&#39;</span>name<span class="stringliteral">&#39; =&gt; &#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39;);</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">        warn &quot;Done.\n\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">    }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    my $analysis_adaptor            = $hive_dba-&gt;get_AnalysisAdaptor;</span></div>
-<div class="line"><span class="stringliteral">    my $analysis_stats_adaptor      = $hive_dba-&gt;get_AnalysisStatsAdaptor;</span></div>
-<div class="line"><span class="stringliteral">    my $job_adaptor                 = $hive_dba-&gt;get_AnalysisJobAdaptor;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    my $valley = Bio::EnsEMBL::Hive::Valley-&gt;new( {}, &#39;</span>LOCAL<span class="stringliteral">&#39; );</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    my %seen_logic_name = ();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    foreach my $aha (@{$self-&gt;pipeline_analyses}) {</span></div>
-<div class="line"><span class="stringliteral">        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,</span></div>
-<div class="line"><span class="stringliteral">                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)</span></div>
-<div class="line"><span class="stringliteral">         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance</span></div>
-<div class="line"><span class="stringliteral">                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        unless($logic_name) {</span></div>
-<div class="line"><span class="stringliteral">            die &quot;logic_name&#39;</span> must be defined in every analysis<span class="stringliteral">&quot;;</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        if($seen_logic_name{$logic_name}++) {</span></div>
-<div class="line"><span class="stringliteral">            die &quot;</span>an entry with logic_name <span class="stringliteral">&#39;$logic_name&#39;</span> appears at least twice in the configuration file, can<span class="stringliteral">&#39;t continue&quot;;</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        my $analysis = $analysis_adaptor-&gt;fetch_by_logic_name($logic_name);</span></div>
-<div class="line"><span class="stringliteral">        if( $analysis ) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if($analysis_topup) {</span></div>
-<div class="line"><span class="stringliteral">                warn &quot;Skipping creation of already existing analysis &#39;</span>$logic_name<span class="stringliteral">&#39;.\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">                next;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        } else {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if($job_topup) {</span></div>
-<div class="line"><span class="stringliteral">                die &quot;Could not fetch analysis &#39;</span>$logic_name<span class="stringliteral">&#39;&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            warn &quot;Creating analysis &#39;</span>$logic_name<span class="stringliteral">&#39;.\n&quot;;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if($rc_id) {</span></div>
-<div class="line"><span class="stringliteral">                warn &quot;(-rc_id =&gt; $rc_id) syntax is deprecated, please start using (-rc_name =&gt; &#39;</span>your_resource_class_name<span class="stringliteral">&#39;)&quot;;</span></div>
-<div class="line"><span class="stringliteral">            } else {</span></div>
-<div class="line"><span class="stringliteral">                $rc_name ||= &#39;</span><span class="keywordflow">default</span><span class="stringliteral">&#39;;</span></div>
-<div class="line"><span class="stringliteral">                my $rc = $resource_class_adaptor-&gt;fetch_by_name($rc_name ) or die &quot;Could not fetch resource with name &#39;</span>$rc_name<span class="stringliteral">&#39;, please check that resource_classes() method of your PipeConfig either contain it or inherit from the parent class&quot;;</span></div>
-<div class="line"><span class="stringliteral">                $rc_id = $rc-&gt;dbID();</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            if ($meadow_type and not exists $valley-&gt;available_meadow_hash()-&gt;{$meadow_type}) {</span></div>
-<div class="line"><span class="stringliteral">                die &quot;The meadow &#39;</span>$meadow_type<span class="stringliteral">&#39; is currently not registered (analysis &#39;</span>$logic_name<span class="stringliteral">&#39;)\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $parameters_hash ||= {};    # in case nothing was given</span></div>
-<div class="line"><span class="stringliteral">            die &quot;&#39;</span>-parameters<span class="stringliteral">&#39; has to be a hash&quot; unless(ref($parameters_hash) eq &#39;</span>HASH<span class="stringliteral">&#39;);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $analysis = Bio::EnsEMBL::Hive::Analysis-&gt;new(</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>logic_name<span class="stringliteral">&#39;            =&gt; $logic_name,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>module<span class="stringliteral">&#39;                =&gt; $module,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>parameters<span class="stringliteral">&#39;            =&gt; $parameters_hash,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>resource_class_id<span class="stringliteral">&#39;     =&gt; $rc_id,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>failed_job_tolerance<span class="stringliteral">&#39;  =&gt; $failed_job_tolerance,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>max_retry_count<span class="stringliteral">&#39;       =&gt; $max_retry_count,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>can_be_empty<span class="stringliteral">&#39;          =&gt; $can_be_empty,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>priority<span class="stringliteral">&#39;              =&gt; $priority,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>meadow_type<span class="stringliteral">&#39;           =&gt; $meadow_type,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>analysis_capacity<span class="stringliteral">&#39;     =&gt; $analysis_capacity,</span></div>
-<div class="line"><span class="stringliteral">            );</span></div>
-<div class="line"><span class="stringliteral">            $analysis-&gt;get_compiled_module_name();  # check if it compiles and is named correctly</span></div>
-<div class="line"><span class="stringliteral">            $analysis_adaptor-&gt;store($analysis);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $stats = Bio::EnsEMBL::Hive::AnalysisStats-&gt;new(</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>analysis_id<span class="stringliteral">&#39;           =&gt; $analysis-&gt;dbID,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>batch_size<span class="stringliteral">&#39;            =&gt; $batch_size,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>hive_capacity<span class="stringliteral">&#39;         =&gt; $hive_capacity,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>status<span class="stringliteral">&#39;                =&gt; $blocked ? &#39;</span>BLOCKED<span class="stringliteral">&#39; : &#39;</span>EMPTY<span class="stringliteral">&#39;,  # be careful, as this &quot;soft&quot; way of blocking may be accidentally unblocked by deep sync</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>total_job_count<span class="stringliteral">&#39;       =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>semaphored_job_count<span class="stringliteral">&#39;  =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>ready_job_count<span class="stringliteral">&#39;       =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>done_job_count<span class="stringliteral">&#39;        =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>failed_job_count<span class="stringliteral">&#39;      =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>num_running_workers<span class="stringliteral">&#39;   =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>num_required_workers<span class="stringliteral">&#39;  =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>behaviour<span class="stringliteral">&#39;             =&gt; &#39;</span>STATIC<span class="stringliteral">&#39;,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>input_capacity<span class="stringliteral">&#39;        =&gt; 4,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>output_capacity<span class="stringliteral">&#39;       =&gt; 4,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>sync_lock<span class="stringliteral">&#39;             =&gt; 0,</span></div>
-<div class="line"><span class="stringliteral">            );</span></div>
-<div class="line"><span class="stringliteral">            $analysis_stats_adaptor-&gt;store($stats);</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            # now create the corresponding jobs (if there are any):</span></div>
-<div class="line"><span class="stringliteral">        if($input_ids) {</span></div>
-<div class="line"><span class="stringliteral">            my @jobs = map { Bio::EnsEMBL::Hive::AnalysisJob-&gt;new(</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>prev_job_id<span class="stringliteral">&#39;   =&gt; undef,           # these jobs are created by the initialization script, not by another job</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>analysis_id<span class="stringliteral">&#39;   =&gt; $analysis-&gt;dbID,</span></div>
-<div class="line"><span class="stringliteral">                &#39;</span>input_id<span class="stringliteral">&#39;      =&gt; $_,              # input_ids are now centrally stringified in the AnalysisJob itself</span></div>
-<div class="line"><span class="stringliteral">            ) } @$input_ids;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $job_adaptor-&gt;store_jobs_and_adjust_counters( \@jobs );</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">    }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    unless($job_topup) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            # Now, run separately through the already created analyses and link them together:</span></div>
-<div class="line"><span class="stringliteral">            #</span></div>
-<div class="line"><span class="stringliteral">        my $ctrl_rule_adaptor            = $hive_dba-&gt;get_AnalysisCtrlRuleAdaptor;</span></div>
-<div class="line"><span class="stringliteral">        my $dataflow_rule_adaptor        = $hive_dba-&gt;get_DataflowRuleAdaptor;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        foreach my $aha (@{$self-&gt;pipeline_analyses}) {</span></div>
-<div class="line"><span class="stringliteral">            my ($logic_name, $wait_for, $flow_into)</span></div>
-<div class="line"><span class="stringliteral">                 = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $analysis = $analysis_adaptor-&gt;fetch_by_logic_name($logic_name);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $wait_for ||= [];</span></div>
-<div class="line"><span class="stringliteral">            $wait_for   = [ $wait_for ] unless(ref($wait_for) eq &#39;</span>ARRAY<span class="stringliteral">&#39;); # force scalar into an arrayref</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                # create control rules:</span></div>
-<div class="line"><span class="stringliteral">            foreach my $condition_url (@$wait_for) {</span></div>
-<div class="line"><span class="stringliteral">                unless ($condition_url =~ m{^\w*://}) {</span></div>
-<div class="line"><span class="stringliteral">                    my $condition_analysis = $analysis_adaptor-&gt;fetch_by_logic_name($condition_url);</span></div>
-<div class="line"><span class="stringliteral">                    die &quot;Could not fetch analysis &#39;</span>$condition_url<span class="stringliteral">&#39; to create a control rule (in &#39;</span><span class="stringliteral">&quot;.($analysis-&gt;logic_name).&quot;</span><span class="stringliteral">&#39;)\n&quot; unless defined $condition_analysis;</span></div>
-<div class="line"><span class="stringliteral">                }</span></div>
-<div class="line"><span class="stringliteral">                my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule-&gt;new(</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>condition_analysis_url<span class="stringliteral">&#39;    =&gt; $condition_url,</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>ctrled_analysis_id<span class="stringliteral">&#39;        =&gt; $analysis-&gt;dbID,</span></div>
-<div class="line"><span class="stringliteral">                );</span></div>
-<div class="line"><span class="stringliteral">                $ctrl_rule_adaptor-&gt;store( $c_rule, 1 );</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                warn $c_rule-&gt;toString.&quot;\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $flow_into ||= {};</span></div>
-<div class="line"><span class="stringliteral">            $flow_into   = { 1 =&gt; $flow_into } unless(ref($flow_into) eq &#39;</span>HASH<span class="stringliteral">&#39;); # force non-hash into a hash</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my %group_tag_to_funnel_dataflow_rule_id = ();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $semaphore_sign = &#39;</span>-&gt;<span class="stringliteral">&#39;;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my @all_branch_tags = keys %$flow_into;</span></div>
-<div class="line"><span class="stringliteral">            foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                my ($branch_name_or_code, $group_role, $group_tag);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                if($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {</span></div>
-<div class="line"><span class="stringliteral">                    ($branch_name_or_code, $group_role, $group_tag) = ($2, &#39;</span>funnel<span class="stringliteral">&#39;, $1);</span></div>
-<div class="line"><span class="stringliteral">                } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {</span></div>
-<div class="line"><span class="stringliteral">                    ($branch_name_or_code, $group_role, $group_tag) = ($1, &#39;</span>fan<span class="stringliteral">&#39;, $2);</span></div>
-<div class="line"><span class="stringliteral">                } elsif($branch_tag=~/^(-?\w+)$/) {</span></div>
-<div class="line"><span class="stringliteral">                    ($branch_name_or_code, $group_role, $group_tag) = ($1, &#39;</span><span class="stringliteral">&#39;);</span></div>
-<div class="line"><span class="stringliteral">                } elsif($branch_tag=~/:/) {</span></div>
-<div class="line"><span class="stringliteral">                    die &quot;Please use newer &#39;</span>2${semaphore_sign}A<span class="stringliteral">&#39; and &#39;</span>A${semaphore_sign}1<span class="stringliteral">&#39; notation instead of &#39;</span>2:1<span class="stringliteral">&#39; and &#39;</span>1<span class="stringliteral">&#39;\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">                } else {</span></div>
-<div class="line"><span class="stringliteral">                    die &quot;Error parsing the group tag &#39;</span>$branch_tag<span class="stringliteral">&#39;\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">                }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                my $funnel_dataflow_rule_id = undef;    # NULL by default</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                if($group_role eq &#39;</span>fan<span class="stringliteral">&#39;) {</span></div>
-<div class="line"><span class="stringliteral">                    unless($funnel_dataflow_rule_id = $group_tag_to_funnel_dataflow_rule_id{$group_tag}) {</span></div>
-<div class="line"><span class="stringliteral">                        die &quot;No funnel dataflow_rule defined for group &#39;</span>$group_tag<span class="stringliteral">&#39;\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">                    }</span></div>
-<div class="line"><span class="stringliteral">                }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                my $heirs = $flow_into-&gt;{$branch_tag};</span></div>
-<div class="line"><span class="stringliteral">                $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first</span></div>
-<div class="line"><span class="stringliteral">                $heirs = { map { ($_ =&gt; undef) } @$heirs } if(ref($heirs) eq &#39;</span>ARRAY<span class="stringliteral">&#39;); # now force it into a hash if it wasn&#39;</span>t</div>
-<div class="line"></div>
-<div class="line">                <span class="keywordflow">while</span>(my ($heir_url, $input_id_template_list) = each %$heirs) {</div>
-<div class="line"></div>
-<div class="line">                    unless ($heir_url =~ m{^\w*:<span class="comment">//}) {</span></div>
-<div class="line">                        my $heir_analysis = $analysis_adaptor-&gt;fetch_by_logic_name($heir_url);</div>
-<div class="line">                        die <span class="stringliteral">&quot;No analysis named &#39;$heir_url&#39; (dataflow from analysis &#39;&quot;</span>.($analysis-&gt;logic_name).<span class="stringliteral">&quot;&#39;)\n&quot;</span> unless defined $heir_analysis;</div>
-<div class="line">                    }</div>
-<div class="line">                    </div>
-<div class="line">                    $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq <span class="stringliteral">&#39;ARRAY&#39;</span>);  # allow <span class="keywordflow">for</span> more than one <span class="keyword">template</span> per analysis</div>
-<div class="line"></div>
-<div class="line">                    <span class="keywordflow">foreach</span> my $input_id_template (@$input_id_template_list) {</div>
-<div class="line"></div>
-<div class="line">                        my $df_rule = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html">Bio::EnsEMBL::Hive::DataflowRule</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
-<div class="line">                            <span class="stringliteral">&#39;from_analysis&#39;</span>             =&gt; $analysis,</div>
-<div class="line">                            <span class="stringliteral">&#39;to_analysis_url&#39;</span>           =&gt; $heir_url,</div>
-<div class="line">                            <span class="stringliteral">&#39;branch_code&#39;</span>               =&gt; $branch_name_or_code,</div>
-<div class="line">                            <span class="stringliteral">&#39;input_id_template&#39;</span>         =&gt; $input_id_template,</div>
-<div class="line">                            <span class="stringliteral">&#39;funnel_dataflow_rule_id&#39;</span>   =&gt; $funnel_dataflow_rule_id,</div>
-<div class="line">                        );</div>
-<div class="line">                        $dataflow_rule_adaptor-&gt;store( $df_rule, 1 );</div>
-<div class="line"></div>
-<div class="line">                        warn $df_rule-&gt;toString.<span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"></div>
-<div class="line">                        <span class="keywordflow">if</span>($group_role eq <span class="stringliteral">&#39;funnel&#39;</span>) {</div>
-<div class="line">                            <span class="keywordflow">if</span>($group_tag_to_funnel_dataflow_rule_id{$group_tag}) {</div>
-<div class="line">                                die <span class="stringliteral">&quot;More than one funnel dataflow_rule defined for group &#39;$group_tag&#39;\n&quot;</span>;</div>
-<div class="line">                            } <span class="keywordflow">else</span> {</div>
-<div class="line">                                $group_tag_to_funnel_dataflow_rule_id{$group_tag} = $df_rule-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a5e5743dee1414d2c0dec45b5a5d42216">dbID</a>();</div>
-<div class="line">                            }</div>
-<div class="line">                        }</div>
-<div class="line">                    } # /<span class="keywordflow">for</span> all templates</div>
-<div class="line">                } # /<span class="keywordflow">for</span> all heirs</div>
-<div class="line">            } # /<span class="keywordflow">for</span> all branch_tags</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
-<div class="line"></div>
-<div class="line">    print <span class="stringliteral">&quot;\n\n# --------------------[Useful commands]--------------------------\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # It is convenient to store the pipeline url in a variable:\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\texport EHIVE_URL=$pipeline_url\t\t\t# bash version\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;(OR)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tsetenv EHIVE_URL $pipeline_url\t\t\t# [t]csh version\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # Add a new job to the pipeline (usually done once before running, but pipeline can be \&quot;topped-up\&quot; at any time) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tseed_pipeline.pl -url $pipeline_url -logic_name &lt;analysis_name&gt; -input_id &lt;param_hash&gt;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # Synchronize the Hive (should be done before [re]starting a pipeline) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url -sync\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # Run the pipeline (can be interrupted and restarted) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url &quot;</span>.$self-&gt;beekeeper_extra_cmdline_options().<span class="stringliteral">&quot; -loop\t\t# run in looped automatic mode (a scheduling step performed every minute)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;(OR)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tbeekeeper.pl -url $pipeline_url &quot;</span>.$self-&gt;beekeeper_extra_cmdline_options().<span class="stringliteral">&quot; -run \t\t# run one scheduling step of the pipeline and exit (useful for debugging/learning)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;(OR)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\trunWorker.pl -url $pipeline_url &quot;</span>.$self-&gt;beekeeper_extra_cmdline_options().<span class="stringliteral">&quot;      \t\t# run exactly one Worker locally (useful for debugging/learning)\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # At any moment during or after execution you can request a pipeline diagram in an image file (desired format is set via extension) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tgenerate_graph.pl -url $pipeline_url -out $pipeline_name.png\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # If you are running the pipeline on LSF, you can collect actual resource usage statistics :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tlsf_report.pl -url $pipeline_url\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # After having run lsf_report.pl, you can request a resource usage timeline in an image file (desired format is set via extension) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tgenerate_timeline.pl -url $pipeline_url -out timeline_$pipeline_name.png\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot; # Peek into your pipeline database with a database client (useful to have open while the pipeline is running) :\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\tdb_cmd.pl -url $pipeline_url\n\n&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">return</span> join(<span class="stringliteral">&quot;\n&quot;</span>, @output_lines);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

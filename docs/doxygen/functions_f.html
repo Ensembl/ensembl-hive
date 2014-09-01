@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -162,14 +162,14 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>fetch_all_by_suitability_rc_id_meadow_type()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html#ae2e16bd96ffd64af54c59ba31f6becb1">Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor</a>
 </li>
-<li>fetch_all_dead_workers_with_jobs()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a1ec8aba875ab47959d2714b32b04a5d2">Bio::EnsEMBL::Hive::Queen</a>
-</li>
 <li>fetch_all_failed_analyses()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_adaptor.html#ae87626fc8dec5f006d35ee4d780c090a">Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor</a>
 </li>
-<li>fetch_all_incomplete_jobs_by_worker_id()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ae84a1895b984f71659306509aac7b3d3">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
+<li>fetch_all_finished_roles_with_unfinished_jobs()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html#ad396d2099ffc0e58eca66a184fa4c3e6">Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor</a>
+</li>
+<li>fetch_all_incomplete_jobs_by_role_id()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a217294b6ab8e75844cb946b2a5cf600d">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
 </li>
 <li>fetch_by_dbID()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a29854e14eb6854bc6871db82fdb89d1f">Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor</a>
@@ -199,8 +199,17 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>fetch_input_ids_for_job_ids()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a33703ebaa739dc4c4924cad07e2abd25">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
 </li>
+<li>fetch_job_counts_hashed_by_status()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#aa9f6c9d54c47acd37229db8f4b0f4e92">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
+</li>
+<li>fetch_last_by_worker_id()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html#af1b2ed27c8dd6309d981237ec8900933">Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor</a>
+</li>
 <li>fetch_overdue_workers()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a47b088cb6be9493e6853b5ee0b20b522">Bio::EnsEMBL::Hive::Queen</a>
+</li>
+<li>fetch_param_hash()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor.html#a79e71f870799d6e6887304e21886bed6">Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor</a>
 </li>
 <li>fetch_some_by_analysis_id_limit()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a171ed08ff5a07ce88413d1257093f7e5">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
@@ -208,11 +217,14 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>fetch_structures_for_job_ids()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_accumulator_adaptor.html#a5ecf1d84e9aabb00cffc7c4df537b98c">Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor</a>
 </li>
-<li>fetch_value_by_key()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html#a872fcb522c8b0322daf1033f7e2fa41e">Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor</a>
-</li>
 <li>final_decision()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#a968b5a54d803a5e4e291cd9510940309">Bio::EnsEMBL::Hive::Limiter</a>
+</li>
+<li>finalize_role()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html#a4d932a7792e11979ae49a3b3f52d36cc">Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor</a>
+</li>
+<li>find_all_by()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html#aa383dd99d53195099209af44e9956094">Bio::EnsEMBL::Hive::Utils::Collection</a>
 </li>
 <li>find_all_sql_schema_patches()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html#a4dd0e15f6e51c889ed715aee9275e54d">Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor</a>
@@ -220,26 +232,17 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>find_available_meadow_responsible_for_worker()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#ae5d7a34a10c8f72107156a73d348b54f">Bio::EnsEMBL::Hive::Valley</a>
 </li>
-<li>find_out_causes()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_s_f.html#ae6030241c373e061f40881edf6e01878">Bio::EnsEMBL::Hive::Meadow::LSF</a>
+<li>find_one_by()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html#ade7af2d6450b8215efc2a06282f961da">Bio::EnsEMBL::Hive::Utils::Collection</a>
 </li>
 <li>find_submodules()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a487b583d13e668734c35bcff7e427d9b">Bio::EnsEMBL::Hive::Utils</a>
-</li>
-<li>from_analysis()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#ad8140faa5aec71033ae2cc3e69571246">Bio::EnsEMBL::Hive::DataflowRule</a>
-</li>
-<li>from_analysis_id()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#ac13454a4f86e556f82560a7f2967fc53">Bio::EnsEMBL::Hive::DataflowRule</a>
 </li>
 <li>from_date_to_seconds()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27">Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection</a>
 </li>
 <li>from_seconds_to_date()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99">Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection</a>
-</li>
-<li>funnel_dataflow_rule_id()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#aec851945dd9ebf3652224066b8d271e8">Bio::EnsEMBL::Hive::DataflowRule</a>
 </li>
 </ul>
 </div><!-- contents -->

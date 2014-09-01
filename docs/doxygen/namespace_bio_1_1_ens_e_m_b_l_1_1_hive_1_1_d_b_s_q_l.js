@@ -13,11 +13,12 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l =
     [ "DBConnection", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection" ],
     [ "LogMessageAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor" ],
     [ "MetaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor" ],
-    [ "MetaContainer", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_container.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_container" ],
     [ "NakedTableAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor" ],
     [ "ObjectAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor" ],
+    [ "PipelineWideParametersAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor" ],
     [ "ResourceClassAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor" ],
     [ "ResourceDescriptionAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor" ],
+    [ "RoleAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor" ],
     [ "SqlSchemaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor" ],
     [ "StatementHandle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle" ]
 ];

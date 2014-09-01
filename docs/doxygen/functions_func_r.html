@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -147,6 +147,9 @@ $(document).ready(function(){initNavTree('functions_func_r.html','');});
 <li>ready_job_count()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#af55400b3e85544df26608ac63d98f7bc">Bio::EnsEMBL::Hive::AnalysisStats</a>
 </li>
+<li>recalculate_from_job_counts()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#abd8bc32f51dee49dc94b4b0635753b92">Bio::EnsEMBL::Hive::AnalysisStats</a>
+</li>
 <li>reconnect()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aedf6ea5fb297d8ef9276d9bc016336c1">Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection</a>
 </li>
@@ -160,14 +163,17 @@ $(document).ready(function(){initNavTree('functions_func_r.html','');});
 <li>register_all_workers_dead()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#ab4f2cf470e0b3bbe732dd50c22e4deca">Bio::EnsEMBL::Hive::Queen</a>
 </li>
+<li>register_attempt()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html#a144c79aed6d5e822b16a718ab71590ef">Bio::EnsEMBL::Hive::Role</a>
+</li>
 <li>register_worker_death()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a1dc35ff50f5375e8796f12d17b372773">Bio::EnsEMBL::Hive::Queen</a>
 </li>
 <li>release_and_age_job()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a375c57130791087ff6781f4cc6cc9b9e">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
 </li>
-<li>release_undone_jobs_from_worker()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a25ddbb1f2f0fada5fc7c9078c887f7d8">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
+<li>release_undone_jobs_from_role()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a64924639a2536d95c78f19b9beab64ee">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
 </li>
 <li>remove()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ab19a4a6d447c8661574a97ae159234f3">Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor</a>
@@ -183,11 +189,6 @@ $(document).ready(function(){initNavTree('functions_func_r.html','');});
 </li>
 <li>reset_or_grab_job_by_dbID()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a4dd834ac1243d05989bcb352021ede70">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
-</li>
-<li>resource_class_id()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a30049fd09f42f0b709d6785191168587">Bio::EnsEMBL::Hive::Analysis</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html#a5c5bf7acac77e65b07761146d39bcc24">Bio::EnsEMBL::Hive::ResourceDescription</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#aec650e3731644a420c7a2be8597e0250">Bio::EnsEMBL::Hive::Worker</a>
 </li>
 <li>resource_classes()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6d9612ad9a85971bc0734cbfb26854d7">Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf</a>
@@ -205,12 +206,14 @@ $(document).ready(function(){initNavTree('functions_func_r.html','');});
 <li>retry_throwing_jobs()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a03e3c2ca474c831a1700dbfdfb424fb6">Bio::EnsEMBL::Hive::Worker</a>
 </li>
+<li>role_id()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#aafa202b387cc9f15d49f7e54d55ff534">Bio::EnsEMBL::Hive::AnalysisJob</a>
+</li>
 <li>root()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a1191c5f58dd3ebbd26f4024b906ccfcf">Bio::EnsEMBL::Hive::DependentOptions</a>
 </li>
 <li>run()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#adb95548d620d772327085f7bb96b8b3a">Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a346410a6c7d0e5f2541bc304048efdb9">Bio::EnsEMBL::Hive::Process</a>
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a346410a6c7d0e5f2541bc304048efdb9">Bio::EnsEMBL::Hive::Process</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html#a0a727e827af0f003386490d0aa3b2af9">Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_dummy.html#a4be920b14ab4f65812887f02751e1a10">Bio::EnsEMBL::Hive::RunnableDB::Dummy</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_failure_test.html#a525479b5642b24c86208663fa2fd7d4a">Bio::EnsEMBL::Hive::RunnableDB::FailureTest</a>
@@ -228,6 +231,9 @@ $(document).ready(function(){initNavTree('functions_func_r.html','');});
 </li>
 <li>run_one_batch()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a7fe639feb3731120a1a66663e8c2a2e8">Bio::EnsEMBL::Hive::Worker</a>
+</li>
+<li>run_pipeline_create_commands()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6449dea7947a928206715abaab925a38">Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf</a>
 </li>
 <li>runnable_object()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a4bc0dde1eb43909e1e8f8a87fd0a3257">Bio::EnsEMBL::Hive::Worker</a>

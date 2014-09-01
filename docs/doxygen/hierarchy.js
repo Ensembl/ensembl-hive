@@ -6,7 +6,7 @@ var hierarchy =
         [ "Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_data_adaptor.html", null ],
         [ "Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor.html", null ],
         [ "Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html", null ],
-        [ "Bio::EnsEMBL::Hive::DBSQL::MetaContainer", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_container.html", null ]
+        [ "Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor.html", null ]
       ] ],
       [ "Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html", [
         [ "Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_adaptor.html", null ],
@@ -16,9 +16,21 @@ var hierarchy =
         [ "Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor.html", null ],
         [ "Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html", null ],
         [ "Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html", null ],
+        [ "Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html", null ],
         [ "Bio::EnsEMBL::Hive::Queen", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html", null ]
       ] ]
     ] ],
+    [ "Bio::EnsEMBL::Hive::Cacheable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html", [
+      [ "Bio::EnsEMBL::Hive::Analysis", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html", null ],
+      [ "Bio::EnsEMBL::Hive::AnalysisCtrlRule", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html", null ],
+      [ "Bio::EnsEMBL::Hive::AnalysisStats", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html", null ],
+      [ "Bio::EnsEMBL::Hive::DataflowRule", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html", null ],
+      [ "Bio::EnsEMBL::Hive::MetaParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html", null ],
+      [ "Bio::EnsEMBL::Hive::PipelineWideParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html", null ],
+      [ "Bio::EnsEMBL::Hive::ResourceClass", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html", null ],
+      [ "Bio::EnsEMBL::Hive::ResourceDescription", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html", null ]
+    ] ],
+    [ "Bio::EnsEMBL::Hive::Utils::Collection", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html", null ],
     [ "Bio::EnsEMBL::Hive::Utils::Config", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html", null ],
     [ "Bio::EnsEMBL::Hive::Configurable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html", [
       [ "Bio::EnsEMBL::Hive::Meadow", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow.html", [
@@ -55,6 +67,7 @@ var hierarchy =
       ] ]
     ] ],
     [ "Bio::EnsEMBL::Hive::Utils::GraphViz", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph_viz.html", null ],
+    [ "Bio::EnsEMBL::Hive", "class_bio_1_1_ens_e_m_b_l_1_1_hive.html", null ],
     [ "Bio::EnsEMBL::Hive::Limiter", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html", null ],
     [ "Bio::EnsEMBL::Hive::Params", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html", [
       [ "Bio::EnsEMBL::Hive::AnalysisJob", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html", null ]
@@ -76,7 +89,6 @@ var hierarchy =
     ] ],
     [ "Bio::EnsEMBL::Hive::Utils::RedirectStack", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_redirect_stack.html", null ],
     [ "Bio::EnsEMBL::Hive::Scheduler", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html", null ],
-    [ "Script", "class_script.html", null ],
     [ "Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html", null ],
     [ "Bio::EnsEMBL::Hive::DBSQL::StatementHandle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html", null ],
     [ "Bio::EnsEMBL::Hive::Utils::Stopwatch", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html", null ],
@@ -90,6 +102,7 @@ var hierarchy =
       [ "Bio::EnsEMBL::Hive::NakedTable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html", null ],
       [ "Bio::EnsEMBL::Hive::ResourceClass", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html", null ],
       [ "Bio::EnsEMBL::Hive::ResourceDescription", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html", null ],
+      [ "Bio::EnsEMBL::Hive::Role", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html", null ],
       [ "Bio::EnsEMBL::Hive::Worker", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html", null ]
     ] ],
     [ "Bio::EnsEMBL::Hive::Utils::URL", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html", null ],

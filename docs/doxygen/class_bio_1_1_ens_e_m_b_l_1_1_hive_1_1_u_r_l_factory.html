@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -288,7 +288,7 @@ Synopsis</h1>
 <div class="line">        } elsif($table_name eq <span class="stringliteral">&#39;accu&#39;</span>) {</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html">Bio::EnsEMBL::Hive::Accumulator</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
-<div class="line">                    adaptor            =&gt; $dba-&gt;get_AccumulatorAdaptor,</div>
+<div class="line">                    $dba ? (adaptor =&gt; $dba-&gt;get_AccumulatorAdaptor) : (),</div>
 <div class="line">                    struct_name        =&gt; $tparam_name,</div>
 <div class="line">                    signature_template =&gt; $tparam_value,</div>
 <div class="line">            );</div>
@@ -296,11 +296,13 @@ Synopsis</h1>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html">Bio::EnsEMBL::Hive::NakedTable</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
-<div class="line">                adaptor    =&gt; $dba-&gt;get_NakedTableAdaptor,</div>
+<div class="line">                $dba ? (adaptor =&gt; $dba-&gt;get_NakedTableAdaptor) : (),</div>
 <div class="line">                table_name =&gt; $table_name,</div>
-<div class="line">                $tparam_value ? (insertion_method =&gt; $tparam_value) : ()</div>
+<div class="line">                $tparam_value ? (insertion_method =&gt; $tparam_value) : (),</div>
 <div class="line">            );</div>
 <div class="line">        }</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        warn <span class="stringliteral">&quot;Could not parse URL &#39;$url&#39;&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">return</span>;</div>
 <div class="line">}</div>

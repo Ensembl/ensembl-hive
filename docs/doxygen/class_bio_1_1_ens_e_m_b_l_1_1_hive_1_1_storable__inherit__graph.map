@@ -8,5 +8,6 @@
 <area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html" title="Bio::EnsEMBL::Hive\l::NakedTable" alt="" coords="202,397,345,438"/>
 <area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="202,462,345,503"/>
 <area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="197,527,349,569"/>
-<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html" title="Bio::EnsEMBL::Hive\l::Worker" alt="" coords="202,593,345,634"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html" title="Bio::EnsEMBL::Hive\l::Role" alt="" coords="202,593,345,634"/>
+<area shape="rect" id="node12" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html" title="Bio::EnsEMBL::Hive\l::Worker" alt="" coords="202,658,345,699"/>
 </map>

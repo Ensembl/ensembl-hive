@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -258,7 +258,7 @@ Description</h1>
 <div class="line">    my ($self, $worker) = @_;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( my $meadow = $self-&gt;available_meadow_hash-&gt;{$worker-&gt;meadow_type} ) {</div>
-<div class="line">        <span class="keywordflow">if</span>($meadow-&gt;name eq $worker-&gt;meadow_name) {</div>
+<div class="line">        <span class="keywordflow">if</span>($meadow-&gt;cached_name eq $worker-&gt;meadow_name) {</div>
 <div class="line">            <span class="keywordflow">return</span> $meadow;</div>
 <div class="line">        }</div>
 <div class="line">    }</div>
@@ -450,7 +450,7 @@ Description</h1>
 <div class="line"><span class="preprocessor">        # make sure modules are loaded and available ones are checked prior to setting the current one</span></div>
 <div class="line"><span class="preprocessor"></span>    <span class="keywordflow">foreach</span> my $meadow_class (@{ find_submodules( $self-&gt;meadow_class_path ) }) {</div>
 <div class="line">        eval <span class="stringliteral">&quot;require $meadow_class&quot;</span>;</div>
-<div class="line">        <span class="keywordflow">if</span>($meadow_class-&gt;name) {</div>
+<div class="line">        <span class="keywordflow">if</span>( $meadow_class-&gt;name ) {</div>
 <div class="line">            my $meadow_object            = $meadow_class-&gt;new( $config );</div>
 <div class="line"></div>
 <div class="line">            $meadow_object-&gt;pipeline_name( $pipeline_name ) <span class="keywordflow">if</span>($pipeline_name);</div>
@@ -526,7 +526,7 @@ Description</h1>
 <div class="line">        eval {</div>
 <div class="line">            $pid         = $meadow-&gt;get_current_worker_process_id();</div>
 <div class="line">            $meadow_type = $meadow-&gt;type();</div>
-<div class="line">            $meadow_name = $meadow-&gt;name();</div>
+<div class="line">            $meadow_name = $meadow-&gt;cached_name();</div>
 <div class="line">        };</div>
 <div class="line">        unless($@) {</div>
 <div class="line">            last;</div>

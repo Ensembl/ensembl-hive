@@ -20,6 +20,9 @@ var dir_a9e0aa06350c0954648fef9d9cd79db9 =
     [ "AnalysisStats.pm", "_analysis_stats_8pm.html", [
       [ "AnalysisStats", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats" ]
     ] ],
+    [ "Cacheable.pm", "_cacheable_8pm.html", [
+      [ "Cacheable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable" ]
+    ] ],
     [ "Configurable.pm", "_configurable_8pm.html", [
       [ "Configurable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable" ]
     ] ],
@@ -35,11 +38,17 @@ var dir_a9e0aa06350c0954648fef9d9cd79db9 =
     [ "Meadow.pm", "_meadow_8pm.html", [
       [ "Meadow", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow" ]
     ] ],
+    [ "MetaParameters.pm", "_meta_parameters_8pm.html", [
+      [ "MetaParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters" ]
+    ] ],
     [ "NakedTable.pm", "_naked_table_8pm.html", [
       [ "NakedTable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table" ]
     ] ],
     [ "Params.pm", "_params_8pm.html", [
       [ "Params", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params" ]
+    ] ],
+    [ "PipelineWideParameters.pm", "_pipeline_wide_parameters_8pm.html", [
+      [ "PipelineWideParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters" ]
     ] ],
     [ "Process.pm", "_process_8pm.html", [
       [ "Process", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process" ]
@@ -52,6 +61,9 @@ var dir_a9e0aa06350c0954648fef9d9cd79db9 =
     ] ],
     [ "ResourceDescription.pm", "_resource_description_8pm.html", [
       [ "ResourceDescription", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description" ]
+    ] ],
+    [ "Role.pm", "_role_8pm.html", [
+      [ "Role", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role" ]
     ] ],
     [ "Scheduler.pm", "_scheduler_8pm.html", [
       [ "Scheduler", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler" ]

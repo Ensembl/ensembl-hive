@@ -1,5 +1,8 @@
 var dir_cc4937ba8ff0b3c0794da36a467c68f2 =
 [
+    [ "Collection.pm", "_collection_8pm.html", [
+      [ "Collection", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection" ]
+    ] ],
     [ "Config.pm", "_config_8pm.html", [
       [ "Config", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config" ]
     ] ],

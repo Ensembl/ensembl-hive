@@ -6,6 +6,7 @@
 <area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::DataflowRuleAdaptor" alt="" coords="439,266,646,307"/>
 <area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceClassAdaptor" alt="" coords="433,331,652,373"/>
 <area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ResourceDescription\lAdaptor" alt="" coords="440,396,645,452"/>
-<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html" title="Bio::EnsEMBL::Hive\l::Queen" alt="" coords="471,475,614,517"/>
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="6,234,165,275"/>
+<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::RoleAdaptor" alt="" coords="465,475,620,517"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html" title="Bio::EnsEMBL::Hive\l::Queen" alt="" coords="471,541,614,582"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="6,266,165,307"/>
 </map>

@@ -1,6 +1,5 @@
 var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats =
 [
-    [ "analysis_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a9dea5f797f92fa7dd1e06a67f0bcd401", null ],
     [ "avg_input_msec_per_job", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a4015806ce9a0a952ec992386f323ecd4", null ],
     [ "avg_msec_per_job", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a0aee41e0ab6ecb6e1726a2254a1c5256", null ],
     [ "avg_output_msec_per_job", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a763d7539d36a921ba14409ffdd805a04", null ],
@@ -11,7 +10,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats =
     [ "determine_status", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a2f551acaf61aa9bf888e5d2246002170", null ],
     [ "done_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a8cbcb7b573a6c3277ac69456dca161fa", null ],
     [ "failed_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a49f5385adef0220da9708e24eeba68e2", null ],
-    [ "get_analysis", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ab3a0f109fab512fdae003e708d4c28df", null ],
     [ "get_or_estimate_batch_size", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac31170452fe2a74986b93ed13eb697c3", null ],
     [ "hive_capacity", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#adf47bc7ce9c36899897d76f526e26e72", null ],
     [ "inprogress_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a859730fee45d764bdc4fbaa50be04ca3", null ],
@@ -23,6 +21,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats =
     [ "num_running_workers", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ae2ece1ac33d251baa674803832bdae70", null ],
     [ "output_capacity", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac64ad37ccf27356c480b1d058315d4dd", null ],
     [ "ready_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#af55400b3e85544df26608ac63d98f7bc", null ],
+    [ "recalculate_from_job_counts", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#abd8bc32f51dee49dc94b4b0635753b92", null ],
     [ "refresh", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac704b4deb0a318afca57dddff2d891df", null ],
     [ "seconds_since_last_update", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ae96201f918c87593f69279e032fea2a5", null ],
     [ "semaphored_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a0a75c8843ba392c7df7a213a0767739f", null ],
@@ -30,6 +29,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats =
     [ "sync_lock", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac66bdac33e42b171ca6917480de34063", null ],
     [ "toString", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a8f23e63cd393a1d4b4fa7489e070a1e0", null ],
     [ "total_job_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a97f57d2303a39d59fb6828c681d1302d", null ],
-    [ "update", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#aea393680de6bbeeb5cea86e986887fdf", null ],
-    [ "update_status", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#aae68800782db346b681387c0412dd05f", null ]
+    [ "unikey", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a982bd322e03a2a1146189c002ff6b046", null ],
+    [ "update", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#aea393680de6bbeeb5cea86e986887fdf", null ]
 ];

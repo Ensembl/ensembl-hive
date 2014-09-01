@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.0</span>
+   &#160;<span id="projectnumber">2.1</span>
    </div>
   </td>
  </tr>
@@ -164,7 +164,7 @@ Synopsis</h1>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            ## typical usage:</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            # $job-&gt;param_init( </span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $runObj-&gt;param_defaults(),                      # module-wide built-in defaults have the lowest precedence (will always be the same for this module)</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;db-&gt;get_MetaContainer-&gt;get_param_hash(), # then come the pipeline-wide parameters from the &#39;meta&#39; table (define things common to all modules in this pipeline)</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;db-&gt;get_PipelineWideParametersAdaptor-&gt;fetch_param_hash(), # then come the pipeline-wide parameters from the &#39;meta&#39; table (define things common to all modules in this pipeline)</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;analysis-&gt;parameters(),                  # analysis-wide &#39;parameters&#39; are even more specific (can be defined differently for several occurence of the same module)</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $job-&gt;input_id(),                               # job-specific &#39;input_id&#39; parameters have the highest precedence</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            # );</span></div>
