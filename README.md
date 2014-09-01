@@ -46,8 +46,8 @@ etc.
 
 Available documentation
 -----------------------
-* eHive dependencies, installation and setup [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/version/1.9/docs/install.html) [(local)](docs/install.html)
-* eHive database schema [(on GitHub)](http://htmlpreview.github.io/?https://github.com/Ensembl/ensembl-hive/blob/version/1.9/docs/hive_schema.html) [(local)](docs/hive_schema.html)
+The main entry point is in docs/index.html (available locally, offline).
+The online version is hosted [here](https://rawgit.com/Ensembl/ensembl-hive/version/1.9/docs/index.html).
 
 Contact us (mailing list)
 -------------------------
@@ -56,6 +56,5 @@ for running Comparative Genomics pipelines, but since then it has been separated
 into a separate software tool and is used in many projects both in Genome Campus, Cambridge and outside.
 There is eHive users' mailing list for questions, suggestions, discussions and announcements.
 
-To subscribe to it please visit:
-        http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users
+To subscribe to it please visit (http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users)
 
