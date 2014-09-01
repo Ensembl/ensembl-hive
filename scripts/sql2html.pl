@@ -32,7 +32,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 ###############
 
 my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
-my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle);
+my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle,$hosts_list);
 
 usage() if (!scalar(@ARGV));
  
@@ -51,6 +51,7 @@ GetOptions(
     'dbname=s'         => \$dbname,
     'user=s'           => \$user,
     'pass=s'           => \$pass,
+    'hosts_list=s'     => \$hosts_list,
     'skip_connection'  => \$skip_conn,
     'intro=s'          => \$intro_file,
     'help!'            => \$help,
@@ -70,6 +71,11 @@ if (!$html_file) {
   usage();
 }
 
+if ($hosts_list && !$user) {
+  print "> Error! Please give user name using the option '-user' when you use the option -hosts_list\n";
+  usage();
+}
+
 $show_colour    = 1 if (!defined($show_colour));
 $header_flag    = 1 if (!defined($header_flag));
 $format_headers = 1 if (!defined($format_headers));
@@ -78,6 +84,7 @@ $sort_tables    = 1 if (!defined($sort_tables));
 
 $skip_conn      = undef if ($skip_conn == 0);
 
+$port ||= 3306;
 
 # Dababase connection (optional)
 if (defined($host) && !defined($skip_conn)) {
@@ -122,10 +129,9 @@ my $parenth_count = 0;
 my $header_colour;
 
 my $SQL_LIMIT = 50;
-my $img_plus  = qq{<img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>};
-my $img_minus = qq{<img src="/i/16/minus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="hide"/>};
+my $img_plus  = qq{<img src="/i/16/plus-button.png" style="width:12px;height:12px;position:relative;top:2px" alt="show"/>};
+my $img_minus = qq{<img src="/i/16/minus-button.png" style="width:12px;height:12px;position:relative;top:2px" alt="hide"/>};
 my $link_text = 'columns';
-
 
 
 ##############
@@ -142,8 +148,6 @@ my $html_header = qq{
 <script language="Javascript" type="text/javascript">
   var img_plus   = '$img_plus';
   var img_minus  = '$img_minus';
-  var span_open  = ' <span style="vertical-align:middle;color:#000;font-weight:bold;padding-right:2px">';
-  var span_close = '</span>';
 
   // Function to show/hide the columns table
   function show_hide (param, a_text) {
@@ -153,20 +157,25 @@ my $html_header = qq{
       div   = document.getElementById('div_'+param);
       alink = document.getElementById('a_'+param);
     }  
+    // Species list
+    else if (a_text === 'species') {
+      div   = document.getElementById('sp_'+param);
+      alink = document.getElementById('s_'+param);
+    }
     // Example tables
     else {
       div   = document.getElementById('ex_'+param);
       alink = document.getElementById('e_'+param);
-    } 
+    }
     
     if (div.style.display=='inline') {
       div.style.display='none';
-      alink.innerHTML=img_plus+span_open+'Show '+a_text+span_close;
+      alink.innerHTML=img_plus+' Show '+a_text;
     }
     else {
       if (div.style.display=='none') {
         div.style.display='inline';
-        alink.innerHTML=img_minus+span_open+'Hide '+a_text+span_close;
+        alink.innerHTML=img_minus+' Hide '+a_text;
       }
     }
   }
@@ -183,11 +192,11 @@ my $html_header = qq{
       if (div && alink) {
         if (expand_flag.value=='0') {
           div.style.display='inline';
-          alink.innerHTML=img_minus+span_open+'Hide '+link_text+span_close;
+          alink.innerHTML=img_minus+' Hide '+link_text;
         }
         else {
           div.style.display='none';
-          alink.innerHTML=img_plus+span_open+'Show '+link_text+span_close;
+          alink.innerHTML=img_plus+' Show '+link_text;
         }
       }
     }
@@ -488,7 +497,10 @@ foreach my $header_name (@header_names) {
     $html_content .= add_info($data->{info},$data);  
     $html_content .= add_columns($t_name,$data);
     $html_content .= add_examples($t_name,$data);
+    $html_content .= qq{<table style="margin-top:20px;border:1px solid #CCC"><tr>};
     $html_content .= add_see($data->{see});
+    $html_content .= add_species_list($t_name,$data->{see}) if ($hosts_list);
+    $html_content .= qq{</tr></table>};
   }
 }
 $html_content .= add_legend();
@@ -775,7 +787,7 @@ sub add_table_name {
   }
 
   my $html = qq{
-  <div id="$t_name" style="width:850px;background-color:#F0F0F0;margin-top:50px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
+  <div id="$t_name" style="width:850px;background-color:#F0F0F0;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
  
     <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
       <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;vertical-align:middle"></span>$t_name</div>
@@ -920,14 +932,56 @@ sub add_examples {
 sub add_see {
   my $sees = shift;
   my $html = '';
-  
+
   if (scalar @$sees) {
-    $html .= qq{  <p style="margin-top:10px"><b>See also:</b></p>\n  <ul>\n};
+    $html .= qq{    <td style="padding: 4px 25px 0px 2px">\    <p style="font-weight:bold">See also:</p>\n  <ul style="margin-bottom:0px";>\n};
     foreach my $see (@$sees) {
-      $html .= qq{    <li><a href="#$see">$see</a></li>\n};
+      $html .= qq{      <li><a href="#$see">$see</a></li>\n};
     }
-    $html .= qq{  </ul>\n\n};
+    $html .= qq{      </ul>\n    </td>\n};
   }
+
+  return $html;
+}
+
+
+# Display the list of species where the given table is populated
+sub add_species_list {
+  my $table   = shift;
+  my $has_see = shift;
+
+  my $db_type = lc($db_team);
+  my $sql = qq{SELECT table_schema FROM information_schema.tables WHERE table_rows>=1 AND 
+               TABLE_SCHEMA like '%$db_type\_$version%' AND TABLE_NAME='$table'};
+
+  my @species_list;
+  foreach my $hostname (split(',',$hosts_list)) {
+    my $db_type = lc($db_team);
+    my $sth = get_connection_and_query("", $hostname, $sql);
+
+    # loop over databases
+    while (my ($dbname) = $sth->fetchrow_array) {
+      next if ($dbname =~ /^master_schema/);
+
+      $dbname =~ /^(.+)_$db_type/;
+      my $s_name = $1;
+
+      push(@species_list, $s_name);
+    }
+  }
+  return "" if (!@species_list);
+
+  my $show_hide = show_hide_button("s_$table", "$table", 'species');
+
+  my $separator = (defined($has_see) && scalar(keys($has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted #CCC"></td>} : '';
+  my $margin = (defined($has_see) && scalar(keys($has_see))) ? qq{;padding-left:25px} : '';
+
+  my $html = qq{$separator
+  <td style="padding-top:4px$margin"><p><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
+    <div id="sp_$table" style="display:none;">};
+  @species_list = map { "<li>$_</li>" } @species_list;
+  $html .= "      <ul>\n        ".join("\n        ",@species_list)."\n      </ul>";
+  $html .= "    </div>\n  </td>";
   
   return $html;
 }
@@ -1152,11 +1206,34 @@ sub show_hide_button {
   my $label  = shift;
   
   my $show_hide = qq{
-  <a id="$a_id" style="cursor:pointer;text-decoration:none;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px" onclick="show_hide('$div_id','$label')">
-    $img_plus
-    <span style="vertical-align:middle;color:#000;font-weight:bold"> Show $label</span>
+  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px" onclick="show_hide('$div_id','$label')">
+    $img_plus Show $label
   </a>};
   return $show_hide;
+}
+
+
+# Connects and execute a query
+sub get_connection_and_query {
+  my $dbname = shift;
+  my $hname  = shift;
+  my $sql    = shift;
+  my $params = shift;
+
+  my ($host, $port) = split /\:/, $hname;
+
+  # DBI connection
+  my $dsn = "DBI:mysql:$dbname:$host:$port";
+  my $dbh = DBI->connect($dsn, $user, $pass) or die "Connection failed";
+
+  my $sth = $dbh->prepare($sql);
+  if ($params) {
+    $sth->execute(join(',',@$params));
+  }
+  else {
+    $sth->execute;
+  }
+  return $sth;
 }
 
 
@@ -1271,8 +1348,9 @@ sub usage {
     -sort_headers     A flag to sort (1) or not (0) the headers by alphabetic order. By default, the value is set to 1.
     -sort_tables      A flag to sort (1) or not (0) the tables by alphabetic order. By default, the value is set to 1.
                      
-    Other optional options - if you want to add some SQL query results as examples
+    Other optional options:
     
+    # If you want to add some SQL query results as examples:
     -host             Host name of the MySQL server
     -port             Port of the MySQL server
     -dbname           Database name
@@ -1280,6 +1358,11 @@ sub usage {
     -pass             MySQL password (not always required)
     -skip_connection  Avoid to run the MySQL queries contained in the "@example" tags.
     
+    # If you want to show, for each table, the list of species where it has been populated:
+    -hosts_list       The list of host names where the databases are stored, separated by a coma,
+                      e.g. ensembldb.ensembl.org1, ensembldb.ensembl.org2
+                      You will need to provide at least the parameter -user (-port and -pass are not mandatory)
+
   } . "\n";
   exit(0);
 }
