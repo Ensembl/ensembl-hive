@@ -1,0 +1,131 @@
+<html>
+    <head>
+        <title>eHive installation and setup</title>
+        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
+    </head>
+<body>
+
+    <center><h1>eHive installation and setup</h1></center>
+    <hr width=50% />
+
+    <center><h2>eHive dependencies</h2></center>
+
+    eHive system depends on the following components that you may need to download and install first:
+    <ol>
+        <li>Perl 5.10 <a href=http://www.perl.org/get.html>or higher</a></li>
+        <li>A database engine of your choice. eHive keeps its state in a database, so you will need
+            <ol>
+                <li>a server installed on the machine where you want to maintain the state of your pipeline(s) and</li>
+                <li>clients installed on the machines where the jobs are to be executed.</li>
+            </ol>
+            At the moment, the following database options are available:
+            <ul>
+                <li>MySQL 5.1 <a href=http://dev.mysql.com/downloads/>or higher</a></li>
+                <li>SQLite 3.6 <a href=http://www.sqlite.org/download.html>or higher</a></li>
+                <li>PostgreSQL 9.2 <a href=http://www.postgresql.org/download/>or higher</a></li>
+            </ul>
+        </li>
+        <li>Perl DBI API version 1.6 <a href=http://dbi.perl.org/>or higher</a> --
+            Perl database interface that has to include a driver for the database engine of your choice above.
+        </li>
+        <li>Perl libraries for visualisation (optional but recommended). They can be found on CPAN:
+            <ul>
+                <li><a href=http://search.cpan.org/~rsavage/GraphViz/lib/GraphViz.pm>GraphViz</a> (needed for generate_graph.pl and the GUI)</li>
+                <li><a href=http://search.cpan.org/dist/Chart-Gnuplot/lib/Chart/Gnuplot.pm>Chart::Gnuplot</a> (needed for generate_timeline.pl)</li>
+            </ul>
+        </li>
+
+    </ol>
+
+    <hr width=50% />
+
+    <center><h2>Installing EnsEMBL core and eHive code</h2></center>
+
+<h3>Create a directory for EnsEMBL repositories:</h3>
+
+It is advised to have a dedicated directory where EnsEMBL-related packages will be deployed.
+Unlike DBI modules that can be installed system-wide by the system administrator,
+you will benefit from full (read+write) access to the EnsEMBL files/directories,
+so it is best to install them under your home directory. For example,
+
+<pre>
+        $ mkdir $HOME/ensembl_main
+</pre>
+
+<h3>Set a variable pointing at this directory:</h3>
+
+<ul>
+<li><i>using bash syntax:</i>
+<pre>
+        $ export ENSEMBL_CVS_ROOT_DIR="$HOME/ensembl_main"<i>
+                #
+                # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)</i>
+</pre></li>
+
+<li><i>using [t]csh syntax:</i>
+<pre>
+        $ setenv ENSEMBL_CVS_ROOT_DIR "$HOME/ensembl_main"<i>
+                #
+                # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)</i>
+</pre></li>
+</ul>
+
+<h3>Change into your EnsEMBL codebase directory:</h3>
+
+<pre>
+        $ cd $ENSEMBL_CVS_ROOT_DIR
+</pre>
+
+<h3>Check out the EnsEMBL repositories by cloning them from GitHub:</h3>
+
+<ol>
+<li><i>EnsEMBL core API:</i>
+<pre>
+    git clone https://github.com/Ensembl/ensembl.git
+</pre></li>
+<li><i>eHive code:</i>
+<pre>
+    git clone https://github.com/Ensembl/ensembl-hive.git
+</pre></li>
+</ol>
+
+<h3>Add new packages to the PERL5LIB variable:</h3>
+
+<ul>
+<li><i>using bash syntax:</i>
+<pre>
+        $ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+        $ export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules<i>
+                #
+                # (for best results, append these lines to your ~/.bashrc or ~/.bash_profile configuration file)</i>
+</pre></li>
+
+<li><i>using [t]csh syntax:</i>
+<pre>
+        $ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
+        $ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules<i>
+                #
+                # (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)</i>
+</pre></li>
+</ul>
+
+<h3>Add eHive scripts' path to the PATH variable (optional but useful) :</h3>
+
+<ul>
+<li><i>using bash syntax:</i>
+<pre>
+        $ export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts<i>
+                #
+                # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)</i>
+</pre></li>
+
+<li><i>using [t]csh syntax:</i>
+<pre>
+        $ set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )<i>
+                #
+                # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)</i>
+</pre></li>
+</ul>
+
+</body>
+</html>
