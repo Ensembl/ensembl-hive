@@ -17,7 +17,7 @@
 
 <h1 id="SYNOPSIS">SYNOPSIS</h1>
 
-<pre><code>    init_pipeline.pl &lt;config_module_or_filename&gt; [-help | [-analysis_topup | -job_topup] &lt;options_for_this_particular_pipeline&gt;]</code></pre>
+<pre><code>    init_pipeline.pl &lt;config_module_or_filename&gt; [&lt;options_for_this_particular_pipeline&gt;]</code></pre>
 
 <h1 id="DESCRIPTION">DESCRIPTION</h1>
 
@@ -31,24 +31,13 @@
         # initialize a generic eHive pipeline:
     init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password &lt;yourpassword&gt;
 
-        # see what command line options are available when initializing long multiplication example pipeline
-        #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive) :
-    init_pipeline.pl PipeConfig/LongMult_conf -help
-
         # initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
         #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :
     init_pipeline.pl LongMult_conf -password &lt;yourpassword&gt; -first_mult 375857335 -second_mult 1111333355556666 </code></pre>
 
 <h1 id="OPTIONS">OPTIONS</h1>
 
-<pre><code>    -help            :   Gets this help message and exits
-
-    -analysis_topup  :   A special initialization mode when (1) pipeline_create_commands are switched off and (2) only newly defined analyses are added to the database
-                         This mode is only useful in the process of putting together a new pipeline.
-
-    -job_topup       :   Another special initialization mode when only jobs are created - no other structural changes to the pipeline are acted upon.
-
-    -hive_force_init :   If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.</code></pre>
+<pre><code>    -hive_force_init :   If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.</code></pre>
 
 <h1 id="LICENSE">LICENSE</h1>
 

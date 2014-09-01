@@ -56,6 +56,10 @@
     -reg_alias &lt;string&gt;    : species/alias name for the Hive DBAdaptor
     -url &lt;url string&gt;      : url defining where hive database is located</code></pre>
 
+<h2 id="Configs-overriding">Configs overriding</h2>
+
+<pre><code>    -config_file &lt;string&gt;  : json file (with absolute path) to override the default configurations (could be multiple)</code></pre>
+
 <h2 id="Looping-control">Looping control</h2>
 
 <pre><code>    -loop                  : run autonomously, loops and sleeps
@@ -63,7 +67,7 @@
     -keep_alive            : do not stop when there are no more jobs to do - carry on looping
     -job_id &lt;job_id&gt;       : run 1 iteration for this job_id
     -run                   : run 1 iteration of automation loop
-    -sleep &lt;num&gt;           : when looping, sleep &lt;num&gt; minutes (default 2min)</code></pre>
+    -sleep &lt;num&gt;           : when looping, sleep &lt;num&gt; minutes (default 1 min)</code></pre>
 
 <h2 id="Current-Meadow-control">Current Meadow control</h2>
 

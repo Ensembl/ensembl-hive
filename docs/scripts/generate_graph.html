@@ -17,7 +17,7 @@
 
 <h1 id="SYNOPSIS">SYNOPSIS</h1>
 
-<pre><code>    ./generate_graph.pl -url mysql://user:pass@server:port/dbname -output OUTPUT_LOC [-help]</code></pre>
+<pre><code>    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC [-help]</code></pre>
 
 <h1 id="DESCRIPTION">DESCRIPTION</h1>
 
@@ -40,6 +40,11 @@
 <p><b>--reg_alias</b></p>
 
 <pre><code>    species/alias name for the Hive DBAdaptor</code></pre>
+
+<p><b>--pipeconfig</b></p>
+
+<pre><code>    A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
+    This option can now be used multiple times for multiple top-ups.</code></pre>
 
 <p><b>--output</b></p>
 
