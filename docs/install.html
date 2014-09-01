@@ -39,57 +39,46 @@
 
     <hr width=50% />
 
-    <center><h2>Installing EnsEMBL core and eHive code</h2></center>
+    <center><h2>Installing eHive code</h2></center>
 
-<h3>Create a directory for EnsEMBL repositories:</h3>
-
-It is advised to have a dedicated directory where EnsEMBL-related packages will be deployed.
-Unlike DBI modules that can be installed system-wide by the system administrator,
-you will benefit from full (read+write) access to the EnsEMBL files/directories,
-so it is best to install them under your home directory. For example,
+<h3>Check out the repository by cloning it from GitHub:</h3>
 
 <pre>
-        $ mkdir $HOME/ensembl_main
+        $ git clone https://github.com/Ensembl/ensembl-hive.git
 </pre>
 
-<h3>Set a variable pointing at this directory:</h3>
+<p>
+This will create ensembl-hive directory with all the code and documentation.
+</p>
+
+
+<h3>Optional configuration of the system:</h3>
+
+<p>
+You may find it convenient (although it is not necessary) to add "ensembl-hive/scripts"
+to your <code>$PATH</code> variable to make it easier to run beekeeper.pl and other useful Hive scripts.
+</p>
 
 <ul>
 <li><i>using bash syntax:</i>
 <pre>
-        $ export ENSEMBL_CVS_ROOT_DIR="$HOME/ensembl_main"<i>
+        $ export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts<i>
                 #
                 # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)</i>
 </pre></li>
 
 <li><i>using [t]csh syntax:</i>
 <pre>
-        $ setenv ENSEMBL_CVS_ROOT_DIR "$HOME/ensembl_main"<i>
+        $ set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )<i>
                 #
                 # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)</i>
 </pre></li>
 </ul>
 
-<h3>Change into your EnsEMBL codebase directory:</h3>
-
-<pre>
-        $ cd $ENSEMBL_CVS_ROOT_DIR
-</pre>
-
-<h3>Check out the EnsEMBL repositories by cloning them from GitHub:</h3>
-
-<ol>
-<li><i>EnsEMBL core API:</i>
-<pre>
-    git clone https://github.com/Ensembl/ensembl.git
-</pre></li>
-<li><i>eHive code:</i>
-<pre>
-    git clone https://github.com/Ensembl/ensembl-hive.git
-</pre></li>
-</ol>
-
-<h3>Add new packages to the PERL5LIB variable:</h3>
+<p>
+Also, if you are developing the code and not just running ready pipelines,
+you may find it convenient to add "ensembl-hive/modules" to your <code>$PERL5LIB</code> variable.
+</p>
 
 <ul>
 <li><i>using bash syntax:</i>
@@ -106,24 +95,6 @@ so it is best to install them under your home directory. For example,
         $ setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules<i>
                 #
                 # (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)</i>
-</pre></li>
-</ul>
-
-<h3>Add eHive scripts' path to the PATH variable (optional but useful) :</h3>
-
-<ul>
-<li><i>using bash syntax:</i>
-<pre>
-        $ export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts<i>
-                #
-                # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)</i>
-</pre></li>
-
-<li><i>using [t]csh syntax:</i>
-<pre>
-        $ set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )<i>
-                #
-                # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)</i>
 </pre></li>
 </ul>
 
