@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">1.9</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -190,7 +190,6 @@ Functions</h2></td></tr>
 <div id='codesection-main-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="beekeeper_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> {</div>
 <div class="line">    $| = 1;</div>
-<div class="line">    Bio::EnsEMBL::Registry-&gt;no_version_check(1);</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # ok this is a hack, but I&#39;m going to pretend I&#39;ve got an object here</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">        # by creating a hash ref and passing it around like an object</span></div>
@@ -496,6 +495,8 @@ Functions</h2></td></tr>
 <div class="line"></div>
 <div class="line">    } elsif($reg_alias) {</div>
 <div class="line">        script_usage(1) if $url;</div>
+<div class="line"></div>
+<div class="line">        require Bio::EnsEMBL::Registry;</div>
 <div class="line">        Bio::EnsEMBL::Registry-&gt;load_all($reg_conf);</div>
 <div class="line"></div>
 <div class="line">        my $species = Bio::EnsEMBL::Registry-&gt;get_alias($reg_alias)</div>
@@ -1163,17 +1164,17 @@ Functions</h2></td></tr>
 <div class="line">        warn <span class="stringliteral">&quot;Since -input_id has not been set, assuming input_id=&#39;$input_id&#39;\n&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $job = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#abb83a9f0a1fa1cd38bc5ae626bfd6b51">new</a>(</div>
-<div class="line">        -prev_job_id    =&gt; undef,   # <span class="keyword">this</span> job has been created by the initialization script, not by another job</div>
-<div class="line">        -analysis_id    =&gt; $analysis-&gt;dbID,</div>
-<div class="line">        -input_id       =&gt; destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative <span class="stringliteral">&quot;spellings&quot;</span> of the same input_id hash</div>
+<div class="line">    my $job = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
+<div class="line">        <span class="stringliteral">&#39;prev_job_id&#39;</span>   =&gt; undef,   # <span class="keyword">this</span> job has been created by the initialization script, not by another job</div>
+<div class="line">        <span class="stringliteral">&#39;analysis_id&#39;</span>   =&gt; $analysis-&gt;dbID,</div>
+<div class="line">        <span class="stringliteral">&#39;input_id&#39;</span>      =&gt; destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative <span class="stringliteral">&quot;spellings&quot;</span> of the same input_id hash</div>
 <div class="line">    );</div>
 <div class="line"></div>
 <div class="line">    my ($job_id) = @{ $hive_dba-&gt;get_AnalysisJobAdaptor-&gt;store_jobs_and_adjust_counters( [ $job ] ) };</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($job_id) {</div>
 <div class="line"></div>
-<div class="line">        print <span class="stringliteral">&quot;Job $job_id [ &quot;</span>.$analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$analysis-&gt;dbID.<span class="stringliteral">&quot;)] : &#39;$input_id&#39;\n&quot;</span>;</div>
+<div class="line">        print <span class="stringliteral">&quot;Job $job_id [ &quot;</span>.$analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$analysis-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a5e5743dee1414d2c0dec45b5a5d42216">dbID</a>.<span class="stringliteral">&quot;)] : &#39;$input_id&#39;\n&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
@@ -1296,7 +1297,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_5fc43faac24a7b81dcfb81b231064839.html">scripts</a></li><li class="navelem"><a class="el" href="beekeeper_8pl.html">beekeeper.pl</a></li>
+    <li class="navelem"><a class="el" href="dir_54316937a66070d9897b24579a7d39ac.html">scripts</a></li><li class="navelem"><a class="el" href="beekeeper_8pl.html">beekeeper.pl</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>

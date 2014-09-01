@@ -35,5 +35,7 @@ var searchData=
   ['find_5fsubmodules',['find_submodules',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a487b583d13e668734c35bcff7e427d9b',1,'Bio::EnsEMBL::Hive::Utils']]],
   ['from_5fanalysis',['from_analysis',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#ad8140faa5aec71033ae2cc3e69571246',1,'Bio::EnsEMBL::Hive::DataflowRule']]],
   ['from_5fanalysis_5fid',['from_analysis_id',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#ac13454a4f86e556f82560a7f2967fc53',1,'Bio::EnsEMBL::Hive::DataflowRule']]],
+  ['from_5fdate_5fto_5fseconds',['from_date_to_seconds',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
+  ['from_5fseconds_5fto_5fdate',['from_seconds_to_date',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['funnel_5fdataflow_5frule_5fid',['funnel_dataflow_rule_id',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#aec851945dd9ebf3652224066b8d271e8',1,'Bio::EnsEMBL::Hive::DataflowRule']]]
 ];

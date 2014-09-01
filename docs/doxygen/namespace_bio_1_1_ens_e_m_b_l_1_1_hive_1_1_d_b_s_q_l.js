@@ -7,6 +7,7 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l =
     [ "AnalysisJobAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor" ],
     [ "AnalysisStatsAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor" ],
     [ "BaseAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor" ],
+    [ "CoreDBConnection", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection" ],
     [ "DataflowRuleAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor" ],
     [ "DBAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor" ],
     [ "DBConnection", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection" ],
@@ -17,5 +18,6 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l =
     [ "ObjectAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor" ],
     [ "ResourceClassAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor" ],
     [ "ResourceDescriptionAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor" ],
-    [ "SqlSchemaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor" ]
+    [ "SqlSchemaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor" ],
+    [ "StatementHandle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle" ]
 ];

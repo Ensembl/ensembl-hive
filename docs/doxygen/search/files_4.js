@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['extensions_2epm',['Extensions.pm',['../_extensions_8pm.html',1,'']]]
+  ['ensemblgeneric_5fconf_2epm',['EnsemblGeneric_conf.pm',['../_ensembl_generic__conf_8pm.html',1,'']]]
 ];

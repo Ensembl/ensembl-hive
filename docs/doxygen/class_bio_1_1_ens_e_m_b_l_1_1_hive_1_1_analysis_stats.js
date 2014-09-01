@@ -19,7 +19,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats =
     [ "job_count_breakout", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a9ef9078ce15a6892e795bf93643ff3cd", null ],
     [ "last_update", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a089b03c15eeb063a7cbae758f72f6637", null ],
     [ "min_batch_time", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ab1aa9f23e9feaec53f6e404dfe19f000", null ],
-    [ "new", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a63bec749348099898cac9401d6af959b", null ],
     [ "num_required_workers", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a0f14ca66c121617e2e6a4f2f7327caa1", null ],
     [ "num_running_workers", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ae2ece1ac33d251baa674803832bdae70", null ],
     [ "output_capacity", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac64ad37ccf27356c480b1d058315d4dd", null ],

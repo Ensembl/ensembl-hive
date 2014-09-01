@@ -1,7 +1,6 @@
 var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor =
 [
     [ "balance_semaphores", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ac9e28226315228b396483078e3823515", null ],
-    [ "CreateNewJob", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a77f78d2fe7e5ac25737ff9322d40e4f9", null ],
     [ "decrease_semaphore_count_for_jobid", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a1518bf5c281727593960180483f8554b", null ],
     [ "default_overflow_limit", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ad5638f98e14c623db7787ae6da2f38cf", null ],
     [ "default_table_name", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a0c5b6bbd627a70f5d1eb35b24b6e2d91", null ],

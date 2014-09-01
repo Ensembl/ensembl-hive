@@ -17,6 +17,7 @@ var searchData=
   ['special_5fbatch',['special_batch',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ab6470f448766be332f7e4d081e6d7cc2',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['specialize_5fand_5fcompile_5fwrapper',['specialize_and_compile_wrapper',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ae432e7a7dbc6a8b0109353d4f6938d9c',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['specialize_5fnew_5fworker',['specialize_new_worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#adcc937a7a48d51f801d65757bc55bda2',1,'Bio::EnsEMBL::Hive::Queen']]],
+  ['sql',['sql',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html#a2205b03c134fd7113a848ecff1165df5',1,'Bio::EnsEMBL::Hive::DBSQL::StatementHandle']]],
   ['start_5fjob_5foutput_5fredirection',['start_job_output_redirection',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#aac9ba54b8924088ef41717fab6240ef4',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['stats',['stats',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a6ff6efb50bd9f7dbb2d2b221920e73a1',1,'Bio::EnsEMBL::Hive::Analysis']]],
   ['status',['status',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ab65c1a11b3be9af06c4e47a71294b757',1,'Bio::EnsEMBL::Hive::AnalysisJob::status()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a08a4fb1e1066710e635b0b078f9e3adb',1,'Bio::EnsEMBL::Hive::AnalysisStats::status()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a814f0afa7c9b155777e5267a4b4fa145',1,'Bio::EnsEMBL::Hive::Worker::status()']]],

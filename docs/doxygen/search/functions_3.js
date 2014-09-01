@@ -19,6 +19,8 @@ var searchData=
   ['config_5fget',['config_get',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html#aeed405377caddb6a1aa3cb605ed6304f',1,'Bio::EnsEMBL::Hive::Configurable']]],
   ['config_5fhash',['config_hash',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html#ab0ede51b2658eddc43a8f6e9fbf34509',1,'Bio::EnsEMBL::Hive::Utils::Config']]],
   ['config_5fset',['config_set',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html#a3e556c76396430193c3f613c6f3e4079',1,'Bio::EnsEMBL::Hive::Configurable']]],
+  ['connect',['connect',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a06a88cf2f46772a4b1a5d780ffcb4242',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
+  ['connected',['connected',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#ad5898fcb340f9986c023175115ef20a0',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['context',['context',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_configurable.html#a419025891535ecd7b2f05183cf2ce8e4',1,'Bio::EnsEMBL::Hive::Configurable']]],
   ['continue',['continue',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html#ad91a33ccd3234b64b19bc3083e9367f0',1,'Bio::EnsEMBL::Hive::Utils::Stopwatch']]],
   ['count_5fall',['count_all',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a5675f57702aa4cae6bfc1e39eb420bde',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
@@ -27,7 +29,6 @@ var searchData=
   ['create_5fcached_5fdba',['create_cached_dba',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html#a1cdc4eafa4fb5abf83942dfe21e3a7ff',1,'Bio::EnsEMBL::Hive::URLFactory']]],
   ['create_5fnew',['create_new',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html#a90b0359523ef5040fd0e839edd83cca4',1,'Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor']]],
   ['create_5fnew_5fworker',['create_new_worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a9cd9baa52f9e7a2240ffb979518cfee1',1,'Bio::EnsEMBL::Hive::Queen']]],
-  ['createnewjob',['CreateNewJob',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a77f78d2fe7e5ac25737ff9322d40e4f9',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
   ['csvq',['csvq',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a77d324a4242b0c01f6f1288846db43d6',1,'Bio::EnsEMBL::Hive::Params']]],
   ['ctrled_5fanalysis',['ctrled_analysis',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html#aa7553c12b9b1af1c15d147dd5f5d4fac',1,'Bio::EnsEMBL::Hive::AnalysisCtrlRule']]],
   ['ctrled_5fanalysis_5fid',['ctrled_analysis_id',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html#ac4c95d1a0114e3d438f8b3b71d40cd70',1,'Bio::EnsEMBL::Hive::AnalysisCtrlRule']]]

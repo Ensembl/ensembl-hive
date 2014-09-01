@@ -14,6 +14,7 @@ var searchData=
   ['load_5ffrom_5fjson',['load_from_json',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html#a4d561e831fd88920ca38ba78582a7f93',1,'Bio::EnsEMBL::Hive::Utils::Config']]],
   ['local',['LOCAL',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_o_c_a_l.html',1,'Bio::EnsEMBL::Hive::Meadow']]],
   ['local_2epm',['LOCAL.pm',['../_l_o_c_a_l_8pm.html',1,'']]],
+  ['locator',['locator',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a33c540b343d16f5f0f00247c692d1752',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['log_5fdir',['log_dir',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a2ddf6136f8b9cb3fca032b2ba6f152ff',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['logic_5fname',['logic_name',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a6528be48120416c630abe32227e70bdb',1,'Bio::EnsEMBL::Hive::Analysis']]],
   ['logmessageadaptor',['LogMessageAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
@@ -22,6 +23,8 @@ var searchData=
   ['longmult_5fconf_2epm',['LongMult_conf.pm',['../_long_mult__conf_8pm.html',1,'']]],
   ['longmultst_5fconf',['LongMultSt_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
   ['longmultst_5fconf_2epm',['LongMultSt_conf.pm',['../_long_mult_st__conf_8pm.html',1,'']]],
+  ['longmultwf_5fconf',['LongMultWf_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
+  ['longmultwf_5fconf_2epm',['LongMultWf_conf.pm',['../_long_mult_wf__conf_8pm.html',1,'']]],
   ['lsf',['LSF',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_s_f.html',1,'Bio::EnsEMBL::Hive::Meadow']]],
   ['lsf_2epm',['LSF.pm',['../_l_s_f_8pm.html',1,'']]],
   ['lsf_5freport_2epl',['lsf_report.pl',['../lsf__report_8pl.html',1,'']]]

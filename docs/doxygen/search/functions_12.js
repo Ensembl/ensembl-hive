@@ -2,6 +2,8 @@ var searchData=
 [
   ['reached',['reached',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#ab3f3e0a81d708e08b8c6a0db9d056aac',1,'Bio::EnsEMBL::Hive::Limiter']]],
   ['ready_5fjob_5fcount',['ready_job_count',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#af55400b3e85544df26608ac63d98f7bc',1,'Bio::EnsEMBL::Hive::AnalysisStats']]],
+  ['reconnect',['reconnect',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aedf6ea5fb297d8ef9276d9bc016336c1',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
+  ['reconnect_5fwhen_5flost',['reconnect_when_lost',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7537c0fac89789eba198006c7b1dfbf8',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['refresh',['refresh',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac704b4deb0a318afca57dddff2d891df',1,'Bio::EnsEMBL::Hive::AnalysisStats::refresh()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html#aed7915b07ea5296ca56e90b46f08553b',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor::refresh()']]],
   ['register_5fall_5fworkers_5fdead',['register_all_workers_dead',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#ab4f2cf470e0b3bbe732dd50c22e4deca',1,'Bio::EnsEMBL::Hive::Queen']]],
   ['register_5fworker_5fdeath',['register_worker_death',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a1dc35ff50f5375e8796f12d17b372773',1,'Bio::EnsEMBL::Hive::Queen']]],
@@ -9,7 +11,6 @@ var searchData=
   ['release_5fundone_5fjobs_5ffrom_5fworker',['release_undone_jobs_from_worker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a25ddbb1f2f0fada5fc7c9078c887f7d8',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
   ['remove',['remove',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ab19a4a6d447c8661574a97ae159234f3',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
   ['remove_5fall',['remove_all',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a1e7b244d27dcc1244453f725d81d3e54',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
-  ['report_5fversions',['report_versions',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ae4891d2eb87c70172c9d37b374647144',1,'Bio::EnsEMBL::Hive::Utils']]],
   ['reset_5fjob_5fby_5fdbid_5fand_5fsync',['reset_job_by_dbID_and_sync',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a46f196406a5bd9c452a5f94361a2eebd',1,'Bio::EnsEMBL::Hive::Queen']]],
   ['reset_5fjobs_5ffor_5fanalysis_5fid',['reset_jobs_for_analysis_id',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a122b718f7e51f923fb50a1c01cb69805',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
   ['reset_5for_5fgrab_5fjob_5fby_5fdbid',['reset_or_grab_job_by_dbID',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a4dd834ac1243d05989bcb352021ede70',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],

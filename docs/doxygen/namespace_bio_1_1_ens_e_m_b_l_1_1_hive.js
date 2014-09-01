@@ -22,6 +22,7 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive =
     [ "ResourceClass", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class" ],
     [ "ResourceDescription", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description" ],
     [ "Scheduler", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler" ],
+    [ "Storable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable" ],
     [ "URLFactory", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory" ],
     [ "Utils", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils" ],
     [ "Valley", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley" ],

@@ -2,7 +2,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process =
 [
     [ "analysis", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a21e51ec58fe708d8875617da6912ca46", null ],
     [ "cleanup_worker_temp_directory", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a35dbbcb04656e835a31cbc927b2c8584", null ],
-    [ "data_dbc", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#afe4af3210589a3123a939ceaf83c0462", null ],
+    [ "data_dbc", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a2d0ad25d584c63aee8a7b45d30afb0e6", null ],
     [ "dataflow_output_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a3fd5b992716a3aa9a5810da1f007aa5b", null ],
     [ "db", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a8ca200c10405c13d535353f2646b49a1", null ],
     [ "dbc", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#afb5ddec979f7e2ed1f2dc375e26c4456", null ],
@@ -21,6 +21,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process =
     [ "param_substitute", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a43ada6306f2f629c9d727ea5a0146f89", null ],
     [ "run", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a346410a6c7d0e5f2541bc304048efdb9", null ],
     [ "strict_hash_format", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#ab6663081a21ccab06ee06c3d3d920846", null ],
+    [ "throw", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#adfc1461a9ef5da83597f054172e10c42", null ],
     [ "warning", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a5fef0ffecdd8b254a622f83baa8e03e3", null ],
     [ "worker", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a9d01ac47d41d31f30aca69b0220e0d9d", null ],
     [ "worker_temp_directory", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a3ee5bd7ae4938b858a48b3812814a0a1", null ],

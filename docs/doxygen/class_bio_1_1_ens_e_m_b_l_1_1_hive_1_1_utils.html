@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">1.9</span>
+   &#160;<span id="projectnumber">2.0</span>
    </div>
   </td>
  </tr>
@@ -133,8 +133,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af7e04ac99c85db0534b11541b99c96da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1cbcb45d800cf3c5b47079e0b27e237"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#aa1cbcb45d800cf3c5b47079e0b27e237">go_figure_dbc</a> ()</td></tr>
 <tr class="separator:aa1cbcb45d800cf3c5b47079e0b27e237"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4891d2eb87c70172c9d37b374647144"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ae4891d2eb87c70172c9d37b374647144">report_versions</a> ()</td></tr>
-<tr class="separator:ae4891d2eb87c70172c9d37b374647144"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af71b51b03c60163952912de68e5eabf6"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af71b51b03c60163952912de68e5eabf6">throw</a> ()</td></tr>
+<tr class="separator:af71b51b03c60163952912de68e5eabf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h1><a class="anchor" id="Synopsis"></a>
@@ -296,27 +296,31 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#aa1cbcb45d800cf3c5b47079e0b27e237">go_figure_dbc</a> {</div>
 <div class="line">    my ($foo, $schema_type) = @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>(UNIVERSAL::isa($foo, <span class="stringliteral">&#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;</span>)) { # already a DBConnection, <span class="keywordflow">return</span> it:</div>
+<div class="line"><span class="preprocessor">#    if(UNIVERSAL::isa($foo, &#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;)) { # already a DBConnection, return it:</span></div>
+<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, <span class="keywordflow">return</span> it:</div>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">return</span> $foo;</div>
 <div class="line"></div>
-<div class="line">    } elsif(UNIVERSAL::can($foo, <span class="stringliteral">&#39;dbc&#39;</span>) and UNIVERSAL::isa($foo-&gt;dbc, <span class="stringliteral">&#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;</span>)) {</div>
+<div class="line"><span class="preprocessor">#    } elsif(UNIVERSAL::can($foo, &#39;dbc&#39;) and UNIVERSAL::isa($foo-&gt;dbc, &#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;)) {</span></div>
+<div class="line"><span class="preprocessor"></span>    } elsif(UNIVERSAL::can($foo, <span class="stringliteral">&#39;dbc&#39;</span>) and ref($foo-&gt;dbc) =~ /DBConnection$/) {</div>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">return</span> $foo-&gt;dbc;</div>
 <div class="line"></div>
-<div class="line">    } elsif(UNIVERSAL::can($foo, <span class="stringliteral">&#39;db&#39;</span>) and UNIVERSAL::can($foo-&gt;db, <span class="stringliteral">&#39;dbc&#39;</span>) and UNIVERSAL::isa($foo-&gt;db-&gt;dbc, <span class="stringliteral">&#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;</span>)) { # another data adaptor or Runnable:</div>
+<div class="line"><span class="preprocessor">#    } elsif(UNIVERSAL::can($foo, &#39;db&#39;) and UNIVERSAL::can($foo-&gt;db, &#39;dbc&#39;) and UNIVERSAL::isa($foo-&gt;db-&gt;dbc, &#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;)) { # another data adaptor or Runnable:</span></div>
+<div class="line"><span class="preprocessor"></span>    } elsif(UNIVERSAL::can($foo, <span class="stringliteral">&#39;db&#39;</span>) and UNIVERSAL::can($foo-&gt;db, <span class="stringliteral">&#39;dbc&#39;</span>) and ref($foo-&gt;db-&gt;dbc) =~ /DBConnection$/) { # another data adaptor or Runnable:</div>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">return</span> $foo-&gt;db-&gt;dbc;</div>
 <div class="line"></div>
 <div class="line">    } elsif(my $db_conn = (ref($foo) eq <span class="stringliteral">&#39;HASH&#39;</span>) ? $foo : <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af7e04ac99c85db0534b11541b99c96da">url2dbconn_hash</a>( $foo ) ) {  # either a hash or a URL that translates into a hash</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;new( %$db_conn );</div>
+<div class="line">        <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( %$db_conn );</div>
 <div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line">        unless(ref($foo)) {    # maybe it is simply a registry key?</div>
 <div class="line">            my $dba;</div>
 <div class="line">            eval {</div>
 <div class="line">                $schema_type ||= <span class="stringliteral">&#39;hive&#39;</span>;</div>
+<div class="line">                require Bio::EnsEMBL::Registry;</div>
 <div class="line">                $dba = Bio::EnsEMBL::Registry-&gt;get_DBAdaptor($foo, $schema_type);</div>
 <div class="line">            };</div>
 <div class="line">            <span class="keywordflow">if</span>(UNIVERSAL::can($dba, <span class="stringliteral">&#39;dbc&#39;</span>)) {</div>
@@ -326,6 +330,9 @@ Description</h1>
 <div class="line">        die <span class="stringliteral">&quot;Sorry, could not figure out how to make a DBConnection object out of &#39;$foo&#39;&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line">}</div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line">sub report_versions {</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
@@ -430,31 +437,6 @@ Description</h1>
 </div><!-- fragment --> </div> 
 </div>
 </div>
-<a class="anchor" id="ae4891d2eb87c70172c9d37b374647144"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::Utils::report_versions </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Undocumented method</p>
-<div id="codesection-report_versions" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-report_versions-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-report_versions-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-report_versions-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ae4891d2eb87c70172c9d37b374647144">report_versions</a> {</div>
-<div class="line">    print <span class="stringliteral">&quot;CodeVersion\t&quot;</span>.Bio::EnsEMBL::Hive::Version-&gt;get_code_version().<span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;CompatibleHiveDatabaseSchemaVersion\t&quot;</span>.Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor-&gt;get_code_sql_schema_version().<span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
 <a class="anchor" id="ad8abe58a987444c45b366ef5dba4e218"></a>
 <div class="memitem">
 <div class="memproto">
@@ -526,6 +508,34 @@ Description</h1>
 <div class="line">    local $Data::Dumper::Maxdepth  = undef;     # make sure nobody can mess up stringification by setting a lower Maxdepth</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> Dumper($structure);</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="af71b51b03c60163952912de68e5eabf6"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::Utils::throw </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-throw" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-throw-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-throw-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-throw-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <span class="keywordflow">throw</span> {</div>
+<div class="line">    my $msg = pop @_;</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">        # TODO: newer versions of Carp are much more tunable, but I am stuck with v1.08 .</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">        #       Alternatively, we could implement our own stack reporter instead of Carp::confess.</span></div>
+<div class="line"><span class="preprocessor"></span>    confess $msg;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

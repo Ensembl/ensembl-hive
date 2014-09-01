@@ -22,7 +22,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker =
     [ "meadow_name", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a21077df2d82c57eda4845c9ea1d153d0", null ],
     [ "meadow_type", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#abf98a83eafeb602f3109fb147f9a2c19", null ],
     [ "more_work_done", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a54f5f9c0d65d4e71c50fd1fdf3e702cc", null ],
-    [ "new", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ac85bb24d028f6a102654f3fdbadf4c74", null ],
     [ "perform_cleanup", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a23b1369583a49f99f47d654993775113", null ],
     [ "prev_job_error", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ab71a53273f57e143655703eaee5bfdc5", null ],
     [ "process_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a631e3067f5825bf38d981150fac0512d", null ],

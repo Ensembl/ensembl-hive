@@ -10,6 +10,8 @@ var searchData=
   ['urlfactory',['URLFactory',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html',1,'Bio::EnsEMBL::Hive']]],
   ['urlfactory_2epm',['URLFactory.pm',['../_u_r_l_factory_8pm.html',1,'']]],
   ['use_5fcases',['use_cases',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a12fa6e8360e2db6bd40dc318654b9d42',1,'Bio::EnsEMBL::Hive::DependentOptions']]],
+  ['user',['user',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a813db671a4662cbc118b36ac9955e2ab',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
+  ['username',['username',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a656ac0a564c773ba2127d48da4821510',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['utils',['Utils',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html',1,'Bio::EnsEMBL::Hive']]],
   ['utils_2epm',['Utils.pm',['../_utils_8pm.html',1,'']]]
 ];

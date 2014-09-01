@@ -9,5 +9,6 @@ var searchData=
   ['hivegeneric_5fconf',['HiveGeneric_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
   ['hivegeneric_5fconf_2epm',['HiveGeneric_conf.pm',['../_hive_generic__conf_8pm.html',1,'']]],
   ['hoover_5fpipeline_2epl',['hoover_pipeline.pl',['../hoover__pipeline_8pl.html',1,'']]],
-  ['host',['host',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a3bf4200e3a8a6603db7ef6a544df3356',1,'Bio::EnsEMBL::Hive::Worker']]]
+  ['host',['host',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a52db0b1ea34968d7f823d74aa6de462a',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection::host()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a3bf4200e3a8a6603db7ef6a544df3356',1,'Bio::EnsEMBL::Hive::Worker::host()']]],
+  ['hostname',['hostname',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a716c1f4c6dab3f80cb8ba46fb95b2835',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]]
 ];
