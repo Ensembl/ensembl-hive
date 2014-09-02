@@ -30,10 +30,18 @@ pre, code, kbd { font-family: Courier New, Courier, monospace; }
 div, span, p, li, dd, dt, pre, code, kbd { font-size: 1em; }
 th, td { font-size: 0.8em; }
 
+body.ie6 th, body.ie6 td { font-size: 13px; }
+
+/*----------------------------------------------------------------------
+  New classes defined for the eHive documents
+----------------------------------------------------------------------*/
+
 div.tree { line-height: 1.1em }
 div.tree span.tree {font-family: Times New Roman; Courier New, Courier, monospace; }
 
-body.ie6 th, body.ie6 td { font-size: 13px; }
+table.pres_thumbnails td { padding: 10px }
+table.pres_thumbnails img { border: 1px solid }
+
 
 /*----------------------------------------------------------------------
   Default whitespace settings round features...
