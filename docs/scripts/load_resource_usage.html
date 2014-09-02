@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>load_resource_usage.pl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+
+<h1 id="NAME">NAME</h1>
+
+<pre><code>    load_resource_usage.pl</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<pre><code>    This script obtains resource usage data for your pipeline from the Meadow and stores it in &#39;worker_resource_usage&#39; table.
+    Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
+
+    Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
+    it pulls the relevant data out of your Meadow (runs &#39;bacct&#39; script in case of LSF), parses the report and stores in &#39;worker_resource_usage&#39; table.
+    You can join this table to &#39;worker&#39; table USING(meadow_name,process_id) in the usual MySQL way
+    to filter by analysis_id, do various stats, etc.
+
+    You can optionally provide an an external filename or command to get the data from it (don&#39;t forget to append a &#39;|&#39; to the end!)
+    and then the data will be taken from your source and parsed from there.</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # Just run it the usual way: query and store the relevant data into &#39;worker_resource_usage&#39; table:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test
+
+        # The same, but assuming another user &#39;someone_else&#39; ran the pipeline:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
+
+        # Assuming the dump file existed. Load the dumped bacct data into &#39;worker_resource_usage&#39; table:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
+
+        # Provide your own command to fetch and parse the worker_resource_usage data from:
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source &quot;bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |&quot;</code></pre>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<pre><code>    -help                   : print this help
+    -url &lt;url string&gt;       : url defining where hive database is located
+    -username &lt;username&gt;    : if it wasn&#39;t you who ran the pipeline, the name of that user can be provided
+    -source &lt;filename&gt;      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>db_cmd.pl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+
+<h1 id="NAME">NAME</h1>
+
+<pre><code>    db_cmd.pl</code></pre>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code>    db_cmd.pl {-url &lt;url&gt; | [-reg_conf &lt;reg_conf&gt;] -reg_alias &lt;reg_alias&gt; [-reg_type &lt;reg_type&gt;] } [ -sql &lt;sql_command&gt; ] [ -extra &lt;extra_params&gt; ] [ -to_params | -verbose ]</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<pre><code>    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
+    -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/&quot; -sql &#39;CREATE DATABASE lg4_long_mult&#39;
+    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot;
+    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot; -sql &#39;SELECT * FROM analysis_base&#39; -extra=&#39;--html&#39;
+    eval mysqldump -t `db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot; -to_params` worker
+
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql &#39;SELECT * FROM coord_system&#39;</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
+
+</body>
+
+</html>
+
+

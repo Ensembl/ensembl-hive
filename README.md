@@ -1,9 +1,9 @@
-EnsEMBL Hive
-============
+eHive
+=====
 
-EnsEMBL Hive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.
+eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.
 
-The name "Hive" comes from the way pipelines are processed by a swarm of autonomous agents.
+The name comes from the way pipelines are processed by a swarm of autonomous agents.
 
 Blackboard, Jobs and Workers
 ----------------------------
@@ -28,7 +28,7 @@ However in some sense an Analysis also acts as a "container" for them.
 
 PipeConfig file defines Analyses and dependency rules of the pipeline
 ---------------------------------------------------------------------
-Hive pipeline databases are molded according to PipeConfig files which are Perl modules conforming to a special interface.
+eHive pipeline databases are molded according to PipeConfig files which are Perl modules conforming to a special interface.
 A PipeConfig file defines the stucture of the pipeline, which is a graph whose nodes are Analyses
 (with their code, parameters and resource requirements) and edges are various dependency rules:
 * Dataflow rules define how data that flows out of an Analysis can be used to trigger creation of Jobs in other Analyses
@@ -44,13 +44,17 @@ There are also other parameters of Analyses that control, for example:
 * what should be autimatically done with a Job if it needs more memory/time,
 etc.
 
+Available documentation
+-----------------------
+The main entry point is in docs/index.html (available locally, offline).
+The online version is hosted [here](https://rawgit.com/Ensembl/ensembl-hive/version/2.1/docs/index.html).
+
 Contact us (mailing list)
 -------------------------
-EnsEMBL Hive was originally conceived and used within EnsEMBL Compara group
+eHive was originally conceived and used within EnsEMBL Compara group
 for running Comparative Genomics pipelines, but since then it has been separated
 into a separate software tool and is used in many projects both in Genome Campus, Cambridge and outside.
-There is a Hive users' mailing list for questions, suggestions, discussions and announcements.
+There is eHive users' mailing list for questions, suggestions, discussions and announcements.
 
-To subscribe to it please visit:
-        http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users
+To subscribe to it please visit (http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users)
 

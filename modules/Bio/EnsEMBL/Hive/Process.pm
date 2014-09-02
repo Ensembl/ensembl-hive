@@ -264,12 +264,9 @@ sub param_defaults {
 }
 
 
-=head2 pre_cleanup
-
-    Title   :  pre_cleanup
-    Function:  sublcass can implement functions related to cleaning up the database/filesystem after the previous unsuccessful run.
-               
-=cut
+#
+## Function: sublcass can implement functions related to cleaning up the database/filesystem after the previous unsuccessful run.
+#
 
 # sub pre_cleanup {
 #    my $self = shift;
@@ -328,13 +325,10 @@ sub write_output {
 }
 
 
-=head2 post_cleanup
-
-    Title   :  post_cleanup
-    Function:  sublcass can implement functions related to cleaning up after running one job
-               (destroying non-trivial data structures in memory).
-               
-=cut
+#
+## Function:  sublcass can implement functions related to cleaning up after running one job
+#               (destroying non-trivial data structures in memory).
+#
 
 #sub post_cleanup {
 #    my $self = shift;

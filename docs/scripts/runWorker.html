@@ -1,0 +1,97 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>runWorker.pl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+
+<h1 id="NAME">NAME</h1>
+
+<pre><code>    runWorker.pl</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<pre><code>    runWorker.pl is an eHive component script that does the work of a single Worker -
+    specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
+
+    Most of the functionality of the eHive is accessible via beekeeper.pl script,
+    but feel free to run the runWorker.pl if you think you know what you are doing :)</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>        # Run one local worker process in ehive_dbname and let the system pick up the analysis
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
+
+        # Run one local worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
+
+        # Run one local worker process in ehive_dbname and specify the logic_name
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast
+
+        # Run a specific job in a local worker process:
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456</code></pre>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<h2 id="Connection-parameters">Connection parameters:</h2>
+
+<pre><code>    -reg_conf &lt;path&gt;        : path to a Registry configuration file
+    -reg_alias &lt;string&gt;     : species/alias name for the Hive DBAdaptor
+    -url &lt;url string&gt;       : url defining where database is located</code></pre>
+
+<h2 id="Task-specificaton-parameters">Task specificaton parameters:</h2>
+
+<pre><code>    -rc_id &lt;id&gt;                 : resource class id
+    -rc_name &lt;string&gt;           : resource class name
+    -analysis_id &lt;id&gt;           : pre-specify this worker in a particular analysis defined by database id
+    -logic_name &lt;string&gt;        : pre-specify this worker in a particular analysis defined by name
+    -job_id &lt;id&gt;                : run a specific job defined by its database id
+    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id</code></pre>
+
+<h2 id="Worker-control-parameters">Worker control parameters:</h2>
+
+<pre><code>    -job_limit &lt;num&gt;            : #jobs to run before worker can die naturally
+    -life_span &lt;num&gt;            : number of minutes this worker is allowed to run
+    -no_cleanup                 : don&#39;t perform temp directory cleanup when worker exits
+    -no_write                   : don&#39;t write_output or auto_dataflow input_job
+    -hive_log_dir &lt;path&gt;        : directory where stdout/stderr of the whole hive of workers is redirected
+    -worker_log_dir &lt;path&gt;      : directory where stdout/stderr of this particular worker is redirected
+    -retry_throwing_jobs &lt;0|1&gt;  : if a job dies *knowingly*, should we retry it by default?
+    -can_respecialize &lt;0|1&gt;     : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one</code></pre>
+
+<h2 id="Other-options">Other options:</h2>
+
+<pre><code>    -help                       : print this help
+    -versions                   : report both Hive code version and Hive database schema version
+    -debug &lt;level&gt;              : turn on debug messages at &lt;level&gt;
+    -analysis_stats             : show status of each analysis in hive</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
+
+</body>
+
+</html>
+
+
