@@ -479,6 +479,8 @@ sub release_undone_jobs_from_role {
         unless($passed_on) {
             $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
         }
+
+        $role->register_attempt( 0 );
     }
     $sth->finish();
 }
