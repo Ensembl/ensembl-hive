@@ -74,7 +74,7 @@ sub finalize_role {
 sub fetch_last_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    return $self->fetch_all( "WHERE worker_id=$worker_id ORDER BY when_started DESC LIMIT 1", 1 );
+    return $self->fetch_all( "WHERE worker_id=$worker_id ORDER BY role_id DESC LIMIT 1", 1 );
 }
 
 
