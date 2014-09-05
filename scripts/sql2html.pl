@@ -106,7 +106,10 @@ if (defined($host) && !defined($skip_conn)) {
 ################
 
 my $default_colour = '#000'; # Black
-my $list_bg = "background-color:#F0F0F0";
+my $border_colour  = '#CCC'; 
+
+my $list_bg   = "background-color:#FEFEFE";
+my $header_bg = "background-color:#F2F2F2";
 
 my %display_col = ('Show' => 'none', 'Hide' => 'inline');
 my $documentation = {};
@@ -276,8 +279,8 @@ while (<SQLFILE>) {
       fill_documentation ($1,$2);
     }
     # Colour of the table header (used for both set, table) (optional)
-    elsif ($doc =~ /^\@(colour)\s*(.+)$/i and $show_colour) {
-      fill_documentation ($1,$2);
+    elsif ($doc =~ /^\@(colour)\s*(.+)$/i) {
+      fill_documentation ($1,$2) if ($show_colour);
     }
     # Column
     elsif ($doc =~ /^\@(column)\s*(.+)$/i) {
@@ -468,7 +471,7 @@ foreach my $header_name (@header_names) {
   #----------------#  
   if ($header_flag == 1 and $header_name ne 'default') {
     $html_content .= qq{\n
-<div style="$list_bg;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
+<div style="$header_bg;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
   <div id="$header_id" style="background-color:$hcolour;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:top"></div>
   <h2 id="$header_id" style="display:inline;color:#000;padding-top:0px;margin-left:6px">$header_name</h2>
 </div>\n};
@@ -497,7 +500,7 @@ foreach my $header_name (@header_names) {
     $html_content .= add_info($data->{info},$data);  
     $html_content .= add_columns($t_name,$data);
     $html_content .= add_examples($t_name,$data);
-    $html_content .= qq{<table style="margin-top:20px;border:1px solid #CCC"><tr>};
+    $html_content .= qq{<table style="margin-top:20px;border:1px solid $border_colour"><tr>};
     $html_content .= add_see($data->{see});
     $html_content .= add_species_list($t_name,$data->{see}) if ($hosts_list);
     $html_content .= qq{</tr></table>};
@@ -599,6 +602,7 @@ sub display_tables_list {
         my $t_colour;
         if ($has_header == 0 && $show_colour) {
           $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'};
+          $t_colour = $default_colour if (!defined($t_colour) || $t_colour eq '');
         }
         $html .= add_table_name_to_list($t_name,$t_colour);
         $t_count++;
@@ -622,10 +626,11 @@ sub display_tables_list {
           $html .= qq{      </ul>\n    </td><td>\n      <ul style="padding-left:20px">\n};
           $table_count = 0;
         }
-        my $t_colour;
+        my $t_colour = $default_colour;
         if ($has_header == 0 && $show_colour) {
-          $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'};
+          $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'} if ($documentation->{$header_name}{'tables'}{$t_name}{'colour'});
         }
+
         $html .= add_table_name_to_list($t_name,$t_colour);
         $table_count ++;
       }
@@ -659,25 +664,18 @@ sub display_header {
   my $html;
   
   if ($format_headers == 1) {
-    my $width = length_names($tables_names->{$header_name},$nb_col);
-    
-    $html .= qq{\n  <div style="$list_bg;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px$width">
-    <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">};
-    
-    my $text_colour = '#FFF';
-    
+  
+    my $hcolour = $default_colour;
     if ($show_colour && $header_colour) {
-      my $hcolour = $documentation->{$header_name}{colour};
-         $hcolour = $default_colour if (!defined($hcolour));
-      
-      $html .= qq{
+      $hcolour = $documentation->{$header_name}{colour} if ($documentation->{$header_name}{colour});
+    }
+
+    $html .= qq{
+  <div style="$list_bg;border-left:1px dotted $border_colour;border-right:1px dotted $border_colour;border-bottom:1px dotted $border_colour;margin-bottom:15px;float:left;margin-right:20px;min-width:200px">
+    <div style="padding:2px 5px;$header_bg;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
       <div style="background-color:$hcolour;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
-      <h2 style="margin-left:8px;display:inline;color:$text_colour;vertical-align:middle">$header_name</h2>\n};
-    }
-    else {
-      $html .= qq{<h2 style="display:inline;color:$text_colour">$header_name</h2>\n};
-    }
-    $html .= qq{    </div>};
+      <h2 style="margin-left:8px;display:inline;color:#000;vertical-align:middle">$header_name</h2>
+    </div>};
   } 
   else {
     $html .= qq{    <h2>$header_name</h2>};
@@ -771,7 +769,7 @@ sub add_table_name_to_list {
     $t_colour = ($t_colour ne '') ? qq{;background-color:$t_colour} : '';
     $t_colour = qq{<div style="padding:0px;margin-left:0px$t_colour;display:inline">&nbsp;</div> };
   }
-  my $html = qq{        <li>$t_colour<a href="#$t_name"><b>$t_name</b></a></li>\n};
+  my $html = qq{        <li style="margin-right:0px">$t_colour<a href="#$t_name" style="text-decoration:none;font-weight:bold">$t_name</a></li>\n};
   return $html;
 }
 
@@ -787,7 +785,7 @@ sub add_table_name {
   }
 
   my $html = qq{
-  <div id="$t_name" style="width:850px;background-color:#F0F0F0;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
+  <div id="$t_name" style="width:850px;$header_bg;border-bottom:1px solid $border_colour;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
  
     <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
       <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;vertical-align:middle"></span>$t_name</div>
@@ -879,7 +877,7 @@ sub add_examples {
   foreach my $ex (@$examples) {
     my @lines = split("\n",$ex);
     my $nb_display = ($nb ne '') ? " $nb" : $nb;
-    $html .= qq{<div style="margin: 10px 5px"><p style="font-weight:bold">Example$nb_display:</p>};
+    $html .= qq{<div style="margin: 10px 0px"><p style="font-weight:bold">Example$nb_display:</p>};
     my $has_desc = 0;
     my $sql;
     
@@ -973,15 +971,15 @@ sub add_species_list {
 
   my $show_hide = show_hide_button("s_$table", "$table", 'species');
 
-  my $separator = (defined($has_see) && scalar(keys($has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted #CCC"></td>} : '';
+  my $separator = (defined($has_see) && scalar(keys($has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
   my $margin = (defined($has_see) && scalar(keys($has_see))) ? qq{;padding-left:25px} : '';
 
   my $html = qq{$separator
-  <td style="padding-top:4px$margin"><p><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
+  <td style="padding-top:4px$margin"><p style="margin-bottom:0px"><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
     <div id="sp_$table" style="display:none;">};
   @species_list = map { "<li>$_</li>" } @species_list;
-  $html .= "      <ul>\n        ".join("\n        ",@species_list)."\n      </ul>";
-  $html .= "    </div>\n  </td>";
+  $html .= qq{      <ul style="margin-top:1em">\n        }.join("\n        ",@species_list).qq{\n      </ul>};
+  $html .= qq{    </div>\n  </td>};
   
   return $html;
 }
@@ -1167,20 +1165,6 @@ sub remove_char {
   return $text;
 }
 
-
-# Count largest length in the table names
-sub length_names {
-  my $list = shift;
-  my $nb_col = shift;
-  
-  my $max = 0;
-  foreach my $name (@$list) {
-    my $length = length($name);
-    $max = $length if ($length>$max);
-  }
-  return '' if ($nb_col>1 || $max>25);
-  return ";width:200px" if ($max<=25);
-}
 
 # Insert the introduction text of the web page
 sub slurp_intro {
