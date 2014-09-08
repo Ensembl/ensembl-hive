@@ -325,11 +325,16 @@ sub register_worker_death {
 
     return unless($worker);
 
-    my $current_role    = $worker->current_role;
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
     my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void
     my $worker_died     = $worker->died;
+
+    my $current_role    = $worker->current_role;
+
+    unless( $current_role ) {
+        $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_by_worker_id( $worker_id ) );
+    }
 
     if( $current_role ) {
         $current_role->when_finished( $worker_died );
@@ -409,8 +414,6 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         warn "GarbageCollector:\t[$meadow_type Meadow:]\t".join(', ', map { "$_:$worker_status_counts{$meadow_type}{$_}" } keys %{$worker_status_counts{$meadow_type}})."\n\n";
     }
 
-    my $role_adaptor = $self->db->get_RoleAdaptor;
-
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {
         my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
 
@@ -434,7 +437,6 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
                 $worker->died(              $report_entries->{$process_id}{'died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
-                $worker->current_role( $role_adaptor->fetch_last_by_worker_id( $worker->dbID ) );
                 $self->register_worker_death( $worker );
             }
 
