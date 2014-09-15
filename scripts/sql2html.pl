@@ -106,10 +106,10 @@ if (defined($host) && !defined($skip_conn)) {
 ################
 
 my $default_colour = '#000'; # Black
-my $border_colour  = '#CCC'; 
+my $border_colour  = '#BBB'; 
 
-my $list_bg   = "background-color:#FEFEFE";
-my $header_bg = "background-color:#F2F2F2";
+my $header_bg1 = "background-color:#FFF";
+my $header_bg2 = "background-color:#F4F4F4";
 
 my %display_col = ('Show' => 'none', 'Hide' => 'inline');
 my $documentation = {};
@@ -471,8 +471,8 @@ foreach my $header_name (@header_names) {
   #----------------#  
   if ($header_flag == 1 and $header_name ne 'default') {
     $html_content .= qq{\n
-<div style="$header_bg;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
-  <div id="$header_id" style="background-color:$hcolour;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:top"></div>
+<div style="$header_bg2;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
+  <div id="$header_id" style="background-color:$hcolour;box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:top"></div>
   <h2 id="$header_id" style="display:inline;color:#000;padding-top:0px;margin-left:6px">$header_name</h2>
 </div>\n};
     $header_id ++;
@@ -550,7 +550,7 @@ sub display_tables_list {
     }
     $html .= qq{
 <div>      
-  <div id="top" style="$list_bg;border-radius:5px;margin-bottom:20px;float:left;$list_width">
+  <div id="top" style="$header_bg2;border-radius:5px;margin-bottom:20px;float:left;$list_width">
     <div style="padding:5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <img src="/i/16/rev/info.png" style="vertical-align:top" />
       <h3 style="display:inline;color:#FFF">List of the tables:</h3>
@@ -671,9 +671,9 @@ sub display_header {
     }
 
     $html .= qq{
-  <div style="$list_bg;border-left:1px dotted $border_colour;border-right:1px dotted $border_colour;border-bottom:1px dotted $border_colour;margin-bottom:15px;float:left;margin-right:20px;min-width:200px">
-    <div style="padding:2px 5px;$header_bg;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
-      <div style="background-color:$hcolour;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
+  <div style="$header_bg2;border-left:1px dotted $border_colour;border-right:1px dotted $border_colour;border-bottom:1px dotted $border_colour;margin-bottom:15px;float:left;margin-right:20px;min-width:200px">
+    <div style="padding:2px 5px;$header_bg1;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
+      <div style="background-color:$hcolour;box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#000;vertical-align:middle">$header_name</h2>
     </div>};
   } 
@@ -785,15 +785,15 @@ sub add_table_name {
   }
 
   my $html = qq{
-  <div id="$t_name" style="width:850px;$header_bg;border-bottom:1px solid $border_colour;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
+  <div id="$t_name" style="width:850px;$header_bg2;border-bottom:1px solid $border_colour;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
  
     <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
-      <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;vertical-align:middle"></span>$t_name</div>
+      <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;box-shadow:1px 1px 2px #888;vertical-align:middle"></span>$t_name</div>
     <div style="float:right;text-align:right;padding:2px 1px">
   };
   $html .= show_hide_button("a_$t_name", $t_name, $link_text);
   $html .= qq{
-      <span style="margin-right:5px;border-right:1px solid #000"> </span> <a href="#top">[Back to top]</a>
+      <span style="margin-right:5px;border-right:1px solid #000"> </span> <a href="#top" style="text-decoration:none">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>\n}; 
@@ -934,7 +934,7 @@ sub add_see {
   if (scalar @$sees) {
     $html .= qq{    <td style="padding: 4px 25px 0px 2px">\    <p style="font-weight:bold">See also:</p>\n  <ul style="margin-bottom:0px";>\n};
     foreach my $see (@$sees) {
-      $html .= qq{      <li><a href="#$see">$see</a></li>\n};
+      $html .= qq{      <li><a href="#$see" style="text-decoration:none">$see</a></li>\n};
     }
     $html .= qq{      </ul>\n    </td>\n};
   }
@@ -976,9 +976,12 @@ sub add_species_list {
 
   my $html = qq{$separator
   <td style="padding-top:4px$margin"><p style="margin-bottom:0px"><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
-    <div id="sp_$table" style="display:none;">};
-  @species_list = map { "<li>$_</li>" } @species_list;
-  $html .= qq{      <ul style="margin-top:1em">\n        }.join("\n        ",@species_list).qq{\n      </ul>};
+    <div id="sp_$table" style="display:none;">
+      <ul style="margin-top:1em">};
+      
+  @species_list = map{ $_ =~ s/_/ /g; $_ } (map { qq{<li style="font-style:italic">}.ucfirst($_)."</li>" } @species_list);
+  
+  $html .= qq{      <ul style="margin-top:1em">\n        }.join("\n        ",@species_list).qq{\n      </ul>\n};
   $html .= qq{    </div>\n  </td>};
   
   return $html;
@@ -994,7 +997,7 @@ sub add_internal_link {
     if ((!grep {$link eq $_} @{$data->{see}}) and defined($link)) {
       push @{$data->{see}}, $link;
     }
-    my $table_to_link = qq{<a href="#$link">$link</a>};
+    my $table_to_link = qq{<a href="#$link" style="text-decoration:none">$link</a>};
     $desc =~ s/\@link\s?\w+/$table_to_link/;
   }
   return $desc;
