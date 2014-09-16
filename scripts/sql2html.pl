@@ -157,57 +157,53 @@ my $html_header = qq{
   
     // Schema tables
     if (a_text === 'columns') {
-      div   = document.getElementById('div_'+param);
-      alink = document.getElementById('a_'+param);
+      div_id   = '#div_'+param;
+      alink_id = '#a_'+param;
     }  
     // Species list
     else if (a_text === 'species') {
-      div   = document.getElementById('sp_'+param);
-      alink = document.getElementById('s_'+param);
+      div_id   = '#sp_'+param;
+      alink_id = '#s_'+param;
     }
     // Example tables
     else {
-      div   = document.getElementById('ex_'+param);
-      alink = document.getElementById('e_'+param);
+      div_id   = '#ex_'+param;
+      alink_id = '#e_'+param;
     }
     
-    if (div.style.display=='inline') {
-      div.style.display='none';
-      alink.innerHTML=img_plus+' Show '+a_text;
+    if (\$(div_id).is(':visible')) {
+      \$(alink_id).html(img_plus+' Show '+a_text);
     }
-    else {
-      if (div.style.display=='none') {
-        div.style.display='inline';
-        alink.innerHTML=img_minus+' Hide '+a_text;
-      }
+    else if (\$(div_id).is(':hidden')) {
+      \$(alink_id).html(img_minus+' Hide '+a_text);
     }
+    \$(div_id).slideToggle( 300 );
   }
   
   // Function to show/hide all the tables
   function show_hide_all (link_text) {
-    expand_flag = document.getElementById('expand');
-    divs = document.getElementsByTagName('div');
-    for(var i=0; i < divs.length; i++){
-      param = divs[i].id.substring(4);
-      div   = document.getElementById('div_'+param);
-      alink = document.getElementById('a_'+param);
+    expand_div = '#expand';
+    div_prefix = 'div_';
+    \$("div[id^='"+div_prefix+"']").each(function() {
+      param = \$(this).attr('id').substring(div_prefix.length);
+      div_id   = '#'+\$(this).attr('id');
+      alink_id = '#a_'+param;
       
-      if (div && alink) {
-        if (expand_flag.value=='0') {
-          div.style.display='inline';
-          alink.innerHTML=img_minus+' Hide '+link_text;
+      if (\$(alink_id)) {
+        if (\$(expand_div).value=='0') {
+          \$(alink_id).html(img_minus+' Hide '+link_text);
         }
         else {
-          div.style.display='none';
-          alink.innerHTML=img_plus+' Show '+link_text;
+          \$(alink_id).html(img_plus+' Show '+link_text);
         }
       }
-    }
-    if (expand_flag.value=='0') {
-      expand_flag.value='1';
+      \$(div_id).slideToggle( 500 );
+    });
+    if (\$(expand_div).value=='0') {
+      \$(expand_div).value='1';
     }
     else {
-      expand_flag.value='0';
+      \$(expand_div).value='0';
     }
   }
 </script>
