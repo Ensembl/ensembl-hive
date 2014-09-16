@@ -273,7 +273,7 @@ sub specialize_new_worker {
             }
         }
             # probably scheduled by beekeeper.pl:
-    } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_by_rc_id_meadow_type($self, $worker->resource_class_id, $worker->meadow_type) ) {
+    } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker) ) {
 
         $analysis_id = $stats->analysis_id;
     } else {

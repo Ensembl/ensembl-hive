@@ -55,7 +55,7 @@ sub schedule_workers_resync_if_necessary {
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
     print $log_buffer;
 
     unless( $total_extra_workers_required ) {
@@ -87,7 +87,7 @@ sub schedule_workers_resync_if_necessary {
         }
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-            = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
         print $log_buffer;
     }
 
@@ -121,22 +121,22 @@ sub schedule_workers_resync_if_necessary {
 }
 
 
-sub suggest_analysis_to_specialize_by_rc_id_meadow_type {
-    my ($queen, $filter_rc_id, $filter_meadow_type) = @_;
+sub suggest_analysis_to_specialize_a_worker {
+    my ( $worker ) = @_;
 
-    return schedule_workers($queen, 1, $filter_meadow_type, $filter_rc_id, $filter_meadow_type);
+    return schedule_workers( $worker->adaptor, 1, $worker->meadow_type, $worker );
 }
 
 
 sub schedule_workers {
-    my ($queen, $submit_capacity, $default_meadow_type, $filter_rc_id, $filter_meadow_type, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
+    my ($queen, $submit_capacity, $default_meadow_type, $worker, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
 
     my @suitable_analyses_stats   = $filter_analysis
                                 ? ( $filter_analysis->stats )
-                                : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability_rc_id_meadow_type($filter_rc_id, $filter_meadow_type) };
+                                : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability( $worker ) };
 
     unless(@suitable_analyses_stats) {
-        return $analysis_id2rc_name ? ({}, 0, "Scheduler could not find any suitable analyses to start with\n") : undef;    # FIXME: returns data in different format in "suggest analysis" mode
+        return $worker ? undef : ({}, 0, "Scheduler could not find any suitable analyses to start with\n");    # FIXME: returns data in different format in "suggest analysis" mode
     }
 
         # the pre-pending-adjusted outcome will be stored here:

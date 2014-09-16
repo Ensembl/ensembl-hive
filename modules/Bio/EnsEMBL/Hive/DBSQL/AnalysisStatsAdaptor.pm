@@ -72,12 +72,23 @@ sub object_class {
 }
 
 
-sub fetch_all_by_suitability_rc_id_meadow_type {
-    my ($self, $resource_class_id, $meadow_type) = @_;
+sub fetch_all_by_suitability {
+    my $self    = shift @_;
 
-    my $join_and_filter_sql    = "JOIN analysis_base USING (analysis_id) WHERE "
-                                .( $resource_class_id ? "resource_class_id=$resource_class_id AND " : '')
-                                .( $meadow_type       ? "(meadow_type IS NULL OR meadow_type='$meadow_type') AND " : '');
+    my $join_and_filter_sql    = "JOIN analysis_base USING (analysis_id) WHERE ";
+
+    if(my $worker = shift @_) { # if the $worker argument is defined, it may constrain the choice of analyses
+
+        if(my $worker_rc_id         = $worker->resource_class_id) {
+            $join_and_filter_sql    .= "resource_class_id=$worker_rc_id AND ";
+        }
+
+        if(my $worker_meadow_type   = $worker->meadow_type) {
+            $join_and_filter_sql    .= "(meadow_type IS NULL OR meadow_type='$worker_meadow_type') AND ";
+        }
+
+        # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name), the corresponding checks should be added here.
+    }
 
         # the ones that clearly have work to do:
     my $primary_sql     = "num_required_workers>0 AND status in ('READY', 'WORKING') "
