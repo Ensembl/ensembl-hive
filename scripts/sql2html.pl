@@ -496,10 +496,15 @@ foreach my $header_name (@header_names) {
     $html_content .= add_info($data->{info},$data);  
     $html_content .= add_columns($t_name,$data);
     $html_content .= add_examples($t_name,$data);
-    $html_content .= qq{<table style="margin-top:20px;border:1px solid $border_colour"><tr>};
-    $html_content .= add_see($data->{see});
-    $html_content .= add_species_list($t_name,$data->{see}) if ($hosts_list);
-    $html_content .= qq{</tr></table>};
+
+    # See also + species list
+    my $html_table   = add_see($data->{see});
+    $html_table     .= add_species_list($t_name,$data->{see}) if ($hosts_list);
+    if ($html_table ne '') {
+      $html_content .= qq{<table style="margin-top:20px;border:1px solid $border_colour"><tr>};
+      $html_content .= $html_table;
+      $html_content .= qq{</tr></table>};
+    }
   }
 }
 $html_content .= add_legend();
@@ -963,7 +968,7 @@ sub add_species_list {
       push(@species_list, $s_name);
     }
   }
-  return "" if (!@species_list);
+  return '' if (!@species_list);
 
   my $show_hide = show_hide_button("s_$table", "$table", 'species');
 
