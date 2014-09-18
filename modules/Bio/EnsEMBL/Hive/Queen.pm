@@ -635,7 +635,7 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
     foreach my $analysis (@$list_of_analyses) {
         my $stats = $analysis->stats;
 
-        $only_semaphored_jobs_to_run = 1 if( $stats->total_job_count != $stats->done_job_count + $stats->failed_job_count + $stats->semaphored_job_count );
+        $only_semaphored_jobs_to_run = 0 if( $stats->total_job_count != $stats->done_job_count + $stats->failed_job_count + $stats->semaphored_job_count );
         $total_semaphored_job_count += $stats->semaphored_job_count;
     }
 
