@@ -73,7 +73,7 @@ sub schedule_workers_resync_if_necessary {
         if( $queen->db->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
             if( $queen->check_nothing_to_run_but_semaphored ) { # and double-check on our side
                 print "Scheduler: looks like we may need re-balancing semaphore_counts...\n";
-                if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && $filter_analysis->dbID) ) {
+                if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores($filter_analysis && [ $filter_analysis ] ) ) {
                     print "Scheduler: re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization of the Hive...\n";
                     $queen->synchronize_hive($filter_analysis);
                 } else {

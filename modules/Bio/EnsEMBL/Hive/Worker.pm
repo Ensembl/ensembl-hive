@@ -526,6 +526,7 @@ sub run {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
         }
 
+            # TODO: when $specialization_arglist is also allowed to contain broader analysis constraints, they will have to be passed into specialize_and_compile_wrapper() below!
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and !$specialization_arglist ) {
             $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers( $self->current_role->analysis->dbID );  # FIXME: tidy up this counting of active roles
             $self->cause_of_death(undef);
