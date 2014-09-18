@@ -55,7 +55,7 @@ sub schedule_workers_resync_if_necessary {
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis && [$filter_analysis->stats], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
     print $log_buffer;
 
     unless( $total_extra_workers_required ) {
@@ -87,7 +87,7 @@ sub schedule_workers_resync_if_necessary {
         }
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-            = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis && [$filter_analysis->stats], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
         print $log_buffer;
     }
 
@@ -129,10 +129,10 @@ sub suggest_analysis_to_specialize_a_worker {
 
 
 sub schedule_workers {
-    my ($queen, $submit_capacity, $default_meadow_type, $worker, $filter_analysis, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
+    my ($queen, $submit_capacity, $default_meadow_type, $worker, $only_analyses_stats, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
 
-    my @suitable_analyses_stats   = $filter_analysis
-                                ? ( $filter_analysis->stats )
+    my @suitable_analyses_stats   = $only_analyses_stats
+                                ? @$only_analyses_stats
                                 : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability( $worker ) };
 
     unless(@suitable_analyses_stats) {
