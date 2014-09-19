@@ -72,39 +72,6 @@ sub object_class {
 }
 
 
-sub fetch_all_by_suitability {
-    my $self    = shift @_;
-
-    my $join_and_filter_sql    = "JOIN analysis_base USING (analysis_id) WHERE ";
-
-    if(my $worker = shift @_) { # if the $worker argument is defined, it may constrain the choice of analyses
-
-        if(my $worker_rc_id         = $worker->resource_class_id) {
-            $join_and_filter_sql    .= "resource_class_id=$worker_rc_id AND ";
-        }
-
-        if(my $worker_meadow_type   = $worker->meadow_type) {
-            $join_and_filter_sql    .= "(meadow_type IS NULL OR meadow_type='$worker_meadow_type') AND ";
-        }
-
-        # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name), the corresponding checks should be added here.
-    }
-
-        # the ones that clearly have work to do:
-    my $primary_sql     = "num_required_workers>0 AND status in ('READY', 'WORKING') "
-                         ."ORDER BY priority DESC, ".( ($self->dbc->driver eq 'mysql') ? 'RAND()' : 'RANDOM()' );
-
-        # the ones that may have work to do after a sync:
-    my $secondary_sql   = "status in ('LOADING', 'BLOCKED', 'ALL_CLAIMED', 'SYNCHING') "
-                         ."ORDER BY last_update";   # FIXME: could mix in a.priority if sync is not too expensive?
-
-    my $primary_results     = $self->fetch_all( $join_and_filter_sql . $primary_sql   );
-    my $secondary_results   = $self->fetch_all( $join_and_filter_sql . $secondary_sql );
-
-    return [ @$primary_results, @$secondary_results ];
-}
-
-
 =head2 refresh
 
   Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object

@@ -36,6 +36,8 @@ package Bio::EnsEMBL::Hive::Scheduler;
 use strict;
 use warnings;
 
+use List::Util ('shuffle');
+
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Valley;
@@ -55,7 +57,7 @@ sub schedule_workers_resync_if_necessary {
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis && [$filter_analysis->stats], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $submit_capacity, $default_meadow_type, $filter_analysis && [$filter_analysis], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
     print $log_buffer;
 
     unless( $total_extra_workers_required ) {
@@ -87,7 +89,7 @@ sub schedule_workers_resync_if_necessary {
         }
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-            = schedule_workers($queen, $submit_capacity, $default_meadow_type, undef, $filter_analysis && [$filter_analysis->stats], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $submit_capacity, $default_meadow_type, $filter_analysis && [$filter_analysis], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
         print $log_buffer;
     }
 
@@ -124,19 +126,35 @@ sub schedule_workers_resync_if_necessary {
 sub suggest_analysis_to_specialize_a_worker {
     my ( $worker ) = @_;
 
-    return schedule_workers( $worker->adaptor, 1, $worker->meadow_type, $worker );
+    my $queen               = $worker->adaptor;
+    my $worker_rc_id        = $worker->resource_class_id;
+    my $worker_meadow_type  = $worker->meadow_type;
+    my @only_analyses       = ();
+
+    foreach my $analysis ( @{ $queen->db->get_AnalysisAdaptor->fetch_all() } ) {
+
+        next if($worker_rc_id       and $worker_rc_id!=$analysis->resource_class_id);
+
+        next if($worker_meadow_type and $analysis->meadow_type and $worker_meadow_type ne $analysis->meadow_type);
+
+            # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name), the corresponding checks should be added here.
+
+        push @only_analyses, $analysis;
+    }
+
+    return schedule_workers( $queen, 1, $worker_meadow_type, \@only_analyses );
 }
 
 
 sub schedule_workers {
-    my ($queen, $submit_capacity, $default_meadow_type, $worker, $only_analyses_stats, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
+    my ($queen, $submit_capacity, $default_meadow_type, $only_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
 
-    my @suitable_analyses_stats   = $only_analyses_stats
-                                ? @$only_analyses_stats
-                                : @{ $queen->db->get_AnalysisStatsAdaptor->fetch_all_by_suitability( $worker ) };
+    $only_analyses ||= $queen->db->get_AnalysisAdaptor->fetch_all();     # make sure we have something to choose from
 
-    unless(@suitable_analyses_stats) {
-        return $worker ? undef : ({}, 0, "Scheduler could not find any suitable analyses to start with\n");    # FIXME: returns data in different format in "suggest analysis" mode
+    my @stats_sorted_by_suitability = @{ Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $only_analyses ) };
+
+    unless(@stats_sorted_by_suitability) {
+        return $analysis_id2rc_name ? ({}, 0, "Scheduler could not find any suitable analyses to start with\n") : undef;    # FIXME: returns data in different format in "suggest analysis" mode
     }
 
         # the pre-pending-adjusted outcome will be stored here:
@@ -147,7 +165,7 @@ sub schedule_workers {
     my $submit_capacity_limiter                     = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
     my $queen_capacity_limiter                      = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
 
-    foreach my $analysis_stats (@suitable_analyses_stats) {
+    foreach my $analysis_stats (@stats_sorted_by_suitability) {
         last if( $submit_capacity_limiter->reached );
 
         my $analysis            = $analysis_stats->analysis();    # FIXME: if it proves too expensive we may need to consider caching
@@ -212,6 +230,23 @@ sub schedule_workers {
     return (\%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
 }
 
+
+sub sort_stats_by_suitability {
+
+    my @sorted_stats    = map { $_->stats }                         # 3. now turn them all into stats objects
+                            sort { $b->priority <=> $a->priority }  # 2. but ordered according to their priority levels
+                                shuffle                             # 1. make sure analyses are well mixed within the same priority level
+                                    @{ shift @_ };
+
+        # assuming sync() is expensive, so first trying analyses that have already been sunk:
+    my @primary_candidates      = grep { ($_->num_required_workers > 0) and ($_->status =~/^(READY|WORKING)$/) }
+                                            @sorted_stats;
+
+    my @secondary_candidates    = grep { $_->status =~ /^(LOADING|BLOCKED|ALL_CLAIMED|SYNCHING)$/ }
+                                            @sorted_stats;
+
+    return [@primary_candidates,  @secondary_candidates];
+}
 
 1;
 
