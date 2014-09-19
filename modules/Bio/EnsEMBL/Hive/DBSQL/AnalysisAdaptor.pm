@@ -41,6 +41,7 @@ use strict;
 use warnings;
 use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::URLFactory;
+use Bio::EnsEMBL::Hive::Utils ('throw');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -107,6 +108,45 @@ sub fetch_by_url_query {
         return $self->fetch_by_dbID($field_value);
 
     }
+}
+
+
+sub fetch_all_by_pattern {
+    my ($self, $pattern) = @_;
+
+    my $analyses;
+
+    if( $pattern=~/^\d+$/ ) {
+
+        $analyses = $self->fetch_all_by_analysis_id( $pattern );
+
+    } elsif( $pattern=~/^(\d+)\.\.(\d+)$/ ) {
+
+        $analyses = $self->fetch_all( "analysis_id BETWEEN $1 AND $2" );
+
+    } elsif( $pattern=~/^(\d+)\.\.$/ ) {
+
+        $analyses = $self->fetch_all( "$1<analysis_id" );
+
+    } elsif( $pattern=~/^\.\.(\d+)$/ ) {
+
+        $analyses = $self->fetch_all( "analysis_id<$1" );
+
+    } elsif( $pattern=~/^\w+$/) {
+
+        $analyses = $self->fetch_all_by_logic_name( $pattern );
+
+    } elsif( $pattern=~/^[\w\%]+$/) {
+
+        $analyses = $self->fetch_all( "logic_name LIKE '$pattern'" );
+
+    } else {
+
+        throw( "Pattern '$pattern' not recognized" );
+
+    }
+
+    return $analyses;
 }
 
 

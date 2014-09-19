@@ -204,17 +204,19 @@ sub specialize_new_worker {
     my $worker  = shift @_;
     my %flags   = @_;
 
-    my ($analysis_id, $logic_name, $job_id, $force)
-     = @flags{qw(-analysis_id -logic_name -job_id -force)};
+    my ($analyses_pattern, $analysis_id, $logic_name, $job_id, $force)
+     = @flags{qw(-analyses_pattern -analysis_id -logic_name -job_id -force)};
 
-    if( scalar( grep {defined($_)} ($analysis_id, $logic_name, $job_id) ) > 1) {
+    my $num_constraints = scalar( grep {defined($_)} ($analysis_id, $logic_name, $job_id) ); 
+
+    if( $num_constraints > 1) {
         die "At most one of the options {-analysis_id, -logic_name, -job_id} can be set to pre-specialize a Worker";
     }
 
     my ($analysis, $stats);
     my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
-    if($job_id or $analysis_id or $logic_name) {    # probably pre-specialized from command-line
+    if( $num_constraints ) {    # probably pre-specialized from command-line
 
         if($job_id) {
             warn "resetting and fetching job for job_id '$job_id'\n";
@@ -235,14 +237,11 @@ sub specialize_new_worker {
                 warn "Increasing the semaphore count of the dependent job";
                 $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
             }
-            $analysis_id = $job->analysis_id;
-        }
+            $analysis = $job->analysis;
 
-        if($logic_name) {
+        } elsif($logic_name) {
             $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name)
                 or die "analysis with name='$logic_name' could not be fetched from the database";
-
-            $analysis_id = $analysis->dbID;
 
         } elsif($analysis_id) {
             $analysis = $self->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id)
@@ -273,9 +272,9 @@ sub specialize_new_worker {
             }
         }
             # probably scheduled by beekeeper.pl:
-    } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker) ) {
+    } elsif( $stats = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($analyses_pattern, $worker) ) {
 
-        $analysis_id = $stats->analysis_id;
+        $analysis = $stats->analysis;
     } else {
         $worker->cause_of_death('NO_ROLE');
         die "No analysis suitable for the worker was found\n";
@@ -287,7 +286,7 @@ sub specialize_new_worker {
     }
     my $new_role = Bio::EnsEMBL::Hive::Role->new(
         'worker'        => $worker,
-        'analysis_id'   => $analysis_id,
+        'analysis'      => $analysis,
     );
     $role_adaptor->store( $new_role );
     $worker->current_role( $new_role );
@@ -303,9 +302,9 @@ sub specialize_new_worker {
 
     } else {    # count it as autonomous worker sharing the load of that analysis:
 
-        $analysis_stats_adaptor->update_status($analysis_id, 'WORKING');
+        $analysis_stats_adaptor->update_status($analysis->dbID, 'WORKING');
 
-        $analysis_stats_adaptor->decrease_required_workers( $new_role->analysis_id );
+        $analysis_stats_adaptor->decrease_required_workers( $analysis->dbID );
     }
 
         # The following increment used to be done only when no specific task was given to the worker,
@@ -315,7 +314,7 @@ sub specialize_new_worker {
         # so I am (temporarily?) simplifying the accounting algorithm.
         #
     unless( $self->db->hive_use_triggers() ) {
-        $analysis_stats_adaptor->increase_running_workers( $new_role->analysis_id );
+        $analysis_stats_adaptor->increase_running_workers( $analysis->dbID );
     }
 }
 

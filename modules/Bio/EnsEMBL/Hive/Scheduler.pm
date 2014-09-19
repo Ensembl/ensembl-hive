@@ -124,14 +124,15 @@ sub schedule_workers_resync_if_necessary {
 
 
 sub suggest_analysis_to_specialize_a_worker {
-    my ( $worker ) = @_;
+    my ( $analyses_pattern, $worker ) = @_;
 
     my $queen               = $worker->adaptor;
+    my $analysis_adaptor    = $queen->db->get_AnalysisAdaptor;
     my $worker_rc_id        = $worker->resource_class_id;
     my $worker_meadow_type  = $worker->meadow_type;
     my @only_analyses       = ();
 
-    foreach my $analysis ( @{ $queen->db->get_AnalysisAdaptor->fetch_all() } ) {
+    foreach my $analysis ( @{ $analyses_pattern ? $analysis_adaptor->fetch_all_by_pattern( $analyses_pattern ) : $analysis_adaptor->fetch_all() } ) {
 
         next if($worker_rc_id       and $worker_rc_id!=$analysis->resource_class_id);
 

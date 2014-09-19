@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 
 my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
-my ($resource_class_id, $resource_class_name, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
+my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
 my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
 my ($help, $report_versions, $debug);
 
@@ -35,6 +35,7 @@ GetOptions(
 # Task specification parameters:
            'rc_id=i'                    => \$resource_class_id,
            'rc_name=s'                  => \$resource_class_name,
+           'analyses_pattern=s'         => \$analyses_pattern,
            'analysis_id=i'              => \$analysis_id,
            'logic_name=s'               => \$logic_name,
            'job_id=i'                   => \$job_id,
@@ -123,7 +124,8 @@ my $worker = $queen->create_new_worker(
          -debug                 => $debug,
 );
 
-my $specialization_arglist = ($analysis_id || $logic_name || $job_id) && [
+my $specialization_arglist = ($analyses_pattern || $analysis_id || $logic_name || $job_id) && [
+     -analyses_pattern      => $analyses_pattern,
      -analysis_id           => $analysis_id,
      -logic_name            => $logic_name,
      -job_id                => $job_id,
