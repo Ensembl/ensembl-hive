@@ -620,10 +620,18 @@ sub synchronize_AnalysisStats {
 }
 
 
-sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent sync
-    my ($self, $filter_analysis) = @_;
+=head2 check_nothing_to_run_but_semaphored
 
-    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+  Arg [1]    : $list_of_analyses
+  Example    : $self->check_nothing_to_run_but_semaphored( [ $analysis_A, $analysis_B ] );
+  Description: Counts the number of immediately runnable jobs in the given analyses.
+  Exceptions : none
+  Caller     : Scheduler
+
+=cut
+
+sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent sync
+    my ($self, $list_of_analyses) = @_;
 
     my $only_semaphored_jobs_to_run = 1;
     my $total_semaphored_job_count  = 0;
@@ -649,7 +657,7 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
                 or 1/0, depending on whether $filter_analysis failed or not.
   Returntype : int
   Exceptions : none
-  Caller     : general
+  Caller     : beekeeper.pl
 
 =cut
 
