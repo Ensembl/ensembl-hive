@@ -124,24 +124,17 @@ sub schedule_workers_resync_if_necessary {
 
 
 sub suggest_analysis_to_specialize_a_worker {
-    my ( $analyses_pattern, $worker ) = @_;
+    my ( $worker, $analyses_pattern ) = @_;
 
     my $queen               = $worker->adaptor;
-    my $analysis_adaptor    = $queen->db->get_AnalysisAdaptor;
     my $worker_rc_id        = $worker->resource_class_id;
     my $worker_meadow_type  = $worker->meadow_type;
-    my @only_analyses       = ();
 
-    foreach my $analysis ( @{ $analyses_pattern ? $analysis_adaptor->fetch_all_by_pattern( $analyses_pattern ) : $analysis_adaptor->fetch_all() } ) {
-
-        next if($worker_rc_id       and $worker_rc_id!=$analysis->resource_class_id);
-
-        next if($worker_meadow_type and $analysis->meadow_type and $worker_meadow_type ne $analysis->meadow_type);
-
-            # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name), the corresponding checks should be added here.
-
-        push @only_analyses, $analysis;
-    }
+    my @only_analyses       = grep { !$worker_rc_id or $worker_rc_id==$_->resource_class_id}
+                                grep { !$worker_meadow_type or !$_->meadow_type or ($worker_meadow_type eq $_->meadow_type) }
+                                    # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),
+                                    # the corresponding checks should be added here
+                                        @{ $queen->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern ) };
 
     return schedule_workers( $queen, 1, $worker_meadow_type, \@only_analyses );
 }

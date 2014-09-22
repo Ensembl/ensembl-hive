@@ -116,7 +116,11 @@ sub fetch_all_by_pattern {
 
     my $analyses;
 
-    if( $pattern=~/^\d+$/ ) {
+    if( not defined($pattern) ) {
+
+        $analyses = $self->fetch_all();
+
+    } elsif( $pattern=~/^\d+$/ ) {
 
         $analyses = $self->fetch_all_by_analysis_id( $pattern );
 
