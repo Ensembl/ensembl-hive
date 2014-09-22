@@ -45,10 +45,7 @@ use Bio::EnsEMBL::Hive::Limiter;
 
 
 sub schedule_workers_resync_if_necessary {
-    my ($queen, $valley, $filter_analysis) = @_;
-
-    my $list_of_analyses                        = $filter_analysis ? [ $filter_analysis ] : $queen->db->get_AnalysisAdaptor->fetch_all();
-        # $queen->db->get_AnalysisAdaptor->fetch_by_logic_name( $analyses_pattern )
+    my ($queen, $valley, $list_of_analyses) = @_;
 
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
@@ -60,7 +57,7 @@ sub schedule_workers_resync_if_necessary {
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers($queen, $submit_capacity, $default_meadow_type, $filter_analysis && [$filter_analysis], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
     print $log_buffer;
 
     unless( $total_extra_workers_required ) {
@@ -92,7 +89,7 @@ sub schedule_workers_resync_if_necessary {
         }
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-            = schedule_workers($queen, $submit_capacity, $default_meadow_type, $filter_analysis && [$filter_analysis], $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
         print $log_buffer;
     }
 
@@ -133,22 +130,20 @@ sub suggest_analysis_to_specialize_a_worker {
     my $worker_rc_id        = $worker->resource_class_id;
     my $worker_meadow_type  = $worker->meadow_type;
 
-    my @only_analyses       = grep { !$worker_rc_id or $worker_rc_id==$_->resource_class_id}
+    my @list_of_analyses    = grep { !$worker_rc_id or $worker_rc_id==$_->resource_class_id}
                                 grep { !$worker_meadow_type or !$_->meadow_type or ($worker_meadow_type eq $_->meadow_type) }
                                     # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),
                                     # the corresponding checks should be added here
                                         @{ $queen->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern ) };
 
-    return schedule_workers( $queen, 1, $worker_meadow_type, \@only_analyses );
+    return schedule_workers( $queen, 1, $worker_meadow_type, \@list_of_analyses );
 }
 
 
 sub schedule_workers {
-    my ($queen, $submit_capacity, $default_meadow_type, $only_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
+    my ($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
 
-    $only_analyses ||= $queen->db->get_AnalysisAdaptor->fetch_all();     # make sure we have something to choose from
-
-    my @stats_sorted_by_suitability = @{ Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $only_analyses ) };
+    my @stats_sorted_by_suitability = @{ Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $list_of_analyses ) };
 
     unless(@stats_sorted_by_suitability) {
         return $analysis_id2rc_name ? ({}, 0, "Scheduler could not find any suitable analyses to start with\n") : undef;    # FIXME: returns data in different format in "suggest analysis" mode

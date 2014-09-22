@@ -271,7 +271,7 @@ sub main {
         }
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
-        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $analysis);   # show what would be submitted, but do not actually submit
+        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);   # show what would be submitted, but do not actually submit
         $queen->get_remaining_jobs_show_hive_progress( $analysis ) if ($analysis);
         $queen->get_remaining_jobs_show_hive_progress();
 
@@ -325,6 +325,7 @@ sub generate_worker_cmd {
     return $worker_cmd;
 }
 
+
 sub run_autonomously {
     my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $run_analysis, $run_job_id, $force) = @_;
 
@@ -356,7 +357,7 @@ sub run_autonomously {
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         my $workers_to_submit_by_meadow_type_rc_name
-            = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $run_analysis);
+            = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);
 
         if( keys %$workers_to_submit_by_meadow_type_rc_name ) {
 

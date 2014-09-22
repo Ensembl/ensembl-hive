@@ -585,10 +585,10 @@ sub reset_jobs_for_analysis_id {
 =cut
 
 sub balance_semaphores {
-    my ($self, $only_analyses) = @_;
+    my ($self, $list_of_analyses) = @_;
 
-    my $analysis_filter = $only_analyses
-        ? "funnel.analysis_id IN (".join(',', map { $_->dbID } @$only_analyses).") AND"
+    my $analysis_filter = $list_of_analyses
+        ? "funnel.analysis_id IN (".join(',', map { $_->dbID } @$list_of_analyses).") AND"
         : '';
 
     my $find_sql    = qq{
