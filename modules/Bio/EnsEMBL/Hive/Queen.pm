@@ -700,10 +700,19 @@ sub get_remaining_jobs_show_hive_progress {
 }
 
 
-sub print_analysis_status {
-    my ($self, $filter_analysis) = @_;
+=head2 print_analysis_status
 
-    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
+  Arg [1]    : $list_of_analyses
+  Example    : $queen->print_analysis_status( [ $analysis_A, $analysis_B ] );
+  Description: Runs through all analyses in the given list and prints their stats.
+  Exceptions : none
+  Caller     : beekeeper.pl
+
+=cut
+
+sub print_analysis_status {
+    my ($self, $list_of_analyses) = @_;
+
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         print $analysis->stats->toString . "\n";
     }
@@ -715,7 +724,7 @@ sub print_analysis_status {
   Example    : $queen->register_all_workers_dead();
   Description: Registers all workers dead
   Exceptions : none
-  Caller     : beekeepers and other external processes
+  Caller     : beekeeper.pl
 
 =cut
 

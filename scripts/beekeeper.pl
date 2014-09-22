@@ -253,7 +253,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $analysis, $run_job_id, $force);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $analysis, $run_job_id, $force);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -261,7 +261,7 @@ sub main {
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        $queen->print_analysis_status($analysis) unless($self->{'no_analysis_stats'});
+        $queen->print_analysis_status( $list_of_analyses ) unless($self->{'no_analysis_stats'});
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -326,10 +326,9 @@ sub generate_worker_cmd {
 }
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $run_analysis, $run_job_id, $force) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $run_analysis, $run_job_id, $force) = @_;
 
     my $resourceless_worker_cmd = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
-    my $special_task            = $run_analysis || $run_job_id;
 
     my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
     my %meadow_type_rc_name2resource_param_list = ();
@@ -353,7 +352,7 @@ sub run_autonomously {
 
         $queen->check_for_dead_workers($valley, 0);
 
-        $queen->print_analysis_status unless($self->{'no_analysis_stats'});
+        $queen->print_analysis_status( $list_of_analyses ) unless($self->{'no_analysis_stats'});
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         my $workers_to_submit_by_meadow_type_rc_name
