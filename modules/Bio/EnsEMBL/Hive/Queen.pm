@@ -528,23 +528,20 @@ sub fetch_overdue_workers {
 
 =head2 synchronize_hive
 
-  Arg [1]    : $filter_analysis (optional)
-  Example    : $queen->synchronize_hive();
-  Description: Runs through all analyses in the system and synchronizes
-              the analysis_stats summary with the states in the job 
-              and worker tables.  Then follows by checking all the blocking rules
-              and blocks/unblocks analyses as needed.
+  Arg [1]    : $list_of_analyses
+  Example    : $queen->synchronize_hive( [ $analysis_A, $analysis_B ] );
+  Description: Runs through all analyses in the given list and synchronizes
+              the analysis_stats summary with the states in the job and worker tables.
+              Then follows by checking all the blocking rules and blocks/unblocks analyses as needed.
   Exceptions : none
   Caller     : general
 
 =cut
 
 sub synchronize_hive {
-    my ($self, $filter_analysis) = @_;
+    my ($self, $list_of_analyses) = @_;
 
     my $start_time = time();
-
-    my $list_of_analyses = $filter_analysis ? [$filter_analysis] : $self->db->get_AnalysisAdaptor->fetch_all;
 
     print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
     foreach my $analysis (@$list_of_analyses) {

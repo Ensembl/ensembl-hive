@@ -242,12 +242,14 @@ sub main {
     }
 
     my $analysis = $run_job_id
-        ? $self->{'dba'}->get_AnalysisAdaptor->fetch_by_dbID( $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis_id )
+        ? $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis
         : ( $self->{'logic_name'} && $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'}) );
+
+    my $list_of_analyses = $analysis ? [ $analysis ] : $self->{'dba'}->get_AnalysisAdaptor->fetch_all();
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
-    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $analysis && [ $analysis ] ); }
+    if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ); }
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
@@ -257,7 +259,7 @@ sub main {
             # the output of several methods will look differently depending on $analysis being [un]defined
 
         if($sync) {
-            $queen->synchronize_hive($analysis);
+            $queen->synchronize_hive( $list_of_analyses );
         }
         $queen->print_analysis_status($analysis) unless($self->{'no_analysis_stats'});
 
