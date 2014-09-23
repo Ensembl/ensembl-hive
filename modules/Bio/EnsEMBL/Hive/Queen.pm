@@ -202,10 +202,10 @@ sub create_new_worker {
 sub specialize_new_worker {
     my $self    = shift @_;
     my $worker  = shift @_;
-    my %flags   = @_;
+    my $flags   = shift @_;
 
     my ($analyses_pattern, $analysis_id, $logic_name, $job_id, $force)
-     = @flags{qw(-analyses_pattern -analysis_id -logic_name -job_id -force)};
+     = @$flags{qw(-analyses_pattern -analysis_id -logic_name -job_id -force)};
 
     my $num_constraints = scalar( grep {defined($_)} ($analysis_id, $logic_name, $job_id) ); 
 

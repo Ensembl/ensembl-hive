@@ -435,7 +435,7 @@ sub toString {
 =cut
 
 sub run {
-    my ($self, $specialization_arglist) = @_;
+    my ($self, $specialization_arghash) = @_;
 
     if( my $worker_log_dir = $self->log_dir ) {
         $self->get_stdout_redirector->push( $worker_log_dir.'/worker.out' );
@@ -447,7 +447,7 @@ sub run {
 
     print "\n"; # to clear beekeeper's prompt in case output is not logged
     $self->worker_say( $self->toString() );
-    $self->specialize_and_compile_wrapper( $specialization_arglist );
+    $self->specialize_and_compile_wrapper( $specialization_arghash );
 
     while (!$self->cause_of_death) {  # Worker's lifespan loop (ends only when the worker dies for any reason)
 
@@ -526,11 +526,10 @@ sub run {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
         }
 
-            # TODO: when $specialization_arglist is also allowed to contain broader analysis constraints, they will have to be passed into specialize_and_compile_wrapper() below!
-        if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and !$specialization_arglist ) {
+        if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and (!$specialization_arghash or $specialization_arghash->{'-analyses_pattern'}!~/^[\w\d]+$/) ) {
             $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers( $self->current_role->analysis->dbID );  # FIXME: tidy up this counting of active roles
             $self->cause_of_death(undef);
-            $self->specialize_and_compile_wrapper();
+            $self->specialize_and_compile_wrapper( $specialization_arghash );
         }
 
     }     # /Worker's lifespan loop
@@ -559,12 +558,12 @@ sub run {
 
 
 sub specialize_and_compile_wrapper {
-    my ($self, $specialization_arglist) = @_;
+    my ($self, $specialization_arghash) = @_;
 
     eval {
         $self->enter_status('SPECIALIZATION');
         my $old_role = $self->current_role();
-        $self->adaptor->specialize_new_worker( $self, $specialization_arglist ? @$specialization_arglist : () );
+        $self->adaptor->specialize_new_worker( $self, $specialization_arghash );
         my $new_role = $self->current_role();
 
         my $specialization_to = $new_role->analysis->logic_name.'('.$new_role->analysis_id.')';

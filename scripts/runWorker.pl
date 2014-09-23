@@ -124,15 +124,15 @@ my $worker = $queen->create_new_worker(
          -debug                 => $debug,
 );
 
-my $specialization_arglist = ($analyses_pattern || $analysis_id || $logic_name || $job_id) && [
+my $specialization_arghash = ($analyses_pattern || $analysis_id || $logic_name || $job_id) && {
      -analyses_pattern      => $analyses_pattern,
      -analysis_id           => $analysis_id,
      -logic_name            => $logic_name,
      -job_id                => $job_id,
      -force                 => $force,
-];
+};
 
-$worker->run( $specialization_arglist );
+$worker->run( $specialization_arghash );
 
 
 __DATA__
