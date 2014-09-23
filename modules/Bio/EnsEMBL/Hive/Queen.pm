@@ -649,12 +649,10 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 
 =head2 get_num_failed_analyses
 
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object (optional)
-  Example    : if( $self->get_num_failed_analyses( $my_analysis )) { do_something; }
-  Example    : my $num_failed_analyses = $self->get_num_failed_analyses();
-  Description: Reports all failed analyses and returns
-                either the number of total failed (if no $filter_analysis was provided)
-                or 1/0, depending on whether $filter_analysis failed or not.
+  Arg [1]    : $list_of_analyses
+  Example    : my $num_failed_analyses = $self->get_num_failed_analyses( [ $analysis_A, $analysis_B ] );
+  Example    : if( $self->get_num_failed_analyses( [ $analysis_A, $analysis_B, $analysis_C ] )) { do_something; }
+  Description: Reports all failed analyses and returns their number.
   Returntype : int
   Exceptions : none
   Caller     : beekeeper.pl
@@ -662,22 +660,23 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 =cut
 
 sub get_num_failed_analyses {
-    my ($self, $filter_analysis) = @_;
+    my ($self, $list_of_analyses) = @_;
 
-    my $failed_analyses = $self->db->get_AnalysisAdaptor->fetch_all_failed_analyses();
+    my $failed_analyses_counter = 0;
 
-    my $filter_analysis_failed = 0;
-
-    foreach my $failed_analysis (@$failed_analyses) {
-        warn "\t##########################################################\n";
-        warn "\t# Too many jobs in analysis '".$failed_analysis->logic_name."' FAILED #\n";
-        warn "\t##########################################################\n\n";
-        if($filter_analysis and ($filter_analysis->dbID == $failed_analysis)) {
-            $filter_analysis_failed = 1;
+    foreach my $analysis (@$list_of_analyses) {
+        my $stats = $analysis->stats;
+        if( $stats->status eq 'FAILED') {
+            my $logic_name          = $analysis->logic_name;
+            my $failed_job_count    = $stats->failed_job_count;
+            my $tolerance           = $analysis->failed_job_tolerance;
+            warn "\t##################################################################################################\n";
+            warn "\t# Analysis '$logic_name' has FAILED    (failed Jobs: $failed_job_count, tolerance: $tolerance\%) #\n";
+            warn "\t##################################################################################################\n";
+            $failed_analyses_counter++;
         }
     }
-
-    return $filter_analysis ? $filter_analysis_failed : scalar(@$failed_analyses);
+    return $failed_analyses_counter;
 }
 
 

@@ -391,7 +391,7 @@ sub run_autonomously {
             print "Not submitting any workers this iteration\n";
         }
 
-        $failed_analyses       = $queen->get_num_failed_analyses( $run_analysis );
+        $failed_analyses       = $queen->get_num_failed_analyses( $list_of_analyses );
         $num_of_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress( $run_analysis );
 
     } while( $keep_alive
