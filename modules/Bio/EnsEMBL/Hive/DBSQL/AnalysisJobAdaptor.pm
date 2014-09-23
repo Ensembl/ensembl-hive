@@ -138,21 +138,29 @@ sub store_jobs_and_adjust_counters {
 
 =head2 fetch_all_by_analysis_id_status
 
-  Arg [1]    : (optional) int $analysis_id
+  Arg [1]    : (optional) listref $list_of_analyses
   Arg [2]    : (optional) string $status
   Arg [3]    : (optional) int $retry_at_least
   Example    : $all_failed_jobs = $adaptor->fetch_all_by_analysis_id_status(undef, 'FAILED');
-               $analysis_done_jobs = $adaptor->fetch_all_by_analysis_id_status($analysis->dbID, 'DONE');
+               $analysis_done_jobs = $adaptor->fetch_all_by_analysis_id_status( $list_of_analyses, 'DONE');
   Description: Returns a list of all jobs filtered by given analysis_id (if specified) and given status (if specified).
   Returntype : reference to list of Bio::EnsEMBL::Hive::AnalysisJob objects
 
 =cut
 
 sub fetch_all_by_analysis_id_status {
-    my ($self, $analysis_id, $status, $retry_count_at_least) = @_;
+    my ($self, $list_of_analyses, $status, $retry_count_at_least) = @_;
 
     my @constraints = ();
-    push @constraints, "analysis_id=$analysis_id"             if ($analysis_id);
+
+    if($list_of_analyses) {
+        if(ref($list_of_analyses) eq 'ARRAY') {
+            push @constraints, "analysis_id IN (".(join(',', map {$_->dbID} @$list_of_analyses)).")";
+        } else {
+            push @constraints, "analysis_id=$list_of_analyses"; # for compatibility with old interface
+        }
+    }
+
     push @constraints, "status='$status'"                     if ($status);
     push @constraints, "retry_count >= $retry_count_at_least" if ($retry_count_at_least);
 
