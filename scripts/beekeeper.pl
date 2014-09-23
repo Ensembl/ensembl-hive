@@ -102,6 +102,7 @@ sub main {
                'job_limit=i'            => \$self->{'job_limit'},
                'life_span|lifespan=i'   => \$self->{'life_span'},
                'logic_name=s'           => \$self->{'logic_name'},
+               'analyses_pattern=s'     => \$self->{'analyses_pattern'},
                'hive_log_dir|hive_output_dir=s'      => \$self->{'hive_log_dir'},
                'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
                'can_respecialize=i'     => \$self->{'can_respecialize'},
@@ -241,11 +242,20 @@ sub main {
         }
     }
 
-    my $analysis = $run_job_id
-        ? $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis
-        : ( $self->{'logic_name'} && $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($self->{'logic_name'}) );
+    if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analysis_pattern quietly
+        $self->{'analyses_pattern'} = $self->{'logic_name'};
+    }
 
-    my $list_of_analyses = $analysis ? [ $analysis ] : $self->{'dba'}->get_AnalysisAdaptor->fetch_all();
+    my $list_of_analyses = $run_job_id
+        ? [ $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis ]
+        : $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $self->{'analyses_pattern'} );
+
+    unless( @$list_of_analyses ) {
+        die "Beekeeper : could not fetch even a single analysis for ". ( $run_job_id
+            ? "-job_id $run_job_id\n"
+            : "-analyses_pattern '".$self->{'analyses_pattern'}."'\n"
+        );
+    }
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
@@ -253,7 +263,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $analysis, $run_job_id, $force);
+        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -294,7 +304,7 @@ sub main {
 
 
 sub generate_worker_cmd {
-    my ($self, $run_analysis, $run_job_id, $force) = @_;
+    my ($self, $analyses_pattern, $run_job_id, $force) = @_;
 
     my $worker_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl';
 
@@ -312,8 +322,8 @@ sub generate_worker_cmd {
         # special task:
     if ($run_job_id) {
         $worker_cmd .= " -job_id $run_job_id";
-    } elsif ($run_analysis) {
-        $worker_cmd .= " -logic_name ".$run_analysis->logic_name;
+    } elsif ($analyses_pattern) {
+        $worker_cmd .= " -analyses_pattern '".$analyses_pattern."'";
     }
 
     if (defined($force)) {
@@ -325,9 +335,9 @@ sub generate_worker_cmd {
 
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $run_analysis, $run_job_id, $force) = @_;
+    my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
 
-    my $resourceless_worker_cmd = generate_worker_cmd($self, $run_analysis, $run_job_id, $force);
+    my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
     my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
     my %meadow_type_rc_name2resource_param_list = ();
