@@ -647,10 +647,10 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 }
 
 
-=head2 show_and_return_totals
+=head2 print_status_and_return_reasons_to_exit
 
   Arg [1]    : $list_of_analyses
-  Example    : my ($failed_analyses_counter, $num_remaining_jobs) = $queen->show_and_return_totals( [ $analysis_A, $analysis_B ] );
+  Example    : my $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( [ $analysis_A, $analysis_B ] );
   Description: Runs through all analyses in the given list, reports failed analyses, computes some totals, prints a combined status line
                 and returns a pair of ($failed_analyses_counter, $total_jobs_to_do)
   Exceptions : none
@@ -658,22 +658,22 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 
 =cut
 
-sub show_and_return_totals {
+sub print_status_and_return_reasons_to_exit {
     my ($self, $list_of_analyses) = @_;
 
-    my ($failed_analyses_counter, $total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 5;
+    my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
+    my $reasons_to_exit = '';
 
-    foreach my $analysis (@$list_of_analyses) {
+    foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
 
+        print $stats->toString . "\n";
+
         if( $stats->status eq 'FAILED') {
-            my $logic_name          = $analysis->logic_name;
-            my $tolerance           = $analysis->failed_job_tolerance;
-            warn "\t##################################################################################################\n";
-            warn "\t# Analysis '$logic_name' has FAILED    (failed Jobs: $failed_job_count, tolerance: $tolerance\%) #\n";
-            warn "\t##################################################################################################\n";
-            $failed_analyses_counter++;
+            my $logic_name    = $analysis->logic_name;
+            my $tolerance     = $analysis->failed_job_tolerance;
+            $reasons_to_exit .= "### Analysis '$logic_name' has FAILED  (failed Jobs: $failed_job_count, tolerance: $tolerance\%) ###\n";
         }
 
         $total_done_jobs    += $stats->done_job_count;
@@ -688,29 +688,14 @@ sub show_and_return_totals {
                                     ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
                                     : 0.0;
 
-    warn sprintf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
+    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
                 scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
 
-    return ($failed_analyses_counter, $total_jobs_to_do);
-}
-
-
-=head2 print_analysis_status
-
-  Arg [1]    : $list_of_analyses
-  Example    : $queen->print_analysis_status( [ $analysis_A, $analysis_B ] );
-  Description: Runs through all analyses in the given list and prints their stats.
-  Exceptions : none
-  Caller     : beekeeper.pl
-
-=cut
-
-sub print_analysis_status {
-    my ($self, $list_of_analyses) = @_;
-
-    foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
-        print $analysis->stats->toString . "\n";
+    unless( $total_jobs_to_do ) {
+        $reasons_to_exit .= "### No jobs left to do ###\n";
     }
+
+    return $reasons_to_exit;
 }
 
 

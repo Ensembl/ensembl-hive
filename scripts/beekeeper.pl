@@ -261,7 +261,7 @@ sub main {
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        $queen->print_analysis_status( $list_of_analyses ) unless($self->{'no_analysis_stats'});
+        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} );
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -272,7 +272,6 @@ sub main {
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);   # show what would be submitted, but do not actually submit
-        $queen->show_and_return_totals( $list_of_analyses );
 
         if($show_failed_jobs) {
             print("===== failed jobs\n");
@@ -339,20 +338,22 @@ sub run_autonomously {
     my $beekeeper_pid = $$;
 
     my $iteration=0;
-    my $num_of_remaining_jobs=0;
-    my $failed_analyses=0;
-    do {
-        if($iteration++) {
-            $self->{'dba'}->dbc->disconnect_if_idle;
-            printf("sleep %.2f minutes. Next loop at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
-            sleep($self->{'sleep_minutes'}*60);  
-        }
+    my $reasons_to_exit;
 
-        print("\n======= beekeeper loop ** $iteration **==========\n");
+    BKLOOP: while( ($iteration++ != $max_loops) or $keep_alive ) {  # NB: the order of conditions is important!
+
+        print("\nBeekeeper : loop #$iteration ======================================================\n");
 
         $queen->check_for_dead_workers($valley, 0);
 
-        $queen->print_analysis_status( $list_of_analyses ) unless($self->{'no_analysis_stats'});
+        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} )) {
+            if($keep_alive) {
+                print "Beekeeper : detected exit condition, but staying alive because of -keep_alive : ".$reasons_to_exit;
+            } else {
+                last BKLOOP;
+            }
+        }
+
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
         my $workers_to_submit_by_meadow_type_rc_name
@@ -374,7 +375,7 @@ sub run_autonomously {
                 foreach my $rc_name (keys %{ $workers_to_submit_by_meadow_type_rc_name->{$meadow_type} }) {
                     my $this_meadow_rc_worker_count = $workers_to_submit_by_meadow_type_rc_name->{$meadow_type}{$rc_name};
 
-                    print "Submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
+                    print "\nBeekeeper : submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
@@ -387,21 +388,19 @@ sub run_autonomously {
                 }
             }
         } else {
-            print "Not submitting any workers this iteration\n";
+            print "\nBeekeeper : not submitting any workers this iteration\n";
         }
 
-        ($failed_analyses, $num_of_remaining_jobs) = $queen->show_and_return_totals( $list_of_analyses );
+        if( $iteration != $max_loops ) {    # skip the last sleep
+            $self->{'dba'}->dbc->disconnect_if_idle;
+            printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
+            sleep($self->{'sleep_minutes'}*60);  
+        }
+    }
 
-    } while( $keep_alive
-            or (!$failed_analyses and $num_of_remaining_jobs and $iteration!=$max_loops) );
+    print "Beekeeper : stopped looping because ".( $reasons_to_exit || "the number of loops was limited by $max_loops and this limit expired\n");
 
-    print "The Beekeeper has stopped because ".(
-          $failed_analyses ? "there were $failed_analyses failed analyses"
-        : !$num_of_remaining_jobs ? "there is nothing left to do"
-        : "the number of loops was limited by $max_loops and this limit expired"
-    )."\n";
-
-    printf("dbc %d disconnect cycles\n", $self->{'dba'}->dbc->disconnect_count);
+    printf("Beekeeper: dbc %d disconnect cycles\n", $self->{'dba'}->dbc->disconnect_count);
 }
 
 
