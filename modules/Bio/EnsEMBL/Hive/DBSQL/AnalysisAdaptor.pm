@@ -61,13 +61,6 @@ sub object_class {
 }
 
 
-sub fetch_all_failed_analyses {
-    my $self = shift;
-
-    return $self->fetch_all( "JOIN analysis_stats s USING(analysis_id) WHERE s.status='FAILED'" );
-}
-
-
 =head2 fetch_by_logic_name_or_url
 
     Description: given a URL gets the analysis from URLFactory, otherwise fetches it from the db

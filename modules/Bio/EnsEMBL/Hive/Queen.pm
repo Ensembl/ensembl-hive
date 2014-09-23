@@ -647,73 +647,51 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 }
 
 
-=head2 get_num_failed_analyses
+=head2 show_and_return_totals
 
   Arg [1]    : $list_of_analyses
-  Example    : my $num_failed_analyses = $self->get_num_failed_analyses( [ $analysis_A, $analysis_B ] );
-  Example    : if( $self->get_num_failed_analyses( [ $analysis_A, $analysis_B, $analysis_C ] )) { do_something; }
-  Description: Reports all failed analyses and returns their number.
-  Returntype : int
+  Example    : my ($failed_analyses_counter, $num_remaining_jobs) = $queen->show_and_return_totals( [ $analysis_A, $analysis_B ] );
+  Description: Runs through all analyses in the given list, reports failed analyses, computes some totals, prints a combined status line
+                and returns a pair of ($failed_analyses_counter, $total_jobs_to_do)
   Exceptions : none
   Caller     : beekeeper.pl
 
 =cut
 
-sub get_num_failed_analyses {
+sub show_and_return_totals {
     my ($self, $list_of_analyses) = @_;
 
-    my $failed_analyses_counter = 0;
+    my ($failed_analyses_counter, $total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 5;
 
     foreach my $analysis (@$list_of_analyses) {
-        my $stats = $analysis->stats;
+        my $stats               = $analysis->stats;
+        my $failed_job_count    = $stats->failed_job_count;
+
         if( $stats->status eq 'FAILED') {
             my $logic_name          = $analysis->logic_name;
-            my $failed_job_count    = $stats->failed_job_count;
             my $tolerance           = $analysis->failed_job_tolerance;
             warn "\t##################################################################################################\n";
             warn "\t# Analysis '$logic_name' has FAILED    (failed Jobs: $failed_job_count, tolerance: $tolerance\%) #\n";
             warn "\t##################################################################################################\n";
             $failed_analyses_counter++;
         }
-    }
-    return $failed_analyses_counter;
-}
 
-
-=head2 get_remaining_jobs_show_hive_progress
-
-  Arg [1]    : $list_of_analyses
-  Example    : my $num_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress( [ $analysis_A, $analysis_B ] );
-  Description: Runs through all analyses in the given list, computes the total number of remaining jobs and prints a combined status line.
-  Exceptions : none
-  Caller     : beekeeper.pl
-
-=cut
-
-sub get_remaining_jobs_show_hive_progress {
-    my ($self, $list_of_analyses) = @_;
-
-    my ($done, $failed, $total, $cpumsec_to_do) = (0) x 4;
-
-    foreach my $analysis (@$list_of_analyses) {
-        my $stats = $analysis->stats;
-
-        $done           += $stats->done_job_count;
-        $failed         += $stats->failed_job_count;
-        $total          += $stats->total_job_count;
-        $cpumsec_to_do  += $stats->ready_job_count * $stats->avg_msec_per_job;
+        $total_done_jobs    += $stats->done_job_count;
+        $total_failed_jobs  += $failed_job_count;
+        $total_jobs         += $stats->total_job_count;
+        $cpumsec_to_do      += $stats->ready_job_count * $stats->avg_msec_per_job;
     }
 
-    my $jobs_to_do              = $total - $done - $failed;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
+    my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
     my $cpuhrs_to_do            = $cpumsec_to_do / (1000.0*60*60);
-    my $percentage_completed    = $total
-                                    ? (($done+$failed)*100.0/$total)
+    my $percentage_completed    = $total_jobs
+                                    ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
                                     : 0.0;
 
     warn sprintf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
-                scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $jobs_to_do, $done, $failed, $total);
+                scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
 
-    return $jobs_to_do;
+    return ($failed_analyses_counter, $total_jobs_to_do);
 }
 
 
