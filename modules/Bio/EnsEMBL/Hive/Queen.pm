@@ -680,30 +680,40 @@ sub get_num_failed_analyses {
 }
 
 
+=head2 get_remaining_jobs_show_hive_progress
+
+  Arg [1]    : $list_of_analyses
+  Example    : my $num_remaining_jobs = $queen->get_remaining_jobs_show_hive_progress( [ $analysis_A, $analysis_B ] );
+  Description: Runs through all analyses in the given list, computes the total number of remaining jobs and prints a combined status line.
+  Exceptions : none
+  Caller     : beekeeper.pl
+
+=cut
+
 sub get_remaining_jobs_show_hive_progress {
-    my ($self, $filter_analysis) = @_;
+    my ($self, $list_of_analyses) = @_;
 
-    my $sql =qq{    SELECT  sum(done_job_count), sum(failed_job_count), sum(total_job_count),
-                            sum(ready_job_count * analysis_stats.avg_msec_per_job)/1000/60/60
-                    FROM analysis_stats }
-            . ($filter_analysis ? " WHERE analysis_id=".$filter_analysis->dbID : '');
+    my ($done, $failed, $total, $cpumsec_to_do) = (0) x 4;
 
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    my ($done, $failed, $total, $cpuhrs) = $sth->fetchrow_array();
-    $sth->finish;
+    foreach my $analysis (@$list_of_analyses) {
+        my $stats = $analysis->stats;
 
-    $done   ||= 0;
-    $failed ||= 0;
-    $total  ||= 0;
-    my $completed = $total
-    ? ((100.0 * ($done+$failed))/$total)
-    : 0.0;
-    my $remaining = $total - $done - $failed;
-    warn sprintf("%30s %1.3f%% complete (< %1.3f CPU_hrs) (%d todo + %d done + %d failed = %d total)\n",
-                ($filter_analysis ? "analysis '".$filter_analysis->logic_name."'" : 'hive'), $completed, $cpuhrs, $remaining, $done, $failed, $total);
+        $done           += $stats->done_job_count;
+        $failed         += $stats->failed_job_count;
+        $total          += $stats->total_job_count;
+        $cpumsec_to_do  += $stats->ready_job_count * $stats->avg_msec_per_job;
+    }
 
-    return $remaining;
+    my $jobs_to_do              = $total - $done - $failed;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
+    my $cpuhrs_to_do            = $cpumsec_to_do / (1000.0*60*60);
+    my $percentage_completed    = $total
+                                    ? (($done+$failed)*100.0/$total)
+                                    : 0.0;
+
+    warn sprintf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
+                scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $jobs_to_do, $done, $failed, $total);
+
+    return $jobs_to_do;
 }
 
 
