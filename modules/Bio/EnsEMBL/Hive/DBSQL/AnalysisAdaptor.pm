@@ -113,6 +113,18 @@ sub fetch_all_by_pattern {
 
         $analyses = $self->fetch_all();
 
+    } elsif( $pattern=~/,/ ) {  # make sure we don't get any repeats as a result of joining
+
+        my %uniq = ();
+
+        foreach my $subpattern (split(/,/, $pattern)) {
+            foreach my $analysis (@{ $self->fetch_all_by_pattern( $subpattern ) }) {
+                $uniq{$analysis->dbID} = $analysis;
+            }
+        }
+
+        $analyses = [ values %uniq ];
+
     } elsif( $pattern=~/^\d+$/ ) {
 
         $analyses = $self->fetch_all_by_analysis_id( $pattern );
