@@ -246,8 +246,14 @@ sub main {
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
-    my $list_of_analyses = $run_job_id
-        ? [ $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis ]
+    my $run_job;
+    if($run_job_id) {
+        $run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )
+            or die "Could not fetch Job with dbID=$run_job_id.\n";
+    }
+
+    my $list_of_analyses = $run_job
+        ? [ $run_job->analysis ]
         : $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $self->{'analyses_pattern'} );
 
     if( $self->{'analyses_pattern'} ) {
