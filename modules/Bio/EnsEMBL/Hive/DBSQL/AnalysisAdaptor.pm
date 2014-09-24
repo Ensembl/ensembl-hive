@@ -135,11 +135,11 @@ sub fetch_all_by_pattern {
 
     } elsif( $pattern=~/^(\d+)\.\.$/ ) {
 
-        $analyses = $self->fetch_all( "$1<analysis_id" );
+        $analyses = $self->fetch_all( "$1<=analysis_id" );
 
     } elsif( $pattern=~/^\.\.(\d+)$/ ) {
 
-        $analyses = $self->fetch_all( "analysis_id<$1" );
+        $analyses = $self->fetch_all( "analysis_id<=$1" );
 
     } elsif( $pattern=~/^\w+$/) {
 
