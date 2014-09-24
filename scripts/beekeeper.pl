@@ -250,11 +250,13 @@ sub main {
         ? [ $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )->analysis ]
         : $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $self->{'analyses_pattern'} );
 
-    unless( @$list_of_analyses ) {
-        die "Beekeeper : could not fetch even a single analysis for ". ( $run_job_id
-            ? "-job_id $run_job_id\n"
-            : "-analyses_pattern '".$self->{'analyses_pattern'}."'\n"
-        );
+    if( $self->{'analyses_pattern'} ) {
+        if( @$list_of_analyses ) {
+            print "Beekeeper : the following Analyses matched your -analysis_pattern '".$self->{'analyses_pattern'}."' : "
+                .join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)."\n\n";
+        } else {
+            die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
+        }
     }
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
