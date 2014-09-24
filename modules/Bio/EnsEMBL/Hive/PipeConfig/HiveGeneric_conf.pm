@@ -519,8 +519,10 @@ sub add_objects_from_config {
          = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
                  -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
 
-        unless($logic_name) {
+        if( not $logic_name ) {
             die "logic_name' must be defined in every analysis";
+        } elsif( $logic_name =~ /[+\-\%\.,]/ ) {
+            die "Characters + - % . , are no longer allowed to be a part of an Analysis name. Please rename Analysis '$logic_name' and try again.\n";
         }
 
         if($seen_logic_name{$logic_name}++) {
