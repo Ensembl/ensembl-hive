@@ -113,13 +113,24 @@ sub fetch_all_by_pattern {
 
         $analyses = $self->fetch_all();
 
-    } elsif( $pattern=~/,/ ) {  # make sure we don't get any repeats as a result of joining
+    } elsif( $pattern=~/[+\-,]/ ) {     # merging by inclusion/exclusion, and maintaining uniqueness
 
-        my %uniq = ();
+        my @syll = split(/([+\-,])/, $pattern);
 
-        foreach my $subpattern (split(/,/, $pattern)) {
+        my %uniq = map { ($_->dbID => $_) } @{ $self->fetch_all_by_pattern( shift @syll ) };   # initialize with the first syllable
+
+        while(@syll) {
+            my $operation   = shift @syll;
+            my $subpattern  = shift @syll;
+
             foreach my $analysis (@{ $self->fetch_all_by_pattern( $subpattern ) }) {
-                $uniq{$analysis->dbID} = $analysis;
+                if($operation eq '-') {
+                    delete $uniq{$analysis->dbID};
+                } elsif ($operation eq '+' or $operation eq ',') {
+                    $uniq{$analysis->dbID} = $analysis;
+                } else {
+                    throw( "Complex pattern '$pattern' not recognized" );
+                }
             }
         }
 
