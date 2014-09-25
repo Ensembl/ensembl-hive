@@ -243,6 +243,7 @@ sub main {
     }
 
     if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analysis_pattern quietly
+#        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
@@ -428,7 +429,7 @@ __DATA__
 
 =head1 NAME
 
-    beekeeper.pl
+    beekeeper.pl [options]
 
 =head1 DESCRIPTION
 
@@ -450,8 +451,8 @@ __DATA__
         # Run the pipeline in automatic mode (-loop), run all the workers locally (-meadow_type LOCAL) and allow for 3 parallel workers (-total_running_workers_max 3)
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -meadow_type LOCAL -total_running_workers_max 3 -loop
 
-        # Run in automatic mode, but only restrict to running the 'fast_blast' analysis
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -logic_name fast_blast -loop
+        # Run in automatic mode, but only restrict to running blast-related analyses with the exception of analyses 4..6
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern 'blast%-4..6' -loop
 
         # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
@@ -494,11 +495,11 @@ __DATA__
 
 =head2 Worker control
 
-    -job_limit <num>            : #jobs to run before worker can die naturally
-    -life_span <num>            : life_span limit for each worker
-    -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
-    -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
+    -analyses_pattern <string>  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
     -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
+    -life_span <num>            : life_span limit for each worker
+    -job_limit <num>            : #jobs to run before worker can die naturally
+    -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected
     -debug <debug_level>        : set debug level of the workers
 

@@ -124,6 +124,16 @@ my $worker = $queen->create_new_worker(
          -debug                 => $debug,
 );
 
+
+if( $logic_name ) {
+#    warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
+    $analyses_pattern = $logic_name;
+} elsif ( $analysis_id ) {
+#    warn "-analysis_id is now deprecated, please use -analyses_pattern that extends the functionality of -analysis_id and -logic_name .\n";
+    $analyses_pattern = $analysis_id;
+}
+
+
 my $specialization_arghash = ($analyses_pattern || $analysis_id || $logic_name || $job_id) && {
      -analyses_pattern      => $analyses_pattern,
      -analysis_id           => $analysis_id,
@@ -141,7 +151,7 @@ __DATA__
 
 =head1 NAME
 
-    runWorker.pl
+    runWorker.pl [options]
 
 =head1 DESCRIPTION
 
@@ -159,8 +169,11 @@ __DATA__
         # Run one local worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
 
-        # Run one local worker process in ehive_dbname and specify the logic_name
-    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -logic_name fast_blast
+        # Run one local worker process in ehive_dbname and constrain its initial specialization within a subset of analyses
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -analyses_pattern '1..15,analysis_X,21'
+
+        # Run one local worker process in ehive_dbname and allow it to respecialize within a subset of analyses
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize 1 -analyses_pattern 'blast%-4..6'
 
         # Run a specific job in a local worker process:
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
@@ -169,16 +182,15 @@ __DATA__
 
 =head2 Connection parameters:
 
-    -reg_conf <path>        : path to a Registry configuration file
-    -reg_alias <string>     : species/alias name for the Hive DBAdaptor
-    -url <url string>       : url defining where database is located
+    -reg_conf <path>            : path to a Registry configuration file
+    -reg_alias <string>         : species/alias name for the Hive DBAdaptor
+    -url <url string>           : url defining where database is located
 
 =head2 Task specificaton parameters:
 
     -rc_id <id>                 : resource class id
     -rc_name <string>           : resource class name
-    -analysis_id <id>           : pre-specify this worker in a particular analysis defined by database id
-    -logic_name <string>        : pre-specify this worker in a particular analysis defined by name
+    -analyses_pattern <string>  : restrict the specialization of the Worker to the specified subset of Analyses
     -job_id <id>                : run a specific job defined by its database id
     -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 

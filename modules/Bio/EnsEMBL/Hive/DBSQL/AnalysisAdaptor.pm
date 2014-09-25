@@ -104,6 +104,22 @@ sub fetch_by_url_query {
 }
 
 
+=head2 fetch_all_by_pattern
+
+  Arg [1]    : (optional) string $pattern
+  Example    : my $first_fifteen_analyses_and_two_more = $analysis_adaptor->fetch_all_by_pattern( '1..15,analysis_X,21' );
+  Example    : my $two_open_ranges = $analysis_adaptor->fetch_all_by_pattern( '..7,10..' );
+  Example    : my $double_exclusion = $analysis_adaptor->fetch_all_by_pattern( '1..15-3..5+4' );
+  Example    : my $blast_related_with_exceptions = $analysis_adaptor->fetch_all_by_pattern( 'blast%-12-%funnel' );
+  Description: Fetches an arrayref of non-repeating Analyses objects by interpreting a pattern.
+                The pattern can contain individual analyses_ids, individual logic_names,
+                open and closed ranges of analysis_ids, wildcard patterns of logic_names,
+                merges (+ or ,) and exclusions (-) of the above subsets.
+  Exceptions : none
+  Caller     : both beekeeper.pl (for scheduling) and runWorker.pl (for specialization)
+
+=cut
+
 sub fetch_all_by_pattern {
     my ($self, $pattern) = @_;
 
