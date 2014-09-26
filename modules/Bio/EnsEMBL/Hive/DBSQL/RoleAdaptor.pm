@@ -60,7 +60,7 @@ sub object_class {
 
 
 sub finalize_role {
-    my ($self, $role) = @_;
+    my ($self, $role, $self_burial) = @_;
 
     my $role_id         = $role->dbID;
     my $when_finished   = $role->when_finished ? "'".$role->when_finished."'" : 'CURRENT_TIMESTAMP';
@@ -68,13 +68,26 @@ sub finalize_role {
     my $sql = "UPDATE role SET when_finished=$when_finished WHERE role_id=$role_id";
 
     $self->dbc->do( $sql );
+
+    unless( $self->db->hive_use_triggers() ) {
+        $self->db->get_AnalysisStatsAdaptor->decrease_running_workers( $role->analysis_id );
+    }
+
+    unless( $self_burial ) {
+        $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $role );
+    }
+
+        # Re-sync the analysis_stats when a worker dies as part of dynamic sync system.
+        # It will also re-calculate num_running_workers (from active roles) and num_required_workers,
+        # so no further adjustment should be necessary.
+    $self->db->get_WorkerAdaptor->safe_synchronize_AnalysisStats( $role->analysis->stats );
 }
 
 
-sub fetch_last_by_worker_id {
+sub fetch_last_unfinished_by_worker_id {
     my ($self, $worker_id) = @_;
 
-    return $self->fetch_all( "WHERE worker_id=$worker_id ORDER BY role_id DESC LIMIT 1", 1 );
+    return $self->fetch_all( "WHERE worker_id=$worker_id AND when_finished IS NULL ORDER BY role_id DESC LIMIT 1", 1 );
 }
 
 

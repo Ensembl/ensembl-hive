@@ -191,7 +191,7 @@ sub create_new_worker {
 }
 
 
-=head2 specialize_new_worker
+=head2 specialize_worker
 
   Description: If analysis_id or logic_name is specified it will try to specialize the Worker into this analysis.
                If not specified the Queen will analyze the hive and pick the most suitable analysis.
@@ -199,7 +199,7 @@ sub create_new_worker {
 
 =cut
 
-sub specialize_new_worker {
+sub specialize_worker {
     my $self    = shift @_;
     my $worker  = shift @_;
     my $flags   = shift @_;
@@ -280,15 +280,11 @@ sub specialize_new_worker {
         die "No analysis suitable for the worker was found\n";
     }
 
-    my $role_adaptor = $self->db->get_RoleAdaptor;
-    if( my $old_role = $worker->current_role ) {
-        $role_adaptor->finalize_role( $old_role );
-    }
     my $new_role = Bio::EnsEMBL::Hive::Role->new(
         'worker'        => $worker,
         'analysis'      => $analysis,
     );
-    $role_adaptor->store( $new_role );
+    $self->db->get_RoleAdaptor->store( $new_role );
     $worker->current_role( $new_role );
 
     if($job_id) {
@@ -332,12 +328,12 @@ sub register_worker_death {
     my $current_role    = $worker->current_role;
 
     unless( $current_role ) {
-        $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_by_worker_id( $worker_id ) );
+        $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_unfinished_by_worker_id( $worker_id ) );
     }
 
-    if( $current_role ) {
+    if( $current_role and !$current_role->when_finished() ) {
         $current_role->when_finished( $worker_died );
-        $self->db->get_RoleAdaptor->finalize_role( $current_role );
+        $self->db->get_RoleAdaptor->finalize_role( $current_role, $self_burial );
     }
 
     my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
@@ -346,32 +342,6 @@ sub register_worker_death {
             . " WHERE worker_id='$worker_id' ";
 
     $self->dbc->do( $sql );
-
-    if( my $analysis_id = $current_role && $current_role->analysis_id ) {
-        my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
-
-        unless( $self->db->hive_use_triggers() ) {
-            $analysis_stats_adaptor->decrease_running_workers( $analysis_id );
-        }
-
-        unless( $cause_of_death eq 'NO_ROLE'
-            or  $cause_of_death eq 'NO_WORK'
-            or  $cause_of_death eq 'JOB_LIMIT'
-            or  $cause_of_death eq 'HIVE_OVERLOAD'
-            or  $cause_of_death eq 'LIFESPAN'
-        ) {
-                $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $current_role );
-        }
-
-            # re-sync the analysis_stats when a worker dies as part of dynamic sync system:
-        $self->safe_synchronize_AnalysisStats( $current_role->analysis->stats );
-
-        if( $current_role->analysis->stats->status ne 'DONE') {
-                # Since I'm dying I should make sure there is someone to take my place after I'm gone.
-                # Above sync still sees me as a 'living worker' so I need to compensate for that.
-            $analysis_stats_adaptor->increase_required_workers( $analysis_id );
-        }
-    }
 }
 
 
