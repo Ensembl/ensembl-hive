@@ -527,9 +527,10 @@ sub run {
         }
 
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and !$specialization_arglist ) {
-            $self->adaptor->db->get_AnalysisStatsAdaptor->decrease_running_workers( $self->current_role->analysis->dbID );  # FIXME: tidy up this counting of active roles
+            my $old_role = $self->current_role;
+            $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 1 );
             $self->cause_of_death(undef);
-            $self->specialize_and_compile_wrapper();
+            $self->specialize_and_compile_wrapper( $specialization_arglist, $old_role->analysis );
         }
 
     }     # /Worker's lifespan loop
@@ -558,17 +559,17 @@ sub run {
 
 
 sub specialize_and_compile_wrapper {
-    my ($self, $specialization_arglist) = @_;
+    my ($self, $specialization_arglist, $prev_analysis) = @_;
 
     eval {
         $self->enter_status('SPECIALIZATION');
-        my $old_role = $self->current_role();
-        $self->adaptor->specialize_new_worker( $self, $specialization_arglist ? @$specialization_arglist : () );
-        my $new_role = $self->current_role();
+        $self->adaptor->specialize_worker( $self, $specialization_arglist ? @$specialization_arglist : () );
 
+        my $new_role = $self->current_role();
         my $specialization_to = $new_role->analysis->logic_name.'('.$new_role->analysis_id.')';
-        if($old_role) {
-            my $respecialization_from = $old_role->analysis->logic_name.'('.$old_role->analysis_id.')';
+
+        if( $prev_analysis ) {
+            my $respecialization_from = $prev_analysis && $prev_analysis->logic_name.'('.$prev_analysis->dbID.')';
             $self->worker_say( "respecializing from $respecialization_from to $specialization_to" );
         } else {
             $self->worker_say( "specializing to $specialization_to" );
