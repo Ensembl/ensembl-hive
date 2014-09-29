@@ -54,8 +54,10 @@ sub main {
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
     my $reset_job_id                = 0;
-    my $reset_all_jobs_for_analysis = 0;
-    my $reset_failed_jobs_for_analysis = 0;
+    my $reset_all_jobs_for_analysis = 0;        # DEPRECATED
+    my $reset_failed_jobs_for_analysis = 0;     # DEPRECATED
+    my $reset_all_jobs              = 0;
+    my $reset_failed_jobs           = 0;
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
@@ -121,8 +123,10 @@ sub main {
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
                'reset_job_id=i'    => \$reset_job_id,
-               'reset_failed|reset_failed_jobs_for_analysis=s' => \$reset_failed_jobs_for_analysis,
-               'reset_all|reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
+               'reset_failed_jobs_for_analysis=s' => \$reset_failed_jobs_for_analysis,
+               'reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
+               'reset_failed_jobs' => \$reset_failed_jobs,
+               'reset_all_jobs'    => \$reset_all_jobs,
                'job_output=i'      => \$job_id_for_output,
     );
 
@@ -207,13 +211,11 @@ sub main {
         print $job->toString. "\n";
     }
 
-    if(my $reset_logic_name = $reset_all_jobs_for_analysis || $reset_failed_jobs_for_analysis) {
-
-        my $reset_analysis = $self->{'dba'}->get_AnalysisAdaptor->fetch_by_logic_name($reset_logic_name)
-              || die( "Cannot AnalysisAdaptor->fetch_by_logic_name($reset_logic_name)"); 
-
-        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id($reset_analysis->dbID, $reset_all_jobs_for_analysis); 
-        $self->{'dba'}->get_Queen->synchronize_AnalysisStats($reset_analysis->stats);
+    if($reset_all_jobs_for_analysis) {
+        die "Deprecated option -reset_all_jobs_for_analysis. Please use -reset_all_jobs in combination with -analyses_pattern <pattern>";
+    }
+    if($reset_failed_jobs_for_analysis) {
+        die "Deprecated option -reset_failed_jobs_for_analysis. Please use -reset_failed_jobs in combination with -analyses_pattern <pattern>";
     }
 
     if ($kill_worker_id) {
@@ -264,6 +266,11 @@ sub main {
         } else {
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
         }
+    }
+
+    if($reset_all_jobs || $reset_failed_jobs) {
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
+        $self->{'dba'}->get_Queen->synchronize_hive( $list_of_analyses );
     }
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
@@ -514,10 +521,8 @@ __DATA__
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
-    -reset_failed_jobs_for_analysis <logic_name>
-                           : reset FAILED jobs of an analysis back to READY so they can be rerun
-    -reset_all_jobs_for_analysis <logic_name>
-                           : reset ALL jobs of an analysis back to READY so they can be rerun
+    -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -reset_all_jobs        : reset ALL jobs of -analyses_filter'ed ones back to READY so they can be rerun
 
 =head1 LICENSE
 

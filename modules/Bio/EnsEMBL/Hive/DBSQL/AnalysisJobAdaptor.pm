@@ -558,15 +558,17 @@ sub gc_dataflow {
 =cut
 
 sub reset_jobs_for_analysis_id {
-    my ($self, $analysis_id, $input_statuses) = @_;
+    my ($self, $list_of_analyses, $input_statuses) = @_;
 
-    my $status_filter = '';
+    my $analyses_filter = ( ref($list_of_analyses) eq 'ARRAY' )
+        ? 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')'
+        : 'analysis_id='.$list_of_analyses;     # compatibility mode (to be deprecated)
 
-    if(ref($input_statuses) eq 'ARRAY') {
-        $status_filter = 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')';
-    } elsif(!$input_statuses) {
-        $status_filter = "AND status='FAILED'"; # temporarily keep it here for compatibility
-    }
+    my $statuses_filter = (ref($input_statuses) eq 'ARRAY')
+        ? 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')'
+        : (!$input_statuses)
+            ? "AND status='FAILED'"             # compatibility mode (to be deprecated)
+            : '';
 
     my $sql = qq{
             UPDATE job
@@ -574,15 +576,20 @@ sub reset_jobs_for_analysis_id {
         }. ( ($self->dbc->driver eq 'pgsql')
         ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
         : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
-        ).qq{
-            WHERE analysis_id=?
-        } . $status_filter;
+        )." WHERE ".$analyses_filter
+        .' '. $statuses_filter;
 
     my $sth = $self->prepare($sql);
-    $sth->execute($analysis_id);
+    $sth->execute();
     $sth->finish;
 
-    $self->db->get_AnalysisStatsAdaptor->update_status($analysis_id, 'LOADING');
+    if( ref($list_of_analyses) eq 'ARRAY' ) {
+        foreach my $analysis ( @$list_of_analyses ) {
+            $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
+        }
+    } else {
+        $self->db->get_AnalysisStatsAdaptor->update_status($list_of_analyses, 'LOADING');   # compatibility mode (to be deprecated)
+    }
 }
 
 
