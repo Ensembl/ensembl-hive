@@ -318,8 +318,6 @@ sub specialize_worker {
 sub register_worker_death {
     my ($self, $worker, $self_burial) = @_;
 
-    return unless($worker);
-
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
     my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void

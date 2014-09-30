@@ -219,7 +219,8 @@ sub main {
     }
 
     if ($kill_worker_id) {
-        my $kill_worker = $queen->fetch_by_dbID($kill_worker_id);
+        my $kill_worker = $queen->fetch_by_dbID($kill_worker_id)
+            or die "Could not fetch worker with dbID='$kill_worker_id' to kill";
 
         unless( $kill_worker->cause_of_death() ) {
             if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $kill_worker ) ) {
