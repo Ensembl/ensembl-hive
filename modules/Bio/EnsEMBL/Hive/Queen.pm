@@ -529,7 +529,9 @@ sub synchronize_hive {
   Description: Prewrapper around synchronize_AnalysisStats that does
                checks and grabs sync_lock before proceeding with sync.
                Used by distributed worker sync system to avoid contention.
-  Exceptions : none
+               Returns 1 on success and 0 if the lock could not have been obtained,
+               and so no sync was attempted.
+  Returntype : boolean
   Caller     : general
 
 =cut
@@ -554,8 +556,11 @@ sub safe_synchronize_AnalysisStats {
 
         if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
             $self->synchronize_AnalysisStats($stats);   
+            return 1;
         } # otherwise assume it's locked and just return un-updated
     }
+
+    return 0;
 }
 
 
