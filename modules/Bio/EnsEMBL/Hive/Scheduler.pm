@@ -58,7 +58,7 @@ sub schedule_workers_resync_if_necessary {
 
     my ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
-    print $log_buffer;
+    print join("\n", @$log_buffer, '');
 
     unless( $total_extra_workers_required ) {
         print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
@@ -90,7 +90,7 @@ sub schedule_workers_resync_if_necessary {
 
         ($workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
             = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
-        print $log_buffer;
+        print join("\n", @$log_buffer, '');
     }
 
         # adjustment for pending workers:
@@ -152,7 +152,7 @@ sub schedule_workers {
         # the pre-pending-adjusted outcome will be stored here:
     my %workers_to_submit_by_meadow_type_rc_name    = ();
     my $total_extra_workers_required                = 0;
-    my $log_buffer                                  = '';
+    my @log_buffer                                  = ();
 
     my $submit_capacity_limiter                     = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
     my $queen_capacity_limiter                      = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
@@ -209,17 +209,17 @@ sub schedule_workers {
         if($analysis_id2rc_name) {
             my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
             $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-            $log_buffer .= $analysis_stats->toString . "\n";
-            $log_buffer .= sprintf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
-                $analysis->logic_name,
-                $queen_capacity_limiter->available_capacity,
-            );
+            push @log_buffer, $analysis_stats->toString;
+            push @log_buffer, sprintf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
+                                $analysis->logic_name,
+                                $queen_capacity_limiter->available_capacity,
+                            );
         } else {
             return $analysis_stats;     # FIXME: returns data in different format in "suggest analysis" mode
         }
     }
 
-    return (\%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
+    return (\%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, \@log_buffer);
 }
 
 
