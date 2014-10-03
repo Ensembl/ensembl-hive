@@ -309,7 +309,7 @@ sub submit_workers {
 
     my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_array_name_with_indices}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
 
-    warn "LSF::submit_workers() running cmd:\n\t$cmd\n";
+    print "Executing [ ".$self->signature." ] \t\t$cmd\n";
 
     system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
 }

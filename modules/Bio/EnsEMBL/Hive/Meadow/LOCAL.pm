@@ -128,7 +128,7 @@ sub submit_workers {
     my $cmd = "$worker_cmd &";
 
     foreach (1..$required_worker_count) {
-        print "SUBMITTING_CMD:\t\t$rc_specific_submission_cmd_args $cmd\n";
+        print "Executing [ ".$self->signature." ] \t\t$cmd\n";
         system( $cmd );
     }
 }
