@@ -180,7 +180,7 @@ sub schedule_workers {
         foreach my $analysis_stats (@stats_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
                 if( $analysis_id2rc_name ) {    # only add this message when scheduling and not during a Worker's specialization
-                    push @log_buffer, "Submission capacity ($submit_capacity) has been reached.";
+                    push @log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
                 }
                 last;
             }
@@ -190,7 +190,7 @@ sub schedule_workers {
             my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
             if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached ) {
-                push @log_buffer, "Capacity of '$this_meadow_type' Meadow has been reached, skipping Analysis '$logic_name'.";
+                push @log_buffer, "Total capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
                 next;
             }
 

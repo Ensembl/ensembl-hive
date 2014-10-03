@@ -39,6 +39,8 @@ sub new {
 
     my $self = bless {}, $class;
     $self->description( $description );
+
+    $self->original_capacity( $available_capacity );
     $self->available_capacity( $available_capacity );
 
         # we fix the multiplier at 1 for direct limiters, but expect it to be (re)set later by reciprocal limiters:
@@ -55,6 +57,16 @@ sub description {
         $self->{_description} = shift @_;
     }
     return $self->{_description};
+}
+
+
+sub original_capacity {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{_original_capacity} = shift @_;
+    }
+    return $self->{_original_capacity};
 }
 
 
