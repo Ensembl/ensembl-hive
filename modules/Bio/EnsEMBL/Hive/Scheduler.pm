@@ -139,6 +139,12 @@ sub suggest_analysis_to_specialize_a_worker {
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers( $queen, 1, $worker_meadow_type, \@list_of_analyses );
 
+    if( $worker->debug ) {
+        foreach my $msg (@$log_buffer) {
+            $worker->worker_say( $msg );
+        }
+    }
+
         # take the first analysis from the "plan" if the "plan" was not empty:
     return scalar(@$workers_to_submit_by_analysis) && $workers_to_submit_by_analysis->[0][0];
 }

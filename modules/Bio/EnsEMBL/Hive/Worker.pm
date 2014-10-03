@@ -205,9 +205,19 @@ sub log_dir {
 ## Non-Storable attributes:
 
 sub current_role {
-      my $self = shift;
-      $self->{'_current_role'} = shift if(@_);
-      return $self->{'_current_role'};
+    my $self = shift;
+
+    if( @_ ) {
+        if( my $from_analysis = $self->{'_current_role'} && $self->{'_current_role'}->analysis ) {
+            $self->worker_say( "unspecializing from ".$from_analysis->logic_name.'('.$from_analysis->dbID.')' );
+        }
+        my $new_role = shift @_;
+        if( my $to_analysis = $new_role && $new_role->analysis ) {
+            $self->worker_say( "specializing to ".$to_analysis->logic_name.'('.$to_analysis->dbID.')' );
+        }
+        $self->{'_current_role'} = $new_role;
+    }
+    return $self->{'_current_role'};
 }
 
 
@@ -529,6 +539,7 @@ sub run {
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and (!$specialization_arghash or $specialization_arghash->{'-analyses_pattern'}!~/^\w+$/) ) {
             my $old_role = $self->current_role;
             $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 1 );
+            $self->current_role( undef );
             $self->cause_of_death(undef);
             $self->specialize_and_compile_wrapper( $specialization_arghash, $old_role->analysis );
         }
@@ -564,22 +575,11 @@ sub specialize_and_compile_wrapper {
     eval {
         $self->enter_status('SPECIALIZATION');
         $self->adaptor->specialize_worker( $self, $specialization_arghash );
-
-        my $new_role = $self->current_role();
-        my $specialization_to = $new_role->analysis->logic_name.'('.$new_role->analysis_id.')';
-
-        if( $prev_analysis ) {
-            my $respecialization_from = $prev_analysis && $prev_analysis->logic_name.'('.$prev_analysis->dbID.')';
-            $self->worker_say( "respecializing from $respecialization_from to $specialization_to" );
-        } else {
-            $self->worker_say( "specializing to $specialization_to" );
-        }
-
         1;
     } or do {
         my $msg = $@;
         chomp $msg;
-        $self->worker_say( "[re]specialization failed:\t$msg" );
+        $self->worker_say( "specialization failed:\t$msg" );
         $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
