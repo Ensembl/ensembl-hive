@@ -44,6 +44,17 @@ use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Limiter;
 
 
+sub scheduler_say {
+    my ($msgs) = @_;
+
+    $msgs = [ $msgs ] unless( ref($msgs) eq 'ARRAY' );
+
+    foreach my $msg (@$msgs) {
+        print "Scheduler : $msg\n";
+    }
+}
+
+
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
@@ -58,39 +69,42 @@ sub schedule_workers_resync_if_necessary {
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
-    print join("\n", @$log_buffer, '');
+
+    scheduler_say( $log_buffer );
 
     unless( $total_extra_workers_required ) {
-        print "\nScheduler: according to analysis_stats no workers are required... let's see if resync can fix it.\n" ;
+        scheduler_say( "According to analysis_stats no workers are required... let's see if anything went out of sync." );
 
             # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
         if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley->count_running_workers ) {
-            print "Scheduler: mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers...\n";
+            scheduler_say( "Mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers..." );
             $queen->check_for_dead_workers($valley, 1);
         }
 
-        print "Scheduler: re-synchronizing...\n";
+        scheduler_say( "re-synchronizing..." );
         $queen->synchronize_hive( $list_of_analyses );
 
         if( $queen->db->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
             if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # and double-check on our side
-                print "Scheduler: looks like we may need re-balancing semaphore_counts...\n";
+                scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
                 if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ) ) {
-                    print "Scheduler: re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization...\n";
+                    scheduler_say( "re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization..." );
                     $queen->synchronize_hive( $list_of_analyses );
                 } else {
-                    print "Scheduler: hmmm... managed to re-balance 0 jobs, you may need to investigate further.\n";
+                    scheduler_say( "hmmm... managed to re-balance 0 jobs, you may need to investigate further." );
                 }
             } else {
-                print "Scheduler: apparently there are no semaphored jobs that may need to be re-balanced at this time.\n";
+                scheduler_say( "apparently there are no semaphored jobs that may need to be re-balanced at this time." );
             }
         } else {
-            print "Scheduler: automatic re-balancing of semaphore_counts is off by default. If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table.\n";
+            scheduler_say( [ "automatic re-balancing of semaphore_counts is off by default.",
+                            "If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table." ] );
         }
 
         ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
             = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
-        print join("\n", @$log_buffer, '');
+
+        scheduler_say( $log_buffer );
     }
 
         # adjustment for pending workers:
@@ -100,17 +114,17 @@ sub schedule_workers_resync_if_necessary {
         while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
             if(my $pending_this_group = $pending_worker_counts_by_meadow_type_rc_name->{ $this_meadow_type }{ $this_rc_name }) {
 
-                print "Scheduler was thinking of submitting $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when it detected $pending_this_group pending in this group, ";
+                scheduler_say( "The plan was to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when the Scheduler detected $pending_this_group pending in this group, " );
 
                 if( $workers_to_submit_this_group > $pending_this_group) {
                     $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}   -= $pending_this_group; # adjust the hashed value
-                    print "so is going to submit only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra\n";
+                    scheduler_say( "so I recommend submitting only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra" );
                 } else {
                     delete $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name};                   # avoid leaving an empty group in the hash
-                    print "so is not going to submit any extra\n";
+                    scheduler_say( "so I don't recommend submitting any extra" );
                 }
             } else {
-                print "Scheduler is going to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers\n";
+                scheduler_say( "I recommend submitting $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers" );
             }
         }
 
@@ -242,7 +256,7 @@ sub schedule_workers {
             if($analysis_id2rc_name) {
                 my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
                 $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-                push @log_buffer, sprintf("Before checking the Valley for pending jobs, Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]\n",
+                push @log_buffer, sprintf("Before checking the Valley for pending jobs, the Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
                                     $logic_name,
                                     $queen_capacity_limiter->available_capacity,
                                 );
@@ -252,7 +266,7 @@ sub schedule_workers {
 
     } else {
 
-        push @log_buffer, "Scheduler could not find any suitable analyses to start with.";
+        push @log_buffer, "Could not find any suitable analyses to start with.";
     }
 
     return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, \@log_buffer);
