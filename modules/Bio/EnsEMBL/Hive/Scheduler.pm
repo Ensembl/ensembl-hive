@@ -191,17 +191,23 @@ sub schedule_workers {
     my @workers_to_submit_by_analysis               = ();   # The down-to-analysis "plan" that may completely change by the time the Workers are born and specialized
     my %workers_to_submit_by_meadow_type_rc_name    = ();   # Pre-pending-adjusted per-resource breakout
     my $total_extra_workers_required                = 0;
-    my @log_buffer                                  = ();
+    my ($stats_sorted_by_suitability, $log_buffer)  = Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $list_of_analyses );
 
-    if( my @stats_sorted_by_suitability = @{ Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $list_of_analyses ) } ) {
+    unless( @$stats_sorted_by_suitability ) {
 
-        my $submit_capacity_limiter                     = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
-        my $queen_capacity_limiter                      = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
+        unless( @$log_buffer ) {
+            push @$log_buffer, "Could not find any suitable analyses to start scheduling.";
+        }
 
-        foreach my $analysis_stats (@stats_sorted_by_suitability) {
+    } else {
+
+        my $submit_capacity_limiter = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
+        my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
+
+        foreach my $analysis_stats (@$stats_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
                 if( $analysis_id2rc_name ) {    # only add this message when scheduling and not during a Worker's specialization
-                    push @log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
+                    push @$log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
                 }
                 last;
             }
@@ -211,23 +217,23 @@ sub schedule_workers {
             my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
             if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached ) {
-                push @log_buffer, "Available capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
+                push @$log_buffer, "Available capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
                 next;
             }
 
                 #digging deeper under the surface so need to sync:
             if( $analysis_stats->status =~ /^(LOADING|ALL_CLAIMED|BLOCKED|SYNCHING)$/ ) {
-                push @log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
+                push @$log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
 
                 if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
-                    push @log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
+                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
                 } else {
-                    push @log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
+                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
                     next;
                 }
             }
             if( $analysis_stats->status =~ /^(BLOCKED|SYNCHING)$/ ) {
-                push @log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
+                push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
                 next;
             }
 
@@ -235,7 +241,7 @@ sub schedule_workers {
             my $extra_workers_this_analysis = $analysis_stats->num_required_workers;
 
             if ($extra_workers_this_analysis <= 0) {
-                push @log_buffer, "Analysis '$logic_name' doesn't require extra workers, skipping it.";
+                push @$log_buffer, "Analysis '$logic_name' doesn't require extra workers, skipping it.";
                 next;
             }
 
@@ -262,7 +268,7 @@ sub schedule_workers {
 
                 # do not continue with this analysis if limiters haven't agreed on a positive number:
             if ($extra_workers_this_analysis <= 0) {
-                push @log_buffer, "Although Analysis '$logic_name' needed extra workers, it is being skipped because of activated limiters.";
+                push @$log_buffer, "Although Analysis '$logic_name' needed extra workers, it is being skipped because of activated limiters.";
                 next;
             }
 
@@ -272,25 +278,21 @@ sub schedule_workers {
             }
 
             push @workers_to_submit_by_analysis, [ $analysis, $extra_workers_this_analysis];
-            push @log_buffer, $analysis_stats->toString;
+            push @$log_buffer, $analysis_stats->toString;
 
             if($analysis_id2rc_name) {
                 my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
                 $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-                push @log_buffer, sprintf("Before checking the Valley for pending jobs, the Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
+                push @$log_buffer, sprintf("Before checking the Valley for pending jobs, the Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
                                     $logic_name,
                                     $queen_capacity_limiter->available_capacity,
                                 );
             }
 
-        }   # /foreach my $analysis_stats (@stats_sorted_by_suitability)
-
-    } else {
-
-        push @log_buffer, "Could not find any suitable analyses to start scheduling.";
+        }   # /foreach my $analysis_stats (@$stats_sorted_by_suitability)
     }
 
-    return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, \@log_buffer);
+    return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
 }
 
 
@@ -301,14 +303,30 @@ sub sort_stats_by_suitability {
                                 shuffle                             # 1. make sure analyses are well mixed within the same priority level
                                     @{ shift @_ };
 
-        # assuming sync() is expensive, so first trying analyses that have already been sunk:
-    my @primary_candidates      = grep { ($_->num_required_workers > 0) and ($_->status =~/^(READY|WORKING)$/) }
-                                            @sorted_stats;
+    my (@primary_candidates, @secondary_candidates, $discarded_count, @log_buffer);
 
-    my @secondary_candidates    = grep { $_->status =~ /^(LOADING|BLOCKED|ALL_CLAIMED|SYNCHING)$/ }
-                                            @sorted_stats;
+    foreach my $stats ( @sorted_stats ) {
 
-    return [@primary_candidates,  @secondary_candidates];
+            # assuming sync() is expensive, so first trying analyses that have already been sunk:
+        if( ($stats->num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
+
+            push @primary_candidates, $stats;
+
+        } elsif( $stats->status =~ /^(LOADING|BLOCKED|ALL_CLAIMED|SYNCHING)$/ ) {
+
+            push @secondary_candidates, $stats;
+
+        } else {
+
+            $discarded_count++;
+        }
+    }
+
+    if( $discarded_count ) {
+        push @log_buffer, "Discarded $discarded_count analyses because they do not need any Workers.";
+    }
+
+    return ( [@primary_candidates,  @secondary_candidates], \@log_buffer );
 }
 
 1;
