@@ -490,7 +490,8 @@ sub run {
 
                 } else {
                     my $desired_batch_size  = $current_role->analysis->stats->get_or_estimate_batch_size();
-                    $desired_batch_size     = $self->job_limiter->preliminary_offer( $desired_batch_size );
+                    my $hit_the_limit;  # dummy at the moment
+                    ($desired_batch_size, $hit_the_limit)   = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
                     if(scalar(@$actual_batch)) {

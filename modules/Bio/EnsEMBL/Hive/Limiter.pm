@@ -108,10 +108,12 @@ sub preliminary_offer {
         my $product = $available_capacity * $multiplier;
         my $slots_available = int( "$product" );            # stringification helps to round up things like 0.1*10 (instead of leaving them at 0.99999999)
 
-        return ($slots_available<$slots_asked) ? $slots_available : $slots_asked;
+        my $hit_the_limit = $slots_available<$slots_asked;
+
+        return ($hit_the_limit ? $slots_available : $slots_asked , $hit_the_limit);
     }
 
-    return $slots_asked;
+    return ($slots_asked, 0);
 }
 
 

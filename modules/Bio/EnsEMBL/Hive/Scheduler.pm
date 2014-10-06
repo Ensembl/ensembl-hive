@@ -261,15 +261,20 @@ sub schedule_workers {
                     : (),
             );
 
+            my $hit_the_limit;
+
                 # negotiations:
             foreach my $limiter (@limiters) {
-                $extra_workers_this_analysis = $limiter->preliminary_offer( $extra_workers_this_analysis );
-            }
+                ($extra_workers_this_analysis, $hit_the_limit) = $limiter->preliminary_offer( $extra_workers_this_analysis );
 
-                # do not continue with this analysis if limiters haven't agreed on a positive number:
-            if ($extra_workers_this_analysis <= 0) {
-                push @$log_buffer, "Although Analysis '$logic_name' needed extra workers, it is being skipped because of activated limiters.";
-                next;
+                if($hit_the_limit) {
+                    if($extra_workers_this_analysis>0) {
+                        push @$log_buffer, "Hit the limit of *** ".$limiter->description." ***, settling for $extra_workers_this_analysis Workers.";
+                    } else {
+                        push @$log_buffer, "Hit the limit of *** ".$limiter->description." ***, skipping this Analysis.";
+                        next;
+                    }
+                }
             }
 
                 # let all parties know the final decision of negotiations:
