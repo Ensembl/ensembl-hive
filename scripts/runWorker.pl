@@ -126,23 +126,19 @@ my $worker = $queen->create_new_worker(
 
 
 if( $logic_name ) {
-#    warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
+    warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
     $analyses_pattern = $logic_name;
 } elsif ( $analysis_id ) {
-#    warn "-analysis_id is now deprecated, please use -analyses_pattern that extends the functionality of -analysis_id and -logic_name .\n";
+    warn "-analysis_id is now deprecated, please use -analyses_pattern that extends the functionality of -analysis_id and -logic_name .\n";
     $analyses_pattern = $analysis_id;
 }
 
 
-my $specialization_arghash = ($analyses_pattern || $analysis_id || $logic_name || $job_id) && {
+$worker->run( {
      -analyses_pattern      => $analyses_pattern,
-     -analysis_id           => $analysis_id,
-     -logic_name            => $logic_name,
      -job_id                => $job_id,
      -force                 => $force,
-};
-
-$worker->run( $specialization_arghash );
+} );
 
 
 __DATA__

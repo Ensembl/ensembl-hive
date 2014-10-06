@@ -204,74 +204,38 @@ sub specialize_worker {
     my $worker  = shift @_;
     my $flags   = shift @_;
 
-    my ($analyses_pattern, $analysis_id, $logic_name, $job_id, $force)
-     = @$flags{qw(-analyses_pattern -analysis_id -logic_name -job_id -force)};
+    my ($analyses_pattern, $job_id, $force)
+     = @$flags{qw(-analyses_pattern -job_id -force)};
 
-    my $num_constraints = scalar( grep {defined($_)} ($analysis_id, $logic_name, $job_id) ); 
-
-    if( $num_constraints > 1) {
-        die "At most one of the options {-analysis_id, -logic_name, -job_id} can be set to pre-specialize a Worker";
+    if( $analyses_pattern and $job_id ) {
+        die "At most one of the options {-analyses_pattern, -job_id} can be set to pre-specialize a Worker";
     }
 
-    my ($analysis, $stats);
-    my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
+    my $analysis;
 
-    if( $num_constraints ) {    # probably pre-specialized from command-line
+    if( $job_id ) {
 
-        if($job_id) {
-            warn "resetting and fetching job for job_id '$job_id'\n";
+        warn "resetting and fetching job for job_id '$job_id'\n";
 
-            my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+        my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
-            my $job = $job_adaptor->fetch_by_dbID( $job_id )
-                or die "Could not fetch job with dbID='$job_id'";
-            my $job_status = $job->status();
+        my $job = $job_adaptor->fetch_by_dbID( $job_id )
+            or die "Could not fetch job with dbID='$job_id'";
+        my $job_status = $job->status();
 
-            if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_CLEANUP)/ ) {
-                die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
-            } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
-                die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
-            }
-
-            if(($job_status eq 'DONE') and $job->semaphored_job_id) {
-                warn "Increasing the semaphore count of the dependent job";
-                $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
-            }
-            $analysis = $job->analysis;
-
-        } elsif($logic_name) {
-            $analysis = $self->db->get_AnalysisAdaptor->fetch_by_logic_name($logic_name)
-                or die "analysis with name='$logic_name' could not be fetched from the database";
-
-        } elsif($analysis_id) {
-            $analysis = $self->db->get_AnalysisAdaptor->fetch_by_dbID($analysis_id)
-                or die "analysis with dbID='$analysis_id' could not be fetched from the database";
+        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_CLEANUP)/ ) {
+            die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
+        } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
+            die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
         }
 
-        if( $worker->resource_class_id
-        and $worker->resource_class_id != $analysis->resource_class_id) {
-                die "resource_class of analysis ".$analysis->logic_name." is incompatible with this Worker's resource_class";
+        if(($job_status eq 'DONE') and $job->semaphored_job_id) {
+            warn "Increasing the semaphore count of the dependent job";
+            $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
         }
 
-        $stats = $analysis->stats;
-        $self->safe_synchronize_AnalysisStats($stats);
+        $analysis = $job->analysis;
 
-        unless($job_id or $force) {    # do we really need to run this analysis?
-            if($self->db->get_RoleAdaptor->get_hive_current_load() >= 1.1) {
-                $worker->cause_of_death('HIVE_OVERLOAD');
-                die "Hive is overloaded, can't specialize a worker";
-            }
-            if($stats->status eq 'BLOCKED') {
-                die "Analysis is BLOCKED, can't specialize a worker";
-            }
-            if($stats->num_required_workers <= 0) {
-                die "Analysis doesn't require extra workers at the moment";
-            }
-            if($stats->status eq 'DONE') {
-                die "Analysis is DONE, and doesn't require workers";
-            }
-        }
-            # probably scheduled by beekeeper.pl:
     } else {
         $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_pattern);
 
@@ -290,6 +254,8 @@ sub specialize_worker {
     );
     $self->db->get_RoleAdaptor->store( $new_role );
     $worker->current_role( $new_role );
+
+    my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
 
     if($job_id) {
         my $role_id = $new_role->dbID;
