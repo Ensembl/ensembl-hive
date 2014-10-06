@@ -144,23 +144,44 @@ sub suggest_analysis_to_specialize_a_worker {
     my $worker_rc_id        = $worker->resource_class_id;
     my $worker_meadow_type  = $worker->meadow_type;
 
-    my @list_of_analyses    = grep { !$worker_rc_id or $worker_rc_id==$_->resource_class_id}
-                                grep { !$worker_meadow_type or !$_->meadow_type or ($worker_meadow_type eq $_->meadow_type) }
-                                    # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),
-                                    # the corresponding checks should be added here
-                                        @{ $queen->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern ) };
+    $analyses_pattern //= '%';  # for printing
 
-    my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers( $queen, 1, $worker_meadow_type, \@list_of_analyses );
+    my $analyses_matching_pattern   = $queen->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
 
-    if( $worker->debug ) {
-        foreach my $msg (@$log_buffer) {
-            $worker->worker_say( $msg );
+    if( ! @$analyses_matching_pattern ) {
+
+        return "Could not find any Analyses matching '$analyses_pattern' pattern";
+
+    } else {
+
+        $worker->worker_say( "Found ".scalar(@$analyses_matching_pattern)." analyses matching '$analyses_pattern' pattern" );
+
+        my @list_of_analyses    = grep { !$worker_rc_id or $worker_rc_id==$_->resource_class_id}
+                                    grep { !$worker_meadow_type or !$_->meadow_type or ($worker_meadow_type eq $_->meadow_type) }
+                                        # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),
+                                        # the corresponding checks should be added here
+                                            @$analyses_matching_pattern;
+
+        if( !@list_of_analyses ) {
+
+            return "Could not find any of the ".scalar(@$analyses_matching_pattern)." '$analyses_pattern' Analyses that would suit this Worker";
+
+        } else {
+
+            my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
+                = schedule_workers( $queen, 1, $worker_meadow_type, \@list_of_analyses );
+
+            if( $worker->debug ) {
+                foreach my $msg (@$log_buffer) {
+                    $worker->worker_say( $msg );
+                }
+            }
+
+            return scalar(@$workers_to_submit_by_analysis)
+                ? $workers_to_submit_by_analysis->[0][0]    # take the first analysis from the "plan" if the "plan" was not empty
+                : pop @$log_buffer;                         # or return the last line of the scheduling log
         }
     }
-
-        # take the first analysis from the "plan" if the "plan" was not empty:
-    return scalar(@$workers_to_submit_by_analysis) && $workers_to_submit_by_analysis->[0][0];
 }
 
 
@@ -190,7 +211,7 @@ sub schedule_workers {
             my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
             if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached ) {
-                push @log_buffer, "Total capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
+                push @log_buffer, "Available capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
                 next;
             }
 
@@ -266,7 +287,7 @@ sub schedule_workers {
 
     } else {
 
-        push @log_buffer, "Could not find any suitable analyses to start with.";
+        push @log_buffer, "Could not find any suitable analyses to start scheduling.";
     }
 
     return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, \@log_buffer);

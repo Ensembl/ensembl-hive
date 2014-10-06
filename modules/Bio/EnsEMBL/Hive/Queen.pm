@@ -272,11 +272,16 @@ sub specialize_worker {
             }
         }
             # probably scheduled by beekeeper.pl:
-    } elsif( $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_pattern) ) {
-
     } else {
-        $worker->cause_of_death('NO_ROLE');
-        die "No analysis suitable for the worker was found\n";
+        $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_pattern);
+
+        unless( ref($analysis) ) {
+
+            $worker->cause_of_death('NO_ROLE');
+
+            my $msg = $analysis // "No analysis suitable for the worker was found";
+            die "$msg\n";
+        }
     }
 
     my $new_role = Bio::EnsEMBL::Hive::Role->new(
