@@ -87,6 +87,8 @@ foreach my $branch_code (keys %$flow_into) {
 $runnable_object->input_job($job);
 $runnable_object->life_cycle();
 
+exit(1) if($job->died_somewhere());
+
 $runnable_object->cleanup_worker_temp_directory() unless($no_cleanup);
 
 __DATA__

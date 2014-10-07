@@ -222,7 +222,7 @@ sub warning {
     $is_error //= 0;
     chomp $msg;
 
-    $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg" );
+    $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg", 1 );
 
     my $job = $self->input_job;
 
