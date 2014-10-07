@@ -365,12 +365,14 @@ sub _subst_one_hashpair {
     } elsif($inside_hashes=~/^expr\((.*)\)expr$/) {
 
         my $expression = $1;
-            # FIXME: the following two lines will have to be switched to drop support for $old_substitution_syntax and stay with #new_substitution_syntax#
-        $expression=~s{(?:\$(\w+)|#(\w+)#)}{stringify($self->_param_possibly_overridden($1 // $2, $overriding_hash))}eg;    # substitute-by-value (bulky, but supports old syntax)
-#        $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;                         # substitute-by-call (no longer supports old syntax)
+
+        if($expression=~/\$\w+/) {
+            warn "ParamWarning: possibly using old substitution syntax in expression '$expression'; please use new syntax '#alpha#' instead of old '\$alpha'.\n";
+        }
+
+        $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;
 
         $value = eval "return $expression";     # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
-# warn "SOH: #$inside_hashes# becomes $expression and is then evaluated into ".stringify($value)."\n";
     }
 
     warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
