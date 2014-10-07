@@ -17,7 +17,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 
 
 sub main {
-    my ($reg_conf, $reg_type, $reg_alias, $url, $sqlcmd, $extra, $to_params, $verbose, $help, $report_versions);
+    my ($reg_conf, $reg_type, $reg_alias, $executable, $url, @prepend, @append, $sqlcmd, $to_params, $verbose, $help, $report_versions);
 
     GetOptions(
                 # connect to the database:
@@ -25,11 +25,12 @@ sub main {
             'reg_type=s'        => \$reg_type,
             'reg_alias=s'       => \$reg_alias,
 
+            'exec|executable=s' => \$executable,
             'url=s'             => \$url,
-
+            'prepend=s@'        => \@prepend,
+            'append|extra=s@'   => \@append,
             'sqlcmd=s'          => \$sqlcmd,
-            'extra=s'           => \$extra,
-            'to_params!'        => \$to_params,
+            'to_params!'        => \$to_params,     # is being phased out and so no longer documented
 
             'verbose!'          => \$verbose,
             'help!'             => \$help,
@@ -91,19 +92,21 @@ sub main {
         script_usage(1);
     }
 
-    my $cmd = dbc_hash_to_cmd( $dbc_hash, $sqlcmd, $extra, $to_params );
+    my @cmd = @{ dbc_hash_to_cmd( $dbc_hash, $executable, \@prepend, \@append, $sqlcmd, $to_params ) };
+
+    my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
 
     if($to_params) {
-        print "$cmd\n";
+        print "$flat_cmd\n";
     } else {
-        warn "\nRunning command:\t$cmd\n\n" if($verbose);
+        warn "\nRunning command:\n\t$flat_cmd\n\n" if($verbose);
 
-        exec($cmd);
+        exec(@cmd);
     }
 }
 
 sub dbc_hash_to_cmd {
-    my ($dbc_hash, $sqlcmd, $extra, $to_params) = @_;
+    my ($dbc_hash, $executable, $prepend, $append, $sqlcmd, $to_params) = @_;
 
     my $driver = $dbc_hash->{'driver'} || 'mysql';
 
@@ -112,7 +115,7 @@ sub dbc_hash_to_cmd {
             my $dbname = $2 || $dbc_hash->{dbname};
 
             if($driver eq 'sqlite') {
-                return "rm -f $dbname";
+                return ['rm', '-f', $dbname];
             } elsif(!$2) {
                 $sqlcmd = "$1 $dbname";
                 $dbc_hash->{dbname} = '';
@@ -121,7 +124,7 @@ sub dbc_hash_to_cmd {
             my $dbname = $2 || $dbc_hash->{dbname};
 
             if($driver eq 'sqlite') {
-                return "touch $dbname";
+                return ['touch', $dbname];
             } elsif(!$2) {
                 $sqlcmd = "$1 $dbname";
                 $dbc_hash->{dbname} = '';
@@ -129,36 +132,47 @@ sub dbc_hash_to_cmd {
         }
     }
 
-    my $cmd;
+    my @cmd;
 
     if($driver eq 'mysql') {
+        $executable ||= 'mysql';
 
-        $cmd = ($to_params ? '' : 'mysql ')
-              ."--host=$dbc_hash->{host} "
-              .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port} " : '')
-              ."--user=$dbc_hash->{user} --password='$dbc_hash->{pass}' "
-              .(defined($extra) ? "$extra " : '')
-              .($dbc_hash->{dbname} || '')
-              .(defined($sqlcmd) ? " -e '$sqlcmd'" : '');
+        push @cmd, $executable                      unless $to_params;
+        push @cmd, @$prepend                        if ($prepend && @$prepend);
+        push @cmd, "-h$dbc_hash->{'host'}"          if $dbc_hash->{'host'};
+        push @cmd, "-P$dbc_hash->{'port'}"          if $dbc_hash->{'port'};
+        push @cmd, "-u$dbc_hash->{'user'}"          if $dbc_hash->{'user'};
+        push @cmd, "-p$dbc_hash->{'pass'}"          if $dbc_hash->{'pass'};
+        push @cmd, ('-e', $sqlcmd)                  if $sqlcmd;
+        push @cmd, $dbc_hash->{'dbname'}            if $dbc_hash->{'dbname'};
+        push @cmd, @$append                         if ($append && @$append);
+
     } elsif($driver eq 'pgsql') {
+        $executable ||= 'psql';
 
-        $cmd = ($to_params ? '' : "env PGPASSWORD='$dbc_hash->{pass}' psql ")
-              ."--host=$dbc_hash->{host} "
-              .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port} " : '')
-              ."--username=$dbc_hash->{user} "
-              .(defined($sqlcmd) ? "--command='$sqlcmd' " : '')
-              .(defined($extra) ? "$extra " : '')
-              .($dbc_hash->{dbname} || '');
+        push @cmd, ('env', "PGPASSWORD='$dbc_hash->{'pass'}'")  if ($to_params && $dbc_hash->{'pass'});
+        push @cmd, $executable                                  unless $to_params;
+        push @cmd, @$prepend                                    if ($prepend && @$prepend);
+        push @cmd, ('-h', $dbc_hash->{'host'})                  if defined($dbc_hash->{'host'});
+        push @cmd, ('-p', $dbc_hash->{'port'})                  if defined($dbc_hash->{'port'});
+        push @cmd, ('-U', $dbc_hash->{'user'})                  if defined($dbc_hash->{'user'});
+        push @cmd, ('-c', $sqlcmd)                              if $sqlcmd;
+        push @cmd, @$append                                     if ($append && @$append);
+        push @cmd, $dbc_hash->{'dbname'}                        if defined($dbc_hash->{'dbname'});
+
     } elsif($driver eq 'sqlite') {
+        $executable ||= 'sqlite3';
 
         die "sqlite requires a database (file) name\n" unless $dbc_hash->{dbname};
-        $cmd = "sqlite3 "
-              .(defined($extra) ? "$extra " : '')
-              .$dbc_hash->{dbname}
-              .(defined($sqlcmd) ? " '$sqlcmd'" : '');
+
+        push @cmd, $executable                                  unless $to_params;
+        push @cmd, @$prepend                                    if ($prepend && @$prepend);
+        push @cmd, @$append                                     if ($append && @$append);
+        push @cmd, $dbc_hash->{'dbname'};
+        push @cmd, $sqlcmd                                      if $sqlcmd;
     }
 
-    return $cmd;
+    return \@cmd;
 }
 
 
@@ -174,7 +188,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -sql <sql_command> ] [ -extra <extra_params> ] [ -to_params | -verbose ]
+    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -exec <alt_executable> ] [ -prepend <prepend_params> ] [ -append <append_params> ] [ -sql <sql_command> ] [ -to_params | -verbose ]
 
 =head1 DESCRIPTION
 
@@ -185,8 +199,8 @@ __DATA__
 
     db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/" -sql 'CREATE DATABASE lg4_long_mult'
     db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
-    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -extra='--html'
-    eval mysqldump -t `db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -to_params` worker
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -append='--html'
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult" -exec mysqldump -prepend -t -append analysis_base -append job
 
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
