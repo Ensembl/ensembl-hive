@@ -51,9 +51,12 @@ $params->param_init(1, {
 
 print $params->param_substitute( "Substituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#\n" );
 
-print $params->param_substitute( 'Old syntax needs single quotes or escaping the dollar. #expr( "One scalar: $alpha and another: $beta and again one: $alpha and another: $beta" )expr#' )."\n";
+print $params->param_substitute( "This is csvq:gamma -> #csvq:gamma#\n" );
+print $params->param_substitute( "\tsum(gamma) -> #expr( sum (\@{#gamma#}) )expr#\n" );
+print $params->param_substitute( "\tcsvq(gamma) -> #expr( csvq(undef,#gamma#) )expr#\n" );  # note the first argument ($self) has to be substituted by a dummy undef
+print $params->param_substitute( "\tjoin(sort(gamma)) -> #expr( join(', ', sort \@{#gamma#}))expr#\n" );
+print $params->param_substitute( "\tthe expression behind csvq reproduced using expr()expr -> #expr( join(', ', map {\"'\$ _'\"} sort \@{#gamma#}))expr#\n\n" );
 
-print $params->param_substitute( "This is csvq:gamma -> #csvq:gamma# and this is an expr()expr -> #expr( join(', ', sort \@{#gamma#}))expr#\n" );
 print $params->param_substitute( 'adding indexed values: #expr( #age#->{Alice}+(max @{#gamma#}) )expr#' )."\n";
 
 print $params->param_substitute( 'joined gamma: #expr( join(", ", @{ #gamma# } ) )expr#'."\n" );
