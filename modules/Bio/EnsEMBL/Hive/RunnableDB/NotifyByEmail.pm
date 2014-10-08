@@ -52,6 +52,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 sub param_defaults {
     return {
+            'is_html'    => 0,
             'subject' => 'An automatic message from your pipeline',
     };
 }
@@ -78,6 +79,8 @@ sub fetch_input {
 
     param('text'):    Text of the email message. It will undergo parameter substitution.
 
+    param('is_html'): Boolean. Whether the content of 'text' is in HTML
+
     param('*'):       Any other parameters can be freely used for parameter substitution.
 
 =cut
@@ -91,6 +94,7 @@ sub run {
 
     open(SENDMAIL, "|sendmail $email");
     print SENDMAIL "Subject: $subject\n";
+    print SENDMAIL "Content-Type: text/html;\n" if $self->param('is_html');
     print SENDMAIL "\n";
     print SENDMAIL "$text\n";
     close SENDMAIL;
