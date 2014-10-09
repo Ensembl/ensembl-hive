@@ -61,7 +61,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
@@ -354,6 +354,9 @@ sub run_pipeline_create_commands {
     my $self            = shift @_;
 
     foreach my $cmd (@{$self->overridable_pipeline_create_commands}) {
+        # We allow commands to be given as an arrayref, but we join the
+        # array elements anyway
+        my $cmd = join_command_args($cmd)->[1];
         warn "Running the command:\n\t$cmd\n";
         if(my $retval = system($cmd)) {
             die "Return value = $retval, possibly an error\n";
