@@ -1,0 +1,342 @@
+<html>
+    <head>
+        <title>Running eHive pipelines</title>
+        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
+    </head>
+<body>
+
+    <center><h1>Running eHive pipelines</h1></center>
+
+    <hr width=50% />
+
+    <h2>Quick overview</h2>
+
+    <p>Each eHive pipeline is a potentially complex computational process.</p>
+
+    <p>Whether it runs locally, on the farm, or on multiple compute resources, this process is centered around a "blackboard"
+    (a MySQL, SQLite or PostgreSQL database) where individual jobs of the pipeline are created, claimed by independent Workers
+    and later recorded as done or failed.</p>
+
+    <p>Running the pipeline involves the following steps:</p>
+    <ul>
+    <li>
+        (optionally) Editing a "PipeConfig" file that describes the structure of a future pipeline and some of its parameters
+        (this file acts as a template and can be used to create multiple instances of the same pipeline that can be run independently
+        at the same time on the same compute resource)
+    </li>
+    <li>
+        Creating an instance pipeline database from the "PipeConfig" file
+    </li>
+    <li>
+        (optionally) Creating initial jobs on the "blackboard" ("seeding")
+    </li>
+    <li>
+        Running the <b>beekeeper.pl</b> script that will look after the pipeline and maintain a population of Worker processes
+            on the compute resource that will take and perform all the jobs of the pipeline
+    </li>
+    <li>
+        (optionally) Monitoring the state of the running pipeline
+        <ol>
+            <li>
+                by periodically generating a fresh snapshot of the pipeline diagram,
+            </li>
+            <li>
+                by using guiHive web interface.
+            </li>
+            <li>
+                by connecting to the database and issuing SQL commands,
+            </li>
+        </ol>
+    </li>
+    </ul>
+
+    <hr width=50% />
+
+    <h2>pre-Configuration of eHive pipelines via PipeConfig files</h2>
+
+    <p>Many aspects of a pipeline that can be pre-configured (both structural and parametric) are located in a "PipeConfig" file
+    that acts as a mould for pipeline databases of a particular class.
+    In current eHive system PipeConfig files are Perl modules (although it is likely to change).
+    These modules are derived from Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric . 
+    Developers of eHive pipelines tend to establish their own base classes that in turn derive from HiveGeneric
+    (such as Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric , for example).</p>
+    
+    <p>A Perl-based PipeConfig file is likely to define the following methods:</p>
+
+    <ul>
+    <li>
+        (optional and deprecated) default_options (returns a HashRef)
+                            - a hash of defaults for the options on which the rest of the configuration may depend.
+                            Do not rush to edit this section, since if an option appears in this hash, it means you can redefine
+                            its value from the <b>init_pipeline.pl</b> command line (explained below).
+    </li>
+    <li>
+        (optional) pipeline_create_commands (returns a ListRef)
+                            - a list of command lines that will be executed as system commands needed to create and set up the pipeline database.
+                            In most cases you don't need to change anything here either.
+    </li>
+    <li>
+        (optional) pipeline_wide_parameters (returns a HashRef)
+                            - a mapping between pipeline-wide parameter names and their values.
+    </li>
+    <li>
+		(optional) resource_classes (returns a HashRef)
+                            - a mapping between resource class names and corresponding farm-specific parameters for each class.
+		                     You may need to adjust some of these if running an existing pipeline on a different farm.
+    </li>
+    <li>
+        pipeline_analyses (returns a ListRef)
+		                    - the structure of the pipeline itself - which tasks to run, in which order, etc.
+		                      These are the very guts of the pipeline, so make sure you know what you are doing
+		                      if you are planning to change anything.
+    </li>
+    </ul>
+
+    <hr width=50% />
+
+    <h2>Initialization of the pipeline database</h2>
+
+    <p>Every eHive pipeline is centered around a "blackboard", which is usually a MySQL/SQLite/PostgreSQL database.
+    This database contains both static information
+	(general definition of analyses, associated runnables, parameters and resources, dependency rules, etc)
+	and runtime information about states of single jobs running on the farm or locally.</p>
+
+	<p>By initialization we mean an act of moulding one such new pipeline database from a PipeConfig file.
+	This is done by feeding the PipeConfig file to ensembl-hive/scripts/<b>init_pipeline.pl</b> script.<br/>
+	A typical example:
+    <pre>
+		<b>init_pipeline.pl</b> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url mysql://user:password@host:port/long_mult
+    </pre>
+    It will create a MySQL pipeline database called 'long_mult' with the given connection parameters.
+    In case of newer PipeConfig files these could be the only parameters needed, as the rest could be set at a later stage via "seeding" (see below).</p>
+
+    <p>If heavy concurrent traffic to the database is not expected, we may choose to keep the blackboard in a local SQLite file:
+    <pre>
+		<b>init_pipeline.pl</b> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url sqlite:///long_mult
+    </pre>
+    In the latter case no other connection parameters except for the filename are necessary, so they are skipped.
+    </p>
+
+	<p>A couple of more complicated examples:
+    <pre>
+		<b>init_pipeline.pl</b> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -user "my_db_username" -password "my_db_password" -mlss_id 12345
+    </pre>
+	It sets 'user', 'password' and 'mlss_id' parameters via command line options.
+	At this stage you can also override any of the other options mentioned in the default_options section of the PipeConfig file.</p>
+
+	<p>If you need to modify second-level values of a "hash option" (such as the '-host' or '-port' of the 'pipeline_db' option),
+	the syntax is the following (follows the extended syntax of Getopt::Long) :
+    <pre>
+		<b>init_pipeline.pl</b> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -port=5306
+    </pre>
+    </p>
+
+    <p><font color=red>PLEASE NOTE</font>:
+    Although many older PipeConfig files make extensive use of command-line options such as -password and -mlss_id above (so-called o() syntax),
+    it is no longer the only or recommended way of pre-configuring pipelines. There are better ways to configure pipelines,
+    so if you find yourself struggling to make sense of an existing PipeConfig's o() syntax, please talk to eHive developers or power-users
+    who are usually happy to help.</p>
+
+	<p>Normally, one run of <b>init_pipeline.pl</b> should create you a pipeline database.<br/>
+
+	If anything goes wrong and the process does not complete successfully, you will need to drop the partially created database in order to try again.
+    You can either drop the database manually, or use "-hive_force_init 1" option, which will automatically drop the database before trying to create it.
+    </p>
+
+	<p>If <b>init_pipeline.pl</b> completes successfully, it will print a legend of commands that could be run next:
+    <ul>
+        <li>how to "seed" jobs into the pipeline database</li>
+        <li>how to run the pipeline</li>
+        <li>how to connect to the pipeline database and monitor the progress</li>
+        <li>how to visualize the pipeline's diagram or resource usage statistics</li>
+        <li>etc...</li>
+    </ul>
+
+	Please remember that these command lines are for use only with a particular pipeline database,
+	and are likely to be different next time you run the pipeline. Moreover, they will contain a sensitive password!
+	So don't write them down.
+    </p>
+
+    <hr width=50% />
+
+    <h2>Generating a pipeline's flow diagram</h2>
+
+    <p>As soon as the pipeline database is ready you can store its visual flow diagram in an image file.
+        This diagram is a much better tool for understanding what is going on in the pipeline.
+        Run the following command to produce it:
+    <pre>
+        <b>generate_graph.pl</b> -url sqlite:///my_pipeline_database -out my_diagram.png
+    </pre>
+        You only have to choose the format (gif, jpg, png, svg, etc) by setting the output file extension.
+    </p>
+
+    <table><tr>
+    <td><img src=LongMult_diagram.png height=450></td>
+
+    <td width=50></td>
+
+    <td>
+    <h3>LEGEND:</h3>
+    <ul>
+        <li>The rounded nodes on the flow diagram represent Analyses (classes of jobs).</li>
+        <li>The white rectangular nodes represent Tables that hold user data.</li>
+        <li>The blue solid arrows are called "dataflow rules". They either generate new jobs (if they point to an Analysis node) or store data (if they point at a Table node).</li>
+        <li>The red solid arrows with T-heads are "analysis control rules". They block the pointed-at Analysis until all the jobs of the pointing Analysis are done.</li>
+        <li>Light-blue shadows behind some analyses stand for "semaphore rules". Together with red and green dashed lines they represent our main job control mechanism that will be described elsewhere.</li>
+    </ul>
+
+    <p>Each flow diagram thus generated is a momentary snapshot of the pipeline state, and these shapshots will be changing as the pipeline runs.
+        One of the things changing will be the colour of the Analysis nodes. The default colour legend is as follows:
+        <ul>
+            <li><span style="background-color:white">&nbsp;[&nbsp;EMPTY&nbsp;]&nbsp;</span> : the Analysis never had any jobs to do. Since pipelines are dynamic it may be ok for some Analyses to stay EMPTY until the very end.</li>
+            <li><span style="background-color:DeepSkyBlue">&nbsp;[&nbsp;DONE&nbsp;]&nbsp;</span> : all jobs of the Analysis are DONE. Since pipelines are dynamic, it may be a temporary state, until new jobs are added.</li>
+            <li><span style="background-color:green">&nbsp;[&nbsp;READY&nbsp;]&nbsp;</span> : some jobs are READY to be run, but nothing is running at the moment.</li>
+            <li><span style="background-color:yellow">&nbsp;[&nbsp;IN PROGRESS&nbsp;]&nbsp;</span> : some jobs of the Analysis are being processed at the moment of the snapshot.</li>
+            <li><span style="background-color:grey">&nbsp;[&nbsp;BLOCKED&nbsp;]&nbsp;</span> : none of the jobs of this Analysis can be run at the moment because of job dependency rules.</li>
+            <li><span style="background-color:red">&nbsp;[&nbsp;FAILED&nbsp;]&nbsp;</span> : the number of FAILED jobs in this Analysis has gone over a threshold (which is 0 by default). By default <b>beepeeper.pl</b> will exit if it encounters a FAILED analysis.</li>
+        </ul>
+    </p>
+
+    <p>
+        Another thing that will be changing from snapshot to snapshot is the job "breakout" formula displayed under the name of the Analysis.
+        It shows how many jobs are in which state and the total number of jobs. Separate parts of this formula are similarly colour-coded:
+        <ul>
+            <li>grey : <span style="background-color:grey">&nbsp;s&nbsp;</span> (SEMAPHORED) - individually blocked jobs</li>
+            <li>green : <span style="background-color:green">&nbsp;r&nbsp;</span> (READY) - jobs that are ready to be claimed by Workers</li>
+            <li>yellow : <span style="background-color:yellow">&nbsp;i&nbsp;</span> (IN PROGRESS) - jobs that are currently being processed by Workers</li>
+            <li>skyblue : <span style="background-color:DeepSkyBlue">&nbsp;d&nbsp;</span> (DONE) - successfully completed jobs</li>
+            <li>red : <span style="background-color:red">&nbsp;f&nbsp;</span> (FAILED) - unsuccessfully completed jobs</li>
+        </ul>
+    </p>
+    </td>
+    </tr></table>
+
+    <p>Actually, you don't even need to generate a pipeline database to see its diagram,
+        as the diagram can be generated directly from the PipeConfig file:
+    <pre>
+        <b>generate_graph.pl</b> -pipeconfig Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -out my_diagram2.png
+    </pre>
+        Such a "standalone" diagram may look slightly different (analysis_ids will be missing).
+    </p>
+
+    <p><font color=red>PLEASE NOTE</font>:
+    A very friendly <b>guiHive</b> web app can periodically regenerate the pipeline flow diagram for you,
+    so you can now monitor (and to a certain extent control) your pipeline from a web browser.
+    </p>
+
+    <hr width=50% />
+
+    <h2>Seeding jobs into the pipeline database</h2>
+
+    <p>Pipeline database contains a dynamic collection of jobs (tasks) to be done.
+        The jobs can be added to the "blackboard" either by the user (we call this process "seeding") or dynamically, by already running jobs.
+        When a database is created using <b>init_pipeline.pl</b> it may or may not be already seeded, depending on the PipeConfig file
+        (you can always make sure whether it has been automatically seeded by looking at the flow diagram).
+        If the pipeline needs seeding, this is done by running <b>seed_pipeline.pl</b> script,
+        by providing both the Analysis to be seeded and the parameters of the job being created:
+    <pre>
+		<b>seed_pipeline.pl</b> -url sqlite:///my_pipeline_database -logic_name "analysis_name" -input_id '{ "paramX" =&gt; "valueX", "paramY" =&gt; "valueY" }'
+    </pre>
+    It only makes sense to seed certain analyses, typically they are the ones that do not have any incoming dataflow on the flow diagram.
+    </p>
+
+    <hr width=50% />
+
+    <h2>Synchronizing ("sync"-ing) the pipeline database</h2>
+
+	<p>In order to function properly (to monitor the progress, block and unblock analyses and send correct number of workers to the farm)
+	the eHive system needs to maintain certain number of job counters. These counters and associated analysis states are updated
+	in the process of "synchronization" (or "sync"). This has to be done once before running the pipeline, and normally the pipeline
+	will take care of synchronization by itself and will trigger the 'sync' process automatically.
+	However sometimes things go out of sync. Especially when people try to outsmart the scheduler by manually stopping and running jobs :)
+	This is when you might want to re-sync the database. It is done by running the ensembl-hive/scripts/<b>beekeeper.pl</b> in "sync" mode:
+
+    <pre>
+		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -sync
+    </pre>
+    </p>
+
+    <hr width=50% />
+
+    <h2>Running the pipeline in automatic mode</h2>
+
+	<p>As mentioned previously, the usual lifecycle of an eHive pipeline is revolving around the pipeline database.
+	There are several "Worker" processes that run on the farm.
+	The Workers pick suitable tasks from the database, run them, and report back to the database.
+	There is also one "Beekeeper" process that normally loops on a head node of the farm,
+	monitors the progress of Workers and whenever needed submits more Workers to the farm
+	(since Workers die from time to time for natural and not-so-natural reasons, Beekeeper maintains the correct load).</p>
+
+	<p>So to "run the pipeline" all you have to do is to run the Beekeeper:
+    <pre>
+		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -loop
+    </pre>
+    </p>
+
+	<p>You can also restrict running to a subset of Analyses (either by analysis_id or by name pattern) :
+    <pre>
+		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -analyses_pattern 'alignment_%' -loop       <i># all analyses whose name starts with 'alignment_'</i>
+    </pre>
+    or
+    <pre>
+		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -analyses_pattern '1..5,fasta_check' -loop  <i># only analyses with analysis_id between 1 and 5 and 'fasta_check'</i>
+    </pre>
+    </p>
+
+	<p>In order to make sure the <b>beekeeper.pl</b> process doesn't die when you disconnect your ssh session from the farm,
+    it is normally run in a "screen session".<br/>
+
+	If your Beekeeper process gets killed for some reason, don't worry - you can re-sync and start another Beekeeper process.
+	It will pick up from where the previous Beekeeper left it.
+    </p>
+
+    <hr width=50% />
+
+    <h2>Monitoring the progress via a direct database session</h2>
+
+    <p>In addition to monitoring the visual flow diagram (that could be generated manually using <b>generate_graph.pl</b> or via <b>guiHive</b> web app)
+    you can also connect to the pipeline database directly and issue SQL commands. To avoid typing in all the connection details (syntax is different
+    depending on the particular database engine used) you can use a bespoke <b>db_cmd.pl</b> that takes the eHive database URL and performs the connection for you:
+
+    <pre>
+		<b>db_cmd.pl</b> -url sqlite:///my_pipeline_database
+    </pre>
+    or
+    <pre>
+		<b>db_cmd.pl</b> -url mysql://user:password@host:port/long_mult
+    </pre>
+    or
+    <pre>
+		<b>db_cmd.pl</b> -url pgsql://user:password@host:port/long_mult
+    </pre>
+
+	Once connected, you can run any SQL queries using eHive schema (see <a href=hive_schema.png>eHive schema diagram</a> and <a href=hive_schema.html>eHive schema description</a>).
+    </p>
+
+    <p>In addition to the tables, there is a "progress" view from which you can select and see how your jobs are doing:
+    <pre>
+		SELECT * from progress;
+    </pre>
+    </p>
+
+	<p>If you see jobs in 'FAILED' state or jobs with retry_count&gt;0 (which means they have failed at least once and had to be retried),
+	you may need to look at the "msg" view in order to find out the reason for the failures:
+    <pre>
+		SELECT * FROM msg WHERE job_id=1234;	# a specific job
+    </pre>
+	or
+    <pre>
+		SELECT * FROM msg WHERE analysis_id=15;	# jobs of a specific analysis
+    </pre>
+	or
+    <pre>
+		SELECT * FROM msg;	# show me all messages
+    </pre>
+    </p>
+
+	<p>Some of the messages indicate temporary errors (such as temporary lack of connectivity with a database or file),
+	but some others may be critical (wrong path to a binary) that will eventually make all jobs of an analysis fail.
+	If the "is_error" flag of a message is false, it may be just a diagnostic message which is not critical.</p>
+
+</body>
+</html>
