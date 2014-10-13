@@ -7,9 +7,9 @@
 
     <center><h1>Running eHive pipelines</h1></center>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
-    <h2>Quick overview</h2>
+    <h2>A quick overview</h2>
 
     <p>Each eHive pipeline is a potentially complex computational process.</p>
 
@@ -20,79 +20,32 @@
     <p>Running the pipeline involves the following steps:</p>
     <ul>
     <li>
-        (optionally) Editing a "PipeConfig" file that describes the structure of a future pipeline and some of its parameters
-        (this file acts as a template and can be used to create multiple instances of the same pipeline that can be run independently
-        at the same time on the same compute resource)
+        Using <a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> script to create an instance pipeline database from a "PipeConfig" file
     </li>
     <li>
-        Creating an instance pipeline database from the "PipeConfig" file
+        (optionally) Using <a href=scripts/seed_pipeline.html><b>seed_pipeline.pl</b></a> script to add jobs to the "blackboard"
     </li>
     <li>
-        (optionally) Creating initial jobs on the "blackboard" ("seeding")
-    </li>
-    <li>
-        Running the <b>beekeeper.pl</b> script that will look after the pipeline and maintain a population of Worker processes
+        Running the <a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> script that will look after the pipeline and maintain a population of Worker processes
             on the compute resource that will take and perform all the jobs of the pipeline
     </li>
     <li>
         (optionally) Monitoring the state of the running pipeline
         <ol>
             <li>
-                by periodically generating a fresh snapshot of the pipeline diagram,
+                by periodically running <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> that will produce a fresh snapshot of the pipeline diagram,
             </li>
             <li>
-                by using guiHive web interface.
+                by using <b>guiHive</b> web interface.
             </li>
             <li>
-                by connecting to the database and issuing SQL commands,
+                by connecting to the database using <a href=scripts/db_cmd.html><b>db_cmd.pl</b></a> script and issuing SQL commands,
             </li>
         </ol>
     </li>
     </ul>
 
-    <hr width=50% />
-
-    <h2>pre-Configuration of eHive pipelines via PipeConfig files</h2>
-
-    <p>Many aspects of a pipeline that can be pre-configured (both structural and parametric) are located in a "PipeConfig" file
-    that acts as a mould for pipeline databases of a particular class.
-    In current eHive system PipeConfig files are Perl modules (although it is likely to change).
-    These modules are derived from Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric . 
-    Developers of eHive pipelines tend to establish their own base classes that in turn derive from HiveGeneric
-    (such as Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric , for example).</p>
-    
-    <p>A Perl-based PipeConfig file is likely to define the following methods:</p>
-
-    <ul>
-    <li>
-        (optional and deprecated) default_options (returns a HashRef)
-                            - a hash of defaults for the options on which the rest of the configuration may depend.
-                            Do not rush to edit this section, since if an option appears in this hash, it means you can redefine
-                            its value from the <b>init_pipeline.pl</b> command line (explained below).
-    </li>
-    <li>
-        (optional) pipeline_create_commands (returns a ListRef)
-                            - a list of command lines that will be executed as system commands needed to create and set up the pipeline database.
-                            In most cases you don't need to change anything here either.
-    </li>
-    <li>
-        (optional) pipeline_wide_parameters (returns a HashRef)
-                            - a mapping between pipeline-wide parameter names and their values.
-    </li>
-    <li>
-		(optional) resource_classes (returns a HashRef)
-                            - a mapping between resource class names and corresponding farm-specific parameters for each class.
-		                     You may need to adjust some of these if running an existing pipeline on a different farm.
-    </li>
-    <li>
-        pipeline_analyses (returns a ListRef)
-		                    - the structure of the pipeline itself - which tasks to run, in which order, etc.
-		                      These are the very guts of the pipeline, so make sure you know what you are doing
-		                      if you are planning to change anything.
-    </li>
-    </ul>
-
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Initialization of the pipeline database</h2>
 
@@ -102,24 +55,24 @@
 	and runtime information about states of single jobs running on the farm or locally.</p>
 
 	<p>By initialization we mean an act of moulding one such new pipeline database from a PipeConfig file.
-	This is done by feeding the PipeConfig file to ensembl-hive/scripts/<b>init_pipeline.pl</b> script.<br/>
+	This is done by feeding the PipeConfig file to ensembl-hive/scripts/<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> script.<br/>
 	A typical example:
     <pre>
-		<b>init_pipeline.pl</b> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url mysql://user:password@host:port/long_mult
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url mysql://user:password@host:port/long_mult
     </pre>
     It will create a MySQL pipeline database called 'long_mult' with the given connection parameters.
     In case of newer PipeConfig files these could be the only parameters needed, as the rest could be set at a later stage via "seeding" (see below).</p>
 
     <p>If heavy concurrent traffic to the database is not expected, we may choose to keep the blackboard in a local SQLite file:
     <pre>
-		<b>init_pipeline.pl</b> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url sqlite:///long_mult
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url sqlite:///long_mult
     </pre>
     In the latter case no other connection parameters except for the filename are necessary, so they are skipped.
     </p>
 
 	<p>A couple of more complicated examples:
     <pre>
-		<b>init_pipeline.pl</b> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -user "my_db_username" -password "my_db_password" -mlss_id 12345
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -user "my_db_username" -password "my_db_password" -mlss_id 12345
     </pre>
 	It sets 'user', 'password' and 'mlss_id' parameters via command line options.
 	At this stage you can also override any of the other options mentioned in the default_options section of the PipeConfig file.</p>
@@ -127,7 +80,7 @@
 	<p>If you need to modify second-level values of a "hash option" (such as the '-host' or '-port' of the 'pipeline_db' option),
 	the syntax is the following (follows the extended syntax of Getopt::Long) :
     <pre>
-		<b>init_pipeline.pl</b> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -port=5306
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -port=5306
     </pre>
     </p>
 
@@ -137,13 +90,13 @@
     so if you find yourself struggling to make sense of an existing PipeConfig's o() syntax, please talk to eHive developers or power-users
     who are usually happy to help.</p>
 
-	<p>Normally, one run of <b>init_pipeline.pl</b> should create you a pipeline database.<br/>
+	<p>Normally, one run of <a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> should create you a pipeline database.<br/>
 
 	If anything goes wrong and the process does not complete successfully, you will need to drop the partially created database in order to try again.
     You can either drop the database manually, or use "-hive_force_init 1" option, which will automatically drop the database before trying to create it.
     </p>
 
-	<p>If <b>init_pipeline.pl</b> completes successfully, it will print a legend of commands that could be run next:
+	<p>If <a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> completes successfully, it will print a legend of commands that could be run next:
     <ul>
         <li>how to "seed" jobs into the pipeline database</li>
         <li>how to run the pipeline</li>
@@ -157,7 +110,7 @@
 	So don't write them down.
     </p>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Generating a pipeline's flow diagram</h2>
 
@@ -165,7 +118,7 @@
         This diagram is a much better tool for understanding what is going on in the pipeline.
         Run the following command to produce it:
     <pre>
-        <b>generate_graph.pl</b> -url sqlite:///my_pipeline_database -out my_diagram.png
+        <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> -url sqlite:///my_pipeline_database -out my_diagram.png
     </pre>
         You only have to choose the format (gif, jpg, png, svg, etc) by setting the output file extension.
     </p>
@@ -214,7 +167,7 @@
     <p>Actually, you don't even need to generate a pipeline database to see its diagram,
         as the diagram can be generated directly from the PipeConfig file:
     <pre>
-        <b>generate_graph.pl</b> -pipeconfig Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -out my_diagram2.png
+        <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> -pipeconfig Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -out my_diagram2.png
     </pre>
         Such a "standalone" diagram may look slightly different (analysis_ids will be missing).
     </p>
@@ -224,23 +177,23 @@
     so you can now monitor (and to a certain extent control) your pipeline from a web browser.
     </p>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Seeding jobs into the pipeline database</h2>
 
     <p>Pipeline database contains a dynamic collection of jobs (tasks) to be done.
         The jobs can be added to the "blackboard" either by the user (we call this process "seeding") or dynamically, by already running jobs.
-        When a database is created using <b>init_pipeline.pl</b> it may or may not be already seeded, depending on the PipeConfig file
+        When a database is created using <a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> it may or may not be already seeded, depending on the PipeConfig file
         (you can always make sure whether it has been automatically seeded by looking at the flow diagram).
-        If the pipeline needs seeding, this is done by running <b>seed_pipeline.pl</b> script,
+        If the pipeline needs seeding, this is done by running <a href=scripts/seed_pipeline.html><b>seed_pipeline.pl</b></a> script,
         by providing both the Analysis to be seeded and the parameters of the job being created:
     <pre>
-		<b>seed_pipeline.pl</b> -url sqlite:///my_pipeline_database -logic_name "analysis_name" -input_id '{ "paramX" =&gt; "valueX", "paramY" =&gt; "valueY" }'
+		<a href=scripts/seed_pipeline.html><b>seed_pipeline.pl</b></a> -url sqlite:///my_pipeline_database -logic_name "analysis_name" -input_id '{ "paramX" =&gt; "valueX", "paramY" =&gt; "valueY" }'
     </pre>
     It only makes sense to seed certain analyses, typically they are the ones that do not have any incoming dataflow on the flow diagram.
     </p>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Synchronizing ("sync"-ing) the pipeline database</h2>
 
@@ -249,14 +202,14 @@
 	in the process of "synchronization" (or "sync"). This has to be done once before running the pipeline, and normally the pipeline
 	will take care of synchronization by itself and will trigger the 'sync' process automatically.
 	However sometimes things go out of sync. Especially when people try to outsmart the scheduler by manually stopping and running jobs :)
-	This is when you might want to re-sync the database. It is done by running the ensembl-hive/scripts/<b>beekeeper.pl</b> in "sync" mode:
+	This is when you might want to re-sync the database. It is done by running the ensembl-hive/scripts/<a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> in "sync" mode:
 
     <pre>
-		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -sync
+		<a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> -url sqlite:///my_pipeline_database -sync
     </pre>
     </p>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Running the pipeline in automatic mode</h2>
 
@@ -269,45 +222,45 @@
 
 	<p>So to "run the pipeline" all you have to do is to run the Beekeeper:
     <pre>
-		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -loop
+		<a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> -url sqlite:///my_pipeline_database -loop
     </pre>
     </p>
 
 	<p>You can also restrict running to a subset of Analyses (either by analysis_id or by name pattern) :
     <pre>
-		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -analyses_pattern 'alignment_%' -loop       <i># all analyses whose name starts with 'alignment_'</i>
+		<a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> -url sqlite:///my_pipeline_database -analyses_pattern 'alignment_%' -loop       <i># all analyses whose name starts with 'alignment_'</i>
     </pre>
     or
     <pre>
-		<b>beekeeper.pl</b> -url sqlite:///my_pipeline_database -analyses_pattern '1..5,fasta_check' -loop  <i># only analyses with analysis_id between 1 and 5 and 'fasta_check'</i>
+		<a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> -url sqlite:///my_pipeline_database -analyses_pattern '1..5,fasta_check' -loop  <i># only analyses with analysis_id between 1 and 5 and 'fasta_check'</i>
     </pre>
     </p>
 
-	<p>In order to make sure the <b>beekeeper.pl</b> process doesn't die when you disconnect your ssh session from the farm,
+	<p>In order to make sure the <a href=scripts/beekeeper.html><b>beekeeper.pl</b></a> process doesn't die when you disconnect your ssh session from the farm,
     it is normally run in a "screen session".<br/>
 
 	If your Beekeeper process gets killed for some reason, don't worry - you can re-sync and start another Beekeeper process.
 	It will pick up from where the previous Beekeeper left it.
     </p>
 
-    <hr width=50% />
+    <p><hr width=50% /></p>
 
     <h2>Monitoring the progress via a direct database session</h2>
 
-    <p>In addition to monitoring the visual flow diagram (that could be generated manually using <b>generate_graph.pl</b> or via <b>guiHive</b> web app)
+    <p>In addition to monitoring the visual flow diagram (that could be generated manually using <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> or via <b>guiHive</b> web app)
     you can also connect to the pipeline database directly and issue SQL commands. To avoid typing in all the connection details (syntax is different
-    depending on the particular database engine used) you can use a bespoke <b>db_cmd.pl</b> that takes the eHive database URL and performs the connection for you:
+    depending on the particular database engine used) you can use a bespoke <a href=scripts/db_cmd.html><b>db_cmd.pl</b></a> script that takes the eHive database URL and performs the connection for you:
 
     <pre>
-		<b>db_cmd.pl</b> -url sqlite:///my_pipeline_database
+		<a href=scripts/db_cmd.html><b>db_cmd.pl</b></a> -url sqlite:///my_pipeline_database
     </pre>
     or
     <pre>
-		<b>db_cmd.pl</b> -url mysql://user:password@host:port/long_mult
+		<a href=scripts/db_cmd.html><b>db_cmd.pl</b></a> -url mysql://user:password@host:port/long_mult
     </pre>
     or
     <pre>
-		<b>db_cmd.pl</b> -url pgsql://user:password@host:port/long_mult
+		<a href=scripts/db_cmd.html><b>db_cmd.pl</b></a> -url pgsql://user:password@host:port/long_mult
     </pre>
 
 	Once connected, you can run any SQL queries using eHive schema (see <a href=hive_schema.png>eHive schema diagram</a> and <a href=hive_schema.html>eHive schema description</a>).
