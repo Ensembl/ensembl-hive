@@ -21,7 +21,9 @@ use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Scheduler;
 
+
 main();
+
 
 sub main {
     $| = 1;
@@ -466,7 +468,7 @@ __DATA__
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
 
         # Reset failed 'buggy_analysis' jobs to 'READY' state, so that they can be run again
-    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -reset_failed_jobs_for_analysis buggy_analysis
+    beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern buggy_analysis -reset_failed_jobs
 
         # Do a cleanup: find and bury dead workers, reclaim their jobs
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
