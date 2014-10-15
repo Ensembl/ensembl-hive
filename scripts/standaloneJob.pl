@@ -17,79 +17,86 @@ use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
 
-my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id);
 
-my $module_or_file = shift @ARGV or script_usage();
-
-GetOptions(
-           'help'               => \$help,
-           'debug=i'            => \$debug,
-           'reg_conf|regfile=s' => \$reg_conf,
-           'no_write'           => \$no_write,
-           'no_cleanup'         => \$no_cleanup,
-           'flow_into|flow=s'   => \$flow_into,
-           'input_id=s'         => \$input_id,
-);
-
-if ($help or !$module_or_file) {
-    script_usage(0);
-}
-
-my $runnable_module = load_file_or_module( $module_or_file );
-
-if($reg_conf) {
-    require Bio::EnsEMBL::Registry;
-    Bio::EnsEMBL::Registry->load_all($reg_conf);
-}
-
-my $runnable_object = $runnable_module->new();
-$runnable_object->debug($debug) if($debug);
-$runnable_object->execute_writes(not $no_write);
+main();
 
 
-my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
-unless($input_id) {
-    my ($param_hash, $param_list) = parse_cmdline_options();
-    $input_id = stringify($param_hash);
-}
-$job->input_id( $input_id );
-warn "\nRunning '$runnable_module' with input_id='$input_id' :\n";
+sub main {
+    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id);
 
-$job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $job->input_id() );
+    my $module_or_file = shift @ARGV or script_usage();
 
-$flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
-$flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
-foreach my $branch_code (keys %$flow_into) {
-    my $heirs = $flow_into->{$branch_code};
+    GetOptions(
+               'help'               => \$help,
+               'debug=i'            => \$debug,
+               'reg_conf|regfile=s' => \$reg_conf,
+               'no_write'           => \$no_write,
+               'no_cleanup'         => \$no_cleanup,
+               'flow_into|flow=s'   => \$flow_into,
+               'input_id=s'         => \$input_id,
+    );
 
-    $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
-    $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
-
-    my @dataflow_rules = ();
-
-    while(my ($heir_url, $input_id_template_list) = each %$heirs) {
-
-        $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
-
-        foreach my $input_id_template (@$input_id_template_list) {
-
-            push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule->new(
-                'to_analysis_url'   => $heir_url,
-                'input_id_template' => $input_id_template,
-            );
-        }
+    if ($help or !$module_or_file) {
+        script_usage(0);
     }
 
-    $job->dataflow_rules( $branch_code, \@dataflow_rules );
+    my $runnable_module = load_file_or_module( $module_or_file );
+
+    if($reg_conf) {
+        require Bio::EnsEMBL::Registry;
+        Bio::EnsEMBL::Registry->load_all($reg_conf);
+    }
+
+    my $runnable_object = $runnable_module->new();
+    $runnable_object->debug($debug) if($debug);
+    $runnable_object->execute_writes(not $no_write);
+
+
+    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
+    unless($input_id) {
+        my ($param_hash, $param_list) = parse_cmdline_options();
+        $input_id = stringify($param_hash);
+    }
+    $job->input_id( $input_id );
+    warn "\nRunning '$runnable_module' with input_id='$input_id' :\n";
+
+    $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $job->input_id() );
+
+    $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
+    $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
+    foreach my $branch_code (keys %$flow_into) {
+        my $heirs = $flow_into->{$branch_code};
+
+        $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
+        $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
+
+        my @dataflow_rules = ();
+
+        while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+
+            $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
+
+            foreach my $input_id_template (@$input_id_template_list) {
+
+                push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule->new(
+                    'to_analysis_url'   => $heir_url,
+                    'input_id_template' => $input_id_template,
+                );
+            }
+        }
+
+        $job->dataflow_rules( $branch_code, \@dataflow_rules );
+    }
+
+
+    $runnable_object->input_job($job);
+    $runnable_object->life_cycle();
+
+    exit(1) if($job->died_somewhere());
+
+    $runnable_object->cleanup_worker_temp_directory() unless($no_cleanup);
 }
 
-
-$runnable_object->input_job($job);
-$runnable_object->life_cycle();
-
-exit(1) if($job->died_somewhere());
-
-$runnable_object->cleanup_worker_temp_directory() unless($no_cleanup);
 
 __DATA__
 

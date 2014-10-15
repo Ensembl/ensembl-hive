@@ -18,127 +18,131 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 
-my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
-my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
-my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
-my ($help, $report_versions, $debug);
 
-GetOptions(
+main();
 
-# Connection parameters:
-           'url=s'                      => \$url,
-           'reg_conf|regfile=s'         => \$reg_conf,
-           'reg_type=s'                 => \$reg_type,
-           'reg_alias|regname=s'        => \$reg_alias,
-           'nosqlvc=i'                  => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
 
-# Task specification parameters:
-           'rc_id=i'                    => \$resource_class_id,
-           'rc_name=s'                  => \$resource_class_name,
-           'analyses_pattern=s'         => \$analyses_pattern,
-           'analysis_id=i'              => \$analysis_id,
-           'logic_name=s'               => \$logic_name,
-           'job_id=i'                   => \$job_id,
-           'force=i'                    => \$force,
+sub main {
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
+    my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
+    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
+    my ($help, $report_versions, $debug);
 
-# Worker control parameters:
-           'job_limit=i'                => \$job_limit,
-           'life_span|lifespan=i'       => \$life_span,
-           'no_cleanup'                 => \$no_cleanup,
-           'no_write'                   => \$no_write,
-           'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
-           'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
-           'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
-           'can_respecialize=i'         => \$can_respecialize,
+    GetOptions(
 
-# Other commands
-           'h|help'                     => \$help,
-           'v|versions'                 => \$report_versions,
-           'debug=i'                    => \$debug,
-);
+    # Connection parameters:
+               'url=s'                      => \$url,
+               'reg_conf|regfile=s'         => \$reg_conf,
+               'reg_type=s'                 => \$reg_type,
+               'reg_alias|regname=s'        => \$reg_alias,
+               'nosqlvc=i'                  => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
 
-if ($help) { script_usage(0); }
+    # Task specification parameters:
+               'rc_id=i'                    => \$resource_class_id,
+               'rc_name=s'                  => \$resource_class_name,
+               'analyses_pattern=s'         => \$analyses_pattern,
+               'analysis_id=i'              => \$analysis_id,
+               'logic_name=s'               => \$logic_name,
+               'job_id=i'                   => \$job_id,
+               'force=i'                    => \$force,
 
-if($report_versions) {
-    report_versions();
-    exit(0);
-}
+    # Worker control parameters:
+               'job_limit=i'                => \$job_limit,
+               'life_span|lifespan=i'       => \$life_span,
+               'no_cleanup'                 => \$no_cleanup,
+               'no_write'                   => \$no_write,
+               'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
+               'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
+               'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
+               'can_respecialize=i'         => \$can_respecialize,
 
-my $hive_dba;
-
-if($url or $reg_alias) {
-        # Perform environment variable substitution separately with and without curly braces.
-        #       Fixme: Perl 5.10 has a cute new "branch reset" (?|pattern)
-        #              that would allow to merge the two substitutions below into a nice one-liner.
-        #              But people around may still be using Perl 5.8, so let's wait a bit.
-        #
-        # Make sure expressions stay as they were if we were unable to substitute them.
-        #
-    if($url) {
-        $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
-        $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
-    }
-
-    $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
-            -url                            => $url,
-            -reg_conf                       => $reg_conf,
-            -reg_type                       => $reg_type,
-            -reg_alias                      => $reg_alias,
-            -no_sql_schema_version_check    => $nosqlvc,
+    # Other commands
+               'h|help'                     => \$help,
+               'v|versions'                 => \$report_versions,
+               'debug=i'                    => \$debug,
     );
 
-} else {
-    print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
-    script_usage(1);
+    if ($help) { script_usage(0); }
+
+    if($report_versions) {
+        report_versions();
+        exit(0);
+    }
+
+    my $hive_dba;
+
+    if($url or $reg_alias) {
+            # Perform environment variable substitution separately with and without curly braces.
+            #       Fixme: Perl 5.10 has a cute new "branch reset" (?|pattern)
+            #              that would allow to merge the two substitutions below into a nice one-liner.
+            #              But people around may still be using Perl 5.8, so let's wait a bit.
+            #
+            # Make sure expressions stay as they were if we were unable to substitute them.
+            #
+        if($url) {
+            $url =~ s/\$(\{(\w+)\})/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+            $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
+        }
+
+        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+                -url                            => $url,
+                -reg_conf                       => $reg_conf,
+                -reg_type                       => $reg_type,
+                -reg_alias                      => $reg_alias,
+                -no_sql_schema_version_check    => $nosqlvc,
+        );
+
+    } else {
+        print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
+        script_usage(1);
+    }
+
+    unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
+        print "ERROR : no database connection\n\n";
+        script_usage(1);
+    }
+
+    my $queen = $hive_dba->get_Queen();
+
+    my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+
+    my $worker = $queen->create_new_worker(
+          # Worker identity:
+             -meadow_type           => $meadow_type,
+             -meadow_name           => $meadow_name,
+             -process_id            => $process_id,
+             -exec_host             => $exec_host,
+             -resource_class_id     => $resource_class_id,
+             -resource_class_name   => $resource_class_name,
+
+          # Worker control parameters:
+             -job_limit             => $job_limit,
+             -life_span             => $life_span,
+             -no_cleanup            => $no_cleanup,
+             -no_write              => $no_write,
+             -worker_log_dir        => $worker_log_dir,
+             -hive_log_dir          => $hive_log_dir,
+             -retry_throwing_jobs   => $retry_throwing_jobs,
+             -can_respecialize      => $can_respecialize,
+
+          # Other parameters:
+             -debug                 => $debug,
+    );
+
+    if( $logic_name ) {
+        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
+        $analyses_pattern = $logic_name;
+    } elsif ( $analysis_id ) {
+        warn "-analysis_id is now deprecated, please use -analyses_pattern that extends the functionality of -analysis_id and -logic_name .\n";
+        $analyses_pattern = $analysis_id;
+    }
+
+    $worker->run( {
+         -analyses_pattern      => $analyses_pattern,
+         -job_id                => $job_id,
+         -force                 => $force,
+    } );
 }
-
-unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
-    print "ERROR : no database connection\n\n";
-    script_usage(1);
-}
-
-my $queen = $hive_dba->get_Queen();
-
-my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-
-my $worker = $queen->create_new_worker(
-      # Worker identity:
-         -meadow_type           => $meadow_type,
-         -meadow_name           => $meadow_name,
-         -process_id            => $process_id,
-         -exec_host             => $exec_host,
-         -resource_class_id     => $resource_class_id,
-         -resource_class_name   => $resource_class_name,
-
-      # Worker control parameters:
-         -job_limit             => $job_limit,
-         -life_span             => $life_span,
-         -no_cleanup            => $no_cleanup,
-         -no_write              => $no_write,
-         -worker_log_dir        => $worker_log_dir,
-         -hive_log_dir          => $hive_log_dir,
-         -retry_throwing_jobs   => $retry_throwing_jobs,
-         -can_respecialize      => $can_respecialize,
-
-      # Other parameters:
-         -debug                 => $debug,
-);
-
-
-if( $logic_name ) {
-    warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
-    $analyses_pattern = $logic_name;
-} elsif ( $analysis_id ) {
-    warn "-analysis_id is now deprecated, please use -analyses_pattern that extends the functionality of -analysis_id and -logic_name .\n";
-    $analyses_pattern = $analysis_id;
-}
-
-
-$worker->run( {
-     -analyses_pattern      => $analyses_pattern,
-     -job_id                => $job_id,
-     -force                 => $force,
-} );
 
 
 __DATA__
