@@ -82,7 +82,8 @@ sub strict_hash_format {
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
                   Here it deals with finding the command line, doing parameter substitution and storing the result in a predefined place.
 
-    param('cmd'): The recommended way of passing in the command line.
+    param('cmd'): The recommended way of passing in the command line. It can be either a string, or an array-ref of strings. The later is safer if some of the
+                  arguments contain white-spaces.
 
     param('*'):   Any other parameters can be freely used for parameter substitution.
 
@@ -115,16 +116,17 @@ sub run {
     my $self = shift;
  
     my $cmd = $self->param('cmd');
+    my $flat_cmd = ref($cmd) ? join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @$cmd) : $cmd;
 
     if($self->debug()) {
-        warn qq{cmd = "$cmd"\n};
+        warn qq{cmd = "$flat_cmd"\n};
     }
 
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
 
-    if(my $return_value = system($cmd)) {
+    if(my $return_value = system(ref($cmd) ? @$cmd : $cmd)) {
         $return_value >>= 8;
-        die "system( $cmd ) failed: $return_value";
+        die "system( $flat_cmd ) failed: $return_value";
     }
 
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
