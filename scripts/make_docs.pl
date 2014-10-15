@@ -29,12 +29,12 @@ sub generate_hive_schema_desc {
 
     my $sql2html = "$erd/ensembl-production/scripts/sql2html.pl";
 
-    die "Cannot find '$sql2html', please make sure ensembl-production API is intalled properly\n" unless(-r $sql2html);
+    die "Cannot find '$sql2html', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2html);
 
     my @cmds = (
         "perl $sql2html -i $ehrd/sql/tables.mysql -d Hive -intro $ehrd/docs/hive_schema.inc -sort_headers 0 -sort_tables 0 -o $ehrd/docs/tmp_hive_schema.html",
         "(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) > $ehrd/docs/hive_schema.html",
-        "rm $ehrd/docs/tmp_hive_schema.html",
+        "rm $ehrd/docs/tmp_hive_schema.html",       # remove the non-patched version
     );
 
     foreach my $cmd (@cmds) {
@@ -53,7 +53,7 @@ sub generate_docs_scripts {
         "find $ehrd/docs/scripts -type f -not -name index.html | xargs rm",     # delete all but index.html
         "cd   $ehrd/scripts",
         "for f in *.pl ; do pod2html --noindex --title=\$f \$f >$ehrd/docs/scripts/`echo \$f | sed 's/pl\$/html/'` ; done",
-        "rm   pod2htm?.tmp",                                            # clean up after pod2html
+        "rm   pod2htm?.tmp",                                                    # clean up after pod2html
     );
 
     foreach my $cmd (@cmds) {
@@ -68,9 +68,20 @@ sub generate_docs_doxygen {
 
     print "Regenerating $ehrd/docs/doxygen ...\n\n";
 
+    my $doxy_bin    = `which doxygen`;
+    chomp $doxy_bin;
+
+    die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
+
+    my $doxy_ver    = `$doxy_bin --version`;
+    chomp $doxy_ver;
+    my $doxy_intver = sprintf("%d%03d%03d", split(/\./, $doxy_ver) );
+
+    die "The doxygen I found ($doxy_bin) being version $doxy_ver is not supported, please downgrade to at most 1.8.6 \n" if($doxy_intver > 1008006);
+
     my $doxy_filter = "$erd/ensembl/misc-scripts/doxygen_filter/ensembldoxygenfilter.pl";
 
-    die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly\n" unless(-x $doxy_filter);
+    die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly.\n" unless(-x $doxy_filter);
 
     my @cmds = (
         "rm   -rf $ehrd/docs/doxygen",
