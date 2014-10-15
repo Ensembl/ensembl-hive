@@ -19,6 +19,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::Graph;
 
+
 main();
 
 
@@ -102,7 +103,8 @@ sub main {
     $graphviz->$call($self->{'output'});
 }
 
-__END__
+
+__DATA__
 
 =pod
 
