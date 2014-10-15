@@ -32,9 +32,8 @@
         {   -logic_name => 'db_snapshot_before_critical_A',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'url'       => $self->dbconn_2_url( 'pipeline_db' ),
                 'filename'  => $ENV{'HOME'}.'/db_snapshot_before_critical_A',
-                'cmd'       => 'eval mysqldump `db_cmd.pl -url #url# -to_params` > #filename#',
+                'cmd'       => $self->db_cmd().' --executable mysqldump > #filename#',
             },
         },
 
