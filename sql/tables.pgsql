@@ -8,8 +8,9 @@
             -sort_headers 0 -sort_tables 0 -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html
 
 
-    Adding the following line into the header of the previous output will make it look prettier (valid in rel.75):
-        <link rel="stylesheet" type="text/css" media="all" href="http://static.ensembl.org/minified/fb4f89868f04f558d1d4421999719047.css" />
+    Adding the following line into the header of the previous output will make it look prettier:
+        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
+
 
 
 
