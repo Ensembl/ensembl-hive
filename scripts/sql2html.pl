@@ -972,8 +972,8 @@ sub add_species_list {
 
   my $show_hide = show_hide_button("s_$table", "$table", 'species');
 
-  my $separator = (defined($has_see) && scalar(keys($has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
-  my $margin = (defined($has_see) && scalar(keys($has_see))) ? qq{;padding-left:25px} : '';
+  my $separator = (defined($has_see) && scalar(keys(%$has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
+  my $margin = (defined($has_see) && scalar(keys(%$has_see))) ? qq{;padding-left:25px} : '';
 
   my $html = qq{$separator
   <td style="padding-top:4px$margin"><p style="margin-bottom:0px"><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
