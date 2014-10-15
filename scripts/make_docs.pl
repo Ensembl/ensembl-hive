@@ -1,0 +1,117 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+    # Finding out own path in order to reference own components (including own modules):
+use Cwd            ();
+use File::Basename ();
+BEGIN {
+    $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
+    unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
+}
+
+use Bio::EnsEMBL::Hive::Version;
+
+my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";
+my $erd         = $ENV{'ENSEMBL_CVS_ROOT_DIR'}  or die "Environment variable 'ENSEMBL_CVS_ROOT_DIR' not defined, please check your setup";
+my $doxy_filter = "$erd/ensembl/misc-scripts/doxygen_filter/ensembldoxygenfilter.pl";
+my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
+
+
+generate_docs_scripts();
+generate_docs_doxygen();
+
+
+sub generate_docs_scripts {
+
+    print "Regenerating $ehrd/docs/scripts ...\n\n";
+
+    my @cmds = (
+        "find $ehrd/docs/scripts -type f -not -name index.html | xargs rm",     # delete all but index.html
+        "cd   $ehrd/scripts",
+        "for f in *.pl ; do pod2html --noindex --title=\$f \$f >$ehrd/docs/scripts/`echo \$f | sed 's/pl\$/html/'` ; done",
+        "rm   pod2htm?.tmp",                                            # clean up after pod2html
+    );
+
+    foreach my $cmd (@cmds) {
+        print "Running the following command:\n\t$cmd\n\n";
+
+        system( $cmd );
+    }
+}
+
+
+sub generate_docs_doxygen {
+
+    print "Regenerating $ehrd/docs/doxygen ...\n\n";
+
+    die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly\n" unless(-x $doxy_filter);
+
+    my @cmds = (
+        "rm   -rf $ehrd/docs/doxygen",
+        "doxygen -g -",
+        "echo 'PROJECT_NAME           = ensembl-hive'",
+        "echo 'PROJECT_NUMBER         = $code_ver'",
+        "echo 'OUTPUT_DIRECTORY       = $ehrd/docs'",
+        "echo 'STRIP_FROM_PATH        = $ehrd'",
+        "echo 'INPUT                  = $ehrd'",
+        "echo 'INPUT_FILTER           = $doxy_filter'",
+        "echo 'HTML_OUTPUT            = doxygen'",
+        "echo 'EXTRACT_ALL            = YES'",
+        "echo 'FILE_PATTERNS          = *.pm *.pl README.md'",
+        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
+        "echo 'ENABLE_PREPROCESSING   = NO'",
+        "echo 'RECURSIVE              = YES'",
+        "echo 'EXAMPLE_PATTERNS       = *'",
+        "echo 'HTML_TIMESTAMP         = NO'",
+        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
+        "echo 'GENERATE_TREEVIEW      = YES'",
+        "echo 'GENERATE_LATEX         = NO'",
+        "echo 'CLASS_DIAGRAMS         = NO'",
+        "echo 'HAVE_DOT               = YES'",
+        "echo 'CALL_GRAPH             = YES'",
+        "echo 'CALLER_GRAPH           = YES'",
+    );
+
+    my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
+
+    print "Running the following command:\n\t$full_cmd\n\n";
+
+    system( $full_cmd );
+}
+
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+    make_docs.pl
+
+=head1 DESCRIPTION
+
+    An internal eHive script for regenerating the documentation both in docs/scripts (using pod2html) and docs/doxygen (using doxygen).
+
+    The script doesn't have any options at the moment.
+
+=head1 LICENSE
+
+    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
+
+=head1 CONTACT
+
+    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+
+=cut
+
