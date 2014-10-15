@@ -15,12 +15,34 @@ use Bio::EnsEMBL::Hive::Version;
 
 my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";
 my $erd         = $ENV{'ENSEMBL_CVS_ROOT_DIR'}  or die "Environment variable 'ENSEMBL_CVS_ROOT_DIR' not defined, please check your setup";
-my $doxy_filter = "$erd/ensembl/misc-scripts/doxygen_filter/ensembldoxygenfilter.pl";
 my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
 
 
+generate_hive_schema_desc();
 generate_docs_scripts();
 generate_docs_doxygen();
+
+
+sub generate_hive_schema_desc {
+
+    print "Regenerating $ehrd/docs/hive_schema.html ...\n\n";
+
+    my $sql2html = "$erd/ensembl-production/scripts/sql2html.pl";
+
+    die "Cannot find '$sql2html', please make sure ensembl-production API is intalled properly\n" unless(-r $sql2html);
+
+    my @cmds = (
+        "perl $sql2html -i $ehrd/sql/tables.mysql -d Hive -intro $ehrd/docs/hive_schema.inc -sort_headers 0 -sort_tables 0 -o $ehrd/docs/tmp_hive_schema.html",
+        "(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) > $ehrd/docs/hive_schema.html",
+        "rm $ehrd/docs/tmp_hive_schema.html",
+    );
+
+    foreach my $cmd (@cmds) {
+        print "Running the following command:\n\t$cmd\n\n";
+
+        system( $cmd );
+    }
+}
 
 
 sub generate_docs_scripts {
@@ -45,6 +67,8 @@ sub generate_docs_scripts {
 sub generate_docs_doxygen {
 
     print "Regenerating $ehrd/docs/doxygen ...\n\n";
+
+    my $doxy_filter = "$erd/ensembl/misc-scripts/doxygen_filter/ensembldoxygenfilter.pl";
 
     die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly\n" unless(-x $doxy_filter);
 

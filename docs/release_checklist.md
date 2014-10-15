@@ -2,30 +2,15 @@
 Checklist to release a new eHive version
 ========================================
 
-1. Update doxygen
+1. Re-draw the schema diagram manually using MySQL Workbench
 
-  Simply run doxygen with the ensembl-hive\_doxygen.conf ?
+2. Update the Changelog manually using a text editor
 
-2. Update the script documentation
+3. Review README.md, install.html and running_eHive_pipelines.html, change the version number in README.md (for rawgit)
 
-  1. Regenerate the HTML files from the PODs
+4. Regenerate docs/hive_schema.html, docs/scripts and docs/doxygen by running make_docs.pl
 
-    ````
-rm docs/scripts/*
-cd scripts/
-for i in *.pl
-do
-    pod2html --noindex --title=$i $i > ../docs/scripts/`echo $i | sed 's/pl$/html/'`
-done
-    ````
+5. Regenerate docs/scripts/index.html if you have 'tree' installed
 
-  2. Update the list of scripts in index.html
-
-3. Update the schema diagram
-
-4. Compile and summarize the change-log
-
-5. Update the version number in README.md (for rawgit)
-
-6. Review the installation guide and README.md 
+6. After branching make sure master will have a new Bio::EnsEMBL::Hive::Version .
 
