@@ -93,6 +93,8 @@ sub preliminary_offer {
 
     if( defined($available_capacity) and defined($multiplier) and ($multiplier >= 0.0) ) {  # if multiplier is negative it is not limiting
 
+        $available_capacity = 0 if($available_capacity<0);
+
         my $product = $available_capacity * $multiplier;
         my $slots_available = int( "$product" );            # stringification helps to round up things like 0.1*10 (instead of leaving them at 0.99999999)
 
