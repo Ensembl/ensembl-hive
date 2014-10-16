@@ -52,9 +52,16 @@ sub generate_docs_scripts {
     my @cmds = (
         "find $ehrd/docs/scripts -type f -not -name index.html | xargs rm",     # delete all but index.html
         "cd   $ehrd/scripts",
-        "for f in *.pl ; do pod2html --noindex --title=\$f \$f >$ehrd/docs/scripts/`echo \$f | sed 's/pl\$/html/'` ; done",
-        "rm   pod2htm?.tmp",                                                    # clean up after pod2html
     );
+    opendir( my $script_dir, "$ehrd/scripts") || die "Can't opendir $ehrd/scripts: $!";
+    foreach my $plname ( readdir($script_dir) ) {
+        if( (-f "$ehrd/scripts/$plname") && $plname=~/^(\w+)\.pl$/) {
+            my $htmlname = $1.'.html';
+            push @cmds, "pod2html --noindex --title=$plname $ehrd/scripts/$plname >$ehrd/docs/scripts/$htmlname";
+        }
+    }
+    closedir($script_dir);
+    push @cmds, "rm   pod2htm?.tmp";                                            # clean up after pod2html
 
     foreach my $cmd (@cmds) {
         print "Running the following command:\n\t$cmd\n\n";
