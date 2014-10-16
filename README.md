@@ -47,7 +47,7 @@ etc.
 Available documentation
 -----------------------
 The main entry point is in docs/index.html (available locally, offline).
-The online version is hosted [here](https://rawgit.com/Ensembl/ensembl-hive/version/2.1/docs/index.html).
+The online version is hosted [here](https://rawgit.com/Ensembl/ensembl-hive/version/2.2/docs/index.html).
 
 Contact us (mailing list)
 -------------------------
