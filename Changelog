@@ -1,3 +1,33 @@
+Version 2.2     - 'analyses_pattern'
+===========
+
+* Running and maintenance of pipeline subsets has been made easy with -analyses_pattern option in beekeeper.pl
+    that understands ranges and additive/subtractive merging. You can refer to analyses in many different ways.
+    Examples:
+        -analyses_pattern 1..9                                  # show scheduling for a range of analysis_ids
+        -analyses_pattern 1..9,11..15   -run                    # run a scheduling iteration for two ranges of analysis_ids
+        -analyses_pattern fasta%        -sync                   # sync analyses matching a pattern
+        -analyses_pattern 1..9-5-report -loop                   # loop over a range except two analyses
+        -analyses_pattern 1..9,fasta%   -reset_all_jobs         # reset all jobs belonging to a range and a pattern
+        -analyses_pattern foo,bar,baz   -reset_failed_jobs      # reset failed jobs belonging to three analyses by names
+
+* The same option is available in runWorker.pl to constrain the set of analyses to specialize into (fully works with -can_respecialize 1 mode)
+
+* Detailed log of Scheduler's decision-making process is available
+
+* db_cmd.pl and SystemCmd.pm runnable have been reworked and are now better adapted for quoted arguments
+
+* Doxygen API documentation packaged with the code
+
+* Scripts' man pages converted into HTML and packaged with the code
+
+* New docs about installing eHive, running eHive and running MPI jobs with eHive
+
+* Using rawgit to render HTML docs hosted on GitHub (impossible otherwise)
+
+* No schema changes since version/2.1 : the same database should continue to work with newer code without patching
+
+
 Version 2.1     - 'multirole'
 ===========
 
