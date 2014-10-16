@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -137,7 +137,7 @@ Functions</h2></td></tr>
 <div id='codesection-dbc_hash_to_cmd-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-dbc_hash_to_cmd-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="db__cmd_8pl.html#aa9d6dbdd85d225abef029815f3ca0336">dbc_hash_to_cmd</a> {</div>
-<div class="line">    my ($dbc_hash, $sqlcmd, $extra, $to_params) = @_;</div>
+<div class="line">    my ($dbc_hash, $executable, $prepend, $append, $sqlcmd, $to_params) = @_;</div>
 <div class="line"></div>
 <div class="line">    my $driver = $dbc_hash-&gt;{<span class="stringliteral">&#39;driver&#39;</span>} || <span class="stringliteral">&#39;mysql&#39;</span>;</div>
 <div class="line"></div>
@@ -146,7 +146,7 @@ Functions</h2></td></tr>
 <div class="line">            my $dbname = $2 || $dbc_hash-&gt;{dbname};</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
-<div class="line">                <span class="keywordflow">return</span> <span class="stringliteral">&quot;rm -f $dbname&quot;</span>;</div>
+<div class="line">                <span class="keywordflow">return</span> [<span class="stringliteral">&#39;rm&#39;</span>, <span class="stringliteral">&#39;-f&#39;</span>, $dbname];</div>
 <div class="line">            } elsif(!$2) {</div>
 <div class="line">                $sqlcmd = <span class="stringliteral">&quot;$1 $dbname&quot;</span>;</div>
 <div class="line">                $dbc_hash-&gt;{dbname} = <span class="stringliteral">&#39;&#39;</span>;</div>
@@ -155,7 +155,7 @@ Functions</h2></td></tr>
 <div class="line">            my $dbname = $2 || $dbc_hash-&gt;{dbname};</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
-<div class="line">                <span class="keywordflow">return</span> <span class="stringliteral">&quot;touch $dbname&quot;</span>;</div>
+<div class="line">                <span class="keywordflow">return</span> [<span class="stringliteral">&#39;touch&#39;</span>, $dbname];</div>
 <div class="line">            } elsif(!$2) {</div>
 <div class="line">                $sqlcmd = <span class="stringliteral">&quot;$1 $dbname&quot;</span>;</div>
 <div class="line">                $dbc_hash-&gt;{dbname} = <span class="stringliteral">&#39;&#39;</span>;</div>
@@ -163,36 +163,47 @@ Functions</h2></td></tr>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $cmd;</div>
+<div class="line">    my @cmd;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;mysql&#39;</span>) {</div>
+<div class="line">        $executable ||= <span class="stringliteral">&#39;mysql&#39;</span>;</div>
 <div class="line"></div>
-<div class="line">        $cmd = ($to_params ? <span class="stringliteral">&#39;&#39;</span> : <span class="stringliteral">&#39;mysql &#39;</span>)</div>
-<div class="line">              .<span class="stringliteral">&quot;--host=$dbc_hash-&gt;{host} &quot;</span></div>
-<div class="line">              .(defined($dbc_hash-&gt;{port}) ? <span class="stringliteral">&quot;--port=$dbc_hash-&gt;{port} &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .<span class="stringliteral">&quot;--user=$dbc_hash-&gt;{user} --password=&#39;$dbc_hash-&gt;{pass}&#39; &quot;</span></div>
-<div class="line">              .(defined($extra) ? <span class="stringliteral">&quot;$extra &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .($dbc_hash-&gt;{dbname} || <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .(defined($sqlcmd) ? <span class="stringliteral">&quot; -e &#39;$sqlcmd&#39;&quot;</span> : <span class="stringliteral">&#39;&#39;</span>);</div>
+<div class="line">        push @cmd, $executable                      unless $to_params;</div>
+<div class="line">        push @cmd, @$prepend                        <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
+<div class="line">        push @cmd, <span class="stringliteral">&quot;-h$dbc_hash-&gt;{&#39;host&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>};</div>
+<div class="line">        push @cmd, <span class="stringliteral">&quot;-P$dbc_hash-&gt;{&#39;port&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>};</div>
+<div class="line">        push @cmd, <span class="stringliteral">&quot;-u$dbc_hash-&gt;{&#39;user&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>};</div>
+<div class="line">        push @cmd, <span class="stringliteral">&quot;-p$dbc_hash-&gt;{&#39;pass&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;pass&#39;</span>};</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;-e&#39;</span>, $sqlcmd)                  <span class="keywordflow">if</span> $sqlcmd;</div>
+<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>}            <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>};</div>
+<div class="line">        push @cmd, @$append                         <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
+<div class="line"></div>
 <div class="line">    } elsif($driver eq <span class="stringliteral">&#39;pgsql&#39;</span>) {</div>
+<div class="line">        $executable ||= <span class="stringliteral">&#39;psql&#39;</span>;</div>
 <div class="line"></div>
-<div class="line">        $cmd = ($to_params ? <span class="stringliteral">&#39;&#39;</span> : <span class="stringliteral">&quot;env PGPASSWORD=&#39;$dbc_hash-&gt;{pass}&#39; psql &quot;</span>)</div>
-<div class="line">              .<span class="stringliteral">&quot;--host=$dbc_hash-&gt;{host} &quot;</span></div>
-<div class="line">              .(defined($dbc_hash-&gt;{port}) ? <span class="stringliteral">&quot;--port=$dbc_hash-&gt;{port} &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .<span class="stringliteral">&quot;--username=$dbc_hash-&gt;{user} &quot;</span></div>
-<div class="line">              .(defined($sqlcmd) ? <span class="stringliteral">&quot;--command=&#39;$sqlcmd&#39; &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .(defined($extra) ? <span class="stringliteral">&quot;$extra &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .($dbc_hash-&gt;{dbname} || <span class="stringliteral">&#39;&#39;</span>);</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;env&#39;</span>, <span class="stringliteral">&quot;PGPASSWORD=&#39;$dbc_hash-&gt;{&#39;pass&#39;}&#39;&quot;</span>)  <span class="keywordflow">if</span> ($to_params &amp;&amp; $dbc_hash-&gt;{<span class="stringliteral">&#39;pass&#39;</span>});</div>
+<div class="line">        push @cmd, $executable                                  unless $to_params;</div>
+<div class="line">        push @cmd, @$prepend                                    <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;-h&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>});</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;-p&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>});</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;-U&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>});</div>
+<div class="line">        push @cmd, (<span class="stringliteral">&#39;-c&#39;</span>, $sqlcmd)                              <span class="keywordflow">if</span> $sqlcmd;</div>
+<div class="line">        push @cmd, @$append                                     <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
+<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>}                        <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>});</div>
+<div class="line"></div>
 <div class="line">    } elsif($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
+<div class="line">        $executable ||= <span class="stringliteral">&#39;sqlite3&#39;</span>;</div>
 <div class="line"></div>
 <div class="line">        die <span class="stringliteral">&quot;sqlite requires a database (file) name\n&quot;</span> unless $dbc_hash-&gt;{dbname};</div>
-<div class="line">        $cmd = <span class="stringliteral">&quot;sqlite3 &quot;</span></div>
-<div class="line">              .(defined($extra) ? <span class="stringliteral">&quot;$extra &quot;</span> : <span class="stringliteral">&#39;&#39;</span>)</div>
-<div class="line">              .$dbc_hash-&gt;{dbname}</div>
-<div class="line">              .(defined($sqlcmd) ? <span class="stringliteral">&quot; &#39;$sqlcmd&#39;&quot;</span> : <span class="stringliteral">&#39;&#39;</span>);</div>
+<div class="line"></div>
+<div class="line">        push @cmd, $executable                                  unless $to_params;</div>
+<div class="line">        push @cmd, @$prepend                                    <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
+<div class="line">        push @cmd, @$append                                     <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
+<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>};</div>
+<div class="line">        push @cmd, $sqlcmd                                      <span class="keywordflow">if</span> $sqlcmd;</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $cmd;</div>
+<div class="line">    <span class="keywordflow">return</span> \@cmd;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -217,7 +228,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_54316937a66070d9897b24579a7d39ac.html">scripts</a></li><li class="navelem"><a class="el" href="db__cmd_8pl.html">db_cmd.pl</a></li>
+    <li class="navelem"><a class="el" href="dir_3eba02bba8db0756280349dc5308b6d9.html">scripts</a></li><li class="navelem"><a class="el" href="db__cmd_8pl.html">db_cmd.pl</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>

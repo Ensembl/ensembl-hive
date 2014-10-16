@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -119,6 +119,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a89203ff40a85e13c7ef840a46dcf4487"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afea6647d740defa4fe2f636cd24b02cd"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#afea6647d740defa4fe2f636cd24b02cd">description</a> ()</td></tr>
 <tr class="separator:afea6647d740defa4fe2f636cd24b02cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad2a861ec9e554998e3ecb2944d68bc8"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#aad2a861ec9e554998e3ecb2944d68bc8">original_capacity</a> ()</td></tr>
+<tr class="separator:aad2a861ec9e554998e3ecb2944d68bc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6e64029524e47016b9db01936324f8d2"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#a6e64029524e47016b9db01936324f8d2">available_capacity</a> ()</td></tr>
 <tr class="separator:a6e64029524e47016b9db01936324f8d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb7019e05c935b4eb437ab7aaad54f8c"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#afb7019e05c935b4eb437ab7aaad54f8c">multiplier</a> ()</td></tr>
@@ -281,12 +283,43 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    my $self = bless {}, $class;</div>
 <div class="line">    $self-&gt;description( $description );</div>
+<div class="line"></div>
+<div class="line">    $self-&gt;original_capacity( $available_capacity );</div>
 <div class="line">    $self-&gt;available_capacity( $available_capacity );</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # we fix the multiplier at 1 for direct limiters, but expect it to be (re)set later by reciprocal limiters:</span></div>
 <div class="line"><span class="preprocessor"></span>    $self-&gt;multiplier( 1 );     </div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> $self;</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="aad2a861ec9e554998e3ecb2944d68bc8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::Limiter::original_capacity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-original_capacity" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-original_capacity-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-original_capacity-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-original_capacity-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#aad2a861ec9e554998e3ecb2944d68bc8">original_capacity</a> {</div>
+<div class="line">    my $self = shift @_;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>(@_) {</div>
+<div class="line">        $self-&gt;{_original_capacity} = shift @_;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;{_original_capacity};</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -317,13 +350,17 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( defined($available_capacity) and defined($multiplier) and ($multiplier &gt;= 0.0) ) {  # <span class="keywordflow">if</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#afb7019e05c935b4eb437ab7aaad54f8c">multiplier</a> is negative it is not limiting</div>
 <div class="line"></div>
+<div class="line">        $available_capacity = 0 <span class="keywordflow">if</span>($available_capacity&lt;0);</div>
+<div class="line"></div>
 <div class="line">        my $product = $available_capacity * $multiplier;</div>
 <div class="line">        my $slots_available = int( <span class="stringliteral">&quot;$product&quot;</span> );            # stringification helps to round up things like 0.1*10 (instead of leaving them at 0.99999999)</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">return</span> ($slots_available&lt;$slots_asked) ? $slots_available : $slots_asked;</div>
+<div class="line">        my $hit_the_limit = $slots_available&lt;$slots_asked;</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">return</span> ($hit_the_limit ? $slots_available : $slots_asked , $hit_the_limit);</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $slots_asked;</div>
+<div class="line">    <span class="keywordflow">return</span> ($slots_asked, 0);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

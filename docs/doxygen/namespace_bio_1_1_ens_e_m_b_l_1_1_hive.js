@@ -19,6 +19,7 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive =
     [ "MetaParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters" ],
     [ "NakedTable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table" ],
     [ "Params", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params" ],
+    [ "Pipeline", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline" ],
     [ "PipelineWideParameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters" ],
     [ "Process", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process" ],
     [ "Queen", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen" ],

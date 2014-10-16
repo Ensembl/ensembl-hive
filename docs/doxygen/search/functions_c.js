@@ -13,6 +13,7 @@ var searchData=
   ['load_5fcollections',['load_collections',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#ad8f443c658d4bdff660c6149c2b7072b',1,'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor']]],
   ['load_5ffile_5for_5fmodule',['load_file_or_module',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a1956b39203f4df86e8d7aac981462ee5',1,'Bio::EnsEMBL::Hive::Utils']]],
   ['load_5ffrom_5fjson',['load_from_json',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html#a4d561e831fd88920ca38ba78582a7f93',1,'Bio::EnsEMBL::Hive::Utils::Config']]],
+  ['load_5ffrom_5fpipeconfig',['load_from_pipeconfig',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html#a091c3cb77f258c84e1e7c7ac39e4de61',1,'Bio::EnsEMBL::Hive::Pipeline']]],
   ['locator',['locator',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a33c540b343d16f5f0f00247c692d1752',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
   ['log_5fdir',['log_dir',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a2ddf6136f8b9cb3fca032b2ba6f152ff',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['logic_5fname',['logic_name',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a6528be48120416c630abe32227e70bdb',1,'Bio::EnsEMBL::Hive::Analysis']]]

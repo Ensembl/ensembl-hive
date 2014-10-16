@@ -12,5 +12,6 @@ var namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config =
     [ "LongMultWf_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf" ],
     [ "MemlimitTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf" ],
     [ "RunListOfCommandsOnFarm_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf" ],
-    [ "TableDumperZipper_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf" ]
+    [ "TableDumperZipper_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf" ],
+    [ "TopUp_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf" ]
 ];

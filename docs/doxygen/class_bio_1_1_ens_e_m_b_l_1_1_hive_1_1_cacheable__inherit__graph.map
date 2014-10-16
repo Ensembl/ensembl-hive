@@ -1,10 +1,10 @@
 <map id="Bio::EnsEMBL::Hive::Cacheable" name="Bio::EnsEMBL::Hive::Cacheable">
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html" title="Bio::EnsEMBL::Hive\l::Analysis" alt="" coords="213,5,355,46"/>
-<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html" title="Bio::EnsEMBL::Hive\l::AnalysisCtrlRule" alt="" coords="213,70,355,111"/>
-<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html" title="Bio::EnsEMBL::Hive\l::AnalysisStats" alt="" coords="213,135,355,177"/>
-<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html" title="Bio::EnsEMBL::Hive\l::DataflowRule" alt="" coords="213,201,355,242"/>
-<area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html" title="Bio::EnsEMBL::Hive\l::MetaParameters" alt="" coords="213,266,355,307"/>
-<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html" title="Bio::EnsEMBL::Hive\l::PipelineWideParameters" alt="" coords="197,331,371,373"/>
-<area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="213,397,355,438"/>
-<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="208,462,360,503"/>
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html" title="Bio::EnsEMBL::Hive\l::Analysis" alt="" coords="235,5,392,49"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_ctrl_rule.html" title="Bio::EnsEMBL::Hive\l::AnalysisCtrlRule" alt="" coords="235,71,392,115"/>
+<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html" title="Bio::EnsEMBL::Hive\l::AnalysisStats" alt="" coords="235,138,392,182"/>
+<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html" title="Bio::EnsEMBL::Hive\l::DataflowRule" alt="" coords="235,205,392,249"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html" title="Bio::EnsEMBL::Hive\l::MetaParameters" alt="" coords="235,271,392,315"/>
+<area shape="rect" id="node13" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline_wide_parameters.html" title="Bio::EnsEMBL::Hive\l::PipelineWideParameters" alt="" coords="215,338,412,382"/>
+<area shape="rect" id="node15" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="235,405,392,449"/>
+<area shape="rect" id="node17" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="225,471,401,515"/>
 </map>

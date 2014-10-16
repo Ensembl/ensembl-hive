@@ -55,11 +55,13 @@ var hierarchy =
         [ "Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_failure_test__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::FastaSplitter_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_fasta_splitter__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html", null ],
+        [ "Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultWf_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::MemlimitTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::RunListOfCommandsOnFarm_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html", null ],
+        [ "Bio::EnsEMBL::Hive::PipeConfig::TopUp_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf.html", null ],
         [ "MiniPecanMulti_conf", "class_mini_pecan_multi__conf.html", null ],
         [ "MiniPecanSingle2_conf", "class_mini_pecan_single2__conf.html", null ],
         [ "MiniPecanSingle3_conf", "class_mini_pecan_single3__conf.html", null ],
@@ -72,6 +74,7 @@ var hierarchy =
     [ "Bio::EnsEMBL::Hive::Params", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html", [
       [ "Bio::EnsEMBL::Hive::AnalysisJob", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html", null ]
     ] ],
+    [ "Bio::EnsEMBL::Hive::Pipeline", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html", null ],
     [ "Bio::EnsEMBL::Hive::Process", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html", [
       [ "Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::Dummy", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_dummy.html", null ],

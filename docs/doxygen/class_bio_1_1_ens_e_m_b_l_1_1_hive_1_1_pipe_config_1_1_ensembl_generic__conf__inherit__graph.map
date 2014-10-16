@@ -1,4 +1,4 @@
 <map id="Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf" name="Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf">
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::HiveGeneric_conf" alt="" coords="17,97,223,138"/>
-<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html" title="Bio::EnsEMBL::Hive\l::DependentOptions" alt="" coords="49,6,191,47"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html" title="Bio::EnsEMBL::Hive\l::PipeConfig::HiveGeneric_conf" alt="" coords="19,99,256,143"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html" title="Bio::EnsEMBL::Hive\l::DependentOptions" alt="" coords="59,6,216,50"/>
 </map>

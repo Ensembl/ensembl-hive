@@ -1,4 +1,0 @@
-var dir_520f0431084093345c8f5f34bc4fe291 =
-[
-    [ "HiveWorkshop_22Feb2013", "dir_5660946ec4c9f590e812054221fd30b5.html", "dir_5660946ec4c9f590e812054221fd30b5" ]
-];

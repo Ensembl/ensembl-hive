@@ -5,6 +5,7 @@ var searchData=
   ['objectadaptor',['ObjectAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
   ['objectadaptor_2epm',['ObjectAdaptor.pm',['../_object_adaptor_8pm.html',1,'']]],
   ['objectify',['objectify',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor.html#ad90a452430769ce22f854fb0d195e905',1,'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor::objectify()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html#a02d847dd4df770edb4bdbc5ed309a2d5',1,'Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor::objectify()']]],
+  ['original_5fcapacity',['original_capacity',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#aad2a861ec9e554998e3ecb2944d68bc8',1,'Bio::EnsEMBL::Hive::Limiter']]],
   ['output_5fcapacity',['output_capacity',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac64ad37ccf27356c480b1d058315d4dd',1,'Bio::EnsEMBL::Hive::AnalysisStats']]],
   ['overflow_5flimit',['overflow_limit',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a1f8bbd7bad6d23b679d4c07ab4121085',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
   ['overridable_5fpipeline_5fcreate_5fcommands',['overridable_pipeline_create_commands',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a5622cf1eeccc7c1345975862cdc2b8e5',1,'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf']]]

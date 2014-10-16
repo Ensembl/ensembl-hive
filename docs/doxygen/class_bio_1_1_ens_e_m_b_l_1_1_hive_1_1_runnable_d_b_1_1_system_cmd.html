@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -119,7 +119,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-0-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd__inherit__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_inherit__map" alt="Inheritance graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_inherit__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_inherit__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="26,6,168,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="29,6,187,50"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
   <img id="dynsection-1-trigger" src="closed.png" alt="+"/> Collaboration diagram for Bio::EnsEMBL::Hive::RunnableDB::SystemCmd:</div>
@@ -128,7 +128,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-1-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd__coll__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_coll__map" alt="Collaboration graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_coll__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd_coll__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="26,6,168,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="29,6,187,50"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -236,7 +236,8 @@ Description</h1>
 </div><div class="memdoc">
 <pre>
     Description : Implements <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd.html#ae29716145f0f87688b97e906c8247c5f">fetch_input()</a> interface method of <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html">Bio::EnsEMBL::Hive::Process</a> that is used to read in parameters and load data.
-                  Here it deals with finding the command line, doing parameter substitution and storing the result in a predefined place.</pre><pre>    param('cmd'): The recommended way of passing in the command line.</pre><pre>    param('*'):   Any other parameters can be freely used for parameter substitution.</pre><pre> </pre><div id="codesection-fetch_input" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+                  Here it deals with finding the command line, doing parameter substitution and storing the result in a predefined place.</pre><pre>    param('cmd'): The recommended way of passing in the command line. It can be either a string, or an array-ref of strings. The later is safer if some of the
+                  arguments contain white-spaces.</pre><pre>    param('*'):   Any other parameters can be freely used for parameter substitution.</pre><pre> </pre><div id="codesection-fetch_input" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-fetch_input-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
 <div id='codesection-fetch_input-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
@@ -281,16 +282,17 @@ Description</h1>
 <div class="line">    my $self = shift;</div>
 <div class="line"> </div>
 <div class="line">    my $cmd = $self-&gt;param(<span class="stringliteral">&#39;cmd&#39;</span>);</div>
+<div class="line">    my $flat_cmd = ref($cmd) ? join(<span class="charliteral">&#39; &#39;</span>, map { ($_=~/^-?\w+$/) ? $_ : <span class="stringliteral">&quot;\&quot;$_\&quot;&quot;</span> } @$cmd) : $cmd;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($self-&gt;debug()) {</div>
-<div class="line">        warn qq{cmd = <span class="stringliteral">&quot;$cmd&quot;</span>\n};</div>
+<div class="line">        warn qq{cmd = <span class="stringliteral">&quot;$flat_cmd&quot;</span>\n};</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    $self-&gt;dbc and $self-&gt;dbc-&gt;disconnect_when_inactive(1);    # release <span class="keyword">this</span> connection <span class="keywordflow">for</span> the duration of system() call</div>
 <div class="line"></div>
-<div class="line">    if(my $return_value = system($cmd)) {</div>
+<div class="line">    if(my $return_value = system(ref($cmd) ? @$cmd : $cmd)) {</div>
 <div class="line">        $return_value &gt;&gt;= 8;</div>
-<div class="line">        die <span class="stringliteral">&quot;system( $cmd ) failed: $return_value&quot;</span>;</div>
+<div class="line">        die <span class="stringliteral">&quot;system( $flat_cmd ) failed: $return_value&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    $self-&gt;dbc and $self-&gt;dbc-&gt;disconnect_when_inactive(0);    # allow the <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a9d01ac47d41d31f30aca69b0220e0d9d">worker</a> to keep the connection open again</div>

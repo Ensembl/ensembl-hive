@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -114,8 +114,233 @@ $(document).ready(function(){initNavTree('generate__timeline_8pl.html','');});
 Functions</h2></td></tr>
 <tr class="memitem:a3ce8b237b3bdb2817dac6f769e5768c2"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="generate__timeline_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> ()</td></tr>
 <tr class="separator:a3ce8b237b3bdb2817dac6f769e5768c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae26789977ae8553649b15f0935dbba69"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="generate__timeline_8pl.html#ae26789977ae8553649b15f0935dbba69">add_dataset</a> ()</td></tr>
+<tr class="separator:ae26789977ae8553649b15f0935dbba69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9173ecf6f7c033aa8704be6d5aa1019"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a> ()</td></tr>
+<tr class="separator:af9173ecf6f7c033aa8704be6d5aa1019"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75fd23e351a53d15c7ab4af9ed65ac5f"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="generate__timeline_8pl.html#a75fd23e351a53d15c7ab4af9ed65ac5f">cumulate_events</a> ()</td></tr>
+<tr class="separator:a75fd23e351a53d15c7ab4af9ed65ac5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac70218a8fce3a55255272b1552f00d3e"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="generate__timeline_8pl.html#ac70218a8fce3a55255272b1552f00d3e">count_number_relevant_sets</a> ()</td></tr>
+<tr class="separator:ac70218a8fce3a55255272b1552f00d3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="ae26789977ae8553649b15f0935dbba69"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public add_dataset </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-add_dataset" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-add_dataset-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-add_dataset-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-add_dataset-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="generate__timeline_8pl.html#ae26789977ae8553649b15f0935dbba69">add_dataset</a> {</div>
+<div class="line">    my ($datasets, $data_timings, $layer_timings, $xdata, $key_ids_to_sum, $title, $color, $pseudo_zero_value, $analysis_ids_pattern) = @_;</div>
+<div class="line"></div>
+<div class="line">    my @ydata;</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $row (@$data_timings) {</div>
+<div class="line">        my $y = sum(map {$row-&gt;{$_} || 0} @$key_ids_to_sum) || $pseudo_zero_value;</div>
+<div class="line"><span class="preprocessor">        # Due to rounding errors, values are not always decreased to 0</span></div>
+<div class="line"><span class="preprocessor"></span>        push @ydata, $y &lt; 0.05 ? $pseudo_zero_value : $y;</div>
+<div class="line">    }</div>
+<div class="line">    my $dataset = Chart::Gnuplot::DataSet-&gt;new(</div>
+<div class="line">        xdata =&gt; $xdata,</div>
+<div class="line">        ydata =&gt; \@ydata,</div>
+<div class="line">        timefmt =&gt; <span class="stringliteral">&#39;%Y-%m-%dT%H:%M:%S&#39;</span>,</div>
+<div class="line">        style =&gt; <span class="stringliteral">&#39;filledcurves x1&#39;</span>,</div>
+<div class="line">        linewidth =&gt; <span class="charliteral">&#39;0&#39;</span>,</div>
+<div class="line">        color =&gt; $color,</div>
+<div class="line">    );</div>
+<div class="line">    push @$datasets, $dataset;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> (defined $analysis_ids_pattern) {</div>
+<div class="line">        $dataset-&gt;{fill} = {pattern =&gt; 1};</div>
+<div class="line">        my @ydatal = @ydata;</div>
+<div class="line">        <span class="keywordflow">foreach</span> my $j (1..(scalar(@$data_timings))) {</div>
+<div class="line">            my $y = $ydata[$j-1];</div>
+<div class="line">            next <span class="keywordflow">if</span> $y == $pseudo_zero_value;</div>
+<div class="line">            my $dt = $data_timings-&gt;[$j-1];</div>
+<div class="line">            my $lt = $layer_timings-&gt;[$j-1];</div>
+<div class="line">            <span class="keywordflow">foreach</span> my $i (@$analysis_ids_pattern) {</div>
+<div class="line">                $y += ($lt-&gt;{$i} || 0) - ($dt-&gt;{$i} || 0);</div>
+<div class="line">            }</div>
+<div class="line">            $ydatal[$j-1] = $y &lt; 0.05 ? $pseudo_zero_value : $y;</div>
+<div class="line">        }</div>
+<div class="line">        $dataset = Chart::Gnuplot::DataSet-&gt;new(</div>
+<div class="line">            xdata =&gt; $xdata,</div>
+<div class="line">            ydata =&gt; \@ydatal,</div>
+<div class="line">            timefmt =&gt; <span class="stringliteral">&#39;%Y-%m-%dT%H:%M:%S&#39;</span>,</div>
+<div class="line">            style =&gt; <span class="stringliteral">&#39;filledcurves x1&#39;</span>,</div>
+<div class="line">            linewidth =&gt; <span class="charliteral">&#39;0&#39;</span>,</div>
+<div class="line">            color =&gt; $color,</div>
+<div class="line">        );</div>
+<div class="line">        push @$datasets, $dataset;</div>
+<div class="line">    }</div>
+<div class="line">    $dataset-&gt;{title} = $title;</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="af9173ecf6f7c033aa8704be6d5aa1019"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public add_event </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-add_event" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-add_event-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-add_event-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-add_event-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a> {</div>
+<div class="line">    my ($events, $key, $born, $died, $offset) = @_;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> <span class="keywordflow">if</span> $offset &lt;= 0;</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">        # temporary Time::Piece values</span></div>
+<div class="line"><span class="preprocessor"></span>    my $death_datetime = Time::Piece-&gt;strptime( $died , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>);</div>
+<div class="line">    my $birth_datetime = ($born =~ /^-[0-9]/) ? $death_datetime + $born : Time::Piece-&gt;strptime( $born , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>);</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">    # We don&#39;t need to draw things at the resolution of 1 second; 1 minute is enough</span></div>
+<div class="line"><span class="preprocessor"></span>    $death_datetime-&gt;[0] = 0;</div>
+<div class="line">    $birth_datetime-&gt;[0] = 0;</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">        # string values:</span></div>
+<div class="line"><span class="preprocessor"></span>    my $birth_date = $birth_datetime-&gt;date . <span class="charliteral">&#39;T&#39;</span> . $birth_datetime-&gt;hms;</div>
+<div class="line">    my $death_date = $death_datetime-&gt;date . <span class="charliteral">&#39;T&#39;</span> . $death_datetime-&gt;hms;</div>
+<div class="line">    <span class="keywordflow">return</span> <span class="keywordflow">if</span> $died and ($birth_date eq $death_date);</div>
+<div class="line"></div>
+<div class="line">    $events-&gt;{$birth_date}{$key} += $offset;</div>
+<div class="line">    $events-&gt;{$death_date}{$key} -= $offset <span class="keywordflow">if</span> $died;</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="ac70218a8fce3a55255272b1552f00d3e"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public count_number_relevant_sets </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-count_number_relevant_sets" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-count_number_relevant_sets-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-count_number_relevant_sets-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-count_number_relevant_sets-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="generate__timeline_8pl.html#ac70218a8fce3a55255272b1552f00d3e">count_number_relevant_sets</a> {</div>
+<div class="line">    my ($sorted_key_ids, $tot_analysis, $total_total, $top, $n_colors_in_palette, $verbose) = @_;</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">    # Get the number of analysis we want to display</span></div>
+<div class="line"><span class="preprocessor"></span>    my $n_relevant_analysis = scalar(@$sorted_key_ids);</div>
+<div class="line">    <span class="keywordflow">if</span> ($top and ($top &gt; 0)) {</div>
+<div class="line">        <span class="keywordflow">if</span> ($top &lt; 1) {</div>
+<div class="line">            my $s = 0;</div>
+<div class="line">            $n_relevant_analysis = 0;</div>
+<div class="line">            map {my $pre_s = $s; $s += $tot_analysis-&gt;{$_}/$total_total; $pre_s &lt; $top &amp;&amp; $n_relevant_analysis++} @$sorted_key_ids;</div>
+<div class="line">        } elsif ($top &lt; scalar(@$sorted_key_ids)) {</div>
+<div class="line">            $n_relevant_analysis = $top;</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"><span class="preprocessor">    # cap based on the length of the palette</span></div>
+<div class="line"><span class="preprocessor"></span>    my $need_other_analysis = $n_relevant_analysis &lt; scalar(@$sorted_key_ids) ? 1 : 0;</div>
+<div class="line">    <span class="keywordflow">if</span> (($n_relevant_analysis+$need_other_analysis) &gt; $n_colors_in_palette) {</div>
+<div class="line">        $n_relevant_analysis = $n_colors_in_palette - 1;</div>
+<div class="line">        $need_other_analysis = 1;</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    warn <span class="stringliteral">&quot;$n_relevant_analysis relevant analysis\n&quot;</span> <span class="keywordflow">if</span> $verbose;</div>
+<div class="line">    <span class="keywordflow">return</span> ($n_relevant_analysis, $need_other_analysis, $top);</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="a75fd23e351a53d15c7ab4af9ed65ac5f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public cumulate_events </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-cumulate_events" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-cumulate_events-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-cumulate_events-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-cumulate_events-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="generate__timeline_8pl.html#a75fd23e351a53d15c7ab4af9ed65ac5f">cumulate_events</a> {</div>
+<div class="line">    my ($events, $key_names, $start_date, $end_date, $ref_events, $verbose) = @_;</div>
+<div class="line"></div>
+<div class="line">    my @event_dates = sort {$a cmp $b} (keys %$ref_events);</div>
+<div class="line">    warn scalar(@event_dates), <span class="stringliteral">&quot; dates\n&quot;</span> <span class="keywordflow">if</span> $verbose;</div>
+<div class="line"></div>
+<div class="line">    my $max_workers = 0;</div>
+<div class="line">    my @data_timings = ();</div>
+<div class="line">    my %tot_area = ();</div>
+<div class="line"></div>
+<div class="line">    my $num_curr_workers = 0;</div>
+<div class="line">    my %hash_curr_workers = (map {$_ =&gt; 0 } @$key_names);</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">foreach</span> my $event_date (@event_dates) {</div>
+<div class="line"></div>
+<div class="line">        last <span class="keywordflow">if</span> $end_date and ($event_date gt $end_date);</div>
+<div class="line">        next unless exists $events-&gt;{$event_date};</div>
+<div class="line"></div>
+<div class="line">        my $topup_hash = $events-&gt;{$event_date};</div>
+<div class="line">        <span class="keywordflow">foreach</span> my $key_id (keys %$topup_hash) {</div>
+<div class="line">            $hash_curr_workers{$key_id} += $topup_hash-&gt;{$key_id};</div>
+<div class="line">            $num_curr_workers += $topup_hash-&gt;{$key_id};</div>
+<div class="line">        }</div>
+<div class="line"><span class="preprocessor">        # Due to rounding errors, the sums may be slightly different</span></div>
+<div class="line"><span class="preprocessor"></span>        die sum(values %hash_curr_workers).<span class="stringliteral">&quot;!=$num_curr_workers&quot;</span> <span class="keywordflow">if</span> abs(sum(values %hash_curr_workers) - $num_curr_workers) &gt; 0.05;</div>
+<div class="line"></div>
+<div class="line">        next <span class="keywordflow">if</span> $start_date and ($event_date lt $start_date);</div>
+<div class="line"></div>
+<div class="line">        my %hash_interval = %hash_curr_workers;</div>
+<div class="line"><span class="preprocessor">        #FIXME It should be normalised by the length of the time interval</span></div>
+<div class="line"><span class="preprocessor"></span>        map {$tot_area{$_} += $hash_interval{$_}} keys %hash_interval;</div>
+<div class="line"></div>
+<div class="line">        $max_workers = $num_curr_workers <span class="keywordflow">if</span> ($num_curr_workers &gt; $max_workers);</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">        # We need to repeat the previous value to have an histogram shape</span></div>
+<div class="line"><span class="preprocessor"></span>        push @data_timings, [$event_date, { %{$data_timings[-1]-&gt;[1]} }] <span class="keywordflow">if</span> @data_timings;</div>
+<div class="line">        push @data_timings, [$event_date, \%hash_interval];</div>
+<div class="line">    }</div>
+<div class="line">    warn <span class="stringliteral">&quot;Last timing: &quot;</span>, Dumper $data_timings[-1] <span class="keywordflow">if</span> $verbose and @data_timings;</div>
+<div class="line">    warn <span class="stringliteral">&quot;Highest y value: &quot;</span>, $max_workers, <span class="stringliteral">&quot;\n&quot;</span> <span class="keywordflow">if</span> $verbose;</div>
+<div class="line">    warn <span class="stringliteral">&quot;Total area: &quot;</span>, Dumper \%tot_area <span class="keywordflow">if</span> $verbose;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> [\%tot_area, \@data_timings, $max_workers];</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="a3ce8b237b3bdb2817dac6f769e5768c2"></a>
 <div class="memitem">
 <div class="memproto">
@@ -136,7 +361,7 @@ Functions</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_54316937a66070d9897b24579a7d39ac.html">scripts</a></li><li class="navelem"><a class="el" href="generate__timeline_8pl.html">generate_timeline.pl</a></li>
+    <li class="navelem"><a class="el" href="dir_3eba02bba8db0756280349dc5308b6d9.html">scripts</a></li><li class="navelem"><a class="el" href="generate__timeline_8pl.html">generate_timeline.pl</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>

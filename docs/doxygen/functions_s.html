@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -142,7 +142,7 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 
 <h3><a class="anchor" id="index_s"></a>- s -</h3><ul>
 <li>safe_synchronize_AnalysisStats()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#abe0354cbdbf898d95cf08cb2d167ba38">Bio::EnsEMBL::Hive::Queen</a>
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a52679a6124cddf931f1882ed5b642259">Bio::EnsEMBL::Hive::Queen</a>
 </li>
 <li>save_collections()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#adc3af59b42d7424b8c4b64a47e0e5c54">Bio::EnsEMBL::Hive::DBSQL::DBAdaptor</a>
@@ -155,6 +155,9 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 </li>
 <li>schedule_workers_resync_if_necessary()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a65f7b429d0ffbda238faeda2451350a8">Bio::EnsEMBL::Hive::Scheduler</a>
+</li>
+<li>scheduler_say()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a8bd3190564f0e48f010e1a88650d5e41">Bio::EnsEMBL::Hive::Scheduler</a>
 </li>
 <li>script_usage()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ad8abe58a987444c45b366ef5dba4e218">Bio::EnsEMBL::Hive::Utils</a>
@@ -191,14 +194,17 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor.html#a2fd8279544ff4bd78e9b3fd09495542c">Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html#af1b4e5cdd9865d10338aafe4c6d047c0">Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor</a>
 </li>
+<li>sort_stats_by_suitability()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a5f75575073a64fa1c764720e1eee5400">Bio::EnsEMBL::Hive::Scheduler</a>
+</li>
 <li>special_batch()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ab6470f448766be332f7e4d081e6d7cc2">Bio::EnsEMBL::Hive::Worker</a>
 </li>
 <li>specialize_and_compile_wrapper()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ae432e7a7dbc6a8b0109353d4f6938d9c">Bio::EnsEMBL::Hive::Worker</a>
 </li>
-<li>specialize_new_worker()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#adcc937a7a48d51f801d65757bc55bda2">Bio::EnsEMBL::Hive::Queen</a>
+<li>specialize_worker()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a7d40ab66d3d6d591705a85fb791a34fe">Bio::EnsEMBL::Hive::Queen</a>
 </li>
 <li>sql()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html#a2205b03c134fd7113a848ecff1165df5">Bio::EnsEMBL::Hive::DBSQL::StatementHandle</a>
@@ -229,6 +235,7 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 </li>
 <li>store()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a23e67bcbf6294126212da34c0c5a2a90">Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor</a>
+, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html#a751246601e079a764fe4b1f9c27846ff">Bio::EnsEMBL::Hive::Pipeline</a>
 </li>
 <li>store_if_needed()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_data_adaptor.html#ac8c0dae5bdef78d715b0f4b94853e8d1">Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor</a>
@@ -273,8 +280,8 @@ $(document).ready(function(){initNavTree('functions_s.html','');});
 <li>substitute()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dependent_options.html#a58f0a875a481ff975964bbd451773f11">Bio::EnsEMBL::Hive::DependentOptions</a>
 </li>
-<li>suggest_analysis_to_specialize_by_rc_id_meadow_type()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#ab56e0d78a8774c93dc262a5c63812891">Bio::EnsEMBL::Hive::Scheduler</a>
+<li>suggest_analysis_to_specialize_a_worker()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a9d2af12ce052ca879c543465c6477da1">Bio::EnsEMBL::Hive::Scheduler</a>
 </li>
 <li>sync_lock()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#ac66bdac33e42b171ca6917480de34063">Bio::EnsEMBL::Hive::AnalysisStats</a>

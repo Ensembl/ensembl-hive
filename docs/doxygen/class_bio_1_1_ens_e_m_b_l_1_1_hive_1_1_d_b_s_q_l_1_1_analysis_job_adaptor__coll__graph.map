@@ -1,4 +1,4 @@
 <map id="Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor">
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ObjectAdaptor" alt="" coords="21,97,187,138"/>
-<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="25,6,183,47"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_object_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::ObjectAdaptor" alt="" coords="24,99,216,143"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="29,6,211,50"/>
 </map>

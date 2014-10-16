@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.1</span>
+   &#160;<span id="projectnumber">2.2</span>
    </div>
   </td>
  </tr>
@@ -119,7 +119,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-0-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker__inherit__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_inherit__map" alt="Inheritance graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_inherit__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_inherit__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,147,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,163,50"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
   <img id="dynsection-1-trigger" src="closed.png" alt="+"/> Collaboration diagram for Bio::EnsEMBL::Hive::Worker:</div>
@@ -128,7 +128,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-1-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker__coll__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_coll__map" alt="Collaboration graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_coll__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker_coll__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,147,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,163,50"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -360,9 +360,19 @@ Description</h1>
 <div id='codesection-current_role-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-current_role-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a3cdc9a0bc7b4805b519594304876a971">current_role</a> {</div>
-<div class="line">      my $self = shift;</div>
-<div class="line">      $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>} = shift <span class="keywordflow">if</span>(@_);</div>
-<div class="line">      <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>};</div>
+<div class="line">    my $self = shift;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>( @_ ) {</div>
+<div class="line">        <span class="keywordflow">if</span>( my $from_analysis = $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>} &amp;&amp; $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>}-&gt;analysis ) {</div>
+<div class="line">            $self-&gt;worker_say( <span class="stringliteral">&quot;unspecializing from &quot;</span>.$from_analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$from_analysis-&gt;dbID.<span class="charliteral">&#39;)&#39;</span> );</div>
+<div class="line">        }</div>
+<div class="line">        my $new_role = shift @_;</div>
+<div class="line">        <span class="keywordflow">if</span>( my $to_analysis = $new_role &amp;&amp; $new_role-&gt;analysis ) {</div>
+<div class="line">            $self-&gt;worker_say( <span class="stringliteral">&quot;specializing to &quot;</span>.$to_analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$to_analysis-&gt;dbID.<span class="charliteral">&#39;)&#39;</span> );</div>
+<div class="line">        }</div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>} = $new_role;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_current_role&#39;</span>};</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -1002,7 +1012,7 @@ Description</h1>
 <div id='codesection-run-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-run-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ab6456d819b72b807884df4b49ea30492">run</a> {</div>
-<div class="line">    my ($self, $specialization_arglist) = @_;</div>
+<div class="line">    my ($self, $specialization_arghash) = @_;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( my $worker_log_dir = $self-&gt;log_dir ) {</div>
 <div class="line">        $self-&gt;get_stdout_redirector-&gt;push( $worker_log_dir.<span class="stringliteral">&#39;/worker.out&#39;</span> );</div>
@@ -1014,7 +1024,7 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    print <span class="stringliteral">&quot;\n&quot;</span>; # to clear beekeeper<span class="stringliteral">&#39;s prompt in case output is not logged</span></div>
 <div class="line"><span class="stringliteral">    $self-&gt;worker_say( $self-&gt;toString() );</span></div>
-<div class="line"><span class="stringliteral">    $self-&gt;specialize_and_compile_wrapper( $specialization_arglist );</span></div>
+<div class="line"><span class="stringliteral">    $self-&gt;specialize_and_compile_wrapper( $specialization_arghash );</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">    while (!$self-&gt;cause_of_death) {  # Worker&#39;</span>s lifespan loop (ends only when the worker dies <span class="keywordflow">for</span> any reason)</div>
 <div class="line"></div>
@@ -1047,7 +1057,8 @@ Description</h1>
 <div class="line"></div>
 <div class="line">                } <span class="keywordflow">else</span> {</div>
 <div class="line">                    my $desired_batch_size  = $current_role-&gt;analysis-&gt;stats-&gt;get_or_estimate_batch_size();</div>
-<div class="line">                    $desired_batch_size     = $self-&gt;job_limiter-&gt;preliminary_offer( $desired_batch_size );</div>
+<div class="line">                    my $hit_the_limit;  # dummy at the moment</div>
+<div class="line">                    ($desired_batch_size, $hit_the_limit)   = $self-&gt;job_limiter-&gt;preliminary_offer( $desired_batch_size );</div>
 <div class="line"></div>
 <div class="line">                    my $actual_batch = $job_adaptor-&gt;grab_jobs_for_role( $current_role, $desired_batch_size );</div>
 <div class="line">                    <span class="keywordflow">if</span>(scalar(@$actual_batch)) {</div>
@@ -1093,10 +1104,12 @@ Description</h1>
 <div class="line">            $self-&gt;adaptor-&gt;db-&gt;get_AnalysisStatsAdaptor-&gt;update_status( $self-&gt;current_role-&gt;analysis_id, <span class="stringliteral">&#39;ALL_CLAIMED&#39;</span> );</div>
 <div class="line">        }</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">if</span>( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self-&gt;can_respecialize and !$specialization_arglist ) {</div>
-<div class="line">            $self-&gt;adaptor-&gt;db-&gt;get_AnalysisStatsAdaptor-&gt;decrease_running_workers( $self-&gt;current_role-&gt;analysis-&gt;dbID );  # FIXME: tidy up <span class="keyword">this</span> counting of active roles</div>
+<div class="line">        <span class="keywordflow">if</span>( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self-&gt;can_respecialize and (!$specialization_arghash-&gt;{<span class="stringliteral">&#39;-analyses_pattern&#39;</span>} or $specialization_arghash-&gt;{<span class="stringliteral">&#39;-analyses_pattern&#39;</span>}!~/^\w+$/) ) {</div>
+<div class="line">            my $old_role = $self-&gt;current_role;</div>
+<div class="line">            $self-&gt;adaptor-&gt;db-&gt;get_RoleAdaptor-&gt;finalize_role( $old_role, 1 );</div>
+<div class="line">            $self-&gt;current_role( undef );</div>
 <div class="line">            $self-&gt;cause_of_death(undef);</div>
-<div class="line">            $self-&gt;specialize_and_compile_wrapper();</div>
+<div class="line">            $self-&gt;specialize_and_compile_wrapper( $specialization_arghash, $old_role-&gt;analysis );</div>
 <div class="line">        }</div>
 <div class="line"></div>
 <div class="line">    }     # /Worker<span class="stringliteral">&#39;s lifespan loop</span></div>
@@ -1367,22 +1380,11 @@ Description</h1>
 <div id='codesection-specialize_and_compile_wrapper-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-specialize_and_compile_wrapper-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ae432e7a7dbc6a8b0109353d4f6938d9c">specialize_and_compile_wrapper</a> {</div>
-<div class="line">    my ($self, $specialization_arglist) = @_;</div>
+<div class="line">    my ($self, $specialization_arghash, $prev_analysis) = @_;</div>
 <div class="line"></div>
 <div class="line">    eval {</div>
 <div class="line">        $self-&gt;enter_status(<span class="stringliteral">&#39;SPECIALIZATION&#39;</span>);</div>
-<div class="line">        my $old_role = $self-&gt;current_role();</div>
-<div class="line">        $self-&gt;adaptor-&gt;specialize_new_worker( $self, $specialization_arglist ? @$specialization_arglist : () );</div>
-<div class="line">        my $new_role = $self-&gt;current_role();</div>
-<div class="line"></div>
-<div class="line">        my $specialization_to = $new_role-&gt;analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$new_role-&gt;analysis_id.<span class="charliteral">&#39;)&#39;</span>;</div>
-<div class="line">        <span class="keywordflow">if</span>($old_role) {</div>
-<div class="line">            my $respecialization_from = $old_role-&gt;analysis-&gt;logic_name.<span class="charliteral">&#39;(&#39;</span>.$old_role-&gt;analysis_id.<span class="charliteral">&#39;)&#39;</span>;</div>
-<div class="line">            $self-&gt;worker_say( <span class="stringliteral">&quot;respecializing from $respecialization_from to $specialization_to&quot;</span> );</div>
-<div class="line">        } <span class="keywordflow">else</span> {</div>
-<div class="line">            $self-&gt;worker_say( <span class="stringliteral">&quot;specializing to $specialization_to&quot;</span> );</div>
-<div class="line">        }</div>
-<div class="line"></div>
+<div class="line">        $self-&gt;adaptor-&gt;specialize_worker( $self, $specialization_arghash );</div>
 <div class="line">        1;</div>
 </div><!-- fragment --> </div> 
 </div>
