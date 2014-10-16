@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    use Bio::EnsEMBL::Hive::Version 2.0;
+    use Bio::EnsEMBL::Hive::Version 2.2;
 
 =head1 DESCRIPTION
 
@@ -37,7 +37,7 @@ package Bio::EnsEMBL::Hive::Version;
 use strict;
 use warnings;
 
-our $VERSION = '2.2';
+our $VERSION = '2.3';
 
 sub get_code_version {
 
