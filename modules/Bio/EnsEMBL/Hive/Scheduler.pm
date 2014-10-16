@@ -204,12 +204,12 @@ sub schedule_workers {
         my $submit_capacity_limiter = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
         my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
 
-        foreach my $analysis_stats (@$stats_sorted_by_suitability) {
+        ANALYSIS: foreach my $analysis_stats (@$stats_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
                 if( $analysis_id2rc_name ) {    # only add this message when scheduling and not during a Worker's specialization
                     push @$log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
                 }
-                last;
+                last ANALYSIS;
             }
 
             my $analysis            = $analysis_stats->analysis();    # FIXME: if it proves too expensive we may need to consider caching
@@ -218,7 +218,7 @@ sub schedule_workers {
 
             if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached ) {
                 push @$log_buffer, "Available capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
-                next;
+                next ANALYSIS;
             }
 
                 #digging deeper under the surface so need to sync:
@@ -229,12 +229,12 @@ sub schedule_workers {
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
                 } else {
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
-                    next;
+                    next ANALYSIS;
                 }
             }
             if( $analysis_stats->status =~ /^(BLOCKED|SYNCHING)$/ ) {
                 push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
-                next;
+                next ANALYSIS;
             }
 
                 # getting the initial worker requirement for this analysis (may be stale if not sync'ed recently)
@@ -242,7 +242,7 @@ sub schedule_workers {
 
             if ($extra_workers_this_analysis <= 0) {
                 push @$log_buffer, "Analysis '$logic_name' doesn't require extra workers, skipping it.";
-                next;
+                next ANALYSIS;
             }
 
             $total_extra_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
@@ -272,7 +272,7 @@ sub schedule_workers {
                         push @$log_buffer, "Hit the limit of *** ".$limiter->description." ***, settling for $extra_workers_this_analysis Workers.";
                     } else {
                         push @$log_buffer, "Hit the limit of *** ".$limiter->description." ***, skipping this Analysis.";
-                        next;
+                        next ANALYSIS;
                     }
                 }
             }
@@ -294,7 +294,7 @@ sub schedule_workers {
                                 );
             }
 
-        }   # /foreach my $analysis_stats (@$stats_sorted_by_suitability)
+        }   # /ANALYSIS : foreach my $analysis_stats (@$stats_sorted_by_suitability)
     }
 
     return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
