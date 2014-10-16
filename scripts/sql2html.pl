@@ -31,7 +31,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 ### Options ###
 ###############
 
-my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
+my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$html_head_file,$help,$help_format);
 my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle,$hosts_list);
 
 usage() if (!scalar(@ARGV));
@@ -54,6 +54,7 @@ GetOptions(
     'hosts_list=s'     => \$hosts_list,
     'skip_connection'  => \$skip_conn,
     'intro=s'          => \$intro_file,
+    'html_head=s'      => \$html_head_file,
     'help!'            => \$help,
     'help_format'      => \$help_format,
 );
@@ -107,6 +108,7 @@ if (defined($host) && !defined($skip_conn)) {
 
 my $default_colour = '#000'; # Black
 my $border_colour  = '#BBB'; 
+my $box_shadow     = 'box-shadow:1px 1px 2px #888';
 
 my $header_bg1 = "background-color:#FFF";
 my $header_bg2 = "background-color:#F4F4F4";
@@ -141,10 +143,12 @@ my $link_text = 'columns';
 ### Header ###
 ##############
 my $title = 'Schema Documentation';
+my $extra_html_head_content = insert_text_into_html_head($html_head_file);
 
 my $html_header = qq{
 <html>
 <head>
+$extra_html_head_content
 <title>$title</title>
 <meta name="order" content="2" />
 
@@ -190,7 +194,7 @@ my $html_header = qq{
       alink_id = '#a_'+param;
       
       if (\$(alink_id)) {
-        if (\$(expand_div).value=='0') {
+        if (\$(expand_div).val()==0) {
           \$(alink_id).html(img_minus+' Hide '+link_text);
         }
         else {
@@ -199,11 +203,11 @@ my $html_header = qq{
       }
       \$(div_id).slideToggle( 500 );
     });
-    if (\$(expand_div).value=='0') {
-      \$(expand_div).value='1';
+    if (\$(expand_div).val()==0) {
+      \$(expand_div).val(1);
     }
     else {
-      \$(expand_div).value='0';
+      \$(expand_div).val(0);
     }
   }
 </script>
@@ -521,6 +525,7 @@ print HTML slurp_intro($intro_file)."\n";
 print HTML $html_content."\n";
 print HTML $html_footer."\n";
 close(HTML);
+chmod 0755, $html_file;
 
 
 
@@ -972,8 +977,8 @@ sub add_species_list {
 
   my $show_hide = show_hide_button("s_$table", "$table", 'species');
 
-  my $separator = (defined($has_see) && scalar(keys(%$has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
-  my $margin = (defined($has_see) && scalar(keys(%$has_see))) ? qq{;padding-left:25px} : '';
+  my $separator = (defined($has_see) && scalar(keys(@$has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
+  my $margin = (defined($has_see) && scalar(keys(@$has_see))) ? qq{;padding-left:25px} : '';
 
   my $html = qq{$separator
   <td style="padding-top:4px$margin"><p style="margin-bottom:0px"><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
@@ -1170,12 +1175,23 @@ sub remove_char {
 }
 
 
+# Insert text into the <head> tags
+sub insert_text_into_html_head {
+  my $header_file = shift;
+  return '' if (!defined $header_file);
+
+  local $/=undef;
+  open my $fh, "< $header_file" or die "Can't open $header_file: $!";
+  my $header_html = <$fh>;
+  close $fh;
+  return $header_html;
+}
+
+
 # Insert the introduction text of the web page
 sub slurp_intro {
-  my ($intro_file) = @_;
-  if (!defined $intro_file) {
-    return qq{<h1>Ensembl $db_team Schema Documentation</h1>\n<h2>Introduction</h2>\n<p><i>please, insert your introduction here</i><p><br />};
-  }
+  my $intro_file = shift;
+  return qq{<h1>Ensembl $db_team Schema Documentation</h1>\n<h2>Introduction</h2>\n<p><i>please, insert your introduction here</i><p><br />} if (!defined $intro_file);
 
   local $/=undef;
   open my $fh, "< $intro_file" or die "Can't open $intro_file: $!";
@@ -1187,6 +1203,7 @@ sub slurp_intro {
   return $intro_html;
 }
 
+
 # Show/hide button
 sub show_hide_button {
   my $a_id   = shift;
@@ -1194,7 +1211,7 @@ sub show_hide_button {
   my $label  = shift;
   
   my $show_hide = qq{
-  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px" onclick="show_hide('$div_id','$label')">
+  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;$box_shadow" onclick="show_hide('$div_id','$label')">
     $img_plus Show $label
   </a>};
   return $show_hide;
@@ -1331,6 +1348,7 @@ sub usage {
     -c                A flag to display the colours associated with the tables (1) or not (0). By default, the value is set to 1.
     -v                Version of the schema. Replace the string ####DB_VERSION#### by the value of the parameter "-v", in the introduction text. (Optional)
     -intro            A html/text file to include in the Introduction section (Optional. If not provided a default text will be inserted)
+    -html_head        A html/text file to include extra text inside the html <head></head> tags. (Optional)
     -show_header      A flag to display headers for a group of tables (1) or not (0). By default, the value is set to 1.
     -format_headers   A flag to display formatted headers for a group of tables (1) or not (0) in the top menu list. By default, the value is set to 1.                
     -sort_headers     A flag to sort (1) or not (0) the headers by alphabetic order. By default, the value is set to 1.
