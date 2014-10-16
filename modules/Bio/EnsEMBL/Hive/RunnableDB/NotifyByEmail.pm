@@ -92,12 +92,12 @@ sub run {
     my $subject = $self->param_required('subject');
     my $text    = $self->param_required('text');
 
-    open(SENDMAIL, "|sendmail $email");
-    print SENDMAIL "Subject: $subject\n";
-    print SENDMAIL "Content-Type: text/html;\n" if $self->param('is_html');
-    print SENDMAIL "\n";
-    print SENDMAIL "$text\n";
-    close SENDMAIL;
+    open(my $sendmail_fh, '|-', "sendmail '$email'");
+    print $sendmail_fh "Subject: $subject\n";
+    print $sendmail_fh "Content-Type: text/html;\n" if $self->param('is_html');
+    print $sendmail_fh "\n";
+    print $sendmail_fh "$text\n";
+    close $sendmail_fh;
 }
 
 =head2 write_output
