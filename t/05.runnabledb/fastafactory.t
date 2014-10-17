@@ -153,7 +153,7 @@ is(@all_files, 1, 'exactly one output file - test 1');
 ## 
 ## next job
 ##
-my $job = $apiarist->get_a_new_job( $config->pipeline_url, 2 );
+$job = $apiarist->get_a_new_job( $config->pipeline_url, 2 );
 ok( $job, 'got more work to do' );
 
 run_job( $runnable, $job );
@@ -185,7 +185,7 @@ foreach my $file(@all_files) {
 ## 
 ## next job
 ##
-my $job = $apiarist->get_a_new_job( $config->pipeline_url, 3 );
+$job = $apiarist->get_a_new_job( $config->pipeline_url, 3 );
 ok( $job, 'got more work to do' );
 
 run_job( $runnable, $job );
