@@ -92,7 +92,7 @@ sub pipeline_analyses {
             -input_ids => [ 
 		 {
 		     'inputfile'         => $self->o('inputfile'),
-		     'max_chunk_length'  => 20000,
+		     'max_chunk_length'  => 20000, ## big enough for all sequences
 		     'output_prefix'     => $self->o('chunks_dir').'/test1_',
 		     'output_suffix'     => $self->o('output_suffix'),
 		 },
