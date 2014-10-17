@@ -20,4 +20,17 @@ sub get_a_new_job {
     return $job;
 }
 
+sub runnable_a_job {
+    my ($self, $runnable, $job) = @_;
+    $job->param_init( 
+	$runnable->strict_hash_format(),
+	$runnable->param_defaults(), 
+	$job->input_id(),
+	);
+    $runnable->input_job( $job );    
+    $runnable->fetch_input();
+    $runnable->run();
+    $runnable->write_output();
+}
+
 1;

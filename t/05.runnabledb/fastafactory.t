@@ -138,7 +138,7 @@ ok( $job, 'got work to do' );
 my $runnable = Bio::EnsEMBL::Hive::RunnableDB::FastaFactory->new();
 ok($runnable, 'instantiation');
 
-run_job( $runnable, $job );
+$apiarist->runnable_a_job( $runnable, $job );
 ##
 ## do some checks
 ##
@@ -156,7 +156,7 @@ is(@all_files, 1, 'exactly one output file - test 1');
 $job = $apiarist->get_a_new_job( $config->pipeline_url, 2 );
 ok( $job, 'got more work to do' );
 
-run_job( $runnable, $job );
+$apiarist->runnable_a_job( $runnable, $job );
 
 $expected_filename = 'test2_1.fa';
 ok(-e $expected_filename, 'output file exists');
@@ -188,7 +188,7 @@ foreach my $file(@all_files) {
 $job = $apiarist->get_a_new_job( $config->pipeline_url, 3 );
 ok( $job, 'got more work to do' );
 
-run_job( $runnable, $job );
+$apiarist->runnable_a_job( $runnable, $job );
 
 $expected_filename = 'test3_1.fa';
 ok(-e $expected_filename, 'output file exists');
@@ -200,20 +200,6 @@ is(@all_files, 2, 'correct number of output files - test 3');
 foreach my $file(@all_files) {
     my $exp_size = $expected_properties->{$file}[0];
     is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
-}
-
-
-sub run_job {
-    my ($runnable, $job) = @_;
-    $job->param_init( 
-	$runnable->strict_hash_format(),
-	$runnable->param_defaults(), 
-	$job->input_id(),
-	);
-    $runnable->input_job( $job );    
-    $runnable->fetch_input();
-    $runnable->run();
-    $runnable->write_output();
 }
 
 chdir $ENV{'EHIVE_ROOT_DIR'};
