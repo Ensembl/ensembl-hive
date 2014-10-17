@@ -248,7 +248,7 @@ sub main {
     }
 
     if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analysis_pattern quietly
-#        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
+        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
@@ -358,12 +358,6 @@ sub run_autonomously {
 
     my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
-    my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
-    my %meadow_type_rc_name2resource_param_list = ();
-    foreach my $rd (@{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all() }) {
-        $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
-    }
-
     my $beekeeper_pid = $$;
 
     my $iteration=0;
@@ -397,6 +391,13 @@ sub run_autonomously {
                 make_path( $submit_log_subdir );
             }
 
+                # make sure the Resources are loaded fresh every time we need them:
+            my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+            my %meadow_type_rc_name2resource_param_list = ();
+            foreach my $rd (@{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all() }) {
+                $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
+            }
+
             foreach my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {
 
                 my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
@@ -424,6 +425,10 @@ sub run_autonomously {
             $self->{'dba'}->dbc->disconnect_if_idle;
             printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
             sleep($self->{'sleep_minutes'}*60);  
+
+            unless($run_job_id) {   # refresh the data from analysis_base table
+                $list_of_analyses = $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
+            }
         }
     }
 
