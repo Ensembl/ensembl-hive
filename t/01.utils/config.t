@@ -18,7 +18,7 @@ BEGIN {
 
 
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
-diag "@config_files"; 
+# diag "@config_files"; 
 
 cmp_ok(@config_files, '>', 0, 'at least one got returned');
 cmp_ok(@config_files, '<', 3, '1 or 2');
