@@ -32,6 +32,8 @@ th, td { font-size: 0.8em; }
 
 body.ie6 th, body.ie6 td { font-size: 13px; }
 
+hr { margin-top:40px; margin-bottom:20px  }
+
 /*----------------------------------------------------------------------
   New classes defined for the eHive documents
 ----------------------------------------------------------------------*/
