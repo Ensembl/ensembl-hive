@@ -43,4 +43,15 @@ is($struct_string,
    q!{"foo" => "bar","latin" => {"atrium" => "foo bar","lorem" => {"ipsum" => "dolor"}}}!,
    'correct depth');
 
+my $destructure = destringify $structure;
+ok($destructure, 'recreated a hash');
+isa_ok($destructure, 'HASH'); ## really is a hash
+is($destructure->{'foo'}, 'bar', 'foo value correct');
+is($destructure->{'latin'}{'lorem'}{'ipsum'}, 'dolor', 'latin test');
+
+$destructure = destringify "[{ 'alpha' => 'beta' }, { 'gamma' => 'delta'}, {'omega' => undef}]";
+isa_ok($destructure, 'ARRAY'); ## got an array
+is($destructure->[0]{'alpha'}, 'beta', 'hash entry');
+is($destructure->[2]{'omega'}, undef, 'undef values');
+
 done_testing();
