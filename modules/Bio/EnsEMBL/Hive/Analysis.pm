@@ -156,18 +156,18 @@ sub get_compiled_module_name {
 =cut
 
 sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter url is generated
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
-    my $adaptor = $self->adaptor;
-    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->url . '/analysis?logic_name=' : '') . $self->logic_name;
+    my $my_dba = $self->adaptor && $self->adaptor->db;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url . '/analysis?logic_name=' : '') . $self->logic_name;
 }
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter display_name is generated
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter display_name is generated
 
-    my $adaptor = $self->adaptor;
-    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->dbname . '/' : '' ) . $self->logic_name;
+    my $my_dba = $self->adaptor && $self->adaptor->db;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->logic_name;
 }
 
 

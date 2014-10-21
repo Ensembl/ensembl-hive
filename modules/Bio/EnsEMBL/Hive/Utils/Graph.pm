@@ -528,7 +528,7 @@ sub _add_dataflow_rules {
             $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => $target_object->struct_name().'#'.$branch_code,
+                label       => '#'.$branch_code."\n".$target_object->display_name( $self->hive_dba ),
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',

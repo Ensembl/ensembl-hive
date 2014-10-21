@@ -58,19 +58,19 @@ sub insertion_method {
 
 
 sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter url is generated
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
-    my $adaptor = $self->adaptor;
-    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->url : ':///' )
+    my $my_dba = $self->adaptor && $self->adaptor->db;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : ':///' )
         . '/' . $self->table_name . '?insertion_method=' . $self->insertion_method;
 }
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'our' dba, a shorter display_name is generated
+    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter display_name is generated
 
-    my $adaptor = $self->adaptor;
-    return ( ($adaptor and $adaptor->db ne ($ref_dba//'') ) ? $adaptor->db->dbc->dbname.'/' : '') . $self->table_name;
+    my $my_dba = $self->adaptor && $self->adaptor->db;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->dbname.'/' : '') . $self->table_name;
 }
 
 
