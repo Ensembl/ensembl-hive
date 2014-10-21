@@ -126,18 +126,11 @@ sub to_analysis_url {
 #            warn "setting to_analysis_url() in an object that had to_analysis() defined";
             $self->{'_to_analysis'} = undef;
         }
-    } elsif( !$self->{'_to_analysis_url'} and my $analysis_or_nt=$self->{'_to_analysis'} ) {
+    } elsif( !$self->{'_to_analysis_url'} and my $target_object=$self->{'_to_analysis'} ) {
 
-        # if the 'from' and 'to' share the same adaptor, then use a simple logic_name
-        # for the URL rather than a full network distributed URL
+        my $ref_dba = $self->from_analysis && $self->from_analysis->adaptor && $self->from_analysis->adaptor->db;
+        $self->{'_to_analysis_url'} = $target_object->url( $ref_dba );      # the URL may be shorter if DBA is the same for source and target
 
-            # FIXME: the following block could be incapsulated in Analysis->url() and NakedTable->url()
-        my $ref_analysis_adaptor = $self->from_analysis && $self->from_analysis->adaptor;
-        if($analysis_or_nt->can('logic_name') and $ref_analysis_adaptor and ($ref_analysis_adaptor == $analysis_or_nt->adaptor)) {
-            $self->{'_to_analysis_url'} = $analysis_or_nt->logic_name;
-        } else {
-            $self->{'_to_analysis_url'} = $analysis_or_nt->url($ref_analysis_adaptor->db);
-        }
 #        warn "Lazy-loaded to_analysis_url\n";
     }
 

@@ -83,16 +83,9 @@ sub condition_analysis_url {
         }
     } elsif( !$self->{'_condition_analysis_url'} and my $condition_analysis=$self->{'_condition_analysis'} ) {
 
-        # if the 'condition' and 'ctrled' share the same adaptor, then use a simple logic_name
-        # for the URL rather than a full network distributed URL
+        my $ref_dba = $self->ctrled_analysis && $self->ctrled_analysis->adaptor && $self->ctrled_analysis->adaptor->db;
+        $self->{'_condition_analysis_url'} = $condition_analysis->url( $ref_dba );  # the URL may be shorter if DBA is the same for source and target
 
-            # FIXME: the following block could be incapsulated in Analysis->url() and NakedTable->url()
-        my $ref_analysis_adaptor = $self->ctrled_analysis && $self->ctrled_analysis->adaptor;
-        if( $ref_analysis_adaptor and ($ref_analysis_adaptor == $condition_analysis->adaptor)) {
-            $self->{'_condition_analysis_url'} = $condition_analysis->logic_name;
-        } else {
-            $self->{'_condition_analysis_url'} = $condition_analysis->url($ref_analysis_adaptor->db);
-        }
 #        warn "Lazy-loaded condition_analysis_url\n";
     }
 
