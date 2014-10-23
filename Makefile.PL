@@ -12,7 +12,7 @@ WriteMakefile(
     PMLIBPARENTDIRS   => [ qw{ modules } ],
 
 
-    ABSTRACT          => 'Hive based processing is a concept based on a more controlled version of an autonomous agent type system.',
+    ABSTRACT          => 'A system for creating and running pipelines on a distributed compute resource',
     AUTHOR            => 'Leo Gordon',
 
     test => { TESTS   => 't/*/*.t' },
