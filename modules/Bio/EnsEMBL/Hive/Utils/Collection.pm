@@ -1,3 +1,11 @@
+=pod
+
+=head1 NAME
+
+Bio::EnsEMBL::Hive::Utils::Collection - A collection object
+
+=cut
+
 package Bio::EnsEMBL::Hive::Utils::Collection;
 
 use strict;

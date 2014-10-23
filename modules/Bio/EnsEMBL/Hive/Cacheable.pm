@@ -1,3 +1,11 @@
+=pod
+
+=head1 NAME
+
+Bio::EnsEMBL::Hive::Cacheable - base class to cache collections
+
+=cut
+
 package Bio::EnsEMBL::Hive::Cacheable;
 
 use strict;
