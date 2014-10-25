@@ -333,6 +333,7 @@ sub register_worker_death {
     }
 
     if( $current_role and !$current_role->when_finished() ) {
+        $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
         $current_role->when_finished( $worker_died );
         $self->db->get_RoleAdaptor->finalize_role( $current_role, $self_burial );
     }
