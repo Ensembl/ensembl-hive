@@ -39,6 +39,7 @@ use strict;
 use warnings;
 use List::Util 'sum';
 use POSIX;
+use Term::ANSIColor;
 
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
@@ -253,20 +254,60 @@ sub inprogress_job_count {      # includes CLAIMED
             - $self->failed_job_count;
 }
 
+my %meta_status_2_color = (
+    'DONE'      => 'bright_cyan',
+    'RUNNING'   => 'bright_yellow',
+    'READY'     => 'bright_green',
+    'BLOCKED'   => 'black on_white',
+    'EMPTY'     => 'clear',
+    'FAILED'    => 'red',
+);
+
+my %analysis_status_2_meta_status = (
+    'LOADING'       => 'READY',
+    'SYNCHING'      => 'READY',
+    'ALL_CLAIMED'   => 'BLOCKED',
+    'WORKING'       => 'RUNNING',
+);
+
+my %count_method_2_meta_status = (
+    'semaphored_job_count'  => 'BLOCKED',
+    'ready_job_count'       => 'READY',
+    'inprogress_job_count'  => 'RUNNING',
+    'done_job_count'        => 'DONE',
+    'failed_job_count'      => 'FAILED',
+);
+
+sub _text_with_status_color {
+    my $field_size = shift;
+    my $color_enabled = shift;
+
+    my $padding = ($field_size and length($_[0]) < $field_size) ? ' ' x ($field_size - length($_[0])) : '';
+    return $padding . ($color_enabled ? color($meta_status_2_color{$_[1]}).$_[0].color('reset') : $_[0]);
+}
+
 
 sub job_count_breakout {
     my $self = shift;
+    my $field_size = shift;
+    my $color_enabled = shift;
 
+    my $this_length = 0;
     my @count_list = ();
     my %count_hash = ();
     my $total_job_count = $self->total_job_count();
     foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
         if( my $count = $count_hash{$count_method} = $self->$count_method() ) {
-            push @count_list, $count.substr($count_method,0,1);
+            $this_length += length("$count") + 1;
+            push @count_list, _text_with_status_color(undef, $color_enabled, $count, $count_method_2_meta_status{$count_method}).substr($count_method,0,1);
         }
     }
     my $breakout_label = join('+', @count_list);
+    $this_length += scalar(@count_list)-1 if @count_list;
     $breakout_label .= '='.$total_job_count if(scalar(@count_list)!=1); # only provide a total if multiple or no categories available
+    $this_length += 1+length("$total_job_count") if(scalar(@count_list)!=1);
+
+    $breakout_label = ' ' x ($field_size - $this_length) . $breakout_label if $field_size and $this_length<$field_size;
 
     return ($breakout_label, $total_job_count, \%count_hash);
 }
@@ -276,14 +317,15 @@ sub toString {
     my $self = shift @_;
     my $max_logic_name_length = shift || 40;
 
-    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout;
+    my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
+    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
     my $analysis                                        = $self->analysis;
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %11s, jobs( %24s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
-        $self->status,
+        _text_with_status_color(11, $can_do_colour, $self->status, $analysis_status_2_meta_status{$self->status} || $self->status),
 
         $breakout_label,
 
