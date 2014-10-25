@@ -542,7 +542,9 @@ sub run {
         }
     }
 
-    $self->adaptor->register_worker_death($self, 1);
+    # The second arguments ("self_burial") controls whether we need to
+    # release the current (unfinished) batch
+    $self->adaptor->register_worker_death($self, ($self->cause_of_death eq 'CONTAMINATED' ? 0 : 1));
 
     if($self->debug) {
         $self->worker_say( 'AnalysisStats : '.$self->current_role->analysis->stats->toString ) if( $self->current_role );
