@@ -128,14 +128,14 @@ sub write_output {
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
     my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
-
+    
     while (my $seq_object = $input_seqio->next_seq) {
+	$chunk_seqio->write_seq( $seq_object );
+	
         if((my $seq_length = $seq_object->length()) + $chunk_length <= $max_chunk_length) {
-
-                # add to the current chunk:
-            $chunk_seqio->write_seq( $seq_object );
             $chunk_length += $seq_length;
             $chunk_size   += 1;
+
         } else {
 
                 # dataflow the current chunk:
@@ -163,6 +163,8 @@ sub write_output {
             'chunk_length' => $chunk_length,
             'chunk_size' => $chunk_size
         }, 2);
+    } else {
+	unlink $chunk_name unless (stat($chunk_name))[7];
     }
 }
 
