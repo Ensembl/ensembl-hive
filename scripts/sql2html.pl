@@ -847,8 +847,14 @@ sub add_columns {
   my $display_style = $display_col{$display};
   
   my $html = qq{\n  <div id="div_$table" style="display:$display_style">
-    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
-      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>\n};
+    <table class="ss" style="border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px">
+      <tr class="center">
+        <th style="background-color:#667aa6;color:#FFF;padding:2px">Column</th>
+        <th style="background-color:#667aa6;color:#FFF;padding:2px">Type</th>
+        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:80px">Default value</th>
+        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:500px">Description</th>
+        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:100px">Index</th>
+      </tr>\n};
   my $bg = 1;
   
   foreach my $col (@$cols) {
@@ -861,7 +867,16 @@ sub add_columns {
     # links
     $desc = add_internal_link($desc,$data);
     
-    $html .= qq{      <tr class="bg$bg"><td><b>$name</b></td><td>$type</td><td>$default</td><td>$desc</td><td>$index</td></tr>\n};
+    $type = parse_column_type($type);
+    
+    $html .= qq{
+      <tr>
+        <td class="bg$bg"><b>$name</b></td>
+        <td class="bg$bg">$type</td>
+        <td class="bg$bg">$default</td>
+        <td class="bg$bg">$desc</td>
+        <td class="bg$bg">$index</td>
+      </tr>\n};
     if ($bg==1) { $bg=2; }
     else { $bg=1; }
   }
@@ -1022,7 +1037,7 @@ sub add_column_index {
     $idx_name = $idx_col;
   }
   if ($idx_type !~ /primary/i) {
-    $index .= ": $idx_name";
+    $index .= ": <i>$idx_name</i>";
   }
   my @idx_cols = split(',',$idx_col); # The index can involve several columns
   
@@ -1075,6 +1090,31 @@ sub add_column_type_and_default_value {
   if ($is_found==0) {
     print STDERR "COLUMN: The description of the column '$c_name' is missing in the table $table!\n";
   }
+}
+
+
+# Display the types "enum" and "set" as an HTML list (<ul><li>)
+sub parse_column_type {
+  my $type = shift;
+  $type =~ /^\s*(enum|set)\s*\((.*)\)/i;
+  my $c_type = uc($1);
+  my $c_data = $2;
+  return $type unless ($c_data);
+  
+  $c_data =~ s/'//g;
+  $c_data =~ s/"//g;
+  $c_data =~ s/<br \/>//g;
+  
+  my @items_list = split(',',$c_data);
+  
+  return $type unless (scalar(@items_list) > 1);
+  
+  my $data_list = qq{$c_type:<ul style="margin-bottom:0px">};
+  foreach my $item (@items_list) {
+    $data_list .= qq{  <li style="line-height:12px">$item</li>};
+  }
+  $data_list .= qq{</ul>};
+  return $data_list;
 }
 
 
