@@ -70,6 +70,12 @@ sub module {
     return $self->{'_module'};
 }
 
+sub language {
+    my $self = shift;
+    $self->{'_language'} = shift if(@_);
+    return $self->{'_language'};
+}
+
 
 sub parameters {
     my $self = shift;
@@ -129,6 +135,9 @@ sub analysis_capacity {
 
 sub get_compiled_module_name {
     my $self = shift;
+
+    # We cannot currently check that a module is valid in a different language than Perl
+    return 'Bio::EnsEMBL::Hive::ForeignProcess' if $self->language;
 
     my $runnable_module_name = $self->module
         or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
@@ -222,7 +231,7 @@ sub dataflow_rules_collection {
 sub toString {
     my $self = shift @_;
 
-    return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', $self->module, $self->parameters, $self->resource_class->name).')';
+    return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', $self->module.($self->language ? sprintf(' (%s)', $self->language) : ''), $self->parameters, $self->resource_class->name).')';
 }
 
 1;

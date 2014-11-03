@@ -89,7 +89,8 @@ CREATE        INDEX pipeline_wide_parameters_value_idx     ON pipeline_wide_para
 
 @column analysis_id             a unique ID that is also a foreign key to most of the other tables
 @column logic_name              the name of the Analysis object
-@column module                  the Perl module name that runs this Analysis
+@column module                  the (Perl) module name that runs this Analysis
+@column language                the language of the module, if not Perl
 @column parameters              a stingified hash of parameters common to all jobs of the Analysis
 @column resource_class_id       link to the resource_class table
 @column failed_job_tolerance    % of tolerated failed Jobs
@@ -104,6 +105,7 @@ CREATE TABLE analysis_base (
     analysis_id             INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     logic_name              VARCHAR(255) NOT NULL,
     module                  VARCHAR(255),
+    language                VARCHAR(16),
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,

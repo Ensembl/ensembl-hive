@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::PythonProcess2
+Bio::EnsEMBL::Hive::ForeignProcess
 
 =head1 LICENSE
 
@@ -24,26 +24,31 @@ Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::PythonProcess2;
+package Bio::EnsEMBL::Hive::ForeignProcess;
 
 use strict;
 use warnings;
 
 use JSON;
-use IPC::Open2;
 use IO::Handle;
+
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
-
+# This is the registry of all the extra languages eHive has bindings to
+# Each language name is associated with the command line that has to be run
 our %known_languages = (
-    'python3'   => [ 'python3', 'worker.py' ],
+    'python3'   => [ 'python3', $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/worker.py' ],
 );
 
 sub new {
 
-    my $class = shift @_;
+    my ($class, $language, $module) = @_;
+
+    die "ForeignProcess must be told which language to interface with" unless $language;
+    die "$language is currently not supported" unless exists $known_languages{$language};
+    die "ForeignProcess must be told which module to run" unless $module;
 
     pipe(PARENT_RDR, CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
     pipe(CHILD_RDR,  PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
@@ -74,9 +79,7 @@ sub new {
         $flags = fcntl(PARENT_WTR, F_GETFD, 0);
         fcntl(PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        my $language = 'python3';
-        #exec($known_languages{$language}->[0], 'worker.py', 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
-        exec($known_languages{$language}->[0], sprintf('%s/wrappers/%s/%s', $ENV{'EHIVE_ROOT_DIR'}, $language, $known_languages{$language}->[1]), 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
+        exec(@{$known_languages{$language}}, $module, fileno(PARENT_RDR), fileno(PARENT_WTR));
     }
 
 

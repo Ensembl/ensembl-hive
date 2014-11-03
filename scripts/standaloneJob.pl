@@ -13,7 +13,7 @@ BEGIN {
 
 
 use Getopt::Long qw(:config pass_through);
-use Bio::EnsEMBL::Hive::Process;
+use Bio::EnsEMBL::Hive::ForeignProcess;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
 
@@ -22,7 +22,7 @@ main();
 
 
 sub main {
-    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id);
+    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id, $language);
 
     my $module_or_file = shift @ARGV or script_usage();
 
@@ -34,20 +34,21 @@ sub main {
                'no_cleanup'         => \$no_cleanup,
                'flow_into|flow=s'   => \$flow_into,
                'input_id=s'         => \$input_id,
+               'language=s'         => \$language,
     );
 
     if ($help or !$module_or_file) {
         script_usage(0);
     }
 
-    my $runnable_module = load_file_or_module( $module_or_file );
+    my $runnable_module = $language ? 'Bio::EnsEMBL::Hive::ForeignProcess' : load_file_or_module( $module_or_file );
 
     if($reg_conf) {
         require Bio::EnsEMBL::Registry;
         Bio::EnsEMBL::Registry->load_all($reg_conf);
     }
 
-    my $runnable_object = $runnable_module->new();
+    my $runnable_object = $runnable_module->new($language, $module_or_file);    # Only ForeignProcess will read the arguments
     $runnable_object->debug($debug) if($debug);
     $runnable_object->execute_writes(not $no_write);
 

@@ -515,9 +515,9 @@ sub add_objects_from_config {
     warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
-                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
+                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $language)
          = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
-                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
+                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -language)};   # slicing a hash reference
 
         if( not $logic_name ) {
             die "logic_name' must be defined in every analysis";
@@ -556,6 +556,7 @@ sub add_objects_from_config {
             $analysis = Bio::EnsEMBL::Hive::Analysis->add_new_or_update(
                 'logic_name'            => $logic_name,
                 'module'                => $module,
+                'language'              => $language,
                 'parameters'            => $parameters_hash,
                 'resource_class'        => $resource_class,
                 'failed_job_tolerance'  => $failed_job_tolerance,
