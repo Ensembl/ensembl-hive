@@ -60,7 +60,7 @@ sub object_class {
 
 
 sub finalize_role {
-    my ($self, $role, $self_burial) = @_;
+    my ($self, $role, $release_undone_jobs) = @_;
 
     my $role_id         = $role->dbID;
     my $when_finished   = $role->when_finished ? "'".$role->when_finished."'" : 'CURRENT_TIMESTAMP';
@@ -73,7 +73,7 @@ sub finalize_role {
         $self->db->get_AnalysisStatsAdaptor->decrease_running_workers( $role->analysis_id );
     }
 
-    unless( $self_burial ) {
+    if( $release_undone_jobs ) {
         $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $role );
     }
 
