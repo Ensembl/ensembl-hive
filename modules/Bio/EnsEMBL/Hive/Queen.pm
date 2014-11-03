@@ -286,7 +286,7 @@ sub specialize_worker {
 
 
 sub register_worker_death {
-    my ($self, $worker, $self_burial) = @_;
+    my ($self, $worker, $update_last_check_in) = @_;
 
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
@@ -294,19 +294,21 @@ sub register_worker_death {
     my $worker_died     = $worker->died;
 
     my $current_role    = $worker->current_role;
+    my $release_undone_jobs = 0;
 
     unless( $current_role ) {
         $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_unfinished_by_worker_id( $worker_id ) );
+        $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
+        $release_undone_jobs = 1;
     }
 
     if( $current_role and !$current_role->when_finished() ) {
-        $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
         $current_role->when_finished( $worker_died );
-        $self->db->get_RoleAdaptor->finalize_role( $current_role, $self_burial );
+        $self->db->get_RoleAdaptor->finalize_role( $current_role, $release_undone_jobs );
     }
 
     my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
-            . ( $self_burial ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
+            . ( $update_last_check_in ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
             . ( $worker_died ? ", died='$worker_died'" : ', died=CURRENT_TIMESTAMP' )
             . " WHERE worker_id='$worker_id' ";
 
