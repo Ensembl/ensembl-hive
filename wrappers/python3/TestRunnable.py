@@ -1,12 +1,12 @@
 
-from HiveRunnable import Process
+import eHive
 
 import sys
 import json
 import numbers
 import warnings
 
-class TestRunnable(Process):
+class TestRunnable(eHive.BaseRunnable):
 
     def param_defaults(self):
         return {

@@ -1,5 +1,5 @@
 
-import Param
+import eHive.Param
 
 import os
 import sys
@@ -22,16 +22,17 @@ class HiveJSONMessageException(Exception):
     pass
 
 
-class Process(object):
+class BaseRunnable(object):
 
-    # Private Process interface
-    ############################
+    # Private BaseRunnable interface
+    #################################
 
     def __init__(self, read_fileno, write_fileno):
         # We need the binary mode to disable the buffering
         self.read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
         self.__send_message('PARAM_DEFAULTS', self.param_defaults())
+        self.__life_cycle()
 
     def __send_message(self, event, content):
         def default_json_encoder(self_encoder, o):
@@ -56,11 +57,11 @@ class Process(object):
         if response['response'] != 'OK':
             raise SystemExit(response)
 
-    def life_cycle(self):
+    def __life_cycle(self):
 
-        print("PYTHON life_cycle", file=sys.stderr)
+        print("PYTHON __life_cycle", file=sys.stderr)
         config = self.__read_message()
-        self.p = Param.Param(config['input_job']['parameters'])
+        self.p = eHive.Param.Param(config['input_job']['parameters'])
 
         # Job attributes
         self.input_job = Job()
@@ -106,8 +107,8 @@ class Process(object):
             getattr(self, method)()
 
 
-    # Public Process interface
-    ###########################
+    # Public BaseRunnable interface
+    ################################
 
     def warning(self, message, is_error = False):
         self.__send_message_and_wait_for_OK('WARNING', {'message': message, 'is_error': is_error})

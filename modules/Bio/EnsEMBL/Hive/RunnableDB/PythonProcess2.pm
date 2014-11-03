@@ -38,7 +38,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 
 our %known_languages = (
-    'python3'   => [ 'python3', 'scripts/worker.py' ],
+    'python3'   => [ 'python3', 'worker.py' ],
 );
 
 sub new {
@@ -75,8 +75,8 @@ sub new {
         fcntl(PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
         my $language = 'python3';
-        exec($known_languages{$language}->[0], 'worker.py', 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
-        #exec($known_languages{$language}->[0], $ENV{'EHIVE_ROOT_DIR'}.'/'.$known_languages{$language}->[1], 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
+        #exec($known_languages{$language}->[0], 'worker.py', 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
+        exec($known_languages{$language}->[0], sprintf('%s/wrappers/%s/%s', $ENV{'EHIVE_ROOT_DIR'}, $language, $known_languages{$language}->[1]), 'TestRunnable', fileno(PARENT_RDR), fileno(PARENT_WTR));
     }
 
 
