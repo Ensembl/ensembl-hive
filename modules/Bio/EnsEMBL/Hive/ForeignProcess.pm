@@ -280,9 +280,6 @@ sub life_cycle {
     my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
     my %job_partial_timing = ();
 
-    $job->incomplete(1);    # reinforce, in case the life_cycle is not run by a Worker
-    $job->autoflow(1);
-
     my %struct = (
         input_job => {
             parameters => $job->{_unsubstituted_param_hash},
@@ -325,7 +322,7 @@ sub life_cycle {
             $self->send_response($wtd);
 
         } elsif ($event eq 'JOB_END') {
-            $job->autoflow($content->{autoflow});
+            $job->autoflow($job->autoflow && $content->{autoflow});
             $job->{_param_hash} = $content->{parameters}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{parameters}->{unsubstituted};
 
@@ -340,8 +337,8 @@ sub life_cycle {
                     $job->transient_error(0);
                     die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
                 }
-
-                $job->incomplete(0);
+            } else {
+                $job->died_somewhere(1);
             }
 
             return \%job_partial_timing;
