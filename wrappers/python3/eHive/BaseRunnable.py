@@ -31,9 +31,8 @@ class BaseRunnable(object):
         # We need the binary mode to disable the buffering
         self.read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
-        self.__send_message('PARAM_DEFAULTS', self.param_defaults())
         self.pid = os.getpid()
-        self.__life_cycle()
+        self.__process_life_cycle()
 
     def __print_debug(self, *args):
         print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
@@ -61,10 +60,20 @@ class BaseRunnable(object):
         if response['response'] != 'OK':
             raise SystemExit(response)
 
-    def __life_cycle(self):
+    def __process_life_cycle(self):
+        self.__send_message('PARAM_DEFAULTS', self.param_defaults())
+        while True:
+            self.__print_debug("waiting for instructions")
+            config = self.__read_message()
+            if 'input_job' not in config:
+                self.__print_debug("no params")
+                return
+            self.__job_life_cycle(config)
+
+    def __job_life_cycle(self, config):
 
         self.__print_debug("__life_cycle")
-        config = self.__read_message()
+
         # Params
         self.p = eHive.Param.Param(config['input_job']['parameters'])
 
@@ -108,7 +117,6 @@ class BaseRunnable(object):
     def __run_method_if_exists(self, method):
         if hasattr(self, method):
             self.__send_message_and_wait_for_OK('JOB_STATUS_UPDATE', method)
-            #self.__send_message('JOB_STATUS_UPDATE', method)
             getattr(self, method)()
 
     def __traceback(self, skipped_traces):

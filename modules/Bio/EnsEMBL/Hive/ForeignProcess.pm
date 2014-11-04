@@ -101,6 +101,14 @@ sub new {
 }
 
 
+sub DESTROY {
+    my $self = shift;
+    $self->print_debug("DESTROY");
+    $self->child_in->print("{}\n");
+    #kill('KILL', $self->child_pid);
+}
+
+
 sub print_debug {
     my ($self, $msg) = @_;
     print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->debug > 1;
