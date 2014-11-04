@@ -125,8 +125,8 @@ class BaseRunnable(object):
     def warning(self, message, is_error = False):
         self.__send_message_and_wait_for_OK('WARNING', {'message': message, 'is_error': is_error})
 
-    def datataflow(self, output_ids, branch_name_or_code = 1):
-        self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code})
+    def dataflow(self, output_ids, branch_name_or_code = 1):
+        self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}})
         return self.__read_message()
 
     def worker_temp_directory(self):

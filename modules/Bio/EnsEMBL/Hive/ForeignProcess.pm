@@ -313,6 +313,8 @@ sub life_cycle {
             $self->send_response('OK');
 
         } elsif ($event eq 'DATAFLOW') {
+            $job->{_param_hash} = $content->{params}->{substituted};
+            $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
             my $d = $self->dataflow_output_id($content->{output_ids}, $content->{branch_name_or_code});
             $self->send_message($d);
 
