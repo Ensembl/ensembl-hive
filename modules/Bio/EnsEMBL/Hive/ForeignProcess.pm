@@ -92,14 +92,18 @@ sub new {
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
 
-    print STDERR "BEFORE READ PARAM_DEFAULTS\n";
+    $self->print_debug("BEFORE READ PARAM_DEFAULTS");
     $self->param_defaults( $self->read_message()->{content} );
-    print STDERR "INIT DONE\n";
+    $self->print_debug("INIT DONE");
 
     return $self;
 }
 
 
+sub print_debug {
+    my ($self, $msg) = @_;
+    print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->debug > 1;
+}
 
 ##############
 # Attributes #
@@ -191,7 +195,7 @@ sub json_formatter {
 sub send_message {
     my ($self, $struct) = @_;
     my $j = $self->json_formatter->encode($struct);
-    print STDERR "PERL send_message $j\n";
+    $self->print_debug("send_message $j");
     $self->child_in->print($j."\n");
 }
 
@@ -225,7 +229,8 @@ sub send_response {
 sub read_message {
     my $self = shift;
     my $s = $self->child_out->getline();
-    print STDERR "PERL read_message: $s\n";
+    chomp $s;
+    $self->print_debug("read_message: $s");
     return $self->json_formatter->decode($s);
 }
 
@@ -269,7 +274,7 @@ sub param_defaults {
 sub life_cycle {
     my $self = shift;
 
-    print STDERR "PERL LIFE_CYCLE\n";
+    $self->print_debug("LIFE_CYCLE");
 
     my $job = $self->input_job();
     my $partial_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
@@ -288,17 +293,17 @@ sub life_cycle {
         execute_writes => $self->execute_writes || 0,
         debug => $self->debug || 0,
     );
-    print STDERR "PERL SEND JOB PARAM\n";
+    $self->print_debug("SEND JOB PARAM");
     $self->send_message(\%struct);
 
     # A simple loop event
     while (1) {
-        print STDERR "PERL WAITING IN LOOP\n";
+        $self->print_debug("WAITING IN LOOP");
 
         my $msg = $self->read_message;
         my $event = $msg->{event};
         my $content = $msg->{content};
-        print STDERR "PERL processing event '$event'\n";
+        $self->print_debug("processing event '$event'");
 
         if ($event eq 'JOB_STATUS_UPDATE') {
             $job_partial_timing{$job->status} = $partial_stopwatch->get_elapsed() if $job->status ne 'READY';
