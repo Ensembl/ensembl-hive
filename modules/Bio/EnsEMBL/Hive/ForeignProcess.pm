@@ -50,45 +50,46 @@ sub new {
     die "$language is currently not supported" unless exists $known_languages{$language};
     die "ForeignProcess must be told which module to run" unless $module;
 
-    pipe(PARENT_RDR, CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
-    pipe(CHILD_RDR,  PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
+    my ($PARENT_RDR, $PARENT_WTR, $CHILD_WTR,$CHILD_RDR);
+    pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
+    pipe($CHILD_RDR,  $PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
 
-    print STDERR "PARENT_RDR is ", fileno(PARENT_RDR), "\n";
-    print STDERR "PARENT_WTR is ", fileno(PARENT_WTR), "\n";
-    print STDERR "CHILD_RDR is ", fileno(CHILD_RDR), "\n";
-    print STDERR "CHILD_WTR is ", fileno(CHILD_WTR), "\n";
+    print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
+    print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
+    print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
+    print STDERR "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
 
     my $pid;
 
     if ($pid = fork()) {
         # In the parent
-        close PARENT_RDR;
-        close PARENT_WTR;
+        close $PARENT_RDR;
+        close $PARENT_WTR;
         print STDERR "parent is PID $$\n";
     } else {
         die "cannot fork: $!" unless defined $pid;
         # In the child
-        close CHILD_RDR;
-        close CHILD_WTR;
+        close $CHILD_RDR;
+        close $CHILD_WTR;
         print STDERR "child is PID $$\n";
 
         # Do not close the non-standard file descriptors on exec(): the child process will need them !
         use Fcntl;
-        my $flags = fcntl(PARENT_RDR, F_GETFD, 0);
-        fcntl(PARENT_RDR, F_SETFD, $flags & ~FD_CLOEXEC);
-        $flags = fcntl(PARENT_WTR, F_GETFD, 0);
-        fcntl(PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
+        my $flags = fcntl($PARENT_RDR, F_GETFD, 0);
+        fcntl($PARENT_RDR, F_SETFD, $flags & ~FD_CLOEXEC);
+        $flags = fcntl($PARENT_WTR, F_GETFD, 0);
+        fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec(@{$known_languages{$language}}, $module, fileno(PARENT_RDR), fileno(PARENT_WTR));
+        exec(@{$known_languages{$language}}, $module, fileno($PARENT_RDR), fileno($PARENT_WTR));
     }
 
 
-    CHILD_WTR->autoflush(1);
+    $CHILD_WTR->autoflush(1);
 
     my $self = bless {}, $class;
 
-    $self->child_out(*CHILD_RDR);
-    $self->child_in(*CHILD_WTR);
+    $self->child_out($CHILD_RDR);
+    $self->child_in($CHILD_WTR);
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
 
