@@ -35,7 +35,7 @@ class BaseRunnable(object):
         self.__life_cycle()
 
     def __send_message(self, event, content):
-        def default_json_encoder(self_encoder, o):
+        def default_json_encoder(o):
             print("Cannot serialize {0} in JSON".format(o))
             return 'UNSERIALIZABLE OBJECT'
         j = json.dumps({'event': event, 'content': content}, indent=None, default=default_json_encoder)
