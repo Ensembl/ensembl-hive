@@ -103,7 +103,7 @@ class BaseRunnable(object):
             self.warning( self.__traceback(2), True)
 
         job_end_structure = {'complete' : not died_somewhere, 'autoflow': self.input_job.autoflow, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}}
-        self.__send_message('JOB_END', job_end_structure)
+        self.__send_message_and_wait_for_OK('JOB_END', job_end_structure)
 
     def __run_method_if_exists(self, method):
         if hasattr(self, method):

@@ -340,7 +340,7 @@ sub life_cycle {
             } else {
                 $job->died_somewhere(1);
             }
-
+            $self->send_response('OK');
             return \%job_partial_timing;
         } else {
             die "Unknown event '$event' coming from the child";
