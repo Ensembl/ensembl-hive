@@ -303,7 +303,7 @@ sub life_cycle {
         $self->print_debug("processing event '$event'");
 
         if ($event eq 'JOB_STATUS_UPDATE') {
-            $job_partial_timing{$job->status} = $partial_stopwatch->get_elapsed() if $job->status ne 'READY';
+            $job_partial_timing{$job->status} = $partial_stopwatch->get_elapsed() if ($job->status ne 'READY') and ($job->status ne 'CLAIMED');
             $self->enter_status(uc $content);
             $partial_stopwatch->restart();
             $self->send_response('OK');
