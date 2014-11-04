@@ -89,13 +89,13 @@ class BaseRunnable(object):
             self.warning(e.args[0] if len(e.args) else repr(e), False)
         except:
             died_somewhere = True
-            self.warning(traceback.format_exc(), True)
+            self.warning( self.__traceback(2), True)
 
         try:
             self.__run_method_if_exists('post_cleanup')
         except:
             died_somewhere = True
-            self.warning(traceback.format_exc(), True)
+            self.warning( self.__traceback(2), True)
 
         job_end_structure = {'complete' : not died_somewhere, 'autoflow': self.input_job.autoflow, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}}
         self.__send_message('JOB_END', job_end_structure)
@@ -105,6 +105,13 @@ class BaseRunnable(object):
             self.__send_message_and_wait_for_OK('JOB_STATUS_UPDATE', method)
             #self.__send_message('JOB_STATUS_UPDATE', method)
             getattr(self, method)()
+
+    def __traceback(self, skipped_traces):
+        (etype, value, tb) = sys.exc_info()
+        s1 = traceback.format_exception_only(etype, value)
+        l = traceback.extract_tb(tb)[skipped_traces:]
+        s2 = traceback.format_list(l)
+        return "".join(s1+s2)
 
 
     # Public BaseRunnable interface
