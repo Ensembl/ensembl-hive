@@ -137,11 +137,16 @@ sub analysis_capacity {
 sub get_compiled_module_name {
     my $self = shift;
 
-    # We cannot currently check that a module is valid in a different language than Perl
-    return 'Bio::EnsEMBL::Hive::ForeignProcess' if $self->language;
-
     my $runnable_module_name = $self->module
         or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
+
+    if (my $language = $self->language) {
+        die "$language is not recognized\n" unless exists $Bio::EnsEMBL::Hive::ForeignProcess::known_languages{$language};
+        if (system($Bio::EnsEMBL::Hive::ForeignProcess::known_languages{$language}, $runnable_module_name, 'compile')) {
+            die "The $language runnable module '$runnable_module_name' cannot be loaded or compiled:\n";
+        }
+        return 'Bio::EnsEMBL::Hive::ForeignProcess';
+    }
 
     eval "require $runnable_module_name";
     die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n$@" if($@);

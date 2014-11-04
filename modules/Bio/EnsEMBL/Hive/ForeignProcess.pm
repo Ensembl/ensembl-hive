@@ -39,7 +39,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 # This is the registry of all the extra languages eHive has bindings to
 # Each language name is associated with the command line that has to be run
 our %known_languages = (
-    'python3'   => [ 'python3', $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/worker.py' ],
+    'python3'   => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/worker.py',
 );
 
 sub new {
@@ -80,7 +80,7 @@ sub new {
         $flags = fcntl($PARENT_WTR, F_GETFD, 0);
         fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec(@{$known_languages{$language}}, $module, fileno($PARENT_RDR), fileno($PARENT_WTR));
+        exec($known_languages{$language}, $module, 'run', fileno($PARENT_RDR), fileno($PARENT_WTR));
     }
 
 
