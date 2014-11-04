@@ -82,9 +82,11 @@ class BaseRunnable(object):
         for x in ['dbID', 'input_id', 'retry_count']:
             setattr(self.input_job, x, config['input_job'][x])
         self.input_job.autoflow = True
+        self.input_job.lethal_for_worker = False
+        self.input_job.transient_error = True
 
         # Worker attributes
-        setattr(self, 'debug', config['debug'])
+        self.debug = config['debug']
 
         # Which methods should be run
         steps = [ 'fetch_input', 'run' ]
@@ -111,7 +113,9 @@ class BaseRunnable(object):
             died_somewhere = True
             self.warning( self.__traceback(2), True)
 
-        job_end_structure = {'complete' : not died_somewhere, 'autoflow': self.input_job.autoflow, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}}
+        job_end_structure = {'complete' : not died_somewhere, 'job': {}, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}}
+        for x in [ 'autoflow', 'lethal_for_worker', 'transient_error' ]:
+            job_end_structure['job'][x] = getattr(self.input_job, x)
         self.__send_message_and_wait_for_OK('JOB_END', job_end_structure)
 
     def __run_method_if_exists(self, method):
@@ -151,6 +155,7 @@ class BaseRunnable(object):
         return {}
 
     def param_required(self, param_name):
+        # should set transient_error to False
         return self.p.get_param(param_name)
 
     def param(self, param_name, *args):

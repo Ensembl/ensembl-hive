@@ -333,7 +333,9 @@ sub life_cycle {
             $self->send_response($wtd);
 
         } elsif ($event eq 'JOB_END') {
-            $job->autoflow($job->autoflow && $content->{autoflow});
+            $job->autoflow($job->autoflow && $content->{job}->{autoflow});
+            $job->lethal_for_worker($content->{job}->{lethal_for_worker});
+            $job->transient_error($content->{job}->{transient_error});
             $job->{_param_hash} = $content->{params}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
 
