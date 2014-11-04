@@ -323,8 +323,8 @@ sub life_cycle {
 
         } elsif ($event eq 'JOB_END') {
             $job->autoflow($job->autoflow && $content->{autoflow});
-            $job->{_param_hash} = $content->{parameters}->{substituted};
-            $job->{_unsubstituted_param_hash} = $content->{parameters}->{unsubstituted};
+            $job->{_param_hash} = $content->{params}->{substituted};
+            $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
 
             if ($content->{complete}) {
                 if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
