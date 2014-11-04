@@ -32,21 +32,25 @@ class BaseRunnable(object):
         self.read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
         self.__send_message('PARAM_DEFAULTS', self.param_defaults())
+        self.pid = os.getpid()
         self.__life_cycle()
+
+    def __print_debug(self, *args):
+        print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
 
     def __send_message(self, event, content):
         def default_json_encoder(o):
-            print("Cannot serialize {0} in JSON".format(o))
+            self.__print_debug("Cannot serialize {0} (type {1}) in JSON".format(o, type(o)))
             return 'UNSERIALIZABLE OBJECT'
         j = json.dumps({'event': event, 'content': content}, indent=None, default=default_json_encoder)
-        print("PYTHON __send_message:", j)
+        self.__print_debug('__send_message:', j)
         self.write_pipe.write(bytes(j+"\n", 'utf-8'))
 
     def __read_message(self):
         try:
-            print("PYTHON __read_message ...")
+            self.__print_debug("__read_message ...")
             l = self.read_pipe.readline()
-            print("PYTHON ... -> ", l.decode())
+            self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
         except ValueError as e:
             raise SystemExit(e)
@@ -59,8 +63,9 @@ class BaseRunnable(object):
 
     def __life_cycle(self):
 
-        print("PYTHON __life_cycle", file=sys.stderr)
+        self.__print_debug("__life_cycle")
         config = self.__read_message()
+        # Params
         self.p = eHive.Param.Param(config['input_job']['parameters'])
 
         # Job attributes
@@ -78,7 +83,7 @@ class BaseRunnable(object):
             steps.insert(0, 'pre_cleanup')
         if config['execute_writes']:
             steps.append('write_output')
-        print("PYTHON steps to run:", steps, file=sys.stderr)
+        self.__print_debug("steps to run:", steps)
 
         # The actual life-cycle
         died_somewhere = False
