@@ -159,7 +159,9 @@ sub main {
         script_usage(1);
     }
 
-    $self->{'safe_url'} = $self->{'dba'}->dbc->url('WORKER_PASSWORD');
+    if( $self->{'url'} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:
+        $self->{'url'} = $self->{'dba'}->dbc->url('EHIVE_PASS');
+    }
 
     my $queen = $self->{'dba'}->get_Queen;
 
