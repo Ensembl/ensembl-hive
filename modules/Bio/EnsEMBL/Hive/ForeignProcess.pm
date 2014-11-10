@@ -95,6 +95,7 @@ sub new {
 
     $self->print_debug("BEFORE READ PARAM_DEFAULTS");
     $self->param_defaults( $self->read_message()->{content} );
+    $self->send_response('OK');
     $self->print_debug("INIT DONE");
 
     return $self;

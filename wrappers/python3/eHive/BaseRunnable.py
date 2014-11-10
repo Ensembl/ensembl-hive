@@ -61,7 +61,7 @@ class BaseRunnable(object):
             raise SystemExit(response)
 
     def __process_life_cycle(self):
-        self.__send_message('PARAM_DEFAULTS', self.param_defaults())
+        self.__send_message_and_wait_for_OK('PARAM_DEFAULTS', self.param_defaults())
         while True:
             self.__print_debug("waiting for instructions")
             config = self.__read_message()
