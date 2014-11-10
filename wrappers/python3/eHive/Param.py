@@ -1,7 +1,6 @@
 
 import sys
 import numbers
-import warnings
 import collections
 
 class ParamWarning(Warning):
@@ -161,9 +160,6 @@ class Param(object):
 
         else:
             val = self._internal_get_param(inside_hashes)
-
-        if val is None:
-            warnings.warn("Substituting an undefined value of #{0}#".format(inside_hashes), ParamWarning)
 
         del self._substitution_in_progress[inside_hashes]
         return val
