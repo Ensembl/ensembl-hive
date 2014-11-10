@@ -15,6 +15,9 @@ class ParamException(Exception):
 class ParamNameException(ParamException):
     def __str__(self):
         return '"{0}" (type {1}) is not a valid parameter name'.format(self.param_name, type(self.param_name).__name__)
+class ParamSubstitutionException(ParamException):
+    def __str__(self):
+        return 'Cannot substitute elements in objects of type "{0}"'.format(str(type(self.param_name)))
 class ParamInfiniteLoopException(ParamException):
     def __init__(self, inside_hashes, _substitution_in_progress):
         ParamException.__init__(self, "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(inside_hashes, list(_substitution_in_progress.keys())))
@@ -69,6 +72,11 @@ class Param(object):
             self._param_hash[param_name] = self._param_substitute(x)
         return self._param_hash[param_name]
 
+
+    """
+    Take any structure and replace the pairs of hashes with the values of the parameters / expression they represent
+    Compatible types: numbers, strings, lists, dictionaries (otherwise, ParamSubstitutionException is raised)
+    """
     def _param_substitute(self, structure):
         self._debug_print("_param_substitute", structure)
 
@@ -79,6 +87,8 @@ class Param(object):
             return [self._param_substitute(_) for _ in structure]
 
         elif isinstance(structure, dict):
+            # NB: In Python, not everything can be hashed and used as a dictionary key.
+            #     Perhaps we should check for such errors ?
             return {self._param_substitute(key): self._param_substitute(value) for (key,value) in structure.items()}
 
         elif isinstance(structure, numbers.Number):
@@ -87,47 +97,46 @@ class Param(object):
         elif isinstance(structure, str):
 
             # We handle the substitution differently if there is a single reference as we can avoid forcing the result to be a string
-            if structure.startswith('#expr(') and structure.endswith(')expr#'):
+
+            if structure[:6] == '#expr(' and structure[-6:] == ')expr#' and structure.count('#expr(', 6, -6) == 0 and structure.count(')expr#', 6, -6) == 0:
                 return self._subst_one_hashpair(structure[1:-1], True)
 
-            # TODO need n_hashes ?
-            n_hashes = structure.count('#')
-            if n_hashes % 2:
-                # TODO warning message
-                raise SyntaxError("ParamError: Odd number of '#' in the parameter '{0}'. Cannot substitute the parameters".format(structure))
-
-            if structure.startswith('#') and structure.endswith('#') and len(structure) >= 3 and n_hashes == 2:
+            if structure[0] == '#' and structure[-1] == '#' and structure.count('#', 1, -1) == 0:
+                if len(structure) <= 2:
+                    return structure
                 return self._subst_one_hashpair(structure[1:-1], False)
 
             # Fallback to the default parser: all pairs of hashes are substituted
-            return self._parse_hash_blocks(structure, lambda middle_param: self._subst_one_hashpair(middle_param, False) )
+            return self._subst_all_hashpairs(structure, lambda middle_param: self._subst_one_hashpair(middle_param, False) )
 
         else:
-            # TODO warning message
-            raise SystemExit("ParamError: Cannot substitute parameters on a '{0}'".format(type(structure)))
+            raise ParamSubstitutionException(structure)
 
 
-    # TODO need a different way of doing that
-    def _parse_hash_blocks(self, structure, callback):
-            result = []
-            while '#' in structure:
-                (head,_,tmp) = structure.partition('#')
-                result.append(head)
-                if tmp.startswith('expr('):
-                    i = tmp.find(')expr#')
-                    val = self._subst_one_hashpair(tmp[:i+5], True)
-                    tail = tmp[i+6:]
+    def _subst_all_hashpairs(self, structure, callback):
+        self._debug_print("_subst_all_hashpairs", structure)
+        result = []
+        while True:
+            (head,_,tmp) = structure.partition('#')
+            result.append(head)
+            if _ != '#':
+                return ''.join(result)
+            if tmp.startswith('expr('):
+                i = tmp.find(')expr#')
+                if i == -1:
+                    raise SyntaxError("Unmatched '#expr(' token")
+                val = self._subst_one_hashpair(tmp[:i+5], True)
+                tail = tmp[i+6:]
+            else:
+                (middle_param,_,tail) = tmp.partition('#')
+                if _ != '#':
+                    raise SyntaxError("Unmatched '#' token")
+                if middle_param == '':
+                    val = '##'
                 else:
-                    (middle_param,_,tail) = tmp.partition('#')
-                    if middle_param == '':
-                        val = '##'
-                    else:
-                        val = callback(middle_param)
-                if val is None:
-                    return None
-                result.append(str(val))
-                structure = tail
-            return ''.join(result) + structure
+                    val = callback(middle_param)
+            result.append(str(val))
+            structure = tail
 
 
     def _subst_one_hashpair(self, inside_hashes, is_expr):
@@ -179,10 +188,18 @@ if __name__ == '__main__':
         'age_prime' : '#expr( dict(#age#) )expr#',
 
         'csv' : '[123,456,789]',
-        'listref' : '#expr( #csv# )expr#'
+        'listref' : '#expr( eval(#csv#) )expr#',
+
+        'null' : None,
+        'ref_null' : '#null#',
+        'ref2_null' : '#expr( #null# )expr#',
+        'ref3_null' : '#alpha##null##beta#',
     }
 
     p = Param(seed_params, True)
+    p.get_param('null')
+    p.get_param('ref_null')
+    p.get_param('ref2_null')
     try:
         p.get_param('ppppppp')
     except KeyError as e:
@@ -197,10 +214,20 @@ if __name__ == '__main__':
     else:
         print("ParamNameException NOT raised")
 
+    try:
+        Param({'a': '#b#', 'b': '#a#'}, True).get_param('a')
+    except ParamInfiniteLoopException as e:
+        print("ParamInfiniteLoopException raised")
+    else:
+        print("ParamInfiniteLoopException NOT raised")
+
 
     print('All the parameters')
     for (key,value) in seed_params.items():
-        print("\t'{0}' is '{1}' in the seeded hash, and '{2}' as a result of p.param()".format(key, value, p.get_param(key)))
+        print("\t>", key)
+        x = p.get_param(key)
+        print("\t=", x, type(x))
+        #print("\t'{0}' is '{1}' in the seeded hash, and '{2}' as a result of p.param()".format(key, value, p.get_param(key)))
 
     print("Numbers")
     print(p._param_substitute( "\tSubstituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" ));
@@ -215,6 +242,8 @@ if __name__ == '__main__':
     print(p._param_substitute( "\tsum(gamma) -> #expr( sum(#gamma#) )expr#" ));
     print(p._param_substitute( "\tmin(gamma) -> #expr( min(#gamma#) )expr#" ));
     print(p._param_substitute( "\tmax(gamma) -> #expr( max(#gamma#) )expr#" ));
+    print(p._param_substitute( "\tdir() -> #expr( dir() )expr#" ));
+    print(p._param_substitute( "\tdir() -> #dir:#" ));
 
     print("Dictionaries")
     print(p._param_substitute( '\tdefault stringification of age: #age#'))
