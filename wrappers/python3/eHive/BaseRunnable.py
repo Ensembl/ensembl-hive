@@ -155,8 +155,11 @@ class BaseRunnable(object):
         return {}
 
     def param_required(self, param_name):
-        # should set transient_error to False
-        return self.p.get_param(param_name)
+        t = self.input_job.transient_error
+        self.input_job.transient_error = False
+        v = elf.p.get_param(param_name)
+        self.input_job.transient_error = t
+        return v
 
     def param(self, param_name, *args):
         # As a setter
