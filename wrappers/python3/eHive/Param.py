@@ -147,9 +147,9 @@ class Param(object):
 
         elif ':' in inside_hashes:
             (func_name,_,parameters) = inside_hashes.partition(':')
-            if func_name in globals():
-                val = globals()[func_name](self._internal_get_param(parameters))
-            else:
+            try:
+                f = eval(func_name)
+            except:
                 raise SyntaxError("Unknown method: " + func_name)
         else:
             val = self._internal_get_param(inside_hashes)
