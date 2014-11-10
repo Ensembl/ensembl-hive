@@ -52,13 +52,13 @@ class BaseRunnable(object):
             self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
         except ValueError as e:
-            raise SystemExit(e)
+            raise HiveJSONMessageException from e
 
     def __send_message_and_wait_for_OK(self, event, content):
         self.__send_message(event, content)
         response = self.__read_message()
         if response['response'] != 'OK':
-            raise SystemExit(response)
+            raise HiveJSONMessageException("Received '{0}' instead of OK".format(response))
 
     def __process_life_cycle(self):
         self.__send_message_and_wait_for_OK('PARAM_DEFAULTS', self.param_defaults())
