@@ -151,6 +151,14 @@ class Param(object):
                 f = eval(func_name)
             except:
                 raise SyntaxError("Unknown method: " + func_name)
+            if callable(f):
+                if parameters:
+                    val = f(self._internal_get_param(parameters))
+                else:
+                    val = f()
+            else:
+                raise SyntaxError(func_name + " is not callable")
+
         else:
             val = self._internal_get_param(inside_hashes)
 
