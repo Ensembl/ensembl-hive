@@ -45,6 +45,8 @@ def find_module(module_name):
     c = getattr(module, class_name)
     if not issubclass(c, eHive.BaseRunnable):
         error_quit("ImportError: {0} (found in {1}) is not a sub-class of eHive.BaseRunnable".format(class_name, module.__file__))
+    if not callable(c):
+        error_quit("ImportError: {0} (found in {1}) is not callable".format(class_name, module.__file__))
 
     return c
 
