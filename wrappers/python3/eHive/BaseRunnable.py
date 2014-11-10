@@ -75,7 +75,7 @@ class BaseRunnable(object):
         self.__print_debug("__life_cycle")
 
         # Params
-        self.p = eHive.Param.Param(config['input_job']['parameters'])
+        self.p = eHive.Param.ParamContainer(config['input_job']['parameters'])
 
         # Job attributes
         self.input_job = Job()

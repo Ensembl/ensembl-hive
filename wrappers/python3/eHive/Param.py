@@ -22,7 +22,7 @@ class ParamInfiniteLoopException(ParamException):
     def __init__(self, inside_hashes, _substitution_in_progress):
         ParamException.__init__(self, "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(inside_hashes, list(_substitution_in_progress.keys())))
 
-class Param(object):
+class ParamContainer(object):
 
     # Constructor
     #############
@@ -196,7 +196,7 @@ if __name__ == '__main__':
         'ref3_null' : '#alpha##null##beta#',
     }
 
-    p = Param(seed_params, True)
+    p = ParamContainer(seed_params, True)
     p.get_param('null')
     p.get_param('ref_null')
     p.get_param('ref2_null')
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         print("ParamNameException NOT raised")
 
     try:
-        Param({'a': '#b#', 'b': '#a#'}, True).get_param('a')
+        ParamContainer({'a': '#b#', 'b': '#a#'}, True).get_param('a')
     except ParamInfiniteLoopException as e:
         print("ParamInfiniteLoopException raised")
     else:
