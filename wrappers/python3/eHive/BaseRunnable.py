@@ -1,5 +1,5 @@
 
-import eHive.Param
+import eHive.Params
 
 import os
 import sys
@@ -75,7 +75,7 @@ class BaseRunnable(object):
         self.__print_debug("__life_cycle")
 
         # Params
-        self.p = eHive.Param.ParamContainer(config['input_job']['parameters'])
+        self.p = eHive.Params.ParamContainer(config['input_job']['parameters'])
 
         # Job attributes
         self.input_job = Job()
@@ -170,7 +170,7 @@ class BaseRunnable(object):
         try:
             return self.p.get_param(param_name)
         except KeyError as e:
-            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), Param.ParamWarning, 2)
+            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):
