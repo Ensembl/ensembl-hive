@@ -177,6 +177,8 @@ class BaseRunnable(object):
         return self.p.has_param(param_name)
 
     def param_is_defined(self, param_name):
+        if not self.param_exists(param_name):
+            return False
         try:
             return self.p.get_param(param_name) is not None
         except KeyError:
