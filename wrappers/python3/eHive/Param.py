@@ -42,7 +42,10 @@ class Param(object):
         if not self._validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         self._substitution_in_progress = collections.OrderedDict()
-        return self._internal_get_param(param_name)
+        try:
+            return self._internal_get_param(param_name)
+        except (KeyError, SyntaxError, ParamException) as e:
+            raise e from None
 
     def has_param(self, param_name):
         if not self._validate_parameter_name(param_name):
@@ -177,6 +180,12 @@ if __name__ == '__main__':
     }
 
     p = Param(seed_params, True)
+    try:
+        p.get_param('ppppppp')
+    except KeyError as e:
+        print("KeyError raised")
+    else:
+        print("KeyError NOT raised")
 
     try:
         p.get_param(0) # should raise ParamNameException
