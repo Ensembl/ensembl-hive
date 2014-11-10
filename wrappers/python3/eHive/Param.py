@@ -88,7 +88,7 @@ class Param(object):
 
             # We handle the substitution differently if there is a single reference as we can avoid forcing the result to be a string
             if structure.startswith('#expr(') and structure.endswith(')expr#'):
-                return self._subst_one_hashpair(structure[1:-1])
+                return self._subst_one_hashpair(structure[1:-1], True)
 
             # TODO need n_hashes ?
             n_hashes = structure.count('#')
@@ -97,9 +97,10 @@ class Param(object):
                 raise SyntaxError("ParamError: Odd number of '#' in the parameter '{0}'. Cannot substitute the parameters".format(structure))
 
             if structure.startswith('#') and structure.endswith('#') and len(structure) >= 3 and n_hashes == 2:
-                return self._subst_one_hashpair(structure[1:-1])
+                return self._subst_one_hashpair(structure[1:-1], False)
 
-            return self._parse_hash_blocks(structure, lambda middle_param: self._subst_one_hashpair(middle_param) )
+            # Fallback to the default parser: all pairs of hashes are substituted
+            return self._parse_hash_blocks(structure, lambda middle_param: self._subst_one_hashpair(middle_param, False) )
 
         else:
             # TODO warning message
@@ -114,7 +115,7 @@ class Param(object):
                 result.append(head)
                 if tmp.startswith('expr('):
                     i = tmp.find(')expr#')
-                    val = callback(tmp[:i+5])
+                    val = self._subst_one_hashpair(tmp[:i+5], True)
                     tail = tmp[i+6:]
                 else:
                     (middle_param,_,tail) = tmp.partition('#')
@@ -129,20 +130,18 @@ class Param(object):
             return ''.join(result) + structure
 
 
+    def _subst_one_hashpair(self, inside_hashes, is_expr):
+        self._debug_print("_subst_one_hashpair", inside_hashes, is_expr)
 
-    def _subst_one_hashpair(self, inside_hashes):
-        self._debug_print("_subst_one_hashpair", inside_hashes)
-
+        # Keep track of the substitutions we've made to detect loops
         if inside_hashes in self._substitution_in_progress:
             raise ParamInfiniteLoopException(inside_hashes, self._substitution_in_progress)
         self._substitution_in_progress[inside_hashes] = 1
 
-        if inside_hashes.startswith('expr(') and inside_hashes.endswith(')expr'):
-            expression = inside_hashes[5:-5].strip()
-            #print(">>> Going to eval: " + expression)
-            val = self._parse_hash_blocks(expression, lambda middle_param: self._internal_get_param(middle_param))
-            #print("=== " + val)
-            val = eval(val)
+        # We ask the caller to provide the is_expr tag to avoid checking the string again for the presence of the "expr" tokens
+        if is_expr:
+            s = self._subst_all_hashpairs(inside_hashes[5:-5].strip(), lambda middle_param: 'self._internal_get_param("{0}")'.format(middle_param))
+            return eval(s)
 
         elif ':' in inside_hashes:
             (func_name,_,parameters) = inside_hashes.partition(':')
