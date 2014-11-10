@@ -16,9 +16,11 @@ class Param(object):
 
     # Constructor
     #############
-    def __init__(self, u):
+    def __init__(self, u, debug=False):
         self._unsubstituted_param_hash = u
         self._param_hash = {}
+        self.debug = debug
+
 
     # Public methods
     #################
@@ -41,14 +43,20 @@ class Param(object):
         if (param_name is None) or not isinstance(param_name, str) or (param_name == ''):
             raise NameError("'{0}' (of type {1}) is not a valid parameter name".format(param_name, type(param_name)))
 
+    def _debug_print(self, *args, **kwargs):
+        if self.debug:
+            print(*args, **kwargs)
+
     def _internal_get_param(self, param_name):
         self._validate_parameter_name(param_name)
+        self._debug_print("_internal_get_param", param_name)
         if param_name not in self._param_hash:
             x = self._unsubstituted_param_hash[param_name]
             self._param_hash[param_name] = self._param_substitute(x)
         return self._param_hash[param_name]
 
     def _param_substitute(self, structure):
+        self._debug_print("_param_substitute", structure)
 
         if structure is None:
             return None
@@ -109,7 +117,7 @@ class Param(object):
 
 
     def _subst_one_hashpair(self, inside_hashes):
-        print('_subst_one_hashpair', inside_hashes)
+        self._debug_print("_subst_one_hashpair", inside_hashes)
 
         if inside_hashes in self._substitution_in_progress:
             raise ParamInfiniteLoopException(inside_hashes, self._substitution_in_progress)
