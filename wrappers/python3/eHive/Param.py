@@ -7,7 +7,15 @@ import collections
 class ParamWarning(Warning):
     pass
 class ParamException(Exception):
-    pass
+    """
+    Base class for parameters-related exceptions.
+    All instances have a "param_name" attribute that gives the name of the parameter that caused the exception
+    """
+    def __init__(self, param_name):
+        self.param_name = param_name
+class ParamNameException(ParamException):
+    def __str__(self):
+        return '"{0}" (type {1}) is not a valid parameter name'.format(self.param_name, type(self.param_name).__name__)
 class ParamInfiniteLoopException(ParamException):
     def __init__(self, inside_hashes, _substitution_in_progress):
         ParamException.__init__(self, "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(inside_hashes, list(_substitution_in_progress.keys())))
@@ -25,30 +33,34 @@ class Param(object):
     # Public methods
     #################
     def set_param(self, param_name, value):
-        self._validate_parameter_name(param_name)
+        if not self._validate_parameter_name(param_name):
+            raise ParamNameException(param_name)
         self._param_hash[param_name] = value
         return value
 
     def get_param(self, param_name):
+        if not self._validate_parameter_name(param_name):
+            raise ParamNameException(param_name)
         self._substitution_in_progress = collections.OrderedDict()
         return self._internal_get_param(param_name)
 
     def has_param(self, param_name):
-        self._validate_parameter_name(param_name)
+        if not self._validate_parameter_name(param_name):
+            raise ParamNameException(param_name)
         return (param_name in self._param_hash) or (param_name in self._unsubstituted_param_hash)
+
 
     # Private methods
     ##################
     def _validate_parameter_name(self, param_name):
-        if (param_name is None) or not isinstance(param_name, str) or (param_name == ''):
-            raise NameError("'{0}' (of type {1}) is not a valid parameter name".format(param_name, type(param_name)))
+        return isinstance(param_name, str) and (param_name != '')
 
     def _debug_print(self, *args, **kwargs):
         if self.debug:
             print(*args, **kwargs)
 
+    # Parameters of _internal_get_param are known to be valid
     def _internal_get_param(self, param_name):
-        self._validate_parameter_name(param_name)
         self._debug_print("_internal_get_param", param_name)
         if param_name not in self._param_hash:
             x = self._unsubstituted_param_hash[param_name]
@@ -164,7 +176,15 @@ if __name__ == '__main__':
         'listref' : '#expr( #csv# )expr#'
     }
 
-    p = Param(seed_params)
+    p = Param(seed_params, True)
+
+    try:
+        p.get_param(0) # should raise ParamNameException
+    except ParamNameException as e:
+        print("ParamNameException raised")
+    else:
+        print("ParamNameException NOT raised")
+
 
     print('All the parameters')
     for (key,value) in seed_params.items():
@@ -197,6 +217,5 @@ if __name__ == '__main__':
     print("\tcsv =", p.get_param('csv'), "(it is a {0}".format(type(p.get_param('csv'))), ')')
     l = p._param_substitute( '#listref#' )
     print("\tlist reference produced by doing expr() on csv: ", l)
-    p.get_param(0)
 
 
