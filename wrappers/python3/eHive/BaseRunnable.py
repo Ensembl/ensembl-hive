@@ -4,7 +4,6 @@ import eHive.Params
 import os
 import sys
 import json
-import time
 import numbers
 import warnings
 import traceback
@@ -12,11 +11,7 @@ import traceback
 class Job(object):
     pass
 
-class HiveJobException(Exception):
-    pass
-class CompleteEarlyException(HiveJobException):
-    pass
-class JobErrorException(HiveJobException):
+class CompleteEarlyException(Exception):
     pass
 class HiveJSONMessageException(Exception):
     pass
