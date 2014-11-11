@@ -1,6 +1,6 @@
 
-import eHive.BaseRunnable
-from eHive.BaseRunnable import BaseRunnable
+import eHive.Process
+from eHive.Process import BaseRunnable
 
 __all__ = [ 'BaseRunnable' ]
 
