@@ -13,7 +13,7 @@ class DigitFactory(eHive.BaseRunnable):
 
     def fetch_input(self):
         b_multiplier = self.param_required('b_multiplier')
-        sub_tasks = [ { 'digit': _ } for _ in str(b_multiplier) if _ not in '01' ]
+        sub_tasks = [ { 'digit': _ } for _ in set(str(b_multiplier)).difference('01') ]
         self.param('sub_tasks', sub_tasks)
 
 
