@@ -10,17 +10,17 @@ class ParamException(Exception):
     Base class for parameters-related exceptions.
     All instances have a "param_name" attribute that gives the name of the parameter that caused the exception
     """
-    def __init__(self, param_name):
-        self.param_name = param_name
+    pass
 class ParamNameException(ParamException):
     def __str__(self):
-        return '"{0}" (type {1}) is not a valid parameter name'.format(self.param_name, type(self.param_name).__name__)
+        return '"{0}" (type {1}) is not a valid parameter name'.format(self.args[0], type(self.args[0]).__name__)
 class ParamSubstitutionException(ParamException):
     def __str__(self):
-        return 'Cannot substitute elements in objects of type "{0}"'.format(str(type(self.param_name)))
+        return 'Cannot substitute elements in objects of type "{0}"'.format(str(type(self.args[0])))
 class ParamInfiniteLoopException(ParamException):
-    def __init__(self, inside_hashes, _substitution_in_progress):
-        ParamException.__init__(self, "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(inside_hashes, list(_substitution_in_progress.keys())))
+    def __str__(self):
+        return "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(self.args[0], list(self.args[1].keys()))
+
 
 class ParamContainer(object):
 
