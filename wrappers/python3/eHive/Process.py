@@ -39,10 +39,12 @@ class BaseRunnable(object):
         self.read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
         self.pid = os.getpid()
+        self.debug = 0
         self.__process_life_cycle()
 
     def __print_debug(self, *args):
-        print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
+        if self.debug > 1:
+            print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
 
     def __send_message(self, event, content):
         def default_json_encoder(o):
