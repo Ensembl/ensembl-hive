@@ -47,7 +47,8 @@ class ParamContainer(object):
         try:
             return self._internal_get_param(param_name)
         except (KeyError, SyntaxError, ParamException) as e:
-            raise e from None
+            # To hide the part of the stack that is in ParamContainer
+            raise type(e)(*e.args) from None
 
     def has_param(self, param_name):
         if not self._validate_parameter_name(param_name):
