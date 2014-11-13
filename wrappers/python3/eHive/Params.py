@@ -206,27 +206,31 @@ class ParamContainer(object):
 
 if __name__ == '__main__':
 
-    seed_params = {
-        'alpha' : 2,
-        'beta' : 5,
-        'delta' : '#expr( #alpha#*#beta# )expr#',
+    seed_params = [
+        ('alpha' , 2),
+        ('beta' , 5),
+        ('delta' , '#expr( #alpha#*#beta# )expr#'),
 
-        'gamma' : [10,20,33,15],
-        'gamma_prime' : '#expr( list(#gamma#) )expr#',
+        ('gamma' , [10,20,33,15]),
+        ('gamma_prime' , '#expr( #gamma# )expr#'),
+        ('gamma_second' , '#expr( list(#gamma#) )expr#'),
 
-        'age' : { 'Alice' : 17, 'Bob' : 20, 'Chloe' : 21},
-        'age_prime' : '#expr( dict(#age#) )expr#',
+        ('age' , { 'Alice' : 17, 'Bob' : 20, 'Chloe' : 21}),
+        ('age_prime' , '#expr( #age# )expr#'),
+        ('age_second' , '#expr( dict(#age#) )expr#'),
 
-        'csv' : '[123,456,789]',
-        'listref' : '#expr( eval(#csv#) )expr#',
+        ('csv' , '[123,456,789]'),
+        ('csv_prime' , '#expr( #csv# )expr#'),
+        ('listref' , '#expr( eval(#csv#) )expr#'),
 
-        'null' : None,
-        'ref_null' : '#null#',
-        'ref2_null' : '#expr( #null# )expr#',
-        'ref3_null' : '#alpha##null##beta#',
-    }
+        ('null' , None),
+        ('ref_null' , '#null#'),
+        ('ref2_null' , '#expr( #null# )expr#'),
+        ('ref3_null' , '#alpha##null##beta#'),
+    ]
 
-    p = ParamContainer(seed_params, True)
+    p = ParamContainer(collections.OrderedDict(seed_params), False)
+
     p.get_param('null')
     p.get_param('ref_null')
     p.get_param('ref2_null')
@@ -253,11 +257,10 @@ if __name__ == '__main__':
 
 
     print('All the parameters')
-    for (key,value) in seed_params.items():
-        print("\t>", key)
+    for (key,value) in seed_params:
+        print("\t>", key, "is seeded as:", value, type(value))
         x = p.get_param(key)
         print("\t=", x, type(x))
-        #print("\t'{0}' is '{1}' in the seeded hash, and '{2}' as a result of p.param()".format(key, value, p.get_param(key)))
 
     print("Numbers")
     print(p.param_substitute( "\tSubstituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" ));
