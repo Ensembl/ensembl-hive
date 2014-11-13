@@ -19,7 +19,10 @@ class Job(object):
     pass
 
 class CompleteEarlyException(Exception):
-    """Can be raised by a derived class of BaseRunnable to indicate an early (successful) termination"""
+    """Can be raised by a derived class of BaseRunnable to indicate an early successful termination"""
+    pass
+class JobFailedException(Exception):
+    """Can be raised by a derived class of BaseRunnable to indicate an early unsuccessful termination"""
     pass
 class HiveJSONMessageException(Exception):
     """Raised when we could not parse the JSON message coming from ForeignProcess"""
