@@ -48,44 +48,44 @@ class ParamContainer(object):
 
     def set_param(self, param_name, value):
         """Setter. Returns the new value"""
-        if not self._validate_parameter_name(param_name):
+        if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         self._param_hash[param_name] = value
         return value
 
     def get_param(self, param_name):
         """Getter. Performs the parameter substitution"""
-        if not self._validate_parameter_name(param_name):
+        if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         self._substitution_in_progress = collections.OrderedDict()
         try:
-            return self._internal_get_param(param_name)
+            return self.internal_get_param(param_name)
         except (KeyError, SyntaxError, ParamException) as e:
             # To hide the part of the stack that is in ParamContainer
             raise type(e)(*e.args) from None
 
     def has_param(self, param_name):
         """Returns a boolean. It checks both substituted and unsubstituted parameters"""
-        if not self._validate_parameter_name(param_name):
+        if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         return (param_name in self._param_hash) or (param_name in self._unsubstituted_param_hash)
 
 
     # Private methods
     ##################
-    def _validate_parameter_name(self, param_name):
+    def validate_parameter_name(self, param_name):
         return isinstance(param_name, str) and (param_name != '')
 
-    def _debug_print(self, *args, **kwargs):
+    def debug_print(self, *args, **kwargs):
         if self.debug:
             print(*args, **kwargs)
 
     # Parameters of _internal_get_param are known to be valid
-    def _internal_get_param(self, param_name):
-        self._debug_print("_internal_get_param", param_name)
+    def internal_get_param(self, param_name):
+        self.debug_print("internal_get_param", param_name)
         if param_name not in self._param_hash:
             x = self._unsubstituted_param_hash[param_name]
-            self._param_hash[param_name] = self._param_substitute(x)
+            self._param_hash[param_name] = self.param_substitute(x)
         return self._param_hash[param_name]
 
 
@@ -93,19 +93,19 @@ class ParamContainer(object):
     Take any structure and replace the pairs of hashes with the values of the parameters / expression they represent
     Compatible types: numbers, strings, lists, dictionaries (otherwise, ParamSubstitutionException is raised)
     """
-    def _param_substitute(self, structure):
-        self._debug_print("_param_substitute", structure)
+    def param_substitute(self, structure):
+        self.debug_print("param_substitute", structure)
 
         if structure is None:
             return None
 
         elif isinstance(structure, list):
-            return [self._param_substitute(_) for _ in structure]
+            return [self.param_substitute(_) for _ in structure]
 
         elif isinstance(structure, dict):
             # NB: In Python, not everything can be hashed and used as a dictionary key.
             #     Perhaps we should check for such errors ?
-            return {self._param_substitute(key): self._param_substitute(value) for (key,value) in structure.items()}
+            return {self.param_substitute(key): self.param_substitute(value) for (key,value) in structure.items()}
 
         elif isinstance(structure, numbers.Number):
             return structure
@@ -115,22 +115,22 @@ class ParamContainer(object):
             # We handle the substitution differently if there is a single reference as we can avoid forcing the result to be a string
 
             if structure[:6] == '#expr(' and structure[-6:] == ')expr#' and structure.count('#expr(', 6, -6) == 0 and structure.count(')expr#', 6, -6) == 0:
-                return self._subst_one_hashpair(structure[1:-1], True)
+                return self.subst_one_hashpair(structure[1:-1], True)
 
             if structure[0] == '#' and structure[-1] == '#' and structure.count('#', 1, -1) == 0:
                 if len(structure) <= 2:
                     return structure
-                return self._subst_one_hashpair(structure[1:-1], False)
+                return self.subst_one_hashpair(structure[1:-1], False)
 
             # Fallback to the default parser: all pairs of hashes are substituted
-            return self._subst_all_hashpairs(structure, lambda middle_param: self._subst_one_hashpair(middle_param, False) )
+            return self.subst_all_hashpairs(structure, lambda middle_param: self.subst_one_hashpair(middle_param, False) )
 
         else:
             raise ParamSubstitutionException(structure)
 
 
-    def _subst_all_hashpairs(self, structure, callback):
-        self._debug_print("_subst_all_hashpairs", structure)
+    def subst_all_hashpairs(self, structure, callback):
+        self.debug_print("subst_all_hashpairs", structure)
         result = []
         while True:
             (head,_,tmp) = structure.partition('#')
@@ -141,7 +141,7 @@ class ParamContainer(object):
                 i = tmp.find(')expr#')
                 if i == -1:
                     raise SyntaxError("Unmatched '#expr(' token")
-                val = self._subst_one_hashpair(tmp[:i+5], True)
+                val = self.subst_one_hashpair(tmp[:i+5], True)
                 tail = tmp[i+6:]
             else:
                 (middle_param,_,tail) = tmp.partition('#')
@@ -155,8 +155,8 @@ class ParamContainer(object):
             structure = tail
 
 
-    def _subst_one_hashpair(self, inside_hashes, is_expr):
-        self._debug_print("_subst_one_hashpair", inside_hashes, is_expr)
+    def subst_one_hashpair(self, inside_hashes, is_expr):
+        self.debug_print("subst_one_hashpair", inside_hashes, is_expr)
 
         # Keep track of the substitutions we've made to detect loops
         if inside_hashes in self._substitution_in_progress:
@@ -165,7 +165,7 @@ class ParamContainer(object):
 
         # We ask the caller to provide the is_expr tag to avoid checking the string again for the presence of the "expr" tokens
         if is_expr:
-            s = self._subst_all_hashpairs(inside_hashes[5:-5].strip(), lambda middle_param: 'self._internal_get_param("{0}")'.format(middle_param))
+            s = self.subst_all_hashpairs(inside_hashes[5:-5].strip(), lambda middle_param: 'self.internal_get_param("{0}")'.format(middle_param))
             return eval(s)
 
         elif ':' in inside_hashes:
@@ -176,14 +176,14 @@ class ParamContainer(object):
                 raise SyntaxError("Unknown method: " + func_name)
             if callable(f):
                 if parameters:
-                    val = f(self._internal_get_param(parameters))
+                    val = f(self.internal_get_param(parameters))
                 else:
                     val = f()
             else:
                 raise SyntaxError(func_name + " is not callable")
 
         else:
-            val = self._internal_get_param(inside_hashes)
+            val = self.internal_get_param(inside_hashes)
 
         del self._substitution_in_progress[inside_hashes]
         return val
@@ -246,33 +246,33 @@ if __name__ == '__main__':
         #print("\t'{0}' is '{1}' in the seeded hash, and '{2}' as a result of p.param()".format(key, value, p.get_param(key)))
 
     print("Numbers")
-    print(p._param_substitute( "\tSubstituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" ));
+    print(p.param_substitute( "\tSubstituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" ));
 
     print("Lists")
-    print(p._param_substitute( "\tdefault stringification of gamma: #gamma#" ));
-    print(p._param_substitute( "\texpr-stringification gamma: #expr( #gamma#  )expr#" ));
-    print(p._param_substitute( "\tcomplex join of gamma: #expr( '~'.join([str(_) for _ in sorted(#gamma#)])  )expr#" ));
-    print(p._param_substitute( "\tcomplex join of gamma_prime: #expr( '~'.join([str(_) for _ in sorted(#gamma_prime#)])  )expr#" ));
+    print(p.param_substitute( "\tdefault stringification of gamma: #gamma#" ));
+    print(p.param_substitute( "\texpr-stringification gamma: #expr( #gamma#  )expr#" ));
+    print(p.param_substitute( "\tcomplex join of gamma: #expr( '~'.join([str(_) for _ in sorted(#gamma#)])  )expr#" ));
+    print(p.param_substitute( "\tcomplex join of gamma_prime: #expr( '~'.join([str(_) for _ in sorted(#gamma_prime#)])  )expr#" ));
 
     print("Global methods")
-    print(p._param_substitute( "\tsum(gamma) -> #expr( sum(#gamma#) )expr#" ));
-    print(p._param_substitute( "\tmin(gamma) -> #expr( min(#gamma#) )expr#" ));
-    print(p._param_substitute( "\tmax(gamma) -> #expr( max(#gamma#) )expr#" ));
-    print(p._param_substitute( "\tdir() -> #expr( dir() )expr#" ));
-    print(p._param_substitute( "\tdir() -> #dir:#" ));
+    print(p.param_substitute( "\tsum(gamma) -> #expr( sum(#gamma#) )expr#" ));
+    print(p.param_substitute( "\tmin(gamma) -> #expr( min(#gamma#) )expr#" ));
+    print(p.param_substitute( "\tmax(gamma) -> #expr( max(#gamma#) )expr#" ));
+    print(p.param_substitute( "\tdir() -> #expr( dir() )expr#" ));
+    print(p.param_substitute( "\tdir() -> #dir:#" ));
 
     print("Dictionaries")
-    print(p._param_substitute( '\tdefault stringification of age: #age#'))
-    print(p._param_substitute( '\texpr-stringification of age: #expr( #age# )expr#'))
-    print(p._param_substitute( '\tcomplex fold of age: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age#.items()]) )expr#'));
-    print(p._param_substitute( '\tcomplex fold of age_prime: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age_prime#.items()]) )expr#'));
+    print(p.param_substitute( '\tdefault stringification of age: #age#'))
+    print(p.param_substitute( '\texpr-stringification of age: #expr( #age# )expr#'))
+    print(p.param_substitute( '\tcomplex fold of age: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age#.items()]) )expr#'));
+    print(p.param_substitute( '\tcomplex fold of age_prime: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age_prime#.items()]) )expr#'));
 
     print("With indexes")
-    print(p._param_substitute( '\tadding indexed values: #expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#'));
+    print(p.param_substitute( '\tadding indexed values: #expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#'));
 
     print("Evaluation")
     print("\tcsv =", p.get_param('csv'), "(it is a {0}".format(type(p.get_param('csv'))), ')')
-    l = p._param_substitute( '#listref#' )
+    l = p.param_substitute( '#listref#' )
     print("\tlist reference produced by doing expr() on csv: ", l)
 
 
