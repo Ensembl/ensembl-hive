@@ -39,7 +39,7 @@ class ParamContainer(object):
 
     def __init__(self, unsubstituted_params, debug=False):
         """Constructor. "unsubstituted_params" is a dictionary"""
-        self._unsubstituted_param_hash = unsubstituted_params
+        self._unsubstituted_param_hash = unsubstituted_params.copy()
         self._param_hash = {}
         self.debug = debug
 
