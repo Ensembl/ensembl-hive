@@ -4,6 +4,87 @@
 
 Bio::EnsEMBL::Hive::ForeignProcess
 
+=head1 SYNOPSIS
+
+This is a variant of Bio::EnsEMBL::Hive::Process that forks into a wrapper that can itself
+run jobs (runnables) written in a different language
+
+=head1 DESCRIPTION
+
+It works by setting up two pipes to communicate with the child process. All the messages
+are passed around in single-line JSON structures. The protocol is described below:
+    ---> represents a message sent to the child process,
+    <--- represents a message sent by the child process
+
+The initialisation (in the constructor) only consists in passing the param_defaults
+section of the runnable:
+    <--- { ... param_defaults ... }
+    ---> "OK"
+The child process then goes to sleep, waiting for jobs to be seeded. Meanwhile,
+ForeignProcess enters a number of life_cycle() executions (as triggered by Worker).
+Each one first sends a JSON object to the child process to initialize the job parameters
+    ---> {
+           "input_job": {
+             "parameters": { ... the unsubstituted job parameters as compiled by Worker ... },
+             // followed by several attributes of the job
+             "input_id": { ...  },
+             "dbID": XXX,
+             "retry_count": XXX
+           },
+           "execute_writes": [1|0],
+           "debug": XXX
+         }
+
+From this point, ForeignProcess acts as a server, listening to events sent by the child.
+Events are JSON objects composed of an "event" field (the name of the event) and a
+"content" field (the payload). Events can be of the following kinds (with the expected
+response from ForeignProcess):
+
+    <--- JOB_STATUS_UPDATE
+         // The content is one of "PRE_CLEANUP", "FETCH_INPUT", "RUN", "WRITE_OUTPUT", "POST_CLEANUP"
+    ---> "OK"
+
+    <--- WARNING
+         // The content is a JSON object:
+            {
+              "message": "XXX",
+              "is_error": [true|false],
+            }
+    ---> "OK"
+
+    <--- DATAFLOW
+         // The content is a JSON object:
+            {
+              "branch_name_or_code": XXX,
+              "output_ids": an array or a hash,
+              "params": {
+                "substituted": { ... the parameters that are currently substituted ... }
+                "unsubstituted": { ... the parameters that have not yet been substituted ... }
+              }
+            }
+    ---> dbIDs of the jobs that have been created
+
+    <--- WORKER_TEMP_DIRECTORY
+         // The content is the "worker_temp_directory_name" as defined in the runnable (or null otherwise)
+    ---> returns the temporary directory of the worker
+
+    <--- JOB_END
+         // The content is a JSON object describing the final state of the job
+            {
+              "complete": [true|false],
+              "job": {
+                "autoflow": [true|false],
+                "lethal_for_worker": [true|false],
+                "transient_error": [true|false],
+              },
+              "params": {
+                "substituted": { ... the parameters that are currently substituted ... }
+                "unsubstituted": { ... the parameters that have not yet been substituted ... }
+              }
+            }
+    ---> "OK"
+
+
 =head1 LICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -41,6 +122,18 @@ use base ('Bio::EnsEMBL::Hive::Process');
 our %known_languages = (
     'python3'   => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/worker.py',
 );
+
+=head2 new
+
+  Arg[1]      : $language: the programming language the external runnable is in
+  Arg[2]      : $module: the name of the runnable (usually a package name)
+  Example     : Bio::EnsEMBL::Hive::ForeignProcess->new();
+  Description : Constructor
+  Returntype  : Bio::EnsEMBL::Hive::ForeignProcess
+  Exceptions  : if $language or $module is not defined properly or if the pipes /
+                child process could not be created
+
+=cut
 
 sub new {
 
@@ -102,6 +195,13 @@ sub new {
 }
 
 
+=head2 DESTROY
+
+  Description : Destructor: tells the child to exit by sending an empty JSON object
+  Returntype  : none
+
+=cut
+
 sub DESTROY {
     my $self = shift;
     $self->print_debug("DESTROY");
@@ -109,6 +209,14 @@ sub DESTROY {
     #kill('KILL', $self->child_pid);
 }
 
+
+=head2 print_debug
+
+  Example     : $process->print_debug("debug message");
+  Description : Prints a message if $self->debug is 2 or above
+  Returntype  : none
+
+=cut
 
 sub print_debug {
     my ($self, $msg) = @_;
@@ -239,6 +347,7 @@ sub send_response {
 sub read_message {
     my $self = shift;
     my $s = $self->child_out->getline();
+    die "Did not receive any messages" unless defined $s;
     chomp $s;
     $self->print_debug("read_message: $s");
     return $self->json_formatter->decode($s);
@@ -269,15 +378,15 @@ sub param_defaults {
     return $self->{'_param_defaults'};
 }
 
+
 =head2 life_cycle
 
   Example     : my $partial_timings = $runnable->life_cycle();
   Description : Runs the life-cycle of the input job and returns the timings
                 of each Runnable method (fetch_input, run, etc).
+                See the description of this module for details about the protocol
   Returntype  : Hashref
   Exceptions  : none
-  Caller      : general
-  Status      : Stable
 
 =cut
 
@@ -303,7 +412,7 @@ sub life_cycle {
     $self->print_debug("SEND JOB PARAM");
     $self->send_message(\%struct);
 
-    # A simple loop event
+    # A simple event loop
     while (1) {
         $self->print_debug("WAITING IN LOOP");
 
@@ -340,6 +449,7 @@ sub life_cycle {
             $job->{_param_hash} = $content->{params}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
 
+            # This piece of code is duplicated from Process
             if ($content->{complete}) {
                 if( $self->execute_writes and $job->autoflow ) {    # AUTOFLOW doesn't have its own status so will have whatever previous state of the job
                     $self->say_with_header( ': AUTOFLOW input->output' );
@@ -362,11 +472,28 @@ sub life_cycle {
     }
 }
 
+=head2 worker_temp_directory_name
+
+  Example     : $process->worker_temp_directory_name();
+  Description : Returns the name of the temp directory for this module
+                The value in $self is initialized at the WORKER_TEMP_DIRECTORY
+                event above and returned to the caller if defined. This allows
+                runnables to redefine the name
+  Returntype  : string
+  Exceptions  : none
+
+=cut
+
 sub worker_temp_directory_name {
     my $self = shift;
     return $self->{worker_temp_directory_name} if $self->{worker_temp_directory_name};
     return $self->SUPER::worker_temp_directory_name();
 }
+
+
+
+
+### Summary of Process methods ###
 
 ## Have to be redefined
 # life_cycle
