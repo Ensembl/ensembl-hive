@@ -26,8 +26,8 @@ class ParamContainer(object):
 
     # Constructor
     #############
-    def __init__(self, u, debug=False):
-        self._unsubstituted_param_hash = u
+    def __init__(self, unsubstituted_params, debug=False):
+        self._unsubstituted_param_hash = unsubstituted_params
         self._param_hash = {}
         self.debug = debug
 
