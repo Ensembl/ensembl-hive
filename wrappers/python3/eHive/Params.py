@@ -180,7 +180,7 @@ class ParamContainer(object):
         # We ask the caller to provide the is_expr tag to avoid checking the string again for the presence of the "expr" tokens
         if is_expr:
             s = self.subst_all_hashpairs(inside_hashes[5:-5].strip(), lambda middle_param: 'self.internal_get_param("{0}")'.format(middle_param))
-            return eval(s)
+            val = eval(s)
 
         elif ':' in inside_hashes:
             (func_name,_,parameters) = inside_hashes.partition(':')
