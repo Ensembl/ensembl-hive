@@ -3,30 +3,41 @@ import sys
 import numbers
 import collections
 
+__doc__ = """
+This module is an implementation of eHive's Param module.
+It defines ParamContainer which is an attribute of BaseRunnable
+and not its base class as in eHive's class hierarchy.
+All the specific warnings and exceptions inherit from ParamWarning
+and ParamException.
+"""
+
+
 class ParamWarning(Warning):
+    """Used by Process.BaseRunnable"""
     pass
+
+
 class ParamException(Exception):
-    """
-    Base class for parameters-related exceptions.
-    All instances have a "param_name" attribute that gives the name of the parameter that caused the exception
-    """
+    """Base class for parameters-related exceptions"""
     pass
 class ParamNameException(ParamException):
+    """Raised when the parameter name is not a string"""
     def __str__(self):
         return '"{0}" (type {1}) is not a valid parameter name'.format(self.args[0], type(self.args[0]).__name__)
 class ParamSubstitutionException(ParamException):
+    """Raised when ParamContainer tried to substitute an unexpected structure (only dictionaries and lists are accepted)"""
     def __str__(self):
         return 'Cannot substitute elements in objects of type "{0}"'.format(str(type(self.args[0])))
 class ParamInfiniteLoopException(ParamException):
+    """Raised when parameters depend on each other, forming a loop"""
     def __str__(self):
         return "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(self.args[0], list(self.args[1].keys()))
 
 
 class ParamContainer(object):
 
-    # Constructor
-    #############
     def __init__(self, unsubstituted_params, debug=False):
+        """Constructor. "unsubstituted_params" is a dictionary"""
         self._unsubstituted_param_hash = unsubstituted_params
         self._param_hash = {}
         self.debug = debug
@@ -34,13 +45,16 @@ class ParamContainer(object):
 
     # Public methods
     #################
+
     def set_param(self, param_name, value):
+        """Setter. Returns the new value"""
         if not self._validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         self._param_hash[param_name] = value
         return value
 
     def get_param(self, param_name):
+        """Getter. Performs the parameter substitution"""
         if not self._validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         self._substitution_in_progress = collections.OrderedDict()
@@ -51,6 +65,7 @@ class ParamContainer(object):
             raise type(e)(*e.args) from None
 
     def has_param(self, param_name):
+        """Returns a boolean. It checks both substituted and unsubstituted parameters"""
         if not self._validate_parameter_name(param_name):
             raise ParamNameException(param_name)
         return (param_name in self._param_hash) or (param_name in self._unsubstituted_param_hash)
