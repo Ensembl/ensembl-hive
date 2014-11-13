@@ -3,3 +3,4 @@
 from eHive.Process import CompleteEarlyException, BaseRunnable
 from eHive.Params import ParamException, ParamNameException, ParamSubstitutionException, ParamInfiniteLoopException
 
+__all__ = ['BaseRunnable', 'CompleteEarlyException', 'ParamException', 'ParamNameException', 'ParamSubstitutionException', 'ParamInfiniteLoopException']
