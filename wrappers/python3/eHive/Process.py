@@ -30,6 +30,14 @@ class HiveJSONMessageException(Exception):
 
 
 class BaseRunnable(object):
+    """This is the equivalent of ForeignProcess. Note that most of the methods
+    are private to be hidden in the derived classes.
+
+    This class can be used as a base-class for people to redefine fetch_input(),
+    run() and/or write_output() (and/or pre_cleanup(), post_cleanup()).
+    Jobs are supposed to raise CompleteEarlyException in case they complete before
+    reaching. They can also raise JobFailedException to indicate a general failure
+    """
 
     # Private BaseRunnable interface
     #################################
@@ -47,29 +55,35 @@ class BaseRunnable(object):
             print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
 
     def __send_message(self, event, content):
+        """seralizes the message in JSON and send it to the parent process"""
         def default_json_encoder(o):
             self.__print_debug("Cannot serialize {0} (type {1}) in JSON".format(o, type(o)))
             return 'UNSERIALIZABLE OBJECT'
         j = json.dumps({'event': event, 'content': content}, indent=None, default=default_json_encoder)
         self.__print_debug('__send_message:', j)
+        # UTF8 encoding has never been tested. Just hope it works :)
         self.write_pipe.write(bytes(j+"\n", 'utf-8'))
 
     def __read_message(self):
+        """Read a message from the parent and parse it"""
         try:
             self.__print_debug("__read_message ...")
             l = self.read_pipe.readline()
             self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
         except ValueError as e:
+            # HiveJSONMessageException is a more meaningful name than ValueError
             raise HiveJSONMessageException from e
 
     def __send_message_and_wait_for_OK(self, event, content):
+        """Send a message and expects a response to be 'OK'"""
         self.__send_message(event, content)
         response = self.__read_message()
         if response['response'] != 'OK':
             raise HiveJSONMessageException("Received '{0}' instead of OK".format(response))
 
     def __process_life_cycle(self):
+        """Simple loop: wait for job parameters, do the job's life-cycle"""
         self.__send_message_and_wait_for_OK('PARAM_DEFAULTS', self.param_defaults())
         while True:
             self.__print_debug("waiting for instructions")
@@ -80,7 +94,7 @@ class BaseRunnable(object):
             self.__job_life_cycle(config)
 
     def __job_life_cycle(self, config):
-
+        """Job's life-cycle. See ForeignProcess for a description of the protocol to communicate with the parent"""
         self.__print_debug("__life_cycle")
 
         # Params
@@ -128,6 +142,8 @@ class BaseRunnable(object):
         self.__send_message_and_wait_for_OK('JOB_END', job_end_structure)
 
     def __run_method_if_exists(self, method):
+        """method is one of "pre_cleanup", "fetch_input", "run", "write_output", "post_cleanup".
+        We only the call the method if it exists to save a trip to the database."""
         if hasattr(self, method):
             self.__send_message_and_wait_for_OK('JOB_STATUS_UPDATE', method)
             getattr(self, method)()
@@ -145,13 +161,19 @@ class BaseRunnable(object):
     ################################
 
     def warning(self, message, is_error = False):
+        """Store a message in the log_message table with is_error indicating whether the warning is actually an error or not"""
         self.__send_message_and_wait_for_OK('WARNING', {'message': message, 'is_error': is_error})
 
     def dataflow(self, output_ids, branch_name_or_code = 1):
+        """Dataflows the output_id(s) on a given branch (default 1). Returns whatever the Perl side returns"""
         self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}})
         return self.__read_message()
 
     def worker_temp_directory(self):
+        """Returns the full path of the temporary directory created by the worker.
+        Runnables can implement "worker_temp_directory_name()" to return the name
+        they would like to use
+        """
         if not hasattr(self, '_created_worker_temp_directory'):
             template_name = self.worker_temp_directory_name() if hasattr(self, 'worker_temp_directory_name') else None
             self.__send_message('WORKER_TEMP_DIRECTORY', template_name)
@@ -162,10 +184,12 @@ class BaseRunnable(object):
     ##################
 
     def param_defaults(self):
+        """Returns the defaults parameters for this runnable"""
         return {}
 
     def param_required(self, param_name):
-        """Returns the value of the parameter "param_name" or raises an exception if anything wrong happens. The exception is marked as non-transient."""
+        """Returns the value of the parameter "param_name" or raises an exception
+        if anything wrong happens. The exception is marked as non-transient."""
         t = self.input_job.transient_error
         self.input_job.transient_error = False
         v = self.p.get_param(param_name)
@@ -175,7 +199,8 @@ class BaseRunnable(object):
     def param(self, param_name, *args):
         """When called as a setter: sets the value of the parameter "param_name".
         When called as a getter: returns the value of the parameter "param_name".
-        It does not raise an exception if the parameter (or another one in the substitution stack) is undefined"""
+        It does not raise an exception if the parameter (or another one in the
+        substitution stack) is undefined"""
         # As a setter
         if len(args):
             return self.p.set_param(param_name, args[0])
@@ -188,9 +213,11 @@ class BaseRunnable(object):
             return None
 
     def param_exists(self, param_name):
+        """Returns True or False, whether the parameter exists (it doesn't mean it can be successfully substituted)"""
         return self.p.has_param(param_name)
 
     def param_is_defined(self, param_name):
+        """Returns True or False, whether the parameter exists, can be successfully substituted, and is not None"""
         if not self.param_exists(param_name):
             return False
         try:
