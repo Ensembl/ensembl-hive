@@ -12,9 +12,11 @@ def error_quit(msg):
 def usage(msg):
     error_quit("Command-line error: {1}\nUsage: worker.py module_name [compile | run fd_in fd_out]\n{0}".format(sys.argv, msg))
 
+
+## A big chunk of the script is for checking that the required module is available, is a eHive runnable, etc
 def find_module(module_name):
 
-    # NB: We assyme that the runnable has the same name as the file itself
+    # NB: We assume that the runnable has the same name as the file itself
     class_name = module_name.split('.')[-1]
 
     # import
@@ -31,6 +33,7 @@ def find_module(module_name):
 
     # get the class in the module
     if not hasattr(module, class_name):
+        # it could be a typo ... Let's print the available modules by decreasing distance to the required name
         import difflib
         possible_modules = [_ for _ in dir(module) if isinstance(getattr(module, _), type) and issubclass(getattr(module, _), eHive.BaseRunnable)]
         possible_modules = sorted(possible_modules, key = lambda _ : difflib.SequenceMatcher(a=class_name, b=_, autojunk=False).ratio(), reverse=True)
@@ -48,6 +51,7 @@ def find_module(module_name):
     if not issubclass(c, eHive.BaseRunnable):
         error_quit("ImportError: {0} (found in {1}) is not a sub-class of eHive.BaseRunnable".format(class_name, module.__file__))
     if not callable(c):
+        # I think this should never happen by definition of a Python class
         error_quit("ImportError: {0} (found in {1}) is not callable".format(class_name, module.__file__))
 
     return c
@@ -70,7 +74,7 @@ if mode == 'run':
         fd_in = int(sys.argv[3])
         fd_out = int(sys.argv[4])
     except:
-        usage('Cannot interpret file descriptors')
+        usage('Cannot read the file descriptors as integers')
     runnable(fd_in, fd_out)
 
 sys.exit(0)

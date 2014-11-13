@@ -35,6 +35,7 @@ class ParamInfiniteLoopException(ParamException):
 
 
 class ParamContainer(object):
+    """Equivalent of eHive's Param module"""
 
     def __init__(self, unsubstituted_params, debug=False):
         """Constructor. "unsubstituted_params" is a dictionary"""
@@ -74,14 +75,17 @@ class ParamContainer(object):
     # Private methods
     ##################
     def validate_parameter_name(self, param_name):
+        """Tells whether "param_name" is a non-empty string"""
         return isinstance(param_name, str) and (param_name != '')
 
     def debug_print(self, *args, **kwargs):
+        """Print debug information if the debug flag is turned on (cf constructor)"""
         if self.debug:
             print(*args, **kwargs)
 
-    # Parameters of _internal_get_param are known to be valid
     def internal_get_param(self, param_name):
+        """Equivalent of get_param() that assumes "param_name" is a valid parameter name and hence, doesn't have to raise ParamNameException.
+        It is only used internally"""
         self.debug_print("internal_get_param", param_name)
         if param_name not in self._param_hash:
             x = self._unsubstituted_param_hash[param_name]
@@ -89,11 +93,11 @@ class ParamContainer(object):
         return self._param_hash[param_name]
 
 
-    """
-    Take any structure and replace the pairs of hashes with the values of the parameters / expression they represent
-    Compatible types: numbers, strings, lists, dictionaries (otherwise, ParamSubstitutionException is raised)
-    """
     def param_substitute(self, structure):
+        """
+        Take any structure and replace the pairs of hashes with the values of the parameters / expression they represent
+        Compatible types: numbers, strings, lists, dictionaries (otherwise, ParamSubstitutionException is raised)
+        """
         self.debug_print("param_substitute", structure)
 
         if structure is None:
@@ -130,6 +134,11 @@ class ParamContainer(object):
 
 
     def subst_all_hashpairs(self, structure, callback):
+        """
+        Parse "structure" and replace all the pairs of hashes by the result of calling callback() on the pair content
+        #expr()expr# are treated differently by calling subst_one_hashpair()
+        The result is a string (like structure)
+        """
         self.debug_print("subst_all_hashpairs", structure)
         result = []
         while True:
@@ -156,6 +165,11 @@ class ParamContainer(object):
 
 
     def subst_one_hashpair(self, inside_hashes, is_expr):
+        """
+        Run the parameter substitution for a single pair of hashes.
+        Here, we only need to handle #expr()expr#, #func:params# and #param_name#
+        as each condition has been parsed in the other methods
+        """
         self.debug_print("subst_one_hashpair", inside_hashes, is_expr)
 
         # Keep track of the substitutions we've made to detect loops

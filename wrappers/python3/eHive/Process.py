@@ -8,12 +8,21 @@ import numbers
 import warnings
 import traceback
 
+
+__doc__ = """
+This module mainly implements python's counterpart of ForeignProcess. Read
+the later for more information about the JSON protocol used to communicate.
+"""
+
 class Job(object):
+    """Dummy class to hold job-related information"""
     pass
 
 class CompleteEarlyException(Exception):
+    """Can be raised by a derived class of BaseRunnable to indicate an early (successful) termination"""
     pass
 class HiveJSONMessageException(Exception):
+    """Raised when we could not parse the JSON message coming from ForeignProcess"""
     pass
 
 
@@ -119,6 +128,7 @@ class BaseRunnable(object):
             getattr(self, method)()
 
     def __traceback(self, skipped_traces):
+        """Remove "skipped_traces" lines from the stack trace (the eHive part)"""
         (etype, value, tb) = sys.exc_info()
         s1 = traceback.format_exception_only(etype, value)
         l = traceback.extract_tb(tb)[skipped_traces:]
@@ -150,6 +160,7 @@ class BaseRunnable(object):
         return {}
 
     def param_required(self, param_name):
+        """Returns the value of the parameter "param_name" or raises an exception if anything wrong happens. The exception is marked as non-transient."""
         t = self.input_job.transient_error
         self.input_job.transient_error = False
         v = self.p.get_param(param_name)
@@ -157,6 +168,9 @@ class BaseRunnable(object):
         return v
 
     def param(self, param_name, *args):
+        """When called as a setter: sets the value of the parameter "param_name".
+        When called as a getter: returns the value of the parameter "param_name".
+        It does not raise an exception if the parameter (or another one in the substitution stack) is undefined"""
         # As a setter
         if len(args):
             return self.p.set_param(param_name, args[0])
