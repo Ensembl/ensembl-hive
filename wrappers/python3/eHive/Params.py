@@ -231,15 +231,27 @@ if __name__ == '__main__':
 
     p = ParamContainer(collections.OrderedDict(seed_params), False)
 
-    p.get_param('null')
-    p.get_param('ref_null')
-    p.get_param('ref2_null')
+    def print_title(title):
+        print();
+        print("*" + title + "*")
+
+    def print_substitution(title, param_string):
+        print(title)
+        print("\t>", param_string)
+        x = p.param_substitute(param_string)
+        print_param_value(x)
+
+    def print_param_value(x):
+        print("\t=", x, type(x), "id=0x{0:012x}".format(id(x)))
+
+    print_title("Exceptions")
     try:
         p.get_param('ppppppp')
     except KeyError as e:
         print("KeyError raised")
     else:
         print("KeyError NOT raised")
+    print()
 
     try:
         p.get_param(0) # should raise ParamNameException
@@ -247,6 +259,7 @@ if __name__ == '__main__':
         print("ParamNameException raised")
     else:
         print("ParamNameException NOT raised")
+    print()
 
     try:
         ParamContainer({'a': '#b#', 'b': '#a#'}, True).get_param('a')
@@ -254,42 +267,41 @@ if __name__ == '__main__':
         print("ParamInfiniteLoopException raised")
     else:
         print("ParamInfiniteLoopException NOT raised")
+    print()
 
-
-    print('All the parameters')
+    print_title('All the parameters')
     for (key,value) in seed_params:
         print("\t>", key, "is seeded as:", value, type(value))
         x = p.get_param(key)
-        print("\t=", x, type(x))
+        print_param_value(x)
+        print()
 
-    print("Numbers")
-    print(p.param_substitute( "\tSubstituting one scalar: #alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" ));
+    print_title("Numbers")
+    print_substitution( "Scalar substitutions", "#alpha# and another: #beta# and again one: #alpha# and the other: #beta# . Their product: #delta#" )
 
-    print("Lists")
-    print(p.param_substitute( "\tdefault stringification of gamma: #gamma#" ));
-    print(p.param_substitute( "\texpr-stringification gamma: #expr( #gamma#  )expr#" ));
-    print(p.param_substitute( "\tcomplex join of gamma: #expr( '~'.join([str(_) for _ in sorted(#gamma#)])  )expr#" ));
-    print(p.param_substitute( "\tcomplex join of gamma_prime: #expr( '~'.join([str(_) for _ in sorted(#gamma_prime#)])  )expr#" ));
+    print_title("Lists")
+    print_substitution( "default stringification of gamma", "#gamma#" )
+    print_substitution( "expr-stringification of gamma", "#expr( #gamma#  )expr#" )
+    print_substitution( "complex join of gamma", "#expr( '~'.join([str(_) for _ in sorted(#gamma#)])  )expr#" )
+    print_substitution( "complex join of gamma_prime", "#expr( '~'.join([str(_) for _ in sorted(#gamma_prime#)])  )expr#" )
 
-    print("Global methods")
-    print(p.param_substitute( "\tsum(gamma) -> #expr( sum(#gamma#) )expr#" ));
-    print(p.param_substitute( "\tmin(gamma) -> #expr( min(#gamma#) )expr#" ));
-    print(p.param_substitute( "\tmax(gamma) -> #expr( max(#gamma#) )expr#" ));
-    print(p.param_substitute( "\tdir() -> #expr( dir() )expr#" ));
-    print(p.param_substitute( "\tdir() -> #dir:#" ));
+    print_title("Global methods")
+    print_substitution( "sum(gamma)", "#expr( sum(#gamma#) )expr#" )
+    print_substitution( "min(gamma)", "#expr( min(#gamma#) )expr#" )
+    print_substitution( "max(gamma)", "#expr( max(#gamma#) )expr#" )
 
-    print("Dictionaries")
-    print(p.param_substitute( '\tdefault stringification of age: #age#'))
-    print(p.param_substitute( '\texpr-stringification of age: #expr( #age# )expr#'))
-    print(p.param_substitute( '\tcomplex fold of age: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age#.items()]) )expr#'));
-    print(p.param_substitute( '\tcomplex fold of age_prime: #expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age_prime#.items()]) )expr#'));
+    print_title("Dictionaries")
+    print_substitution( "default stringification of age", "#age#" )
+    print_substitution( "expr-stringification of age", "#expr( #age# )expr#" )
+    print_substitution( "complex fold of age", '#expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age#.items()]) )expr#' )
+    print_substitution( "complex fold of age_prime", '#expr( "\t".join(["{0} is {1} years old".format(p,a) for (p,a) in #age_prime#.items()]) )expr#' )
 
-    print("With indexes")
-    print(p.param_substitute( '\tadding indexed values: #expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#'));
+    print_title("With indexes")
+    print_substitution( "adding indexed values", '#expr( #age#["Alice"]+max(#gamma#)+#listref#[0] )expr#' )
 
-    print("Evaluation")
-    print("\tcsv =", p.get_param('csv'), "(it is a {0}".format(type(p.get_param('csv'))), ')')
-    l = p.param_substitute( '#listref#' )
-    print("\tlist reference produced by doing expr() on csv: ", l)
-
+    print_title("Modifications of gamma")
+    p.get_param('gamma').append("val0")
+    print("\tgamma", p.get_param('gamma'))
+    print("\tgamma_prime", p.get_param('gamma_prime'))
+    print("\tgamma_second", p.get_param('gamma_second'))
 
