@@ -1,9 +1,7 @@
 
-> This document explains how to add support for new languages in eHive
-
 # Introduction
 
-eHive provide a generic interface to interact with runnables written in
+eHive provides a generic interface to interact with runnables written in
 languages other than Perl. This is mainly a communication protocol based on
 JSON, and managed by the Perl module ``Bio::EnsEMBL::Hive::ForeignProcess``.
 
@@ -13,7 +11,8 @@ Support must come in two parts:
 * a port of eHive's Runnable API to the new language, which people can use
   in their Runnables
 
-This documents explains both aspects in details.
+This documents explains both aspects in details 
+> This document explains how to add support for new languages in eHive
 
 # Interface for wrappers
 
@@ -37,6 +36,9 @@ The ``run`` mode takes two file descriptors that indicate the channels to
 use to communicate with the Perl side. The protocol is explained in
 ForeignProcess itself and consists in passing JSON messages.
 
+> LEO: The ``run`` mode should probably accept more resource-specific arguments.
+> I'm thinking of JAVA which often requires -Xmx arguments
+
 # Guidelines
 
 ## For object-oriented languages
@@ -46,10 +48,40 @@ For object-oriented programming languages, the implementation must export a
 eHive methods (``fetch_input()``, ``run()``, and ``write_output()``, as well as
 ``pre_cleanup()`` and ``post_cleanup()``).
 
+BaseRunnable must expose the following attributes:
+* ``input_id`` so that the runnable can dataflow jobs with the same parameters
+  as itself
+* ``retry_count``: the number of times this job has already been tried.
+* ``autoflow``: defaults to True: False means that the job will not a
+  dataflow on branch #1 upon success
+* ``lethal_for_worker``: defaults to False. True means that the error may
+  have contaminated the worker itself, which should bury itself
+* ``transient_error``: defaults to True. False means that the next error
+  can not magically disappear at the next run
+* ``debug``: an unsigned integer indicating the logging level
+
+``input_id``, ``retry_count`` and ``debug`` are seeded by ForeignProcess
+and should not be editable by the runnable
+
+> * In Compara, ``input_id`` is only used to create jobs on branches other than
+>   #1 with the same parameters as the current job. Perhaps the first
+>   argument of ``dataflow_output_ids`` should be interpreted as follows:
+>   undef means that we carry the current job's input\_id, and a hash
+>   (potentially {}) means that we define the input\_id of the new job.
+>   Otherwise, I find it dangerous to allow jobs to access their input\_id
+>   regardless of accu / the parameter stack
+> * As you've said, ``lethal_for_worker`` is trickier for respecializable
+>   workers. Probably the solution is to implement a smarter method to
+>   report error about (1) the current run, (2) the current job, (3) the
+>   current role, (4) the current worker, (5) the current analysis, or (6)
+>   the whole pipeline. This method could be merged with ``transient_error``
+> * ``debug`` can be freely interpreted. We could normalize its usage with
+>   pre-defined debug levels (see ``warning()`` below)
+
 BaseRunnable must also expose the following methods:
 * ``warning(message, [True|False])``
   to store a message (error or warning) in the database
-* ``dataflow(output_ids, branch_name_or_code)``
+* ``dataflow_output_ids(output_ids, branch_name_or_code)``
   to flow some data on a given branch (to an analysis, a table, etc)
 * ``worker_temp_directory``
   to get the directory of the worker
@@ -64,13 +96,19 @@ BaseRunnable must also expose the following methods:
 
 >NB: The APi for parameters is explained below.
 
-> LEO: Here are questions about the API:
-> * ``warning()`` with ``is_error``: should there be both ``warning(message)``
->   and ``error(message)`` ? In Python, I have defined two exceptions that
+> * Having a single ``warning()`` method with a ``is_error`` parameter is
+>   not very intuitive and probably too close to the way the message is
+>   stored in the database. Perhaps there should be both ``warning(message)``
+>   and ``error(message)`` ? Can errors be non-fatal ? Does `error()``
+>   duplicate ``throw()`` ? Common libraries about message-logging have a
+>   second argument that is a log-level (usually: debug, info, warning,
+>   error, and critical)
+>   BTW, in Python, I have defined two exceptions that
 >   people can use to terminate the job earlier (``CompleteEarlyException``
 >   and ``JobFailedException``). The latter replaces the need for a specific
 >   ``throw(message)``
-> * ``dataflow``: Does the name ``branch_name_or_code`` refer to the first
+> * ``dataflow_output_ids``: should we simply rename it to ``dataflow()`` ?
+>   Also, does the name ``branch_name_or_code`` refer to the first
 >   implementation of semapthores ? I think it would be clearer as
 >   ``branch_number`` if possible. Secondly, the Perl method returns the list
 >   of the dbIDs of the new jobs. I think we can hide the database stuff from
@@ -109,24 +147,20 @@ methods as the OOP-one but in the global namespace.
 TODO: explain the param syntax
 
 
-# Refactor everything below
+# Completeness of each implementation
 
-# How-to add new languages
+Currently, only *python3* fully implements this API. It is to be noted that
+some aspects of the API might be difficult -or impossible- to implement (like
+``#expr()expr#`` on pre-compiled languages). It is thus allowed not to implement
+the expr syntax.
 
-Two modules have to be implemented to extend eHive to another language:
-* Gestion of parameters (the Param interface)
-* Gestion of the process' and job's life cycles
+Languages that could be implemented:
+* C
+* C++
+* JAVA
+* GO
+* Ruby
 
-This probably requires:
-* The ability to manipulate sub-strings
-* an equivalent of ``eval()`` to evaluate ``#expr()expr#`` expressions
-* a JSON library to communicate with eHive's ForeignProcess
-
-
-# Future plans
-
-* Extend the "run" interface to add resource-class parameters (like
-  maximum memory usage for Java programs)
-* Force the wrappers to be called with the same name, so that languages
-  don't have to be registered in ForeignProcess ?
+Note that the difficulty of the implementation depends on the language's
+API to manipulate sub-strings and parse / write JSON.
 
