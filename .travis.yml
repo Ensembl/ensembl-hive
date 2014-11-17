@@ -1,0 +1,26 @@
+language: "perl"
+
+perl:
+  - "5.10"
+
+env:
+  - COVERALLS=true  DB=sqlite
+
+before_install:
+    - sudo apt-get -y update
+    - sudo apt-get -y install unzip
+    - wget https://github.com/bioperl/bioperl-live/archive/bioperl-release-1-2-3.zip
+    - unzip bioperl-release-1-2-3.zip
+
+
+install:
+    - cpanm -v --installdeps --notest .
+    - cpanm -n Devel::Cover::Report::Coveralls
+    - cpanm -n DBD::SQLite
+
+script: "./travisci/harness.sh"
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
