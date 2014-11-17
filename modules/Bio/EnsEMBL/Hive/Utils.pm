@@ -55,6 +55,7 @@ use strict;
 use warnings;
 use Carp ('confess');
 use Data::Dumper;
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::Hive::Version;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
@@ -109,6 +110,7 @@ sub destringify {
         or $value=~/^".*"$/
         or $value=~/^{.*}$/
         or $value=~/^\[.*\]$/
+        or looks_like_number($value)    # Needed for pipeline_wide_parameters as each value is destringified independently and the JSON writer would otherwise force writing numbers as strings
         or $value eq 'undef') {
 
             $value = eval($value);
