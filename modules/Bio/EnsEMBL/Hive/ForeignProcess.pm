@@ -11,15 +11,22 @@ run jobs (runnables) written in a different language
 
 =head1 DESCRIPTION
 
-It works by setting up two pipes to communicate with the child process. All the messages
-are passed around in single-line JSON structures. The protocol is described below:
+Upon initialisation, ForeignProcess forks, and the child process executes the wrapper that
+will allow running Runnables of the other language. The communication is ensured by two
+pipes and is schematically similar to running "| wrapper |", except that ForeignProcess
+uses non-standard file descriptors, thus allowing the Runnable to still use std{in,out,err}.
+
+The wrapper receives the two file-numbers that it is meant to use (one for reading data
+from ForeignProcess, and one to send data to ForeignProcess). All the messages are passed
+around in single-line JSON structures. The protocol is described below using the convention:
     ---> represents a message sent to the child process,
     <--- represents a message sent by the child process
 
-The initialisation (in the constructor) only consists in passing the param_defaults
-section of the runnable:
+The initialisation (in the constructor) only consists in the child process passing the
+default parameters back to ForeignProcess (the param_defaults() section of the Runnable):
     <--- { ... param_defaults ... }
     ---> "OK"
+
 The child process then goes to sleep, waiting for jobs to be seeded. Meanwhile,
 ForeignProcess enters a number of life_cycle() executions (as triggered by Worker).
 Each one first sends a JSON object to the child process to initialize the job parameters
@@ -34,6 +41,7 @@ Each one first sends a JSON object to the child process to initialize the job pa
            "execute_writes": [1|0],
            "debug": XXX
          }
+    <--- "OK"
 
 From this point, ForeignProcess acts as a server, listening to events sent by the child.
 Events are JSON objects composed of an "event" field (the name of the event) and a
@@ -354,6 +362,23 @@ sub read_message {
 }
 
 
+=head2 wait_for_OK
+
+  Example     : $process->wait_for_OK();
+  Description : Wait for the child process to send the OK signal
+  Returntype  : none
+  Exceptions  : dies if the response is not OK, or anything raised by L<read_message()>
+
+=cut
+
+sub wait_for_OK {
+    my $self = shift;
+    my $s = $self->read_message();
+    die "Response message does not look like a response" if not exists $s->{'response'};
+    die "Received response is not OK" if ref($s->{'response'}) or $s->{'response'} ne 'OK';
+}
+
+
 ###########################
 # Hive::Process interface #
 ###########################
@@ -411,6 +436,7 @@ sub life_cycle {
     );
     $self->print_debug("SEND JOB PARAM");
     $self->send_message(\%struct);
+    $self->wait_for_OK();
 
     # A simple event loop
     while (1) {

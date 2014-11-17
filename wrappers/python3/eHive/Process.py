@@ -64,6 +64,12 @@ class BaseRunnable(object):
         # UTF8 encoding has never been tested. Just hope it works :)
         self.write_pipe.write(bytes(j+"\n", 'utf-8'))
 
+    def __send_response(self, response):
+        """Sends a response message to the parent process"""
+        self.__print_debug('__send_response:', response)
+        # Like above, UTF8 encoding has never been tested. Just hope it works :)
+        self.write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
+
     def __read_message(self):
         """Read a message from the parent and parse it"""
         try:
@@ -118,6 +124,7 @@ class BaseRunnable(object):
         if config['execute_writes']:
             steps.append('write_output')
         self.__print_debug("steps to run:", steps)
+        self.__send_response('OK')
 
         # The actual life-cycle
         died_somewhere = False
