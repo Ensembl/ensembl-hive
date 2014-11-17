@@ -11,15 +11,9 @@ BEGIN {
 }
 #########################
 
-my $hive = find_submodules 'Bio::EnsEMBL';
+my $hive = find_submodules 'Bio::EnsEMBL::Hive';
 isa_ok($hive, 'ARRAY');
-is(@$hive, 1, 'single return');
-is($hive->[0], 'Bio::EnsEMBL::Hive', 'found hive');
-
-$hive = find_submodules 'Bio/EnsEMBL';
-isa_ok($hive, 'ARRAY');
-is(@$hive, 1, 'single return');
-is($hive->[0], 'Bio::EnsEMBL::Hive', 'found hive');
+cmp_ok(scalar(@$hive), '>', 0, 'modules loaded');
 
 my $pipe_configs = find_submodules 'Bio::EnsEMBL::Hive::PipeConfig';
 ok($pipe_configs, 'configs found');
