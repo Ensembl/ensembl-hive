@@ -43,7 +43,7 @@ is($struct_string,
    q!{"foo" => "bar","latin" => {"atrium" => "foo bar","lorem" => {"ipsum" => "dolor"}}}!,
    'correct depth');
 
-my $destructure = destringify $structure;
+my $destructure = destringify $struct_string;
 ok($destructure, 'recreated a hash');
 isa_ok($destructure, 'HASH'); ## really is a hash
 is($destructure->{'foo'}, 'bar', 'foo value correct');
