@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3
+export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
