@@ -23,6 +23,9 @@ This documents explains both aspects in details.
 There must be an executable under ``ensembl-hive/wrappers/${language}/``
 that is registered in ``ensembl-hive/modules/Bio/EnsEMBL/Hive/ForeignProcess.pm``
 
+> LEO: should the wrapper always be called "wrapper" (without an extension
+> ?). We could then simply skip the "registration" process.
+
 It works in two modes:
 * ``${executable} ${module_name} compile``
 * ``${executable} ${module_name} run ${fd_in} ${fd_out}``
@@ -60,6 +63,40 @@ BaseRunnable must also expose the following methods:
   returns True if the parameter is defined and non-null
 
 >NB: The APi for parameters is explained below.
+
+> LEO: Here are questions about the API:
+> * ``warning()`` with ``is_error``: should there be both ``warning(message)``
+>   and ``error(message)`` ? In Python, I have defined two exceptions that
+>   people can use to terminate the job earlier (``CompleteEarlyException``
+>   and ``JobFailedException``). The latter replaces the need for a specific
+>   ``throw(message)``
+> * ``dataflow``: Does the name ``branch_name_or_code`` refer to the first
+>   implementation of semapthores ? I think it would be clearer as
+>   ``branch_number`` if possible. Secondly, the Perl method returns the list
+>   of the dbIDs of the new jobs. I think we can hide the database stuff from
+>   the other languages, and hence not return the dbIDs, but instead the
+>   number of successful dataflows ?
+> * ``param`` as both a getter and a setter: I would find it cleaner to have
+>   the two modes in different methods, like ``get_param(param_name)`` and
+>   ``set_param(param_name, new_value)``
+> * ``param_exists``: there is an entry with that key in either
+>   ``_param_hash`` or ``_unsubstituted_param_hash``. I don't try to
+>   perform any substitutions
+> * ``param_required``: raw call to an internal method ``get_param`` that
+>   may raise several kinds of exceptions, especially a KeyError if the
+>   parameter is not found in the hash
+> * ``param``: also calls ``get_param`` but catches the KeyError exception
+>   and print a warning + returns None in this case. The two other exceptions:
+>   an infinite loop while substituting, and the user trying to substitute
+>   a non-standard structure (not a list / hash) are not caught
+> * ``param_is_defined``: returns False if there is no entry with that key
+>   in ``_param_hash`` and ``_unsubstituted_param_hash``. If there is,
+>   calls ``get_param``. KeyError is caught and mapped to False. Other
+>   exceptions are not caught. If no exceptions are raised, returns True if
+>   the value of the parameter is not None
+>   In the history of Perl, we first introduced ``param_is_defined`` and
+>   then ``param_required`` because the latter was a better description of
+>   the test we really wanted to achieve. Should we only expose one of them ?
 
 
 ## For procedural languages
