@@ -27,7 +27,7 @@ that is registered in `ensembl-hive/modules/Bio/EnsEMBL/Hive/ForeignProcess.pm`
 > LEO: If you have a look at ForeignProcess, you'll see that the new
 > entries will be quite redundant: repeating `EHIVE_ROOT_DIR` and the
 > name of the language. Perhaps, we should state that the wrapper is always
-> called `wrapper` ? In this case, we can kip the "registration" process
+> called `wrapper` ? In this case, we can skip the "registration" process
 
 It works in two modes:
 * `${executable} ${module_name} compile`
@@ -95,12 +95,15 @@ BaseRunnable must also expose the following methods:
   to get the directory of the worker
 * `param(param_name, [new_value])`
   to get/set a parameter
+* `param_exists(param_name)`
+  returns True if there is a parameter with that name (without attempting
+  the substitution)
+* `param_is_defined(param_name)`
+  returns True if there is a parameter with that name that can be
+  successfully substituted
 * `param_required(param_name)`
   similar to `param()` but raises an error if the parameter doesn't exist
-* `param_exists(param_name)`
-  returns True if the parameter is definable
-* `param_is_defined(param_name)`
-  returns True if the parameter is defined and non-null
+  or if the substitution fails
 
 >NB: The API for parameters is explained further down this document.
 
@@ -125,25 +128,18 @@ BaseRunnable must also expose the following methods:
 >   number of successful dataflows ?
 > * `param` as both a getter and a setter: I would find it cleaner to have
 >   the two modes in different methods, like `get_param(param_name)` and
->   `set_param(param_name, new_value)`
-> * `param_exists`: we said it should test whether there is an entry with
->   that key in either `_param_hash` or `_unsubstituted_param_hash`. No
->   substitutions are attempted.
-> * `param_required`: raw call to an internal method `get_param` that
->   may raise several kinds of exceptions, especially a KeyError if the
->   parameter is not found in the hash
-> * `param`: also calls `get_param` but catches the KeyError exception
->   and print a warning + returns None in this case. The two other exceptions:
->   an infinite loop while substituting, and the user trying to substitute
->   a non-standard structure (not a list / hash) are not caught
-> * `param_is_defined`: returns False if there is no entry with that key
->   in `_param_hash` and `_unsubstituted_param_hash`. If there is,
->   calls `get_param`. KeyError is caught and mapped to False. Other
->   exceptions are not caught. If no exceptions are raised, returns True if
->   the value of the parameter is not None
->   In the history of Perl, we first introduced `param_is_defined` and
->   then `param_required` because the latter was a better description of
->   the test we really wanted to achieve. Should we only expose one of them ?
+>   `set_param(param_name, new_value)`. Also, I haven't included the third mode
+>   of Perl's `param`: without any arguments: it returns a hash, doens't it ?
+>   It could be cleaner with a third method: `param_list()` or
+>   `all_params()` that returns a list of all the parameter names
+>   (substituted *and* not substituted) ?
+> * `param_exists` and `param_is_defined`: I think the Perl implementations
+>   are buggy for some edge cases, I can have a look at it once we agree on
+>   the API. Is it worth having both methods ? Is there an interest in jobs
+>   detecting the parameters that have an entry but cannot be substituted ?
+>   To be useful, we would need to expose a way of reporting which
+>   parameters are missing and preventing the substitution. So perhaps we
+>   could only have one method with the behaviour of `param_is_defined` ?
 
 
 ## For procedural languages
