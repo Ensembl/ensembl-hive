@@ -10,7 +10,7 @@ def error_quit(msg):
     sys.exit(1)
 
 def usage(msg):
-    error_quit("Command-line error: {1}\nUsage: worker.py module_name [compile | run fd_in fd_out]\n{0}".format(sys.argv, msg))
+    error_quit("Command-line error: {1}\nUsage: {2} module_name [compile | run fd_in fd_out]\n{0}".format(sys.argv, msg, sys.argv[0]))
 
 
 ## A big chunk of the script is for checking that the required module is available, is a eHive runnable, etc

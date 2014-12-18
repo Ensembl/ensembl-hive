@@ -21,15 +21,12 @@ used as a reference.
 > In this section, `${language}` is the name of the programming
 > language, `${module_name}` is the name of the user's runnable
 
-There must be an executable under `ensembl-hive/wrappers/${language}/`
-that is registered in `ensembl-hive/modules/Bio/EnsEMBL/Hive/GuestProcess.pm`
+eHive natively supports a few langues (see `ensembl-hive/wrappers/`) but
+can also use wrappers that exist in the user's environment.
+Wrappers can be declared through the environment variable
+`EHIVE_WRAPPER_XXX` where `XXX` is the name of the language in upper case.
 
-> LEO: If you have a look at GuestProcess, you'll see that the new
-> entries will be quite redundant: repeating `EHIVE_ROOT_DIR` and the
-> name of the language. Perhaps, we should state that the wrapper is always
-> called `wrapper` ? In this case, we can skip the "registration" process
-
-It works in two modes:
+Wrappers work in two modes:
 * `${executable} ${module_name} compile`
 * `${executable} ${module_name} run ${fd_in} ${fd_out}`
 

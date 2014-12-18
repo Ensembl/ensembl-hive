@@ -125,11 +125,6 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
-# This is the registry of all the extra languages eHive has bindings to
-# Each language name is associated with the command line that has to be run
-our %known_languages = (
-    'python3'   => $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/python3/worker.py',
-);
 
 =head2 new
 
@@ -148,7 +143,8 @@ sub new {
     my ($class, $language, $module) = @_;
 
     die "GuestProcess must be told which language to interface with" unless $language;
-    die "$language is currently not supported" unless exists $known_languages{$language};
+
+    my $wrapper = _get_wrapper_for_language($language);
     die "GuestProcess must be told which module to run" unless $module;
 
     my ($PARENT_RDR, $PARENT_WTR, $CHILD_WTR,$CHILD_RDR);
@@ -181,7 +177,7 @@ sub new {
         $flags = fcntl($PARENT_WTR, F_GETFD, 0);
         fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec($known_languages{$language}, $module, 'run', fileno($PARENT_RDR), fileno($PARENT_WTR));
+        exec($wrapper, $module, 'run', fileno($PARENT_RDR), fileno($PARENT_WTR));
     }
 
 
@@ -200,6 +196,31 @@ sub new {
     $self->print_debug("INIT DONE");
 
     return $self;
+}
+
+
+=head2 _get_wrapper_for_language
+
+  Example     : Bio::EnsEMBL::Hive::GuestProcess::_get_wrapper_for_language('python3');
+  Description : Finds the wrapper that understands the given language
+  Returntype  : String
+  Exceptions  : Can die if the wrapper doesn't exist
+
+=cut
+
+sub _get_wrapper_for_language {
+    my ($language) = @_;
+
+    my $wrapper = $ENV{'EHIVE_WRAPPER_'.(uc $language)} # User-overriden wrapper
+                    || sprintf('%s/wrappers/%s/wrapper', $ENV{'EHIVE_ROOT_DIR'}, $language);  # Embedded wrapper
+    if (not -e $wrapper) {
+        die "$language is currently not supported\n";
+    } elsif (not -s $wrapper) {
+        die "The wrapper '$wrapper' is an empty file !\n";
+    } elsif (not -x $wrapper) {
+        die "No permissions to execute the wrapper '$wrapper'\n";
+    }
+    return $wrapper;
 }
 
 
