@@ -3,10 +3,10 @@
 
 eHive provides a generic interface to interact with runnables written in
 languages other than Perl. This is mainly a communication protocol based on
-JSON, and managed by the Perl module `Bio::EnsEMBL::Hive::ForeignProcess`.
+JSON, and managed by the Perl module `Bio::EnsEMBL::Hive::GuestProcess`.
 
 Support must come in two parts:
-* a wrapper that ForeignProcess will launch, which will in turn run the
+* a wrapper that GuestProcess will launch, which will in turn run the
   user's Runnable
 * a port of eHive's Runnable API to the new language, which people can use
   in their Runnables
@@ -22,9 +22,9 @@ used as a reference.
 > language, `${module_name}` is the name of the user's runnable
 
 There must be an executable under `ensembl-hive/wrappers/${language}/`
-that is registered in `ensembl-hive/modules/Bio/EnsEMBL/Hive/ForeignProcess.pm`
+that is registered in `ensembl-hive/modules/Bio/EnsEMBL/Hive/GuestProcess.pm`
 
-> LEO: If you have a look at ForeignProcess, you'll see that the new
+> LEO: If you have a look at GuestProcess, you'll see that the new
 > entries will be quite redundant: repeating `EHIVE_ROOT_DIR` and the
 > name of the language. Perhaps, we should state that the wrapper is always
 > called `wrapper` ? In this case, we can skip the "registration" process
@@ -38,7 +38,7 @@ valid eHive Runnable. The return code must be 0 upon success, or 1 otherwise.
 
 The `run` mode takes two file descriptors that indicate the channels to
 use to communicate with the Perl side. The protocol is explained in
-ForeignProcess itself and consists in passing JSON messages.
+GuestProcess itself and consists in passing JSON messages.
 
 > LEO: The `run` mode should probably accept more resource-specific arguments.
 > I'm thinking of JAVA which often requires arguments like -Xmx. I don't
@@ -66,7 +66,7 @@ BaseRunnable must expose the following attributes:
   can not magically disappear at the next run
 * `debug`: an unsigned integer indicating the logging level
 
-`input_id`, `retry_count` and `debug` are seeded by ForeignProcess
+`input_id`, `retry_count` and `debug` are seeded by GuestProcess
 and should not be editable by the runnable
 
 > * In Compara, `input_id` is only used to create jobs on branches other than

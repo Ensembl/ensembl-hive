@@ -10,7 +10,7 @@ import traceback
 
 
 __doc__ = """
-This module mainly implements python's counterpart of ForeignProcess. Read
+This module mainly implements python's counterpart of GuestProcess. Read
 the later for more information about the JSON protocol used to communicate.
 """
 
@@ -25,12 +25,12 @@ class JobFailedException(Exception):
     """Can be raised by a derived class of BaseRunnable to indicate an early unsuccessful termination"""
     pass
 class HiveJSONMessageException(Exception):
-    """Raised when we could not parse the JSON message coming from ForeignProcess"""
+    """Raised when we could not parse the JSON message coming from GuestProcess"""
     pass
 
 
 class BaseRunnable(object):
-    """This is the equivalent of ForeignProcess. Note that most of the methods
+    """This is the equivalent of GuestProcess. Note that most of the methods
     are private to be hidden in the derived classes.
 
     This class can be used as a base-class for people to redefine fetch_input(),
@@ -100,7 +100,7 @@ class BaseRunnable(object):
             self.__job_life_cycle(config)
 
     def __job_life_cycle(self, config):
-        """Job's life-cycle. See ForeignProcess for a description of the protocol to communicate with the parent"""
+        """Job's life-cycle. See GuestProcess for a description of the protocol to communicate with the parent"""
         self.__print_debug("__life_cycle")
 
         # Params

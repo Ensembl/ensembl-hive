@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::ForeignProcess
+Bio::EnsEMBL::Hive::GuestProcess
 
 =head1 SYNOPSIS
 
@@ -11,24 +11,24 @@ run jobs (runnables) written in a different language
 
 =head1 DESCRIPTION
 
-Upon initialisation, ForeignProcess forks, and the child process executes the wrapper that
+Upon initialisation, GuestProcess forks, and the child process executes the wrapper that
 will allow running Runnables of the other language. The communication is ensured by two
-pipes and is schematically similar to running "| wrapper |", except that ForeignProcess
+pipes and is schematically similar to running "| wrapper |", except that GuestProcess
 uses non-standard file descriptors, thus allowing the Runnable to still use std{in,out,err}.
 
 The wrapper receives the two file-numbers that it is meant to use (one for reading data
-from ForeignProcess, and one to send data to ForeignProcess). All the messages are passed
+from GuestProcess, and one to send data to GuestProcess). All the messages are passed
 around in single-line JSON structures. The protocol is described below using the convention:
     ---> represents a message sent to the child process,
     <--- represents a message sent by the child process
 
 The initialisation (in the constructor) only consists in the child process passing the
-default parameters back to ForeignProcess (the param_defaults() section of the Runnable):
+default parameters back to GuestProcess (the param_defaults() section of the Runnable):
     <--- { ... param_defaults ... }
     ---> "OK"
 
 The child process then goes to sleep, waiting for jobs to be seeded. Meanwhile,
-ForeignProcess enters a number of life_cycle() executions (as triggered by Worker).
+GuestProcess enters a number of life_cycle() executions (as triggered by Worker).
 Each one first sends a JSON object to the child process to initialize the job parameters
     ---> {
            "input_job": {
@@ -43,10 +43,10 @@ Each one first sends a JSON object to the child process to initialize the job pa
          }
     <--- "OK"
 
-From this point, ForeignProcess acts as a server, listening to events sent by the child.
+From this point, GuestProcess acts as a server, listening to events sent by the child.
 Events are JSON objects composed of an "event" field (the name of the event) and a
 "content" field (the payload). Events can be of the following kinds (with the expected
-response from ForeignProcess):
+response from GuestProcess):
 
     <--- JOB_STATUS_UPDATE
          // The content is one of "PRE_CLEANUP", "FETCH_INPUT", "RUN", "WRITE_OUTPUT", "POST_CLEANUP"
@@ -113,7 +113,7 @@ Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/
 =cut
 
 
-package Bio::EnsEMBL::Hive::ForeignProcess;
+package Bio::EnsEMBL::Hive::GuestProcess;
 
 use strict;
 use warnings;
@@ -135,9 +135,9 @@ our %known_languages = (
 
   Arg[1]      : $language: the programming language the external runnable is in
   Arg[2]      : $module: the name of the runnable (usually a package name)
-  Example     : Bio::EnsEMBL::Hive::ForeignProcess->new();
+  Example     : Bio::EnsEMBL::Hive::GuestProcess->new();
   Description : Constructor
-  Returntype  : Bio::EnsEMBL::Hive::ForeignProcess
+  Returntype  : Bio::EnsEMBL::Hive::GuestProcess
   Exceptions  : if $language or $module is not defined properly or if the pipes /
                 child process could not be created
 
@@ -147,9 +147,9 @@ sub new {
 
     my ($class, $language, $module) = @_;
 
-    die "ForeignProcess must be told which language to interface with" unless $language;
+    die "GuestProcess must be told which language to interface with" unless $language;
     die "$language is currently not supported" unless exists $known_languages{$language};
-    die "ForeignProcess must be told which module to run" unless $module;
+    die "GuestProcess must be told which module to run" unless $module;
 
     my ($PARENT_RDR, $PARENT_WTR, $CHILD_WTR,$CHILD_RDR);
     pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';

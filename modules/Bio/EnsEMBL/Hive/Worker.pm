@@ -591,7 +591,7 @@ sub specialize_and_compile_wrapper {
         eval {
             $self->enter_status('COMPILATION');
 
-            my $runnable_object = $self->current_role->analysis->get_compiled_module_name->new($self->current_role->analysis->language, $self->current_role->analysis->module)  # Only ForeignProcess will read the arguments
+            my $runnable_object = $self->current_role->analysis->get_compiled_module_name->new($self->current_role->analysis->language, $self->current_role->analysis->module)  # Only GuestProcess will read the arguments
                 or die "Unknown compilation error";
 
             $runnable_object->db( $self->adaptor->db );

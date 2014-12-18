@@ -13,7 +13,7 @@ BEGIN {
 
 
 use Getopt::Long qw(:config pass_through);
-use Bio::EnsEMBL::Hive::ForeignProcess;
+use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
 
@@ -41,14 +41,14 @@ sub main {
         script_usage(0);
     }
 
-    my $runnable_module = $language ? 'Bio::EnsEMBL::Hive::ForeignProcess' : load_file_or_module( $module_or_file );
+    my $runnable_module = $language ? 'Bio::EnsEMBL::Hive::GuestProcess' : load_file_or_module( $module_or_file );
 
     if($reg_conf) {
         require Bio::EnsEMBL::Registry;
         Bio::EnsEMBL::Registry->load_all($reg_conf);
     }
 
-    my $runnable_object = $runnable_module->new($language, $module_or_file);    # Only ForeignProcess will read the arguments
+    my $runnable_object = $runnable_module->new($language, $module_or_file);    # Only GuestProcess will read the arguments
     $runnable_object->debug($debug) if($debug);
     $runnable_object->execute_writes(not $no_write);
 

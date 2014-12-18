@@ -41,7 +41,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
-use Bio::EnsEMBL::Hive::ForeignProcess;
+use Bio::EnsEMBL::Hive::GuestProcess;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
  
@@ -141,11 +141,11 @@ sub get_compiled_module_name {
         or die "Analysis '".$self->logic_name."' does not have its 'module' defined";
 
     if (my $language = $self->language) {
-        die "$language is not recognized\n" unless exists $Bio::EnsEMBL::Hive::ForeignProcess::known_languages{$language};
-        if (system($Bio::EnsEMBL::Hive::ForeignProcess::known_languages{$language}, $runnable_module_name, 'compile')) {
+        die "$language is not recognized\n" unless exists $Bio::EnsEMBL::Hive::GuestProcess::known_languages{$language};
+        if (system($Bio::EnsEMBL::Hive::GuestProcess::known_languages{$language}, $runnable_module_name, 'compile')) {
             die "The $language runnable module '$runnable_module_name' cannot be loaded or compiled:\n";
         }
-        return 'Bio::EnsEMBL::Hive::ForeignProcess';
+        return 'Bio::EnsEMBL::Hive::GuestProcess';
     }
 
     eval "require $runnable_module_name";
