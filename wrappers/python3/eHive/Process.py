@@ -95,7 +95,7 @@ class BaseRunnable(object):
             self.__print_debug("waiting for instructions")
             config = self.__read_message()
             if 'input_job' not in config:
-                self.__print_debug("no params")
+                self.__print_debug("no params, this is the end of the wrapper")
                 return
             self.__job_life_cycle(config)
 
