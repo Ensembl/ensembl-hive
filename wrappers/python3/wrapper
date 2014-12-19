@@ -64,7 +64,6 @@ if mode not in [ 'compile', 'run' ]:
     usage('Unknown mode')
 
 # Set up PYTHONPATH and load the runnable
-sys.path.insert(0, os.environ['EHIVE_ROOT_DIR'] + '/wrappers/python3')
 runnable = find_module(sys.argv[1])
 
 if mode == 'run':
