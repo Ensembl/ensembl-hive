@@ -218,7 +218,7 @@ class BaseRunnable(object):
         try:
             return self.p.get_param(param_name)
         except KeyError as e:
-            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), Params.ParamWarning, 2)
+            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), eHive.Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):
