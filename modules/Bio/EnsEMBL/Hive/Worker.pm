@@ -554,8 +554,8 @@ sub run {
         }
     }
 
-    # The second arguments ("self_burial") controls whether we need to
-    # update the "last_check_in" date in the worker table
+    # The second argument ("update_last_check_in") is set to force an
+    # update of the "last_check_in" date in the worker table
     $self->adaptor->register_worker_death($self, 1);
 
     if($self->debug) {
