@@ -468,7 +468,7 @@ sub release_undone_jobs_from_role {
     } );
     $sth->execute();
 
-    my $cod = $worker->cause_of_death();
+    my $cod = $worker->cause_of_death() || 'UNKNOWN';
     $msg ||= "GarbageCollector: The worker died because of $cod";
 
     my $resource_overusage = ($cod eq 'MEMLIMIT') || ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
