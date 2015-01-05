@@ -105,7 +105,7 @@ sub stringify {
 sub destringify {
     my $value = pop @_;
 
-    if($value) {
+    if(defined $value) {
         if($value=~/^'.*'$/
         or $value=~/^".*"$/
         or $value=~/^{.*}$/
