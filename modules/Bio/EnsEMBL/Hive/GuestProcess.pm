@@ -490,9 +490,12 @@ sub life_cycle {
             $self->send_response($wtd);
 
         } elsif ($event eq 'JOB_END') {
-            $job->autoflow($job->autoflow && $content->{job}->{autoflow});
-            $job->lethal_for_worker($content->{job}->{lethal_for_worker});
-            $job->transient_error($content->{job}->{transient_error});
+            # Especially here we need to be careful about boolean values
+            # They are coded as JSON::true and JSON::false which have
+            # different meanings in text / number contexts
+            $job->autoflow($job->autoflow and $content->{job}->{autoflow});
+            $job->lethal_for_worker($content->{job}->{lethal_for_worker}+0);
+            $job->transient_error($content->{job}->{transient_error}+0);
             $job->{_param_hash} = $content->{params}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
 
