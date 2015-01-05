@@ -538,7 +538,7 @@ sub run {
 
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and (!$specialization_arghash->{'-analyses_pattern'} or $specialization_arghash->{'-analyses_pattern'}!~/^\w+$/) ) {
             my $old_role = $self->current_role;
-            $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 1 );
+            $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 0 );
             $self->current_role( undef );
             $self->cause_of_death(undef);
             $self->specialize_and_compile_wrapper( $specialization_arghash, $old_role->analysis );
@@ -553,9 +553,9 @@ sub run {
         }
     }
 
-    # The second arguments ("self_burial") controls whether we need to
-    # release the current (unfinished) batch
-    $self->adaptor->register_worker_death($self, ($self->cause_of_death eq 'CONTAMINATED' ? 0 : 1));
+    # The second argument ("update_last_check_in") is set to force an
+    # update of the "last_check_in" date in the worker table
+    $self->adaptor->register_worker_death($self, 1);
 
     if($self->debug) {
         $self->worker_say( 'AnalysisStats : '.$self->current_role->analysis->stats->toString ) if( $self->current_role );
