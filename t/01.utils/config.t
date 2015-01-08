@@ -4,8 +4,6 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(spurt);
 
-use lib 't/lib/';
-use Hive::Config;
 use File::Spec::Functions qw{catdir};
 use File::Temp qw{tempdir};
 use Test::More;

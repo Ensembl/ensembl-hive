@@ -3,6 +3,9 @@ package Hive::Test::SystemCmd;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils::Test;
+
+
 use lib 't/lib/';
 
 use base qw{Hive::Config};

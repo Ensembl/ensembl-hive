@@ -1,13 +1,7 @@
 package Hive::Config;
 
-use Cwd qw{getcwd};
-
-BEGIN {
-    $ENV{'USER'}         ||= (getpwuid($<))[7];
-    $ENV{'EHIVE_USER'}     = $ENV{'USER'};
-    $ENV{'EHIVE_PASS'}   ||= 'password';
-    $ENV{'EHIVE_ROOT_DIR'} =  getcwd();
-}
+use strict;
+use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 

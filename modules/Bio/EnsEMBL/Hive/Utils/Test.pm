@@ -6,6 +6,14 @@ use warnings;
 
 use Exporter;
 use Carp qw{croak};
+use Cwd qw{getcwd};
+
+BEGIN {
+    $ENV{'USER'}         ||= (getpwuid($<))[7];
+    $ENV{'EHIVE_USER'}     = $ENV{'USER'};
+    $ENV{'EHIVE_PASS'}   ||= 'password';
+    $ENV{'EHIVE_ROOT_DIR'} =  getcwd();
+}
 
 
 our @ISA         = qw(Exporter);
