@@ -18,12 +18,27 @@ my $inputfile = $ENV{EHIVE_ROOT_DIR}.'/t/input_fasta.fa';
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
-standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
+    {
         'inputfile'         => $inputfile,
         'max_chunk_length'  => 20000, ## big enough for all sequences
         'output_prefix'     => './test1_',
         'output_suffix'     => '.fa',
-});
+    },
+    [
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 1,
+                'chunk_length' => 3360,
+                'chunk_size' => 3,
+                'chunk_name' => './test1_1.fa'
+            },
+            2
+        ]
+    ],
+);
 
 
 ##

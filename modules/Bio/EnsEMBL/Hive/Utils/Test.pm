@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Hive::Utils::Test;
 
 use strict;
 use warnings;
+no warnings qw( redefine );
 
 use Exporter;
 use Carp qw{croak};
@@ -38,8 +39,11 @@ sub spurt {
 }
 
 
+my $events_to_test = undef;
 sub standaloneJob {
-    my ($module_or_file, $param_hash, $no_write) = @_;
+    my ($module_or_file, $param_hash, $expected_events, $no_write) = @_;
+
+    $events_to_test = $expected_events ? [@$expected_events] : undef;
 
     my $runnable_module = load_file_or_module( $module_or_file );
     ok($runnable_module, "module '$module_or_file' is loaded");
@@ -59,6 +63,29 @@ sub standaloneJob {
     $runnable_object->life_cycle();
 
     ok(!$job->died_somewhere(), 'job completed');
+}
+
+
+*Bio::EnsEMBL::Hive::Process::dataflow_output_id = sub {
+    shift;
+    _test_event('DATAFLOW', @_);
+    return [1];
+};
+
+*Bio::EnsEMBL::Hive::Process::warning = sub {
+    shift;
+    _test_event('WARNING', @_);
+};
+
+sub _test_event {
+    return unless $events_to_test;
+    if (@$events_to_test) {
+        is_deeply([@_], (shift @$events_to_test), "$_[0] event");
+    } else {
+        ok(0, "event-stack is not empty");
+        use Data::Dumper;
+        print Dumper([@_]);
+    }
 }
 
 
