@@ -5,8 +5,6 @@ use warnings;
 
 use lib 't/lib/';
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(spurt);
-
 use base qw{Hive::Config};
 
 sub test_suite_init {
@@ -55,7 +53,7 @@ BEGIN {
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
-my @argv   = Hive::Test::SystemCmd::test_suite_init('input.fa');
+my @argv   = Hive::Test::SystemCmd::test_suite_init();
 my $config = Hive::Test::SystemCmd->init_pipeline_here( @argv );
 
 my $apiarist = Hive::Apiarist->new();
