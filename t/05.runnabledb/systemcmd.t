@@ -5,7 +5,7 @@ use warnings;
 
 use lib 't/lib/';
 
-use Hive::Test qw{spurt};
+use Bio::EnsEMBL::Hive::Utils::Test qw(spurt);
 
 use base qw{Hive::Config};
 

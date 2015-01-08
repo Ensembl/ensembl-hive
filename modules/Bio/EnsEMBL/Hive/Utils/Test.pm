@@ -1,4 +1,5 @@
-package Hive::Test;
+
+package Bio::EnsEMBL::Hive::Utils::Test;
 
 use strict;
 use warnings;

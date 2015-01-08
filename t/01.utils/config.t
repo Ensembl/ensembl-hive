@@ -2,11 +2,12 @@
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils::Test qw(spurt);
+
 use lib 't/lib/';
 use Hive::Config;
 use File::Spec::Functions qw{catdir};
 use File::Temp qw{tempdir};
-use Hive::Test qw{spurt};
 use Test::More;
 use Data::Dumper;
 
