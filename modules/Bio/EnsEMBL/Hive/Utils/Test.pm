@@ -26,7 +26,7 @@ BEGIN {
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( spurt standaloneJob );
+our @EXPORT_OK   = qw( spurt standaloneJob init_pipeline );
 
 our $VERSION = '0.00';
 
@@ -86,6 +86,36 @@ sub _test_event {
         use Data::Dumper;
         print Dumper([@_]);
     }
+}
+
+
+sub init_pipeline {
+    my ($file_or_module, $options) = @_;
+
+    my $pipeconfig_package_name = load_file_or_module( $file_or_module );
+    ok($pipeconfig_package_name, "module '$file_or_module' is loaded");
+
+    my $pipeconfig_object = $pipeconfig_package_name->new();
+
+    $options = [] unless $options;
+    push @$options, ('-hive_driver', 'sqlite');
+
+    if ($options) {
+	local @ARGV = @$options;
+	$pipeconfig_object->process_options( 1 );
+    }
+
+    $pipeconfig_object->run_pipeline_create_commands();
+
+    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
+
+    $hive_dba->load_collections();
+
+    $pipeconfig_object->add_objects_from_config();
+
+    $hive_dba->save_collections();
+
+    return $pipeconfig_object;
 }
 
 
