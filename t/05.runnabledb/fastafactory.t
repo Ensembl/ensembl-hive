@@ -8,10 +8,6 @@ use File::Temp qw{tempdir};
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-BEGIN {
-    use_ok( 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory' );
-}
-#########################
 
 my $inputfile = $ENV{EHIVE_ROOT_DIR}.'/t/input_fasta.fa';
 
