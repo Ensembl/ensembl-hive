@@ -82,7 +82,7 @@ sub _test_event {
     if (@$events_to_test) {
         is_deeply([@_], (shift @$events_to_test), "$_[0] event");
     } else {
-        ok(0, "event-stack is not empty");
+        fail("event-stack is empty, cannot get the next expected event");
         use Data::Dumper;
         print Dumper([@_]);
     }
