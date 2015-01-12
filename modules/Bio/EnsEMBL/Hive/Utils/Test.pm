@@ -63,6 +63,7 @@ sub standaloneJob {
     $runnable_object->life_cycle();
 
     ok(!$job->died_somewhere(), 'job completed');
+    ok(!scalar(@$events_to_test), 'no untriggered events') if $expected_events;
 }
 
 
