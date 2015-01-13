@@ -42,10 +42,12 @@ sub find_all_sql_schema_patches {
     my %all_patches = ();
 
     if(my $hive_root_dir = $ENV{'EHIVE_ROOT_DIR'} ) {
-        foreach my $patch_path ( split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.*sql*`) ) {
+        foreach my $patch_path ( split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.*`) ) {
             my ($patch_name, $driver) = ($patch_path=~/^(.+)\.(\w+)$/);
 
             $driver = 'mysql' if ($driver eq 'sql');    # for backwards compatibility
+
+            $driver = 'script' if ($driver!~/sql/);
 
             $all_patches{$patch_name}{$driver} = $patch_path;
         }
@@ -63,8 +65,10 @@ sub get_sql_schema_patches {
 
     my @ordered_patches = ();
     foreach my $patch_key ( (sort keys %$all_patches)[$after_version..$code_schema_version-1] ) {
-        if(my $patch_path = $all_patches->{$patch_key}{$driver}) {
-            push @ordered_patches, $patch_path;
+        if(my $sql_patch_path = $all_patches->{$patch_key}{$driver}) {
+            push @ordered_patches, $sql_patch_path;
+        } elsif(my $script_patch_path = $all_patches->{$patch_key}{'script'}) {
+            push @ordered_patches, $script_patch_path;
         } else {
             return;
         }
