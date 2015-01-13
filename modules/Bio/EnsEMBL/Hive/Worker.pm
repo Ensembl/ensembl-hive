@@ -126,10 +126,17 @@ sub meadow_name {
 }
 
 
-sub host {
+sub meadow_host {
     my $self = shift;
-    $self->{'_host'} = shift if(@_);
-    return $self->{'_host'};
+    $self->{'_meadow_host'} = shift if(@_);
+    return $self->{'_meadow_host'};
+}
+
+
+sub meadow_user {
+    my $self = shift;
+    $self->{'_meadow_user'} = shift if(@_);
+    return $self->{'_meadow_user'};
 }
 
 
@@ -406,7 +413,7 @@ sub toString {
             $include_analysis ? ( 'analysis='.($current_role ? $current_role->analysis->logic_name.'('.$current_role->analysis_id.')' : 'UNSPECIALIZED') ) : (),
             'resource_class_id='.($self->resource_class_id // 'NULL'),
             'meadow='.$self->meadow_type.'/'.$self->meadow_name,
-            'process='.$self->process_id.'@'.$self->host,
+            'process='.$self->meadow_user.'@'.$self->meadow_host.'#'.$self->process_id,
             'last_check_in='.($self->last_check_in // 'NEVER'),
             'batch_size='.($current_role ? $current_role->analysis->stats->get_or_estimate_batch_size() : 'UNSPECIALIZED'),
             'job_limit='.($self->job_limiter->available_capacity() // 'NONE'),

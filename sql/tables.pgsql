@@ -444,8 +444,9 @@ CREATE INDEX ON analysis_data (data);
 
 @column worker_id           unique ID of the Worker
 @column meadow_type         type of the Meadow it is running on
-@column meadow_name         name of the Meadow it is running on (for 'LOCAL' type is the same as host)
-@column host                execution host name
+@column meadow_name         name of the Meadow it is running on (for meadow_type=='LOCAL' it is the same as meadow_host)
+@column meadow_host         execution host name
+@column meadow_user         scheduling/execution user name (within the Meadow)
 @column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
 @column resource_class_id   links to Worker's resource class
 @column work_done           how many jobs the Worker has completed successfully
@@ -462,7 +463,8 @@ CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
     meadow_type             VARCHAR(255) NOT NULL,
     meadow_name             VARCHAR(255) NOT NULL,
-    host                    VARCHAR(255) NOT NULL,
+    meadow_host             VARCHAR(255) NOT NULL,
+    meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
     work_done               INTEGER     NOT NULL DEFAULT 0,

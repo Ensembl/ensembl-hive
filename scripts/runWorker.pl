@@ -104,14 +104,15 @@ sub main {
 
     my $queen = $hive_dba->get_Queen();
 
-    my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
 
     my $worker = $queen->create_new_worker(
           # Worker identity:
              -meadow_type           => $meadow_type,
              -meadow_name           => $meadow_name,
              -process_id            => $process_id,
-             -exec_host             => $exec_host,
+             -meadow_host           => $meadow_host,
+             -meadow_user           => $meadow_user,
              -resource_class_id     => $resource_class_id,
              -resource_class_name   => $resource_class_name,
 

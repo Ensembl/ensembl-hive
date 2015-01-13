@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
-use Sys::Hostname;
+use Sys::Hostname ('hostname');
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Limiter;
 
@@ -147,9 +147,10 @@ sub whereami {
         die "Could not determine the Meadow, please investigate";
     }
 
-    my $exechost = hostname();
+    my $meadow_host = hostname();
+    my $meadow_user = $ENV{'USER'} || getpwuid($<);
 
-    return ($meadow_type, $meadow_name, $pid, $exechost);
+    return ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user);
 }
 
 
