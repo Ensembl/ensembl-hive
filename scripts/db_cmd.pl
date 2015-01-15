@@ -126,6 +126,10 @@ sub dbc_hash_to_cmd {
             if($driver eq 'sqlite') {
                 return ['touch', $dbname];
             } elsif(!$2) {
+                my %limits = ( 'mysql' => 64, 'pgsql' => 63 );
+                if (length($dbname) > $limits{$driver}) {
+                    die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
+                }
                 $sqlcmd = "$1 $dbname";
                 $dbc_hash->{dbname} = '';
             }
