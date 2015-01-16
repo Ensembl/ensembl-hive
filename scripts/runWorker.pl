@@ -138,11 +138,24 @@ sub main {
         $analyses_pattern = $analysis_id;
     }
 
-    $worker->run( {
-         -analyses_pattern      => $analyses_pattern,
-         -job_id                => $job_id,
-         -force                 => $force,
-    } );
+    eval {
+        $worker->run( {
+             -analyses_pattern      => $analyses_pattern,
+             -job_id                => $job_id,
+             -force                 => $force,
+        } );
+
+        1;
+    } or do {
+        my $msg = $@;
+
+        $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
+
+        $worker->cause_of_death( 'SEE_MSG' );
+        $queen->register_worker_death($worker, 1);
+
+        die $msg;
+    };
 }
 
 
