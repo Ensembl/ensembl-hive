@@ -590,9 +590,11 @@ sub specialize_and_compile_wrapper {
         my $msg = $@;
         chomp $msg;
         $self->worker_say( "specialization failed:\t$msg" );
-        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+
+        my $is_error = $self->cause_of_death() ne 'NO_ROLE';
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $is_error );
     };
 
     if( !$self->cause_of_death() ) {
