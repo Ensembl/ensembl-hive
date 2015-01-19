@@ -116,11 +116,13 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
     my $self        = shift @_;
     my $sql         = shift @_;
 
-    my $retries     = 3;
+    my $attempts    = 4;
+    my $sleep_secs  = 1;
+    my $log_message_adaptor;
 
     my $retval;
 
-    foreach (0..$retries) {
+    foreach my $attempt (1..$attempts) {
         eval {
             my $sth = $self->prepare($sql);
             $retval = $sth->execute( @_ );
@@ -128,14 +130,25 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
             1;
         } or do {
             if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
-                sleep 1;
+
+                unless($log_message_adaptor) {
+                    require Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+                    my $slave_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+                        -dbconn => $self,
+                        -no_sql_schema_version_check => 1,
+                    );
+                    $log_message_adaptor = $slave_dba->get_LogMessageAdaptor();
+                }
+                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql' (attempt #$attempt), retrying in $sleep_secs sec", 0 );
+
+                sleep $sleep_secs;
                 next;
             }
             die $@;     # but definitely report other errors
         };
         last;
     }
-    die "After $retries retries the query '$sql' is still in a deadlock: $@" if($@);
+    die "After $attempts attempts the query '$sql' is still in a deadlock: $@" if($@);
 
     return $retval;
 }

@@ -90,5 +90,21 @@ sub store_worker_message {
     $sth->finish();
 }
 
-1;
 
+sub store_hive_message {
+    my ($self, $msg, $is_error) = @_;
+
+    chomp $msg;   # we don't want that last "\n" in the database
+
+    my $table_name = $self->table_name();
+
+        # Note: the timestamp 'time' column will be set automatically
+    my $sql = qq{
+        INSERT INTO $table_name (status, msg, is_error) VALUES ('UNKNOWN', ?, ?)
+    };
+    my $sth = $self->prepare( $sql );
+    $sth->execute( $msg, $is_error ? 1 : 0 );
+    $sth->finish();
+}
+
+1;
