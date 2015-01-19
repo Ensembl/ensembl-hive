@@ -37,6 +37,7 @@ package Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use strict;
 use warnings;
 
+use Time::HiRes ('usleep');
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
@@ -116,8 +117,8 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
     my $self        = shift @_;
     my $sql         = shift @_;
 
-    my $attempts    = 4;
-    my $sleep_secs  = 1;
+    my $attempts        = 4;
+    my $sleep_max_sec   = 1;
     my $log_message_adaptor;
 
     my $retval;
@@ -139,9 +140,12 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
                     );
                     $log_message_adaptor = $slave_dba->get_LogMessageAdaptor();
                 }
-                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql' (attempt #$attempt), retrying in $sleep_secs sec", 0 );
 
-                sleep $sleep_secs;
+                my $this_sleep_sec = rand( $sleep_max_sec );
+                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql' (attempt #$attempt), retrying in $this_sleep_sec sec", 0 );
+
+                usleep( $this_sleep_sec*1000000 );
+                $sleep_max_sec *= 2;
                 next;
             }
             die $@;     # but definitely report other errors
