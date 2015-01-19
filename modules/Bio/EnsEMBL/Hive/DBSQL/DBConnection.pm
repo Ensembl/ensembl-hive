@@ -118,10 +118,12 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
 
     my $retries     = 3;
 
+    my $retval;
+
     foreach (0..$retries) {
         eval {
             my $sth = $self->prepare($sql);
-            $sth->execute( @_ );
+            $retval = $sth->execute( @_ );
             $sth->finish;
             1;
         } or do {
@@ -134,6 +136,8 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         last;
     }
     die "After $retries retries the query '$sql' is still in a deadlock: $@" if($@);
+
+    return $retval;
 }
 
 1;
