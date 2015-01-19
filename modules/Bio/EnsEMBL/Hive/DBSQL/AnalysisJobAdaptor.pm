@@ -416,9 +416,9 @@ sub grab_jobs_for_role {
     };
 
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-    if(  (my $claim_count = $self->dbc->do( $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-        if( ($claim_count = $self->dbc->do( $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-             $claim_count = $self->dbc->do( $prefix_sql .               $limit_sql .               $suffix_sql);
+    if(  (my $claim_count = $self->dbc->protected_prepare_execute( $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
+        if( ($claim_count = $self->dbc->protected_prepare_execute( $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
+             $claim_count = $self->dbc->protected_prepare_execute( $prefix_sql .               $limit_sql .               $suffix_sql);
         }
     }
 
