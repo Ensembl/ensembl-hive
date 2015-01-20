@@ -248,7 +248,7 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         WHERE job_id=? AND status='SEMAPHORED'
     };
     
-    $self->dbc->protected_prepare_execute( $sql, $dec, $jobid );
+    $self->dbc->protected_prepare_execute( [ $sql, $dec, $jobid ] );
 }
 
 sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
@@ -262,7 +262,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
         WHERE job_id=?
     };
     
-    $self->dbc->protected_prepare_execute( $sql, $inc, $jobid );
+    $self->dbc->protected_prepare_execute( [ $sql, $inc, $jobid ] );
 }
 
 
@@ -294,7 +294,7 @@ sub check_in_job {
     $sql .= " WHERE job_id='".$job->dbID."' ";
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
-    $self->dbc->protected_prepare_execute( $sql );
+    $self->dbc->protected_prepare_execute( [ $sql ] );
 }
 
 
@@ -416,9 +416,9 @@ sub grab_jobs_for_role {
     };
 
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-    if(  (my $claim_count = $self->dbc->protected_prepare_execute( $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-        if( ($claim_count = $self->dbc->protected_prepare_execute( $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-             $claim_count = $self->dbc->protected_prepare_execute( $prefix_sql .               $limit_sql .               $suffix_sql);
+    if(  (my $claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql ] )) == 0 ) {
+        if( ($claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql ] )) == 0 ) {
+             $claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql .               $suffix_sql ] );
         }
     }
 

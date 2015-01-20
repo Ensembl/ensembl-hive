@@ -115,7 +115,9 @@ sub url {
 
 sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by trying again (a useful workaround even in mysql 5.1.61)
     my $self        = shift @_;
-    my $sql         = shift @_;
+    my $sql_params  = shift @_;
+
+    my $sql_cmd     = shift @$sql_params;
 
     my $attempts        = 4;
     my $sleep_max_sec   = 1;
@@ -125,8 +127,8 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
 
     foreach my $attempt (1..$attempts) {
         eval {
-            my $sth = $self->prepare($sql);
-            $retval = $sth->execute( @_ );
+            my $sth = $self->prepare( $sql_cmd );
+            $retval = $sth->execute( @$sql_params );
             $sth->finish;
             1;
         } or do {
@@ -142,7 +144,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
                 }
 
                 my $this_sleep_sec = rand( $sleep_max_sec );
-                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql' (attempt #$attempt), retrying in $this_sleep_sec sec", 0 );
+                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql_cmd' (attempt #$attempt), retrying in $this_sleep_sec sec", 0 );
 
                 usleep( $this_sleep_sec*1000000 );
                 $sleep_max_sec *= 2;
@@ -152,7 +154,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         };
         last;
     }
-    die "After $attempts attempts the query '$sql' is still in a deadlock: $@" if($@);
+    die "After $attempts attempts the query '$sql_cmd' is still in a deadlock: $@" if($@);
 
     return $retval;
 }
