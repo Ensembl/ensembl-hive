@@ -301,7 +301,7 @@ sub check_in_job {
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( "checking the job #$job_id in".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "checking the job in".$after, 0 ); }
     );
 }
 
