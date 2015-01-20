@@ -114,8 +114,9 @@ sub url {
 
 
 sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by trying again (a useful workaround even in mysql 5.1.61)
-    my $self        = shift @_;
-    my $sql_params  = shift @_;
+    my $self                    = shift @_;
+    my $sql_params              = shift @_;
+    my $deadlock_log_callback   = shift @_;
 
     my $sql_cmd     = shift @$sql_params;
 
@@ -134,17 +135,11 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         } or do {
             if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
 
-                unless($log_message_adaptor) {
-                    require Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-                    my $slave_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
-                        -dbconn => $self,
-                        -no_sql_schema_version_check => 1,
-                    );
-                    $log_message_adaptor = $slave_dba->get_LogMessageAdaptor();
-                }
-
                 my $this_sleep_sec = rand( $sleep_max_sec );
-                $log_message_adaptor->store_hive_message( "Caught a DEADLOCK when trying to execute '$sql_cmd' (attempt #$attempt), retrying in $this_sleep_sec sec", 0 );
+
+                if( $deadlock_log_callback ) {
+                    $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
+                }
 
                 usleep( $this_sleep_sec*1000000 );
                 $sleep_max_sec *= 2;
