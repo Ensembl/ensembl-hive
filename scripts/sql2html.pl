@@ -221,6 +221,8 @@ $extra_html_head_content
 ##############
 
 my $html_footer = qq{
+    </div>
+  </div>
 </body>
 </html>};
 
@@ -591,7 +593,7 @@ sub display_tables_list {
     if ($header_flag == 1) {
       if ($header_name ne 'default') {
         if ($nb_col_line+$nbc > 4 and $format_headers == 1) {
-          $html .= qq{  <div style="clear:both" />\n</div>\n\n<div>};
+          $html .= qq{  <div style="clear:both"></div>\n</div>\n\n<div>};
           $nb_col_line = 0;
         }
       
