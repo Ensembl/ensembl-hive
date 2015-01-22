@@ -249,25 +249,47 @@ sub _table_info_loader {
 
 
 sub count_all {
-    my ($self, $constraint) = @_;
+    my ($self, $constraint, $key_list) = @_;
 
     my $table_name      = $self->table_name();
 
-    my $sql = "SELECT COUNT(*) FROM $table_name";
+    my $sql = "SELECT ".($key_list ? join(', ', @$key_list, '') : '')."COUNT(*) FROM $table_name";
 
     if($constraint) {
             # in case $constraint contains any kind of JOIN (regular, LEFT, RIGHT, etc) do not put WHERE in front:
         $sql .= (($constraint=~/\bJOIN\b/i) ? ' ' : ' WHERE ') . $constraint;
     }
 
+    if($key_list) {
+        $sql .= " GROUP BY ".join(', ', @$key_list);
+    }
     # warn "SQL: $sql\n";
 
     my $sth = $self->prepare($sql);
-    $sth->execute;  
-    my ($count) = $sth->fetchrow_array();
-    $sth->finish;  
+    $sth->execute;
 
-    return $count;
+    my $result_struct;  # will be autovivified to the correct data structure
+
+    while(my $hashref = $sth->fetchrow_hashref) {
+
+        my $pptr = \$result_struct;
+        if($key_list) {
+            foreach my $syll (@$key_list) {
+                $pptr = \$$pptr->{$hashref->{$syll}};   # using pointer-to-pointer to enforce same-level vivification
+            }
+        }
+        $$pptr = $hashref->{'COUNT(*)'};
+    }
+
+    unless(defined($result_struct)) {
+        if($key_list and scalar(@$key_list)) {
+            $result_struct = {};
+        } else {
+            $result_struct = 0;
+        }
+    }
+
+    return $result_struct;
 }
 
 
@@ -539,17 +561,23 @@ sub AUTOLOAD {
         my $column_set = $self->column_set();
 
         my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        foreach my $column_name ( @$filter_components ) {
-            unless($column_set->{$column_name}) {
-                die "unknown column '$column_name'";
+        if($filter_components) {
+            foreach my $column_name ( @$filter_components ) {
+                unless($column_set->{$column_name}) {
+                    die "unknown column '$column_name'";
+                }
             }
         }
+
         my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
-        foreach my $column_name ( @$key_components ) {
-            unless($column_set->{$column_name}) {
-                die "unknown column '$column_name'";
+        if($key_components) {
+            foreach my $column_name ( @$key_components ) {
+                unless($column_set->{$column_name}) {
+                    die "unknown column '$column_name'";
+                }
             }
         }
+
         if($value_column && !$column_set->{$value_column}) {
             die "unknown column '$value_column'";
         }
@@ -558,7 +586,7 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
-                join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
                 !$all,
                 $key_components,
                 $value_column
@@ -566,16 +594,28 @@ sub AUTOLOAD {
         };
         goto &$AUTOLOAD;    # restart the new method
 
-    } elsif($AUTOLOAD =~ /::count_all_by_(\w+)$/) {
-        my $filter_string = $1;
+    } elsif($AUTOLOAD =~ /::count_all(?:_by_(\w+))?(?:_HASHED_FROM_(\w+?))?$/) {
+        my $filter_string   = $1;
+        my $key_string      = $2;
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
         my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        foreach my $column_name ( @$filter_components ) {
-            unless($column_set->{$column_name}) {
-                die "unknown column '$column_name'";
+        if($filter_components) {
+            foreach my $column_name ( @$filter_components ) {
+                unless($column_set->{$column_name}) {
+                    die "unknown column '$column_name'";
+                }
+            }
+        }
+
+        my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
+        if($key_components) {
+            foreach my $column_name ( @$key_components ) {
+                unless($column_set->{$column_name}) {
+                    die "unknown column '$column_name'";
+                }
             }
         }
 
@@ -583,7 +623,8 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->count_all(
-                join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $key_components,
             );
         };
         goto &$AUTOLOAD;    # restart the new method

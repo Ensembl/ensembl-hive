@@ -24,3 +24,8 @@ print "Count(filter by 1 'from_analysis_id' column) ".$hive_dba->get_DataflowRul
 print "Count(filter by 1 'branch_code' column) ".$hive_dba->get_DataflowRuleAdaptor->count_all_by_branch_code(1)."\n";
 print "Count(filter by 2 columns) ".$hive_dba->get_DataflowRuleAdaptor->count_all_by_from_analysis_id_AND_branch_code(1, 2)."\n";
 
+print "Count workers: ".$hive_dba->get_WorkerAdaptor->count_all()."\n";
+print "Count workers by meadow_user: ".$hive_dba->get_WorkerAdaptor->count_all_by_meadow_user('lg4')."\n";
+print "Count workers HASHED FROM meadow_user: ".Dumper($hive_dba->get_WorkerAdaptor->count_all_HASHED_FROM_meadow_user())."\n";
+print "Count workers HASHED FROM meadow_type, meadow_user: ".Dumper($hive_dba->get_WorkerAdaptor->count_all_HASHED_FROM_meadow_type_AND_meadow_user())."\n";
+
