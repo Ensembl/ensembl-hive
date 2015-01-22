@@ -171,14 +171,14 @@ sub get_pending_worker_counts_by_meadow_type_rc_name {
 
 
 sub get_meadow_capacity_hash_by_meadow_type {
-    my $self = shift @_;
+    my ($self, $meadow_users_of_interest) = @_;
 
     my %meadow_capacity_hash = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
 
         my $available_worker_slots = defined($meadow->config_get('TotalRunningWorkersMax'))
-            ? $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers
+            ? $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers( $meadow_users_of_interest )
             : undef;
 
             # so the hash will contain limiters for every meadow_type, but not all of them active:
@@ -189,13 +189,14 @@ sub get_meadow_capacity_hash_by_meadow_type {
 }
 
 
-sub count_running_workers {     # just an aggregator
-    my $self = shift @_;
+sub aggregated_count_running_workers {     # just an aggregator
+    my ($self, $meadow_users_of_interest) = @_;
+    
 
     my $valley_running_workers = 0;
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        $valley_running_workers += $meadow->count_running_workers;
+        $valley_running_workers += $meadow->count_running_workers( $meadow_users_of_interest );
     }
 
     return $valley_running_workers;

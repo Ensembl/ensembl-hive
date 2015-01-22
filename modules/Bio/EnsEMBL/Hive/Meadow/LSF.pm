@@ -93,41 +93,54 @@ sub count_pending_workers_by_rc_name {
 
 
 sub count_running_workers {
-    my ($self) = @_;
+    my $self                        = shift @_;
+    my $meadow_users_of_interest    = shift @_ || [ 'all' ];
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null | grep RUN | wc -l";
 
-#    warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
+    my $total_running_worker_count = 0;
 
-    my $run_count = qx/$cmd/;
-    chomp($run_count);
+    foreach my $meadow_user (@$meadow_users_of_interest) {
+        my $cmd = "bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null | grep RUN | wc -l";
 
-    return $run_count;
+#        warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
+
+        my $meadow_user_worker_count = qx/$cmd/;
+        chomp($meadow_user_worker_count);
+
+        $total_running_worker_count += $meadow_user_worker_count;
+    }
+
+    return $total_running_worker_count;
 }
 
 
 sub status_of_all_our_workers { # returns a hashref
-    my ($self) = @_;
+    my $self                        = shift @_;
+    my $meadow_users_of_interest    = shift @_ || [ 'all' ];
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = "bjobs -w -J '${jnp}*' -u all 2>/dev/null";
-
-#    warn "LSF::status_of_all_our_workers() running cmd:\n\t$cmd\n";
 
     my %status_hash = ();
-    foreach my $line (`$cmd`) {
-        my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
 
-        next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
+    foreach my $meadow_user (@$meadow_users_of_interest) {
+        my $cmd = "bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null";
 
-        my $worker_pid = $group_pid;
-        if($job_name=~/(\[\d+\])/) {
-            $worker_pid .= $1;
+#        warn "LSF::status_of_all_our_workers() running cmd:\n\t$cmd\n";
+
+        foreach my $line (`$cmd`) {
+            my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
+
+            next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
+
+            my $worker_pid = $group_pid;
+            if($job_name=~/(\[\d+\])/) {
+                $worker_pid .= $1;
+            }
+            $status_hash{$worker_pid} = $status;
         }
-            
-        $status_hash{$worker_pid} = $status;
     }
+
     return \%status_hash;
 }
 

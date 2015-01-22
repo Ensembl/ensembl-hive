@@ -319,6 +319,13 @@ sub register_worker_death {
 }
 
 
+sub meadow_users_of_running_workers {
+    my $self = shift @_;
+
+    return [ keys %{ $self->count_all("status!='DEAD'", ['meadow_user']) } ];
+}
+
+
 sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachable ones)
     my ($self, $valley, $check_buried_in_haste) = @_;
 
@@ -326,6 +333,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
     my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
+    my $meadow_users_of_interest    = $self->meadow_users_of_running_workers();             # FIXME: we could make it very granular ( meadow_type->meadow_name->meadow_user->count )
     my %mt_and_pid_to_worker_status = ();
     my %worker_status_counts        = ();
     my %mt_and_pid_to_lost_worker   = ();
@@ -337,7 +345,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         my $meadow_type = $worker->meadow_type;
         if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
 
-            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers;  # only run this once per reachable Meadow
+            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );  # only run this once per reachable Meadow
 
             my $process_id = $worker->process_id;
             if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) {  # can be RUN|PEND|xSUSP
