@@ -15,6 +15,8 @@ use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 
+use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
+
 BEGIN {
     $ENV{'USER'}         ||= (getpwuid($<))[7];
     $ENV{'EHIVE_USER'}     = $ENV{'USER'};
@@ -93,30 +95,17 @@ sub _test_event {
 sub init_pipeline {
     my ($file_or_module, $options) = @_;
 
-    my $pipeconfig_package_name = load_file_or_module( $file_or_module );
-    ok($pipeconfig_package_name, "module '$file_or_module' is loaded");
-
-    my $pipeconfig_object = $pipeconfig_package_name->new();
-
     $options = [] unless $options;
     push @$options, ('-hive_driver', 'sqlite');
 
-    if ($options) {
-	local @ARGV = @$options;
-	$pipeconfig_object->process_options( 1 );
+    local @ARGV = @$options;
+    eval {
+        ok(Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, 1));
+    };
+    if ($@) {
+        fail(sprintf('init_pipeline("%s", "%s")', $file_or_module, stringify($options)));
+        print $@, "\n";
     }
-
-    $pipeconfig_object->run_pipeline_create_commands();
-
-    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
-
-    $hive_dba->load_collections();
-
-    $pipeconfig_object->add_objects_from_config();
-
-    $hive_dba->save_collections();
-
-    return $pipeconfig_object;
 }
 
 
