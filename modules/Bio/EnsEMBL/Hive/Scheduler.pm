@@ -66,7 +66,8 @@ sub schedule_workers_resync_if_necessary {
 
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
-    my $meadow_capacity_limiter_hashed_by_type  = $valley->get_meadow_capacity_hash_by_meadow_type( $meadow_users_of_interest );
+    my ($valley_running_worker_count,
+        $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_users_of_interest );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
@@ -77,7 +78,7 @@ sub schedule_workers_resync_if_necessary {
         scheduler_say( "According to analysis_stats no workers are required... let's see if anything went out of sync." );
 
             # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
-        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley->aggregated_count_running_workers( $meadow_users_of_interest ) ) {
+        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley_running_worker_count ) {
             scheduler_say( "Mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers..." );
             $queen->check_for_dead_workers($valley, 1);
         }
