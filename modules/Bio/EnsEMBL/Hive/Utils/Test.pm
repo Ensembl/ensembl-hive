@@ -16,6 +16,7 @@ use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
+use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 
 BEGIN {
     $ENV{'USER'}         ||= (getpwuid($<))[7];
@@ -43,28 +44,19 @@ sub spurt {
 
 my $events_to_test = undef;
 sub standaloneJob {
-    my ($module_or_file, $param_hash, $expected_events, $no_write) = @_;
+    my ($module_or_file, $param_hash, $expected_events, $flags) = @_;
 
     $events_to_test = $expected_events ? [@$expected_events] : undef;
 
-    my $runnable_module = load_file_or_module( $module_or_file );
-    ok($runnable_module, "module '$module_or_file' is loaded");
-
-    my $runnable_object = $runnable_module->new();
-    ok($runnable_object, "runnable is instantiated");
-    $runnable_object->execute_writes(not $no_write);
-
-    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
     my $input_id = stringify($param_hash);
-    $job->input_id( $input_id );
-    $job->dataflow_rules(1, []);
 
-    $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $job->input_id() );
-
-    $runnable_object->input_job($job);
-    $runnable_object->life_cycle();
-
-    ok(!$job->died_somewhere(), 'job completed');
+    eval {
+        ok(Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef, 1), 'job completed');
+    };
+    if ($@) {
+        fail(sprintf('standaloneJob("%s", "%s")', $module_or_file, stringify($param_hash)));
+        print $@, "\n";
+    }
     ok(!scalar(@$events_to_test), 'no untriggered events') if $expected_events;
 }
 
