@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -90,5 +90,21 @@ sub store_worker_message {
     $sth->finish();
 }
 
-1;
 
+sub store_hive_message {
+    my ($self, $msg, $is_error) = @_;
+
+    chomp $msg;   # we don't want that last "\n" in the database
+
+    my $table_name = $self->table_name();
+
+        # Note: the timestamp 'time' column will be set automatically
+    my $sql = qq{
+        INSERT INTO $table_name (status, msg, is_error) VALUES ('UNKNOWN', ?, ?)
+    };
+    my $sth = $self->prepare( $sql );
+    $sth->execute( $msg, $is_error ? 1 : 0 );
+    $sth->finish();
+}
+
+1;

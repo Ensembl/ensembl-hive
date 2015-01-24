@@ -104,14 +104,15 @@ sub main {
 
     my $queen = $hive_dba->get_Queen();
 
-    my ($meadow_type, $meadow_name, $process_id, $exec_host) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
 
     my $worker = $queen->create_new_worker(
           # Worker identity:
              -meadow_type           => $meadow_type,
              -meadow_name           => $meadow_name,
              -process_id            => $process_id,
-             -exec_host             => $exec_host,
+             -meadow_host           => $meadow_host,
+             -meadow_user           => $meadow_user,
              -resource_class_id     => $resource_class_id,
              -resource_class_name   => $resource_class_name,
 
@@ -137,11 +138,24 @@ sub main {
         $analyses_pattern = $analysis_id;
     }
 
-    $worker->run( {
-         -analyses_pattern      => $analyses_pattern,
-         -job_id                => $job_id,
-         -force                 => $force,
-    } );
+    eval {
+        $worker->run( {
+             -analyses_pattern      => $analyses_pattern,
+             -job_id                => $job_id,
+             -force                 => $force,
+        } );
+
+        1;
+    } or do {
+        my $msg = $@;
+
+        $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
+
+        $worker->cause_of_death( 'SEE_MSG' );
+        $queen->register_worker_death($worker, 1);
+
+        die $msg;
+    };
 }
 
 
@@ -214,7 +228,7 @@ __DATA__
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

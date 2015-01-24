@@ -13,7 +13,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
-use Sys::Hostname;
+use Sys::Hostname ('hostname');
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Limiter;
 
@@ -147,9 +147,10 @@ sub whereami {
         die "Could not determine the Meadow, please investigate";
     }
 
-    my $exechost = hostname();
+    my $meadow_host = hostname();
+    my $meadow_user = $ENV{'USER'} || getpwuid($<);
 
-    return ($meadow_type, $meadow_name, $pid, $exechost);
+    return ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user);
 }
 
 

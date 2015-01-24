@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -809,7 +809,7 @@ sub reconnect {
 =cut
 
 sub do {
-   my ($self,$string) = @_;
+   my ($self,$string, $attr, @bind_values) = @_;
 
    if( ! $string ) {
      throw("Attempting to do an empty SQL query.");
@@ -820,7 +820,7 @@ sub do {
    
    my $do_result = $self->work_with_db_handle(sub {
      my ($dbh) = @_;
-     my $result = eval { $dbh->do($string) };
+     my $result = eval { $dbh->do($string, $attr, @bind_values) };
      $error = $@ if $@;
      return $result;
    });

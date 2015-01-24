@@ -1,0 +1,10 @@
+
+    -- First, rename 'host' to 'meadow_host' for consistency:
+ALTER TABLE worker CHANGE COLUMN host meadow_host VARCHAR(255) NOT NULL;
+
+    -- Then allow each Worker to register the username that is running the process on the meadow_host:
+ALTER TABLE worker ADD COLUMN meadow_user VARCHAR(255) DEFAULT NULL AFTER meadow_host;
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=63 WHERE meta_key='hive_sql_schema_version' AND meta_value='62';
+

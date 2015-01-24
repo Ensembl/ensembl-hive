@@ -40,7 +40,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -115,9 +115,9 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($meadow_type, $meadow_name, $process_id, $exec_host, $resource_class_id, $resource_class_name,
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-meadow_type -meadow_name -process_id -exec_host -resource_class_id -resource_class_name
+     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
@@ -145,7 +145,8 @@ sub create_new_worker {
     my $worker = Bio::EnsEMBL::Hive::Worker->new(
         'meadow_type'       => $meadow_type,
         'meadow_name'       => $meadow_name,
-        'host'              => $exec_host,
+        'meadow_host'       => $meadow_host,
+        'meadow_user'       => $meadow_user,
         'process_id'        => $process_id,
         'resource_class'    => $resource_class,
     );
@@ -303,6 +304,11 @@ sub register_worker_death {
     }
 
     if( $current_role and !$current_role->when_finished() ) {
+        # List of cause_of_death:
+        # only happen before or after a batch: 'NO_ROLE','NO_WORK','JOB_LIMIT','HIVE_OVERLOAD','LIFESPAN','SEE_MSG'
+        # can happen whilst the worker is running a batch: 'CONTAMINATED','RELOCATED','KILLED_BY_USER','MEMLIMIT','RUNLIMIT','SEE_MSG','UNKNOWN'
+        my $release_undone_jobs = ($cause_of_death =~ /^(CONTAMINATED|RELOCATED|KILLED_BY_USER|MEMLIMIT|RUNLIMIT|SEE_MSG|UNKNOWN)$/);
+        $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
         $current_role->when_finished( $worker_died );
         $self->db->get_RoleAdaptor->finalize_role( $current_role, $release_undone_jobs );
     }

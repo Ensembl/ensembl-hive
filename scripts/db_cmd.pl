@@ -126,6 +126,10 @@ sub dbc_hash_to_cmd {
             if($driver eq 'sqlite') {
                 return ['touch', $dbname];
             } elsif(!$2) {
+                my %limits = ( 'mysql' => 64, 'pgsql' => 63 );
+                if (length($dbname) > $limits{$driver}) {
+                    die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
+                }
                 $sqlcmd = "$1 $dbname";
                 $dbc_hash->{dbname} = '';
             }
@@ -208,7 +212,7 @@ __DATA__
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
