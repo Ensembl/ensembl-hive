@@ -295,12 +295,9 @@ sub register_worker_death {
     my $worker_died     = $worker->died;
 
     my $current_role    = $worker->current_role;
-    my $release_undone_jobs = 0;
 
     unless( $current_role ) {
         $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_unfinished_by_worker_id( $worker_id ) );
-        $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
-        $release_undone_jobs = 1;
     }
 
     if( $current_role and !$current_role->when_finished() ) {
