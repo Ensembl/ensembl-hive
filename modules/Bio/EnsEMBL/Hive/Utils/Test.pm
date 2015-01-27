@@ -89,7 +89,7 @@ sub init_pipeline {
     lives_and(sub {
         $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, 1);
         ok($hive_dba, 'pipeline initialized');
-        $hive_dba->init_collections();
+        %Bio::EnsEMBL::Hive::Cacheable::cache_by_class = %;
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
 
     return $hive_dba;
