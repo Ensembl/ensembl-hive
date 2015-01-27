@@ -275,20 +275,16 @@ sub job_count_breakout {
 sub toString {
     my $self = shift @_;
 
-    my $analysis = $self->analysis;
+    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout;
+    my $analysis                                        = $self->analysis;
 
-    my $output .= sprintf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-27s(%2d) %11s, jobs( %24s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
         $self->status,
 
-        $self->semaphored_job_count,
-        $self->ready_job_count,
-        $self->inprogress_job_count,
-        $self->done_job_count,
-        $self->failed_job_count,
-        $self->total_job_count,
+        $breakout_label,
 
         $self->avg_msec_per_job,
 
