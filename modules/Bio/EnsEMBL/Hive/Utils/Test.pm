@@ -23,7 +23,7 @@ BEGIN {
     $ENV{'USER'}         ||= (getpwuid($<))[7];
     $ENV{'EHIVE_USER'}     = $ENV{'USER'};
     $ENV{'EHIVE_PASS'}   ||= 'password';
-    $ENV{'EHIVE_ROOT_DIR'} =  getcwd();
+    $ENV{'EHIVE_ROOT_DIR'} ||=  getcwd();
 }
 
 
