@@ -30,7 +30,7 @@ BEGIN {
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( spurt standaloneJob init_pipeline );
+our @EXPORT_OK   = qw( spurt standaloneJob init_pipeline runWorker );
 
 our $VERSION = '0.00';
 
@@ -95,5 +95,49 @@ sub init_pipeline {
     return $hive_dba;
 }
 
+
+sub runWorker {
+    my ($hive_dba, $specialization_options, $life_options, $execution_options) = @_;
+
+    isa_ok($hive_dba, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
+    $specialization_options ||= {};
+    $life_options ||= {};
+    $execution_options ||= {};
+
+    my $queen = $hive_dba->get_Queen();
+    isa_ok($queen, 'Bio::EnsEMBL::Hive::Queen', 'God bless the Queen');
+
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    ok($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user, 'Valley is fully defined');
+
+    my $worker = $queen->create_new_worker(
+          # Worker identity:
+             -meadow_type           => $meadow_type,
+             -meadow_name           => $meadow_name,
+             -process_id            => $process_id,
+             -meadow_host           => $meadow_host,
+             -meadow_user           => $meadow_user,
+             -resource_class_name   => $specialization_options->{resource_class_name},
+
+          # Worker control parameters:
+             -job_limit             => $life_options->{job_limit},
+             -life_span             => $life_options->{life_span},
+             -no_cleanup            => $execution_options->{no_cleanup},
+             -no_write              => $execution_options->{no_write},
+             -retry_throwing_jobs   => $life_options->{retry_throwing_jobs},
+             -can_respecialize      => $specialization_options->{can_respecialize},
+    );
+    isa_ok($worker, 'Bio::EnsEMBL::Hive::Worker', 'we have a worker !');
+
+    eval {
+        $worker->run( {
+             -analyses_pattern      => $specialization_options->{analyses_pattern},
+             -job_id                => $specialization_options->{job_id},
+        } );
+        pass('run the worker');
+    } or do {
+        fail("could not run the worker:\n$@");
+    };
+}
 
 1;
