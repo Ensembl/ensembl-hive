@@ -40,7 +40,7 @@ sub init_pipeline {
 
     print $pipeconfig_object->useful_commands_legend();
 
-    return $pipeconfig_object;
+    return $hive_dba;
 }
 
 

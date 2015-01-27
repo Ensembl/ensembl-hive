@@ -10,6 +10,7 @@ use Carp qw{croak};
 use Cwd qw{getcwd};
 
 use Test::More;
+use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -89,14 +90,15 @@ sub init_pipeline {
 
     $options ||= [];
 
+    my $hive_dba;
     local @ARGV = @$options;
-    eval {
-        ok(Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, 1));
-    };
-    if ($@) {
-        fail(sprintf('init_pipeline("%s", "%s")', $file_or_module, stringify($options)));
-        print $@, "\n";
-    }
+    lives_and(sub {
+        $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, 1);
+        ok($hive_dba, 'pipeline initialized');
+        $hive_dba->init_collections();
+    }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
+
+    return $hive_dba;
 }
 
 
