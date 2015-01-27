@@ -110,6 +110,11 @@ sub runWorker {
     my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
     ok($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user, 'Valley is fully defined');
 
+    # Sync the hive
+    my $list_of_analyses = $hive_dba->get_AnalysisAdaptor->fetch_all_by_pattern( $specialization_options->{analyses_pattern} );
+    $queen->synchronize_hive( $list_of_analyses );
+
+    # Create the worker
     my $worker = $queen->create_new_worker(
           # Worker identity:
              -meadow_type           => $meadow_type,
@@ -129,6 +134,7 @@ sub runWorker {
     );
     isa_ok($worker, 'Bio::EnsEMBL::Hive::Worker', 'we have a worker !');
 
+    # Run the worker
     eval {
         $worker->run( {
              -analyses_pattern      => $specialization_options->{analyses_pattern},
