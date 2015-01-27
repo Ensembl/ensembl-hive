@@ -17,11 +17,12 @@ sub standaloneJob {
     ok($runnable_module, "module '$module_or_file' is loaded") if $do_tests;
 
     my $runnable_object = $runnable_module->new();
-    ok($runnable_object, "runnable is instantiated") if $do_tests;
+    isa_ok($runnable_object, 'Bio::EnsEMBL::Hive::Process', "runnable is instantiated") if $do_tests;
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
+    isa_ok($job, 'Bio::EnsEMBL::Hive::AnalysisJob', 'we have a dummy job') if $do_tests;
     $job->input_id( $input_id );
     $job->dataflow_rules(1, []);
 

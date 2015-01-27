@@ -18,6 +18,7 @@ sub init_pipeline {
     ok($pipeconfig_package_name, "module '$file_or_module' is loaded") if $do_tests;
 
     my $pipeconfig_object = $pipeconfig_package_name->new();
+    isa_ok($pipeconfig_object, 'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf') if $do_tests;
 
     $pipeconfig_object->process_options( 1 );
     pass('Command-line options have been processed') if $do_tests;
@@ -26,6 +27,7 @@ sub init_pipeline {
     pass('Create commands could be run') if $do_tests;
 
     my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
+    isa_ok($hive_dba, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor', 'hive DBA is correct') if $do_tests;
 
     $hive_dba->load_collections();
     pass('Database pre-existing content could be loaded') if $do_tests;
