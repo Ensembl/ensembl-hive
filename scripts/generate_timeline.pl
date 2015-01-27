@@ -163,13 +163,13 @@ sub main {
     my %layers = ();
     {
         my $sql = $key eq 'analysis'
-            ? 'SELECT born, died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
-            : 'SELECT born, died, worker_id, resource_class_id FROM worker';
+            ? 'SELECT when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
+            : 'SELECT when_born, when_died, worker_id, resource_class_id FROM worker';
         my @tmp_dates = @{$dbh->selectall_arrayref($sql)};
         warn scalar(@tmp_dates), " rows\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($born, $died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
+            my ($when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
 
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
@@ -178,24 +178,24 @@ sub main {
             $key_value = -1 if not defined $key_value;
 
             if ($mode eq 'workers') {
-                add_event(\%events, $key_value, $born, $died, 1);
+                add_event(\%events, $key_value, $when_born, $when_died, 1);
 
             } elsif ($mode eq 'memory') {
                 my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
-                add_event(\%events, $key_value, $born, $died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset);
                 $offset = ($used_res{$worker_id}->[0]) / 1024. if exists $used_res{$worker_id} and $used_res{$worker_id}->[0];
-                add_event(\%layers, $key_value, $born, $died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
 
             } elsif ($mode eq 'cores') {
                 my $offset = ($cpu_resources{$resource_class_id} || $default_cores);
-                add_event(\%events, $key_value, $born, $died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset);
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
-                add_event(\%layers, $key_value, $born, $died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
             } else {
                 if (exists $used_res{$worker_id} and $used_res{$worker_id}->[2]) {
                     my $pending_sec = $used_res{$worker_id}->[2];
-                    add_event(\%events, $key_value, -$pending_sec, $born, 1);
-                    add_event(\%layers, $key_value, -$pending_sec, $born, $pending_sec/60);
+                    add_event(\%events, $key_value, -$pending_sec, $when_born, 1);
+                    add_event(\%layers, $key_value, -$pending_sec, $when_born, $pending_sec/60);
                 }
             }
         }
@@ -349,13 +349,13 @@ sub add_dataset {
 #####
 
 sub add_event {
-    my ($events, $key, $born, $died, $offset) = @_;
+    my ($events, $key, $when_born, $when_died, $offset) = @_;
 
     return if $offset <= 0;
 
         # temporary Time::Piece values
-    my $death_datetime = Time::Piece->strptime( $died , '%Y-%m-%d %H:%M:%S');
-    my $birth_datetime = ($born =~ /^-[0-9]/) ? $death_datetime + $born : Time::Piece->strptime( $born , '%Y-%m-%d %H:%M:%S');
+    my $death_datetime = Time::Piece->strptime( $when_died , '%Y-%m-%d %H:%M:%S');
+    my $birth_datetime = ($when_born =~ /^-[0-9]/) ? $death_datetime + $when_born : Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
 
     # We don't need to draw things at the resolution of 1 second; 1 minute is enough
     $death_datetime->[0] = 0;
@@ -364,10 +364,10 @@ sub add_event {
         # string values:
     my $birth_date = $birth_datetime->date . 'T' . $birth_datetime->hms;
     my $death_date = $death_datetime->date . 'T' . $death_datetime->hms;
-    return if $died and ($birth_date eq $death_date);
+    return if $when_died and ($birth_date eq $death_date);
 
     $events->{$birth_date}{$key} += $offset;
-    $events->{$death_date}{$key} -= $offset if $died;
+    $events->{$death_date}{$key} -= $offset if $when_died;
 }
 
 

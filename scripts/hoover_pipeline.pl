@@ -63,7 +63,7 @@ sub main {
     my $sql = qq{
     DELETE j FROM job j
      WHERE j.status='DONE'
-       AND j.completed < $threshold_datetime_expression
+       AND j.when_completed < $threshold_datetime_expression
     };
 
     my $dbc = $hive_dba->dbc();

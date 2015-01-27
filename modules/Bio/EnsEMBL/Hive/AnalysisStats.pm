@@ -188,16 +188,16 @@ sub avg_output_msec_per_job {
 
 ## other storable attributes:
 
-sub last_update {                   # this method is called by the initial store() [at which point it returns undef]
+sub when_updated {                   # this method is called by the initial store() [at which point it returns undef]
     my $self = shift;
-    $self->{'_last_update'} = shift if(@_);
-    return $self->{'_last_update'};
+    $self->{'_when_updated'} = shift if(@_);
+    return $self->{'_when_updated'};
 }
 
-sub seconds_since_last_update {     # this method is mostly used to convert between server time and local time
+sub seconds_since_when_updated {     # this method is mostly used to convert between server time and local time
     my( $self, $value ) = @_;
-    $self->{'_last_update'} = time() - $value if(defined($value));
-    return defined($self->{'_last_update'}) ? time() - $self->{'_last_update'} : undef;
+    $self->{'_when_updated'} = time() - $value if(defined($value));
+    return defined($self->{'_when_updated'}) ? time() - $self->{'_when_updated'} : undef;
 }
 
 sub sync_lock {
@@ -293,7 +293,7 @@ sub toString {
     );
     $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
-               ."  (sync'd "  .($self->seconds_since_last_update // 0)." sec ago)";
+               ."  (sync'd "  .($self->seconds_since_when_updated // 0)." sec ago)";
 
     return $output;
 }

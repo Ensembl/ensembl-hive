@@ -289,11 +289,11 @@ sub check_in_job {
     my $sql = "UPDATE job SET status='".$job->status."' ";
 
     if($job->status eq 'DONE') {
-        $sql .= ",completed=CURRENT_TIMESTAMP";
+        $sql .= ",when_completed=CURRENT_TIMESTAMP";
         $sql .= ",runtime_msec=".$job->runtime_msec;
         $sql .= ",query_count=".$job->query_count;
     } elsif($job->status eq 'PASSED_ON') {
-        $sql .= ", completed=CURRENT_TIMESTAMP";
+        $sql .= ", when_completed=CURRENT_TIMESTAMP";
     } elsif($job->status eq 'READY') {
     }
 

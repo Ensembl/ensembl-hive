@@ -219,10 +219,10 @@ sub parse_report_source_line {
         if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
 
             my ($exit_status, $exception_status) = ('' x 2);
-            my ($died, $cause_of_death);
+            my ($when_died, $cause_of_death);
             foreach (@lines) {
                 if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
-                    $died           = _yearless_2_datetime($1);
+                    $when_died      = _yearless_2_datetime($1);
                     $cause_of_death = $3 && $status_2_cod{$3};
                     $exit_status = $2 . ($3 ? "/$3" : '');
                 }
@@ -243,7 +243,7 @@ sub parse_report_source_line {
 
             $report_entry{ $process_id } = {
                     # entries for 'worker' table:
-                'died'              => $died,
+                'when_died'         => $when_died,
                 'cause_of_death'    => $cause_of_death,
 
                     # entries for 'worker_resource_usage' table:

@@ -54,7 +54,7 @@ sub store_job_message {
 
     my $table_name = $self->table_name();
 
-        # Note: the timestamp 'time' column will be set automatically
+        # Note: the timestamp 'when_logged' column will be set automatically
     my $sql = qq{
         INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, is_error)
                            SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
@@ -79,7 +79,7 @@ sub store_worker_message {
 
     my $table_name = $self->table_name();
 
-        # Note: the timestamp 'time' column will be set automatically
+        # Note: the timestamp 'when_logged' column will be set automatically
     my $sql = qq{
         INSERT INTO $table_name (worker_id, role_id, status, msg, is_error)
                            SELECT worker_id, ?, status, ?, ?
@@ -98,7 +98,7 @@ sub store_hive_message {
 
     my $table_name = $self->table_name();
 
-        # Note: the timestamp 'time' column will be set automatically
+        # Note: the timestamp 'when_logged' column will be set automatically
     my $sql = qq{
         INSERT INTO $table_name (status, msg, is_error) VALUES ('UNKNOWN', ?, ?)
     };

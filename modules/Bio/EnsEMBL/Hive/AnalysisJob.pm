@@ -101,10 +101,10 @@ sub retry_count {
     return $self->{'_retry_count'};
 }
 
-sub completed {
+sub when_completed {
     my $self = shift;
-    $self->{'_completed'} = shift if(@_);
-    return $self->{'_completed'};
+    $self->{'_when_completed'} = shift if(@_);
+    return $self->{'_when_completed'};
 }
 
 sub runtime_msec {

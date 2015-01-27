@@ -1,0 +1,24 @@
+
+    -- First, rename all TIMESTAMPed columns to have a 'when_' prefix for automatic identification:
+ALTER TABLE analysis_stats          CHANGE COLUMN last_update    when_updated            TIMESTAMP                    NULL;
+ALTER TABLE job                     CHANGE COLUMN completed      when_completed          TIMESTAMP                    NULL;
+ALTER TABLE worker                  CHANGE COLUMN born           when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE worker                  CHANGE COLUMN last_check_in  when_checked_in         TIMESTAMP                    NULL;
+ALTER TABLE worker                  CHANGE COLUMN died           when_died               TIMESTAMP                    NULL;
+ALTER TABLE log_message             CHANGE COLUMN time           when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE analysis_stats_monitor  CHANGE COLUMN time           when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE analysis_stats_monitor  CHANGE COLUMN last_update    when_updated            TIMESTAMP                    NULL;
+
+    -- Then add one more column to register when a Worker was last seen by the Meadow:
+ALTER TABLE worker                  ADD COLUMN                   when_seen               TIMESTAMP                    NULL AFTER when_checked_in;
+
+    -- replace the 'msg' view as the columns implicitly referenced there have been renamed:
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN job j ON (j.job_id=m.job_id)
+    LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
+
+    -- UPDATE hive_sql_schema_version
+UPDATE hive_meta SET meta_value=64 WHERE meta_key='hive_sql_schema_version' AND meta_value='63';
+

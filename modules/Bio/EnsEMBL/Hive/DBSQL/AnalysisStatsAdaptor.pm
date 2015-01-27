@@ -58,10 +58,10 @@ sub default_input_column_mapping {
     my $self    = shift @_;
     my $driver  = $self->dbc->driver();
     return  {
-        'last_update' => {
-                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_update) seconds_since_last_update ",
-                            'sqlite'    => "strftime('%s','now')-strftime('%s',last_update) seconds_since_last_update ",
-                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - last_update) seconds_since_last_update ",
+        'when_updated' => {
+                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_updated) seconds_since_when_updated ",
+                            'sqlite'    => "strftime('%s','now')-strftime('%s',when_updated) seconds_since_when_updated ",
+                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_updated) seconds_since_when_updated ",
         }->{$driver},
     };
 }
@@ -151,7 +151,7 @@ sub update {
   }
 
   $sql .= ",num_required_workers=" . $stats->num_required_workers();
-  $sql .= ",last_update=CURRENT_TIMESTAMP";
+  $sql .= ",when_updated=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
 
@@ -161,7 +161,7 @@ sub update {
   $sth = $self->prepare("INSERT INTO analysis_stats_monitor SELECT CURRENT_TIMESTAMP, analysis_stats.* from analysis_stats WHERE analysis_id = ".$stats->analysis_id);
   $sth->execute();
   $sth->finish;
-  $stats->seconds_since_last_update(0); #not exact but good enough :)
+  $stats->seconds_since_when_updated(0); #not exact but good enough :)
 }
 
 

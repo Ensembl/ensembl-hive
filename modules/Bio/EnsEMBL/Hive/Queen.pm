@@ -287,12 +287,12 @@ sub specialize_worker {
 
 
 sub register_worker_death {
-    my ($self, $worker, $update_last_check_in) = @_;
+    my ($self, $worker, $update_when_checked_in) = @_;
 
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
     my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void
-    my $worker_died     = $worker->died;
+    my $worker_died     = $worker->when_died;
 
     my $current_role    = $worker->current_role;
 
@@ -311,8 +311,8 @@ sub register_worker_death {
     }
 
     my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
-            . ( $update_last_check_in ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
-            . ( $worker_died ? ", died='$worker_died'" : ', died=CURRENT_TIMESTAMP' )
+            . ( $update_when_checked_in ? ', when_checked_in=CURRENT_TIMESTAMP ' : '' )
+            . ( $worker_died ? ", when_died='$worker_died'" : ', when_died=CURRENT_TIMESTAMP' )
             . " WHERE worker_id='$worker_id' ";
 
     $self->dbc->do( $sql );
@@ -386,7 +386,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             warn "GarbageCollector:\tReleasing the jobs\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->died(              $report_entries->{$process_id}{'died'} );
+                $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
             }
@@ -421,7 +421,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 sub check_in_worker {
     my ($self, $worker) = @_;
 
-    $self->dbc->do("UPDATE worker SET last_check_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'");
+    $self->dbc->do("UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'");
 }
 
 
@@ -469,9 +469,9 @@ sub fetch_overdue_workers {
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
     my $constraint = "status!='DEAD' AND ".{
-            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in)) > $overdue_secs",
-            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',last_check_in)) > $overdue_secs",
-            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - last_check_in) > $overdue_secs",
+            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_checked_in)) > $overdue_secs",
+            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',when_checked_in)) > $overdue_secs",
+            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_checked_in) > $overdue_secs",
         }->{ $self->dbc->driver };
 
     return $self->fetch_all( $constraint );
@@ -531,7 +531,7 @@ sub safe_synchronize_AnalysisStats {
     }
 
     unless( ($stats->status eq 'DONE')
-         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_last_update) and ($stats->seconds_since_last_update < 3*60) ) ) {
+         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < 3*60) ) ) {
 
         my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
                   "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
@@ -681,7 +681,7 @@ sub interval_workers_with_unknown_usage {
     my %meadow_to_interval = ();
 
     my $sql_times = qq{
-        SELECT meadow_type, meadow_name, min(born), max(died), count(*)
+        SELECT meadow_type, meadow_name, min(when_born), max(when_died), count(*)
         FROM worker w
         LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL

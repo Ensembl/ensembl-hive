@@ -150,7 +150,7 @@ CREATE TABLE analysis_base (
 @column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
 @column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
 
-@column last_update             when this entry was last updated
+@column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
 */
 
@@ -179,7 +179,7 @@ CREATE TABLE analysis_stats (
     avg_run_msec_per_job    INTEGER              DEFAULT NULL,
     avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
-    last_update             TIMESTAMP            DEFAULT NULL,
+    when_updated            TIMESTAMP            DEFAULT NULL,
     sync_lock               SMALLINT    NOT NULL DEFAULT 0,
 
     PRIMARY KEY (analysis_id)
@@ -319,7 +319,7 @@ CREATE TABLE resource_description (
 @column role_id                 links to the Role that claimed this job (NULL means it has never been claimed)
 @column status                  state the job is in
 @column retry_count             number times job had to be reset when worker failed to run it
-@column completed               when the job was completed
+@column when_completed          when the job was completed
 @column runtime_msec            how long did it take to execute the job (or until the moment it failed)
 @column query_count             how many SQL queries were run during this job
 @column semaphore_count         if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".
@@ -339,7 +339,7 @@ CREATE TABLE job (
     role_id                 INTEGER              DEFAULT NULL,
     status                  jw_status   NOT NULL DEFAULT 'READY',
     retry_count             INTEGER     NOT NULL DEFAULT 0,
-    completed               TIMESTAMP            DEFAULT NULL,
+    when_completed          TIMESTAMP            DEFAULT NULL,
     runtime_msec            INTEGER              DEFAULT NULL,
     query_count             INTEGER              DEFAULT NULL,
 
@@ -451,9 +451,10 @@ CREATE INDEX ON analysis_data (data);
 @column resource_class_id   links to Worker's resource class
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
-@column born                when the Worker process was started
-@column last_check_in       when the Worker last checked into the database
-@column died                if defined, when the Worker died (or its premature death was first detected by GC)
+@column when_born           when the Worker process was started
+@column when_checked_in     when the Worker last checked into the database
+@column when_seen           when the Worker was last seen by the Meadow
+@column when_died           if defined, when the Worker died (or its premature death was first detected by GC)
 @column cause_of_death      if defined, why did the Worker exit (or why it was killed)
 @column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
@@ -469,9 +470,10 @@ CREATE TABLE worker (
     resource_class_id       INTEGER              DEFAULT NULL,
     work_done               INTEGER     NOT NULL DEFAULT 0,
     status                  jw_status   NOT NULL DEFAULT 'READY',
-    born                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_check_in           TIMESTAMP            DEFAULT NULL,
-    died                    TIMESTAMP            DEFAULT NULL,
+    when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_checked_in         TIMESTAMP            DEFAULT NULL,
+    when_seen               TIMESTAMP            DEFAULT NULL,
+    when_died               TIMESTAMP            DEFAULT NULL,
     cause_of_death          worker_cod           DEFAULT NULL,
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
@@ -560,7 +562,7 @@ CREATE TABLE worker_resource_usage (
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
 @column        role_id  the 'current' role
 @column      worker_id  the 'current' worker
-@column           time  when the message was thrown
+@column    when_logged  when the message was thrown
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
 @column            msg  string that contains the message
@@ -572,7 +574,7 @@ CREATE TABLE log_message (
     job_id                  INTEGER              DEFAULT NULL,
     role_id                 INTEGER              DEFAULT NULL,
     worker_id               INTEGER              DEFAULT NULL,
-    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  jw_status            DEFAULT 'UNKNOWN',
     msg                     TEXT,
@@ -590,7 +592,7 @@ CREATE INDEX ON log_message (job_id);
 
 @desc   A regular timestamped snapshot of the analysis_stats table.
 
-@column time                    when this snapshot was taken
+@column when_logged             when this snapshot was taken
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
 @column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
@@ -615,12 +617,12 @@ CREATE INDEX ON log_message (job_id);
 @column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
 @column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
 
-@column last_update             when this entry was last updated
+@column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
 */
 
 CREATE TABLE analysis_stats_monitor (
-    time                    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     analysis_id             INTEGER     NOT NULL,
     batch_size              INTEGER     NOT NULL DEFAULT 1,
@@ -644,7 +646,7 @@ CREATE TABLE analysis_stats_monitor (
     avg_run_msec_per_job    INTEGER              DEFAULT NULL,
     avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
-    last_update             TIMESTAMP            DEFAULT NULL,
+    when_updated            TIMESTAMP            DEFAULT NULL,
     sync_lock               SMALLINT    NOT NULL DEFAULT 0
 
 );
