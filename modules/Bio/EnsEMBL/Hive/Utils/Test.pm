@@ -87,8 +87,7 @@ sub _test_event {
 sub init_pipeline {
     my ($file_or_module, $options) = @_;
 
-    $options = [] unless $options;
-    push @$options, ('-hive_driver', 'sqlite');
+    $options ||= [];
 
     local @ARGV = @$options;
     eval {
