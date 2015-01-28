@@ -340,16 +340,25 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
+    my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id=?";
+    my $update_when_seen_sth;
+
     foreach my $worker (@$queen_overdue_workers) {
 
         my $meadow_type = $worker->meadow_type;
         if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
 
-            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );  # only run this once per reachable Meadow
+                # only run this once per reachable Meadow:
+            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
 
             my $process_id = $worker->process_id;
             if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) {  # can be RUN|PEND|xSUSP
                 $worker_status_counts{$meadow_type}{$status}++;
+
+                    # only prepare once at most:
+                $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );
+
+                $update_when_seen_sth->execute( $worker->dbID );
             } else {
                 $worker_status_counts{$meadow_type}{'LOST'}++;
 
@@ -359,6 +368,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
         }
     }
+
+    $update_when_seen_sth->finish() if $update_when_seen_sth;
 
         # print a quick summary report:
     foreach my $meadow_type (keys %worker_status_counts) {
