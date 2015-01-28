@@ -61,6 +61,9 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 
 use strict;
 use warnings;
+
+use Capture::Tiny ':all';
+
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -122,13 +125,16 @@ sub run {
     }
 
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
-
-    if(my $return_value = system(ref($cmd) ? @$cmd : $cmd)) {
-        $return_value >>= 8;
-        die "system( $flat_cmd ) failed: $return_value";
-    }
-
+    my $return_value;
+    my $stderr = tee_stderr {
+        system(ref($cmd) ? @$cmd : $cmd);
+        $return_value = $? >> 8;
+    };
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
+
+    if($return_value) {
+        die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
+    }
 }
 
 
