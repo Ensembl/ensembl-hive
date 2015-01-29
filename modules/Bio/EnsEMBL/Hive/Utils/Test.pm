@@ -87,9 +87,9 @@ sub init_pipeline {
     my $hive_dba;
     local @ARGV = @$options;
     lives_and(sub {
-        $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, 1);
+        $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
         ok($hive_dba, 'pipeline initialized');
-        %Bio::EnsEMBL::Hive::Cacheable::cache_by_class = %;
+        %Bio::EnsEMBL::Hive::Cacheable::cache_by_class = ();
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
 
     return $hive_dba;
