@@ -2,10 +2,7 @@
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(spurt);
 
-use File::Spec::Functions qw{catdir};
-use File::Temp qw{tempdir};
 use Test::More;
 use Data::Dumper;
 
@@ -24,20 +21,7 @@ cmp_ok(@config_files, '<', 3, '1 or 2');
 
 my $config = bless {_config_hash => {}}, 'Bio::EnsEMBL::Hive::Utils::Config';
 
-my $dir = tempdir CLEANUP => 1;
-my $json = catdir $dir, 'test.json';
-spurt <<EOF, $json;
-{
-    "Meadow" : {
-        "OPENLAVA"  : {
-	    "TotalRunningWorkersMax" : 1000,
-	    "omics" : {
-		"SubmissionOptions" : "-q special-branch"
-	    }
-	}
-    },
-}
-EOF
+my $json = $ENV{EHIVE_ROOT_DIR}.'/t/test_config.json';
 
 my $simple = $config->load_from_json($json);
 isa_ok($simple, 'HASH');
