@@ -4,9 +4,9 @@ export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test' perl $PWD/scripts/runtests.pl -verbose t $SKIP_TESTS
+  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test' perl $PWD/scripts/run_tests.pl -verbose t $SKIP_TESTS
 else
-  perl $PWD/scripts/runtests.pl t $SKIP_TESTS
+  perl $PWD/scripts/run_tests.pl t $SKIP_TESTS
 fi
 
 rt=$?
