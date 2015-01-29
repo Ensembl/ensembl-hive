@@ -72,7 +72,7 @@ sub standaloneJob {
     } if $expected_events;
 
     lives_and(sub {
-        ok(Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef, 1), 'job completed');
+        ok(Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef), 'job completed');
     }, sprintf('standaloneJob("%s", %s, (...), %s)', $module_or_file, stringify($param_hash), stringify($flags)));
 
     ok(!scalar(@$events_to_test), 'no untriggered events') if $expected_events;

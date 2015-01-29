@@ -4,25 +4,23 @@ package Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 use strict;
 use warnings;
 
-use Test::More;
-
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 
 sub standaloneJob {
-    my ($module_or_file, $input_id, $flags, $flow_into, $do_tests) = @_;
+    my ($module_or_file, $input_id, $flags, $flow_into) = @_;
 
     my $runnable_module = load_file_or_module( $module_or_file );
-    ok($runnable_module, "module '$module_or_file' is loaded") if $do_tests;
+    die "$module_or_file not loaded\n" unless $runnable_module;
 
     my $runnable_object = $runnable_module->new();
-    isa_ok($runnable_object, 'Bio::EnsEMBL::Hive::Process', "runnable is instantiated") if $do_tests;
+    die "Runnable $module_or_file not created\n" unless $runnable_object;
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
-    isa_ok($job, 'Bio::EnsEMBL::Hive::AnalysisJob', 'we have a dummy job') if $do_tests;
+    die "Dummy job not created\n" unless $job;
     $job->input_id( $input_id );
     $job->dataflow_rules(1, []);
 
