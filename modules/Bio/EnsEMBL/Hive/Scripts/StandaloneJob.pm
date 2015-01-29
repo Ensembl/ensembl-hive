@@ -30,7 +30,6 @@ sub standaloneJob {
     my ($module_or_file, $input_id, $flags, $flow_into) = @_;
 
     my $runnable_module = load_file_or_module( $module_or_file );
-    die "$module_or_file not loaded\n" unless $runnable_module;
 
     my $runnable_object = $runnable_module->new();
     die "Runnable $module_or_file not created\n" unless $runnable_object;

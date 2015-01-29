@@ -33,7 +33,6 @@ sub init_pipeline {
     my ($file_or_module) = @_;
 
     my $pipeconfig_package_name = load_file_or_module( $file_or_module );
-    die "$file_or_module not loaded\n" unless $pipeconfig_package_name;
 
     my $pipeconfig_object = $pipeconfig_package_name->new();
     die "PipeConfig $pipeconfig_package_name not created\n" unless $pipeconfig_object;
