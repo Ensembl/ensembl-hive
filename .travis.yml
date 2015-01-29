@@ -7,10 +7,6 @@ perl:
 env:
   - COVERALLS=true  DB=sqlite
 
-branches:
-  only:
-    - feature/tests_ci
-
 before_install:
     - sudo apt-get -y update
     - sudo apt-get -y install unzip
