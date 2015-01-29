@@ -22,7 +22,7 @@ install:
     - cpanm -n Devel::Cover::Report::Coveralls
     - cpanm -n DBD::SQLite
 
-script: "./travisci/harness.sh"
+script: "./scripts/travis_run_tests.sh"
 
 notifications:
   email:
