@@ -48,6 +48,7 @@ package Bio::EnsEMBL::Hive::Utils::Graph;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -467,6 +468,9 @@ sub _add_dataflow_rules {
         my ($from_analysis, $branch_code, $funnel_dataflow_rule) =
             ($df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule);
 
+        my $input_id_template = $self->config_get('DisplayInputIDTemplate') ? $df_rule->input_id_template : undef;
+        $input_id_template = join(",\n", sort keys( %{destringify($input_id_template)} )) if $input_id_template;
+
         my $target_object       = $df_rule->to_analysis
             or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
@@ -509,7 +513,7 @@ sub _add_dataflow_rules {
                 arrowhead   => 'none',
                 fontname    => $df_edge_fontname,
                 fontcolor   => $dataflow_colour,
-                label       => '#'.$branch_code,
+                label       => '#'.$branch_code.($input_id_template ? ":\n".$input_id_template : ''),
             );
             $graph->add_edge( $midpoint_name => $target_node_name,   # second half of the two-part arrow
                 color     => $dataflow_colour,
@@ -528,7 +532,7 @@ sub _add_dataflow_rules {
             $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => '#'.$branch_code."\n".$target_object->display_name( $self->hive_dba ),
+                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->hive_dba ),
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',
@@ -540,7 +544,7 @@ sub _add_dataflow_rules {
                 color       => $dataflow_colour,
                 fontname    => $df_edge_fontname,
                 fontcolor   => $dataflow_colour,
-                label       => '#'.$branch_code,
+                label       => '#'.$branch_code.($input_id_template ? ":\n".$input_id_template : ''),
             );
         } # /if( "$df_rule needs a midpoint" )
     } # /foreach my $df_rule (@$dataflow_rules)
