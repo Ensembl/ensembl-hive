@@ -21,7 +21,3 @@ install:
 
 script: "./scripts/travis_run_tests.sh"
 
-notifications:
-  email:
-    on_success: always
-    on_failure: always
