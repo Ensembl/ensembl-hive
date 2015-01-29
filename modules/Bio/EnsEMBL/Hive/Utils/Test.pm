@@ -36,6 +36,7 @@ use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify'
 
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
+use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 
 BEGIN {
     $ENV{'USER'}         ||= (getpwuid($<))[7];
@@ -109,51 +110,12 @@ sub init_pipeline {
 sub runWorker {
     my ($hive_dba, $specialization_options, $life_options, $execution_options) = @_;
 
-    isa_ok($hive_dba, 'Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
-    $specialization_options ||= {};
-    $life_options ||= {};
-    $execution_options ||= {};
+    $specialization_options->{force_sync} = 1;
 
-    my $queen = $hive_dba->get_Queen();
-    isa_ok($queen, 'Bio::EnsEMBL::Hive::Queen', 'God bless the Queen');
-
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-    ok($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user, 'Valley is fully defined');
-
-    # Sync the hive
-    my $list_of_analyses = $hive_dba->get_AnalysisAdaptor->fetch_all_by_pattern( $specialization_options->{analyses_pattern} );
-    $queen->synchronize_hive( $list_of_analyses );
-
-    # Create the worker
-    my $worker = $queen->create_new_worker(
-          # Worker identity:
-             -meadow_type           => $meadow_type,
-             -meadow_name           => $meadow_name,
-             -process_id            => $process_id,
-             -meadow_host           => $meadow_host,
-             -meadow_user           => $meadow_user,
-             -resource_class_name   => $specialization_options->{resource_class_name},
-
-          # Worker control parameters:
-             -job_limit             => $life_options->{job_limit},
-             -life_span             => $life_options->{life_span},
-             -no_cleanup            => $execution_options->{no_cleanup},
-             -no_write              => $execution_options->{no_write},
-             -retry_throwing_jobs   => $life_options->{retry_throwing_jobs},
-             -can_respecialize      => $specialization_options->{can_respecialize},
-    );
-    isa_ok($worker, 'Bio::EnsEMBL::Hive::Worker', 'we have a worker !');
-
-    # Run the worker
-    eval {
-        $worker->run( {
-             -analyses_pattern      => $specialization_options->{analyses_pattern},
-             -job_id                => $specialization_options->{job_id},
-        } );
-        pass('run the worker');
-    } or do {
-        fail("could not run the worker:\n$@");
-    };
+    lives_and(sub {
+        Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($hive_dba, $specialization_options, $life_options, $execution_options);
+    }, sprintf('runWorker()'));
 }
+
 
 1;
