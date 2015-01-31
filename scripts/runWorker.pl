@@ -17,6 +17,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
+use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 
 
 main();
@@ -102,34 +103,6 @@ sub main {
         script_usage(1);
     }
 
-    my $queen = $hive_dba->get_Queen();
-
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-
-    my $worker = $queen->create_new_worker(
-          # Worker identity:
-             -meadow_type           => $meadow_type,
-             -meadow_name           => $meadow_name,
-             -process_id            => $process_id,
-             -meadow_host           => $meadow_host,
-             -meadow_user           => $meadow_user,
-             -resource_class_id     => $resource_class_id,
-             -resource_class_name   => $resource_class_name,
-
-          # Worker control parameters:
-             -job_limit             => $job_limit,
-             -life_span             => $life_span,
-             -no_cleanup            => $no_cleanup,
-             -no_write              => $no_write,
-             -worker_log_dir        => $worker_log_dir,
-             -hive_log_dir          => $hive_log_dir,
-             -retry_throwing_jobs   => $retry_throwing_jobs,
-             -can_respecialize      => $can_respecialize,
-
-          # Other parameters:
-             -debug                 => $debug,
-    );
-
     if( $logic_name ) {
         warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n";
         $analyses_pattern = $logic_name;
@@ -138,24 +111,28 @@ sub main {
         $analyses_pattern = $analysis_id;
     }
 
-    eval {
-        $worker->run( {
-             -analyses_pattern      => $analyses_pattern,
-             -job_id                => $job_id,
-             -force                 => $force,
-        } );
+    my %specialization_options = (
+        resource_class_id   => $resource_class_id,
+        resource_class_name => $resource_class_name,
+        can_respecialize    => $can_respecialize,
+        analyses_pattern    => $analyses_pattern,
+        job_id              => $job_id,
+        force               => $force,
+    );
+    my %life_options = (
+        job_limit           => $job_limit,
+        life_span           => $life_span,
+        retry_throwing_jobs => $retry_throwing_jobs,
+    );
+    my %execution_options = (
+        no_cleanup          => $no_cleanup,
+        no_write            => $no_write,
+        worker_log_dir      => $worker_log_dir,
+        hive_log_dir        => $hive_log_dir,
+        debug               => $debug,
+    );
 
-        1;
-    } or do {
-        my $msg = $@;
-
-        $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
-
-        $worker->cause_of_death( 'SEE_MSG' );
-        $queen->register_worker_death($worker, 1);
-
-        die $msg;
-    };
+    Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($hive_dba, \%specialization_options, \%life_options, \%execution_options);
 }
 
 
