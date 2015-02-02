@@ -312,6 +312,20 @@ sub job_count_breakout {
     return ($breakout_label, $total_job_count, \%count_hash);
 }
 
+sub friendly_avg_job_runtime {
+    my $self = shift;
+
+    my $avg = $self->avg_msec_per_job;
+    my @units = ([24*3600*1000, 'day'], [3600*1000, 'hr'], [60*1000, 'min'], [1000, 'sec']);
+
+    while (my $unit_description = shift @units) {
+        my $x = $avg / $unit_description->[0];
+        if ($x >= 1.) {
+            return ($x, $unit_description->[1]);
+        }
+    }
+    return ($avg, 'ms');
+}
 
 sub toString {
     my $self = shift @_;
@@ -320,8 +334,9 @@ sub toString {
     my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
     my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
     my $analysis                                        = $self->analysis;
+    my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
@@ -329,7 +344,7 @@ sub toString {
 
         $breakout_label,
 
-        $self->avg_msec_per_job,
+        $avg_runtime, $avg_runtime_unit,
 
         $self->num_running_workers,
         $self->num_required_workers,
