@@ -68,6 +68,7 @@ package Bio::EnsEMBL::Hive::Queen;
 use strict;
 use warnings;
 use File::Path 'make_path';
+use List::Util qw(max);
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -632,11 +633,13 @@ sub print_status_and_return_reasons_to_exit {
     my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
     my $reasons_to_exit = '';
 
+    my $max_logic_name_length = max(map {length($_->logic_name)} @$list_of_analyses);
+
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
 
-        print $stats->toString . "\n";
+        print $stats->toString($max_logic_name_length) . "\n";
 
         if( $stats->status eq 'FAILED') {
             my $logic_name    = $analysis->logic_name;
