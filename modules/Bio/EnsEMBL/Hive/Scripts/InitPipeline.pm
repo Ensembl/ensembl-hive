@@ -22,8 +22,6 @@ package Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 use strict;
 use warnings;
 
-use Test::More;
-
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
