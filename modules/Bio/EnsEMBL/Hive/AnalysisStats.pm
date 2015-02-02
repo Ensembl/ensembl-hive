@@ -279,7 +279,7 @@ sub toString {
     my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout;
     my $analysis                                        = $self->analysis;
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%2d) %11s, jobs( %24s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %11s, jobs( %24s ), ave_msec:%d, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
