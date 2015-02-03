@@ -47,10 +47,11 @@ sub new {
     my $class = shift;
     my %flags = @_;
 
-    if(my $url = $flags{'-url'}) {
+    if(my $url = delete $flags{'-url'}) {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
             return $class->SUPER::new(
+                %flags,
                 -driver => $parsed_url->{'driver'},
                 -host   => $parsed_url->{'host'},
                 -port   => $parsed_url->{'port'},
