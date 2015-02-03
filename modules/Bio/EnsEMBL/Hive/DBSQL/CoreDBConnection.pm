@@ -748,9 +748,10 @@ sub db_handle {
 =cut
 
 sub prepare {
-   my ($self,@args) = @_;
+   my $self = shift @_;
+   my $sql  = shift @_;
 
-   if( ! $args[0] ) {
+   if( ! $sql ) {
      throw("Attempting to prepare an empty SQL query.");
    }
 
@@ -758,19 +759,8 @@ sub prepare {
    if ( ($self->reconnect_when_lost()) and (!$self->db_handle()->ping()) ) { 
        $self->reconnect();
    }
-   my $sth;
-   eval {
-       $sth = $self->db_handle->prepare(@args);
-       1;
-   } or do {
-       throw( "FAILED_SQL(".$self->dbname."): " . join(' ', @args) . "\nGot: ".$@."\n" );
-   };
 
-   # return an overridden statement handle that provides us with
-   # the means to disconnect inactive statement handles automatically
-   bless $sth, "Bio::EnsEMBL::Hive::DBSQL::StatementHandle";
-   $sth->dbc($self);
-   $sth->sql($args[0]);
+   my $sth = Bio::EnsEMBL::Hive::DBSQL::StatementHandle->new( $self, $sql, @_ );
 
    $self->query_count($self->query_count()+1);
    return $sth;
