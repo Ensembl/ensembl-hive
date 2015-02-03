@@ -309,13 +309,6 @@ sub connect {
                     $driver, $dbparam,
                     $self->host(),   $self->port() );
 
-    if ( $self->{'disconnect_when_inactive'} ) {
-      $self->{'count'}++;
-      if ( $self->{'count'} > 1000 ) {
-        sleep 1;
-        $self->{'count'} = 0;
-      }
-    }
     eval {
       $dbh = DBI->connect( $dsn, $self->username(), $self->password(),
                            { 'RaiseError' => 1 } );
