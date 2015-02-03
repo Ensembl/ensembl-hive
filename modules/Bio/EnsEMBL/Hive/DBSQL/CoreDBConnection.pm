@@ -344,7 +344,13 @@ sub connect {
   $self->db_handle($dbh);
 
   if ( $self->timeout() ) {
+    my $driver = $self->driver();
+
+    if( $driver eq 'mysql' ) {
     $dbh->do( "SET SESSION wait_timeout=" . $self->timeout() );
+    } else {
+        warn "Don't know how to set the timeout for '$driver' driver, skipping.\n";
+    }
   }
 
   #print("CONNECT\n");
