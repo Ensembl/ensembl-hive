@@ -159,9 +159,8 @@ sub _run_test {
     $query .= " LIMIT $maxrow" unless $query =~ /LIMIT/i;
     print "Query: $query\n";
 
-    my $sth_attribs = ($self->data_dbc->driver eq 'mysql') ? { 'mysql_use_result' => 1 } : {};
-
-    my $sth = $self->data_dbc()->prepare($query, $sth_attribs);
+    my $sth = $self->data_dbc()->prepare( $query,
+                                    ($self->data_dbc->driver eq 'mysql') ? { 'mysql_use_result' => 1 } : undef );
     $sth->execute();
 
     my $nrow = 0;

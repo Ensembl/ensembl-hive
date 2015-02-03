@@ -217,7 +217,7 @@ sub _get_rows_from_query {
     my @rows = ();
     my $sth = $self->data_dbc()->prepare($inputquery);
     $sth->execute();
-    my @column_names_from_data = @{$sth->{NAME}};   # tear it off the original reference to gain some freedom
+    my @column_names_from_data = @{$sth->dbi_sth()->{'NAME'}};   # tear it off the original reference to gain some freedom
 
     while (my @cols = $sth->fetchrow_array()) {
         push @rows, \@cols;

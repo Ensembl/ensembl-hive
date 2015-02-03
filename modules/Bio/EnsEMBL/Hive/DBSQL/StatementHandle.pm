@@ -11,10 +11,10 @@
 
 =head1 DESCRIPTION
 
-    This class extends DBD::mysql::st so that the DESTROY method may be
-    overridden.  If the DBConnection::disconnect_when_inactive flag is set
-    this statement handle will cause the database connection to be closed
-    when it goes out of scope and there are no other open statement handles.
+    This class extends DBI::st via containment, intercepts possible "gone away" errors,
+    automatically reconnects and re-prepares the statement. It should take much less resources
+    than pinging or worrying about disconnecting before and reconnecting after external processes
+    whose duration we do not control.
 
 =head1 LICENSE
 
@@ -39,73 +39,138 @@
 package Bio::EnsEMBL::Hive::DBSQL::StatementHandle;
 
 use strict;
+no strict 'refs';
 use warnings;
-
-use DBI;
-use Bio::EnsEMBL::Hive::Utils ('throw');
-
-use base ('DBI::st');
+use Bio::EnsEMBL::Hive::Utils ('throw', 'stringify');
 
 
-# As DBD::mysql::st is a tied hash can't store things in it,
-# so have to have parallel hash
-my %dbchash;
-my %dbc_sql_hash;
+sub new {
+    my ($class, $dbc, $sql, $attr) = @_;
+
+    my $dbi_sth;
+    eval {
+        $dbi_sth = $dbc->db_handle->prepare( $sql, $attr );
+        1;
+    } or do {
+        throw( "FAILED_SQL(".$dbc->dbname."): " . join(' ', $sql, stringify($attr)) . "\nGot: ".$@."\n" );
+    };
+
+    my $self = bless {}, $class;
+
+    $self->dbc( $dbc );
+    $self->sql( $sql );
+    $self->attr( $attr );
+
+    $self->dbi_sth( $dbi_sth );
+
+    return $self;
+}
 
 
 sub dbc {
     my $self = shift;
-
-    if (@_) {
-        my $dbc = shift;
-        if(!defined($dbc)) {
-            # without delete key space would grow indefinitely causing mem-leak
-            delete($dbchash{$self});
-        } else {
-            $dbchash{$self} = $dbc;
-        }
-    }
-
-    return $dbchash{$self};
+    $self->{'_dbc'} = shift if(@_);
+    return $self->{'_dbc'};
 }
 
 
 sub sql {
     my $self = shift;
-
-    if (@_) {
-        my $sql = shift;
-        if(!defined($sql)) {
-            # without delete key space would grow indefinitely causing mem-leak
-            delete($dbc_sql_hash{$self});
-        } else {
-            $dbc_sql_hash{$self} = $sql;
-        }
-    }
-
-    return $dbc_sql_hash{$self};
+    $self->{'_sql'} = shift if(@_);
+    return $self->{'_sql'};
 }
 
 
-sub DESTROY {
+sub attr {
+    my $self = shift;
+    $self->{'_attr'} = shift if(@_);
+    return $self->{'_attr'};
+}
+
+
+sub dbi_sth {
+    my $self = shift;
+    $self->{'_dbi_sth'} = shift if(@_);
+    return $self->{'_dbi_sth'};
+}
+
+
+sub AUTOLOAD {
+    our $AUTOLOAD;
+
+    $AUTOLOAD=~/^.+::(\w+)$/;
+    my $method_name = $1;
+
+#    warn "[AUTOLOAD instantiating '$method_name'] ($AUTOLOAD)\n";
+
+    *$AUTOLOAD = sub {
+#        warn "[AUTOLOADed method '$method_name' running] ($AUTOLOAD)\n";
+
+        my $self = shift @_;
+        my $dbi_sth = $self->dbi_sth() or throw( "dbi_sth returns false" );
+        my $wantarray = wantarray;
+
+        my @retval;
+        eval {
+            if( $wantarray ) {
+                @retval = $dbi_sth->$method_name( @_ );
+            } else {
+                $retval[0] = $dbi_sth->$method_name( @_ );
+            }
+            1;
+        } or do {
+            my $error = $@;
+            if( $error =~ /MySQL server has gone away/                      # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
+             or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
+
+                my $dbc = $self->dbc();
+                my $sql = $self->sql();
+                my $attr = $self->attr();
+
+                warn "trying to reconnect...";
+                $dbc->reconnect();
+
+                warn "trying to re-prepare [$sql". ($attr ? (', '.stringify($attr)) : '') ."]...";
+                $dbi_sth = $dbc->db_handle->prepare( $sql, $attr );
+                $self->dbi_sth( $dbi_sth );
+
+                warn "trying to re-$method_name...";
+                if( $wantarray ) {
+                    @retval = $dbi_sth->$method_name( @_ );
+                } else {
+                    $retval[0] = $dbi_sth->$method_name( @_ );
+                }
+            } else {
+                throw( $error );
+            }
+        };
+
+        return $wantarray ? @retval : $retval[0];
+    };
+    goto &$AUTOLOAD;
+}
+
+
+sub DESTROY {   # note AUTOLOAD/DESTROY interdependence!
     my ($self) = @_;
 
     my $dbc = $self->dbc;
     $self->dbc(undef);
+
     my $sql = $self->sql;
     $self->sql(undef);
 
-    # Re-bless into DBI::st so that superclass destroy method is called if
-    # it exists (it does not exist in all DBI versions).
-    bless( $self, 'DBI::st' );
+    $self->dbi_sth( undef );  # make sure it goes through its own DESTROY *now*
 
-    # The count for the number of kids is decremented only after this
-    # function is complete. Disconnect if there is 1 kid (this one)
-    # remaining.
+    #
+    # Forgetting $dbi_sth gets it out of scope, which decrements $db_handle->{Kids} .
+    # If as the result the $db_handle has no more Kids, we can safely trigger the disconnect if it was requested.
+    #
+
     if (   $dbc
         && $dbc->disconnect_when_inactive()
         && $dbc->connected
-        && ( $dbc->db_handle->{Kids} == 1 ) ) {
+        && ( $dbc->db_handle->{Kids} == 0 ) ) {
 
         if ( $dbc->disconnect_if_idle() ) {
             warn("Problem disconnect $self around sql = $sql\n");
@@ -114,4 +179,3 @@ sub DESTROY {
 }
 
 1;
-
