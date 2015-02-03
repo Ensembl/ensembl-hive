@@ -68,6 +68,7 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
 package Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection;
 
 use strict;
+no strict 'refs';
 use warnings;
 
 use DBI;
@@ -787,42 +788,6 @@ sub reconnect {
 }
 
 
-=head2 do
-
-  Arg [1]    : string $string
-               the SQL statement to prepare
-  Example    : $sth = $db_connection->do("SELECT column FROM table");
-  Description: Executes a SQL statement using the internal DBI database handle.
-  Returntype : Result of DBI dbh do() method
-  Exceptions : thrown if the SQL statement is empty, or if the internal
-               database handle is not present.
-  Caller     : Adaptor modules
-  Status     : Stable
-
-=cut
-
-sub do {
-   my ($self,$string, $attr, @bind_values) = @_;
-
-   if( ! $string ) {
-     throw("Attempting to do an empty SQL query.");
-   }
-
-   # warn "SQL(".$self->dbname."): $string";
-   my $error;
-   
-   my $do_result = $self->work_with_db_handle(sub {
-     my ($dbh) = @_;
-     my $result = eval { $dbh->do($string, $attr, @bind_values) };
-     $error = $@ if $@;
-     return $result;
-   });
-   
-   throw "Detected an error whilst executing statement '$string': $error" if $error;
- 
-   return $do_result;
-}
-
 =head2 work_with_db_handle
 
   Arg [1]    : CodeRef $callback
@@ -969,6 +934,76 @@ sub disconnect_if_idle {
   return 0;
 }
 
+
+
+#
+# We have to redefine do() to avoid inheriting Core's do().
+# However our do() is no different from any other DBI-enhanced methods in that they are all AUTOLOADed.
+# So we switch off warnings and enforce AUTOLOADing.
+#
+
+no warnings 'redefine';
+sub do {
+    my $autoload    = __PACKAGE__.'::AUTOLOAD';
+    $$autoload      = __PACKAGE__.'::do';
+    goto &AUTOLOAD;
+}
+
+
+sub AUTOLOAD {
+    our $AUTOLOAD;
+
+    $AUTOLOAD=~/^.+::(\w+)$/;
+    my $method_name = $1;
+
+#    warn "[AUTOLOAD instantiating '$method_name'] ($AUTOLOAD)\n";
+
+    *$AUTOLOAD = sub {
+#        warn "[AUTOLOADed method '$method_name' running] ($AUTOLOAD)\n";
+
+        my $self = shift @_;
+        my $db_handle = $self->db_handle() or throw( "db_handle returns false" );
+        my $wantarray = wantarray;
+
+        my @retval;
+        eval {
+            if( $wantarray ) {
+                @retval = $db_handle->$method_name( @_ );
+            } else {
+                $retval[0] = $db_handle->$method_name( @_ );
+            }
+            1;
+        } or do {
+            my $error = $@;
+            if( $error =~ /MySQL server has gone away/                      # mysql version  ( test by setting "SET SESSION wait_timeout=5;" and waiting for 10sec)
+             or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
+
+                warn "trying to reconnect...";
+                $self->reconnect();
+                my $db_handle = $self->db_handle() or throw( "db_handle returns false" );
+
+                warn "trying to re-$method_name...";
+                if( $wantarray ) {
+                    @retval = $db_handle->$method_name( @_ );
+                } else {
+                    $retval[0] = $db_handle->$method_name( @_ );
+                }
+            } else {
+                throw( $error );
+            }
+        };
+
+        if($self->disconnect_when_inactive()) {
+            $self->disconnect_if_idle();
+        }
+
+        return $wantarray ? @retval : $retval[0];
+    };
+    goto &$AUTOLOAD;
+}
+
+
+sub DESTROY { } # needed because of AUTOLOAD
 
 1;
 
