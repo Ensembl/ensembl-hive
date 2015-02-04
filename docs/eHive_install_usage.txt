@@ -18,6 +18,8 @@
 
 	see http://dev.mysql.com/downloads/
 
+	WARNING: eHive is not compatible with MysQL 5.6.20 but is with versions 5.6.16 and 5.6.23. We suggest avoiding the 5.6.[17-22] interval
+
 1.2.2. SQLite 3.6 or higher
 
 	see http://www.sqlite.org/download.html
