@@ -432,6 +432,13 @@ sub overridable_pipeline_create_commands {
 }
 
 
+sub is_analysis_topup {
+    my $self                        = shift @_;
+
+    return $self->o('hive_no_init');
+}
+
+
 sub run_pipeline_create_commands {
     my $self            = shift @_;
 
