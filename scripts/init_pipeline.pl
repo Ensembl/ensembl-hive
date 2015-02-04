@@ -40,7 +40,7 @@ sub main {
 
     $pipeconfig_object->run_pipeline_create_commands();
 
-    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
+    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url() );
 
     $hive_dba->load_collections();
 
