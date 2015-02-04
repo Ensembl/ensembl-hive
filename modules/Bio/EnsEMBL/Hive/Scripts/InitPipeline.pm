@@ -40,8 +40,8 @@ sub init_pipeline {
 
     $pipeconfig_object->run_pipeline_create_commands();
 
-    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
-    die "Hive's DBAdaptor could not be created for ".$pipeconfig_object->pipeline_url() unless $hive_dba;
+    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url())
+        or die "Hive's DBAdaptor could not be created for ".$pipeconfig_object->pipeline_url();
 
     $hive_dba->load_collections();
 
