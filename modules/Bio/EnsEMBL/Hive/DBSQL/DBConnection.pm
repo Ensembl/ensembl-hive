@@ -121,7 +121,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
 
     my $sql_cmd     = shift @$sql_params;
 
-    my $attempts        = 4;
+    my $attempts        = 9;
     my $sleep_max_sec   = 1;
     my $log_message_adaptor;
 
