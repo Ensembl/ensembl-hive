@@ -113,14 +113,14 @@ BEGIN {
                  useful when running a lot of jobs on a compute farm
                  which would otherwise keep open a lot of connections to the
                  database.  Database connections are automatically reopened
-                 when required.Do not use this option together with RECONNECT_WHEN_CONNECTION_LOST.
+                 when required.Do not use this option together with RECONNECT_WHEN_LOST.
   Arg [WAIT_TIMEOUT]: (optional) integer
-                 Time in seconds for the wait timeout to happen. Time after which
+                 Time in seconds for the wait_timeout to happen. Time after which
                  the connection is deleted if not used. By default this is 28800 (8 hours)
                  on most systems. 
                  So set this to greater than this if your connection are getting deleted.
                  Only set this if you are having problems and know what you are doing.
-  Arg [RECONNECT_WHEN_CONNECTION_LOST]: (optional) boolean
+  Arg [RECONNECT_WHEN_LOST]: (optional) boolean
                  In case you're reusing the same database connection, i.e. DISCONNECT_WHEN_INACTIVE is 
                  set to false and running a job which takes a long time to process (over 8hrs), 
                  which means that the db connection may be lost, set this option to true. 
@@ -193,15 +193,13 @@ sub new {
         }
     }
 
-    $wait_timeout   ||= 0;
-
     $self->driver($driver);
     $self->host( $host );
     $self->port($port);
     $self->username( $user );
     $self->password( $password );
     $self->dbname( $dbname );
-    $self->timeout($wait_timeout);
+    $self->wait_timeout($wait_timeout);
 
     if($disconnect_when_inactive) {
       $self->disconnect_when_inactive($disconnect_when_inactive);
@@ -336,13 +334,13 @@ sub connect {
 
   $self->db_handle($dbh);
 
-  if ( $self->timeout() ) {
+  if ( $self->wait_timeout() ) {
     my $driver = $self->driver();
 
     if( $driver eq 'mysql' ) {
-    $dbh->do( "SET SESSION wait_timeout=" . $self->timeout() );
+        $dbh->do( "SET SESSION wait_timeout=" . $self->wait_timeout() );
     } else {
-        warn "Don't know how to set the timeout for '$driver' driver, skipping.\n";
+        warn "Don't know how to set the wait_timeout for '$driver' driver, skipping.\n";
     }
   }
 
@@ -378,13 +376,13 @@ sub disconnect_count {
   return $self->{'disconnect_count'};
 }
 
-sub timeout{
+sub wait_timeout{
   my($self, $arg ) = @_;
 
   (defined $arg) &&
-    ($self->{_timeout} = $arg );
+    ($self->{_wait_timeout} = $arg );
 
-  return $self->{_timeout};
+  return $self->{_wait_timeout};
 
 }
 
