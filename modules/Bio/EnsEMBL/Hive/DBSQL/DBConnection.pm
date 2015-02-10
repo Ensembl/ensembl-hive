@@ -106,6 +106,14 @@ sub url {
     }
     $url .= '/' . $self->dbname;
 
+    my @opt_pairs = ();
+    foreach my $option ('disconnect_when_inactive', 'wait_timeout', 'reconnect_when_lost') {
+        if( defined(my $value = $self->$option()) ) {
+            push @opt_pairs, "$option=$value";
+        }
+    }
+    $url = join(';', $url, @opt_pairs);
+
     return $url;
 }
 

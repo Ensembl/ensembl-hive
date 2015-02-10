@@ -163,7 +163,7 @@ sub main {
     }
 
     if( $self->{'url'} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:
-        $self->{'url'} = $self->{'dba'}->dbc->url('EHIVE_PASS');
+        $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
     }
 
     my $queen = $self->{'dba'}->get_Queen;
