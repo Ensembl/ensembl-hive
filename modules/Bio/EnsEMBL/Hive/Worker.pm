@@ -680,7 +680,7 @@ sub run_one_batch {
         };
         if(my $msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            $self->runnable_object->input_job->warning( $msg, $job->incomplete );
+            $self->runnable_object->warning( $msg, $job->incomplete );
         }
 
             # whether the job completed successfully or not:
