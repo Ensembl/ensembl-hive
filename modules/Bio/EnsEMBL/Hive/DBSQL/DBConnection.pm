@@ -51,15 +51,11 @@ sub new {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
             return $class->SUPER::new(
-                %flags,
-                -driver => $parsed_url->{'driver'},
-                -host   => $parsed_url->{'host'},
-                -port   => $parsed_url->{'port'},
-                -user   => $parsed_url->{'user'},
-                -pass   => $parsed_url->{'pass'},
-                -dbname => $parsed_url->{'dbname'},
-                -disconnect_when_inactive       => $parsed_url->{'conn_params'}->{'discon'},
-                -reconnect_when_connection_lost => $parsed_url->{'conn_params'}->{'recon'},
+                %flags,     # they act as overridable defaults
+
+                ( map { ("-$_" => $parsed_url->{$_}) } ( 'driver', 'host', 'port', 'user', 'pass', 'dbname' ) ),    # parentheses are essential
+
+                ( map { ("-$_" => $parsed_url->{'conn_params'}->{$_}) } keys %{$parsed_url->{'conn_params'}}  ),    # parentheses are essential
             );
 
         } else {

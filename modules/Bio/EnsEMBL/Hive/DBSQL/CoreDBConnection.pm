@@ -149,15 +149,15 @@ sub new {
     my %flags = @_;
 
     my ($driver, $user, $password, $host, $port, $dbname,
-        $dbconn, $disconnect_when_inactive, $wait_timeout, $reconnect_when_connection_lost)
+        $dbconn, $disconnect_when_inactive, $wait_timeout, $reconnect_when_lost)
      = @flags{qw(-driver -user -pass -host -port -dbname -dbconn
-                 -disconnect_when_inactive -wait_timeout -reconnect_when_connection_lost)};
+                 -disconnect_when_inactive -wait_timeout -reconnect_when_lost)};
 
     my $self = {};
     bless $self, $class;
 
   if($dbconn) {
-    if($dbname || $host || $driver || $password || $port || $disconnect_when_inactive || $reconnect_when_connection_lost) {
+    if($dbname || $host || $driver || $password || $port || $disconnect_when_inactive || $reconnect_when_lost) {
       throw("Cannot specify other arguments when -DBCONN argument used.");
     }
 
@@ -206,8 +206,8 @@ sub new {
     if($disconnect_when_inactive) {
       $self->disconnect_when_inactive($disconnect_when_inactive);
     }
-    if($reconnect_when_connection_lost) {
-      $self->reconnect_when_lost($reconnect_when_connection_lost);
+    if($reconnect_when_lost) {
+      $self->reconnect_when_lost($reconnect_when_lost);
     }
   }
 

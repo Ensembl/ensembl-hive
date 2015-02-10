@@ -74,7 +74,7 @@ sub DESTROY {
 =head2 fetch
 
   Arg[1]     : string $url
-  Example    :  $url = 'mysql://user:pass@host:3306/dbname/table_name?tparam_name=tparam_value;type=compara;discon=1'
+  Example    :  $url = 'mysql://user:pass@host:3306/dbname/table_name?tparam_name=tparam_value;type=compara;disconnect_when_inactive=1'
                 my $object = Bio::EnsEMBL::Hive::URLFactory->fetch($url);
   Description: parses the URL, connects to appropriate DBAdaptor,
                determines appropriate object_adaptor, fetches the object
@@ -135,6 +135,7 @@ sub fetch {
     return;
 }
 
+
 sub create_cached_dba {
     my ($class, $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
 
@@ -145,9 +146,9 @@ sub create_cached_dba {
         $port ||= 3306;
     }
 
-    my $type    = $conn_params->{'type'};
-    my $discon  = $conn_params->{'discon'};
-    my $nosqlvc = $conn_params->{'nosqlvc'};
+    my $type                        = $conn_params->{'type'};
+    my $disconnect_when_inactive    = $conn_params->{'disconnect_when_inactive'};
+    my $no_sql_schema_version_check = $conn_params->{'no_sql_schema_version_check'};
 
     my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
     my $dba = $_URLFactory_global_instance->{$connectionKey};
@@ -166,9 +167,9 @@ sub create_cached_dba {
         $_URLFactory_global_instance->{$connectionKey} = $dba =
         $type eq 'hive'
           ? $module->new(
-            -url    => $dbconn_part,
-            -disconnect_when_inactive => $discon,
-            -no_sql_schema_version_check => $nosqlvc,
+            -url                        => $dbconn_part,
+            -disconnect_when_inactive   => $disconnect_when_inactive,
+            -no_sql_schema_version_check=> $no_sql_schema_version_check,
         ) : $module->new(
             -driver => $driver,
             -host   => $host,
@@ -177,7 +178,7 @@ sub create_cached_dba {
             -pass   => $pass,
             -dbname => $dbname,
             -species => $dbname,
-            -disconnect_when_inactive => $discon,
+            -disconnect_when_inactive => $disconnect_when_inactive,
         );
     }
     return $dba;
