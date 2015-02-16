@@ -1,4 +1,33 @@
 
+-- ---------------------------------------------------------------------------------------------------
+-- Rename   all TIMESTAMP columns to have a 'when_' prefix for easier (and possibly automatic) identification.
+-- Add      worker.when_seen TIMESTAMP
+-- Fix      msg VIEW
+-- ---------------------------------------------------------------------------------------------------
+
+\set expected_version 63
+
+\set ON_ERROR_STOP on
+
+    -- warn that we detected the schema version mismatch:
+SELECT ('The patch only applies to schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', but the current schema version is '
+    || meta_value
+    || ', so skipping the rest.') as incompatible_msg
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value!=CAST(:expected_version AS VARCHAR);
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+   SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE 1 != 1/CAST( (meta_key!='hive_sql_schema_version' OR meta_value=CAST(:expected_version AS VARCHAR)) AS INTEGER );
+
+SELECT ('The patch seems to be compatible with schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', applying the patch...') AS compatible_msg;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
     -- First, rename all TIMESTAMPed columns to have a 'when_' prefix for automatic identification:
 ALTER TABLE analysis_stats          RENAME COLUMN last_update   TO when_updated;
 ALTER TABLE job                     RENAME COLUMN completed     TO when_completed;
@@ -20,6 +49,9 @@ CREATE OR REPLACE VIEW msg AS
     LEFT JOIN job j ON (j.job_id=m.job_id)
     LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
 
-    -- UPDATE hive_sql_schema_version
-UPDATE hive_meta SET meta_value=64 WHERE meta_key='hive_sql_schema_version' AND meta_value='63';
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value= (CAST(meta_value AS INTEGER) + 1) WHERE meta_key='hive_sql_schema_version';
 
