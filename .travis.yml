@@ -17,8 +17,6 @@ before_install:
 install:
     - cpanm -v --installdeps --notest .
     - cpanm -n Devel::Cover::Report::Coveralls
-    - cpanm -n DBD::SQLite
-    - cpanm -n JSON
 
 script: "./scripts/travis_run_tests.sh"
 
