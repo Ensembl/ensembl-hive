@@ -1,4 +1,39 @@
 
+-- ---------------------------------------------------------------------------------------------------
+-- Create   `role` table
+-- Populate it by recreating the timeline of respecialization events from log_message and worker tables.
+-- Copy     all the data from meta to pipeline_wide_parameters
+-- Add      `log_message`.role_id column
+-- FKeys    to establish a practical link via `role` table
+-- Replace  some functions and procedures to work with the new `role` table
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 59;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
     -- Adding a new table for tracking Roles of multirole Workers:
 CREATE TABLE role (
     role_id                 INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -54,7 +89,6 @@ INSERT INTO role (worker_id, analysis_id, when_started, when_finished, attempted
     WHERE completed BETWEEN when_started AND when_finished GROUP BY worker_id, analysis_id;
 
 
-
     -- new column in log_message to log the role_id:
 ALTER TABLE log_message ADD COLUMN role_id INTEGER DEFAULT NULL AFTER job_id;
 
@@ -103,7 +137,8 @@ BEGIN
 END; //
 DELIMITER ;
 
+-- ----------------------------------</actual_patch> -------------------------------------------------
 
-    -- UPDATE hive_sql_schema_version
-UPDATE hive_meta SET meta_value=60 WHERE meta_key='hive_sql_schema_version' AND meta_value='59';
 
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
