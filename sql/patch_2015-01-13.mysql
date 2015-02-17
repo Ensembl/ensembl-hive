@@ -25,6 +25,10 @@ SELECT CONCAT(  'The patch seems to be compatible with schema version ',
                 @expected_version,
                 ', applying the patch...') AS '';
 
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
     -- First, rename 'host' to 'meadow_host' for consistency:
