@@ -56,10 +56,18 @@ sub count_pending_workers_by_rc_name {
 }
 
 
+sub _command_line_to_extract_all_running_workers {
+    my ($self) = @_;
+
+        # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
+    return q{ps x -o state,pid,command -w -w | awk '(/runWorker.pl/ && ($3 ~ /perl$/) )'};
+}
+
+
 sub count_running_workers {
     my $self = shift @_;
 
-    my $cmd = 'ps x | grep runWorker.pl | grep -v "grep runWorker.pl" | wc -l';
+    my $cmd = $self->_command_line_to_extract_all_running_workers . ' | wc -l';
     my $run_count = qx/$cmd/;
     chomp($run_count);
 
@@ -70,7 +78,7 @@ sub count_running_workers {
 sub status_of_all_our_workers { # returns a hashref
     my ($self) = @_;
 
-    my $cmd = 'ps x -o state,pid,command -w -w | grep runWorker.pl | grep -v "grep runWorker.pl" ';
+    my $cmd = $self->_command_line_to_extract_all_running_workers;
 
         # FIXME: if we want to incorporate Meadow->pipeline_name() filtering here,
         #        a dummy parameter to the runWorker.pl should probably be introduced
