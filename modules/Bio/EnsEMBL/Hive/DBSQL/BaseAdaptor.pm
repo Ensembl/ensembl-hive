@@ -404,15 +404,26 @@ sub check_object_present_in_db {    # return autoinc_id/undef if the table has a
     my $column_set  = $self->column_set();
     my $autoinc_id  = $self->autoinc_id();
 
+        # we look for identical contents, so must skip the autoinc_id columns when fetching:
     my $non_autoinc_columns = [ grep { $_ ne $autoinc_id } keys %$column_set ];
     my $non_autoinc_values  = $self->slicer( $object, $non_autoinc_columns );
 
-    my $sql = 'SELECT '.($autoinc_id or 1)." FROM $table_name WHERE ".
-            # we look for identical contents, so must skip the autoinc_id columns when fetching:
-        join(' AND ', map { my $v=$non_autoinc_values->[$_]; "$non_autoinc_columns->[$_] ".(defined($v) ? "='$v'" : 'IS NULL') } (0..@$non_autoinc_columns-1) );
+    my @constraints = ();
+    my @values = ();
+    foreach my $idx (0..scalar(@$non_autoinc_columns)-1) {
+        my $column = $non_autoinc_columns->[$idx];
+        my $value  = $non_autoinc_values->[$idx];
+        if( defined($value) ) {
+            push @constraints, "$column = ?";
+            push @values, $value;
+        } else {
+            push @constraints, "$column IS NULL";
+        }
+    }
 
-    my $sth = $self->prepare($sql);
-    $sth->execute();
+    my $sql = 'SELECT '.($autoinc_id or 1)." FROM $table_name WHERE ".  join(' AND ', @constraints);
+    my $sth = $self->prepare( $sql );
+    $sth->execute( @values );
 
     my ($return_value) = $sth->fetchrow_array();
     $sth->finish;
