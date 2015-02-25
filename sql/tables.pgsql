@@ -103,7 +103,7 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 CREATE TABLE analysis_base (
     analysis_id             SERIAL PRIMARY KEY,
     logic_name              VARCHAR(255) NOT NULL,
-    module                  VARCHAR(255),
+    module                  VARCHAR(255) NOT NULL,
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
