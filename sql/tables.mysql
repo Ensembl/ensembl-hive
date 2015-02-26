@@ -51,7 +51,7 @@ CONTACT
 
 CREATE TABLE hive_meta (
     meta_key                VARCHAR(255) NOT NULL PRIMARY KEY,
-    meta_value              TEXT
+    meta_value              MEDIUMTEXT
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
@@ -70,7 +70,7 @@ CREATE TABLE hive_meta (
 
 CREATE TABLE pipeline_wide_parameters (
     param_name              VARCHAR(255) NOT NULL PRIMARY KEY,
-    param_value             TEXT,
+    param_value             MEDIUMTEXT,
 
     KEY value_idx (param_name(255))
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -102,7 +102,7 @@ CREATE TABLE analysis_base (
     analysis_id             INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
     logic_name              VARCHAR(255) NOT NULL,
     module                  VARCHAR(255) NOT NULL,
-    parameters              TEXT,
+    parameters              MEDIUMTEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
     max_retry_count         INTEGER     NOT NULL DEFAULT 3,
@@ -214,7 +214,7 @@ CREATE TABLE dataflow_rule (
     branch_code             INTEGER     NOT NULL DEFAULT 1,
     funnel_dataflow_rule_id INTEGER              DEFAULT NULL,
     to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',
-    input_id_template       TEXT                 DEFAULT NULL,
+    input_id_template       MEDIUMTEXT            DEFAULT NULL,
 
     UNIQUE  KEY (from_analysis_id, branch_code, funnel_dataflow_rule_id, to_analysis_url, input_id_template(512))
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -393,7 +393,7 @@ CREATE TABLE accu (
     receiving_job_id        INTEGER     NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
-    value                   TEXT,
+    value                   MEDIUMTEXT,
 
     KEY accu_sending_idx (sending_job_id),
     KEY accu_receiving_idx (receiving_job_id)
@@ -416,7 +416,7 @@ CREATE TABLE accu (
 
 CREATE TABLE analysis_data (
     analysis_data_id        INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    data                    TEXT,
+    data                    MEDIUMTEXT,
 
             KEY (data(100))
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -573,7 +573,7 @@ CREATE TABLE log_message (
     when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
     status                  ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN',
-    msg                     TEXT,
+    msg                     MEDIUMTEXT,
     is_error                SMALLINT,
 
             KEY worker_id     (worker_id),
