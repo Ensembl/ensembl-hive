@@ -304,14 +304,16 @@ sub check_in_job {
 sub store_out_files {
     my ($self, $job) = @_;
 
+    # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
+
+    my $delete_sql  = 'DELETE from job_file WHERE role_id=' . $job->role_id . ' AND job_id=' . $job->dbID . ' AND retry='.$job->retry_count;
+    $self->dbc->do( $delete_sql );
+
     if($job->stdout_file or $job->stderr_file) {
-        my $insert_sql = 'REPLACE INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
-        my $sth = $self->dbc()->prepare($insert_sql);
-        $sth->execute($job->dbID(), $job->retry_count(), $job->role_id(), $job->stdout_file(), $job->stderr_file());
-        $sth->finish();
-    } else {
-        my $sql = 'DELETE from job_file WHERE role_id='.$job->role_id.' AND job_id='.$job->dbID;
-        $self->dbc->do($sql);
+        my $insert_sql = 'INSERT INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
+        my $insert_sth = $self->dbc->prepare($insert_sql);
+        $insert_sth->execute( $job->dbID, $job->retry_count, $job->role_id, $job->stdout_file, $job->stderr_file );
+        $insert_sth->finish();
     }
 }
 
