@@ -719,21 +719,28 @@ sub interval_workers_with_unknown_usage {
 sub store_resource_usage {
     my ($self, $report_entries, $processid_2_workerid) = @_;
 
-    my $sql_replace = 'REPLACE INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    my $sth_replace = $self->prepare( $sql_replace );
+    # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
+
+    my $sql_delete = 'DELETE FROM worker_resource_usage WHERE worker_id=?';
+    my $sth_delete = $self->prepare( $sql_delete );
+
+    my $sql_insert = 'INSERT INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    my $sth_insert = $self->prepare( $sql_insert );
 
     my @not_ours = ();
 
     while( my ($process_id, $report_entry) = each %$report_entries ) {
 
         if( my $worker_id = $processid_2_workerid->{$process_id} ) {
-            $sth_replace->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+            $sth_delete->execute( $worker_id );
+            $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
         } else {
             push @not_ours, $process_id;
             #warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
         }
     }
-    $sth_replace->finish();
+    $sth_delete->finish();
+    $sth_insert->finish();
 }
 
 
