@@ -199,6 +199,17 @@ sub update_status {
 }
 
 
+sub interval_update_claim {
+    my ($self, $analysis_id, $job_count) = @_;
+
+    unless( $self->db->hive_use_triggers() ) {
+        my $sql = "UPDATE analysis_stats SET ready_job_count = ready_job_count - $job_count WHERE analysis_id= $analysis_id";
+
+        $self->dbc->do( $sql );
+    }
+}
+
+
 =head2 interval_update_work_done
 
   Arg [1]     : int $analysis_id
@@ -236,12 +247,11 @@ sub interval_update_work_done {
         avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
         avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)), 
-        ready_job_count = ready_job_count - $job_count, 
         done_job_count = done_job_count + $job_count 
     WHERE analysis_id= $analysis_id
   };
 
-  $self->dbc->do($sql);
+  $self->dbc->do( $sql );
 }
 
 

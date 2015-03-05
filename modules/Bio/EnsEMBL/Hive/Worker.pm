@@ -484,6 +484,7 @@ sub run {
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
                     if(scalar(@$actual_batch)) {
+                        $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_claim($self->current_role->analysis->dbID, scalar(@$actual_batch));
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
                         $jobs_done_by_batches_loop += $jobs_done_by_this_batch;
                         $self->job_limiter->final_decision( $jobs_done_by_this_batch );
