@@ -81,7 +81,7 @@ sub runWorker {
         1;
 
     } or do {
-        my $msg = @_;
+        my $msg = $@;
 
         $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
 
