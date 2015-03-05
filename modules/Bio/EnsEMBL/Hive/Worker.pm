@@ -503,11 +503,15 @@ sub run {
                     $self->cause_of_death('LIFESPAN');
 
                 } else {
-                    my $desired_batch_size  = $current_role->analysis->stats->get_or_estimate_batch_size();
+                    my $stats = $current_role->analysis->stats;
+                    my $desired_batch_size  = $stats->get_or_estimate_batch_size();
                     my $hit_the_limit;  # dummy at the moment
                     ($desired_batch_size, $hit_the_limit)   = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
+
+                    $self->worker_say( "ready_job_count=".$stats->ready_job_count.", num_running_workers=".$stats->num_running_workers.", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch) );
+
                     if(scalar(@$actual_batch)) {
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
                         $jobs_done_by_batches_loop += $jobs_done_by_this_batch;
@@ -747,6 +751,12 @@ sub run_one_batch {
 
         $self->prev_job_error( $job->died_somewhere );
         $self->enter_status('READY');
+
+        # UNCLAIM THE SURPLUS:
+        # my $stats = $current_role->analysis->stats;       # FIXME: make sure you are getting a fresh value from the database -- and it's cheap to obtain!
+        # my $jobs_to_unclaim = scalar(@$jobs) - $stats->get_or_estimate_batch_size();
+        # if($jobs_to_unclaim > 0) { unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
+
     } # /while(my $job = shift @$jobs)
 
     return $jobs_done_here;

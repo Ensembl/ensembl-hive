@@ -223,26 +223,40 @@ sub update {
 sub get_or_estimate_batch_size {
     my $self = shift;
 
-    if( (my $batch_size = $self->batch_size())>0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
+    my $batch_size = $self->batch_size;
 
-        return $batch_size;
+    if( $batch_size > 0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
+
                                                         # otherwise it is a request for dynamic estimation:
-    } elsif( my $avg_msec_per_job = $self->avg_msec_per_job() ) {           # further estimations from collected stats
+    } elsif( my $avg_msec_per_job = $self->avg_msec_per_job ) {           # further estimations from collected stats
 
         $avg_msec_per_job = 100 if($avg_msec_per_job<100);
 
-        return POSIX::ceil( $self->min_batch_time() / $avg_msec_per_job );
+        $batch_size = POSIX::ceil( $self->min_batch_time / $avg_msec_per_job );
 
     } else {        # first estimation when no stats are available (take -$batch_size as first guess, if not zero)
-        return -$batch_size || 1;
+        $batch_size = -$batch_size || 1;
     }
+
+        # TailTrimming correction:
+    if( my $num_running_workers = $self->num_running_workers ) {
+        my $tt_batch_size = POSIX::floor( $self->ready_job_count / $num_running_workers );
+        if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
+            $batch_size = $tt_batch_size;
+        } elsif(!$tt_batch_size) {
+            $batch_size = POSIX::ceil( $self->ready_job_count / $num_running_workers ); # essentially, 0 or 1
+        }
+    }
+
+    return $batch_size;
 }
 
 
 sub estimate_num_required_workers {
     my $self = shift;
 
-    return POSIX::ceil( $self->ready_job_count / $self->get_or_estimate_batch_size );
+    # return POSIX::ceil( $self->ready_job_count / $self->get_or_estimate_batch_size ); # no TailTrimming
+    return $self->ready_job_count;  # TailTrimming
 }
 
 
