@@ -306,7 +306,7 @@ sub store_out_files {
 
     # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
 
-    my $delete_sql  = 'DELETE from job_file WHERE role_id=' . $job->role_id . ' AND job_id=' . $job->dbID . ' AND retry='.$job->retry_count;
+    my $delete_sql  = 'DELETE from job_file WHERE job_id=' . $job->dbID . ' AND retry='.$job->retry_count;
     $self->dbc->do( $delete_sql );
 
     if($job->stdout_file or $job->stderr_file) {
