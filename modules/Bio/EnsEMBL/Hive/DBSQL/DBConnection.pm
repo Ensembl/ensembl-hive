@@ -126,6 +126,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
     my $log_message_adaptor;
 
     my $retval;
+    my $query_msg;
 
     foreach my $attempt (1..$attempts) {
         eval {
@@ -134,23 +135,35 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
             $sth->finish;
             1;
         } or do {
-            if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
+            $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
 
-                my $this_sleep_sec = rand( $sleep_max_sec );
+            if( (my $deadlock_detected = ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/))
+             or (my $toomanyconn_detected = ($@ =~ /Could not connect to database.+?failed: Too many connections/))
+            ) {
 
-                if( $deadlock_log_callback ) {
-                    $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
+                my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
+
+                if($toomanyconn_detected) {     # It may get noticed in case the error log is monitored/recorded:
+                    warn "Too many connections detected when trying to run $query_msg (attempt #$attempt). Will try again in $this_sleep_sec sec";
+                } else {
+                    if( $deadlock_log_callback ) {
+                        $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
+                    }
                 }
 
                 usleep( $this_sleep_sec*1000000 );
                 $sleep_max_sec *= 2;
                 next;
+
+            } else {     # but definitely report other errors
+
+                die "$@ -- $query_msg";
             }
-            die $@;     # but definitely report other errors
         };
-        last;
+        last;   # stop looping once we succeeded
     }
-    die "After $attempts attempts the query '$sql_cmd' is still in a deadlock: $@" if($@);
+
+    die "After $attempts attempts the query $query_msg still cannot be run: $@" if($@);
 
     return $retval;
 }
