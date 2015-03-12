@@ -320,61 +320,75 @@ sub register_worker_death {
 }
 
 
-sub meadow_users_of_running_workers {
+sub meadow_type_2_name_2_users_of_running_workers {
     my $self = shift @_;
 
-    return [ keys %{ $self->count_all("status!='DEAD'", ['meadow_user']) } ];
+    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user']);
 }
 
 
 sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachable ones)
     my ($self, $valley, $check_buried_in_haste) = @_;
 
+    my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
+
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
-    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
-    my $meadow_users_of_interest    = $self->meadow_users_of_running_workers();             # FIXME: we could make it very granular ( meadow_type->meadow_name->meadow_user->count )
-    my %mt_and_pid_to_worker_status = ();
-    my %worker_status_counts        = ();
-    my %mt_and_pid_to_lost_worker   = ();
+    my $meadow_type_2_name_2_users      = $self->meadow_type_2_name_2_users_of_running_workers();
+    my %signature_and_pid_to_worker_status = ();
 
+    while(my ($meadow_type, $level2) = each %$meadow_type_2_name_2_users) {
+
+        if(my $meadow = $valley->available_meadow_hash->{$meadow_type}) {   # if this Valley supports $meadow_type at all...
+            while(my ($meadow_name, $level3) = each %$level2) {
+
+                if($meadow->cached_name eq $meadow_name) {  # and we can reach the same $meadow_name from this Valley...
+                    my $meadow_users_of_interest    = [ keys %$level3 ];
+                    my $meadow_signature            = $meadow_type.'/'.$meadow_name;
+
+                    $signature_and_pid_to_worker_status{$meadow_signature} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
+                }
+            }
+        }
+    }
+
+    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
     my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id=?";
     my $update_when_seen_sth;
 
+    my %meadow_status_counts        = ();
+    my %mt_and_pid_to_lost_worker   = ();
     foreach my $worker (@$queen_overdue_workers) {
 
-        my $meadow_type = $worker->meadow_type;
-        if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
+        my $meadow_signature    = $worker->meadow_type.'/'.$worker->meadow_name;
+        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
 
-                # only run this once per reachable Meadow:
-            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
-
-            my $process_id = $worker->process_id;
-            if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) {  # can be RUN|PEND|xSUSP
-                $worker_status_counts{$meadow_type}{$status}++;
+            my $meadow_type = $worker->meadow_type;
+            my $process_id  = $worker->process_id;
+            if(my $status = $pid_to_worker_status->{$process_id}) {  # can be RUN|PEND|xSUSP
+                $meadow_status_counts{$meadow_signature}{$status}++;
 
                     # only prepare once at most:
                 $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );
 
                 $update_when_seen_sth->execute( $worker->dbID );
             } else {
-                $worker_status_counts{$meadow_type}{'LOST'}++;
+                $meadow_status_counts{$meadow_signature}{'LOST'}++;
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
             }
         } else {
-            $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
+            $meadow_status_counts{$meadow_signature}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
         }
     }
 
     $update_when_seen_sth->finish() if $update_when_seen_sth;
 
         # print a quick summary report:
-    foreach my $meadow_type (keys %worker_status_counts) {
-        warn "GarbageCollector:\t[$meadow_type Meadow:]\t".join(', ', map { "$_:$worker_status_counts{$meadow_type}{$_}" } keys %{$worker_status_counts{$meadow_type}})."\n\n";
+    while(my ($meadow_signature, $status_count) = each %meadow_status_counts) {
+        warn "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
     }
 
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {

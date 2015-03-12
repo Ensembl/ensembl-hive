@@ -171,12 +171,13 @@ sub get_pending_worker_counts_by_meadow_type_rc_name {
 
 
 sub count_running_workers_and_generate_limiters {
-    my ($self, $meadow_users_of_interest) = @_;
+    my ($self, $meadow_type_2_name_2_users) = @_;
 
     my $valley_running_worker_count             = 0;
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $meadow_users_of_interest = [keys %{ $meadow_type_2_name_2_users->{$meadow->type}{$meadow->cached_name} || {} }];
         my $this_worker_count   = $meadow->count_running_workers( $meadow_users_of_interest );
 
         $valley_running_worker_count                           += $this_worker_count;

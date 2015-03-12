@@ -60,14 +60,14 @@ sub schedule_workers_resync_if_necessary {
 
     my $analysis_id2rc_id                       = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
     my $rc_id2name                              = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
-    my $meadow_users_of_interest                = $queen->meadow_users_of_running_workers();    # FIXME: we could make it very granular ( meadow_type->meadow_name->meadow_user->count )
+    my $meadow_type_2_name_2_users              = $queen->meadow_type_2_name_2_users_of_running_workers();
         # combined mapping:
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
 
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
     my ($valley_running_worker_count,
-        $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_users_of_interest );
+        $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_type_2_name_2_users );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
