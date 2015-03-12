@@ -316,7 +316,9 @@ sub register_worker_death {
             . ( $worker_died ? ", when_died='$worker_died'" : ', when_died=CURRENT_TIMESTAMP' )
             . " WHERE worker_id='$worker_id' ";
 
-    $self->dbc->do( $sql );
+    $self->dbc->protected_prepare_execute( [ $sql ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 0 ); }
+    );
 }
 
 
@@ -447,7 +449,11 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 sub check_in_worker {
     my ($self, $worker) = @_;
 
-    $self->dbc->do("UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'");
+    my $sql = "UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'";
+
+    $self->dbc->protected_prepare_execute( [ $sql ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 0 ); }
+    );
 }
 
 
