@@ -67,6 +67,13 @@ use Capture::Tiny ':all';
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
+sub param_defaults {
+    return {
+        return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
+    }
+}
+
+
 =head2 strict_hash_format
 
     Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
@@ -154,6 +161,15 @@ sub write_output {
     my $flat_cmd = $self->param('flat_cmd');
 
     if ($return_value) {
+
+        # We create a dataflow event depending on the exit code of the process.
+        if (exists $self->param('return_codes_2_branches')->{$return_value}) {
+            my $branch_number = $self->param('return_codes_2_branches')->{$return_value};
+            $self->dataflow_output_id( $self->input_id, $branch_number );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number));
+        }
+
         die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
     }
 }
