@@ -170,6 +170,12 @@ sub write_output {
             $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number));
         }
 
+        if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->input_job->autoflow(0);
+            $self->complete_early("Java heap space is out of memory.\n");
+        }
+
         die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
     }
 }
