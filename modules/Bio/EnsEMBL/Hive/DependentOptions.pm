@@ -10,7 +10,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -129,7 +129,8 @@ sub hash_leaves {
             $self->hash_leaves($hash_to, $element, $array_element_prefix);
         }
     } elsif(!$self->is_fully_substituted_string($source)) {
-        $hash_to->{$prefix} = 1;
+        $source =~ m/#\:subst (.+?)\:#/;
+        $hash_to->{$prefix} = $prefix =~ /'$1'/ ? undef : $1;
     }
 
     return $hash_to;
@@ -252,9 +253,15 @@ sub process_options {
     my $missing_options = $self->hash_leaves( {}, $self->root, '' );
 
     if(scalar(keys %$missing_options)) {
-        warn "Missing or incomplete definition of the following options:\n";
-        foreach my $key (sort keys %$missing_options) {
-            print "\t$key\n";
+        my @missing_keys = grep {!defined $missing_options->{$_}} (keys %$missing_options);
+        my @incomplete_keys = grep {defined $missing_options->{$_}} (keys %$missing_options);
+        if (@missing_keys) {
+            warn "The following options are missing:\n";
+            print "\t$_\n" for @missing_keys;
+        }
+        if (@incomplete_keys) {
+            warn "The following options are incomplete:\n";
+            print "\t$_ needs '".($missing_options->{$_})."'\n" for @incomplete_keys;
         }
         exit(1);
     } else {

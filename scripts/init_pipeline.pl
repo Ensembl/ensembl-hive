@@ -16,6 +16,7 @@ BEGIN {
 
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
+use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 
 sub main {
     my %deprecated_option = ();
@@ -33,22 +34,7 @@ sub main {
 
     my $file_or_module = shift @ARGV or script_usage(0);
 
-    my $pipeconfig_package_name = load_file_or_module( $file_or_module );
-
-    my $pipeconfig_object = $pipeconfig_package_name->new();
-    $pipeconfig_object->process_options( 1 );
-
-    $pipeconfig_object->run_pipeline_create_commands();
-
-    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeconfig_object->pipeline_url(), -no_sql_schema_version_check => 1 );
-
-    $hive_dba->load_collections();
-
-    $pipeconfig_object->add_objects_from_config();
-
-    $hive_dba->save_collections();
-
-    print $pipeconfig_object->useful_commands_legend();
+    return Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
 }
 
 main();
@@ -87,7 +73,7 @@ __DATA__
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

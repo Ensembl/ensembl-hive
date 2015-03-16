@@ -1,4 +1,36 @@
 
+-- ---------------------------------------------------------------------------------------------------
+-- Change   the `worker`.last_check_in to auto-initialize by NULL (bugfix to 6d6edeb)
+-- Remove   constraints to deleting `worker`.analysis_id
+-- Drop     `worker`.analysis_id
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 60;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
     -- bugfix [to 6d6edeb] : make sure the default timestamp is auto-initialized to NULL:
 ALTER TABLE worker MODIFY COLUMN last_check_in TIMESTAMP NULL DEFAULT NULL;
 
@@ -12,6 +44,8 @@ ALTER TABLE worker DROP INDEX analysis_status;
     -- Now we can drop the column itself:
 ALTER TABLE worker DROP COLUMN analysis_id;
 
-    -- UPDATE hive_sql_schema_version
-UPDATE hive_meta SET meta_value=61 WHERE meta_key='hive_sql_schema_version' AND meta_value='60';
+-- ----------------------------------</actual_patch> -------------------------------------------------
 
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';

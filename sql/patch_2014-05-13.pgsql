@@ -1,4 +1,36 @@
 
+-- ---------------------------------------------------------------------------------------------------
+-- Create   `role` table
+-- Populate it by recreating the timeline of respecialization events from log_message and worker tables.
+-- Copy     all the data from meta to pipeline_wide_parameters
+-- Add      `log_message`.role_id column
+-- FKeys    to establish a practical link via `role` table
+-- Replace  some functions and procedures to work with the new `role` table
+-- ---------------------------------------------------------------------------------------------------
+
+\set expected_version 59
+
+\set ON_ERROR_STOP on
+
+    -- warn that we detected the schema version mismatch:
+SELECT ('The patch only applies to schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', but the current schema version is '
+    || meta_value
+    || ', so skipping the rest.') as incompatible_msg
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value!=CAST(:expected_version AS VARCHAR);
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+   SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE 1 != 1/CAST( (meta_key!='hive_sql_schema_version' OR meta_value=CAST(:expected_version AS VARCHAR)) AS INTEGER );
+
+SELECT ('The patch seems to be compatible with schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', applying the patch...') AS compatible_msg;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
     -- Adding a new table for tracking Roles of multirole Workers:
 CREATE TABLE role (
     role_id                 SERIAL PRIMARY KEY,
@@ -22,8 +54,13 @@ ALTER TABLE role                    ADD FOREIGN KEY (worker_id)                 
 ALTER TABLE log_message             ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
 
 
-    -- replace affected views and procedures:
-CREATE OR REPLACE VIEW resource_usage_stats AS
+    -- replace affected views and procedures.
+    --
+    -- For some reason CREATE OR REPLACE VIEW didn't work,
+    -- so we are doing it in two steps:
+DROP VIEW IF EXISTS resource_usage_stats;
+
+CREATE VIEW resource_usage_stats AS
     SELECT a.logic_name || '(' || a.analysis_id || ')' analysis,
            w.meadow_type,
            rc.name || '(' || rc.resource_class_id || ')' resource_class,
@@ -39,7 +76,8 @@ CREATE OR REPLACE VIEW resource_usage_stats AS
     GROUP BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status
     ORDER BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status;
 
+-- ----------------------------------</actual_patch> -------------------------------------------------
 
-    -- UPDATE hive_sql_schema_version
-UPDATE hive_meta SET meta_value=60 WHERE meta_key='hive_sql_schema_version' AND meta_value='59';
 
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value= (CAST(meta_value AS INTEGER) + 1) WHERE meta_key='hive_sql_schema_version';

@@ -1,0 +1,45 @@
+
+-- ---------------------------------------------------------------------------------------------------
+-- Rename   worker.host -> worker.meadow_host
+-- Add      worker.meadow_user
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 62;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+    -- First, rename 'host' to 'meadow_host' for consistency:
+ALTER TABLE worker CHANGE COLUMN host meadow_host VARCHAR(255) NOT NULL;
+
+    -- Then allow each Worker to register the username that is running the process on the meadow_host:
+ALTER TABLE worker ADD COLUMN meadow_user VARCHAR(255) DEFAULT NULL AFTER meadow_host;
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+

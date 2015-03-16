@@ -11,7 +11,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -101,10 +101,10 @@ sub retry_count {
     return $self->{'_retry_count'};
 }
 
-sub completed {
+sub when_completed {
     my $self = shift;
-    $self->{'_completed'} = shift if(@_);
-    return $self->{'_completed'};
+    $self->{'_when_completed'} = shift if(@_);
+    return $self->{'_when_completed'};
 }
 
 sub runtime_msec {

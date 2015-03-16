@@ -10,7 +10,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -39,6 +39,7 @@ use strict;
 use warnings;
 use List::Util 'sum';
 use POSIX;
+use Term::ANSIColor;
 
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Analysis;
@@ -188,16 +189,16 @@ sub avg_output_msec_per_job {
 
 ## other storable attributes:
 
-sub last_update {                   # this method is called by the initial store() [at which point it returns undef]
+sub when_updated {                   # this method is called by the initial store() [at which point it returns undef]
     my $self = shift;
-    $self->{'_last_update'} = shift if(@_);
-    return $self->{'_last_update'};
+    $self->{'_when_updated'} = shift if(@_);
+    return $self->{'_when_updated'};
 }
 
-sub seconds_since_last_update {     # this method is mostly used to convert between server time and local time
+sub seconds_since_when_updated {     # this method is mostly used to convert between server time and local time
     my( $self, $value ) = @_;
-    $self->{'_last_update'} = time() - $value if(defined($value));
-    return defined($self->{'_last_update'}) ? time() - $self->{'_last_update'} : undef;
+    $self->{'_when_updated'} = time() - $value if(defined($value));
+    return defined($self->{'_when_updated'}) ? time() - $self->{'_when_updated'} : undef;
 }
 
 sub sync_lock {
@@ -253,51 +254,104 @@ sub inprogress_job_count {      # includes CLAIMED
             - $self->failed_job_count;
 }
 
+my %meta_status_2_color = (
+    'DONE'      => 'bright_cyan',
+    'RUNNING'   => 'bright_yellow',
+    'READY'     => 'bright_green',
+    'BLOCKED'   => 'black on_white',
+    'EMPTY'     => 'clear',
+    'FAILED'    => 'red',
+);
+
+my %analysis_status_2_meta_status = (
+    'LOADING'       => 'READY',
+    'SYNCHING'      => 'READY',
+    'ALL_CLAIMED'   => 'BLOCKED',
+    'WORKING'       => 'RUNNING',
+);
+
+my %count_method_2_meta_status = (
+    'semaphored_job_count'  => 'BLOCKED',
+    'ready_job_count'       => 'READY',
+    'inprogress_job_count'  => 'RUNNING',
+    'done_job_count'        => 'DONE',
+    'failed_job_count'      => 'FAILED',
+);
+
+sub _text_with_status_color {
+    my $field_size = shift;
+    my $color_enabled = shift;
+
+    my $padding = ($field_size and length($_[0]) < $field_size) ? ' ' x ($field_size - length($_[0])) : '';
+    return $padding . ($color_enabled ? color($meta_status_2_color{$_[1]}).$_[0].color('reset') : $_[0]);
+}
+
 
 sub job_count_breakout {
     my $self = shift;
+    my $field_size = shift;
+    my $color_enabled = shift;
 
+    my $this_length = 0;
     my @count_list = ();
     my %count_hash = ();
     my $total_job_count = $self->total_job_count();
     foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
         if( my $count = $count_hash{$count_method} = $self->$count_method() ) {
-            push @count_list, $count.substr($count_method,0,1);
+            $this_length += length("$count") + 1;
+            push @count_list, _text_with_status_color(undef, $color_enabled, $count, $count_method_2_meta_status{$count_method}).substr($count_method,0,1);
         }
     }
     my $breakout_label = join('+', @count_list);
+    $this_length += scalar(@count_list)-1 if @count_list;
     $breakout_label .= '='.$total_job_count if(scalar(@count_list)!=1); # only provide a total if multiple or no categories available
+    $this_length += 1+length("$total_job_count") if(scalar(@count_list)!=1);
+
+    $breakout_label = ' ' x ($field_size - $this_length) . $breakout_label if $field_size and $this_length<$field_size;
 
     return ($breakout_label, $total_job_count, \%count_hash);
 }
 
+sub friendly_avg_job_runtime {
+    my $self = shift;
+
+    my $avg = $self->avg_msec_per_job;
+    my @units = ([24*3600*1000, 'day'], [3600*1000, 'hr'], [60*1000, 'min'], [1000, 'sec']);
+
+    while (my $unit_description = shift @units) {
+        my $x = $avg / $unit_description->[0];
+        if ($x >= 1.) {
+            return ($x, $unit_description->[1]);
+        }
+    }
+    return ($avg, 'ms');
+}
 
 sub toString {
     my $self = shift @_;
+    my $max_logic_name_length = shift || 40;
 
-    my $analysis = $self->analysis;
+    my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
+    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
+    my $analysis                                        = $self->analysis;
+    my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
 
-    my $output .= sprintf("%-27s(%2d) %11s jobs(Sem:%d, Rdy:%d, InProg:%d, Done+Pass:%d, Fail:%d)=%d Ave_msec:%d, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Reqired:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
-        $self->status,
+        _text_with_status_color(11, $can_do_colour, $self->status, $analysis_status_2_meta_status{$self->status} || $self->status),
 
-        $self->semaphored_job_count,
-        $self->ready_job_count,
-        $self->inprogress_job_count,
-        $self->done_job_count,
-        $self->failed_job_count,
-        $self->total_job_count,
+        $breakout_label,
 
-        $self->avg_msec_per_job,
+        $avg_runtime, $avg_runtime_unit,
 
         $self->num_running_workers,
         $self->num_required_workers,
     );
     $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
-               ."  (sync'd "  .($self->seconds_since_last_update // 0)." sec ago)";
+               ."  (sync'd "  .($self->seconds_since_when_updated // 0)." sec ago)";
 
     return $output;
 }

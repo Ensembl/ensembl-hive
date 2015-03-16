@@ -40,7 +40,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -68,6 +68,7 @@ package Bio::EnsEMBL::Hive::Queen;
 use strict;
 use warnings;
 use File::Path 'make_path';
+use List::Util qw(max);
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::AnalysisJob;
@@ -115,9 +116,9 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($meadow_type, $meadow_name, $process_id, $exec_host, $resource_class_id, $resource_class_name,
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-meadow_type -meadow_name -process_id -exec_host -resource_class_id -resource_class_name
+     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
@@ -145,7 +146,8 @@ sub create_new_worker {
     my $worker = Bio::EnsEMBL::Hive::Worker->new(
         'meadow_type'       => $meadow_type,
         'meadow_name'       => $meadow_name,
-        'host'              => $exec_host,
+        'meadow_host'       => $meadow_host,
+        'meadow_user'       => $meadow_user,
         'process_id'        => $process_id,
         'resource_class'    => $resource_class,
     );
@@ -286,73 +288,109 @@ sub specialize_worker {
 
 
 sub register_worker_death {
-    my ($self, $worker, $update_last_check_in) = @_;
+    my ($self, $worker, $update_when_checked_in) = @_;
 
     my $worker_id       = $worker->dbID;
     my $work_done       = $worker->work_done;
     my $cause_of_death  = $worker->cause_of_death || 'UNKNOWN';    # make sure we do not attempt to insert a void
-    my $worker_died     = $worker->died;
+    my $worker_died     = $worker->when_died;
 
     my $current_role    = $worker->current_role;
-    my $release_undone_jobs = 0;
 
     unless( $current_role ) {
         $worker->current_role( $current_role = $self->db->get_RoleAdaptor->fetch_last_unfinished_by_worker_id( $worker_id ) );
-        # $current_role can be undef if the cause_of_death is NO_ROLE
-        $release_undone_jobs = 1 if $current_role;
     }
 
     if( $current_role and !$current_role->when_finished() ) {
+        # List of cause_of_death:
+        # only happen before or after a batch: 'NO_ROLE','NO_WORK','JOB_LIMIT','HIVE_OVERLOAD','LIFESPAN','SEE_MSG'
+        # can happen whilst the worker is running a batch: 'CONTAMINATED','RELOCATED','KILLED_BY_USER','MEMLIMIT','RUNLIMIT','SEE_MSG','UNKNOWN'
+        my $release_undone_jobs = ($cause_of_death =~ /^(CONTAMINATED|RELOCATED|KILLED_BY_USER|MEMLIMIT|RUNLIMIT|SEE_MSG|UNKNOWN)$/);
         $current_role->worker($worker); # So that release_undone_jobs_from_role() has the correct cause_of_death and work_done
         $current_role->when_finished( $worker_died );
         $self->db->get_RoleAdaptor->finalize_role( $current_role, $release_undone_jobs );
     }
 
     my $sql = "UPDATE worker SET status='DEAD', work_done='$work_done', cause_of_death='$cause_of_death'"
-            . ( $update_last_check_in ? ', last_check_in=CURRENT_TIMESTAMP ' : '' )
-            . ( $worker_died ? ", died='$worker_died'" : ', died=CURRENT_TIMESTAMP' )
+            . ( $update_when_checked_in ? ', when_checked_in=CURRENT_TIMESTAMP ' : '' )
+            . ( $worker_died ? ", when_died='$worker_died'" : ', when_died=CURRENT_TIMESTAMP' )
             . " WHERE worker_id='$worker_id' ";
 
-    $self->dbc->do( $sql );
+    $self->dbc->protected_prepare_execute( [ $sql ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 0 ); }
+    );
+}
+
+
+sub meadow_type_2_name_2_users_of_running_workers {
+    my $self = shift @_;
+
+    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user']);
 }
 
 
 sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachable ones)
     my ($self, $valley, $check_buried_in_haste) = @_;
 
+    my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
+
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
-    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
-    my %mt_and_pid_to_worker_status = ();
-    my %worker_status_counts        = ();
-    my %mt_and_pid_to_lost_worker   = ();
+    my $meadow_type_2_name_2_users      = $self->meadow_type_2_name_2_users_of_running_workers();
+    my %signature_and_pid_to_worker_status = ();
 
+    while(my ($meadow_type, $level2) = each %$meadow_type_2_name_2_users) {
+
+        if(my $meadow = $valley->available_meadow_hash->{$meadow_type}) {   # if this Valley supports $meadow_type at all...
+            while(my ($meadow_name, $level3) = each %$level2) {
+
+                if($meadow->cached_name eq $meadow_name) {  # and we can reach the same $meadow_name from this Valley...
+                    my $meadow_users_of_interest    = [ keys %$level3 ];
+                    my $meadow_signature            = $meadow_type.'/'.$meadow_name;
+
+                    $signature_and_pid_to_worker_status{$meadow_signature} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
+                }
+            }
+        }
+    }
+
+    my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
+    my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id=?";
+    my $update_when_seen_sth;
+
+    my %meadow_status_counts        = ();
+    my %mt_and_pid_to_lost_worker   = ();
     foreach my $worker (@$queen_overdue_workers) {
 
-        my $meadow_type = $worker->meadow_type;
-        if(my $meadow = $valley->find_available_meadow_responsible_for_worker($worker)) {
+        my $meadow_signature    = $worker->meadow_type.'/'.$worker->meadow_name;
+        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
 
-            $mt_and_pid_to_worker_status{$meadow_type} ||= $meadow->status_of_all_our_workers;  # only run this once per reachable Meadow
+            my $meadow_type = $worker->meadow_type;
+            my $process_id  = $worker->process_id;
+            if(my $status = $pid_to_worker_status->{$process_id}) {  # can be RUN|PEND|xSUSP
+                $meadow_status_counts{$meadow_signature}{$status}++;
 
-            my $process_id = $worker->process_id;
-            if(my $status = $mt_and_pid_to_worker_status{$meadow_type}{$process_id}) {  # can be RUN|PEND|xSUSP
-                $worker_status_counts{$meadow_type}{$status}++;
+                    # only prepare once at most:
+                $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );
+
+                $update_when_seen_sth->execute( $worker->dbID );
             } else {
-                $worker_status_counts{$meadow_type}{'LOST'}++;
+                $meadow_status_counts{$meadow_signature}{'LOST'}++;
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
             }
         } else {
-            $worker_status_counts{$meadow_type}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
+            $meadow_status_counts{$meadow_signature}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
         }
     }
 
+    $update_when_seen_sth->finish() if $update_when_seen_sth;
+
         # print a quick summary report:
-    foreach my $meadow_type (keys %worker_status_counts) {
-        warn "GarbageCollector:\t[$meadow_type Meadow:]\t".join(', ', map { "$_:$worker_status_counts{$meadow_type}{$_}" } keys %{$worker_status_counts{$meadow_type}})."\n\n";
+    while(my ($meadow_signature, $status_count) = each %meadow_status_counts) {
+        warn "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
     }
 
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {
@@ -376,7 +414,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             warn "GarbageCollector:\tReleasing the jobs\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->died(              $report_entries->{$process_id}{'died'} );
+                $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
             }
@@ -411,7 +449,11 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 sub check_in_worker {
     my ($self, $worker) = @_;
 
-    $self->dbc->do("UPDATE worker SET last_check_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'");
+    my $sql = "UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'";
+
+    $self->dbc->protected_prepare_execute( [ $sql ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 0 ); }
+    );
 }
 
 
@@ -459,9 +501,9 @@ sub fetch_overdue_workers {
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
     my $constraint = "status!='DEAD' AND ".{
-            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(last_check_in)) > $overdue_secs",
-            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',last_check_in)) > $overdue_secs",
-            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - last_check_in) > $overdue_secs",
+            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_checked_in)) > $overdue_secs",
+            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',when_checked_in)) > $overdue_secs",
+            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_checked_in) > $overdue_secs",
         }->{ $self->dbc->driver };
 
     return $self->fetch_all( $constraint );
@@ -521,7 +563,7 @@ sub safe_synchronize_AnalysisStats {
     }
 
     unless( ($stats->status eq 'DONE')
-         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_last_update) and ($stats->seconds_since_last_update < 3*60) ) ) {
+         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < 3*60) ) ) {
 
         my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
                   "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
@@ -611,11 +653,13 @@ sub print_status_and_return_reasons_to_exit {
     my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
     my $reasons_to_exit = '';
 
+    my $max_logic_name_length = max(map {length($_->logic_name)} @$list_of_analyses);
+
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
 
-        print $stats->toString . "\n";
+        print $stats->toString($max_logic_name_length) . "\n";
 
         if( $stats->status eq 'FAILED') {
             my $logic_name    = $analysis->logic_name;
@@ -671,7 +715,7 @@ sub interval_workers_with_unknown_usage {
     my %meadow_to_interval = ();
 
     my $sql_times = qq{
-        SELECT meadow_type, meadow_name, min(born), max(died), count(*)
+        SELECT meadow_type, meadow_name, min(when_born), max(when_died), count(*)
         FROM worker w
         LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL
@@ -695,21 +739,28 @@ sub interval_workers_with_unknown_usage {
 sub store_resource_usage {
     my ($self, $report_entries, $processid_2_workerid) = @_;
 
-    my $sql_replace = 'REPLACE INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-    my $sth_replace = $self->prepare( $sql_replace );
+    # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
+
+    my $sql_delete = 'DELETE FROM worker_resource_usage WHERE worker_id=?';
+    my $sth_delete = $self->prepare( $sql_delete );
+
+    my $sql_insert = 'INSERT INTO worker_resource_usage (worker_id, exit_status, mem_megs, swap_megs, pending_sec, cpu_sec, lifespan_sec, exception_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    my $sth_insert = $self->prepare( $sql_insert );
 
     my @not_ours = ();
 
     while( my ($process_id, $report_entry) = each %$report_entries ) {
 
         if( my $worker_id = $processid_2_workerid->{$process_id} ) {
-            $sth_replace->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+            $sth_delete->execute( $worker_id );
+            $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
         } else {
             push @not_ours, $process_id;
             #warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
         }
     }
-    $sth_replace->finish();
+    $sth_delete->finish();
+    $sth_insert->finish();
 }
 
 

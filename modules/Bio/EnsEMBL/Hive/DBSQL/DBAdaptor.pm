@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -119,10 +119,12 @@ sub new {
                 || die "DB($safe_url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
                       ."Unfortunately we cannot patch the database; you may have to create a new database or agree to run older code\n";
 
-            my $patcher_command = "$ENV{'EHIVE_ROOT_DIR'}/scripts/db_cmd.pl -url $safe_url";
+            my $sql_patcher_command = "$ENV{'EHIVE_ROOT_DIR'}/scripts/db_cmd.pl -url $safe_url";
 
             die "DB($safe_url) sql_schema_version mismatch: the database's version is '$db_sql_schema_version' but the code is already '$code_sql_schema_version'.\n"
-               ."Please upgrade the database by applying the following patches:\n\n".join("\n", map { "\t$patcher_command < $_" } @$new_patches)."\n\nand try again.\n";
+               ."Please upgrade the database by applying the following patches:\n\n"
+               .join("\n", map { ($_=~/\.\w*sql\w*$/) ? "\t$sql_patcher_command < $_" : "$_ -url $safe_url" } @$new_patches)
+               ."\n\nand try again.\n";
 
         } elsif($code_sql_schema_version < $db_sql_schema_version) {
 

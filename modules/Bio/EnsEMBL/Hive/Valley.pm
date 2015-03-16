@@ -13,7 +13,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
-use Sys::Hostname;
+use Sys::Hostname ('hostname');
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Limiter;
 
@@ -147,9 +147,10 @@ sub whereami {
         die "Could not determine the Meadow, please investigate";
     }
 
-    my $exechost = hostname();
+    my $meadow_host = hostname();
+    my $meadow_user = $ENV{'USER'} || getpwuid($<);
 
-    return ($meadow_type, $meadow_name, $pid, $exechost);
+    return ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user);
 }
 
 
@@ -169,37 +170,27 @@ sub get_pending_worker_counts_by_meadow_type_rc_name {
 }
 
 
-sub get_meadow_capacity_hash_by_meadow_type {
-    my $self = shift @_;
+sub count_running_workers_and_generate_limiters {
+    my ($self, $meadow_type_2_name_2_users) = @_;
 
-    my %meadow_capacity_hash = ();
+    my $valley_running_worker_count             = 0;
+    my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $meadow_users_of_interest = [keys %{ $meadow_type_2_name_2_users->{$meadow->type}{$meadow->cached_name} || {} }];
+        my $this_worker_count   = $meadow->count_running_workers( $meadow_users_of_interest );
+
+        $valley_running_worker_count                           += $this_worker_count;
 
         my $available_worker_slots = defined($meadow->config_get('TotalRunningWorkersMax'))
-            ? $meadow->config_get('TotalRunningWorkersMax') - $meadow->count_running_workers
+            ? $meadow->config_get('TotalRunningWorkersMax') - $this_worker_count
             : undef;
 
             # so the hash will contain limiters for every meadow_type, but not all of them active:
-        $meadow_capacity_hash{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( "Number of workers in '".$meadow->signature."' meadow", $available_worker_slots );
+        $meadow_capacity_limiter_hashed_by_type{ $meadow->type } = Bio::EnsEMBL::Hive::Limiter->new( "Number of workers in '".$meadow->signature."' meadow", $available_worker_slots );
     }
 
-    return \%meadow_capacity_hash;
+    return ($valley_running_worker_count, \%meadow_capacity_limiter_hashed_by_type);
 }
-
-
-sub count_running_workers {     # just an aggregator
-    my $self = shift @_;
-
-    my $valley_running_workers = 0;
-
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        $valley_running_workers += $meadow->count_running_workers;
-    }
-
-    return $valley_running_workers;
-}
-
 
 1;
-

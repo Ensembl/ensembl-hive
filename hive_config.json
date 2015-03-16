@@ -17,7 +17,8 @@
             "SubmissionOptions"         : "",
             "TotalRunningWorkersMax"    : 2000,
             "farm3" : {
-                "SubmissionOptions"  : ""
+                "SubmissionOptions"  : "",
+                "TotalRunningWorkersMax"    : 5000
             },
             "EBI" : {
                 "SubmissionOptions"  : ""

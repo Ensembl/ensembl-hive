@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -37,6 +37,7 @@ package Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use strict;
 use warnings;
 
+use Time::HiRes ('usleep');
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
@@ -46,10 +47,11 @@ sub new {
     my $class = shift;
     my %flags = @_;
 
-    if(my $url = $flags{'-url'}) {
+    if(my $url = delete $flags{'-url'}) {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
             return $class->SUPER::new(
+                %flags,
                 -driver => $parsed_url->{'driver'},
                 -host   => $parsed_url->{'host'},
                 -port   => $parsed_url->{'port'},
@@ -113,27 +115,57 @@ sub url {
 
 
 sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by trying again (a useful workaround even in mysql 5.1.61)
-    my $self        = shift @_;
-    my $sql         = shift @_;
+    my $self                    = shift @_;
+    my $sql_params              = shift @_;
+    my $deadlock_log_callback   = shift @_;
 
-    my $retries     = 3;
+    my $sql_cmd     = shift @$sql_params;
 
-    foreach (0..$retries) {
+    my $attempts        = 9;
+    my $sleep_max_sec   = 1;
+    my $log_message_adaptor;
+
+    my $retval;
+    my $query_msg;
+
+    foreach my $attempt (1..$attempts) {
         eval {
-            my $sth = $self->prepare($sql);
-            $sth->execute( @_ );
+            my $sth = $self->prepare( $sql_cmd );
+            $retval = $sth->execute( @$sql_params );
             $sth->finish;
             1;
         } or do {
-            if($@ =~ /Deadlock found when trying to get lock; try restarting transaction/) {    # ignore this particular error
-                sleep 1;
+            $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
+
+            if( (my $deadlock_detected = ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/))
+             or (my $toomanyconn_detected = ($@ =~ /Could not connect to database.+?failed: Too many connections/))
+            ) {
+
+                my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
+
+                if($toomanyconn_detected) {     # It may get noticed in case the error log is monitored/recorded:
+                    warn "Too many connections detected when trying to run $query_msg (attempt #$attempt). Will try again in $this_sleep_sec sec";
+                } else {
+                    if( $deadlock_log_callback ) {
+                        $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
+                    }
+                }
+
+                usleep( $this_sleep_sec*1000000 );
+                $sleep_max_sec *= 2;
                 next;
+
+            } else {     # but definitely report other errors
+
+                die "$@ -- $query_msg";
             }
-            die $@;     # but definitely report other errors
         };
-        last;
+        last;   # stop looping once we succeeded
     }
-    die "After $retries retries the query '$sql' is still in a deadlock: $@" if($@);
+
+    die "After $attempts attempts the query $query_msg still cannot be run: $@" if($@);
+
+    return $retval;
 }
 
 1;

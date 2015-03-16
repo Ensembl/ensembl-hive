@@ -13,7 +13,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -58,14 +58,16 @@ sub scheduler_say {
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
-    my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
-    my $default_meadow_type                     = $valley->get_default_meadow()->type;
-    my $meadow_capacity_limiter_hashed_by_type  = $valley->get_meadow_capacity_hash_by_meadow_type();
-
     my $analysis_id2rc_id                       = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
     my $rc_id2name                              = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+    my $meadow_type_2_name_2_users              = $queen->meadow_type_2_name_2_users_of_running_workers();
         # combined mapping:
     my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
+
+    my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
+    my $default_meadow_type                     = $valley->get_default_meadow()->type;
+    my ($valley_running_worker_count,
+        $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_type_2_name_2_users );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
@@ -76,7 +78,7 @@ sub schedule_workers_resync_if_necessary {
         scheduler_say( "According to analysis_stats no workers are required... let's see if anything went out of sync." );
 
             # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
-        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley->count_running_workers ) {
+        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley_running_worker_count ) {
             scheduler_say( "Mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers..." );
             $queen->check_for_dead_workers($valley, 1);
         }

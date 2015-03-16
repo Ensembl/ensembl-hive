@@ -37,7 +37,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -244,95 +244,6 @@ sub pre_options {
 }
 
 
-=head2 dbconn_2_mysql
-
-    Description : Deprecated method. Please use $self->db_cmd() instead.
-
-=cut
-
-sub dbconn_2_mysql {    # will save you a lot of typing
-    my ($self, $db_conn, $with_db) = @_;
-
-    warn "\nDEPRECATED: dbconn_2_mysql() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
-
-    my $port = $self->o($db_conn,'-port');
-
-    return '--host='.$self->o($db_conn,'-host').' '
-          .($port ? '--port='.$self->o($db_conn,'-port').' ' : '')
-          .'--user="'.$self->o($db_conn,'-user').'" '
-          .'--password="'.$self->o($db_conn,'-pass').'" '
-          .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
-}
-
-
-=head2 dbconn_2_pgsql
-
-    Description : Deprecated method. Please use $self->db_cmd() instead.
-
-=cut
-
-sub dbconn_2_pgsql {    # will save you a lot of typing
-    my ($self, $db_conn, $with_db) = @_;
-
-    warn "\nDEPRECATED: dbconn_2_pgsql() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
-
-    my $port = $self->o($db_conn,'-port');
-
-    return '--host='.$self->o($db_conn,'-host').' '
-          .($port ? '--port='.$self->o($db_conn,'-port').' ' : '')
-          .'--username="'.$self->o($db_conn,'-user').'" '
-          .($with_db ? ($self->o($db_conn,'-dbname').' ') : '');
-}
-
-=head2 db_connect_command
-
-    Description : Deprecated method. Please use $self->db_cmd() instead.
-
-=cut
-
-sub db_connect_command {
-    my ($self, $db_conn) = @_;
-
-    warn "\nDEPRECATED: db_connect_command() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
-
-    my $driver = $self->o($db_conn, '-driver');
-
-    return {
-        'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname'),
-        'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, 1),
-        'pgsql'     => "env PGPASSWORD='".$self->o($db_conn,'-pass')."' psql ".$self->dbconn_2_pgsql($db_conn, 1),
-    }->{ $driver };
-}
-
-
-=head2 db_execute_command
-
-    Description : Deprecated method. Please use $self->db_cmd() instead.
-
-=cut
-
-sub db_execute_command {
-    my ($self, $db_conn, $sql_command, $with_db) = @_;
-
-    warn "\nDEPRECATED: db_execute_command() method is no longer supported, please call db_cmd(\$sql_command) instead, it will be more portable\n\n";
-
-    $with_db = 1 unless(defined($with_db));
-
-    my $driver = $self->o($db_conn, '-driver');
-
-    if(($driver eq 'sqlite') && !$with_db) {    # in these special cases we pretend sqlite can understand these commands
-        return "rm -f $1" if($sql_command=~/DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?(\w+)/);
-        return "touch $1" if($sql_command=~/CREATE\s+DATABASE\s+(\w+)/);
-    } else {
-        return {
-            'sqlite'    => 'sqlite3 '.$self->o($db_conn, '-dbname')." '$sql_command'",
-            'mysql'     => 'mysql '.$self->dbconn_2_mysql($db_conn, $with_db)." -e '$sql_command'",
-            'pgsql'     => "env PGPASSWORD='".$self->o($db_conn,'-pass')."' psql --command='$sql_command' ".$self->dbconn_2_pgsql($db_conn, $with_db),
-        }->{ $driver };
-    }
-}
-
-
 =head2 dbconn_2_url
 
     Description :  A convenience method used to stringify a connection-parameters hash into a 'pipeline_url' that beekeeper.pl will undestand
@@ -429,6 +340,13 @@ sub overridable_pipeline_create_commands {
     my $pipeline_create_commands    = $self->pipeline_create_commands();
 
     return $self->o('hive_no_init') ? [] : $pipeline_create_commands;
+}
+
+
+sub is_analysis_topup {
+    my $self                        = shift @_;
+
+    return $self->o('hive_no_init');
 }
 
 

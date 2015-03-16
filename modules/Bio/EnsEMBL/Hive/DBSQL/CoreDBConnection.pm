@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -309,13 +309,6 @@ sub connect {
                     $driver, $dbparam,
                     $self->host(),   $self->port() );
 
-    if ( $self->{'disconnect_when_inactive'} ) {
-      $self->{'count'}++;
-      if ( $self->{'count'} > 1000 ) {
-        sleep 1;
-        $self->{'count'} = 0;
-      }
-    }
     eval {
       $dbh = DBI->connect( $dsn, $self->username(), $self->password(),
                            { 'RaiseError' => 1 } );
@@ -344,7 +337,13 @@ sub connect {
   $self->db_handle($dbh);
 
   if ( $self->timeout() ) {
+    my $driver = $self->driver();
+
+    if( $driver eq 'mysql' ) {
     $dbh->do( "SET SESSION wait_timeout=" . $self->timeout() );
+    } else {
+        warn "Don't know how to set the timeout for '$driver' driver, skipping.\n";
+    }
   }
 
   #print("CONNECT\n");

@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -248,7 +248,9 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         WHERE job_id=? AND status='SEMAPHORED'
     };
     
-    $self->dbc->protected_prepare_execute( $sql, $dec, $jobid );
+    $self->dbc->protected_prepare_execute( [ $sql, $dec, $jobid ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'decreasing semaphore_count'.$after, 0 ); }
+    );
 }
 
 sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
@@ -262,7 +264,9 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
         WHERE job_id=?
     };
     
-    $self->dbc->protected_prepare_execute( $sql, $inc, $jobid );
+    $self->dbc->protected_prepare_execute( [ $sql, $inc, $jobid ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'increasing semaphore_count'.$after, 0 ); }
+    );
 }
 
 
@@ -280,21 +284,25 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
 sub check_in_job {
     my ($self, $job) = @_;
 
+    my $job_id = $job->dbID;
+
     my $sql = "UPDATE job SET status='".$job->status."' ";
 
     if($job->status eq 'DONE') {
-        $sql .= ",completed=CURRENT_TIMESTAMP";
+        $sql .= ",when_completed=CURRENT_TIMESTAMP";
         $sql .= ",runtime_msec=".$job->runtime_msec;
         $sql .= ",query_count=".$job->query_count;
     } elsif($job->status eq 'PASSED_ON') {
-        $sql .= ", completed=CURRENT_TIMESTAMP";
+        $sql .= ", when_completed=CURRENT_TIMESTAMP";
     } elsif($job->status eq 'READY') {
     }
 
-    $sql .= " WHERE job_id='".$job->dbID."' ";
+    $sql .= " WHERE job_id='$job_id' ";
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
-    $self->dbc->protected_prepare_execute( $sql );
+    $self->dbc->protected_prepare_execute( [ $sql ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "checking the job in".$after, 0 ); }
+    );
 }
 
 
@@ -312,14 +320,16 @@ sub check_in_job {
 sub store_out_files {
     my ($self, $job) = @_;
 
+    # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
+
+    my $delete_sql  = 'DELETE from job_file WHERE job_id=' . $job->dbID . ' AND retry='.$job->retry_count;
+    $self->dbc->do( $delete_sql );
+
     if($job->stdout_file or $job->stderr_file) {
-        my $insert_sql = 'REPLACE INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
-        my $sth = $self->dbc()->prepare($insert_sql);
-        $sth->execute($job->dbID(), $job->retry_count(), $job->role_id(), $job->stdout_file(), $job->stderr_file());
-        $sth->finish();
-    } else {
-        my $sql = 'DELETE from job_file WHERE role_id='.$job->role_id.' AND job_id='.$job->dbID;
-        $self->dbc->do($sql);
+        my $insert_sql = 'INSERT INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
+        my $insert_sth = $self->dbc->prepare($insert_sql);
+        $insert_sth->execute( $job->dbID, $job->retry_count, $job->role_id, $job->stdout_file, $job->stderr_file );
+        $insert_sth->finish();
     }
 }
 
@@ -415,14 +425,22 @@ sub grab_jobs_for_role {
            AND status='READY'
     };
 
+    my $claim_count;
+
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
-    if(  (my $claim_count = $self->dbc->do( $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-        if( ($claim_count = $self->dbc->do( $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql)) == 0 ) {
-             $claim_count = $self->dbc->do( $prefix_sql .               $limit_sql .               $suffix_sql);
+    if(  0 == ($claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql ],
+                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a virgin batch of offset jobs".$after, 0 ); }
+    ))) {
+        if( 0 == ($claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql ],
+                        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of offset jobs".$after, 0 ); }
+        ))) {
+             $claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql .               $suffix_sql ],
+                            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of non-offset jobs".$after, 0 ); }
+             );
         }
     }
 
-    return $self->fetch_all_by_role_id_AND_status($role_id, 'CLAIMED') ;
+    return $claim_count ? $self->fetch_all_by_role_id_AND_status($role_id, 'CLAIMED') : [];
 }
 
 
