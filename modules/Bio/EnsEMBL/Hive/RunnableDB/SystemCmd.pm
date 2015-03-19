@@ -132,20 +132,30 @@ sub run {
     };
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
 
-    if($return_value) {
-        die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
-    }
+    # To be used in write_output()
+    $self->param('return_value', $return_value);
+    $self->param('stderr', $stderr);
+    $self->param('flat_cmd', $flat_cmd);
 }
 
 
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Here we have nothing to do, as the wrapper is very generic.
+                  Here we take actions based on the command's exit status.
 
 =cut
 
 sub write_output {
+    my $self = shift;
+
+    my $return_value = $self->param('return_value');
+    my $stderr = $self->param('stderr');
+    my $flat_cmd = $self->param('flat_cmd');
+
+    if ($return_value) {
+        die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
+    }
 }
 
 1;
