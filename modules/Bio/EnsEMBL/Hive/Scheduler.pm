@@ -239,8 +239,8 @@ sub schedule_workers {
                 next ANALYSIS;
             }
 
-                # getting the initial worker requirement for this analysis (may be stale if not sync'ed recently)
-            my $extra_workers_this_analysis = $analysis_stats->num_required_workers;
+                # getting the initial worker requirement for this analysis (may be off if $analysis_stats has not been sync'ed recently)
+            my $extra_workers_this_analysis = $analysis_stats->estimate_num_required_workers;
 
             if ($extra_workers_this_analysis <= 0) {
                 push @$log_buffer, "Analysis '$logic_name' doesn't require extra workers, skipping it.";
@@ -315,7 +315,7 @@ sub sort_stats_by_suitability {
     foreach my $stats ( @sorted_stats ) {
 
             # assuming sync() is expensive, so first trying analyses that have already been sunk:
-        if( ($stats->num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
+        if( ($stats->estimate_num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
 
             push @primary_candidates, $stats;
 

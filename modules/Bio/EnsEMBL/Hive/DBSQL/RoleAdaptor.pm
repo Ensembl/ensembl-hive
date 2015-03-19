@@ -78,7 +78,7 @@ sub finalize_role {
     }
 
         # Re-sync the analysis_stats when a worker dies as part of dynamic sync system.
-        # It will also re-calculate num_running_workers (from active roles) and num_required_workers,
+        # It will also re-calculate num_running_workers (from active roles)
         # so no further adjustment should be necessary.
     $self->db->get_WorkerAdaptor->safe_synchronize_AnalysisStats( $role->analysis->stats );
 }

@@ -139,7 +139,6 @@ CREATE TABLE analysis_base (
 @column failed_job_count        number of Jobs of this Analysis that are in FAILED state
 
 @column num_running_workers     number of running Workers of this Analysis
-@column num_required_workers    extra number of Workers of this Analysis needed to execute all READY jobs
 
 @column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
 @column input_capacity          used to compute hive_capacity in DYNAMIC mode
@@ -167,8 +166,8 @@ CREATE TABLE analysis_stats (
     ready_job_count         INTEGER     NOT NULL DEFAULT 0,
     done_job_count          INTEGER     NOT NULL DEFAULT 0,
     failed_job_count        INTEGER     NOT NULL DEFAULT 0,
+
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
-    num_required_workers    INTEGER     NOT NULL DEFAULT 0,
 
     behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
     input_capacity          INTEGER     NOT NULL DEFAULT 4,
@@ -606,7 +605,6 @@ CREATE INDEX ON log_message (job_id);
 @column failed_job_count        number of Jobs of this Analysis that are in FAILED state
 
 @column num_running_workers     number of running Workers of this Analysis
-@column num_required_workers    extra number of Workers of this Analysis needed to execute all READY jobs
 
 @column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
 @column input_capacity          used to compute hive_capacity in DYNAMIC mode
@@ -634,8 +632,8 @@ CREATE TABLE analysis_stats_monitor (
     ready_job_count         INTEGER     NOT NULL DEFAULT 0,
     done_job_count          INTEGER     NOT NULL DEFAULT 0,
     failed_job_count        INTEGER     NOT NULL DEFAULT 0,
+
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
-    num_required_workers    INTEGER     NOT NULL DEFAULT 0,
 
     behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
     input_capacity          INTEGER     NOT NULL DEFAULT 4,

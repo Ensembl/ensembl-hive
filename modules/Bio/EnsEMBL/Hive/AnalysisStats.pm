@@ -126,12 +126,6 @@ sub num_running_workers {
     return $self->{'_num_running_workers'};
 }
 
-sub num_required_workers {      # NB: the meaning of this field is, again, "how many extra workers we need to add"
-    my $self = shift;
-    $self->{'_num_required_workers'} = shift if(@_);
-    return $self->{'_num_required_workers'};
-}
-
 
 ## dynamic hive_capacity mode attributes:
 
@@ -245,6 +239,13 @@ sub get_or_estimate_batch_size {
 }
 
 
+sub estimate_num_required_workers {
+    my $self = shift;
+
+    return POSIX::ceil( $self->ready_job_count / $self->get_or_estimate_batch_size );
+}
+
+
 sub inprogress_job_count {      # includes CLAIMED
     my $self = shift;
     return    $self->total_job_count
@@ -336,7 +337,7 @@ sub toString {
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
@@ -347,7 +348,7 @@ sub toString {
         $avg_runtime, $avg_runtime_unit,
 
         $self->num_running_workers,
-        $self->num_required_workers,
+        $self->estimate_num_required_workers,
     );
     $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
@@ -444,14 +445,6 @@ sub recalculate_from_job_counts {
         $self->done_job_count(       ( $job_counts->{'DONE'} // 0 ) + ($job_counts->{'PASSED_ON'} // 0 ) ); # done here or potentially done elsewhere
         $self->total_job_count(      sum( values %$job_counts ) || 0 );
     }
-
-        # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
-    my $analysis              = $self->analysis();
-    my $scheduling_allowed    =  ( !defined( $self->hive_capacity ) or $self->hive_capacity )
-                              && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
-    my $required_workers    = $scheduling_allowed
-                            && POSIX::ceil( $self->ready_job_count() / $self->get_or_estimate_batch_size() );
-    $self->num_required_workers( $required_workers );
 
     $self->check_blocking_control_rules();
 

@@ -150,7 +150,6 @@ sub update {
       $sql .= ",num_running_workers=" . $stats->num_running_workers();
   }
 
-  $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",when_updated=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
@@ -250,28 +249,6 @@ sub decrease_running_workers {
 
   my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
       " WHERE analysis_id='$analysis_id'";
-
-  $self->dbc->do($sql);
-}
-
-
-sub decrease_required_workers {
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers-1 ".
-            "WHERE analysis_id='$analysis_id' ";
-
-  $self->dbc->do($sql);
-}
-
-
-sub increase_required_workers {
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers+1 ".
-            "WHERE analysis_id='$analysis_id' ";
 
   $self->dbc->do($sql);
 }

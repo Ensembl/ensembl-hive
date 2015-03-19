@@ -271,8 +271,6 @@ sub specialize_worker {
     } else {    # count it as autonomous worker sharing the load of that analysis:
 
         $analysis_stats_adaptor->update_status($analysis->dbID, 'WORKING');
-
-        $analysis_stats_adaptor->decrease_required_workers( $analysis->dbID );
     }
 
         # The following increment used to be done only when no specific task was given to the worker,
