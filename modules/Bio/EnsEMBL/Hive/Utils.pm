@@ -61,7 +61,7 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw dbc_to_cmd);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw dbc_to_cmd join_command_args);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -425,6 +425,42 @@ sub dbc_to_cmd {
     }
 
     return \@cmd;
+}
+
+=head2 join_command_args
+
+    Argument[0]: String or Arrayref of Strings
+    Description: Prepares the command to be executed by system(). It is needed if the
+                 command is in fact composed of multiple commands.
+    Returns:     Tuple (boolean,string). The boolean indicates whether it was needed to
+                 join the arguments. The string is the new command-line string.
+                 PS: Shamelessly adapted from http://www.perlmonks.org/?node_id=908096
+
+=cut
+
+my %shell_characters = map {$_ => 1} qw(< > |);
+
+sub join_command_args {
+    my $args = shift;
+    return (0,$args) unless ref($args);
+
+    # system() can only spawn 1 process. For multiple commands piped
+    # together or if redirections are used, we need a shell to parse
+    # a joined string representing the command
+    my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;
+
+    my @new_args = ();
+    foreach my $a (@$args) {
+        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {
+            push @new_args, $a;
+        } else {
+            # Escapes the single-quotes and protects the arguments
+            $a =~ s/'/'\\''/g;
+            push @new_args, "'$a'";
+        }
+    }
+
+    return ($join_needed,join(' ', @new_args));
 }
 
 

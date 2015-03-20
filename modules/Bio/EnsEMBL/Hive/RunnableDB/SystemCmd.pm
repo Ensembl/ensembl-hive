@@ -62,6 +62,8 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(join_command_args);
+
 use Capture::Tiny ':all';
 
 use base ('Bio::EnsEMBL::Hive::Process');
@@ -145,23 +147,22 @@ sub run {
     my $self = shift;
  
     my $cmd = $self->param('cmd');
-    my $flat_cmd = ref($cmd) ? join(' ', map text_to_shell_lit, @$cmd) : $cmd;
-
-    # system() can only spawn 1 process. For multiple commands piped
-    # together or if redirections are used, we need a shell. The system()
-    # way is to merge everything into a single string
-    $cmd = $flat_cmd if ref($cmd) and (grep {$shell_characters{$_}} @$cmd);
+    my ($join_needed, $flat_cmd) = join_command_args($cmd);
+    # Let's use the array if possible, it saves us from running a shell
+    my @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd);
 
     if($self->debug()) {
-        warn qq{cmd = "$flat_cmd"\n};
         use Data::Dumper;
-        warn "Command used: ", Dumper($cmd);
+        local $Data::Dumper::Terse = 1;
+        local $Data::Dumper::Indent = 0;
+        warn "Command given: ", Dumper($cmd), "\n";
+        warn "Command to run: ", Dumper(\@cmd_to_run), "\n";
     }
 
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
     my $return_value;
     my $stderr = tee_stderr {
-        system(ref($cmd) ? @$cmd : $cmd);
+        system(@cmd_to_run);
         $return_value = $? >> 8;
     };
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
