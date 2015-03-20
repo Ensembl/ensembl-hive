@@ -279,9 +279,7 @@ sub specialize_worker {
         # However this may be tricky to emulate by triggers that know nothing about "special tasks",
         # so I am (temporarily?) simplifying the accounting algorithm.
         #
-    unless( $self->db->hive_use_triggers() ) {
-        $analysis_stats_adaptor->increase_running_workers( $analysis->dbID );
-    }
+    $analysis_stats_adaptor->increment_a_counter( 'num_running_workers', 1, $analysis->dbID );
 }
 
 
