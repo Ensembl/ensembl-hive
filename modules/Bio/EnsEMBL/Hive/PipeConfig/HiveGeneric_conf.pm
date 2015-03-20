@@ -356,7 +356,7 @@ sub run_pipeline_create_commands {
     foreach my $cmd (@{$self->overridable_pipeline_create_commands}) {
         # We allow commands to be given as an arrayref, but we join the
         # array elements anyway
-        my $cmd = join_command_args($cmd)->[1];
+        (my $dummy,$cmd) = join_command_args($cmd);
         warn "Running the command:\n\t$cmd\n";
         if(my $retval = system($cmd)) {
             die "Return value = $retval, possibly an error\n";
