@@ -61,7 +61,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::Hive::Utils ('stringify join_command_args');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
