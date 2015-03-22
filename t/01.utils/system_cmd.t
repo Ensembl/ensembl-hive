@@ -16,7 +16,7 @@
 use strict;
 use warnings;
 
-use Test::More;
+use Test::More tests => 4;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
@@ -28,27 +28,29 @@ BEGIN {
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
-# block 1: the command line is given as a string
+subtest 'The command line is given as a string' => sub
 {
+    plan tests => 3;
     is_deeply([join_command_args("ls")], [0,"ls"], "String: the executable name");
     is_deeply([join_command_args("ls cpanfile")], [0,"ls cpanfile"], "String: the executable name and an argument");
     is_deeply([join_command_args("ls | cat")], [0,"ls | cat"], "String: two executables piped");
-}
+};
 
-# block 2: the command line is given as an arrayref
+subtest 'The command line is given as an arrayref' => sub
 {
+    plan tests => 3;
     is_deeply([join_command_args(["ls"])], [0,"ls"], "Array with 1 element: the executable name");
     is_deeply([join_command_args(["ls", "cpanfile"])], [0,"ls cpanfile"], "Array with 2 elements: the executable and an argument");
     is_deeply([join_command_args(["ls", "file space"])], [0,"ls 'file space'"], "Array with 2 elements: the executable and an argument that contains a space");
-}
+};
 
-# block 3: the command line is given as an arrayref and contains
-# redirections / pipes
+subtest 'The command line is given as an arrayref and contains redirections / pipes' => sub
 {
+    plan tests => 3;
     is_deeply([join_command_args(["ls", ">", "file space"])], [1, "ls > 'file space'"], "Array with a redirection");
     is_deeply([join_command_args(["ls", "|", "cat"])], [1, "ls | cat"], "Array with a pipe");
     is_deeply([join_command_args(["ls", "|", "cat", ">", "file space"])], [1, "ls | cat > 'file space'"], "Array with a pipe and a redirection");
-}
+};
 
 chdir $ENV{'EHIVE_ROOT_DIR'};
 
