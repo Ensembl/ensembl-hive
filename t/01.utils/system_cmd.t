@@ -18,11 +18,15 @@ use warnings;
 
 use Test::More;
 use Data::Dumper;
+use File::Temp qw{tempdir};
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Utils', 'join_command_args' );
 }
 #########################
+
+my $dir = tempdir CLEANUP => 1;
+chdir $dir;
 
 # block 1: the command line is given as a string
 {
@@ -45,5 +49,7 @@ BEGIN {
     is_deeply([join_command_args(["ls", "|", "cat"])], [1, "ls | cat"], "Array with a pipe");
     is_deeply([join_command_args(["ls", "|", "cat", ">", "file space"])], [1, "ls | cat > 'file space'"], "Array with a pipe and a redirection");
 }
+
+chdir $ENV{'EHIVE_ROOT_DIR'};
 
 done_testing();
