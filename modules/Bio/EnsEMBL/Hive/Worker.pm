@@ -753,9 +753,16 @@ sub run_one_batch {
         $self->enter_status('READY');
 
         # UNCLAIM THE SURPLUS:
-        # my $stats = $current_role->analysis->stats;       # FIXME: make sure you are getting a fresh value from the database -- and it's cheap to obtain!
-        # my $jobs_to_unclaim = scalar(@$jobs) - $stats->get_or_estimate_batch_size();
-        # if($jobs_to_unclaim > 0) { unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
+        if( my $fresh_stats = $current_role->analysis->stats->refresh( 20 ) ) { # if we DID refresh
+            my $jobs_to_unclaim = scalar(@$jobs) - $fresh_stats->get_or_estimate_batch_size();
+            if( $jobs_to_unclaim > 1 ) {
+                # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
+                    # currently we just dump all the remaining jobs and prepare to take a fresh batch:
+                $job->adaptor->release_claimed_jobs_from_role( $current_role );
+                $jobs = [];
+                $self->worker_say( "Unclaimed $jobs_to_unclaim jobs (trimming the tail)" );
+            }
+        }
 
     } # /while(my $job = shift @$jobs)
 

@@ -189,10 +189,16 @@ sub when_updated {                   # this method is called by the initial stor
     return $self->{'_when_updated'};
 }
 
-sub seconds_since_when_updated {     # this method is mostly used to convert between server time and local time
+sub seconds_since_when_updated {     # we fetch the server difference, store local time in the memory object, and use the local difference
     my( $self, $value ) = @_;
     $self->{'_when_updated'} = time() - $value if(defined($value));
     return defined($self->{'_when_updated'}) ? time() - $self->{'_when_updated'} : undef;
+}
+
+sub seconds_since_last_fetch {      # track the freshness of the object (store local time, use the local difference)
+    my( $self, $value ) = @_;
+    $self->{'_last_fetch'} = time() - $value if(defined($value));
+    return defined($self->{'_last_fetch'}) ? time() - $self->{'_last_fetch'} : undef;
 }
 
 sub sync_lock {
@@ -206,10 +212,15 @@ sub sync_lock {
 
 
 sub refresh {
-    my $self = shift;
+    my ($self, $seconds_fresh)      = @_;
+    my $seconds_since_last_fetch    = $self->seconds_since_last_fetch;
 
-    return $self->adaptor && $self->adaptor->refresh($self);
+    if( $self->adaptor
+    and (!defined($seconds_fresh) or !defined($seconds_since_last_fetch) or $seconds_fresh < $seconds_since_last_fetch) ) {
+        return $self->adaptor->refresh($self);
+    }
 }
+
 
 sub update {
     my $self = shift;
