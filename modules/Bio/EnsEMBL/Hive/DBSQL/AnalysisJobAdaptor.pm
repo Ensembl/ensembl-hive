@@ -392,6 +392,8 @@ sub reset_or_grab_job_by_dbID {
 
 sub grab_jobs_for_role {
     my ($self, $role, $how_many_this_batch) = @_;
+
+    return [] unless( $how_many_this_batch );
   
     my $analysis_id     = $role->analysis_id;
     my $role_id         = $role->dbID;
