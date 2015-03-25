@@ -645,12 +645,13 @@ sub run_one_batch {
     my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
     my $accu_adaptor            = $self->adaptor->db->get_AccumulatorAdaptor;
     my $max_retry_count         = $current_role->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+    my $stats                   = $current_role->analysis->stats;   # cache it to avoid reloading
 
     $self->adaptor->check_in_worker( $self );
-    $self->adaptor->safe_synchronize_AnalysisStats( $current_role->analysis->stats );
+    $self->adaptor->safe_synchronize_AnalysisStats( $stats );
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats : ' . $current_role->analysis->stats->toString );
+        $self->worker_say( 'AnalysisStats : ' . $stats->toString );
         $self->worker_say( 'claimed '.scalar(@{$jobs}).' jobs to process' );
     }
 
@@ -754,9 +755,9 @@ sub run_one_batch {
 
         unless( $is_special_batch) {    # UNCLAIM THE SURPLUS:
             my $refresh_tolerance_seconds = 20;
-            if( my $fresh_stats = $current_role->analysis->stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
+            if( $stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
                 my $remaining_jobs_in_batch = scalar(@$jobs);
-                my $optimal_batch_now = $fresh_stats->get_or_estimate_batch_size();
+                my $optimal_batch_now = $stats->get_or_estimate_batch_size();
                 my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
                 $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Check-point: rts=$refresh_tolerance_seconds, rem=$remaining_jobs_in_batch, opt=$optimal_batch_now, 2unc=$jobs_to_unclaim", 0 );
                 if( $jobs_to_unclaim > 1 ) {
