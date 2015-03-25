@@ -481,7 +481,7 @@ sub run {
 
         if( my $special_batch = $self->special_batch() ) {
             my $special_batch_length = scalar(@$special_batch);     # has to be recorded because the list is gradually destroyed
-            $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
+            $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch, $special_batch_length );
             $self->cause_of_death( $jobs_done_by_batches_loop == $special_batch_length ? 'JOB_LIMIT' : 'CONTAMINATED');
         } else {    # a proper "BATCHES" loop
 
@@ -637,7 +637,7 @@ sub specialize_and_compile_wrapper {
 
 
 sub run_one_batch {
-    my ($self, $jobs) = @_;
+    my ($self, $jobs, $is_special_batch) = @_;
 
     my $jobs_done_here = 0;
 
@@ -752,19 +752,20 @@ sub run_one_batch {
         $self->prev_job_error( $job->died_somewhere );
         $self->enter_status('READY');
 
-        # UNCLAIM THE SURPLUS:
-        my $refresh_tolerance_seconds = 20;
-        if( my $fresh_stats = $current_role->analysis->stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
-            my $remaining_jobs_in_batch = scalar(@$jobs);
-            my $optimal_batch_now = $fresh_stats->get_or_estimate_batch_size();
-            my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Check-point: rts=$refresh_tolerance_seconds, rem=$remaining_jobs_in_batch, opt=$optimal_batch_now, 2unc=$jobs_to_unclaim", 0 );
-            if( $jobs_to_unclaim > 1 ) {
-                # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
-                    # currently we just dump all the remaining jobs and prepare to take a fresh batch:
-                $job->adaptor->release_claimed_jobs_from_role( $current_role );
-                $jobs = [];
-                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 0 );
+        unless( $is_special_batch) {    # UNCLAIM THE SURPLUS:
+            my $refresh_tolerance_seconds = 20;
+            if( my $fresh_stats = $current_role->analysis->stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
+                my $remaining_jobs_in_batch = scalar(@$jobs);
+                my $optimal_batch_now = $fresh_stats->get_or_estimate_batch_size();
+                my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
+                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Check-point: rts=$refresh_tolerance_seconds, rem=$remaining_jobs_in_batch, opt=$optimal_batch_now, 2unc=$jobs_to_unclaim", 0 );
+                if( $jobs_to_unclaim > 1 ) {
+                    # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
+                        # currently we just dump all the remaining jobs and prepare to take a fresh batch:
+                    $job->adaptor->release_claimed_jobs_from_role( $current_role );
+                    $jobs = [];
+                    $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 0 );
+                }
             }
         }
 
