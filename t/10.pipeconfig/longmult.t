@@ -69,7 +69,6 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
 
         system( @{ dbc_to_cmd($hive_dba->dbc, undef, undef, undef, 'DROP DATABASE') } );
     }
-    last;
 }
 
 done_testing();
