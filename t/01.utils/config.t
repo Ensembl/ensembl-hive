@@ -16,7 +16,8 @@
 use strict;
 use warnings;
 
-
+use Cwd;
+use File::Basename;
 use Test::More;
 use Data::Dumper;
 
@@ -26,6 +27,8 @@ BEGIN {
 }
 #########################
 
+# Need EHIVE_ROOT_DIR to access the default config file
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 # diag "@config_files"; 

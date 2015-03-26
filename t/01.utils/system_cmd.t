@@ -52,6 +52,4 @@ subtest 'The command line is given as an arrayref and contains redirections / pi
     is_deeply([join_command_args(["ls", "|", "cat", ">", "file space"])], [1, "ls | cat > 'file space'"], "Array with a pipe and a redirection");
 };
 
-chdir $ENV{'EHIVE_ROOT_DIR'};
-
 done_testing();
