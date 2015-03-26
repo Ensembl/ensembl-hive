@@ -233,7 +233,7 @@ sub update {
 
 sub get_or_estimate_batch_size {
     my $self                = shift @_;
-    my $remaining_job_count = shift @_ || 0;
+    my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
     my $batch_size = $self->batch_size;
 
@@ -251,13 +251,13 @@ sub get_or_estimate_batch_size {
     }
 
         # TailTrimming correction:
-    if( my $num_running_workers = $self->num_running_workers ) {
+    if( my $num_of_workers = $self->num_running_workers+1 ) {   # Note: with this ad-hoc correction $num_of_workers is always positive
         my $jobs_to_do = $self->ready_job_count + $remaining_job_count;
-        my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_running_workers );
+        my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_of_workers );
         if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
             $batch_size = $tt_batch_size;
         } elsif(!$tt_batch_size) {
-            $batch_size = POSIX::ceil( $jobs_to_do / $num_running_workers ); # essentially, 0 or 1
+            $batch_size = POSIX::ceil( $jobs_to_do / $num_of_workers ); # essentially, 0 or 1
         }
     }
 
