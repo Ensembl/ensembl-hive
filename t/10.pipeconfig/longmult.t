@@ -43,6 +43,9 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
 
         if ($with_beekeeper) {
             my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', '-url', $hive_dba->dbc->url, '-loop', '-local');
+            # beekeeper can take a while and has its own DBConnection, it
+            # is better to close ours to avoid "MySQL server has gone away"
+            $hive_dba->dbc->disconnect_if_idle;
             system(@beekeeper_cmd);
             ok(!$?, 'beekeeper exited with the return code 0');
         } else {
