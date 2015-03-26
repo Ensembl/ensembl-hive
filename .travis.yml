@@ -6,6 +6,7 @@ perl:
 
 env:
   - COVERALLS=true
+  - COVERALLS=false
 
 before_install:
     - sudo apt-get -y update
@@ -24,4 +25,12 @@ notifications:
   email:
     on_success: always
     on_failure: always
+
+# Get the matrix to only build coveralls support when on 5.10
+matrix:
+  exclude:
+    - perl: "5.10"
+      env: COVERALLS=false
+    - perl: "5.14"
+      env: COVERALLS=true
 
