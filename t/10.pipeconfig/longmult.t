@@ -37,15 +37,25 @@ my @pipeline_urls = (
 );
 
 foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)) {
+  foreach my $with_beekeeper (0..1) {
     foreach my $pipeline_url (@pipeline_urls) {
         my $hive_dba = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
-        runWorker($hive_dba, { can_respecialize => 1 });
+
+        if ($with_beekeeper) {
+            my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', '-url', $hive_dba->dbc->url, '-loop', '-local');
+            system(@beekeeper_cmd);
+            ok(!$?, 'beekeeper exited with the return code 0');
+        } else {
+            runWorker($hive_dba, { can_respecialize => 1 });
+        }
+
         my $results = $hive_dba->dbc->db_handle->selectall_arrayref('SELECT * FROM final_result');
         ok(scalar(@$results), 'There are some results');
         ok($_->[0]*$_->[1] eq $_->[2], sprintf("%s*%s=%s", $_->[0], $_->[1], $_->[0]*$_->[1])) for @$results;
 
         system( @{ dbc_to_cmd($hive_dba->dbc, undef, undef, undef, 'DROP DATABASE') } );
     }
+  }
 }
 
 done_testing();
