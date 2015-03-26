@@ -32,7 +32,6 @@ my $pipe_configs = find_submodules 'Bio::EnsEMBL::Hive::PipeConfig';
 ok($pipe_configs, 'configs found');
 isa_ok($pipe_configs, 'ARRAY'); ## still an array
 my @sorted_configs = sort { $a cmp $b } @$pipe_configs;
-is(@sorted_configs, 13, 'lucky number');
 my ($generic) = grep { /HiveGeneric_conf/ } @sorted_configs;
 ok($generic, 'found generic base config');
 
