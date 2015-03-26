@@ -40,6 +40,8 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
   foreach my $with_beekeeper (0..1) {
     foreach my $pipeline_url (@pipeline_urls) {
         my $hive_dba = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+        my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+
 
         if ($with_beekeeper) {
             my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', '-url', $hive_dba->dbc->url, '-loop', '-local');
@@ -48,8 +50,10 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
             $hive_dba->dbc->disconnect_if_idle;
             system(@beekeeper_cmd);
             ok(!$?, 'beekeeper exited with the return code 0');
+            is(scalar(@{$job_adaptor->fetch_all('status != "DONE"')}), 0, 'All the jobs could be run');
         } else {
             runWorker($hive_dba, { can_respecialize => 1 });
+            is(scalar(@{$job_adaptor->fetch_all('status != "DONE"')}), 0, 'All the jobs could be run');
         }
 
         my $results = $hive_dba->dbc->db_handle->selectall_arrayref('SELECT * FROM final_result');
