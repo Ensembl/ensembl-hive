@@ -31,10 +31,8 @@ $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File:
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
-my @pipeline_urls = (
-    'sqlite:///ehive_test_pipeline_db',
-    $ENV{'EHIVE_MYSQL_PIPELINE_URL'} ? ( $ENV{'EHIVE_MYSQL_PIPELINE_URL'} ) : (),
-);
+my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
+my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
 
 foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)) {
     foreach my $pipeline_url (@pipeline_urls) {
@@ -43,7 +41,7 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
 
         # First run a single worker in this process
         runWorker($hive_dba, { can_respecialize => 1 });
-        is(scalar(@{$job_adaptor->fetch_all('status != "DONE"')}), 0, 'All the jobs could be run');
+        is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
         {
@@ -56,16 +54,19 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf)
 
             system(@seed_pipeline_cmd);
             ok(!$?, 'seed_pipeline exited with the return code 0');
-            ok(scalar(@{$job_adaptor->fetch_all('status != "DONE"')}), 'There are new jobs to run');
+            is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
 
             system(@beekeeper_cmd);
             ok(!$?, 'beekeeper exited with the return code 0');
-            is(scalar(@{$job_adaptor->fetch_all('status != "DONE"')}), 0, 'All the jobs could be run');
+            is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
         }
 
         my $results = $hive_dba->dbc->db_handle->selectall_arrayref('SELECT * FROM final_result');
         is(scalar(@$results), 3, 'There are exactly 3 results');
         ok($_->[0]*$_->[1] eq $_->[2], sprintf("%s*%s=%s", $_->[0], $_->[1], $_->[0]*$_->[1])) for @$results;
+
+            # disconnect to be able to drop the database (some drivers like PostgreSQL do not like dropping connected databases):
+        $hive_dba->dbc->disconnect_if_idle;
 
         system( @{ dbc_to_cmd($hive_dba->dbc, undef, undef, undef, 'DROP DATABASE') } );
     }

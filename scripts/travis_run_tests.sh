@@ -17,7 +17,7 @@
 export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
 
     # for the t/10.pipeconfig/longmult.t test
-export EHIVE_MYSQL_PIPELINE_URL=mysql://travis@127.0.0.1/ehive_test_pipeline_db
+export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db pgsql://postgres@127.0.0.1/ehive_test_pipeline_db'
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
