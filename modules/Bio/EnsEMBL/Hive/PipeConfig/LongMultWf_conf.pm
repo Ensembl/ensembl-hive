@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_conf;
+    Bio::EnsEMBL::Hive::PipeConfig::LongMultWf_conf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMultWf_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -17,15 +17,13 @@
 
 =head1 DESCRIPTION
 
-    This is a special version of LongMult_conf with hive_use_param_stack mode switched on.
-
     This is the PipeConfig file for the long multiplication pipeline example.
     The main point of this pipeline is to provide an example of how to write Hive Runnables and link them together into a pipeline.
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
-    The setting. Let's assume we are given two loooooong numbers to multiply. Reeeeally long.
-    Soooo long that they do not fit into registers of the CPU and should be multiplied digit-by-digit.
+    The setting. let's assume we are given two loooooong numbers to multiply. reeeeally long.
+    soooo long that they do not fit into registers of the cpu and should be multiplied digit-by-digit.
     For the purposes of this example we also assume this task is very computationally intensive and has to be done in parallel.
 
     The long multiplication pipeline consists of three "analyses" (types of tasks):
@@ -44,7 +42,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -62,7 +60,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_conf;
+package Bio::EnsEMBL::Hive::PipeConfig::LongMultWf_conf;
 
 use strict;
 use warnings;
@@ -84,6 +82,7 @@ sub pipeline_create_commands {
 
             # additional tables needed for long multiplication pipeline's operation:
         $self->db_cmd('CREATE TABLE final_result (a_multiplier varchar(255) NOT NULL, b_multiplier varchar(255) NOT NULL, result varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+        $self->db_cmd('CREATE TABLE intermediate_result (a_multiplier varchar(255) NOT NULL, digit char(1) NOT NULL, partial_product varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
     ];
 }
 
@@ -102,16 +101,6 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'take_time'     => 1,
-    };
-}
-
-
-sub hive_meta_table {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-
-        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     };
 }
 
@@ -145,8 +134,8 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                '2->A' => [ 'part_multiply' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
-                'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
+                2 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                1 => [ 'add_together'  ],
             },
         },
 
@@ -154,21 +143,22 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?partial_product={digit}' ],
+                1 => [ ':////intermediate_result' ],
             },
+            -can_be_empty       => 1,
         },
         
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
+            -parameters => {
+                'intermediate_table_name' => 'intermediate_result',
+            },
+            -wait_for => [ 'part_multiply' ],
             -flow_into => {
-                1 => [ ':////final_result', 'last' ],
+                1 => [ ':////final_result' ],
             },
         },
-
-        {   -logic_name => 'last',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        }
     ];
 }
 
