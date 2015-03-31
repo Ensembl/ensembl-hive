@@ -268,7 +268,7 @@ sub specialize_worker {
             die "Could not claim job with dbID='$job_id' for Role with dbID='$role_id'";
         }
 
-    } else {    # count it as autonomous worker sharing the load of that analysis:
+    } else {    # Note: special batch Workers should avoid flipping the status to 'WORKING' in case the analysis is still 'BLOCKED'
 
         $analysis_stats_adaptor->update_status($analysis->dbID, 'WORKING');
     }
