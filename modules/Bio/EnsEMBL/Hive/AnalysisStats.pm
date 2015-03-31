@@ -251,7 +251,11 @@ sub get_or_estimate_batch_size {
     }
 
         # TailTrimming correction:
-    if( my $num_of_workers = $self->num_running_workers+1 ) {   # Note: with this ad-hoc correction $num_of_workers is always positive
+    if( my $num_of_workers = $self->num_running_workers ) {   # Note: going back to no correction
+
+        my $num_allowed_workers_max = $self->hive_capacity || $self->num_running_workers;   # ideally it should include mindef( hive_capacity, analysis_capacity), but the latter is not cheap to acquire
+        $num_of_workers = POSIX::ceil( ($num_of_workers + $num_allowed_workers_max)/2 );
+
         my $jobs_to_do = $self->ready_job_count + $remaining_job_count;
         my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_of_workers );
         if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
@@ -260,6 +264,7 @@ sub get_or_estimate_batch_size {
             $batch_size = POSIX::ceil( $jobs_to_do / $num_of_workers ); # essentially, 0 or 1
         }
     }
+
 
     return $batch_size;
 }
