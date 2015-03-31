@@ -193,9 +193,9 @@ sub schedule_workers {
     my @workers_to_submit_by_analysis               = ();   # The down-to-analysis "plan" that may completely change by the time the Workers are born and specialized
     my %workers_to_submit_by_meadow_type_rc_name    = ();   # Pre-pending-adjusted per-resource breakout
     my $total_extra_workers_required                = 0;
-    my ($stats_sorted_by_suitability, $log_buffer)  = Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability( $list_of_analyses );
+    my ($pairs_sorted_by_suitability, $log_buffer)  = Bio::EnsEMBL::Hive::Scheduler::sort_pairs_by_suitability( $list_of_analyses );
 
-    unless( @$stats_sorted_by_suitability ) {
+    unless( @$pairs_sorted_by_suitability ) {
 
         unless( @$log_buffer ) {
             push @$log_buffer, "Could not find any suitable analyses to start scheduling.";
@@ -206,7 +206,7 @@ sub schedule_workers {
         my $submit_capacity_limiter = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
         my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
 
-        ANALYSIS: foreach my $analysis_stats (@$stats_sorted_by_suitability) {
+        ANALYSIS: foreach my $pair (@$pairs_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
                 if( $analysis_id2rc_name ) {    # only add this message when scheduling and not during a Worker's specialization
                     push @$log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
@@ -214,7 +214,8 @@ sub schedule_workers {
                 last ANALYSIS;
             }
 
-            my $analysis            = $analysis_stats->analysis();    # FIXME: if it proves too expensive we may need to consider caching
+            my ($analysis, $analysis_stats) = @$pair;
+
             my $logic_name          = $analysis->logic_name;
             my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
@@ -296,32 +297,33 @@ sub schedule_workers {
                                 );
             }
 
-        }   # /ANALYSIS : foreach my $analysis_stats (@$stats_sorted_by_suitability)
+        }   # /ANALYSIS : foreach my $pair (@$pairs_sorted_by_suitability)
     }
 
     return (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);
 }
 
 
-sub sort_stats_by_suitability {
+sub sort_pairs_by_suitability {
 
-    my @sorted_stats    = map { $_->stats }                         # 3. now turn them all into stats objects
+    my @sorted_stats    = map { [ $_, $_->stats] }                  # 3. pair analyses with their stats objects
                             sort { $b->priority <=> $a->priority }  # 2. but ordered according to their priority levels
                                 shuffle                             # 1. make sure analyses are well mixed within the same priority level
                                     @{ shift @_ };
 
     my (@primary_candidates, @secondary_candidates, $discarded_count, @log_buffer);
 
-    foreach my $stats ( @sorted_stats ) {
+    foreach my $pair ( @sorted_stats ) {
+        my ($analysis, $stats) = @$pair;
 
             # assuming sync() is expensive, so first trying analyses that have already been sunk:
         if( ($stats->estimate_num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
 
-            push @primary_candidates, $stats;
+            push @primary_candidates, $pair;
 
         } elsif( $stats->status =~ /^(LOADING|BLOCKED|ALL_CLAIMED|SYNCHING)$/ ) {
 
-            push @secondary_candidates, $stats;
+            push @secondary_candidates, $pair;
 
         } else {
 
