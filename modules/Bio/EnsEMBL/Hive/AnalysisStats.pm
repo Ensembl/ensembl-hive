@@ -250,13 +250,11 @@ sub get_or_estimate_batch_size {
         $batch_size = -$batch_size || 1;
     }
 
-        # TailTrimming correction:
-    if( my $num_of_workers = $self->num_running_workers ) {   # Note: going back to no correction
+        # TailTrimming correction aims at meeting the requirement half way:
+    if( my $num_of_workers = POSIX::ceil( ($self->num_running_workers + $self->estimate_num_required_workers($remaining_job_count))/2 ) ) {
 
-        my $num_allowed_workers_max = $self->hive_capacity || $self->num_running_workers;   # ideally it should include mindef( hive_capacity, analysis_capacity), but the latter is not cheap to acquire
-        $num_of_workers = POSIX::ceil( ($num_of_workers + $num_allowed_workers_max)/2 );
+        my $jobs_to_do  = $self->ready_job_count + $remaining_job_count;
 
-        my $jobs_to_do = $self->ready_job_count + $remaining_job_count;
         my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_of_workers );
         if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
             $batch_size = $tt_batch_size;
@@ -270,11 +268,28 @@ sub get_or_estimate_batch_size {
 }
 
 
-sub estimate_num_required_workers {
-    my $self = shift;
+sub estimate_num_required_workers {     # this 'max allowed' total includes the ones that are currently running
+    my $self                = shift @_;
+    my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
-    # return POSIX::ceil( $self->ready_job_count / $self->get_or_estimate_batch_size ); # no TailTrimming
-    return $self->ready_job_count;  # TailTrimming
+    my $num_required_workers = $self->ready_job_count + $remaining_job_count;   # this 'max' estimation can still be zero
+
+    my $h_cap = $self->hive_capacity;
+    if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
+        my $hive_current_load = $self->adaptor ? $self->adaptor->db->get_RoleAdaptor->get_hive_current_load() : 0;
+        my $h_max = $self->num_running_workers + $h_cap * ( 1.0 - $hive_current_load );
+        if($h_max < $num_required_workers) {
+            $num_required_workers = $h_max;
+        }
+    }
+    my $a_max = $self->analysis->analysis_capacity;
+    if( defined($a_max) and $a_max>=0 ) {   # what is the currently attainable maximum defined via analysis_capacity?
+        if($a_max < $num_required_workers) {
+            $num_required_workers = $a_max;
+        }
+    }
+
+    return $num_required_workers;
 }
 
 
