@@ -239,7 +239,19 @@ sub specialize_worker {
         $analysis = $job->analysis;
 
     } else {
-        $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_pattern);
+        $analyses_pattern //= '%';  # for printing
+        my $analyses_matching_pattern   = $self->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
+
+            # Caching both sets of objects for faster cross-reference:
+            #
+            #       in theory, this Worker should never need to access more:
+        Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $analyses_matching_pattern ) );
+            #
+            #       it is easier to preload all Stats objects:
+        Bio::EnsEMBL::Hive::AnalysisStats->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_AnalysisStatsAdaptor->fetch_all ) );
+
+
+        $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_matching_pattern, $analyses_pattern);
 
         unless( ref($analysis) ) {
 
@@ -550,6 +562,8 @@ sub synchronize_hive {
 
 sub safe_synchronize_AnalysisStats {
     my ($self, $stats) = @_;
+
+    $stats->refresh();
 
     my $max_refresh_attempts = 5;
     while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
