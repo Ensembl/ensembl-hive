@@ -207,6 +207,8 @@ sub parse_report_source_line {
 
             my ($exit_status, $exception_status) = ('' x 2);
             my ($died, $cause_of_death);
+            my (@keys, @values);
+            my $line_has_key_values = 0;
             foreach (@lines) {
                 if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
                     $died           = _yearless_2_datetime($1);
@@ -217,10 +219,16 @@ sub parse_report_source_line {
                     $exception_status = $1;
                     $exception_status =~s/\s+/;/g;
                 }
+                elsif(/^\s*CPU_T/) {
+                    @keys = split(/\s+/, ' '.$_);
+                    $line_has_key_values = 1;
+                }
+                elsif($line_has_key_values) {
+                    @values = split(/\s+/, ' '.$_);
+                    $line_has_key_values = 0;
+                }
             }
 
-            my (@keys)   = split(/\s+/, ' '.$lines[@lines-2]);
-            my (@values) = split(/\s+/, ' '.$lines[@lines-1]);
             my %usage;  @usage{@keys} = @values;
 
             #warn join(', ', map {sprintf('%s=%s', $_, $usage{$_})} (sort keys %usage)), "\n";
