@@ -401,8 +401,9 @@ sub dbc_to_cmd {
 
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
+        my $pgpass = $dbc->pass;
 
-        push @cmd, ('env', "PGPASSWORD='$dbc->pass'")  if ($dbc->pass);
+        push @cmd, ('env', "PGPASSWORD=$pgpass")  if ($pgpass);
         push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
         push @cmd, ('-h', $dbc->host)       if defined($dbc->host);
