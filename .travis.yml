@@ -14,6 +14,7 @@ before_install:
     - wget https://github.com/bioperl/bioperl-live/archive/bioperl-release-1-2-3.zip
     - unzip bioperl-release-1-2-3.zip
     - sudo sed -i '1s/usr\/bin\/perl -w/usr\/bin\/env perl/' `which psql`
+    - ln -s /usr/share/perl5/PgCommon.pm modules/
 
 
 install:
