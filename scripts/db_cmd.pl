@@ -18,7 +18,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions', 'dbc_to_cmd');
 
 
 sub main {
-    my ($reg_conf, $reg_type, $reg_alias, $executable, $url, @prepend, @append, $sqlcmd, $to_params, $verbose, $help, $report_versions);
+    my ($reg_conf, $reg_type, $reg_alias, $executable, $url, @prepend, @append, $sqlcmd, $verbose, $help, $report_versions);
 
     GetOptions(
                 # connect to the database:
@@ -31,7 +31,6 @@ sub main {
             'prepend=s@'        => \@prepend,
             'append|extra=s@'   => \@append,
             'sqlcmd=s'          => \$sqlcmd,
-            'to_params!'        => \$to_params,     # is being phased out and so no longer documented
 
             'verbose!'          => \$verbose,
             'help!'             => \$help,
@@ -84,17 +83,13 @@ sub main {
         script_usage(1);
     }
 
-    my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, \@append, $sqlcmd, $to_params ) };
+    my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, \@append, $sqlcmd ) };
 
     my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
 
-    if($to_params) {
-        print "$flat_cmd\n";
-    } else {
-        warn "\nRunning command:\n\t$flat_cmd\n\n" if($verbose);
+    warn "\nRunning command:\n\t$flat_cmd\n\n"; # if($verbose);
 
-        exec(@cmd);
-    }
+    exec(@cmd);
 }
 
 

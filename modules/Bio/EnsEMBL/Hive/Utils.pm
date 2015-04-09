@@ -353,7 +353,7 @@ sub throw {
 
 
 sub dbc_to_cmd {
-    my ($dbc, $executable, $prepend, $append, $sqlcmd, $to_params) = @_;
+    my ($dbc, $executable, $prepend, $append, $sqlcmd) = @_;
 
     my $driver = $dbc->driver || 'mysql';
 
@@ -389,7 +389,7 @@ sub dbc_to_cmd {
     if($driver eq 'mysql') {
         $executable ||= 'mysql';
 
-        push @cmd, $executable              unless $to_params;
+        push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
         push @cmd, '-h'.$dbc->host          if $dbc->host;
         push @cmd, '-P'.$dbc->port          if $dbc->port;
@@ -402,8 +402,8 @@ sub dbc_to_cmd {
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
 
-        push @cmd, ('env', "PGPASSWORD='$dbc->pass'")  if ($to_params && $dbc->pass);
-        push @cmd, $executable              unless $to_params;
+        push @cmd, ('env', "PGPASSWORD='$dbc->pass'")  if ($dbc->pass);
+        push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
         push @cmd, ('-h', $dbc->host)       if defined($dbc->host);
         push @cmd, ('-p', $dbc->port)       if defined($dbc->port);
@@ -417,7 +417,7 @@ sub dbc_to_cmd {
 
         die "sqlite requires a database (file) name\n" unless $dbname;
 
-        push @cmd, $executable              unless $to_params;
+        push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
         push @cmd, @$append                 if ($append && @$append);
         push @cmd, $dbname;
