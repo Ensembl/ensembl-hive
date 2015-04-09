@@ -105,7 +105,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -exec <alt_executable> ] [ -prepend <prepend_params> ] [ -append <append_params> ] [ -sql <sql_command> ] [ -to_params | -verbose ]
+    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -exec <alt_executable> ] [ -prepend <prepend_params> ] [ -append <append_params> ] [ -sql <sql_command> ] [ -verbose ]
 
 =head1 DESCRIPTION
 
