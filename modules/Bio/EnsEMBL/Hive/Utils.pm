@@ -410,7 +410,7 @@ sub dbc_to_cmd {
         push @cmd, ('-U', $dbc->username)   if defined($dbc->username);
         push @cmd, ('-c', $sqlcmd)          if $sqlcmd;
         push @cmd, @$append                 if ($append && @$append);
-        push @cmd, $dbname                  if defined($dbname);
+        push @cmd, $dbname                  if $dbname;
 
     } elsif($driver eq 'sqlite') {
         $executable ||= 'sqlite3';
