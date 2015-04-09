@@ -88,21 +88,21 @@ CREATE OR REPLACE VIEW resource_usage_stats AS
 -- time an analysis or group of analyses (given by a name pattern) ----------------------------------------
 --
 -- Usage:
---      SELECT * FROM time_analysis('%');
+--      SELECT * FROM time_analysis();
 --      SELECT * FROM time_analysis('alignment_chains%');
 
 DROP FUNCTION IF EXISTS time_analysis(VARCHAR);
-CREATE FUNCTION time_analysis(analyses_pattern VARCHAR,
-                                OUT still_running BIGINT,
-                                OUT measured_in_minutes DOUBLE PRECISION,
-                                OUT measured_in_hours DOUBLE PRECISION,
-                                OUT measured_in_days DOUBLE PRECISION)
+CREATE FUNCTION time_analysis(analyses_pattern VARCHAR DEFAULT '%')
+RETURNS TABLE ( still_running BIGINT,
+                measured_in_minutes DOUBLE PRECISION,
+                measured_in_hours DOUBLE PRECISION,
+                measured_in_days DOUBLE PRECISION)
 AS $$
     SELECT  COUNT(*)-COUNT(when_finished),
             EXTRACT(EPOCH FROM (CASE WHEN COUNT(*)>COUNT(when_finished) THEN CURRENT_TIMESTAMP ELSE max(when_finished) END) - min(when_started))/60,
             EXTRACT(EPOCH FROM (CASE WHEN COUNT(*)>COUNT(when_finished) THEN CURRENT_TIMESTAMP ELSE max(when_finished) END) - min(when_started))/3600,
             EXTRACT(EPOCH FROM (CASE WHEN COUNT(*)>COUNT(when_finished) THEN CURRENT_TIMESTAMP ELSE max(when_finished) END) - min(when_started))/3600/24
     FROM role JOIN analysis_base USING (analysis_id)
-    WHERE logic_name like analyses_pattern;
+    WHERE logic_name like $1;
 $$ LANGUAGE SQL;
 
