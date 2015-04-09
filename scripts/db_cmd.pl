@@ -85,9 +85,11 @@ sub main {
 
     my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, \@append, $sqlcmd ) };
 
-    my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
+    if( $verbose ) {
+        my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
 
-    warn "\nRunning command:\n\t$flat_cmd\n\n"; # if($verbose);
+        warn "\nThe actual command I am running is:\n\t$flat_cmd\n\n";
+    }
 
     exec(@cmd);
 }
