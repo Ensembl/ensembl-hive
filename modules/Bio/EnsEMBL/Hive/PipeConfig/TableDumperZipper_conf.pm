@@ -95,11 +95,10 @@ sub pipeline_analyses {
         {   -logic_name => 'find_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT table_name FROM information_schema.tables WHERE table_schema = "#mysql_dbname:db_conn#" AND table_name #matching_op# "#only_tables#"',
+                'inputquery'    => 'SHOW TABLE STATUS WHERE Name #matching_op# "#only_tables#"',
             },
             -flow_into => {
-#                2 => { 'table_dumper' => { 'table_name' => '#table_name#', 'db_conn' => '#db_conn#' }, },
-                2 => [ 'table_dumper' ],
+                2 => { 'table_dumper' => { 'table_name' => '#Name#' }, },
             },
         },
 
