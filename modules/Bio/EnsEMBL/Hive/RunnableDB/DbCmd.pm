@@ -97,8 +97,8 @@ sub param_defaults {
     return {
         %{$self->SUPER::param_defaults(@_)},
         'executable'    => undef,
-        'prepend'       => undef,
-        'append'        => undef,
+        'prepend'       => [],
+        'append'        => [],
         'input_file'    => undef,
         'input_query'   => undef,
         'output_file'   => undef,
@@ -135,7 +135,13 @@ sub fetch_input {
         die "'output_file' and 'command_out' cannot be set together\n";
     }
 
-    my @cmd = @{ dbc_to_cmd( $self->data_dbc, $self->param('executable'), $self->param('prepend'), $self->param('append'), $self->param('input_query'), 0 ) };
+    my @cmd = @{ dbc_to_cmd(
+        $self->data_dbc,
+        $self->param('executable'),
+        [grep {defined $_} @{$self->param('prepend')}],
+        [grep {defined $_} @{$self->param('append')}],
+        $self->param('input_query'),
+    ) };
 
     # Add the input data
     if ($self->param('input_file')) {
