@@ -93,7 +93,9 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults(@_)},
         'executable'    => undef,
         'prepend'       => undef,
         'append'        => undef,
