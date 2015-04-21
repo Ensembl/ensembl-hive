@@ -67,7 +67,7 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class, then add our own stuff
 
         'db_conn'       => $self->o('db_conn'),
-        'dumping_flags' => '-t',    # '-t' for "dump without table definition" or '' for "dump with table definition"
+        'dumping_flag'  => '-t',    # '-t' for "dump without table definition" or undef for "dump with table definition"
         'directory'     => '.',     # directory where both source and target files are located
         'matching_op'   => 'LIKE',  # 'LIKE' or 'NOT LIKE'
         'only_tables'   => '%',     # any wildcard understood by MySQL
@@ -103,14 +103,14 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'table_dumper',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters    => {
-                'filename'   => '#directory#/#table_name#.sql',
-                'cmd'        => 'mysqldump #mysql_conn:db_conn# #dumping_flags# #table_name# >#filename#',
+                'output_file'   => '#directory#/#table_name#.sql',
+                'executable'    => 'mysqldump',
+                'append'        => ['#dumping_flag#', '#table_name#'],
             },
             -analysis_capacity => 2,
             -flow_into => {
-#                1 => { 'file_compressor' => { 'filename' => '#filename#' }, },
                 1 => [ 'file_compressor' ],
             },
         },
