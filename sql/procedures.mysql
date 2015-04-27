@@ -58,8 +58,8 @@ CREATE OR REPLACE VIEW progress AS
 CREATE OR REPLACE VIEW msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM log_message m
-    LEFT JOIN job j ON (j.job_id=m.job_id)
-    LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
 
 
 -- show statistics of Workers' real resource usage by analysis -------------------------------------------
