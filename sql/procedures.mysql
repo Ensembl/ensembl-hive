@@ -85,6 +85,22 @@ CREATE OR REPLACE VIEW resource_usage_stats AS
     ORDER BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status;
 
 
+-- show the roles that are currently live (grouped by meadow_users, resource_classes and analyses) -------
+--
+-- Usage:
+--       select * from live_roles;
+--       select * from live_roles where resource_class_id=12;
+
+CREATE OR REPLACE VIEW live_roles AS
+    SELECT w.meadow_user, w.meadow_type, w.resource_class_id, rc.name resource_class_name, r.analysis_id, a.logic_name, count(*)
+    FROM worker w
+    JOIN role r USING(worker_id)
+    LEFT JOIN resource_class rc ON w.resource_class_id=rc.resource_class_id
+    LEFT JOIN analysis_base a USING(analysis_id)
+    WHERE r.when_finished IS NULL
+    GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
+
+
 -- time an analysis or group of analyses (given by a name pattern) ----------------------------------------
 --
 -- Usage:
