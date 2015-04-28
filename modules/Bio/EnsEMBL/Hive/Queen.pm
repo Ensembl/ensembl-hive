@@ -749,7 +749,17 @@ sub store_resource_usage {
 
         if( my $worker_id = $processid_2_workerid->{$process_id} ) {
             $sth_delete->execute( $worker_id );
-            $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+
+            eval {
+                $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+                1;
+            } or do {
+                if($@ =~ /execute failed: Duplicate entry/s) {     # ignore the collision with another parallel beekeeper
+                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 0 );
+                } else {
+                    die $@;
+                }
+            };
         } else {
             push @not_ours, $process_id;
             #warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
