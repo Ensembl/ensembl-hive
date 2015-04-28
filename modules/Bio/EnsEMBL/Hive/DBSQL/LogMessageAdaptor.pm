@@ -70,10 +70,10 @@ sub store_job_message {
 
 
 sub store_worker_message {
-    my ($self, $worker, $msg, $is_error) = @_;
+    my ($self, $worker_or_id, $msg, $is_error) = @_;
 
-    my $worker_id = $worker->dbID;
-    my $role_id   = $worker->current_role && $worker->current_role->dbID;
+    my ($worker, $worker_id) = ref($worker_or_id) ? ($worker_or_id, $worker_or_id->dbID) : (undef, $worker_or_id);
+    my $role_id   = $worker && $worker->current_role && $worker->current_role->dbID;
 
     chomp $msg;   # we don't want that last "\n" in the database
 
