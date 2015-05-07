@@ -510,7 +510,13 @@ sub run {
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
 
-                    $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Claiming: ready_job_count=".$stats->ready_job_count.", num_running_workers=".$stats->num_running_workers.", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch), 0 );
+                    if($self->debug) {
+                        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self,
+                             "Claiming: ready_job_count=".$stats->ready_job_count
+                            .", num_running_workers=".$stats->num_running_workers
+                            .", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch),
+                        0 );
+                    }
 
                     if(scalar(@$actual_batch)) {
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
