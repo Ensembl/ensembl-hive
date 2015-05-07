@@ -129,6 +129,8 @@ sub store_jobs_and_adjust_counters {
             push @output_job_ids, $job->dbID();
 
         } elsif( $local_job ) {
+            $self->db->get_LogMessageAdaptor->store_hive_message( "JobAdaptor failed to store the local Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision", 0 );
+
             $failed_to_store_local_jobs++;
         }
     }
