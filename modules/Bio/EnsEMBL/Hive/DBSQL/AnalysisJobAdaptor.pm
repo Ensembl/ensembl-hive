@@ -93,7 +93,8 @@ sub store_jobs_and_adjust_counters {
 
     foreach my $job (@$jobs) {
 
-        my $job_adaptor = $job->analysis->adaptor->db->get_AnalysisJobAdaptor;
+        my $analysis    = $job->analysis;
+        my $job_adaptor = $analysis ? $analysis->adaptor->db->get_AnalysisJobAdaptor : $self;   # if analysis object is undefined, consider the job local
         my $local_job   = $job_adaptor == $self;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
