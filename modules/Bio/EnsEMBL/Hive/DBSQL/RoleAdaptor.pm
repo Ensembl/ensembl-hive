@@ -65,20 +65,16 @@ sub finalize_role {
     my $role_id         = $role->dbID;
     my $when_finished   = $role->when_finished ? "'".$role->when_finished."'" : 'CURRENT_TIMESTAMP';
 
-    my $sql = "UPDATE role SET when_finished=$when_finished WHERE role_id=$role_id";
+    $self->dbc->do( "UPDATE role SET when_finished=$when_finished WHERE role_id=$role_id" );
 
-    $self->dbc->do( $sql );
-
-    unless( $self->db->hive_use_triggers() ) {
-        $self->db->get_AnalysisStatsAdaptor->decrease_running_workers( $role->analysis_id );
-    }
+    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'num_running_workers', -1, $role->analysis_id );
 
     if( $release_undone_jobs ) {
         $self->db->get_AnalysisJobAdaptor->release_undone_jobs_from_role( $role );
     }
 
         # Re-sync the analysis_stats when a worker dies as part of dynamic sync system.
-        # It will also re-calculate num_running_workers (from active roles) and num_required_workers,
+        # It will also re-calculate num_running_workers (from active roles)
         # so no further adjustment should be necessary.
     $self->db->get_WorkerAdaptor->safe_synchronize_AnalysisStats( $role->analysis->stats );
 }

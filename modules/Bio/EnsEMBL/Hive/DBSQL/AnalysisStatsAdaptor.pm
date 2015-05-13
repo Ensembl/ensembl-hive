@@ -150,7 +150,6 @@ sub update {
       $sql .= ",num_running_workers=" . $stats->num_running_workers();
   }
 
-  $sql .= ",num_required_workers=" . $stats->num_required_workers();
   $sql .= ",when_updated=CURRENT_TIMESTAMP";
   $sql .= ",sync_lock='0'";
   $sql .= " WHERE analysis_id='".$stats->analysis_id."' ";
@@ -168,23 +167,11 @@ sub update {
 sub update_status {
   my ($self, $analysis_id, $status) = @_;
 
-  my $sql = "UPDATE analysis_stats SET status='$status' ";
-  $sql .= " WHERE analysis_id='$analysis_id' ";
+  my $sql = "UPDATE analysis_stats SET status='$status' WHERE analysis_id='$analysis_id' ";
 
   my $sth = $self->prepare($sql);
   $sth->execute();
   $sth->finish;
-}
-
-
-sub interval_update_claim {
-    my ($self, $analysis_id, $job_count) = @_;
-
-    unless( $self->db->hive_use_triggers() ) {
-        my $sql = "UPDATE analysis_stats SET ready_job_count = ready_job_count - $job_count WHERE analysis_id= $analysis_id";
-
-        $self->dbc->do( $sql );
-    }
 }
 
 
@@ -233,49 +220,15 @@ sub interval_update_work_done {
 }
 
 
-sub increase_running_workers {
-  my $self = shift;
-  my $analysis_id = shift;
+sub increment_a_counter {
+    my ($self, $counter, $increment, $analysis_id) = @_;
 
-  my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers + 1 ".
-      " WHERE analysis_id='$analysis_id'";
-
-  $self->dbc->do($sql);
+    unless( $self->db->hive_use_triggers() ) {
+        if($increment) {    # can either be positive or negative
+            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment) WHERE analysis_id='$analysis_id'" );
+        }
+    }
 }
-
-
-sub decrease_running_workers {
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats SET num_running_workers = num_running_workers - 1 ".
-      " WHERE analysis_id='$analysis_id'";
-
-  $self->dbc->do($sql);
-}
-
-
-sub decrease_required_workers {
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers-1 ".
-            "WHERE analysis_id='$analysis_id' ";
-
-  $self->dbc->do($sql);
-}
-
-
-sub increase_required_workers {
-  my $self = shift;
-  my $analysis_id = shift;
-
-  my $sql = "UPDATE analysis_stats SET num_required_workers=num_required_workers+1 ".
-            "WHERE analysis_id='$analysis_id' ";
-
-  $self->dbc->do($sql);
-}
-
 
 1;
 

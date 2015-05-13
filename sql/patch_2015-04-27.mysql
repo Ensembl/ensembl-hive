@@ -1,0 +1,43 @@
+
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 69;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+CREATE OR REPLACE VIEW live_roles AS
+    SELECT w.meadow_user, w.meadow_type, w.resource_class_id, rc.name resource_class_name, r.analysis_id, a.logic_name, count(*)
+    FROM worker w
+    JOIN role r USING(worker_id)
+    LEFT JOIN resource_class rc ON w.resource_class_id=rc.resource_class_id
+    LEFT JOIN analysis_base a USING(analysis_id)
+    WHERE r.when_finished IS NULL
+    GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';

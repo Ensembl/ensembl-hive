@@ -34,6 +34,8 @@ The following parameters are accepted:
  - output_db [string] : URL of a database to write the dump to. In this
     mode, the Runnable acts like MySQLTransfer
 
+ - skip_dump : boolean. 1 to skip the dump process
+
 If "table_list" is undefined or maps to an empty list, the list
 of tables to be dumped is decided accordingly to "exclude_list" (EL)
 and "exclude_ehive" (EH). "exclude_list" controls the whole list of
@@ -192,12 +194,25 @@ sub run {
     );
     print "$cmd\n" if $self->debug;
 
-    # We have to skip the dump
-    return if ($self->param('skip_dump'));
+    # Check whether the current database has been restored from a snapshot.
+    # If it is the case, we shouldn't re-dump and overwrite the file.
+    # We also check here the value of the "skip_dump" parameter
+    my $completion_signature = sprintf('dump_%d_restored', $self->input_job->dbID);
+    return if $self->param('skip_dump') or $self->param($completion_signature);
 
     # OK, we can dump
     if(my $return_value = system($cmd)) {
         die "system( $cmd ) failed: $return_value";
+    }
+
+    # We add the signature to the dump, so that the job won't rerun on a
+    # restored database
+    my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
+    # We're very lucky that gzipped streams can be concatenated and the
+    # output is still valid !
+    $extra_sql =~ s/>/>>/;
+    if(my $return_value = system($extra_sql)) {
+        die "system( $extra_sql ) failed: $return_value";
     }
 }
 

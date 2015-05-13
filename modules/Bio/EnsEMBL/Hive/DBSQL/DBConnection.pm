@@ -51,15 +51,11 @@ sub new {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
             return $class->SUPER::new(
-                %flags,
-                -driver => $parsed_url->{'driver'},
-                -host   => $parsed_url->{'host'},
-                -port   => $parsed_url->{'port'},
-                -user   => $parsed_url->{'user'},
-                -pass   => $parsed_url->{'pass'},
-                -dbname => $parsed_url->{'dbname'},
-                -disconnect_when_inactive       => $parsed_url->{'conn_params'}->{'discon'},
-                -reconnect_when_connection_lost => $parsed_url->{'conn_params'}->{'recon'},
+                %flags,     # they act as overridable defaults
+
+                ( map { ("-$_" => $parsed_url->{$_}) } ( 'driver', 'host', 'port', 'user', 'pass', 'dbname' ) ),    # parentheses are essential
+
+                ( map { ("-$_" => $parsed_url->{'conn_params'}->{$_}) } keys %{$parsed_url->{'conn_params'}}  ),    # parentheses are essential
             );
 
         } else {
@@ -110,20 +106,65 @@ sub url {
     }
     $url .= '/' . $self->dbname;
 
+    my @opt_pairs = ();
+    foreach my $option ('disconnect_when_inactive', 'wait_timeout', 'reconnect_when_lost') {
+        if( defined(my $value = $self->$option()) ) {
+            push @opt_pairs, "$option=$value";
+        }
+    }
+    $url = join(';', $url, @opt_pairs);
+
     return $url;
 }
 
 
-sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by trying again (a useful workaround even in mysql 5.1.61)
+sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental backoff-and-retry approach
+    my $self        = shift @_;
+
+    my $attempts    = 8;
+    my $sleep_sec   = 1;
+    my $retval;
+
+    foreach my $attempt (1..$attempts) {
+        eval {
+            $retval = $self->SUPER::connect( @_ );
+            1;
+        } or do {
+            if( ($@ =~ /Could not connect to database.+?failed: Too many connections/s)                             # problem on server side (configured with not enough connections)
+             or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(99\)/s)     # problem on client side (cooling down period after a disconnect)
+            ) {
+
+                warn "Possibly transient problem conecting to the database (attempt #$attempt). Will try again in $sleep_sec sec";
+
+                usleep( $sleep_sec*1000000 );
+                $sleep_sec *= 2;
+                next;
+
+            } else {     # but definitely report other errors
+
+                die $@;
+            }
+        };
+        last;   # stop looping once we succeeded
+    }
+
+    if($@) {
+        die "After $attempts attempts still could not connect() : $@";
+    }
+
+    return $retval;
+}
+
+
+sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" by imitating CSMA/CD protocol's incremental backoff-and-retry approach (a useful workaround even in mysql 5.1.61)
     my $self                    = shift @_;
     my $sql_params              = shift @_;
     my $deadlock_log_callback   = shift @_;
 
-    my $sql_cmd     = shift @$sql_params;
+    my $sql_cmd         = shift @$sql_params;
 
     my $attempts        = 9;
     my $sleep_max_sec   = 1;
-    my $log_message_adaptor;
 
     my $retval;
     my $query_msg;
@@ -137,18 +178,12 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         } or do {
             $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
 
-            if( (my $deadlock_detected = ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/))
-             or (my $toomanyconn_detected = ($@ =~ /Could not connect to database.+?failed: Too many connections/))
-            ) {
+            if( $@ =~ /Deadlock found when trying to get lock; try restarting transaction/ ) {
 
                 my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
 
-                if($toomanyconn_detected) {     # It may get noticed in case the error log is monitored/recorded:
-                    warn "Too many connections detected when trying to run $query_msg (attempt #$attempt). Will try again in $this_sleep_sec sec";
-                } else {
-                    if( $deadlock_log_callback ) {
-                        $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
-                    }
+                if( $deadlock_log_callback ) {
+                    $deadlock_log_callback->( " temporarily failed due to a DEADLOCK in the database (attempt #$attempt). Will try again in $this_sleep_sec sec" );
                 }
 
                 usleep( $this_sleep_sec*1000000 );

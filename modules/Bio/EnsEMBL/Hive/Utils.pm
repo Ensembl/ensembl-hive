@@ -61,7 +61,7 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw dbc_to_cmd join_command_args);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -349,6 +349,119 @@ sub throw {
         # TODO: newer versions of Carp are much more tunable, but I am stuck with v1.08 .
         #       Alternatively, we could implement our own stack reporter instead of Carp::confess.
     confess $msg;
+}
+
+
+sub dbc_to_cmd {
+    my ($dbc, $executable, $prepend, $append, $sqlcmd) = @_;
+
+    my $driver = $dbc->driver || 'mysql';
+
+    my $dbname = $dbc->dbname;
+    if($sqlcmd) {
+        if($sqlcmd =~ /(DROP\s+DATABASE(?:\s+IF\s+EXISTS)?\s*?)(?:\s+(\w+))?/i) {
+            $dbname = $2 if $2;
+
+            if($driver eq 'sqlite') {
+                return ['rm', '-f', $dbname];
+            } elsif(!$2) {
+                $sqlcmd = "$1 $dbname";
+                $dbname = '';
+            }
+        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
+            $dbname = $2 if $2;
+
+            if($driver eq 'sqlite') {
+                return ['touch', $dbname];
+            } elsif(!$2) {
+                my %limits = ( 'mysql' => 64, 'pgsql' => 63 );
+                if (length($dbname) > $limits{$driver}) {
+                    die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
+                }
+                $sqlcmd = "$1 $dbname";
+                $dbname = '';
+            }
+        }
+    }
+
+    my @cmd;
+
+    if($driver eq 'mysql') {
+        $executable ||= 'mysql';
+
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, '-h'.$dbc->host          if $dbc->host;
+        push @cmd, '-P'.$dbc->port          if $dbc->port;
+        push @cmd, '-u'.$dbc->username      if $dbc->username;
+        push @cmd, '-p'.$dbc->password      if $dbc->password;
+        push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
+        push @cmd, $dbname                  if $dbname;
+        push @cmd, @$append                 if ($append && @$append);
+
+    } elsif($driver eq 'pgsql') {
+        $executable ||= 'psql';
+        my $pgpass = $dbc->pass;
+
+        push @cmd, ('env', "PGPASSWORD=$pgpass")  if ($pgpass);
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, ('-h', $dbc->host)       if defined($dbc->host);
+        push @cmd, ('-p', $dbc->port)       if defined($dbc->port);
+        push @cmd, ('-U', $dbc->username)   if defined($dbc->username);
+        push @cmd, ('-c', $sqlcmd)          if $sqlcmd;
+        push @cmd, @$append                 if ($append && @$append);
+        push @cmd, $dbname                  if $dbname;
+
+    } elsif($driver eq 'sqlite') {
+        $executable ||= 'sqlite3';
+
+        die "sqlite requires a database (file) name\n" unless $dbname;
+
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, @$append                 if ($append && @$append);
+        push @cmd, $dbname;
+        push @cmd, $sqlcmd                  if $sqlcmd;
+    }
+
+    return \@cmd;
+}
+
+=head2 join_command_args
+
+    Argument[0]: String or Arrayref of Strings
+    Description: Prepares the command to be executed by system(). It is needed if the
+                 command is in fact composed of multiple commands.
+    Returns:     Tuple (boolean,string). The boolean indicates whether it was needed to
+                 join the arguments. The string is the new command-line string.
+                 PS: Shamelessly adapted from http://www.perlmonks.org/?node_id=908096
+
+=cut
+
+my %shell_characters = map {$_ => 1} qw(< > |);
+
+sub join_command_args {
+    my $args = shift;
+    return (0,$args) unless ref($args);
+
+    # system() can only spawn 1 process. For multiple commands piped
+    # together or if redirections are used, we need a shell to parse
+    # a joined string representing the command
+    my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;
+
+    my @new_args = ();
+    foreach my $a (@$args) {
+        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {
+            push @new_args, $a;
+        } else {
+            # Escapes the single-quotes and protects the arguments
+            $a =~ s/'/'\\''/g;
+            push @new_args, "'$a'";
+        }
+    }
+
+    return ($join_needed,join(' ', @new_args));
 }
 
 

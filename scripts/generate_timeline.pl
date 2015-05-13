@@ -26,6 +26,9 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 no warnings qw{qw};
 
+# This replaces "when_died" when a role is still active
+my $now = localtime;
+
 main();
 exit(0);
 
@@ -354,7 +357,7 @@ sub add_event {
     return if $offset <= 0;
 
         # temporary Time::Piece values
-    my $death_datetime = Time::Piece->strptime( $when_died , '%Y-%m-%d %H:%M:%S');
+    my $death_datetime = $when_died ? Time::Piece->strptime( $when_died , '%Y-%m-%d %H:%M:%S') : $now;
     my $birth_datetime = ($when_born =~ /^-[0-9]/) ? $death_datetime + $when_born : Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
 
     # We don't need to draw things at the resolution of 1 second; 1 minute is enough
@@ -364,10 +367,10 @@ sub add_event {
         # string values:
     my $birth_date = $birth_datetime->date . 'T' . $birth_datetime->hms;
     my $death_date = $death_datetime->date . 'T' . $death_datetime->hms;
-    return if $when_died and ($birth_date eq $death_date);
+    return if $birth_date eq $death_date;
 
     $events->{$birth_date}{$key} += $offset;
-    $events->{$death_date}{$key} -= $offset if $when_died;
+    $events->{$death_date}{$key} -= $offset;
 }
 
 
@@ -415,6 +418,7 @@ sub cumulate_events {
         push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
         push @data_timings, [$event_date, \%hash_interval];
     }
+    push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
     warn "Last timing: ", Dumper $data_timings[-1] if $verbose and @data_timings;
     warn "Highest y value: ", $max_workers, "\n" if $verbose;
     warn "Total area: ", Dumper \%tot_area if $verbose;

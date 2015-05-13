@@ -93,7 +93,8 @@ sub store_jobs_and_adjust_counters {
 
     foreach my $job (@$jobs) {
 
-        my $job_adaptor = $job->analysis->adaptor->db->get_AnalysisJobAdaptor;
+        my $analysis    = $job->analysis;
+        my $job_adaptor = $analysis ? $analysis->adaptor->db->get_AnalysisJobAdaptor : $self;   # if analysis object is undefined, consider the job local
         my $local_job   = $job_adaptor == $self;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
@@ -129,6 +130,8 @@ sub store_jobs_and_adjust_counters {
             push @output_job_ids, $job->dbID();
 
         } elsif( $local_job ) {
+            $self->db->get_LogMessageAdaptor->store_hive_message( "JobAdaptor failed to store the local Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision", 0 );
+
             $failed_to_store_local_jobs++;
         }
     }
@@ -390,6 +393,8 @@ sub reset_or_grab_job_by_dbID {
 
 sub grab_jobs_for_role {
     my ($self, $role, $how_many_this_batch) = @_;
+
+    return [] unless( $how_many_this_batch );
   
     my $analysis_id     = $role->analysis_id;
     my $role_id         = $role->dbID;
@@ -440,7 +445,26 @@ sub grab_jobs_for_role {
         }
     }
 
+    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'ready_job_count', -$claim_count, $analysis_id );
+
     return $claim_count ? $self->fetch_all_by_role_id_AND_status($role_id, 'CLAIMED') : [];
+}
+
+
+sub release_claimed_jobs_from_role {
+    my ($self, $role) = @_;
+
+        # previous value of role_id is not important, because that Role never had a chance to run the jobs
+    my $num_released_jobs = $self->dbc->protected_prepare_execute( [ "UPDATE job SET status='READY', role_id=NULL WHERE role_id=? AND status='CLAIMED'", $role->dbID ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "releasing claimed jobs from role".$after, 0 ); }
+    );
+
+    my $analysis_stats_adaptor  = $self->db->get_AnalysisStatsAdaptor;
+    my $analysis_id             = $role->analysis_id;
+
+    $analysis_stats_adaptor->increment_a_counter( 'ready_job_count', $num_released_jobs, $analysis_id );
+
+#    $analysis_stats_adaptor->update_status( $analysis_id, 'LOADING' );
 }
 
 
@@ -470,13 +494,7 @@ sub release_undone_jobs_from_role {
     my $worker          = $role->worker;
 
         #first just reset the claimed jobs, these don't need a retry_count index increment:
-        # (previous role_id does not matter, because that Role has never had a chance to run the job)
-    $self->dbc->do( qq{
-        UPDATE job
-           SET status='READY', role_id=NULL
-         WHERE role_id='$role_id'
-           AND status='CLAIMED'
-    } );
+    $self->release_claimed_jobs_from_role( $role );
 
     my $sth = $self->prepare( qq{
         SELECT job_id
@@ -562,6 +580,9 @@ sub gc_dataflow {
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 
     $job->set_and_update_status('PASSED_ON');
+
+        # PASSED_ON jobs are included in done_job_count
+    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'done_job_count', 1, $analysis->dbID );
 
     if(my $semaphored_job_id = $job->semaphored_job_id) {
         $self->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore

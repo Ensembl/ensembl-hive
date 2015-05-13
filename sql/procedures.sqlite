@@ -58,8 +58,8 @@ CREATE VIEW IF NOT EXISTS progress AS
 CREATE VIEW IF NOT EXISTS msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM log_message m
-    LEFT JOIN job j ON (j.job_id=m.job_id)
-    LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
 
 
 -- show statistics of Workers' real resource usage by analysis -------------------------------------------
@@ -83,4 +83,21 @@ CREATE VIEW IF NOT EXISTS resource_usage_stats AS
     LEFT JOIN worker_resource_usage u USING (worker_id)
     GROUP BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status
     ORDER BY a.analysis_id, w.meadow_type, rc.resource_class_id, u.exit_status;
+
+
+-- show the roles that are currently live (grouped by meadow_users, resource_classes and analyses) -------
+--
+-- Usage:
+--       select * from live_roles;
+--       select * from live_roles where resource_class_id=12;
+
+CREATE VIEW IF NOT EXISTS live_roles AS
+    SELECT w.meadow_user, w.meadow_type, w.resource_class_id, rc.name resource_class_name, r.analysis_id, a.logic_name, count(*)
+    FROM worker w
+    JOIN role r USING(worker_id)
+    LEFT JOIN resource_class rc ON w.resource_class_id=rc.resource_class_id
+    LEFT JOIN analysis_base a USING(analysis_id)
+    WHERE r.when_finished IS NULL
+    GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
+
 

@@ -58,7 +58,7 @@ sub new {
     my ($dbc, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)
         = @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};
 
-    $url .= ';nosqlvc=1' if($url && $no_sql_schema_version_check);
+    $url .= ';no_sql_schema_version_check=1' if($url && $no_sql_schema_version_check);
 
     if($reg_conf or $reg_alias) {   # need to initialize Registry even if $reg_conf is not really given
         require Bio::EnsEMBL::Registry;

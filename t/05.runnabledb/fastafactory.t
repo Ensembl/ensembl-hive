@@ -16,14 +16,16 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Basename;
 use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-
-my $inputfile = $ENV{EHIVE_ROOT_DIR}.'/t/input_fasta.fa';
+# Where the Fasta file should be
+my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
@@ -119,7 +121,5 @@ foreach my $file(@all_files) {
     my $exp_size = $expected_properties->{$file}[0];
     is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
 }
-
-chdir $ENV{'EHIVE_ROOT_DIR'};
 
 done_testing();

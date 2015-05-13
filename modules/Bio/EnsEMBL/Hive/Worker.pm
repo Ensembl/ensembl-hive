@@ -480,7 +480,7 @@ sub run {
 
         if( my $special_batch = $self->special_batch() ) {
             my $special_batch_length = scalar(@$special_batch);     # has to be recorded because the list is gradually destroyed
-            $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch );
+            $jobs_done_by_batches_loop += $self->run_one_batch( $special_batch, $special_batch_length );
             $self->cause_of_death( $jobs_done_by_batches_loop == $special_batch_length ? 'JOB_LIMIT' : 'CONTAMINATED');
         } else {    # a proper "BATCHES" loop
 
@@ -502,13 +502,22 @@ sub run {
                     $self->cause_of_death('LIFESPAN');
 
                 } else {
-                    my $desired_batch_size  = $current_role->analysis->stats->get_or_estimate_batch_size();
+                    my $stats = $current_role->analysis->stats;
+                    my $desired_batch_size  = $stats->get_or_estimate_batch_size();
                     my $hit_the_limit;  # dummy at the moment
                     ($desired_batch_size, $hit_the_limit)   = $self->job_limiter->preliminary_offer( $desired_batch_size );
 
                     my $actual_batch = $job_adaptor->grab_jobs_for_role( $current_role, $desired_batch_size );
+
+                    if($self->debug) {
+                        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self,
+                             "Claiming: ready_job_count=".$stats->ready_job_count
+                            .", num_running_workers=".$stats->num_running_workers
+                            .", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch),
+                        0 );
+                    }
+
                     if(scalar(@$actual_batch)) {
-                        $self->adaptor->db->get_AnalysisStatsAdaptor->interval_update_claim($self->current_role->analysis->dbID, scalar(@$actual_batch));
                         my $jobs_done_by_this_batch = $self->run_one_batch( $actual_batch );
                         $jobs_done_by_batches_loop += $jobs_done_by_this_batch;
                         $self->job_limiter->final_decision( $jobs_done_by_this_batch );
@@ -633,7 +642,7 @@ sub specialize_and_compile_wrapper {
 
 
 sub run_one_batch {
-    my ($self, $jobs) = @_;
+    my ($self, $jobs, $is_special_batch) = @_;
 
     my $jobs_done_here = 0;
 
@@ -641,12 +650,13 @@ sub run_one_batch {
     my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
     my $accu_adaptor            = $self->adaptor->db->get_AccumulatorAdaptor;
     my $max_retry_count         = $current_role->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
+    my $stats                   = $current_role->analysis->stats;   # cache it to avoid reloading
 
     $self->adaptor->check_in_worker( $self );
-    $self->adaptor->safe_synchronize_AnalysisStats( $current_role->analysis->stats );
+    $self->adaptor->safe_synchronize_AnalysisStats( $stats );
 
     if($self->debug) {
-        $self->worker_say( 'AnalysisStats : ' . $current_role->analysis->stats->toString );
+        $self->worker_say( 'AnalysisStats : ' . $stats->toString );
         $self->worker_say( 'claimed '.scalar(@{$jobs}).' jobs to process' );
     }
 
@@ -747,6 +757,25 @@ sub run_one_batch {
 
         $self->prev_job_error( $job->died_somewhere );
         $self->enter_status('READY');
+
+        my $refresh_tolerance_seconds = 20;
+
+            # UNCLAIM THE SURPLUS:
+        my $remaining_jobs_in_batch = scalar(@$jobs);
+        if( !$is_special_batch and $remaining_jobs_in_batch and $stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
+            my $ready_job_count = $stats->ready_job_count;
+            my $optimal_batch_now = $stats->get_or_estimate_batch_size( $remaining_jobs_in_batch );
+            my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
+            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Check-point: rdy=$ready_job_count, rem=$remaining_jobs_in_batch, opt=$optimal_batch_now, 2unc=$jobs_to_unclaim", 0 );
+            if( $jobs_to_unclaim > 0 ) {
+                # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
+                    # currently we just dump all the remaining jobs and prepare to take a fresh batch:
+                $job->adaptor->release_claimed_jobs_from_role( $current_role );
+                $jobs = [];
+                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 0 );
+            }
+        }
+
     } # /while(my $job = shift @$jobs)
 
     return $jobs_done_here;

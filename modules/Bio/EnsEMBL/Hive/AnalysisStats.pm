@@ -126,12 +126,6 @@ sub num_running_workers {
     return $self->{'_num_running_workers'};
 }
 
-sub num_required_workers {      # NB: the meaning of this field is, again, "how many extra workers we need to add"
-    my $self = shift;
-    $self->{'_num_required_workers'} = shift if(@_);
-    return $self->{'_num_required_workers'};
-}
-
 
 ## dynamic hive_capacity mode attributes:
 
@@ -195,10 +189,16 @@ sub when_updated {                   # this method is called by the initial stor
     return $self->{'_when_updated'};
 }
 
-sub seconds_since_when_updated {     # this method is mostly used to convert between server time and local time
+sub seconds_since_when_updated {     # we fetch the server difference, store local time in the memory object, and use the local difference
     my( $self, $value ) = @_;
     $self->{'_when_updated'} = time() - $value if(defined($value));
     return defined($self->{'_when_updated'}) ? time() - $self->{'_when_updated'} : undef;
+}
+
+sub seconds_since_last_fetch {      # track the freshness of the object (store local time, use the local difference)
+    my( $self, $value ) = @_;
+    $self->{'_last_fetch'} = time() - $value if(defined($value));
+    return defined($self->{'_last_fetch'}) ? time() - $self->{'_last_fetch'} : undef;
 }
 
 sub sync_lock {
@@ -212,10 +212,15 @@ sub sync_lock {
 
 
 sub refresh {
-    my $self = shift;
+    my ($self, $seconds_fresh)      = @_;
+    my $seconds_since_last_fetch    = $self->seconds_since_last_fetch;
 
-    return $self->adaptor && $self->adaptor->refresh($self);
+    if( $self->adaptor
+    and (!defined($seconds_fresh) or !defined($seconds_since_last_fetch) or $seconds_fresh < $seconds_since_last_fetch) ) {
+        return $self->adaptor->refresh($self);
+    }
 }
+
 
 sub update {
     my $self = shift;
@@ -227,21 +232,64 @@ sub update {
 
 
 sub get_or_estimate_batch_size {
-    my $self = shift;
+    my $self                = shift @_;
+    my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
-    if( (my $batch_size = $self->batch_size())>0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
+    my $batch_size = $self->batch_size;
 
-        return $batch_size;
+    if( $batch_size > 0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
+
                                                         # otherwise it is a request for dynamic estimation:
-    } elsif( my $avg_msec_per_job = $self->avg_msec_per_job() ) {           # further estimations from collected stats
+    } elsif( my $avg_msec_per_job = $self->avg_msec_per_job ) {           # further estimations from collected stats
 
         $avg_msec_per_job = 100 if($avg_msec_per_job<100);
 
-        return POSIX::ceil( $self->min_batch_time() / $avg_msec_per_job );
+        $batch_size = POSIX::ceil( $self->min_batch_time / $avg_msec_per_job );
 
     } else {        # first estimation when no stats are available (take -$batch_size as first guess, if not zero)
-        return -$batch_size || 1;
+        $batch_size = -$batch_size || 1;
     }
+
+        # TailTrimming correction aims at meeting the requirement half way:
+    if( my $num_of_workers = POSIX::ceil( ($self->num_running_workers + $self->estimate_num_required_workers($remaining_job_count))/2 ) ) {
+
+        my $jobs_to_do  = $self->ready_job_count + $remaining_job_count;
+
+        my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_of_workers );
+        if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
+            $batch_size = $tt_batch_size;
+        } elsif(!$tt_batch_size) {
+            $batch_size = POSIX::ceil( $jobs_to_do / $num_of_workers ); # essentially, 0 or 1
+        }
+    }
+
+
+    return $batch_size;
+}
+
+
+sub estimate_num_required_workers {     # this 'max allowed' total includes the ones that are currently running
+    my $self                = shift @_;
+    my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
+
+    my $num_required_workers = $self->ready_job_count + $remaining_job_count;   # this 'max' estimation can still be zero
+
+    my $h_cap = $self->hive_capacity;
+    if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
+        my $hive_current_load = $self->adaptor ? $self->adaptor->db->get_RoleAdaptor->get_hive_current_load() : 0;
+        my $h_max = $self->num_running_workers + $h_cap * ( 1.0 - $hive_current_load );
+        if($h_max < $num_required_workers) {
+            $num_required_workers = $h_max;
+        }
+    }
+    my $a_max = $self->analysis->analysis_capacity;
+    if( defined($a_max) and $a_max>=0 ) {   # what is the currently attainable maximum defined via analysis_capacity?
+        if($a_max < $num_required_workers) {
+            $num_required_workers = $a_max;
+        }
+    }
+
+    return $num_required_workers;
 }
 
 
@@ -336,7 +384,7 @@ sub toString {
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Reqired:%d) ",
+    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
@@ -347,7 +395,7 @@ sub toString {
         $avg_runtime, $avg_runtime_unit,
 
         $self->num_running_workers,
-        $self->num_required_workers,
+        $self->estimate_num_required_workers,
     );
     $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
@@ -444,14 +492,6 @@ sub recalculate_from_job_counts {
         $self->done_job_count(       ( $job_counts->{'DONE'} // 0 ) + ($job_counts->{'PASSED_ON'} // 0 ) ); # done here or potentially done elsewhere
         $self->total_job_count(      sum( values %$job_counts ) || 0 );
     }
-
-        # compute the number of total required workers for this analysis (taking into account the jobs that are already running)
-    my $analysis              = $self->analysis();
-    my $scheduling_allowed    =  ( !defined( $self->hive_capacity ) or $self->hive_capacity )
-                              && ( !defined( $analysis->analysis_capacity  ) or $analysis->analysis_capacity  );
-    my $required_workers    = $scheduling_allowed
-                            && POSIX::ceil( $self->ready_job_count() / $self->get_or_estimate_batch_size() );
-    $self->num_required_workers( $required_workers );
 
     $self->check_blocking_control_rules();
 

@@ -25,7 +25,6 @@ no warnings qw( redefine );
 
 use Exporter;
 use Carp qw{croak};
-use Cwd qw{getcwd};
 
 use Test::More;
 use Test::Exception;
@@ -37,13 +36,6 @@ use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify'
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 use Bio::EnsEMBL::Hive::Scripts::RunWorker;
-
-BEGIN {
-    $ENV{'USER'}         ||= (getpwuid($<))[7];
-    $ENV{'EHIVE_USER'}     = $ENV{'USER'};
-    $ENV{'EHIVE_PASS'}   ||= 'password';
-    $ENV{'EHIVE_ROOT_DIR'} ||=  getcwd();
-}
 
 
 our @ISA         = qw(Exporter);

@@ -1,0 +1,40 @@
+
+-- ---------------------------------------------------------------------------------------------------
+
+\set expected_version 69
+
+\set ON_ERROR_STOP on
+
+    -- warn that we detected the schema version mismatch:
+SELECT ('The patch only applies to schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', but the current schema version is '
+    || meta_value
+    || ', so skipping the rest.') as incompatible_msg
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value!=CAST(:expected_version AS VARCHAR);
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+   SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE 1 != 1/CAST( (meta_key!='hive_sql_schema_version' OR meta_value=CAST(:expected_version AS VARCHAR)) AS INTEGER );
+
+SELECT ('The patch seems to be compatible with schema version '
+    || CAST(:expected_version AS VARCHAR)
+    || ', applying the patch...') AS compatible_msg;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+CREATE OR REPLACE VIEW live_roles AS
+    SELECT w.meadow_user, w.meadow_type, w.resource_class_id, rc.name resource_class_name, r.analysis_id, a.logic_name, count(*)
+    FROM worker w
+    JOIN role r USING(worker_id)
+    LEFT JOIN resource_class rc ON w.resource_class_id=rc.resource_class_id
+    LEFT JOIN analysis_base a USING(analysis_id)
+    WHERE r.when_finished IS NULL
+    GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value= (CAST(meta_value AS INTEGER) + 1) WHERE meta_key='hive_sql_schema_version';

@@ -42,7 +42,7 @@ sub parse {
     if( my ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
         $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]*))?)?((?:;(\w+)=(\w+))*)$} ) {
 
-        my %conn_params = split(/[;=]/, 'type=hive;discon=0'.$conn_param_string );
+        my %conn_params = split(/[;=]/, 'type=hive;disconnect_when_inactive=0'.$conn_param_string );
 
         my $parsed_url = {
             'dbconn_part'   => $dbconn_part,

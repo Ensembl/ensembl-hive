@@ -61,7 +61,19 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Utils qw(join_command_args);
+
+use Capture::Tiny ':all';
+
 use base ('Bio::EnsEMBL::Hive::Process');
+
+
+sub param_defaults {
+    return {
+        return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
+    }
+}
 
 
 =head2 strict_hash_format
@@ -104,6 +116,26 @@ sub fetch_input {
 }
 
 
+=head2 text_to_shell_lit
+
+    Argument[0]: String
+    Description: Escapes the single-quotes of the string and wrap it into single-quotes
+                 This is useful to stringify a list of commands / arguments to run them
+                 through the shell.
+                 NB: The "_" prototype is essential to allow the method to wrap $_ into @_
+                 PS: Shamelessly adapted from http://www.perlmonks.org/?node_id=908096
+
+=cut
+
+my %shell_characters = map {$_ => 1} qw(< > |);
+sub text_to_shell_lit(_) {
+    return $_[0] if $shell_characters{$_[0]} or $_[0] =~ /^[a-zA-Z0-9_\-]+\z/;
+    my $s = $_[0];
+    $s =~ s/'/'\\''/g;
+    return "'$s'";
+}
+
+
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
@@ -115,31 +147,65 @@ sub run {
     my $self = shift;
  
     my $cmd = $self->param('cmd');
-    my $flat_cmd = ref($cmd) ? join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @$cmd) : $cmd;
+    my ($join_needed, $flat_cmd) = join_command_args($cmd);
+    # Let's use the array if possible, it saves us from running a shell
+    my @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd);
 
     if($self->debug()) {
-        warn qq{cmd = "$flat_cmd"\n};
+        use Data::Dumper;
+        local $Data::Dumper::Terse = 1;
+        local $Data::Dumper::Indent = 0;
+        warn "Command given: ", Dumper($cmd), "\n";
+        warn "Command to run: ", Dumper(\@cmd_to_run), "\n";
     }
 
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
-
-    if(my $return_value = system(ref($cmd) ? @$cmd : $cmd)) {
-        $return_value >>= 8;
-        die "system( $flat_cmd ) failed: $return_value";
-    }
-
+    my $return_value;
+    my $stderr = tee_stderr {
+        system(@cmd_to_run);
+        $return_value = $? >> 8;
+    };
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
+
+    # To be used in write_output()
+    $self->param('return_value', $return_value);
+    $self->param('stderr', $stderr);
+    $self->param('flat_cmd', $flat_cmd);
 }
 
 
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Here we have nothing to do, as the wrapper is very generic.
+                  Here we take actions based on the command's exit status.
 
 =cut
 
 sub write_output {
+    my $self = shift;
+
+    my $return_value = $self->param('return_value');
+    my $stderr = $self->param('stderr');
+    my $flat_cmd = $self->param('flat_cmd');
+
+    if ($return_value) {
+
+        # We create a dataflow event depending on the exit code of the process.
+        if (exists $self->param('return_codes_2_branches')->{$return_value}) {
+            my $branch_number = $self->param('return_codes_2_branches')->{$return_value};
+            $self->dataflow_output_id( $self->input_id, $branch_number );
+            $self->input_job->autoflow(0);
+            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number));
+        }
+
+        if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->input_job->autoflow(0);
+            $self->complete_early("Java heap space is out of memory.\n");
+        }
+
+        die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
+    }
 }
 
 1;

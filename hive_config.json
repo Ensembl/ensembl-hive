@@ -77,6 +77,7 @@
         "DisplayStats"          : "barchart",
         "DisplayJobs"           : 0,
         "DisplayData"           : 0,
+        "DisplayInputIDTemplate": 1,
 
         "DisplayDetails"        : 1,
         "DisplayStretched"      : 0,

@@ -16,9 +16,12 @@
 
 export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
 
+    # for the t/10.pipeconfig/longmult.t test
+export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db pgsql://postgres@127.0.0.1/ehive_test_pipeline_db'
+
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT='-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test' perl $PWD/scripts/all_tests.pl -verbose t $SKIP_TESTS
+  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test,-db,$PWD/cover_db/" perl $PWD/scripts/all_tests.pl -verbose t $SKIP_TESTS
 else
   perl $PWD/scripts/all_tests.pl t $SKIP_TESTS
 fi

@@ -239,7 +239,19 @@ sub specialize_worker {
         $analysis = $job->analysis;
 
     } else {
-        $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_pattern);
+        $analyses_pattern //= '%';  # for printing
+        my $analyses_matching_pattern   = $self->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
+
+            # Caching both sets of objects for faster cross-reference:
+            #
+            #       in theory, this Worker should never need to access more:
+        Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $analyses_matching_pattern ) );
+            #
+            #       it is easier to preload all Stats objects:
+        Bio::EnsEMBL::Hive::AnalysisStats->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_AnalysisStatsAdaptor->fetch_all ) );
+
+
+        $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_matching_pattern, $analyses_pattern);
 
         unless( ref($analysis) ) {
 
@@ -268,11 +280,9 @@ sub specialize_worker {
             die "Could not claim job with dbID='$job_id' for Role with dbID='$role_id'";
         }
 
-    } else {    # count it as autonomous worker sharing the load of that analysis:
+    } else {    # Note: special batch Workers should avoid flipping the status to 'WORKING' in case the analysis is still 'BLOCKED'
 
         $analysis_stats_adaptor->update_status($analysis->dbID, 'WORKING');
-
-        $analysis_stats_adaptor->decrease_required_workers( $analysis->dbID );
     }
 
         # The following increment used to be done only when no specific task was given to the worker,
@@ -281,9 +291,7 @@ sub specialize_worker {
         # However this may be tricky to emulate by triggers that know nothing about "special tasks",
         # so I am (temporarily?) simplifying the accounting algorithm.
         #
-    unless( $self->db->hive_use_triggers() ) {
-        $analysis_stats_adaptor->increase_running_workers( $analysis->dbID );
-    }
+    $analysis_stats_adaptor->increment_a_counter( 'num_running_workers', 1, $analysis->dbID );
 }
 
 
@@ -555,6 +563,8 @@ sub synchronize_hive {
 sub safe_synchronize_AnalysisStats {
     my ($self, $stats) = @_;
 
+    $stats->refresh();
+
     my $max_refresh_attempts = 5;
     while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
             # ToDo: it would be nice to report the detected collision
@@ -753,7 +763,17 @@ sub store_resource_usage {
 
         if( my $worker_id = $processid_2_workerid->{$process_id} ) {
             $sth_delete->execute( $worker_id );
-            $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+
+            eval {
+                $sth_insert->execute( $worker_id, @$report_entry{'exit_status', 'mem_megs', 'swap_megs', 'pending_sec', 'cpu_sec', 'lifespan_sec', 'exception_status'} );  # slicing hashref
+                1;
+            } or do {
+                if($@ =~ /execute failed: Duplicate entry/s) {     # ignore the collision with another parallel beekeeper
+                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 0 );
+                } else {
+                    die $@;
+                }
+            };
         } else {
             push @not_ours, $process_id;
             #warn "\tDiscarding process_id=$process_id as probably not ours because it could not be mapped to a Worker\n";
