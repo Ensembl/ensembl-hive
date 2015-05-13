@@ -89,7 +89,7 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 
 @column analysis_id             a unique ID that is also a foreign key to most of the other tables
 @column logic_name              the name of the Analysis object
-@column module                  the (Perl) module name that runs this Analysis
+@column module                  the name of the module / package that runs this Analysis
 @column language                the language of the module, if not Perl
 @column parameters              a stingified hash of parameters common to all jobs of the Analysis
 @column resource_class_id       link to the resource_class table
