@@ -39,8 +39,8 @@ class ParamContainer(object):
 
     def __init__(self, unsubstituted_params, debug=False):
         """Constructor. "unsubstituted_params" is a dictionary"""
-        self._unsubstituted_param_hash = unsubstituted_params.copy()
-        self._param_hash = {}
+        self.unsubstituted_param_hash = unsubstituted_params.copy()
+        self.param_hash = {}
         self.debug = debug
 
 
@@ -51,14 +51,14 @@ class ParamContainer(object):
         """Setter. Returns the new value"""
         if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
-        self._param_hash[param_name] = value
+        self.param_hash[param_name] = value
         return value
 
     def get_param(self, param_name):
         """Getter. Performs the parameter substitution"""
         if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
-        self._substitution_in_progress = collections.OrderedDict()
+        self.substitution_in_progress = collections.OrderedDict()
         try:
             return self.internal_get_param(param_name)
         except (KeyError, SyntaxError, ParamException) as e:
@@ -69,7 +69,7 @@ class ParamContainer(object):
         """Returns a boolean. It checks both substituted and unsubstituted parameters"""
         if not self.validate_parameter_name(param_name):
             raise ParamNameException(param_name)
-        return (param_name in self._param_hash) or (param_name in self._unsubstituted_param_hash)
+        return (param_name in self.param_hash) or (param_name in self.unsubstituted_param_hash)
 
 
     # Private methods
@@ -87,10 +87,10 @@ class ParamContainer(object):
         """Equivalent of get_param() that assumes "param_name" is a valid parameter name and hence, doesn't have to raise ParamNameException.
         It is only used internally"""
         self.debug_print("internal_get_param", param_name)
-        if param_name not in self._param_hash:
-            x = self._unsubstituted_param_hash[param_name]
-            self._param_hash[param_name] = self.param_substitute(x)
-        return self._param_hash[param_name]
+        if param_name not in self.param_hash:
+            x = self.unsubstituted_param_hash[param_name]
+            self.param_hash[param_name] = self.param_substitute(x)
+        return self.param_hash[param_name]
 
 
     def param_substitute(self, structure):
@@ -173,9 +173,9 @@ class ParamContainer(object):
         self.debug_print("subst_one_hashpair", inside_hashes, is_expr)
 
         # Keep track of the substitutions we've made to detect loops
-        if inside_hashes in self._substitution_in_progress:
-            raise ParamInfiniteLoopException(inside_hashes, self._substitution_in_progress)
-        self._substitution_in_progress[inside_hashes] = 1
+        if inside_hashes in self.substitution_in_progress:
+            raise ParamInfiniteLoopException(inside_hashes, self.substitution_in_progress)
+        self.substitution_in_progress[inside_hashes] = 1
 
         # We ask the caller to provide the is_expr tag to avoid checking the string again for the presence of the "expr" tokens
         if is_expr:
@@ -199,7 +199,7 @@ class ParamContainer(object):
         else:
             val = self.internal_get_param(inside_hashes)
 
-        del self._substitution_in_progress[inside_hashes]
+        del self.substitution_in_progress[inside_hashes]
         return val
 
 

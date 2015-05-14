@@ -45,15 +45,15 @@ class BaseRunnable(object):
 
     def __init__(self, read_fileno, write_fileno):
         # We need the binary mode to disable the buffering
-        self.read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
-        self.write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
-        self.pid = os.getpid()
+        self.__read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
+        self.__write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
+        self.__pid = os.getpid()
         self.debug = 0
         self.__process_life_cycle()
 
     def __print_debug(self, *args):
         if self.debug > 1:
-            print("PYTHON {0}".format(self.pid), *args, file=sys.stderr)
+            print("PYTHON {0}".format(self.__pid), *args, file=sys.stderr)
 
     def __send_message(self, event, content):
         """seralizes the message in JSON and send it to the parent process"""
@@ -63,19 +63,19 @@ class BaseRunnable(object):
         j = json.dumps({'event': event, 'content': content}, indent=None, default=default_json_encoder)
         self.__print_debug('__send_message:', j)
         # UTF8 encoding has never been tested. Just hope it works :)
-        self.write_pipe.write(bytes(j+"\n", 'utf-8'))
+        self.__write_pipe.write(bytes(j+"\n", 'utf-8'))
 
     def __send_response(self, response):
         """Sends a response message to the parent process"""
         self.__print_debug('__send_response:', response)
         # Like above, UTF8 encoding has never been tested. Just hope it works :)
-        self.write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
+        self.__write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
 
     def __read_message(self):
         """Read a message from the parent and parse it"""
         try:
             self.__print_debug("__read_message ...")
-            l = self.read_pipe.readline()
+            l = self.__read_pipe.readline()
             self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
         except ValueError as e:
@@ -93,6 +93,7 @@ class BaseRunnable(object):
         """Simple loop: wait for job parameters, do the job's life-cycle"""
         self.__send_message_and_wait_for_OK('VERSION', __version__)
         self.__send_message_and_wait_for_OK('PARAM_DEFAULTS', self.param_defaults())
+        self.__created_worker_temp_directory = None
         while True:
             self.__print_debug("waiting for instructions")
             config = self.__read_message()
@@ -106,7 +107,7 @@ class BaseRunnable(object):
         self.__print_debug("__life_cycle")
 
         # Params
-        self.p = eHive.Params.ParamContainer(config['input_job']['parameters'])
+        self.__params = eHive.Params.ParamContainer(config['input_job']['parameters'])
 
         # Job attributes
         self.input_job = Job()
@@ -145,7 +146,7 @@ class BaseRunnable(object):
             died_somewhere = True
             self.warning( self.__traceback(2), True)
 
-        job_end_structure = {'complete' : not died_somewhere, 'job': {}, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}}
+        job_end_structure = {'complete' : not died_somewhere, 'job': {}, 'params': {'substituted': self.__params.param_hash, 'unsubstituted': self.__params.unsubstituted_param_hash}}
         for x in [ 'autoflow', 'lethal_for_worker', 'transient_error' ]:
             job_end_structure['job'][x] = getattr(self.input_job, x)
         self.__send_message_and_wait_for_OK('JOB_END', job_end_structure)
@@ -177,7 +178,7 @@ class BaseRunnable(object):
         """Dataflows the output_id(s) on a given branch (default 1). Returns whatever the Perl side returns"""
         if branch_name_or_code == 1:
             self.autoflow = False
-        self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.p._param_hash, 'unsubstituted': self.p._unsubstituted_param_hash}})
+        self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.__params.param_hash, 'unsubstituted': self.__params.unsubstituted_param_hash}})
         return self.__read_message()
 
     def worker_temp_directory(self):
@@ -185,11 +186,11 @@ class BaseRunnable(object):
         Runnables can implement "worker_temp_directory_name()" to return the name
         they would like to use
         """
-        if not hasattr(self, '_created_worker_temp_directory'):
+        if self.__created_worker_temp_directory is None:
             template_name = self.worker_temp_directory_name() if hasattr(self, 'worker_temp_directory_name') else None
             self.__send_message('WORKER_TEMP_DIRECTORY', template_name)
-            self._created_worker_temp_directory = self.__read_message()
-        return self._created_worker_temp_directory
+            self.__created_worker_temp_directory = self.__read_message()
+        return self.__created_worker_temp_directory
 
     # Param interface
     ##################
@@ -203,7 +204,7 @@ class BaseRunnable(object):
         if anything wrong happens. The exception is marked as non-transient."""
         t = self.input_job.transient_error
         self.input_job.transient_error = False
-        v = self.p.get_param(param_name)
+        v = self.__params.get_param(param_name)
         self.input_job.transient_error = t
         return v
 
@@ -214,25 +215,25 @@ class BaseRunnable(object):
         substitution stack) is undefined"""
         # As a setter
         if len(args):
-            return self.p.set_param(param_name, args[0])
+            return self.__params.set_param(param_name, args[0])
 
         # As a getter
         try:
-            return self.p.get_param(param_name)
+            return self.__params.get_param(param_name)
         except KeyError as e:
             warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), eHive.Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):
         """Returns True or False, whether the parameter exists (it doesn't mean it can be successfully substituted)"""
-        return self.p.has_param(param_name)
+        return self.__params.has_param(param_name)
 
     def param_is_defined(self, param_name):
         """Returns True or False, whether the parameter exists, can be successfully substituted, and is not None"""
         if not self.param_exists(param_name):
             return False
         try:
-            return self.p.get_param(param_name) is not None
+            return self.__params.get_param(param_name) is not None
         except KeyError:
             return False
 
