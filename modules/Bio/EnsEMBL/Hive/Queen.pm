@@ -71,7 +71,6 @@ use File::Path 'make_path';
 use List::Util qw(max);
 
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
-use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
 use Bio::EnsEMBL::Hive::Worker;

@@ -41,9 +41,6 @@ use List::Util 'sum';
 use POSIX;
 use Term::ANSIColor;
 
-use Bio::EnsEMBL::Hive::Utils ('throw');
-use Bio::EnsEMBL::Hive::Analysis;
-
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 

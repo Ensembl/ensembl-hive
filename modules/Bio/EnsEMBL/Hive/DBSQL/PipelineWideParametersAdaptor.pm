@@ -36,6 +36,9 @@ package Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::PipelineWideParameters;
+
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');

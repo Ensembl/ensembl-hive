@@ -48,7 +48,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils::URL;
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Accumulator;
 use Bio::EnsEMBL::Hive::NakedTable;
 

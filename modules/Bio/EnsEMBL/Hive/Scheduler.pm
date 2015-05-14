@@ -38,8 +38,6 @@ use warnings;
 
 use List::Util ('shuffle');
 
-use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Limiter;
 
