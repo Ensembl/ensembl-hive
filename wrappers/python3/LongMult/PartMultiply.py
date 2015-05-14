@@ -4,6 +4,7 @@ import eHive
 import time
 
 class PartMultiply(eHive.BaseRunnable):
+    """Runnable to multiply a number by a digit"""
 
     def param_defaults(self):
         return {
@@ -23,6 +24,7 @@ class PartMultiply(eHive.BaseRunnable):
 
 
 def _rec_multiply(a_multiplier, digit, carry):
+    """Function to multiply a number by a digit"""
 
     if a_multiplier == '':
         return str(carry) if carry else ''

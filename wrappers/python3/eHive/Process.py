@@ -31,7 +31,7 @@ class HiveJSONMessageException(Exception):
 
 
 class BaseRunnable(object):
-    """This is the equivalent of GuestProcess. Note that most of the methods
+    """This is the counterpart of GuestProcess. Note that most of the methods
     are private to be hidden in the derived classes.
 
     This class can be used as a base-class for people to redefine fetch_input(),
@@ -221,7 +221,7 @@ class BaseRunnable(object):
         try:
             return self.__params.get_param(param_name)
         except KeyError as e:
-            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !\n".format(param_name, e), eHive.Params.ParamWarning, 2)
+            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !".format(param_name, e), eHive.Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):

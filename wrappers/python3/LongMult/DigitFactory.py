@@ -4,6 +4,7 @@ import eHive
 import time
 
 class DigitFactory(eHive.BaseRunnable):
+    """Factory that creates 1 job per digit found in the decimal representation of 'b_multiplier'"""
 
     def param_defaults(self):
         return {

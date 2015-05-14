@@ -2,6 +2,7 @@
 import eHive
 
 class TestRunnable(eHive.BaseRunnable):
+    """Simple Runnable to test standaloneJob"""
 
     def param_defaults(self):
         return {

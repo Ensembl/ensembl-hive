@@ -4,6 +4,7 @@ import eHive
 import time
 
 class AddTogether(eHive.BaseRunnable):
+    """Runnable that adds up all the partial-multiplications from PartMultiply"""
 
     def param_defaults(self):
         return {
