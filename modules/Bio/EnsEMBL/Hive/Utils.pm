@@ -56,8 +56,6 @@ use warnings;
 use Carp ('confess');
 use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::Hive::Version;
-use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
@@ -338,8 +336,12 @@ sub go_figure_dbc {
 
 
 sub report_versions {
+    require Bio::EnsEMBL::Hive::Version;
+    require Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
+    require Bio::EnsEMBL::Hive::GuestProcess;
     print "CodeVersion\t".Bio::EnsEMBL::Hive::Version->get_code_version()."\n";
     print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
+    print "CompatibleGuestLanguageCommunicationProtocolVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
 }
 
 

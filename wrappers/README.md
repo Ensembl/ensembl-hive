@@ -27,20 +27,23 @@ Wrappers can be declared through the environment variable
 `EHIVE_WRAPPER_XXX` where `XXX` is the name of the language in upper case.
 
 Wrappers work in two modes:
-* `${executable} ${module_name} compile`
-* `${executable} ${module_name} run ${fd_in} ${fd_out}`
+* `${executable} version`
+* `${executable} load ${module_name}`
+* `${executable} run ${module_name} ${fd_in} ${fd_out}`
 
-The `compile` mode is used to check that the Runnable can be loaded and is a
+The `version` mode will report the version of the communication protocol
+that this wrapper understands.
+
+The `load` mode is used to check that the Runnable can be loaded and is a
 valid eHive Runnable. The return code must be 0 upon success, or 1 otherwise.
 
 The `run` mode takes two file descriptors that indicate the channels to
 use to communicate with the Perl side. The protocol is explained in
 GuestProcess itself and consists in passing JSON messages.
 
-> LEO: The `run` mode should probably accept more resource-specific arguments.
-> I'm thinking of JAVA which often requires arguments like -Xmx. I don't
-> know where those arguments should be stored. A third column in the
-> resource description ?
+> We may have to add extra arguments to the `run` mode to pass
+> resource-specific parameters. This will probably be needed for JAVA,
+> where -Xmx (and alike parameters) must be set.
 
 # Guidelines
 

@@ -8,6 +8,7 @@ import numbers
 import warnings
 import traceback
 
+__version__ = "0.1"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
@@ -90,6 +91,7 @@ class BaseRunnable(object):
 
     def __process_life_cycle(self):
         """Simple loop: wait for job parameters, do the job's life-cycle"""
+        self.__send_message_and_wait_for_OK('VERSION', __version__)
         self.__send_message_and_wait_for_OK('PARAM_DEFAULTS', self.param_defaults())
         while True:
             self.__print_debug("waiting for instructions")

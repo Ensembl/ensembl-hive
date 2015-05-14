@@ -56,25 +56,49 @@ def find_module(module_name):
 
     return c
 
-if len(sys.argv) < 3:
-    usage('Not enough arguments')
 
-mode = sys.argv[2]
-if mode not in [ 'compile', 'run' ]:
-    usage('Unknown mode')
+## One method per mode
 
-# Set up PYTHONPATH and load the runnable
-runnable = find_module(sys.argv[1])
+def do_version():
+    print(eHive.__version__)
 
-if mode == 'run':
-    if len(sys.argv) != 5:
-        usage('Wrong number of arguments')
+def do_compile():
+    find_module(sys.argv[2])
+
+def do_run():
+    runnable = find_module(sys.argv[2])
     try:
         fd_in = int(sys.argv[3])
         fd_out = int(sys.argv[4])
     except:
-        usage('Cannot read the file descriptors as integers')
+        usage('Cannot read the file descriptors as integers', 'run')
     runnable(fd_in, fd_out)
 
-sys.exit(0)
+
+## And here we select the mode
+
+available_modes = {
+        'version' : (do_version, []),
+        'compile' : (do_compile, ['module_name']),
+        'run'     : (do_run, ['module_name', 'fd_in', 'fd_out'])
+    }
+
+def usage(msg):
+    error = "Command-line error: " + msg + "\nUsage: \n"
+    for (mode, (_, args)) in available_modes.items():
+        error += "\t" + " ".join([sys.argv[0], mode] + args) + "\n"
+    print(error, file=sys.stderr)
+    sys.exit(1)
+
+if len(sys.argv) == 1:
+    usage('No mode provided')
+
+mode = sys.argv[1]
+if mode not in available_modes:
+    usage('Unknown mode "{0}"'.format(mode))
+
+if len(sys.argv)-2 != len(available_modes[mode][1]):
+    usage('Not enough arguments for mode "' + mode + '". Expecting: ' + ' '.join(available_modes[mode][1]))
+
+available_modes[mode][0]()
 

@@ -142,7 +142,7 @@ sub get_compiled_module_name {
 
     if ($self->language) {
         my $wrapper = Bio::EnsEMBL::Hive::GuestProcess::_get_wrapper_for_language($self->language);
-        if (system($wrapper, $runnable_module_name, 'compile')) {
+        if (system($wrapper, 'compile', $runnable_module_name)) {
             die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n";
         }
         return 'Bio::EnsEMBL::Hive::GuestProcess';

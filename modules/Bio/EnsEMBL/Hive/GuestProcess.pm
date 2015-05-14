@@ -22,8 +22,14 @@ around in single-line JSON structures. The protocol is described below using the
     ---> represents a message sent to the child process,
     <--- represents a message sent by the child process
 
-The initialisation (in the constructor) only consists in the child process passing the
-default parameters back to GuestProcess (the param_defaults() section of the Runnable):
+The initialisation (in the constructor) consists in checking that both sides spek the same
+version of the protocol:
+    <--- { "version": "XXX" }
+    ---> "OK"
+GuestProcess will bail out if the response is not "OK"
+
+Then, the child process (i.e. the runnable) will send its default parameters to GuestProcess.
+This fills the usual param_defaults() section of the Runnable:
     <--- { ... param_defaults ... }
     ---> "OK"
 
@@ -126,6 +132,22 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
+our $VERSION = '0.1';
+
+=head2 get_protocol_version
+
+  Example     : print Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version(), "\n";
+  Description : Returns the version number of the communication protocol
+  Returntype  : String
+
+=cut
+
+sub get_protocol_version {
+    return $VERSION
+}
+
+
+
 =head2 new
 
   Arg[1]      : $language: the programming language the external runnable is in
@@ -177,7 +199,7 @@ sub new {
         $flags = fcntl($PARENT_WTR, F_GETFD, 0);
         fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec($wrapper, $module, 'run', fileno($PARENT_RDR), fileno($PARENT_WTR));
+        exec($wrapper, 'run', $module, fileno($PARENT_RDR), fileno($PARENT_WTR));
     }
 
 
@@ -190,9 +212,19 @@ sub new {
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
 
+    $self->print_debug('CHECK VERSION NUMBER');
+    my $other_version = $self->read_message()->{content};
+    if ($other_version ne $VERSION) {
+        $self->send_response('NO');
+        die "eHive's protocol version is '$VERSION' but the wrapper's is '$other_version'\n";
+    } else {
+        $self->send_response('OK');
+    }
+
     $self->print_debug("BEFORE READ PARAM_DEFAULTS");
     $self->param_defaults( $self->read_message()->{content} );
     $self->send_response('OK');
+
     $self->print_debug("INIT DONE");
 
     return $self;
