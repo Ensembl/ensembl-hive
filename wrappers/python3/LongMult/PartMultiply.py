@@ -15,7 +15,7 @@ class PartMultiply(eHive.BaseRunnable):
     def run(self):
         a_multiplier = self.param_required('a_multiplier')
         digit = int(self.param_required('digit'))
-        self.param('partial_product', _rec_multiply(str(a_multiplier), digit, 0))
+        self.param('partial_product', rec_multiply(str(a_multiplier), digit, 0))
         time.sleep( self.param('take_time') )
 
 
@@ -23,7 +23,7 @@ class PartMultiply(eHive.BaseRunnable):
         self.dataflow( { 'partial_product' : self.param('partial_product') }, 1)
 
 
-def _rec_multiply(a_multiplier, digit, carry):
+def rec_multiply(a_multiplier, digit, carry):
     """Function to multiply a number by a digit"""
 
     if a_multiplier == '':
@@ -36,6 +36,6 @@ def _rec_multiply(a_multiplier, digit, carry):
     this_result = this_product % 10
     this_carry = this_product // 10
 
-    return _rec_multiply(prefix, digit, this_carry) + str(this_result)
+    return rec_multiply(prefix, digit, this_carry) + str(this_result)
 
 

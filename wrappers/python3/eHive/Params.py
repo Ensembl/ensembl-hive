@@ -204,8 +204,7 @@ class ParamContainer(object):
 
 
 
-if __name__ == '__main__':
-
+def __main():
     seed_params = [
         ('alpha' , 2),
         ('beta' , 5),
@@ -304,4 +303,8 @@ if __name__ == '__main__':
     print("\tgamma", p.get_param('gamma'))
     print("\tgamma_prime", p.get_param('gamma_prime'))
     print("\tgamma_second", p.get_param('gamma_second'))
+
+
+if __name__ == '__main__':
+    __main()
 
