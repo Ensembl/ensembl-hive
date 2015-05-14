@@ -20,7 +20,8 @@ my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
 
 generate_hive_schema_desc();
 generate_docs_scripts();
-generate_docs_doxygen();
+generate_docs_doxygen_perl();
+generate_docs_doxygen_python();
 
 
 sub generate_hive_schema_desc {
@@ -71,7 +72,7 @@ sub generate_docs_scripts {
 }
 
 
-sub generate_docs_doxygen {
+sub generate_docs_doxygen_perl {
 
     print "Regenerating $ehrd/docs/doxygen ...\n\n";
 
@@ -114,6 +115,57 @@ sub generate_docs_doxygen {
         "echo 'HAVE_DOT               = YES'",
         "echo 'CALL_GRAPH             = YES'",
         "echo 'CALLER_GRAPH           = YES'",
+    );
+
+    my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
+
+    print "Running the following command:\n\t$full_cmd\n\n";
+
+    system( $full_cmd );
+}
+
+
+sub generate_docs_doxygen_python {
+
+    print "Regenerating $ehrd/wrappers/python3/doxygen ...\n\n";
+
+    my $doxy_bin    = `which doxygen`;
+    chomp $doxy_bin;
+    die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
+
+    my $doxy_filter = `which doxypy`;
+    chomp $doxy_filter;
+
+    die "Cannot find the Doxygen Python filter 'doxypy' in the current PATH.\n" unless -e $doxy_filter;
+
+    my @cmds = (
+        "rm -rf $ehrd/wrappers/python3/doxygen",
+        "doxygen -g -",
+        "echo 'PROJECT_NAME           = ensembl-hive-python3'",
+        "echo 'PROJECT_NUMBER         = $code_ver'",
+        "echo 'OUTPUT_DIRECTORY       = $ehrd/wrappers/python3'",
+        "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/python3'",
+        "echo 'INPUT                  = $ehrd/wrappers/python3'",
+        "echo 'INPUT_FILTER           = $doxy_filter'",
+        "echo 'HTML_OUTPUT            = doxygen'",
+        "echo 'EXTRACT_ALL            = YES'",
+        "echo 'EXTRACT_PRIVATE        = YES'",
+        "echo 'EXTRACT_STATIC         = YES'",
+        "echo 'FILE_PATTERNS          = *.py README.md'",
+        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
+        "echo 'ENABLE_PREPROCESSING   = NO'",
+        "echo 'RECURSIVE              = YES'",
+        "echo 'EXAMPLE_PATTERNS       = *'",
+        "echo 'HTML_TIMESTAMP         = NO'",
+        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
+        "echo 'GENERATE_TREEVIEW      = YES'",
+        "echo 'GENERATE_LATEX         = NO'",
+        "echo 'CLASS_DIAGRAMS         = YES'",
+        "echo 'HAVE_DOT               = YES'",
+        "echo 'CALL_GRAPH             = YES'",
+        "echo 'CALLER_GRAPH           = YES'",
+        "echo 'COLLABORATION_GRAPH    = NO'",
+        "echo 'SOURCE_BROWSER         = YES'",
     );
 
     my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";

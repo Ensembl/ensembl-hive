@@ -1,0 +1,9 @@
+<map id="LongMult.DigitFactory.DigitFactory.write_output" name="LongMult.DigitFactory.DigitFactory.write_output">
+<area shape="rect" id="node2" href="$classeHive_1_1Process_1_1BaseRunnable.html#a11adb84bc2b95f138346911b3acda14a" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="241,5,479,32"/>
+<area shape="rect" id="node3" href="$classeHive_1_1Process_1_1BaseRunnable.html#af8bdfe695b9b9a0bb3c6837f22883057" title="Dataflows the output_id(s) on a given branch (default 1). " alt="" coords="235,56,485,83"/>
+<area shape="rect" id="node4" href="$classeHive_1_1Process_1_1BaseRunnable.html#af3c999502afdc346070e50c4fc42905b" title="Store a message in the log_message table with is_error indicating whether the warning is actually an ..." alt="" coords="237,107,483,133"/>
+<area shape="rect" id="node5" href="$classeHive_1_1Process_1_1BaseRunnable.html#ac518b346f9494f5b5f20e964eb34794d" title="Send a message and expects a response to be &#39;OK&#39;. " alt="" coords="533,99,764,141"/>
+<area shape="rect" id="node6" href="$classeHive_1_1Process_1_1BaseRunnable.html#a6a6493b41d7be02d02671a9e14cfa76f" title="seralizes the message in JSON and send it to the parent process " alt="" coords="812,66,1013,107"/>
+<area shape="rect" id="node8" href="$classeHive_1_1Process_1_1BaseRunnable.html#a4bbc7670e98c0fbd96efeca31921d7cb" title="Read a message from the parent and parse it. " alt="" coords="812,131,1013,173"/>
+<area shape="rect" id="node7" href="$classeHive_1_1Process_1_1BaseRunnable.html#a6530f9e23f33773f2b9d9e9e1115435a" title="eHive.Process.BaseRunnable.\l__print_debug" alt="" coords="1061,99,1263,141"/>
+</map>
