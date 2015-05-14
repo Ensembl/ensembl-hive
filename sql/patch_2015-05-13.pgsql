@@ -24,7 +24,7 @@ SELECT ('The patch seems to be compatible with schema version '
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
-ALTER TABLE analysis_base ADD COLUMN language VARCHAR(16);
+ALTER TABLE analysis_base ADD COLUMN language VARCHAR(255);
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 

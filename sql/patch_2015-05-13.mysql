@@ -28,7 +28,7 @@ SET SESSION sql_mode='';
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
 
-ALTER TABLE analysis_base ADD COLUMN language VARCHAR(16) AFTER module;
+ALTER TABLE analysis_base ADD COLUMN language VARCHAR(255) AFTER module;
 
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
