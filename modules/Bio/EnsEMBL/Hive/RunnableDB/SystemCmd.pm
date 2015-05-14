@@ -76,46 +76,6 @@ sub param_defaults {
 }
 
 
-=head2 strict_hash_format
-
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
-                  Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
-
-=cut
-
-sub strict_hash_format {
-    return 0;
-}
-
-
-=head2 fetch_input
-
-    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-                  Here it deals with finding the command line, doing parameter substitution and storing the result in a predefined place.
-
-    param('cmd'): The recommended way of passing in the command line. It can be either a string, or an array-ref of strings. The later is safer if some of the
-                  arguments contain white-spaces.
-
-    param('*'):   Any other parameters can be freely used for parameter substitution.
-
-=cut
-
-sub fetch_input {
-    my $self = shift;
-
-        # First, FIND the command line
-        #
-    my $cmd = ($self->input_id()!~/^\{.*\}$/)
-            ? $self->input_id()                 # assume the command line is given in input_id
-            : $self->param('cmd')               # or defined as a hash value (in input_id or parameters)
-    or die "Could not find the command defined in param('cmd') or input_id()";
-
-        # Store the value with parameter substitutions for the actual execution:
-        #
-    $self->param('cmd', $cmd);
-}
-
-
 =head2 text_to_shell_lit
 
     Argument[0]: String
@@ -141,12 +101,17 @@ sub text_to_shell_lit(_) {
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
                   Here it actually runs the command line.
 
+    param('cmd'): The recommended way of passing in the command line. It can be either a string, or an array-ref of strings. The later is safer if some of the
+                  arguments contain white-spaces.
+
+    param('*'):   Any other parameters can be freely used for parameter substitution.
+
 =cut
 
 sub run {
     my $self = shift;
  
-    my $cmd = $self->param('cmd');
+    my $cmd = $self->param_required('cmd');
     my ($join_needed, $flat_cmd) = join_command_args($cmd);
     # Let's use the array if possible, it saves us from running a shell
     my @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd);

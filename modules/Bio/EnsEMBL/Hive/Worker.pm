@@ -696,7 +696,7 @@ sub run_one_batch {
             }
             push @params_precedence, $job->input_id(), $job->accu_hash();
 
-            $job->param_init( $runnable_object->strict_hash_format(), @params_precedence );
+            $job->param_init( @params_precedence );
 
             $self->worker_say( "Job $job_id unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
 

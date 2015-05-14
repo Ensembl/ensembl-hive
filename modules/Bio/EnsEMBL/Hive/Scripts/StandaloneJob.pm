@@ -41,7 +41,7 @@ sub standaloneJob {
     $job->input_id( $input_id );
     $job->dataflow_rules(1, []);
 
-    $job->param_init( $runnable_object->strict_hash_format(), $runnable_object->param_defaults(), $job->input_id() );
+    $job->param_init( $runnable_object->param_defaults(), $job->input_id() );
 
     $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
     $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash

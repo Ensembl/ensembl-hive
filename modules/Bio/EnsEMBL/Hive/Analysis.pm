@@ -138,6 +138,9 @@ sub get_compiled_module_name {
     die "Problem accessing methods in '$runnable_module_name'. Please check that it inherits from Bio::EnsEMBL::Hive::Process and is named correctly.\n"
         unless($runnable_module_name->isa('Bio::EnsEMBL::Hive::Process'));
 
+    die "DEPRECATED: the strict_hash_format() method is no longer supported in Runnables - the input_id() in '$runnable_module_name' has to be a hash now.\n"
+        if($runnable_module_name->can('strict_hash_format'));
+
     return $runnable_module_name;
 }
 

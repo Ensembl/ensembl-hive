@@ -56,25 +56,13 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-=head2 strict_hash_format
+=head2 run
 
-    Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
-                  Here we return 0 in order to indicate that neither input_id() nor parameters() is required to contain a hash.
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
+                  Here it actually runs the sql command(s).  If a list of commands is given, they are run in succession within the same session
+                  (so you can create a temporary tables and use it in another command within the same sql command list).
 
-=cut
-
-sub strict_hash_format {
-    return 0;
-}
-
-
-=head2 fetch_input
-
-    Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-                  Here it deals with finding the sql command(s), doing parameter substitution, storing the result in a predefined place
-                  and optionally connecting to another database (see param('db_conn')).
-
-    param('sql'): The recommended way of passing in the sql command(s).
+    param('sql'): Either a scalar SQL command or an array of SQL commands.
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the sql command(s) will have to be run.
 
@@ -82,34 +70,12 @@ sub strict_hash_format {
 
 =cut
 
-sub fetch_input {
-    my $self = shift;
-
-        # First, FIND the sql command
-        #
-    my $sql = ($self->input_id()!~/^\{.*\}$/)
-            ? $self->input_id()                 # assume the sql command is given in input_id
-            : $self->param('sql')               # or defined as a hash value (in input_id or parameters)
-    or die "Could not find the command defined in param('sql') or input_id()";
-
-        #   Store the sql command array:
-        #
-    $self->param('sqls', (ref($sql) eq 'ARRAY') ? $sql : [$sql] );  
-}
-
-
-=head2 run
-
-    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here it actually runs the sql command(s).  If a list of commands is given, they are run in succession within the same session
-                  (so you can create a temporary tables and use it in another command within the same sql command list).
-
-=cut
-
 sub run {
     my $self = shift;
 
-    my $sqls = $self->param('sqls');
+    my $sqls = $self->param_required('sql');
+    $sqls = [$sqls] if(ref($sqls) ne 'ARRAY');
+
     my $data_dbc  = $self->data_dbc();
 
     my %output_id;

@@ -239,18 +239,6 @@ sub warning {
 #
 ##########################################
 
-=head2 strict_hash_format
-
-    Title   :  strict_hash_format
-    Function:  if a subclass wants more flexibility in parsing job.input_id and analysis.parameters,
-               it should redefine this method to return 0
-
-=cut
-
-sub strict_hash_format {
-    return 1;
-}
-
 
 =head2 param_defaults
 
