@@ -83,7 +83,11 @@ sub main {
         script_usage(1);
     }
 
-    my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, \@append, $sqlcmd ) };
+    if (@append) {
+        warn qq{In db_cmd.pl, final arguments don't have to be declared with --append any more. All the remaining arguments are considered to be appended.\n};
+    }
+
+    my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };
 
     if( $verbose ) {
         my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
@@ -107,19 +111,20 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -exec <alt_executable> ] [ -prepend <prepend_params> ] [ -append <append_params> ] [ -sql <sql_command> ] [ -verbose ]
+    db_cmd.pl {-url <url> | [-reg_conf <reg_conf>] -reg_alias <reg_alias> [-reg_type <reg_type>] } [ -exec <alt_executable> ] [ -prepend <prepend_params> ] [ -sql <sql_command> ] [ -verbose ] [other arguments to append to the command line]
 
 =head1 DESCRIPTION
 
     db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
     -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.
+    If the arguments that have to be appended contain options (i.e. start with dashes), first use a double-dash to indicate the end of db_cmd.pl's options and the start of the arguments that have to be passed as-is (see the example below with --html)
 
 =head1 USAGE EXAMPLES
 
     db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/" -sql 'CREATE DATABASE lg4_long_mult'
     db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
-    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -append='--html'
-    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult" -exec mysqldump -prepend -t -append analysis_base -append job
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -sql 'SELECT * FROM analysis_base' -- --html
+    db_cmd.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult" -exec mysqldump -prepend -t analysis_base job
 
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
