@@ -575,7 +575,7 @@ sub gc_dataflow {
 
     my $job = $self->fetch_by_dbID($job_id);
 
-    $job->param_init( 0, $analysis->parameters(), $job->input_id() );    # input_id_templates still supported, however to a limited extent
+    $job->param_init( $analysis->parameters(), $job->input_id() );    # input_id_templates still supported, however to a limited extent
 
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 
