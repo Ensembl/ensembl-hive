@@ -74,7 +74,7 @@ sub standaloneJob {
         &$_test_event('WARNING', @_);
     } if $expected_events;
 
-    lives_and(sub {
+    lives_ok(sub {
         ok(Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef), 'job completed');
     }, sprintf('standaloneJob("%s", %s, (...), %s)', $module_or_file, stringify($param_hash), stringify($flags)));
 
@@ -89,7 +89,7 @@ sub init_pipeline {
 
     my $hive_dba;
     local @ARGV = @$options;
-    lives_and(sub {
+    lives_ok(sub {
         $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
         ok($hive_dba, 'pipeline initialized');
         %Bio::EnsEMBL::Hive::Cacheable::cache_by_class = ();
@@ -104,7 +104,7 @@ sub runWorker {
 
     $specialization_options->{force_sync} = 1;
 
-    lives_and(sub {
+    lives_ok(sub {
         Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($hive_dba, $specialization_options, $life_options, $execution_options);
     }, sprintf('runWorker()'));
 }
