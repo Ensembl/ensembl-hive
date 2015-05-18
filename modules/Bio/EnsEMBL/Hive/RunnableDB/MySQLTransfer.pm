@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'dbc_to_cmd');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -120,16 +120,19 @@ sub run {
     my $where       = $self->param('where');
     my $filter_cmd  = $self->param('filter_cmd');
 
-    my $cmd = 'mysqldump '
-                . { 'overwrite' => '', 'topup' => '--no-create-info ', 'insertignore' => '--no-create-info --insert-ignore ' }->{$mode}
-                . $self->mysql_conn_from_dbc($src_dbc)
-                . " $table "
-                . (defined($where) ? "--where '$where' " : '')
-                . '| '
-                . ($filter_cmd ? "$filter_cmd | " : '')
-                . 'mysql '
-                . $self->mysql_conn_from_dbc($dest_dbc);
+    my $mode_options = { 'overwrite' => [], 'topup' => ['--no-create-info'], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
 
+    # Must be joined because of the pipe
+    my $cmd = join(' ',
+                @{dbc_to_cmd($src_dbc, 'mysqldump', $mode_options, undef, undef, 1)},
+                $table,
+                (defined($where) ? "--where '$where' " : ''),
+                '|',
+                ($filter_cmd ? "$filter_cmd | " : ''),
+                @{dbc_to_cmd($dest_dbc, undef, undef, undef, undef, 1)}
+            );
+
+    print "$cmd\n" if $self->debug;
     if(my $return_value = system($cmd)) {   # NB: unfortunately, this code won't catch many errors because of the pipe
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
@@ -191,12 +194,6 @@ sub get_row_count {
     $sth->finish;
 
     return $row_count;
-}
-
-sub mysql_conn_from_dbc {
-    my ($self, $dbc) = @_;
-
-    return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --password='".$dbc->password."' ".$dbc->dbname;
 }
 
 1;

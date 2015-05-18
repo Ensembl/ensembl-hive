@@ -82,7 +82,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'dbc_to_cmd');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -181,12 +181,12 @@ sub run {
             $output = sprintf('> %s', $self->param('output_file'));
         }
     } else {
-        $output = sprintf(' | mysql %s', $self->mysql_conn_from_dbc($self->param('real_output_db')));
+        $output = join(' ', '|', @{ dbc_to_cmd($self->param('real_output_db'), undef, undef, undef, undef, 1) } );
     };
 
+    # Must be joined because of the redirection / the pipe
     my $cmd = join(' ', 
-        'mysqldump',
-        $self->mysql_conn_from_dbc($src_dbc),
+        @{ dbc_to_cmd($src_dbc, 'mysqldump', undef, undef, undef, 1) },
         '--skip-lock-tables',
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
@@ -214,13 +214,6 @@ sub run {
     if(my $return_value = system($extra_sql)) {
         die "system( $extra_sql ) failed: $return_value";
     }
-}
-
-
-sub mysql_conn_from_dbc {
-    my ($self, $dbc) = @_; 
-
-    return '--host='.$dbc->host.' --port='.$dbc->port." --user='".$dbc->username."' --password='".$dbc->password."' ".$dbc->dbname;
 }
 
 

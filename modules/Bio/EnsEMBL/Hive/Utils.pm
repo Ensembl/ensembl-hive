@@ -354,8 +354,9 @@ sub throw {
 }
 
 
+our $pass_internal_counter = 0;
 sub dbc_to_cmd {
-    my ($dbc, $executable, $prepend, $append, $sqlcmd) = @_;
+    my ($dbc, $executable, $prepend, $append, $sqlcmd, $hide_password_in_env) = @_;
 
     my $driver = $dbc->driver || 'mysql';
 
@@ -388,6 +389,18 @@ sub dbc_to_cmd {
 
     my @cmd;
 
+    my $hidden_password;
+    if ($dbc->password) {
+        if ($hide_password_in_env) {
+            my $pass_variable = "EHIVE_TMP_PASSWORD_${pass_internal_counter}";
+            $pass_internal_counter++;
+            $ENV{$pass_variable} = $dbc->password;
+            $hidden_password = '$'.$pass_variable;
+        } else {
+            $hidden_password = $dbc->password;
+        }
+    }
+
     if($driver eq 'mysql') {
         $executable ||= 'mysql';
 
@@ -396,16 +409,15 @@ sub dbc_to_cmd {
         push @cmd, '-h'.$dbc->host          if $dbc->host;
         push @cmd, '-P'.$dbc->port          if $dbc->port;
         push @cmd, '-u'.$dbc->username      if $dbc->username;
-        push @cmd, '-p'.$dbc->password      if $dbc->password;
+        push @cmd, '-p'.$hidden_password    if $dbc->password;
         push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
         push @cmd, $dbname                  if $dbname;
         push @cmd, @$append                 if ($append && @$append);
 
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
-        my $pgpass = $dbc->pass;
 
-        push @cmd, ('env', "PGPASSWORD=$pgpass")  if ($pgpass);
+        push @cmd, ('env', 'PGPASSWORD='.$hidden_password)  if ($dbc->password);
         push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
         push @cmd, ('-h', $dbc->host)       if defined($dbc->host);

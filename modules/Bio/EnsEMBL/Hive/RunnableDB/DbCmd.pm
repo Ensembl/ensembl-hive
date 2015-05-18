@@ -141,6 +141,9 @@ sub fetch_input {
         [grep {defined $_} @{$self->param('prepend')}],
         [grep {defined $_} @{$self->param('append')}],
         $self->param('input_query'),
+        # If there is any of those, system() will need a shell to deal with
+        # the pipes / redirections, and we need to hide the passwords
+        ($self->param('input_file') or $self->param('command_in') or $self->param('output_file') or $self->param('command_out')),
     ) };
 
     # Add the input data
