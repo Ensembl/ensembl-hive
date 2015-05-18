@@ -40,6 +40,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
@@ -237,6 +238,37 @@ sub died_somewhere {
 }
 
 ##-----------------[/indicators to the Worker]-------------------------------
+
+
+sub load_parameters {
+    my ($self, $runnable_object) = @_;
+
+    my @params_precedence = ();
+
+    if(my $job_adaptor = $self->adaptor) {
+        my $job_id          = $self->dbID;
+        my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
+
+        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
+
+        push @params_precedence, $runnable_object->param_defaults if($runnable_object);
+
+        push @params_precedence, $job_adaptor->db->get_PipelineWideParametersAdaptor->fetch_param_hash;
+
+        push @params_precedence, $self->analysis->parameters if($self->analysis);
+
+        if( $job_adaptor->db->hive_use_param_stack ) {
+            my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
+            my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
+            my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
+            push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
+        }
+
+    }
+    push @params_precedence, $self->input_id, $self->accu_hash;
+
+    $self->param_init( @params_precedence );
+}
 
 
 sub fan_cache {     # a self-initializing getter (no setting)

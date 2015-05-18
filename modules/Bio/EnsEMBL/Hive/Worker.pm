@@ -79,7 +79,6 @@ use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Limiter;
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
@@ -573,7 +572,7 @@ sub run {
 
         # have runnable clean up any global/process files/data it may have created
     if($self->perform_cleanup) {
-        if(my $runnable_object = $self->runnable_object()) {    # the temp_directory is actually kept in the Process object:
+        if(my $runnable_object = $self->runnable_object) {    # the temp_directory is actually kept in the Process object:
             $runnable_object->cleanup_worker_temp_directory();
         }
     }
@@ -648,8 +647,6 @@ sub run_one_batch {
     my $jobs_done_here = 0;
 
     my $current_role            = $self->current_role;
-    my $hive_use_param_stack    = $self->adaptor->db->hive_use_param_stack();
-    my $accu_adaptor            = $self->adaptor->db->get_AccumulatorAdaptor;
     my $max_retry_count         = $current_role->analysis->max_retry_count();  # a constant (as the Worker is already specialized by the Queen) needed later for retrying jobs
     my $stats                   = $current_role->analysis->stats;   # cache it to avoid reloading
 
@@ -673,30 +670,15 @@ sub run_one_batch {
 
         $self->start_job_output_redirection($job);  # switch logging into job's STDERR
         eval {  # capture any throw/die
+
             $job->incomplete(1);
-
-            $job->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
-
-            my $runnable_object = $self->runnable_object();
-
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            my @params_precedence = (
-                $runnable_object->param_defaults(),
-                $self->adaptor->db->get_PipelineWideParametersAdaptor->fetch_param_hash(),
-                $current_role->analysis->parameters(),
-            );
+            $job->analysis( $current_role->analysis );
 
-            if( $hive_use_param_stack ) {
-                my $input_ids_hash      = $job->adaptor->fetch_input_ids_for_job_ids( $job->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
-                my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $job->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
-                my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
-                push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
-            }
-            push @params_precedence, $job->input_id(), $job->accu_hash();
-
-            $job->param_init( @params_precedence );
+            my $runnable_object = $self->runnable_object();
+            $job->load_parameters( $runnable_object );
 
             $self->worker_say( "Job $job_id unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
 

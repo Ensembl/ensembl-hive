@@ -36,12 +36,14 @@ sub standaloneJob {
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
-    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new( 'dbID' => -1 );
-    die "Dummy job not created\n" unless $job;
-    $job->input_id( $input_id );
+    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+        'input_id'  => $input_id,
+        'dbID'      => -1,
+    );
+
     $job->dataflow_rules(1, []);
 
-    $job->param_init( $runnable_object->param_defaults(), $job->input_id() );
+    $job->load_parameters( $runnable_object );
 
     $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
     $flow_into = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
