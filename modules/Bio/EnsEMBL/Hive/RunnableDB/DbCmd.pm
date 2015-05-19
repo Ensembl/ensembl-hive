@@ -125,7 +125,7 @@ sub fetch_input {
 
     # Validate the arguments
     # There can be only 1 input
-    if (not ($self->param('input_file') or $self->param('input_query') or $self->param('command_in'))) {
+    if (not $self->param('executable') and not ($self->param('input_file') or $self->param('input_query') or $self->param('command_in'))) {
         die "No input defined (missing 'input_file', 'input_query' and 'command_in')\n";
     } elsif (($self->param('input_file') and ($self->param('input_query') or $self->param('command_in'))) or ($self->param('input_query') and $self->param('command_in'))) {
         die "Only 1 input ('input_file', 'input_query' and 'command_in') can be defined\n";
