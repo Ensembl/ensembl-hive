@@ -249,6 +249,9 @@ sub specialize_worker {
             #
             #       it is easier to preload all Stats objects:
         Bio::EnsEMBL::Hive::AnalysisStats->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_AnalysisStatsAdaptor->fetch_all ) );
+            #
+            #        preload all the DFRs here as well:
+        Bio::EnsEMBL::Hive::DataflowRule->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_DataflowRuleAdaptor->fetch_all ) );
 
 
         $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_matching_pattern, $analyses_pattern);
