@@ -28,6 +28,9 @@ class JobFailedException(Exception):
 class HiveJSONMessageException(Exception):
     """Raised when we could not parse the JSON message coming from GuestProcess"""
     pass
+class LostHiveConnectionException(Exception):
+    """Raised when the process has lost the communication pipe with the Perl side"""
+    pass
 
 
 class BaseRunnable(object):
@@ -55,6 +58,8 @@ class BaseRunnable(object):
         if self.debug > 1:
             print("PYTHON {0}".format(self.__pid), *args, file=sys.stderr)
 
+    # FIXME: we can probably merge __send_message and __send_response
+
     def __send_message(self, event, content):
         """seralizes the message in JSON and send it to the parent process"""
         def default_json_encoder(o):
@@ -63,13 +68,19 @@ class BaseRunnable(object):
         j = json.dumps({'event': event, 'content': content}, indent=None, default=default_json_encoder)
         self.__print_debug('__send_message:', j)
         # UTF8 encoding has never been tested. Just hope it works :)
-        self.__write_pipe.write(bytes(j+"\n", 'utf-8'))
+        try:
+            self.__write_pipe.write(bytes(j+"\n", 'utf-8'))
+        except BrokenPipeError as e:
+            raise LostHiveConnectionException("__write_pipe") from None
 
     def __send_response(self, response):
         """Sends a response message to the parent process"""
         self.__print_debug('__send_response:', response)
         # Like above, UTF8 encoding has never been tested. Just hope it works :)
-        self.__write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
+        try:
+            self.__write_pipe.write(bytes('{"response": "' + str(response) + '"}\n', 'utf-8'))
+        except BrokenPipeError as e:
+            raise LostHiveConnectionException("__write_pipe") from None
 
     def __read_message(self):
         """Read a message from the parent and parse it"""
@@ -78,6 +89,8 @@ class BaseRunnable(object):
             l = self.__read_pipe.readline()
             self.__print_debug(" ... -> ", l[:-1].decode())
             return json.loads(l.decode())
+        except BrokenPipeError as e:
+            raise LostHiveConnectionException("__read_pipe") from None
         except ValueError as e:
             # HiveJSONMessageException is a more meaningful name than ValueError
             raise HiveJSONMessageException from e
@@ -136,12 +149,18 @@ class BaseRunnable(object):
                 self.__run_method_if_exists(s)
         except CompleteEarlyException as e:
             self.warning(e.args[0] if len(e.args) else repr(e), False)
+        except LostHiveConnectionException as e:
+            # Mothing we can do, let's just exit
+            raise
         except:
             died_somewhere = True
             self.warning( self.__traceback(2), True)
 
         try:
             self.__run_method_if_exists('post_cleanup')
+        except LostHiveConnectionException as e:
+            # Mothing we can do, let's just exit
+            raise
         except:
             died_somewhere = True
             self.warning( self.__traceback(2), True)
