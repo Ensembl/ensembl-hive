@@ -90,7 +90,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'    => '#expr([0..$job_count-1])expr#',    # this expression will evaluate into a listref
+                'inputlist'    => '#expr([0..#job_count#-1])expr#',    # this expression will evaluate into a listref
                 'column_names' => [ 'value' ],
             },
             -input_ids => [

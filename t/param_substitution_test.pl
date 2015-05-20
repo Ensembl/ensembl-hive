@@ -48,7 +48,7 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 my $params = Bio::EnsEMBL::Hive::Params->new();
 
-$params->param_init(1, {
+$params->param_init({
     'alpha' => 2,
     'beta' => 5,
     'delta' => '#expr( #alpha#*#beta# )expr#',

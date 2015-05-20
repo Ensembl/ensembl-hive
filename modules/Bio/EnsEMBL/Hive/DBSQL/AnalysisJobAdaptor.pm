@@ -95,7 +95,7 @@ sub store_jobs_and_adjust_counters {
 
         my $analysis    = $job->analysis;
         my $job_adaptor = $analysis ? $analysis->adaptor->db->get_AnalysisJobAdaptor : $self;   # if analysis object is undefined, consider the job local
-        my $local_job   = $job_adaptor == $self;
+        my $local_job   = $job_adaptor eq $self;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
         if($need_to_increase_semaphore_count and $local_job and ($job_adaptor->dbc->driver ne 'sqlite')) {
@@ -574,8 +574,9 @@ sub gc_dataflow {
     }
 
     my $job = $self->fetch_by_dbID($job_id);
+    $job->analysis( $analysis );
 
-    $job->param_init( 0, $analysis->parameters(), $job->input_id() );    # input_id_templates still supported, however to a limited extent
+    $job->load_parameters();    # input_id_templates still supported, however to a limited extent
 
     $job->dataflow_output_id( $job->input_id() , $branch_name );
 

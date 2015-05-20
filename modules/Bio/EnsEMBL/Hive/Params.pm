@@ -101,24 +101,19 @@ sub new {
 sub param_init {
                     
     my $self                = shift @_;
-    my $strict_hash_format  = shift @_;
 
     my %unsubstituted_param_hash = ();
 
     foreach my $source (@_) {
         if(ref($source) ne 'HASH') {
-            if($strict_hash_format or $source=~/^\{.*\}$/) {
-                my $param_hash = eval($source) || {};
-                if($@ or (ref($param_hash) ne 'HASH')) {
-                    if($self->can('transient_error')) {
-                        $self->transient_error(0);
-                    }
-                    die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
+            my $param_hash = eval($source) || {};
+            if($@ or (ref($param_hash) ne 'HASH')) {
+                if($self->can('transient_error')) {
+                    $self->transient_error(0);
                 }
-                $source = $param_hash;
-            } else {
-                $source = {};
+                die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
             }
+            $source = $param_hash;
         }
         while(my ($k,$v) = each %$source ) {
             $unsubstituted_param_hash{$k} = $v;
@@ -232,7 +227,7 @@ sub param_is_defined {
 
     Arg [2]    : (optional) $param_value
 
-    Description: A getter/setter method for a job's parameters that are initialized through 4 levels of precedence (see param_init() )
+    Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see param_init() )
 
     Example 1  : my $source = $self->param('source'); # acting as a getter
 

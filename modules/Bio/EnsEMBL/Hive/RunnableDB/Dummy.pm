@@ -52,10 +52,6 @@ use Time::HiRes ('usleep');
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-sub strict_hash_format { # allow this Runnable to parse parameters in its own way (don't complain)
-    return 0;
-}
-
 =head2 param_defaults
 
     Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters.

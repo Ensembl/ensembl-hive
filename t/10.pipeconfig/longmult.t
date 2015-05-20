@@ -35,6 +35,9 @@ my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///eh
 my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
 
 foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf)) {
+
+warn "\nInitializing the $long_mult_version pipeline ...\n\n";
+
     foreach my $pipeline_url (@pipeline_urls) {
         my $hive_dba = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;

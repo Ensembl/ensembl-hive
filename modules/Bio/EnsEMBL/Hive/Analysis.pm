@@ -153,6 +153,9 @@ sub get_compiled_module_name {
     die "Problem accessing methods in '$runnable_module_name'. Please check that it inherits from Bio::EnsEMBL::Hive::Process and is named correctly.\n"
         unless($runnable_module_name->isa('Bio::EnsEMBL::Hive::Process'));
 
+    die "DEPRECATED: the strict_hash_format() method is no longer supported in Runnables - the input_id() in '$runnable_module_name' has to be a hash now.\n"
+        if($runnable_module_name->can('strict_hash_format'));
+
     return $runnable_module_name;
 }
 
@@ -230,7 +233,24 @@ sub control_rules_collection {
 sub dataflow_rules_collection {
     my $self = shift @_;
 
-    return Bio::EnsEMBL::Hive::DataflowRule->collection()->find_all_by('from_analysis', $self);
+    my $collection = Bio::EnsEMBL::Hive::DataflowRule->collection();
+
+    return $collection->find_all_by('from_analysis', $self);
+}
+
+
+sub dataflow_rules_by_branch {
+    my $self = shift @_;
+
+    if (not $self->{'_dataflow_rules_by_branch'}) {
+        my %dataflow_rules_by_branch = ();
+        foreach my $dataflow (@{$self->dataflow_rules_collection}) {
+            push @{$dataflow_rules_by_branch{$dataflow->branch_code}}, $dataflow;
+        }
+        $self->{'_dataflow_rules_by_branch'} = \%dataflow_rules_by_branch;
+    }
+
+    return $self->{'_dataflow_rules_by_branch'};
 }
 
 
