@@ -197,7 +197,7 @@ sub run {
     # Check whether the current database has been restored from a snapshot.
     # If it is the case, we shouldn't re-dump and overwrite the file.
     # We also check here the value of the "skip_dump" parameter
-    my $completion_signature = sprintf('dump_%d_restored', $self->input_job->dbID);
+    my $completion_signature = sprintf('dump_%d_restored', $self->input_job->dbID < 0 ? 0 : $self->input_job->dbID);
     return if $self->param('skip_dump') or $self->param($completion_signature);
 
     # OK, we can dump
