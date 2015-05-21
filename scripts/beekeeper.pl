@@ -274,6 +274,9 @@ sub main {
     }
 
     if($reset_all_jobs || $reset_failed_jobs) {
+        if ($reset_all_jobs and not $self->{'analyses_pattern'}) {
+            die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
+        }
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
         $self->{'dba'}->get_Queen->synchronize_hive( $list_of_analyses );
     }
