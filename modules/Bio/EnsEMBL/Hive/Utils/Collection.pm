@@ -73,7 +73,10 @@ sub find_one_by {
         while(my ($filter_name, $filter_value) = each %method_to_filter_value) {
             my $actual_value = (ref($element) eq 'HASH') ? $element->{$filter_name} : $element->$filter_name();
             next ELEMENT unless( defined($actual_value)   # either both defined and equal or neither defined
-                                    ? defined($filter_value) && ($actual_value eq $filter_value)
+                                    ? defined($filter_value) && ( (ref($filter_value) eq 'CODE')
+                                                                    ? &$filter_value( $actual_value )
+                                                                    : ( $filter_value eq $actual_value )
+                                                                )
                                     : !defined($filter_value)
                                );
         }
@@ -92,7 +95,10 @@ sub find_all_by {
         while(my ($filter_name, $filter_value) = each %method_to_filter_value) {
             my $actual_value = (ref($element) eq 'HASH') ? $element->{$filter_name} : $element->$filter_name();
             next ELEMENT unless( defined($actual_value)   # either both defined and equal or neither defined
-                                    ? defined($filter_value) && ($actual_value eq $filter_value)
+                                    ? defined($filter_value) && ( (ref($filter_value) eq 'CODE')
+                                                                    ? &$filter_value( $actual_value )
+                                                                    : ( $filter_value eq $actual_value )
+                                                                )
                                     : !defined($filter_value)
                                );
         }
@@ -100,6 +106,74 @@ sub find_all_by {
     }
 
     return \@filtered_elements;
+}
+
+
+sub _find_all_by_subpattern {    # subpatterns can be combined into full patterns using +-,
+    my ($self, $pattern) = @_;
+
+    my $filtered_elements;
+
+    if( $pattern=~/^\d+$/ ) {
+
+        $filtered_elements = $self->find_all_by( 'dbID', $pattern );
+
+    } elsif( $pattern=~/^(\d+)\.\.(\d+)$/ ) {
+
+        $filtered_elements = $self->find_all_by( 'dbID', sub { return $1<=$_[0] && $_[0]<=$2; } );
+
+    } elsif( $pattern=~/^(\d+)\.\.$/ ) {
+
+        $filtered_elements = $self->find_all_by( 'dbID', sub { return $1<=$_[0]; } );
+
+    } elsif( $pattern=~/^\.\.(\d+)$/ ) {
+
+        $filtered_elements = $self->find_all_by( 'dbID', sub { return $_[0]<=$1; } );
+
+    } elsif( $pattern=~/^\w+$/) {
+
+        $filtered_elements = $self->find_all_by( 'name', $pattern );
+
+    } elsif( $pattern=~/^[\w\%]+$/) {
+
+        $pattern=~s/\%/.*/g;
+        $filtered_elements = $self->find_all_by( 'name', sub { return $_[0]=~/^${pattern}$/; } );
+    }
+
+    return $filtered_elements;
+}
+
+
+sub find_all_by_pattern {
+    my ($self, $pattern) = @_;
+
+    if( not defined($pattern) ) {
+
+        return [ $self->list ];
+
+    } else {
+
+        my @syll = split(/([+\-,])/, $pattern);
+
+        my %uniq = map { ("$_" => $_) } @{ $self->_find_all_by_subpattern( shift @syll ) };   # initialize with the first syllable
+
+        while(@syll) {
+            my $operation   = shift @syll;
+            my $subpattern  = shift @syll;
+
+            foreach my $element (@{ $self->_find_all_by_subpattern( $subpattern ) }) {
+                if($operation eq '-') {
+                    delete $uniq{ "$element" };
+                } elsif ($operation eq '+' or $operation eq ',') {
+                    $uniq{ "$element" } = $element;
+                } else {
+                    throw( "Complex pattern '$pattern' not recognized" );
+                }
+            }
+        }
+
+        return [ values %uniq ];
+    }
 }
 
 

@@ -277,7 +277,7 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
     my $h_cap = $self->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
         my $hive_current_load = $self->adaptor ? $self->adaptor->db->get_RoleAdaptor->get_hive_current_load() : 0;
-        my $h_max = $self->num_running_workers + $h_cap * ( 1.0 - $hive_current_load );
+        my $h_max = $self->num_running_workers + POSIX::floor( $h_cap * ( 1.0 - $hive_current_load ) );
         if($h_max < $num_required_workers) {
             $num_required_workers = $h_max;
         }
