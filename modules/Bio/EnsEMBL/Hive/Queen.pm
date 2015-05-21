@@ -239,20 +239,14 @@ sub specialize_worker {
         $analysis = $job->analysis;
 
     } else {
+
         $analyses_pattern //= '%';  # for printing
-        my $analyses_matching_pattern   = $self->db->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
+        my $analyses_matching_pattern   = Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $analyses_pattern );
 
-            # Caching both sets of objects for faster cross-reference:
-            #
-            #       in theory, this Worker should never need to access more:
-        Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $analyses_matching_pattern ) );
-            #
-            #       it is easier to preload all Stats objects:
-        Bio::EnsEMBL::Hive::AnalysisStats->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_AnalysisStatsAdaptor->fetch_all ) );
-            #
-            #        preload all the DFRs here as well:
-        Bio::EnsEMBL::Hive::DataflowRule->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->db->get_DataflowRuleAdaptor->fetch_all ) );
-
+            # refresh the stats of matching analyses before re-specialization:
+        foreach my $analysis ( @$analyses_matching_pattern ) {
+            $analysis->stats->refresh();
+        }
 
         $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_matching_pattern, $analyses_pattern);
 
