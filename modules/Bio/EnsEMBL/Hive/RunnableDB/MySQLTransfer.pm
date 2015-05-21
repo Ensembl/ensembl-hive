@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'dbc_to_cmd');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -124,12 +124,12 @@ sub run {
 
     # Must be joined because of the pipe
     my $cmd = join(' ',
-                @{dbc_to_cmd($src_dbc, 'mysqldump', $mode_options, undef, undef, 1)},
+                @{$src_dbc->to_cmd('mysqldump', $mode_options, undef, undef, 1)},
                 $table,
                 (defined($where) ? "--where '$where' " : ''),
                 '|',
                 ($filter_cmd ? "$filter_cmd | " : ''),
-                @{dbc_to_cmd($dest_dbc, undef, undef, undef, undef, 1)}
+                @{$dest_dbc->to_cmd(undef, undef, undef, undef, 1)}
             );
 
     print "$cmd\n" if $self->debug;

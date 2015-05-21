@@ -203,5 +203,92 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
     return $retval;
 }
 
+our $pass_internal_counter = 0;
+sub to_cmd {
+    my ($self, $executable, $prepend, $append, $sqlcmd, $hide_password_in_env) = @_;
+
+    my $driver = $self->driver || 'mysql';
+
+    my $dbname = $self->dbname;
+    if($sqlcmd) {
+        if($sqlcmd =~ /(DROP\s+DATABASE(?:\s+IF\s+EXISTS)?\s*?)(?:\s+(\w+))?/i) {
+            $dbname = $2 if $2;
+
+            if($driver eq 'sqlite') {
+                return ['rm', '-f', $dbname];
+            } elsif(!$2) {
+                $sqlcmd = "$1 $dbname";
+                $dbname = '';
+            }
+        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
+            $dbname = $2 if $2;
+
+            if($driver eq 'sqlite') {
+                return ['touch', $dbname];
+            } elsif(!$2) {
+                my %limits = ( 'mysql' => 64, 'pgsql' => 63 );
+                if (length($dbname) > $limits{$driver}) {
+                    die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
+                }
+                $sqlcmd = "$1 $dbname";
+                $dbname = '';
+            }
+        }
+    }
+
+    my @cmd;
+
+    my $hidden_password;
+    if ($self->password) {
+        if ($hide_password_in_env) {
+            my $pass_variable = "EHIVE_TMP_PASSWORD_${pass_internal_counter}";
+            $pass_internal_counter++;
+            $ENV{$pass_variable} = $self->password;
+            $hidden_password = '$'.$pass_variable;
+        } else {
+            $hidden_password = $self->password;
+        }
+    }
+
+    if($driver eq 'mysql') {
+        $executable ||= 'mysql';
+
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, '-h'.$self->host         if $self->host;
+        push @cmd, '-P'.$self->port         if $self->port;
+        push @cmd, '-u'.$self->username     if $self->username;
+        push @cmd, '-p'.$hidden_password    if $self->password;
+        push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
+        push @cmd, $dbname                  if $dbname;
+        push @cmd, @$append                 if ($append && @$append);
+
+    } elsif($driver eq 'pgsql') {
+        $executable ||= 'psql';
+
+        push @cmd, ('env', 'PGPASSWORD='.$hidden_password)  if ($self->password);
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, ('-h', $self->host)      if defined($self->host);
+        push @cmd, ('-p', $self->port)      if defined($self->port);
+        push @cmd, ('-U', $self->username)  if defined($self->username);
+        push @cmd, ('-c', $sqlcmd)          if $sqlcmd;
+        push @cmd, @$append                 if ($append && @$append);
+        push @cmd, $dbname                  if $dbname;
+
+    } elsif($driver eq 'sqlite') {
+        $executable ||= 'sqlite3';
+
+        die "sqlite requires a database (file) name\n" unless $dbname;
+
+        push @cmd, $executable;
+        push @cmd, @$prepend                if ($prepend && @$prepend);
+        push @cmd, @$append                 if ($append && @$append);
+        push @cmd, $dbname;
+        push @cmd, $sqlcmd                  if $sqlcmd;
+    }
+
+    return \@cmd;
+}
 1;
 

@@ -14,7 +14,7 @@ BEGIN {
 use Getopt::Long;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions', 'dbc_to_cmd');
+use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 
 
 sub main {
@@ -87,7 +87,7 @@ sub main {
         warn qq{In db_cmd.pl, final arguments don't have to be declared with --append any more. All the remaining arguments are considered to be appended.\n};
     }
 
-    my @cmd = @{ dbc_to_cmd( $dbc, $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };
+    my @cmd = @{ $dbc->to_cmd( $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };
 
     if( $verbose ) {
         my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);

@@ -10,9 +10,9 @@ Bio::EnsEMBL::Hive::RunnableDB::DbCmd
 
 =head1 DESCRIPTION
 
-    This RunnableDB module acts as a wrapper around db_cmd.pl. It allows to run any command line that would involve an occurrence of db_cmd.pl,
-    with the advantage of not having to hardcode the database connection details in the command line in the PipeConfig file itself.
-    The database connection is instead reused from the "data_dbc" parameter, which defaults to the current hive database.
+    This RunnableDB module acts as a wrapper around a database connection. It interfaces with the database the same way as you would
+    on the command line (i.e. with redirections and / or pipes to other commands) but with hive parameters instead.
+    The database connection is created from the "data_dbc" parameter, if provided, or the current hive database.
 
 =head1 CONFIGURATION EXAMPLE
 
@@ -85,9 +85,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::DbCmd;
 use strict;
 use warnings;
 
-# This runnable is simply a SystemCmd made aware of db_cmd (which is interfaced by dbc_to_cmd())
-
-use Bio::EnsEMBL::Hive::Utils ('dbc_to_cmd');
+# This runnable is simply a SystemCmd specialized for database commands
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
@@ -135,8 +133,7 @@ sub fetch_input {
         die "'output_file' and 'command_out' cannot be set together\n";
     }
 
-    my @cmd = @{ dbc_to_cmd(
-        $self->data_dbc,
+    my @cmd = @{ $self->data_dbc->to_cmd(
         $self->param('executable'),
         [grep {defined $_} @{$self->param('prepend')}],
         [grep {defined $_} @{$self->param('append')}],
@@ -150,7 +147,7 @@ sub fetch_input {
     if ($self->param('input_file')) {
         push @cmd, '<', $self->param('input_file');
     } elsif ($self->param('input_query')) {
-        # the query as already been fed into @cmd by dbc_to_cmd()
+        # the query as already been fed into @cmd by to_cmd()
     } elsif ($self->param('command_in')) {
         unshift @cmd, (ref($self->param('command_in')) ? @{$self->param('command_in')} : $self->param('command_in')), '|';
     }

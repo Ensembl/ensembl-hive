@@ -82,7 +82,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'dbc_to_cmd');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -181,12 +181,12 @@ sub run {
             $output = sprintf('> %s', $self->param('output_file'));
         }
     } else {
-        $output = join(' ', '|', @{ dbc_to_cmd($self->param('real_output_db'), undef, undef, undef, undef, 1) } );
+        $output = join(' ', '|', @{ $self->param('real_output_db')->to_cmd(undef, undef, undef, undef, 1) } );
     };
 
     # Must be joined because of the redirection / the pipe
     my $cmd = join(' ', 
-        @{ dbc_to_cmd($src_dbc, 'mysqldump', undef, undef, undef, 1) },
+        @{ $src_dbc->to_cmd('mysqldump', undef, undef, undef, 1) },
         '--skip-lock-tables',
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),

@@ -22,7 +22,6 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils qw(dbc_to_cmd);
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -71,7 +70,7 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
             # disconnect to be able to drop the database (some drivers like PostgreSQL do not like dropping connected databases):
         $hive_dba->dbc->disconnect_if_idle;
 
-        system( @{ dbc_to_cmd($hive_dba->dbc, undef, undef, undef, 'DROP DATABASE') } );
+        system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
 }
 
