@@ -63,6 +63,12 @@ sub logic_name {
     return $self->{'_logic_name'};
 }
 
+sub name {              # a useful synonym
+    my $self = shift;
+
+    return $self->logic_name(@_);
+}
+
 
 sub module {
     my $self = shift;

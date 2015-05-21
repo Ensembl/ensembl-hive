@@ -59,4 +59,20 @@ $result = $collection->find_all_by('foo', undef);
 
 #is(@$result, 3, 'sensible');
 
+$collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [
+    { 'dbID' => 2, 'name' => 'beta' },
+    { 'dbID' => 1, 'name' => 'alpha' },
+    { 'dbID' => 7, 'name' => 'eta' },
+    { 'dbID' => 3, 'name' => 'gamma' },
+    { 'dbID' => 4, 'name' => 'delta' },
+    { 'dbID' => 5, 'name' => 'epsilon' },
+    { 'dbID' => 6, 'name' => 'zeta' },
+] );
+
+my $odd_elements = $collection->find_all_by( 'dbID', sub { return $_[0] % 2; } );
+is(@$odd_elements, 4, '4 odd elements');
+
+my $mix = $collection->find_all_by_pattern( '%-%ta' );
+is(@$mix, 3, 'another 3 elements');
+
 done_testing();
