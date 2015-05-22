@@ -187,7 +187,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>meta_key</b></td><td>VARCHAR(255)</td><td>-</td><td>the KEY of KEY-VALUE pairs (primary key)</td><td></td></tr>
-      <tr class="bg2"><td><b>meta_value</b></td><td>TEXT</td><td>NULL</td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
+      <tr class="bg2"><td><b>meta_value</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
     </table>
   </div>
 
@@ -210,7 +210,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>param_name</b></td><td>VARCHAR(255)</td><td>-</td><td>the KEY of KEY-VALUE pairs (primary key)</td><td>key: value_idx</td></tr>
-      <tr class="bg2"><td><b>param_value</b></td><td>TEXT</td><td>NULL</td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
+      <tr class="bg2"><td><b>param_value</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>the VALUE of KEY-VALUE pairs</td><td></td></tr>
     </table>
   </div>
 
@@ -234,15 +234,16 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>analysis_id</b></td><td>INTEGER</td><td>-</td><td>a unique ID that is also a foreign key to most of the other tables</td><td></td></tr>
       <tr class="bg2"><td><b>logic_name</b></td><td>VARCHAR(255)</td><td>-</td><td>the name of the Analysis object</td><td>unique  key: logic_name_idx</td></tr>
-      <tr class="bg1"><td><b>module</b></td><td>VARCHAR(255)</td><td>NULL</td><td>the Perl module name that runs this Analysis</td><td></td></tr>
-      <tr class="bg2"><td><b>parameters</b></td><td>TEXT</td><td>NULL</td><td>a stingified hash of parameters common to all jobs of the Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td>-</td><td>link to the resource_class table</td><td></td></tr>
-      <tr class="bg2"><td><b>failed_job_tolerance</b></td><td>INTEGER</td><td>0</td><td>% of tolerated failed Jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>max_retry_count</b></td><td>INTEGER</td><td>3</td><td>how many times a job of this Analysis will be retried (unless there is no point)</td><td></td></tr>
-      <tr class="bg2"><td><b>can_be_empty</b></td><td>SMALLINT</td><td>0</td><td>if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>priority</b></td><td>SMALLINT</td><td>0</td><td>an Analysis with higher priority will be more likely chosen on Worker's specialization</td><td></td></tr>
-      <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, forces this Analysis to be run only on the given Meadow</td><td></td></tr>
-      <tr class="bg1"><td><b>analysis_capacity</b></td><td>INTEGER</td><td>NULL</td><td>if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel</td><td></td></tr>
+      <tr class="bg1"><td><b>module</b></td><td>VARCHAR(255)</td><td>-</td><td>the name of the module / package that runs this Analysis</td><td></td></tr>
+      <tr class="bg2"><td><b>language</b></td><td>VARCHAR(255)</td><td>NULL</td><td>the language of the module, if not Perl</td><td></td></tr>
+      <tr class="bg1"><td><b>parameters</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a stingified hash of parameters common to all jobs of the Analysis</td><td></td></tr>
+      <tr class="bg2"><td><b>resource_class_id</b></td><td>INTEGER</td><td>-</td><td>link to the resource_class table</td><td></td></tr>
+      <tr class="bg1"><td><b>failed_job_tolerance</b></td><td>INTEGER</td><td>0</td><td>% of tolerated failed Jobs</td><td></td></tr>
+      <tr class="bg2"><td><b>max_retry_count</b></td><td>INTEGER</td><td>3</td><td>how many times a job of this Analysis will be retried (unless there is no point)</td><td></td></tr>
+      <tr class="bg1"><td><b>can_be_empty</b></td><td>SMALLINT</td><td>0</td><td>if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs</td><td></td></tr>
+      <tr class="bg2"><td><b>priority</b></td><td>SMALLINT</td><td>0</td><td>an Analysis with higher priority will be more likely chosen on Worker's specialization</td><td></td></tr>
+      <tr class="bg1"><td><b>meadow_type</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, forces this Analysis to be run only on the given Meadow</td><td></td></tr>
+      <tr class="bg2"><td><b>analysis_capacity</b></td><td>INTEGER</td><td>NULL</td><td>if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel</td><td></td></tr>
     </table>
   </div>
 
@@ -274,16 +275,15 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>done_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
       <tr class="bg1"><td><b>failed_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
       <tr class="bg2"><td><b>num_running_workers</b></td><td>INTEGER</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
-      <tr class="bg1"><td><b>num_required_workers</b></td><td>INTEGER</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
-      <tr class="bg2"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
-      <tr class="bg1"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg2"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>last_update</b></td><td>TIMESTAMP</td><td>NULL</td><td>when this entry was last updated</td><td></td></tr>
-      <tr class="bg2"><td><b>sync_lock</b></td><td>SMALLINT</td><td>0</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
+      <tr class="bg1"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
+      <tr class="bg2"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg1"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>when_updated</b></td><td>TIMESTAMP</td><td>NULL</td><td>when this entry was last updated</td><td></td></tr>
+      <tr class="bg1"><td><b>sync_lock</b></td><td>SMALLINT</td><td>0</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
     </table>
   </div>
 
@@ -310,7 +310,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>branch_code</b></td><td>INTEGER</td><td>1</td><td>branch_code of the fan</td><td>unique: key</td></tr>
       <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>INTEGER</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td>unique: key</td></tr>
       <tr class="bg1"><td><b>to_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>input_id_template</b></td><td>TEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>input_id_template</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -424,7 +424,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td>NULL</td><td>links to the Role that claimed this job (NULL means it has never been claimed)</td><td>key: role_status</td></tr>
       <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
       <tr class="bg1"><td><b>retry_count</b></td><td>INTEGER</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
-      <tr class="bg2"><td><b>completed</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the job was completed</td><td></td></tr>
+      <tr class="bg2"><td><b>when_completed</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the job was completed</td><td></td></tr>
       <tr class="bg1"><td><b>runtime_msec</b></td><td>INTEGER</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
       <tr class="bg2"><td><b>query_count</b></td><td>INTEGER</td><td>NULL</td><td>how many SQL queries were run during this job</td><td></td></tr>
       <tr class="bg1"><td><b>semaphore_count</b></td><td>INTEGER</td><td>0</td><td>if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".</td><td></td></tr>
@@ -480,7 +480,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>receiving_job_id</b></td><td>INTEGER</td><td>-</td><td>semaphored job outside the "box"</td><td>key: accu_receiving_idx</td></tr>
       <tr class="bg1"><td><b>struct_name</b></td><td>VARCHAR(255)</td><td>-</td><td>name of the structured parameter</td><td></td></tr>
       <tr class="bg2"><td><b>key_signature</b></td><td>VARCHAR(255)</td><td>-</td><td>locates the part of the structured parameter</td><td></td></tr>
-      <tr class="bg1"><td><b>value</b></td><td>TEXT</td><td>NULL</td><td>value of the part</td><td></td></tr>
+      <tr class="bg1"><td><b>value</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>value of the part</td><td></td></tr>
     </table>
   </div>
 
@@ -503,7 +503,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>analysis_data_id</b></td><td>INTEGER</td><td>-</td><td>primary id</td><td></td></tr>
-      <tr class="bg2"><td><b>data</b></td><td>TEXT</td><td>NULL</td><td>text blob which holds the data</td><td>key: data(100)</td></tr>
+      <tr class="bg2"><td><b>data</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>text blob which holds the data</td><td>key: data(100)</td></tr>
     </table>
   </div>
 
@@ -533,15 +533,17 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>worker_id</b></td><td>INTEGER</td><td>-</td><td>unique ID of the Worker</td><td></td></tr>
       <tr class="bg2"><td><b>meadow_type</b></td><td>VARCHAR(255)</td><td>-</td><td>type of the Meadow it is running on</td><td>key: meadow_process</td></tr>
-      <tr class="bg1"><td><b>meadow_name</b></td><td>VARCHAR(255)</td><td>-</td><td>name of the Meadow it is running on (for 'LOCAL' type is the same as host)</td><td>key: meadow_process</td></tr>
-      <tr class="bg2"><td><b>host</b></td><td>VARCHAR(255)</td><td>-</td><td>execution host name</td><td></td></tr>
-      <tr class="bg1"><td><b>process_id</b></td><td>VARCHAR(255)</td><td>-</td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td>key: meadow_process</td></tr>
-      <tr class="bg2"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
-      <tr class="bg1"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td></td></tr>
-      <tr class="bg1"><td><b>born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
-      <tr class="bg2"><td><b>last_check_in</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the Worker last checked into the database</td><td></td></tr>
-      <tr class="bg1"><td><b>died</b></td><td>TIMESTAMP</td><td>NULL</td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
+      <tr class="bg1"><td><b>meadow_name</b></td><td>VARCHAR(255)</td><td>-</td><td>name of the Meadow it is running on (for meadow_type=='LOCAL' it is the same as meadow_host)</td><td>key: meadow_process</td></tr>
+      <tr class="bg2"><td><b>meadow_host</b></td><td>VARCHAR(255)</td><td>-</td><td>execution host name</td><td></td></tr>
+      <tr class="bg1"><td><b>meadow_user</b></td><td>VARCHAR(255)</td><td>NULL</td><td>scheduling/execution user name (within the Meadow)</td><td></td></tr>
+      <tr class="bg2"><td><b>process_id</b></td><td>VARCHAR(255)</td><td>-</td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td>key: meadow_process</td></tr>
+      <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
+      <tr class="bg2"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
+      <tr class="bg1"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td></td></tr>
+      <tr class="bg2"><td><b>when_born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
+      <tr class="bg1"><td><b>when_checked_in</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the Worker last checked into the database</td><td></td></tr>
+      <tr class="bg2"><td><b>when_seen</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the Worker was last seen by the Meadow</td><td></td></tr>
+      <tr class="bg1"><td><b>when_died</b></td><td>TIMESTAMP</td><td>NULL</td><td>if defined, when the Worker died (or its premature death was first detected by GC)</td><td></td></tr>
       <tr class="bg2"><td><b>cause_of_death</b></td><td>ENUM('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN')</td><td>NULL</td><td>if defined, why did the Worker exit (or why it was killed)</td><td></td></tr>
       <tr class="bg1"><td><b>log_dir</b></td><td>VARCHAR(255)</td><td>NULL</td><td>if defined, a filesystem directory where this Worker's output is logged</td><td></td></tr>
     </table>
@@ -632,10 +634,10 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>job_id</b></td><td>INTEGER</td><td>NULL</td><td>the id of the job that threw the message (or NULL if it was outside of a message)</td><td>key: job_id</td></tr>
       <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td>NULL</td><td>the 'current' role</td><td></td></tr>
       <tr class="bg2"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>the 'current' worker</td><td>key: worker_id</td></tr>
-      <tr class="bg1"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
+      <tr class="bg1"><td><b>when_logged</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
       <tr class="bg2"><td><b>retry</b></td><td>INTEGER</td><td>NULL</td><td>retry_count of the job when the message was thrown (or NULL if no job)</td><td></td></tr>
       <tr class="bg1"><td><b>status</b></td><td>ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
-      <tr class="bg2"><td><b>msg</b></td><td>TEXT</td><td>NULL</td><td>string that contains the message</td><td></td></tr>
+      <tr class="bg2"><td><b>msg</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>string that contains the message</td><td></td></tr>
       <tr class="bg1"><td><b>is_error</b></td><td>SMALLINT</td><td>NULL</td><td>binary flag</td><td></td></tr>
     </table>
   </div>
@@ -658,7 +660,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
   <div id="div_analysis_stats_monitor" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>time</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when this snapshot was taken</td><td></td></tr>
+      <tr class="bg1"><td><b>when_logged</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when this snapshot was taken</td><td></td></tr>
       <tr class="bg2"><td><b>analysis_id</b></td><td>INTEGER</td><td>-</td><td>foreign-keyed to the corresponding analysis_base entry</td><td></td></tr>
       <tr class="bg1"><td><b>batch_size</b></td><td>INTEGER</td><td>1</td><td>how many jobs are claimed in one claiming operation before Worker starts executing them</td><td></td></tr>
       <tr class="bg2"><td><b>hive_capacity</b></td><td>INTEGER</td><td>NULL</td><td>a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)</td><td></td></tr>
@@ -669,16 +671,15 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>done_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in DONE state</td><td></td></tr>
       <tr class="bg2"><td><b>failed_job_count</b></td><td>INTEGER</td><td>0</td><td>number of Jobs of this Analysis that are in FAILED state</td><td></td></tr>
       <tr class="bg1"><td><b>num_running_workers</b></td><td>INTEGER</td><td>0</td><td>number of running Workers of this Analysis</td><td></td></tr>
-      <tr class="bg2"><td><b>num_required_workers</b></td><td>INTEGER</td><td>0</td><td>extra number of Workers of this Analysis needed to execute all READY jobs</td><td></td></tr>
-      <tr class="bg1"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
-      <tr class="bg2"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg1"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg1"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
-      <tr class="bg2"><td><b>last_update</b></td><td>TIMESTAMP</td><td>NULL</td><td>when this entry was last updated</td><td></td></tr>
-      <tr class="bg1"><td><b>sync_lock</b></td><td>SMALLINT</td><td>-</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
+      <tr class="bg2"><td><b>behaviour</b></td><td>ENUM('STATIC', 'DYNAMIC')</td><td>'STATIC'</td><td>whether hive_capacity is set or is dynamically calculated based on timers</td><td></td></tr>
+      <tr class="bg1"><td><b>input_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg2"><td><b>output_capacity</b></td><td>INTEGER</td><td>4</td><td>used to compute hive_capacity in DYNAMIC mode</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_input_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>avg_run_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg2"><td><b>avg_output_msec_per_job</b></td><td>INTEGER</td><td>NULL</td><td>weighted average used to compute DYNAMIC hive_capacity</td><td></td></tr>
+      <tr class="bg1"><td><b>when_updated</b></td><td>TIMESTAMP</td><td>NULL</td><td>when this entry was last updated</td><td></td></tr>
+      <tr class="bg2"><td><b>sync_lock</b></td><td>SMALLINT</td><td>-</td><td>a binary lock flag to prevent simultaneous updates</td><td></td></tr>
     </table>
   </div>
 

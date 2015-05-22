@@ -1,6 +1,7 @@
 var searchData=
 [
   ['reached',['reached',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#ab3f3e0a81d708e08b8c6a0db9d056aac',1,'Bio::EnsEMBL::Hive::Limiter']]],
+  ['read_5fmessage',['read_message',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_guest_process.html#a1d3e0fc87e4b639448e139d52dccbb7d',1,'Bio::EnsEMBL::Hive::GuestProcess']]],
   ['ready_5fjob_5fcount',['ready_job_count',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#af55400b3e85544df26608ac63d98f7bc',1,'Bio::EnsEMBL::Hive::AnalysisStats']]],
   ['recalculate_5ffrom_5fjob_5fcounts',['recalculate_from_job_counts',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#abd8bc32f51dee49dc94b4b0635753b92',1,'Bio::EnsEMBL::Hive::AnalysisStats']]],
   ['reconnect',['reconnect',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aedf6ea5fb297d8ef9276d9bc016336c1',1,'Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection']]],
@@ -10,6 +11,7 @@ var searchData=
   ['register_5fattempt',['register_attempt',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html#a144c79aed6d5e822b16a718ab71590ef',1,'Bio::EnsEMBL::Hive::Role']]],
   ['register_5fworker_5fdeath',['register_worker_death',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a1dc35ff50f5375e8796f12d17b372773',1,'Bio::EnsEMBL::Hive::Queen']]],
   ['release_5fand_5fage_5fjob',['release_and_age_job',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a375c57130791087ff6781f4cc6cc9b9e',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
+  ['release_5fclaimed_5fjobs_5ffrom_5frole',['release_claimed_jobs_from_role',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ae132fe5a9be2622c21af73d926647528',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
   ['release_5fundone_5fjobs_5ffrom_5frole',['release_undone_jobs_from_role',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a64924639a2536d95c78f19b9beab64ee',1,'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor']]],
   ['remove',['remove',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ab19a4a6d447c8661574a97ae159234f3',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
   ['remove_5fall',['remove_all',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a1e7b244d27dcc1244453f725d81d3e54',1,'Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor']]],
@@ -29,5 +31,6 @@ var searchData=
   ['run_5fone_5fbatch',['run_one_batch',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a7fe639feb3731120a1a66663e8c2a2e8',1,'Bio::EnsEMBL::Hive::Worker']]],
   ['run_5fpipeline_5fcreate_5fcommands',['run_pipeline_create_commands',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#a6449dea7947a928206715abaab925a38',1,'Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf']]],
   ['runnable_5fobject',['runnable_object',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a4bc0dde1eb43909e1e8f8a87fd0a3257',1,'Bio::EnsEMBL::Hive::Worker']]],
-  ['runtime_5fmsec',['runtime_msec',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#af050b0e809253aef004926eeaf6cdf75',1,'Bio::EnsEMBL::Hive::AnalysisJob']]]
+  ['runtime_5fmsec',['runtime_msec',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#af050b0e809253aef004926eeaf6cdf75',1,'Bio::EnsEMBL::Hive::AnalysisJob']]],
+  ['runworker',['runWorker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#ab18652111ead2fcde6332f271e47237f',1,'Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_test.html#a181ddfe87ca33c064f9d3419a3163149',1,'Bio::EnsEMBL::Hive::Utils::Test::runWorker()']]]
 ];

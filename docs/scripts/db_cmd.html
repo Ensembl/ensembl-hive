@@ -4,87 +4,58 @@
 <head>
 <title>db_cmd.pl</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rev="made" href="mailto:_mdnsresponder@scream.apple.com" />
+<link rev="made" href="mailto:vxd@glow.apple.com" />
 </head>
 
 <body style="background-color: white">
 
 
-<!-- INDEX BEGIN -->
-<div name="index">
-<p><a name="__index__"></a></p>
-<!--
 
-<ul>
+<h1 id="NAME">NAME</h1>
 
-	<li><a href="#name">NAME</a></li>
-	<li><a href="#synopsis">SYNOPSIS</a></li>
-	<li><a href="#description">DESCRIPTION</a></li>
-	<li><a href="#usage_examples">USAGE EXAMPLES</a></li>
-	<li><a href="#license">LICENSE</a></li>
-	<li><a href="#contact">CONTACT</a></li>
-</ul>
+<pre><code>    db_cmd.pl</code></pre>
 
--->
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
 
+<pre><code>    db_cmd.pl {-url &lt;url&gt; | [-reg_conf &lt;reg_conf&gt;] -reg_alias &lt;reg_alias&gt; [-reg_type &lt;reg_type&gt;] } [ -exec &lt;alt_executable&gt; ] [ -prepend &lt;prepend_params&gt; ] [ -sql &lt;sql_command&gt; ] [ -verbose ] [other arguments to append to the command line]</code></pre>
 
-</div>
-<!-- INDEX END -->
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
 
-<p>
-</p>
-<hr />
-<h1><a name="name">NAME</a></h1>
-<pre>
-    db_cmd.pl</pre>
-<p>
-</p>
-<hr />
-<h1><a name="synopsis">SYNOPSIS</a></h1>
-<pre>
-    db_cmd.pl {-url &lt;url&gt; | [-reg_conf &lt;reg_conf&gt;] -reg_alias &lt;reg_alias&gt; [-reg_type &lt;reg_type&gt;] } [ -exec &lt;alt_executable&gt; ] [ -prepend &lt;prepend_params&gt; ] [ -append &lt;append_params&gt; ] [ -sql &lt;sql_command&gt; ] [ -verbose ]</pre>
-<p>
-</p>
-<hr />
-<h1><a name="description">DESCRIPTION</a></h1>
-<pre>
-    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
-    -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="usage_examples">USAGE EXAMPLES</a></h1>
-<pre>
-    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/&quot; -sql 'CREATE DATABASE lg4_long_mult'
+<pre><code>    db_cmd.pl is a generic script that connects you interactively to your database using either URL or Registry and optionally runs an SQL command.
+    -url is exclusive to -reg_alias. -reg_type is only needed if several databases map to that alias / species.
+    If the arguments that have to be appended contain options (i.e. start with dashes), first use a double-dash to indicate the end of db_cmd.pl&#39;s options and the start of the arguments that have to be passed as-is (see the example below with --html)</code></pre>
+
+<h1 id="USAGE-EXAMPLES">USAGE EXAMPLES</h1>
+
+<pre><code>    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/&quot; -sql &#39;CREATE DATABASE lg4_long_mult&#39;
     db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot;
-    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot; -sql 'SELECT * FROM analysis_base' -append='--html'
-    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult&quot; -exec mysqldump -prepend -t -append analysis_base -append job</pre>
-<pre>
+    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult&quot; -sql &#39;SELECT * FROM analysis_base&#39; -- --html
+    db_cmd.pl -url &quot;mysql://ensadmin:${ENSADMIN_PSW}@localhost/lg4_long_mult&quot; -exec mysqldump -prepend -t analysis_base job
+
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias compara_master
     db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias mus_musculus   -reg_type core
-    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql 'SELECT * FROM coord_system'</pre>
-<p>
-</p>
-<hr />
-<h1><a name="license">LICENSE</a></h1>
-<pre>
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute</pre>
-<pre>
+    db_cmd.pl -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -reg_alias squirrel       -reg_type core -sql &#39;SELECT * FROM coord_system&#39;</code></pre>
+
+<h1 id="LICENSE">LICENSE</h1>
+
+<pre><code>    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
     Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at</pre>
-<pre>
-         <a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></pre>
-<pre>
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
     Unless required by applicable law or agreed to in writing, software distributed under the License
     is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and limitations under the License.</pre>
-<p>
-</p>
-<hr />
-<h1><a name="contact">CONTACT</a></h1>
-<pre>
-    Please subscribe to the Hive mailing list:  <a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>  to discuss Hive-related questions or to be notified of our updates</pre>
+    See the License for the specific language governing permissions and limitations under the License.</code></pre>
+
+<h1 id="CONTACT">CONTACT</h1>
+
+<pre><code>    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates</code></pre>
+
 
 </body>
 
 </html>
+
+

@@ -1,0 +1,11 @@
+<map id="eHive.Process.BaseRunnable.__send_message" name="eHive.Process.BaseRunnable.__send_message">
+<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#acee7256b4f9226feeaf83c937deb42a8" title="Send a message and expects a response to be &#39;OK&#39;. " alt="" coords="259,70,496,111"/>
+<area shape="rect" id="node10" href="$classe_hive_1_1_process_1_1_base_runnable.html#aa4d37984c3b82369705632c03d33f3b8" title="Returns the full path of the temporary directory created by the worker. " alt="" coords="256,135,499,177"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#aa24e911fed2a086627fd7959288d31b8" title="Simple loop: wait for job parameters, do the job&#39;s life&#45;cycle. " alt="" coords="571,5,773,46"/>
+<area shape="rect" id="node4" href="$classe_hive_1_1_process_1_1_base_runnable.html#adb681425aa6f351938bb2ed801ca66ad" title="method is one of &quot;pre_cleanup&quot;, &quot;fetch_input&quot;, &quot;run&quot;, &quot;write_output&quot;, &quot;post_cleanup&quot;. " alt="" coords="571,70,773,111"/>
+<area shape="rect" id="node5" href="$classe_hive_1_1_process_1_1_base_runnable.html#af3c999502afdc346070e50c4fc42905b" title="Store a message in the log_message table with is_error indicating whether the warning is actually an ..." alt="" coords="547,136,797,163"/>
+<area shape="rect" id="node6" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html#a019e049fb5a45e6be23f2878eaa2b4e2" title="LongMult.DigitFactory.Digit\lFactory.write_output" alt="" coords="866,34,1049,75"/>
+<area shape="rect" id="node7" href="$class_test_runnable_1_1_test_runnable.html#a7fe88677b553ce139e9a47c305c6470a" title="TestRunnable.TestRunnable.fetch\l_input" alt="" coords="845,99,1069,141"/>
+<area shape="rect" id="node8" href="$class_test_runnable_1_1_test_runnable.html#a4a992aab947c0bd8857e8c99471f2cec" title="TestRunnable.TestRunnable.run" alt="" coords="850,165,1065,192"/>
+<area shape="rect" id="node9" href="$class_test_runnable_1_1_test_runnable.html#a44b70d4b32623732bccd2af7dbcf81cd" title="TestRunnable.TestRunnable.write\l_output" alt="" coords="845,217,1069,258"/>
+</map>

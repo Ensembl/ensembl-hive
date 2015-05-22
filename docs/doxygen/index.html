@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li class="current"><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -87,7 +86,7 @@ $(document).ready(function(){initNavTree('index.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -101,7 +100,8 @@ $(document).ready(function(){initNavTree('index.html','');});
 <div class="title">ensembl-hive Documentation</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.</p>
+<div class="textblock"><p><a href="https://travis-ci.org/Ensembl/ensembl-hive">![Build Status](https://travis-ci.org/Ensembl/ensembl-hive.png?branch=master)</a> <a href="https://coveralls.io/r/Ensembl/ensembl-hive">![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.png)</a></p>
+<p>eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.</p>
 <p>The name comes from the way pipelines are processed by a swarm of autonomous agents.</p>
 <h2>Blackboard, Jobs and Workers </h2>
 <p>In the centre of each running pipeline is a database that acts as a blackboard with individual tasks to be run. These tasks (we call them Jobs) are claimed and processed by "Worker bees" or just Workers - autonomous processes that are continuously running on the compute farm and connect to the pipeline database to report about the progress of Jobs or claim some more. When a Worker discovers that its predefined time is up or that there are no more Jobs to do, it claims no more Jobs and exits the compute farm freeing the resources.</p>
@@ -123,7 +123,8 @@ $(document).ready(function(){initNavTree('index.html','');});
 <li>what should be autimatically done with a Job if it needs more memory/time, etc.</li>
 </ul>
 <h2>Available documentation </h2>
-<p>The main entry point is in docs/index.html (available locally, offline). The online version is hosted <a href="https://rawgit.com/Ensembl/ensembl-hive/version/2.1/docs/index.html">here</a>.</p>
+<p>The main entry point is in <a href="https://rawgit.com/Ensembl/ensembl-hive/HEAD/docs/index.html">**docs/index.html**</a> and can also be browsed offline.</p>
+<p>There is preliminary support for Python3, see <a href="https://rawgit.com/Ensembl/ensembl-hive/HEAD/wrappers/python3/doxygen/index.html">the Doxygen documentation</a> and <a href="modules/Bio/EnsEMBL/Hive/PipeConfig/LongMultSt_pyconf.pm#L139">an example PipeConfig file</a>.</p>
 <h2>Contact us (mailing list) </h2>
 <p>eHive was originally conceived and used within EnsEMBL Compara group for running Comparative Genomics pipelines, but since then it has been separated into a separate software tool and is used in many projects both in Genome Campus, Cambridge and outside. There is eHive users' mailing list for questions, suggestions, discussions and announcements.</p>
 <p>To subscribe to it please visit (<a href="http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users">http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users</a>) </p>

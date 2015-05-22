@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['job',['Job',['../classeHive_1_1Process_1_1Job.html',1,'eHive::Process']]],
-  ['jobfailedexception',['JobFailedException',['../classeHive_1_1Process_1_1JobFailedException.html',1,'eHive::Process']]]
+  ['job',['Job',['../classe_hive_1_1_process_1_1_job.html',1,'eHive::Process']]],
+  ['jobfailedexception',['JobFailedException',['../classe_hive_1_1_process_1_1_job_failed_exception.html',1,'eHive::Process']]]
 ];

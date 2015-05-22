@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -163,9 +162,9 @@ Synopsis</h1>
 <div class="line">        $port ||= 3306;</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $type    = $conn_params-&gt;{<span class="stringliteral">&#39;type&#39;</span>};</div>
-<div class="line">    my $discon  = $conn_params-&gt;{<span class="stringliteral">&#39;discon&#39;</span>};</div>
-<div class="line">    my $nosqlvc = $conn_params-&gt;{<span class="stringliteral">&#39;nosqlvc&#39;</span>};</div>
+<div class="line">    my $type                        = $conn_params-&gt;{<span class="stringliteral">&#39;type&#39;</span>};</div>
+<div class="line">    my $disconnect_when_inactive    = $conn_params-&gt;{<span class="stringliteral">&#39;disconnect_when_inactive&#39;</span>};</div>
+<div class="line">    my $no_sql_schema_version_check = $conn_params-&gt;{<span class="stringliteral">&#39;no_sql_schema_version_check&#39;</span>};</div>
 <div class="line"></div>
 <div class="line">    my $connectionKey = <span class="stringliteral">&quot;$driver://$user:$pass\@$host:$port/$dbname;$type&quot;</span>;</div>
 <div class="line">    my $dba = $_URLFactory_global_instance-&gt;{$connectionKey};</div>
@@ -184,9 +183,9 @@ Synopsis</h1>
 <div class="line">        $_URLFactory_global_instance-&gt;{$connectionKey} = $dba =</div>
 <div class="line">        $type eq <span class="stringliteral">&#39;hive&#39;</span></div>
 <div class="line">          ? $module-&gt;new(</div>
-<div class="line">            -url    =&gt; $dbconn_part,</div>
-<div class="line">            -disconnect_when_inactive =&gt; $discon,</div>
-<div class="line">            -no_sql_schema_version_check =&gt; $nosqlvc,</div>
+<div class="line">            -url                        =&gt; $dbconn_part,</div>
+<div class="line">            -disconnect_when_inactive   =&gt; $disconnect_when_inactive,</div>
+<div class="line">            -no_sql_schema_version_check=&gt; $no_sql_schema_version_check,</div>
 <div class="line">        ) : $module-&gt;new(</div>
 <div class="line">            -driver =&gt; $driver,</div>
 <div class="line">            -host   =&gt; $host,</div>
@@ -195,7 +194,7 @@ Synopsis</h1>
 <div class="line">            -pass   =&gt; $pass,</div>
 <div class="line">            -dbname =&gt; $dbname,</div>
 <div class="line">            -species =&gt; $dbname,</div>
-<div class="line">            -disconnect_when_inactive =&gt; $discon,</div>
+<div class="line">            -disconnect_when_inactive =&gt; $disconnect_when_inactive,</div>
 <div class="line">        );</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keywordflow">return</span> $dba;</div>
@@ -245,7 +244,7 @@ Synopsis</h1>
 </div><div class="memdoc">
 <pre>
   Arg[1]     : string $url
-  Example    :</pre><div class="fragment"><div class="line">$url = <span class="stringliteral">&#39;mysql://user:pass@host:3306/dbname/table_name?tparam_name=tparam_value;type=compara;discon=1&#39;</span></div>
+  Example    :</pre><div class="fragment"><div class="line">$url = <span class="stringliteral">&#39;mysql://user:pass@host:3306/dbname/table_name?tparam_name=tparam_value;type=compara;disconnect_when_inactive=1&#39;</span></div>
 <div class="line">               my $object = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html">Bio::EnsEMBL::Hive::URLFactory</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html#a9b61c3f379811a6695c8bf57510fe293">fetch</a>($url);</div>
 </div><!-- fragment --> <pre>  Description: parses the URL, connects to appropriate DBAdaptor,
                determines appropriate object_adaptor, fetches the object

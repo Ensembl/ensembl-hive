@@ -1,11 +1,12 @@
 var searchData=
 [
-  ['scheduler',['Scheduler',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html',1,'Bio::EnsEMBL::Hive']]],
-  ['sqlcmd',['SqlCmd',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_cmd.html',1,'Bio::EnsEMBL::Hive::RunnableDB']]],
-  ['sqlhealthcheck',['SqlHealthcheck',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_healthcheck.html',1,'Bio::EnsEMBL::Hive::RunnableDB']]],
-  ['sqlschemaadaptor',['SqlSchemaAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
-  ['statementhandle',['StatementHandle',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
-  ['stopwatch',['Stopwatch',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html',1,'Bio::EnsEMBL::Hive::Utils']]],
-  ['storable',['Storable',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html',1,'Bio::EnsEMBL::Hive']]],
-  ['systemcmd',['SystemCmd',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd.html',1,'Bio::EnsEMBL::Hive::RunnableDB']]]
+  ['redirectstack',['RedirectStack',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_redirect_stack.html',1,'Bio::EnsEMBL::Hive::Utils']]],
+  ['resourceclass',['ResourceClass',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html',1,'Bio::EnsEMBL::Hive']]],
+  ['resourceclassadaptor',['ResourceClassAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_class_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
+  ['resourcedescription',['ResourceDescription',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html',1,'Bio::EnsEMBL::Hive']]],
+  ['resourcedescriptionadaptor',['ResourceDescriptionAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_resource_description_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
+  ['role',['Role',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html',1,'Bio::EnsEMBL::Hive']]],
+  ['roleadaptor',['RoleAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
+  ['runlistofcommandsonfarm_5fconf',['RunListOfCommandsOnFarm_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
+  ['runworker',['RunWorker',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html',1,'Bio::EnsEMBL::Hive::Scripts']]]
 ];

@@ -25,8 +25,8 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection =
     [ "query_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a273d7e5246bf1823445181da78b88e87", null ],
     [ "reconnect", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aedf6ea5fb297d8ef9276d9bc016336c1", null ],
     [ "reconnect_when_lost", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7537c0fac89789eba198006c7b1dfbf8", null ],
-    [ "timeout", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a64ee782c251b162c07efc262f0b67f8b", null ],
     [ "user", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a813db671a4662cbc118b36ac9955e2ab", null ],
     [ "username", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a656ac0a564c773ba2127d48da4821510", null ],
+    [ "wait_timeout", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a9d2360ccf06ccac4f3a392c59e4af615", null ],
     [ "work_with_db_handle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#ac1e7d1b09012f716c7860e6eb7c71e13", null ]
 ];

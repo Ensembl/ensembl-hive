@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['addtogether',['AddTogether',['../classLongMult_1_1AddTogether_1_1AddTogether.html',1,'LongMult::AddTogether']]]
+  ['addtogether',['AddTogether',['../class_long_mult_1_1_add_together_1_1_add_together.html',1,'LongMult::AddTogether']]]
 ];

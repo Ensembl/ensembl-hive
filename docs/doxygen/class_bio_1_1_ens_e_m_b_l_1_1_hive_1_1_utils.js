@@ -4,6 +4,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils =
     [ "dir_revhash", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a8c682e65730f8bb07e2d6274958b640d", null ],
     [ "find_submodules", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a487b583d13e668734c35bcff7e427d9b", null ],
     [ "go_figure_dbc", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#aa1cbcb45d800cf3c5b47079e0b27e237", null ],
+    [ "join_command_args", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a90d8d2a331fb15be0a5fc6dfdedceb66", null ],
     [ "load_file_or_module", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a1956b39203f4df86e8d7aac981462ee5", null ],
     [ "parse_cmdline_options", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ad08ca8e7270cfe9c94e0865e3cf75862", null ],
     [ "script_usage", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ad8abe58a987444c45b366ef5dba4e218", null ],

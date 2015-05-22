@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -128,7 +127,7 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -151,6 +150,9 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 <li>meadow_class_path()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a63cab22c63e3c5aa31191ec02f0a6bf1">Bio::EnsEMBL::Hive::Valley</a>
 </li>
+<li>meadow_host()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a8f54a54e00d756f3160aa026b0c12e4d">Bio::EnsEMBL::Hive::Worker</a>
+</li>
 <li>meadow_name()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a21077df2d82c57eda4845c9ea1d153d0">Bio::EnsEMBL::Hive::Worker</a>
 </li>
@@ -158,6 +160,12 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#ac41c5978a943fb1bf45a7c42507460ef">Bio::EnsEMBL::Hive::Analysis</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html#a73ad6041bffcd835a77d9086b2ea1695">Bio::EnsEMBL::Hive::ResourceDescription</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#abf98a83eafeb602f3109fb147f9a2c19">Bio::EnsEMBL::Hive::Worker</a>
+</li>
+<li>meadow_type_2_name_2_users_of_running_workers()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#af3b9b35d2f58db76a9e3205c3c2985de">Bio::EnsEMBL::Hive::Queen</a>
+</li>
+<li>meadow_user()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#ab8668d1ccf1e3b5b3f9dd98aa2cd8446">Bio::EnsEMBL::Hive::Worker</a>
 </li>
 <li>merge()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_config.html#a74bd20559c70a83d01236591fc606691">Bio::EnsEMBL::Hive::Utils::Config</a>
@@ -179,10 +187,6 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 </li>
 <li>mysql_conn()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a7c9b7527f3745f962277b5022d1d09ca">Bio::EnsEMBL::Hive::Params</a>
-</li>
-<li>mysql_conn_from_dbc()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html#a66b12a83a4107e2f9758fba932642f7b">Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_my_s_q_l_transfer.html#ab2382b362b1dd698c6c7b0a8d02acabe">Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer</a>
 </li>
 <li>mysql_dbname()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a7660586a322000f6f797927a3a216676">Bio::EnsEMBL::Hive::Params</a>

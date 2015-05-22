@@ -1,4 +1,4 @@
 <map id="Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor">
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::NakedTableAdaptor" alt="" coords="5,99,232,143"/>
-<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="28,6,209,50"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_naked_table_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::NakedTableAdaptor" alt="" coords="5,97,205,138"/>
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="26,6,184,47"/>
 </map>

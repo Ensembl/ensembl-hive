@@ -1,0 +1,8 @@
+<map id="TestRunnable.TestRunnable.run" name="TestRunnable.TestRunnable.run">
+<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#af3c999502afdc346070e50c4fc42905b" title="Store a message in the log_message table with is_error indicating whether the warning is actually an ..." alt="" coords="270,45,519,72"/>
+<area shape="rect" id="node7" href="$classe_hive_1_1_process_1_1_base_runnable.html#aef94af8ebb478c65e2782c92e5d81d37" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="275,96,515,123"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#acee7256b4f9226feeaf83c937deb42a8" title="Send a message and expects a response to be &#39;OK&#39;. " alt="" coords="568,38,805,79"/>
+<area shape="rect" id="node4" href="$classe_hive_1_1_process_1_1_base_runnable.html#a463f8fe480a9aeebec35cb0ec486b362" title="seralizes the message in JSON and send it to the parent process " alt="" coords="853,5,1056,46"/>
+<area shape="rect" id="node6" href="$classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e" title="Read a message from the parent and parse it. " alt="" coords="853,70,1056,111"/>
+<area shape="rect" id="node5" href="$classe_hive_1_1_process_1_1_base_runnable.html#acdc59ca54b4b4cbdfa33d88f9abaa88b" title="eHive.Process.BaseRunnable.\l__print_debug" alt="" coords="1104,38,1307,79"/>
+</map>

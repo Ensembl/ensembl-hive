@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -128,7 +127,7 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -181,6 +180,7 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>fetch_input()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#acdd4d38526457335f615330593ab9329">Bio::EnsEMBL::Hive::Process</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html#ae38dde4f24511a8913461f18ae56067b">Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper</a>
+, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_db_cmd.html#ab1ff6c39ffde6898498386cbd5326001">Bio::EnsEMBL::Hive::RunnableDB::DbCmd</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_dummy.html#a0574c8877209e27b076ef7afe573baa2">Bio::EnsEMBL::Hive::RunnableDB::Dummy</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_failure_test.html#a9ca1fe4defa82d28bc60b64fb4c9cf71">Bio::EnsEMBL::Hive::RunnableDB::FailureTest</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_fasta_factory.html#a364bc206bd7c1d93307258ff83b3fcce">Bio::EnsEMBL::Hive::RunnableDB::FastaFactory</a>
@@ -189,9 +189,7 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_long_mult_1_1_part_multiply.html#aefd561f1a619b59d3b784bdb78a54439">Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_my_s_q_l_transfer.html#a2b25c050ce8cf7f5b8a12e0a21f2203d">Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_notify_by_email.html#ae903a369bd861a15a9826fa15fa8fa08">Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_cmd.html#a8796e11e1db7a6fd716e684198dfc282">Bio::EnsEMBL::Hive::RunnableDB::SqlCmd</a>
 , <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_healthcheck.html#acabf587c254445072170ed6c7858cbe3">Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck</a>
-, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd.html#ae29716145f0f87688b97e906c8247c5f">Bio::EnsEMBL::Hive::RunnableDB::SystemCmd</a>
 </li>
 <li>fetch_input_ids_for_job_ids()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a33703ebaa739dc4c4924cad07e2abd25">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
@@ -223,6 +221,9 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 <li>find_all_by()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html#aa383dd99d53195099209af44e9956094">Bio::EnsEMBL::Hive::Utils::Collection</a>
 </li>
+<li>find_all_by_pattern()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html#a01b58e8715ba2fdd370afc8c6db11cf7">Bio::EnsEMBL::Hive::Utils::Collection</a>
+</li>
 <li>find_all_sql_schema_patches()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html#a4dd0e15f6e51c889ed715aee9275e54d">Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor</a>
 </li>
@@ -234,6 +235,9 @@ $(document).ready(function(){initNavTree('functions_f.html','');});
 </li>
 <li>find_submodules()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a487b583d13e668734c35bcff7e427d9b">Bio::EnsEMBL::Hive::Utils</a>
+</li>
+<li>friendly_avg_job_runtime()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a85bef96ae9b45f50ebdb189138de324c">Bio::EnsEMBL::Hive::AnalysisStats</a>
 </li>
 <li>from_date_to_seconds()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27">Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection</a>

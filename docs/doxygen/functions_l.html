@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -128,7 +127,7 @@ $(document).ready(function(){initNavTree('functions_l.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -141,17 +140,15 @@ $(document).ready(function(){initNavTree('functions_l.html','');});
 <div class="textblock">Here is a list of all class members with links to the classes they belong to:</div>
 
 <h3><a class="anchor" id="index_l"></a>- l -</h3><ul>
-<li>last_check_in()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a23a37f5e84b64bdeb435f726e20255fc">Bio::EnsEMBL::Hive::Worker</a>
-</li>
-<li>last_update()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a089b03c15eeb063a7cbae758f72f6637">Bio::EnsEMBL::Hive::AnalysisStats</a>
+<li>language()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a79329439ac79ed6c98d2943873c82cad">Bio::EnsEMBL::Hive::Analysis</a>
 </li>
 <li>lethal_for_worker()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a1fb261840767255efd596b84312532d1">Bio::EnsEMBL::Hive::AnalysisJob</a>
 </li>
 <li>life_cycle()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a1c6fcf03a764b66577f4e33477525401">Bio::EnsEMBL::Hive::Process</a>
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_guest_process.html#aa13db41cd8a1caf6726dc4d72455f1a3">Bio::EnsEMBL::Hive::GuestProcess</a>
+, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a1c6fcf03a764b66577f4e33477525401">Bio::EnsEMBL::Hive::Process</a>
 </li>
 <li>life_span()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a83d94917e06cca7e9f59aa999bec0c45">Bio::EnsEMBL::Hive::Worker</a>
@@ -182,6 +179,9 @@ $(document).ready(function(){initNavTree('functions_l.html','');});
 </li>
 <li>load_from_pipeconfig()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html#a091c3cb77f258c84e1e7c7ac39e4de61">Bio::EnsEMBL::Hive::Pipeline</a>
+</li>
+<li>load_parameters()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ae423536560d2e1407d1db5d71bd6b4d5">Bio::EnsEMBL::Hive::AnalysisJob</a>
 </li>
 <li>locator()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a33c540b343d16f5f0f00247c692d1752">Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection</a>

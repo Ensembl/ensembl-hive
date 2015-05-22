@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -119,7 +118,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-0-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params__inherit__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params_inherit__map" alt="Inheritance graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params_inherit__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params_inherit__map">
-<area shape="rect" id="node3" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html" title="Bio::EnsEMBL::Hive\l::AnalysisJob" alt="" coords="5,99,163,143"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html" title="Bio::EnsEMBL::Hive\l::AnalysisJob" alt="" coords="5,97,147,138"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -158,7 +157,7 @@ Synopsis</h1>
 <div class="line"></div>
 <div class="line">    1) parsing of parameters in the order of precedence, starting with the lowest:</div>
 <div class="line">            #</div>
-<div class="line">            ## general usage:</div>
+<div class="line">            ## general <a class="code" href="all__tests_8pl.html#a9449f3118943816afb79e9c3394972ca">usage</a>:</div>
 <div class="line">            # $self-&gt;param_init( $lowest_precedence_hashref, $middle_precedence_hashref, $highest_precedence_hashref );</div>
 <div class="line"><span class="preprocessor">            #</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            ## typical usage:</span></div>
@@ -448,7 +447,7 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <pre>
-    Arg [1]    : string $param_name</pre><pre>    Arg [2]    : (optional) $param_value</pre><pre>    Description: A getter/setter method for a job's parameters that are initialized through 4 levels of precedence (see <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a03f67c01a12beaa839338be4da9bf9cb">param_init()</a> )</pre><pre>    Example 1  : my $source = $self-&gt;param('source'); # acting as a getter</pre><pre>    Example 2  : $self-&gt;param('binpath', '/software/ensembl/compara');  # acting as a setter</pre><pre>    Returntype : any Perl structure or object that you dared to store</pre><pre> </pre><div id="codesection-param" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    Arg [1]    : string $param_name</pre><pre>    Arg [2]    : (optional) $param_value</pre><pre>    Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a03f67c01a12beaa839338be4da9bf9cb">param_init()</a> )</pre><pre>    Example 1  : my $source = $self-&gt;param('source'); # acting as a getter</pre><pre>    Example 2  : $self-&gt;param('binpath', '/software/ensembl/compara');  # acting as a setter</pre><pre>    Returntype : any Perl structure or object that you dared to store</pre><pre> </pre><div id="codesection-param" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-param-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
 <div id='codesection-param-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
@@ -522,24 +521,19 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a03f67c01a12beaa839338be4da9bf9cb">param_init</a> {</div>
 <div class="line">                    </div>
 <div class="line">    my $self                = shift @_;</div>
-<div class="line">    my $strict_hash_format  = shift @_;</div>
 <div class="line"></div>
 <div class="line">    my %unsubstituted_param_hash = ();</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">foreach</span> my $source (@_) {</div>
 <div class="line">        <span class="keywordflow">if</span>(ref($source) ne <span class="stringliteral">&#39;HASH&#39;</span>) {</div>
-<div class="line">            <span class="keywordflow">if</span>($strict_hash_format or $source=~/^\{.*\}$/) {</div>
-<div class="line">                my $param_hash = eval($source) || {};</div>
-<div class="line">                <span class="keywordflow">if</span>($@ or (ref($param_hash) ne <span class="stringliteral">&#39;HASH&#39;</span>)) {</div>
-<div class="line">                    <span class="keywordflow">if</span>($self-&gt;can(<span class="stringliteral">&#39;transient_error&#39;</span>)) {</div>
-<div class="line">                        $self-&gt;transient_error(0);</div>
-<div class="line">                    }</div>
-<div class="line">                    die <span class="stringliteral">&quot;Expected a {&#39;param&#39;=&gt;&#39;value&#39;} hashref, but got the following string instead: &#39;$source&#39;\n&quot;</span>;</div>
+<div class="line">            my $param_hash = eval($source) || {};</div>
+<div class="line">            <span class="keywordflow">if</span>($@ or (ref($param_hash) ne <span class="stringliteral">&#39;HASH&#39;</span>)) {</div>
+<div class="line">                <span class="keywordflow">if</span>($self-&gt;can(<span class="stringliteral">&#39;transient_error&#39;</span>)) {</div>
+<div class="line">                    $self-&gt;transient_error(0);</div>
 <div class="line">                }</div>
-<div class="line">                $source = $param_hash;</div>
-<div class="line">            } <span class="keywordflow">else</span> {</div>
-<div class="line">                $source = {};</div>
+<div class="line">                die <span class="stringliteral">&quot;Expected a {&#39;param&#39;=&gt;&#39;value&#39;} hashref, but got the following string instead: &#39;$source&#39;\n&quot;</span>;</div>
 <div class="line">            }</div>
+<div class="line">            $source = $param_hash;</div>
 <div class="line">        }</div>
 <div class="line">        <span class="keywordflow">while</span>(my ($k,$v) = each %$source ) {</div>
 <div class="line">            $unsubstituted_param_hash{$k} = $v;</div>

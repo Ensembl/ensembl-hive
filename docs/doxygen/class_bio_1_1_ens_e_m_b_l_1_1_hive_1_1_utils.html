@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -135,6 +134,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aa1cbcb45d800cf3c5b47079e0b27e237"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af71b51b03c60163952912de68e5eabf6"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af71b51b03c60163952912de68e5eabf6">throw</a> ()</td></tr>
 <tr class="separator:af71b51b03c60163952912de68e5eabf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90d8d2a331fb15be0a5fc6dfdedceb66"><td class="memItemLeft" align="right" valign="top">public Tuple&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a90d8d2a331fb15be0a5fc6dfdedceb66">join_command_args</a> ()</td></tr>
+<tr class="separator:a90d8d2a331fb15be0a5fc6dfdedceb66"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h1><a class="anchor" id="Synopsis"></a>
@@ -183,15 +184,16 @@ Description</h1>
 </div>
 <div id='codesection-destringify-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-destringify-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub destringify {</div>
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ac3350cd70c4187290ded88a59533e62d">destringify</a> {</div>
 <div class="line">    my $value = pop @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>($value) {</div>
+<div class="line">    <span class="keywordflow">if</span>(defined $value) {</div>
 <div class="line">        <span class="keywordflow">if</span>($value=~/^<span class="stringliteral">&#39;.*&#39;</span>$/</div>
 <div class="line">        or $value=~/^<span class="stringliteral">&quot;.*&quot;</span>$/</div>
 <div class="line">        or $value=~/^{.*}$/</div>
 <div class="line">        or $value=~/^\[.*\]$/</div>
-<div class="line">        or $value eq <span class="stringliteral">&#39;undef&#39;</span>) {</div>
+<div class="line">        or looks_like_number($value)    <span class="preprocessor"># Needed for pipeline_wide_parameters as each value is destringified independently and the JSON writer would otherwise force writing numbers as strings</span></div>
+<div class="line"><span class="preprocessor"></span>        or $value eq <span class="stringliteral">&#39;undef&#39;</span>) {</div>
 <div class="line"></div>
 <div class="line">            $value = eval($value);</div>
 <div class="line">        }</div>
@@ -333,6 +335,54 @@ Description</h1>
 <div class="line"></div>
 <div class="line"></div>
 <div class="line">sub report_versions {</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="a90d8d2a331fb15be0a5fc6dfdedceb66"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Tuple Bio::EnsEMBL::Hive::Utils::join_command_args </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre>
+    Argument[0]: String or Arrayref of Strings
+    Description: Prepares the command to be executed by system(). It is needed if the
+                 command is in fact composed of multiple commands.
+    Returns:     Tuple (boolean,string). The boolean indicates whether it was needed to
+                 join the arguments. The string is the new command-line string.
+                 PS: Shamelessly adapted from <a href="http://www.perlmonks.org/?node_id=908096">http://www.perlmonks.org/?node_id=908096</a></pre><pre> </pre><div id="codesection-join_command_args" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-join_command_args-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-join_command_args-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-join_command_args-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a90d8d2a331fb15be0a5fc6dfdedceb66">join_command_args</a> {</div>
+<div class="line">    my $args = shift;</div>
+<div class="line">    <span class="keywordflow">return</span> (0,$args) unless ref($args);</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">    # system() can only spawn 1 process. For multiple commands piped</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # together or if redirections are used, we need a shell to parse</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # a joined string representing the command</span></div>
+<div class="line"><span class="preprocessor"></span>    my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;</div>
+<div class="line"></div>
+<div class="line">    my @new_args = ();</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $a (@$args) {</div>
+<div class="line">        <span class="keywordflow">if</span> ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {</div>
+<div class="line">            push @new_args, $a;</div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line"><span class="preprocessor">            # Escapes the single-quotes and protects the arguments</span></div>
+<div class="line"><span class="preprocessor"></span>            $a =~ s/<span class="charliteral">&#39;/&#39;</span>\\<span class="stringliteral">&#39;&#39;</span>/g;</div>
+<div class="line">            push @new_args, <span class="stringliteral">&quot;&#39;$a&#39;&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> ($join_needed,join(<span class="charliteral">&#39; &#39;</span>, @new_args));</div>
+<div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
@@ -505,7 +555,7 @@ Description</h1>
 <div class="line">    local $Data::Dumper::Quotekeys = 1;         # conserve some space</div>
 <div class="line">    local $Data::Dumper::Useqq     = 1;         # escape the \n and \t correctly</div>
 <div class="line">    local $Data::Dumper::Pair      = <span class="stringliteral">&#39; =&gt; &#39;</span>;    # make sure we always produce Perl-parsable structures, no matter what is set externally</div>
-<div class="line">    local $Data::Dumper::Maxdepth  = undef;     # make sure nobody can mess up stringification by setting a lower Maxdepth</div>
+<div class="line">    local $Data::Dumper::Maxdepth  = 0;         # make sure nobody can mess up stringification by setting a lower Maxdepth</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> Dumper($structure);</div>
 <div class="line">}</div>

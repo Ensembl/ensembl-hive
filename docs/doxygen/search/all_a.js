@@ -6,5 +6,7 @@ var searchData=
   ['job_5fname_5fprefix',['job_name_prefix',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow.html#a8d9888b59ba0e3fe41ac963b6415b894',1,'Bio::EnsEMBL::Hive::Meadow']]],
   ['jobfactory',['JobFactory',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html',1,'Bio::EnsEMBL::Hive::RunnableDB']]],
   ['jobfactory_2epm',['JobFactory.pm',['../_job_factory_8pm.html',1,'']]],
-  ['jobs_5fcollection',['jobs_collection',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a17818363e108f7835c910178b8d4f671',1,'Bio::EnsEMBL::Hive::Analysis']]]
+  ['jobs_5fcollection',['jobs_collection',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html#a17818363e108f7835c910178b8d4f671',1,'Bio::EnsEMBL::Hive::Analysis']]],
+  ['join_5fcommand_5fargs',['join_command_args',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a90d8d2a331fb15be0a5fc6dfdedceb66',1,'Bio::EnsEMBL::Hive::Utils']]],
+  ['json_5fformatter',['json_formatter',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_guest_process.html#a9ad87a904360cadf6ff23f07d76b5a85',1,'Bio::EnsEMBL::Hive::GuestProcess']]]
 ];

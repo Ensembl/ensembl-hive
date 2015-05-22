@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -123,8 +122,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9d2af12ce052ca879c543465c6477da1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad37b01e88608cec39e5f883d95c8ea42"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#ad37b01e88608cec39e5f883d95c8ea42">schedule_workers</a> ()</td></tr>
 <tr class="separator:ad37b01e88608cec39e5f883d95c8ea42"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f75575073a64fa1c764720e1eee5400"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a5f75575073a64fa1c764720e1eee5400">sort_stats_by_suitability</a> ()</td></tr>
-<tr class="separator:a5f75575073a64fa1c764720e1eee5400"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a235921067a5147f198099ba00b85acd2"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a235921067a5147f198099ba00b85acd2">sort_pairs_by_suitability</a> ()</td></tr>
+<tr class="separator:a235921067a5147f198099ba00b85acd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h1><a class="anchor" id="Description"></a>
@@ -160,9 +159,9 @@ Description</h1>
 <div class="line">    my @workers_to_submit_by_analysis               = ();   # The down-to-analysis <span class="stringliteral">&quot;plan&quot;</span> that may completely change by the time the Workers are born and specialized</div>
 <div class="line">    my %workers_to_submit_by_meadow_type_rc_name    = ();   # Pre-pending-adjusted per-resource breakout</div>
 <div class="line">    my $total_extra_workers_required                = 0;</div>
-<div class="line">    my ($stats_sorted_by_suitability, $log_buffer)  = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a5f75575073a64fa1c764720e1eee5400">Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability</a>( $list_of_analyses );</div>
+<div class="line">    my ($pairs_sorted_by_suitability, $log_buffer)  = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a235921067a5147f198099ba00b85acd2">Bio::EnsEMBL::Hive::Scheduler::sort_pairs_by_suitability</a>( $list_of_analyses );</div>
 <div class="line"></div>
-<div class="line">    unless( @$stats_sorted_by_suitability ) {</div>
+<div class="line">    unless( @$pairs_sorted_by_suitability ) {</div>
 <div class="line"></div>
 <div class="line">        unless( @$log_buffer ) {</div>
 <div class="line">            push @$log_buffer, <span class="stringliteral">&quot;Could not find any suitable analyses to start scheduling.&quot;</span>;</div>
@@ -173,21 +172,22 @@ Description</h1>
 <div class="line">        my $submit_capacity_limiter = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html">Bio::EnsEMBL::Hive::Limiter</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#a89203ff40a85e13c7ef840a46dcf4487">new</a>( <span class="stringliteral">&#39;Max number of Workers scheduled this time&#39;</span>, $submit_capacity );</div>
 <div class="line">        my $queen_capacity_limiter  = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html">Bio::EnsEMBL::Hive::Limiter</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html#a89203ff40a85e13c7ef840a46dcf4487">new</a>( <span class="stringliteral">&#39;Total reciprocal capacity of the Hive&#39;</span>, 1.0 - $queen-&gt;db-&gt;get_RoleAdaptor-&gt;get_hive_current_load() );</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">foreach</span> my $analysis_stats (@$stats_sorted_by_suitability) {</div>
+<div class="line">        ANALYSIS: <span class="keywordflow">foreach</span> my $pair (@$pairs_sorted_by_suitability) {</div>
 <div class="line">            <span class="keywordflow">if</span>( $submit_capacity_limiter-&gt;reached ) {</div>
 <div class="line">                <span class="keywordflow">if</span>( $analysis_id2rc_name ) {    # only add <span class="keyword">this</span> message when scheduling and not during a Worker<span class="stringliteral">&#39;s specialization</span></div>
 <div class="line"><span class="stringliteral">                    push @$log_buffer, &quot;Submission capacity (=&quot;.$submit_capacity_limiter-&gt;original_capacity.&quot;) has been reached.&quot;;</span></div>
 <div class="line"><span class="stringliteral">                }</span></div>
-<div class="line"><span class="stringliteral">                last;</span></div>
+<div class="line"><span class="stringliteral">                last ANALYSIS;</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $analysis            = $analysis_stats-&gt;analysis();    # FIXME: if it proves too expensive we may need to consider caching</span></div>
+<div class="line"><span class="stringliteral">            my ($analysis, $analysis_stats) = @$pair;</span></div>
+<div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            my $logic_name          = $analysis-&gt;logic_name;</span></div>
 <div class="line"><span class="stringliteral">            my $this_meadow_type    = $analysis-&gt;meadow_type || $default_meadow_type;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            if( $meadow_capacity_limiter_hashed_by_type &amp;&amp; $meadow_capacity_limiter_hashed_by_type-&gt;{$this_meadow_type}-&gt;reached ) {</span></div>
 <div class="line"><span class="stringliteral">                push @$log_buffer, &quot;Available capacity of &#39;</span>$this_meadow_type<span class="stringliteral">&#39; Meadow (=&quot;.$meadow_capacity_limiter_hashed_by_type-&gt;{$this_meadow_type}-&gt;original_capacity.&quot;) has been reached, skipping Analysis &#39;</span>$logic_name<span class="stringliteral">&#39;.&quot;;</span></div>
-<div class="line"><span class="stringliteral">                next;</span></div>
+<div class="line"><span class="stringliteral">                next ANALYSIS;</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">                #digging deeper under the surface so need to sync:</span></div>
@@ -198,20 +198,20 @@ Description</h1>
 <div class="line"><span class="stringliteral">                    push @$log_buffer, &quot;Safe-sync of Analysis &#39;</span>$logic_name<span class="stringliteral">&#39; succeeded.&quot;;</span></div>
 <div class="line"><span class="stringliteral">                } else {</span></div>
 <div class="line"><span class="stringliteral">                    push @$log_buffer, &quot;Safe-sync of Analysis &#39;</span>$logic_name<span class="stringliteral">&#39; could not be run at this moment, skipping it.&quot;;</span></div>
-<div class="line"><span class="stringliteral">                    next;</span></div>
+<div class="line"><span class="stringliteral">                    next ANALYSIS;</span></div>
 <div class="line"><span class="stringliteral">                }</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral">            if( $analysis_stats-&gt;status =~ /^(BLOCKED|SYNCHING)$/ ) {</span></div>
 <div class="line"><span class="stringliteral">                push @$log_buffer, &quot;Analysis &#39;</span>$logic_name<span class="stringliteral">&#39; is still &quot;.$analysis_stats-&gt;status.&quot;, skipping it.&quot;;</span></div>
-<div class="line"><span class="stringliteral">                next;</span></div>
+<div class="line"><span class="stringliteral">                next ANALYSIS;</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                # getting the initial worker requirement for this analysis (may be stale if not sync&#39;</span>ed recently)</div>
-<div class="line">            my $extra_workers_this_analysis = $analysis_stats-&gt;num_required_workers;</div>
+<div class="line"><span class="stringliteral">                # getting the initial worker requirement for this analysis (may be off if $analysis_stats has not been sync&#39;</span>ed recently)</div>
+<div class="line">            my $extra_workers_this_analysis = $analysis_stats-&gt;estimate_num_required_workers;</div>
 <div class="line"></div>
 <div class="line">            if ($extra_workers_this_analysis &lt;= 0) {</div>
 <div class="line">                push @$log_buffer, <span class="stringliteral">&quot;Analysis &#39;$logic_name&#39; doesn&#39;t require extra workers, skipping it.&quot;</span>;</div>
-<div class="line">                next;</div>
+<div class="line">                next ANALYSIS;</div>
 <div class="line">            }</div>
 <div class="line"></div>
 <div class="line">            $total_extra_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (<span class="keywordflow">if</span> nothing required we may need a resync later)</div>
@@ -241,7 +241,7 @@ Description</h1>
 <div class="line">                        push @$log_buffer, <span class="stringliteral">&quot;Hit the limit of *** &quot;</span>.$limiter-&gt;description.<span class="stringliteral">&quot; ***, settling for $extra_workers_this_analysis Workers.&quot;</span>;</div>
 <div class="line">                    } <span class="keywordflow">else</span> {</div>
 <div class="line">                        push @$log_buffer, <span class="stringliteral">&quot;Hit the limit of *** &quot;</span>.$limiter-&gt;description.<span class="stringliteral">&quot; ***, skipping this Analysis.&quot;</span>;</div>
-<div class="line">                        next;</div>
+<div class="line">                        next ANALYSIS;</div>
 <div class="line">                    }</div>
 <div class="line">                }</div>
 <div class="line">            }</div>
@@ -263,7 +263,7 @@ Description</h1>
 <div class="line">                                );</div>
 <div class="line">            }</div>
 <div class="line"></div>
-<div class="line">        }   # /<span class="keywordflow">foreach</span> my $analysis_stats (@$stats_sorted_by_suitability)</div>
+<div class="line">        }   # /ANALYSIS : <span class="keywordflow">foreach</span> my $pair (@$pairs_sorted_by_suitability)</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> (\@workers_to_submit_by_analysis, \%workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer);</div>
@@ -292,14 +292,16 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a65f7b429d0ffbda238faeda2451350a8">schedule_workers_resync_if_necessary</a> {</div>
 <div class="line">    my ($queen, $valley, $list_of_analyses) = @_;</div>
 <div class="line"></div>
-<div class="line">    my $submit_capacity                         = $valley-&gt;config_get(<span class="stringliteral">&#39;SubmitWorkersMax&#39;</span>);</div>
-<div class="line">    my $default_meadow_type                     = $valley-&gt;get_default_meadow()-&gt;type;</div>
-<div class="line">    my $meadow_capacity_limiter_hashed_by_type  = $valley-&gt;get_meadow_capacity_hash_by_meadow_type();</div>
-<div class="line"></div>
 <div class="line">    my $analysis_id2rc_id                       = $queen-&gt;db-&gt;get_AnalysisAdaptor-&gt;fetch_HASHED_FROM_analysis_id_TO_resource_class_id();</div>
 <div class="line">    my $rc_id2name                              = $queen-&gt;db-&gt;get_ResourceClassAdaptor-&gt;fetch_HASHED_FROM_resource_class_id_TO_name();</div>
+<div class="line">    my $meadow_type_2_name_2_users              = $queen-&gt;meadow_type_2_name_2_users_of_running_workers();</div>
 <div class="line"><span class="preprocessor">        # combined mapping:</span></div>
 <div class="line"><span class="preprocessor"></span>    my $analysis_id2rc_name                     = { map { $_ =&gt; $rc_id2name-&gt;{ $analysis_id2rc_id-&gt;{ $_ }} } keys %$analysis_id2rc_id };</div>
+<div class="line"></div>
+<div class="line">    my $submit_capacity                         = $valley-&gt;config_get(<span class="stringliteral">&#39;SubmitWorkersMax&#39;</span>);</div>
+<div class="line">    my $default_meadow_type                     = $valley-&gt;get_default_meadow()-&gt;type;</div>
+<div class="line">    my ($valley_running_worker_count,</div>
+<div class="line">        $meadow_capacity_limiter_hashed_by_type)= $valley-&gt;count_running_workers_and_generate_limiters( $meadow_type_2_name_2_users );</div>
 <div class="line"></div>
 <div class="line">    my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)</div>
 <div class="line">        = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#ad37b01e88608cec39e5f883d95c8ea42">schedule_workers</a>($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);</div>
@@ -310,7 +312,7 @@ Description</h1>
 <div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a8bd3190564f0e48f010e1a88650d5e41">scheduler_say</a>( <span class="stringliteral">&quot;According to analysis_stats no workers are required... let&#39;s see if anything went out of sync.&quot;</span> );</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">            # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:</span></div>
-<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span>( $queen-&gt;db-&gt;get_RoleAdaptor-&gt;count_active_roles() != $valley-&gt;count_running_workers ) {</div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span>( $queen-&gt;db-&gt;get_RoleAdaptor-&gt;count_active_roles() != $valley_running_worker_count ) {</div>
 <div class="line">            <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a8bd3190564f0e48f010e1a88650d5e41">scheduler_say</a>( <span class="stringliteral">&quot;Mismatch between DB&#39;s active Roles and Valley&#39;s running Workers detected, checking for dead workers...&quot;</span> );</div>
 <div class="line">            $queen-&gt;check_for_dead_workers($valley, 1);</div>
 <div class="line">        }</div>
@@ -402,12 +404,12 @@ Description</h1>
 </div><!-- fragment --> </div> 
 </div>
 </div>
-<a class="anchor" id="a5f75575073a64fa1c764720e1eee5400"></a>
+<a class="anchor" id="a235921067a5147f198099ba00b85acd2"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::Scheduler::sort_stats_by_suitability </td>
+          <td class="memname">public Bio::EnsEMBL::Hive::Scheduler::sort_pairs_by_suitability </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -415,30 +417,31 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <p>Undocumented method</p>
-<div id="codesection-sort_stats_by_suitability" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-sort_stats_by_suitability-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+<div id="codesection-sort_pairs_by_suitability" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-sort_pairs_by_suitability-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
-<div id='codesection-sort_stats_by_suitability-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-sort_stats_by_suitability-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a5f75575073a64fa1c764720e1eee5400">sort_stats_by_suitability</a> {</div>
+<div id='codesection-sort_pairs_by_suitability-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-sort_pairs_by_suitability-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a235921067a5147f198099ba00b85acd2">sort_pairs_by_suitability</a> {</div>
 <div class="line"></div>
-<div class="line">    my @sorted_stats    = map { $_-&gt;stats }                         # 3. now turn them all into stats objects</div>
+<div class="line">    my @sorted_stats    = map { [ $_, $_-&gt;stats] }                  # 3. pair analyses with their stats objects</div>
 <div class="line">                            sort { $b-&gt;priority &lt;=&gt; $a-&gt;priority }  # 2. but ordered according to their priority levels</div>
 <div class="line">                                shuffle                             # 1. make sure analyses are well mixed within the same priority level</div>
 <div class="line">                                    @{ shift @_ };</div>
 <div class="line"></div>
 <div class="line">    my (@primary_candidates, @secondary_candidates, $discarded_count, @log_buffer);</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">foreach</span> my $stats ( @sorted_stats ) {</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $pair ( @sorted_stats ) {</div>
+<div class="line">        my ($analysis, $stats) = @$pair;</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">            # assuming sync() is expensive, so first trying analyses that have already been sunk:</span></div>
-<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span>( ($stats-&gt;num_required_workers &gt; 0) and ($stats-&gt;status =~/^(READY|WORKING)$/) ) {</div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span>( ($stats-&gt;estimate_num_required_workers &gt; 0) and ($stats-&gt;status =~/^(READY|WORKING)$/) ) {</div>
 <div class="line"></div>
-<div class="line">            push @primary_candidates, $stats;</div>
+<div class="line">            push @primary_candidates, $pair;</div>
 <div class="line"></div>
 <div class="line">        } elsif( $stats-&gt;status =~ /^(LOADING|BLOCKED|ALL_CLAIMED|SYNCHING)$/ ) {</div>
 <div class="line"></div>
-<div class="line">            push @secondary_candidates, $stats;</div>
+<div class="line">            push @secondary_candidates, $pair;</div>
 <div class="line"></div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
@@ -474,15 +477,11 @@ Description</h1>
 <div id='codesection-suggest_analysis_to_specialize_a_worker-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-suggest_analysis_to_specialize_a_worker-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a9d2af12ce052ca879c543465c6477da1">suggest_analysis_to_specialize_a_worker</a> {</div>
-<div class="line">    my ( $worker, $analyses_pattern ) = @_;</div>
+<div class="line">    my ( $worker, $analyses_matching_pattern, $analyses_pattern ) = @_;</div>
 <div class="line"></div>
 <div class="line">    my $queen               = $worker-&gt;adaptor;</div>
 <div class="line">    my $worker_rc_id        = $worker-&gt;resource_class_id;</div>
 <div class="line">    my $worker_meadow_type  = $worker-&gt;meadow_type;</div>
-<div class="line"></div>
-<div class="line">    $analyses_pattern <span class="comment">//= &#39;%&#39;;  # for printing</span></div>
-<div class="line"></div>
-<div class="line">    my $analyses_matching_pattern   = $queen-&gt;db-&gt;get_AnalysisAdaptor-&gt;fetch_all_by_pattern( $analyses_pattern );</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( ! @$analyses_matching_pattern ) {</div>
 <div class="line"></div>
@@ -492,20 +491,20 @@ Description</h1>
 <div class="line"></div>
 <div class="line">        $worker-&gt;worker_say( <span class="stringliteral">&quot;Found &quot;</span>.scalar(@$analyses_matching_pattern).<span class="stringliteral">&quot; analyses matching &#39;$analyses_pattern&#39; pattern&quot;</span> );</div>
 <div class="line"></div>
-<div class="line">        my @list_of_analyses    = grep { !$worker_rc_id or $worker_rc_id==$_-&gt;resource_class_id}</div>
-<div class="line">                                    grep { !$worker_meadow_type or !$_-&gt;meadow_type or ($worker_meadow_type eq $_-&gt;meadow_type) }</div>
-<div class="line"><span class="preprocessor">                                        # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">                                        # the corresponding checks should be added here</span></div>
-<div class="line"><span class="preprocessor"></span>                                            @$analyses_matching_pattern;</div>
+<div class="line">        my @analyses_matching_worker = grep { !$worker_rc_id or $worker_rc_id==$_-&gt;resource_class_id}</div>
+<div class="line">                                        grep { !$worker_meadow_type or !$_-&gt;meadow_type or ($worker_meadow_type eq $_-&gt;meadow_type) }</div>
+<div class="line"><span class="preprocessor">                                            # if any other attributes of the worker are specifically constrained in the analysis (such as meadow_name),</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">                                            # the corresponding checks should be added here</span></div>
+<div class="line"><span class="preprocessor"></span>                                                @$analyses_matching_pattern;</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">if</span>( !@list_of_analyses ) {</div>
+<div class="line">        <span class="keywordflow">if</span>( !@analyses_matching_worker ) {</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">return</span> <span class="stringliteral">&quot;Could not find any of the &quot;</span>.scalar(@$analyses_matching_pattern).<span class="stringliteral">&quot; &#39;$analyses_pattern&#39; Analyses that would suit this Worker&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
 <div class="line">            my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)</div>
-<div class="line">                = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#ad37b01e88608cec39e5f883d95c8ea42">schedule_workers</a>( $queen, 1, $worker_meadow_type, \@list_of_analyses );</div>
+<div class="line">                = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#ad37b01e88608cec39e5f883d95c8ea42">schedule_workers</a>( $queen, 1, $worker_meadow_type, \@analyses_matching_worker );</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">if</span>( $worker-&gt;debug ) {</div>
 <div class="line">                <span class="keywordflow">foreach</span> my $msg (@$log_buffer) {</div>

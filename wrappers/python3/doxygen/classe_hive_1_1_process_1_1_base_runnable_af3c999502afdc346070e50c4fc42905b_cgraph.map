@@ -1,0 +1,6 @@
+<map id="eHive.Process.BaseRunnable.warning" name="eHive.Process.BaseRunnable.warning">
+<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#acee7256b4f9226feeaf83c937deb42a8" title="Send a message and expects a response to be &#39;OK&#39;. " alt="" coords="304,38,541,79"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#a463f8fe480a9aeebec35cb0ec486b362" title="seralizes the message in JSON and send it to the parent process " alt="" coords="589,5,792,46"/>
+<area shape="rect" id="node5" href="$classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e" title="Read a message from the parent and parse it. " alt="" coords="589,70,792,111"/>
+<area shape="rect" id="node4" href="$classe_hive_1_1_process_1_1_base_runnable.html#acdc59ca54b4b4cbdfa33d88f9abaa88b" title="eHive.Process.BaseRunnable.\l__print_debug" alt="" coords="840,38,1043,79"/>
+</map>

@@ -16,6 +16,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor =
     [ "increase_semaphore_count_for_jobid", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ac693f76b13041b3709e5d6a11ac03820", null ],
     [ "object_class", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#acaa839ac5ee54ada4e4e555205925592", null ],
     [ "release_and_age_job", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a375c57130791087ff6781f4cc6cc9b9e", null ],
+    [ "release_claimed_jobs_from_role", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ae132fe5a9be2622c21af73d926647528", null ],
     [ "release_undone_jobs_from_role", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a64924639a2536d95c78f19b9beab64ee", null ],
     [ "reset_jobs_for_analysis_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a122b718f7e51f923fb50a1c01cb69805", null ],
     [ "reset_or_grab_job_by_dbID", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a4dd834ac1243d05989bcb352021ede70", null ],

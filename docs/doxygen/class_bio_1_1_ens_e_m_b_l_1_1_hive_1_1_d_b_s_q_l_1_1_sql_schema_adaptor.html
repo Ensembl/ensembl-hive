@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -155,10 +154,12 @@ Description</h1>
 <div class="line">    my %all_patches = ();</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>(my $hive_root_dir = $ENV{<span class="stringliteral">&#39;EHIVE_ROOT_DIR&#39;</span>} ) {</div>
-<div class="line">        <span class="keywordflow">foreach</span> my $patch_path ( split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.*sql*`) ) {</div>
+<div class="line">        <span class="keywordflow">foreach</span> my $patch_path ( split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.*`) ) {</div>
 <div class="line">            my ($patch_name, $driver) = ($patch_path=~/^(.+)\.(\w+)$/);</div>
 <div class="line"></div>
 <div class="line">            $driver = <span class="stringliteral">&#39;mysql&#39;</span> <span class="keywordflow">if</span> ($driver eq <span class="stringliteral">&#39;sql&#39;</span>);    # <span class="keywordflow">for</span> backwards compatibility</div>
+<div class="line"></div>
+<div class="line">            $driver = <span class="stringliteral">&#39;script&#39;</span> <span class="keywordflow">if</span> ($driver!~/sql/);</div>
 <div class="line"></div>
 <div class="line">            $all_patches{$patch_name}{$driver} = $patch_path;</div>
 <div class="line">        }</div>
@@ -221,8 +222,10 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    my @ordered_patches = ();</div>
 <div class="line">    <span class="keywordflow">foreach</span> my $patch_key ( (sort keys %$all_patches)[$after_version..$code_schema_version-1] ) {</div>
-<div class="line">        <span class="keywordflow">if</span>(my $patch_path = $all_patches-&gt;{$patch_key}{$driver}) {</div>
-<div class="line">            push @ordered_patches, $patch_path;</div>
+<div class="line">        <span class="keywordflow">if</span>(my $sql_patch_path = $all_patches-&gt;{$patch_key}{$driver}) {</div>
+<div class="line">            push @ordered_patches, $sql_patch_path;</div>
+<div class="line">        } elsif(my $script_patch_path = $all_patches-&gt;{$patch_key}{<span class="stringliteral">&#39;script&#39;</span>}) {</div>
+<div class="line">            push @ordered_patches, $script_patch_path;</div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line">            <span class="keywordflow">return</span>;</div>
 <div class="line">        }</div>

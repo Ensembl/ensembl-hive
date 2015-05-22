@@ -1,6 +1,8 @@
 var dir_3eba02bba8db0756280349dc5308b6d9 =
 [
+    [ "all_tests.pl", "all__tests_8pl.html", "all__tests_8pl" ],
     [ "beekeeper.pl", "beekeeper_8pl.html", "beekeeper_8pl" ],
+    [ "create_sql_patches.pl", "create__sql__patches_8pl.html", "create__sql__patches_8pl" ],
     [ "db_cmd.pl", "db__cmd_8pl.html", "db__cmd_8pl" ],
     [ "generate_graph.pl", "generate__graph_8pl.html", "generate__graph_8pl" ],
     [ "generate_timeline.pl", "generate__timeline_8pl.html", "generate__timeline_8pl" ],

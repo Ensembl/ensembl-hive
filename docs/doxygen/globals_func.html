@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -99,7 +98,7 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -116,17 +115,20 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <li>add_event()
 : <a class="el" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">generate_timeline.pl</a>
 </li>
+<li>clean()
+: <a class="el" href="all__tests_8pl.html#a422ef8d1a748ca4ffbcd453fbf22ba8b">all_tests.pl</a>
+</li>
 <li>count_number_relevant_sets()
 : <a class="el" href="generate__timeline_8pl.html#ac70218a8fce3a55255272b1552f00d3e">generate_timeline.pl</a>
 </li>
 <li>cumulate_events()
 : <a class="el" href="generate__timeline_8pl.html#a75fd23e351a53d15c7ab4af9ed65ac5f">generate_timeline.pl</a>
 </li>
-<li>dbc_hash_to_cmd()
-: <a class="el" href="db__cmd_8pl.html#aa9d6dbdd85d225abef029815f3ca0336">db_cmd.pl</a>
+<li>generate_docs_doxygen_perl()
+: <a class="el" href="make__docs_8pl.html#ae93420c01717b5507a6abee45eea82f5">make_docs.pl</a>
 </li>
-<li>generate_docs_doxygen()
-: <a class="el" href="make__docs_8pl.html#a08b93b6c6623859aa091b45a27e57137">make_docs.pl</a>
+<li>generate_docs_doxygen_python()
+: <a class="el" href="make__docs_8pl.html#a6beb731e13cc7bf174c278941604f2c6">make_docs.pl</a>
 </li>
 <li>generate_docs_scripts()
 : <a class="el" href="make__docs_8pl.html#abfd18200e24abf7b7b0a2da0052e407c">make_docs.pl</a>
@@ -137,8 +139,12 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <li>generate_worker_cmd()
 : <a class="el" href="beekeeper_8pl.html#ad7de8680eb8b39e160cee04957ccd668">beekeeper.pl</a>
 </li>
+<li>get_all_tests()
+: <a class="el" href="all__tests_8pl.html#afec6f985b18aa1e7edb785fb6c35aada">all_tests.pl</a>
+</li>
 <li>main()
 : <a class="el" href="beekeeper_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">beekeeper.pl</a>
+, <a class="el" href="patch__2015-01-12_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">patch_2015-01-12.pl</a>
 , <a class="el" href="standalone_job_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">standaloneJob.pl</a>
 , <a class="el" href="seed__pipeline_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">seed_pipeline.pl</a>
 , <a class="el" href="run_worker_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">runWorker.pl</a>
@@ -154,6 +160,10 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 </li>
 <li>show_seedable_analyses()
 : <a class="el" href="seed__pipeline_8pl.html#ae56eff1c83733ae5dcc4d7f7d6d25ff8">seed_pipeline.pl</a>
+</li>
+<li>usage()
+: <a class="el" href="all__tests_8pl.html#a9449f3118943816afb79e9c3394972ca">all_tests.pl</a>
+, <a class="el" href="create__sql__patches_8pl.html#a9449f3118943816afb79e9c3394972ca">create_sql_patches.pl</a>
 </li>
 </ul>
 </div><!-- contents -->

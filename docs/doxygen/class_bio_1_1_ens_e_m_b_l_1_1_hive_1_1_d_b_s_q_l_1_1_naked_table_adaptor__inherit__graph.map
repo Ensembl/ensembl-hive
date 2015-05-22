@@ -1,8 +1,8 @@
 <map id="Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor" name="Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor">
-<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_accumulator_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AccumulatorAdaptor" alt="" coords="524,5,759,49"/>
-<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_data_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisDataAdaptor" alt="" coords="524,71,759,115"/>
-<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::LogMessageAdaptor" alt="" coords="524,138,759,182"/>
-<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::MetaAdaptor" alt="" coords="552,205,731,249"/>
-<area shape="rect" id="node13" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::PipelineWideParameters\lAdaptor" alt="" coords="513,271,769,331"/>
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="5,138,187,182"/>
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_accumulator_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AccumulatorAdaptor" alt="" coords="475,5,677,46"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_data_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::AnalysisDataAdaptor" alt="" coords="473,70,679,111"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_log_message_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::LogMessageAdaptor" alt="" coords="473,135,679,177"/>
+<area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::MetaAdaptor" alt="" coords="497,201,655,242"/>
+<area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_pipeline_wide_parameters_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::PipelineWideParameters\lAdaptor" alt="" coords="461,267,691,323"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html" title="Bio::EnsEMBL::Hive\l::DBSQL::BaseAdaptor" alt="" coords="6,135,165,177"/>
 </map>

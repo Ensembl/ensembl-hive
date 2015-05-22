@@ -55,10 +55,12 @@ var hierarchy =
         [ "Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_failure_test__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::FastaSplitter_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_fasta_splitter__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html", null ],
-        [ "Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html", null ],
+        [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultForeign_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_foreign__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf.html", null ],
+        [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_pyconf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__pyconf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::LongMultWf_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::MemlimitTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html", null ],
+        [ "Bio::EnsEMBL::Hive::PipeConfig::OverloadTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_overload_test__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::RunListOfCommandsOnFarm_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html", null ],
         [ "Bio::EnsEMBL::Hive::PipeConfig::TopUp_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf.html", null ],
@@ -70,12 +72,14 @@ var hierarchy =
     ] ],
     [ "Bio::EnsEMBL::Hive::Utils::GraphViz", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph_viz.html", null ],
     [ "Bio::EnsEMBL::Hive", "class_bio_1_1_ens_e_m_b_l_1_1_hive.html", null ],
+    [ "Bio::EnsEMBL::Hive::Scripts::InitPipeline", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_init_pipeline.html", null ],
     [ "Bio::EnsEMBL::Hive::Limiter", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_limiter.html", null ],
     [ "Bio::EnsEMBL::Hive::Params", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html", [
       [ "Bio::EnsEMBL::Hive::AnalysisJob", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html", null ]
     ] ],
     [ "Bio::EnsEMBL::Hive::Pipeline", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html", null ],
     [ "Bio::EnsEMBL::Hive::Process", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html", [
+      [ "Bio::EnsEMBL::Hive::GuestProcess", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_guest_process.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::Dummy", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_dummy.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::FailureTest", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_failure_test.html", null ],
@@ -88,11 +92,15 @@ var hierarchy =
       [ "Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_notify_by_email.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::SqlCmd", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_cmd.html", null ],
       [ "Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_healthcheck.html", null ],
-      [ "Bio::EnsEMBL::Hive::RunnableDB::SystemCmd", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd.html", null ]
+      [ "Bio::EnsEMBL::Hive::RunnableDB::SystemCmd", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_system_cmd.html", [
+        [ "Bio::EnsEMBL::Hive::RunnableDB::DbCmd", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_db_cmd.html", null ]
+      ] ]
     ] ],
     [ "Bio::EnsEMBL::Hive::Utils::RedirectStack", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_redirect_stack.html", null ],
+    [ "Bio::EnsEMBL::Hive::Scripts::RunWorker", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html", null ],
     [ "Bio::EnsEMBL::Hive::Scheduler", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html", null ],
     [ "Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html", null ],
+    [ "Bio::EnsEMBL::Hive::Scripts::StandaloneJob", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_standalone_job.html", null ],
     [ "Bio::EnsEMBL::Hive::DBSQL::StatementHandle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_statement_handle.html", null ],
     [ "Bio::EnsEMBL::Hive::Utils::Stopwatch", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html", null ],
     [ "Bio::EnsEMBL::Hive::Storable", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html", [
@@ -108,6 +116,7 @@ var hierarchy =
       [ "Bio::EnsEMBL::Hive::Role", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html", null ],
       [ "Bio::EnsEMBL::Hive::Worker", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html", null ]
     ] ],
+    [ "Bio::EnsEMBL::Hive::Utils::Test", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_test.html", null ],
     [ "Bio::EnsEMBL::Hive::Utils::URL", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html", null ],
     [ "Bio::EnsEMBL::Hive::URLFactory", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html", null ],
     [ "Bio::EnsEMBL::Hive::Utils", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html", null ],

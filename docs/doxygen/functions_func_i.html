@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -128,7 +127,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -144,20 +143,21 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <li>incomplete()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a7ba3562d4484fea866441d7d501d4900">Bio::EnsEMBL::Hive::AnalysisJob</a>
 </li>
-<li>increase_required_workers()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html#a08e32841d6e713fc8b4eada7a3057d8d">Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor</a>
-</li>
-<li>increase_running_workers()
-: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html#aff5f1a7e1f8579cd228352678cce7b78">Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor</a>
-</li>
 <li>increase_semaphore_count_for_jobid()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ac693f76b13041b3709e5d6a11ac03820">Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor</a>
+</li>
+<li>increment_a_counter()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_stats_adaptor.html#a6a3ec60df7eda80bf86005983e72b6af">Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor</a>
 </li>
 <li>init()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html#a85d390e244fcd69c62f4544d8b384e44">Bio::EnsEMBL::Hive::Worker</a>
 </li>
 <li>init_collections()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#a45d333f0553191bff073966ff1d0aa53">Bio::EnsEMBL::Hive::DBSQL::DBAdaptor</a>
+</li>
+<li>init_pipeline()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_init_pipeline.html#a20ae94e5207096eb0b868d9bd1525008">Bio::EnsEMBL::Hive::Scripts::InitPipeline</a>
+, <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_test.html#aa6032567868557258c29496478a6c2fb">Bio::EnsEMBL::Hive::Utils::Test</a>
 </li>
 <li>inprogress_job_count()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html#a859730fee45d764bdc4fbaa50be04ca3">Bio::EnsEMBL::Hive::AnalysisStats</a>
@@ -187,6 +187,9 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 </li>
 <li>interval_workers_with_unknown_usage()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a93a13028e6f1b781c3d178f2aab61744">Bio::EnsEMBL::Hive::Queen</a>
+</li>
+<li>is_analysis_topup()
+: <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html#afa519bbe27c59548ab6eb9b1222d0fb6">Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf</a>
 </li>
 <li>is_counting()
 : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html#a27af7e8ae932532af50bfee75b08d2f3">Bio::EnsEMBL::Hive::Utils::Stopwatch</a>

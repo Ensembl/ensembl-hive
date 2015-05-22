@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -93,7 +92,7 @@ $(document).ready(function(){initNavTree('beekeeper_8pl.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -325,7 +324,9 @@ Functions</h2></td></tr>
 <div class="line"><span class="stringliteral">        script_usage(1);</span></div>
 <div class="line"><span class="stringliteral">    }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    $self-&gt;{&#39;</span>safe_url<span class="stringliteral">&#39;} = $self-&gt;{&#39;</span>dba<span class="stringliteral">&#39;}-&gt;dbc-&gt;url(&#39;</span>WORKER_PASSWORD<span class="stringliteral">&#39;);</span></div>
+<div class="line"><span class="stringliteral">    if( $self-&gt;{&#39;</span>url<span class="stringliteral">&#39;} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:</span></div>
+<div class="line"><span class="stringliteral">        $self-&gt;{&#39;</span>url<span class="stringliteral">&#39;} = &quot;&#39;</span><span class="stringliteral">&quot;. $self-&gt;{&#39;dba&#39;}-&gt;dbc-&gt;url(&#39;EHIVE_PASS&#39;) .&quot;</span><span class="stringliteral">&#39;&quot;;</span></div>
+<div class="line"><span class="stringliteral">    }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">    my $queen = $self-&gt;{&#39;</span>dba<span class="stringliteral">&#39;}-&gt;get_Queen;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
@@ -411,7 +412,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="stringliteral">    }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">    if( $self-&gt;{&#39;logic_name&#39;} ) {   # FIXME: for now, logic_name will override analysis_pattern quietly</span></div>
-<div class="line"><span class="stringliteral">#        warn &quot;</span>-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n<span class="stringliteral">&quot;;</span></div>
+<div class="line"><span class="stringliteral">        warn &quot;</span>-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n<span class="stringliteral">&quot;;</span></div>
 <div class="line"><span class="stringliteral">        $self-&gt;{&#39;analyses_pattern&#39;} = $self-&gt;{&#39;logic_name&#39;};</span></div>
 <div class="line"><span class="stringliteral">    }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
@@ -435,48 +436,51 @@ Functions</h2></td></tr>
 <div class="line"><span class="stringliteral">    }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">    if($reset_all_jobs || $reset_failed_jobs) {</span></div>
-<div class="line"><span class="stringliteral">        $self-&gt;{&#39;dba&#39;}-&gt;get_AnalysisJobAdaptor-&gt;reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); </span></div>
-<div class="line"><span class="stringliteral">        $self-&gt;{&#39;dba&#39;}-&gt;get_Queen-&gt;synchronize_hive( $list_of_analyses );</span></div>
-<div class="line"><span class="stringliteral">    }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    if($all_dead)           { $queen-&gt;register_all_workers_dead(); }</span></div>
-<div class="line"><span class="stringliteral">    if($check_for_dead)     { $queen-&gt;check_for_dead_workers($valley, 1); }</span></div>
-<div class="line"><span class="stringliteral">    if($balance_semaphores) { $self-&gt;{&#39;dba&#39;}-&gt;get_AnalysisJobAdaptor-&gt;balance_semaphores( $list_of_analyses ); }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    if ($max_loops) { # positive $max_loop means limited, negative means unlimited</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $self-&gt;{&#39;analyses_pattern&#39;}, $run_job_id, $force);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    } else {</span></div>
-<div class="line"><span class="stringliteral">            # the output of several methods will look differently depending on $analysis being [un]defined</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        if($sync) {</span></div>
-<div class="line"><span class="stringliteral">            $queen-&gt;synchronize_hive( $list_of_analyses );</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">        print $queen-&gt;print_status_and_return_reasons_to_exit( $list_of_analyses, !$self-&gt;{&#39;no_analysis_stats&#39;} );</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        if($show_worker_stats) {</span></div>
-<div class="line"><span class="stringliteral">            print &quot;</span>\n===== List of live Workers according to the Queen: ======\n<span class="stringliteral">&quot;;</span></div>
-<div class="line"><span class="stringliteral">            foreach my $worker (@{ $queen-&gt;fetch_overdue_workers(0) }) {</span></div>
-<div class="line"><span class="stringliteral">                print $worker-&gt;toString(1).&quot;</span>\n<span class="stringliteral">&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">        $self-&gt;{&#39;dba&#39;}-&gt;get_RoleAdaptor-&gt;print_active_role_counts;</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);   # show what would be submitted, but do not actually submit</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        if($show_failed_jobs) {</span></div>
-<div class="line"><span class="stringliteral">            print(&quot;</span>===== failed jobs\n<span class="stringliteral">&quot;);</span></div>
-<div class="line"><span class="stringliteral">            my $failed_job_list = $self-&gt;{&#39;dba&#39;}-&gt;get_AnalysisJobAdaptor-&gt;fetch_all_by_analysis_id_status( $self-&gt;{&#39;logic_name&#39;} and $list_of_analyses , &#39;FAILED&#39;);</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            foreach my $job (@{$failed_job_list}) {</span></div>
-<div class="line"><span class="stringliteral">                print $job-&gt;toString. &quot;</span>\n<span class="stringliteral">&quot;;</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral">    }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    exit(0);</span></div>
-<div class="line"><span class="stringliteral">}</span></div>
+<div class="line"><span class="stringliteral">        if ($reset_all_jobs and not $self-&gt;{&#39;analyses_pattern&#39;}) {</span></div>
+<div class="line"><span class="stringliteral">            die &quot;</span>Beekeeper : do you really want to reset *all* the jobs ? If yes, add \<span class="stringliteral">&quot;-analyses_pattern &#39;%&#39;\&quot; to the command line\n&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_AnalysisJobAdaptor-&gt;reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); </div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_Queen-&gt;synchronize_hive( $list_of_analyses );</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>($all_dead)           { $queen-&gt;register_all_workers_dead(); }</div>
+<div class="line">    <span class="keywordflow">if</span>($check_for_dead)     { $queen-&gt;check_for_dead_workers($valley, 1); }</div>
+<div class="line">    <span class="keywordflow">if</span>($balance_semaphores) { $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_AnalysisJobAdaptor-&gt;balance_semaphores( $list_of_analyses ); }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span> ($max_loops) { # positive $max_loop means limited, negative means unlimited</div>
+<div class="line"></div>
+<div class="line">        <a class="code" href="beekeeper_8pl.html#af314298b28a69538fb25aa7eb1327c98">run_autonomously</a>($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $self-&gt;{<span class="stringliteral">&#39;analyses_pattern&#39;</span>}, $run_job_id, $force);</div>
+<div class="line"></div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line"><span class="preprocessor">            # the output of several methods will look differently depending on $analysis being [un]defined</span></div>
+<div class="line"><span class="preprocessor"></span></div>
+<div class="line">        <span class="keywordflow">if</span>($sync) {</div>
+<div class="line">            $queen-&gt;synchronize_hive( $list_of_analyses );</div>
+<div class="line">        }</div>
+<div class="line">        print $queen-&gt;print_status_and_return_reasons_to_exit( $list_of_analyses, !$self-&gt;{<span class="stringliteral">&#39;no_analysis_stats&#39;</span>} );</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>($show_worker_stats) {</div>
+<div class="line">            print <span class="stringliteral">&quot;\n===== List of live Workers according to the Queen: ======\n&quot;</span>;</div>
+<div class="line">            <span class="keywordflow">foreach</span> my $worker (@{ $queen-&gt;fetch_overdue_workers(0) }) {</div>
+<div class="line">                print $worker-&gt;toString(1).<span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line">        }</div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_RoleAdaptor-&gt;print_active_role_counts;</div>
+<div class="line"></div>
+<div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a65f7b429d0ffbda238faeda2451350a8">Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary</a>($queen, $valley, $list_of_analyses);   # show what would be submitted, but <span class="keywordflow">do</span> not actually submit</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>($show_failed_jobs) {</div>
+<div class="line">            print(<span class="stringliteral">&quot;===== failed jobs\n&quot;</span>);</div>
+<div class="line">            my $failed_job_list = $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_AnalysisJobAdaptor-&gt;fetch_all_by_analysis_id_status( $self-&gt;{<span class="stringliteral">&#39;logic_name&#39;</span>} and $list_of_analyses , <span class="stringliteral">&#39;FAILED&#39;</span>);</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">foreach</span> my $job (@{$failed_job_list}) {</div>
+<div class="line">                print $job-&gt;toString. <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    exit(0);</div>
+<div class="line">}</div>
 </div><!-- fragment --> </div><p>Undocumented method</p>
 <div id="codesection-main" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-main-trigger' src='closed.png' style='display:inline'><b>Code:</b>
@@ -484,7 +488,7 @@ Functions</h2></td></tr>
 <div id='codesection-main-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-main-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="beekeeper_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> {</div>
-<div class="line">    my ($reg_conf, $reg_type, $reg_alias, $executable, $url, @prepend, @append, $sqlcmd, $to_params, $verbose, $help, $report_versions);</div>
+<div class="line">    my ($reg_conf, $reg_type, $reg_alias, $executable, $url, @prepend, @append, $sqlcmd, $verbose, $help, $report_versions);</div>
 <div class="line"></div>
 <div class="line">    GetOptions(</div>
 <div class="line">                # connect to the database:</div>
@@ -497,14 +501,13 @@ Functions</h2></td></tr>
 <div class="line">            <span class="stringliteral">&#39;prepend=s@&#39;</span>        =&gt; \@prepend,</div>
 <div class="line">            <span class="stringliteral">&#39;append|extra=s@&#39;</span>   =&gt; \@append,</div>
 <div class="line">            <span class="stringliteral">&#39;sqlcmd=s&#39;</span>          =&gt; \$sqlcmd,</div>
-<div class="line">            <span class="stringliteral">&#39;to_params!&#39;</span>        =&gt; \$to_params,     # is being phased out and so no longer documented</div>
 <div class="line"></div>
 <div class="line">            <span class="stringliteral">&#39;verbose!&#39;</span>          =&gt; \$verbose,</div>
 <div class="line">            <span class="stringliteral">&#39;help!&#39;</span>             =&gt; \$help,</div>
 <div class="line">            <span class="stringliteral">&#39;v|versions!&#39;</span>       =&gt; \$report_versions,</div>
 <div class="line">    );</div>
 <div class="line"></div>
-<div class="line">    my $dbc_hash;</div>
+<div class="line">    my $dbc;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($help) {</div>
 <div class="line"></div>
@@ -542,35 +545,28 @@ Functions</h2></td></tr>
 <div class="line">            $dba = $dbas-&gt;[0];</div>
 <div class="line">        }</div>
 <div class="line"></div>
-<div class="line">        my $dbc = $dba-&gt;dbc();</div>
+<div class="line">        $dbc = $dba-&gt;dbc();</div>
 <div class="line"></div>
-<div class="line">        $dbc_hash = {</div>
-<div class="line">            <span class="stringliteral">&#39;driver&#39;</span>    =&gt; $dbc-&gt;driver,</div>
-<div class="line">            <span class="stringliteral">&#39;host&#39;</span>      =&gt; $dbc-&gt;host,</div>
-<div class="line">            <span class="stringliteral">&#39;port&#39;</span>      =&gt; $dbc-&gt;port,</div>
-<div class="line">            <span class="stringliteral">&#39;user&#39;</span>      =&gt; $dbc-&gt;username,</div>
-<div class="line">            <span class="stringliteral">&#39;pass&#39;</span>      =&gt; $dbc-&gt;password,</div>
-<div class="line">            <span class="stringliteral">&#39;dbname&#39;</span>    =&gt; $dbc-&gt;dbname,</div>
-<div class="line">        };</div>
 <div class="line">    } elsif($url) {</div>
-<div class="line">        $dbc_hash = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html#ac80cc911eba215fb0ed17104861fe5f7">Bio::EnsEMBL::Hive::Utils::URL::parse</a>( $url )</div>
-<div class="line">            || die <span class="stringliteral">&quot;Could not parse URL &#39;$url&#39;&quot;</span>;</div>
+<div class="line">        $dbc = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( -url =&gt; $url );</div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line">        script_usage(1);</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my @cmd = @{ <a class="code" href="db__cmd_8pl.html#aa9d6dbdd85d225abef029815f3ca0336">dbc_hash_to_cmd</a>( $dbc_hash, $executable, \@prepend, \@append, $sqlcmd, $to_params ) };</div>
-<div class="line"></div>
-<div class="line">    my $flat_cmd = join(<span class="charliteral">&#39; &#39;</span>, map { ($_=~/^-?\w+$/) ? $_ : <span class="stringliteral">&quot;\&quot;$_\&quot;&quot;</span> } @cmd);</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>($to_params) {</div>
-<div class="line">        print <span class="stringliteral">&quot;$flat_cmd\n&quot;</span>;</div>
-<div class="line">    } <span class="keywordflow">else</span> {</div>
-<div class="line">        warn <span class="stringliteral">&quot;\nRunning command:\n\t$flat_cmd\n\n&quot;</span> <span class="keywordflow">if</span>($verbose);</div>
-<div class="line"></div>
-<div class="line">        exec(@cmd);</div>
-<div class="line">    }</div>
-<div class="line">}</div>
+<div class="line">    <span class="keywordflow">if</span> (@append) {</div>
+<div class="line">        warn qq{In db_cmd.pl, <span class="keyword">final</span> arguments don<span class="stringliteral">&#39;t have to be declared with --append any more. All the remaining arguments are considered to be appended.\n};</span></div>
+<div class="line"><span class="stringliteral">    }</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">    my @cmd = @{ $dbc-&gt;to_cmd( $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">    if( $verbose ) {</span></div>
+<div class="line"><span class="stringliteral">        my $flat_cmd = join(&#39;</span> <span class="stringliteral">&#39;, map { ($_=~/^-?\w+$/) ? $_ : &quot;\&quot;$_\&quot;&quot; } @cmd);</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">        warn &quot;\nThe actual command I am running is:\n\t$flat_cmd\n\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">    }</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">    exec(@cmd);</span></div>
+<div class="line"><span class="stringliteral">}</span></div>
 </div><!-- fragment --> </div><p>Undocumented method</p>
 <div id="codesection-main" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-main-trigger' src='closed.png' style='display:inline'><b>Code:</b>
@@ -796,13 +792,13 @@ Functions</h2></td></tr>
 <div class="line">    my %layers = ();</div>
 <div class="line">    {</div>
 <div class="line">        my $sql = $key eq <span class="stringliteral">&#39;analysis&#39;</span></div>
-<div class="line">            ? <span class="stringliteral">&#39;SELECT born, died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)&#39;</span></div>
-<div class="line">            : <span class="stringliteral">&#39;SELECT born, died, worker_id, resource_class_id FROM worker&#39;</span>;</div>
+<div class="line">            ? <span class="stringliteral">&#39;SELECT when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)&#39;</span></div>
+<div class="line">            : <span class="stringliteral">&#39;SELECT when_born, when_died, worker_id, resource_class_id FROM worker&#39;</span>;</div>
 <div class="line">        my @tmp_dates = @{$dbh-&gt;selectall_arrayref($sql)};</div>
 <div class="line">        warn scalar(@tmp_dates), <span class="stringliteral">&quot; rows\n&quot;</span> <span class="keywordflow">if</span> $verbose;</div>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">foreach</span> my $db_entry (@tmp_dates) {</div>
-<div class="line">            my ($born, $died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;</div>
+<div class="line">            my ($when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">            # In case $resource_class_id is undef</span></div>
 <div class="line"><span class="preprocessor"></span>            next unless $resource_class_id or $analysis_id;</div>
@@ -811,24 +807,24 @@ Functions</h2></td></tr>
 <div class="line">            $key_value = -1 <span class="keywordflow">if</span> not defined $key_value;</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">if</span> ($mode eq <span class="stringliteral">&#39;workers&#39;</span>) {</div>
-<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $born, $died, 1);</div>
+<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $when_born, $when_died, 1);</div>
 <div class="line"></div>
 <div class="line">            } elsif ($mode eq <span class="stringliteral">&#39;memory&#39;</span>) {</div>
 <div class="line">                my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;</div>
-<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $born, $died, $offset);</div>
+<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $when_born, $when_died, $offset);</div>
 <div class="line">                $offset = ($used_res{$worker_id}-&gt;[0]) / 1024. <span class="keywordflow">if</span> exists $used_res{$worker_id} and $used_res{$worker_id}-&gt;[0];</div>
-<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, $born, $died, $offset);</div>
+<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, $when_born, $when_died, $offset);</div>
 <div class="line"></div>
 <div class="line">            } elsif ($mode eq <span class="stringliteral">&#39;cores&#39;</span>) {</div>
 <div class="line">                my $offset = ($cpu_resources{$resource_class_id} || $default_cores);</div>
-<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $born, $died, $offset);</div>
+<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, $when_born, $when_died, $offset);</div>
 <div class="line">                $offset = $used_res{$worker_id}-&gt;[1] <span class="keywordflow">if</span> exists $used_res{$worker_id} and $used_res{$worker_id}-&gt;[1];</div>
-<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, $born, $died, $offset);</div>
+<div class="line">                <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, $when_born, $when_died, $offset);</div>
 <div class="line">            } <span class="keywordflow">else</span> {</div>
 <div class="line">                <span class="keywordflow">if</span> (exists $used_res{$worker_id} and $used_res{$worker_id}-&gt;[2]) {</div>
 <div class="line">                    my $pending_sec = $used_res{$worker_id}-&gt;[2];</div>
-<div class="line">                    <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, -$pending_sec, $born, 1);</div>
-<div class="line">                    <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, -$pending_sec, $born, $pending_sec/60);</div>
+<div class="line">                    <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%events, $key_value, -$pending_sec, $when_born, 1);</div>
+<div class="line">                    <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a>(\%layers, $key_value, -$pending_sec, $when_born, $pending_sec/60);</div>
 <div class="line">                }</div>
 <div class="line">            }</div>
 <div class="line">        }</div>
@@ -969,7 +965,7 @@ Functions</h2></td></tr>
 <div class="line">    my $sql = qq{</div>
 <div class="line">    DELETE j FROM job j</div>
 <div class="line">     WHERE j.status=<span class="stringliteral">&#39;DONE&#39;</span></div>
-<div class="line">       AND j.completed &lt; $threshold_datetime_expression</div>
+<div class="line">       AND j.when_completed &lt; $threshold_datetime_expression</div>
 <div class="line">    };</div>
 <div class="line"></div>
 <div class="line">    my $dbc = $hive_dba-&gt;dbc();</div>
@@ -997,22 +993,7 @@ Functions</h2></td></tr>
 <div class="line"></div>
 <div class="line">    my $file_or_module = shift @ARGV or script_usage(0);</div>
 <div class="line"></div>
-<div class="line">    my $pipeconfig_package_name = load_file_or_module( $file_or_module );</div>
-<div class="line"></div>
-<div class="line">    my $pipeconfig_object = $pipeconfig_package_name-&gt;new();</div>
-<div class="line">    $pipeconfig_object-&gt;process_options( 1 );</div>
-<div class="line"></div>
-<div class="line">    $pipeconfig_object-&gt;run_pipeline_create_commands();</div>
-<div class="line"></div>
-<div class="line">    my $hive_dba = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::DBAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#abf2b541c5d7e3b124323a34356e3ace6">new</a>( -url =&gt; $pipeconfig_object-&gt;pipeline_url(), -no_sql_schema_version_check =&gt; 1 );</div>
-<div class="line"></div>
-<div class="line">    $hive_dba-&gt;load_collections();</div>
-<div class="line"></div>
-<div class="line">    $pipeconfig_object-&gt;add_objects_from_config();</div>
-<div class="line"></div>
-<div class="line">    $hive_dba-&gt;save_collections();</div>
-<div class="line"></div>
-<div class="line">    print $pipeconfig_object-&gt;useful_commands_legend();</div>
+<div class="line">    <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_init_pipeline.html#a20ae94e5207096eb0b868d9bd1525008">Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline</a>($file_or_module);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div><p>Undocumented method</p>
 <div id="codesection-main" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
@@ -1172,33 +1153,6 @@ Functions</h2></td></tr>
 <div class="line">        script_usage(1);</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $queen = $hive_dba-&gt;get_Queen();</div>
-<div class="line"></div>
-<div class="line">    my ($meadow_type, $meadow_name, $process_id, $exec_host) = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html">Bio::EnsEMBL::Hive::Valley</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a51140e4714459dccef65cb34d97bfe13">new</a>()-&gt;whereami();</div>
-<div class="line"></div>
-<div class="line">    my $worker = $queen-&gt;create_new_worker(</div>
-<div class="line">          # Worker identity:</div>
-<div class="line">             -meadow_type           =&gt; $meadow_type,</div>
-<div class="line">             -meadow_name           =&gt; $meadow_name,</div>
-<div class="line">             -process_id            =&gt; $process_id,</div>
-<div class="line">             -exec_host             =&gt; $exec_host,</div>
-<div class="line">             -resource_class_id     =&gt; $resource_class_id,</div>
-<div class="line">             -resource_class_name   =&gt; $resource_class_name,</div>
-<div class="line"></div>
-<div class="line">          # Worker control parameters:</div>
-<div class="line">             -job_limit             =&gt; $job_limit,</div>
-<div class="line">             -life_span             =&gt; $life_span,</div>
-<div class="line">             -no_cleanup            =&gt; $no_cleanup,</div>
-<div class="line">             -no_write              =&gt; $no_write,</div>
-<div class="line">             -worker_log_dir        =&gt; $worker_log_dir,</div>
-<div class="line">             -hive_log_dir          =&gt; $hive_log_dir,</div>
-<div class="line">             -retry_throwing_jobs   =&gt; $retry_throwing_jobs,</div>
-<div class="line">             -can_respecialize      =&gt; $can_respecialize,</div>
-<div class="line"></div>
-<div class="line">          # Other parameters:</div>
-<div class="line">             -debug                 =&gt; $debug,</div>
-<div class="line">    );</div>
-<div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( $logic_name ) {</div>
 <div class="line">        warn <span class="stringliteral">&quot;-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name and -analysis_id .\n&quot;</span>;</div>
 <div class="line">        $analyses_pattern = $logic_name;</div>
@@ -1207,11 +1161,28 @@ Functions</h2></td></tr>
 <div class="line">        $analyses_pattern = $analysis_id;</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    $worker-&gt;run( {</div>
-<div class="line">         -analyses_pattern      =&gt; $analyses_pattern,</div>
-<div class="line">         -job_id                =&gt; $job_id,</div>
-<div class="line">         -force                 =&gt; $force,</div>
-<div class="line">    } );</div>
+<div class="line">    my %specialization_options = (</div>
+<div class="line">        resource_class_id   =&gt; $resource_class_id,</div>
+<div class="line">        resource_class_name =&gt; $resource_class_name,</div>
+<div class="line">        can_respecialize    =&gt; $can_respecialize,</div>
+<div class="line">        analyses_pattern    =&gt; $analyses_pattern,</div>
+<div class="line">        job_id              =&gt; $job_id,</div>
+<div class="line">        force               =&gt; $force,</div>
+<div class="line">    );</div>
+<div class="line">    my %life_options = (</div>
+<div class="line">        job_limit           =&gt; $job_limit,</div>
+<div class="line">        life_span           =&gt; $life_span,</div>
+<div class="line">        retry_throwing_jobs =&gt; $retry_throwing_jobs,</div>
+<div class="line">    );</div>
+<div class="line">    my %execution_options = (</div>
+<div class="line">        no_cleanup          =&gt; $no_cleanup,</div>
+<div class="line">        no_write            =&gt; $no_write,</div>
+<div class="line">        worker_log_dir      =&gt; $worker_log_dir,</div>
+<div class="line">        hive_log_dir        =&gt; $hive_log_dir,</div>
+<div class="line">        debug               =&gt; $debug,</div>
+<div class="line">    );</div>
+<div class="line"></div>
+<div class="line">    <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#ab18652111ead2fcde6332f271e47237f">Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker</a>($hive_dba, \%specialization_options, \%life_options, \%execution_options);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div><p>Undocumented method</p>
 <div id="codesection-main" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
@@ -1295,7 +1266,7 @@ Functions</h2></td></tr>
 <div id='codesection-main-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-main-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="beekeeper_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> {</div>
-<div class="line">    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id);</div>
+<div class="line">    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id, $language);</div>
 <div class="line"></div>
 <div class="line">    my $module_or_file = shift @ARGV or script_usage();</div>
 <div class="line"></div>
@@ -1307,68 +1278,56 @@ Functions</h2></td></tr>
 <div class="line">               <span class="stringliteral">&#39;no_cleanup&#39;</span>         =&gt; \$no_cleanup,</div>
 <div class="line">               <span class="stringliteral">&#39;flow_into|flow=s&#39;</span>   =&gt; \$flow_into,</div>
 <div class="line">               <span class="stringliteral">&#39;input_id=s&#39;</span>         =&gt; \$input_id,</div>
+<div class="line">               <span class="stringliteral">&#39;language=s&#39;</span>         =&gt; \$language,</div>
 <div class="line">    );</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span> ($help or !$module_or_file) {</div>
 <div class="line">        script_usage(0);</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $runnable_module = load_file_or_module( $module_or_file );</div>
-<div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($reg_conf) {</div>
 <div class="line">        require Bio::EnsEMBL::Registry;</div>
 <div class="line">        Bio::EnsEMBL::Registry-&gt;load_all($reg_conf);</div>
 <div class="line">    }</div>
 <div class="line"></div>
-<div class="line">    my $runnable_object = $runnable_module-&gt;new();</div>
-<div class="line">    $runnable_object-&gt;debug($debug) <span class="keywordflow">if</span>($debug);</div>
-<div class="line">    $runnable_object-&gt;execute_writes(not $no_write);</div>
-<div class="line"></div>
-<div class="line"></div>
-<div class="line">    my $job = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>( <span class="stringliteral">&#39;dbID&#39;</span> =&gt; -1 );</div>
 <div class="line">    unless($input_id) {</div>
 <div class="line">        my ($param_hash, $param_list) = parse_cmdline_options();</div>
 <div class="line">        $input_id = stringify($param_hash);</div>
 <div class="line">    }</div>
-<div class="line">    $job-&gt;input_id( $input_id );</div>
-<div class="line">    warn <span class="stringliteral">&quot;\nRunning &#39;$runnable_module&#39; with input_id=&#39;$input_id&#39; :\n&quot;</span>;</div>
+<div class="line">    warn <span class="stringliteral">&quot;\nRunning &#39;$module_or_file&#39; with input_id=&#39;$input_id&#39; :\n&quot;</span>;</div>
 <div class="line"></div>
-<div class="line">    $job-&gt;param_init( $runnable_object-&gt;strict_hash_format(), $runnable_object-&gt;param_defaults(), $job-&gt;input_id() );</div>
+<div class="line">    my %flags = (</div>
+<div class="line">        no_write    =&gt; $no_write,</div>
+<div class="line">        no_cleanup  =&gt; $no_cleanup,</div>
+<div class="line">        debug       =&gt; $debug,</div>
+<div class="line">    );</div>
+<div class="line">    my $job_successful = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_standalone_job.html#aebb03c207ffdd2934466700684041aed">Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob</a>($module_or_file, $input_id, \%flags, $flow_into, $language);</div>
+<div class="line">    exit(1) unless $job_successful;</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div><p>Undocumented method</p>
+<div id="codesection-main" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-main-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-main-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-main-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="beekeeper_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> {</div>
+<div class="line">    my $url;</div>
 <div class="line"></div>
-<div class="line">    $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow <span class="keywordflow">for</span> branch 1 by <span class="keywordflow">default</span></div>
-<div class="line">    $flow_into = { 1 =&gt; $flow_into } unless(ref($flow_into) eq <span class="stringliteral">&#39;HASH&#39;</span>); # force non-hash into a hash</div>
-<div class="line">    <span class="keywordflow">foreach</span> my $branch_code (keys %$flow_into) {</div>
-<div class="line">        my $heirs = $flow_into-&gt;{$branch_code};</div>
+<div class="line">    GetOptions(</div>
+<div class="line">            <span class="stringliteral">&#39;url=s&#39;</span>             =&gt; \$url,</div>
+<div class="line">    );</div>
 <div class="line"></div>
-<div class="line">        $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first</div>
-<div class="line">        $heirs = { map { ($_ =&gt; undef) } @$heirs } <span class="keywordflow">if</span>(ref($heirs) eq <span class="stringliteral">&#39;ARRAY&#39;</span>); # now force it into a hash <span class="keywordflow">if</span> it wasn<span class="stringliteral">&#39;t</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        my @dataflow_rules = ();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        while(my ($heir_url, $input_id_template_list) = each %$heirs) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq &#39;</span>ARRAY<span class="stringliteral">&#39;);  # allow for more than one template per analysis</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            foreach my $input_id_template (@$input_id_template_list) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                push @dataflow_rules, Bio::EnsEMBL::Hive::DataflowRule-&gt;new(</span></div>
-<div class="line"><span class="stringliteral">                    &#39;</span>to_analysis_url<span class="stringliteral">&#39;   =&gt; $heir_url,</span></div>
-<div class="line"><span class="stringliteral">                    &#39;</span>input_id_template<span class="stringliteral">&#39; =&gt; $input_id_template,</span></div>
-<div class="line"><span class="stringliteral">                );</span></div>
-<div class="line"><span class="stringliteral">            }</span></div>
-<div class="line"><span class="stringliteral">        }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">        $job-&gt;dataflow_rules( $branch_code, \@dataflow_rules );</span></div>
-<div class="line"><span class="stringliteral">    }</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;input_job($job);</span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;life_cycle();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    exit(1) if($job-&gt;died_somewhere());</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;cleanup_worker_temp_directory() unless($no_cleanup);</span></div>
-<div class="line"><span class="stringliteral">}</span></div>
+<div class="line">    <span class="keywordflow">if</span>($url) {</div>
+<div class="line">        my $dbc = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( -url =&gt; $url )</div>
+<div class="line">            || die <span class="stringliteral">&quot;Could not parse URL &#39;$url&#39;&quot;</span>;</div>
+<div class="line"></div>
+<div class="line">        my $sql = <span class="stringliteral">&quot;UPDATE hive_meta SET meta_value=63 WHERE meta_key=&#39;hive_sql_schema_version&#39; AND meta_value=&#39;62&#39;&quot;</span>;</div>
+<div class="line">        my $sth = $dbc-&gt;do( $sql );</div>
+<div class="line"></div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        die <span class="stringliteral">&quot;Please provide -url parameter to this patch script&quot;</span>;</div>
+<div class="line">    }</div>
+<div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
@@ -1394,12 +1353,6 @@ Functions</h2></td></tr>
 <div class="line">    my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;</div>
 <div class="line"></div>
 <div class="line">    my $resourceless_worker_cmd = <a class="code" href="beekeeper_8pl.html#ad7de8680eb8b39e160cee04957ccd668">generate_worker_cmd</a>($self, $analyses_pattern, $run_job_id, $force);</div>
-<div class="line"></div>
-<div class="line">    my $rc_id2name  = $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_ResourceClassAdaptor-&gt;fetch_HASHED_FROM_resource_class_id_TO_name();</div>
-<div class="line">    my %meadow_type_rc_name2resource_param_list = ();</div>
-<div class="line">    <span class="keywordflow">foreach</span> my $rd (@{ $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_ResourceDescriptionAdaptor-&gt;fetch_all() }) {</div>
-<div class="line">        $meadow_type_rc_name2resource_param_list{ $rd-&gt;meadow_type() }{ $rc_id2name-&gt;{$rd-&gt;resource_class_id} } = [ $rd-&gt;submission_cmd_args, $rd-&gt;worker_cmd_args ];</div>
-<div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    my $beekeeper_pid = $$;</div>
 <div class="line"></div>
@@ -1434,6 +1387,13 @@ Functions</h2></td></tr>
 <div class="line">                make_path( $submit_log_subdir );</div>
 <div class="line">            }</div>
 <div class="line"></div>
+<div class="line"><span class="preprocessor">                # make sure the Resources are loaded fresh every time we need them:</span></div>
+<div class="line"><span class="preprocessor"></span>            my $rc_id2name  = $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_ResourceClassAdaptor-&gt;fetch_HASHED_FROM_resource_class_id_TO_name();</div>
+<div class="line">            my %meadow_type_rc_name2resource_param_list = ();</div>
+<div class="line">            <span class="keywordflow">foreach</span> my $rd (@{ $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_ResourceDescriptionAdaptor-&gt;fetch_all() }) {</div>
+<div class="line">                $meadow_type_rc_name2resource_param_list{ $rd-&gt;meadow_type() }{ $rc_id2name-&gt;{$rd-&gt;resource_class_id} } = [ $rd-&gt;submission_cmd_args, $rd-&gt;worker_cmd_args ];</div>
+<div class="line">            }</div>
+<div class="line"></div>
 <div class="line">            <span class="keywordflow">foreach</span> my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {</div>
 <div class="line"></div>
 <div class="line">                my $this_meadow = $valley-&gt;available_meadow_hash-&gt;{$meadow_type};</div>
@@ -1461,6 +1421,10 @@ Functions</h2></td></tr>
 <div class="line">            $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;dbc-&gt;disconnect_if_idle;</div>
 <div class="line">            printf(<span class="stringliteral">&quot;Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n&quot;</span>, $self-&gt;{<span class="stringliteral">&#39;sleep_minutes&#39;</span>}, scalar localtime(time+$self-&gt;{<span class="stringliteral">&#39;sleep_minutes&#39;</span>}*60));</div>
 <div class="line">            sleep($self-&gt;{<span class="stringliteral">&#39;sleep_minutes&#39;</span>}*60);  </div>
+<div class="line"></div>
+<div class="line">            unless($run_job_id) {   # refresh the data from analysis_base table</div>
+<div class="line">                $list_of_analyses = $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_AnalysisAdaptor-&gt;fetch_all_by_pattern( $analyses_pattern );</div>
+<div class="line">            }</div>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"></div>

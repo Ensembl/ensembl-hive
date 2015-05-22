@@ -1,0 +1,5 @@
+<map id="LongMult.PartMultiply.PartMultiply.run" name="LongMult.PartMultiply.PartMultiply.run">
+<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#a49c5b1633c7c62d7cd7d893a68390082" title="Returns the value of the parameter &quot;param_name&quot; or raises an exception if anything wrong happens..." alt="" coords="232,5,472,46"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#aef94af8ebb478c65e2782c92e5d81d37" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="232,71,472,97"/>
+<area shape="rect" id="node4" href="$namespace_long_mult_1_1_part_multiply.html#a57961f50767a072486a2f34f110d5d58" title="Function to multiply a number by a digit. " alt="" coords="266,122,438,163"/>
+</map>

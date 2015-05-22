@@ -3,14 +3,13 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job =
     [ "accu_hash", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a1a33fd570abad2c0f79c22bc5d77d652", null ],
     [ "accu_id_stack", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a52165b28650c26a24b621da4ff2e777a", null ],
     [ "autoflow", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ac5bab7c3ffa521e44370d1bdc34cf11a", null ],
-    [ "completed", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#adf437552d1a1b96a0fb1868b7ee58e0b", null ],
     [ "dataflow_output_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a02aa287f1ac4ae8ff473bb550dcf5355", null ],
-    [ "dataflow_rules", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ae830f1e7b046d1787e65ece0cebc30cd", null ],
     [ "died_somewhere", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a3223528d5c1fb1f3cfb33e64e95dbf19", null ],
     [ "fan_cache", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a48bcb9722516ca9456c53dd1732c394d", null ],
     [ "incomplete", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a7ba3562d4484fea866441d7d501d4900", null ],
     [ "input_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a9dd7289999985b60a8299ac66327f3ce", null ],
     [ "lethal_for_worker", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a1fb261840767255efd596b84312532d1", null ],
+    [ "load_parameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ae423536560d2e1407d1db5d71bd6b4d5", null ],
     [ "param_id_stack", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#abb5e9b464027c776b1bd01eaf7b9cfe7", null ],
     [ "query_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ab69fe83605e95a9dafb3025e655082b5", null ],
     [ "retry_count", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#ae3bad87fd4aff80e2b4ee41185494c64", null ],
@@ -23,5 +22,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job =
     [ "stderr_file", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a817a316519b8f04e340458abf0a0cf1e", null ],
     [ "stdout_file", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#aa110de6559e3966aa60049145b77be0c", null ],
     [ "toString", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a65bafee37ae9da96499433c2dd73f9bd", null ],
-    [ "transient_error", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a52d6385c42523ebbd5c42c75e892fa31", null ]
+    [ "transient_error", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#a52d6385c42523ebbd5c42c75e892fa31", null ],
+    [ "when_completed", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html#add17127a0941da4b86ae7c9cf2974679", null ]
 ];

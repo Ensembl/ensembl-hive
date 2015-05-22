@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -95,7 +94,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -477,7 +476,7 @@ Description</h1>
 <div class="line">    my ($dbc, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)</div>
 <div class="line">        = @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};</div>
 <div class="line"></div>
-<div class="line">    $url .= <span class="stringliteral">&#39;;nosqlvc=1&#39;</span> <span class="keywordflow">if</span>($url &amp;&amp; $no_sql_schema_version_check);</div>
+<div class="line">    $url .= <span class="stringliteral">&#39;;no_sql_schema_version_check=1&#39;</span> <span class="keywordflow">if</span>($url &amp;&amp; $no_sql_schema_version_check);</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($reg_conf or $reg_alias) {   # need to initialize Registry even <span class="keywordflow">if</span> $reg_conf is not really given</div>
 <div class="line">        require Bio::EnsEMBL::Registry;</div>
@@ -512,40 +511,42 @@ Description</h1>
 <div class="line">    unless($no_sql_schema_version_check) {</div>
 <div class="line"></div>
 <div class="line">        my $dbc = $self-&gt;dbc();</div>
-<div class="line">        $url ||= $dbc-&gt;url();</div>
+<div class="line">        my $safe_url = $dbc-&gt;url(<span class="stringliteral">&#39;EHIVE_PASS&#39;</span>);</div>
 <div class="line"></div>
 <div class="line">        my $code_sql_schema_version = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_sql_schema_adaptor.html#a0c2dc02c4e81944f9eb9fa7f670aa753">get_code_sql_schema_version</a>()</div>
-<div class="line">            || die <span class="stringliteral">&quot;DB($url) Could not establish code_sql_schema_version, please check that &#39;EHIVE_ROOT_DIR&#39; environment variable is set correctly&quot;</span>;</div>
+<div class="line">            || die <span class="stringliteral">&quot;DB($safe_url) Could not establish code_sql_schema_version, please check that &#39;EHIVE_ROOT_DIR&#39; environment variable is set correctly&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">        my $db_sql_schema_version   = eval { $self-&gt;get_MetaAdaptor-&gt;get_value_by_key( <span class="stringliteral">&#39;hive_sql_schema_version&#39;</span> ); };</div>
 <div class="line">        <span class="keywordflow">if</span>($@) {</div>
 <div class="line">            <span class="keywordflow">if</span>($@ =~ /hive_meta.*doesn<span class="stringliteral">&#39;t exist/) {</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                die &quot;\nDB($url) The &#39;</span>hive_meta<span class="stringliteral">&#39; table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version &#39;</span>$code_sql_schema_version<span class="stringliteral">&#39; and try again.\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">                die &quot;\nDB($safe_url) The &#39;</span>hive_meta<span class="stringliteral">&#39; table does not seem to exist in the database yet.\nPlease patch the database up to sql_schema_version &#39;</span>$code_sql_schema_version<span class="stringliteral">&#39; and try again.\n&quot;;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            } else {</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                die &quot;DB($url) $@&quot;;</span></div>
+<div class="line"><span class="stringliteral">                die &quot;DB($safe_url) $@&quot;;</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">        } elsif(!$db_sql_schema_version) {</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            die &quot;\nDB($url) The &#39;</span>hive_meta<span class="stringliteral">&#39; table does not contain &#39;</span>hive_sql_schema_version<span class="stringliteral">&#39; entry.\nPlease investigate.\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">            die &quot;\nDB($safe_url) The &#39;</span>hive_meta<span class="stringliteral">&#39; table does not contain &#39;</span>hive_sql_schema_version<span class="stringliteral">&#39; entry.\nPlease investigate.\n&quot;;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">        } elsif($db_sql_schema_version &lt; $code_sql_schema_version) {</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            my $new_patches = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor-&gt;get_sql_schema_patches( $db_sql_schema_version, $dbc-&gt;driver )</span></div>
-<div class="line"><span class="stringliteral">                || die &quot;DB($url) sql_schema_version mismatch: the database&#39;</span>s version is <span class="stringliteral">&#39;$db_sql_schema_version&#39;</span> but the code is already <span class="stringliteral">&#39;$code_sql_schema_version&#39;</span>.\n<span class="stringliteral">&quot;</span></div>
+<div class="line"><span class="stringliteral">                || die &quot;DB($safe_url) sql_schema_version mismatch: the database&#39;</span>s version is <span class="stringliteral">&#39;$db_sql_schema_version&#39;</span> but the code is already <span class="stringliteral">&#39;$code_sql_schema_version&#39;</span>.\n<span class="stringliteral">&quot;</span></div>
 <div class="line"><span class="stringliteral">                      .&quot;</span>Unfortunately we cannot patch the database; you may have to create a <span class="keyword">new</span> database or agree to run older code\n<span class="stringliteral">&quot;;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $patcher_command = &quot;</span>$ENV{<span class="stringliteral">&#39;EHIVE_ROOT_DIR&#39;</span>}/scripts/db_cmd.pl -url $url<span class="stringliteral">&quot;;</span></div>
+<div class="line"><span class="stringliteral">            my $sql_patcher_command = &quot;</span>$ENV{<span class="stringliteral">&#39;EHIVE_ROOT_DIR&#39;</span>}/scripts/db_cmd.pl -url $safe_url<span class="stringliteral">&quot;;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            die &quot;</span>DB($url) sql_schema_version mismatch: the database&#39;s version is &#39;$db_sql_schema_version&#39; but the code is already &#39;$code_sql_schema_version&#39;.\n&quot;</div>
-<div class="line">               .&quot;Please upgrade the database by applying the following patches:\n\n&quot;.join(&quot;\n&quot;, map { <span class="stringliteral">&quot;\t$patcher_command &lt; $_&quot;</span> } @$new_patches).<span class="stringliteral">&quot;\n\nand try again.\n&quot;</span>;</div>
+<div class="line"><span class="stringliteral">            die &quot;</span>DB($safe_url) sql_schema_version mismatch: the database&#39;s version is &#39;$db_sql_schema_version&#39; but the code is already &#39;$code_sql_schema_version&#39;.\n&quot;</div>
+<div class="line">               .&quot;Please upgrade the database by applying the following patches:\n\n&quot;</div>
+<div class="line">               .join(&quot;\n&quot;, map { ($_=~/\.\w*sql\w*$/) ? <span class="stringliteral">&quot;\t$sql_patcher_command &lt; $_&quot;</span> : <span class="stringliteral">&quot;$_ -url $safe_url&quot;</span> } @$new_patches)</div>
+<div class="line">               .<span class="stringliteral">&quot;\n\nand try again.\n&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">        } elsif($code_sql_schema_version &lt; $db_sql_schema_version) {</div>
 <div class="line"></div>
-<div class="line">            die <span class="stringliteral">&quot;DB($url) sql_schema_version mismatch: the database&#39;s version is &#39;$db_sql_schema_version&#39;, but your code is still &#39;$code_sql_schema_version&#39;.\n&quot;</span></div>
+<div class="line">            die <span class="stringliteral">&quot;DB($safe_url) sql_schema_version mismatch: the database&#39;s version is &#39;$db_sql_schema_version&#39;, but your code is still &#39;$code_sql_schema_version&#39;.\n&quot;</span></div>
 <div class="line">               .<span class="stringliteral">&quot;Please update the code and try again.\n&quot;</span>;</div>
 <div class="line">        }</div>
 <div class="line">    }</div>

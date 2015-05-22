@@ -1,7 +1,6 @@
 var NAVTREE =
 [
   [ "ensembl-hive", "index.html", [
-    [ "Deprecated List", "deprecated.html", null ],
     [ "Namespaces", null, [
       [ "Namespace List", "namespaces.html", "namespaces" ]
     ] ],
@@ -27,9 +26,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "_accumulator_8pm.html",
-"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a23e67bcbf6294126212da34c0c5a2a90",
-"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html#a0046c9bd300412bda32547458e60064d",
-"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_graph_viz.html#afe6a7243b9051c98db319ecbcf89d212"
+"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ae132fe5a9be2622c21af73d926647528",
+"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_apply_to_databases__conf.html#a9e6433a752ae91242daaed87123f7ad3",
+"class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html#acf08a2e7774e3dcc8643f8703d068c6a",
+"namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

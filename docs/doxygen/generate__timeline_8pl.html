@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -93,7 +92,7 @@ $(document).ready(function(){initNavTree('generate__timeline_8pl.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -208,13 +207,13 @@ Functions</h2></td></tr>
 <div id='codesection-add_event-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-add_event-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="generate__timeline_8pl.html#af9173ecf6f7c033aa8704be6d5aa1019">add_event</a> {</div>
-<div class="line">    my ($events, $key, $born, $died, $offset) = @_;</div>
+<div class="line">    my ($events, $key, $when_born, $when_died, $offset) = @_;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> <span class="keywordflow">if</span> $offset &lt;= 0;</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # temporary Time::Piece values</span></div>
-<div class="line"><span class="preprocessor"></span>    my $death_datetime = Time::Piece-&gt;strptime( $died , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>);</div>
-<div class="line">    my $birth_datetime = ($born =~ /^-[0-9]/) ? $death_datetime + $born : Time::Piece-&gt;strptime( $born , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>);</div>
+<div class="line"><span class="preprocessor"></span>    my $death_datetime = $when_died ? Time::Piece-&gt;strptime( $when_died , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>) : $now;</div>
+<div class="line">    my $birth_datetime = ($when_born =~ /^-[0-9]/) ? $death_datetime + $when_born : Time::Piece-&gt;strptime( $when_born , <span class="stringliteral">&#39;%Y-%m-%d %H:%M:%S&#39;</span>);</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">    # We don&#39;t need to draw things at the resolution of 1 second; 1 minute is enough</span></div>
 <div class="line"><span class="preprocessor"></span>    $death_datetime-&gt;[0] = 0;</div>
@@ -223,10 +222,10 @@ Functions</h2></td></tr>
 <div class="line"><span class="preprocessor">        # string values:</span></div>
 <div class="line"><span class="preprocessor"></span>    my $birth_date = $birth_datetime-&gt;date . <span class="charliteral">&#39;T&#39;</span> . $birth_datetime-&gt;hms;</div>
 <div class="line">    my $death_date = $death_datetime-&gt;date . <span class="charliteral">&#39;T&#39;</span> . $death_datetime-&gt;hms;</div>
-<div class="line">    <span class="keywordflow">return</span> <span class="keywordflow">if</span> $died and ($birth_date eq $death_date);</div>
+<div class="line">    <span class="keywordflow">return</span> <span class="keywordflow">if</span> $birth_date eq $death_date;</div>
 <div class="line"></div>
 <div class="line">    $events-&gt;{$birth_date}{$key} += $offset;</div>
-<div class="line">    $events-&gt;{$death_date}{$key} -= $offset <span class="keywordflow">if</span> $died;</div>
+<div class="line">    $events-&gt;{$death_date}{$key} -= $offset;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -332,6 +331,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="preprocessor"></span>        push @data_timings, [$event_date, { %{$data_timings[-1]-&gt;[1]} }] <span class="keywordflow">if</span> @data_timings;</div>
 <div class="line">        push @data_timings, [$event_date, \%hash_interval];</div>
 <div class="line">    }</div>
+<div class="line">    push @data_timings, [$end_date, { %{$data_timings[-1]-&gt;[1]} }] <span class="keywordflow">if</span> @data_timings and $end_date and ($data_timings[-1]-&gt;[0] lt $end_date);</div>
 <div class="line">    warn <span class="stringliteral">&quot;Last timing: &quot;</span>, Dumper $data_timings[-1] <span class="keywordflow">if</span> $verbose and @data_timings;</div>
 <div class="line">    warn <span class="stringliteral">&quot;Highest y value: &quot;</span>, $max_workers, <span class="stringliteral">&quot;\n&quot;</span> <span class="keywordflow">if</span> $verbose;</div>
 <div class="line">    warn <span class="stringliteral">&quot;Total area: &quot;</span>, Dumper \%tot_area <span class="keywordflow">if</span> $verbose;</div>

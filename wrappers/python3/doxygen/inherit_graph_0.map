@@ -1,9 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node2" href="$classeHive_1_1Params_1_1ParamContainer.html" title="Equivalent of eHive&#39;s Param module. " alt="" coords="111,61,313,87"/>
-<area shape="rect" id="node3" href="$classeHive_1_1Process_1_1BaseRunnable.html" title="This is the counterpart of GuestProcess. " alt="" coords="113,111,311,138"/>
-<area shape="rect" id="node8" href="$classeHive_1_1Process_1_1Job.html" title="Dummy class to hold job&#45;related information. " alt="" coords="145,162,279,189"/>
-<area shape="rect" id="node4" href="$classLongMult_1_1AddTogether_1_1AddTogether.html" title="Runnable that adds up all the partial&#45;multiplications from PartMultiply. " alt="" coords="365,5,545,47"/>
-<area shape="rect" id="node5" href="$classLongMult_1_1DigitFactory_1_1DigitFactory.html" title="Factory that creates 1 job per digit found in the decimal representation of &#39;b_multiplier&#39;. " alt="" coords="365,71,546,112"/>
-<area shape="rect" id="node6" href="$classLongMult_1_1PartMultiply_1_1PartMultiply.html" title="Runnable to multiply a number by a digit. " alt="" coords="367,136,543,177"/>
-<area shape="rect" id="node7" href="$classTestRunnable_1_1TestRunnable.html" title="Simple Runnable to test as a standaloneJob. " alt="" coords="361,202,549,229"/>
+<area shape="rect" id="node2" href="$classe_hive_1_1_params_1_1_param_container.html" title="Equivalent of eHive&#39;s Param module. " alt="" coords="113,60,319,87"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html" title="This is the counterpart of GuestProcess. " alt="" coords="117,111,315,137"/>
+<area shape="rect" id="node8" href="$classe_hive_1_1_process_1_1_job.html" title="Dummy class to hold job&#45;related information. " alt="" coords="149,161,283,188"/>
+<area shape="rect" id="node4" href="$class_long_mult_1_1_add_together_1_1_add_together.html" title="Runnable that adds up all the partial&#45;multiplications from PartMultiply. " alt="" coords="371,5,557,46"/>
+<area shape="rect" id="node5" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html" title="Factory that creates 1 job per digit found in the decimal representation of &#39;b_multiplier&#39;. " alt="" coords="373,70,555,111"/>
+<area shape="rect" id="node6" href="$class_long_mult_1_1_part_multiply_1_1_part_multiply.html" title="Runnable to multiply a number by a digit. " alt="" coords="375,135,553,177"/>
+<area shape="rect" id="node7" href="$class_test_runnable_1_1_test_runnable.html" title="Simple Runnable to test as a standaloneJob. " alt="" coords="368,201,560,228"/>
 </map>

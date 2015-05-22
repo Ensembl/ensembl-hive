@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.2</span>
+   &#160;<span id="projectnumber">2.3</span>
    </div>
   </td>
  </tr>
@@ -45,7 +45,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
@@ -93,7 +92,7 @@ $(document).ready(function(){initNavTree('db__cmd_8pl.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -114,100 +113,8 @@ $(document).ready(function(){initNavTree('db__cmd_8pl.html','');});
 Functions</h2></td></tr>
 <tr class="memitem:a3ce8b237b3bdb2817dac6f769e5768c2"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="db__cmd_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2">main</a> ()</td></tr>
 <tr class="separator:a3ce8b237b3bdb2817dac6f769e5768c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9d6dbdd85d225abef029815f3ca0336"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="db__cmd_8pl.html#aa9d6dbdd85d225abef029815f3ca0336">dbc_hash_to_cmd</a> ()</td></tr>
-<tr class="separator:aa9d6dbdd85d225abef029815f3ca0336"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="aa9d6dbdd85d225abef029815f3ca0336"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public dbc_hash_to_cmd </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Undocumented method</p>
-<div id="codesection-dbc_hash_to_cmd" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-dbc_hash_to_cmd-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-dbc_hash_to_cmd-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-dbc_hash_to_cmd-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="db__cmd_8pl.html#aa9d6dbdd85d225abef029815f3ca0336">dbc_hash_to_cmd</a> {</div>
-<div class="line">    my ($dbc_hash, $executable, $prepend, $append, $sqlcmd, $to_params) = @_;</div>
-<div class="line"></div>
-<div class="line">    my $driver = $dbc_hash-&gt;{<span class="stringliteral">&#39;driver&#39;</span>} || <span class="stringliteral">&#39;mysql&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>($sqlcmd) {</div>
-<div class="line">        <span class="keywordflow">if</span>($sqlcmd =~ /(DROP\s+DATABASE(?:\s+IF\s+EXISTS)?\s*?)(?:\s+(\w+))?/i) {</div>
-<div class="line">            my $dbname = $2 || $dbc_hash-&gt;{dbname};</div>
-<div class="line"></div>
-<div class="line">            <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
-<div class="line">                <span class="keywordflow">return</span> [<span class="stringliteral">&#39;rm&#39;</span>, <span class="stringliteral">&#39;-f&#39;</span>, $dbname];</div>
-<div class="line">            } elsif(!$2) {</div>
-<div class="line">                $sqlcmd = <span class="stringliteral">&quot;$1 $dbname&quot;</span>;</div>
-<div class="line">                $dbc_hash-&gt;{dbname} = <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">            }</div>
-<div class="line">        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {</div>
-<div class="line">            my $dbname = $2 || $dbc_hash-&gt;{dbname};</div>
-<div class="line"></div>
-<div class="line">            <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
-<div class="line">                <span class="keywordflow">return</span> [<span class="stringliteral">&#39;touch&#39;</span>, $dbname];</div>
-<div class="line">            } elsif(!$2) {</div>
-<div class="line">                $sqlcmd = <span class="stringliteral">&quot;$1 $dbname&quot;</span>;</div>
-<div class="line">                $dbc_hash-&gt;{dbname} = <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">            }</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
-<div class="line"></div>
-<div class="line">    my @cmd;</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;mysql&#39;</span>) {</div>
-<div class="line">        $executable ||= <span class="stringliteral">&#39;mysql&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">        push @cmd, $executable                      unless $to_params;</div>
-<div class="line">        push @cmd, @$prepend                        <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
-<div class="line">        push @cmd, <span class="stringliteral">&quot;-h$dbc_hash-&gt;{&#39;host&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>};</div>
-<div class="line">        push @cmd, <span class="stringliteral">&quot;-P$dbc_hash-&gt;{&#39;port&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>};</div>
-<div class="line">        push @cmd, <span class="stringliteral">&quot;-u$dbc_hash-&gt;{&#39;user&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>};</div>
-<div class="line">        push @cmd, <span class="stringliteral">&quot;-p$dbc_hash-&gt;{&#39;pass&#39;}&quot;</span>          <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;pass&#39;</span>};</div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;-e&#39;</span>, $sqlcmd)                  <span class="keywordflow">if</span> $sqlcmd;</div>
-<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>}            <span class="keywordflow">if</span> $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>};</div>
-<div class="line">        push @cmd, @$append                         <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
-<div class="line"></div>
-<div class="line">    } elsif($driver eq <span class="stringliteral">&#39;pgsql&#39;</span>) {</div>
-<div class="line">        $executable ||= <span class="stringliteral">&#39;psql&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;env&#39;</span>, <span class="stringliteral">&quot;PGPASSWORD=&#39;$dbc_hash-&gt;{&#39;pass&#39;}&#39;&quot;</span>)  <span class="keywordflow">if</span> ($to_params &amp;&amp; $dbc_hash-&gt;{<span class="stringliteral">&#39;pass&#39;</span>});</div>
-<div class="line">        push @cmd, $executable                                  unless $to_params;</div>
-<div class="line">        push @cmd, @$prepend                                    <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;-h&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;host&#39;</span>});</div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;-p&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;port&#39;</span>});</div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;-U&#39;</span>, $dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>})                  <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;user&#39;</span>});</div>
-<div class="line">        push @cmd, (<span class="stringliteral">&#39;-c&#39;</span>, $sqlcmd)                              <span class="keywordflow">if</span> $sqlcmd;</div>
-<div class="line">        push @cmd, @$append                                     <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
-<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>}                        <span class="keywordflow">if</span> defined($dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>});</div>
-<div class="line"></div>
-<div class="line">    } elsif($driver eq <span class="stringliteral">&#39;sqlite&#39;</span>) {</div>
-<div class="line">        $executable ||= <span class="stringliteral">&#39;sqlite3&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">        die <span class="stringliteral">&quot;sqlite requires a database (file) name\n&quot;</span> unless $dbc_hash-&gt;{dbname};</div>
-<div class="line"></div>
-<div class="line">        push @cmd, $executable                                  unless $to_params;</div>
-<div class="line">        push @cmd, @$prepend                                    <span class="keywordflow">if</span> ($prepend &amp;&amp; @$prepend);</div>
-<div class="line">        push @cmd, @$append                                     <span class="keywordflow">if</span> ($append &amp;&amp; @$append);</div>
-<div class="line">        push @cmd, $dbc_hash-&gt;{<span class="stringliteral">&#39;dbname&#39;</span>};</div>
-<div class="line">        push @cmd, $sqlcmd                                      <span class="keywordflow">if</span> $sqlcmd;</div>
-<div class="line">    }</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> \@cmd;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
 <a class="anchor" id="a3ce8b237b3bdb2817dac6f769e5768c2"></a>
 <div class="memitem">
 <div class="memproto">

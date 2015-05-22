@@ -8,6 +8,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen =
     [ "default_table_name", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a545edfa6d9aa715376d5ed7d20767755", null ],
     [ "fetch_overdue_workers", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a47b088cb6be9493e6853b5ee0b20b522", null ],
     [ "interval_workers_with_unknown_usage", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#a93a13028e6f1b781c3d178f2aab61744", null ],
+    [ "meadow_type_2_name_2_users_of_running_workers", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#af3b9b35d2f58db76a9e3205c3c2985de", null ],
     [ "object_class", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#af9d2e010bf4d53356d2efde2367c5472", null ],
     [ "print_status_and_return_reasons_to_exit", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#abc4c353dfe92ddde75dbe83c460a51b8", null ],
     [ "register_all_workers_dead", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_queen.html#ab4f2cf470e0b3bbe732dd50c22e4deca", null ],
