@@ -85,6 +85,8 @@ package Bio::EnsEMBL::Hive::RunnableDB::DbCmd;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(join_command_args);
+
 # This runnable is simply a SystemCmd specialized for database commands
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
@@ -133,14 +135,16 @@ sub fetch_input {
         die "'output_file' and 'command_out' cannot be set together\n";
     }
 
+    # If there is any of those, system() will need a shell to deal with
+    # the pipes / redirections, and we need to hide the passwords
+    my $need_a_shell = ($self->param('input_file') or $self->param('command_in') or $self->param('output_file') or $self->param('command_out')) ? 1 : 0;
+
     my @cmd = @{ $self->data_dbc->to_cmd(
         $self->param('executable'),
         [grep {defined $_} @{$self->param('prepend')}],
         [grep {defined $_} @{$self->param('append')}],
         $self->param('input_query'),
-        # If there is any of those, system() will need a shell to deal with
-        # the pipes / redirections, and we need to hide the passwords
-        ($self->param('input_file') or $self->param('command_in') or $self->param('output_file') or $self->param('command_out')),
+        $need_a_shell,
     ) };
 
     # Add the input data
@@ -159,10 +163,17 @@ sub fetch_input {
         push @cmd, '|', (ref($self->param('command_out')) ? @{$self->param('command_out')} : $self->param('command_out'));
     }
 
-    $self->param('cmd', \@cmd);
+    if ($need_a_shell) {
+        my ($join_needed, $flat_cmd) = join_command_args(\@cmd);
+        $flat_cmd =~ s/ '(-p\$EHIVE_TMP_PASSWORD_\d+)' / $1 /g;
+        $self->param('cmd', $flat_cmd);
+    } else {
+        $self->param('cmd', \@cmd);
+    }
+
     if ($self->debug) {
         use Data::Dumper;
-        warn "db_cmd command: ", Dumper(@cmd);
+        warn "db_cmd command: ", Dumper($self->param('cmd'));
     }
 }
 
