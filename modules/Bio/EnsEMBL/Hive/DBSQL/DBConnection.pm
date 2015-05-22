@@ -261,7 +261,6 @@ sub to_cmd {
         push @cmd, '-p'.$hidden_password    if $self->password;
         push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
         push @cmd, $dbname                  if $dbname;
-        push @cmd, @$append                 if ($append && @$append);
 
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
@@ -273,7 +272,6 @@ sub to_cmd {
         push @cmd, ('-p', $self->port)      if defined($self->port);
         push @cmd, ('-U', $self->username)  if defined($self->username);
         push @cmd, ('-c', $sqlcmd)          if $sqlcmd;
-        push @cmd, @$append                 if ($append && @$append);
         push @cmd, $dbname                  if $dbname;
 
     } elsif($driver eq 'sqlite') {
@@ -283,10 +281,11 @@ sub to_cmd {
 
         push @cmd, $executable;
         push @cmd, @$prepend                if ($prepend && @$prepend);
-        push @cmd, @$append                 if ($append && @$append);
         push @cmd, $dbname;
         push @cmd, $sqlcmd                  if $sqlcmd;
     }
+
+    push @cmd, @$append                 if ($append && @$append);
 
     return \@cmd;
 }
