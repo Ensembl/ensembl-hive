@@ -76,26 +76,6 @@ sub param_defaults {
 }
 
 
-=head2 text_to_shell_lit
-
-    Argument[0]: String
-    Description: Escapes the single-quotes of the string and wrap it into single-quotes
-                 This is useful to stringify a list of commands / arguments to run them
-                 through the shell.
-                 NB: The "_" prototype is essential to allow the method to wrap $_ into @_
-                 PS: Shamelessly adapted from http://www.perlmonks.org/?node_id=908096
-
-=cut
-
-my %shell_characters = map {$_ => 1} qw(< > |);
-sub text_to_shell_lit(_) {
-    return $_[0] if $shell_characters{$_[0]} or $_[0] =~ /^[a-zA-Z0-9_\-]+\z/;
-    my $s = $_[0];
-    $s =~ s/'/'\\''/g;
-    return "'$s'";
-}
-
-
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
