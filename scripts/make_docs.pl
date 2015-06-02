@@ -34,7 +34,7 @@ sub generate_hive_schema_desc {
 
     my @cmds = (
         "perl $sql2html -i $ehrd/sql/tables.mysql -d Hive -intro $ehrd/docs/hive_schema.inc -sort_headers 0 -sort_tables 0 -o $ehrd/docs/tmp_hive_schema.html",
-        "(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) > $ehrd/docs/hive_schema.html",
+        "(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) | sed 's/\\/i\\/16\\//http:\\/\\/www.ensembl.org\\/i\\/16\\//' > $ehrd/docs/hive_schema.html",
         "rm $ehrd/docs/tmp_hive_schema.html",       # remove the non-patched version
     );
 
