@@ -1,0 +1,31 @@
+
+-- ---------------------------------------------------------------------------------------------------
+
+CREATE TEMPORARY VIEW exp_ver AS SELECT "71" AS expected_version;
+
+.bail ON
+
+SELECT ('The patch only applies to schema version '
+    || expected_version
+    || ', but the current schema version is '
+    || meta_value
+    || ', skipping the rest.') AS ''
+    FROM hive_meta JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT hm.* FROM hive_meta AS hm JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+SELECT ('The patch seems to be compatible with schema version '
+    || expected_version
+    || ', applying the patch...') AS '' FROM exp_ver;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+-- the patch is trivial for SQLite
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
