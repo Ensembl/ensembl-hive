@@ -75,7 +75,7 @@ sub main {
             $dba = $dbas->[0];
         }
 
-        $dbc = $dba->dbc();
+        $dbc = bless $dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
 
     } elsif($url) {
         $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
