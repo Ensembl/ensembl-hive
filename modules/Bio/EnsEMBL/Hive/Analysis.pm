@@ -241,7 +241,9 @@ sub dataflow_rules_collection {
 
     my $collection = Bio::EnsEMBL::Hive::DataflowRule->collection();
 
-    return $collection->find_all_by('from_analysis', $self);
+    return $collection
+        ? $collection->find_all_by('from_analysis', $self)
+        : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id( $self->dbID );
 }
 
 
