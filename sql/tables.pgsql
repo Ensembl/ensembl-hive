@@ -577,7 +577,7 @@ CREATE TABLE log_message (
     worker_id               INTEGER              DEFAULT NULL,
     when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry                   INTEGER              DEFAULT NULL,
-    status                  jw_status            DEFAULT 'UNKNOWN',
+    status                  VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN',
     msg                     TEXT,
     is_error                SMALLINT
 
