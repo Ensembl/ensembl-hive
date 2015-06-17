@@ -335,7 +335,7 @@ sub meadow_type_2_name_2_users_of_running_workers {
 
 
 sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but ignores unreachable ones)
-    my ($self, $valley, $check_buried_in_haste) = @_;
+    my ($self, $valley, $check_buried_in_haste, $bury_unkwn_workers) = @_;
 
     my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
 
@@ -374,7 +374,22 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             my $meadow_type = $worker->meadow_type;
             my $process_id  = $worker->process_id;
-            if(my $status = $pid_to_worker_status->{$process_id}) {  # can be RUN|PEND|xSUSP
+            my $status = $pid_to_worker_status->{$process_id};
+
+            if($bury_unkwn_workers and ($status eq 'UNKWN')) {
+                if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
+                    if($meadow->can('kill_worker')) {
+                        if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
+                            warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
+
+                            # $meadow->kill_worker($worker, 1);
+                            # $status = ''; # make it look like LOST
+                        }
+                    }
+                }
+            }
+
+            if($status) {  # can be RUN|PEND|xSUSP
                 $meadow_status_counts{$meadow_signature}{$status}++;
 
                     # only prepare once at most:

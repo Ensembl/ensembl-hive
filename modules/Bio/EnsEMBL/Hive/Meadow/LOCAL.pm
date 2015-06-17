@@ -123,7 +123,7 @@ sub check_worker_is_alive_and_mine {
 
 
 sub kill_worker {
-    my $worker = pop @_;
+    my ($self, $worker, $fast) = @_;
 
     my $cmd = 'kill -9 '.$worker->process_id();
     system($cmd);

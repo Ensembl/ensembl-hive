@@ -50,6 +50,7 @@ sub main {
     my $force                       = undef;
     my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
+    my $bury_unkwn_workers          = 0;
     my $all_dead                    = 0;
     my $balance_semaphores          = 0;
     my $job_id_for_output           = 0;
@@ -118,6 +119,7 @@ sub main {
                'v|versions!'       => \$report_versions,
                'sync!'             => \$sync,
                'dead!'             => \$check_for_dead,
+               'unkwn!'            => \$bury_unkwn_workers,
                'killworker=i'      => \$kill_worker_id,
                'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
@@ -283,6 +285,7 @@ sub main {
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
+    if($bury_unkwn_workers) { $queen->check_for_dead_workers($valley, 1, 1); }
     if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ); }
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
