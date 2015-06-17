@@ -107,8 +107,7 @@ sub run {
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
     my $return_value;
     my $stderr = tee_stderr {
-        system(@cmd_to_run);
-        $return_value = $? >> 8;
+        $return_value = system(@cmd_to_run);
     };
     $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
 
@@ -133,7 +132,16 @@ sub write_output {
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 
-    if ($return_value) {
+    if ($return_value and not ($return_value >> 8)) {
+        # The job has been killed. The best is to wait a bit that LSF kills
+        # the worker too
+        sleep 30;
+        # If we reach this point, perhaps it was killed by a user
+        die sprintf( "'%s' was killed with code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
+
+    } elsif ($return_value) {
+        # "Normal" process exit with a non-zero code
+        $return_value >>= 8;
 
         # We create a dataflow event depending on the exit code of the process.
         if (exists $self->param('return_codes_2_branches')->{$return_value}) {
