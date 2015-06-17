@@ -382,8 +382,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                         if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
                             warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
 
-                            # $meadow->kill_worker($worker, 1);
-                            # $status = ''; # make it look like LOST
+                            $meadow->kill_worker($worker, 1);
+                            $status = ''; # make it look like LOST
                         }
                     }
                 }
