@@ -179,9 +179,10 @@ sub parse_report_source_line {
     warn "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
 
     my %status_2_cod = (
-        'TERM_MEMLIMIT' => 'MEMLIMIT',
-        'TERM_RUNLIMIT' => 'RUNLIMIT',
-        'TERM_OWNER'    => 'KILLED_BY_USER',
+        'TERM_MEMLIMIT'     => 'MEMLIMIT',
+        'TERM_RUNLIMIT'     => 'RUNLIMIT',
+        'TERM_OWNER'        => 'KILLED_BY_USER',    # bkill     (wait until it dies)
+        'TERM_FORCE_OWNER'  => 'KILLED_BY_USER',    # bkill -r  (quick remove)
     );
 
     my %units_2_megs = (
