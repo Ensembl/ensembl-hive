@@ -43,7 +43,14 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
+use Bio::EnsEMBL::Hive::MetaParameters;
+use Bio::EnsEMBL::Hive::PipelineWideParameters;
+use Bio::EnsEMBL::Hive::ResourceClass;
+use Bio::EnsEMBL::Hive::ResourceDescription;
 use Bio::EnsEMBL::Hive::Analysis;
+use Bio::EnsEMBL::Hive::AnalysisStats;
+use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
+use Bio::EnsEMBL::Hive::DataflowRule;
 
 
 sub new {
