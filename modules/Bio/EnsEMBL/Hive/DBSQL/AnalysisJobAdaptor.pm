@@ -657,7 +657,7 @@ sub balance_semaphores {
                             FROM job funnel
                             LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
                             WHERE $analysis_filter
-                            funnel.status='SEMAPHORED'
+                            funnel.status in ('SEMAPHORED', 'READY')
                             GROUP BY funnel.job_id
                          ) AS internal WHERE was<>should OR should=0
                      };
@@ -667,7 +667,7 @@ sub balance_semaphores {
         .( ($self->dbc->driver eq 'pgsql')
         ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS jw_status) "
         : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
-        )." WHERE job_id=? AND status='SEMAPHORED'";
+        )." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);
