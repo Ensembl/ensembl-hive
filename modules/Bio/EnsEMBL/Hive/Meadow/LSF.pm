@@ -158,9 +158,10 @@ sub find_out_causes {
     my $self = shift @_;
 
     my %lsf_2_hive = (
-        'TERM_MEMLIMIT' => 'MEMLIMIT',
-        'TERM_RUNLIMIT' => 'RUNLIMIT',
-        'TERM_OWNER'    => 'KILLED_BY_USER',
+        'TERM_MEMLIMIT'     => 'MEMLIMIT',
+        'TERM_RUNLIMIT'     => 'RUNLIMIT',
+        'TERM_OWNER'        => 'KILLED_BY_USER',    # bkill     (wait until it dies)
+        'TERM_FORCE_OWNER'  => 'KILLED_BY_USER',    # bkill -r  (quick remove)
     );
 
     my %cod = ();
@@ -171,7 +172,7 @@ sub find_out_causes {
 #        warn "LSF::find_out_causes() running cmd:\n\t$cmd\n";
 
         foreach my $section (split(/\-{10,}\s+/, `$cmd`)) {
-            if($section=~/^Job <(\d+(?:\[\d+\])?)>.+(TERM_MEMLIMIT|TERM_RUNLIMIT|TERM_OWNER): job killed/is) {
+            if($section=~/^Job <(\d+(?:\[\d+\])?)>.+(TERM_\w+): job killed/is) {
                 $cod{$1} = $lsf_2_hive{$2};
             }
         }
