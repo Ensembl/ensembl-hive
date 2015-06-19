@@ -216,8 +216,11 @@ sub to_cmd {
 
             if($driver eq 'sqlite') {
                 return ['rm', '-f', $dbname];
-            } elsif(!$2) {
-                $sqlcmd = "$1 $dbname";
+            } else {
+                if (not $dbname) {
+                    die "'DROP DATABASE' needs a database name\n";
+                }
+                $sqlcmd = "$1 $dbname" unless $2;
                 $dbname = '';
             }
         } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
@@ -225,12 +228,15 @@ sub to_cmd {
 
             if($driver eq 'sqlite') {
                 return ['touch', $dbname];
-            } elsif(!$2) {
+            } else {
+                if (not $dbname) {
+                    die "'CREATE DATABASE' needs a database name\n";
+                }
                 my %limits = ( 'mysql' => 64, 'pgsql' => 63 );
                 if (length($dbname) > $limits{$driver}) {
                     die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
                 }
-                $sqlcmd = "$1 $dbname";
+                $sqlcmd = "$1 $dbname" unless $2;
                 $dbname = '';
             }
         }
