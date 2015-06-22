@@ -554,7 +554,13 @@ sub release_and_age_job {
          WHERE job_id=$job_id
            AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
+
+        # FIXME: move the decision making completely to the API side and so avoid the potential race condition.
+    my $job         = $self->fetch_by_dbID( $job_id );
+
+    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( ($job->status eq 'FAILED') ? 'failed_job_count' : 'ready_job_count', 1, $job->analysis_id );
 }
+
 
 =head2 gc_dataflow
 
