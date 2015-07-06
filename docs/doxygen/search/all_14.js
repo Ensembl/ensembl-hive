@@ -5,7 +5,6 @@ var searchData=
   ['tabledumperzipper_5fconf_2epm',['TableDumperZipper_conf.pm',['../_table_dumper_zipper__conf_8pm.html',1,'']]],
   ['test',['Test',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_test.html',1,'Bio::EnsEMBL::Hive::Utils']]],
   ['test_2epm',['Test.pm',['../_test_8pm.html',1,'']]],
-  ['test_5fconfess_2epl',['test_confess.pl',['../test__confess_8pl.html',1,'']]],
   ['test_5freg_5fconf_2epl',['test_reg_conf.pl',['../test__reg__conf_8pl.html',1,'']]],
   ['throw',['throw',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#adfc1461a9ef5da83597f054172e10c42',1,'Bio::EnsEMBL::Hive::Process::throw()'],['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af71b51b03c60163952912de68e5eabf6',1,'Bio::EnsEMBL::Hive::Utils::throw()']]],
   ['to_5fanalysis',['to_analysis',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html#ae069a34e628c9f6348c5110a8e9b29b6',1,'Bio::EnsEMBL::Hive::DataflowRule']]],

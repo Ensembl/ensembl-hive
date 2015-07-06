@@ -350,7 +350,7 @@ Description</h1>
 <div id='codesection-kill_worker-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-kill_worker-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_o_c_a_l.html#a2b3d6f77f19e0a635a444d551715704e">kill_worker</a> {</div>
-<div class="line">    my $worker = pop @_;</div>
+<div class="line">    my ($self, $worker, $fast) = @_;</div>
 <div class="line"></div>
 <div class="line">    my $cmd = <span class="stringliteral">&#39;kill -9 &#39;</span>.$worker-&gt;process_id();</div>
 <div class="line">    system($cmd);</div>

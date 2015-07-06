@@ -482,9 +482,11 @@ Description</h1>
 <div id='codesection-kill_worker-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-kill_worker-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow_1_1_l_s_f.html#accdb28c3a317e4ecc45368b83a426a0c">kill_worker</a> {</div>
-<div class="line">    my $worker = pop @_;</div>
+<div class="line">    my ($self, $worker, $fast) = @_;</div>
 <div class="line"></div>
-<div class="line">    my $cmd = <span class="stringliteral">&#39;bkill &#39;</span>.$worker-&gt;process_id();</div>
+<div class="line">    my $fast_flag = $fast ? <span class="stringliteral">&#39;-r &#39;</span> : <span class="stringliteral">&#39;&#39;</span>;</div>
+<div class="line"></div>
+<div class="line">    my $cmd = <span class="stringliteral">&quot;bkill $fast_flag&quot;</span>.$worker-&gt;process_id();</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">#    warn &quot;LSF::kill_worker() running cmd:\n\t$cmd\n&quot;;</span></div>
 <div class="line"><span class="preprocessor"></span></div>
@@ -549,9 +551,10 @@ Description</h1>
 <div class="line">    warn <span class="stringliteral">&quot;LSF::parse_report_source_line( \&quot;$bacct_source_line\&quot; )\n&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">    my %status_2_cod = (</div>
-<div class="line">        <span class="stringliteral">&#39;TERM_MEMLIMIT&#39;</span> =&gt; <span class="stringliteral">&#39;MEMLIMIT&#39;</span>,</div>
-<div class="line">        <span class="stringliteral">&#39;TERM_RUNLIMIT&#39;</span> =&gt; <span class="stringliteral">&#39;RUNLIMIT&#39;</span>,</div>
-<div class="line">        <span class="stringliteral">&#39;TERM_OWNER&#39;</span>    =&gt; <span class="stringliteral">&#39;KILLED_BY_USER&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;TERM_MEMLIMIT&#39;</span>     =&gt; <span class="stringliteral">&#39;MEMLIMIT&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;TERM_RUNLIMIT&#39;</span>     =&gt; <span class="stringliteral">&#39;RUNLIMIT&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;TERM_OWNER&#39;</span>        =&gt; <span class="stringliteral">&#39;KILLED_BY_USER&#39;</span>,    # bkill     (wait until it dies)</div>
+<div class="line">        <span class="stringliteral">&#39;TERM_FORCE_OWNER&#39;</span>  =&gt; <span class="stringliteral">&#39;KILLED_BY_USER&#39;</span>,    # bkill -r  (quick <span class="keyword">remove</span>)</div>
 <div class="line">    );</div>
 <div class="line"></div>
 <div class="line">    my %units_2_megs = (</div>

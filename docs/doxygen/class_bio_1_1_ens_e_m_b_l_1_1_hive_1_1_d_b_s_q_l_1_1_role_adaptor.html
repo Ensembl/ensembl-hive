@@ -331,7 +331,8 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_role_adaptor.html#ad396d2099ffc0e58eca66a184fa4c3e6">fetch_all_finished_roles_with_unfinished_jobs</a> {</div>
 <div class="line">    my $self = shift;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $self-&gt;fetch_all( <span class="stringliteral">&quot;JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status NOT IN (&#39;DONE&#39;, &#39;READY&#39;, &#39;FAILED&#39;, &#39;PASSED_ON&#39;) GROUP BY role_id&quot;</span> );</div>
+<div class="line"><span class="preprocessor">        # the list should contain all status&#39;es that are not &quot;in progress&quot;:</span></div>
+<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">return</span> $self-&gt;fetch_all( <span class="stringliteral">&quot;JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status NOT IN (&#39;DONE&#39;, &#39;READY&#39;, &#39;FAILED&#39;, &#39;PASSED_ON&#39;, &#39;SEMAPHORED&#39;) GROUP BY role_id&quot;</span> );</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

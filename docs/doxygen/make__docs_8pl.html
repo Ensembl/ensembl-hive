@@ -336,7 +336,7 @@ Functions</h2></td></tr>
 <div class="line"></div>
 <div class="line">    my @cmds = (</div>
 <div class="line">        <span class="stringliteral">&quot;perl $sql2html -i $ehrd/sql/tables.mysql -d Hive -intro $ehrd/docs/hive_schema.inc -sort_headers 0 -sort_tables 0 -o $ehrd/docs/tmp_hive_schema.html&quot;</span>,</div>
-<div class="line">        <span class="stringliteral">&quot;(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) &gt; $ehrd/docs/hive_schema.html&quot;</span>,</div>
+<div class="line">        <span class="stringliteral">&quot;(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) | sed &#39;s/\\/i\\/16\\//http:\\/\\/www.ensembl.org\\/i\\/16\\//&#39; &gt; $ehrd/docs/hive_schema.html&quot;</span>,</div>
 <div class="line">        <span class="stringliteral">&quot;rm $ehrd/docs/tmp_hive_schema.html&quot;</span>,       # <span class="keyword">remove</span> the non-patched version</div>
 <div class="line">    );</div>
 <div class="line"></div>

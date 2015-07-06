@@ -20,6 +20,5 @@ var NAVTREEINDEX4 =
 "standalone_job_8pl.html#a3ce8b237b3bdb2817dac6f769e5768c2":[2,0,2,12,0],
 "store__with__overflow_8pl.html":[2,0,4,7],
 "stringify__test_8pl.html":[2,0,4,8],
-"test__confess_8pl.html":[2,0,4,9],
 "test__reg__conf_8pl.html":[2,0,1,0,0,0,2,16]
 };

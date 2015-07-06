@@ -212,6 +212,7 @@ Functions</h2></td></tr>
 <div class="line">    my $force                       = undef;</div>
 <div class="line">    my $keep_alive                  = 0; # ==1 means run even when there is nothing to <span class="keywordflow">do</span></div>
 <div class="line">    my $check_for_dead              = 0;</div>
+<div class="line">    my $bury_unkwn_workers          = 0;</div>
 <div class="line">    my $all_dead                    = 0;</div>
 <div class="line">    my $balance_semaphores          = 0;</div>
 <div class="line">    my $job_id_for_output           = 0;</div>
@@ -280,6 +281,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="stringliteral">               &#39;</span>v|versions!<span class="stringliteral">&#39;       =&gt; \$report_versions,</span></div>
 <div class="line"><span class="stringliteral">               &#39;</span>sync!<span class="stringliteral">&#39;             =&gt; \$sync,</span></div>
 <div class="line"><span class="stringliteral">               &#39;</span>dead!<span class="stringliteral">&#39;             =&gt; \$check_for_dead,</span></div>
+<div class="line"><span class="stringliteral">               &#39;</span>unkwn!<span class="stringliteral">&#39;            =&gt; \$bury_unkwn_workers,</span></div>
 <div class="line"><span class="stringliteral">               &#39;</span>killworker=i<span class="stringliteral">&#39;      =&gt; \$kill_worker_id,</span></div>
 <div class="line"><span class="stringliteral">               &#39;</span>alldead!<span class="stringliteral">&#39;          =&gt; \$all_dead,</span></div>
 <div class="line"><span class="stringliteral">               &#39;</span>balance_semaphores<span class="stringliteral">&#39;=&gt; \$balance_semaphores,</span></div>
@@ -445,6 +447,7 @@ Functions</h2></td></tr>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($all_dead)           { $queen-&gt;register_all_workers_dead(); }</div>
 <div class="line">    <span class="keywordflow">if</span>($check_for_dead)     { $queen-&gt;check_for_dead_workers($valley, 1); }</div>
+<div class="line">    <span class="keywordflow">if</span>($bury_unkwn_workers) { $queen-&gt;check_for_dead_workers($valley, 1, 1); }</div>
 <div class="line">    <span class="keywordflow">if</span>($balance_semaphores) { $self-&gt;{<span class="stringliteral">&#39;dba&#39;</span>}-&gt;get_AnalysisJobAdaptor-&gt;balance_semaphores( $list_of_analyses ); }</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span> ($max_loops) { # positive $max_loop means limited, negative means unlimited</div>
@@ -545,7 +548,7 @@ Functions</h2></td></tr>
 <div class="line">            $dba = $dbas-&gt;[0];</div>
 <div class="line">        }</div>
 <div class="line"></div>
-<div class="line">        $dbc = $dba-&gt;dbc();</div>
+<div class="line">        $dbc = bless $dba-&gt;dbc, <span class="stringliteral">&#39;Bio::EnsEMBL::Hive::DBSQL::DBConnection&#39;</span>;</div>
 <div class="line"></div>
 <div class="line">    } elsif($url) {</div>
 <div class="line">        $dbc = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( -url =&gt; $url );</div>

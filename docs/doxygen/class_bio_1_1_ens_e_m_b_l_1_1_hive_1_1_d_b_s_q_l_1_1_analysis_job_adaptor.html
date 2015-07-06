@@ -291,7 +291,7 @@ Description</h1>
 <div class="line">                            FROM job funnel</div>
 <div class="line">                            LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)</div>
 <div class="line">                            WHERE $analysis_filter</div>
-<div class="line">                            funnel.status=<span class="stringliteral">&#39;SEMAPHORED&#39;</span></div>
+<div class="line">                            funnel.status in (<span class="stringliteral">&#39;SEMAPHORED&#39;</span>, <span class="stringliteral">&#39;READY&#39;</span>)</div>
 <div class="line">                            GROUP BY funnel.job_id</div>
 <div class="line">                         ) AS <span class="keyword">internal</span> WHERE was&lt;&gt;should OR should=0</div>
 <div class="line">                     };</div>
@@ -301,7 +301,7 @@ Description</h1>
 <div class="line">        .( ($self-&gt;dbc-&gt;driver eq <span class="stringliteral">&#39;pgsql&#39;</span>)</div>
 <div class="line">        ? <span class="stringliteral">&quot;status = CAST(CASE WHEN semaphore_count&gt;0 THEN &#39;SEMAPHORED&#39; ELSE &#39;READY&#39; END AS jw_status) &quot;</span></div>
 <div class="line">        : <span class="stringliteral">&quot;status =      CASE WHEN semaphore_count&gt;0 THEN &#39;SEMAPHORED&#39; ELSE &#39;READY&#39; END &quot;</span></div>
-<div class="line">        ).<span class="stringliteral">&quot; WHERE job_id=? AND status=&#39;SEMAPHORED&#39;&quot;</span>;</div>
+<div class="line">        ).<span class="stringliteral">&quot; WHERE job_id=? AND status IN (&#39;SEMAPHORED&#39;, &#39;READY&#39;)&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">    my $find_sth    = $self-&gt;prepare($find_sql);</div>
 <div class="line">    my $update_sth  = $self-&gt;prepare($update_sql);</div>
@@ -901,6 +901,11 @@ Description</h1>
 <div class="line">         WHERE job_id=$job_id</div>
 <div class="line">           AND status in (<span class="stringliteral">&#39;CLAIMED&#39;</span>,<span class="stringliteral">&#39;PRE_CLEANUP&#39;</span>,<span class="stringliteral">&#39;FETCH_INPUT&#39;</span>,<span class="stringliteral">&#39;RUN&#39;</span>,<span class="stringliteral">&#39;WRITE_OUTPUT&#39;</span>,<span class="stringliteral">&#39;POST_CLEANUP&#39;</span>)</div>
 <div class="line">    } );</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">        # FIXME: move the decision making completely to the API side and so avoid the potential race condition.</span></div>
+<div class="line"><span class="preprocessor"></span>    my $job         = $self-&gt;fetch_by_dbID( $job_id );</div>
+<div class="line"></div>
+<div class="line">    $self-&gt;db-&gt;get_AnalysisStatsAdaptor-&gt;increment_a_counter( ($job-&gt;status eq <span class="stringliteral">&#39;FAILED&#39;</span>) ? <span class="stringliteral">&#39;failed_job_count&#39;</span> : <span class="stringliteral">&#39;ready_job_count&#39;</span>, 1, $job-&gt;analysis_id );</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

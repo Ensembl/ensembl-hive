@@ -8,6 +8,5 @@ var dir_3612b2f14309adebdf3758e6dc628f9f =
     [ "parse_underscored.pl", "parse__underscored_8pl.html", null ],
     [ "primary_key.pl", "primary__key_8pl.html", null ],
     [ "store_with_overflow.pl", "store__with__overflow_8pl.html", null ],
-    [ "stringify_test.pl", "stringify__test_8pl.html", null ],
-    [ "test_confess.pl", "test__confess_8pl.html", null ]
+    [ "stringify_test.pl", "stringify__test_8pl.html", null ]
 ];

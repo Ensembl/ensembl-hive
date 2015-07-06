@@ -347,7 +347,9 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    my $collection = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html">Bio::EnsEMBL::Hive::DataflowRule</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>();</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $collection-&gt;find_all_by(<span class="stringliteral">&#39;from_analysis&#39;</span>, $self);</div>
+<div class="line">    <span class="keywordflow">return</span> $collection</div>
+<div class="line">        ? $collection-&gt;find_all_by(<span class="stringliteral">&#39;from_analysis&#39;</span>, $self)</div>
+<div class="line">        : $self-&gt;adaptor-&gt;db-&gt;get_DataflowRuleAdaptor-&gt;fetch_all_by_from_analysis_id( $self-&gt;dbID );</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

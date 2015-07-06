@@ -282,8 +282,7 @@ Description</h1>
 <div class="line">    $self-&gt;dbc and $self-&gt;dbc-&gt;disconnect_when_inactive(1);    # release <span class="keyword">this</span> connection <span class="keywordflow">for</span> the duration of system() call</div>
 <div class="line">    my $return_value;</div>
 <div class="line">    my $stderr = tee_stderr {</div>
-<div class="line">        system(@cmd_to_run);</div>
-<div class="line">        $return_value = $? &gt;&gt; 8;</div>
+<div class="line">        $return_value = system(@cmd_to_run);</div>
 <div class="line">    };</div>
 <div class="line">    $self-&gt;dbc and $self-&gt;dbc-&gt;disconnect_when_inactive(0);    # allow the <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a9d01ac47d41d31f30aca69b0220e0d9d">worker</a> to keep the connection open again</div>
 <div class="line"></div>
@@ -321,7 +320,16 @@ Description</h1>
 <div class="line">    my $stderr = $self-&gt;param(<span class="stringliteral">&#39;stderr&#39;</span>);</div>
 <div class="line">    my $flat_cmd = $self-&gt;param(<span class="stringliteral">&#39;flat_cmd&#39;</span>);</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span> ($return_value) {</div>
+<div class="line">    <span class="keywordflow">if</span> ($return_value and not ($return_value &gt;&gt; 8)) {</div>
+<div class="line"><span class="preprocessor">        # The job has been killed. The best is to wait a bit that LSF kills</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">        # the worker too</span></div>
+<div class="line"><span class="preprocessor"></span>        sleep 30;</div>
+<div class="line"><span class="preprocessor">        # If we reach this point, perhaps it was killed by a user</span></div>
+<div class="line"><span class="preprocessor"></span>        die sprintf( <span class="stringliteral">&quot;&#39;%s&#39; was killed with code=%d\nstderr is: %s\n&quot;</span>, $flat_cmd, $return_value, $stderr);</div>
+<div class="line"></div>
+<div class="line">    } elsif ($return_value) {</div>
+<div class="line"><span class="preprocessor">        # &quot;Normal&quot; process exit with a non-zero code</span></div>
+<div class="line"><span class="preprocessor"></span>        $return_value &gt;&gt;= 8;</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # We create a dataflow event depending on the exit code of the process.</span></div>
 <div class="line"><span class="preprocessor"></span>        <span class="keywordflow">if</span> (exists $self-&gt;param(<span class="stringliteral">&#39;return_codes_2_branches&#39;</span>)-&gt;{$return_value}) {</div>

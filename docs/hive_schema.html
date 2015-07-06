@@ -635,7 +635,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>worker_id</b></td><td>INTEGER</td><td>NULL</td><td>the 'current' worker</td><td>key: worker_id</td></tr>
       <tr class="bg1"><td><b>when_logged</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the message was thrown</td><td></td></tr>
       <tr class="bg2"><td><b>retry</b></td><td>INTEGER</td><td>NULL</td><td>retry_count of the job when the message was thrown (or NULL if no job)</td><td></td></tr>
-      <tr class="bg1"><td><b>status</b></td><td>ENUM('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON')</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
+      <tr class="bg1"><td><b>status</b></td><td>VARCHAR(255)</td><td>'UNKNOWN'</td><td>of the job or worker when the message was thrown</td><td></td></tr>
       <tr class="bg2"><td><b>msg</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>string that contains the message</td><td></td></tr>
       <tr class="bg1"><td><b>is_error</b></td><td>SMALLINT</td><td>NULL</td><td>binary flag</td><td></td></tr>
     </table>
