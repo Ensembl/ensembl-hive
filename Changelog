@@ -1,3 +1,41 @@
+
+Version 2.3     - Spring 2015 edition
+===========
+
+Main highlights of the release:
+    API for Runnables written in "guest languages" (with reference Python implementation and examples)
+    Test suite (inspired by Roy's original pull request)
+    "TailTrimmer" [ in analyses with nontrivial batch sizes ] several techniques are now used to automatically decrease the batch size 
+        towards the end of the analysis in order to speed up the execution of the whole analysis
+    Stability improvements that significantly increase efficiency of parallel execution
+
+[ higher level features ]
+* support for Runnables written in Python3 and API for extending similar support to other languages (this API may still change)
+* coloured Beekeeper output - catches the eye!
+* SystemCmd now runs through Capture::Tiny , captures the error output from the actual command that gets stored in log_message
+* SystemCmd also knows how to capture MEMLIMIT events from the underlying Java code 
+* SystemCmd can map specific return codes to dataflow events
+* a new DbCmd runnable that mimics the behaviour of db_cmd.pl script ; you can also pipe data in or out of the connection to another system command
+* DbCmd, DatabaseDumper and MySQLTransfer runnable hide passwords in the command lines that they run
+* beekeeper.pl -unkwn option to clean up the workers found to be in UNKWN state (at the user's risk!)
+
+[ lower level features ]
+* record the 'meadow_user' in each Worker entry -- these values are also used when querying the Meadow to avoid running an equivalent of "-u all" in SGE Meadow
+* record the 'when_seen' timestamp in each Worker entry -- when the Worker was last seen as running by the Beekeeper process.
+* testing: introduced a Travis-integrated test suite loosely based on Roy's original pull request
+    -- the extended version tests direct API calls, runs individual Runnables (and tests their dataflow/warning events) or whole pipelines
+* testing: Travis runs tests against Hive databases stored in local MySQL, PostgreSQL and SQLite databases
+* stability [too many simultaneous queries] : detect and log deadlock collisions and retry them for a given number of times before failing
+* stability [running out of server connections] : try to resolve the "too many connections" situation by bouncing, waiting and retrying
+* stability [running out of local ports] : avoiding RELOCATED workers by applying incemental backoff-and-retry approach from Ethernet CSMA/CD protocol
+* stability [applying an incorrect patch] : schema patches now have internal SQL-based checks and should not cause much damage if applied in wrong order
+    + a new script to create such patches
+
+* the schema version changes to 73
+
+* multiple bug fixes, many of which have been ported to the previous version branches.
+
+
 Version 2.2     - 'analyses_pattern'
 ===========
 
