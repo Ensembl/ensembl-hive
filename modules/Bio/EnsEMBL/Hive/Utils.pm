@@ -331,7 +331,7 @@ sub go_figure_dbc {
                 $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
             };
             if(UNIVERSAL::can($dba, 'dbc')) {
-                return $dba->dbc;
+                return bless $dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
             }
         }
         die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
