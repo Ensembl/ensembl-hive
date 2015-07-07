@@ -322,7 +322,11 @@ sub go_figure_dbc {
         unless(ref($foo)) {    # maybe it is simply a registry key?
             my $dba;
             eval {
-                $schema_type ||= 'hive';
+                if($foo=~/^(\w+):(\w+)$/) {
+                    ($schema_type, $foo) = ($1, $2);
+                } else {
+                    $schema_type ||= 'hive';
+                }
                 require Bio::EnsEMBL::Registry;
                 $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
             };
