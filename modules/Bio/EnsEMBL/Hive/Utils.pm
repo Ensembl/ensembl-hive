@@ -297,7 +297,7 @@ sub url2dbconn_hash {
 
 
 sub go_figure_dbc {
-    my ($foo, $schema_type) = @_;
+    my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable
 
 #    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
     if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, return it:
@@ -321,15 +321,27 @@ sub go_figure_dbc {
     } else {
         unless(ref($foo)) {    # maybe it is simply a registry key?
             my $dba;
+
             eval {
-                if($foo=~/^(\w+):(\w+)$/) {
-                    ($schema_type, $foo) = ($1, $2);
-                } else {
-                    $schema_type ||= 'hive';
-                }
                 require Bio::EnsEMBL::Registry;
-                $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $schema_type);
+
+                if($foo=~/^(\w+):(\w+)$/) {
+                    ($reg_type, $foo) = ($1, $2);
+                }
+
+                if($reg_type) {
+                    $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($foo, $reg_type);
+                } else {
+                    my $dbas = Bio::EnsEMBL::Registry->get_all_DBAdaptors(-species => $foo);
+
+                    if( scalar(@$dbas) == 1 ) {
+                        $dba = $dbas->[0];
+                    } elsif( @$dbas ) {
+                        warn "The registry contains multiple entries for '$foo', please prepend the reg_alias with the desired type";
+                    }
+                }
             };
+
             if(UNIVERSAL::can($dba, 'dbc')) {
                 return bless $dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
             }
