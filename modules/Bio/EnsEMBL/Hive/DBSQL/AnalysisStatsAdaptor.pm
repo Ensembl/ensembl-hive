@@ -225,7 +225,9 @@ sub increment_a_counter {
 
     unless( $self->db->hive_use_triggers() ) {
         if($increment) {    # can either be positive or negative
-            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment) WHERE analysis_id='$analysis_id'" );
+## ToDo: does it make sense to update the timestamp as well, to signal to the sync-allowed workers that they should wait?
+#            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment), when_updated=CURRENT_TIMESTAMP WHERE sync_lock=0 AND analysis_id='$analysis_id'" );
+            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment) WHERE sync_lock=0 AND analysis_id='$analysis_id'" );
         }
     }
 }
