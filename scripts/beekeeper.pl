@@ -256,6 +256,9 @@ sub main {
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
+        #       preloading all Analysis objects now:
+    Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->{'dba'}->get_AnalysisAdaptor->fetch_all ) );
+
     my $run_job;
     if($run_job_id) {
         $run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )
@@ -264,7 +267,7 @@ sub main {
 
     my $list_of_analyses = $run_job
         ? [ $run_job->analysis ]
-        : $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $self->{'analyses_pattern'} );
+        : Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $self->{'analyses_pattern'} );
 
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
@@ -434,8 +437,11 @@ sub run_autonomously {
             printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
             sleep($self->{'sleep_minutes'}*60);  
 
-            unless($run_job_id) {   # refresh the data from analysis_base table
-                $list_of_analyses = $self->{'dba'}->get_AnalysisAdaptor->fetch_all_by_pattern( $analyses_pattern );
+                # after waking up reload the Analyses to stay current:
+            unless($run_job_id) {
+                Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->{'dba'}->get_AnalysisAdaptor->fetch_all ) );
+
+                $list_of_analyses = Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $analyses_pattern );
             }
         }
     }
