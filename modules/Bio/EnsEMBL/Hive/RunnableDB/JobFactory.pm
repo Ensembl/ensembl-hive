@@ -65,6 +65,7 @@ sub param_defaults {
         'delimiter'         => undef,
         'randomize'         => 0,
         'step'              => 0,
+        'contiguous'        => 0,
         'key_column'        => 0,
         'input_id'          => 0,   # this parameter is no longer supported and should stay at 0
 
@@ -90,6 +91,8 @@ sub param_defaults {
     param('randomize'): Shuffles the rows before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step>1).
 
     param('step'):      The requested size of the minibatch (1 by default). The real size of a range may be smaller than the requested size.
+
+    param('contiguous'): Whether the key_column range of each minibatch should be contiguous (0 by default).
 
     param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
                          this is the way to say which column is undergoing 'ranging'
@@ -117,6 +120,7 @@ sub run {
 
         # minibatching-related:
     my $step            = $self->param('step');
+    my $contiguous      = $self->param('contiguous');
     my $key_column      = $self->param('key_column');
 
     my $inputlist       = $self->param('inputlist');
@@ -149,7 +153,7 @@ sub run {
     }
 
     my $output_ids = $step
-        ? $self->_substitute_minibatched_rows($rows, $column_names, $step, $key_column)
+        ? $self->_substitute_minibatched_rows($rows, $column_names, $step, $contiguous, $key_column)
         : $self->_substitute_rows($rows, $column_names);
 
     $self->param('output_ids', $output_ids);
@@ -278,25 +282,30 @@ sub _substitute_rows {
 =cut
 
 sub _substitute_minibatched_rows {
-    my ($self, $rows, $column_names, $step, $key_column) = @_;
+    my ($self, $rows, $column_names, $step, $contiguous, $key_column) = @_;
 
     my @ranges = ();
 
     while(@$rows) {
         my $start_row  = shift @$rows;
         my $range_start = $start_row->[$key_column];
+        my @range_list  = ( $range_start );
 
         my $range_end   = $range_start;
         my $range_count = 1;
-        my $next_row    = $start_row; # safety, in case the internal while doesn't execute even once
+        my $next_row    = $start_row;   # safety, in case the internal while doesn't execute even once
+        my $last_row    = $next_row;    # last row in the current minibatch
 
         while($range_count<$step && @$rows) {
                $next_row    = shift @$rows;
             my $next_value  = $next_row->[$key_column];
 
-            my $predicted_next = $range_end;
-            if(++$predicted_next eq $next_value) {
-                $range_end = $next_value;
+            my $predicted_next = $range_end;        # ++$predicted_next is used instead of ($range_end+1) as "string increment" to turn 'aa' into 'ab' into 'ac', etc.
+            if(!$contiguous or (++$predicted_next eq $next_value)) {
+
+                push @range_list, $next_value;
+                $range_end      = $next_value;
+                $last_row       = $next_row;
                 $range_count++;
             } else {
                 unshift @$rows, $next_row;
@@ -308,10 +317,11 @@ sub _substitute_minibatched_rows {
             '_range_start'  => $range_start,
             '_range_end'    => $range_end,
             '_range_count'  => $range_count,
+            '_range_list'   => \@range_list,
 
             $column_names
-                ?  map { ('_start_'.$column_names->[$_] => $start_row->[$_], '_end_'.$column_names->[$_] => $next_row->[$_]) } (0..scalar(@$start_row)-1)
-                :  map { ("_start_$_"                   => $start_row->[$_], "_end_$_"                   => $next_row->[$_]) } (0..scalar(@$start_row)-1)
+                ?  map { ('_start_'.$column_names->[$_] => $start_row->[$_], '_end_'.$column_names->[$_] => $last_row->[$_]) } (0..scalar(@$start_row)-1)
+                :  map { ("_start_$_"                   => $start_row->[$_], "_end_$_"                   => $last_row->[$_]) } (0..scalar(@$start_row)-1)
         };
         push @ranges, $job_range;
     }
