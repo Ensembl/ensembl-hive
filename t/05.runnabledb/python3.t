@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +17,10 @@
 
 use strict;
 use warnings;
+
+use Cwd            ();
+use File::Basename ();
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use JSON;
 use Test::More;
