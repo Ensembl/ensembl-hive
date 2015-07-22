@@ -13,7 +13,7 @@ BEGIN {
 
 use Getopt::Long;
 
-use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 
 
@@ -48,39 +48,19 @@ sub main {
         report_versions();
         exit(0);
 
-    } elsif($reg_alias) {
-        script_usage(1) if $url;
-
-        require Bio::EnsEMBL::Registry;
-        Bio::EnsEMBL::Registry->load_all($reg_conf);
-
-        my $species = Bio::EnsEMBL::Registry->get_alias($reg_alias)
-            || die "Could not solve the alias '$reg_alias'".($reg_conf ? " via the registry file '$reg_conf'" : "");
-
-        my $dba;
-        if ($reg_type) {
-            $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species, $reg_type)
-                || die "Could not find any database for '$species' (alias: '$reg_alias') with the type '$reg_type'".($reg_conf ? " via the registry file '$reg_conf'" : "");
-
-        } else {
-
-            my $dbas = Bio::EnsEMBL::Registry->get_all_DBAdaptors(-species => $species);
-            if (scalar(@$dbas) == 0) {
-                # I think this case cannot happen: if there are no databases, the alias does not exist and get_alias() should have failed
-                die "Could not find any database for '$species' (alias: '$reg_alias')".($reg_conf ? " via the registry file '$reg_conf'" : "");
-
-            } elsif (scalar(@$dbas) >= 2) {
-                die "There are several databases for '$species' (alias: '$reg_alias'). Please set -reg_type to one of: ".join(", ", map {$_->group} @$dbas);
-            };
-            $dba = $dbas->[0];
-        }
-
-        $dbc = bless $dba->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
-
-    } elsif($url) {
-        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
-    } else {
+    } elsif( not ($url xor $reg_alias) ) {
         script_usage(1);
+
+    } else {
+        my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+            -url                            => $url,
+            -reg_conf                       => $reg_conf,
+            -reg_type                       => $reg_type,
+            -reg_alias                      => $reg_alias,
+            -no_sql_schema_version_check    => 1,
+        );
+
+        $dbc = $dba->dbc;
     }
 
     if (@append) {
