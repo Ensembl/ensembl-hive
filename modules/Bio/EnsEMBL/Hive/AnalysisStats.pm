@@ -308,6 +308,17 @@ my %meta_status_2_color = (
     'FAILED'    => 'red',
 );
 
+# "Support for colors 8 through 15 (the bright_ variants) was added in
+# Term::ANSIColor 3.00, included in Perl 5.13.3."
+# http://perldoc.perl.org/Term/ANSIColor.html#COMPATIBILITY
+if ($Term::ANSIColor::VERSION < '3.00') {
+    foreach my $s (keys %meta_status_2_color) {
+        my $c = $meta_status_2_color{$s};
+        $c =~ s/bright_//;
+        $meta_status_2_color{$s} = $c;
+    }
+}
+
 my %analysis_status_2_meta_status = (
     'LOADING'       => 'READY',
     'SYNCHING'      => 'READY',
