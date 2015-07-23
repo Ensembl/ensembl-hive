@@ -375,12 +375,13 @@ sub run_pipeline_create_commands {
 =cut
 
 sub add_objects_from_config {
-    my $self                = shift @_;
+    my $self        = shift @_;
+    my $pipeline    = shift @_;
 
     warn "Adding hive_meta table entries ...\n";
     my $new_meta_entries = $self->hive_meta_table();
     while( my ($meta_key, $meta_value) = each %$new_meta_entries ) {
-        Bio::EnsEMBL::Hive::MetaParameters->add_new_or_update(
+        $pipeline->add_new_or_update( 'MetaParameters',
             'meta_key'      => $meta_key,
             'meta_value'    => $meta_value,
         );
@@ -390,7 +391,7 @@ sub add_objects_from_config {
     warn "Adding pipeline-wide parameters ...\n";
     my $new_pwp_entries = $self->pipeline_wide_parameters();
     while( my ($param_name, $param_value) = each %$new_pwp_entries ) {
-        Bio::EnsEMBL::Hive::PipelineWideParameters->add_new_or_update(
+        $pipeline->add_new_or_update( 'PipelineWideParameters',
             'param_name'    => $param_name,
             'param_value'   => stringify($param_value),
         );
@@ -409,14 +410,14 @@ sub add_objects_from_config {
             die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
         }
 
-        my $resource_class = Bio::EnsEMBL::Hive::ResourceClass->add_new_or_update(
+        my $resource_class = $pipeline->add_new_or_update( 'ResourceClass',
             'name'  => $rc_name,
         );
 
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-            my $resource_description = Bio::EnsEMBL::Hive::ResourceDescription->add_new_or_update(
+            my $resource_description = $pipeline->add_new_or_update( 'ResourceDescription',
                 'resource_class'        => $resource_class,
                 'meadow_type'           => $meadow_type,
                 'submission_cmd_args'   => $resource_param_list->[0],
@@ -453,7 +454,7 @@ sub add_objects_from_config {
             die "(-rc_id => $rc_id) syntax is deprecated, please use (-rc_name => 'your_resource_class_name')";
         }
 
-        my $analysis = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
+        my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
         my $stats;
         if( $analysis ) {
 
@@ -463,7 +464,7 @@ sub add_objects_from_config {
         } else {
 
             $rc_name ||= 'default';
-            my $resource_class = Bio::EnsEMBL::Hive::ResourceClass->collection()->find_one_by('name', $rc_name)
+            my $resource_class = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name)
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
             if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
@@ -473,7 +474,7 @@ sub add_objects_from_config {
             $parameters_hash ||= {};    # in case nothing was given
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
-            $analysis = Bio::EnsEMBL::Hive::Analysis->add_new_or_update(
+            $analysis = $pipeline->add_new_or_update( 'Analysis',
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'language'              => $language,
@@ -488,7 +489,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            $stats = Bio::EnsEMBL::Hive::AnalysisStats->add_new_or_update(
+            $stats = $pipeline->add_new_or_update( 'AnalysisStats',
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
@@ -524,7 +525,7 @@ sub add_objects_from_config {
         my ($logic_name, $wait_for, $flow_into)
              = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-        my $analysis = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $logic_name);
+        my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);
 
         $wait_for ||= [];
         $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -532,10 +533,10 @@ sub add_objects_from_config {
             # create control rules:
         foreach my $condition_url (@$wait_for) {
             unless ($condition_url =~ m{^\w*://}) {
-                my $condition_analysis = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $condition_url)
+                my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                     or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
             }
-            my $c_rule = Bio::EnsEMBL::Hive::AnalysisCtrlRule->add_new_or_update(
+            my $c_rule = $pipeline->add_new_or_update( 'AnalysisCtrlRule',
                     'condition_analysis_url'    => $condition_url,
                     'ctrled_analysis'           => $analysis,
             );
@@ -580,7 +581,7 @@ sub add_objects_from_config {
             while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
                 unless ($heir_url =~ m{^\w*://}) {
-                    my $heir_analysis = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $heir_url)
+                    my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
                         or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                 }
 
@@ -588,7 +589,7 @@ sub add_objects_from_config {
 
                 foreach my $input_id_template (@$input_id_template_list) {
 
-                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->add_new_or_update(
+                    my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
                         'from_analysis'             => $analysis,
                         'to_analysis_url'           => $heir_url,
                         'branch_code'               => $branch_name_or_code,

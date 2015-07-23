@@ -15,7 +15,7 @@ BEGIN {
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Utils::Graph;
 
@@ -67,7 +67,7 @@ sub main {
     }
 
     if($self->{'url'} or $self->{'reg_alias'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+        $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                            => $self->{'url'},
             -reg_conf                       => $self->{'reg_conf'},
             -reg_type                       => $self->{'reg_type'},
@@ -75,25 +75,22 @@ sub main {
             -no_sql_schema_version_check    => $self->{'nosqlvc'},
         );
 
-        $self->{'dba'}->load_collections();
     } else {
+        $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new();
 
-        Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->init_collections();
     }
 
-    if($self->{'pipeconfigs'}) {
-        foreach my $pipeconfig (@{ $self->{'pipeconfigs'} }) {
-            my $pipeconfig_package_name = load_file_or_module( $pipeconfig );
+    foreach my $pipeconfig (@{ $self->{'pipeconfigs'} || [] }) {
+        my $pipeconfig_package_name = load_file_or_module( $pipeconfig );
 
-            my $pipeconfig_object = $pipeconfig_package_name->new();
-            $pipeconfig_object->process_options( 0 );
+        my $pipeconfig_object = $pipeconfig_package_name->new();
+        $pipeconfig_object->process_options( 0 );
 
-            $pipeconfig_object->add_objects_from_config();
-        }
+        $pipeconfig_object->add_objects_from_config( $self->{'pipeline'} );
     }
 
     my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
-        $self->{'dba'},
+        $self->{'pipeline'},
         $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
     );
     my $graphviz = $graph->build();
@@ -114,7 +111,9 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC [-help]
+    ./generate_graph.pl -help
+
+    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
 
 =head1 DESCRIPTION
 

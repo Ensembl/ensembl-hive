@@ -301,48 +301,4 @@ sub AUTOLOAD {
 }
 
 
-sub init_collections {  # should not really belong to DBAdaptor, temporarily squatting here...
-
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-        $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new() );
-    }
-}
-
-
-sub load_collections {
-    my $self = shift @_;
-
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        my $adaptor = $self->get_adaptor( $AdaptorType );
-        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-        $class->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
-    }
-}
-
-
-sub save_collections {
-    my $self = shift @_;
-
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        my $adaptor = $self->get_adaptor( $AdaptorType );
-        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-        foreach my $storable_object ( $class->collection()->list ) {
-            $adaptor->store_or_update_one( $storable_object, $class->unikey() );
-#            warn "Stored/updated ".$storable_object->toString()."\n";
-        }
-    }
-
-    my $job_adaptor = $self->get_AnalysisJobAdaptor;
-    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
-        if(my $our_jobs = $analysis->jobs_collection ) {
-            $job_adaptor->store( $our_jobs );
-            foreach my $job (@$our_jobs) {
-#                warn "Stored ".$job->toString()."\n";
-            }
-        }
-    }
-}
-
 1;
-

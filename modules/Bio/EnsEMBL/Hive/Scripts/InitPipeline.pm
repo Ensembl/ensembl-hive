@@ -22,9 +22,8 @@ package Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
+use Bio::EnsEMBL::Hive::HivePipeline;
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 
 
 sub init_pipeline {
@@ -40,16 +39,16 @@ sub init_pipeline {
 
     $pipeconfig_object->run_pipeline_create_commands();
 
-    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+    my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url => $pipeconfig_object->pipeline_url(),
-                -no_sql_schema_version_check => !$pipeconfig_object->is_analysis_topup )
-        or die "Hive's DBAdaptor could not be created for ".$pipeconfig_object->pipeline_url();
+                -no_sql_schema_version_check => !$pipeconfig_object->is_analysis_topup );
 
-    $hive_dba->load_collections();
+    my $hive_dba = $pipeline->hive_dba()
+        or die "HivePipeline could not be created for ".$pipeconfig_object->pipeline_url();
 
-    $pipeconfig_object->add_objects_from_config();
+    $pipeconfig_object->add_objects_from_config( $pipeline );
 
-    $hive_dba->save_collections();
+    $pipeline->save_collections();
 
     print $pipeconfig_object->useful_commands_legend();
 

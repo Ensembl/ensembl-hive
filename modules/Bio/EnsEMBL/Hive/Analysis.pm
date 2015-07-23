@@ -265,7 +265,7 @@ sub dataflow_rules_by_branch {
 sub toString {
     my $self = shift @_;
 
-    return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', $self->module.($self->language ? sprintf(' (%s)', $self->language) : ''), $self->parameters, $self->resource_class->name).')';
+    return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', ($self->module // 'no_module').($self->language ? sprintf(' (%s)', $self->language) : ''), $self->parameters // '{}', $self->resource_class ? $self->resource_class->name : 'no_rc').')';
 }
 
 1;

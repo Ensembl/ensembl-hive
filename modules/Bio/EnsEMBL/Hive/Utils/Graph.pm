@@ -6,8 +6,7 @@
 
 =head1 SYNOPSIS
 
-    my $hive_dba = get_hive_dba();
-    my $g = Bio::EnsEMBL::Hive::Utils::Graph->new(-DBA => $hive_dba);
+    my $g = Bio::EnsEMBL::Hive::Utils::Graph->new( $hive_pipeline );
     my $graphviz = $g->build();
     $graphviz->as_png('location.png');
 
@@ -62,7 +61,7 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 
 =head2 new()
 
-  Arg [1] : Bio::EnsEMBL::Hive::DBSQL::DBAdaptor $hive_dba;
+  Arg [1] : Bio::EnsEMBL::Hive::HivePipeline $pipeline;
               The adaptor to get information from
   Arg [2] : (optional) string $config_file_name;
                   A JSON file name to initialize the Config object with.
@@ -76,11 +75,12 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 
 sub new {
     my $class       = shift @_;
-    my $hive_dba    = shift @_;
+    my $pipeline    = shift @_;
 
     my $self = bless({}, ref($class) || $class);
 
-    $self->hive_dba($hive_dba);
+    $self->pipeline( $pipeline );
+
     my $config = Bio::EnsEMBL::Hive::Utils::Config->new( @_ );
     $self->config($config);
     $self->context( [ 'Graph' ] );
@@ -101,38 +101,36 @@ sub new {
 sub graph {
     my ($self) = @_;
 
-    if(! exists $self->{graph}) {
+    if(! exists $self->{'_graph'}) {
         my $padding  = $self->config_get('Pad') || 0;
-        $self->{graph} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
+        $self->{'_graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
     }
-    return $self->{graph};
+    return $self->{'_graph'};
 }
 
 
-=head2 hive_dba()
+=head2 pipeline()
 
-  Arg [1] : The DBAdaptor instance
-  Returntype : DBAdaptor
-  Exceptions : If the given object is not a hive DBAdaptor
-  Status     : Beta
+  Arg [1] : The HivePipeline instance
+  Returntype : HivePipeline
 
 =cut
 
-sub hive_dba {
+sub pipeline {
     my $self = shift @_;
 
     if(@_) {
-        $self->{'hive_dba'} = shift @_;
+        $self->{'_pipeline'} = shift @_;
     }
 
-    return $self->{'hive_dba'};
+    return $self->{'_pipeline'};
 }
 
 
 sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
-    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->hive_dba );
+    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->pipeline->hive_dba );
     $analysis_node_name=~s/\W/__/g;
     return $analysis_node_name;
 }
@@ -141,7 +139,7 @@ sub _analysis_node_name {
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
-    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->hive_dba ) .
+    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->pipeline->hive_dba ) .
                 ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
     $table_node_name=~s/\W/__/g;
     return $table_node_name;
@@ -171,18 +169,19 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $hive_dba = $self->hive_dba;
+    my $pipeline    = $self->pipeline;
+    my $hive_dba    = $pipeline->hive_dba;
 
     if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
-        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
         }
     }
 
-    foreach my $df_rule ( Bio::EnsEMBL::Hive::DataflowRule->collection()->list ) {
+    foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
 
-        if(my $target_object = Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $df_rule->to_analysis_url )) {
+        if(my $target_object = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
             $df_rule->to_analysis( $target_object );
             if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
                 $target_object->{'_inflow_count'}++;
@@ -193,9 +192,9 @@ sub build {
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
                 $target_object->{'_foreign'}=1;
-                Bio::EnsEMBL::Hive::Analysis->collection()->add( $target_object );  # add it to the collection
-                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $self->hive_dba );
-                Bio::EnsEMBL::Hive::AnalysisStats->collection()->add( $foreign_stats ); # add it to the collection
+                $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
+                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $hive_dba );
+                $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
             } else {
@@ -208,19 +207,19 @@ sub build {
         }
     }
 
-    foreach my $c_rule ( Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection()->list ) {   # control rule's condition is a foreign Analysis
-        unless( Bio::EnsEMBL::Hive::Analysis->collection()->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
+    foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
+        unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
             $condition_analysis->{'_foreign'}=1;
-            Bio::EnsEMBL::Hive::Analysis->collection()->add( $condition_analysis ); # add it to the collection
-            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $self->hive_dba );
-            Bio::EnsEMBL::Hive::AnalysisStats->collection()->add( $foreign_stats ); # add it to the collection
+            $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
+            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $hive_dba );
+            $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
         }
     }
 
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+    foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
         unless( $source_analysis->{'_inflow_count'} or $source_analysis->{'_foreign'} ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
@@ -231,16 +230,16 @@ sub build {
         my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
         $self->_add_pipeline_label( $pipeline_label );
     }
-    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+    foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
         $self->_add_analysis_node($analysis);
     }
-    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+    foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
         $self->_add_control_rules( $analysis->control_rules_collection );
         $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
-        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
             if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
                 my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
@@ -255,7 +254,7 @@ sub build {
     if($self->config_get('DisplaySemaphoreBoxes') ) {
         my %cluster_2_nodes = ();
 
-        foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
             if(my $funnel = $analysis->{'_funnel_dfr'}) {
                 push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_analysis_node_name( $analysis );
             }
@@ -370,7 +369,7 @@ sub _add_analysis_node {
     my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
-    my $hive_dba                                          = $self->hive_dba;
+    my $hive_dba                                          = $self->pipeline->hive_dba;
 
     my $colspan = 0;
     my $bar_chart = '';
@@ -532,7 +531,7 @@ sub _add_dataflow_rules {
             $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->hive_dba ),
+                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->pipeline->hive_dba ),
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',
@@ -555,10 +554,10 @@ sub _add_dataflow_rules {
 sub _add_table_node {
     my ($self, $table_node_name, $naked_table) = @_;
 
-    my $node_fontname    = $self->config_get('Node', 'Table', 'Font');
+    my $node_fontname   = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    my $hive_dba = $self->hive_dba;
+    my $hive_dba        = $self->pipeline->hive_dba;
 
     if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor ) {
         $naked_table_adaptor->table_name( $naked_table->table_name );
