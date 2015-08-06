@@ -60,7 +60,7 @@ sub fetch_param_hash {
 
     if( my $collection = Bio::EnsEMBL::Hive::PipelineWideParameters->collection() ) {
 
-        return { map { $_->{'param_name'} => destringify($->{'param_value'}) } $collection->list() };
+        return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
 
     } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
 
