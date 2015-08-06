@@ -29,17 +29,18 @@ sub collection_of {
 
 
 sub new {       # construct an attached or a detached Pipeline object
-    my $class = shift @_;
+    my $class           = shift @_;
 
     my $self = bless {}, $class;
 
-    my %dba_flags = @_;
+    my %dba_flags           = @_;
+    my $load_collections    = delete $dba_flags{'-load_collections'};
 
     if(%dba_flags) {
         my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %dba_flags );
         $self->hive_dba( $hive_dba );
 
-        $self->load_collections();  # ToDo: should become lazy when $class->collection() is no longer used and $pipeline->collection_of() is used everywhere instead
+        $self->load_collections( $load_collections );  # ToDo: should become lazy when $class->collection() is no longer used and $pipeline->collection_of() is used everywhere instead
     } else {
         $self->init_collections();
     }
@@ -48,7 +49,7 @@ sub new {       # construct an attached or a detached Pipeline object
 }
 
 
-sub init_collections {  # should not really belong to DBAdaptor, temporarily squatting here...
+sub init_collections {
     my $self = shift @_;
 
     foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
@@ -58,11 +59,13 @@ sub init_collections {  # should not really belong to DBAdaptor, temporarily squ
 
 
 sub load_collections {
-    my $self = shift @_;
+    my $self                = shift @_;
+    my $load_collections    = shift @_
+                        || [ 'MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule' ];
 
     my $hive_dba = $self->hive_dba();
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+    foreach my $AdaptorType ( @$load_collections ) {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
         $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
     }
@@ -137,6 +140,22 @@ sub add_new_or_update {
     }
 
     return $object;
+}
+
+
+sub get_meta_value_by_key {
+    my ($self, $meta_key) = @_;
+
+    if( my $collection = $self->collection_of( 'MetaParameters' )) {
+        my $hash = $collection->find_one_by( 'meta_key', $meta_key );
+        return $hash && $hash->{'meta_value'};
+
+    }  else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
+
+        my $adaptor = $self->hive_dba->get_MetaParametersAdaptor;
+        my $pair = $adaptor->fetch_by_meta_key( $meta_key );
+        return $pair && $pair->{'meta_value'};
+    }
 }
 
 

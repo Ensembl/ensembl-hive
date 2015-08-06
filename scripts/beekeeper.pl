@@ -16,7 +16,7 @@ use Getopt::Long;
 use File::Path 'make_path';
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Config;
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Scheduler;
@@ -152,13 +152,18 @@ sub main {
     }
 
     if($self->{'url'} or $self->{'reg_alias'}) {
-        $self->{'dba'} = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+
+        $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                            => $self->{'url'},
             -reg_conf                       => $self->{'reg_conf'},
             -reg_type                       => $self->{'reg_type'},
             -reg_alias                      => $self->{'reg_alias'},
             -no_sql_schema_version_check    => $self->{'nosqlvc'},
+            -load_collections               => [ 'ResourceClass', 'ResourceDescription', 'Analysis' ],
         );
+
+        $self->{'dba'} = $self->{'pipeline'}->hive_dba();
+
     } else {
         print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
@@ -168,9 +173,7 @@ sub main {
         $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
     }
 
-    my $queen = $self->{'dba'}->get_Queen;
-
-    my $pipeline_name = $self->{'dba'}->get_MetaAdaptor->get_value_by_key( 'hive_pipeline_name' );
+    my $pipeline_name = $self->{'pipeline'}->get_meta_value_by_key( 'hive_pipeline_name' );
 
     if($pipeline_name) {
         warn "Pipeline name: $pipeline_name\n";
@@ -208,6 +211,8 @@ sub main {
 
     $default_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
     $default_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
+
+    my $queen = $self->{'dba'}->get_Queen;
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
@@ -256,9 +261,6 @@ sub main {
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
-        #       preloading all Analysis objects now:
-    Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->{'dba'}->get_AnalysisAdaptor->fetch_all ) );
-
     my $run_job;
     if($run_job_id) {
         $run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )
@@ -267,7 +269,7 @@ sub main {
 
     my $list_of_analyses = $run_job
         ? [ $run_job->analysis ]
-        : Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $self->{'analyses_pattern'} );
+        : $self->{'pipeline'}->collection_of('Analysis')->find_all_by_pattern( $self->{'analyses_pattern'} );
 
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
@@ -283,7 +285,7 @@ sub main {
             die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
         }
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
-        $self->{'dba'}->get_Queen->synchronize_hive( $list_of_analyses );
+        $queen->synchronize_hive( $list_of_analyses );
     }
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
@@ -293,7 +295,7 @@ sub main {
 
     if ($max_loops) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
+        run_autonomously($self, $self->{'pipeline'}, $max_loops, $keep_alive, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
 
     } else {
             # the output of several methods will look differently depending on $analysis being [un]defined
@@ -365,7 +367,10 @@ sub generate_worker_cmd {
 
 
 sub run_autonomously {
-    my ($self, $max_loops, $keep_alive, $queen, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
+    my ($self, $pipeline, $max_loops, $keep_alive, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
+
+    my $hive_dba = $pipeline->hive_dba;
+    my $queen    = $hive_dba->get_Queen;
 
     my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
@@ -388,7 +393,7 @@ sub run_autonomously {
             }
         }
 
-        $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
+        $hive_dba->get_RoleAdaptor->print_active_role_counts;
 
         my $workers_to_submit_by_meadow_type_rc_name
             = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);
@@ -402,11 +407,11 @@ sub run_autonomously {
                 make_path( $submit_log_subdir );
             }
 
-                # make sure the Resources are loaded fresh every time we need them:
-            my $rc_id2name  = $self->{'dba'}->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
+                # create an "index" over the freshly loaded RC/RD collections:
             my %meadow_type_rc_name2resource_param_list = ();
-            foreach my $rd (@{ $self->{'dba'}->get_ResourceDescriptionAdaptor->fetch_all() }) {
-                $meadow_type_rc_name2resource_param_list{ $rd->meadow_type() }{ $rc_id2name->{$rd->resource_class_id} } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
+            foreach my $rd ( $pipeline->collection_of('ResourceDescription')->list ) {
+                my $rc_name = $rd->resource_class->name;
+                $meadow_type_rc_name2resource_param_list{ $rd->meadow_type }{ $rc_name } = [ $rd->submission_cmd_args, $rd->worker_cmd_args ];
             }
 
             foreach my $meadow_type (keys %$workers_to_submit_by_meadow_type_rc_name) {
@@ -433,22 +438,22 @@ sub run_autonomously {
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep
-            $self->{'dba'}->dbc->disconnect_if_idle;
+            $hive_dba->dbc->disconnect_if_idle;
             printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
             sleep($self->{'sleep_minutes'}*60);  
 
-                # after waking up reload the Analyses to stay current:
+                # after waking up reload Resources and Analyses to stay current:
             unless($run_job_id) {
-                Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $self->{'dba'}->get_AnalysisAdaptor->fetch_all ) );
+                $pipeline->load_collections( [ 'ResourceClass', 'ResourceDescription', 'Analysis' ] );
 
-                $list_of_analyses = Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $analyses_pattern );
+                $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
             }
         }
     }
 
     print "Beekeeper : stopped looping because ".( $reasons_to_exit || "the number of loops was limited by $max_loops and this limit expired\n");
 
-    printf("Beekeeper: dbc %d disconnect cycles\n", $self->{'dba'}->dbc->disconnect_count);
+    printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
 }
 
 
