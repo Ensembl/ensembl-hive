@@ -26,7 +26,9 @@ use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 
 sub runWorker {
-    my ($hive_dba, $specialization_options, $life_options, $execution_options) = @_;
+    my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
+
+    my $hive_dba = $pipeline->hive_dba;
 
     die "Hive's DBAdaptor is not a defined Bio::EnsEMBL::Hive::DBSQL::DBAdaptor\n" unless $hive_dba and $hive_dba->isa('Bio::EnsEMBL::Hive::DBSQL::DBAdaptor');
 
@@ -40,22 +42,11 @@ sub runWorker {
     my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
     die "Valley is not fully defined" unless ($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user);
 
-        #       preloading all Analysis objects now:
-    Bio::EnsEMBL::Hive::Analysis->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $hive_dba->get_AnalysisAdaptor->fetch_all ) );
-        #
-        #       and all AnalysisStats objects as well:
-    Bio::EnsEMBL::Hive::AnalysisStats->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $hive_dba->get_AnalysisStatsAdaptor->fetch_all ) );
-        #
-        #       and all DataflowRule objects too:
-    Bio::EnsEMBL::Hive::DataflowRule->collection( Bio::EnsEMBL::Hive::Utils::Collection->new( $hive_dba->get_DataflowRuleAdaptor->fetch_all ) );
-
-
     if( $specialization_options->{'force_sync'} ) {       # sync the Hive in Test mode:
-        my $list_of_analyses = Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $specialization_options->{'analyses_pattern'} );
+        my $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $specialization_options->{'analyses_pattern'} );
 
         $queen->synchronize_hive( $list_of_analyses );
     }
-
 
     # Create the worker
     my $worker = $queen->create_new_worker(

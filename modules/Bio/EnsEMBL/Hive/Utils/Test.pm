@@ -102,12 +102,12 @@ sub init_pipeline {
 
 
 sub runWorker {
-    my ($hive_dba, $specialization_options, $life_options, $execution_options) = @_;
+    my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
 
     $specialization_options->{force_sync} = 1;
 
     lives_ok(sub {
-        Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($hive_dba, $specialization_options, $life_options, $execution_options);
+        Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, $specialization_options, $life_options, $execution_options);
     }, sprintf('runWorker()'));
 }
 

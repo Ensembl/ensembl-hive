@@ -14,7 +14,7 @@ BEGIN {
 
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Scripts::RunWorker;
@@ -70,7 +70,7 @@ sub main {
         exit(0);
     }
 
-    my $hive_dba;
+    my $pipeline;
 
     if($url or $reg_alias) {
             # Perform environment variable substitution separately with and without curly braces.
@@ -85,18 +85,21 @@ sub main {
             $url =~ s/\$((\w+))/defined($ENV{$2})?"$ENV{$2}":"\$$1"/eg;
         }
 
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
-                -url                            => $url,
-                -reg_conf                       => $reg_conf,
-                -reg_type                       => $reg_type,
-                -reg_alias                      => $reg_alias,
-                -no_sql_schema_version_check    => $nosqlvc,
+        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            -url                            => $url,
+            -reg_conf                       => $reg_conf,
+            -reg_type                       => $reg_type,
+            -reg_alias                      => $reg_alias,
+            -no_sql_schema_version_check    => $nosqlvc,
+            -load_collections               => [ 'Analysis', 'AnalysisStats', 'DataflowRule', 'AnalysisCtrlRule' ],
         );
 
     } else {
         print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
         script_usage(1);
     }
+
+    my $hive_dba = $pipeline->hive_dba;
 
     unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
         print "ERROR : no database connection\n\n";
@@ -132,7 +135,7 @@ sub main {
         debug               => $debug,
     );
 
-    Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($hive_dba, \%specialization_options, \%life_options, \%execution_options);
+    Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, \%specialization_options, \%life_options, \%execution_options);
 }
 
 

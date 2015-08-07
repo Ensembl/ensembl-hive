@@ -40,12 +40,15 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
     foreach my $pipeline_url (@pipeline_urls) {
         my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
-        my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $url );
+        my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            -url                            => $url,
+        );
 
+        my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
         # First run a single worker in this process
-        runWorker($hive_dba, { can_respecialize => 1 });
+        runWorker($pipeline, { can_respecialize => 1 });
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
