@@ -90,14 +90,14 @@ sub init_pipeline {
 
     $options ||= [];
 
-    my $hive_dba;
+    my $url;
     local @ARGV = @$options;
     lives_ok(sub {
-        $hive_dba = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
-        ok($hive_dba, 'pipeline initialized');
+        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
+        ok($url, 'pipeline initialized');
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
 
-    return $hive_dba;
+    return $url;
 }
 
 

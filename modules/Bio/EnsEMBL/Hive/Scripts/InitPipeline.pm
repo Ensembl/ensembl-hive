@@ -52,7 +52,7 @@ sub init_pipeline {
 
     print $pipeconfig_object->useful_commands_legend();
 
-    return $hive_dba;
+    return $hive_dba->dbc->url;
 }
 
 

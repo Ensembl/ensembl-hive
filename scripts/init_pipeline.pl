@@ -34,7 +34,7 @@ sub main {
 
     my $file_or_module = shift @ARGV or script_usage(0);
 
-    return Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
+    Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
 }
 
 main();

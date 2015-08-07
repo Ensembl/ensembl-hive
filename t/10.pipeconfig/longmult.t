@@ -38,7 +38,10 @@ foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf 
 warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
     foreach my $pipeline_url (@pipeline_urls) {
-        my $hive_dba = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+        my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+
+        my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $url );
+
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
         # First run a single worker in this process
