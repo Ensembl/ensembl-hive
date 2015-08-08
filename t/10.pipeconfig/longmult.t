@@ -31,9 +31,12 @@ my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf';
 
-foreach my $long_mult_version (qw(LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf)) {
+my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
+my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
+
+foreach my $long_mult_version ( @pipeline_cfgs ) {
 
 warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 

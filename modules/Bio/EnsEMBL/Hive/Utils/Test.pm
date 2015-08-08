@@ -92,6 +92,8 @@ sub init_pipeline {
 
     my $url;
     local @ARGV = @$options;
+    local %Bio::EnsEMBL::Hive::Cacheable::cache_by_class;
+
     lives_ok(sub {
         $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
         ok($url, 'pipeline initialized');
