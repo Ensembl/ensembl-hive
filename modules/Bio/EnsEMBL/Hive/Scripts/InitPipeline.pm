@@ -52,6 +52,8 @@ sub init_pipeline {
 
     print $pipeconfig_object->useful_commands_legend();
 
+    $hive_dba->dbc->disconnect_if_idle;     # This is necessary because the current lack of global DBC caching may leave this DBC connected and prevent deletion of the DB in pgsql mode
+
     return $hive_dba->dbc->url;
 }
 
