@@ -50,13 +50,14 @@ sub new {
     if(my $url = delete $flags{'-url'}) {
         if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
-            return $class->SUPER::new(
-                %flags,     # they act as overridable defaults
+            foreach my $name ( 'driver', 'host', 'port', 'user', 'pass', 'dbname' ) {
+                $flags{ "-$name" } //= $parsed_url->{$name};
+            }
+            foreach my $name ( keys %{$parsed_url->{'conn_params'}} ) {
+                $flags{ "-$name" } //= $parsed_url->{'conn_params'}->{$name};
+            }
 
-                ( map { ("-$_" => $parsed_url->{$_}) } ( 'driver', 'host', 'port', 'user', 'pass', 'dbname' ) ),    # parentheses are essential
-
-                ( map { ("-$_" => $parsed_url->{'conn_params'}->{$_}) } keys %{$parsed_url->{'conn_params'}}  ),    # parentheses are essential
-            );
+            return $class->SUPER::new( %flags );
 
         } else {
             die "Could not create DBC because could not parse the URL '$url'";

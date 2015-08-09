@@ -58,7 +58,7 @@ sub new {
     my %flags = @_;
 
     my ($dbc, $url, $reg_conf, $reg_type, $reg_alias, $species, $no_sql_schema_version_check)
-        = @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};
+        = delete @flags{qw(-dbconn -url -reg_conf -reg_type -reg_alias -species -no_sql_schema_version_check)};
 
     $url .= ';no_sql_schema_version_check=1' if($url && $no_sql_schema_version_check);
 
@@ -70,8 +70,7 @@ sub new {
     my $self;
 
     if($url) {
-
-        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $url)
+        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $url, %flags)
             or die "Unable to create a DBC using url='$url'";
 
     } elsif($reg_alias) {
