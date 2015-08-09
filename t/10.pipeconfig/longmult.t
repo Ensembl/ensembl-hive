@@ -44,11 +44,13 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
         my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-            -url                            => $url,
+            -url                        => $url,
+            -disconnect_when_inactive   => 1,
         );
 
         my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+
 
         # First run a single worker in this process
         runWorker($pipeline, { can_respecialize => 1 });
@@ -59,10 +61,6 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
             my @seed_pipeline_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/seed_pipeline.pl', -url => $hive_dba->dbc->url, -logic_name => 'take_b_apart', -input_id => '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
             my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.1, '-loop', '-local');
 
-            # beekeeper can take a while and has its own DBConnection, it
-            # is better to close ours to avoid "MySQL server has gone away"
-            $hive_dba->dbc->disconnect_if_idle;
-
             system(@seed_pipeline_cmd);
             ok(!$?, 'seed_pipeline exited with the return code 0');
             is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
@@ -72,12 +70,12 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
             is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
         }
 
-        my $results = $hive_dba->dbc->db_handle->selectall_arrayref('SELECT * FROM final_result');
-        is(scalar(@$results), 3, 'There are exactly 3 results');
-        ok($_->[0]*$_->[1] eq $_->[2], sprintf("%s*%s=%s", $_->[0], $_->[1], $_->[0]*$_->[1])) for @$results;
+        my $nt_adaptor = $hive_dba->get_NakedTableAdaptor();
+        $nt_adaptor->table_name( 'final_result' );
+        my $results = $nt_adaptor->fetch_all();
 
-            # disconnect to be able to drop the database (some drivers like PostgreSQL do not like dropping connected databases):
-        $hive_dba->dbc->disconnect_if_idle;
+        is(scalar(@$results), 3, 'There are exactly 3 results');
+        ok($_->{'a_multiplier'}*$_->{'b_multiplier'} eq $_->{'result'}, sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'a_multiplier'}*$_->{'b_multiplier'})) for @$results;
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }

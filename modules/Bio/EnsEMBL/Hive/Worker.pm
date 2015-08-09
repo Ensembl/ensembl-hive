@@ -623,7 +623,7 @@ sub specialize_and_compile_wrapper {
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
 
-            $self->adaptor->db->dbc->disconnect_when_inactive(0);
+#            $self->adaptor->db->dbc->disconnect_when_inactive(0);
             1;
         } or do {
             my $msg = $@;
