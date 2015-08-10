@@ -79,9 +79,8 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
     my $partial_product;
 
     if($intermediate_table_name) {      # special compatibility mode, where data is fetched from a given table
-        my $adaptor = $self->db->get_NakedTableAdaptor();
-        $adaptor->table_name( $intermediate_table_name );
-        $partial_product = $self->param('partial_product', $adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_partial_product( $a_multiplier ) );
+        my $intermediate_table_adaptor = $self->db->get_NakedTableAdaptor( 'table_name' => $intermediate_table_name );
+        $partial_product = $self->param('partial_product', $intermediate_table_adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_partial_product( $a_multiplier ) );
     } else {
         $partial_product = $self->param('partial_product');
     }

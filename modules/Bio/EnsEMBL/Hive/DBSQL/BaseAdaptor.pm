@@ -72,7 +72,8 @@ sub default_input_column_mapping {
 # ---------------------------------------------------------------------------
 
 sub new {
-    my ( $class, $dbobj ) = @_;
+    my $class   = shift @_;
+    my $dbobj   = shift @_;
 
     my $self = bless {}, $class;
 
@@ -87,6 +88,12 @@ sub new {
         $self->db( $dbobj );
     } else {
         throw("I was given [$dbobj] for a new adaptor");
+    }
+
+    my %flags = @_;
+
+    if(my $table_name = delete $flags{ 'table_name' }) {
+        $self->table_name( $table_name );
     }
 
     return $self;

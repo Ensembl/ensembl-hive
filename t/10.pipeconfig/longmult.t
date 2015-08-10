@@ -70,12 +70,14 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
             is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
         }
 
-        my $nt_adaptor = $hive_dba->get_NakedTableAdaptor();
-        $nt_adaptor->table_name( 'final_result' );
-        my $results = $nt_adaptor->fetch_all();
+        my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
+        my $final_results = $final_result_nta->fetch_all();
 
-        is(scalar(@$results), 3, 'There are exactly 3 results');
-        ok($_->{'a_multiplier'}*$_->{'b_multiplier'} eq $_->{'result'}, sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'a_multiplier'}*$_->{'b_multiplier'})) for @$results;
+        is(scalar(@$final_results), 3, 'There are exactly 3 final_results');
+        foreach ( @$final_results ) {
+            ok( $_->{'a_multiplier'}*$_->{'b_multiplier'} eq $_->{'result'},
+                sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
+        }
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }

@@ -559,8 +559,7 @@ sub _add_table_node {
 
     my $hive_dba        = $self->pipeline->hive_dba;
 
-    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor ) {
-        $naked_table_adaptor->table_name( $naked_table->table_name );
+    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor( 'table_name' => $naked_table->table_name ) ) {
 
         @column_names = sort keys %{$naked_table_adaptor->column_set};
         $columns = scalar(@column_names);
