@@ -37,13 +37,8 @@ public class Wrapper {
 				+ args[1] + "/" + args[2]);
 		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance(new File(
 				args[1]), new File(args[2])));
-		log.info("Executing fetchInput");
-		runnable.fetchInput();
-		log.info("Executing run");
-		runnable.run();
-		log.info("Executing writeOutput");
-		runnable.writeOutput();
-		log.info("Execution complete");
+		runnable.processLifeCycle();
+
 	}
 
 }

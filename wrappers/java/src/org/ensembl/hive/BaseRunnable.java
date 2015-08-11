@@ -29,23 +29,45 @@ import com.google.gson.internal.LinkedTreeMap;
  */
 public abstract class BaseRunnable {
 
+	private static final String BRANCH_NAME_OR_CODE_KEY = "branch_name_or_code";
+	private static final String OUTPUT_IDS_KEY = "output_ids";
+	private static final String DATAFLOW_TYPE = "DATAFLOW";
+	private static final String WORKER_TEMP_DIRECTORY_TYPE = "WORKER_TEMP_DIRECTORY";
+	private static final String UNSUBSTITUTED_KEY = "unsubstituted";
+	private static final String SUBSTITUTED_KEY = "substituted";
+	private static final String PARAMS_KEY = "params";
+	private static final String JOB_KEY = "job";
+	private static final String COMPLETE_KEY = "complete";
+	private static final String IS_ERROR_KEY = "is_error";
+	private static final String MESSAGE_KEY = "message";
+	private static final String WARNING_KEY = "WARNING";
+	private static final String TRANSIENT_ERROR_KEY = "transient_error";
+	private static final String LETHAL_FOR_WORKER_KEY = "lethal_for_worker";
+	private static final String AUTOFLOW_KEY = "autoflow";
+	private static final String EXECUTE_WRITES_KEY = "execute_writes";
+	private static final String DEBUG_KEY = "debug";
+	private static final String INPUT_JOB_KEY = "input_job";
+	private static final String RESPONSE_KEY = "response";
+	private static final String EVENT_KEY = "event";
+	private static final String CONTENT_KEY = "content";
+	private static final String VERSION_TYPE = "VERSION";
+	private static final String PARAM_DEFAULT_TYPE = "PARAM_DEFAULTS";
+	private static final String JOB_END_TYPE = "JOB_END";
 	private static final String OK = "OK";
 
-	private static final String RESPONSE_KEY = "response";
-
-	private static final String CONTENT_KEY = "content";
-
-	private static final String VERSION_TYPE = "VERSION";
-
-	private static final String EVENT_KEY = "event";
-
 	public final static String VERSION = "0.1";
+
+	protected final static Map<String, Object> DEFAULT_PARAMS = new HashMap<>();
 
 	protected final BufferedReader input;
 	protected final BufferedWriter output;
 	protected final Gson gson;
 
+	private int debug = 1;
+	private String workerTempDirectory;
+
 	private Logger log;
+	private boolean autoFlow;
 
 	protected Logger getLog() {
 		if (log == null) {
@@ -58,7 +80,6 @@ public abstract class BaseRunnable {
 		this.input = new BufferedReader(input);
 		this.output = new BufferedWriter(output);
 		this.gson = new Gson();
-		init();
 	}
 
 	public BaseRunnable(InputStream input, OutputStream output)
@@ -70,41 +91,241 @@ public abstract class BaseRunnable {
 		this(new FileInputStream(inputFile), new FileOutputStream(outputFile));
 	}
 
-	protected void init() throws IOException {
-		getLog().debug("Initialising");
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put(EVENT_KEY, VERSION_TYPE);
-		map.put(CONTENT_KEY, VERSION);
-		sendMessage(map);
-		Map response = readMessage();
-		Object responseVal = response.get(RESPONSE_KEY);
-		if (!OK.equals(responseVal)) {
-			throw new HiveCommunicationException("Expected response " + OK
-					+ ": got response " + responseVal);
+	public void processLifeCycle() {
+		init();
+		boolean run = true;
+		while (run) {
+			Object responseO = readMessageAndRespond();
+			getLog().debug("Received response: " + responseO);
+			if (Map.class.isAssignableFrom(responseO.getClass())) {
+				Map response = (Map) responseO;
+				// handle the job
+				Object inputJob = response.get(INPUT_JOB_KEY);
+				getLog().debug("Received input job: " + inputJob);
+				if (inputJob == null) {
+					getLog().info("No further job received - worker exiting");
+					run = false;
+				} else {
+					Job job = new Job((Map) inputJob);
+					// process some other configs
+					this.debug = ((Double) response.get(DEBUG_KEY)).intValue();
+					try {
+						runLifeCycle(job, "1".equals(EXECUTE_WRITES_KEY));
+						getLog().info("Job completed");
+						job.setComplete(true);
+					} catch (HiveCommunicationException e) {
+						// we can't do anything here except let it bubble up
+						throw e;
+					} catch (Throwable e2) {
+						// log everything else
+						getLog().error("Job failed", e2);
+						job.setComplete(false);
+						getLog().equals(e2);
+					}
+					finishJob(job);
+				}
+			} else {
+				String msg = "Unexpected object of class "
+						+ responseO.getClass() + " received";
+				getLog().error(msg);
+				throw new HiveCommunicationException(msg);
+			}
+			run = false;
 		}
+	}
+
+	private void finishJob(Job job) {
+		sendMessageAndWait(
+				JOB_END_TYPE,
+				toMap(COMPLETE_KEY,
+						job.isComplete(),
+						JOB_KEY,
+						toMap(AUTOFLOW_KEY, job.isAutoflow(),
+								LETHAL_FOR_WORKER_KEY, job.isLethalForWorker(),
+								TRANSIENT_ERROR_KEY, job.isTransientError()),
+						PARAMS_KEY,
+						toMap(SUBSTITUTED_KEY, getParamHash(),
+								UNSUBSTITUTED_KEY, getUnsubstitutedParamHash())));
+	}
+
+	protected void runLifeCycle(Job job, boolean executeWrites) {
+
+		if (job.getRetryCount() > 0) {
+			getLog().info("Executing preCleanUp");
+			preCleanUp(job);
+		}
+		getLog().info("Executing fetchInput");
+		fetchInput(job);
+		getLog().info("Executing run");
+		run(job);
+		if (executeWrites) {
+			getLog().info("Executing writeOutput");
+			writeOutput(job);
+		}
+		getLog().info("Executing postCleanUp");
+		postCleanUp(job);
+		getLog().info("Execution complete");
+
+	}
+
+	protected void init() {
+		getLog().debug("Initialising");
+		sendMessageAndWait(VERSION_TYPE, VERSION);
+		sendMessageAndWait(PARAM_DEFAULT_TYPE, getParamDefaults());
 		getLog().debug("Initialisation complete");
 	}
 
-	protected void sendMessage(Object message) {
-		String json = gson.toJson(message);
-		log.trace("Writing output: " + json);
+	protected Map<String, Object> getParamDefaults() {
+		return DEFAULT_PARAMS;
+	}
+
+	protected void preCleanUp(Job job) {
+	}
+
+	protected abstract void fetchInput(Job job);
+
+	protected abstract void run(Job job);
+
+	protected void postCleanUp(Job job) {
+	}
+
+	protected abstract void writeOutput(Job job);
+
+	/**
+	 * Store a message in the log_message table with is_error indicating whether
+	 * the warning is actually an error or not
+	 * 
+	 * @param message
+	 * @param isError
+	 */
+	protected void warning(String message, boolean isError) {
+		sendMessageAndWait(WARNING_KEY,
+				toMap(MESSAGE_KEY, message, IS_ERROR_KEY, isError));
+	}
+
+	/**
+	 * Dataflows the output_id(s) on a given branch (default 1). Returns
+	 * whatever the Perl side returns
+	 * 
+	 * @param outputIds
+	 * @return
+	 */
+	protected Map<String, Object> dataflow(Object outputIds) {
+		return dataflow(outputIds, 1);
+	}
+
+	/**
+	 * Dataflows the output_id(s) on a given branch (default 1). Returns
+	 * whatever the Perl side returns
+	 * 
+	 * @param outputIds
+	 * @param branchNameOrCode
+	 * @return
+	 */
+	protected Map<String, Object> dataflow(Object outputIds,
+			int branchNameOrCode) {
+		if (branchNameOrCode == 1) {
+			this.autoFlow = false;
+		}
+		sendEventMessage(
+				DATAFLOW_TYPE,
+				toMap(OUTPUT_IDS_KEY,
+						outputIds,
+						BRANCH_NAME_OR_CODE_KEY,
+						branchNameOrCode,
+						PARAMS_KEY,
+						toMap(SUBSTITUTED_KEY, getParamHash(),
+								UNSUBSTITUTED_KEY, getUnsubstitutedParamHash())));
+		return this.readMessageAndRespond();
+	}
+
+	private Object getUnsubstitutedParamHash() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Object getParamHash() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * Returns the full path of the temporary directory created by the worker.
+	 * Runnables can override this to return the name they would like to use
+	 * 
+	 * @return directory name
+	 */
+	protected String workerTempDirectory() {
+		if (workerTempDirectory == null) {
+			sendEventMessage(WORKER_TEMP_DIRECTORY_TYPE, getWorkerTemplateName());
+			workerTempDirectory = (String) (readMessageAndRespond().get(RESPONSE_KEY));
+		}
+		return workerTempDirectory;
+	}
+
+	/**
+	 * Override to provide a special template for the worker temporary directory
+	 * 
+	 * @return
+	 */
+	protected String getWorkerTemplateName() {
+		return null;
+	}
+
+	/**
+	 * Send a message and wait for OK from the parent
+	 * 
+	 * @param event
+	 * @param content
+	 */
+	protected void sendMessageAndWait(String event, Object content) {
+		sendEventMessage(event, content);
+		Map<String, Object> response = readMessage();
+		if (response == null || !OK.equals(response.get(RESPONSE_KEY))) {
+			throw new HiveCommunicationException("Expected response " + OK
+					+ ": got response " + response);
+		}
+	}
+
+	/**
+	 * Send an event-based message to the parent 
+	 * 
+	 * @param event
+	 * @param content
+	 */
+	protected void sendEventMessage(String event, Object content) {
+		sendMessage(gson.toJson(wrapContent(event, content)));
+	}
+
+	/**
+	 * Send a piece of JSON to the parent
+	 * @param json
+	 */
+	private void sendMessage(String json) {
+		getLog().trace("Writing output: " + json);
 		try {
 			output.write(json);
 			output.write('\n');
 			output.flush();
 		} catch (IOException e) {
 			String msg = "Could not send message to parent process";
-			log.error(msg, e);
+			getLog().error(msg, e);
 			throw new HiveCommunicationException(msg, e);
 		}
 	}
 
-	protected Map readMessage() {
+	/**
+	 * Read a JSON message from the parent
+	 * 
+	 * @return
+	 */
+	protected Map<String, Object> readMessage() {
 		try {
 			log.trace("Reading input");
 			String json = input.readLine();
 			log.trace("Parsing " + json);
-			return gson.fromJson(json, LinkedTreeMap.class);
+			return (Map<String, Object>) (gson.fromJson(json,
+					LinkedTreeMap.class));
 		} catch (IOException e) {
 			String msg = "Could not read message from parent process";
 			log.error(msg, e);
@@ -112,12 +333,40 @@ public abstract class BaseRunnable {
 		}
 	}
 
-	public abstract ParamContainer paramDefaults();
+	protected Map<String, Object> readMessageAndRespond() {
+		 Map<String, Object> msg = readMessage();
+		 sendMessage(gson.toJson(toMap(RESPONSE_KEY,OK)));
+		 return msg;
+	}
+	
+	/**
+	 * Utility method to pack an event and a piece of content into a JSON
+	 * message for sending to the parent
+	 * 
+	 * @param event
+	 * @param content
+	 * @return
+	 */
+	private Map<String, Object> wrapContent(String event, Object content) {
+		return toMap(EVENT_KEY, event, CONTENT_KEY, content);
+	}
 
-	public abstract void fetchInput();
-
-	public abstract void run();
-
-	public abstract void writeOutput();
+	/**
+	 * Utility method for building a hash from key-value pairs
+	 * 
+	 * @param o
+	 * @return
+	 */
+	protected Map<String, Object> toMap(Object... o) {
+		if (o.length % 2 != 0) {
+			throw new IllegalArgumentException(
+					"Even number of arguments expected");
+		}
+		Map<String, Object> map = new HashMap<>();
+		for (int i = 0; i < o.length; i += 2) {
+			map.put(o[i].toString(), o[i + 1]);
+		}
+		return map;
+	}
 
 }

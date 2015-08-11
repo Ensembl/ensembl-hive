@@ -20,7 +20,7 @@
 	</target>
 
 	<target name="compile" depends="init" description="compile source">
-		<javac srcdir="${src}" destdir="${build}">
+		<javac srcdir="${src}" destdir="${build}" debug="true" debuglevel="lines,vars,source">
 			<classpath refid="wrapper_classpath" />
 		</javac>
 	</target>
