@@ -52,7 +52,9 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 sub param_defaults {
     return {
-        description => '/no description/',
+        'description'   => '/no description/',
+        'expected_size' => undef,
+        'inputquery'    => undef,
     }
 }
 
