@@ -18,7 +18,7 @@ use strict;
 use warnings;
 
 use List::Util qw(first min max minstr maxstr reduce sum shuffle);              # make them available for substituted expressions
-use Test::More;
+use Test::More tests => 19;
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Params' );
@@ -80,3 +80,4 @@ is(
     'complex fold of age_prime'
 );
 
+done_testing();
