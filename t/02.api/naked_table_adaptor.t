@@ -32,7 +32,7 @@ $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File:
 
 my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
 
-my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+my $url         = init_pipeline($ENV{'EHIVE_ROOT_DIR'}.'/modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
 my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
     -url                        => $url,
