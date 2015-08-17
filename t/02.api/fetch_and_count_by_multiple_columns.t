@@ -36,7 +36,14 @@ chdir $dir;
 
 my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
 
-my $hive_dba    = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+
+my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+    -url                        => $url,
+    -disconnect_when_inactive   => 1,
+);
+
+my $hive_dba    = $pipeline->hive_dba;
 my $ana_a       = $hive_dba->get_AnalysisAdaptor;
 my $job_a       = $hive_dba->get_AnalysisJobAdaptor;
 my $dfr_a       = $hive_dba->get_DataflowRuleAdaptor;
