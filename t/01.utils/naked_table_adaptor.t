@@ -57,6 +57,12 @@ $final_result_nta->store( $second_hash );
 my $final_results = $final_result_nta->fetch_all();
 is_deeply( $final_results, [ $first_hash, $second_hash ], "The data stored into final_result table is as expected");
 
+my $third_hash = { 'a_multiplier' => $first_hash->{a_multiplier}, 'b_multiplier' => '1', 'result' => $first_hash->{a_multiplier} };
+$final_result_nta->store( $third_hash );
+
+is_deeply($final_result_nta->count_all_HASHED_FROM_a_multiplier(), {$first_hash->{a_multiplier} => 2, $second_hash->{a_multiplier} => 1}, '3 results in total in the table, 2 of which share the same a_multiplier');
+is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2, '2 result for this a_multiplier');
+is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
 system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
