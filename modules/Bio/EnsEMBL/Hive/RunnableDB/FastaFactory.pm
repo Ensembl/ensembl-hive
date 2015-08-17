@@ -130,7 +130,8 @@ sub write_output {
     my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
     
     while (my $seq_object = $input_seqio->next_seq) {
-	$chunk_seqio->write_seq( $seq_object );
+
+        $chunk_seqio->write_seq( $seq_object );
 	
         if((my $seq_length = $seq_object->length()) + $chunk_length <= $max_chunk_length) {
             $chunk_length += $seq_length;
@@ -140,10 +141,10 @@ sub write_output {
 
                 # dataflow the current chunk:
             $self->dataflow_output_id( {
-                'chunk_name' => $chunk_name,
-                'chunk_number' => $chunk_number,
-                'chunk_length' => $chunk_length,
-                'chunk_size' => $chunk_size
+                'chunk_name'    => $chunk_name,
+                'chunk_number'  => $chunk_number,
+                'chunk_length'  => $chunk_length,
+                'chunk_size'    => $chunk_size
             }, 2);
 
                 # start writing to the next one:
@@ -158,13 +159,14 @@ sub write_output {
     if($chunk_size) {   # flush the last chunk:
 
         $self->dataflow_output_id( {
-            'chunk_name' => $chunk_name,
-            'chunk_number' => $chunk_number,
-            'chunk_length' => $chunk_length,
-            'chunk_size' => $chunk_size
+            'chunk_name'    => $chunk_name,
+            'chunk_number'  => $chunk_number,
+            'chunk_length'  => $chunk_length,
+            'chunk_size'    => $chunk_size
         }, 2);
+
     } else {
-	unlink $chunk_name unless (stat($chunk_name))[7];
+        unlink $chunk_name unless (stat($chunk_name))[7];
     }
 }
 
