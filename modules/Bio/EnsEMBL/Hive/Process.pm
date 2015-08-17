@@ -20,6 +20,7 @@
         fetch_input();                      # fetch the data from databases/filesystems
         run();                              # perform the main computation 
         write_output();                     # record the results in databases/filesystems
+        post_healthcheck();                 # check if we got the expected result (optional)
         post_cleanup();                     # destroy all non-trivial data structures after the job is done
     The developer can implement their own versions of
     pre_cleanup, fetch_input, run, write_output, and post_cleanup to do what they need.  
@@ -143,6 +144,11 @@ sub life_cycle {
             $partial_stopwatch->restart();
             $self->write_output;
             $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
+
+            if( $self->can('post_healthcheck') ) {
+                $self->enter_status('POST_HEALTHCHECK');
+                $self->post_healthcheck;
+            }
         } else {
             $self->say_with_header( ": *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW" );
         }
