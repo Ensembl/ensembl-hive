@@ -208,7 +208,7 @@ sub enter_status {
     $job->set_and_update_status( $status );
 
     if(my $worker = $self->worker) {
-        $worker->set_and_update_status( $status );
+        $worker->set_and_update_status( 'JOB_LIFECYCLE' );  # to ensure when_checked_in TIMESTAMP is updated
     }
 
     $self->say_with_header( '-> '.$status );

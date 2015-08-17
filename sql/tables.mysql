@@ -464,9 +464,9 @@ CREATE TABLE worker (
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
 
-    work_done               INTEGER     NOT NULL DEFAULT 0,
-    status                  ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL,
-    when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    work_done               INTEGER      NOT NULL DEFAULT 0,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
+    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     when_checked_in         TIMESTAMP                    NULL,
     when_seen               TIMESTAMP                    NULL,
     when_died               TIMESTAMP                    NULL,  -- mysql's special for "TIMESTAMP DEFAULT NULL"

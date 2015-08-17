@@ -469,9 +469,9 @@ CREATE TABLE worker (
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
-    work_done               INTEGER     NOT NULL DEFAULT 0,
-    status                  jw_status   NOT NULL DEFAULT 'READY',
-    when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    work_done               INTEGER      NOT NULL DEFAULT 0,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
+    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
