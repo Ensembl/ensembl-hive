@@ -599,7 +599,7 @@ sub AUTOLOAD {
         };
         goto &$AUTOLOAD;    # restart the new method
 
-    } elsif($AUTOLOAD =~ /::count_all(?:_by_(\w+))?(?:_HASHED_FROM_(\w+?))?$/) {
+    } elsif($AUTOLOAD =~ /::count_all(?:_by_(\w+?))?(?:_HASHED_FROM_(\w+?))?$/) {
         my $filter_string   = $1;
         my $key_string      = $2;
 
