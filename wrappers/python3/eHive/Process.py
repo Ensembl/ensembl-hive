@@ -208,7 +208,7 @@ class BaseRunnable(object):
         if self.__created_worker_temp_directory is None:
             template_name = self.worker_temp_directory_name() if hasattr(self, 'worker_temp_directory_name') else None
             self.__send_message('WORKER_TEMP_DIRECTORY', template_name)
-            self.__created_worker_temp_directory = self.__read_message()
+            self.__created_worker_temp_directory = self.__read_message()['response']
         return self.__created_worker_temp_directory
 
     # Param interface
