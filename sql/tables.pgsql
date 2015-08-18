@@ -327,9 +327,6 @@ CREATE TABLE resource_description (
 @column semaphored_job_id       the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".
 */
 
--- union enum status for job and worker
-CREATE TYPE jw_status AS ENUM ('UNKNOWN','SPECIALIZATION','COMPILATION','SEMAPHORED','READY','CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON','DEAD');
-
 CREATE TABLE job (
     job_id                  SERIAL PRIMARY KEY,
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
@@ -338,7 +335,7 @@ CREATE TABLE job (
     param_id_stack          TEXT        NOT NULL DEFAULT '',
     accu_id_stack           TEXT        NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
-    status                  jw_status   NOT NULL DEFAULT 'READY',
+    status                  TEXT        NOT NULL DEFAULT 'READY',   -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     when_completed          TIMESTAMP            DEFAULT NULL,
     runtime_msec            INTEGER              DEFAULT NULL,
@@ -469,9 +466,9 @@ CREATE TABLE worker (
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
-    work_done               INTEGER     NOT NULL DEFAULT 0,
-    status                  jw_status   NOT NULL DEFAULT 'READY',
-    when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    work_done               INTEGER      NOT NULL DEFAULT 0,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
+    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,

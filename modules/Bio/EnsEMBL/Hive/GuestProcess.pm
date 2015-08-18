@@ -132,7 +132,7 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 =head2 get_protocol_version
 
@@ -514,7 +514,7 @@ sub life_cycle {
             $job->{_param_hash} = $content->{params}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
             my $d = $self->dataflow_output_id($content->{output_ids}, $content->{branch_name_or_code});
-            $self->send_message($d);
+            $self->send_response($d);
 
         } elsif ($event eq 'WORKER_TEMP_DIRECTORY') {
             $self->{worker_temp_directory_name} = $content;

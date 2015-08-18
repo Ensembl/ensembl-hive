@@ -34,7 +34,7 @@ The following parameters are accepted:
  - output_db [string] : URL of a database to write the dump to. In this
     mode, the Runnable acts like MySQLTransfer
 
- - skip_dump : boolean. 1 to skip the dump process
+ - skip_dump [boolean=0] : set this to 1 to skip the dump
 
 If "table_list" is undefined or maps to an empty list, the list
 of tables to be dumped is decided accordingly to "exclude_list" (EL)
@@ -85,6 +85,23 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
 use base ('Bio::EnsEMBL::Hive::Process');
+
+sub param_defaults {
+    return {
+        # Which tables to dump. How the options are combined is explained above
+        'table_list'    => undef,   # array-ref
+        'exclude_ehive' => 0,       # boolean
+        'exclude_list'  => 0,       # boolean
+
+        # Input / output
+        'src_db_conn'   => undef,   # URL, hash-ref, or Registry name
+        'output_file'   => undef,   # String
+        'output_db'     => undef,   # URL, hash-ref, or Registry name
+
+        # Other options
+        'skip_dump'     => 0,       # boolean
+    }
+}
 
 sub fetch_input {
     my $self = shift @_;

@@ -324,13 +324,13 @@ CREATE TABLE resource_description (
 
 CREATE TABLE job (
     job_id                  INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
-    prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
+    prev_job_id             INTEGER              DEFAULT NULL,      -- the job that created this one using a dataflow rule
     analysis_id             INTEGER     NOT NULL,
     input_id                CHAR(255)   NOT NULL,
     param_id_stack          CHAR(64)    NOT NULL DEFAULT '',
     accu_id_stack           CHAR(64)    NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
-    status                  TEXT        NOT NULL DEFAULT 'READY', /* enum('SEMAPHORED','READY','CLAIMED','COMPILATION','FETCH_INPUT','RUN','WRITE_OUTPUT','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL, */
+    status                  TEXT        NOT NULL DEFAULT 'READY',   -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     when_completed          TIMESTAMP            DEFAULT NULL,
     runtime_msec            INTEGER              DEFAULT NULL,
@@ -459,9 +459,9 @@ CREATE TABLE worker (
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
-    work_done               INTEGER     NOT NULL DEFAULT 0,
-    status                  TEXT        NOT NULL DEFAULT 'READY', /* enum('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD') DEFAULT 'READY' NOT NULL */
-    when_born               TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    work_done               INTEGER      NOT NULL DEFAULT 0,
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY', /* enum('SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD') DEFAULT 'READY' NOT NULL */
+    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,

@@ -6,8 +6,8 @@
 
 =head1 SYNOPSIS
 
-    $naked_table_adaptor = $dba->get_NakedTableAdaptor;
-    $naked_table_adaptor = $naked_table->adaptor;
+    my $intermediate_result_nt_adaptor  = $dba->get_NakedTableAdaptor( 'table_name' => 'intermediate_result' );
+    my $final_result_nt_adaptor         = $final_result_nt->adaptor;
 
 =head1 DESCRIPTION
 

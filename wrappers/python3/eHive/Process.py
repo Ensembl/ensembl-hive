@@ -8,7 +8,7 @@ import numbers
 import warnings
 import traceback
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
@@ -198,7 +198,7 @@ class BaseRunnable(object):
         if branch_name_or_code == 1:
             self.autoflow = False
         self.__send_message('DATAFLOW', {'output_ids': output_ids, 'branch_name_or_code': branch_name_or_code, 'params': {'substituted': self.__params.param_hash, 'unsubstituted': self.__params.unsubstituted_param_hash}})
-        return self.__read_message()
+        return self.__read_message()['response']
 
     def worker_temp_directory(self):
         """Returns the full path of the temporary directory created by the worker.
@@ -208,7 +208,7 @@ class BaseRunnable(object):
         if self.__created_worker_temp_directory is None:
             template_name = self.worker_temp_directory_name() if hasattr(self, 'worker_temp_directory_name') else None
             self.__send_message('WORKER_TEMP_DIRECTORY', template_name)
-            self.__created_worker_temp_directory = self.__read_message()
+            self.__created_worker_temp_directory = self.__read_message()['response']
         return self.__created_worker_temp_directory
 
     # Param interface
