@@ -311,8 +311,21 @@ sub main {
         push @datasets, $dataset;
     }
 
+    my $safe_database_location = sprintf('%s@%s', $hive_dba->dbc->dbname, $hive_dba->dbc->host || '-');
+    my $plotted_analyses_desc = '';
+    if ($n_relevant_analysis < scalar(@sorted_analysis_ids)) {
+        if ($top < 1) {
+            $plotted_analyses_desc = sprintf('the top %.1f%% of ', 100*$top);
+        } else {
+            $plotted_analyses_desc = "the top $top analyses of ";
+        }
+    }
+    my $title = "Profile of ${plotted_analyses_desc}${safe_database_location}";
+    $title .= " from $start_date" if $start_date;
+    $title .= " to $end_date" if $end_date;
+
     my $chart = Chart::Gnuplot->new(
-        title => sprintf('Profile of %s', $n_relevant_analysis < scalar(@sorted_analysis_ids) ? ($top < 1 ? sprintf('%.1f%% of %s', 100*$top, $url) : "the $top top-analysis of $url") : $url).($start_date ? " from $start_date" : "").($end_date ? " to $end_date" : ""),
+        title => $title,
         timeaxis => 'x',
         legend => {
             position => 'outside right',
