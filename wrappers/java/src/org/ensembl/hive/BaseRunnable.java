@@ -12,7 +12,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -59,6 +62,24 @@ public abstract class BaseRunnable {
 
 	protected final static Map<String, Object> DEFAULT_PARAMS = new HashMap<>();
 
+	/**
+	 * Utility method for building a hash from key-value pairs
+	 * 
+	 * @param o
+	 * @return
+	 */
+	protected static Map<String, Object> toMap(Object... o) {
+		if (o.length % 2 != 0) {
+			throw new IllegalArgumentException(
+					"Even number of arguments expected");
+		}
+		Map<String, Object> map = new HashMap<>();
+		for (int i = 0; i < o.length; i += 2) {
+			map.put(o[i].toString(), o[i + 1]);
+		}
+		return map;
+	}
+
 	protected final BufferedReader input;
 	protected final BufferedWriter output;
 	protected final Gson gson;
@@ -76,13 +97,13 @@ public abstract class BaseRunnable {
 		return log;
 	}
 
-	public BaseRunnable(Reader input, Writer output) throws IOException {
+	private BaseRunnable(Reader input, Writer output) throws IOException {
 		this.input = new BufferedReader(input);
 		this.output = new BufferedWriter(output);
 		this.gson = new Gson();
 	}
 
-	public BaseRunnable(InputStream input, OutputStream output)
+	private BaseRunnable(InputStream input, OutputStream output)
 			throws IOException {
 		this(new InputStreamReader(input), new OutputStreamWriter(output));
 	}
@@ -95,7 +116,7 @@ public abstract class BaseRunnable {
 		init();
 		boolean run = true;
 		while (run) {
-			Object responseO = readMessageAndRespond();
+			Object responseO = readMessage();
 			getLog().debug("Received response: " + responseO);
 			if (Map.class.isAssignableFrom(responseO.getClass())) {
 				Map response = (Map) responseO;
@@ -103,18 +124,23 @@ public abstract class BaseRunnable {
 				Object inputJob = response.get(INPUT_JOB_KEY);
 				getLog().debug("Received input job: " + inputJob);
 				if (inputJob == null) {
+					// empty job, so exit with no response needed
 					getLog().info("No further job received - worker exiting");
 					run = false;
 				} else {
+					// job, so respond OK and process it
+					sendOK();
+					getLog().debug("Building job with " + String.valueOf(inputJob));
 					Job job = new Job((Map) inputJob);
 					// process some other configs
 					this.debug = ((Double) response.get(DEBUG_KEY)).intValue();
 					try {
-						runLifeCycle(job, "1".equals(EXECUTE_WRITES_KEY));
+						runLifeCycle(job, (((Double)response.get(EXECUTE_WRITES_KEY)).intValue() == 1));
 						getLog().info("Job completed");
 						job.setComplete(true);
 					} catch (HiveCommunicationException e) {
 						// we can't do anything here except let it bubble up
+						getLog().error("Caught exception ", e);
 						throw e;
 					} catch (Throwable e2) {
 						// log everything else
@@ -130,7 +156,15 @@ public abstract class BaseRunnable {
 				getLog().error(msg);
 				throw new HiveCommunicationException(msg);
 			}
-			run = false;
+		}
+		
+		try {
+			getLog().trace("Closing input pipe");
+			input.close();
+			getLog().trace("Closing output pipe");
+			output.close();
+		} catch (IOException e) {
+			throw new HiveCommunicationException("Could not close pipes", e);
 		}
 	}
 
@@ -144,8 +178,9 @@ public abstract class BaseRunnable {
 								LETHAL_FOR_WORKER_KEY, job.isLethalForWorker(),
 								TRANSIENT_ERROR_KEY, job.isTransientError()),
 						PARAMS_KEY,
-						toMap(SUBSTITUTED_KEY, getParamHash(),
-								UNSUBSTITUTED_KEY, getUnsubstitutedParamHash())));
+						toMap(SUBSTITUTED_KEY, job.getParameters().getParams(),
+								UNSUBSTITUTED_KEY, job.getParameters()
+										.getUnsubParameters())));
 	}
 
 	protected void runLifeCycle(Job job, boolean executeWrites) {
@@ -210,8 +245,9 @@ public abstract class BaseRunnable {
 	 * @param outputIds
 	 * @return
 	 */
-	protected Map<String, Object> dataflow(Object outputIds) {
-		return dataflow(outputIds, 1);
+	protected Map<String, Object> dataflow(ParamContainer params,
+			Collection<Object> outputIds) {
+		return dataflow(params, outputIds, 1);
 	}
 
 	/**
@@ -222,8 +258,8 @@ public abstract class BaseRunnable {
 	 * @param branchNameOrCode
 	 * @return
 	 */
-	protected Map<String, Object> dataflow(Object outputIds,
-			int branchNameOrCode) {
+	protected Map<String, Object> dataflow(ParamContainer params,
+			Collection<Object> outputIds, int branchNameOrCode) {
 		if (branchNameOrCode == 1) {
 			this.autoFlow = false;
 		}
@@ -234,19 +270,9 @@ public abstract class BaseRunnable {
 						BRANCH_NAME_OR_CODE_KEY,
 						branchNameOrCode,
 						PARAMS_KEY,
-						toMap(SUBSTITUTED_KEY, getParamHash(),
-								UNSUBSTITUTED_KEY, getUnsubstitutedParamHash())));
-		return this.readMessageAndRespond();
-	}
-
-	private Object getUnsubstitutedParamHash() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private Object getParamHash() {
-		// TODO Auto-generated method stub
-		return null;
+						toMap(SUBSTITUTED_KEY, params.getParams(),
+								UNSUBSTITUTED_KEY, params.getUnsubParameters())));
+		return this.readMessage();
 	}
 
 	/**
@@ -257,8 +283,10 @@ public abstract class BaseRunnable {
 	 */
 	protected String workerTempDirectory() {
 		if (workerTempDirectory == null) {
-			sendEventMessage(WORKER_TEMP_DIRECTORY_TYPE, getWorkerTemplateName());
-			workerTempDirectory = (String) (readMessageAndRespond().get(RESPONSE_KEY));
+			sendEventMessage(WORKER_TEMP_DIRECTORY_TYPE,
+					getWorkerTemplateName());
+			workerTempDirectory = (String) (readMessageAndRespond()
+					.get(RESPONSE_KEY));
 		}
 		return workerTempDirectory;
 	}
@@ -288,7 +316,7 @@ public abstract class BaseRunnable {
 	}
 
 	/**
-	 * Send an event-based message to the parent 
+	 * Send an event-based message to the parent
 	 * 
 	 * @param event
 	 * @param content
@@ -299,6 +327,7 @@ public abstract class BaseRunnable {
 
 	/**
 	 * Send a piece of JSON to the parent
+	 * 
 	 * @param json
 	 */
 	private void sendMessage(String json) {
@@ -334,11 +363,15 @@ public abstract class BaseRunnable {
 	}
 
 	protected Map<String, Object> readMessageAndRespond() {
-		 Map<String, Object> msg = readMessage();
-		 sendMessage(gson.toJson(toMap(RESPONSE_KEY,OK)));
-		 return msg;
+		Map<String, Object> msg = readMessage();
+		sendOK();
+		return msg;
 	}
-	
+
+	protected void sendOK() {
+		sendMessage(gson.toJson(toMap(RESPONSE_KEY, OK)));
+	}
+
 	/**
 	 * Utility method to pack an event and a piece of content into a JSON
 	 * message for sending to the parent
@@ -349,24 +382,6 @@ public abstract class BaseRunnable {
 	 */
 	private Map<String, Object> wrapContent(String event, Object content) {
 		return toMap(EVENT_KEY, event, CONTENT_KEY, content);
-	}
-
-	/**
-	 * Utility method for building a hash from key-value pairs
-	 * 
-	 * @param o
-	 * @return
-	 */
-	protected Map<String, Object> toMap(Object... o) {
-		if (o.length % 2 != 0) {
-			throw new IllegalArgumentException(
-					"Even number of arguments expected");
-		}
-		Map<String, Object> map = new HashMap<>();
-		for (int i = 0; i < o.length; i += 2) {
-			map.put(o[i].toString(), o[i + 1]);
-		}
-		return map;
 	}
 
 }

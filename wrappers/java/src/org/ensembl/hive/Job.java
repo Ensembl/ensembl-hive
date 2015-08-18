@@ -2,6 +2,9 @@ package org.ensembl.hive;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.gson.Gson;
 
 /**
@@ -11,6 +14,8 @@ import com.google.gson.Gson;
  *
  */
 public class Job {
+	
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private static final String INPUT_ID_KEY = "input_id";
 
@@ -20,7 +25,7 @@ public class Job {
 
 	private static final String PARAMETERS_KEY = "parameters";
 
-	private final Map<String, Object> parameters;
+	private final ParamContainer parameters;
 	private final int retryCount;
 	private final int dbID;
 	private final String inputId;
@@ -33,7 +38,9 @@ public class Job {
 	private transient final Gson gson = new Gson();
 
 	public Job(Map<String, Object> jobParams) {
-		this.parameters = (Map<String, Object>) (jobParams.get(PARAMETERS_KEY));
+		log.debug("Building job with params with "+String.valueOf(jobParams.get(PARAMETERS_KEY)));
+		this.parameters = new ParamContainer(
+				(Map<String, Object>) (jobParams.get(PARAMETERS_KEY)));;
 		this.retryCount = Double.valueOf(
 				jobParams.get(RETRY_COUNT_KEY).toString()).intValue();
 		this.dbID = Double.valueOf(jobParams.get(DB_ID_KEY).toString())
@@ -41,7 +48,7 @@ public class Job {
 		this.inputId = (String) (jobParams.get(INPUT_ID_KEY));
 	}
 
-	public Job(Map<String, Object> parameters, int retryCount, int dbID,
+	public Job(ParamContainer parameters, int retryCount, int dbID,
 			String inputId) {
 		super();
 		this.parameters = parameters;
@@ -58,7 +65,7 @@ public class Job {
 		return inputId;
 	}
 
-	public Map<String, Object> getParameters() {
+	public ParamContainer getParameters() {
 		return parameters;
 	}
 
@@ -102,4 +109,18 @@ public class Job {
 		this.complete = complete;
 	}
 
+	/**
+	 * Returns the value of the parameter "param_name" or raises an exception if
+	 * anything wrong happens. The exception is marked as non-transient.
+	 * 
+	 * @param paramName
+	 * @return
+	 */
+	public Object paramRequired(String paramName) {
+		boolean e = isTransientError();
+		setTransientError(false);
+		Object v = getParameters().getParam(paramName);
+		setTransientError(e);
+		return v;
+	}
 }
