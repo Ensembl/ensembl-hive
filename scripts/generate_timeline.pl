@@ -259,10 +259,26 @@ sub main {
             [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
+    my $safe_database_location = sprintf('%s@%s', $hive_dba->dbc->dbname, $hive_dba->dbc->host || '-');
+    my $plotted_analyses_desc = '';
+    if ($n_relevant_analysis < scalar(@sorted_key_ids)) {
+        if ($real_top) {
+            if ($real_top < 1) {
+                $plotted_analyses_desc = sprintf('the top %.1f%% of ', 100*$real_top);
+            } else {
+                $plotted_analyses_desc = "the top $real_top analyses of ";
+            }
+        } else {
+            $plotted_analyses_desc = "the top $n_relevant_analysis analyses of ";
+        }
+    }
+    my $title = "Profile of ${plotted_analyses_desc}${safe_database_location}";
+    $title .= " from $start_date" if $start_date;
+    $title .= " to $end_date" if $end_date;
+
     # The main Gnuplot object
     my $chart = Chart::Gnuplot->new(
-        title => sprintf('Profile of %s%s', $n_relevant_analysis < scalar(@sorted_key_ids) ? sprintf('the %s top-analysis of ', $real_top ? ($real_top < 1 ? sprintf('%.1f%%', 100*$real_top) : $real_top) : $n_relevant_analysis) : '', $url)
-                 .($start_date ? " from $start_date" : "").($end_date ? " to $end_date" : ""),
+        title => $title,
         timeaxis => 'x',
         legend => {
             position => 'outside right',
