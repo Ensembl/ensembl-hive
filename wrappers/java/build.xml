@@ -39,6 +39,7 @@
 			<arg value="${org.ensembl.hive.module}" />
 			<arg value="${org.ensembl.hive.pipe_in}" />
 			<arg value="${org.ensembl.hive.pipe_out}" />
+			<arg value="${org.ensembl.hive.debug}" />
 			<classpath refid="wrapper_classpath" />
 		</java>
 	</target>
