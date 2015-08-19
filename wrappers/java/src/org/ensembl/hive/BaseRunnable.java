@@ -21,6 +21,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 
@@ -58,7 +60,7 @@ public abstract class BaseRunnable {
 	private static final String JOB_END_TYPE = "JOB_END";
 	private static final String OK = "OK";
 
-	public final static String VERSION = "0.1";
+	public final static String VERSION = "0.2";
 
 	protected final static Map<String, Object> DEFAULT_PARAMS = new HashMap<>();
 
@@ -82,7 +84,7 @@ public abstract class BaseRunnable {
 
 	protected final BufferedReader input;
 	protected final BufferedWriter output;
-	protected final Gson gson;
+	protected final ObjectMapper mapper;
 
 	private int debug = 1;
 	private String workerTempDirectory;
@@ -100,7 +102,7 @@ public abstract class BaseRunnable {
 	private BaseRunnable(Reader input, Writer output) throws IOException {
 		this.input = new BufferedReader(input);
 		this.output = new BufferedWriter(output);
-		this.gson = new Gson();
+		this.mapper = new ObjectMapper();
 	}
 
 	private BaseRunnable(InputStream input, OutputStream output)
@@ -132,10 +134,11 @@ public abstract class BaseRunnable {
 					sendOK();
 					getLog().debug("Building job with " + String.valueOf(inputJob));
 					Job job = new Job((Map) inputJob);
+					getLog().info("Processing job "+job.getDbID());
 					// process some other configs
-					this.debug = ((Double) response.get(DEBUG_KEY)).intValue();
+					this.debug = (Integer) response.get(DEBUG_KEY);
 					try {
-						runLifeCycle(job, (((Double)response.get(EXECUTE_WRITES_KEY)).intValue() == 1));
+						runLifeCycle(job, numericParamToLong(response.get(EXECUTE_WRITES_KEY)) == 1);
 						getLog().info("Job completed");
 						job.setComplete(true);
 					} catch (HiveCommunicationException e) {
@@ -322,7 +325,13 @@ public abstract class BaseRunnable {
 	 * @param content
 	 */
 	protected void sendEventMessage(String event, Object content) {
-		sendMessage(gson.toJson(wrapContent(event, content)));
+		try {
+			sendMessage(mapper.writeValueAsString(wrapContent(event, content)));
+		} catch (JsonProcessingException e) {
+			String msg = "Problem writing event "+event+" as json";
+			getLog().error(msg,e);
+			throw new HiveCommunicationException(msg, e);
+		}
 	}
 
 	/**
@@ -353,8 +362,8 @@ public abstract class BaseRunnable {
 			log.trace("Reading input");
 			String json = input.readLine();
 			log.trace("Parsing " + json);
-			return (Map<String, Object>) (gson.fromJson(json,
-					LinkedTreeMap.class));
+			return (Map<String, Object>) (mapper.readValue(json,
+					Map.class));
 		} catch (IOException e) {
 			String msg = "Could not read message from parent process";
 			log.error(msg, e);
@@ -369,7 +378,13 @@ public abstract class BaseRunnable {
 	}
 
 	protected void sendOK() {
-		sendMessage(gson.toJson(toMap(RESPONSE_KEY, OK)));
+		try {
+			sendMessage(mapper.writeValueAsString(toMap(RESPONSE_KEY, OK)));
+		} catch (JsonProcessingException e) {
+			String msg = "Problem writing OK response as json";
+			getLog().error(msg,e);
+			throw new HiveCommunicationException(msg, e);
+		}
 	}
 
 	/**
@@ -382,6 +397,38 @@ public abstract class BaseRunnable {
 	 */
 	private Map<String, Object> wrapContent(String event, Object content) {
 		return toMap(EVENT_KEY, event, CONTENT_KEY, content);
+	}
+	
+	/**
+	 * Helper method for dealing with numbers that have been passed around
+	 * through JSON and may be of different types
+	 * 
+	 * @param param
+	 * @return
+	 */
+	public static Long numericParamToLong(Object param) {
+		if (Long.class.isAssignableFrom(param.getClass())) {
+			return (Long) param;
+		} else if (Integer.class.isAssignableFrom(param.getClass())) {
+			return Long.valueOf((Integer) param);
+		} else if (Double.class.isAssignableFrom(param.getClass())) {
+			return ((Double) param).longValue();
+		} else if (String.class.isAssignableFrom(param.getClass())) {
+			return Long.parseLong((String) param);
+		} else {
+			throw new UnsupportedOperationException(
+					"Cannot extract integer from object of type "
+							+ param.getClass());
+		}
+	}
+
+	public static String numericParamToStr(Object param) {
+		if (Double.class.isAssignableFrom(param.getClass())) {
+			// cast to long first
+			return String.valueOf(((Double) param).longValue());
+		} else {
+			return String.valueOf(param);
+		}
 	}
 
 }
