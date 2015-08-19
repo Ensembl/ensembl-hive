@@ -33,7 +33,7 @@ sub standaloneJob {
     my $runnable_module = $language ? 'Bio::EnsEMBL::Hive::GuestProcess' : load_file_or_module( $module_or_file );
 
 
-    my $runnable_object = $runnable_module->new($language, $module_or_file);    # Only GuestProcess will read the arguments
+    my $runnable_object = $runnable_module->new($language, $module_or_file, $flags->{debug});    # Only GuestProcess will read the arguments
     die "Runnable $module_or_file not created\n" unless $runnable_object;
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
