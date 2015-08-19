@@ -4,8 +4,6 @@ import static org.ensembl.hive.longmult.DigitFactory.A_MULTIPLIER;
 import static org.ensembl.hive.longmult.DigitFactory.B_MULTIPLIER;
 import static org.ensembl.hive.longmult.DigitFactory.PARTIAL_PRODUCT;
 import static org.ensembl.hive.longmult.DigitFactory.TAKE_TIME;
-import static org.ensembl.hive.longmult.DigitFactory.numericParamToLong;
-import static org.ensembl.hive.longmult.DigitFactory.numericParamToStr;
 import static org.ensembl.hive.longmult.DigitFactory.sleep;
 
 import java.io.File;
@@ -34,8 +32,8 @@ public class AddTogether extends BaseRunnable {
 		Map<String, Object> partialProduct = (Map<String, Object>) job
 				.getParameters().getParam(PARTIAL_PRODUCT);
 		System.out.println(partialProduct);
-		partialProduct.put("0", new Double(a_multiplier));
-		partialProduct.put("1", new Double(0));
+		partialProduct.put("0", new Long(0));
+		partialProduct.put("1", new Long(a_multiplier));
 	}
 
 	@Override
@@ -63,10 +61,9 @@ public class AddTogether extends BaseRunnable {
 		}
 
 		// split and reverse the digits in b_multiplier
-		// my @b_digits = reverse split(//, $b_multiplier);
 		char[] b_digits = StringUtils.reverse(b_multiplier).toCharArray();
-		// iterate over each digit in b_digits
 
+		// iterate over each digit in b_digits
 		for (int i = 0; i < b_digits.length; i++) {
 			// for each digit
 			char b_digit = b_digits[i];
@@ -81,7 +78,8 @@ public class AddTogether extends BaseRunnable {
 				char p_digit = p_digits[j];
 				getLog().debug(
 						"j=" + j + ", p_digit="
-								+ Character.getNumericValue(p_digit));
+								+ Character.getNumericValue(p_digit) + ", i+j="
+								+ (i + j));
 				// add to accumulator
 				getLog().debug("[" + i + "+" + j + "] before=" + accu[i + j]);
 				accu[i + j] = accu[i + j] + Character.getNumericValue(p_digit);
@@ -97,19 +95,19 @@ public class AddTogether extends BaseRunnable {
 			int val = carry + accu[i];
 			accu[i] = val % 10;
 			carry = val / 10;
+			getLog().debug(
+					"Finished dealing with digit " + i + " of " + accu.length
+							+ ": " + accu[i] + ", carry=" + carry);
 		}
 
 		getLog().debug("result=" + Arrays.toString(accu));
-
-		// join together but remove leading 0
+		// turn accumulator array back into a string and reversing it
 		StringBuilder sb = new StringBuilder();
 		for (int i = accu.length - 1; i >= 0; i--) {
-			if (i < accu.length || accu[i] != '0') {
-				sb.append(accu[i]);
-			}
+			sb.append(accu[i]);
 		}
 
-		return sb.toString();
+		return Long.parseLong(sb.toString());
 	}
 
 	@Override

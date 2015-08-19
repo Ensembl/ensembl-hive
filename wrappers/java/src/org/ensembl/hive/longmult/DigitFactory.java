@@ -31,16 +31,16 @@ public class DigitFactory extends BaseRunnable {
 
 	@Override
 	protected void fetchInput(Job job) {
-		getLog().info("Fetching b_multiplier");
+		getLog().debug("Fetching b_multiplier");
 		String bMultiplier = numericParamToStr(job.paramRequired(B_MULTIPLIER)
 				.toString());
-		getLog().info("b_multiplier=" + bMultiplier);
+		getLog().debug("b_multiplier=" + bMultiplier);
 		// split the multiplier by digits and store each digit in a hash
 		List<Map<String, Object>> subTasks = Arrays
 				.asList(bMultiplier.split("(?!^)")).stream()
 				.filter(c -> c.matches("[2-9]")).map(c -> toMap(DIGIT, c))
 				.collect(Collectors.toList());
-		getLog().info("subTasks=" + subTasks);
+		getLog().debug("subTasks=" + subTasks);
 		job.getParameters().setParam(SUB_TASKS, subTasks);
 	}
 
@@ -64,40 +64,8 @@ public class DigitFactory extends BaseRunnable {
 	@Override
 	protected void writeOutput(Job job) {
 		Object subTasks = job.getParameters().getParam(SUB_TASKS);
-		getLog().info("Writing output " + subTasks + " on branch 2");
+		getLog().debug("Writing output " + subTasks + " on branch 2");
 		dataflow(job.getParameters(), (List)subTasks, 2);
-	}
-
-	/**
-	 * Helper method for dealing with numbers that have been passed around
-	 * through JSON and may be of different types
-	 * 
-	 * @param param
-	 * @return
-	 */
-	public static Long numericParamToLong(Object param) {
-		if (Long.class.isAssignableFrom(param.getClass())) {
-			return (Long) param;
-		} else if (Integer.class.isAssignableFrom(param.getClass())) {
-			return Long.valueOf((Integer) param);
-		} else if (Double.class.isAssignableFrom(param.getClass())) {
-			return ((Double) param).longValue();
-		} else if (String.class.isAssignableFrom(param.getClass())) {
-			return Long.parseLong((String) param);
-		} else {
-			throw new UnsupportedOperationException(
-					"Cannot extract integer from object of type "
-							+ param.getClass());
-		}
-	}
-
-	public static String numericParamToStr(Object param) {
-		if (Double.class.isAssignableFrom(param.getClass())) {
-			// cast to int first
-			return String.valueOf(((Double) param).longValue());
-		} else {
-			return String.valueOf(param);
-		}
 	}
 
 }
