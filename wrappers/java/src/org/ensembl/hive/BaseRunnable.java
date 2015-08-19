@@ -12,10 +12,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -23,8 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 
 /**
  * Base class implementing the runnable lifecycle
@@ -132,13 +128,16 @@ public abstract class BaseRunnable {
 				} else {
 					// job, so respond OK and process it
 					sendOK();
-					getLog().debug("Building job with " + String.valueOf(inputJob));
+					getLog().debug(
+							"Building job with " + String.valueOf(inputJob));
 					Job job = new Job((Map) inputJob);
-					getLog().info("Processing job "+job.getDbID());
+					getLog().info("Processing job " + job.getDbID());
 					// process some other configs
 					this.debug = (Integer) response.get(DEBUG_KEY);
 					try {
-						runLifeCycle(job, numericParamToLong(response.get(EXECUTE_WRITES_KEY)) == 1);
+						runLifeCycle(job,
+								numericParamToLong(response
+										.get(EXECUTE_WRITES_KEY)) == 1);
 						getLog().info("Job completed");
 						job.setComplete(true);
 					} catch (HiveCommunicationException e) {
@@ -160,7 +159,7 @@ public abstract class BaseRunnable {
 				throw new HiveCommunicationException(msg);
 			}
 		}
-		
+
 		try {
 			getLog().trace("Closing input pipe");
 			input.close();
@@ -328,8 +327,8 @@ public abstract class BaseRunnable {
 		try {
 			sendMessage(mapper.writeValueAsString(wrapContent(event, content)));
 		} catch (JsonProcessingException e) {
-			String msg = "Problem writing event "+event+" as json";
-			getLog().error(msg,e);
+			String msg = "Problem writing event " + event + " as json";
+			getLog().error(msg, e);
 			throw new HiveCommunicationException(msg, e);
 		}
 	}
@@ -362,8 +361,7 @@ public abstract class BaseRunnable {
 			log.trace("Reading input");
 			String json = input.readLine();
 			log.trace("Parsing " + json);
-			return (Map<String, Object>) (mapper.readValue(json,
-					Map.class));
+			return (Map<String, Object>) (mapper.readValue(json, Map.class));
 		} catch (IOException e) {
 			String msg = "Could not read message from parent process";
 			log.error(msg, e);
@@ -382,7 +380,7 @@ public abstract class BaseRunnable {
 			sendMessage(mapper.writeValueAsString(toMap(RESPONSE_KEY, OK)));
 		} catch (JsonProcessingException e) {
 			String msg = "Problem writing OK response as json";
-			getLog().error(msg,e);
+			getLog().error(msg, e);
 			throw new HiveCommunicationException(msg, e);
 		}
 	}
@@ -398,7 +396,7 @@ public abstract class BaseRunnable {
 	private Map<String, Object> wrapContent(String event, Object content) {
 		return toMap(EVENT_KEY, event, CONTENT_KEY, content);
 	}
-	
+
 	/**
 	 * Helper method for dealing with numbers that have been passed around
 	 * through JSON and may be of different types
