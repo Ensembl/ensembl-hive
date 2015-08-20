@@ -17,16 +17,9 @@
     This RunnableDB module acts as a wrapper for an SQL command
     run against either the current hive database (default) or against one specified by 'db_conn' parameter
     (--db_conn becomes obligatory in standalone mode, because there is no hive_db).
-    If you behave you may also use parameter substitution.
 
-    The SQL command(s) can be given using two different syntaxes:
-
-    1) Sql command is stored in the input_id() or parameters() as the value corresponding to the 'sql' key.
-        THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
-
-    2) Sql command is stored in the 'input_id' field of the job table.
-        (only works with sql commands shorter than 255 bytes).
-        This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
+    The Sql command must be stored in the parameters() as the value corresponding to the 'sql' key.
+    It allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
 =head1 LICENSE
 
