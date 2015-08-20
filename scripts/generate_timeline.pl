@@ -416,6 +416,11 @@ sub cumulate_events {
         last if $end_date and ($event_date gt $end_date);
         next unless exists $events->{$event_date};
 
+        if ((scalar(@data_timings) == 0) and $start_date and ($event_date ge $start_date)) {
+            push @data_timings, [$start_date, { %hash_curr_workers }];
+            %tot_area = %hash_curr_workers;
+        }
+
         my $topup_hash = $events->{$event_date};
         foreach my $key_id (keys %$topup_hash) {
             $hash_curr_workers{$key_id} += $topup_hash->{$key_id};
