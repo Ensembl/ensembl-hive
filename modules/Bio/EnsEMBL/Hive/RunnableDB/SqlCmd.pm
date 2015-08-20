@@ -55,11 +55,78 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
+sub param_defaults {
+    return {
+        'wrap_in_transaction' => 0,
+    }
+}
+
 
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here it actually runs the sql command(s).  If a list of commands is given, they are run in succession within the same session
+                  Here it is a simple decision step based on the "wrap_in_transaction" parameter. If the latter is set, call _exec_sql() in a transaction,
+                  otherwise call it directly.
+
+    param('wrap_in_transaction'): Whether or not run the commands in a global transaction
+
+=cut
+
+sub run {
+    my $self = shift;
+
+    if ($self->param('wrap_in_transaction')) {
+        $self->_run_in_transaction();
+    } else {
+        $self->_exec_sql();
+    }
+}
+
+
+=head2 _run_in_transaction
+
+    Description : Wrapper around _exec_sql() that first sets AutoCommit to 0, and at the end issues a commit() / rollback()
+                  command depending on the outcome of _exec_sql().
+                  It also has to temporarily set disconnect_when_inactive() to 1 because a value of 0 would cause the
+                  DBConnection object to disconnect early, which would rollback the transaction.
+
+=cut
+
+sub _run_in_transaction {
+    my $self = shift;
+
+    my $dbc = $self->data_dbc();
+
+    # Save the original value of disconnect_when_inactive()
+    my $original_dwi = $dbc->disconnect_when_inactive();
+    $dbc->disconnect_when_inactive(0);
+
+    # Save the original value of "AutoCommit"
+    my $original_ac = $dbc->db_handle()->{'AutoCommit'};
+    $dbc->db_handle()->{'AutoCommit'} = 0;
+
+    eval {
+        $self->_exec_sql();
+        $dbc->db_handle()->commit();
+    };
+    my $error = $@;
+
+    #If there is an error then we apply rollbacks
+    if($error) {
+        eval { $dbc->db_handle()->rollback(); };
+    }
+
+    # Restore the original values
+    $dbc->db_handle()->{'AutoCommit'} = $original_ac;
+    $dbc->disconnect_when_inactive($original_dwi);
+
+    $self->throw("ABORT: Transaction aborted because of error: ${error}") if $error;
+}
+
+
+=head2 _exec_sql
+
+    Description : Actually run the sql command(s).  If a list of commands is given, they are run in succession within the same session
                   (so you can create a temporary tables and use it in another command within the same sql command list).
 
     param('sql'): Either a scalar SQL command or an array of SQL commands.
@@ -70,7 +137,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 =cut
 
-sub run {
+sub _exec_sql {
     my $self = shift;
 
     my $sqls = $self->param_required('sql');
