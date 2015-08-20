@@ -433,7 +433,11 @@ sub cumulate_events {
         $max_workers = $num_curr_workers if ($num_curr_workers > $max_workers);
 
         # We need to repeat the previous value to have an histogram shape
-        push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
+        if (@data_timings) {
+            push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }];
+        } elsif ($event_date ne $start_date) {
+            push @data_timings, [$start_date, { %hash_interval }];
+        }
         push @data_timings, [$event_date, \%hash_interval];
     }
     push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
