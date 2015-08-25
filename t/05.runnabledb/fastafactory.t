@@ -89,12 +89,20 @@ my $expected_properties = {
     'test2_1.fa' => [ 662 ],
     'test2_2.fa' => [ 1313 ],
     'test2_3.fa' => [ 1475 ],
-    'test2_4.fa' => [ 0 ],
 
     'test3_1.fa' => [ 1975 ],
     'test3_2.fa' => [ 1475 ],
-    'test3_3.fa' => [ 0 ],
-    'test3_4.fa' => [ 0 ],
+
+    'test4_1.fa' => [ 402 ],
+    'test4_2.fa' => [ 386 ],
+    'test4_3.fa' => [ 408 ],
+    'test4_4.fa' => [ 408 ],
+    'test4_5.fa' => [ 408 ],
+    'test4_6.fa' => [ 368 ],
+    'test4_7.fa' => [ 408 ],
+    'test4_8.fa' => [ 408 ],
+    'test4_9.fa' => [ 408 ],
+    '0/test4_10.fa' => [ 204 ],
 };
 
 foreach my $file(@all_files) {
@@ -123,5 +131,34 @@ foreach my $file(@all_files) {
     my $exp_size = $expected_properties->{$file}[0];
     is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
 }
+
+##
+## next job
+##
+
+# New input file that has shorter sequences
+my $new_inputfile = 'test_input.fa';
+system(q{awk '!($0 ~ /^>/) {print ">seq"NR; print $0}' }.qq{ $inputfile > $new_inputfile});
+
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
+        'inputfile'         => $new_inputfile,
+        'max_chunk_length'  => 300, ## such that some files will be in sub-directories
+        'output_prefix'     => './test4_',
+        'output_suffix'     => '.fa',
+        'hash_directories'  => 1,
+});
+
+$expected_filename = 'test4_1.fa';
+ok(-e $expected_filename, 'output file exists');
+
+@all_files = (glob('test4_*.fa'), glob('0/test4_*.fa'));
+is(@all_files, 10, 'correct number of output files - test 4');
+# diag "@all_files";
+
+foreach my $file(@all_files) {
+    my $exp_size = $expected_properties->{$file}[0];
+    is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
+}
+
 
 done_testing();
