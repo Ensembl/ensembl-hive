@@ -17,7 +17,10 @@
 =head1 DESCRIPTION
 
     This is a Bioinformatics-specific "Factory" Runnable that splits a given Fasta file into smaller chunks
-    and dataflows one job per chunk.
+    and dataflows one job per chunk. Note that:
+        - the files are created in the current directory.
+        - the Runnable does not split the individual sequences, it only groups them in a way that none of the output files will
+          be longer than param('max_chunk_length').
 
     The following parameters are supported:
 
@@ -28,6 +31,8 @@
         param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
 
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
+
+        param('hash_directories');  # Boolean (default to 0): should the output files be put in different ("hashed") directories
 
 =head1 LICENSE
 
@@ -53,8 +58,12 @@ package Bio::EnsEMBL::Hive::RunnableDB::FastaFactory;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::SeqIO;
+use File::Path;
+
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
+
+use base ('Bio::EnsEMBL::Hive::Process');
 
 
 =head2 param_defaults
@@ -69,6 +78,7 @@ sub param_defaults {
         'max_chunk_length'  => 100000,
         'output_prefix'     => 'my_chunk_',
         'output_suffix'     => '.fasta',
+        'hash_directories'  => 0,
     };
 }
 
@@ -126,6 +136,13 @@ sub write_output {
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
+    if ($self->param('hash_directories')) {
+        my $dir_tree = dir_revhash($chunk_number);
+        if ($dir_tree ne '') {
+            mkpath($dir_tree);
+            $chunk_name = $dir_tree.'/'.$chunk_name;
+        }
+    }
     my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
     
     while (my $seq_object = $input_seqio->next_seq) {
@@ -150,6 +167,13 @@ sub write_output {
             $chunk_size     = 0;
             $chunk_number++;
             $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
+            if ($self->param('hash_directories')) {
+                my $dir_tree = dir_revhash($chunk_number);
+                if ($dir_tree ne '') {
+                    mkpath($dir_tree);
+                    $chunk_name = $dir_tree.'/'.$chunk_name;
+                }
+            }
             $chunk_seqio    = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
         }
     }
