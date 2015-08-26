@@ -28,6 +28,8 @@ no warnings qw{qw};
 
 # This replaces "when_died" when a role is still active
 my $now = localtime;
+# To compare things to 0
+my $rounding_error_threshold = 0.005;
 
 main();
 exit(0);
@@ -319,7 +321,7 @@ sub add_dataset {
     foreach my $row (@$data_timings) {
         my $y = sum(map {$row->{$_} || 0} @$key_ids_to_sum) || $pseudo_zero_value;
         # Due to rounding errors, values are not always decreased to 0
-        push @ydata, $y < 0.05 ? $pseudo_zero_value : $y;
+        push @ydata, $y < $rounding_error_threshold ? $pseudo_zero_value : $y;
     }
     my $dataset = Chart::Gnuplot::DataSet->new(
         xdata => $xdata,
@@ -342,7 +344,7 @@ sub add_dataset {
             foreach my $i (@$analysis_ids_pattern) {
                 $y += ($lt->{$i} || 0) - ($dt->{$i} || 0);
             }
-            $ydatal[$j-1] = $y < 0.05 ? $pseudo_zero_value : $y;
+            $ydatal[$j-1] = $y < $rounding_error_threshold ? $pseudo_zero_value : $y;
         }
         $dataset = Chart::Gnuplot::DataSet->new(
             xdata => $xdata,
@@ -420,7 +422,7 @@ sub cumulate_events {
             $num_curr_workers += $topup_hash->{$key_id};
         }
         # Due to rounding errors, the sums may be slightly different
-        die sum(values %hash_curr_workers)."!=$num_curr_workers" if abs(sum(values %hash_curr_workers) - $num_curr_workers) > 0.05;
+        die sum(values %hash_curr_workers)."!=$num_curr_workers" if abs(sum(values %hash_curr_workers) - $num_curr_workers) > $rounding_error_threshold;
 
         next if $start_date and ($event_date lt $start_date);
 
@@ -431,7 +433,11 @@ sub cumulate_events {
         $max_workers = $num_curr_workers if ($num_curr_workers > $max_workers);
 
         # We need to repeat the previous value to have an histogram shape
-        push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
+        if (@data_timings) {
+            push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }];
+        } elsif ($event_date ne $start_date) {
+            push @data_timings, [$start_date, { %hash_interval }];
+        }
         push @data_timings, [$event_date, \%hash_interval];
     }
     push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
