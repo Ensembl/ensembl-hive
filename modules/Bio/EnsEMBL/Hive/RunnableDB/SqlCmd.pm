@@ -21,6 +21,8 @@
     The Sql command must be stored in the parameters() as the value corresponding to the 'sql' key.
     It allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
+    The Sql command(s) can be wrapped in a global transaction if the "wrap_in_transaction" flag is switched on (off by default)
+
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
