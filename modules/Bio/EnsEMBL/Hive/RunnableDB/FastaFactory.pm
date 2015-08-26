@@ -80,6 +80,7 @@ sub param_defaults {
         'output_prefix'     => 'my_chunk_',
         'output_suffix'     => '.fasta',
         'hash_directories'  => 0,
+        'output_dir'        => '.',
     };
 }
 
@@ -130,26 +131,35 @@ sub write_output {
 
     my $input_seqio         = $self->param('input_seqio');
     my $max_chunk_length    = $self->param('max_chunk_length');
+    my $output_dir          = $self->param('output_dir');
     my $output_prefix       = $self->param('output_prefix');
     my $output_suffix       = $self->param('output_suffix');
 
     my $chunk_number = 1;   # counts the chunks
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
-    my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
+    
+    my $current_output_directory;    
     if ($self->param('hash_directories')) {
         my $dir_tree = dir_revhash($chunk_number);
-        if ($dir_tree ne '') {
-            mkpath($dir_tree);
-            $chunk_name = $dir_tree.'/'.$chunk_name;
+        
+        if ($dir_tree eq '') {
+	  $current_output_directory = $output_dir;
+        } else {
+	  $current_output_directory = $output_dir . '/' . $dir_tree;
         }
+    } else {      
+      $current_output_directory = $output_dir;
     }
-    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+    mkpath($current_output_directory);
+    my $chunk_name   = $current_output_directory . '/' . $output_prefix . $chunk_number . $output_suffix;
+    my $chunk_seqio  = Bio::SeqIO->new(-file => '>' . $chunk_name, -format => 'fasta');
     
-    while (my $seq_object = $input_seqio->next_seq) {
-	$chunk_seqio->write_seq( $seq_object );
+    while (my $seq_object = $input_seqio->next_seq) {	
 	
         if((my $seq_length = $seq_object->length()) + $chunk_length <= $max_chunk_length) {
+        
+	    $chunk_seqio->write_seq( $seq_object );
             $chunk_length += $seq_length;
             $chunk_size   += 1;
 
@@ -167,15 +177,22 @@ sub write_output {
             $chunk_length   = 0;
             $chunk_size     = 0;
             $chunk_number++;
-            $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
+            
+            my $current_output_directory;
+            
             if ($self->param('hash_directories')) {
                 my $dir_tree = dir_revhash($chunk_number);
-                if ($dir_tree ne '') {
-                    mkpath($dir_tree);
-                    $chunk_name = $dir_tree.'/'.$chunk_name;
+                if ($dir_tree eq '') {                
+		  $current_output_directory = $output_dir;
+                } else {
+                  $current_output_directory = $output_dir . '/' . $dir_tree;
                 }
+                mkpath($current_output_directory);
+            } else {            
+	      $current_output_directory = $output_dir;
             }
-            $chunk_seqio    = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+            $chunk_name   = $current_output_directory . '/' . $output_prefix . $chunk_number . $output_suffix;
+            $chunk_seqio = Bio::SeqIO->new(-file => '>' . $chunk_name, -format => 'fasta');
         }
     }
 
