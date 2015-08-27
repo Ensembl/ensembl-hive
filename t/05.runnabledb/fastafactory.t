@@ -68,12 +68,46 @@ is(@all_files, 1, 'exactly one output file - test 1');
 ## 
 ## next job
 ##
-standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
+    {
         'inputfile'         => $inputfile,
         'max_chunk_length'  => 200, ## smaller than all sequences
         'output_prefix'     => './test2_',
         'output_suffix'     => '.fa',
-});
+    },
+    [
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 1,
+                'chunk_length' => 640,
+                'chunk_size' => 1,
+                'chunk_name' => './test2_1.fa'
+            },
+            2
+        ],
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 2,
+                'chunk_length' => 1280,
+                'chunk_size' => 1,
+                'chunk_name' => './test2_2.fa'
+            },
+            2
+        ],
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 3,
+                'chunk_length' => 1440,
+                'chunk_size' => 1,
+                'chunk_name' => './test2_3.fa'
+            },
+            2
+        ],
+    ],
+);
 
 
 $expected_filename = 'test2_1.fa';
@@ -111,12 +145,36 @@ foreach my $file(@all_files) {
 ## 
 ## next job
 ##
-standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
+    {
         'inputfile'         => $inputfile,
         'max_chunk_length'  => 1000, ## smaller than two combined sequences
         'output_prefix'     => './test3_',
         'output_suffix'     => '.fa',
-});
+    },
+    [
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 1,
+                'chunk_length' => 1920,
+                'chunk_size' => 2,
+                'chunk_name' => './test3_1.fa'
+            },
+            2
+        ],
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 2,
+                'chunk_length' => 1440,
+                'chunk_size' => 1,
+                'chunk_name' => './test3_2.fa'
+            },
+            2
+        ],
+    ],
+);
 
 $expected_filename = 'test3_1.fa';
 ok(-e $expected_filename, 'output file exists');

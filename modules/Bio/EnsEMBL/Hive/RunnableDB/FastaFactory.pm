@@ -148,12 +148,10 @@ sub write_output {
     
     while (my $seq_object = $input_seqio->next_seq) {
 	$chunk_seqio->write_seq( $seq_object );
+        $chunk_length += $seq_object->length();
+        $chunk_size   += 1;
 	
-        if((my $seq_length = $seq_object->length()) + $chunk_length <= $max_chunk_length) {
-            $chunk_length += $seq_length;
-            $chunk_size   += 1;
-
-        } else {
+        if ($chunk_length > $max_chunk_length) {
 
                 # dataflow the current chunk:
             $self->dataflow_output_id( {
