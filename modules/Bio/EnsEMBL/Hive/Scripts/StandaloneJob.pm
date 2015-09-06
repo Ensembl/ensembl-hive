@@ -25,6 +25,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 
 sub standaloneJob {
@@ -38,8 +39,11 @@ sub standaloneJob {
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
-    my $dummy_analysis = Bio::EnsEMBL::Hive::Analysis->new(
+    my $dummy_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();
+
+    my $dummy_analysis = $dummy_pipeline->add_new_or_update( 'Analysis',
         'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
+        'module'        => ref($runnable_object),
         'dbID'          => -1,
     );
 
@@ -50,8 +54,6 @@ sub standaloneJob {
     );
 
     $job->load_parameters( $runnable_object );
-
-    Bio::EnsEMBL::Hive::DataflowRule->collection( Bio::EnsEMBL::Hive::Utils::Collection->new() );
 
     $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow for branch 1 by default
 
@@ -98,7 +100,7 @@ sub standaloneJob {
 
                 foreach my $input_id_template (@$input_id_template_list) {
 
-                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule->add_new_or_update(
+                    my $df_rule = $dummy_pipeline->add_new_or_update( 'DataflowRule',
                         'from_analysis'             => $dummy_analysis,
                         'to_analysis_url'           => $heir_url,
                         'branch_code'               => $branch_name_or_code,
