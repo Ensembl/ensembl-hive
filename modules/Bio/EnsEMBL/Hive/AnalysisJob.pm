@@ -277,7 +277,7 @@ sub fan_cache {     # a self-initializing getter (no setting)
 =cut
 
 sub dataflow_output_id {
-    my ($self, $output_ids, $branch_name_or_code, $create_job_options) = @_;
+    my ($self, $output_ids, $branch_name_or_code) = @_;
 
     my $input_id                = $self->input_id();
     my $param_id_stack          = $self->param_id_stack();
@@ -297,10 +297,6 @@ sub dataflow_output_id {
 
     $output_ids  ||= [ $hive_use_param_stack ? {} : $input_id ];            # by default replicate the parameters of the parent in the child
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
-
-    if($create_job_options) {
-        die "Please consider configuring semaphored dataflow from PipeConfig rather than setting it up manually";
-    }
 
         # map branch names to numbers:
     my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
