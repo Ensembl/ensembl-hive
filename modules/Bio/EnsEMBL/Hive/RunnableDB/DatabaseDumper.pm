@@ -112,8 +112,7 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    # Would be good to have this from eHive
-    my @ehive_tables = qw(hive_meta pipeline_wide_parameters worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor role msg progress resource_class worker_resource_usage);
+    my @ehive_tables = (@{$self->db->list_of_tables}, @{$self->db->list_all_hive_views});
     $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Connection parameters

@@ -199,6 +199,16 @@ sub hive_auto_rebalance_semaphores {  # getter only, not setter
     return $self->_hive_meta_getter('hive_auto_rebalance_semaphores', 0);
 }
 
+sub list_all_hive_tables {
+    my $self = shift @_;
+    return [split /,/, $self->_hive_meta_getter('hive_all_base_tables', '')];
+}
+
+sub list_all_hive_views {
+    my $self = shift @_;
+    return [split /,/, $self->_hive_meta_getter('hive_all_views', '')];
+}
+
 
 our %adaptor_type_2_package_name = (
     'Accumulator'           => 'Bio::EnsEMBL::Hive::DBSQL::AccumulatorAdaptor',

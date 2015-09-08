@@ -136,6 +136,9 @@ sub pipeline_create_commands {
     my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
     my $hive_force_init = $self->o('hive_force_init');
 
+    # Will insert two keys: "hive_all_base_tables" and "hive_all_views"
+    my $hive_tables_sql = 'INSERT INTO hive_meta SELECT CONCAT("hive_all_", REPLACE(LOWER(TABLE_TYPE), " ", "_"), "s"), GROUP_CONCAT(TABLE_NAME) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "%s" GROUP BY TABLE_TYPE';
+
     return [
             $hive_force_init ? $self->db_cmd('DROP DATABASE IF EXISTS') : (),
             $self->db_cmd('CREATE DATABASE'),
@@ -151,6 +154,8 @@ sub pipeline_create_commands {
 
                 # we got procedure definitions for all drivers:
             $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+
+            ($driver eq 'mysql' ? ($self->db_cmd(sprintf($hive_tables_sql, $parsed_url->{'dbname'}))) : ()),
     ];
 }
 
