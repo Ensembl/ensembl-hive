@@ -172,36 +172,31 @@ sub dbc {
 }
 
 
-sub hive_use_triggers {  # getter only, not setter
-    my $self = shift @_;
+sub _hive_meta_getter {  # getter only, not setter
+    my ($self, $hive_meta_key, $default_value) = @_;
 
-    unless( defined($self->{'_hive_use_triggers'}) ) {
-        my $hive_use_triggers = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_triggers' );
-        $self->{'_hive_use_triggers'} = $hive_use_triggers // 0;
+    my $hash_key = '_hive_meta_'.$hive_meta_key;
+    unless( defined($self->{$hash_key}) ) {
+        my $val = $self->get_MetaAdaptor->get_value_by_key($hive_meta_key);
+        $self->{$hash_key} = $val // $default_value;
     } 
-    return $self->{'_hive_use_triggers'};
+    return $self->{$hash_key};
 }
 
+
+sub hive_use_triggers {  # getter only, not setter
+    my $self = shift @_;
+    return $self->_hive_meta_getter('hive_use_triggers', 0);
+}
 
 sub hive_use_param_stack {  # getter only, not setter
     my $self = shift @_;
-
-    unless( defined($self->{'_hive_use_param_stack'}) ) {
-        my $hive_use_param_stack = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_param_stack' );
-        $self->{'_hive_use_param_stack'} = $hive_use_param_stack // 0;
-    } 
-    return $self->{'_hive_use_param_stack'};
+    return $self->_hive_meta_getter('hive_use_param_stack', 0);
 }
-
 
 sub hive_auto_rebalance_semaphores {  # getter only, not setter
     my $self = shift @_;
-
-    unless( defined($self->{'_hive_auto_rebalance_semaphores'}) ) {
-        my $hive_auto_rebalance_semaphores = $self->get_MetaAdaptor->get_value_by_key( 'hive_auto_rebalance_semaphores' );
-        $self->{'_hive_auto_rebalance_semaphores'} = $hive_auto_rebalance_semaphores // 0;
-    } 
-    return $self->{'_hive_auto_rebalance_semaphores'};
+    return $self->_hive_meta_getter('hive_auto_rebalance_semaphores', 0);
 }
 
 
