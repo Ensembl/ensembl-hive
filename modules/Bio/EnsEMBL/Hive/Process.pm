@@ -492,6 +492,7 @@ sub param_substitute {
 sub dataflow_output_id {
     my $self = shift @_;
 
+    $self->say_with_header(sprintf("Dataflow on branch #%d of %s", $_[1] || 1, stringify($_[0])));
     return $self->input_job->dataflow_output_id(@_);
 }
 
