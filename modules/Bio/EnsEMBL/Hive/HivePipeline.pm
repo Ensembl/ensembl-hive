@@ -87,7 +87,7 @@ sub save_collections {
     }
 
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
-    foreach my $analysis ( Bio::EnsEMBL::Hive::Analysis->collection()->list ) {
+    foreach my $analysis ( $self->collection_of( 'Analysis' )->list ) {
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store( $our_jobs );
             foreach my $job (@$our_jobs) {
@@ -111,7 +111,7 @@ sub add_new_or_update {
         my %unikey_pairs;
         @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
 
-        if( $object = $class->collection()->find_one_by( %unikey_pairs ) ) {
+        if( $object = $self->collection_of( $type )->find_one_by( %unikey_pairs ) ) {
             my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object);
             if(keys %other_pairs) {
                 warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
@@ -136,7 +136,7 @@ sub add_new_or_update {
         my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
         warn "Created a new $found_display\n";
 
-        $class->collection()->add( $object );
+        $self->collection_of( $type )->add( $object );
     }
 
     return $object;
