@@ -939,7 +939,15 @@ sub add_examples {
           $sql =~ s/$word /$word /i;
         }
       }
-      $html .= qq{<pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">$sql</pre> $show_hide\n$sql_table};
+      $html .= qq{
+      <div>
+        <div style="float:left">
+          <pre style="border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px;overflow:auto;max-width:800px">$sql</pre>
+        </div>
+        <div style="float:left">$show_hide</div>
+        <div style="clear:both"></div>
+      </div>
+      $sql_table};
     }
     $html .= qq{</div>};
     $nb ++;
@@ -1253,7 +1261,7 @@ sub show_hide_button {
   my $label  = shift;
   
   my $show_hide = qq{
-  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;$box_shadow" onclick="show_hide('$div_id','$label')">
+  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;vertical-align:middle;$box_shadow" onclick="show_hide('$div_id','$label')">
     $img_plus Show $label
   </a>};
   return $show_hide;
