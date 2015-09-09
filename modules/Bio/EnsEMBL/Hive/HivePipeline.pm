@@ -13,6 +13,7 @@ sub hive_dba {      # The adaptor for HivePipeline objects
 
     if(@_) {
         $self->{'_hive_dba'} = shift @_;
+        $self->{'_hive_dba'}->hive_pipeline($self) if $self->{'_hive_dba'};
     }
     return $self->{'_hive_dba'};
 }
@@ -22,9 +23,14 @@ sub collection_of {
     my $self = shift @_;
     my $type = shift @_;
 
-    my $class = 'Bio::EnsEMBL::Hive::'.$type;
+    if (@_) {
+        warn "set the $type collection";
+        $self->{'_cache_by_class'}->{$type} = shift @_;
+    } elsif (not $self->{'_cache_by_class'}->{$type}) {
+        $self->load_collections( [$type] );
+    }
 
-    return $class->collection( @_ );    # temporary re-routing
+    return $self->{'_cache_by_class'}->{$type};
 }
 
 
@@ -34,13 +40,13 @@ sub new {       # construct an attached or a detached Pipeline object
     my $self = bless {}, $class;
 
     my %dba_flags           = @_;
-    my $load_collections    = delete $dba_flags{'-load_collections'};
+    my $existing_dba        = delete $dba_flags{'-dba'};
 
     if(%dba_flags) {
         my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( %dba_flags );
         $self->hive_dba( $hive_dba );
-
-        $self->load_collections( $load_collections );  # ToDo: should become lazy when $class->collection() is no longer used and $pipeline->collection_of() is used everywhere instead
+    } elsif ($existing_dba) {
+        $self->hive_dba( $existing_dba );
     } else {
         $self->init_collections();
     }
@@ -52,6 +58,13 @@ sub new {       # construct an attached or a detached Pipeline object
 sub init_collections {
     my $self = shift @_;
 
+    # If there is a DBAdaptor, collection_of() will call load_collections() on demand
+    if ($self->hive_dba) {
+        delete $self->{'_cache_by_class'};
+        return;
+    }
+
+    # Otherwise, we need to explicitly reset all the collections
     foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
         $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new() );
     }
@@ -67,7 +80,11 @@ sub load_collections {
 
     foreach my $AdaptorType ( @$load_collections ) {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $adaptor->fetch_all ) );
+        my $all_objects = $adaptor->fetch_all();
+        if (@$all_objects and UNIVERSAL::isa($all_objects->[0], 'Bio::EnsEMBL::Hive::Cacheable')) {
+            $_->hive_pipeline($self) for @$all_objects;
+        }
+        $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $all_objects ) );
     }
 }
 
@@ -137,6 +154,8 @@ sub add_new_or_update {
         warn "Created a new $found_display\n";
 
         $self->collection_of( $type )->add( $object );
+
+        $object->hive_pipeline($self) if UNIVERSAL::isa($object, 'Bio::EnsEMBL::Hive::Cacheable');
     }
 
     return $object;

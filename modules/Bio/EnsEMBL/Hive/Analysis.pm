@@ -209,10 +209,9 @@ sub display_name {
 sub stats {
     my $self = shift @_;
 
-    my $collection = Bio::EnsEMBL::Hive::AnalysisStats->collection();
+    my $collection = $self->best_collection('AnalysisStats');
 
-    return ($collection && $collection->find_one_by('analysis', $self) )
-        || $self->adaptor->db->get_AnalysisStatsAdaptor->fetch_by_analysis_id( $self->dbID );
+    return $collection->find_one_by('analysis', $self);
 }
 
 
@@ -228,22 +227,18 @@ sub jobs_collection {
 sub control_rules_collection {
     my $self = shift @_;
 
-    my $collection = Bio::EnsEMBL::Hive::AnalysisCtrlRule->collection();
+    my $collection = $self->best_collection('AnalysisCtrlRule');
 
-    return $collection
-        ? $collection->find_all_by('ctrled_analysis', $self)
-        : $self->adaptor->db->get_AnalysisCtrlRuleAdaptor->fetch_all_by_ctrled_analysis_id( $self->dbID );
+    return $collection->find_all_by('ctrled_analysis', $self);
 }
 
 
 sub dataflow_rules_collection {
     my $self = shift @_;
 
-    my $collection = Bio::EnsEMBL::Hive::DataflowRule->collection();
+    my $collection = $self->best_collection('DataflowRule');
 
-    return $collection
-        ? $collection->find_all_by('from_analysis', $self)
-        : $self->adaptor->db->get_DataflowRuleAdaptor->fetch_all_by_from_analysis_id( $self->dbID );
+    return $collection->find_all_by('from_analysis', $self);
 }
 
 

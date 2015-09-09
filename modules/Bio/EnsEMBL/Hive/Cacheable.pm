@@ -29,6 +29,8 @@ package Bio::EnsEMBL::Hive::Cacheable;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
@@ -45,6 +47,25 @@ sub collection {
     return $cache_by_class{$class};
 }
 
+sub best_collection {
+    my ($self, $type) = @_;
+
+    if ($self->hive_pipeline) {
+        return $self->hive_pipeline->collection_of($type);
+    } else {
+        use Data::Dumper;
+        die "$self does not have a HivePipeline. Cannot find the $type collection.", Dumper($self);
+    }
+}
+
+sub hive_pipeline {
+    my $self = shift @_;
+    if (@_) {
+        $self->{'_hive_pipeline'} = shift @_;
+        weaken($self->{'_hive_pipeline'});
+    }
+    return $self->{'_hive_pipeline'};
+}
 
 sub unikey {    # to be redefined by individual Cacheable classes
     return undef;

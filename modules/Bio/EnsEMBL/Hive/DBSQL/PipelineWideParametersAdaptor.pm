@@ -58,17 +58,8 @@ sub default_table_name {
 sub fetch_param_hash {
     my $self = shift @_;
 
-    if( my $collection = Bio::EnsEMBL::Hive::PipelineWideParameters->collection() ) {
-
-        return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
-
-    } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
-
-        my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();
-        my %destringified_hash  = map { $_, destringify($original_value->{$_}) } keys %$original_value;
-
-        return \%destringified_hash;
-    }
+    my $collection = $self->db->hive_pipeline->collection_of( 'PipelineWideParameters' );
+    return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
 }
 
 1;

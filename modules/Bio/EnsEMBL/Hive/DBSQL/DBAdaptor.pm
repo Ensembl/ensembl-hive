@@ -37,7 +37,10 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
@@ -169,6 +172,18 @@ sub dbc {
     $self->{'_dbc'} = bless shift, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection' if(@_);
 
     return $self->{'_dbc'};
+}
+
+
+sub hive_pipeline {
+    my $self = shift @_;
+    if (@_) {
+        $self->{'_hive_pipeline'} = shift @_;
+    }
+    unless ($self->{'_hive_pipeline'}) {
+        $self->{'_hive_pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new( -dba => $self );
+    }
+    return $self->{'_hive_pipeline'};
 }
 
 

@@ -85,7 +85,10 @@ sub refresh {
 
     my $new_stats = $self->fetch_by_analysis_id( $stats->analysis_id );     # fetch into a separate object
 
+    my $has_hive_pipeline = exists $stats->{'_hive_pipeline'};
+    my $orig_hive_pipeline = $stats->hive_pipeline;
     %$stats = %$new_stats;                                                  # copy the data over
+    $stats->hive_pipeline($orig_hive_pipeline) if $has_hive_pipeline;
 
     return $stats;
 }

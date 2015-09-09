@@ -91,7 +91,6 @@ sub main {
             -reg_type                       => $reg_type,
             -reg_alias                      => $reg_alias,
             -no_sql_schema_version_check    => $nosqlvc,
-            -load_collections               => [ 'Analysis', 'AnalysisStats', 'DataflowRule', 'AnalysisCtrlRule' ],
         );
 
     } else {

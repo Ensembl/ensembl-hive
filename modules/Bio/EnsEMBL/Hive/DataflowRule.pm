@@ -159,7 +159,7 @@ sub to_analysis {
 
         # lazy load the analysis object if I can
     if( !$self->{'_to_analysis'} and my $to_analysis_url = $self->to_analysis_url ) {
-        my $collection = Bio::EnsEMBL::Hive::Analysis->collection();
+        my $collection = $self->best_collection('Analysis');
 
         if( $collection and $self->{'_to_analysis'} = $collection->find_one_by('logic_name', $to_analysis_url) ) {
 #            warn "Lazy-loading object from 'Analysis' collection\n";

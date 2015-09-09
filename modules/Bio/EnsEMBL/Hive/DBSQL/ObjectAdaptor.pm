@@ -70,7 +70,9 @@ sub objectify { # turn the hashref into an object (if only we could inline in Pe
 
     my $autoinc_id = $self->autoinc_id();
 
-    return $self->object_class()->new( 'adaptor' => $self, map { ( ($_ eq $autoinc_id) ? 'dbID' : $_ ) => $hashref->{$_} } keys %$hashref );
+    my $object = $self->object_class()->new( 'adaptor' => $self, map { ( ($_ eq $autoinc_id) ? 'dbID' : $_ ) => $hashref->{$_} } keys %$hashref );
+    $object->hive_pipeline($self->db->hive_pipeline) if $self->db->hive_pipeline and $object->can('hive_pipeline');
+    return $object;
 }
 
 

@@ -159,7 +159,6 @@ sub main {
             -reg_type                       => $self->{'reg_type'},
             -reg_alias                      => $self->{'reg_alias'},
             -no_sql_schema_version_check    => $self->{'nosqlvc'},
-            -load_collections               => [ 'ResourceClass', 'ResourceDescription', 'Analysis' ],
         );
 
         $self->{'dba'} = $self->{'pipeline'}->hive_dba();
@@ -444,7 +443,8 @@ sub run_autonomously {
 
                 # after waking up reload Resources and Analyses to stay current:
             unless($run_job_id) {
-                $pipeline->load_collections( [ 'ResourceClass', 'ResourceDescription', 'Analysis' ] );
+                # reset all the collections so that fresher data will be used at this iteration
+                $pipeline->init_collections();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
             }
