@@ -443,8 +443,8 @@ sub run_autonomously {
 
                 # after waking up reload Resources and Analyses to stay current:
             unless($run_job_id) {
-                # reset all the collections so that fresher data will be used at this iteration
-                $pipeline->init_collections();
+                    # reset all the collections so that fresher data will be used at this iteration:
+                $pipeline->invalidate_collections();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
             }

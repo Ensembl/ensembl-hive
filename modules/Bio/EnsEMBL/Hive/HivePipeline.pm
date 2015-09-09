@@ -26,7 +26,17 @@ sub collection_of {
     if (@_) {
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
-        $self->load_collections( [$type] );
+
+        if( my $hive_dba = $self->hive_dba ) {
+            my $adaptor = $hive_dba->get_adaptor( $type );
+            my $all_objects = $adaptor->fetch_all();
+            if(@$all_objects and UNIVERSAL::can($all_objects->[0], 'hive_pipeline') ) {
+                $_->hive_pipeline($self) for @$all_objects;
+            }
+            $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new( $all_objects );
+        } else {
+            $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new();
+        }
     }
 
     return $self->{'_cache_by_class'}->{$type};
@@ -47,44 +57,19 @@ sub new {       # construct an attached or a detached Pipeline object
     } elsif ($existing_dba) {
         $self->hive_dba( $existing_dba );
     } else {
-        $self->init_collections();
+#       warn "Created a standalone pipeline";
     }
 
     return $self;
 }
 
 
-sub init_collections {
+    # If there is a DBAdaptor, collection_of() will fetch a collection on demand:
+sub invalidate_collections {
     my $self = shift @_;
 
-    # If there is a DBAdaptor, collection_of() will call load_collections() on demand
-    if ($self->hive_dba) {
-        delete $self->{'_cache_by_class'};
-        return;
-    }
-
-    # Otherwise, we need to explicitly reset all the collections
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
-        $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new() );
-    }
-}
-
-
-sub load_collections {
-    my $self                = shift @_;
-    my $load_collections    = shift @_
-                        || [ 'MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule' ];
-
-    my $hive_dba = $self->hive_dba();
-
-    foreach my $AdaptorType ( @$load_collections ) {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        my $all_objects = $adaptor->fetch_all();
-        if (@$all_objects and UNIVERSAL::isa($all_objects->[0], 'Bio::EnsEMBL::Hive::Cacheable')) {
-            $_->hive_pipeline($self) for @$all_objects;
-        }
-        $self->collection_of( $AdaptorType, Bio::EnsEMBL::Hive::Utils::Collection->new( $all_objects ) );
-    }
+    delete $self->{'_cache_by_class'};
+    return;
 }
 
 
