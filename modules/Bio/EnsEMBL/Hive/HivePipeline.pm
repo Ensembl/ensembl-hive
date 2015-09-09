@@ -24,7 +24,6 @@ sub collection_of {
     my $type = shift @_;
 
     if (@_) {
-        warn "set the $type collection";
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
         $self->load_collections( [$type] );

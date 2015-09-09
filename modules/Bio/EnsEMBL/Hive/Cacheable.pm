@@ -31,32 +31,6 @@ use warnings;
 
 use Scalar::Util qw(weaken);
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
-use Bio::EnsEMBL::Hive::Utils::Collection;
-
-our %cache_by_class;    # global Hash-of-Hashes
-
-
-sub collection {
-    my $class = shift @_;
-
-    if(@_) {
-        $cache_by_class{$class} = shift @_;
-    }
-
-    return $cache_by_class{$class};
-}
-
-sub best_collection {
-    my ($self, $type) = @_;
-
-    if ($self->hive_pipeline) {
-        return $self->hive_pipeline->collection_of($type);
-    } else {
-        use Data::Dumper;
-        die "$self does not have a HivePipeline. Cannot find the $type collection.", Dumper($self);
-    }
-}
 
 sub hive_pipeline {
     my $self = shift @_;

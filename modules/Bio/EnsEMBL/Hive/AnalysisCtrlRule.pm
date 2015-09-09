@@ -117,7 +117,7 @@ sub condition_analysis {
         # lazy load the analysis object if I can
     if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {
 
-        my $collection = $self->best_collection('Analysis');
+        my $collection = $self->hive_pipeline->collection_of( 'Analysis' );
 
         if( $self->{'_condition_analysis'} = $collection->find_one_by('logic_name', $condition_analysis_url) ) {
 #            warn "Lazy-loading object from 'Analysis' collection\n";

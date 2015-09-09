@@ -209,9 +209,7 @@ sub display_name {
 sub stats {
     my $self = shift @_;
 
-    my $collection = $self->best_collection('AnalysisStats');
-
-    return $collection->find_one_by('analysis', $self);
+    return $self->hive_pipeline->collection_of( 'AnalysisStats' )->find_one_by('analysis', $self);
 }
 
 
@@ -227,18 +225,14 @@ sub jobs_collection {
 sub control_rules_collection {
     my $self = shift @_;
 
-    my $collection = $self->best_collection('AnalysisCtrlRule');
-
-    return $collection->find_all_by('ctrled_analysis', $self);
+    return $self->hive_pipeline->collection_of( 'AnalysisCtrlRule' )->find_all_by('ctrled_analysis', $self);
 }
 
 
 sub dataflow_rules_collection {
     my $self = shift @_;
 
-    my $collection = $self->best_collection('DataflowRule');
-
-    return $collection->find_all_by('from_analysis', $self);
+    return $self->hive_pipeline->collection_of( 'DataflowRule' )->find_all_by('from_analysis', $self);
 }
 
 

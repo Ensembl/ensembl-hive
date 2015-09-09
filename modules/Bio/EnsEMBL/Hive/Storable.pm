@@ -155,8 +155,9 @@ sub AUTOLOAD {
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                my $collection = $self->can('hive_pipeline') && $self->hive_pipeline && $self->best_collection($AdaptorType);
+                my $collection = $self->can('hive_pipeline') && $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
                    $collection = $self->adaptor && $self->adaptor->db->hive_pipeline->collection_of($AdaptorType) unless $collection;
+
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {
