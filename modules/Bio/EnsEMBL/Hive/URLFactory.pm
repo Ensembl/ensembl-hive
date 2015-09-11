@@ -92,13 +92,18 @@ sub fetch {
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
+        my $table_name      = $parsed_url->{'table_name'};
+        my $tparam_name     = $parsed_url->{'tparam_name'};
+        my $tparam_value    = $parsed_url->{'tparam_value'};
+
+        unless($table_name=~/^(analysis|job|accu)$/) {  # do not check schema version version when performing table dataflow:
+            $parsed_url->{'conn_params'}{'no_sql_schema_version_check'} = 1;
+        }
+
         my $dba = ($parsed_url->{'dbconn_part'} =~ m{^\w*:///$} )
             ? $default_dba
             : $class->create_cached_dba( @$parsed_url{qw(dbconn_part driver user pass host port dbname conn_params)} );
 
-        my $table_name      = $parsed_url->{'table_name'};
-        my $tparam_name     = $parsed_url->{'tparam_name'};
-        my $tparam_value    = $parsed_url->{'tparam_value'};
 
         if(not $table_name) {
         
