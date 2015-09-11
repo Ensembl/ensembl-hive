@@ -138,18 +138,11 @@ sub fetch {
 sub create_cached_dba {
     my ($class, $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
 
-    if($driver eq 'mysql') {
-        $user ||= 'ensro';
-        $pass ||= '';
-        $host ||= '';
-        $port ||= 3306;
-    }
-
     my $type                        = $conn_params->{'type'};
     my $disconnect_when_inactive    = $conn_params->{'disconnect_when_inactive'};
     my $no_sql_schema_version_check = $conn_params->{'no_sql_schema_version_check'};
 
-    my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
+    my $connectionKey = $driver.'://'.($user//'').':'.($pass//'').'@'.($host//'').':'.($port//'').'/'.($dbname//'').';'.$type;
     my $dba = $_URLFactory_global_instance->{$connectionKey};
 
     unless($dba) {
