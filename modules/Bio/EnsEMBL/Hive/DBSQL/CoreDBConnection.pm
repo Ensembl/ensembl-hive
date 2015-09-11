@@ -754,11 +754,17 @@ sub prepare {
      throw("Attempting to prepare an empty SQL query.");
    }
 
-   #warn "SQL(".$self->dbname."):" . join(' ', @args) . "\n";
+   #warn "SQL(".$self->dbname."): " . join(' ', @args) . "\n";
    if ( ($self->reconnect_when_lost()) and (!$self->db_handle()->ping()) ) { 
        $self->reconnect();
    }
-   my $sth = $self->db_handle->prepare(@args);
+   my $sth;
+   eval {
+       $sth = $self->db_handle->prepare(@args);
+       1;
+   } or do {
+       throw( "FAILED_SQL(".$self->dbname."): " . join(' ', @args) );
+   };
 
    # return an overridden statement handle that provides us with
    # the means to disconnect inactive statement handles automatically
