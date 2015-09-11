@@ -117,7 +117,8 @@ sub new {
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
             || die "DB($safe_url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
 
-        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->get_value_by_key( 'hive_sql_schema_version' ); };
+        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_by_meta_key( 'hive_sql_schema_version' )->{'meta_value'}; };
+
         if($@) {
             if($@ =~ /hive_meta.*doesn't exist/) {
 
@@ -187,41 +188,34 @@ sub hive_pipeline {
 }
 
 
-sub _hive_meta_getter {  # getter only, not setter
-    my ($self, $hive_meta_key, $default_value) = @_;
-
-    my $hash_key = '_hive_meta_'.$hive_meta_key;
-    unless( defined($self->{$hash_key}) ) {
-        my $val = $self->get_MetaAdaptor->get_value_by_key($hive_meta_key);
-        $self->{$hash_key} = $val // $default_value;
-    } 
-    return $self->{$hash_key};
-}
-
-
 sub hive_use_triggers {  # getter only, not setter
     my $self = shift @_;
-    return $self->_hive_meta_getter('hive_use_triggers', 0);
+
+    return $self->hive_pipeline->get_meta_value_by_key('hive_use_triggers') // 0;
 }
 
 sub hive_use_param_stack {  # getter only, not setter
     my $self = shift @_;
-    return $self->_hive_meta_getter('hive_use_param_stack', 0);
+
+    return $self->hive_pipeline->get_meta_value_by_key('hive_use_param_stack') // 0;
 }
 
 sub hive_auto_rebalance_semaphores {  # getter only, not setter
     my $self = shift @_;
-    return $self->_hive_meta_getter('hive_auto_rebalance_semaphores', 0);
+
+    return $self->hive_pipeline->get_meta_value_by_key('hive_auto_rebalance_semaphores') // 0;
 }
 
 sub list_all_hive_tables {
     my $self = shift @_;
-    return [split /,/, $self->_hive_meta_getter('hive_all_base_tables', '')];
+
+    return [ split /,/, ($self->hive_pipeline->get_meta_value_by_key('hive_all_base_tables') // '') ];
 }
 
 sub list_all_hive_views {
     my $self = shift @_;
-    return [split /,/, $self->_hive_meta_getter('hive_all_views', '')];
+
+    return [ split /,/, ($self->hive_pipeline->get_meta_value_by_key('hive_all_views') // '') ];
 }
 
 

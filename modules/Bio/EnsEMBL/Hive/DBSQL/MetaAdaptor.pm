@@ -46,13 +46,4 @@ sub default_table_name {
 }
 
 
-sub get_value_by_key {
-    my ($self, $meta_key) = @_;
-
-    my $collection = $self->db->hive_pipeline->collection_of( 'MetaParameters' );
-    my $hash = $collection->find_one_by( 'meta_key', $meta_key );
-    return $hash && $hash->{'meta_value'};
-}
-
 1;
-
