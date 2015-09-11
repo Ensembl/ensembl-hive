@@ -112,7 +112,7 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    my @ehive_tables = (@{$self->db->list_of_tables}, @{$self->db->list_all_hive_views});
+    my @ehive_tables = (@{$self->db->list_all_hive_tables}, @{$self->db->list_all_hive_views});
     $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Connection parameters
