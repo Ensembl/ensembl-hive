@@ -139,7 +139,7 @@ sub add_new_or_update {
 
         $self->collection_of( $type )->add( $object );
 
-        $object->hive_pipeline($self) if UNIVERSAL::isa($object, 'Bio::EnsEMBL::Hive::Cacheable');
+        $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
     }
 
     return $object;
