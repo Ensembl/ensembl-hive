@@ -42,7 +42,8 @@ use warnings;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
-use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() method
+            'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
             'Bio::EnsEMBL::Hive::Params',   # inherit param management functionality
          );
 
@@ -230,13 +231,13 @@ sub load_parameters {
 
     push @params_precedence, $runnable_object->param_defaults if($runnable_object);
 
+    push @params_precedence, $self->hive_pipeline->params_as_hash;
+
     if(my $job_adaptor = $self->adaptor) {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
 
         $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
-
-        push @params_precedence, $job_adaptor->db->get_PipelineWideParametersAdaptor->fetch_param_hash;
 
         push @params_precedence, $self->analysis->parameters if($self->analysis);
 

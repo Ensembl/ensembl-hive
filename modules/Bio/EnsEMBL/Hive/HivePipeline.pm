@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
 
@@ -146,11 +146,31 @@ sub add_new_or_update {
 }
 
 
+=head2 get_meta_value_by_key
+
+    Description: returns a particular meta_value from 'MetaParameters' collection given meta_key
+
+=cut
+
 sub get_meta_value_by_key {
     my ($self, $meta_key) = @_;
 
     my $hash = $self->collection_of( 'MetaParameters' )->find_one_by( 'meta_key', $meta_key );
     return $hash && $hash->{'meta_value'};
+}
+
+
+=head2 params_as_hash
+
+    Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash
+
+=cut
+
+sub params_as_hash {
+    my $self = shift @_;
+
+    my $collection = $self->collection_of( 'PipelineWideParameters' );
+    return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
 }
 
 

@@ -39,18 +39,19 @@ sub standaloneJob {
     $runnable_object->debug($flags->{debug}) if $flags->{debug};
     $runnable_object->execute_writes(not $flags->{no_write});
 
-    my $dummy_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();
+    my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();
 
-    my $dummy_analysis = $dummy_pipeline->add_new_or_update( 'Analysis',
+    my $dummy_analysis = $hive_pipeline->add_new_or_update( 'Analysis',
         'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
         'module'        => ref($runnable_object),
         'dbID'          => -1,
     );
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        'analysis'  => $dummy_analysis,
-        'input_id'  => $input_id,
-        'dbID'      => -1,
+        'hive_pipeline' => $hive_pipeline,
+        'analysis'      => $dummy_analysis,
+        'input_id'      => $input_id,
+        'dbID'          => -1,
     );
 
     $job->load_parameters( $runnable_object );
@@ -100,7 +101,7 @@ sub standaloneJob {
 
                 foreach my $input_id_template (@$input_id_template_list) {
 
-                    my $df_rule = $dummy_pipeline->add_new_or_update( 'DataflowRule',
+                    my $df_rule = $hive_pipeline->add_new_or_update( 'DataflowRule',
                         'from_analysis'             => $dummy_analysis,
                         'to_analysis_url'           => $heir_url,
                         'branch_code'               => $branch_name_or_code,

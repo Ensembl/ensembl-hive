@@ -39,8 +39,6 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::PipelineWideParameters;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
-
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
@@ -48,18 +46,5 @@ sub default_table_name {
     return 'pipeline_wide_parameters';
 }
 
-
-=head2 fetch_param_hash
-
-    Description: returns the contents of the 'pipeline_wide_parameters' table as a hash
-
-=cut
-
-sub fetch_param_hash {
-    my $self = shift @_;
-
-    my $collection = $self->db->hive_pipeline->collection_of( 'PipelineWideParameters' );
-    return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
-}
 
 1;
