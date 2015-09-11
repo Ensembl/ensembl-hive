@@ -194,12 +194,6 @@ sub hive_use_triggers {  # getter only, not setter
     return $self->hive_pipeline->get_meta_value_by_key('hive_use_triggers') // 0;
 }
 
-sub hive_use_param_stack {  # getter only, not setter
-    my $self = shift @_;
-
-    return $self->hive_pipeline->get_meta_value_by_key('hive_use_param_stack') // 0;
-}
-
 sub hive_auto_rebalance_semaphores {  # getter only, not setter
     my $self = shift @_;
 

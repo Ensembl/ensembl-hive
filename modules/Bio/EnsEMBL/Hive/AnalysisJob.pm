@@ -241,7 +241,7 @@ sub load_parameters {
 
         push @params_precedence, $self->analysis->parameters if($self->analysis);
 
-        if( $job_adaptor->db->hive_use_param_stack ) {
+        if( $self->hive_pipeline->hive_use_param_stack ) {
             my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
             my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
             my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
@@ -285,7 +285,7 @@ sub dataflow_output_id {
     my $accu_id_stack           = $self->accu_id_stack();
 
     my $job_adaptor             = $self->adaptor() || 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor';
-    my $hive_use_param_stack    = ref($job_adaptor) && $job_adaptor->db->hive_use_param_stack();
+    my $hive_use_param_stack    = $self->hive_pipeline->hive_use_param_stack;
 
     if($hive_use_param_stack) {
         if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters

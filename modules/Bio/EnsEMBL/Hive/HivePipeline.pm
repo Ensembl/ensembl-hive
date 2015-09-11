@@ -160,6 +160,19 @@ sub get_meta_value_by_key {
 }
 
 
+=head2 hive_use_param_stack
+
+    Description: (getter only) defines which one of two modes of parameter propagation is used in this pipeline
+
+=cut
+
+sub hive_use_param_stack {
+    my $self = shift @_;
+
+    return $self->get_meta_value_by_key('hive_use_param_stack') // 0;
+}
+
+
 =head2 params_as_hash
 
     Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash
