@@ -112,9 +112,6 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    my @ehive_tables = (@{$self->db->list_all_hive_tables}, @{$self->db->list_all_hive_views});
-    $self->param('nb_ehive_tables', scalar(@ehive_tables));
-
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
     my $src_dbc = $src_db_conn ? go_figure_dbc($src_db_conn) : $self->data_dbc;
@@ -122,6 +119,18 @@ sub fetch_input {
 
     $self->input_job->transient_error(0);
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
+
+    my @ehive_tables = ();
+    {
+        ## Only query the list of eHive tables if there is a "hive_meta" table
+        my $meta_sth = $src_dbc->db_handle->table_info(undef, undef, 'hive_meta');
+        if ($meta_sth->fetchrow_arrayref) {
+            my $src_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -dbconn => $src_dbc, -disconnect_when_inactive => 1, -no_sql_schema_version_check => 1 );
+            @ehive_tables = (@{$src_dba->list_all_hive_tables}, @{$src_dba->list_all_hive_views});
+        }
+        $meta_sth->finish();
+    }
+    $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Get the table list in either "tables" or "ignores"
     my $table_list = $self->_get_table_list;
