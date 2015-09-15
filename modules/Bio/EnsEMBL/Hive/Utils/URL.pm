@@ -58,6 +58,22 @@ sub parse {
             'conn_params'   => \%conn_params,
         };
 
+        $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver} // '';
+        $host = '127.0.0.1' if(($host//'') eq 'localhost');
+        my $unambig_url = $driver .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
+        $parsed_url->{'unambig_url'} = $unambig_url;
+
+        return $parsed_url;
+
+    } elsif( $url=~/^\w+$/ ) {
+
+        my $parsed_url = {
+            'unambig_url'   => ':///',
+            'table_name'    => 'analysis',
+            'tparam_name'   => 'logic_name',
+            'tparam_value'  => $url,
+        };
+
         return $parsed_url;
 
     } else {

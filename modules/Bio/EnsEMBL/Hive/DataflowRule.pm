@@ -55,7 +55,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
+use Bio::EnsEMBL::Hive::TheApiary;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
@@ -123,15 +123,12 @@ sub to_analysis_url {
     if(@_) {
         $self->{'_to_analysis_url'} = shift @_;
         if( $self->{'_to_analysis'} ) {
-#            warn "setting to_analysis_url() in an object that had to_analysis() defined";
             $self->{'_to_analysis'} = undef;
         }
     } elsif( !$self->{'_to_analysis_url'} and my $target_object=$self->{'_to_analysis'} ) {
 
         my $ref_dba = $self->from_analysis && $self->from_analysis->adaptor && $self->from_analysis->adaptor->db;
         $self->{'_to_analysis_url'} = $target_object->url( $ref_dba );      # the URL may be shorter if DBA is the same for source and target
-
-#        warn "Lazy-loaded to_analysis_url\n";
     }
 
     return $self->{'_to_analysis_url'};
@@ -148,28 +145,18 @@ sub to_analysis_url {
 =cut
 
 sub to_analysis {
-    my ($self, $analysis_or_nt) = @_;
+    my ($self, $target_object) = @_;
 
-    if( defined $analysis_or_nt ) {
-        unless ($analysis_or_nt->can('url')) {
-            throw( "to_analysis arg must support 'url' method, '$analysis_or_nt' does not know how to do it");
+    if( defined $target_object ) {
+        unless ($target_object->can('url')) {
+            throw( "to_analysis arg must support 'url' method, '$target_object' does not know how to do it");
         }
-        $self->{'_to_analysis'} = $analysis_or_nt;
+        $self->{'_to_analysis'} = $target_object;
     }
 
-        # lazy load the analysis object if I can
-    if( !$self->{'_to_analysis'} and my $to_analysis_url = $self->to_analysis_url ) {
-        my $collection = $self->hive_pipeline->collection_of('Analysis');
+    if( !$self->{'_to_analysis'} and my $to_analysis_url = $self->to_analysis_url ) {   # lazy-load through TheApiary
 
-        if( $self->{'_to_analysis'} = $collection->find_one_by('logic_name', $to_analysis_url) ) {
-#            warn "Lazy-loading object from 'Analysis' collection\n";
-        } elsif(my $adaptor = $self->adaptor) {
-#            warn "Lazy-loading object from AnalysisAdaptor\n";
-            $self->{'_to_analysis'} = $adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($to_analysis_url);
-        } else {
-#            warn "Lazy-loading object from full URL\n";
-            $self->{'_to_analysis'} = Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($to_analysis_url);
-        }
+        $self->{'_to_analysis'} = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $to_analysis_url, $self->hive_pipeline );
     }
 
     return $self->{'_to_analysis'};

@@ -43,6 +43,44 @@ sub collection_of {
 }
 
 
+sub find_by_url_query {
+    my $self        = shift @_;
+    my $parsed_url  = shift @_;
+
+    my $table_name      = $parsed_url->{'table_name'};
+    my $tparam_name     = $parsed_url->{'tparam_name'};
+    my $tparam_value    = $parsed_url->{'tparam_value'};
+
+    if($table_name eq 'analysis') {
+
+        die "Analyses can only be found using either logic_name or dbID" unless($tparam_name=~/^(logic_name|dbID)$/);
+
+        return $self->collection_of('Analysis')->find_one_by( $tparam_name, $tparam_value);
+
+    } elsif($table_name eq 'accu') {
+
+        return Bio::EnsEMBL::Hive::Accumulator->new(
+                $self->hive_dba ? (adaptor => $self->hive_dba->get_AccumulatorAdaptor) : (),
+                struct_name        => $tparam_name,
+                signature_template => $tparam_value,
+        );
+
+    } elsif($table_name eq 'job') {
+
+        die "Jobs cannot yet be found by URLs, sorry";
+
+    } else {
+
+        return Bio::EnsEMBL::Hive::NakedTable->new(
+            $self->hive_dba ? (adaptor => $self->hive_dba->get_NakedTableAdaptor( 'table_name' => $table_name ) ) : (),
+            table_name => $table_name,
+            $tparam_value ? (insertion_method => $tparam_value) : (),
+        );
+
+    }
+}
+
+
 sub new {       # construct an attached or a detached Pipeline object
     my $class           = shift @_;
 

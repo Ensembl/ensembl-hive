@@ -61,24 +61,6 @@ sub object_class {
 }
 
 
-=head2 fetch_by_logic_name_or_url
-
-    Description: given a URL gets the analysis from URLFactory, otherwise fetches it from the db
-
-=cut
-
-sub fetch_by_logic_name_or_url {
-    my $self                = shift @_; # can either be $self or class name
-    my $logic_name_or_url   = shift @_;
-
-    if($logic_name_or_url =~ m{^\w*://}) {
-        return Bio::EnsEMBL::Hive::URLFactory->fetch($logic_name_or_url, ref($self) && $self->db);
-    } else {
-        return $self->fetch_by_logic_name($logic_name_or_url);
-    }
-}
-
-
 =head2 fetch_by_url_query
 
     Description: fetches the analysis either by logic_name or by dbID (either coming from the tail of the URL)
