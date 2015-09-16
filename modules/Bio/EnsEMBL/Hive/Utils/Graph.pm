@@ -226,9 +226,8 @@ sub build {
         }
     }
 
-    if( $self->config_get('DisplayDetails') and my $dbc = $hive_dba && $hive_dba->dbc ) {
-        my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
-        $self->_add_pipeline_label( $pipeline_label );
+    if( $self->config_get('DisplayDetails') ) {
+        $self->_add_pipeline_label( $pipeline->display_name );
     }
     foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
         $self->_add_analysis_node($analysis);
