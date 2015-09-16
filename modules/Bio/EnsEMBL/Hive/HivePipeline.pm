@@ -7,6 +7,10 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
+    # needed for offline graph generation:
+use Bio::EnsEMBL::Hive::Accumulator;
+use Bio::EnsEMBL::Hive::NakedTable;
+
 
 sub hive_dba {      # The adaptor for HivePipeline objects
     my $self = shift @_;
