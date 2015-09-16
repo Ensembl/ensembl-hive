@@ -215,6 +215,19 @@ sub hive_use_param_stack {
 }
 
 
+=head2 hive_pipeline_name
+
+    Description: (getter only) defines the symbolic name of the pipeline
+
+=cut
+
+sub hive_pipeline_name {
+    my $self = shift @_;
+
+    return $self->get_meta_value_by_key('hive_pipeline_name') // '';
+}
+
+
 =head2 params_as_hash
 
     Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash

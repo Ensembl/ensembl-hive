@@ -172,7 +172,7 @@ sub main {
         $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
     }
 
-    my $pipeline_name = $self->{'pipeline'}->get_meta_value_by_key( 'hive_pipeline_name' );
+    my $pipeline_name = $self->{'pipeline'}->hive_pipeline_name;
 
     if($pipeline_name) {
         warn "Pipeline name: $pipeline_name\n";
