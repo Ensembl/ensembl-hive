@@ -191,7 +191,6 @@ sub build {
                 or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
-                $target_object->{'_foreign'}=1;
                 $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
                 my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $hive_dba );
                 $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
@@ -210,7 +209,6 @@ sub build {
     foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
         unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
-            $condition_analysis->{'_foreign'}=1;
             $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
             my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $hive_dba );
             $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
@@ -220,7 +218,8 @@ sub build {
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
-        unless( $source_analysis->{'_inflow_count'} or $source_analysis->{'_foreign'} ) {    # if there is no dataflow into this analysis
+        my $is_foreign = $source_analysis->hive_pipeline != $pipeline;
+        unless( $source_analysis->{'_inflow_count'} or $is_foreign ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
         }
