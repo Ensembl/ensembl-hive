@@ -431,15 +431,14 @@ sub cumulate_events {
 
         next if $start_date and ($event_date lt $start_date);
 
-        my %hash_interval = %hash_curr_workers;
         #FIXME It should be normalised by the length of the time interval
-        map {$tot_area{$_} += $hash_interval{$_}} keys %hash_interval;
+        map {$tot_area{$_} += $hash_curr_workers{$_}} keys %hash_curr_workers;
 
         $max_workers = $num_curr_workers if ($num_curr_workers > $max_workers);
 
         # We need to repeat the previous value to have an histogram shape
         push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
-        push @data_timings, [$event_date, \%hash_interval];
+        push @data_timings, [$event_date, { %hash_curr_workers }];
     }
     push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
     warn "Last timing: ", Dumper $data_timings[-1] if $verbose and @data_timings;
