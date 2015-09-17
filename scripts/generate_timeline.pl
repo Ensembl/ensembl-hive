@@ -416,6 +416,11 @@ sub cumulate_events {
         last if $end_date and ($event_date gt $end_date);
         next unless exists $events->{$event_date};
 
+        if ((scalar(@data_timings) == 0) and $start_date and ($event_date gt $start_date)) {
+            push @data_timings, [$start_date, { %hash_curr_workers }];
+            %tot_area = %hash_curr_workers;
+        }
+
         my $topup_hash = $events->{$event_date};
         foreach my $key_id (keys %$topup_hash) {
             $hash_curr_workers{$key_id} += $topup_hash->{$key_id};
@@ -426,19 +431,14 @@ sub cumulate_events {
 
         next if $start_date and ($event_date lt $start_date);
 
-        my %hash_interval = %hash_curr_workers;
         #FIXME It should be normalised by the length of the time interval
-        map {$tot_area{$_} += $hash_interval{$_}} keys %hash_interval;
+        map {$tot_area{$_} += $hash_curr_workers{$_}} keys %hash_curr_workers;
 
         $max_workers = $num_curr_workers if ($num_curr_workers > $max_workers);
 
         # We need to repeat the previous value to have an histogram shape
-        if (@data_timings) {
-            push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }];
-        } elsif ($event_date ne $start_date) {
-            push @data_timings, [$start_date, { %hash_interval }];
-        }
-        push @data_timings, [$event_date, \%hash_interval];
+        push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
+        push @data_timings, [$event_date, { %hash_curr_workers }];
     }
     push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
     warn "Last timing: ", Dumper $data_timings[-1] if $verbose and @data_timings;
