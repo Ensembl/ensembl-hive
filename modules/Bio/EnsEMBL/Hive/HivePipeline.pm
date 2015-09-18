@@ -42,7 +42,7 @@ sub collection_of {
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
 
-        if( my $hive_dba = $self->hive_dba ) {
+        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') ) {
             my $adaptor = $hive_dba->get_adaptor( $type );
             my $all_objects = $adaptor->fetch_all();
             if(@$all_objects and UNIVERSAL::can($all_objects->[0], 'hive_pipeline') ) {
@@ -73,25 +73,36 @@ sub find_by_url_query {
         return $self->collection_of('Analysis')->find_one_by( $tparam_name, $tparam_value);
 
     } elsif($table_name eq 'accu') {
+        my $accu;
 
-        return Bio::EnsEMBL::Hive::Accumulator->new(
+        unless($accu = $self->collection_of('Accumulator')->find_one_by( 'struct_name', $tparam_name, 'signature_template', $tparam_value )) {
+
+            $accu = $self->add_new_or_update( 'Accumulator',
                 $self->hive_dba ? (adaptor => $self->hive_dba->get_AccumulatorAdaptor) : (),
                 struct_name        => $tparam_name,
                 signature_template => $tparam_value,
-        );
+            );
+        }
+
+        return $accu;
 
     } elsif($table_name eq 'job') {
 
         die "Jobs cannot yet be found by URLs, sorry";
 
     } else {
+        my $naked_table;
 
-        return Bio::EnsEMBL::Hive::NakedTable->new(
-            $self->hive_dba ? (adaptor => $self->hive_dba->get_NakedTableAdaptor( 'table_name' => $table_name ) ) : (),
-            table_name => $table_name,
-            $tparam_value ? (insertion_method => $tparam_value) : (),
-        );
+        unless($naked_table = $self->collection_of('NakedTable')->find_one_by( 'table_name', $table_name )) {
 
+            $naked_table = $self->add_new_or_update( 'NakedTable',
+                $self->hive_dba ? (adaptor => $self->hive_dba->get_NakedTableAdaptor( 'table_name' => $table_name ) ) : (),
+                table_name => $table_name,
+                $tparam_value ? (insertion_method => $tparam_value) : (),
+            );
+        }
+
+        return $naked_table;
     }
 }
 

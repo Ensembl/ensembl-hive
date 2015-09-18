@@ -34,7 +34,12 @@ package Bio::EnsEMBL::Hive::NakedTable;
 use strict;
 use warnings;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+
+
+sub unikey {    # override the default from Cacheable parent
+    return [ 'table_name' ];
+}
 
 
 sub table_name {
@@ -77,13 +82,7 @@ sub display_name {
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-        # we have to do this the ugly way
-        # because Registry code currently prevents us from passing arguments to adaptors' new() methods
-        # (and by caching guarantees there is only one instance of each adaptor per DBAdaptor)
-    my $adaptor = $self->adaptor();
-    $adaptor->table_name( $self->table_name() );
-    $adaptor->insertion_method( $self->insertion_method() );
-
+    my $adaptor      = $self->adaptor();
     my @column_names = keys %{$self->adaptor->column_set};
     my @rows = ();
 
@@ -95,6 +94,13 @@ sub dataflow {
         push @rows, \%row_hash;
     }
     $adaptor->store( \@rows );
+}
+
+
+sub toString {
+    my $self = shift @_;
+
+    return 'NakedTable('.$self->table_name.')';
 }
 
 1;
