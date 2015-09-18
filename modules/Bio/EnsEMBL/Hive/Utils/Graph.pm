@@ -130,7 +130,7 @@ sub pipeline {
 sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
-    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->pipeline->hive_dba );
+    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->pipeline );
     $analysis_node_name=~s/\W/__/g;
     return $analysis_node_name;
 }
@@ -139,7 +139,7 @@ sub _analysis_node_name {
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
-    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->pipeline->hive_dba ) .
+    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->pipeline ) .
                 ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
     $table_node_name=~s/\W/__/g;
     return $table_node_name;
@@ -191,7 +191,7 @@ sub build {
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
                 $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
-                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $hive_dba );
+                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $pipeline );
                 $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
@@ -209,7 +209,7 @@ sub build {
         unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
             $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
-            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $hive_dba );
+            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $pipeline );
             $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
         }
     }
@@ -364,7 +364,7 @@ sub _add_analysis_node {
     my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
-    my $hive_dba                                          = $self->pipeline->hive_dba;
+    my $hive_pipeline                                     = $self->pipeline;
 
     my $colspan = 0;
     my $bar_chart = '';
@@ -383,7 +383,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_dba ).' ('.($analysis->dbID || '?').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_pipeline ).' ('.($analysis->dbID || '?').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -526,7 +526,7 @@ sub _add_dataflow_rules {
             $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->pipeline->hive_dba ),
+                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->pipeline ),
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',
@@ -552,7 +552,7 @@ sub _add_table_node {
     my $node_fontname   = $self->config_get('Node', 'Table', 'Font');
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    my $hive_dba        = $self->pipeline->hive_dba;
+    my $hive_pipeline   = $self->pipeline;
 
     if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $naked_table->adaptor ) {
 
@@ -566,7 +566,7 @@ sub _add_table_node {
         }
     }
 
-    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_dba ) .'</td></tr>';
+    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_pipeline ) .'</td></tr>';
 
     if( $self->config_get('DisplayData') and $columns) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';

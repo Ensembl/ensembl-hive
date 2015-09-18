@@ -72,10 +72,11 @@ sub url {
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter display_name is generated
+    my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter display_name is generated
 
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->dbname.'/' : '') . $self->table_name;
+    my $my_pipeline = $self->hive_pipeline;
+    my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
+    return ( ($my_dba and $my_pipeline!=$ref_pipeline) ? $my_dba->dbc->dbname . '/' : '' ) . $self->table_name;
 }
 
 
