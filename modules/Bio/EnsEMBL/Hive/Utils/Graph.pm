@@ -554,7 +554,7 @@ sub _add_table_node {
 
     my $hive_dba        = $self->pipeline->hive_dba;
 
-    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor( 'table_name' => $naked_table->table_name ) ) {
+    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $naked_table->adaptor ) {
 
         @column_names = sort keys %{$naked_table_adaptor->column_set};
         $columns = scalar(@column_names);
@@ -568,7 +568,7 @@ sub _add_table_node {
 
     my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_dba ) .'</td></tr>';
 
-    if( $self->config_get('DisplayData') ) {
+    if( $self->config_get('DisplayData') and $columns) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
         $table_label .= '<tr>'.join('', map { qq{<td bgcolor="lightblue" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
