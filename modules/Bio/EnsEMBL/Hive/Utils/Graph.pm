@@ -182,7 +182,7 @@ sub build {
                 or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
-                $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
+                $pipeline->collection_of('Analysis')->add_once( $target_object );  # add it to the collection
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
             } else {
@@ -198,7 +198,7 @@ sub build {
     foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
         unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
-            $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
+            $pipeline->collection_of('Analysis')->add_once( $condition_analysis ); # add it to the collection
         }
     }
 

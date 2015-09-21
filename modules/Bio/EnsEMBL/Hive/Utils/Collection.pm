@@ -58,10 +58,31 @@ sub list {
 }
 
 
+sub present {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    foreach my $element (@{ $self->listref }) {
+        return 1 if($element == $candidate);
+    }
+    return 0;
+}
+
+
 sub add {
     my $self = shift @_;
 
     push @{ $self->listref }, @_;
+}
+
+
+sub add_once {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    unless( $self->present( $candidate ) ) {
+        $self->add( $candidate );
+    }
 }
 
 
