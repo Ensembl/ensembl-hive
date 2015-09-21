@@ -170,7 +170,6 @@ sub build {
     my ($self) = @_;
 
     my $pipeline    = $self->pipeline;
-    my $hive_dba    = $pipeline->hive_dba;
 
     foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
 
@@ -184,8 +183,6 @@ sub build {
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
                 $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
-                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $pipeline );
-                $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
             } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
             } else {
@@ -202,8 +199,6 @@ sub build {
         unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
             my $condition_analysis = $c_rule->condition_analysis();
             $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
-            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $pipeline );
-            $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
         }
     }
 
@@ -416,7 +411,7 @@ sub _add_analysis_node {
         }
 
         if($hit_limit) {
-            $analysis_label    .= qq{<tr><td colspan="$colspan">[ and }.($total_job_count-$job_limit).qq{ more ]</td></tr>};
+            $analysis_label    .= qq{<tr><td colspan="$colspan">[ + }.($total_job_count-$job_limit).qq{ more jobs ]</td></tr>};
         }
     }
     $analysis_label    .= '</table>>';
