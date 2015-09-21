@@ -172,13 +172,6 @@ sub build {
     my $pipeline    = $self->pipeline;
     my $hive_dba    = $pipeline->hive_dba;
 
-    if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
-            $analysis->jobs_collection( \@jobs );
-        }
-    }
-
     foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
 
         if(my $target_object = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
@@ -211,6 +204,15 @@ sub build {
             $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
             my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $pipeline );
             $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
+        }
+    }
+
+    if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
+            if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
+                my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+                $analysis->jobs_collection( \@jobs );
+            }
         }
     }
 
@@ -383,7 +385,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_pipeline ).' ('.($analysis->dbID || '?').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -406,7 +408,7 @@ sub _add_analysis_node {
         foreach my $job (@jobs) {
             my $input_id = $job->input_id;
             my $status   = $job->status;
-            my $job_id   = $job->dbID;
+            my $job_id   = $job->dbID || 'unstored';
             $input_id=~s/\>/&gt;/g;
             $input_id=~s/\</&lt;/g;
             $input_id=~s/\{|\}//g;
