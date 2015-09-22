@@ -240,6 +240,13 @@ sub dataflow_rules_collection {
 }
 
 
+sub inflow_rules_count {
+    my $self = shift @_;
+
+    return scalar( @{ $self->hive_pipeline->collection_of( 'DataflowRule' )->find_all_by('to_analysis', $self) } );
+}
+
+
 sub dataflow_rules_by_branch {
     my $self = shift @_;
 

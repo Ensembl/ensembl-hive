@@ -169,12 +169,8 @@ sub build {
 
     foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
 
-        if(my $target_object = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
-            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-                $target_object->{'_inflow_count'}++;
-            }
-        } else {
-            $target_object = $df_rule->to_analysis
+        unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url) ) {
+            my $target_object = $df_rule->to_analysis
                 or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
             if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
@@ -207,7 +203,7 @@ sub build {
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
         my $is_foreign = $source_analysis->hive_pipeline != $pipeline;
-        if( !$source_analysis->{'_inflow_count'} and !$is_foreign ) {    # if there is no dataflow into this analysis
+        if( !$source_analysis->inflow_rules_count and !$is_foreign ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
         }
