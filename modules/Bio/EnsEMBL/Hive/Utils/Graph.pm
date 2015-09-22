@@ -47,14 +47,10 @@ package Bio::EnsEMBL::Hive::Utils::Graph;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
-use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::Config;
-use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::Hive::AnalysisStats;
-use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
-use Bio::EnsEMBL::Hive::DataflowRule;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -224,10 +220,9 @@ sub build {
     if( $self->config_get('DisplayDetails') ) {
         $self->_add_pipeline_label( $pipeline->display_name );
     }
+
     foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
         $self->_add_analysis_node($analysis);
-        $self->_add_control_rules( $analysis->control_rules_collection );
-        $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
@@ -281,7 +276,7 @@ sub build {
 sub _propagate_allocation {
     my ($self, $source_analysis ) = @_;
 
-    foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {    # this will only work if the analyses objects are ALL cached before loading DFRs
+    foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {
         my $target_object       = $df_rule->to_analysis
             or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
@@ -423,6 +418,9 @@ sub _add_analysis_node {
         style       => $style,
         fillcolor   => $analysis_status_colour,
     );
+
+    $self->_add_control_rules( $analysis->control_rules_collection );
+    $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
 }
 
 

@@ -42,6 +42,8 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::GuestProcess;
+use Bio::EnsEMBL::Hive::Utils::Collection;
+
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
  
@@ -76,6 +78,7 @@ sub module {
     $self->{'_module'} = shift if(@_);
     return $self->{'_module'};
 }
+
 
 sub language {
     my $self = shift;
