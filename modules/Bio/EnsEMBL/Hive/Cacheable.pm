@@ -41,6 +41,15 @@ sub hive_pipeline {
     return $self->{'_hive_pipeline'};
 }
 
+
+sub is_local_to {
+    my $self            = shift @_;
+    my $rel_pipeline    = shift @_;
+
+    return $self->hive_pipeline == $rel_pipeline;
+}
+
+
 sub unikey {    # to be redefined by individual Cacheable classes
     return undef;
 }

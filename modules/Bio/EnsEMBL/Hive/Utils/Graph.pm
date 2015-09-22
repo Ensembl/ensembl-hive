@@ -170,8 +170,7 @@ sub build {
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
-        my $is_foreign = $source_analysis->hive_pipeline != $pipeline;
-        if( !$source_analysis->inflow_rules_count and !$is_foreign ) {    # if there is no dataflow into this analysis
+        if( !$source_analysis->inflow_rules_count and $source_analysis->is_local_to($pipeline) ) {    # if there is no dataflow into this analysis
                 # run the recursion in each component that has a non-cyclic start:
             $self->_propagate_allocation( $source_analysis );
         }
@@ -403,8 +402,8 @@ sub _add_control_rules {
         my $condition_analysis  = $c_rule->condition_analysis;
         my $ctrled_analysis     = $c_rule->ctrled_analysis;
 
-        my $ctrled_is_local     = $ctrled_analysis->hive_pipeline == $self->pipeline;
-        my $condition_is_local  = $condition_analysis->hive_pipeline == $self->pipeline;
+        my $ctrled_is_local     = $ctrled_analysis->is_local_to( $self->pipeline );
+        my $condition_is_local  = $condition_analysis->is_local_to( $self->pipeline );
 
         if($ctrled_is_local and !$condition_is_local) {
             $self->{'_foreign_analyses'}{ $condition_analysis->display_name($self->pipeline) } = $condition_analysis;
@@ -451,8 +450,8 @@ sub _add_dataflow_rules {
 
             $target_node_name = $self->_analysis_node_name( $target_object );
 
-            my $from_is_local   = $from_analysis->hive_pipeline == $self->pipeline;
-            my $target_is_local = $target_object->hive_pipeline == $self->pipeline;
+            my $from_is_local   = $from_analysis->is_local_to( $self->pipeline );
+            my $target_is_local = $target_object->is_local_to( $self->pipeline );
 
             if($from_is_local and !$target_is_local) {
                 $self->{'_foreign_analyses'}{ $target_object->display_name($self->pipeline) } = $target_object;
