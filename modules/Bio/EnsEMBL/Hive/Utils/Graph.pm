@@ -167,38 +167,6 @@ sub build {
 
     my $pipeline    = $self->pipeline;
 
-    foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
-
-        unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url) ) {
-            my $target_object = $df_rule->to_analysis
-                or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
-
-            if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
-                $pipeline->collection_of('Analysis')->add_once( $target_object );  # add it to the collection
-            } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
-            } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
-            } else {
-                warn "Do not know how to handle the type '".ref($target_object)."'";
-            }
-        }
-    }
-
-    foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
-        unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
-            my $condition_analysis = $c_rule->condition_analysis();
-            $pipeline->collection_of('Analysis')->add_once( $condition_analysis ); # add it to the collection
-        }
-    }
-
-    if( my $job_limit = $self->config_get('DisplayJobs') ) {
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
-                my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
-                $analysis->jobs_collection( \@jobs );
-            }
-        }
-    }
-
         # NB: this is a very approximate algorithm with rough edges!
         # It will not find all start nodes in cyclic components!
     foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
@@ -215,6 +183,9 @@ sub build {
 
     foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
         $self->_add_analysis_node($analysis);
+    }
+    foreach my $foreign_analysis ( values %{ $self->{'_foreign_analyses'}} ) {
+        $self->_add_analysis_node($foreign_analysis);
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
@@ -378,6 +349,11 @@ sub _add_analysis_node {
     }
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
+            my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+            $analysis->jobs_collection( \@jobs );
+        }
+
         my @jobs = @{ $analysis->jobs_collection };
 
         my $hit_limit;
@@ -417,21 +393,33 @@ sub _add_analysis_node {
 
 
 sub _add_control_rules {
-  my ($self, $ctrl_rules) = @_;
-  
-  my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
-  my $graph = $self->graph();
+    my ($self, $ctrl_rules) = @_;
 
-      #The control rules are always from and to an analysis so no need to search for odd cases here
-  foreach my $c_rule ( @$ctrl_rules ) {
-    my $from_node_name = $self->_analysis_node_name( $c_rule->condition_analysis );
-    my $to_node_name   = $self->_analysis_node_name( $c_rule->ctrled_analysis );
+    my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
+    my $graph = $self->graph();
 
-    $graph->add_edge( $from_node_name => $to_node_name,
-      color => $control_colour,
-      arrowhead => 'tee',
-    );
-  }
+        #The control rules are always from and to an analysis so no need to search for odd cases here
+    foreach my $c_rule ( @$ctrl_rules ) {
+        my $condition_analysis  = $c_rule->condition_analysis;
+        my $ctrled_analysis     = $c_rule->ctrled_analysis;
+
+        my $ctrled_is_local     = $ctrled_analysis->hive_pipeline == $self->pipeline;
+        my $condition_is_local  = $condition_analysis->hive_pipeline == $self->pipeline;
+
+        if($ctrled_is_local and !$condition_is_local) {
+            $self->{'_foreign_analyses'}{ $condition_analysis->display_name($self->pipeline) } = $condition_analysis;
+        }
+
+        next unless( $ctrled_is_local or $condition_is_local or $self->{'_foreign_analyses'}{ $condition_analysis->display_name($self->pipeline) } );
+
+        my $from_node_name      = $self->_analysis_node_name( $condition_analysis );
+        my $to_node_name        = $self->_analysis_node_name( $ctrled_analysis );
+
+        $graph->add_edge( $from_node_name => $to_node_name,
+            color => $control_colour,
+            arrowhead => 'tee',
+        );
+    }
 }
 
 
@@ -462,6 +450,15 @@ sub _add_dataflow_rules {
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
 
             $target_node_name = $self->_analysis_node_name( $target_object );
+
+            my $from_is_local   = $from_analysis->hive_pipeline == $self->pipeline;
+            my $target_is_local = $target_object->hive_pipeline == $self->pipeline;
+
+            if($from_is_local and !$target_is_local) {
+                $self->{'_foreign_analyses'}{ $target_object->display_name($self->pipeline) } = $target_object;
+            }
+
+            next unless( $from_is_local or $target_is_local or $self->{'_foreign_analyses'}{ $target_object->display_name($self->pipeline) } );
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
