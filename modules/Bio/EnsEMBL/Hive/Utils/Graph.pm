@@ -185,10 +185,6 @@ sub build {
                 warn "Do not know how to handle the type '".ref($target_object)."'";
             }
         }
-
-        if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
-            $funnel_dataflow_rule->{'_is_a_funnel'}++;
-        }
     }
 
     foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
@@ -247,7 +243,7 @@ sub build {
             }
 
             foreach my $df_rule ( @{ $analysis->dataflow_rules_collection } ) {
-                if( $df_rule->{'_is_a_funnel'} and ! $df_rule->{'_funnel_dfr'} ) {
+                if( $df_rule->is_a_funnel_rule and ! $df_rule->{'_funnel_dfr'} ) {
 
                     push @{$cluster_2_nodes{ '' }}, _midpoint_name( $df_rule );     # top-level funnels define clusters (top-level "boxes")
 
@@ -486,7 +482,7 @@ sub _add_dataflow_rules {
         }
 
             # a rule needs a midpoint either if it HAS a funnel or if it IS a funnel
-        if( $funnel_dataflow_rule or $df_rule->{'_is_a_funnel'} ) {
+        if( $funnel_dataflow_rule or $df_rule->is_a_funnel_rule ) {
             my $midpoint_name = _midpoint_name( $df_rule );
 
             $graph->add_node( $midpoint_name,   # midpoint itself

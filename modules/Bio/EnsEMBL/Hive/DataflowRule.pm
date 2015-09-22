@@ -163,6 +163,13 @@ sub to_analysis {
 }
 
 
+sub is_a_funnel_rule {  # currently only local rules are considered, not TheApiary-aware
+    my $self = shift @_;
+
+    return scalar( @{ $self->hive_pipeline->collection_of('DataflowRule')->find_all_by('funnel_dataflow_rule', $self) } );
+}
+
+
 =head2 toString
 
     Args       : (none)
