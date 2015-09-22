@@ -145,7 +145,7 @@ sub _table_node_name {
 sub _midpoint_name {
     my ($df_rule) = @_;
 
-    if(scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
+    if($df_rule and scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
         return 'dfr_'.$1.'_mp';
     } else {
         die "Wrong argument to _midpoint_name";
@@ -466,6 +466,7 @@ sub _add_dataflow_rules {
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
 
+            die "Could not find funnel analysis for the ".$target_object->toString."\n" unless($from_analysis->{'_funnel_dfr'});
             $target_node_name = _midpoint_name( $from_analysis->{'_funnel_dfr'} );
 
         } else {
