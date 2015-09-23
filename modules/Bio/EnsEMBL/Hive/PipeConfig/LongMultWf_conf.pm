@@ -83,6 +83,10 @@ sub pipeline_create_commands {
             # additional tables needed for long multiplication pipeline's operation:
         $self->db_cmd('CREATE TABLE final_result (a_multiplier varchar(255) NOT NULL, b_multiplier varchar(255) NOT NULL, result varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
         $self->db_cmd('CREATE TABLE intermediate_result (a_multiplier varchar(255) NOT NULL, digit char(1) NOT NULL, partial_product varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, digit))'),
+
+#        'rm -f foreign_db',
+
+#        $self->db_cmd('CREATE TABLE intermediate_result (a_multiplier varchar(255) NOT NULL, digit char(1) NOT NULL, partial_product varchar(255) NOT NULL, PRIMARY KEY (a_multiplier, digit))', 'sqlite:///foreign_db'),
     ];
 }
 
@@ -143,16 +147,19 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////intermediate_result' ],
+                1 => [
+                    ':////intermediate_result',
+#                    'sqlite:///foreign_db/intermediate_result',
+                ],
             },
             -can_be_empty       => 1,
         },
         
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
-#           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -parameters => {
-                'intermediate_table_name' => 'intermediate_result',
+                'intermediate_table_url' => ':////intermediate_result',
+#                'intermediate_table_url' => 'sqlite:///foreign_db/intermediate_result',
             },
             -wait_for => [ 'part_multiply' ],
             -flow_into => {

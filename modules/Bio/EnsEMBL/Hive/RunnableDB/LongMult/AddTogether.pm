@@ -39,6 +39,8 @@ package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::TheApiary;
+
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -51,7 +53,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
 
     return {
-        'intermediate_table_name'   => undef,   # if defined, take data from there rather than from accu
+        'intermediate_table_url'    => undef,   # if defined, take data from there rather than from accu
         'partial_product'           => { },     # to be used when b_multiplier only contains digits '0' and '1'
         'take_time'                 => 0,       # how much time run() method will spend in sleeping state
     };
@@ -75,12 +77,12 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
     my $self = shift @_;
 
     my $a_multiplier            = $self->param_required('a_multiplier');
-    my $intermediate_table_name = $self->param('intermediate_table_name');
+    my $intermediate_table_url  = $self->param('intermediate_table_url');
     my $partial_product;
 
-    if($intermediate_table_name) {      # special compatibility mode, where data is fetched from a given table
-        my $intermediate_table_adaptor = $self->db->get_NakedTableAdaptor( 'table_name' => $intermediate_table_name );
-        $partial_product = $self->param('partial_product', $intermediate_table_adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_partial_product( $a_multiplier ) );
+    if($intermediate_table_url) {      # special compatibility mode, where data is fetched from a given table
+        my $intermediate_table = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $intermediate_table_url, $self->input_job->hive_pipeline );
+        $partial_product = $self->param('partial_product', $intermediate_table->adaptor->fetch_by_a_multiplier_HASHED_FROM_digit_TO_partial_product( $a_multiplier ) );
     } else {
         $partial_product = $self->param('partial_product');
     }
