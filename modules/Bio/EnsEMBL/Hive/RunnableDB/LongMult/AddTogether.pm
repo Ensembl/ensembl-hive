@@ -99,10 +99,11 @@ sub fetch_input {   # fetch all the (relevant) precomputed products
 sub run {   # call the function that will compute the stuff
     my $self = shift @_;
 
+    my $a_multiplier    = $self->param_required('a_multiplier');
     my $b_multiplier    = $self->param_required('b_multiplier');
     my $partial_product = $self->param('partial_product');
 
-    $self->param('result', _add_together($b_multiplier, $partial_product));
+    $self->param('result', _add_together($a_multiplier, $b_multiplier, $partial_product));
 
     sleep( $self->param('take_time') );
 }
@@ -154,7 +155,7 @@ sub post_healthcheck {
 =cut
 
 sub _add_together {
-    my ($b_multiplier, $partial_product) = @_;
+    my ($a_multiplier, $b_multiplier, $partial_product) = @_;
 
     my @accu  = ();
 
@@ -162,6 +163,8 @@ sub _add_together {
     foreach my $b_index (0..(@b_digits-1)) {
         my $b_digit = $b_digits[$b_index];
         my $product = $partial_product->{$b_digit};
+
+        die "The partial product of $a_multiplier x $b_digit has not arrived at AddTogether stage - please check your wiring!" unless(defined($product));
 
         my @p_digits = reverse split(//, $product);
         foreach my $p_index (0..(@p_digits-1)) {
