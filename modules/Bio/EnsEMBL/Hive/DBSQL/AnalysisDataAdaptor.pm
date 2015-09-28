@@ -43,6 +43,8 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
+
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
@@ -54,7 +56,7 @@ sub default_table_name {
 sub store_if_needed {
     my ($self, $data) = @_;
 
-    my $storable_hash = {'data'=> $data};
+    my $storable_hash = {'data' => $data, 'md5sum' => md5_hex($data)};
 
     $self->store_or_update_one( $storable_hash  );
 

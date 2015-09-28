@@ -422,14 +422,16 @@ CREATE TABLE accu (
         and the input_id contains the corresponding analysis_data_id.
 
 @column analysis_data_id    primary id
+@column md5sum              checksum over the data to quickly detect (potential) collisions
 @column data                text blob which holds the data
 */
 
 CREATE TABLE analysis_data (
     analysis_data_id        INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    data                    MEDIUMTEXT,
+    md5sum                  CHAR(32)    NOT NULL,
+    data                    MEDIUMTEXT  NOT NULL,
 
-            KEY (data(100))
+    KEY md5sum (md5sum)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 

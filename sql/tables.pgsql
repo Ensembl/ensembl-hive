@@ -425,14 +425,16 @@ CREATE INDEX ON accu (receiving_job_id);
         and the input_id contains the corresponding analysis_data_id.
 
 @column analysis_data_id    primary id
+@column md5sum              checksum over the data to quickly detect (potential) collisions
 @column data                text blob which holds the data
 */
 
 CREATE TABLE analysis_data (
     analysis_data_id        SERIAL PRIMARY KEY,
-    data                    TEXT
+    md5sum                  CHAR(32) NOT NULL,
+    data                    TEXT     NOT NULL
 );
-CREATE INDEX ON analysis_data (data);
+CREATE INDEX ON analysis_data (md5sum);
 
 
 /**
