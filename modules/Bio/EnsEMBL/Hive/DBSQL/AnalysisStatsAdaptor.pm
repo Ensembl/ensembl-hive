@@ -155,8 +155,6 @@ sub update {
     $sql .= ",hive_capacity=" . (defined($stats->hive_capacity()) ? $stats->hive_capacity() : 'NULL');
   }
 
-  $sql .= ",batch_size=" . $stats->batch_size();
-
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
