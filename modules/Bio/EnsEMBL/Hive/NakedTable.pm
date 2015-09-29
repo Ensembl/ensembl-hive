@@ -76,7 +76,7 @@ sub display_name {
 
     my $my_pipeline = $self->hive_pipeline;
     my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
-    return ( ($my_dba and $self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->table_name;
+    return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->table_name;
 }
 
 
