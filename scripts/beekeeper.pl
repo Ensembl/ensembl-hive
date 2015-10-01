@@ -123,7 +123,6 @@ sub main {
                'killworker=i'      => \$kill_worker_id,
                'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
-               'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
                'reset_job_id=i'    => \$reset_job_id,
@@ -302,7 +301,7 @@ sub main {
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} );
+        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses );
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -384,7 +383,7 @@ sub run_autonomously {
 
         $queen->check_for_dead_workers($valley, 0);
 
-        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} )) {
+        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses ) ) {
             if($keep_alive) {
                 print "Beekeeper : detected exit condition, but staying alive because of -keep_alive : ".$reasons_to_exit;
             } else {
@@ -545,7 +544,6 @@ __DATA__
     -unkwn                 : detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
     -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
     -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
-    -no_analysis_stats     : don't show status of each analysis
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
