@@ -167,13 +167,12 @@ sub build {
 
     my $pipeline    = $self->pipeline;
 
-        # NB: this is a very approximate algorithm with rough edges!
-        # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
-        if( !$source_analysis->inflow_rules_count and $source_analysis->is_local_to($pipeline) ) {    # if there is no dataflow into this analysis
-                # run the recursion in each component that has a non-cyclic start:
-            $self->_propagate_allocation( $source_analysis );
-        }
+        # FIXME: using this approach we will never reach cyclic components that lack zero-inflow source nodes!
+        #        But we have to start somewhere...
+        #
+    foreach my $source_analysis ( @{ $pipeline->get_source_analyses } ) {
+            # run the recursion in each component that has a non-cyclic start:
+        $self->_propagate_allocation( $source_analysis );
     }
 
     if( $self->config_get('DisplayDetails') ) {

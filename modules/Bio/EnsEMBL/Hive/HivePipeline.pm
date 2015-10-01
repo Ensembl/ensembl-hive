@@ -210,6 +210,19 @@ sub add_new_or_update {
 }
 
 
+=head2 get_source_analyses
+
+    Description: returns a listref of analyses that do not have local inflow ("source analyses")
+
+=cut
+
+sub get_source_analyses {
+    my $self = shift @_;
+
+    return [ grep { ! $_->inflow_rules_count } $self->collection_of( 'Analysis' )->list ];
+}
+
+
 =head2 get_meta_value_by_key
 
     Description: returns a particular meta_value from 'MetaParameters' collection given meta_key
