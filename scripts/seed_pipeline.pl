@@ -19,27 +19,21 @@ use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
 
 sub show_seedable_analyses {
-    my ($hive_dba) = @_;
+    my ($pipeline) = @_;
 
-    my $analyses    = $hive_dba->get_AnalysisAdaptor->fetch_all();
-    my $incoming    = $hive_dba->get_DataflowRuleAdaptor->fetch_HASHED_FROM_to_analysis_url_TO_dataflow_rule_id();
-    my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+    my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
 
-    print "\nYou haven't specified neither -logic_name nor -analysis_id of the analysis being seeded.\n";
-    print "\nSeedable analyses without incoming dataflow:\n";
-    foreach my $analysis (@$analyses) {
-        my $logic_name = $analysis->logic_name;
-        unless($incoming->{$logic_name}) {
-            my $analysis_id = $analysis->dbID;
-            my ($example_job) = @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis_id, 1 ) };
-            print "\t$logic_name ($analysis_id)\t\t".($example_job ? "Example input_id:   '".$example_job->input_id."'" : "[not populated yet]")."\n";
-        }
+    foreach my $source_analysis ( @{ $pipeline->get_source_analyses } ) {
+        my $logic_name = $source_analysis->logic_name;
+        my $analysis_id = $source_analysis->dbID;
+        my ($example_job) = @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis_id, 1 ) };
+        print "\t$logic_name ($analysis_id)\t\t".($example_job ? "Example input_id:   '".$example_job->input_id."'" : "[not populated yet]")."\n";
     }
 }
 
 
 sub main {
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $analysis_id, $logic_name, $input_id);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $analyses_pattern, $analysis_id, $logic_name, $input_id);
 
     GetOptions(
                 # connect to the database:
@@ -51,6 +45,7 @@ sub main {
 
 
                 # identify the analysis:
+            'analyses_pattern=s'    => \$analyses_pattern,
             'analysis_id=i'         => \$analysis_id,
             'logic_name=s'          => \$logic_name,
 
@@ -58,9 +53,9 @@ sub main {
             'input_id=s'            => \$input_id,
     );
 
-    my $hive_dba;
+    my $pipeline;
     if($url or $reg_alias) {
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                            => $url,
                 -reg_conf                       => $reg_conf,
                 -reg_type                       => $reg_type,
@@ -72,16 +67,24 @@ sub main {
         script_usage(1);
     }
 
-    my $analysis_adaptor = $hive_dba->get_AnalysisAdaptor;
-    my $analysis; 
-    if($logic_name) {
-        $analysis = $analysis_adaptor->fetch_by_logic_name( $logic_name )
-            or die "Could not fetch analysis '$logic_name'";
-    } elsif($analysis_id) {
-        $analysis = $analysis_adaptor->fetch_by_dbID( $analysis_id )
-            or die "Could not fetch analysis with dbID='$analysis_id'";
+    my $analysis;
+    if($analyses_pattern ||= $analysis_id || $logic_name) {
+
+        my $candidate_analyses = $pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+
+        if( scalar(@$candidate_analyses) > 1 ) {
+            die "Too many analyses matching pattern '$analyses_pattern', please specify\n";
+        } elsif( !scalar(@$candidate_analyses) ) {
+            die "Analysis matching the pattern '$analyses_pattern' could not be found\n";
+        }
+
+        ($analysis) = @$candidate_analyses;
+
     } else {
-        show_seedable_analyses($hive_dba);
+
+        print "\nYou haven't specified neither -logic_name nor -analysis_id of the analysis being seeded.\n";
+        print "\nSeedable analyses without incoming dataflow:\n";
+        show_seedable_analyses($pipeline);
         exit(0);
     }
 
@@ -96,7 +99,7 @@ sub main {
         'input_id'      => destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
     );
 
-    my ($job_id) = @{ $hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    my ($job_id) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
 
     if($job_id) {
 
@@ -120,7 +123,7 @@ __DATA__
 
 =head1 SYNOPSIS
 
-    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> [-reg_type <reg_type>] -reg_alias <reg_alias>} [ {-analysis_id <analysis_id> | -logic_name <logic_name>} [ -input_id <input_id> ] ]
+    seed_pipeline.pl {-url <url> | -reg_conf <reg_conf> [-reg_type <reg_type>] -reg_alias <reg_alias>} [ {-analyses_pattern <pattern> | -analysis_id <analysis_id> | -logic_name <logic_name>} [ -input_id <input_id> ] ]
 
 =head1 DESCRIPTION
 
