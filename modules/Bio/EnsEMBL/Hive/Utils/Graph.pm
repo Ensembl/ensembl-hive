@@ -257,16 +257,18 @@ sub _propagate_allocation {
 
         my $proposed_funnel_dfr;    # will depend on whether we start a new semaphore
 
-        my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule();
-        if( $funnel_dataflow_rule ) {   # if there is a new semaphore, the dfrs involved (their midpoints) will also have to be allocated
-            $proposed_funnel_dfr = $funnel_dataflow_rule;       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+        # --------------- first assign the rules (their midpoints if applicable) --------------------
 
-            $df_rule->{'_funnel_dfr'} = $proposed_funnel_dfr;
-
+        my $funnel_dataflow_rule;
+        if( $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {   # if there is a new semaphore, the dfrs involved (their midpoints) will also have to be allocated
             $funnel_dataflow_rule->{'_funnel_dfr'} = $source_analysis->{'_funnel_dfr'}; # draw the funnel's midpoint outside of the box
+
+            $proposed_funnel_dfr = $df_rule->{'_funnel_dfr'} = $funnel_dataflow_rule;       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
         } else {
             $proposed_funnel_dfr = $source_analysis->{'_funnel_dfr'} || ''; # if we don't start a new semaphore, inherit the allocation of the source
         }
+
+        # --------------- then assign the target_objects --------------------------------------------
 
             # we allocate on first-come basis at the moment:
         if( exists $target_object->{'_funnel_dfr'} ) {  # node is already allocated?
