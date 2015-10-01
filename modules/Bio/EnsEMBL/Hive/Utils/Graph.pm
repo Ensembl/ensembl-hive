@@ -48,7 +48,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::Hive::Utils qw(destringify);
+use Bio::EnsEMBL::Hive::Utils qw(destringify throw);
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
@@ -148,7 +148,7 @@ sub _midpoint_name {
     if($df_rule and scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
         return 'dfr_'.$1.'_mp';
     } else {
-        die "Wrong argument to _midpoint_name";
+        throw("Wrong argument to _midpoint_name");
     }
 }
 
