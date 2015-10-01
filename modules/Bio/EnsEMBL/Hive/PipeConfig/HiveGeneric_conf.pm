@@ -473,7 +473,7 @@ sub add_objects_from_config {
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
             if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
-                die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
+                warn "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
             }
 
             $parameters_hash ||= {};    # in case nothing was given
