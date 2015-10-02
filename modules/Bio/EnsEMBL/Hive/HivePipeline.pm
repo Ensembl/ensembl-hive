@@ -277,4 +277,16 @@ sub params_as_hash {
 }
 
 
+sub print_diagram {
+    my $self = shift @_;
+
+    print ''.('─'x20).'[ '.$self->display_name.' ]'.('─'x20)."\n";
+
+    foreach my $source_analysis ( @{ $self->get_source_analyses } ) {
+        print "\n";
+        $source_analysis->print_diagram_node($self, '');
+    }
+}
+
+
 1;

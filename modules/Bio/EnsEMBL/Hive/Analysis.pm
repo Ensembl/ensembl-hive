@@ -247,6 +247,34 @@ sub inflow_rules_count {
 }
 
 
+=head2 get_grouped_dataflow_rules
+
+  Args       : none
+  Example    : $groups = $analysis->get_grouped_dataflow_rules;
+  Description: returns a listref of pairs, where the first element is a separate dfr or a funnel, and the second element is a listref of semaphored fan dfrs
+  Returntype : listref
+
+=cut
+
+sub get_grouped_dataflow_rules {
+    my $self = shift @_;
+
+    my %set_of_groups = ();     # Note that the key (being a stringified reference) is unusable,
+                                # so we end up packing it as the first element of the structure,
+                                # and only returning the listref of the values.
+
+    foreach my $dfr (@{$self->dataflow_rules_collection}) {
+        if(my $funnel_dfr = $dfr->funnel_dataflow_rule) {
+            my $this_group = $set_of_groups{$funnel_dfr} ||= [$funnel_dfr, []];
+            push @{$this_group->[1]}, $dfr;
+        } else {
+            $set_of_groups{$dfr} ||= [$dfr, []];
+        }
+    }
+    return [ sort { scalar(@{$a->[1]}) <=> scalar(@{$b->[1]}) or $b->[0]->branch_code <=> $a->[0]->branch_code } values %set_of_groups ];
+}
+
+
 sub dataflow_rules_by_branch {
     my $self = shift @_;
 
@@ -266,6 +294,70 @@ sub toString {
     my $self = shift @_;
 
     return 'Analysis['.($self->dbID // '').']: '.$self->display_name.'->('.join(', ', ($self->module // 'no_module').($self->language ? sprintf(' (%s)', $self->language) : ''), $self->parameters // '{}', $self->resource_class ? $self->resource_class->name : 'no_rc').')';
+}
+
+
+sub print_diagram_node {
+    my ($self, $ref_pipeline, $prefix) = @_;
+
+    print $self->display_name($ref_pipeline)."\n";  # NB: the prefix of the label itself is done by the previous level
+
+    my $groups = $self->get_grouped_dataflow_rules;
+
+    foreach my $i (0..scalar(@$groups)-1) {
+
+        my ($funnel_dfr, $fan_dfrs) = @{ $groups->[$i] };
+
+        my ($a_prefix, $b_prefix);
+
+        if($i < scalar(@$groups)-1) {   # there is more on the list:
+            $a_prefix = $prefix." └─▻ ";
+            $b_prefix = " │   ";
+        } elsif( $i ) {                 # the last one out of several:
+            $a_prefix = $prefix." └─▻ ";
+            $b_prefix = "     ";
+        } else {                        # the only one ("backbone"):
+            $a_prefix = $prefix." v\n".$prefix;
+            $b_prefix = '';
+        }
+
+        if(scalar(@$fan_dfrs)) {
+            $a_prefix = $prefix.$b_prefix." V\n".$prefix.$b_prefix;     # override funnel's arrow to always be vertical (and in CAPS)
+
+            if(scalar(@$groups)>1) {        # if there is a fork (no single backbone), the semaphore group should also be offset
+                print $prefix." │\n";
+#               print $prefix." └────┬──┐\n";
+                print $prefix." ╘════╤══╗\n";
+            }
+        }
+
+        foreach my $j (0..scalar(@$fan_dfrs)-1) {
+            my $fan_dfr     = $fan_dfrs->[$j];
+            my $fan_branch  = $fan_dfr->branch_code;
+            my $template    = $fan_dfr->input_id_template;
+            print $prefix.$b_prefix." │  ║\n";
+            print $prefix.$b_prefix." │  ║#$fan_branch".($template ? " >> $template" : '')."\n";
+            print $prefix.$b_prefix." │├─╚═> ";
+
+            my $target      = $fan_dfr->to_analysis;    # semaphored target is always supposed to be an analysis
+            my $c_prefix    = ($j<scalar(@$fan_dfrs)-1) ? ' │  ║   ' : ' │      ';
+            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix.$c_prefix );
+        }
+
+        my $funnel_branch = $funnel_dfr->branch_code;
+            print $prefix.(scalar(@$fan_dfrs) ? $b_prefix : '')." │\n";
+            print $prefix.(scalar(@$fan_dfrs) ? $b_prefix : '')." │#$funnel_branch\n";
+            print $a_prefix;
+
+        my $target      = $funnel_dfr->to_analysis;
+        if($target->can('print_diagram_node')) {
+            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix );
+        } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
+            print '[[ '.$target->display_name($ref_pipeline)." ]]\n";
+        } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
+            print '<<-- '.$target->display_name($ref_pipeline)."\n";
+        }
+    }
 }
 
 1;
