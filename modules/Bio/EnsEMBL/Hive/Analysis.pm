@@ -298,7 +298,13 @@ sub toString {
 
 
 sub print_diagram_node {
-    my ($self, $ref_pipeline, $prefix) = @_;
+    my ($self, $ref_pipeline, $prefix, $seen_analyses) = @_;
+
+    if ($seen_analyses->{$self}) {
+        print "(".$self->display_name($ref_pipeline).")\n";  # NB: the prefix of the label itself is done by the previous level
+        return;
+    }
+    $seen_analyses->{$self} = 1;
 
     print $self->display_name($ref_pipeline)."\n";  # NB: the prefix of the label itself is done by the previous level
 
@@ -341,7 +347,7 @@ sub print_diagram_node {
 
             my $target      = $fan_dfr->to_analysis;    # semaphored target is always supposed to be an analysis
             my $c_prefix    = ($j<scalar(@$fan_dfrs)-1) ? ' │  ║   ' : ' │      ';
-            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix.$c_prefix );
+            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix.$c_prefix, $seen_analyses );
         }
 
         my $funnel_branch = $funnel_dfr->branch_code;
@@ -351,7 +357,7 @@ sub print_diagram_node {
 
         my $target      = $funnel_dfr->to_analysis;
         if($target->can('print_diagram_node')) {
-            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix );
+            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix, $seen_analyses );
         } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
             print '[[ '.$target->display_name($ref_pipeline)." ]]\n";
         } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {

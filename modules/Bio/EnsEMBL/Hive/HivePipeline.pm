@@ -282,9 +282,10 @@ sub print_diagram {
 
     print ''.('─'x20).'[ '.$self->display_name.' ]'.('─'x20)."\n";
 
+    my %seen = ();
     foreach my $source_analysis ( @{ $self->get_source_analyses } ) {
         print "\n";
-        $source_analysis->print_diagram_node($self, '');
+        $source_analysis->print_diagram_node($self, '', \%seen);
     }
 }
 
