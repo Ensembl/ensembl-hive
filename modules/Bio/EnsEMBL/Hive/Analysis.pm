@@ -271,7 +271,7 @@ sub get_grouped_dataflow_rules {
             $set_of_groups{$dfr} ||= [$dfr, []];
         }
     }
-    return [ sort { scalar(@{$a->[1]}) <=> scalar(@{$b->[1]}) or $b->[0]->branch_code <=> $a->[0]->branch_code } values %set_of_groups ];
+    return [ sort { scalar(@{$a->[1]}) <=> scalar(@{$b->[1]}) or $a->[0]->branch_code <=> $b->[0]->branch_code } values %set_of_groups ];
 }
 
 
