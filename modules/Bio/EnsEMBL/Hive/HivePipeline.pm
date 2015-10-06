@@ -287,6 +287,11 @@ sub print_diagram {
         print "\n";
         $source_analysis->print_diagram_node($self, '', \%seen);
     }
+    foreach my $cyclic_analysis ( $self->collection_of( 'Analysis' )->list ) {
+        next if $seen{$cyclic_analysis};
+        print "\n";
+        $cyclic_analysis->print_diagram_node($self, '', \%seen);
+    }
 }
 
 
