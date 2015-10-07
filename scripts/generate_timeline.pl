@@ -21,7 +21,7 @@ use Data::Dumper;
 use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 no warnings qw{qw};
@@ -61,9 +61,9 @@ sub main {
 
     if ($help) { script_usage(0); }
 
-    my $hive_dba;
+    my $pipeline;
     if($url or $reg_alias) {
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                            => $url,
                 -reg_conf                       => $reg_conf,
                 -reg_type                       => $reg_type,
@@ -121,14 +121,14 @@ sub main {
 
     }
 
-
-    my $dbh = $hive_dba->dbc->db_handle();
+    my $hive_dbc = $pipeline->hive_dba->dbc;
+    my $dbh = $hive_dbc->db_handle();
 
     # Get the memory usage from each resource_class
     my %mem_resources = ();
     my %cpu_resources = ();
     {
-        foreach my $rd (@{$hive_dba->get_ResourceDescriptionAdaptor->fetch_all()}) {
+        foreach my $rd ($pipeline->collection_of('ResourceDescription')->list) {
             if ($rd->meadow_type eq 'LSF') {
                 $mem_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
                 $cpu_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/-n\s*(\d+)/;
@@ -152,14 +152,14 @@ sub main {
     }
 
     # Get the info about the analysis
-    my $analysis_adaptor        = $hive_dba->get_AnalysisAdaptor;
-    my %default_resource_class  = %{ $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id() };
-    my $rc_adaptor              = $hive_dba->get_ResourceClassAdaptor;
+    my %default_resource_class  = map {$_->dbID => $_->resource_class_id} $pipeline->collection_of('Analysis')->list;
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name = %{$key eq 'analysis'
-        ? $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_logic_name()
-        : $rc_adaptor->fetch_HASHED_FROM_resource_class_id_TO_name()
-    };
+    my %key_name;
+    if ($key eq 'analysis') {
+        %key_name = map {$_->dbID => $_->logic_name} $pipeline->collection_of('Analysis')->list;
+    } else {
+        %key_name = map {$_->dbID => $_->name} $pipeline->collection_of('ResourceClass')->list;
+    }
     $key_name{-1} = 'UNSPECIALIZED';
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
@@ -264,7 +264,7 @@ sub main {
             [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
-    my $safe_database_location = sprintf('%s@%s', $hive_dba->dbc->dbname, $hive_dba->dbc->host || '-');
+    my $safe_database_location = sprintf('%s@%s', $hive_dbc->dbname, $hive_dbc->host || '-');
     my $plotted_analyses_desc = '';
     if ($n_relevant_analysis < scalar(@sorted_key_ids)) {
         if ($real_top) {

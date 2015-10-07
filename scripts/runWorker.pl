@@ -98,9 +98,7 @@ sub main {
         script_usage(1);
     }
 
-    my $hive_dba = $pipeline->hive_dba;
-
-    unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
+    unless($pipeline->hive_dba) {
         print "ERROR : no database connection\n\n";
         script_usage(1);
     }
