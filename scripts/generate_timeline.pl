@@ -154,12 +154,7 @@ sub main {
     # Get the info about the analysis
     my %default_resource_class  = map {$_->dbID => $_->resource_class_id} $pipeline->collection_of('Analysis')->list;
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name;
-    if ($key eq 'analysis') {
-        %key_name = map {$_->dbID => $_->logic_name} $pipeline->collection_of('Analysis')->list;
-    } else {
-        %key_name = map {$_->dbID => $_->name} $pipeline->collection_of('ResourceClass')->list;
-    }
+    my %key_name = map {$_->dbID => $_->display_name} $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
     $key_name{-1} = 'UNSPECIALIZED';
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 

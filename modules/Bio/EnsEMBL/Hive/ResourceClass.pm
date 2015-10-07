@@ -58,6 +58,12 @@ sub name {
 }
 
 
+sub display_name {
+    my ($self) = @_;
+    return $self->name;
+}
+
+
 sub toString {
     my $self = shift @_;
 
