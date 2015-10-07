@@ -191,11 +191,8 @@ sub url {
 
 
 sub display_name {
-    my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter display_name is generated
-
-    my $my_pipeline = $self->hive_pipeline;
-    my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
-    return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->logic_name;
+    my ($self) = @_;
+    return $self->logic_name;
 }
 
 
@@ -301,12 +298,12 @@ sub print_diagram_node {
     my ($self, $ref_pipeline, $prefix, $seen_analyses) = @_;
 
     if ($seen_analyses->{$self}) {
-        print "(".$self->display_name($ref_pipeline).")\n";  # NB: the prefix of the label itself is done by the previous level
+        print "(".$self->relative_display_name($ref_pipeline).")\n";  # NB: the prefix of the label itself is done by the previous level
         return;
     }
     $seen_analyses->{$self} = 1;
 
-    print $self->display_name($ref_pipeline)."\n";  # NB: the prefix of the label itself is done by the previous level
+    print $self->relative_display_name($ref_pipeline)."\n";  # NB: the prefix of the label itself is done by the previous level
 
     my $groups = $self->get_grouped_dataflow_rules;
 
@@ -359,9 +356,9 @@ sub print_diagram_node {
         if($target->can('print_diagram_node')) {
             $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix, $seen_analyses );
         } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
-            print '[[ '.$target->display_name($ref_pipeline)." ]]\n";
+            print '[[ '.$target->relative_display_name($ref_pipeline)." ]]\n";
         } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
-            print '<<-- '.$target->display_name($ref_pipeline)."\n";
+            print '<<-- '.$target->relative_display_name($ref_pipeline)."\n";
         }
     }
 }

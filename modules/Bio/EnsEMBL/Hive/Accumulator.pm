@@ -74,11 +74,8 @@ sub url {
 
 
 sub display_name {
-    my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter display_name is generated
-
-    my $my_pipeline = $self->hive_pipeline;
-    my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
-    return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->struct_name . $self->signature_template;
+    my ($self) = @_;
+    return $self->struct_name . $self->signature_template;
 }
 
 
