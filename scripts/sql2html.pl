@@ -31,7 +31,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 ### Options ###
 ###############
 
-my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$html_head_file,$help,$help_format);
+my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$html_head_file,$include_css,$help,$help_format);
 my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle,$hosts_list);
 
 usage() if (!scalar(@ARGV));
@@ -55,6 +55,7 @@ GetOptions(
     'skip_connection'  => \$skip_conn,
     'intro=s'          => \$intro_file,
     'html_head=s'      => \$html_head_file,
+    'include_css!'     => \$include_css,
     'help!'            => \$help,
     'help_format'      => \$help_format,
 );
@@ -107,11 +108,6 @@ if (defined($host) && !defined($skip_conn)) {
 ################
 
 my $default_colour = '#000'; # Black
-my $border_colour  = '#BBB'; 
-my $box_shadow     = 'box-shadow:1px 1px 2px #888';
-
-my $header_bg1 = "background-color:#FFF";
-my $header_bg2 = "background-color:#F4F4F4";
 
 my %display_col = ('Show' => 'none', 'Hide' => 'inline');
 my $documentation = {};
@@ -134,8 +130,8 @@ my $parenth_count = 0;
 my $header_colour;
 
 my $SQL_LIMIT = 50;
-my $img_plus  = qq{<img src="/i/16/plus-button.png" style="width:12px;height:12px;position:relative;top:2px" alt="show"/>};
-my $img_minus = qq{<img src="/i/16/minus-button.png" style="width:12px;height:12px;position:relative;top:2px" alt="hide"/>};
+my $img_plus  = qq{<img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/>};
+my $img_minus = qq{<img src="/i/16/minus-button.png" class="sql_schema_icon" alt="hide"/>};
 my $link_text = 'columns';
 
 
@@ -145,13 +141,15 @@ my $link_text = 'columns';
 my $title = 'Schema Documentation';
 my $extra_html_head_content = insert_text_into_html_head($html_head_file);
 
+my $css_code = ($include_css) ? get_css_code() : '';
+
 my $html_header = qq{
 <html>
 <head>
 $extra_html_head_content
 <title>$title</title>
 <meta name="order" content="2" />
-
+$css_code
 <script language="Javascript" type="text/javascript">
   var img_plus   = '$img_plus';
   var img_minus  = '$img_minus';
@@ -473,13 +471,13 @@ foreach my $header_name (@header_names) {
   #----------------#  
   if ($header_flag == 1 and $header_name ne 'default') {
     $html_content .= qq{\n
-<div style="$header_bg2;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
-  <div id="$header_id" style="background-color:$hcolour;box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:top"></div>
-  <h2 id="$header_id" style="display:inline;color:#000;padding-top:0px;margin-left:6px">$header_name</h2>
+<div class="sql_schema_group_header" style="border-color:$hcolour">
+  <div id="$header_id" class="sql_schema_group_bullet" style="background-color:$hcolour"></div>
+  <h2 id="$header_id">$header_name</h2>
 </div>\n};
     $header_id ++;
     my $header_desc = $documentation->{$header_name}{'desc'};    
-    $html_content .= qq{<p style="width:800px">$header_desc</p>} if (defined($header_desc));
+    $html_content .= qq{<p class="sql_schema_group_header_desc">$header_desc</p>} if (defined($header_desc));
   }
   
   #------------------------#
@@ -507,7 +505,7 @@ foreach my $header_name (@header_names) {
     my $html_table   = add_see($data->{see});
     $html_table     .= add_species_list($t_name,$data->{see}) if ($hosts_list);
     if ($html_table ne '') {
-      $html_content .= qq{<table style="margin-top:20px;border:1px solid $border_colour"><tr>};
+      $html_content .= qq{<table class="sql_schema_extra"><tr>};
       $html_content .= $html_table;
       $html_content .= qq{</tr></table>};
     }
@@ -558,10 +556,10 @@ sub display_tables_list {
     }
     $html .= qq{
 <div>      
-  <div id="top" style="$header_bg2;border-radius:5px;margin-bottom:20px;float:left;$list_width">
-    <div style="padding:5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
+  <div id="top" class="sql_schema_table_list_nh" style="$list_width">
+    <div class="sql_schema_table_list_sub_nh">
       <img src="/i/16/rev/info.png" style="vertical-align:top" />
-      <h3 style="display:inline;color:#FFF">List of the tables:</h3>
+      <h3>List of the tables:</h3>
     </div>};
   }
   
@@ -604,7 +602,7 @@ sub display_tables_list {
       
       # List of tables #
       $html .= qq{\n      <div style="float:left">} if ($count > $nb_by_col);
-      $html .= qq{\n      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">\n};
+      $html .= qq{\n      <ul class="sql_schema_table_list">\n};
       my $t_count = 0;
       foreach my $t_name (@{$tables}) {
         my $t_colour;
@@ -617,7 +615,7 @@ sub display_tables_list {
         if ($t_count>=$nb_by_col) {
           $html .= qq{\n      </ul>\n      </div>};
           $html .= qq{\n      <div style="float:left">};
-          $html .= qq{\n      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">\n};
+          $html .= qq{\n      <ul class="sql_schema_table_list">\n};
           $t_count = 0;
         }
       }
@@ -626,12 +624,12 @@ sub display_tables_list {
       $html .= qq{\n    </div>\n} if ($format_headers == 1);   
     }
     else {
-      $html .= qq{\n    <table style="padding:0px 2px"><tr><td>\n      <ul style="padding-left:20px">\n};
+      $html .= qq{\n    <table><tr><td>\n      <ul class="sql_schema_table_list_nh">\n};
 
       # List of tables #
       foreach my $t_name (@{$tables}) {
         if ($table_count == $nb_by_col and $col_count<$nb_col and $nb_col>1){
-          $html .= qq{      </ul>\n    </td><td>\n      <ul style="padding-left:20px">\n};
+          $html .= qq{      </ul>\n    </td><td>\n      <ul class="sql_schema_table_list_nh">\n};
           $table_count = 0;
         }
         my $t_colour = $default_colour;
@@ -679,10 +677,10 @@ sub display_header {
     }
 
     $html .= qq{
-  <div style="$header_bg2;border-left:1px dotted $border_colour;border-right:1px dotted $border_colour;border-bottom:1px dotted $border_colour;margin-bottom:15px;float:left;margin-right:20px;min-width:200px">
-    <div style="padding:2px 5px;$header_bg1;border-top:2px solid $hcolour;border-bottom:1px solid $hcolour">
-      <div style="background-color:$hcolour;box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:middle"></div>
-      <h2 style="margin-left:8px;display:inline;color:#000;vertical-align:middle">$header_name</h2>
+  <div class="sql_schema_table_group">
+    <div class="sql_schema_table_group_header" style="border-color:$hcolour">
+      <div class="sql_schema_table_group_bullet" style="background-color:$hcolour"></div>
+      <h2>$header_name</h2>
     </div>};
   } 
   else {
@@ -774,10 +772,10 @@ sub add_table_name_to_list {
   my $t_colour = shift;
   my $c = $t_colour;
   if (defined($t_colour)) {
-    $t_colour = ($t_colour ne '') ? qq{;background-color:$t_colour} : '';
-    $t_colour = qq{<div style="padding:0px;margin-left:0px$t_colour;display:inline">&nbsp;</div> };
+    $t_colour = ($t_colour ne '') ? qq{ style="background-color:$t_colour"} : '';
+    $t_colour = qq{<div class="sql_schema_table_name_nh"$t_colour>&nbsp;</div> };
   }
-  my $html = qq{        <li style="margin-right:0px">$t_colour<a href="#$t_name" style="text-decoration:none;font-weight:bold">$t_name</a></li>\n};
+  my $html = qq{        <li>$t_colour<a href="#$t_name" class="sql_schema_link" style="font-weight:bold">$t_name</a></li>\n};
   return $html;
 }
 
@@ -786,22 +784,15 @@ sub add_table_name_to_list {
 sub add_table_name {
   my $t_name = shift;
   my $colour = shift || $default_colour;
-  
-  my $c_box = '';
-  if ($show_colour) {
-    $c_box = qq{    <div style="float:left;padding:0px;height:20px;width:10px;background-color:$colour;margin-right:10px"></div>};
-  }
 
   my $html = qq{
-  <div id="$t_name" style="width:850px;$header_bg2;border-bottom:1px solid $border_colour;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid $colour">
- 
-    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
-      <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:$colour;box-shadow:1px 1px 2px #888;vertical-align:middle"></span>$t_name</div>
-    <div style="float:right;text-align:right;padding:2px 1px">
+  <div id="$t_name"class="sql_schema_table_header" style="border-top-color:$colour">
+    <div class="sql_schema_table_header_left"><span style="background-color:$colour"></span>$t_name</div>
+    <div class="sql_schema_table_header_right">
   };
   $html .= show_hide_button("a_$t_name", $t_name, $link_text);
   $html .= qq{
-      <span style="margin-right:5px;border-right:1px solid #000"> </span> <a href="#top" style="text-decoration:none">[Back to top]</a>
+      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
     </div>
     <div style="clear:both"></div>
   </div>\n}; 
@@ -816,7 +807,7 @@ sub add_description {
   # Search if there are some @link tags in the description text.
   my $desc = add_internal_link($data->{desc},$data);
   
-  return qq{  <p style="padding:5px 0px;margin-bottom:0px;width:800px">$desc</p>\n};
+  return qq{  <p class="sql_schema_table_desc">$desc</p>\n};
 }
 
 
@@ -849,13 +840,13 @@ sub add_columns {
   my $display_style = $display_col{$display};
   
   my $html = qq{\n  <div id="div_$table" style="display:$display_style">
-    <table class="ss" style="border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px">
+    <table class="ss sql_schema_table_column" style="border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px">
       <tr class="center">
-        <th style="background-color:#667aa6;color:#FFF;padding:2px">Column</th>
-        <th style="background-color:#667aa6;color:#FFF;padding:2px">Type</th>
-        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:80px">Default value</th>
-        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:500px">Description</th>
-        <th style="background-color:#667aa6;color:#FFF;padding:2px;min-width:100px">Index</th>
+        <th>Column</th>
+        <th>Type</th>
+        <th style="min-width:80px">Default value</th>
+        <th style="min-width:500px">Description</th>
+        <th style="min-width:100px">Index</th>
       </tr>\n};
   my $bg = 1;
   
@@ -900,7 +891,7 @@ sub add_examples {
   foreach my $ex (@$examples) {
     my @lines = split("\n",$ex);
     my $nb_display = ($nb ne '') ? " $nb" : $nb;
-    $html .= qq{<div style="margin: 10px 0px"><p style="font-weight:bold">Example$nb_display:</p>};
+    $html .= qq{<div class="sql_schema_table_examples"><p class="sql_schema_table_example_header">Example$nb_display:</p><div class="sql_schema_table_example_content">};
     my $has_desc = 0;
     my $sql;
     
@@ -910,10 +901,10 @@ sub add_examples {
       
       # Pick up the SQl query if it exists
       if ($line =~ /(.*)\s*\@sql\s*(.+)/) {
-        $html .= ($has_desc == 1) ? $1 : qq{<p style="padding-left:10px">$1};
+        $html .= ($has_desc == 1) ? $1 : qq{<p>$1};
         $sql = $2;
       } elsif (!defined($sql)){
-        $html .= qq{<p style="padding-left:10px">} if ($has_desc == 0);
+        $html .= qq{<p>} if ($has_desc == 0);
         $html .= $line;
         $has_desc = 1;
       }
@@ -935,21 +926,23 @@ sub add_examples {
         $sql_table = get_example_table($sql,$table,$nb);
       }
       if (defined($sql)) {
-        foreach my $word (qw(SELECT DISTINCT CONCAT FROM LEFT JOIN USING WHERE LIMIT DESC ORDER GROUP)) {
-          $sql =~ s/$word /$word /i;
+             
+        foreach my $word (qw(SELECT DISTINCT COUNT CONCAT GROUP_CONCAT AS FROM LEFT JOIN USING WHERE AND OR ON IN LIMIT DESC ORDER GROUP BY)) {
+          my $hl_word = qq{<span class="sql_schema_sql_highlight">$word</span>};
+          $sql =~ s/$word /$hl_word /ig;
         }
       }
       $html .= qq{
       <div>
-        <div style="float:left">
-          <pre style="border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px;overflow:auto;max-width:800px">$sql</pre>
+        <div class="sql_schema_table_example_query">
+          <pre>$sql</pre>
         </div>
-        <div style="float:left">$show_hide</div>
+        <div class="sql_schema_table_example_button">$show_hide</div>
         <div style="clear:both"></div>
       </div>
       $sql_table};
     }
-    $html .= qq{</div>};
+    $html .= qq{</div></div>};
     $nb ++;
   }
   
@@ -963,9 +956,9 @@ sub add_see {
   my $html = '';
 
   if (scalar @$sees) {
-    $html .= qq{    <td style="padding: 4px 25px 0px 2px">\    <p style="font-weight:bold">See also:</p>\n  <ul style="margin-bottom:0px";>\n};
+    $html .= qq{    <td class="sql_schema_extra_left"">\    <p style="font-weight:bold">See also:</p>\n  <ul>\n};
     foreach my $see (@$sees) {
-      $html .= qq{      <li><a href="#$see" style="text-decoration:none">$see</a></li>\n};
+      $html .= qq{      <li><a href="#$see">$see</a></li>\n};
     }
     $html .= qq{      </ul>\n    </td>\n};
   }
@@ -1002,17 +995,17 @@ sub add_species_list {
 
   my $show_hide = show_hide_button("s_$table", "$table", 'species');
 
-  my $separator = (defined($has_see) && scalar(keys(@$has_see))) ? qq{  <td style="margin:0px;padding:0px;width:1px;border-right:1px dotted $border_colour"></td>} : '';
-  my $margin = (defined($has_see) && scalar(keys(@$has_see))) ? qq{;padding-left:25px} : '';
+  my $separator = (defined($has_see) && scalar(keys(@$has_see))) ? qq{  <td class="sql_schema_extra_separator"></td>} : '';
+  my $margin = (defined($has_see) && scalar(keys(@$has_see))) ? qq{ style="padding-left:25px"} : '';
 
   my $html = qq{$separator
-  <td style="padding-top:4px$margin"><p style="margin-bottom:0px"><span style="margin-right:10px;font-weight:bold">List of species with populated data:</span>$show_hide</p>
-    <div id="sp_$table" style="display:none;">
-      <ul style="margin-top:1em">};
+  <td class="sql_schema_extra_right"$margin><p><span>List of species with populated data:</span>$show_hide</p>
+    <div id="sp_$table" style="display:none;">};
       
-  @species_list = map{ $_ =~ s/_/ /g; $_ } (map { qq{<li style="font-style:italic">}.ucfirst($_)."</li>" } @species_list);
+  @species_list = map{ $_ =~ s/_/ /g; $_ } @species_list;
+  @species_list = map { qq{<li class="sql_schema_species_name">}.ucfirst($_)."</li>" } @species_list;
   
-  $html .= qq{      <ul style="margin-top:1em">\n        }.join("\n        ",@species_list).qq{\n      </ul>\n};
+  $html .= qq{      <ul>\n        }.join("\n        ",@species_list).qq{\n      </ul>\n};
   $html .= qq{    </div>\n  </td>};
   
   return $html;
@@ -1028,7 +1021,7 @@ sub add_internal_link {
     if ((!grep {$link eq $_} @{$data->{see}}) and defined($link)) {
       push @{$data->{see}}, $link;
     }
-    my $table_to_link = qq{<a href="#$link" style="text-decoration:none">$link</a>};
+    my $table_to_link = qq{<a href="#$link" class="sql_schema_link">$link</a>};
     $desc =~ s/\@link\s?\w+/$table_to_link/;
   }
   return $desc;
@@ -1119,9 +1112,9 @@ sub parse_column_type {
   
   return $type unless (scalar(@items_list) > 1);
   
-  my $data_list = qq{$c_type:<ul style="margin-bottom:0px">};
+  my $data_list = qq{$c_type:<ul class="sql_schema_table_column_type">};
   foreach my $item (@items_list) {
-    $data_list .= qq{  <li style="line-height:12px">$item</li>};
+    $data_list .= qq{  <li>$item</li>};
   }
   $data_list .= qq{</ul>};
   return $data_list;
@@ -1165,7 +1158,7 @@ sub get_example_table {
   if (scalar(@$results)) {
     $html .= qq{
   <div id="ex_$table$nb" style="display:none;">
-    <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">\n      <tr><th>};
+    <table class="ss sql_schema_table_example_result">\n      <tr><th>};
     $html .= join("</th><th>",@tcols);
     $html .= qq{</th></tr>};
     
@@ -1184,7 +1177,7 @@ sub get_example_table {
     $html .= qq{    </table>\n  </div>};
   } else {
     my $msg = qq{ERROR: the SQL query displayed above returned no results!};
-    $html .= qq{<div style="padding:5px;margin:10px;width:500px;font-weight:bold;border:2px solid red;color:red">$msg</div>};
+    $html .= qq{<div class="sql_schema_table_example_error">$msg</div>};
     print STDERR qq{SQL: $sql\n$msg\n};
   }
   
@@ -1209,7 +1202,7 @@ sub add_legend {
     else {
       $desc = $legend{$c};
     }
-    $html .= qq{  <tr><td style="width:25px;height:15px;background-color:$c"></td><td>$desc</td></tr>\n};
+    $html .= qq{  <tr><td class="sql_schema_legend" style="background-color:$c"></td><td>$desc</td></tr>\n};
   }
   $html .= qq{</table>};
   
@@ -1261,7 +1254,7 @@ sub show_hide_button {
   my $label  = shift;
   
   my $show_hide = qq{
-  <a id="$a_id" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;vertical-align:middle;$box_shadow" onclick="show_hide('$div_id','$label')">
+  <a id="$a_id" class="help-header sql_schema_show_hide" onclick="show_hide('$div_id','$label')">
     $img_plus Show $label
   </a>};
   return $show_hide;
@@ -1289,6 +1282,86 @@ sub get_connection_and_query {
     $sth->execute;
   }
   return $sth;
+}
+
+
+sub get_css_code() {
+  my $css = qq{
+<style type="text/css">
+  /* Icons */
+  img.sql_schema_icon { width:12px;height:12px;position:relative;top:2px; }
+
+  /* Tables list - with header */
+  div.sql_schema_table_group           { background-color:#F4F4F4;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB;margin-bottom:15px;float:left;margin-right:20px;min-width:200px; }
+  div.sql_schema_table_group_header    { background-color:#FFF;padding:2px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
+  div.sql_schema_table_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:middle; }
+  div.sql_schema_table_group_header h2 { margin-left:8px;display:inline;color:#000;vertical-align:middle; }
+  ul.sql_schema_table_list             { padding:0px 4px 0px 22px;margin-bottom:2px; }
+  ul.sql_schema_table_list li          { margin-right:0px; }
+
+  /* Tables list - no header */
+  div.sql_schema_table_list_nh       { background-color:#F4F4F4;border-radius:5px;margin-bottom:20px;float:left; }
+  div.sql_schema_table_list_sub_nh   { padding:5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px; }
+  div.sql_schema_table_list_nh h3    { display:inline;color:#FFF; }
+  div.sql_schema_table_list_nh table { padding:0px 2px; }
+  ul.sql_schema_table_list_nh        { padding-left:20px; }
+  div.sql_schema_table_name_nh       {padding:0px;margin-left:0px;display:inline; }
+
+  /* Group header */
+  div.sql_schema_group_header    { background-color:#F4F4F4;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
+  div.sql_schema_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:top; }
+  div.sql_schema_group_header h2 { display:inline;color:#000;padding-top:0px;margin-left:6px; }
+  p.sql_schema_group_header_desc { width:800px; }
+
+  /* SQL table header */
+  div.sql_schema_table_header           { background-color:#F4F4F4;width:850px;border-bottom:1px solid #BBB;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid #000; }
+  div.sql_schema_table_header_left      { float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px; }
+  div.sql_schema_table_header_left span { display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;box-shadow:1px 1px 2px #888;vertical-align:middle; }
+  div.sql_schema_table_header_right     { float:right;text-align:right;padding:2px 1px; }
+  span.sql_schema_table_separator       { margin-right:5px;border-right:1px solid #000; }
+
+  /* SQL table description */
+  p.sql_schema_table_desc { padding:5px 0px;margin-bottom:0px;width:800px; }
+
+  /* SQL table columns */
+  table.sql_schema_table_column      { border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px; }
+  table.sql_schema_table_column th   { background-color:#667aa6;color:#FFF;padding:2px; }
+  ul.sql_schema_table_column_type    { margin-bottom:0px; }
+  ul.sql_schema_table_column_type li { line-height:12px; }
+
+  /* SQL table examples */
+  div.sql_schema_table_examples          { margin:10px 0px 15px; }
+  p.sql_schema_table_example_header      { font-weight:bold;margin-bottom:10px; }
+  div.sql_schema_table_example_content   { margin-left:10px; }
+  div.sql_schema_table_example_query     { float:left;border:1px solid #555;padding:2px 4px;margin-right:15px;overflow:auto;max-width:800px;background-color:#FAFAFA; }
+  div.sql_schema_table_example_query pre { margin-bottom:0px;color:#333; }
+  table.sql_schema_table_example_result  { width:50%;margin-top:20px;margin-left:10px;border-spacing:2px; }
+  div.sql_schema_table_example_error     { padding:5px;margin:10px;width:500px;font-weight:bold;border:2px solid red;color:red; }
+  span.sql_schema_sql_highlight          { color:#00F; }
+
+  /* SQL table extra info */
+  table.sql_schema_extra         { margin-top:20px;border:1px solid #BBB; }
+  table.sql_schema_extra a       { text-decoration:none; }
+  td.sql_schema_extra_left       { padding: 4px 25px 0px 2px }
+  td.sql_schema_extra_left ul    { margin-bottom:0px; }
+  td.sql_schema_extra_right      { padding-top:4px; }
+  td.sql_schema_extra_right p    { margin-bottom:0px; }
+  td.sql_schema_extra_right span { margin-right:10px;font-weight:bold; }
+  td.sql_schema_extra_right ul   { margin-top:1em; }
+  td.sql_schema_extra_separator  { margin:0px;padding:0px;width:1px;border-right:1px dotted #BBB; }
+  .sql_schema_species_name       { font-style:italic; }
+
+  /* Legend */
+  .sql_schema_legend { width:25px;height:15px;}
+
+  /* Links */
+  a.sql_schema_link { text-decoration:none; }
+  a.sql_schema_show_hide { cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;vertical-align:middle;box-shadow:1px 1px 2px #888; }
+  .sql_schema_legend { width:25px;height:15px; }
+</style>  
+  };
+
+  return $css;
 }
 
 
