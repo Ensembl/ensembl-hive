@@ -495,7 +495,9 @@ foreach my $header_name (@header_names) {
     my $data = $documentation->{$header_name}{'tables'}{$t_name};
     my $colour = ($header_flag && $hcolour) ? $hcolour : $data->{colour};
     
+    $html_content .= qq{<div class="sql_schema_table">};
     $html_content .= add_table_name($t_name,$colour);
+    $html_content .= qq{<div class="sql_schema_table_content">};
     $html_content .= add_description($data);
     $html_content .= add_info($data->{info},$data);  
     $html_content .= add_columns($t_name,$data);
@@ -509,6 +511,7 @@ foreach my $header_name (@header_names) {
       $html_content .= $html_table;
       $html_content .= qq{</tr></table>};
     }
+    $html_content .= qq{</div></div>};
   }
 }
 $html_content .= add_legend();
@@ -840,13 +843,13 @@ sub add_columns {
   my $display_style = $display_col{$display};
   
   my $html = qq{\n  <div id="div_$table" style="display:$display_style">
-    <table class="ss sql_schema_table_column" style="border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px">
+    <table class="ss sql_schema_table_column">
       <tr class="center">
         <th>Column</th>
         <th>Type</th>
-        <th style="min-width:80px">Default value</th>
-        <th style="min-width:500px">Description</th>
-        <th style="min-width:100px">Index</th>
+        <th class="val">Default value</th>
+        <th class="desc">Description</th>
+        <th class="index">Index</th>
       </tr>\n};
   my $bg = 1;
   
@@ -1314,28 +1317,34 @@ sub get_css_code() {
   p.sql_schema_group_header_desc { width:800px; }
 
   /* SQL table header */
-  div.sql_schema_table_header           { background-color:#F4F4F4;width:850px;border-bottom:1px solid #BBB;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid #000; }
+  div.sql_schema_table                  { max-width:90%;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB; }
+  div.sql_schema_table_header           { background-color:#F4F4F4;border-bottom:1px solid #BBB;margin-top:60px;padding:4px;border-top:1px solid #000; }
   div.sql_schema_table_header_left      { float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px; }
   div.sql_schema_table_header_left span { display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;box-shadow:1px 1px 2px #888;vertical-align:middle; }
-  div.sql_schema_table_header_right     { float:right;text-align:right;padding:2px 1px; }
-  span.sql_schema_table_separator       { margin-right:5px;border-right:1px solid #000; }
+  div.sql_schema_table_header_right     { float:right;text-align:right;padding:2px 1px;margin-right:8px; }
+  div.sql_schema_table_content          { padding:10px; }
+  span.sql_schema_table_separator       { margin-right:8px;border-right:1px solid #000; }
 
   /* SQL table description */
-  p.sql_schema_table_desc { padding:5px 0px;margin-bottom:0px;width:800px; }
+  p.sql_schema_table_desc { padding:5px 0px;margin-bottom:0px; }
 
   /* SQL table columns */
-  table.sql_schema_table_column      { border:1px solid #667aa6;min-width:1000px;max-width:1200px;border-spacing:2px; }
-  table.sql_schema_table_column th   { background-color:#667aa6;color:#FFF;padding:2px; }
-  ul.sql_schema_table_column_type    { margin-bottom:0px; }
-  ul.sql_schema_table_column_type li { line-height:12px; }
+  table.sql_schema_table_column          { border:1px solid #667aa6;border-spacing:2px; }
+  table.sql_schema_table_column th       { background-color:#667aa6;color:#FFF;padding:2px; }
+  table.sql_schema_table_column th.val   { min-width:80px; }
+  table.sql_schema_table_column th.desc  { min-width:250px; }
+  table.sql_schema_table_column th.index { min-width:100px; }
+  ul.sql_schema_table_column_type        { margin-bottom:0px; }
+  ul.sql_schema_table_column_type li     { line-height:12px; }
 
   /* SQL table examples */
   div.sql_schema_table_examples          { margin:10px 0px 15px; }
   p.sql_schema_table_example_header      { font-weight:bold;margin-bottom:10px; }
   div.sql_schema_table_example_content   { margin-left:10px; }
-  div.sql_schema_table_example_query     { float:left;border:1px solid #555;padding:2px 4px;margin-right:15px;overflow:auto;max-width:800px;background-color:#FAFAFA; }
+  div.sql_schema_table_example_query     { float:left;border:1px solid #555;padding:2px 4px;margin-right:15px;overflow:auto;max-width:90%;background-color:#FAFAFA; }
   div.sql_schema_table_example_query pre { margin-bottom:0px;color:#333; }
-  table.sql_schema_table_example_result  { width:50%;margin-top:20px;margin-left:10px;border-spacing:2px; }
+  div.sql_schema_table_example_button    { float:left; }
+  table.sql_schema_table_example_result  { width:90%;margin-top:20px;border-spacing:2px; }
   div.sql_schema_table_example_error     { padding:5px;margin:10px;width:500px;font-weight:bold;border:2px solid red;color:red; }
   span.sql_schema_sql_highlight          { color:#00F; }
 
@@ -1347,17 +1356,17 @@ sub get_css_code() {
   td.sql_schema_extra_right      { padding-top:4px; }
   td.sql_schema_extra_right p    { margin-bottom:0px; }
   td.sql_schema_extra_right span { margin-right:10px;font-weight:bold; }
-  td.sql_schema_extra_right ul   { margin-top:1em; }
+  td.sql_schema_extra_right ul   { margin-top:1em; } 
   td.sql_schema_extra_separator  { margin:0px;padding:0px;width:1px;border-right:1px dotted #BBB; }
   .sql_schema_species_name       { font-style:italic; }
 
   /* Legend */
-  .sql_schema_legend { width:25px;height:15px;}
+  .sql_schema_legend { width:25px;height:15px; }
 
   /* Links */
   a.sql_schema_link { text-decoration:none; }
-  a.sql_schema_show_hide { cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px;vertical-align:middle;box-shadow:1px 1px 2px #888; }
-  .sql_schema_legend { width:25px;height:15px; }
+  a.sql_schema_show_hide { cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:8px;vertical-align:middle;box-shadow:1px 1px 2px #888; }
+  .sql_schema_legend { width:25px;height:15px;}
 </style>  
   };
 
