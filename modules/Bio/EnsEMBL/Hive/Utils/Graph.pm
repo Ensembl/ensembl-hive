@@ -126,7 +126,7 @@ sub pipeline {
 sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
-    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->pipeline );
+    my $analysis_node_name = 'analysis_' . $analysis->relative_display_name( $self->pipeline );
     $analysis_node_name=~s/\W/__/g;
     return $analysis_node_name;
 }
@@ -135,7 +135,7 @@ sub _analysis_node_name {
 sub _table_node_name {
     my ($self, $df_rule) = @_;
 
-    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->pipeline ) .
+    my $table_node_name = 'table_' . $df_rule->to_analysis->relative_display_name( $self->pipeline ) .
                 ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
     $table_node_name=~s/\W/__/g;
     return $table_node_name;
@@ -338,7 +338,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -407,10 +407,10 @@ sub _add_control_rules {
         my $condition_is_local  = $condition_analysis->is_local_to( $self->pipeline );
 
         if($ctrled_is_local and !$condition_is_local) {
-            $self->{'_foreign_analyses'}{ $condition_analysis->display_name($self->pipeline) } = $condition_analysis;
+            $self->{'_foreign_analyses'}{ $condition_analysis->relative_display_name($self->pipeline) } = $condition_analysis;
         }
 
-        next unless( $ctrled_is_local or $condition_is_local or $self->{'_foreign_analyses'}{ $condition_analysis->display_name($self->pipeline) } );
+        next unless( $ctrled_is_local or $condition_is_local or $self->{'_foreign_analyses'}{ $condition_analysis->relative_display_name($self->pipeline) } );
 
         my $from_node_name      = $self->_analysis_node_name( $condition_analysis );
         my $to_node_name        = $self->_analysis_node_name( $ctrled_analysis );
@@ -455,10 +455,10 @@ sub _add_dataflow_rules {
             my $target_is_local = $target_object->is_local_to( $self->pipeline );
 
             if($from_is_local and !$target_is_local) {
-                $self->{'_foreign_analyses'}{ $target_object->display_name($self->pipeline) } = $target_object;
+                $self->{'_foreign_analyses'}{ $target_object->relative_display_name($self->pipeline) } = $target_object;
             }
 
-            next unless( $from_is_local or $target_is_local or $self->{'_foreign_analyses'}{ $target_object->display_name($self->pipeline) } );
+            next unless( $from_is_local or $target_is_local or $self->{'_foreign_analyses'}{ $target_object->relative_display_name($self->pipeline) } );
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
 
@@ -511,7 +511,7 @@ sub _add_dataflow_rules {
             $graph->add_edge( $from_node_name => $target_node_name,
                 color       => $accu_colour,
                 style       => 'dashed',
-                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->pipeline ),
+                label       => '#'.$branch_code.":\n".$target_object->relative_display_name( $self->pipeline ),
                 fontname    => $df_edge_fontname,
                 fontcolor   => $accu_colour,
                 dir         => 'both',
@@ -551,7 +551,7 @@ sub _add_table_node {
         }
     }
 
-    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_pipeline ) .'</td></tr>';
+    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->relative_display_name( $hive_pipeline ) .'</td></tr>';
 
     if( $self->config_get('DisplayData') and $columns) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
