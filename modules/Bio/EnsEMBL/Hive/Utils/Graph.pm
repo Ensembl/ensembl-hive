@@ -238,63 +238,38 @@ sub build {
 
 
 sub _propagate_allocation {
-    my ($self, $source_analysis ) = @_;
+    my ($self, $source_object, $source_rule, $curr_allocation ) = @_;
 
-    foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {
-        my $target_object       = $df_rule->to_analysis
-            or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
+    $curr_allocation ||= '';
 
-        my $target_node_name;
+    if(!exists $source_object->{'_funnel_dfr'} ) {     # only allocate on the first-come basis:
+        $source_object->{'_funnel_dfr'} = $curr_allocation;
+        if($source_rule) { $source_rule->{'_funnel_dfr'} = $curr_allocation; }
 
-        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $target_node_name = $self->_analysis_node_name( $target_object );
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
-            $target_node_name = $self->_table_node_name( $df_rule );
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-            next;
-        } else {
-            warn("Do not know how to handle the type '".ref($target_object)."'");
-            next;
-        }
+        if(UNIVERSAL::isa($source_object, 'Bio::EnsEMBL::Hive::Analysis')) {
 
-        my $proposed_funnel_dfr;    # will depend on whether we start a new semaphore
+            foreach my $group ( @{ $source_object->get_grouped_dataflow_rules } ) {
 
-        # --------------- first assign the rules (their midpoints if applicable) --------------------
+                my ($df_rule, $fan_dfrs) = @$group;
 
-        my $funnel_dataflow_rule;
-        if( $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {   # if there is a new semaphore, the dfrs involved (their midpoints) will also have to be allocated
-            $funnel_dataflow_rule->{'_funnel_dfr'} = $source_analysis->{'_funnel_dfr'}; # draw the funnel's midpoint outside of the box
+                my $target_object       = $df_rule->to_analysis
+                    or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
-            $proposed_funnel_dfr = $df_rule->{'_funnel_dfr'} = $funnel_dataflow_rule;       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
-        } else {
-            $proposed_funnel_dfr = $source_analysis->{'_funnel_dfr'} || ''; # if we don't start a new semaphore, inherit the allocation of the source
-        }
+                unless(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
 
-        # --------------- then assign the target_objects --------------------------------------------
+                        # the funnel itself points at the factory analysis, to draw the funnel's midpoint outside of the box:
+                    $self->_propagate_allocation( $target_object, @$fan_dfrs && $df_rule, $curr_allocation );
 
-            # we allocate on first-come basis at the moment:
-        if( exists $target_object->{'_funnel_dfr'} ) {  # node is already allocated?
+                        # all fan members point to the funnel:
+                    foreach my $fan_dfr (@$fan_dfrs) {
+                        $self->_propagate_allocation( $fan_dfr->to_analysis, $fan_dfr, $df_rule );
+                    }
+                } # /unless
+            } # /foreach group
+        } # if Analysis
 
-            my $known_funnel_dfr = $target_object->{'_funnel_dfr'};
-
-            if( $known_funnel_dfr eq $proposed_funnel_dfr) {
-                # warn "analysis '$target_node_name' has already been allocated to the same '$known_funnel_dfr' by another branch";
-            } else {
-                # warn "analysis '$target_node_name' has already been allocated to '$known_funnel_dfr' however this branch would allocate it to '$proposed_funnel_dfr'";
-            }
-
-            if($funnel_dataflow_rule) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                $df_rule->{'_funnel_dfr'} = $target_object->{'_funnel_dfr'};
-            }
-
-        } else {
-            # warn "allocating analysis '$target_node_name' to '$proposed_funnel_dfr'";
-            $target_object->{'_funnel_dfr'} = $proposed_funnel_dfr;
-
-            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-                $self->_propagate_allocation( $target_object );
-            }
-        }
+    } elsif($source_rule) {
+        $source_rule->{'_funnel_dfr'} = $source_object->{'_funnel_dfr'};    # correction for multiple entries into the same box (probably needs re-thinking)
     }
 }
 
