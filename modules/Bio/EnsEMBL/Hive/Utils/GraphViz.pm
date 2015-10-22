@@ -81,9 +81,11 @@ sub display_subgraph {
         # uncomment the following line to see the cluster names:
 #     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
 
-    $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
-    $text .= $prefix . "\tstyle=filled;\n";
-    $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
+    if($depth) {
+        $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
+        $text .= $prefix . "\tstyle=filled;\n";
+        $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
+    }
 
     foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 
@@ -105,8 +107,8 @@ sub _as_debug {
 
     $text=~s/^}$//m;
 
-    foreach my $node_name ( sort @{ $self->cluster_2_nodes->{''} || [] } ) {
-        $text .= $self->display_subgraph( $node_name, 1);
+    foreach my $node_name ( grep { !/^dfr_/ } keys %{ $self->cluster_2_nodes } ) {
+        $text .= $self->display_subgraph( $node_name, 0);
     }
     $text .= "}\n";
 

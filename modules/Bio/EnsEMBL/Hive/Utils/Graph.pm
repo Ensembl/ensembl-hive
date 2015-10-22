@@ -51,6 +51,7 @@ use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::Utils qw(destringify throw);
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::TheApiary;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -145,7 +146,7 @@ sub _table_node_name {
 sub _cluster_name {
     my ($df_rule) = @_;
 
-    return $df_rule ? _midpoint_name($df_rule) : '';
+    return UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '');
 }
 
 
@@ -172,32 +173,28 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $pipeline    = $self->pipeline;
+    my $main_pipeline    = $self->pipeline;
 
-    foreach my $source_analysis ( @{ $pipeline->get_source_analyses } ) {
+    foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
             # run the recursion in each component that has a non-cyclic start:
         $self->_propagate_allocation( $source_analysis );
     }
-    foreach my $cyclic_analysis ( $pipeline->collection_of( 'Analysis' )->list ) {
+    foreach my $cyclic_analysis ( $main_pipeline->collection_of( 'Analysis' )->list ) {
         next if(defined $cyclic_analysis->{'_funnel_dfr'});
         $self->_propagate_allocation( $cyclic_analysis );
     }
 
-    if( $self->config_get('DisplayDetails') ) {
-        $self->_add_pipeline_label( $pipeline->display_name );
-    }
-
-    foreach my $source_analysis ( @{ $pipeline->get_source_analyses } ) {
+    foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
             # run the recursion in each component that has a non-cyclic start:
         $self->_add_analysis_node( $source_analysis );
     }
-    foreach my $cyclic_analysis ( $pipeline->collection_of( 'Analysis' )->list ) {
+    foreach my $cyclic_analysis ( $main_pipeline->collection_of( 'Analysis' )->list ) {
         next if($self->{'_created_analysis'}{ $cyclic_analysis });
         $self->_add_analysis_node( $cyclic_analysis );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list ) {
             if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
                 my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
@@ -212,7 +209,15 @@ sub build {
     if($self->config_get('DisplaySemaphoreBoxes') ) {
         my %cluster_2_nodes = ();
 
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
+        if( $self->config_get('DisplayDetails') ) {
+            foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
+                my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
+
+                push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
+            }
+        }
+
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, values %{ $self->{'_foreign_analyses'} } ) {
             push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
             foreach my $group ( @{ $analysis->get_grouped_dataflow_rules } ) {
@@ -245,7 +250,7 @@ sub build {
 sub _propagate_allocation {
     my ($self, $source_object, $source_rule, $curr_allocation ) = @_;
 
-    $curr_allocation ||= '';
+    $curr_allocation ||= $source_object->hive_pipeline->hive_pipeline_name;
 
     if(!exists $source_object->{'_funnel_dfr'} ) {     # only allocate on the first-come basis:
         $source_object->{'_funnel_dfr'} = $curr_allocation;
@@ -261,6 +266,10 @@ sub _propagate_allocation {
                     or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
 
                 unless(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
+
+                    if($self->pipeline!=$target_object->hive_pipeline) {    # clear the allocation so it can be reset by the next recursive invocation
+                        $curr_allocation = '';
+                    }
 
                         # the funnel itself points at the factory analysis, to draw the funnel's midpoint outside of the box:
                     $self->_propagate_allocation( $target_object, @$fan_dfrs && $df_rule, $curr_allocation );
@@ -280,14 +289,19 @@ sub _propagate_allocation {
 
 
 sub _add_pipeline_label {
-    my ($self, $pipeline_label) = @_;
+    my ($self, $pipeline) = @_;
 
-    my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
-    $self->graph()->add_node( 'Details',
+    my $node_fontname       = $self->config_get('Node', 'Details', 'Font');
+    my $pipeline_label      = $pipeline->display_name;
+    my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
+
+    $self->graph()->add_node( $pipelabel_node_name,
         label     => $pipeline_label,
         fontname  => $node_fontname,
         shape     => 'plaintext',
     );
+
+    return $pipelabel_node_name;
 }
 
 
@@ -586,7 +600,6 @@ sub _add_table_node {
         label => $table_label,
         shape => 'record',
         fontname => $node_fontname,
-        color => $self->config_get('Node', 'Table', 'Colour'),
     );
 
     return $this_table_node_name;
