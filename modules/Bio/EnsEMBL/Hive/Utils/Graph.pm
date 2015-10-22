@@ -206,17 +206,17 @@ sub build {
         }
     }
 
-    if($self->config_get('DisplaySemaphoreBoxes') ) {
-        my %cluster_2_nodes = ();
+    my %cluster_2_nodes = ();
 
-        if( $self->config_get('DisplayDetails') ) {
-            foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
-                my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
+    if( $self->config_get('DisplayDetails') ) {
+        foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
+            my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
 
-                push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
-            }
+            push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
         }
+    }
 
+    if($self->config_get('DisplaySemaphoreBoxes') ) {
         foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, values %{ $self->{'_foreign_analyses'} } ) {
             push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
@@ -239,8 +239,10 @@ sub build {
         }
 
         $self->graph->cluster_2_nodes( \%cluster_2_nodes );
-        $self->graph->colour_scheme( $self->config_get('Box', 'ColourScheme') );
-        $self->graph->colour_offset( $self->config_get('Box', 'ColourOffset') );
+        $self->graph->main_pipeline_name( $main_pipeline->hive_pipeline_name );
+        $self->graph->semaphore_bgcolour( [$self->config_get('Box', 'ColourScheme'), $self->config_get('Box', 'ColourOffset')] );
+        $self->graph->main_pipeline_bgcolour(  ['pastel19', 3] );
+        $self->graph->other_pipeline_bgcolour( ['pastel19', 8] );
     }
 
     return $self->graph();
@@ -597,9 +599,11 @@ sub _add_table_node {
     $table_label .= '</table>>';
 
     $self->graph()->add_node( $this_table_node_name,
-        label => $table_label,
-        shape => 'record',
-        fontname => $node_fontname,
+        label       => $table_label,
+        shape       => 'record',
+        fontname    => $node_fontname,
+        style       => 'filled',
+        fillcolor   => 'white',
     );
 
     return $this_table_node_name;

@@ -48,43 +48,65 @@ sub cluster_2_nodes {
 }
 
 
-sub colour_scheme {
+sub main_pipeline_name {
     my $self = shift @_;
     if(@_) {
-        $self->{_colour_scheme} = shift @_;
+        $self->{_main_pipeline_name} = shift @_;
     }
-    return $self->{_colour_scheme};
+    return $self->{_main_pipeline_name};
 }
 
 
-sub colour_offset {
+sub semaphore_bgcolour {
     my $self = shift @_;
     if(@_) {
-        $self->{_colour_offset} = shift @_;
+        $self->{_semaphore_bgcolour} = shift @_;
     }
-    return $self->{_colour_offset};
+    return $self->{_semaphore_bgcolour};
+}
+
+
+sub main_pipeline_bgcolour {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_main_pipeline_bgcolour} = shift @_;
+    }
+    return $self->{_main_pipeline_bgcolour};
+}
+
+
+sub other_pipeline_bgcolour {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_other_pipeline_bgcolour} = shift @_;
+    }
+    return $self->{_other_pipeline_bgcolour};
 }
 
 
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $colour_scheme   = $self->colour_scheme();
-    my $colour_offset   = $self->colour_offset();
+    my $box_colour  = $depth
+        ? $self->semaphore_bgcolour
+        : ( $cluster_name eq $self->main_pipeline_name)
+            ? $self->main_pipeline_bgcolour
+            : $self->other_pipeline_bgcolour;
 
     my $prefix = "\t" x $depth;
-
-    my $text = '';
-
-    $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
+    my  $text = '';
+        $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
 
         # uncomment the following line to see the cluster names:
 #     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
 
-    if($depth) {
-        $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
         $text .= $prefix . "\tstyle=filled;\n";
+    if(ref($box_colour)) { # it must be a (scheme,offset) pair arrayref:
+        my ($colour_scheme, $colour_offset) = @$box_colour;
+        $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
         $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
+    } else {    # it's just a simple colour:
+        $text .= $prefix . "\tcolor=${box_colour};\n";
     }
 
     foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
