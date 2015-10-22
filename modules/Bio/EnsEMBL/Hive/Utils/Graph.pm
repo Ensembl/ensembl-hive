@@ -142,6 +142,13 @@ sub _table_node_name {
 }
 
 
+sub _cluster_name {
+    my ($df_rule) = @_;
+
+    return $df_rule ? _midpoint_name($df_rule) : '';
+}
+
+
 sub _midpoint_name {
     my ($df_rule) = @_;
 
@@ -206,26 +213,24 @@ sub build {
         my %cluster_2_nodes = ();
 
         foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            if(my $funnel = $analysis->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_analysis_node_name( $analysis );
-            }
+            push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
-            foreach my $df_rule ( @{ $analysis->dataflow_rules_collection } ) {
-                if( $df_rule->is_a_funnel_rule and ! $df_rule->{'_funnel_dfr'} ) {
+            foreach my $group ( @{ $analysis->get_grouped_dataflow_rules } ) {
 
-                    push @{$cluster_2_nodes{ '' }}, _midpoint_name( $df_rule );     # top-level funnels define clusters (top-level "boxes")
+                my ($df_rule, $fan_dfrs) = @$group;
 
-                } elsif( UNIVERSAL::isa($df_rule->to_analysis, 'Bio::EnsEMBL::Hive::NakedTable') ) {
+                if(@$fan_dfrs) {
+                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule ); # top-level funnels define clusters (top-level "boxes")
 
-                    if(my $funnel = $df_rule->to_analysis->{'_funnel_dfr'}) {
-                        push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $df_rule );    # table belongs to the same "box" as the dataflow source
+                    foreach my $fan_dfr (@$fan_dfrs) {
+                        print "Alternative entry into a box detected.\n" unless($fan_dfr->{'_funnel_dfr'} == $df_rule);
+                        push @{$cluster_2_nodes{ _cluster_name( $fan_dfr->{'_funnel_dfr'} ) } }, _midpoint_name( $fan_dfr ); # midpoints of rules that have a funnel live inside "boxes"
                     }
-                }
+                } elsif( UNIVERSAL::isa($df_rule->to_analysis, 'Bio::EnsEMBL::Hive::NakedTable') ) {    # table belongs to the same "box" as the dataflow source:
 
-                if(my $funnel = $df_rule->{'_funnel_dfr'}) {
-                    push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _midpoint_name( $df_rule ); # midpoints of rules that have a funnel live inside "boxes"
+                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->to_analysis->{'_funnel_dfr'} ) } }, $self->_table_node_name( $df_rule );
                 }
-            }
+            } # /foreach group
         }
 
         $self->graph->cluster_2_nodes( \%cluster_2_nodes );
