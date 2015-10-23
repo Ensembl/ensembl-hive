@@ -27,7 +27,7 @@ sub display_name {
     my $self = shift @_;
 
     if(my $dbc = $self->hive_dba && $self->hive_dba->dbc) {
-        return $dbc->dbname . '@' . $dbc->host;
+        return $dbc->dbname . '@' .($dbc->host||'');
     } else {
         return '(unstored '.$self->hive_pipeline_name.')';
     }
