@@ -1,5 +1,8 @@
 {
     "VERSION" : 0.01,
+    "REMARKS" : [
+        "Colour names and colour scheme names are taken from http://www.graphviz.org/doc/info/colors.html"
+    ],
     "Valley" : {
         "SubmitWorkersMax"  : 50
     },
