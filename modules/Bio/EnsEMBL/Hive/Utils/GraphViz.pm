@@ -87,11 +87,12 @@ sub other_pipeline_bgcolour {
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $box_colour  = $depth
+    my $box_colour_pair  = $depth
         ? $self->semaphore_bgcolour
         : ( $cluster_name eq $self->main_pipeline_name)
             ? $self->main_pipeline_bgcolour
             : $self->other_pipeline_bgcolour;
+    my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
 
     my $prefix = "\t" x $depth;
     my  $text = '';
@@ -100,14 +101,16 @@ sub display_subgraph {
         # uncomment the following line to see the cluster names:
 #     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
 
+    if($colour_scheme) {
         $text .= $prefix . "\tstyle=filled;\n";
-    if(ref($box_colour)) { # it must be a (scheme,offset) pair arrayref:
-        my ($colour_scheme, $colour_offset) = @$box_colour;
-        $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
-        $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
-    } else {    # it's just a simple colour:
-        $text .= $prefix . "\tcolor=${box_colour};\n";
-    }
+
+        if(defined($colour_offset)) {
+            $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
+            $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
+        } else {    # it's just a simple colour:
+            $text .= $prefix . "\tcolor=${colour_scheme};\n";
+        }
+    } # otherwise just draw a black frame around the subgraph
 
     foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 

@@ -70,8 +70,9 @@
             "Accu"        : { "Colour" : "darkgreen"    }
         },
         "Box"  : {
-            "ColourScheme"  : "blues9",
-            "ColourOffset"  : 1
+            "Semaphore"     : { "ColourScheme" : "blues9",   "ColourOffset" : 1 },
+            "MainPipeline"  : { "ColourScheme" : "pastel19", "ColourOffset" : 3 },
+            "OtherPipeline" : { "ColourScheme" : "pastel19", "ColourOffset" : 8 }
         },
 
         "DisplayStats"          : "barchart",

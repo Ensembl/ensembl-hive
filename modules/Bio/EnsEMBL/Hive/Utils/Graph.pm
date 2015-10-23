@@ -240,9 +240,9 @@ sub build {
 
         $self->graph->cluster_2_nodes( \%cluster_2_nodes );
         $self->graph->main_pipeline_name( $main_pipeline->hive_pipeline_name );
-        $self->graph->semaphore_bgcolour( [$self->config_get('Box', 'ColourScheme'), $self->config_get('Box', 'ColourOffset')] );
-        $self->graph->main_pipeline_bgcolour(  ['pastel19', 3] );
-        $self->graph->other_pipeline_bgcolour( ['pastel19', 8] );
+        $self->graph->semaphore_bgcolour(       [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
+        $self->graph->main_pipeline_bgcolour(   [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')] );
+        $self->graph->other_pipeline_bgcolour(  [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')] );
     }
 
     return $self->graph();
