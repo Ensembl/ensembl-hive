@@ -428,6 +428,7 @@ sub check_blocking_control_rules {
                 #the AnalysisStats object
             my $condition_analysis  = $ctrl_rule->condition_analysis;
             my $condition_stats     = $condition_analysis && $condition_analysis->stats;
+            $condition_stats->refresh();    # make sure we haven't cached an external AnalysisStats object!
             my $condition_status    = $condition_stats    && $condition_stats->status;
             my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
             my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;
