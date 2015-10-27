@@ -302,24 +302,24 @@ sub dataflow_output_id {
         # map branch names to numbers:
     my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
 
-        # if branch_code is set to 1 (explicitly or impliticly), turn off automatic dataflow:
+        # if branch_code is set to 1 (explicitly or implicitly), turn off automatic dataflow:
     $self->autoflow(0) if($branch_code == 1);
 
     my @output_job_ids = ();
 
-        # sort rules to make sure the fan rules come before funnel rules for the same branch_code:
-    foreach my $rule (sort {($b->funnel_dataflow_rule//0) cmp ($a->funnel_dataflow_rule//0)} @{ $self->analysis->dataflow_rules_by_branch->{$branch_code} || [] }) {
+        # fan rules come sorted before funnel rules for the same branch_code:
+    foreach my $df_rule ( @{ $self->analysis->dataflow_rules_by_branch->{$branch_code} || [] } ) {
 
             # parameter substitution into input_id_template is rule-specific
         my $output_ids_for_this_rule;
-        if(my $template_string = $rule->input_id_template()) {
+        if(my $template_string = $df_rule->input_id_template()) {
             my $template_hash = destringify($template_string);
             $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @$output_ids ];
         } else {
             $output_ids_for_this_rule = $output_ids;
         }
 
-        my $target_analysis_or_table = $rule->to_analysis();
+        my $target_analysis_or_table = $df_rule->to_analysis();
 
         if($target_analysis_or_table->can('dataflow')) {
 
@@ -334,7 +334,7 @@ sub dataflow_output_id {
                 'accu_id_stack'     => $accu_id_stack,
             );
 
-            if( my $funnel_dataflow_rule = $rule->funnel_dataflow_rule ) {    # members of a semaphored fan will have to wait in cache until the funnel is created:
+            if( my $funnel_dataflow_rule = $df_rule->funnel_dataflow_rule ) {    # members of a semaphored fan will have to wait in cache until the funnel is created:
 
                 my $fan_cache_this_branch = $self->fan_cache->{"$funnel_dataflow_rule"} ||= [];
                 push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
@@ -345,7 +345,7 @@ sub dataflow_output_id {
 
             } else {    # either a semaphored funnel or a non-semaphored dataflow:
 
-                my $fan_jobs = delete $self->fan_cache->{"$rule"};   # clear the cache at the same time
+                my $fan_jobs = delete $self->fan_cache->{"$df_rule"};   # clear the cache at the same time
 
                 if( $fan_jobs && @$fan_jobs ) { # a semaphored funnel
 
@@ -399,7 +399,7 @@ sub dataflow_output_id {
             } # /if funnel
 
         } # /if (table or analysis)
-    } # /foreach my $rule
+    } # /foreach my $df_rule
 
     return \@output_job_ids;
 }

@@ -277,8 +277,14 @@ sub dataflow_rules_by_branch {
 
     if (not $self->{'_dataflow_rules_by_branch'}) {
         my %dataflow_rules_by_branch = ();
-        foreach my $dataflow (@{$self->dataflow_rules_collection}) {
-            push @{$dataflow_rules_by_branch{$dataflow->branch_code}}, $dataflow;
+        foreach my $df_rule (@{$self->dataflow_rules_collection}) {
+            my $dfr_bb = $dataflow_rules_by_branch{ $df_rule->branch_code } ||= []; # no autovivification here, have to do it manually
+
+            if($df_rule->funnel_dataflow_rule) {    # sort rules so that semaphored fan rules come before other (potentially fan) rules for the same branch_code
+                unshift @$dfr_bb, $df_rule;
+            } else {
+                push @$dfr_bb, $df_rule;
+            }
         }
         $self->{'_dataflow_rules_by_branch'} = \%dataflow_rules_by_branch;
     }
