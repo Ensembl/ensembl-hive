@@ -313,18 +313,47 @@ sub dataflow_output_id {
         # fan rules come sorted before funnel rules for the same branch_code:
     foreach my $df_rule ( @{ $self->analysis->dataflow_rules_by_branch->{$branch_code} || [] } ) {
 
-                    # parameter substitution into input_id_template is rule-specific
-                my $output_ids_for_this_rule;
-                if(my $template_string = $df_rule->input_id_template()) {
-                    my $template_hash = destringify($template_string);
-                    $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @$output_ids ];
-                } else {
-                    $output_ids_for_this_rule = $output_ids;
+        my $targets_grouped_by_condition    = $df_rule->get_my_targets_grouped_by_condition;    # the pairs are deliberately ordered to put the DEFAULT branch last
+        my @conditions                      = map { $_->[0] } @$targets_grouped_by_condition;
+
+        foreach my $output_id (@$output_ids) {  # filter the output_ids and place them into the [2] part of $targets_grouped_by_condition
+            my $condition_match_count = 0;
+            foreach my $condition_idx (0..@conditions-1) {
+            my $unsubstituted_condition = $conditions[$condition_idx];
+
+                if(defined($unsubstituted_condition)) {
+                    if(my $substituted_condition = $self->param_substitute($unsubstituted_condition, $output_id)) {
+                        $condition_match_count++;
+                    } else {
+                        next;   # non-DEFAULT condition branch failed
+                    }
+                } elsif($condition_match_count) {
+                    next;   # DEFAULT condition branch failed, because one of the conditions fired
                 }
 
-                my ($stored_listref) = $df_rule->to_analysis->dataflow( $output_ids_for_this_rule, $self, \@common_job_params, $df_rule );
+                push @{$targets_grouped_by_condition->[$condition_idx][2]}, $output_id;
+            }
+        }
+
+        foreach my $triple (@$targets_grouped_by_condition) {
+            my ($unsubstituted_condition, $df_targets, $filtered_output_ids) = @$triple;
+
+            foreach my $df_target (@$df_targets) {
+
+                    # parameter substitution into input_id_template is rule-specific
+                my $output_ids_for_this_rule;
+                if(my $template_string = $df_target->input_id_template()) {
+                    my $template_hash = destringify($template_string);
+                    $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @$filtered_output_ids ];
+                } else {
+                    $output_ids_for_this_rule = $filtered_output_ids;
+                }
+
+                my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, \@common_job_params, $df_rule );
                 push @output_job_ids, @$stored_listref;
 
+            } # /foreach my $df_target
+        } # /foreach my $unsubstituted_condition
     } # /foreach my $df_rule
 
     return \@output_job_ids;

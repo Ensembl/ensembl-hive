@@ -44,6 +44,11 @@ use Bio::EnsEMBL::Hive::DataflowRule;
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
+sub check_object_present_in_db_by_content {
+    return 0;
+}
+
+
 sub default_table_name {
     return 'dataflow_rule';
 }

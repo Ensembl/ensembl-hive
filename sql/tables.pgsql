@@ -192,37 +192,47 @@ CREATE TABLE analysis_stats (
 
 @colour #C70C09
 
-@desc Extension of simple_rule design except that goal(to) is now in extended URL format e.g.
-        mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
-        (full network address of an analysis).
-        The only requirement is that there are rows in the job, analysis, dataflow_rule,
-        and worker tables so that the following join works on the same database 
-            WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
-            AND   analysis.analysis_id = job.analysis_id
-            AND   analysis.analysis_id = worker.analysis_id
-        These are the rules used to create entries in the job table where the
-        input_id (control data) is passed from one analysis to the next to define work.
-        The analysis table will be extended so that it can specify different read and write
-        databases, with the default being the database the analysis is on
+@desc Each entry of this table defines a starting point for dataflow (via from_analysis_id and branch_code)
+      to which point a group of dataflow_target entries can be linked. This grouping is used in two ways:
+      (1) dataflow_target entries that link into the same dataflow_rule share the same from_analysis, branch_code and funnel_dataflow_rule
+      (2) to define the conditions for DEFAULT or ELSE case (via excluding all conditions explicitly listed in the group)
 
 @column dataflow_rule_id        internal ID
 @column from_analysis_id        foreign key to analysis table analysis_id
 @column branch_code             branch_code of the fan
 @column funnel_dataflow_rule_id dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)
-@column to_analysis_url         foreign key to net distributed analysis logic_name reference
-@column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 */
 
 CREATE TABLE dataflow_rule (
     dataflow_rule_id        SERIAL PRIMARY KEY,
     from_analysis_id        INTEGER     NOT NULL,
     branch_code             INTEGER     NOT NULL DEFAULT 1,
-    funnel_dataflow_rule_id INTEGER              DEFAULT NULL,
-    to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',
-    input_id_template       TEXT                 DEFAULT NULL,
-
-    UNIQUE (from_analysis_id, branch_code, funnel_dataflow_rule_id, to_analysis_url, input_id_template)
+    funnel_dataflow_rule_id INTEGER              DEFAULT NULL
 );
+
+
+/**
+@table  dataflow_target
+
+@colour #C70C09
+
+@desc This table links specific conditions with the target object (Analysis/Table/Accu) and optional input_id_template.
+
+@column source_dataflow_rule_id foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)
+@column on_condition            param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE
+@column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
+@column to_analysis_url         the URL of the dataflow target object (Analysis/Table/Accu)
+*/
+
+CREATE TABLE dataflow_target (
+    source_dataflow_rule_id INTEGER     NOT NULL,
+    on_condition            VARCHAR(255)          DEFAULT NULL,
+    input_id_template       TEXT                  DEFAULT NULL,
+    to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',       -- to be renamed 'target_url'
+
+    UNIQUE (source_dataflow_rule_id, on_condition, input_id_template, to_analysis_url)
+);
+
 
 
 /**

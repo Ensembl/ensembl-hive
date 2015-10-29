@@ -142,7 +142,7 @@ sub save_collections {
 
     my $hive_dba = $self->hive_dba();
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule') {
+    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule', 'DataflowTarget') {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
         my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
         foreach my $storable_object ( $self->collection_of( $AdaptorType )->list ) {
@@ -198,12 +198,12 @@ sub add_new_or_update {
     unless( $object ) {
         $object = $class->can('new') ? $class->new( @_ ) : { @_ };
 
-        my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
-        warn "Created a new $found_display\n";
-
         $self->collection_of( $type )->add( $object );
 
         $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
+
+        my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
+        warn "Created a new $found_display\n";
     }
 
     return $object;

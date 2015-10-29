@@ -54,6 +54,7 @@ use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
+use Bio::EnsEMBL::Hive::DataflowTarget;
 
 
 sub new {
@@ -221,6 +222,7 @@ our %adaptor_type_2_package_name = (
     'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
     'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
     'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
+    'DataflowTarget'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
     'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
     'PipelineWideParameters'=> 'Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor',

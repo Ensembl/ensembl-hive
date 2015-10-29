@@ -97,6 +97,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
         <li style="margin-right:0px"><a href="#analysis_base" style="text-decoration:none;font-weight:bold">analysis_base</a></li>
         <li style="margin-right:0px"><a href="#analysis_stats" style="text-decoration:none;font-weight:bold">analysis_stats</a></li>
         <li style="margin-right:0px"><a href="#dataflow_rule" style="text-decoration:none;font-weight:bold">dataflow_rule</a></li>
+        <li style="margin-right:0px"><a href="#dataflow_target" style="text-decoration:none;font-weight:bold">dataflow_target</a></li>
         <li style="margin-right:0px"><a href="#analysis_ctrl_rule" style="text-decoration:none;font-weight:bold">analysis_ctrl_rule</a></li>
 
       </ul>
@@ -299,17 +300,40 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     </div>
     <div style="clear:both"></div>
   </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Extension of simple_rule design except that goal(to) is now in extended URL format e.g. mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34' (full network address of an analysis). The only requirement is that there are rows in the job, analysis, dataflow_rule, and worker tables so that the following join works on the same database  WHERE analysis.analysis_id = dataflow_rule.from_analysis_id  AND   analysis.analysis_id = job.analysis_id AND   analysis.analysis_id = worker.analysis_id These are the rules used to create entries in the job table where the input_id (control data) is passed from one analysis to the next to define work. The analysis table will be extended so that it can specify different read and write databases, with the default being the database the analysis is on</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">Each entry of this table defines a starting point for dataflow (via from_analysis_id and branch_code) to which point a group of dataflow_target entries can be linked. This grouping is used in two ways: (1) dataflow_target entries that link into the same dataflow_rule share the same from_analysis, branch_code and funnel_dataflow_rule (2) to define the conditions for DEFAULT or ELSE case (via excluding all conditions explicitly listed in the group)</p>
 
   <div id="div_dataflow_rule" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>dataflow_rule_id</b></td><td>INTEGER</td><td>-</td><td>internal ID</td><td></td></tr>
-      <tr class="bg2"><td><b>from_analysis_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
-      <tr class="bg1"><td><b>branch_code</b></td><td>INTEGER</td><td>1</td><td>branch_code of the fan</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>INTEGER</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td>unique: key</td></tr>
-      <tr class="bg1"><td><b>to_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis logic_name reference</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>input_id_template</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>from_analysis_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to analysis table analysis_id</td><td></td></tr>
+      <tr class="bg1"><td><b>branch_code</b></td><td>INTEGER</td><td>1</td><td>branch_code of the fan</td><td></td></tr>
+      <tr class="bg2"><td><b>funnel_dataflow_rule_id</b></td><td>INTEGER</td><td>NULL</td><td>dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)</td><td></td></tr>
+    </table>
+  </div>
+
+  <div id="dataflow_target" style="width:850px;background-color:#F4F4F4;border-bottom:1px solid #BBB;margin-top:60px;margin-bottom:2px;padding:4px;border-top:1px solid #C70C09">
+ 
+    <div style="float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px">
+      <span style="display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;background-color:#C70C09;box-shadow:1px 1px 2px #888;vertical-align:middle"></span>dataflow_target</div>
+    <div style="float:right;text-align:right;padding:2px 1px">
+  
+  <a id="a_dataflow_target" class="help-header" style="cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:5px" onclick="show_hide('dataflow_target','columns')">
+    <img src="http://www.ensembl.org/i/16/plus-button.png" style="width:12px;height:12px;position:relative;top:2px" alt="show"/> Show columns
+  </a>
+      <span style="margin-right:5px;border-right:1px solid #000"> </span> <a href="#top" style="text-decoration:none">[Back to top]</a>
+    </div>
+    <div style="clear:both"></div>
+  </div>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table links specific conditions with the target object (Analysis/Table/Accu) and optional input_id_template.</p>
+
+  <div id="div_dataflow_target" style="display:none">
+    <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
+      <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
+      <tr class="bg1"><td><b>source_dataflow_rule_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>on_condition</b></td><td>VARCHAR(255)</td><td>NULL</td><td>param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>input_id_template</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>to_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>the URL of the dataflow target object (Analysis/Table/Accu)</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -421,7 +445,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>param_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose input_ids contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg2"><td><b>accu_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose accu's contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td>NULL</td><td>links to the Role that claimed this job (NULL means it has never been claimed)</td><td>key: role_status</td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>CHAR(32)</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
       <tr class="bg1"><td><b>retry_count</b></td><td>INTEGER</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
       <tr class="bg2"><td><b>when_completed</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the job was completed</td><td></td></tr>
       <tr class="bg1"><td><b>runtime_msec</b></td><td>INTEGER</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
@@ -538,7 +562,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg2"><td><b>process_id</b></td><td>VARCHAR(255)</td><td>-</td><td>identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)</td><td>key: meadow_process</td></tr>
       <tr class="bg1"><td><b>resource_class_id</b></td><td>INTEGER</td><td>NULL</td><td>links to Worker's resource class</td><td></td></tr>
       <tr class="bg2"><td><b>work_done</b></td><td>INTEGER</td><td>0</td><td>how many jobs the Worker has completed successfully</td><td></td></tr>
-      <tr class="bg1"><td><b>status</b></td><td>ENUM('SPECIALIZATION','COMPILATION','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','DEAD')</td><td>'READY'</td><td>current status of the Worker</td><td></td></tr>
+      <tr class="bg1"><td><b>status</b></td><td>VARCHAR(255)</td><td>'READY'</td><td>current status of the Worker</td><td></td></tr>
       <tr class="bg2"><td><b>when_born</b></td><td>TIMESTAMP</td><td>CURRENT_TIMESTAMP</td><td>when the Worker process was started</td><td></td></tr>
       <tr class="bg1"><td><b>when_checked_in</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the Worker last checked into the database</td><td></td></tr>
       <tr class="bg2"><td><b>when_seen</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the Worker was last seen by the Meadow</td><td></td></tr>

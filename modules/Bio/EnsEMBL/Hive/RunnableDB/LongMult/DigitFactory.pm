@@ -121,7 +121,7 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
         # "fan out" into branch#2 first, branch#1 will be created if we wire it (and we do)
     $self->dataflow_output_id($sub_tasks, 2);
 
-    $self->warning(scalar(@$sub_tasks).' multiplication jobs have been created');     # warning messages get recorded into 'log_message' table
+    $self->warning('Attempted to create '.scalar(@$sub_tasks)." multiplication jobs");     # warning messages get recorded into 'log_message' table
 
 ## extra information sent to the funnel will extend its stack:
 #    $self->dataflow_output_id( { 'different_digits' => scalar(@$sub_tasks) } , 1);

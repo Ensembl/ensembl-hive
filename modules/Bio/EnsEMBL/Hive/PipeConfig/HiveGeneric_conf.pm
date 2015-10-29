@@ -596,10 +596,15 @@ sub add_objects_from_config {
 
                     my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
                         'from_analysis'             => $analysis,
-                        'to_analysis_url'           => $heir_url,
                         'branch_code'               => $branch_name_or_code,
                         'funnel_dataflow_rule'      => $funnel_dataflow_rule,
+                    );
+
+                    my $df_target = $pipeline->add_new_or_update( 'DataflowTarget',
+                        'source_dataflow_rule'      => $df_rule,
+                        'condition'                 => undef,
                         'input_id_template'         => $input_id_template,
+                        'to_analysis_url'           => $heir_url,
                     );
 
                     if($group_role eq 'funnel') {
