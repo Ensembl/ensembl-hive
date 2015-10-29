@@ -487,11 +487,11 @@ sub check_object_present_in_db_by_content {    # return autoinc_id/undef if the 
     }
 
     my $sql = 'SELECT '.($autoinc_id or 1)." FROM $table_name WHERE ".  join(' AND ', @constraints);
-#warn "check_object_present_in_db_by_content: sql= $sql WITH VALUES (".join(', ', @values).")\n";
     my $sth = $self->prepare( $sql );
     $sth->execute( @values );
 
     my ($return_value) = $sth->fetchrow_array();
+#warn "check_object_present_in_db_by_content: sql= $sql WITH VALUES (".join(', ', @values).") ---> return_value=".($return_value//'undef')."\n";
     $sth->finish;
 
     return $return_value;
