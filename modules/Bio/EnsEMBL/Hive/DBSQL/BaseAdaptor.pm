@@ -504,7 +504,7 @@ sub store {
     my $objects = (ref($object_or_list) eq 'ARRAY')     # ensure we get an array of objects to store
         ? $object_or_list
         : [ $object_or_list ];
-    return unless(scalar(@$objects));
+    return ([], 0) unless(scalar(@$objects));
 
     my $table_name              = $self->table_name();
     my $autoinc_id              = $self->autoinc_id();
