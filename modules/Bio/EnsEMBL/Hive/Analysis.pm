@@ -38,7 +38,7 @@ package Bio::EnsEMBL::Hive::Analysis;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::GuestProcess;
@@ -260,10 +260,22 @@ sub get_grouped_dataflow_rules {
                                 # so we end up packing it as the first element of the structure,
                                 # and only returning the listref of the values.
 
-    foreach my $dfr (@{$self->dataflow_rules_collection}) {
+    foreach my $dfr ( sort { ($b->funnel_dataflow_rule // 0) <=> ($a->funnel_dataflow_rule // 0) } @{$self->dataflow_rules_collection}) {
         if(my $funnel_dfr = $dfr->funnel_dataflow_rule) {
-            my $this_group = $set_of_groups{$funnel_dfr} ||= [$funnel_dfr, []];
-            push @{$this_group->[1]}, $dfr;
+            unless($set_of_groups{$funnel_dfr}) {
+                if( $funnel_dfr->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis') ) {
+                    $set_of_groups{$funnel_dfr} = [$funnel_dfr, []];
+                } else {
+                    throw("A funnel target must be an Analysis");
+                }
+            }
+            my $this_group = $set_of_groups{$funnel_dfr};
+
+            if( $dfr->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis') ) {
+                push @{$this_group->[1]}, $dfr;
+            } else {
+                throw("A semaphored fan target must be an Analysis");
+            }
         } else {
             $set_of_groups{$dfr} ||= [$dfr, []];
         }

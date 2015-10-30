@@ -282,7 +282,7 @@ sub _propagate_allocation {
                     }
                 } # /unless
             } # /foreach group
-        } # if Analysis
+        } # if source_object isa Analysis
 
     } elsif($source_rule) {
         $source_rule->{'_funnel_dfr'} = $source_object->{'_funnel_dfr'};    # correction for multiple entries into the same box (probably needs re-thinking)
@@ -532,10 +532,9 @@ sub _add_dataflow_rules {
 
             foreach my $fan_dfr (@$fan_dfrs) {
 
-                my $fan_target_object = $fan_dfr->to_analysis;
-                die "All semaphored fan rules must be wired to Analyses" unless(UNIVERSAL::isa($fan_target_object, 'Bio::EnsEMBL::Hive::Analysis'));
+                my $fan_target_analysis = $fan_dfr->to_analysis;
 
-                $self->_add_analysis_node( $fan_target_object );
+                $self->_add_analysis_node( $fan_target_analysis );
 
                 my $fan_midpoint_name = $self->_twopart_arrow( $fan_dfr );
 
