@@ -11,6 +11,7 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
+use Getopt::Long;
 use Bio::EnsEMBL::Hive::Version;
 
 my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";
@@ -18,10 +19,25 @@ my $erd         = $ENV{'ENSEMBL_CVS_ROOT_DIR'}  or die "Environment variable 'EN
 my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
 
 
-generate_hive_schema_desc();
-generate_docs_scripts();
-generate_docs_doxygen_perl();
-generate_docs_doxygen_python();
+main();
+
+
+sub main {
+    my ($no_schema_desc, $no_script_docs, $no_doxygen);
+
+    GetOptions(
+            'no_schema_desc'    => \$no_schema_desc,
+            'no_script_docs'    => \$no_script_docs,
+            'no_doxygen'        => \$no_doxygen,
+    );
+
+    generate_hive_schema_desc() unless($no_schema_desc);
+    generate_docs_scripts()     unless($no_script_docs);
+    unless($no_doxygen) {
+        generate_docs_doxygen_perl();
+        generate_docs_doxygen_python();
+    }
+}
 
 
 sub generate_hive_schema_desc {
