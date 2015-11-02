@@ -264,23 +264,21 @@ sub _propagate_allocation {
 
                 my ($df_rule, $fan_dfrs) = @$group;
 
-                my $target_object       = $df_rule->to_analysis
-                    or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
+                my $target_object       = $df_rule->to_analysis;
 
-                unless(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
+                    # the funnel itself points at the factory analysis, to draw the funnel's midpoint outside of the box.
+                    #   Only request midpoint's allocation if we have a non-empty fan.
+                    #   In case we have crossed pipeline borders, let the next call decide its own allocation by resetting it.
+                $self->_propagate_allocation( $target_object,
+                                        @$fan_dfrs && $df_rule,
+                                        ($self->pipeline == $target_object->hive_pipeline) ? $curr_allocation : '' );
 
-                    if($self->pipeline!=$target_object->hive_pipeline) {    # clear the allocation so it can be reset by the next recursive invocation
-                        $curr_allocation = '';
-                    }
+                    # all fan members point to the funnel.
+                    #   Request midpoint's allocation since we definitely have a funnel to link to.
+                foreach my $fan_dfr (@$fan_dfrs) {
+                    $self->_propagate_allocation( $fan_dfr->to_analysis, $fan_dfr, $df_rule );
+                }
 
-                        # the funnel itself points at the factory analysis, to draw the funnel's midpoint outside of the box:
-                    $self->_propagate_allocation( $target_object, @$fan_dfrs && $df_rule, $curr_allocation );
-
-                        # all fan members point to the funnel:
-                    foreach my $fan_dfr (@$fan_dfrs) {
-                        $self->_propagate_allocation( $fan_dfr->to_analysis, $fan_dfr, $df_rule );
-                    }
-                } # /unless
             } # /foreach group
         } # if source_object isa Analysis
 
@@ -493,11 +491,11 @@ sub _add_dataflow_rules {
 
         if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
 
-            my $funnel_analysis = $from_analysis->{'_funnel_dfr'}
-                or die "Could not find funnel analysis for the ".$target_object->toString."\n";
+            my $funnel_dfr = $from_analysis->{'_funnel_dfr'}
+                or die "Could not find funnel dataflow rule for the ".$target_object->toString."\n";
 
                 # one-part dashed arrow:
-            $graph->add_edge( $from_node_name => _midpoint_name( $funnel_analysis ),
+            $graph->add_edge( $from_node_name => _midpoint_name( $funnel_dfr ),
                 color       => $accu_colour,
                 style       => 'dashed',
                 label       => '#'.$df_rule->branch_code.":\n".$target_object->relative_display_name( $self->pipeline ),
@@ -510,7 +508,7 @@ sub _add_dataflow_rules {
 
         } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {    # skip some *really* foreign dataflow rules:
 
-            my $from_is_local   = $df_rule->from_analysis->is_local_to( $self->pipeline );
+            my $from_is_local   = $from_analysis->is_local_to( $self->pipeline );
             my $target_is_local = $target_object->is_local_to( $self->pipeline );
 
             if($from_is_local and !$target_is_local) {  # register a new "near neighbour" node if it's reachable by following one rule "out":
