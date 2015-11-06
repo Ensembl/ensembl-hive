@@ -142,6 +142,13 @@ sub _table_node_name {
 }
 
 
+sub _accu_sink_node_name {
+    my ($funnel_dfr) = @_;
+
+    return 'sink_'.(UNIVERSAL::isa($funnel_dfr, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($funnel_dfr) : ($funnel_dfr || ''));
+}
+
+
 sub _cluster_name {
     my ($df_rule) = @_;
 
@@ -236,10 +243,14 @@ sub build {
                 }
 
                 foreach my $df_target (@$df_targets) {
-                    my $naked_table = $df_target->to_analysis;
-                    if( UNIVERSAL::isa($naked_table, 'Bio::EnsEMBL::Hive::NakedTable') ) {    # table belongs to the same "box" as the dataflow source:
+                    my $target_object = $df_target->to_analysis;
+                    if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {        # put the table into the same "box" as the dataflow source:
 
-                        push @{$cluster_2_nodes{ _cluster_name( $naked_table->{'_funnel_dfr'} ) } }, $self->_table_node_name( $naked_table );
+                        push @{$cluster_2_nodes{ _cluster_name( $target_object->{'_funnel_dfr'} ) } }, $self->_table_node_name( $target_object );
+
+                    } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {  # put the accu sink into the same "box" as the dataflow source:
+
+                        push @{$cluster_2_nodes{ _cluster_name( $target_object->{'_funnel_dfr'} ) } }, _accu_sink_node_name( $target_object->{'_funnel_dfr'} );
                     }
                 }
             } # /foreach group
@@ -403,6 +414,24 @@ sub _add_analysis_node {
 }
 
 
+sub _add_accu_sink_node {
+    my ($self, $funnel_dfr) = @_;
+
+    my $accu_sink_node_name = _accu_sink_node_name( $funnel_dfr );
+
+    $self->graph->add_node( $accu_sink_node_name,
+#        shape       => 'noverhang',
+#        shape       => 'invtriangle',
+        shape       => 'invhouse',
+        label       => '',
+        style       => 'filled',
+        fillcolor   => 'darkgreen',
+    );
+
+    return $accu_sink_node_name;
+}
+
+
 sub _add_control_rules {
     my ($self, $ctrl_rules) = @_;
 
@@ -446,7 +475,7 @@ sub _last_part_arrow {
     my $target_node_name    =
             UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')      ? $self->_add_analysis_node( $target_object )
         :   UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')    ? $self->_add_table_node( $target_object )
-        :   UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')   ? _midpoint_name( $from_analysis->{'_funnel_dfr'} )
+        :   UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')   ? $self->_add_accu_sink_node( $from_analysis->{'_funnel_dfr'} )
         :   die "Unknown node type";
 
     if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {    # skip some *really* foreign dataflow rules:
