@@ -60,6 +60,9 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
+use Exporter 'import';
+our @EXPORT_OK = qw(WHEN);
+
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Collection;
@@ -371,6 +374,13 @@ sub run_pipeline_create_commands {
 }
 
 
+our $cond_group_marker   = 'CONDitionGRoup';
+
+sub WHEN {
+    return [ $cond_group_marker, @_ ];
+}
+
+
 =head2 add_objects_from_config
 
     Description : The method that uses the Hive/EnsEMBL API to actually create all the analyses, jobs, dataflow and control rules and resource descriptions.
@@ -579,43 +589,57 @@ sub add_objects_from_config {
                 }
             }
 
-            my $heirs = $flow_into->{$branch_tag};
-            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
-            $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
+            my $cond_groups = $flow_into->{$branch_tag};
+            $cond_groups = [ $cond_groups ] unless(ref($cond_groups)); # force scalar into an arrayref first
+            $cond_groups = { map { ($_ => undef) } @$cond_groups } if((ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0]) and ($cond_groups->[0] ne $cond_group_marker) );
 
-            while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+            $cond_groups = [ $cond_group_marker, undef, $cond_groups ] if(ref($cond_groups) eq 'HASH');
+            $cond_groups = [ $cond_groups ] if( (ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0]) and ($cond_groups->[0] eq $cond_group_marker) );
 
-                unless ($heir_url =~ m{^\w*://}) {
-                    my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
-                        or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
-                }
+            my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
+                'from_analysis'             => $analysis,
+                'branch_code'               => $branch_name_or_code,
+                'funnel_dataflow_rule'      => $funnel_dataflow_rule,
+            );
 
-                $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
+            foreach my $cond_group (@$cond_groups) {
+                my $this_cond_group_marker = shift @$cond_group;
+                die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
 
-                foreach my $input_id_template (@$input_id_template_list) {
+                while(@$cond_group) {
+                    my $on_condition    = shift @$cond_group;
+                    my $heirs           = shift @$cond_group;
 
-                    my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
-                        'from_analysis'             => $analysis,
-                        'branch_code'               => $branch_name_or_code,
-                        'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-                    );
+                    while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
-                    my $df_target = $pipeline->add_new_or_update( 'DataflowTarget',
-                        'source_dataflow_rule'      => $df_rule,
-                        'condition'                 => undef,
-                        'input_id_template'         => $input_id_template,
-                        'to_analysis_url'           => $heir_url,
-                    );
-
-                    if($group_role eq 'funnel') {
-                        if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                            die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
-                        } else {
-                            $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
+                        unless ($heir_url =~ m{^\w*://}) {
+                            my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
+                                or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
                         }
-                    }
-                } # /for all templates
-            } # /for all heirs
+
+                        $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
+
+                        foreach my $input_id_template (@$input_id_template_list) {
+
+                            my $df_target = $pipeline->add_new_or_update( 'DataflowTarget',
+                                'source_dataflow_rule'      => $df_rule,
+                                'on_condition'              => $on_condition,
+                                'input_id_template'         => $input_id_template,
+                                'to_analysis_url'           => $heir_url,
+                            );
+
+                            if($group_role eq 'funnel') {
+                                if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
+                                    die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
+                                } else {
+                                    $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
+                                }
+                            }
+                        } # /for all templates
+                    } # /for all heirs
+                } # /for each condition and heir
+            } # /foreach $cond_group
+
         } # /for all branch_tags
     } # /for all pipeline_analyses
     warn "Done.\n\n";

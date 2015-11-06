@@ -79,7 +79,7 @@ sub fetch_input {
 
     my %digit_hash = ();
     foreach my $digit (split(//,$b_multiplier)) {
-        next if (($digit eq '0') or ($digit eq '1'));
+#        next if (($digit eq '0') or ($digit eq '1'));
         $digit_hash{$digit}++;
     }
 
