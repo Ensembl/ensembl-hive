@@ -103,7 +103,7 @@ sub get_my_targets_grouped_by_condition {
         push @{$this_pair->[1]}, $df_target;
     }
 
-    return [ sort { $b->[0] cmp $a->[0] } values %my_targets_by_condition ];
+    return [ sort { ($b->[0]//'') cmp ($a->[0]//'') } values %my_targets_by_condition ];
 }
 
 
