@@ -61,7 +61,7 @@ use strict;
 use warnings;
 
 use Exporter 'import';
-our @EXPORT_OK = qw(WHEN);
+our @EXPORT = qw(WHEN ELSE);
 
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
@@ -378,6 +378,13 @@ our $cond_group_marker   = 'CONDitionGRoup';
 
 sub WHEN {
     return [ $cond_group_marker, @_ ];
+}
+
+
+sub ELSE {
+    my ($foo) = @_;
+
+    return (undef, $foo);
 }
 
 
