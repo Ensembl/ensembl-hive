@@ -322,7 +322,7 @@ sub dataflow_output_id {
             my $unsubstituted_condition = $conditions[$condition_idx];
 
                 if(defined($unsubstituted_condition)) {
-                    if(my $substituted_condition = $self->param_substitute($unsubstituted_condition, $output_id)) {
+                    if(my $substituted_condition = $self->param_substitute('#expr('.$unsubstituted_condition.')expr#', $output_id)) {
                         $condition_match_count++;
                     } else {
                         next;   # non-DEFAULT condition branch failed

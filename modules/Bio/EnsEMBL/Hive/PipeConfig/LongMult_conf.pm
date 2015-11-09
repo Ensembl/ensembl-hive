@@ -136,8 +136,8 @@ sub pipeline_analyses {
             -flow_into => {
                     # will create a semaphored fan of jobs; will use a template to top-up the hashes:
                 '2->A' => WHEN(
-                                '#expr(#digit#>1)expr#' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
-                                ELSE                       { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
+                                '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                                ELSE           { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
                           ),
                     # will create a semaphored funnel job to wait for the fan to complete and add the results:
                 'A->1' => [ 'add_together'  ],
