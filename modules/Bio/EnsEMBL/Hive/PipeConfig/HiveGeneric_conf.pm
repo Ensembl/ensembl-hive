@@ -381,7 +381,7 @@ sub WHEN {
 }
 
 
-sub ELSE {
+sub ELSE ($) {
     my ($foo) = @_;
 
     return (undef, $foo);
