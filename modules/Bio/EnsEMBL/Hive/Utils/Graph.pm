@@ -551,6 +551,7 @@ sub _twopart_arrow {
 
     foreach my $df_target (@$df_targets) {
         my $condition = $df_target->on_condition;
+        $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
         $self->_last_part_arrow($from_analysis, $midpoint_name, $condition ? "IF $condition" : $choice ? 'ELSE' : '', $df_target);
     }
 
