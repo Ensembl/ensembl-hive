@@ -596,26 +596,33 @@ sub add_objects_from_config {
                 }
             }
 
-            my $cond_groups = $flow_into->{$branch_tag};
-            $cond_groups = [ $cond_groups ] unless(ref($cond_groups)); # force scalar into an arrayref first
-            $cond_groups = { map { ($_ => undef) } @$cond_groups } if((ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0]) and ($cond_groups->[0] ne $cond_group_marker) );
-
-            $cond_groups = [ $cond_group_marker, undef, $cond_groups ] if(ref($cond_groups) eq 'HASH');
-            $cond_groups = [ $cond_groups ] if( (ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0]) and ($cond_groups->[0] eq $cond_group_marker) );
-
             my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
                 'from_analysis'             => $analysis,
                 'branch_code'               => $branch_name_or_code,
                 'funnel_dataflow_rule'      => $funnel_dataflow_rule,
             );
 
+            my $cond_groups = $flow_into->{$branch_tag};
+
+                # force anything else into an array of condition groups so that we could iterate over it:
+            $cond_groups = [ $cond_groups ] if((ref($cond_groups) ne 'ARRAY') or ($cond_groups->[0] eq $cond_group_marker));
+
             foreach my $cond_group (@$cond_groups) {
+
+                    # force anything else into a condition group:
+                $cond_group = [ $cond_group_marker, undef, $cond_group] unless((ref($cond_group) eq 'ARRAY') and ($cond_group->[0] eq $cond_group_marker));
+
+                    # chop the condition group marker off:
                 my $this_cond_group_marker = shift @$cond_group;
                 die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
 
                 while(@$cond_group) {
                     my $on_condition    = shift @$cond_group;
                     my $heirs           = shift @$cond_group;
+
+                        # force anything else to the common denominator format:
+                    $heirs = [ $heirs ] unless(ref($heirs));
+                    $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY');
 
                     while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
