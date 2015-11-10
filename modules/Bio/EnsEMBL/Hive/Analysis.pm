@@ -237,17 +237,6 @@ sub dataflow_rules_collection {
 }
 
 
-sub inflow_rules_count {
-    my $self = shift @_;
-
-    my $counter = 0;
-    foreach my $df_rule ($self->hive_pipeline->collection_of( 'DataflowRule' )->list) {
-        $counter += scalar(grep { $_->to_analysis eq $self } @{$df_rule->get_my_targets});
-    }
-    return $counter;
-}
-
-
 =head2 get_grouped_dataflow_rules
 
   Args       : none

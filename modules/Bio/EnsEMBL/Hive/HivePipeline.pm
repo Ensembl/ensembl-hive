@@ -219,7 +219,13 @@ sub add_new_or_update {
 sub get_source_analyses {
     my $self = shift @_;
 
-    return [ grep { ! $_->inflow_rules_count } $self->collection_of( 'Analysis' )->list ];
+    my (%refset_of_analyses) = map { ("$_" => $_) } $self->collection_of( 'Analysis' )->list;
+
+    foreach my $df_target ($self->collection_of( 'DataflowTarget' )->list) {
+        delete $refset_of_analyses{ $df_target->to_analysis };
+    }
+
+    return [ values %refset_of_analyses ];
 }
 
 
