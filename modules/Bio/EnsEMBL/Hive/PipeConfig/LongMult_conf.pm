@@ -134,12 +134,14 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                    # will create a semaphored fan of jobs; will use a template to top-up the hashes:
+                    # creating a semaphored fan of jobs; filtering by WHEN; using templates to top-up the hashes.
+                    #
+                    # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
                 '2->A' => WHEN(
                                 '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
-                                ELSE           { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
+#                                ELSE           { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
                           ),
-                    # will create a semaphored funnel job to wait for the fan to complete and add the results:
+                    # creating a semaphored funnel job to wait for the fan to complete and add the results:
                 'A->1' => [ 'add_together'  ],
             },
         },

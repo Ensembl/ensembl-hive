@@ -68,6 +68,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 
 =head2 pipeline_create_commands
@@ -145,7 +146,9 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                '2->A' => [ 'part_multiply' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
+                '2->A' => WHEN(
+                    '#digit#>1' => [ 'part_multiply' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
+                ),
                 'A->1' => [ 'add_together'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
             },
         },

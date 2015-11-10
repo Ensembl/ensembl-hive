@@ -66,6 +66,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 
 =head2 pipeline_create_commands
@@ -138,7 +139,10 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                2 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                    # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
+                2 => WHEN(
+                    '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                ),
                 1 => [ 'add_together'  ],
             },
         },
