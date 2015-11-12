@@ -425,7 +425,7 @@ CREATE        INDEX accu_receiving_idx ON accu (receiving_job_id);
 CREATE TABLE analysis_data (
     analysis_data_id        INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     md5sum                  CHAR(32)    NOT NULL,
-    data                    TEXT        NOT NULL,
+    data                    TEXT        NOT NULL
 );
 CREATE        INDEX analysis_data_idx ON analysis_data (md5sum);
 
