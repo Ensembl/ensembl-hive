@@ -42,7 +42,6 @@
         "Node" : {
             "Font"        : "Times-Roman",
             "Colour"      : "cyan",
-            "Table"       : { "Colour" : "black", "Font" : "Courier" },
             "Details"     : { "Font"   : "Helvetica" },
 
             "JobStatus"   : {
@@ -63,7 +62,30 @@
                 "WORKING"     : { "Colour" : "yellow"      },
                 "DONE"        : { "Colour" : "DeepSkyBlue" },
                 "FAILED"      : { "Colour" : "red"         }
-            }
+            },
+
+            "Table" : {
+                "Colour"        : "orange",
+                "HeaderColour"  : "orangered",
+                "Font"          : "Courier",
+                "FontColour"    : "black"
+            },
+
+            "AccuSink"  : {
+                "Shape"         : "invhouse",
+                "Style"         : "filled",
+                "Colour"        : "darkgreen",
+                "Font"          : "Courier",
+                "FontColour"    : "white"
+            },
+
+            "Switch"  : {
+                "Shape"         : "diamond",
+                "Style"         : "filled",
+                "Colour"        : "blueviolet",
+                "Font"          : "Courier",
+                "FontColour"    : "white"
+            },
         },
         "Edge" : {
             "Font"        : "Helvetica",

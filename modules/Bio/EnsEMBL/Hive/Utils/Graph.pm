@@ -214,8 +214,8 @@ sub build {
                 my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
                 $self->graph->add_edge( $from => $to,
-                    color     => 'black',
                     style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
+                    color     => 'black',
                 );
             }
         }
@@ -323,9 +323,9 @@ sub _add_pipeline_label {
     my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
 
     $self->graph()->add_node( $pipelabel_node_name,
-        label     => $pipeline_label,
-        fontname  => $node_fontname,
         shape     => 'plaintext',
+        fontname  => $node_fontname,
+        label     => $pipeline_label,
     );
 
     return $pipelabel_node_name;
@@ -408,11 +408,11 @@ sub _add_analysis_node {
     $analysis_label    .= '</table>>';
   
     $self->graph->add_node( $this_analysis_node_name,
-        label       => $analysis_label,
         shape       => 'record',
-        fontname    => $node_fontname,
         style       => $style,
         fillcolor   => $analysis_status_colour,
+        fontname    => $node_fontname,
+        label       => $analysis_label,
     );
 
     $self->_add_control_rules( $analysis->control_rules_collection );
@@ -425,15 +425,21 @@ sub _add_analysis_node {
 sub _add_accu_sink_node {
     my ($self, $funnel_dfr) = @_;
 
+    my $accusink_shape      = $self->config_get('Node', 'AccuSink', 'Shape');
+    my $accusink_style      = $self->config_get('Node', 'AccuSink', 'Style');
+    my $accusink_colour     = $self->config_get('Node', 'AccuSink', 'Colour');
+    my $accusink_font       = $self->config_get('Node', 'AccuSink', 'Font');
+    my $accusink_fontcolour = $self->config_get('Node', 'AccuSink', 'FontColour');
+
     my $accu_sink_node_name = _accu_sink_node_name( $funnel_dfr );
 
     $self->graph->add_node( $accu_sink_node_name,
-#        shape       => 'noverhang',
-#        shape       => 'invtriangle',
-        shape       => 'invhouse',
-        label       => '',
-        style       => 'filled',
-        fillcolor   => 'darkgreen',
+        style       => $accusink_style,
+        shape       => $accusink_shape,
+        fillcolor   => $accusink_colour,
+        fontname    => $accusink_font,
+        fontcolor   => $accusink_fontcolour,
+        label       => 'Accu',
     );
 
     return $accu_sink_node_name;
@@ -526,6 +532,11 @@ sub _twopart_arrow {
 
     my $graph               = $self->graph();
     my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
+    my $switch_shape        = $self->config_get('Node', 'Switch', 'Shape');
+    my $switch_style        = $self->config_get('Node', 'Switch', 'Style');
+    my $switch_colour       = $self->config_get('Node', 'Switch', 'Colour');
+    my $switch_font         = $self->config_get('Node', 'Switch', 'Font');
+    my $switch_fontcolour   = $self->config_get('Node', 'Switch', 'FontColour');
 
     my $from_analysis       = $df_rule->from_analysis;
     my $from_node_name      = $self->_analysis_node_name( $from_analysis );
@@ -535,10 +546,13 @@ sub _twopart_arrow {
     my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
     $graph->add_node( $midpoint_name,   # midpoint itself
-        color       => 'black',
         $choice ? (
-            shape   => 'diamond',
-            label   => scalar(@$df_targets)==1 ? 'Filter' : 'Switch',
+            style       => $switch_style,
+            shape       => $switch_shape,
+            fillcolor   => $switch_colour,
+            fontname    => $switch_font,
+            fontcolor   => $switch_fontcolour,
+            label       => scalar(@$df_targets)==1 ? 'Filter' : 'Switch',
         ) : (
             shape       => 'point',
             fixedsize   => 1,
@@ -616,7 +630,11 @@ sub _add_dataflow_rules {
 sub _add_table_node {
     my ($self, $naked_table) = @_;
 
-    my $node_fontname           = $self->config_get('Node', 'Table', 'Font');
+    my $table_colour            = $self->config_get('Node', 'Table', 'Colour');
+    my $table_header_colour     = $self->config_get('Node', 'Table', 'HeaderColour');
+    my $table_fontcolour        = $self->config_get('Node', 'Table', 'FontColour');
+    my $table_fontname          = $self->config_get('Node', 'Table', 'Font');
+
     my $hive_pipeline           = $self->pipeline;
     my $this_table_node_name    = $self->_table_node_name( $naked_table );
 
@@ -638,7 +656,7 @@ sub _add_table_node {
 
     if( $self->config_get('DisplayData') and $columns) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
-        $table_label .= '<tr>'.join('', map { qq{<td bgcolor="lightblue" border="1">$_</td>} } @column_names).'</tr>';
+        $table_label .= '<tr>'.join('', map { qq{<td bgcolor="$table_header_colour" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
             $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
         }
@@ -649,11 +667,12 @@ sub _add_table_node {
     $table_label .= '</table>>';
 
     $self->graph()->add_node( $this_table_node_name,
-        label       => $table_label,
         shape       => 'record',
-        fontname    => $node_fontname,
         style       => 'filled',
-        fillcolor   => 'white',
+        fillcolor   => $table_colour,
+        fontname    => $table_fontname,
+        fontcolor   => $table_fontcolour,
+        label       => $table_label,
     );
 
     return $this_table_node_name;
