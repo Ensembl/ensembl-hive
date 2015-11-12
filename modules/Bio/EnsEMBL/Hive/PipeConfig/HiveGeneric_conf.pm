@@ -596,25 +596,33 @@ sub add_objects_from_config {
                 }
             }
 
-            my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
-                'from_analysis'             => $analysis,
-                'branch_code'               => $branch_name_or_code,
-                'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-            );
-
             my $cond_groups = $flow_into->{$branch_tag};
 
-                # force anything else into an array of condition groups so that we could iterate over it:
-            $cond_groups = [ $cond_groups ] if((ref($cond_groups) ne 'ARRAY') or ($cond_groups->[0] eq $cond_group_marker));
+                # force the old format into the new one, making sure we get separate condition groups:
+            if(!ref($cond_groups)) {    # treat a scalar as a single target_url:
+                $cond_groups = [ WHEN( ELSE( $cond_groups )) ];
+            } elsif(ref($cond_groups) eq 'HASH') {
+                $cond_groups = [ map { WHEN( ELSE( { $_ => $cond_groups->{$_} } )) } keys %$cond_groups ];
+            } elsif((ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0])) {
+                if($cond_groups->[0] eq $cond_group_marker) { # one WHEN has to be put into an array:
+                    $cond_groups = [ $cond_groups ];
+                } else {    # otherwise assume it is an array of target_urls:
+                    $cond_groups = [ map { WHEN( ELSE( $_ )) } @$cond_groups ];
+                    print "performed WHEN/ELSE substitution that resulted in ".scalar(@$cond_groups)." elements\n";
+                }
+            }
 
             foreach my $cond_group (@$cond_groups) {
-
-                    # force anything else into a condition group:
-                $cond_group = [ $cond_group_marker, undef, $cond_group] unless((ref($cond_group) eq 'ARRAY') and ($cond_group->[0] eq $cond_group_marker));
 
                     # chop the condition group marker off:
                 my $this_cond_group_marker = shift @$cond_group;
                 die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
+
+                my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
+                    'from_analysis'             => $analysis,
+                    'branch_code'               => $branch_name_or_code,
+                    'funnel_dataflow_rule'      => $funnel_dataflow_rule,
+                );
 
                 while(@$cond_group) {
                     my $on_condition    = shift @$cond_group;
