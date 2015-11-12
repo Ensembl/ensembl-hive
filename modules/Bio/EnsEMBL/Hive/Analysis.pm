@@ -254,25 +254,29 @@ sub get_grouped_dataflow_rules {
                                 # and only returning the listref of the values.
 
     foreach my $dfr ( sort { ($b->funnel_dataflow_rule // 0) <=> ($a->funnel_dataflow_rule // 0) } @{$self->dataflow_rules_collection}) {
+
+        my $df_targets = $dfr->get_my_targets;
+
         if(my $funnel_dfr = $dfr->funnel_dataflow_rule) {
             unless($set_of_groups{$funnel_dfr}) {   # both the type check and the initial push will only be done once per funnel
-                foreach my $df_target (@{ $funnel_dfr->get_my_targets }) {
-                    unless($df_target->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
+                my $funnel_targets = $funnel_dfr->get_my_targets;
+                foreach my $funnel_target (@$funnel_targets) {
+                    unless($funnel_target->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
                         throw("Each conditional branch of a semaphored funnel rule must point at an Analysis");
                     }
                 }
-                $set_of_groups{$funnel_dfr} = [$funnel_dfr, []];
+                $set_of_groups{$funnel_dfr} = [$funnel_dfr, [], $funnel_targets];
             }
             my $this_group = $set_of_groups{$funnel_dfr};
 
-            foreach my $df_target (@{ $dfr->get_my_targets }) {
+            foreach my $df_target (@$df_targets) {
                 unless($df_target->to_analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
                     throw("Each conditional branch of a semaphored fan rule must point at an Analysis");
                 }
             }
             push @{$this_group->[1]}, $dfr;
         } else {
-            $set_of_groups{$dfr} ||= [$dfr, []];
+            $set_of_groups{$dfr} ||= [$dfr, [], $df_targets];
         }
     }
     return [ sort { scalar(@{$a->[1]}) <=> scalar(@{$b->[1]}) or $a->[0]->branch_code <=> $b->[0]->branch_code } values %set_of_groups ];

@@ -124,6 +124,15 @@ sub pipeline {
 }
 
 
+sub _grouped_dataflow_rules {
+    my ($self, $analysis) = @_;
+
+    my $gdr = $self->{'_gdr'} ||= {};
+
+    return $gdr->{$analysis} ||= $analysis->get_grouped_dataflow_rules;
+}
+
+
 sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
@@ -227,11 +236,10 @@ sub build {
 
             push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
-            foreach my $group ( @{ $analysis->get_grouped_dataflow_rules } ) {
+            foreach my $group ( @{ $self->_grouped_dataflow_rules($analysis) } ) {
 
-                my ($df_rule, $fan_dfrs) = @$group;
+                my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
-                my $df_targets  = $df_rule->get_my_targets;
                 my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
                 if(@$fan_dfrs or $choice) {
@@ -277,13 +285,13 @@ sub _propagate_allocation {
 
         if(UNIVERSAL::isa($source_object, 'Bio::EnsEMBL::Hive::Analysis')) {
 
-            foreach my $group ( @{ $source_object->get_grouped_dataflow_rules } ) {
+            foreach my $group ( @{ $self->_grouped_dataflow_rules($source_object) } ) {
 
-                my ($df_rule, $fan_dfrs) = @$group;
+                my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
                 $df_rule->{'_funnel_dfr'} = $curr_allocation;
 
-                foreach my $df_target (@{ $df_rule->get_my_targets }) {
+                foreach my $df_target (@$df_targets) {
                     my $target_object       = $df_target->to_analysis;
 
                         #   In case we have crossed pipeline borders, let the next call decide its own allocation by resetting it.
@@ -513,7 +521,7 @@ sub _last_part_arrow {
 
 
 sub _twopart_arrow {
-    my ($self, $df_rule) = @_;
+    my ($self, $df_rule, $df_targets) = @_;
 
     my $graph               = $self->graph();
     my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
@@ -521,7 +529,8 @@ sub _twopart_arrow {
     my $from_analysis       = $df_rule->from_analysis;
     my $from_node_name      = $self->_analysis_node_name( $from_analysis );
     my $midpoint_name       = _midpoint_name( $df_rule );
-    my $df_targets          = $df_rule->get_my_targets;
+
+       $df_targets        ||= $df_rule->get_my_targets;
     my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
     $graph->add_node( $midpoint_name,   # midpoint itself
@@ -565,13 +574,13 @@ sub _add_dataflow_rules {
     my $graph               = $self->graph();
     my $semablock_colour    = $self->config_get('Edge', 'Semablock', 'Colour');
 
-    foreach my $group ( @{ $from_analysis->get_grouped_dataflow_rules } ) {
+    foreach my $group ( @{ $self->_grouped_dataflow_rules($from_analysis) } ) {
 
-        my ($df_rule, $fan_dfrs) = @$group;
+        my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
         if(@$fan_dfrs) {    # semaphored funnel case => all rules have an Analysis target and have two parts:
 
-            my $funnel_midpoint_name = $self->_twopart_arrow( $df_rule );
+            my $funnel_midpoint_name = $self->_twopart_arrow( $df_rule, $df_targets );
 
             foreach my $fan_dfr (@$fan_dfrs) {
                 my $fan_midpoint_name = $self->_twopart_arrow( $fan_dfr );
@@ -587,11 +596,10 @@ sub _add_dataflow_rules {
             }
 
         } else {
-            my $df_targets  = $df_rule->get_my_targets;
             my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
             if($choice) {
-                $self->_twopart_arrow( $df_rule );
+                $self->_twopart_arrow( $df_rule, $df_targets );
             } else {
                 my $from_node_name  = $self->_analysis_node_name( $from_analysis );
                 my $df_target       = $df_targets->[0];
