@@ -472,7 +472,7 @@ sub _add_control_rules {
 
 
 sub _last_part_arrow {
-    my ($self, $from_analysis, $source_node_name, $label_prefix, $df_target) = @_;
+    my ($self, $from_analysis, $source_node_name, $label_prefix, $df_target, $extras) = @_;
 
     my $graph               = $self->graph();
     my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
@@ -502,6 +502,7 @@ sub _last_part_arrow {
     my $multistring_template= $input_id_template ? ": {".join(",\n", sort keys( %{destringify($input_id_template)} )).'}' : '';
 
     $graph->add_edge( $source_node_name => $target_node_name,
+        @$extras,
         UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')
             ? (
                 color       => $accu_colour,
@@ -550,8 +551,8 @@ sub _twopart_arrow {
         fontcolor   => 'black',
         fontname    => $df_edge_fontname,
         label       => '#'.$df_rule->branch_code,
+        headport    => 'n',
         $choice ? (
-            headport    => 'n',
             arrowhead   => 'normal',
         ) : (
             arrowhead   => 'none',
@@ -561,7 +562,7 @@ sub _twopart_arrow {
     foreach my $df_target (@$df_targets) {
         my $condition = $df_target->on_condition;
         $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
-        $self->_last_part_arrow($from_analysis, $midpoint_name, $condition ? "IF $condition" : $choice ? 'ELSE' : '', $df_target);
+        $self->_last_part_arrow($from_analysis, $midpoint_name, $condition ? "IF $condition" : $choice ? 'ELSE' : '', $df_target, $choice ? [] : [ tailport => 's' ]);
     }
 
     return $midpoint_name;
@@ -604,7 +605,7 @@ sub _add_dataflow_rules {
                 my $from_node_name  = $self->_analysis_node_name( $from_analysis );
                 my $df_target       = $df_targets->[0];
 
-                $self->_last_part_arrow($from_analysis, $from_node_name, '#'.$df_rule->branch_code, $df_target);
+                $self->_last_part_arrow($from_analysis, $from_node_name, '#'.$df_rule->branch_code, $df_target, []);
             }
         }
 
