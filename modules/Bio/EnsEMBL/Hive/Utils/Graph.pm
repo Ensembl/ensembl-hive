@@ -137,7 +137,9 @@ sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
     my $analysis_node_name = 'analysis_' . $analysis->relative_display_name( $self->pipeline );
-    $analysis_node_name=~s/\W/__/g;
+    if($analysis_node_name=~s/\W/__/g) {
+        $analysis_node_name = 'foreign_' . $analysis_node_name;
+    }
     return $analysis_node_name;
 }
 

@@ -141,7 +141,7 @@ sub _as_debug {
         # but newer versions of dot allow more freedom, so we patch dot input after generation:
         #
     $text=~s/^(\s+table_.*)"record"/$1"tab"/mg;
-    $text=~s/^(\s+analysis_.*)"record"/$1"Mrecord"/mg;
+    $text=~s/^(\s+(?:foreign_)?analysis_.*)"record"/$1"Mrecord"/mg;
 
         # uncomment the following line to see the final input to dot
 #    print $text;
