@@ -378,8 +378,6 @@ sub _subst_one_hashpair {
         }
     }
 
-    warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
-
     delete $self->{'_substitution_in_progress'}{$inside_hashes};
     return $value;
 }
