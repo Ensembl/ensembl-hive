@@ -371,6 +371,11 @@ sub _subst_one_hashpair {
 
         $value = eval "return ($expression)";   # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
                                                 #       and parentheses are needed because return binds stronger than 'and' and 'or'
+
+        if ($@) {
+            delete $self->{'_substitution_in_progress'}{$inside_hashes};    # to allow re-entering the sub
+            die "ParamError: Cannot evaluate the expression: '$inside_hashes' ==> '$expression'\n$@";
+        }
     }
 
     warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
