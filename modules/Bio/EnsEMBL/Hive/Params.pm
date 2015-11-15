@@ -216,9 +216,15 @@ sub param_exists {
     my $self        = shift @_;
     my $param_name  = shift @_;
 
-    return exists( $self->{'_param_hash'}{$param_name} )
-            ? 1
-            : 0;
+    $self->_param_silent($param_name);
+    if (exists( $self->{'_param_hash'}{$param_name} )) {
+        return 1;
+    } elsif (exists( $self->{'_unsubstituted_param_hash'}{$param_name} )) {
+        # In this case, the substitution failed
+        return undef;
+    } else {
+        return 0;
+    }
 }
 
 =head2 param_is_defined
@@ -237,9 +243,15 @@ sub param_is_defined {
     my $self        = shift @_;
     my $param_name  = shift @_;
 
-    return defined( $self->_param_silent($param_name) )
-            ? 1
-            : 0;
+    my $value = $self->_param_silent($param_name);
+    if (exists( $self->{'_param_hash'}{$param_name} )) {
+        return (defined $value ? 1 : 0);
+    } elsif (exists( $self->{'_unsubstituted_param_hash'}{$param_name} )) {
+        # In this case, the substitution failed
+        return undef;
+    } else {
+        return 0;
+    }
 }
 
 
@@ -268,7 +280,7 @@ sub param {
 
     my $value = $self->_param_silent( $param_name, @_ );
     
-    unless( $self->param_exists( $param_name ) ) {
+    unless( exists( $self->{'_param_hash'}{$param_name} )) {
         warn "ParamWarning: value for param('$param_name') is used before having been initialized!\n";
     }
 
