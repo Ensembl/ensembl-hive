@@ -162,13 +162,11 @@ sub check_worker_is_alive_and_mine {
 sub kill_worker {
     my ($self, $worker, $fast) = @_;
 
-    my $fast_flag = $fast ? '-r ' : '';
-
-    my $cmd = "bkill $fast_flag".$worker->process_id();
-
-#    warn "LSF::kill_worker() running cmd:\n\t$cmd\n";
-
-    system($cmd);
+    if ($fast) {
+        system('bkill', '-r', $worker->process_id());
+    } else {
+        system('bkill', $worker->process_id());
+    }
 }
 
 
