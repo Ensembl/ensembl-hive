@@ -148,25 +148,27 @@ sub fetch_input {
     ) };
 
     # Add the input data
+    my $prefix = '';
     if ($self->param('input_file')) {
         push @cmd, '<', $self->param('input_file');
     } elsif ($self->param('input_query')) {
         # the query as already been fed into @cmd by to_cmd()
     } elsif ($self->param('command_in')) {
-        unshift @cmd, (ref($self->param('command_in')) ? @{$self->param('command_in')} : $self->param('command_in')), '|';
+        $prefix = (join_command_args($self->param('command_in')))[1] . ' | ';
     }
 
     # Add the output data
+    my $postfix = '';
     if ($self->param('output_file')) {
         push @cmd, '>', $self->param('output_file');
     } elsif ($self->param('command_out')) {
-        push @cmd, '|', (ref($self->param('command_out')) ? @{$self->param('command_out')} : $self->param('command_out'));
+        $postfix = ' | ' . (join_command_args($self->param('command_out')))[1];
     }
 
     if ($need_a_shell) {
         my ($join_needed, $flat_cmd) = join_command_args(\@cmd);
         $flat_cmd =~ s/ '(-p\$EHIVE_TMP_PASSWORD_\d+)' / $1 /g;
-        $self->param('cmd', $flat_cmd);
+        $self->param('cmd', $prefix.$flat_cmd.$postfix);
     } else {
         $self->param('cmd', \@cmd);
     }
