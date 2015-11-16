@@ -132,7 +132,17 @@ sub kill_worker {
 sub submit_workers {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
-    my $cmd = "$worker_cmd &";
+    my ($submit_stdout_file, $submit_stderr_file);
+
+    if($submit_log_subdir) {
+        $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.out";
+        $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.err";
+    } else {
+        $submit_stdout_file = '/dev/null';
+        $submit_stderr_file = '/dev/null';
+    }
+
+    my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
 
     foreach (1..$required_worker_count) {
         print "Executing [ ".$self->signature." ] \t\t$cmd\n";
