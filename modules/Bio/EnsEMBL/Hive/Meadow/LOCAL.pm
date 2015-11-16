@@ -146,7 +146,7 @@ sub submit_workers {
 
     print "Executing [ ".$self->signature." ] x$required_worker_count \t\t$cmd\n";
     foreach (1..$required_worker_count) {
-        system( $cmd );
+        system( $cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax;
     }
 }
 
