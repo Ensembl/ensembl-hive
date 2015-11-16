@@ -144,8 +144,8 @@ sub submit_workers {
 
     my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
 
+    print "Executing [ ".$self->signature." ] x$required_worker_count \t\t$cmd\n";
     foreach (1..$required_worker_count) {
-        print "Executing [ ".$self->signature." ] \t\t$cmd\n";
         system( $cmd );
     }
 }
