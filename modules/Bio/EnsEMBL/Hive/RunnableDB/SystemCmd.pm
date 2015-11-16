@@ -99,12 +99,11 @@ sub run {
         warn "Command to run: ", Dumper(\@cmd_to_run), "\n";
     }
 
-    $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
+    $self->dbc and $self->dbc->disconnect_if_idle();    # release this connection for the duration of system() call
     my $return_value;
     my $stderr = tee_stderr {
         $return_value = system(@cmd_to_run);
     };
-    $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
