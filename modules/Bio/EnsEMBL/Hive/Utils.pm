@@ -388,13 +388,13 @@ sub join_command_args {
     return (0,$args) unless ref($args);
 
     # system() can only spawn 1 process. For multiple commands piped
-    # together or if redirections are used, we need a shell to parse
-    # a joined string representing the command
+    # together or if redirections are used, it needs a shell to parse
+    # a string representing the whole command
     my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;
 
     my @new_args = ();
     foreach my $a (@$args) {
-        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {
+        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\/\-]+\z/) {
             push @new_args, $a;
         } else {
             # Escapes the single-quotes and protects the arguments
