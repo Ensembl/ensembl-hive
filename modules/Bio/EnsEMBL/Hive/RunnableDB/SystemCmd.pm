@@ -66,6 +66,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
     return {
         return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
+        'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
     }
 }
 
@@ -88,7 +89,7 @@ sub run {
     my $cmd = $self->param_required('cmd');
     my ($join_needed, $flat_cmd) = join_command_args($cmd);
     # Let's use the array if possible, it saves us from running a shell
-    my @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd);
+    my @cmd_to_run = $self->param('use_bash_pipefail') ? ('bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)) : ($join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd));
 
     if($self->debug()) {
         use Data::Dumper;
