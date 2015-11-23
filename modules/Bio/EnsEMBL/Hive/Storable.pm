@@ -52,7 +52,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 =head2 new
 
     Args            : pairs of ($method_name, $value)
-    Caller          : ObjectAdaptor, AnalysisJob, URLFactory.pm, HiveGeneric_conf, seed_pipeline.pl, standaloneJob.pl
+    Caller          : ObjectAdaptor, AnalysisJob, HivePipeline, seed_pipeline.pl, standaloneJob.pl
     Description     : create a new Storable object 
     Returntype      : Bio::EnsEMBL::Hive::Storable
     Status          : stable
