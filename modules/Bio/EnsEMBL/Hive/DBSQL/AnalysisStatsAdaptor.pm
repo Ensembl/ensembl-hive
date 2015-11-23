@@ -119,18 +119,7 @@ sub refresh {
 ################
 
 
-=head2 update
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Example    :
-  Description:
-  Returntype : Bio::EnsEMBL::Hive::Worker
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub update {
+sub update_stats_and_monitor {
   my ($self, $stats) = @_;
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";

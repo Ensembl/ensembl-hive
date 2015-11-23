@@ -210,7 +210,7 @@ sub refresh {
 sub update {
     my $self = shift;
     return unless($self->adaptor);
-    $self->adaptor->update($self);
+    $self->adaptor->update_stats_and_monitor($self);
 }
 
 sub update_status {

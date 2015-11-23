@@ -215,7 +215,7 @@ sub run {
     return if ($self->param('skip_dump'));
 
     # OK, we can dump
-    if(my $return_value = system($cmd)) {
+    if(my $return_value = system(bash => (-o => 'pipefail', -c => $cmd))) {
         die "system( $cmd ) failed: $return_value";
     }
 }
