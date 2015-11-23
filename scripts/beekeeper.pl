@@ -530,7 +530,7 @@ __DATA__
 
     -analyses_pattern <string>  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
     -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
-    -life_span <num>            : life_span limit for each worker
+    -life_span <num>            : number of minutes each worker is allowed to run
     -job_limit <num>            : #jobs to run before worker can die naturally
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected

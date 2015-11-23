@@ -133,7 +133,7 @@ sub run {
             );
 
     print "$cmd\n" if $self->debug;
-    if(my $return_value = system($cmd)) {   # NB: unfortunately, this code won't catch many errors because of the pipe
+    if(my $return_value = system(bash => (-o => 'pipefail', -c => $cmd))) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }

@@ -19,6 +19,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
@@ -28,10 +29,30 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
         'cmd' => 'echo hello world >&2',
 });
 
+# This is expected to complete succesfully since the return status of a
+# pipe is the last command's
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
+        'cmd' => 'exit 1 | exit 0',
+});
 
-##
-## do some checks
-##
+# With "use_bash_pipefail" enabled, we can catch the error with a dataflow
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    {
+        'cmd'               => 'exit 1 | exit 0',
+        'use_bash_pipefail' => 1,
+        'return_codes_2_branches'   => { 1 => 4 },
+    }, [
+        [
+            'DATAFLOW',
+            '{"cmd" => "exit 1 | exit 0","return_codes_2_branches" => {1 => 4},"use_bash_pipefail" => 1}',
+            4,
+        ], [
+            'WARNING',
+            "The command exited with code 1, which is mapped to a dataflow on branch #4.\n",
+            0,
+        ],
+    ],
+);
 
 
 done_testing();
