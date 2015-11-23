@@ -93,7 +93,7 @@ sub run {   # call the function that will compute the stuff
     my $b_multiplier    = $self->param_required('b_multiplier');
     my $partial_product = $self->param('partial_product');
 
-    $self->param('result', _add_together($b_multiplier, $partial_product));
+    $self->param('result', $self->_add_together($b_multiplier, $partial_product));
 
     sleep( $self->param('take_time') );
 }
@@ -114,20 +114,25 @@ sub write_output {  # store and dataflow
     }, 1);
 }
 
+
 =head2 _add_together
 
-    Description: this is a private function (not a method) that adds all the products with a shift
+    Description: this is a private method that adds all the products with a shift
 
 =cut
 
 sub _add_together {
-    my ($b_multiplier, $partial_product) = @_;
+    my ($self, $b_multiplier, $partial_product) = @_;
 
     my @accu  = ();
 
     my @b_digits = reverse split(//, $b_multiplier);
     foreach my $b_index (0..(@b_digits-1)) {
         my $b_digit = $b_digits[$b_index];
+        if (not exists $partial_product->{$b_digit}) {
+           $self->input_job->transient_error(0);
+           die "Could not find the partial product for the digit '$b_digit'\n";
+        }
         my $product = $partial_product->{$b_digit};
 
         my @p_digits = reverse split(//, $product);
