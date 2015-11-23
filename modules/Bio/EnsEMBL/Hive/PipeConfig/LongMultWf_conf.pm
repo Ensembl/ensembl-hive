@@ -134,7 +134,7 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                2 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                2 => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },   # do not need to include "take_time" because it is already "pipeline-wide"
                 1 => [ 'add_together'  ],
             },
         },
