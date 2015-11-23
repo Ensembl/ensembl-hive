@@ -480,7 +480,7 @@ __DATA__
 =head2 Worker control
 
     -job_limit <num>            : #jobs to run before worker can die naturally
-    -life_span <num>            : life_span limit for each worker
+    -life_span <num>            : number of minutes each worker is allowed to run
     -logic_name <string>        : restrict the pipeline stat/runs to this analysis logic_name
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted

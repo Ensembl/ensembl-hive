@@ -65,6 +65,13 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
+sub param_defaults {
+    return {
+        'use_bash_pipefail' => 0,   # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+    }
+}
+
+
 =head2 strict_hash_format
 
     Description : Implements strict_hash_format() interface method of Bio::EnsEMBL::Hive::Process that is used to set the strictness level of the parameters' parser.
@@ -122,7 +129,8 @@ sub run {
 
     $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
 
-    if(my $return_value = system($cmd)) {
+    my @system_args = $self->param('use_bash_pipefail') ? ('bash' => ('-o' => 'pipefail', '-c' => $cmd)) : ($cmd);
+    if(my $return_value = system(@system_args)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
