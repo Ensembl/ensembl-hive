@@ -134,7 +134,7 @@ sub pipeline_analyses {
             ],
             -flow_into => {
                     # will create a semaphored fan of jobs; will use a template to top-up the hashes:
-                '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                '2->A' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },  # do not need to include "take_time" because it is already "pipeline-wide"
                     # will create a semaphored funnel job to wait for the fan to complete and add the results:
                 'A->1' => [ 'add_together'  ],
             },
