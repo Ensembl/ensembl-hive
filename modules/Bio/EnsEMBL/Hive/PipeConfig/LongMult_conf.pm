@@ -138,7 +138,7 @@ sub pipeline_analyses {
                     #
                     # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
                 '2->A' => WHEN(
-                                '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#' } },
+                                '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
 #                                ELSE           { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
                           ),
                     # creating a semaphored funnel job to wait for the fan to complete and add the results:
