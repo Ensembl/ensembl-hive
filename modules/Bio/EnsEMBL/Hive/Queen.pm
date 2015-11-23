@@ -175,7 +175,7 @@ sub create_new_worker {
       $worker->life_span(0);
     }
 
-    $worker->life_span($life_span * 60)                 if($life_span);
+    $worker->life_span($life_span * 60)                 if($life_span); # $life_span min -> sec
 
     $worker->execute_writes(0)                          if($no_write);
 
