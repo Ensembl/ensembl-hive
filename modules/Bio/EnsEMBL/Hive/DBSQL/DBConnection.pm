@@ -38,6 +38,7 @@ use strict;
 use warnings;
 
 use Time::HiRes ('usleep');
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
@@ -60,7 +61,7 @@ sub new {
             return $class->SUPER::new( %flags );
 
         } else {
-            die "Could not create DBC because could not parse the URL '$url'";
+            throw("Could not create DBC because could not parse the URL '$url'");
         }
     } else {
         return $class->SUPER::new( @_ );
