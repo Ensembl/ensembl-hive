@@ -17,10 +17,9 @@ use strict;
 use warnings;
 
 use Test::More;
-use Test::Exception;
 use Data::Dumper;
-use File::Temp qw{tempdir};
 
+use Bio::EnsEMBL::Hive::Utils qw(stringify);
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
@@ -34,15 +33,16 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
 });
 
 # With "use_bash_pipefail" enabled, we can catch the error with a dataflow
+my $input_hash = {
+    'cmd'                       => 'exit 1 | exit 0',
+    'use_bash_pipefail'         => 1,
+    'return_codes_2_branches'   => { 1 => 4 },
+};
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-    {
-        'cmd'               => 'exit 1 | exit 0',
-        'use_bash_pipefail' => 1,
-        'return_codes_2_branches'   => { 1 => 4 },
-    }, [
+    $input_hash, [
         [
             'DATAFLOW',
-            '{"cmd" => "exit 1 | exit 0","return_codes_2_branches" => {1 => 4},"use_bash_pipefail" => 1}',
+            stringify($input_hash),
             4,
         ], [
             'WARNING',
