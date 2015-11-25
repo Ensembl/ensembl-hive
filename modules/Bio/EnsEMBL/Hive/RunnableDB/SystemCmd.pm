@@ -56,10 +56,6 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils qw(join_command_args);
-
-use Capture::Tiny ':all';
-
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
@@ -86,24 +82,7 @@ sub param_defaults {
 sub run {
     my $self = shift;
  
-    my $cmd = $self->param_required('cmd');
-    my ($join_needed, $flat_cmd) = join_command_args($cmd);
-    # Let's use the array if possible, it saves us from running a shell
-    my @cmd_to_run = $self->param('use_bash_pipefail') ? ('bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)) : ($join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd));
-
-    if($self->debug()) {
-        use Data::Dumper;
-        local $Data::Dumper::Terse = 1;
-        local $Data::Dumper::Indent = 0;
-        warn "Command given: ", Dumper($cmd), "\n";
-        warn "Command to run: ", Dumper(\@cmd_to_run), "\n";
-    }
-
-    $self->dbc and $self->dbc->disconnect_if_idle();    # release this connection for the duration of system() call
-    my $return_value;
-    my $stderr = tee_stderr {
-        $return_value = system(@cmd_to_run);
-    };
+    my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), {'use_bash_pipefail' => $self->param('use_bash_pipefail')});
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
