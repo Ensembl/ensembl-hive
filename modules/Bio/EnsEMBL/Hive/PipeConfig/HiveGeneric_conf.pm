@@ -542,7 +542,7 @@ sub add_objects_from_config {
 
             # create control rules:
         foreach my $condition_url (@$wait_for) {
-            unless ($condition_url =~ m{^\w*://}) {
+            if($condition_url =~ m{^\w+$/}) {
                 my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                     or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
             }
