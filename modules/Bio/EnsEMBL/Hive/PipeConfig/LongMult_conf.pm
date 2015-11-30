@@ -150,14 +150,14 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?partial_product={digit}' ],
+                1 => [ '?struct_name=partial_product&signature_template={digit}' ],
             },
         },
         
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
             -flow_into => {
-                1 => [ ':////final_result' ],
+                1 => [ '?table_name=final_result' ],
             },
         },
     ];

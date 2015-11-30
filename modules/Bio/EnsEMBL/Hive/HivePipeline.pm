@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 
     # needed for offline graph generation:
@@ -58,51 +58,31 @@ sub collection_of {
 }
 
 
-sub find_by_url_query {
-    my $self        = shift @_;
-    my $parsed_url  = shift @_;
+sub find_by_query {
+    my $self            = shift @_;
+    my $query_params    = shift @_;
 
-    my $table_name      = $parsed_url->{'table_name'};
-    my $tparam_name     = $parsed_url->{'tparam_name'};
-    my $tparam_value    = $parsed_url->{'tparam_value'};
+    if(my $object_type = delete $query_params->{'object_type'}) {
+        my $object;
 
-    if($table_name eq 'analysis') {
+        if($object_type eq 'Accumulator' or $object_type eq 'NakedTable') {
 
-        die "Analyses can only be found using either logic_name or dbID" unless($tparam_name=~/^(logic_name|dbID)$/);
+            unless($object = $self->collection_of($object_type)->find_one_by( %$query_params )) {
 
-        return $self->collection_of('Analysis')->find_one_by( $tparam_name, $tparam_value);
-
-    } elsif($table_name eq 'accu') {
-        my $accu;
-
-        unless($accu = $self->collection_of('Accumulator')->find_one_by( 'struct_name', $tparam_name, 'signature_template', $tparam_value )) {
-
-            ($accu) = $self->add_new_or_update( 'Accumulator',  # NB: add_new_or_update returns a list
-                $self->hive_dba ? (adaptor => $self->hive_dba->get_AccumulatorAdaptor) : (),
-                struct_name        => $tparam_name,
-                signature_template => $tparam_value,
-            );
+                my @specific_adaptor_params = ($object_type eq 'NakedTable') ? ('table_name' => $query_params->{'table_name'}) : ();
+                ($object) = $self->add_new_or_update( $object_type, # NB: add_new_or_update returns a list
+                    %$query_params,
+                    $self->hive_dba ? ('adaptor' => $self->hive_dba->get_adaptor($object_type, @specific_adaptor_params)) : (),
+                );
+            }
+        } else {
+            $object = $self->collection_of($object_type)->find_one_by( %$query_params );
         }
 
-        return $accu;
-
-    } elsif($table_name eq 'job') {
-
-        die "Jobs cannot yet be found by URLs, sorry";
+        return $object || throw("Could not find an '$object_type' object from query ".stringify($query_params));
 
     } else {
-        my $naked_table;
-
-        unless($naked_table = $self->collection_of('NakedTable')->find_one_by( 'table_name', $table_name )) {
-
-            ($naked_table) = $self->add_new_or_update( 'NakedTable',    # NB: add_new_or_update returns a list
-                $self->hive_dba ? (adaptor => $self->hive_dba->get_NakedTableAdaptor( 'table_name' => $table_name ) ) : (),
-                table_name => $table_name,
-                $tparam_value ? (insertion_method => $tparam_value) : (),
-            );
-        }
-
-        return $naked_table;
+        throw("Could not find or guess the object_type from the query ".stringify($query_params)." , so could not find the object");
     }
 }
 

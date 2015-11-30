@@ -62,9 +62,8 @@ sub find_by_url {
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
-        my $real_url        = $parsed_url->{'dbconn_part'};
         my $unambig_url     = $parsed_url->{'unambig_url'};
-        my $table_name      = $parsed_url->{'table_name'};
+        my $query_params    = $parsed_url->{'query_params'};
         my $conn_params     = $parsed_url->{'conn_params'};
 
         my $disconnect_when_inactive    = $conn_params->{'disconnect_when_inactive'};
@@ -78,19 +77,19 @@ sub find_by_url {
 
         } elsif( not ($hive_pipeline = $class->pipelines_collection->{ $unambig_url }) ) {
 
-            if($table_name and $table_name!~/^(analysis|accu|job)$/) {  # do not check schema version when performing table dataflow:
+            if($query_params and ($query_params->{'object_type'} eq 'NakedTable') ) {  # do not check schema version when performing table dataflow:
                 $no_sql_schema_version_check = 1;
             }
 
             $class->pipelines_collection->{ $unambig_url } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-                -url                        => $real_url,
+                -url                        => $unambig_url,
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,
             );
         }
 
-        return  $table_name
-            ? $hive_pipeline->find_by_url_query( $parsed_url )
+        return  $query_params
+            ? $hive_pipeline->find_by_query( $query_params )
             : $hive_pipeline;
 
     } else {

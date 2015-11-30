@@ -152,8 +152,7 @@ sub pipeline_analyses {
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [
-                    ':////intermediate_result',
-#                    'sqlite:///foreign_db/intermediate_result',
+                    '?table_name=intermediate_result',
                 ],
             },
             -can_be_empty       => 1,
@@ -162,12 +161,11 @@ sub pipeline_analyses {
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
             -parameters => {
-                'intermediate_table_url' => ':////intermediate_result',
-#                'intermediate_table_url' => 'sqlite:///foreign_db/intermediate_result',
+                'intermediate_table_url' => '?table_name=intermediate_result',
             },
             -wait_for => [ 'part_multiply' ],
             -flow_into => {
-                1 => [ ':////final_result' ],
+                1 => [ '?table_name=final_result' ],
             },
         },
     ];

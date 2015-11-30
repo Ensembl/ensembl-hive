@@ -157,7 +157,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?partial_product={digit}' ],
+                1 => [ '?struct_name=partial_product&signature_template={digit}' ],
             },
         },
         
@@ -165,7 +165,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
-                1 => [ ':////final_result', 'last' ],
+                1 => [ '?table_name=final_result', 'last' ],
             },
         },
 

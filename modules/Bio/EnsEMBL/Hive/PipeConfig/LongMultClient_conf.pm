@@ -116,7 +116,7 @@ sub pipeline_analyses {
             -flow_into => {
                     # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
                 2 => WHEN(
-                        '#digit#>1' =>  { $self->o('server_url').'/analysis?logic_name=part_multiply'
+                        '#digit#>1' =>  { $self->o('server_url').'?logic_name=part_multiply'
                                             => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#', 'foreign' => 1 },
                                         },
                 ),
@@ -131,11 +131,11 @@ sub pipeline_analyses {
         {   -logic_name => 'add_together',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
             -parameters => {
-                'intermediate_table_url' => $self->o('server_url').'/intermediate_result',
+                'intermediate_table_url' => $self->o('server_url').'?table_name=intermediate_result',
             },
-            -wait_for => [ $self->o('server_url').'/analysis?logic_name=part_multiply' ],
+            -wait_for => [ $self->o('server_url').'?logic_name=part_multiply' ],
             -flow_into => {
-                1 => [ ':////final_result' ],
+                1 => [ '?table_name=final_result' ],
             },
         },
     ];

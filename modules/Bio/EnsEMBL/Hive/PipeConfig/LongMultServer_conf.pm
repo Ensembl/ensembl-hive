@@ -92,7 +92,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////intermediate_result' ],
+                1 => [ '?table_name=intermediate_result' ],
             },
         },
     ];
