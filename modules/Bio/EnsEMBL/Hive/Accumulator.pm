@@ -68,8 +68,9 @@ sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : ':///' )
-        . '/accu?' . $self->struct_name . '=' . $self->signature_template;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
+        . '?struct_name=' . $self->struct_name
+        . ( $self->signature_template ? '&signature_template='.$self->signature_template : '');
 }
 
 

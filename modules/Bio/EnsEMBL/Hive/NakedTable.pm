@@ -66,8 +66,9 @@ sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : ':///' )
-        . '/' . $self->table_name . '?insertion_method=' . $self->insertion_method;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
+        . '?table_name=' . $self->table_name
+        . ( $self->insertion_method ? '&insertion_method='.$self->insertion_method : '');
 }
 
 

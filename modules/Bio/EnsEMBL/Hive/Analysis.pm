@@ -187,7 +187,7 @@ sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url . '/analysis?logic_name=' : '') . $self->logic_name;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url.'?logic_name=' : '') . $self->logic_name;
 }
 
 
