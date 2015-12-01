@@ -63,7 +63,7 @@ sub parse {
                     $query_params->{$tparam_name}           = $tparam_value;    # $tparam_name is 'logic_name' or 'dbID', $tparam_value is the analysis_name or dbID
                 } elsif($table_name eq 'accu') {
                     $query_params->{'object_type'}          = 'Accumulator';
-                    $query_params->{'struct_name'}          = $tparam_name;
+                    $query_params->{'accu_name'}            = $tparam_name;
                     $query_params->{'signature_template'}   = $tparam_value;
                 } elsif($table_name eq 'job') {
                     die "Jobs cannot yet be located by URLs, sorry";
@@ -116,7 +116,7 @@ sub parse {
                     if($dbname=~m{^([/~\w\-\.]*)/analysis$}) {
                         $exception_from_NEW_format = 1;
                     }
-                } elsif($query_params->{'struct_name'}) { # we don't require $query_params->{'signature_template'} to support scalar accu
+                } elsif($query_params->{'accu_name'}) { # we don't require $query_params->{'signature_template'} to support scalar accu
                     $object_type = 'Accumulator';
                 } elsif($query_params->{'table_name'}) {  # NB: the order is important here, in case table_name is reset for non-NakedTables
                     $object_type = 'NakedTable';

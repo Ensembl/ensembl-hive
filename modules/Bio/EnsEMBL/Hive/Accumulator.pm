@@ -40,17 +40,17 @@ use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
-    return [ 'struct_name', 'signature_template' ];
+    return [ 'accu_name', 'signature_template' ];
 }
 
 
-sub struct_name {
+sub accu_name {
     my $self = shift @_;
 
     if(@_) {
-        $self->{'_struct_name'} = shift @_;
+        $self->{'_accu_name'} = shift @_;
     }
-    return $self->{'_struct_name'};
+    return $self->{'_accu_name'};
 }
 
 
@@ -69,25 +69,25 @@ sub url {
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
     return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
-        . '?struct_name=' . $self->struct_name
+        . '?accu_name=' . $self->accu_name
         . ( $self->signature_template ? '&signature_template='.$self->signature_template : '');
 }
 
 
 sub display_name {
     my ($self) = @_;
-    return $self->struct_name . $self->signature_template;
+    return $self->accu_name . $self->signature_template;
 }
 
 
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    my $sending_job_id      = $emitting_job->dbID();
-    my $receiving_job_id    = $emitting_job->semaphored_job_id() || die "No semaphored job, cannot perform accumulated dataflow";
+    my $sending_job_id      = $emitting_job->dbID;
+    my $receiving_job_id    = $emitting_job->semaphored_job_id || die "No semaphored job, cannot perform accumulated dataflow";
 
-    my $struct_name         = $self->struct_name();
-    my $signature_template  = $self->signature_template();
+    my $accu_name         = $self->accu_name;
+    my $signature_template  = $self->signature_template;
 
     my @rows = ();
 
@@ -99,9 +99,9 @@ sub dataflow {
         push @rows, {
             'sending_job_id'    => $sending_job_id,
             'receiving_job_id'  => $receiving_job_id,
-            'struct_name'       => $struct_name,
+            'struct_name'       => $accu_name,
             'key_signature'     => $key_signature,
-            'value'             => stringify( $emitting_job->_param_possibly_overridden($struct_name, $output_id) ),
+            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_name, $output_id) ),
         };
     }
 
@@ -112,7 +112,7 @@ sub dataflow {
 sub toString {
     my $self = shift @_;
 
-    return 'Accumulator(' . $self->struct_name . '<--' . $self->signature_template . ')';
+    return 'Accumulator(' . $self->accu_name . '<--' . $self->signature_template . ')';
 }
 
 1;

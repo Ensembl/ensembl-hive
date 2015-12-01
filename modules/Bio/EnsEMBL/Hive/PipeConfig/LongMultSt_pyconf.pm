@@ -156,7 +156,7 @@ sub pipeline_analyses {
             -language   => 'python3',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?partial_product={digit}' ],
+                1 => [ '?accu_name=partial_product&signature_template={digit}' ],
             },
         },
         
@@ -164,7 +164,7 @@ sub pipeline_analyses {
             -module     => 'LongMult.AddTogether',
             -language   => 'python3',
             -flow_into => {
-                1 => [ ':////final_result', 'last' ],
+                1 => [ '?table_name=final_result', 'last' ],
             },
         },
 
