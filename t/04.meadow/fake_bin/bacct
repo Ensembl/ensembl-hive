@@ -57,6 +57,29 @@ Accounting information about this job:
       2.61      196            215     done         0.0121    50M    269M
 ------------------------------------------------------------------------------
 
+Job <3194397[75]>, Job Name <orth_qm_mammals-Hive-default-430[75]>, User <cc21>
+                     , Project <ensembl-compara>, Status <EXIT>, Queue <normal>
+                     , Command </nfs/users/nfs_c/cc21/src/ensembl-hive/scripts/
+                     runWorker.pl -url mysql://ensadmin:${EHIVE_PASS}@compara3:
+                     3306/cc21_orth_qm_mammals -rc_name default>, Share group c
+                     harged </WTSI/ComputationalGenomics/Annotation/ensembl-grp
+                     /ensembl-compara/cc21>
+Wed Dec  2 13:52:32: Submitted from host <farm3-head2>, CWD <$HOME/OrthologQM>,
+                      Output File </dev/null>;
+Wed Dec  2 13:52:34: [75] dispatched to <bc-31-2-11>, Effective RES_REQ <select
+                     [(mem>100) && (type == any )] order[r15s:pg] rusage[mem=10
+                     0.00] >;
+Wed Dec  2 13:53:29: Completed <exit>; TERM_MEMLIMIT: job killed after reaching
+                      LSF memory usage limit.
+
+ EXCEPTION STATUS:  underrun
+
+Accounting information about this job:
+     Share group charged </WTSI/ComputationalGenomics/Annotation/ensembl-grp/ensembl-compara/cc21>
+     CPU_T     WAIT     TURNAROUND   STATUS     HOG_FACTOR    MEM SWAP
+      6.97        2             57     exit         0.1223   102M 218M
+------------------------------------------------------------------------------
+
 SUMMARY:      ( time unit: second ) 
  Total number of done jobs:       2      Total number of exited jobs:     0
  Total CPU time consumed:       5.3      Average CPU time consumed:     2.7

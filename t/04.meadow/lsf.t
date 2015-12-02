@@ -162,7 +162,18 @@ my $expected_bacct = {
         'cpu_sec' => '2.61',
         'exit_status' => 'done',
         'swap_megs' => 269
-    }
+    },
+    '3194397[75]' => {
+        'cpu_sec' => '6.97',
+        'lifespan_sec' => '57',
+        'pending_sec' => '2',
+        'exception_status' => 'underrun',
+        'swap_megs' => 218,
+        'when_died' => '2015-12-02 13:53:29',
+        'cause_of_death' => 'MEMLIMIT',
+        'exit_status' => 'exit/TERM_MEMLIMIT',
+        'mem_megs' => 102
+    },
 };
 
 lives_and( sub {
