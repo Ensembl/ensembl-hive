@@ -98,7 +98,7 @@ sub parse {
         }
     
         if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =
-            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(?:;\w+=\w+(?:;\w+=\w+)*)?$} ) {
+            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
 
             my %conn_params  = split(/[;=]/, 'type=hive;disconnect_when_inactive=0'.($conn_param_string // '') );
             my $query_params = $query_part ? { split(/[&=]/, $query_part ) } : undef;
