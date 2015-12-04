@@ -40,6 +40,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
