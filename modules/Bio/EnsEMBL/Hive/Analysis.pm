@@ -43,6 +43,7 @@ use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::Utils::Collection;
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
