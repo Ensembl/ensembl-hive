@@ -308,7 +308,7 @@ sub dataflow_rules_by_branch {
 sub dataflow {
     my ( $self, $output_ids_for_this_rule, $emitting_job, $common_params, $df_rule ) = @_;
 
-    my $job_adaptor     = $emitting_job->adaptor() || 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor';
+    my $job_adaptor     = $self->adaptor->db->get_AnalysisJobAdaptor;
     my @output_job_ids  = ();
 
     push @$common_params, (
