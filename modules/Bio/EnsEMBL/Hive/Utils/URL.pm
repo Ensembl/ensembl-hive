@@ -83,6 +83,10 @@ sub parse {
             if($exception_from_OLD_format) {
                 warn "\nOLD URL parser thinks you are using the NEW URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
+                $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
+                $host = '127.0.0.1' if(($host//'') eq 'localhost');
+                my $unambig_url = ($driver//'') .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
+
                 $old_parse = {
                     'dbconn_part'   => $dbconn_part,
                     'driver'        => $driver,
@@ -93,9 +97,10 @@ sub parse {
                     'dbname'        => $dbname,
                     'conn_params'   => \%conn_params,
                     'query_params'  => $query_params,
+                    'unambig_url'   => $unambig_url,
                 };
             }
-        }
+        } # /if OLD format
     
         if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =
             $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
@@ -133,6 +138,10 @@ sub parse {
             if($exception_from_NEW_format) {
                 warn "\nNEW URL parser thinks you are using the OLD URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
+                $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
+                $host = '127.0.0.1' if(($host//'') eq 'localhost');
+                my $unambig_url = ($driver//'') .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
+
                 $new_parse = {
                     'dbconn_part'   => $dbconn_part,
                     'driver'        => $driver,
@@ -143,17 +152,11 @@ sub parse {
                     'dbname'        => $dbname,
                     'conn_params'   => \%conn_params,
                     'query_params'  => $query_params,
+                    'unambig_url'   => $unambig_url,
                 };
             }
+        } # /if NEW format
 
-        }
-
-        $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
-        $host = '127.0.0.1' if(($host//'') eq 'localhost');
-        my $unambig_url = ($driver//'') .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
-
-        $old_parse->{'unambig_url'} = $unambig_url if($old_parse);
-        $new_parse->{'unambig_url'} = $unambig_url if($new_parse);
     }
 
     if($new_parse and $old_parse) {
