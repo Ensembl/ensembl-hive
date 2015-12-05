@@ -90,7 +90,12 @@ sub parse_flow_into {
         if(!ref($cond_groups)) {    # treat a scalar as a single target_url:
             $cond_groups = [ WHEN( ELSE( $cond_groups )) ];
         } elsif(ref($cond_groups) eq 'HASH') {
-            $cond_groups = [ map { WHEN( ELSE( { $_ => $cond_groups->{$_} } )) } keys %$cond_groups ];
+            my @temp_cond_groups = ();
+            while(my ($target, $templates) = each %$cond_groups) {
+                $templates = [$templates] unless(ref($templates) eq 'ARRAY');
+                push @temp_cond_groups, map { WHEN( ELSE( { $target => $_ } )) } @$templates;
+            }
+            $cond_groups = \@temp_cond_groups;
         } elsif((ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0])) {
             if($cond_groups->[0] eq $cond_group_marker) { # one WHEN has to be put into an array:
                 $cond_groups = [ $cond_groups ];
