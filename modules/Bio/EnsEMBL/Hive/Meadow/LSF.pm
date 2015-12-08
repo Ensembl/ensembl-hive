@@ -193,7 +193,7 @@ sub submit_workers {
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
+    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_name}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args "$worker_cmd"};
 
     warn "LSF::submit_workers() running cmd:\n\t$cmd\n";
 
