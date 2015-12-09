@@ -400,7 +400,7 @@ sub _add_analysis_node {
             $input_id=~s/\>/&gt;/g;
             $input_id=~s/\</&lt;/g;
             $input_id=~s/\{|\}//g;
-            $analysis_label    .= qq{<tr><td colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
+            $analysis_label    .= qq{<tr><td align="left" colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
         }
 
         if($hit_limit) {
