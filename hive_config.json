@@ -45,6 +45,8 @@
             "Details"     : { "Font"   : "Helvetica" },
 
             "JobStatus"   : {
+                "Colour"        : "yellow",
+
                 "SEMAPHORED"    : { "Colour" : "grey"        },
                 "READY"         : { "Colour" : "green"       },
                 "INPROGRESS"    : { "Colour" : "yellow"      },
