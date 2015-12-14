@@ -101,7 +101,6 @@ sub parse_flow_into {
                 $cond_groups = [ $cond_groups ];
             } else {    # otherwise assume it is an array of target_urls:
                 $cond_groups = [ map { WHEN( ELSE( $_ )) } @$cond_groups ];
-                print "performed WHEN/ELSE substitution that resulted in ".scalar(@$cond_groups)." elements\n";
             }
         }
 
