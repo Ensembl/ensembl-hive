@@ -394,11 +394,10 @@ sub toString {
 sub print_diagram_node {
     my ($self, $ref_pipeline, $prefix, $seen_analyses) = @_;
 
-    if ($seen_analyses->{$self}) {
+    if($seen_analyses->{$self}++) {
         print "(".$self->relative_display_name($ref_pipeline).")\n";  # NB: the prefix of the label itself is done by the previous level
         return;
     }
-    $seen_analyses->{$self} = 1;
 
     print $self->relative_display_name($ref_pipeline)."\n";  # NB: the prefix of the label itself is done by the previous level
 
@@ -406,7 +405,12 @@ sub print_diagram_node {
 
     foreach my $i (0..scalar(@$groups)-1) {
 
-        my ($funnel_dfr, $fan_dfrs) = @{ $groups->[$i] };
+        my ($funnel_dfr, $fan_dfrs, $df_targets) = @{ $groups->[$i] };
+
+        my $choice = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
+        if($choice) {
+            die "Cannot produce UnicodeArt for conditional dataflow yet, sorry\n";
+        }
 
         my ($a_prefix, $b_prefix);
 
@@ -434,12 +438,20 @@ sub print_diagram_node {
         foreach my $j (0..scalar(@$fan_dfrs)-1) {
             my $fan_dfr     = $fan_dfrs->[$j];
             my $fan_branch  = $fan_dfr->branch_code;
-            my $template    = $fan_dfr->input_id_template;
+
+            my $fan_df_targets = $fan_dfr->get_my_targets;
+            my $fan_choice = (scalar(@$fan_df_targets)!=1) || defined($fan_df_targets->[0]->on_condition);
+            if($fan_choice) {
+                die "Cannot produce UnicodeArt for conditional dataflow yet, sorry\n";
+            }
+
+            my $template    = $fan_df_targets->[0]->input_id_template;
+            my $target      = $fan_df_targets->[0]->to_analysis;    # semaphored target is always supposed to be an analysis
+
             print $prefix.$b_prefix." │  ║\n";
             print $prefix.$b_prefix." │  ║#$fan_branch".($template ? " >> $template" : '')."\n";
             print $prefix.$b_prefix." │├─╚═> ";
 
-            my $target      = $fan_dfr->to_analysis;    # semaphored target is always supposed to be an analysis
             my $c_prefix    = ($j<scalar(@$fan_dfrs)-1) ? ' │  ║   ' : ' │      ';
             $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix.$c_prefix, $seen_analyses );
         }
@@ -449,7 +461,8 @@ sub print_diagram_node {
             print $prefix.(scalar(@$fan_dfrs) ? $b_prefix : '')." │#$funnel_branch\n";
             print $a_prefix;
 
-        my $target      = $funnel_dfr->to_analysis;
+        my $target      = $df_targets->[0]->to_analysis;
+
         if($target->can('print_diagram_node')) {
             $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix, $seen_analyses );
         } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
