@@ -40,7 +40,7 @@ use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
-    return [ 'accu_name', 'signature_template' ];
+    return [ 'accu_name', 'accu_address' ];
 }
 
 
@@ -54,13 +54,13 @@ sub accu_name {
 }
 
 
-sub signature_template {
+sub accu_address {
     my $self = shift @_;
 
     if(@_) {
-        $self->{'_signature_template'} = shift @_;
+        $self->{'_accu_address'} = shift @_;
     }
-    return $self->{'_signature_template'};
+    return $self->{'_accu_address'};
 }
 
 
@@ -70,13 +70,13 @@ sub url {
     my $my_dba = $self->adaptor && $self->adaptor->db;
     return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
         . '?accu_name=' . $self->accu_name
-        . ( $self->signature_template ? '&signature_template='.$self->signature_template : '');
+        . ( $self->accu_address ? '&accu_address='.$self->accu_address : '');
 }
 
 
 sub display_name {
     my ($self) = @_;
-    return $self->accu_name . $self->signature_template;
+    return $self->accu_name . $self->accu_address;
 }
 
 
@@ -86,14 +86,14 @@ sub dataflow {
     my $sending_job_id      = $emitting_job->dbID;
     my $receiving_job_id    = $emitting_job->semaphored_job_id || die "No semaphored job, cannot perform accumulated dataflow";
 
-    my $accu_name         = $self->accu_name;
-    my $signature_template  = $self->signature_template;
+    my $accu_name           = $self->accu_name;
+    my $accu_address        = $self->accu_address;
 
     my @rows = ();
 
     foreach my $output_id (@$output_ids) {
 
-        my $key_signature = $signature_template;
+        my $key_signature = $accu_address;
         $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
 
         push @rows, {
@@ -112,7 +112,7 @@ sub dataflow {
 sub toString {
     my $self = shift @_;
 
-    return 'Accumulator(' . $self->accu_name . '<--' . $self->signature_template . ')';
+    return 'Accumulator(' . $self->accu_name . '<--' . $self->accu_address . ')';
 }
 
 1;

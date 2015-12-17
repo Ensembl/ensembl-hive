@@ -156,7 +156,7 @@ sub pipeline_analyses {
             -language   => 'python3',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ '?accu_name=partial_product&signature_template={digit}' ],
+                1 => [ '?accu_name=partial_product&accu_address={digit}' ],
             },
         },
         

@@ -87,7 +87,7 @@ BEGIN {
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
 
-    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Accumulator', 'accu_name' => 'partial_product', 'signature_template' => '{digit}' },
+    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Accumulator', 'accu_name' => 'partial_product', 'accu_address' => '{digit}' },
                                             'query_params hash correct' );
 }
 
@@ -164,14 +164,14 @@ BEGIN {
 }
 
 {       # NEW style accu URL:
-    my $url = '?accu_name=intermediate_result&signature_template={digit}';
+    my $url = '?accu_name=intermediate_result&accu_address={digit}';
 
     my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
 
     ok($url_hash, "parser returned something for $url");
     isa_ok( $url_hash, 'HASH' );
 
-    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Accumulator', 'accu_name' => 'intermediate_result', 'signature_template' => '{digit}' }, 'query_params hash correct' );
+    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Accumulator', 'accu_name' => 'intermediate_result', 'accu_address' => '{digit}' }, 'query_params hash correct' );
 }
 
 {       # NEW style registry DB URL:

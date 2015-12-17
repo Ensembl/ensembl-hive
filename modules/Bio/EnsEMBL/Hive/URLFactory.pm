@@ -121,8 +121,8 @@ sub fetch {
 
             return Bio::EnsEMBL::Hive::Accumulator->new(
                     $dba ? (adaptor => $dba->get_AccumulatorAdaptor) : (),
-                    accu_name          => $tparam_name,
-                    signature_template => $tparam_value,
+                    accu_name       => $tparam_name,
+                    accu_address    => $tparam_value,
             );
 
         } else {
