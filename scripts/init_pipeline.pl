@@ -13,7 +13,9 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-
+use Getopt::ArgvFile; # Enable passing of long commandline options by file. 
+                      # Example: perl init_pipeline.pl B::E::H::P::Whaterver_conf  @my_file.conf 
+                      # See CPAN Getopt::ArgvFile for more info. 
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
