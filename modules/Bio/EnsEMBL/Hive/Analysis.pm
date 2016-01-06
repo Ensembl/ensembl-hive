@@ -412,59 +412,77 @@ sub print_diagram_node {
             die "Cannot produce UnicodeArt for conditional dataflow yet, sorry\n";
         }
 
-        my ($a_prefix, $b_prefix);
+        my $next_group_offset   = '';
+        my $this_funnel_offset  = '';
 
-        if($i < scalar(@$groups)-1) {   # there is more on the list:
-            $a_prefix = $prefix." └─▻ ";
-            $b_prefix = " │   ";
-        } elsif( $i ) {                 # the last one out of several:
-            $a_prefix = $prefix." └─▻ ";
-            $b_prefix = "     ";
-        } else {                        # the only one ("backbone"):
-            $a_prefix = $prefix." v\n".$prefix;
-            $b_prefix = '';
-        }
+        if(scalar(@$groups)>1) {    # if more than one group - fork to the right:
 
-        if(scalar(@$fan_dfrs)) {
-            $a_prefix = $prefix.$b_prefix." V\n".$prefix.$b_prefix;     # override funnel's arrow to always be vertical (and in CAPS)
+            $next_group_offset = ($i < scalar(@$groups)-1)
+                               ? ' │   '    # 'non-last group'
+                               : '     ';   # 'last group'
 
-            if(scalar(@$groups)>1) {        # if there is a fork (no single backbone), the semaphore group should also be offset
+            if(scalar(@$fan_dfrs)) {        # if no single backbone and semaphore, the semaphored group will be offset:
                 print $prefix." │\n";
-#               print $prefix." └────┬──┐\n";
-                print $prefix." ╘════╤══╗\n";
+                print $prefix." ╘════╤══╗\n";   # " └────┬──┐\n";
+                $this_funnel_offset = $next_group_offset;
             }
         }
 
-        foreach my $j (0..scalar(@$fan_dfrs)-1) {
+        foreach my $j (0..scalar(@$fan_dfrs)-1) {   # for each of the dependent fan rules, show them one by one:
             my $fan_dfr     = $fan_dfrs->[$j];
             my $fan_branch  = $fan_dfr->branch_code;
 
+            print $prefix.$next_group_offset." │  ║\n";
+            print $prefix.$next_group_offset." │  ║\n";
+            print $prefix.$next_group_offset." │  ║#$fan_branch\n";
+
             my $fan_df_targets = $fan_dfr->get_my_targets;
-            my $fan_choice = (scalar(@$fan_df_targets)!=1) || defined($fan_df_targets->[0]->on_condition);
-            if($fan_choice) {
-                die "Cannot produce UnicodeArt for conditional dataflow yet, sorry\n";
+
+            foreach my $k (0..scalar(@$fan_df_targets)-1) {   # for each of the dependent fan rules, show them one by one:
+                my $fan_target = $fan_df_targets->[$k];
+
+                print $prefix.$next_group_offset." │  ║\n";
+
+                if(my $fan_choice = (scalar(@$fan_df_targets)!=1) || defined($fan_target->on_condition)) {
+                    if(my $on_condition = $fan_target->on_condition) {
+                        print $prefix.$next_group_offset." │  ║ WHEN $on_condition\n";
+                    } else {
+                        print $prefix.$next_group_offset." │  ║ ELSE\n";
+                    }
+                }
+                print $prefix.$next_group_offset." │├─╚═> ";
+
+                my $next_fan_or_condition_offset = ($j<scalar(@$fan_dfrs)-1 or $k<scalar(@$fan_df_targets)-1) ? ' │  ║   ' : ' │      ';
+
+                if(my $template = $fan_target->input_id_template) {
+                    print "$template\n";
+                    print $prefix.$next_group_offset.$next_fan_or_condition_offset." │\n";
+                    print $prefix.$next_group_offset.$next_fan_or_condition_offset." V\n";
+                    print $prefix.$next_group_offset.$next_fan_or_condition_offset;
+                }
+
+                $fan_target->to_analysis->print_diagram_node($ref_pipeline, $prefix.$next_group_offset.$next_fan_or_condition_offset, $seen_analyses );
             }
-
-            my $template    = $fan_df_targets->[0]->input_id_template;
-            my $target      = $fan_df_targets->[0]->to_analysis;    # semaphored target is always supposed to be an analysis
-
-            print $prefix.$b_prefix." │  ║\n";
-            print $prefix.$b_prefix." │  ║#$fan_branch".($template ? " >> $template" : '')."\n";
-            print $prefix.$b_prefix." │├─╚═> ";
-
-            my $c_prefix    = ($j<scalar(@$fan_dfrs)-1) ? ' │  ║   ' : ' │      ';
-            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix.$c_prefix, $seen_analyses );
         }
 
         my $funnel_branch = $funnel_dfr->branch_code;
-            print $prefix.(scalar(@$fan_dfrs) ? $b_prefix : '')." │\n";
-            print $prefix.(scalar(@$fan_dfrs) ? $b_prefix : '')." │#$funnel_branch\n";
-            print $a_prefix;
+        my $template      = $df_targets->[0]->input_id_template;
+        my $target        = $df_targets->[0]->to_analysis;
 
-        my $target      = $df_targets->[0]->to_analysis;
+        my @this_funnel_arrow = (
+            " │\n",
+            " │#$funnel_branch".($template ? " >> $template" : '')."\n",
+                ( scalar(@$groups)==1 or scalar(@$fan_dfrs) )   # 'the only group' (backbone) of a semaphore ...
+                ? ( " V\n",                                     # ... make a vertical arrow
+                    ''      )
+                : ( ' └─▻ ' )                                   # otherwise fork to the right
+        );
+        foreach (@this_funnel_arrow) {
+             print $prefix.$this_funnel_offset.$_;
+        }
 
         if($target->can('print_diagram_node')) {
-            $target->print_diagram_node($ref_pipeline, $prefix.$b_prefix, $seen_analyses );
+            $target->print_diagram_node($ref_pipeline, $prefix.$next_group_offset, $seen_analyses );
         } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
             print '[[ '.$target->relative_display_name($ref_pipeline)." ]]\n";
         } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
