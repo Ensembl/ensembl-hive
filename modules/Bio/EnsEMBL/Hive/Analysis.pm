@@ -432,36 +432,36 @@ sub print_diagram_node {
             my $fan_dfr     = $fan_dfrs->[$j];
             my $fan_branch  = $fan_dfr->branch_code;
 
-            print $prefix.$next_group_offset." │  ║\n";
-            print $prefix.$next_group_offset." │  ║\n";
-            print $prefix.$next_group_offset." │  ║#$fan_branch\n";
+            print $prefix.$this_funnel_offset." │  ║\n";
+            print $prefix.$this_funnel_offset." │  ║\n";
+            print $prefix.$this_funnel_offset." │  ║#$fan_branch\n";
 
             my $fan_df_targets = $fan_dfr->get_my_targets;
 
             foreach my $k (0..scalar(@$fan_df_targets)-1) {   # for each of the dependent fan rules, show them one by one:
                 my $fan_target = $fan_df_targets->[$k];
 
-                print $prefix.$next_group_offset." │  ║\n";
+                print $prefix.$this_funnel_offset." │  ║\n";
 
                 if(my $fan_choice = (scalar(@$fan_df_targets)!=1) || defined($fan_target->on_condition)) {
                     if(my $on_condition = $fan_target->on_condition) {
-                        print $prefix.$next_group_offset." │  ║ WHEN $on_condition\n";
+                        print $prefix.$this_funnel_offset." │  ║ WHEN $on_condition\n";
                     } else {
-                        print $prefix.$next_group_offset." │  ║ ELSE\n";
+                        print $prefix.$this_funnel_offset." │  ║ ELSE\n";
                     }
                 }
-                print $prefix.$next_group_offset." │├─╚═> ";
+                print $prefix.$this_funnel_offset." │├─╚═> ";
 
                 my $next_fan_or_condition_offset = ($j<scalar(@$fan_dfrs)-1 or $k<scalar(@$fan_df_targets)-1) ? ' │  ║   ' : ' │      ';
 
                 if(my $template = $fan_target->input_id_template) {
                     print "$template\n";
-                    print $prefix.$next_group_offset.$next_fan_or_condition_offset." │\n";
-                    print $prefix.$next_group_offset.$next_fan_or_condition_offset." V\n";
-                    print $prefix.$next_group_offset.$next_fan_or_condition_offset;
+                    print $prefix.$this_funnel_offset.$next_fan_or_condition_offset." │\n";
+                    print $prefix.$this_funnel_offset.$next_fan_or_condition_offset." V\n";
+                    print $prefix.$this_funnel_offset.$next_fan_or_condition_offset;
                 }
 
-                $fan_target->to_analysis->print_diagram_node($ref_pipeline, $prefix.$next_group_offset.$next_fan_or_condition_offset, $seen_analyses );
+                $fan_target->to_analysis->print_diagram_node($ref_pipeline, $prefix.$this_funnel_offset.$next_fan_or_condition_offset, $seen_analyses );
             }
         }
 
@@ -471,7 +471,7 @@ sub print_diagram_node {
 
         my @this_funnel_arrow = (
             " │\n",
-            " │#$funnel_branch".($template ? " >> $template" : '')."\n",
+            " │#$funnel_branch\n",
                 ( scalar(@$groups)==1 or scalar(@$fan_dfrs) )   # 'the only group' (backbone) of a semaphore ...
                 ? ( " V\n",                                     # ... make a vertical arrow
                     ''      )
@@ -479,6 +479,12 @@ sub print_diagram_node {
         );
         foreach (@this_funnel_arrow) {
              print $prefix.$this_funnel_offset.$_;
+        }
+        if(my $template = $df_targets->[0]->input_id_template) {
+            print "$template\n";
+            print $prefix.$next_group_offset." │\n";
+            print $prefix.$next_group_offset." V\n";
+            print $prefix.$next_group_offset;
         }
 
         if($target->can('print_diagram_node')) {
