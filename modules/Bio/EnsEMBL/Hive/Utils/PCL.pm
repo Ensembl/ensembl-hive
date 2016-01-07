@@ -142,16 +142,17 @@ sub parse_flow_into {
                             'to_analysis_url'           => $heir_url,
                         );
 
-                        if($group_role eq 'funnel') {
-                            if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                                die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
-                            } else {
-                                $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
-                            }
-                        }
                     } # /for all templates
                 } # /for all heirs
             } # /for each condition and heir
+
+            if($group_role eq 'funnel') {
+                if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
+                    die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
+                } else {
+                    $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
+                }
+            }
         } # /foreach $cond_group
 
     } # /for all branch_tags
