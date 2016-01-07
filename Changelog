@@ -40,6 +40,7 @@ Developer tools:
 * An experimental "Unicode-art" flow diagram drawing code has been implemented (skip the -output parameter in generate_graph.pl to see)
 * eHive's DBAdaptor now has methods to get the list of eHive tables and views
 * standaloneJob test method: warnings can be assessed via a regular expression
+* Support for Slack WebHook integrations in beekeeper and a dedicated Runnable
 
 Under the hood:
 * HivePipeline object with its collections becomes the center of things, and TheApiary becomes the centralized way of accessing foreign objects

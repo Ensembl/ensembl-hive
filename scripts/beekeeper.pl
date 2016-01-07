@@ -15,6 +15,7 @@ BEGIN {
 use Getopt::Long;
 use File::Path 'make_path';
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
+use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Queen;
@@ -451,6 +452,9 @@ sub run_autonomously {
     }
 
     print "Beekeeper : stopped looping because ".( $reasons_to_exit || "the number of loops was limited by $max_loops and this limit expired\n");
+    if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
+        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $reasons_to_exit);
+    }
 
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
 }
