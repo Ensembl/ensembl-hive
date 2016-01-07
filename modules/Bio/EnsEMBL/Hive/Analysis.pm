@@ -407,11 +407,6 @@ sub print_diagram_node {
 
         my ($funnel_dfr, $fan_dfrs, $df_targets) = @{ $groups->[$i] };
 
-        my $choice = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
-        if($choice) {
-            die "Cannot produce UnicodeArt for conditional dataflow yet, sorry\n";
-        }
-
         my $next_group_offset   = '';
         my $this_funnel_offset  = '';
 
@@ -438,7 +433,7 @@ sub print_diagram_node {
 
             my $fan_df_targets = $fan_dfr->get_my_targets;
 
-            foreach my $k (0..scalar(@$fan_df_targets)-1) {   # for each of the dependent fan rules, show them one by one:
+            foreach my $k (0..scalar(@$fan_df_targets)-1) {   # for each fan's target
                 my $fan_target = $fan_df_targets->[$k];
 
                 print $prefix.$this_funnel_offset." │  ║\n";
@@ -450,7 +445,7 @@ sub print_diagram_node {
                         print $prefix.$this_funnel_offset." │  ║ ELSE\n";
                     }
                 }
-                print $prefix.$this_funnel_offset." │├─╚═> ";
+                print $prefix.$this_funnel_offset.' │├─╚═> ';
 
                 my $next_fan_or_condition_offset = ($j<scalar(@$fan_dfrs)-1 or $k<scalar(@$fan_df_targets)-1) ? ' │  ║   ' : ' │      ';
 
@@ -465,34 +460,48 @@ sub print_diagram_node {
             }
         }
 
-        my $funnel_branch = $funnel_dfr->branch_code;
-        my $template      = $df_targets->[0]->input_id_template;
-        my $target        = $df_targets->[0]->to_analysis;
+        my $funnel_branch   = $funnel_dfr->branch_code;
 
-        my @this_funnel_arrow = (
-            " │\n",
-            " │#$funnel_branch\n",
-                ( scalar(@$groups)==1 or scalar(@$fan_dfrs) )   # 'the only group' (backbone) of a semaphore ...
-                ? ( " V\n",                                     # ... make a vertical arrow
-                    ''      )
-                : ( ' └─▻ ' )                                   # otherwise fork to the right
-        );
-        foreach (@this_funnel_arrow) {
-             print $prefix.$this_funnel_offset.$_;
-        }
-        if(my $template = $df_targets->[0]->input_id_template) {
-            print "$template\n";
-            print $prefix.$next_group_offset." │\n";
-            print $prefix.$next_group_offset." V\n";
-            print $prefix.$next_group_offset;
-        }
+        print $prefix.$this_funnel_offset." │\n";
+        print $prefix.$this_funnel_offset." │\n";
+        print $prefix.$this_funnel_offset." │#$funnel_branch\n";
 
-        if($target->can('print_diagram_node')) {
-            $target->print_diagram_node($ref_pipeline, $prefix.$next_group_offset, $seen_analyses );
-        } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
-            print '[[ '.$target->relative_display_name($ref_pipeline)." ]]\n";
-        } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
-            print '<<-- '.$target->relative_display_name($ref_pipeline)."\n";
+        foreach my $k (0..scalar(@$df_targets)-1) {   # for each funnel's target
+            my $df_target = $df_targets->[$k];
+
+            print $prefix.$this_funnel_offset." │\n";
+
+            my $funnel_choice = (scalar(@$df_targets)!=1) || defined($df_target->on_condition);
+
+            if($funnel_choice) {
+                if(my $on_condition = $df_target->on_condition) {
+                    print $prefix.$this_funnel_offset." │ WHEN $on_condition\n";
+                } else {
+                    print $prefix.$this_funnel_offset." │ ELSE\n";
+                }
+            }
+
+            if( (scalar(@$groups)==1 or $this_funnel_offset) and !$funnel_choice ) {  # 'the only group' (backbone) or a semaphore funnel ...
+                print $prefix.$this_funnel_offset." V\n";       # ... make a vertical arrow
+                print $prefix.$this_funnel_offset;
+            } else {
+                print $prefix.$this_funnel_offset.' └─▻ ';      # otherwise fork to the right
+            }
+            if(my $template = $df_target->input_id_template) {
+                print "$template\n";
+                print $prefix.$next_group_offset." │\n";
+                print $prefix.$next_group_offset." V\n";
+                print $prefix.$next_group_offset;
+            }
+
+            my $target = $df_target->to_analysis;
+            if($target->can('print_diagram_node')) {
+                $target->print_diagram_node($ref_pipeline, $prefix.$next_group_offset, $seen_analyses );
+            } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
+                print '[[ '.$target->relative_display_name($ref_pipeline)." ]]\n";
+            } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
+                print '<<-- '.$target->relative_display_name($ref_pipeline)."\n";
+            }
         }
     }
 }
