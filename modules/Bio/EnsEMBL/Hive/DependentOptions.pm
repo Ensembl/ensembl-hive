@@ -62,6 +62,12 @@ sub load_cmdline_options {
     my $target      = shift @_ || {};
 
     local @ARGV = @ARGV;    # make this function reenterable by forbidding it to modify the original parameters
+
+    # Enable passing of long commandline options by file.
+    # Example: perl init_pipeline.pl B::E::H::P::Whaterver_conf  @my_file.conf
+    # See CPAN Getopt::ArgvFile for more info.
+    eval {require Getopt::ArgvFile; Getopt::ArgvFile::argvFile(); };
+
     GetOptions( $target,
         map { my $ref_type = ref($expected->{$_}); $_=~m{\!$} ? $_ : ($ref_type eq 'HASH') ? "$_=s%" : ($ref_type eq 'ARRAY') ? "$_=s@" : "$_=s" } keys %$expected
     );
