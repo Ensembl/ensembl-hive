@@ -60,6 +60,7 @@ sub load_cmdline_options {
     my $self        = shift @_;
     my $expected    = shift @_;
     my $target      = shift @_ || {};
+    my $check_extra = shift @_;
 
     local @ARGV = @ARGV;    # make this function reenterable by forbidding it to modify the original parameters
 
@@ -71,6 +72,10 @@ sub load_cmdline_options {
     GetOptions( $target,
         map { my $ref_type = ref($expected->{$_}); $_=~m{\!$} ? $_ : ($ref_type eq 'HASH') ? "$_=s%" : ($ref_type eq 'ARRAY') ? "$_=s@" : "$_=s" } keys %$expected
     );
+
+    if ($check_extra && scalar(@ARGV)) {
+        warn "These command-line arguments were not used: ", join(" ", @ARGV), "\n";
+    }
     return $target;
 }
 
@@ -225,7 +230,7 @@ sub process_options {
         # the first run of this method allows us to collect possibly_used_options
     my $rules = $self->default_options();
 
-    $self->load_cmdline_options( { %$definitely_used_options, %$possibly_used_options }, $rules );
+    $self->load_cmdline_options( { %$definitely_used_options, %$possibly_used_options }, $rules, "check_extra" );
 
     $self->root( $definitely_used_options );
 
