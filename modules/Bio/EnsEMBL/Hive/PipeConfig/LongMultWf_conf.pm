@@ -145,10 +145,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ ':////intermediate_result' ],
             },
-<<<<<<< HEAD
-=======
             -can_be_empty       => 1,
->>>>>>> version/1.9
         },
         
         {   -logic_name => 'add_together',
