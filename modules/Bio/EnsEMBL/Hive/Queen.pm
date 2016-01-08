@@ -230,6 +230,10 @@ sub specialize_worker {
             } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
                 die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
             }
+            $stats = $analysis_stats_adaptor->fetch_by_analysis_id($job->analysis_id);
+            if(($stats->status eq 'BLOCKED') and !$force) {
+                die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
+            }
 
             if(($job_status eq 'DONE') and $job->semaphored_job_id) {
                 warn "Increasing the semaphore count of the dependent job";
@@ -254,7 +258,7 @@ sub specialize_worker {
                 die "resource_class of analysis ".$analysis->logic_name." is incompatible with this Worker's resource_class";
         }
 
-        $stats = $analysis->stats;
+        $stats ||= $analysis->stats;
         $self->safe_synchronize_AnalysisStats($stats);
 
         unless($job_id or $force) {    # do we really need to run this analysis?
