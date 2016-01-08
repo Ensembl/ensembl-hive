@@ -407,20 +407,12 @@ sub print_diagram_node {
 
         my ($funnel_dfr, $fan_dfrs, $df_targets) = @{ $groups->[$i] };
 
-        my $next_group_offset   = '';
         my $this_funnel_offset  = '';
 
-        if(scalar(@$groups)>1) {    # if more than one group - fork to the right:
-
-            $next_group_offset = ($i < scalar(@$groups)-1)
-                               ? ' │   '    # 'non-last group'
-                               : '     ';   # 'last group'
-
-            if(scalar(@$fan_dfrs)) {        # if no single backbone and semaphore, the semaphored group will be offset:
-                print $prefix." │\n";
-                print $prefix." ╘════╤══╗\n";   # " └────┬──┐\n";
-                $this_funnel_offset = $next_group_offset;
-            }
+        if(scalar(@$groups)>1 and scalar(@$fan_dfrs)) {     # if more than one group (no single backbone) and semaphored, the semaphored group will be offset:
+            print $prefix." │\n";
+            print $prefix." ╘════╤══╗\n";   # " └────┬──┐\n";
+            $this_funnel_offset = ($i < scalar(@$groups)-1) ? ' │   ' : '     ';    # non-last vs last group
         }
 
         foreach my $j (0..scalar(@$fan_dfrs)-1) {   # for each of the dependent fan rules, show them one by one:
@@ -481,25 +473,25 @@ sub print_diagram_node {
                 }
             }
 
-            my $this_funnel_condition_offset = '';
+            my $next_funnel_or_condition_offset = '';
 
             if( (scalar(@$groups)==1 or $this_funnel_offset) and !$funnel_choice ) {  # 'the only group' (backbone) or a semaphore funnel ...
                 print $prefix.$this_funnel_offset." V\n";       # ... make a vertical arrow
                 print $prefix.$this_funnel_offset;
             } else {
                 print $prefix.$this_funnel_offset.' └─▻ ';      # otherwise fork to the right
-                $this_funnel_condition_offset = ($k<scalar(@$df_targets)-1) ? ' │  ' : '    ';
+                $next_funnel_or_condition_offset = ($i<scalar(@$groups)-1 or $k<scalar(@$df_targets)-1) ? ' │  ' : '    ';
             }
             if(my $template = $df_target->input_id_template) {
                 print "$template\n";
-                print $prefix.$next_group_offset.$this_funnel_condition_offset." │\n";
-                print $prefix.$next_group_offset.$this_funnel_condition_offset." V\n";
-                print $prefix.$next_group_offset.$this_funnel_condition_offset;
+                print $prefix.$this_funnel_offset.$next_funnel_or_condition_offset." │\n";
+                print $prefix.$this_funnel_offset.$next_funnel_or_condition_offset." V\n";
+                print $prefix.$this_funnel_offset.$next_funnel_or_condition_offset;
             }
 
             my $target = $df_target->to_analysis;
             if($target->can('print_diagram_node')) {
-                $target->print_diagram_node($ref_pipeline, $prefix.$next_group_offset.$this_funnel_condition_offset, $seen_analyses );
+                $target->print_diagram_node($ref_pipeline, $prefix.$this_funnel_offset.$next_funnel_or_condition_offset, $seen_analyses );
             } elsif($target->isa('Bio::EnsEMBL::Hive::NakedTable')) {
                 print '[[ '.$target->relative_display_name($ref_pipeline)." ]]\n";
             } elsif($target->isa('Bio::EnsEMBL::Hive::Accumulator')) {
