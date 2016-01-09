@@ -67,7 +67,8 @@ sub load_cmdline_options {
     # Enable passing of long commandline options by file.
     # Example: perl init_pipeline.pl B::E::H::P::Whaterver_conf  @my_file.conf
     # See CPAN Getopt::ArgvFile for more info.
-    eval {require Getopt::ArgvFile; Getopt::ArgvFile::argvFile(); };
+    my $getopt_argvfile_loaded = 0;
+    eval {require Getopt::ArgvFile; Getopt::ArgvFile::argvFile(); $getopt_argvfile_loaded = 1; };
 
     GetOptions( $target,
         map { my $ref_type = ref($expected->{$_}); $_=~m{\!$} ? $_ : ($ref_type eq 'HASH') ? "$_=s%" : ($ref_type eq 'ARRAY') ? "$_=s@" : "$_=s" } keys %$expected
@@ -75,7 +76,11 @@ sub load_cmdline_options {
 
     if ($check_extra && scalar(@ARGV)) {
         warn "These command-line arguments were not used: ", join(" ", @ARGV), "\n";
+        if (!$getopt_argvfile_loaded && scalar(grep {$_ =~ /^@/} @ARGV)) {
+            die "Getopt:ArgvFile is not installed on your system. Arguments starting with '\@' could not be processed.\n";
+        }
     }
+
     return $target;
 }
 
