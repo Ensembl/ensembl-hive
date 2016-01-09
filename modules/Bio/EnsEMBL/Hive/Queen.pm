@@ -230,12 +230,15 @@ sub specialize_worker {
             die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
         }
 
+        $analysis = $job->analysis;
+        if(($analysis->stats->status eq 'BLOCKED') and !$force) {
+            die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
+        }
+
         if(($job_status eq 'DONE') and $job->semaphored_job_id) {
             warn "Increasing the semaphore count of the dependent job";
             $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
         }
-
-        $analysis = $job->analysis;
 
     } else {
 

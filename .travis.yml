@@ -35,6 +35,8 @@ notifications:
   email:
     on_success: always
     on_failure: always
+  slack:
+    secure: "fbxQ+yuUAKKI10MUmNeCUbLqmVoOHUhGdM2KetqT5DmSn2rHxb099040Ira2tBYmUEPb5QvIMfPZ1xgS27he4xsZIpvOLsd1Or9OOL8XqyeTLcZ/IG4rpky0ehltVXs3s4ClM+YXwCHIoR2FwVghLVn6znmRkYm3TreSDtEUC2o="
 
 # Get the matrix to only build coveralls support when on 5.10
 matrix:
