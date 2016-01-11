@@ -10,7 +10,7 @@ requires 'JSON';
 on 'test' => sub {
 	requires 'Test::Exception';
 	requires 'Test::More';
-}
+};
 
 recommends 'Getopt::ArgvFile';
 
