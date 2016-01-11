@@ -372,7 +372,8 @@ sub _subst_one_hashpair {
 
         $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;
 
-        $value = eval "return $expression";     # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+        $value = eval "return ($expression)";   # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+                                                #       and parentheses are needed because return binds stronger than 'and' and 'or'
     }
 
     warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
