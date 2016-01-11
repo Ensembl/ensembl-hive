@@ -369,7 +369,8 @@ sub _subst_one_hashpair {
         $expression=~s{(?:\$(\w+)|#(\w+)#)}{stringify($self->_param_possibly_overridden($1 // $2, $overriding_hash))}eg;    # substitute-by-value (bulky, but supports old syntax)
 #        $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;                         # substitute-by-call (no longer supports old syntax)
 
-        $value = eval "return $expression";     # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+        $value = eval "return ($expression)";   # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+                                                #       and parentheses are needed because return binds stronger than 'and' and 'or'
 # warn "SOH: #$inside_hashes# becomes $expression and is then evaluated into ".stringify($value)."\n";
     }
 
