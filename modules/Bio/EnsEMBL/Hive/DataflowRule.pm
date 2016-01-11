@@ -130,7 +130,7 @@ sub toString {
             ' --#',
             $self->branch_code,
             '--> [ ',
-            join(', ', map { $_->toString($short) } sort { $b->on_condition <=> $a->on_condition } (@{$self->get_my_targets()})),
+            join(', ', map { $_->toString($short) } sort { $b->on_condition cmp $a->on_condition } (@{$self->get_my_targets()})),
             ' ]',
             ($self->funnel_dataflow_rule ? ' ---|| ('.$self->funnel_dataflow_rule->toString(1).' )'  : ''),
     );
