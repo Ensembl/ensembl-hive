@@ -84,28 +84,38 @@ sub parse_flow_into {
             }
         }
 
-        my $cond_groups = $flow_into->{$branch_tag};
+        my $pre_cond_groups = $flow_into->{$branch_tag};
 
-            # force the old format into the new one, making sure we get separate condition groups:
-        if(!ref($cond_groups)) {    # treat a scalar as a single target_url:
-            $cond_groups = [ WHEN( ELSE( $cond_groups )) ];
-        } elsif(ref($cond_groups) eq 'HASH') {
-            my @temp_cond_groups = ();
-            while(my ($target, $templates) = each %$cond_groups) {
-                $templates = [$templates] unless(ref($templates) eq 'ARRAY');
-                push @temp_cond_groups, map { WHEN( ELSE( { $target => $_ } )) } @$templates;
-            }
-            $cond_groups = \@temp_cond_groups;
-        } elsif((ref($cond_groups) eq 'ARRAY') and !ref($cond_groups->[0])) {
-            if($cond_groups->[0] eq $cond_group_marker) { # one WHEN has to be put into an array:
-                $cond_groups = [ $cond_groups ];
-            } else {    # otherwise assume it is an array of target_urls:
-                $cond_groups = [ map { WHEN( ELSE( $_ )) } @$cond_groups ];
+            # [first pass] force pre_cond_groups into a list:
+        if( !ref($pre_cond_groups)                  # a scalar (a single target)
+         or (ref($pre_cond_groups) eq 'HASH')       # a hash (a combination of targets with templates)
+         or ((ref($pre_cond_groups) eq 'ARRAY') and !ref($pre_cond_groups->[0]) and ($pre_cond_groups->[0] eq $cond_group_marker)) # a single WHEN group
+        ) {
+            $pre_cond_groups = [ $pre_cond_groups ];
+        }
+
+        my @uniform_cond_groups = ();
+
+            # [second pass] rework them into a true list of WHEN-groups:
+        foreach my $pre_group (@$pre_cond_groups) {
+            if( !ref($pre_group) ) {                                            # wrap the scalar:
+                push @uniform_cond_groups, WHEN( ELSE( $pre_group ));
+            } elsif( ref($pre_group) eq 'HASH') {                               # break up the hash and wrap the parts:
+                while(my ($target, $templates) = each %$pre_group) {
+                    $templates = [$templates] unless(ref($templates) eq 'ARRAY');
+                    push @uniform_cond_groups, map { WHEN( ELSE( { $target => $_ } )) } @$templates;
+                }
+            } else {                                                            # keep the WHEN groups unchanged
+                push @uniform_cond_groups, $pre_group;
             }
         }
 
-        foreach my $cond_group (@$cond_groups) {
+        foreach my $cond_group (@uniform_cond_groups) {
 
+            unless(ref($cond_group) eq 'ARRAY') {
+                use Data::Dumper;
+                die "Expecting ARRAYref, but got ".Dumper($cond_group)." instead.";
+            }
                 # chop the condition group marker off:
             my $this_cond_group_marker = shift @$cond_group;
             die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
