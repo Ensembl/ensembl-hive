@@ -46,6 +46,9 @@ CREATE TABLE dataflow_target (
     UNIQUE  KEY (source_dataflow_rule_id, on_condition, input_id_template(512), to_analysis_url)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
+-- adding a foreign key between targets and rules:
+ALTER TABLE dataflow_target         ADD FOREIGN KEY (source_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
+
 -- transferring the data:
 INSERT INTO dataflow_target (source_dataflow_rule_id, on_condition, input_id_template, to_analysis_url)
     SELECT dataflow_rule_id, NULL, input_id_template, to_analysis_url FROM dataflow_rule;
