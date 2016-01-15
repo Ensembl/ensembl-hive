@@ -138,10 +138,11 @@ sub _as_debug {
     $text .= "}\n";
 
         # GraphViz.pm thinks 'record' is the only shape that allows HTML-like labels,
-        # but newer versions of dot allow more freedom, so we patch dot input after generation:
+        # but newer versions of dot allow more freedom.
+        # Since we wanted to stick with the older GraphViz, we initially ask for shape="record",
+        # but put the desired shape into the comment and patch dot input after generation:
         #
-    $text=~s/^(\s+table_.*)"record"/$1"tab"/mg;
-    $text=~s/^(\s+(?:foreign_)?analysis_.*)"record"/$1"Mrecord"/mg;
+    $text=~s/\bcomment="new_shape:(\w+)",(.*shape=)"record"/$2"$1"/mg;
 
         # uncomment the following line to see the final input to dot
 #    print $text;

@@ -55,6 +55,8 @@
             },
 
             "AnalysisStatus"   : {
+                "Shape"       : "Mrecord",
+
                 "EMPTY"       : { "Colour" : "white"       },
                 "BLOCKED"     : { "Colour" : "grey"        },
                 "LOADING"     : { "Colour" : "green"       },
@@ -67,6 +69,8 @@
             },
 
             "Table" : {
+                "Shape"         : "tab",
+                "Style"         : "filled",
                 "Colour"        : "orange",
                 "HeaderColour"  : "orangered",
                 "Font"          : "Courier",
@@ -82,7 +86,7 @@
             },
 
             "Switch"  : {
-                "Shape"         : "diamond",
+                "Shape"         : "egg",
                 "Style"         : "filled",
                 "Colour"        : "blueviolet",
                 "Font"          : "Courier",

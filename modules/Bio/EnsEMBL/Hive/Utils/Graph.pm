@@ -346,7 +346,8 @@ sub _add_analysis_node {
     my ($breakout_label, $total_job_count, $count_hash)   = $analysis_stats->job_count_breakout();
     my $analysis_status                                   = $analysis_stats->status;
     my $analysis_status_colour                            = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Colour');
-    my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
+    my $analysis_shape                                    = $self->config_get('Node', 'AnalysisStatus', 'Shape');
+    my $analysis_style                                    = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
     my $hive_pipeline                                     = $self->pipeline;
@@ -411,7 +412,8 @@ sub _add_analysis_node {
   
     $self->graph->add_node( $this_analysis_node_name,
         shape       => 'record',
-        style       => $style,
+        comment     => qq{new_shape:$analysis_shape},
+        style       => $analysis_style,
         fillcolor   => $analysis_status_colour,
         fontname    => $node_fontname,
         label       => $analysis_label,
@@ -546,15 +548,28 @@ sub _twopart_arrow {
 
        $df_targets        ||= $df_rule->get_my_targets;
     my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
+    #my $label               = scalar(@$df_targets)==1 ? 'Filter' : 'Switch';
+    my $tablabel            = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr>};
+
+    foreach my $i (0..scalar(@$df_targets)-1) {
+        my $df_target = $df_targets->[$i];
+        my $condition = $df_target->on_condition;
+        $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
+        $condition=~s{<}{&lt;}g if(defined($condition));
+        $condition=~s{>}{&gt;}g if(defined($condition));
+        $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
+    }
+    $tablabel .= '</table>>';
 
     $graph->add_node( $midpoint_name,   # midpoint itself
         $choice ? (
+            shape       => 'record',
+            comment     => qq{new_shape:$switch_shape},
             style       => $switch_style,
-            shape       => $switch_shape,
             fillcolor   => $switch_colour,
             fontname    => $switch_font,
             fontcolor   => $switch_fontcolour,
-            label       => scalar(@$df_targets)==1 ? 'Filter' : 'Switch',
+            label       => $tablabel,
         ) : (
             shape       => 'point',
             fixedsize   => 1,
@@ -575,10 +590,11 @@ sub _twopart_arrow {
         ),
     );
 
-    foreach my $df_target (@$df_targets) {
+    foreach my $i (0..scalar(@$df_targets)-1) {
+        my $df_target = $df_targets->[$i];
         my $condition = $df_target->on_condition;
         $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
-        $self->_last_part_arrow($from_analysis, $midpoint_name, $condition ? "IF $condition" : $choice ? 'ELSE' : '', $df_target, $choice ? [] : [ tailport => 's' ]);
+        $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_target, $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
     }
 
     return $midpoint_name;
@@ -632,6 +648,8 @@ sub _add_dataflow_rules {
 sub _add_table_node {
     my ($self, $naked_table) = @_;
 
+    my $table_shape             = $self->config_get('Node', 'Table', 'Shape');
+    my $table_style             = $self->config_get('Node', 'Table', 'Style');
     my $table_colour            = $self->config_get('Node', 'Table', 'Colour');
     my $table_header_colour     = $self->config_get('Node', 'Table', 'HeaderColour');
     my $table_fontcolour        = $self->config_get('Node', 'Table', 'FontColour');
@@ -670,7 +688,8 @@ sub _add_table_node {
 
     $self->graph()->add_node( $this_table_node_name,
         shape       => 'record',
-        style       => 'filled',
+        comment     => qq{new_shape:$table_shape},
+        style       => $table_style,
         fillcolor   => $table_colour,
         fontname    => $table_fontname,
         fontcolor   => $table_fontcolour,
