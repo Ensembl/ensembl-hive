@@ -122,6 +122,7 @@ sub param_init {
     }
 
     $self->{'_unsubstituted_param_hash'} = \%unsubstituted_param_hash;
+    $self->{'_param_hash'} = {};
 }
 
 
