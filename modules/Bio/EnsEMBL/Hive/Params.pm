@@ -142,7 +142,14 @@ sub _param_silent {
         or die "ParamError: calling param() without arguments\n";
 
     if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
+        my $new_val = shift @_;
+        if (@_ and (shift)) {
+            # If there is an extra parameter after the value, it means that
+            # the value is unsubstituted
+            $self->{'_unsubstituted_param_hash'}{$param_name} = $new_val;
+        } else {
+            $self->{'_param_hash'}{$param_name} = $new_val;
+        }
     } elsif( !exists( $self->{'_param_hash'}{$param_name} )
        and    exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
         my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
@@ -228,6 +235,8 @@ sub param_is_defined {
     Arg [1]    : string $param_name
 
     Arg [2]    : (optional) $param_value
+
+    Arg [3]    : (optional) $value_needs_substitution (in case you want to define a parameter with '#other_param#' and let the system compute its true value later)
 
     Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see param_init() )
 
