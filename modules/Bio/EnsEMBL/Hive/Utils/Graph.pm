@@ -100,7 +100,7 @@ sub graph {
 
     if(! exists $self->{'_graph'}) {
         my $padding  = $self->config_get('Pad') || 0;
-        $self->{'_graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
+        $self->{'_graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', concentrate => 'true', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
     }
     return $self->{'_graph'};
 }
