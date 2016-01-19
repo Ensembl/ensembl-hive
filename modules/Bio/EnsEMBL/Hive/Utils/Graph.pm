@@ -212,7 +212,7 @@ sub build {
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
         foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list ) {
-            if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
+            if(ref($analysis->{'_funnel_dfr'})) {    # this should only affect analyses that have a funnel
                 my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
                 $self->graph->add_edge( $from => $to,
