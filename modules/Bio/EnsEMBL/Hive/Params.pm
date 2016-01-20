@@ -150,11 +150,24 @@ sub _param_silent {
         } else {
             $self->{'_param_hash'}{$param_name} = $new_val;
         }
-    } elsif( !exists( $self->{'_param_hash'}{$param_name} )
-       and    exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
-        my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
-
-        $self->{'_param_hash'}{$param_name} = $self->param_substitute( $unsubstituted );
+    } elsif( !exists( $self->{'_param_hash'}{$param_name}) ) {
+        if (exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
+            my $ini_used_missing_param = $self->{'_used_missing_params'};
+            delete $self->{'_used_missing_params'};
+            my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
+            my $substituted = $self->param_substitute( $unsubstituted );
+            if (my $failed_dep = $self->{'_used_missing_params'}) {
+                delete $self->{'_used_missing_params'};
+                delete $self->{'_substitution_in_progress'};
+                die "ParamError: the evaluation of '$param_name' requires '$failed_dep' which is missing\n";
+            }
+            $self->{'_param_hash'}{$param_name} = $substituted;
+            $self->{'_used_missing_params'} = $ini_used_missing_param if $ini_used_missing_param;
+        } else {
+            $self->{'_used_missing_params'} = $param_name;
+        }
+    } else {
+        # The parameter has already been substituted
     }
 
     return exists( $self->{'_param_hash'}{$param_name} )
@@ -383,6 +396,7 @@ sub _subst_one_hashpair {
 
         if ($@) {
             delete $self->{'_substitution_in_progress'}{$inside_hashes};    # to allow re-entering the sub
+            die $@ if $@ =~ /^ParamError/;                                  # re-raise the underlying Param error
             die "ParamError: Cannot evaluate the expression: '$inside_hashes' ==> '$expression'\n$@";
         }
     }
