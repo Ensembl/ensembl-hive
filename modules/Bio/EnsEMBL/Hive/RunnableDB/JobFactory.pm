@@ -242,6 +242,8 @@ sub _get_rows_from_open {
         push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];
     }
     close FILE;
+    my $exit = $? >> 8;
+    die "Could not read from '$input_file_or_pipe'. Received the error $exit\n" if $exit;
 
     my $column_names_from_data = $parse_header ? shift @rows : 0;
 
