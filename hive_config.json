@@ -109,6 +109,7 @@
         "DisplayStats"          : "barchart",
         "DisplayJobs"           : 0,
         "DisplayData"           : 0,
+        "DisplayConditionLength": 64,
         "DisplayInputIDTemplate": 1,
 
         "DisplayDetails"        : 1,

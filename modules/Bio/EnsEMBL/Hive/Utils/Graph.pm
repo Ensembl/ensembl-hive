@@ -541,6 +541,7 @@ sub _twopart_arrow {
     my $switch_colour       = $self->config_get('Node', 'Switch', 'Colour');
     my $switch_font         = $self->config_get('Node', 'Switch', 'Font');
     my $switch_fontcolour   = $self->config_get('Node', 'Switch', 'FontColour');
+    my $display_cond_length = $self->config_get('DisplayConditionLength');
 
     my $from_analysis       = $df_rule->from_analysis;
     my $from_node_name      = $self->_analysis_node_name( $from_analysis );
@@ -554,9 +555,16 @@ sub _twopart_arrow {
     foreach my $i (0..scalar(@$df_targets)-1) {
         my $df_target = $df_targets->[$i];
         my $condition = $df_target->on_condition;
-        $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
-        $condition=~s{<}{&lt;}g if(defined($condition));
-        $condition=~s{>}{&gt;}g if(defined($condition));
+        if($display_cond_length) {
+            if(defined($condition)) {
+                $condition=~s{"}{&quot;}g;  # should fix a string display bug for pre-2.16 GraphViz'es
+                $condition=~s{<}{&lt;}g;
+                $condition=~s{>}{&gt;}g;
+                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
+            }
+        } else {
+            $condition &&= 'condition_'.$i;
+        }
         $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
     }
     $tablabel .= '</table>>';
@@ -591,10 +599,7 @@ sub _twopart_arrow {
     );
 
     foreach my $i (0..scalar(@$df_targets)-1) {
-        my $df_target = $df_targets->[$i];
-        my $condition = $df_target->on_condition;
-        $condition=~s{"}{&quot;}g if(defined($condition));  # should fix a string display bug for pre-2.16 GraphViz'es
-        $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_target, $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
+        $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_targets->[$i], $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
     }
 
     return $midpoint_name;
