@@ -419,14 +419,14 @@ sub add_objects_from_config {
             die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
         }
 
-        my $resource_class = $pipeline->add_new_or_update( 'ResourceClass',
+        my ($resource_class) = $pipeline->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
             'name'  => $rc_name,
         );
 
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-            my $resource_description = $pipeline->add_new_or_update( 'ResourceDescription',
+            my ($resource_description) = $pipeline->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
                 'resource_class'        => $resource_class,
                 'meadow_type'           => $meadow_type,
                 'submission_cmd_args'   => $resource_param_list->[0],
@@ -483,7 +483,7 @@ sub add_objects_from_config {
             $parameters_hash ||= {};    # in case nothing was given
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
-            $analysis = $pipeline->add_new_or_update( 'Analysis',
+            ($analysis) = $pipeline->add_new_or_update( 'Analysis',   # NB: add_new_or_update returns a list
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'language'              => $language,
@@ -498,7 +498,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            $stats = $pipeline->add_new_or_update( 'AnalysisStats',
+            ($stats) = $pipeline->add_new_or_update( 'AnalysisStats',   # NB: add_new_or_update returns a list
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
@@ -546,7 +546,7 @@ sub add_objects_from_config {
                 my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                     or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
             }
-            my $c_rule = $pipeline->add_new_or_update( 'AnalysisCtrlRule',
+            my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
                     'condition_analysis_url'    => $condition_url,
                     'ctrled_analysis'           => $analysis,
             );

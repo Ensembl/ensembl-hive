@@ -43,7 +43,7 @@ sub standaloneJob {
 
     my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new();
 
-    my $dummy_analysis = $hive_pipeline->add_new_or_update( 'Analysis',
+    my ($dummy_analysis) = $hive_pipeline->add_new_or_update( 'Analysis',   # NB: add_new_or_update returns a list
         'logic_name'    => 'Standalone_Dummy_Analysis',     # looks nicer when printing out DFRs
         'module'        => ref($runnable_object),
         'dbID'          => -1,

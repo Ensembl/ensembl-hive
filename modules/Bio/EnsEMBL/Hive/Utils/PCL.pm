@@ -120,12 +120,6 @@ sub parse_flow_into {
             my $this_cond_group_marker = shift @$cond_group;
             die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
 
-            my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
-                'from_analysis'             => $from_analysis,
-                'branch_code'               => $branch_name_or_code,
-                'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-            );
-
             while(@$cond_group) {
                 my $on_condition    = shift @$cond_group;
                 my $heirs           = shift @$cond_group;
@@ -145,8 +139,8 @@ sub parse_flow_into {
 
                     foreach my $input_id_template (@$input_id_template_list) {
 
-                        my $df_target = $pipeline->add_new_or_update( 'DataflowTarget',
-                            'source_dataflow_rule'      => $df_rule,
+                        my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget',   # NB: add_new_or_update returns a list
+                            'source_dataflow_rule'      => undef,           # NB: had to create the "suspended targets" to break the dependence circle
                             'on_condition'              => $on_condition,
                             'input_id_template'         => $input_id_template,
                             'to_analysis_url'           => $heir_url,
@@ -155,6 +149,26 @@ sub parse_flow_into {
                     } # /for all templates
                 } # /for all heirs
             } # /for each condition and heir
+
+            my $suspended_targets = $pipeline->collection_of('DataflowTarget')->find_all_by( 'source_dataflow_rule', undef );
+
+            my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule',   # NB: add_new_or_update returns a list
+                'from_analysis'             => $from_analysis,
+                'branch_code'               => $branch_name_or_code,
+                'funnel_dataflow_rule'      => $funnel_dataflow_rule,
+                'unitargets'                => Bio::EnsEMBL::Hive::DataflowRule->unitargets($suspended_targets),
+#                'unitargets'                => $suspended_targets,
+            );
+
+            if( $df_rule_is_new ) {
+                foreach my $suspended_target (@$suspended_targets) {
+                    $suspended_target->source_dataflow_rule( $df_rule );
+                }
+            } else {
+                foreach my $suspended_target (@$suspended_targets) {
+                    $pipeline->collection_of('DataflowTarget')->forget( $suspended_target );
+                }
+            }
 
             if($group_role eq 'funnel') {
                 if($group_tag_to_funnel_dataflow_rule{$group_tag}) {

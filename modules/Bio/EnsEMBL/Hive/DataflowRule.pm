@@ -57,7 +57,7 @@ use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {
-    return undef;   # unfortunately, this object is no longer unique
+    return [ 'from_analysis', 'branch_code', 'funnel_dataflow_rule', 'unitargets' ];
 } 
 
 
@@ -104,6 +104,21 @@ sub get_my_targets_grouped_by_condition {
     }
 
     return [ sort { ($b->[0]//'') cmp ($a->[0]//'') } values %my_targets_by_condition ];
+}
+
+
+sub unitargets {
+    my $self    = shift @_;
+    my $targets = shift @_ || $self->get_my_targets;
+
+    if(ref($targets)) {
+        my $unitargets = join( ';', map { ($_->on_condition//'').':'.($_->input_id_template//'').':'.$_->to_analysis_url }
+                                        sort { ($a->on_condition//'') cmp ($b->on_condition//'')
+                                            or ($a->input_id_template//'') cmp ($b->input_id_template//'') }
+                                            @$targets);
+
+        return $unitargets;
+    }
 }
 
 

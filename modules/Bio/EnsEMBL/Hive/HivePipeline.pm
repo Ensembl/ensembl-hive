@@ -77,7 +77,7 @@ sub find_by_url_query {
 
         unless($accu = $self->collection_of('Accumulator')->find_one_by( 'struct_name', $tparam_name, 'signature_template', $tparam_value )) {
 
-            $accu = $self->add_new_or_update( 'Accumulator',
+            ($accu) = $self->add_new_or_update( 'Accumulator',  # NB: add_new_or_update returns a list
                 $self->hive_dba ? (adaptor => $self->hive_dba->get_AccumulatorAdaptor) : (),
                 struct_name        => $tparam_name,
                 signature_template => $tparam_value,
@@ -95,7 +95,7 @@ sub find_by_url_query {
 
         unless($naked_table = $self->collection_of('NakedTable')->find_one_by( 'table_name', $table_name )) {
 
-            $naked_table = $self->add_new_or_update( 'NakedTable',
+            ($naked_table) = $self->add_new_or_update( 'NakedTable',    # NB: add_new_or_update returns a list
                 $self->hive_dba ? (adaptor => $self->hive_dba->get_NakedTableAdaptor( 'table_name' => $table_name ) ) : (),
                 table_name => $table_name,
                 $tparam_value ? (insertion_method => $tparam_value) : (),
@@ -170,6 +170,7 @@ sub add_new_or_update {
     my $class = 'Bio::EnsEMBL::Hive::'.$type;
 
     my $object;
+    my $newly_made = 0;
 
     if( my $unikey_keys = $class->unikey() ) {
         my %other_pairs = @_;
@@ -197,6 +198,7 @@ sub add_new_or_update {
 
     unless( $object ) {
         $object = $class->can('new') ? $class->new( @_ ) : { @_ };
+        $newly_made = 1;
 
         $self->collection_of( $type )->add( $object );
 
@@ -206,7 +208,7 @@ sub add_new_or_update {
         warn "Created a new $found_display\n";
     }
 
-    return $object;
+    return ($object, $newly_made);
 }
 
 

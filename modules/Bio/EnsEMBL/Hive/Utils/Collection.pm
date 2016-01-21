@@ -86,6 +86,20 @@ sub add_once {
 }
 
 
+sub forget {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    my $listref = $self->listref;
+
+    for(my $i=scalar(@$listref)-1;$i>=0;$i--) {
+        if($listref->[$i] == $candidate) {
+            splice @$listref, $i, 1;
+        }
+    }
+}
+
+
 sub find_one_by {
     my ($self, %method_to_filter_value) = @_;
 
