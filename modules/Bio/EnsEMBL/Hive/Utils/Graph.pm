@@ -557,11 +557,12 @@ sub _twopart_arrow {
         my $condition = $df_target->on_condition;
         if($display_cond_length) {
             if(defined($condition)) {
-                $condition=~s{&}{&amp;}g;   # Since we are in HTML context now, ampersands should be escaped (first thing)
+                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
+
+                $condition=~s{&}{&amp;}g;   # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
                 $condition=~s{"}{&quot;}g;  # should fix a string display bug for pre-2.16 GraphViz'es
                 $condition=~s{<}{&lt;}g;
                 $condition=~s{>}{&gt;}g;
-                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
             }
         } else {
             $condition &&= 'condition_'.$i;
