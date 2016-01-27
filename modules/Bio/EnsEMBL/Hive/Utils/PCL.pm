@@ -34,7 +34,10 @@ use strict;
 use warnings;
 
 use Exporter 'import';
-our @EXPORT = qw(WHEN ELSE);
+our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
+
 
 our $cond_group_marker   = 'CONDitionGRoup';
 
@@ -47,6 +50,13 @@ sub ELSE ($) {
     my ($foo) = @_;
 
     return (undef, $foo);
+}
+
+
+sub INPUT_PLUS {
+    my $template = shift @_ // '';
+
+    return '+'.(ref($template) ? stringify($template) : $template);
 }
 
 

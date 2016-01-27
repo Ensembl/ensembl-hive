@@ -61,7 +61,7 @@ use strict;
 use warnings;
 
 use Exporter 'import';
-our @EXPORT = qw(WHEN ELSE);
+our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
 
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
