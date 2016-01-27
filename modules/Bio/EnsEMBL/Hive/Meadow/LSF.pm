@@ -224,7 +224,8 @@ sub parse_report_source_line {
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                // Parse yearless + year bacct response
+                if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+)(?:\s*\d*):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
                     $when_died      = _yearless_2_datetime($1);
                     $cause_of_death = $3 && $status_2_cod{$3};
                     $exit_status = $2 . ($3 ? "/$3" : '');
