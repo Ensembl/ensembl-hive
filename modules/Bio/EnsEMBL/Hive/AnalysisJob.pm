@@ -336,11 +336,13 @@ sub dataflow_output_id {
 
                 foreach my $df_target (@$df_targets) {
 
+                    my $input_plus; # INPUT_PLUS (using capitalization here to simplify grepping)
+
                         # parameter substitution into input_id_template is rule-specific
                     my $output_ids_for_this_rule;
                     if(my $template_string = $df_target->input_id_template()) {
 
-                        my $input_plus  = $template_string=~s/^\+(.*)$/$1/;   # removing the '+' sign if it was present, and recording the fact
+                        $input_plus  = $template_string=~s/^\+(.*)$/$1/;   # removing the '+' sign if it was present, and recording the fact
 
                         if($template_string) {
                             my $template_hash = destringify($template_string);
@@ -348,16 +350,11 @@ sub dataflow_output_id {
                         } else {
                             $output_ids_for_this_rule = $filtered_output_ids;
                         }
-
-                        if($input_plus) {   # INPUT_PLUS (using capitalization here to simplify grepping)
-                            my $input_hash = destringify($self->input_id);
-                            $output_ids_for_this_rule = [ map { { %$input_hash, %$_} } @$output_ids_for_this_rule ];
-                        }
                     } else {
                         $output_ids_for_this_rule = $filtered_output_ids;
                     }
 
-                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $hive_use_param_stack, $df_rule );
+                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $hive_use_param_stack || $input_plus, $df_rule ); # INPUT_PLUS (using capitalization here to simplify grepping)
                     push @output_job_ids, @$stored_listref;
 
                 } # /foreach my $df_target
