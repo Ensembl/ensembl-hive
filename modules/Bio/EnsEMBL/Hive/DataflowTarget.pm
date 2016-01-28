@@ -80,6 +80,22 @@ sub input_id_template {
 }
 
 
+=head2 extend_param_stack
+
+    Function: getter/setter method. The boolean value defines whether the newly created jobs will inherit both the parameters and the accu of the prev_job.
+
+=cut
+
+sub extend_param_stack {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_extend_param_stack'} = shift @_;
+    }
+    return $self->{'_extend_param_stack'};
+}
+
+
 =head2 to_analysis_url
 
     Arg[1]  : (optional) string $url

@@ -218,6 +218,7 @@ CREATE TABLE dataflow_rule (
 @column source_dataflow_rule_id foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)
 @column on_condition            param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE
 @column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
+@column extend_param_stack      the boolean value defines whether the newly created jobs will inherit both the parameters and the accu of the prev_job
 @column to_analysis_url         the URL of the dataflow target object (Analysis/Table/Accu)
 */
 
@@ -225,6 +226,7 @@ CREATE TABLE dataflow_target (
     source_dataflow_rule_id INTEGER     NOT NULL,
     on_condition            VARCHAR(255)          DEFAULT NULL,
     input_id_template       MEDIUMTEXT            DEFAULT NULL,
+    extend_param_stack      SMALLINT     NOT NULL DEFAULT 0,
     to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',       -- to be renamed 'target_url'
 
     UNIQUE  KEY (source_dataflow_rule_id, on_condition, input_id_template(512), to_analysis_url)
