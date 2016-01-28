@@ -241,7 +241,7 @@ sub load_parameters {
 
         push @params_precedence, $self->analysis->parameters if($self->analysis);
 
-        if( $self->hive_pipeline->hive_use_param_stack ) {
+        if($self->param_id_stack or $self->accu_id_stack) {
             my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
             my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
             my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
