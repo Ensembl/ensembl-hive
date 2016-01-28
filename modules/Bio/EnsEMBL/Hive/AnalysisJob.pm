@@ -281,23 +281,7 @@ sub dataflow_output_id {
     my ($self, $output_ids, $branch_name_or_code) = @_;
 
     my $input_id                = $self->input_id();
-    my $param_id_stack          = $self->param_id_stack();
-    my $accu_id_stack           = $self->accu_id_stack();
     my $hive_use_param_stack    = $self->hive_pipeline->hive_use_param_stack;
-
-    if($hive_use_param_stack) {
-        if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
-            $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$self->dbID();
-        }
-        if(scalar(keys %{$self->accu_hash()})) {    # add the parent to the accu_id_stack if it had "own" accumulator
-            $accu_id_stack = ($accu_id_stack ? $accu_id_stack.',' : '').$self->dbID();
-        }
-    }
-
-    my @common_job_params = (
-        'param_id_stack'    => $param_id_stack,
-        'accu_id_stack'     => $accu_id_stack,
-    );
 
     $output_ids  ||= [ $hive_use_param_stack ? {} : $input_id ];            # by default replicate the parameters of the parent in the child
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
@@ -373,7 +357,7 @@ sub dataflow_output_id {
                         $output_ids_for_this_rule = $filtered_output_ids;
                     }
 
-                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, \@common_job_params, $df_rule );
+                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $hive_use_param_stack, $df_rule );
                     push @output_job_ids, @$stored_listref;
 
                 } # /foreach my $df_target
