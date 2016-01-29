@@ -83,9 +83,9 @@ sub parse {
             if($exception_from_OLD_format) {
                 warn "\nOLD URL parser thinks you are using the NEW URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
-                $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
-                $host = '127.0.0.1' if(($host//'') eq 'localhost');
-                my $unambig_url = ($driver//'') .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
+                my $unambig_port    = $port // { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
+                my $unambig_host    = ($host//'') eq 'localhost' ? '127.0.0.1' : ($host//'');
+                my $unambig_url     = ($driver//'') .'://'. ($user ? $user.'@' : '') . $unambig_host . ( $unambig_port ? ':'.$unambig_port : '') .'/'. ($dbname//'');
 
                 $old_parse = {
                     'dbconn_part'   => $dbconn_part,
@@ -138,9 +138,9 @@ sub parse {
             if($exception_from_NEW_format) {
                 warn "\nNEW URL parser thinks you are using the OLD URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
-                $port ||= { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
-                $host = '127.0.0.1' if(($host//'') eq 'localhost');
-                my $unambig_url = ($driver//'') .'://'. ($user ? $user.'@' : '') . ($host//'') . ( $port ? ':'.$port : '') .'/'. ($dbname//'');
+                my $unambig_port    = $port // { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
+                my $unambig_host    = ($host//'') eq 'localhost' ? '127.0.0.1' : ($host//'');
+                my $unambig_url     = ($driver//'') .'://'. ($user ? $user.'@' : '') . $unambig_host . ( $unambig_port ? ':'.$unambig_port : '') .'/'. ($dbname//'');
 
                 $new_parse = {
                     'dbconn_part'   => $dbconn_part,
