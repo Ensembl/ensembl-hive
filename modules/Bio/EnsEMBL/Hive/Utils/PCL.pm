@@ -150,7 +150,7 @@ sub parse_flow_into {
                     foreach my $input_id_template (@$input_id_template_list) {
 
                         my $template_string = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template);
-                        my $extend_param_stack = $template_string=~s/^\+(.*)$/$1/ ? 1 : 0;
+                        my $extend_param_stack = ($template_string && $template_string=~s/^\+(.*)$/$1/) ? 1 : 0;
 
                         my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget',   # NB: add_new_or_update returns a list
                             'source_dataflow_rule'      => undef,           # NB: had to create the "suspended targets" to break the dependence circle
