@@ -170,18 +170,23 @@ sub kill_worker {
 }
 
 
-sub _yearless_2_datetime {      # a private subroutine that recovers missing year from a date and transforms it into SQL's datetime for storage
-    my $wd_yearless = shift @_;
+sub _convert_to_datetime {      # a private subroutine that can recover missing year from an incomplete date and then transforms it into SQL's datetime for storage
+    my ($weekday, $yearless, $real_year) = @_;
 
-    my ($wd, $yearless) = split(' ', $wd_yearless, 2);
-    my $curr_year = Time::Piece->new->year();
+    if($real_year) {
+        my $datetime = Time::Piece->strptime("$yearless $real_year", '%b %d %T %Y');
+        return $datetime->date.' '.$datetime->hms;
+    } else {
+        my $curr_year = Time::Piece->new->year();
 
-    foreach my $year ($curr_year, $curr_year-1) {
-        my $datetime = Time::Piece->strptime("$yearless $year", '%b %d %T %Y');
-        if($datetime->wdayname eq $wd) {
-            return $datetime->date.' '.$datetime->hms;
+        foreach my $candidate_year ($curr_year, $curr_year-1) {
+            my $datetime = Time::Piece->strptime("$yearless $candidate_year", '%b %d %T %Y');
+            if($datetime->wdayname eq $weekday) {
+                return $datetime->date.' '.$datetime->hms;
+            }
         }
     }
+
     return; # could not guess the year
 }
 
@@ -224,10 +229,10 @@ sub parse_report_source_line {
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
-                    $when_died      = _yearless_2_datetime($1);
-                    $cause_of_death = $3 && $status_2_cod{$3};
-                    $exit_status = $2 . ($3 ? "/$3" : '');
+                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                    $when_died      = _convert_to_datetime($1, $2, $3);
+                    $cause_of_death = $5 && $status_2_cod{$5};
+                    $exit_status = $4 . ($5 ? "/$5" : '');
                 }
                 elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
                     $exception_status = $1;
