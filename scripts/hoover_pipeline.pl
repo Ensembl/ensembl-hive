@@ -68,6 +68,24 @@ sub main {
 
     my $dbc = $hive_dba->dbc();
     $dbc->do( $sql );
+
+    # Remove the roles that are not attached to any jobs
+    my $sql_roles = q{
+    DELETE role
+      FROM role LEFT JOIN job USING (role_id)
+     WHERE job.job_id IS NULL
+    };
+    $dbc->do( $sql_roles );
+
+    # Remove the workers that are not attached to any roles, but only the
+    # ones that should actually have a role (e.g. have been deleted by the
+    # above statement).
+    my $sql_workers = q{
+    DELETE worker
+      FROM worker LEFT JOIN role USING (worker_id)
+     WHERE role.role_id IS NULL AND work_done > 0
+    };
+    $dbc->do( $sql_workers );
 }
 
 main();
