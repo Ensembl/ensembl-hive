@@ -23,7 +23,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $source_line, $username, $help);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $source_line, $username, $meadow_type, $help);
 
     GetOptions(
                 # connect to the database:
@@ -35,6 +35,7 @@ sub main {
 
             'username=s'            => \$username,      # say "-user all" if the pipeline was run by several people
             'source_line=s'         => \$source_line,
+            'meadow_type=s'         => \$meadow_type,
             'h|help'                => \$help,
     );
 
@@ -61,7 +62,7 @@ sub main {
 
     if( $source_line ) {
 
-        my $meadow = $valley->get_available_meadow_list()->[0];
+        my $meadow = $valley->available_meadow_hash->{$meadow_type || ''} || $valley->get_available_meadow_list()->[0];
         warn "Taking the resource_usage data from the source ( $source_line ), assuming Meadow ".$meadow->signature."\n";
 
         if(my $report_entries = $meadow->parse_report_source_line( $source_line ) ) {
@@ -121,7 +122,7 @@ __DATA__
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
         # Provide your own command to fetch and parse the worker_resource_usage data from:
-    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |"
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |" -meadow_type LSF
 
 =head1 OPTIONS
 
@@ -129,6 +130,7 @@ __DATA__
     -url <url string>       : url defining where hive database is located
     -username <username>    : if it wasn't you who ran the pipeline, the name of that user can be provided
     -source <filename>      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
+    -meadow_type <type>     : only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
 
 =head1 LICENSE
 
