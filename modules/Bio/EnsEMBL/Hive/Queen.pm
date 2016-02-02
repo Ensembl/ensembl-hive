@@ -426,12 +426,9 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             if($this_meadow->can('find_out_causes')) {
                 die "Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n";
 
-            } elsif($this_meadow->can('get_report_entries_for_process_ids')) {
-                $report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker );
+            } elsif ($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
-            } else {
-                warn "GarbageCollector:\t$meadow_type meadow does not support post-mortem examination\n";
             }
 
             warn "GarbageCollector:\tReleasing the jobs\n";

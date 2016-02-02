@@ -38,6 +38,13 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
 
+=head2 new
+
+    Title   :  new (constructor)
+    Function:  Instantiates a new Meadow object
+
+=cut
+
 sub new {
     my ($class, $config) = @_;
 
@@ -49,6 +56,17 @@ sub new {
     return $self;
 }
 
+
+=head2 cached_name
+
+    Title   :  cached_name
+    Function:  Wrapper around L<name()> that caches its return value.
+               This is because (1) it can be expensive to get the name
+               (e.g. calling an external command), and (2) the name of a
+               Meadow is not expected to change through the life of the
+               agent.
+
+=cut
 
 sub cached_name {
     my ($self) = @_;
@@ -66,7 +84,18 @@ sub cached_name {
 }
 
 
-sub type { # should return 'LOCAL' or 'LSF'
+=head2 type
+
+    Title   :  type
+    Function:  The "type" of a Meadow is basically its job management
+               system. eHive comes with two Meadows: Platform LSF (type
+               "LSF"), and a default fork()-based (type "LOCAL"). Other
+               meadows can be implemented provided that they follow the
+               right interface.
+
+=cut
+
+sub type {
     my $class = shift @_;
 
     $class = ref($class) if(ref($class));
@@ -75,14 +104,31 @@ sub type { # should return 'LOCAL' or 'LSF'
 }
 
 
+=head2 signature
+
+    Title   :  signature
+    Function:  The "signature" of a Meadow is its unique identifier across
+               the Valley.
+
+=cut
+
 sub signature {
     my $self = shift @_;
 
     return $self->type.'/'.$self->cached_name;
 }
 
+=head2 pipeline_name
 
-sub pipeline_name { # if set, provides a filter for job-related queries
+    Title   :  pipeline_name
+    Function:  Getter/setter for the name of the current pipeline.
+               This method is used by other Meadow methods such as
+               L<job_name_prefix()>.
+
+=cut
+
+
+sub pipeline_name {
     my $self = shift @_;
 
     if(@_) { # new value is being set (which can be undef)
@@ -92,12 +138,29 @@ sub pipeline_name { # if set, provides a filter for job-related queries
 }
 
 
+=head2 job_name_prefix
+
+    Title   :  job_name_prefix
+    Function:  Tells how the agents (workers) should be generally named. It
+               is used to name new agents, and to find our own agents.
+
+=cut
+
 sub job_name_prefix {
     my $self = shift @_;
 
     return ($self->pipeline_name() ? $self->pipeline_name().'-' : '') . 'Hive-';
 }
 
+
+=head2 job_array_common_name
+
+    Title   :  job_array_common_name
+    Function:  More specific version of L<job_name_prefix()> that returns
+               the actual name that agents should have at a specific
+               beekeeper loop.
+
+=cut
 
 sub job_array_common_name {
     my ($self, $rc_name, $iteration) = @_;
@@ -106,12 +169,109 @@ sub job_array_common_name {
 }
 
 
-sub responsible_for_worker {
+=head2 responsible_for_worker
+
+    Title   :  responsible_for_worker
+    Function:  Tells whether the given worker lives in the current Meadow.
+
+=cut
+
+sub responsible_for_worker {    ## UNUSED
     my ($self, $worker) = @_;
 
     return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->cached_name);
 }
 
+
+##
+## The methods below must be reimplemented in a sub-class. See Meadow/LOCAL and Meadow/LSF
+##
+
+=head2 name
+
+    Title   :  name
+    Function:  Returns the name of the Meadow (which excludes the Meadow type)
+
+=cut
+
+sub name {
+    my ($self) = @_;
+
+    die "Please use a derived method";
+}
+
+
+=head2 get_current_worker_process_id
+
+    Title   :  get_current_worker_process_id
+    Function:  Called by a worker to find its process_id. At any point in
+               time, the triple (meadow_type, meadow_name, process_id)
+               should be unique
+
+=cut
+
+sub get_current_worker_process_id {
+    my ($self) = @_;
+
+    die "Please use a derived method";
+}
+
+
+=head2 count_pending_workers_by_rc_name
+
+    Title   :  count_pending_workers_by_rc_name
+    Function:  Called by the scheduler to decide how many more workers to
+               submit for each resource-class.
+
+=cut
+
+sub count_pending_workers_by_rc_name {
+    my ($self) = @_;
+
+    die "Please use a derived method";
+}
+
+
+=head2 count_running_workers
+
+    Title   :  count_running_workers
+    Function:  Called by the scheduler to decide the number of additional
+               workers that can be submitted (within the defined
+               capacities).
+
+=cut
+
+sub count_running_workers {
+    my ($self, $meadow_users_of_interest) = @_;
+
+    die "Please use a derived method";
+}
+
+
+=head2 status_of_all_our_workers
+
+    Title   :  status_of_all_our_workers
+    Function:  Returns a hashref that maps workers' process_id to their status.
+               Statuses are mainly free-text strings. Only "UNKWN" is a special
+               status that beekeeper can understand.
+               Typical statuses are "RUN", "PEND", "SSUSP", "UNKWN"
+
+=cut
+
+sub status_of_all_our_workers { # returns a hashref
+    my ($self, $meadow_users_of_interest) = @_;
+
+    die "Please use a derived method";
+}
+
+
+=head2 check_worker_is_alive_and_mine
+
+    Title   :  check_worker_is_alive_and_mine
+    Function:  Tells whether the given worker lives in the current Meadow
+               and belongs to the current user.
+
+=cut
 
 sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
@@ -120,15 +280,40 @@ sub check_worker_is_alive_and_mine {
 }
 
 
+=head2 kill_worker
+
+    Title   :  kill_worker
+    Function:  Kill a worker.
+
+=cut
+
 sub kill_worker {
-    my ($self, $worker) = @_;
+    my ($self, $worker, $fast) = @_;
 
     die "Please use a derived method";
 }
 
 
+=head2 parse_report_source_line
+
+    Title   :  parse_report_source_line
+    Function:  Opens and parses a file / command-line to return the
+               resource-usage of some workers. Should return a hashref
+               where process_id is the key to a hashref composed of:
+                 when_died
+                 pending_sec
+                 exception_status
+                 cause_of_death
+                 lifespan_sec
+                 mem_megs
+                 cpu_sec
+                 exit_status
+                 swap_megs
+
+=cut
+
 sub parse_report_source_line {
-    my $self = shift @_;
+    my ($self, $bacct_source_line) = @_;
 
     warn "\t".ref($self)." does not support resource usage logs\n";
 
@@ -136,12 +321,51 @@ sub parse_report_source_line {
 }
 
 
-sub get_report_entries_for_time_interval {
-    my $self = shift @_;
+=head2 get_report_entries_for_process_ids
+
+    Title   :  get_report_entries_for_process_ids
+    Function:  A higher-level method that gets process_ids as input and
+               returns a structure like parse_report_source_line.
+
+=cut
+
+sub get_report_entries_for_process_ids {
+    my ($self, @process_ids) = @_;
 
     warn "\t".ref($self)." does not support resource usage logs\n";
 
     return;
+}
+
+
+=head2 get_report_entries_for_time_interval
+
+    Title   :  get_report_entries_for_time_interval
+    Function:  A higher-level method that gets a time interval as input and
+               returns a structure like parse_report_source_line.
+
+=cut
+
+sub get_report_entries_for_time_interval {
+    my ($self, $from_time, $to_time, $username) = @_;
+
+    warn "\t".ref($self)." does not support resource usage logs\n";
+
+    return;
+}
+
+
+=head2 submit_workers
+
+    Title   :  submit_workers
+    Function:  Submit $required_worker_count workers with the command $worker_cmd
+
+=cut
+
+sub submit_workers {
+    my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
+
+    die "Please use a derived method";
 }
 
 1;
