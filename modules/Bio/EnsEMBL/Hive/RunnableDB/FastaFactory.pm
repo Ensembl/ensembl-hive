@@ -148,13 +148,9 @@ sub write_output {
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
-    if ($self->param('hash_directories')) {
-        my $dir_tree = dir_revhash($chunk_number);
-        if ($dir_tree ne '') {
-            mkpath($dir_tree);
-            $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
-        }
-    }
+
+    # No need to check param('hash_directories') because even in this mode
+    # the first file is in the required directory
     my $chunk_seqio  = $input_seqio->new(-file => '>'.$chunk_name);
     
     while (my $seq_object = $input_seqio->next_seq) {
@@ -179,10 +175,10 @@ sub write_output {
             $chunk_number++;
             $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
             if ($self->param('hash_directories')) {
-                my $dir_tree = dir_revhash($chunk_number);
-                if ($dir_tree ne '') {
-                    mkpath($dir_tree);
-                    $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
+                my $hash_dir = dir_revhash($chunk_number);
+                if ($hash_dir ne '') {
+                    mkpath($hash_dir);
+                    $chunk_name = File::Spec->catfile($hash_dir, $chunk_name);
                 }
             }
             $chunk_seqio    = $input_seqio->new(-file => '>'.$chunk_name);
