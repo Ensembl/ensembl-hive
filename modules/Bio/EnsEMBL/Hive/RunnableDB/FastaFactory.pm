@@ -21,6 +21,7 @@
         - the files are created in the current directory.
         - the Runnable does not split the individual sequences, it only groups them in a way that none of the output files will
           be longer than param('max_chunk_length').
+        - Thanks to BioPerl's versatility, the Runnable can in fact read many formats. Tune param('input_format') to do so.
 
     The following parameters are supported:
 
@@ -33,6 +34,8 @@
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
 
         param('hash_directories');  # Boolean (default to 0): should the output files be put in different ("hashed") directories
+
+        param('input_format');      # The format of the input file (defaults to "fasta")
 
 =head1 LICENSE
 
@@ -78,8 +81,9 @@ sub param_defaults {
     return {
         'max_chunk_length'  => 100000,
         'output_prefix'     => 'my_chunk_',
-        'output_suffix'     => '.fasta',
+        'output_suffix'     => '.#input_format#',
         'hash_directories'  => 0,
+        'input_format'      => 'fasta',
     };
 }
 
@@ -100,7 +104,7 @@ sub fetch_input {
     my $input_seqio;
     if($inputfile=~/\.(?:gz|Z)$/) {
         open(my $in_fh, '-|', "gunzip -c $inputfile");
-        $input_seqio = Bio::SeqIO->new(-fh => $in_fh, -format => 'fasta');
+        $input_seqio = Bio::SeqIO->new(-fh => $in_fh, -format => $self->param_required('input_format'));
         $self->param('input_fh', $in_fh);
     } else {
         $input_seqio = Bio::SeqIO->new(-file => $inputfile);
