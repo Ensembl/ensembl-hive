@@ -134,6 +134,7 @@ sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental bac
         } or do {
             if( ($@ =~ /Could not connect to database.+?failed: Too many connections/s)                             # problem on server side (configured with not enough connections)
              or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(99\)/s)     # problem on client side (cooling down period after a disconnect)
+             or ($@ =~ /Could not connect to database.+?failed: Lost connection to MySQL server at 'reading authorization packet', system error: 0/s)     # problem on server side (server too busy ?)
             ) {
 
                 warn "Possibly transient problem conecting to the database (attempt #$attempt). Will try again in $sleep_sec sec";
