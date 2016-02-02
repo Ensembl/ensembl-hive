@@ -124,8 +124,8 @@ my $expected_properties = {
     'test2_2.fa' => [ 1313 ],
     'test2_3.fa' => [ 1475 ],
 
-    'test3_1.fa' => [ 1975 ],
-    'test3_2.fa' => [ 1475 ],
+    'inside/test3_1.fa' => [ 1975 ],
+    'inside/test3_2.fa' => [ 1475 ],
 
     'test4_1.fa' => [ 402 ],
     'test4_2.fa' => [ 386 ],
@@ -153,6 +153,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
         'max_chunk_length'  => 1000, ## smaller than two combined sequences
         'output_prefix'     => './test3_',
         'output_suffix'     => '.fa',
+        'output_dir'        => 'inside',
     },
     [
         [
@@ -161,7 +162,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
                 'chunk_number' => 1,
                 'chunk_length' => 1920,
                 'chunk_size' => 2,
-                'chunk_name' => './test3_1.fa'
+                'chunk_name' => 'inside/test3_1.fa'
             },
             2
         ],
@@ -171,7 +172,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
                 'chunk_number' => 2,
                 'chunk_length' => 1440,
                 'chunk_size' => 1,
-                'chunk_name' => './test3_2.fa'
+                'chunk_name' => 'inside/test3_2.fa'
             },
             2
         ],
@@ -181,7 +182,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
 $expected_filename = 'test3_1.fa';
 ok(-e $expected_filename, 'output file exists');
 
-@all_files = glob('test3_*.fa');
+@all_files = glob('inside/test3_*.fa');
 is(@all_files, 2, 'correct number of output files - test 3');
 # diag "@all_files";
 
@@ -215,6 +216,27 @@ is(@all_files, 10, 'correct number of output files - test 4');
 
 foreach my $file(@all_files) {
     my $exp_size = $expected_properties->{$file}[0];
+    is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
+}
+
+# And now output_dir with hash_directories
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
+        'inputfile'         => $new_inputfile,
+        'max_chunk_length'  => 300, ## such that some files will be in sub-directories
+        'output_prefix'     => 'test4_',
+        'output_suffix'     => '.fa',
+        'output_dir'        => 'in4',
+        'hash_directories'  => 1,
+});
+
+@all_files = (glob('in4/test4_*.fa'), glob('in4/0/test4_*.fa'));
+is(@all_files, 10, 'correct number of output files - test 4');
+# diag "@all_files";
+
+foreach my $file (@all_files) {
+    my $clean_filename = $file;
+    $clean_filename =~ s/in4\///;
+    my $exp_size = $expected_properties->{$clean_filename}[0];
     is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
 }
 

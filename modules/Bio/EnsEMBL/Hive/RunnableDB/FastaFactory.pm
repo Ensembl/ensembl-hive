@@ -37,6 +37,8 @@
 
         param('input_format');      # The format of the input file (defaults to "fasta")
 
+        param('output_dir');        # Where to create the chunks (defaults to the current directory)
+
 =head1 LICENSE
 
     Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -86,6 +88,7 @@ sub param_defaults {
         'output_suffix'     => '.#input_format#',
         'hash_directories'  => 0,
         'input_format'      => 'fasta',
+        'output_dir'        => '',
     };
 }
 
@@ -143,6 +146,7 @@ sub write_output {
     my $max_chunk_length    = $self->param('max_chunk_length');
     my $output_prefix       = $self->param('output_prefix');
     my $output_suffix       = $self->param('output_suffix');
+    my $output_dir          = $self->param('output_dir');
 
     my $chunk_number = 1;   # counts the chunks
     my $chunk_length = 0;   # total length of the current chunk
@@ -151,6 +155,10 @@ sub write_output {
 
     # No need to check param('hash_directories') because even in this mode
     # the first file is in the required directory
+    if ($output_dir) {
+        mkpath($output_dir);
+        $chunk_name = File::Spec->catfile($output_dir, $chunk_name);
+    }
     my $chunk_seqio  = $input_seqio->new(-file => '>'.$chunk_name);
     
     while (my $seq_object = $input_seqio->next_seq) {
@@ -174,12 +182,21 @@ sub write_output {
             $chunk_size     = 0;
             $chunk_number++;
             $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
+
+            my @partial_dirs;
+            if ((defined $output_dir) and ($output_dir ne '')) {
+                push @partial_dirs, $output_dir;
+            }
             if ($self->param('hash_directories')) {
                 my $hash_dir = dir_revhash($chunk_number);
                 if ($hash_dir ne '') {
-                    mkpath($hash_dir);
-                    $chunk_name = File::Spec->catfile($hash_dir, $chunk_name);
+                    push @partial_dirs, $hash_dir;
                 }
+            }
+            my $dir_tree = File::Spec->catdir(@partial_dirs);
+            if ($dir_tree ne '') {
+                mkpath($dir_tree);
+                $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
             }
             $chunk_seqio    = $input_seqio->new(-file => '>'.$chunk_name);
         }
