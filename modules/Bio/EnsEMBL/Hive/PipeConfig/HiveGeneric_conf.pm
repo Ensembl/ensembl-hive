@@ -440,7 +440,7 @@ sub add_objects_from_config {
     warn "Done.\n\n";
 
 
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
+    my $amh = Bio::EnsEMBL::Hive::Valley->new()->available_meadow_hash();
 
     my %seen_logic_name = ();
 
@@ -478,7 +478,7 @@ sub add_objects_from_config {
             my $resource_class = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name)
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
-            if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
+            if ($meadow_type and not exists $amh->{$meadow_type}) {
                 warn "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
             }
 
