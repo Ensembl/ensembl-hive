@@ -112,9 +112,6 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
 );
 
 
-$expected_filename = 'test2_1.fa';
-ok(-e $expected_filename, 'output file exists');
-
 @all_files = glob('test2_*.fa');
 is(@all_files, 3, 'correct number of output files - test 2');
 # diag "@all_files";
@@ -179,9 +176,6 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
     ],
 );
 
-$expected_filename = 'test3_1.fa';
-ok(-e $expected_filename, 'output file exists');
-
 @all_files = glob('inside/test3_*.fa');
 is(@all_files, 2, 'correct number of output files - test 3');
 # diag "@all_files";
@@ -206,9 +200,6 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory', {
         'output_suffix'     => '.fa',
         'hash_directories'  => 1,
 });
-
-$expected_filename = 'test4_1.fa';
-ok(-e $expected_filename, 'output file exists');
 
 @all_files = (glob('test4_*.fa'), glob('0/test4_*.fa'));
 is(@all_files, 10, 'correct number of output files - test 4');
