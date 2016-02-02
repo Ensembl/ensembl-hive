@@ -219,4 +219,42 @@ foreach my $file(@all_files) {
 }
 
 
+# Try the compressed mode
+my $compressed_inputfile = "comp_input_fasta.fa.gz";
+system("gzip < $inputfile > $compressed_inputfile");
+
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
+    {
+        'inputfile'         => $compressed_inputfile,
+        'max_chunk_length'  => 20000, ## big enough for all sequences
+        'output_prefix'     => './test5_',
+        'output_suffix'     => '.fa',
+    },
+    [
+        [
+            'DATAFLOW',
+            {
+                'chunk_number' => 1,
+                'chunk_length' => 3360,
+                'chunk_size' => 3,
+                'chunk_name' => './test5_1.fa'
+            },
+            2
+        ]
+    ],
+);
+
+##
+## do some checks
+##
+$expected_filename = 'test5_1.fa';
+ok(-e $expected_filename, 'output file exists');
+
+is((stat($expected_filename))[7], (stat($inputfile))[7], 'file size of input == output');
+
+@all_files = glob('test5_*.fa');
+is(@all_files, 1, 'exactly one output file - test 5 (like 1)');
+
+
 done_testing();

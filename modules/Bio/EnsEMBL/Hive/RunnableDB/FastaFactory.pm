@@ -97,10 +97,15 @@ sub fetch_input {
     my $inputfile   = $self->param_required('inputfile');
     die "Cannot read '$inputfile'" unless(-r $inputfile);
 
+    my $input_seqio;
     if($inputfile=~/\.(?:gz|Z)$/) {
-        $inputfile = "gunzip -c $inputfile |";
+        open(my $in_fh, '-|', "gunzip -c $inputfile");
+        $input_seqio = Bio::SeqIO->new(-fh => $in_fh, -format => 'fasta');
+        $self->param('input_fh', $in_fh);
+    } else {
+        $input_seqio = Bio::SeqIO->new(-file => $inputfile);
     }
-    my $input_seqio = Bio::SeqIO->new(-file => $inputfile)  || die "Could not open or parse '$inputfile', please investigate";
+    die "Could not open or parse '$inputfile', please investigate" unless $input_seqio;
 
     $self->param('input_seqio', $input_seqio);
 }
@@ -190,6 +195,18 @@ sub write_output {
     } else {
         unlink $chunk_name unless (stat($chunk_name))[7];
     }
+}
+
+
+=head2 post_cleanup
+
+    Description : Close the file handle open in fetch_input()
+
+=cut
+
+sub post_cleanup {
+    my $self = shift;
+    close( $self->param('input_fh') ) if $self->param('input_fh');
 }
 
 1;
