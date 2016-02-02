@@ -181,7 +181,7 @@ sub life_cycle {
         my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
         if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
             $job->transient_error(0);
-            die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
+            die "The group of semaphored jobs is incomplete ! Some fan jobs (coming from dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") are missing a job on their funnel. Check the order of your dataflow_output_id() calls.";
         }
 
         $job->incomplete(0);
