@@ -149,7 +149,7 @@ sub write_output {
             $chunk_name = $dir_tree.'/'.$chunk_name;
         }
     }
-    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+    my $chunk_seqio  = $input_seqio->new(-file => '>'.$chunk_name);
     
     while (my $seq_object = $input_seqio->next_seq) {
 
@@ -179,7 +179,7 @@ sub write_output {
                     $chunk_name = $dir_tree.'/'.$chunk_name;
                 }
             }
-            $chunk_seqio    = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+            $chunk_seqio    = $input_seqio->new(-file => '>'.$chunk_name);
         }
     }
 
