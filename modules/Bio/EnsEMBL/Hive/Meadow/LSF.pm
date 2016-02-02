@@ -134,7 +134,7 @@ sub status_of_all_our_workers { # returns a hashref
             next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
 
             my $worker_pid = $group_pid;
-            if($job_name=~/(\[\d+\])/) {
+            if($job_name=~/(\[\d+\])$/ and $worker_pid!~/\[\d+\]$/) {   # account for the difference in LSF 9.1.1.1 vs LSF 9.1.2.0  bjobs' output
                 $worker_pid .= $1;
             }
             $status_hash{$worker_pid} = $status;
