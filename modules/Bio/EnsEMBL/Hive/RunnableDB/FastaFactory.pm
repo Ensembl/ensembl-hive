@@ -64,6 +64,8 @@ use warnings;
 
 use Bio::SeqIO;
 use File::Path;
+use File::Spec;
+
 
 use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
 
@@ -150,7 +152,7 @@ sub write_output {
         my $dir_tree = dir_revhash($chunk_number);
         if ($dir_tree ne '') {
             mkpath($dir_tree);
-            $chunk_name = $dir_tree.'/'.$chunk_name;
+            $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
         }
     }
     my $chunk_seqio  = $input_seqio->new(-file => '>'.$chunk_name);
@@ -180,7 +182,7 @@ sub write_output {
                 my $dir_tree = dir_revhash($chunk_number);
                 if ($dir_tree ne '') {
                     mkpath($dir_tree);
-                    $chunk_name = $dir_tree.'/'.$chunk_name;
+                    $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
                 }
             }
             $chunk_seqio    = $input_seqio->new(-file => '>'.$chunk_name);
