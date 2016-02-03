@@ -148,6 +148,7 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
     my ($self, $pattern) = @_;
 
     my $filtered_elements;
+    $pattern //= '';
 
     if( $pattern=~/^\d+$/ ) {
 
