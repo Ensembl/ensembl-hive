@@ -123,17 +123,23 @@ sub write_output {
     my $self = shift;
 
     my $return_value = $self->param('return_value');
+    return unless $return_value;
+
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 
-    if ($return_value and not ($return_value >> 8)) {
+    if ($return_value < 0) {
+        # system() could not start, or wait() failed
+        die sprintf( "Could not start '%s': %s\n", $flat_cmd, $stderr);
+
+    } elsif (not ($return_value >> 8)) {
         # The job has been killed. The best is to wait a bit that LSF kills
         # the worker too
         sleep 30;
         # If we reach this point, perhaps it was killed by a user
         die sprintf( "'%s' was killed with code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
 
-    } elsif ($return_value) {
+    } else {
         # "Normal" process exit with a non-zero code
         $return_value >>= 8;
 
