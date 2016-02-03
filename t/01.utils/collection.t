@@ -92,4 +92,10 @@ is(@$mix, 3, 'find_all_by_pattern - open range (left)');
 $mix = $collection->find_all_by_pattern( 'gamma' );
 is(@$mix, 1, 'find_all_by_pattern - single name (no %)');
 
+$mix = $collection->find_all_by_pattern( 'gamma+5' );
+is(@$mix, 2, 'find_all_by_pattern - combined patterns (no overlap)');
+
+$mix = $collection->find_all_by_pattern( 'gamma+3' );
+is(@$mix, 1, 'find_all_by_pattern - combined patterns (overlap)');
+
 done_testing();
