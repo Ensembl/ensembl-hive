@@ -56,6 +56,25 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     { 'expect_failure' => 1 },
 );
 
+# Here we pretend we have run a Java program that failed because of memory
+my $java_memory_error = 'This is Java speaking. Exception in thread "" java.lang.OutOfMemoryError: Java heap space at line 0';
+my $input_hash = { 'cmd' => "echo '$java_memory_error' >&2 && exit 1" };
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    $input_hash,
+    [
+        [
+            'DATAFLOW',
+            stringify($input_hash),
+            -1,
+        ],
+        [
+            'WARNING',
+            "Java heap space is out of memory.\n",
+            0
+        ],
+    ],
+);
+
 
 # This is expected to complete succesfully since the return status of a
 # pipe is the last command's
@@ -64,7 +83,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
 });
 
 # With "use_bash_pipefail" enabled, we can catch the error with a dataflow
-my $input_hash = {
+$input_hash = {
     'cmd'                       => 'exit 1 | exit 0',
     'use_bash_pipefail'         => 1,
     'return_codes_2_branches'   => { 1 => 4 },
