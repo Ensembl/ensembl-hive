@@ -26,6 +26,8 @@ no warnings qw( redefine );
 use Exporter;
 use Carp qw{croak};
 
+use Data::Dumper;
+
 use Test::More;
 use Test::Exception;
 
@@ -57,8 +59,7 @@ sub standaloneJob {
         if (@$events_to_test) {
             is_deeply([@_], (shift @$events_to_test), "$_[0] event");
         } else {
-            fail("event-stack is empty, cannot get the next expected event");
-            use Data::Dumper;
+            fail("event-stack is empty but the job emitted an event");
             print Dumper([@_]);
         }
     };
