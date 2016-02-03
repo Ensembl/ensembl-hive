@@ -169,20 +169,6 @@ sub job_array_common_name {
 }
 
 
-=head2 responsible_for_worker
-
-    Title   :  responsible_for_worker
-    Function:  Tells whether the given worker lives in the current Meadow.
-
-=cut
-
-sub responsible_for_worker {    ## UNUSED
-    my ($self, $worker) = @_;
-
-    return ($worker->meadow_type eq $self->type) && ($worker->meadow_name eq $self->cached_name);
-}
-
-
 ##
 ## The methods below must be reimplemented in a sub-class. See Meadow/LOCAL and Meadow/LSF
 ##
