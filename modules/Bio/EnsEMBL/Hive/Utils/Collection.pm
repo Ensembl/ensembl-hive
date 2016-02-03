@@ -63,7 +63,7 @@ sub present {
     my $candidate   = shift @_;
 
     foreach my $element (@{ $self->listref }) {
-        return 1 if($element == $candidate);
+        return 1 if($element eq $candidate);
     }
     return 0;
 }
@@ -93,7 +93,7 @@ sub forget {
     my $listref = $self->listref;
 
     for(my $i=scalar(@$listref)-1;$i>=0;$i--) {
-        if($listref->[$i] == $candidate) {
+        if($listref->[$i] eq $candidate) {
             splice @$listref, $i, 1;
         }
     }

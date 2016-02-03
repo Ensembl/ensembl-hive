@@ -43,6 +43,15 @@ foreach my $member(qw{quick brown fox}) {
     is(@ref, 1, 'no addition as it was a copy');
 }
 
+ok($collection->present('fox'), 'present() - There is a fox');
+ok(!$collection->present('chickens'), '!present() - The fox is unlucky');
+
+$collection->add_once('fox');
+is(@$ref, $i, 'Same size - there can be only 1 fox');
+
+$collection->forget('fox');
+is(@$ref, --$i, 'one less element - the fox is gone: we\'re safe !');
+
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new([{ foo => undef}]);
 $collection->add({ foo => undef });
 $collection->add({ bar => 'foobar' });
