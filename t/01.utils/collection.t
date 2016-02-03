@@ -77,4 +77,19 @@ is(@$odd_elements, 4, '4 odd elements');
 my $mix = $collection->find_all_by_pattern( '%-%ta' );
 is(@$mix, 3, 'another 3 elements');
 
+$mix = $collection->find_all_by_pattern( '3' );
+is(@$mix, 1, 'find_all_by_pattern - single dbID');
+
+$mix = $collection->find_all_by_pattern( '3..5' );
+is(@$mix, 3, 'find_all_by_pattern - dbID range');
+
+$mix = $collection->find_all_by_pattern( '4..' );
+is(@$mix, 4, 'find_all_by_pattern - open range (right)');
+
+$mix = $collection->find_all_by_pattern( '..3' );
+is(@$mix, 3, 'find_all_by_pattern - open range (left)');
+
+$mix = $collection->find_all_by_pattern( 'gamma' );
+is(@$mix, 1, 'find_all_by_pattern - single name (no %)');
+
 done_testing();
