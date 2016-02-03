@@ -28,6 +28,35 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
         'cmd' => 'echo hello world >&2',
 });
 
+# This is expected to fail
+my $ctdne = 'command_that_does_not_exist';
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    { 'cmd' => $ctdne },
+    [
+        [
+            'WARNING',
+            qr/^Could not start '${ctdne}': Can't exec "${ctdne}": No such file or directory at/,
+            1
+        ],
+    ],
+    { 'expect_failure' => 1 },
+);
+
+# This is expected to fail too
+my $ptdne = 'path_that_does_not_exist';
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    { 'cmd' => "ls $ptdne" },
+    [
+        [
+            'WARNING',
+            qr/'ls ${ptdne}' resulted in an error code=2\nstderr is: ls: cannot access ${ptdne}: No such file or directory/,
+            1
+        ],
+    ],
+    { 'expect_failure' => 1 },
+);
+
+
 # This is expected to complete succesfully since the return status of a
 # pipe is the last command's
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
