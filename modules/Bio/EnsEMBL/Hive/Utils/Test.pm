@@ -47,6 +47,24 @@ our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker );
 
 our $VERSION = '0.00';
 
+sub _compare_job_warnings {
+    my ($got, $expects) = @_;
+    subtest "WARNING content as expected" => sub {
+        plan tests => 2;
+        my $exp_mess = shift @$expects;
+        if (re::is_regexp($exp_mess)) {
+            like(shift @$got, $exp_mess, 'WARNING message as expected');
+        } else {
+            is(shift @$got, $exp_mess, 'WARNING message as expected');
+        }
+        is_deeply($got, $expects, 'remaining WARNING arguments');
+    };
+}
+
+sub _compare_job_dataflows {
+    my ($got, $expects) = @_;
+    is_deeply($got, $expects, 'DATAFLOW content as expected');
+}
 
 sub standaloneJob {
     my ($module_or_file, $param_hash, $expected_events, $flags) = @_;
@@ -56,8 +74,17 @@ sub standaloneJob {
     my $input_id = stringify($param_hash);
 
     my $_test_event = sub {
+        my ($triggered_type, @got) = @_;
         if (@$events_to_test) {
-            is_deeply([@_], (shift @$events_to_test), "$_[0] event");
+            my $expects = shift @$events_to_test;
+            my $expected_type = shift @$expects;
+            if ($triggered_type ne $expected_type) {
+                fail("Got a $triggered_type event but was expecting $expected_type");
+            } elsif ($triggered_type eq 'WARNING') {
+                _compare_job_warnings(\@got, $expects);
+            } else {
+                _compare_job_dataflows(\@got, $expects);
+            }
         } else {
             fail("event-stack is empty but the job emitted an event");
             print Dumper([@_]);
