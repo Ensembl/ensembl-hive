@@ -351,7 +351,7 @@ sub dataflow_output_id {
 
                         unless($funnel_job_id) {    # apparently it has been created previously, trying to leech to it:
 
-                            if( $funnel_job = $job_adaptor->fetch_by_analysis_id_AND_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id) ) {
+                            if( $funnel_job = $job_adaptor->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id) ) {
                                 $funnel_job_id = $funnel_job->dbID;
 
                                 if( $funnel_job->status eq 'SEMAPHORED' ) {
