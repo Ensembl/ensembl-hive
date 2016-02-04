@@ -71,6 +71,30 @@ sub default_overflow_limit {
 }
 
 
+=head2 fetch_by_analysis_id_and_input_id
+
+  Arg [1]    : Integer $analysis_id
+  Arg [2]    : String $input_id
+  Example    : $funnel_job = $job_adaptor->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id);
+  Description: Attempts to find the job by contents, then makes another attempt if the input_id is expected to have overflown into analysis_data
+  Returntype : AnalysisJob object
+
+=cut
+
+sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered by AUTOLOAD; note the lowercase _and_
+    my ($self, $analysis_id, $input_id) = @_;
+
+    my $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, $input_id);
+
+    if(!$job and length($input_id)>$self->default_overflow_limit->{input_id}) {
+        if(my $ext_data_id = $self->db->get_AnalysisDataAdaptor->fetch_by_data_TO_analysis_data_id( $input_id )) {
+            $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, "_extended_data_id $ext_data_id");
+        }
+    }
+    return $job;
+}
+
+
 =head2 store_jobs_and_adjust_counters
 
   Arg [1]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $jobs_to_store
