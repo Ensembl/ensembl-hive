@@ -82,7 +82,7 @@ sub find_by_url {
             }
 
             $class->pipelines_collection->{ $unambig_url } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-                -url                        => $unambig_url,
+                -url                        => $parsed_url->{'dbconn_part'},
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,
             );
