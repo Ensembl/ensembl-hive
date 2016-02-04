@@ -565,6 +565,7 @@ sub AUTOLOAD {
         my ($self) = @_;
         my $column_set = $self->column_set();
 
+            # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
         my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
         if($filter_components) {
             foreach my $column_name ( @$filter_components ) {
