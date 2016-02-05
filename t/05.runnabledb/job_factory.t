@@ -25,7 +25,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-plan tests => 4;
+plan tests => 5;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -247,6 +247,45 @@ standaloneJob(
         ]
     ]
 );
+
+my $l1 = q{ALTER TABLE analysis_stats ADD COLUMN max_retry_count int(10) DEFAULT 3 NOT NULL AFTER done_job_count;};
+my $l2 = q{ALTER TABLE analysis_stats ADD COLUMN failed_job_tolerance int(10) DEFAULT 0 NOT NULL AFTER max_retry_count;};
+
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    {
+        'inputfile'     => $ENV{EHIVE_ROOT_DIR}.'/sql/patch_2007-11-16.sql',
+        'step'          => 1,
+        'column_names'  => [ 'line' ],
+    },
+    # The files contains 3 lines but the last one is empty. JobFactory only
+    # selects the non-empty lines
+    [
+        [
+            'DATAFLOW',
+            [
+                {
+                    "_range_start"      => $l1,,
+                    "_range_end"        => $l1,
+                    "_range_count"      => 1,
+                    "_range_list"       => [$l1],
+                    "_start_line"       => $l1,
+                    "_end_line"         => $l1,
+                },
+                {
+                    "_range_start"      => $l2,,
+                    "_range_end"        => $l2,
+                    "_range_count"      => 1,
+                    "_range_list"       => [$l2],
+                    "_start_line"       => $l2,
+                    "_end_line"         => $l2,
+                },
+            ],
+            2
+        ]
+    ]
+);
+
 
 
 
