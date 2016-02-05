@@ -182,13 +182,33 @@ standaloneJob(
     ]
 );
 
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    {
+        'inputlist'     => [1..5],
+    },
+    [
+        [
+            'DATAFLOW',
+            [
+                { '_0' => 1, '_' => [ 1 ] },
+                { '_0' => 2, '_' => [ 2 ] },
+                { '_0' => 3, '_' => [ 3 ] },
+                { '_0' => 4, '_' => [ 4 ] },
+                { '_0' => 5, '_' => [ 5 ] },
+            ],
+            2
+        ]
+    ]
+);
+
+
 my $original = chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputcmd'      => 'find -iname "patch_2012-09-*" | sort',
         'step'          => 2,
-        'column_names'  => [ 'filename' ],
     },
     [
         [
@@ -199,16 +219,16 @@ standaloneJob(
                     "_range_end"        => "./patch_2012-09-21.sql",
                     "_range_count"      => 2,
                     "_range_list"       => ["./patch_2012-09-04.sql", "./patch_2012-09-21.sql"],
-                    "_start_filename"   => "./patch_2012-09-04.sql",
-                    "_end_filename"     => "./patch_2012-09-21.sql",
+                    "_start_0"          => "./patch_2012-09-04.sql",
+                    "_end_0"            => "./patch_2012-09-21.sql",
                 },
                 {
                     "_range_start"      => "./patch_2012-09-24.sql",
                     "_range_end"        => "./patch_2012-09-25.sql",
                     "_range_count"      => 2,
                     "_range_list"       => ["./patch_2012-09-24.sql", "./patch_2012-09-25.sql"],
-                    "_start_filename"   => "./patch_2012-09-24.sql",
-                    "_end_filename"     => "./patch_2012-09-25.sql",
+                    "_start_0"          => "./patch_2012-09-24.sql",
+                    "_end_0"            => "./patch_2012-09-25.sql",
                 },
             ],
             2
