@@ -72,5 +72,8 @@ foreach my $meadow (@$available_meadows) {
     is($meadow->pipeline_name, $pipeline_name, $meadow->type.' is registered to the pipeline');
 }
 
+my $mtdne = 'meadow_that_does_not_exist';
+throws_ok {$valley->set_default_meadow_type($mtdne)} qr/Meadow '$mtdne' does not seem to be available on this machine, please investigate/, 'Cannot set an unexisting meadow as default';
+
 done_testing();
 
