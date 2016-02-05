@@ -32,9 +32,6 @@ plan tests => 6;
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $dir = tempdir CLEANUP => 1;
-chdir $dir;
-
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
@@ -183,10 +180,11 @@ standaloneJob(
     ]
 );
 
+chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
-        'inputcmd'      => 'cd $EHIVE_ROOT_DIR/sql; ls patch_2012-09-*',
+        'inputcmd'      => 'find -iname "patch_2012-09-*" | sort',
         'step'          => 2,
         'column_names'  => [ 'filename' ],
     },
@@ -195,20 +193,20 @@ standaloneJob(
             'DATAFLOW',
             [
                 {
-                    "_range_start"      => "patch_2012-09-04.sql",
-                    "_range_end"        => "patch_2012-09-21.sql",
+                    "_range_start"      => "./patch_2012-09-04.sql",
+                    "_range_end"        => "./patch_2012-09-21.sql",
                     "_range_count"      => 2,
-                    "_range_list"       => ["patch_2012-09-04.sql", "patch_2012-09-21.sql"],
-                    "_start_filename"   => "patch_2012-09-04.sql",
-                    "_end_filename"     => "patch_2012-09-21.sql",
+                    "_range_list"       => ["./patch_2012-09-04.sql", "./patch_2012-09-21.sql"],
+                    "_start_filename"   => "./patch_2012-09-04.sql",
+                    "_end_filename"     => "./patch_2012-09-21.sql",
                 },
                 {
-                    "_range_start"      => "patch_2012-09-24.sql",
-                    "_range_end"        => "patch_2012-09-25.sql",
+                    "_range_start"      => "./patch_2012-09-24.sql",
+                    "_range_end"        => "./patch_2012-09-25.sql",
                     "_range_count"      => 2,
-                    "_range_list"       => ["patch_2012-09-24.sql", "patch_2012-09-25.sql"],
-                    "_start_filename"   => "patch_2012-09-24.sql",
-                    "_end_filename"     => "patch_2012-09-25.sql",
+                    "_range_list"       => ["./patch_2012-09-24.sql", "./patch_2012-09-25.sql"],
+                    "_start_filename"   => "./patch_2012-09-24.sql",
+                    "_end_filename"     => "./patch_2012-09-25.sql",
                 },
             ],
             2
@@ -222,7 +220,7 @@ my $l2 = q{ALTER TABLE analysis_stats ADD COLUMN failed_job_tolerance int(10) DE
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
-        'inputfile'     => $ENV{EHIVE_ROOT_DIR}.'/sql/patch_2007-11-16.sql',
+        'inputfile'     => 'patch_2007-11-16.sql',  # We're still in the $EHIVE_ROOT_DIR/sql/ directory
         'column_names'  => [ 'line' ],
     },
     # The files contains 3 lines but the last one is empty. JobFactory only
@@ -239,6 +237,9 @@ standaloneJob(
     ]
 );
 
+
+my $dir = tempdir CLEANUP => 1;
+chdir $dir;
 
 my $sqlite_url = 'sqlite:///test_db';
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
