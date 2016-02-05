@@ -19,6 +19,7 @@ use warnings;
 
 use Test::More; # tests => 22;
 use Test::Exception;
+use Test::Warn;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
 
@@ -46,6 +47,9 @@ subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
     };
     foreach my $method (@virtual_methods) {
         throws_ok {$virtual_meadow->$method()} qr/Please use a derived method/, $method.'() is virtual in Meadow';
+    }
+    foreach my $method (qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval)) {
+        warning_like {$virtual_meadow->$method()} qr/Bio::EnsEMBL::Hive::Meadow does not support resource usage logs/, $method.'() has a default (empty) implementation in Meadow';
     }
 };
 
