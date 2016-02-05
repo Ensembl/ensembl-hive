@@ -27,6 +27,9 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+my $dir = tempdir CLEANUP => 1;
+my $original = chdir $dir;
+
 my $server_url  = 'sqlite:///ehive_server_pipeline_db';
 my $client_url  = 'sqlite:///ehive_client_pipeline_db';
 
@@ -72,3 +75,6 @@ if(my $server_pid = fork) {
     exec( @server_beekeeper_cmd );
 }
 
+END {
+    chdir $original;
+}

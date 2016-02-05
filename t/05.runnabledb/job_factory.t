@@ -182,7 +182,7 @@ standaloneJob(
     ]
 );
 
-chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
+my $original = chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
@@ -271,4 +271,8 @@ system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
 
 
 done_testing();
+
+END {
+    chdir $original;
+}
 
