@@ -48,6 +48,8 @@ ok(!$collection->present('chickens'), '!present() - The fox is unlucky');
 
 $collection->add_once('fox');
 is(@$ref, $i, 'Same size - there can be only 1 fox');
+$collection->add_once('human');
+is(@$ref, ++$i, 'Addition - Someone comes in');
 
 $collection->forget('fox');
 is(@$ref, --$i, 'one less element - the fox is gone: we\'re safe !');
