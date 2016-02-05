@@ -509,7 +509,10 @@ sub _last_part_arrow {
     }
 
     my $input_id_template   = $self->config_get('DisplayInputIDTemplate') ? $df_target->input_id_template : undef;
-    my $multistring_template= $input_id_template ? ": {".join(",\n", sort keys( %{destringify($input_id_template)} )).'}' : '';
+    my $extend_param_stack  = $df_target->extend_param_stack;
+    my $multistring_template= ($extend_param_stack ? "INPUT_PLUS " : '')
+                             .($input_id_template  ?  '{'.join(",\n", sort keys( %{destringify($input_id_template)} )).'}'
+                                                   : ($extend_param_stack ? '' : '') );
 
     $graph->add_edge( $source_node_name => $target_node_name,
         @$extras,
