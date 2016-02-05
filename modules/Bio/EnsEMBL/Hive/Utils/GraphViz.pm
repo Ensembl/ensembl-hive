@@ -6,7 +6,13 @@
 
 =head1 DESCRIPTION
 
-    An extension of GraphViz that supports nested clusters
+    An extension of GraphViz that employs a collection of hacks
+    to use some functionality of dot that is not available through GraphViz.
+
+    There are at least 3 areas where we need it:
+        (1) passing in some parameters of the drawing (such as pad => ...)
+        (2) drawing clusters (boxes) around semaphore fans
+        (3) using the newest node types (such as Mrecord, tab and egg) with HTML-like labels
 
 =head1 EXTERNAL DEPENDENCIES
 
@@ -37,6 +43,26 @@ package Bio::EnsEMBL::Hive::Utils::GraphViz;
 use strict;
 use warnings;
 use base ('GraphViz');
+
+
+=head2 new
+
+    Title   :  new (constructor)
+    Function:  Instantiates a new Utils::GraphViz object
+                by injecting some variables unsupported by GraphViz (but understood by dot) directly into the dot output.
+                We rely on a particular quoting pattern used in dot's input format to fool GraphViz (which luckily doesn't escape quotes).
+
+=cut
+
+sub new {
+    my $class       = shift @_;
+    my %all_params  = @_;
+
+    my $ratio_value = delete $all_params{'ratio'} || 'compress';
+    my $injection = join('', map { '"; ' . $_ . ' = "' . $all_params{$_} } keys %all_params);
+
+    return $class->SUPER::new( 'ratio' => $ratio_value.$injection );
+}
 
 
 sub cluster_2_nodes {
