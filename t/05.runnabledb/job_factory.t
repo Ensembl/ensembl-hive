@@ -25,7 +25,11 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-plan tests => 3;
+plan tests => 4;
+
+# Need EHIVE_ROOT_DIR to be able to point at specific files
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -204,6 +208,39 @@ standaloneJob(
                     "_range_list"       => [1],
                     "_start_foo"        => 1,
                     "_end_foo"          => 1,
+                },
+            ],
+            2
+        ]
+    ]
+);
+
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    {
+        'inputcmd'      => 'cd $EHIVE_ROOT_DIR/sql; ls patch_2012-09-*',
+        'step'          => 2,
+        'column_names'  => [ 'filename' ],
+    },
+    [
+        [
+            'DATAFLOW',
+            [
+                {
+                    "_range_start"      => "patch_2012-09-04.sql",
+                    "_range_end"        => "patch_2012-09-21.sql",
+                    "_range_count"      => 2,
+                    "_range_list"       => ["patch_2012-09-04.sql", "patch_2012-09-21.sql"],
+                    "_start_filename"   => "patch_2012-09-04.sql",
+                    "_end_filename"     => "patch_2012-09-21.sql",
+                },
+                {
+                    "_range_start"      => "patch_2012-09-24.sql",
+                    "_range_end"        => "patch_2012-09-25.sql",
+                    "_range_count"      => 2,
+                    "_range_list"       => ["patch_2012-09-24.sql", "patch_2012-09-25.sql"],
+                    "_start_filename"   => "patch_2012-09-24.sql",
+                    "_end_filename"     => "patch_2012-09-25.sql",
                 },
             ],
             2
