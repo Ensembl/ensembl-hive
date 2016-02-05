@@ -205,21 +205,20 @@ sub find_all_by_pattern {
 
     } else {
 
+        # By using the grouping, we ask Perl to return the pattern and their delimiters
         my @syll = split(/([+\-,])/, $pattern);
 
         my %uniq = map { ("$_" => $_) } @{ $self->_find_all_by_subpattern( shift @syll ) };   # initialize with the first syllable
 
         while(@syll) {
-            my $operation   = shift @syll;
-            my $subpattern  = shift @syll;
+            my $operation   = shift @syll;  # by construction this is one of [+-,]
+            my $subpattern  = shift @syll;  # can be an empty string
 
             foreach my $element (@{ $self->_find_all_by_subpattern( $subpattern ) }) {
                 if($operation eq '-') {
                     delete $uniq{ "$element" };
-                } elsif ($operation eq '+' or $operation eq ',') {
-                    $uniq{ "$element" } = $element;
                 } else {
-                    throw( "Complex pattern '$pattern' not recognized" );
+                    $uniq{ "$element" } = $element;
                 }
             }
         }
