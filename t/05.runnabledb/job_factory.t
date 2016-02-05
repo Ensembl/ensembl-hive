@@ -242,6 +242,8 @@ standaloneJob(
 
 chdir $dir;
 
+system('sqlite3 --version');
+
 my $sqlite_url = 'sqlite:///test_db';
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
