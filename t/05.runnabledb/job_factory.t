@@ -245,10 +245,13 @@ chdir $dir;
 my $sqlite_url = 'sqlite:///test_db';
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE TABLE params (key VARCHAR(10), value INT)') });
+warn "about to create the table";
+$dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
 my ($k1, $v1) = ('one_key', 34);
 my ($k2, $v2) = ('another_key', -5);
-system(@{ $dbc->to_cmd(undef, undef, undef, "INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)") });
+warn "about to insert rows: INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)";
+$dbc->do("INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)");
+warn "start job";
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -267,6 +270,7 @@ standaloneJob(
         ]
     ]
 );
+system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
 
 
 done_testing();
