@@ -32,6 +32,8 @@ plan tests => 6;
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+my $dir = tempdir CLEANUP => 1;
+
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
@@ -238,7 +240,6 @@ standaloneJob(
 );
 
 
-my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
 my $sqlite_url = 'sqlite:///test_db';
