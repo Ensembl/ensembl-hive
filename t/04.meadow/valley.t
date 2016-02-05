@@ -23,6 +23,7 @@ use Test::Exception;
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 BEGIN {
+    use_ok( 'Bio::EnsEMBL::Hive::Meadow' );
     use_ok( 'Bio::EnsEMBL::Hive::Valley' );
 }
 
@@ -30,6 +31,23 @@ BEGIN {
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
+
+my @virtual_methods = qw(name get_current_worker_process_id count_running_workers count_pending_workers_by_rc_name status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers);
+
+# Check that the base Meadow class has some virtual methods
+subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
+    my $virtual_meadow = eval {
+        # Meadow's constructor calls cached_name(), which needs name()
+        # name() will revert to its original implementation at the end of the scope
+        local *Bio::EnsEMBL::Hive::Meadow::name = sub {
+            return 'this_is_me';
+        };
+        return Bio::EnsEMBL::Hive::Meadow->new();
+    };
+    foreach my $method (@virtual_methods) {
+        throws_ok {$virtual_meadow->$method()} qr/Please use a derived method/, $method.'() is virtual in Meadow';
+    }
+};
 
 # Check that the meadows are fully implemented
 foreach my $meadow_class ( @{ Bio::EnsEMBL::Hive::Valley->get_implemented_meadow_list() } ) {
@@ -42,7 +60,7 @@ foreach my $meadow_class ( @{ Bio::EnsEMBL::Hive::Valley->get_implemented_meadow
         ok($meadow_object->isa('Bio::EnsEMBL::Hive::Meadow'), $meadow_class.' implements the eHive Meadow interface');
 
         # Let's check that the virtual methods have been redefined
-        foreach my $method (qw(name get_current_worker_process_id count_running_workers count_pending_workers_by_rc_name status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers)) {
+        foreach my $method (@virtual_methods) {
             eval {
                 $meadow_object->$method();
             };
