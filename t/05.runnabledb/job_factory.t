@@ -25,7 +25,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-plan tests => 2;
+plan tests => 3;
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -150,6 +150,68 @@ standaloneJob(
         ]
     ]
 );
+
+srand 1;
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    {
+        'inputlist'     => [1..5],
+        'step'          => 1,
+        'contiguous'    => 1,
+        'randomize'     => 1,
+        'column_names'  => [ 'foo' ],
+    },
+    [
+        [
+            'DATAFLOW',
+            [
+                {
+                    "_range_start"      => 4,
+                    "_range_end"        => 4,
+                    "_range_count"      => 1,
+                    "_range_list"       => [4],
+                    "_start_foo"        => 4,
+                    "_end_foo"          => 4,
+                },
+                {
+                    "_range_start"      => 5,
+                    "_range_end"        => 5,
+                    "_range_count"      => 1,
+                    "_range_list"       => [5],
+                    "_start_foo"        => 5,
+                    "_end_foo"          => 5,
+                },
+                {
+                    "_range_start"      => 3,
+                    "_range_end"        => 3,
+                    "_range_count"      => 1,
+                    "_range_list"       => [3],
+                    "_start_foo"        => 3,
+                    "_end_foo"          => 3,
+                },
+                {
+                    "_range_start"      => 2,
+                    "_range_end"        => 2,
+                    "_range_count"      => 1,
+                    "_range_list"       => [2],
+                    "_start_foo"        => 2,
+                    "_end_foo"          => 2,
+                },
+                {
+                    "_range_start"      => 1,
+                    "_range_end"        => 1,
+                    "_range_count"      => 1,
+                    "_range_list"       => [1],
+                    "_start_foo"        => 1,
+                    "_end_foo"          => 1,
+                },
+            ],
+            2
+        ]
+    ]
+);
+
+
 
 done_testing();
 
