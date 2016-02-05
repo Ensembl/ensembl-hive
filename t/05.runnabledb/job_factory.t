@@ -160,7 +160,6 @@ standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputlist'     => [1..5],
-        'step'          => 1,
         'contiguous'    => 1,
         'randomize'     => 1,
         'column_names'  => [ 'foo' ],
@@ -169,46 +168,11 @@ standaloneJob(
         [
             'DATAFLOW',
             [
-                {
-                    "_range_start"      => 4,
-                    "_range_end"        => 4,
-                    "_range_count"      => 1,
-                    "_range_list"       => [4],
-                    "_start_foo"        => 4,
-                    "_end_foo"          => 4,
-                },
-                {
-                    "_range_start"      => 5,
-                    "_range_end"        => 5,
-                    "_range_count"      => 1,
-                    "_range_list"       => [5],
-                    "_start_foo"        => 5,
-                    "_end_foo"          => 5,
-                },
-                {
-                    "_range_start"      => 3,
-                    "_range_end"        => 3,
-                    "_range_count"      => 1,
-                    "_range_list"       => [3],
-                    "_start_foo"        => 3,
-                    "_end_foo"          => 3,
-                },
-                {
-                    "_range_start"      => 2,
-                    "_range_end"        => 2,
-                    "_range_count"      => 1,
-                    "_range_list"       => [2],
-                    "_start_foo"        => 2,
-                    "_end_foo"          => 2,
-                },
-                {
-                    "_range_start"      => 1,
-                    "_range_end"        => 1,
-                    "_range_count"      => 1,
-                    "_range_list"       => [1],
-                    "_start_foo"        => 1,
-                    "_end_foo"          => 1,
-                },
+                { 'foo' => 4 },
+                { 'foo' => 5 },
+                { 'foo' => 3 },
+                { 'foo' => 2 },
+                { 'foo' => 1 },
             ],
             2
         ]
@@ -255,7 +219,6 @@ standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputfile'     => $ENV{EHIVE_ROOT_DIR}.'/sql/patch_2007-11-16.sql',
-        'step'          => 1,
         'column_names'  => [ 'line' ],
     },
     # The files contains 3 lines but the last one is empty. JobFactory only
@@ -264,22 +227,8 @@ standaloneJob(
         [
             'DATAFLOW',
             [
-                {
-                    "_range_start"      => $l1,,
-                    "_range_end"        => $l1,
-                    "_range_count"      => 1,
-                    "_range_list"       => [$l1],
-                    "_start_line"       => $l1,
-                    "_end_line"         => $l1,
-                },
-                {
-                    "_range_start"      => $l2,,
-                    "_range_end"        => $l2,
-                    "_range_count"      => 1,
-                    "_range_list"       => [$l2],
-                    "_start_line"       => $l2,
-                    "_end_line"         => $l2,
-                },
+                { 'line' => $l1 },
+                { 'line' => $l2 },
             ],
             2
         ]
