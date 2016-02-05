@@ -20,16 +20,20 @@ use warnings;
 
 use JSON;
 use Test::More;
+use File::Temp qw{tempdir};
 
 use Data::Dumper;
 
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-plan tests => 5;
+plan tests => 6;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+my $dir = tempdir CLEANUP => 1;
+chdir $dir;
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -236,6 +240,31 @@ standaloneJob(
 );
 
 
+my $sqlite_url = 'sqlite:///test_db';
+my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
+system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
+system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE TABLE params (key VARCHAR(10), value INT)') });
+my ($k1, $v1) = ('one_key', 34);
+my ($k2, $v2) = ('another_key', -5);
+system(@{ $dbc->to_cmd(undef, undef, undef, "INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)") });
+
+standaloneJob(
+    'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+    {
+        'inputquery'    => 'SELECT * FROM params',
+        'db_conn'       => $sqlite_url,
+    },
+    [
+        [
+            'DATAFLOW',
+            [
+                { 'key' => $k1, 'value' => $v1 },
+                { 'key' => $k2, 'value' => $v2 },
+            ],
+            2
+        ]
+    ]
+);
 
 
 done_testing();
