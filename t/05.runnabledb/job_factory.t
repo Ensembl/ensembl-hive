@@ -163,7 +163,6 @@ standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputlist'     => [1..5],
-        'contiguous'    => 1,
         'randomize'     => 1,
         'column_names'  => [ 'foo' ],
     },
@@ -171,6 +170,7 @@ standaloneJob(
         [
             'DATAFLOW',
             [
+                # The order depends on the above-initialized seed
                 { 'foo' => 4 },
                 { 'foo' => 5 },
                 { 'foo' => 3 },
