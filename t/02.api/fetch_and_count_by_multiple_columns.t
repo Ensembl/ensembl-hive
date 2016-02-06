@@ -49,7 +49,7 @@ my $dfr_a       = $hive_dba->get_DataflowRuleAdaptor;
 
 is($ana_a->count_all(), 3, 'There are 3 analyses in the pipeline');
 is($ana_a->count_all_by_logic_name('take_b_apart'), 1, 'But only 1 "take_b_apart"');
-my $take_b_apart_analysis = $hive_dba->get_AnalysisAdaptor->fetch_by_logic_name('take_b_apart');
+my $take_b_apart_analysis = $ana_a->fetch_by_logic_name('take_b_apart');
 
 my $n_from_1 = $dfr_a->count_all_by_from_analysis_id($take_b_apart_analysis->dbID);
 is($n_from_1, 2, '2 dataflow-rules starting from this analysis_id');
