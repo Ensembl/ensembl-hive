@@ -19,16 +19,11 @@ use strict;
 use warnings;
 
 use Test::More tests => 4;
-use Data::Dumper;
-use File::Temp qw{tempdir};
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Utils', 'join_command_args' );
 }
 #########################
-
-my $dir = tempdir CLEANUP => 1;
-chdir $dir;
 
 subtest 'The command line is given as a string' => sub
 {
@@ -55,3 +50,4 @@ subtest 'The command line is given as an arrayref and contains redirections / pi
 };
 
 done_testing();
+
