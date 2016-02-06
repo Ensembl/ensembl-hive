@@ -763,7 +763,7 @@ sub prepare {
        $sth = $self->db_handle->prepare(@args);
        1;
    } or do {
-       throw( "FAILED_SQL(".$self->dbname."): " . join(' ', @args) );
+       throw( "FAILED_SQL(".$self->dbname."): " . join(' ', @args) . "\nGot: ".$@."\n" );
    };
 
    # return an overridden statement handle that provides us with
