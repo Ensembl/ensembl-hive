@@ -85,6 +85,5 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
 done_testing();
 
-END {
-    chdir $original;
-}
+chdir $original;
+

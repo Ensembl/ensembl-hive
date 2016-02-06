@@ -272,6 +272,5 @@ is(@all_files, 1, 'exactly one output file - test 5 (like 1)');
 
 done_testing();
 
-END {
-    chdir $original;
-}
+chdir $original;
+
