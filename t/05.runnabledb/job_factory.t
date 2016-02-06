@@ -260,9 +260,7 @@ standaloneJob(
 );
 
 
-chdir $dir;
-
-my $sqlite_url = 'sqlite:///test_db';
+my $sqlite_url = "sqlite:///${dir}/test_db";
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
 $dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
@@ -289,10 +287,7 @@ standaloneJob(
 );
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
 
-
 done_testing();
 
-END {
-    chdir $original;
-}
+chdir $original;
 

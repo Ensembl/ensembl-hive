@@ -28,10 +28,9 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
 
-my $server_url  = 'sqlite:///ehive_server_pipeline_db';
-my $client_url  = 'sqlite:///ehive_client_pipeline_db';
+my $server_url  = "sqlite:///${dir}/ehive_server_pipeline_db";
+my $client_url  = "sqlite:///${dir}/ehive_client_pipeline_db";
 
 init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMultServer_conf', [-pipeline_url => $server_url, -hive_force_init => 1]);
 init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMultClient_conf', [-pipeline_url => $client_url, -server_url => $server_url, -hive_force_init => 1]);
@@ -75,6 +74,4 @@ if(my $server_pid = fork) {
     exec( @server_beekeeper_cmd );
 }
 
-END {
-    chdir $original;
-}
+

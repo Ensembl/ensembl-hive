@@ -32,9 +32,8 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
 
-my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
+my $pipeline_url      = "sqlite:///${dir}/ehive_test_pipeline_db";
 
 my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
@@ -71,8 +70,4 @@ is_deeply($job_a->count_all_HASHED_FROM_status_AND_job_id(), { 'READY' => { '1' 
 is_deeply($job_a->count_all_by_analysis_id_HASHED_FROM_status(1), { 'READY' => 2 }, 'They both belong to the analysis with dbID=1');
 
 done_testing();
-
-END {
-    chdir $original;
-}
 
