@@ -51,6 +51,9 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
         my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
+        # Set take_time to 0 to make the test quicker
+        $hive_dba->get_PipelineWideParametersAdaptor->update( {'param_name' => 'take_time', 'param_value' => 0} );
+
 
         # First run a single worker in this process
         runWorker($pipeline, { can_respecialize => 1 });
