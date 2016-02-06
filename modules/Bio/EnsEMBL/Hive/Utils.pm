@@ -59,7 +59,7 @@ use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw join_command_args);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage go_figure_dbc report_versions throw join_command_args);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -276,26 +276,6 @@ sub script_usage {
 }
 
 
-sub url2dbconn_hash {
-    my $url = pop @_;
-
-    if( my ($driver, $user, $pass, $host, $port, $dbname) =
-        $url =~ m{^(\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {
-
-        return {
-            '-driver' => $driver    || 'mysql',
-            '-host'   => $host      || 'localhost',
-            '-port'   => $port      || 3306,
-            '-user'   => $user      || '',
-            '-pass'   => $pass      || '',
-            '-dbname' => $dbname,
-        };
-    } else {
-        return 0;
-    }
-}
-
-
 sub go_figure_dbc {
     my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable
 
@@ -314,9 +294,13 @@ sub go_figure_dbc {
 
         return $foo->db->dbc;
 
-    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
+    } elsif(ref($foo) eq 'HASH') {
 
-        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( %$db_conn );
+        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( %$foo );
+
+    } elsif($foo =~ m{^(\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {  # We can probably use a simpler regexp
+
+        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $foo );
 
     } else {
         unless(ref($foo)) {    # maybe it is simply a registry key?
