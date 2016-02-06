@@ -19,27 +19,19 @@ use strict;
 use warnings;
 
 use Test::More;
+use File::Temp qw{tempdir};
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline);
+use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-# eHive needs this to initialize the pipeline (and run db_cmd.pl)
-use Cwd            ();
-use File::Basename ();
-$ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+my $dir = tempdir CLEANUP => 1;
 
-
-
-my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
-
-my $url         = init_pipeline($ENV{'EHIVE_ROOT_DIR'}.'/modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
-
-my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-    -url                        => $url,
-    -disconnect_when_inactive   => 1,
-);
-
-my $hive_dba            = $pipeline->hive_dba;
+my $sqlite_url = "sqlite:///${dir}/test_db";
+# -no_sql_schema_version_check is needed because the database does not have the eHive schema
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
+my $dbc = $hive_dba->dbc();
+system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
+$dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
@@ -64,6 +56,6 @@ is_deeply($final_result_nta->count_all_HASHED_FROM_a_multiplier(), {$first_hash-
 is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2, '2 result for this a_multiplier');
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
-system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
 done_testing();
