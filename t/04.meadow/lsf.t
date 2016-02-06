@@ -64,7 +64,7 @@ is_deeply(
     'count_pending_workers_by_rc_name()',
 );
 
-is($lsf_meadow->count_running_workers, 25, 'count_running_workers()');
+is($lsf_meadow->count_running_workers, 26, 'count_running_workers()');
 is($lsf_meadow->count_running_workers(['il4']), 24, 'count_running_workers("il4")');
 
 is_deeply(
@@ -103,7 +103,8 @@ is_deeply(
         '2067769[8]' => 'RUN',
         '2067754[28]' => 'RUN',
         '2067754[33]' => 'RUN',
-        '2067769[5]' => 'PEND'
+        '2067769[5]' => 'PEND',
+        '276335[13]' => 'RUN',
     },
     'status_of_all_our_workers()',
 );

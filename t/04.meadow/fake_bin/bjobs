@@ -42,6 +42,7 @@ read -r -d '' bjobs_content << EOF
 2068349 il4     RUN   normal     farm3-head1 2*bc-31-2-08 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-361[1] Nov 16 23:03
 2067754 il4     RUN   normal     farm3-head1 bc-29-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[7] Nov 16 22:40
 2067769 il4     RUN   normal     farm3-head1 bc-26-2-04  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[2] Nov 16 22:42
+276335[13] tmpseq RUN verylong   node5005    node1322    tracking_homo_sapiens_funcgen_81_38_hive-Hive-verylong_rc-1[13] Jan 27 22:08
 EOF
 
 USER_FILTER=all
