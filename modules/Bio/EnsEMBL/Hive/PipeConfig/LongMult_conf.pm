@@ -134,11 +134,11 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                    # creating a semaphored fan of jobs; filtering by WHEN; using templates to top-up the hashes.
+                    # creating a semaphored fan of jobs; filtering by WHEN; using INPUT_PLUS or templates to top-up the hashes.
                     #
                     # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
                 '2->A' => WHEN(
-                                '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
+                                '#digit#>1' => { 'part_multiply' => INPUT_PLUS() },     # make parent job's parameters available to the kids
 #                                ELSE           { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } },
                           ),
                     # creating a semaphored funnel job to wait for the fan to complete and add the results:
