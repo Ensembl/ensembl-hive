@@ -6,27 +6,36 @@ Main highlights of the release:
     Conditional dataflow on the pipeline structure level. For every dataflow rule you can set up conditions
         that will be computed based on the parameters of the context.
         Multiple conditions can be grouped with an optional common ELSE branch where the dataflow will happen by default.
-    The new diagram display code is more flexible and configurable - it can now display the newly added conditions (with a length limit)
-        and cross-database dataflow or control rules (parts of "foreign" pipelines are shown on different colour background).
     INPUT_PLUS is a lightweight mechanism that allows a parent job to selectively pass its parameters to its children
         without the need to specify which parameters are being passed. It's a significant simplification in comparison
         with what could be achieved with templates, although templates will keep their niche for renaming and evaluating params.
     New style URL parser that understands shorter URLs like "?table_name=foo", "?accu_name=bar&accu_address=[]" for referring to local objects.
         It also allows to refer to the absoulte/relative SQLite filepath in full. Some compatibility sacrifices had to be made,
         but in version/2.4 the old parsing way has priority over the new one, with a warning to encourage switching to the new format.
+NB: see these three features in action in the Long-multiplication pipelines
 
-* HivePipeline object with its collections becomes the center of things, and TheApiary becomes the centralized way of accessing foreign objects
-* An extra post_healthcheck() API method has been added to Runnables (and the POST_HEALTHCHECK status to Jobs) to stop failures in their tracks
+Universal Runnables:
 * JobFactory: non-contiguous split option has been added for those who have to use minibatching
-* A lot of work has been done on improving the test suite, which now works in a container for speed-up
-* FastaFactory has been improved and thoroughly tested
-* SqlCmd supprots transactions
-* A failed prepare() shows a full stack trace on error
-* A special Client/Server version of LongMult pipeline to test cross-database dataflow and control rules (use with caution!)
+* FastaFactory has been improved: more input file-formats -which can be compressed-, target output directory
+* SqlCmd supports transactions
+* new run_system_command() method available to all Runnables (defined in Process). It takes care of disconnecting from the eHive database and can capture stderr
+* "Bash pipefail" mode is used to catch errors on both sides of pipes in many system() calls
+
+Developer tools:
+* Registry names can generally be used to refer to databases (go_figure_dbc())
+* The parameter substitution behaviour when some components are unavailable has been standardised, param_exists() has been fixed
+* An extra post_healthcheck() API method has been added to Runnables (and the POST_HEALTHCHECK status to Jobs) to stop failures in their tracks
+* We reenabled cross-database dataflow and control rules and added a special Client/Server version of LongMult pipeline.
+* The diagram display code can now display the newly added conditions (with a length limit) and cross-database dataflow or control rules (parts of "foreign" pipelines are shown on different colour background).
 * An experimental "Unicode-art" flow diagram drawing code has been implemented (skip the -output parameter in generate_graph.pl to see)
+* eHive's DBAdaptor now has methods to get the list of eHive tables and views
+* standaloneJob test method: warnings can be assessed via a regular expression
+
+Under the hood:
+* HivePipeline object with its collections becomes the center of things, and TheApiary becomes the centralized way of accessing foreign objects
+* A lot of work has been done on improving the test suite to run faster and cover more modules
+* A failed prepare() shows a full stack trace on error
 * Speed improvement of storing extended job parameters via adding an MD5 checksum based index
-* Bash pipefail mode is used in the unversal Runnables to catch errors on both sides of pipes
-* The parameter substitution behaviour when some components are unavailable has been standardised
 * The parsers of both 'bjobs' and 'bacct' have been extended to also support the output format of LSF v.9.1.2.0
 
 * + numerous bug fixes, many of which have been ported to the previous version branches.
