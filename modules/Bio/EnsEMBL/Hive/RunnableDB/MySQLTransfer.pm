@@ -43,7 +43,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
     return {
@@ -53,6 +53,10 @@ sub param_defaults {
         'table'         => '',
         'where'         => undef,
         'filter_cmd'    => undef,
+
+        # Needed by SystemCmd
+        'use_bash_pipefail'         => 1,
+        'return_codes_2_branches'   => {},
     };
 }
 
@@ -101,24 +105,7 @@ sub fetch_input {
     if($mode ne 'overwrite') {
         $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
-}
 
-=head2 run
-
-    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here the actual data transfer is attempted.
-
-=cut
-
-sub run {
-    my $self = shift;
-
-    my $src_dbc     = $self->param('src_dbc');
-    my $dest_dbc    = $self->param('dest_dbc');
-
-    my $mode        = $self->param('mode');
-    my $table       = $self->param('table');
-    my $where       = $self->param('where');
     my $filter_cmd  = $self->param('filter_cmd');
 
     my $mode_options = { 'overwrite' => [], 'topup' => ['--no-create-info'], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
@@ -133,12 +120,7 @@ sub run {
                 ($filter_cmd ? "$filter_cmd | " : ''),
                 @{$dest_dbc->to_cmd(undef, undef, undef, undef, 1)}
             );
-
-    print "$cmd\n" if $self->debug;
-    if(my $return_value = system(bash => (-o => 'pipefail', -c => $cmd))) {
-        $return_value >>= 8;
-        die "system( $cmd ) failed: $return_value";
-    }
+    $self->param('cmd', $cmd);
 }
 
 =head2 write_output
@@ -150,6 +132,9 @@ sub run {
 
 sub write_output {
     my $self = shift;
+
+    # Error processing
+    $self->SUPER::write_output();
 
     my $dest_dbc    = $self->param('dest_dbc');
 
