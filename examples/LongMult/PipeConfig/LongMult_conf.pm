@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
+    LongMult::PipeConfig::LongMult_conf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
+    init_pipeline.pl LongMult::PipeConfig::LongMult_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -60,7 +60,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf;
+package LongMult::PipeConfig::LongMult_conf;
 
 use strict;
 use warnings;
@@ -126,7 +126,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'take_b_apart',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory',
+            -module     => 'LongMult::RunnableDB::DigitFactory',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
@@ -147,7 +147,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'part_multiply',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
+            -module     => 'LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [ '?accu_name=partial_product&accu_address={digit}' ],
@@ -155,7 +155,7 @@ sub pipeline_analyses {
         },
         
         {   -logic_name => 'add_together',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether',
+            -module     => 'LongMult::RunnableDB::AddTogether',
             -flow_into => {
                 1 => [ '?table_name=final_result' ],
             },

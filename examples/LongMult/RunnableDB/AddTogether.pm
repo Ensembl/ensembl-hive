@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether
+    LongMult::RunnableDB::AddTogether
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-    'LongMult::AddTogether' is the final step of the pipeline that, naturally, adds the products together
+    'LongMult::RunnableDB::AddTogether' is the final step of the pipeline that, naturally, adds the products together
     and stores the result in 'final_result' database table.
 
 =head1 LICENSE
@@ -34,7 +34,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether;
+package LongMult::RunnableDB::AddTogether;
 
 use strict;
 use warnings;

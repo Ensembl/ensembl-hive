@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply
+    LongMult::RunnableDB::PartMultiply
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-    'LongMult::PartMultiply' has a separate task of multiplying 'a_multiplier' by the given 'digit',
+    'LongMult::RunnableDB::PartMultiply' has a separate task of multiplying 'a_multiplier' by the given 'digit',
     then it passes its partial_product on.
 
 =head1 LICENSE
@@ -34,7 +34,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply;
+package LongMult::RunnableDB::PartMultiply;
 
 use strict;
 use warnings;

@@ -2,15 +2,15 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::LongMultServer_conf;
+    LongMult::PipeConfig::LongMultServer_conf;
 
 =head1 SYNOPSIS
 
        # initialize the "server" database first and note its URL - you will need it to initialize the "client" later:
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMultServer_conf -password <mypass>
+    init_pipeline.pl LongMult::PipeConfig::LongMultServer_conf -password <mypass>
 
        # initialize the "client" database by plugging the server's URL:
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMultClient_conf -password <mypass> -server_url $SERVER_HIVE_URL
+    init_pipeline.pl LongMult::PipeConfig::LongMultClient_conf -password <mypass> -server_url $SERVER_HIVE_URL
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $CLIENT_HIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -57,7 +57,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::LongMultServer_conf;
+package LongMult::PipeConfig::LongMultServer_conf;
 
 use strict;
 use warnings;
@@ -89,7 +89,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'part_multiply',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply',
+            -module     => 'LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [ '?table_name=intermediate_result' ],
