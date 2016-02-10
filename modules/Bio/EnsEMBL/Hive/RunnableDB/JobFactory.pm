@@ -224,6 +224,8 @@ sub _get_rows_from_query {
     }
     $sth->finish();
 
+    $self->data_dbc()->disconnect_if_idle();
+
     return (\@rows, \@column_names_from_data);
 }
 

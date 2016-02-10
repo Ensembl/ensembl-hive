@@ -180,6 +180,8 @@ sub get_row_count {
     my ($row_count) = $sth->fetchrow_array();
     $sth->finish;
 
+    $dbc->disconnect_if_idle();
+
     return $row_count;
 }
 
