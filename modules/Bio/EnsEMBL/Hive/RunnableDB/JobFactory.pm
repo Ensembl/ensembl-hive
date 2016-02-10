@@ -75,6 +75,8 @@ sub param_defaults {
         'inputcmd'          => undef,
 
         'fan_branch_code'   => 2,
+
+        'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
     };
 }
 
@@ -134,7 +136,7 @@ sub run {
               $inputlist    ? $self->_get_rows_from_list(  $inputlist  )
             : $inputquery   ? $self->_get_rows_from_query( $inputquery )
             : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , $delimiter, $parse_column_names )
-            : $inputcmd     ? $self->_get_rows_from_open( "$inputcmd |", $delimiter, $parse_column_names )
+            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '')."$inputcmd |", $delimiter, $parse_column_names )
             : die "range of values should be defined by setting 'inputlist', 'inputquery', 'inputfile' or 'inputcmd'";
 
     if( $column_names_from_data                                             # column data is available
