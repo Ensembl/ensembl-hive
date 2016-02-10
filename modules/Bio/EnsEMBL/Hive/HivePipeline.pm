@@ -79,7 +79,7 @@ sub find_by_query {
             $object = $self->collection_of($object_type)->find_one_by( %$query_params );
         }
 
-        return $object || throw("Could not find an '$object_type' object from query ".stringify($query_params));
+        return $object || throw("Could not find an '$object_type' object from query ".stringify($query_params)." in ".$self->display_name);
 
     } else {
         throw("Could not find or guess the object_type from the query ".stringify($query_params)." , so could not find the object");
