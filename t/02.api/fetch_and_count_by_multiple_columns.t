@@ -35,7 +35,7 @@ my $dir = tempdir CLEANUP => 1;
 
 my $pipeline_url      = "sqlite:///${dir}/ehive_test_pipeline_db";
 
-my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+my $url         = init_pipeline('LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
 my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
     -url                        => $url,

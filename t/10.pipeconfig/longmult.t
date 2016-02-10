@@ -41,7 +41,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
 warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
     foreach my $pipeline_url (@pipeline_urls) {
-        my $url         = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+        my $url         = init_pipeline('LongMult::PipeConfig::'.$long_mult_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                        => $url,
