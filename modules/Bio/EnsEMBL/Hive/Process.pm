@@ -621,8 +621,7 @@ sub cleanup_worker_temp_directory {
 
     my $tmp_dir = $self->worker_temp_directory_name();
     if(-e $tmp_dir) {
-        my $cmd = "rm -r $tmp_dir";
-        system($cmd);
+        system('rm', '-r', $tmp_dir);
     }
 }
 
