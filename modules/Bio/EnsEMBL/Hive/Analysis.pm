@@ -215,6 +215,29 @@ sub stats {
 }
 
 
+# --------------------------------- dispatch the following calls directly to our Stats: ---------------------------------------
+
+sub status {
+    my $self = shift @_;
+
+    return $self->stats->status(@_);
+}
+
+sub batch_size {
+    my $self = shift @_;
+
+    return $self->stats->batch_size(@_);
+}
+
+sub hive_capacity {
+    my $self = shift @_;
+
+    return $self->stats->hive_capacity(@_);
+}
+
+# ------------------------------------------------------------------------------------------------------------------------------
+
+
 sub jobs_collection {
     my $self = shift @_;
 
