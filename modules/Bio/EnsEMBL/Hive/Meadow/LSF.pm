@@ -272,6 +272,8 @@ sub parse_report_source_line {
         }
     }
     close $bacct_fh;
+    my $exit = $? >> 8;
+    die "Could not read from '$bacct_source_line'. Received the error $exit\n" if $exit;
 
     return \%report_entry;
 }
