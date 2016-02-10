@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::RunnableDB::GCPct::CalcOverallPercentage
+    GCPct::RunnableDB::CalcOverallPercentage
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-    'GCPct::CalcOverallPercentage' is the final step of the pipeline. It sums up the GC and AT counts from all of the chunked subsequences,
+    'GCPct::RunnableDB::CalcOverallPercentage' is the final step of the pipeline. It sums up the GC and AT counts from all of the chunked subsequences,
     then divides the GC count by the total nucleotide count to determine %GC
 
 =head1 LICENSE
@@ -34,7 +34,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::RunnableDB::GCPct::CalcOverallPercentage;
+package GCPct::RunnableDB::CalcOverallPercentage;
 
 use strict;
 use warnings;

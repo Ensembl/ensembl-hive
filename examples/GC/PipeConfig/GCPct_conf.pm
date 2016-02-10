@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::GCPct_conf;
+    GCPct::PipeConfig::GCPct_conf;
 
 =head1 SYNOPSIS
 
@@ -67,7 +67,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::GCPct_conf;
+package GCPct::PipeConfig::GCPct_conf;
 
 use strict;
 use warnings;
@@ -153,7 +153,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'count_atgc',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::GCPct::CountATGC',
+            -module     => 'GCPct::RunnableDB::CountATGC',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [ ':////accu?at_count=[]',
@@ -162,7 +162,7 @@ sub pipeline_analyses {
         },
         
         {   -logic_name => 'calc_overall_percentage',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::GCPct::CalcOverallPercentage',
+            -module     => 'GCPct::RunnableDB::CalcOverallPercentage',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
                 1 => [ ':////final_result', 'last' ],
