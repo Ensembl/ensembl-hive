@@ -37,6 +37,8 @@
 
         param('input_format');      # The format of the input file (defaults to "fasta")
 
+        param('output_format');     # The format of the output file (defaults to the same as param('input_format'))
+
         param('output_dir');        # Where to create the chunks (defaults to the current directory)
 
 =head1 LICENSE
@@ -89,6 +91,7 @@ sub param_defaults {
         'hash_directories'  => 0,
         'input_format'      => 'fasta',
         'output_dir'        => '',
+        'output_format'     => '#input_format#',
     };
 }
 
@@ -159,7 +162,7 @@ sub write_output {
         mkpath($output_dir);
         $chunk_name = File::Spec->catfile($output_dir, $chunk_name);
     }
-    my $chunk_seqio  = $input_seqio->new(-file => '>'.$chunk_name);
+    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => $self->param_required('output_format'));
     
     while (my $seq_object = $input_seqio->next_seq) {
 
@@ -198,7 +201,7 @@ sub write_output {
                 mkpath($dir_tree);
                 $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
             }
-            $chunk_seqio    = $input_seqio->new(-file => '>'.$chunk_name);
+            $chunk_seqio    = $chunk_seqio->new(-file => '>'.$chunk_name);
         }
     }
 

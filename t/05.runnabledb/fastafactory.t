@@ -121,8 +121,8 @@ my $expected_properties = {
     'test2_2.fa' => [ 1313 ],
     'test2_3.fa' => [ 1475 ],
 
-    'inside/test3_1.fa' => [ 1975 ],
-    'inside/test3_2.fa' => [ 1475 ],
+    'inside/test3_1.embl' => [ 3067 ],
+    'inside/test3_2.embl' => [ 2142 ],
 
     'test4_1.fa' => [ 402 ],
     'test4_2.fa' => [ 386 ],
@@ -149,8 +149,9 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
         'inputfile'         => $inputfile,
         'max_chunk_length'  => 1000, ## smaller than two combined sequences
         'output_prefix'     => './test3_',
-        'output_suffix'     => '.fa',
+        'output_suffix'     => '.embl',
         'output_dir'        => 'inside',
+        'output_format'     => 'embl',
     },
     [
         [
@@ -159,7 +160,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
                 'chunk_number' => 1,
                 'chunk_length' => 1920,
                 'chunk_size' => 2,
-                'chunk_name' => 'inside/test3_1.fa'
+                'chunk_name' => 'inside/test3_1.embl'
             },
             2
         ],
@@ -169,14 +170,14 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
                 'chunk_number' => 2,
                 'chunk_length' => 1440,
                 'chunk_size' => 1,
-                'chunk_name' => 'inside/test3_2.fa'
+                'chunk_name' => 'inside/test3_2.embl'
             },
             2
         ],
     ],
 );
 
-@all_files = glob('inside/test3_*.fa');
+@all_files = glob('inside/test3_*.embl');
 is(@all_files, 2, 'correct number of output files - test 3');
 # diag "@all_files";
 
