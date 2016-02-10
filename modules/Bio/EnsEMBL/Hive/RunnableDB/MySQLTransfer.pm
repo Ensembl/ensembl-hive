@@ -84,7 +84,7 @@ sub fetch_input {
     if($src_db_conn eq $dest_db_conn) {
         die "Please either specify 'src_db_conn' or 'dest_db_conn' or make them different\n";
     }
-    my $table = $self->param('table') or die "Please specify 'table' parameter\n";
+    my $table = $self->param_required('table');
     $self->input_job->transient_error(1);
 
     my $src_dbc     = $src_db_conn  ? go_figure_dbc( $src_db_conn )  : $self->data_dbc;
@@ -94,10 +94,11 @@ sub fetch_input {
     $self->param('dest_dbc',        $dest_dbc);
 
     my $where = $self->param('where');
+    my $mode  = $self->param_required('mode');
 
     $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 
-    if($self->param('mode') ne 'overwrite') {
+    if($mode ne 'overwrite') {
         $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
 }
@@ -121,6 +122,7 @@ sub run {
     my $filter_cmd  = $self->param('filter_cmd');
 
     my $mode_options = { 'overwrite' => [], 'topup' => ['--no-create-info'], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
+    die "Mode '$mode' not recognized. Should be 'overwrite', 'topup' or 'insertignore'\n" unless $mode_options;
 
     # Must be joined because of the pipe
     my $cmd = join(' ',
