@@ -14,7 +14,7 @@
 # limitations under the License.
 
 
-export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
+export PERL5LIB=$PWD/bioperl-live:$PWD/modules
 
     # for the t/10.pipeconfig/longmult.t test
 export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db pgsql://postgres@127.0.0.1/ehive_test_pipeline_db sqlite:///ehive_test_pipeline_db'
