@@ -207,7 +207,7 @@ my $original = chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
-        'inputcmd'      => 'find -iname "patch_2012-09-*" | sort',
+        'inputcmd'      => 'find . -iname "patch_2012-09-*" | sort',
         'step'          => 2,
     },
     [
