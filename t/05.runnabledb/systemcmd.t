@@ -49,7 +49,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     [
         [
             'WARNING',
-            qr/'ls ${ptdne}' resulted in an error code=2\nstderr is: ls: cannot access ${ptdne}: No such file or directory/,
+            qr/'ls ${ptdne}' resulted in an error code=\d+\nstderr is: ls: .+: No such file or directory/,
             1
         ],
     ],
