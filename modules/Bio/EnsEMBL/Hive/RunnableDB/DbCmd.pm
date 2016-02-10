@@ -172,11 +172,6 @@ sub fetch_input {
     } else {
         $self->param('cmd', \@cmd);
     }
-
-    if ($self->debug) {
-        use Data::Dumper;
-        warn "db_cmd command: ", Dumper($self->param('cmd'));
-    }
 }
 
 
