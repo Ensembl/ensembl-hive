@@ -174,6 +174,30 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
 
         $pattern=~s/\%/.*/g;
         $filtered_elements = $self->find_all_by( 'name', sub { return $_[0]=~/^${pattern}$/; } );
+
+    } elsif( $pattern=~/^(\w+)==(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, $2 );
+
+    } elsif( $pattern=~/^(\w+)!=(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] ne $2; } );
+
+    } elsif( $pattern=~/^(\w+)<=(.*)$/) {       # NB: the order is important - all digraphs should be parsed before their proper prefixes
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] <= $2; } );
+
+    } elsif( $pattern=~/^(\w+)>=(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] >= $2; } );
+
+    } elsif( $pattern=~/^(\w+)<(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] < $2; } );
+
+    } elsif( $pattern=~/^(\w+)>(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] > $2; } );
     }
 
     return $filtered_elements;
