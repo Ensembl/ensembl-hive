@@ -73,13 +73,13 @@ $result = $collection->find_all_by('foo', undef);
 #is(@$result, 3, 'sensible');
 
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [
-    { 'dbID' => 2, 'name' => 'beta' },
-    { 'dbID' => 1, 'name' => 'alpha' },
-    { 'dbID' => 7, 'name' => 'eta' },
-    { 'dbID' => 3, 'name' => 'gamma' },
-    { 'dbID' => 4, 'name' => 'delta' },
-    { 'dbID' => 5, 'name' => 'epsilon' },
-    { 'dbID' => 6, 'name' => 'zeta' },
+    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 },
+    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 },
+    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 },
+    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',    'size' =>  1 },
+    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 },
+    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 },
+    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 },
 ] );
 
 my $odd_elements = $collection->find_all_by( 'dbID', sub { return $_[0] % 2; } );
@@ -108,5 +108,11 @@ is(@$mix, 2, 'find_all_by_pattern - combined patterns (no overlap)');
 
 $mix = $collection->find_all_by_pattern( 'gamma+3' );
 is(@$mix, 1, 'find_all_by_pattern - combined patterns (overlap)');
+
+$mix = $collection->find_all_by_pattern( 'colour==yellow' );
+is(@$mix, 2, 'find_all_by_pattern - selecting by a fields equality');
+
+$mix = $collection->find_all_by_pattern( 'size<10,colour==orange' );
+is(@$mix, 5, 'find_all_by_pattern - selecting by a fields inequality');
 
 done_testing();
