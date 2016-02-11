@@ -7,7 +7,7 @@
 =head1 SYNOPSIS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::GCPct_conf pipeline configuration file
-    to understand how this particular example pipeline is configured and ran.
+    to understand how this particular example pipeline is configured and run.
 
 =head1 DESCRIPTION
 
@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -61,31 +61,26 @@ sub param_defaults {
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
-                  Here all relevant partial products are fetched from the 'partial_product' accumulator and stored in a hash for future use.
 
-    param('a_multiplier'):  The first long number (a string of digits - doesn't have to fit a register).
-
-    param('b_multiplier'):  The second long number (also a string of digits).
-
-    param('take_time'):     How much time to spend sleeping (seconds).
+    There are no hard and fast rules on whether to fetch parameters in fetch_input(), or to wait until run() to fetch them.
+    In general, fetch_input() is a place to validate parameter existance and values for errors before the worker get set into RUN state
+    from the FETCH_INPUT state. In this case, since it's a simple computation, we don't do anything in fetch_input() and instead just
+    handle the parameters in run()
 
 =cut
 
-sub fetch_input {   # fetch all the (relevant) precomputed products
+sub fetch_input {   
     my $self = shift @_;
-
-    # my $at_count = $self->param('at_count');
-    # my $gc_count = $self->param('gc_count');
 }
 
 =head2 run
 
-    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  The only thing we do here is make a call to the function that will add together the intermediate results.
+    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job.
+                  Here, we fetch AT and GC counts, then call a subroutine to calculate %GC from the counts.
 
 =cut
 
-sub run {   # call the function that will compute the stuff
+sub run { 
     my $self = shift @_;
 
     my $at_count = $self->param('at_count');
@@ -117,7 +112,7 @@ sub write_output {  # store and dataflow
 sub _calc_pct {
   my ($self, $at_count, $gc_count) = @_;
 
-  # as Perl doesn't have reduce, just map...
+  # using reduce from List::Util
   my $at_sum = reduce {$a + $b} @{$at_count};
   my $gc_sum = reduce {$a + $b} @{$gc_count};
 
