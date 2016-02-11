@@ -7,10 +7,10 @@
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -password <mypass>
+    init_pipeline.pl GCPct::PipeConfig::GCPct_conf -password <mypass>
 
         # optionally also seed it with your specific values:
-    seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "sequence" => "gcpct_example.fa" }'
+    seed_pipeline.pl -url $EHIVE_URL -logic_name chunk_sequences -input_id '{ "sequence" => "gcpct_example.fa" }'
 
         # run the pipeline:
     beekeeper.pl -url $EHIVE_URL -loop
@@ -78,7 +78,8 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive datab
 =head2 pipeline_create_commands
 
     Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates two pipeline-specific tables used by Runnables to communicate.
+                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates a pipeline-specific table called 'final_result'
+                  to store the results of the computation.
 
 =cut
 
@@ -87,7 +88,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
-            # additional tables needed for long multiplication pipeline's operation:
+            # additional table to store the end result of the computation:
         $self->db_cmd('CREATE TABLE final_result (inputfile varchar(255) NOT NULL, result varchar(255) NOT NULL, PRIMARY KEY (inputfile))'),
     ];
 }
