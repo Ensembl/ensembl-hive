@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    LongMult::PipeConfig::LongMultSt_pyconf;
+    Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_pyconf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl LongMult::PipeConfig::LongMultSt_pyconf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_pyconf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -62,7 +62,7 @@
 =cut
 
 
-package LongMult::PipeConfig::LongMultSt_pyconf;
+package Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_pyconf;
 
 use strict;
 use warnings;

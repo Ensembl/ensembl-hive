@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    LongMult::RunnableDB::DigitFactory
+    Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-    'LongMult::RunnableDB::DigitFactory' is the first step of the LongMult example pipeline that multiplies two long numbers.
+    'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory' is the first step of the LongMult example pipeline that multiplies two long numbers.
 
     It takes apart the second multiplier and creates several 'LongMult::PartMultiply' jobs
     that correspond to the different digits of the second multiplier.
@@ -39,7 +39,7 @@
 =cut
 
 
-package LongMult::RunnableDB::DigitFactory;
+package Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory;
 
 use strict;
 use warnings;

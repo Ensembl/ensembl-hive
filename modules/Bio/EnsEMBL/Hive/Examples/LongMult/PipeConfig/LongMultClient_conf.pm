@@ -2,15 +2,15 @@
 
 =head1 NAME
 
-    LongMult::PipeConfig::LongMultClient_conf;
+    Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf;
 
 =head1 SYNOPSIS
 
        # initialize the "server" database first and note its URL - you will need it to initialize the "client" later:
-    init_pipeline.pl LongMult::PipeConfig::LongMultServer_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf -password <mypass>
 
        # initialize the "client" database by plugging the server's URL:
-    init_pipeline.pl LongMult::PipeConfig::LongMultClient_conf -password <mypass> -server_url $SERVER_HIVE_URL
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf -password <mypass> -server_url $SERVER_HIVE_URL
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $CLIENT_HIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -57,7 +57,7 @@
 =cut
 
 
-package LongMult::PipeConfig::LongMultClient_conf;
+package Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf;
 
 use strict;
 use warnings;
@@ -106,7 +106,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'take_b_apart',
-            -module     => 'LongMult::RunnableDB::DigitFactory',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
@@ -129,7 +129,7 @@ sub pipeline_analyses {
         #
 
         {   -logic_name => 'add_together',
-            -module     => 'LongMult::RunnableDB::AddTogether',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether',
             -parameters => {
                 'intermediate_table_url' => $self->o('server_url').'?table_name=intermediate_result',
             },

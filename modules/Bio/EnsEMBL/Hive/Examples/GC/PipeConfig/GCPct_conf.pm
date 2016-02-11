@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    GC::PipeConfig::GCPct_conf;
+    Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl GC::PipeConfig::GCPct_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name chunk_sequences -input_id '{ "sequence" => "gcpct_example.fa" }'
@@ -67,7 +67,7 @@
 =cut
 
 
-package GC::PipeConfig::GCPct_conf;
+package Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf;
 
 use strict;
 use warnings;
@@ -154,7 +154,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'count_atgc',
-            -module     => 'GC::RunnableDB::CountATGC',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [ ':////accu?at_count=[]',
@@ -163,7 +163,7 @@ sub pipeline_analyses {
         },
         
         {   -logic_name => 'calc_overall_percentage',
-            -module     => 'GC::RunnableDB::CalcOverallPercentage',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
                 1 => [ ':////final_result', 'last' ],

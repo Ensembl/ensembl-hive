@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    GC::RunnableDB::CountATGC
+    Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC
 
 =head1 SYNOPSIS
 
@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-    'GC::RunnableDB::CountATGC' determines AT and GC frequencies in sequence(s) in a .fasta file, then stores
+    'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC' determines AT and GC frequencies in sequence(s) in a .fasta file, then stores
     those frequencies in an accumulator
 
 =head1 LICENSE
@@ -34,7 +34,7 @@
 =cut
 
 
-package GC::RunnableDB::CountATGC;
+package Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC;
 
 use strict;
 use warnings;

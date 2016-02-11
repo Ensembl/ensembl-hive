@@ -5,7 +5,7 @@
 #
 #   Please have a look at the pipeline configuration file
 #
-#       ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm
+#       ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMult_conf.pm
 #
 #   which is used to load the Long Multiplication pipeline either in "analysis control" or "semaphore job control" mode.
 #

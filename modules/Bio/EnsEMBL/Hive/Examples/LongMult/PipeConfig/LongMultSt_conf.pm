@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    LongMult::PipeConfig::LongMultSt_conf;
+    Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_conf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl LongMult::PipeConfig::LongMult_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -62,7 +62,7 @@
 =cut
 
 
-package LongMult::PipeConfig::LongMultSt_conf;
+package Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_conf;
 
 use strict;
 use warnings;
@@ -138,7 +138,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'take_b_apart',
-            -module     => 'LongMult::RunnableDB::DigitFactory',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
@@ -154,7 +154,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'part_multiply',
-            -module     => 'LongMult::RunnableDB::PartMultiply',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => [ '?accu_name=partial_product&accu_address={digit}' ],
@@ -162,7 +162,7 @@ sub pipeline_analyses {
         },
         
         {   -logic_name => 'add_together',
-            -module     => 'LongMult::RunnableDB::AddTogether',
+            -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether',
 #           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
                 1 => [ '?table_name=final_result', 'last' ],
