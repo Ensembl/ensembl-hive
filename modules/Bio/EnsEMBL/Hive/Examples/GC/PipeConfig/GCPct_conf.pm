@@ -75,6 +75,15 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
+
+sub default_options {
+  my ($self) = @_;
+  return {
+	  %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
+	  'inputfile' => 'input_fasta.fa',
+	 };
+}
+
 =head2 pipeline_create_commands
 
     Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
@@ -142,7 +151,7 @@ sub pipeline_analyses {
         {   -logic_name => 'chunk_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
             -input_ids => [
-                { 'inputfile' => 'input_fasta.fa', 
+                { 'inputfile' => $self->o('inputfile'), 
 		  'max_chunk_length' => '1000000',
 		  'output_prefix' => 'gcpct_input_chunk_',
 		},
