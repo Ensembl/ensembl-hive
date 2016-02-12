@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::MemlimitTest_conf
+    Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::MemlimitTest_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::MemlimitTest_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::MemlimitTest_conf -password <your_password>
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::MemlimitTest_conf;
+package Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::MemlimitTest_conf;
 
 use strict;
 use warnings;
@@ -78,7 +78,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'failure_test',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::FailureTest',
+            -module        => 'Bio::EnsEMBL::Hive::Examples::FailureTest::RunnableDB::FailureTest',
             -parameters => {
                 'time_RUN'      => 30,
             },

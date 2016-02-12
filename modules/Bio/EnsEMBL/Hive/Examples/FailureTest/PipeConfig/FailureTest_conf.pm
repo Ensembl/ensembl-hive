@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf
+    Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf -password <your_password>
 
     init_pipeline.pl FailureTest_conf.pm -host=localhost -password <your_password> -job_count 100 -failure_rate 3
 
@@ -40,7 +40,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::FailureTest_conf;
+package Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf;
 
 use strict;
 use warnings;
@@ -102,7 +102,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'failure_test',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::FailureTest',
+            -module        => 'Bio::EnsEMBL::Hive::Examples::FailureTest::RunnableDB::FailureTest',
             -parameters    => {
                 'divisor'       => $self->o('failure_rate'),
                 'state'         => $self->o('state'),
