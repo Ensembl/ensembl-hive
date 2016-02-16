@@ -40,6 +40,15 @@ Under the hood:
 
 * + numerous bug fixes, many of which have been ported to the previous version branches.
 
+Example pipelines and runnables:
+* A new example pipeline that calculates %GC for a collection of sequences has been created. It is configured using the 'GCPct_conf' PipeConfig.
+* Example Runnables and PipeConfigs are now grouped together under Bio/EnsEMBL/Hive/Examples.
+	** DbCmd contains the TableDumperZipper_conf PipeConfig, which illustrates usage of the DbCmd Runnable
+	** FailureTest contains the FailureTest_conf and MemlimitTest_conf PipeConfigs, and the FailureTest runnable, which illustrate eHive error handling
+	** GC contains the GCPct_conf PipeConfig and two new Runnables, CalcOverallPercentage and CountATGC, which together form a simple example pipeline illustrating the eHive fan and accumulator features.
+	** JobFactory contains the ApplyToDatabases_conf PipeConfig, illustrating usage of the JobFactory and flowing output directly to a database as SQL commands
+	** LongMult contains the long multiplication example pipeline. There are several PipeConfigs that implement this pipeline using different eHive features, such as the parameter stack, the new Input_Plus mechanism, and client-server interactions.
+	** SystemCmd contains four PipeConfigs illustrating different pipeline configurations, all of which utilize SystemCmd.
 
 Version 2.3     - Spring 2015 edition
 ===========
