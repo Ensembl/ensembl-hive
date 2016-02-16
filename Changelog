@@ -13,6 +13,7 @@ Main highlights of the release:
         It also allows to refer to the absoulte/relative SQLite filepath in full. Some compatibility sacrifices had to be made,
         but in version/2.4 the old parsing way has priority over the new one, with a warning to encourage switching to the new format.
 NB: see these three features in action in the Long-multiplication pipelines
+All the example pipelines have been grouped together under a new directory: Bio/EnsEMBL/Hive/Examples
 
 Universal Runnables:
 * JobFactory: non-contiguous split option has been added for those who have to use minibatching
@@ -44,11 +45,11 @@ Example pipelines and runnables:
 * A new example pipeline that calculates %GC for a collection of sequences has been created. It is configured using the 'GCPct_conf' PipeConfig.
 * Example Runnables and PipeConfigs are now grouped together under Bio/EnsEMBL/Hive/Examples.
 	** DbCmd contains the TableDumperZipper_conf PipeConfig, which illustrates usage of the DbCmd Runnable
-	** FailureTest contains the FailureTest_conf and MemlimitTest_conf PipeConfigs, and the FailureTest runnable, which illustrate eHive error handling
+	** FailureTest contains the FailureTest_conf and MemlimitTest_conf PipeConfigs, along with the FailureTest runnable, which illustrate eHive error handling
 	** GC contains the GCPct_conf PipeConfig and two new Runnables, CalcOverallPercentage and CountATGC, which together form a simple example pipeline illustrating the eHive fan and accumulator features.
-	** JobFactory contains the ApplyToDatabases_conf PipeConfig, illustrating usage of the JobFactory and flowing output directly to a database as SQL commands
+	** Factory contains three PipeConfigs illustrating the use of a 'factory' runnable to create fans of jobs. CompressFiles_conf, RunListOfCommandsOnFarm_conf, and ApplyToDatabases_conf use the JobFactory runnable to create the fan, whilst FastaFactory_conf illustrates the use of the more specialized FastaFactory runnable.
 	** LongMult contains the long multiplication example pipeline. There are several PipeConfigs that implement this pipeline using different eHive features, such as the parameter stack, the new Input_Plus mechanism, and client-server interactions.
-	** SystemCmd contains four PipeConfigs illustrating different pipeline configurations, all of which utilize SystemCmd.
+	** SystemCmd contains AnyCommand_conf, a very simple PipeConfig that runs a single command using SystemCmd.
 
 Version 2.3     - Spring 2015 edition
 ===========
