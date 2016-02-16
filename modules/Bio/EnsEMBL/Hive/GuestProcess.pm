@@ -526,8 +526,8 @@ sub life_cycle {
             # They are coded as JSON::true and JSON::false which have
             # different meanings in text / number contexts
             $job->autoflow($job->autoflow and $content->{job}->{autoflow});
-            $job->lethal_for_worker($content->{job}->{lethal_for_worker}+0);
-            $job->transient_error($content->{job}->{transient_error}+0);
+            $job->lethal_for_worker($content->{job}->{lethal_for_worker}?1:0);
+            $job->transient_error($content->{job}->{transient_error}?1:0);
             $job->{_param_hash} = $content->{params}->{substituted};
             $job->{_unsubstituted_param_hash} = $content->{params}->{unsubstituted};
 
