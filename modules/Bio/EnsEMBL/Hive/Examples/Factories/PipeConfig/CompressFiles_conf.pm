@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::CompressFiles_conf
+    Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::CompressFiles_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::CompressFiles_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::CompressFiles_conf -password <your_password>
 
     seed_pipeline.pl -url <url> -logic_name find_files -input_id "{ 'directory' => 'dumps' }"
 
@@ -40,7 +40,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::CompressFiles_conf;
+package Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::CompressFiles_conf;
 
 use strict;
 use warnings;

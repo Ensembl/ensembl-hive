@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::JobFactory::PipeConfig::ApplyToDatabases_conf
+    Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ApplyToDatabases_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::JobFactory::PipeConfig::ApplyToDatabases_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ApplyToDatabases_conf -password <your_password>
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::JobFactory::PipeConfig::ApplyToDatabases_conf -password <your_password> -only_databases '%'
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ApplyToDatabases_conf -password <your_password> -only_databases '%'
 
 =head1 DESCRIPTION  
 
@@ -40,7 +40,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::Examples::JobFactory::PipeConfig::ApplyToDatabases_conf;
+package Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ApplyToDatabases_conf;
 
 use strict;
 use warnings;

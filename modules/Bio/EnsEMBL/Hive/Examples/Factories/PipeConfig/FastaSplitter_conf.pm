@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::FastaSplitter_conf
+    Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::FastaSplitter_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::FastaSplitter_conf -inputfile reference.fasta -chunks_dir reference_chunks
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::FastaSplitter_conf -inputfile reference.fasta -chunks_dir reference_chunks
 
 =head1 LICENSE
 
@@ -28,7 +28,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::FastaSplitter_conf;
+package Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::FastaSplitter_conf;
 
 use strict;
 use warnings;
