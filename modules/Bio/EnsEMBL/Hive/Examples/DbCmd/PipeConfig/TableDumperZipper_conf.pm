@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf
+    Bio::EnsEMBL::Hive::Examples::DbCmd::PipeConfig::TableDumperZipper_conf
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::TableDumperZipper_conf;
+package Bio::EnsEMBL::Hive::Examples::DbCmd::PipeConfig::TableDumperZipper_conf;
 
 use strict;
 use warnings;

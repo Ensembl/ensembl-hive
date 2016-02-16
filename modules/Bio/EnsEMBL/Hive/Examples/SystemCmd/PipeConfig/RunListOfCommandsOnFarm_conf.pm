@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::RunListOfCommandsOnFarm_conf
+    Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::RunListOfCommandsOnFarm_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::RunListOfCommandsOnFarm_conf -password <your_password> -inputfile file_with_cmds.txt
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::RunListOfCommandsOnFarm_conf -password <your_password> -inputfile file_with_cmds.txt
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::RunListOfCommandsOnFarm_conf;
+package Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::RunListOfCommandsOnFarm_conf;
 
 use strict;
 use warnings;

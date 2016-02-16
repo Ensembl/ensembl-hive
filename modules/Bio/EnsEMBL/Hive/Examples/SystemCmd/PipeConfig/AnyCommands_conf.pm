@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::AnyCommands_conf
+    Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::AnyCommands_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_conf -password <your_password>
 
     seed_pipeline.pl -url $HIVE_URL -logic_name perform_cmd -input_id "{'cmd' => 'gzip pdfs/RondoAllaTurca_Mozart_Am.pdf; sleep 5'}"
 
@@ -41,7 +41,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::AnyCommands_conf;
+package Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_conf;
 
 use strict;
 use warnings;
