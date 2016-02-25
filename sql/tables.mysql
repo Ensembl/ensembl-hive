@@ -534,14 +534,17 @@ CREATE TABLE role (
 @colour #F4D20C
 
 @desc   A table with post-mortem resource usage statistics of a Worker.
+	This table is not automatically populated: you first need to run
+	load_resource_usage.pl. Note that some meadows (like LOCAL) do not
+	support post-mortem inspection of resource usage
 
 @column          worker_id  links to the worker table
 @column        exit_status  meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)
 @column           mem_megs  how much memory the Worker process used
 @column          swap_megs  how much swap the Worker process used
 @column        pending_sec  time spent by the process in the queue before it became a Worker
-@column            cpu_sec  cpu time used by the Worker process
-@column       lifespan_sec  walltime used by the Worker process
+@column            cpu_sec  cpu time (in seconds) used by the Worker process. It is often lower than the walltime because of time spent in I/O waits, but it can also be higher if the process is multi-threaded
+@column       lifespan_sec  walltime (in seconds) used by the Worker process. It is often higher than the sum of its jobs' "runtime_msec" because of the overhead from the Worker itself
 @column   exception_status  meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'
 */
 
