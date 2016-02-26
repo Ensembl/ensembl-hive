@@ -116,7 +116,7 @@ sub write_output {  # but this time we have something to store
     my $self = shift @_;
 
     $self->dataflow_output_id( {
-				'at_count'   => $self->param('at_count'),
+				'at_count' => $self->param('at_count'),
 				'gc_count' => $self->param('gc_count'),
     }, 1);
 }

@@ -40,7 +40,7 @@ package Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage;
 use strict;
 use warnings;
 
-use List::Util qw(reduce);
+use List::Util qw(sum);
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -53,9 +53,6 @@ use base ('Bio::EnsEMBL::Hive::Process');
 
 sub param_defaults {
 
-    return {
-        'take_time'                 => 0,       # how much time run() method will spend in sleeping state
-    };
 }
 
 
@@ -84,8 +81,8 @@ sub fetch_input {
 sub run { 
     my $self = shift @_;
 
-    my $at_count = $self->param('at_count');
-    my $gc_count = $self->param('gc_count');
+    my $at_count = $self->param_required('at_count');
+    my $gc_count = $self->param_required('gc_count');
 
     my $percentage = $self->_calc_pct($at_count, $gc_count);
 
@@ -127,8 +124,8 @@ sub _calc_pct {
   my ($self, $at_count, $gc_count) = @_;
 
   # using reduce from List::Util
-  my $at_sum = reduce {$a + $b} @{$at_count};
-  my $gc_sum = reduce {$a + $b} @{$gc_count};
+  my $at_sum = sum @{$at_count};
+  my $gc_sum = sum @{$gc_count};
 
   my $pct_gc = 0;
   if (($at_sum + $gc_sum) != 0) {

@@ -78,13 +78,34 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
+=head2 default_options
 
+    Description : Implements the default_options() interface method of  Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
+    that sets default parameter values. These values can be overridden when running the init_pipeline.pl script.
+    Here, we set defaults for:
+    * input_format,
+    * inputfile (the name of the input file, here set to a sample file included with the eHive distribution)
+    * output_dir (directory to store the files containing portions of the original file)
+    * output_prefix (common prefix for the files containing portions of the original file)
+    * output_suffix (common suffix for the files containing portions of the original file)
+    * max_chunk_length (amount of sequence, in bases, to include in a single sub-file. 
+      See the documentation for Bio::EnsEMBL::Hive::RunnableDB::FastaFactory for more details)
+
+=cut
 
 sub default_options {
   my ($self) = @_;
+
   return {
 	  %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
-	  'inputfile' => 'input_fasta.fa',
+	  'input_format' => 'FASTA',
+	  # init_pipeline makes a best guess of the hive root directory and stores
+          # it in EHIVE_ROOT_DIR, if it is not already set in the shell
+	  'inputfile' => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',
+	  'output_dir' => '.',
+	  'output_prefix' => 'gcpct_pipeline_chunk_',
+	  'output_suffix' => '.fa',
+	  'max_chunk_length' => 100
 	 };
 }
 
@@ -101,8 +122,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
-            # additional table to store the end result of the computation:
-        $self->db_cmd('CREATE TABLE final_result (inputfile varchar(255) NOT NULL, result varchar(255) NOT NULL, PRIMARY KEY (inputfile))'),
+        # create an additional table to store the end result of the computation:
+        $self->db_cmd('CREATE TABLE final_result (inputfile VARCHAR(255) NOT NULL, result DOUBLE NOT NULL, PRIMARY KEY (inputfile))'),
     ];
 }
 
@@ -120,15 +141,11 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
+        # Because this is an example pipeline, we provide a way to slow down execution so
+        # that it can be more easily observed as it runs. The 'take_time' parameter,
+        # specifies how much additional time a step should take before setting itself
+        # to "DONE."
         'take_time'     => 1,
-    };
-}
-
-
-sub hive_meta_table {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
     };
 }
 
@@ -155,9 +172,12 @@ sub pipeline_analyses {
         {   -logic_name => 'chunk_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
             -input_ids => [
-                { 'inputfile' => $self->o('inputfile'), 
-		  'max_chunk_length' => '1000000',
-		  'output_prefix' => 'gcpct_input_chunk_',
+                { 'input_format' => $self->o('input_format'),
+		  'inputfile' => $self->o('inputfile'), 
+		  'output_dir' => $self->o('output_dir'),
+		  'output_prefix' => $self->o('output_prefix'),
+		  'output_suffix' => $self->o('output_suffix'),
+		  'max_chunk_length' => $self->o('max_chunk_length'),
 		},
             ],
             -flow_into => {
@@ -170,23 +190,18 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?at_count=[]',
-		       ':////accu?gc_count=[]'],
+ 			   1 => ['?accu_name=at_count&accu_address=[]', 
+				 '?accu_name=gc_count&accu_address=[]']
             },
         },
         
         {   -logic_name => 'calc_overall_percentage',
             -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage',
-#           -analysis_capacity  =>  0,  # this is a way to temporarily block a given analysis
             -flow_into => {
-                1 => [ ':////final_result', 'last' ],
+                1 => [ '?table_name=final_result' ],
             },
         },
-
-        {   -logic_name => 'last',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        }
-    ];
+     ];
 }
 
 1;
