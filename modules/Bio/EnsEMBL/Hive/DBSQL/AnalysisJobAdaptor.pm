@@ -266,8 +266,11 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         # NB: BOTH THE ORDER OF UPDATES AND EXACT WORDING IS ESSENTIAL FOR SYNCHRONOUS ATOMIC OPERATION,
         #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
         #
-    my $sql = qq{
-            UPDATE job SET status = CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END,
+    my $sql = "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "SET status = CAST(CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END AS job_status), "
+            : "SET status =      CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END, "
+        ).qq{
             semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
     };
@@ -565,13 +568,16 @@ sub release_and_age_job {
         #
         # FIXME: would it be possible to retain role_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
         #
-    $self->dbc->do( qq{
-        UPDATE job
-        SET status = CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END,
-            retry_count=retry_count+1,
-            runtime_msec=$runtime_msec
-        WHERE job_id=$job_id
-          AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+    $self->dbc->do( 
+        "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "SET status = CAST(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS job_status), "
+            : "SET status =      CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END, "
+         ).qq{
+               retry_count=retry_count+1,
+               runtime_msec=$runtime_msec
+         WHERE job_id=$job_id
+           AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
 
         # FIXME: move the decision making completely to the API side and so avoid the potential race condition.
@@ -641,10 +647,13 @@ sub reset_jobs_for_analysis_id {
             : '';
 
     my $sql = qq{
-           UPDATE job
+            UPDATE job
            SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
-               status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END
-           WHERE } . $analyses_filter .' '. $statuses_filter;
+        }. ( ($self->dbc->driver eq 'pgsql')
+            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
+            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        )." WHERE ".$analyses_filter
+        .' '. $statuses_filter;
 
     my $sth = $self->prepare($sql);
     $sth->execute();
@@ -684,12 +693,12 @@ sub balance_semaphores {
                          ) AS internal WHERE was<>should OR should=0
                      };
 
-    my $update_sql  = qq{
-        UPDATE job
-        SET semaphore_count=semaphore_count+? ,
-            status         = CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END
-        WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')
-    };
+    my $update_sql  = "UPDATE job SET "
+        ." semaphore_count=semaphore_count+? , "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
+            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        )." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);

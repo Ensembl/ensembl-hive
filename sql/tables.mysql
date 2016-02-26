@@ -343,7 +343,7 @@ CREATE TABLE job (
     param_id_stack          CHAR(64)    NOT NULL DEFAULT '',
     accu_id_stack           CHAR(64)    NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
-    status                  CHAR(32)    NOT NULL DEFAULT 'READY',   -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
+    status                  ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     when_completed          TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
     runtime_msec            INTEGER              DEFAULT NULL,
