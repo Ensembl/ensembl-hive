@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf;
+    Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf
 
 =head1 SYNOPSIS
 
@@ -25,31 +25,35 @@
     The setting. Let's assume we are given a nucleotide sequence and want to calculate what percentage of bases are G or C.
     The approach to this problem is quite simple: go through the sequence, tally up how many times a G or C occurs, then divide by the total number of bases in the sequence.
     Thinking a bit more about this problem, we see that it is very easy to split up into smaller subproblems. 
-    Each base is its own, independant entity, and they can be tallied in any order, or even simultaneously, without impacting the final result.
-    (As an aside, this problem falls into a class of problems that computer scientists call "embarrasingly parallell" or "pleasingly parallell",
+    Each base is its own, independent entity, and they can be tallied in any order, or even simultaneously, without impacting the final result.
+    (As an aside, this problem falls into a class of problems that computer scientists call "embarrassingly parallel" or "pleasingly parallel",
      as they are so easy to divide.)
-    We can take advantage of this and speed up the computation on longer sequences by splitting up the input sequence into smaller chunks, 
+    We can take advantage of this and speed up the computation on longer sequences by splitting up the input sequences into smaller chunks, 
     tallying Gs and Cs in those chunks in parallel, then adding up the individual results into a final total.
 
-    The %gc pipeline consists of three "analyses" (types of tasks):
-        chunk_sequences, 'count_atgc', and 'calc_overall_percentage' that we use to examplify various features of the Hive.
+    The %GC pipeline consists of three "analyses" (types of tasks):
+        'chunk_sequences', 'count_atgc', and 'calc_overall_percentage' that we use to exemplify various features of the Hive.
 
-        * A chunk_sequences job takes sequences in a .fasta format file and splits them
-          into smaller chunks. It creates a set of new .fasta format files to store these sequence chunks. It creates
-          one new job for each of the new .fasta files it creates. In this configuration file, we specify that each of these
+        * A chunk_sequences job takes sequences in a file and splits them
+          into smaller chunks. It creates a set of new files to store these sequence chunks. It creates
+          one new job for each of the new files it creates. In this configuration file, we specify that each of these
           new jobs will be a 'count_atgc' job. 
 
-        * A 'count_atgc' job takes in a string parameter 'fasta_filename', then tllies up the number of As, Cs, Gs and Ts in the sequence(s)
-          in that file, accumulating them in the 'at_count' and 'gc_count' accumulators.
+        * A 'count_atgc' job takes in a string parameter 'fasta_filename', then tallies up the number of As, Cs, Gs and Ts in the sequence(s)
+          in that file. It outputs the tallies as two parameters: 'at_count' and 'gc_count'. In this pipeline, 
+          these parameters are flowed into two accumulators, also called 'at_count' and 'gc_count' where they are
+          stored for later use.
 
-        * A 'calc_overall_percentage' job waits for all count_atgc jobs to complete. It takes in the 'at_count' and 'gc_count' hashes
-          and produces the final result in the final_resutl table.
+        * The 'calc_overall_percentage' job is run after all count_atgc jobs have completed. 
+          It takes in the tallied AT and GC counts from the 'at_count' and 'gc_count' accumulators,
+          calculates the overall GC percentage, and outputs it as a 'result' parameter.
+          This pipeline then flows that result into the 'final_results' table.
 
     Please see the implementation details in Runnable modules themselves.
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -133,15 +137,15 @@ sub hive_meta_table {
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
-                    * 'chunk_sequences' which uses the FastaFactory runnable to split sequences in an input .fasta file
+                    * 'chunk_sequences' which uses the FastaFactory runnable to split sequences in an input file
                        into smaller chunks
 
-                    * 'count_atgc' which takes a chunk produced by chunk_sequences, and tallies the number of occurances of each base
+                    * 'count_atgc' which takes a chunk produced by chunk_sequences, and tallies the number of occurrences of each base
                       in the sequence(s) in the file
 
                     * 'calc_overall_percentage' which takes the base count subtotals from all count_atgc jobs and calculates the
-                      overall %GC in the sequence(s) in the original input .fasta Until the hash is complete the
-                      'calc_overall_percentage' job is blocked by a semaphore.
+                      overall %GC in the sequence(s) in the original input file. The 'calc_overall_percentage' job is blocked by a semaphore.
+                      until all count_atgc jobs have completed.
 
 =cut
 
@@ -158,7 +162,7 @@ sub pipeline_analyses {
             ],
             -flow_into => {
                 '2->A' => [ 'count_atgc' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
-                'A->1' => [ 'calc_overall_percentage'  ],   # will create a semaphored funnel job to wait for the fan to complete and add the results
+                'A->1' => [ 'calc_overall_percentage'  ],   # will create a semaphored funnel job to wait for the fan to complete
             },
         },
 

@@ -11,8 +11,9 @@
 
 =head1 DESCRIPTION
 
-    'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC' determines AT and GC frequencies in sequence(s) in a .fasta file, then stores
-    those frequencies in an accumulator
+    'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CountATGC' counts the occurrences of A/T and G/C bases in
+    the sequences in a .fasta file. It takes a .fasta file with DNA sequences as input. It flows out two parameters:
+    at_count and gc_count.
 
 =head1 LICENSE
 
@@ -62,7 +63,7 @@ sub param_defaults {
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
                   There are no hard and fast rules on whether to fetch parameters in fetch_input(), or to wait until run() to fetch them.
-                  In general, fetch_input() is a place to validate parameter existance and values for errors before the worker get set into RUN state 
+                  In general, fetch_input() is a place to validate parameter existence and values for errors before the worker get set into RUN state 
                   from the FETCH_INPUT state.
 
                   In this case, we decide to try and open our input file in fetch_input(), so that it will fail early if there is a problem with the
@@ -74,9 +75,7 @@ sub fetch_input {
   my $self = shift @_;
 
     my $chunkfile = $self->param_required('chunk_name');
-
     my $chunkin = Bio::SeqIO->new(-file => "$chunkfile");
-
     $self->param('chunkin', $chunkin);
 
 }
@@ -89,7 +88,7 @@ sub fetch_input {
 
 =cut
 
-sub run {   # call the recursive function that will compute the stuff
+sub run { 
     my $self = shift @_;
 
     my $at_count = 0;
@@ -109,7 +108,7 @@ sub run {   # call the recursive function that will compute the stuff
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Dataflows the intermediate results down branch 1, which will be routed into 'at_count' and 'gc_count' accumulators.
+                  Dataflows the AT and GC counts down branch 1 in two parameters: 'at_count' and 'gc_count'.
 
 =cut
 

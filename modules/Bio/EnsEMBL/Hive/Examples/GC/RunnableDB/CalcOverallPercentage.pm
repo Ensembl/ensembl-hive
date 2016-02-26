@@ -11,8 +11,9 @@
 
 =head1 DESCRIPTION
 
-    'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage' is the final step of the pipeline. It sums up the GC and AT counts from all of the chunked subsequences,
-    then divides the GC count by the total nucleotide count to determine %GC
+    'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage' is the final step of the pipeline. 
+    It sums up the GC and AT counts from all of the chunked subsequences, then divides the GC count by the GC + AT 
+    count to determine %GC
 
 =head1 LICENSE
 
@@ -63,7 +64,7 @@ sub param_defaults {
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
 
     There are no hard and fast rules on whether to fetch parameters in fetch_input(), or to wait until run() to fetch them.
-    In general, fetch_input() is a place to validate parameter existance and values for errors before the worker get set into RUN state
+    In general, fetch_input() is a place to validate parameter existence and values for errors before the worker get set into RUN state
     from the FETCH_INPUT state. In this case, since it's a simple computation, we don't do anything in fetch_input() and instead just
     handle the parameters in run()
 
@@ -96,18 +97,31 @@ sub run {
 =head2 write_output
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Dataflows both original multipliers and the final result down branch-1, which will be routed into 'final_result' table.
+                  Here, it flows the result from the %GC calculation out into branch 1 in a parameter called 'result'.
 
 =cut
 
 
-sub write_output {  # store and dataflow
+sub write_output {  # dataflow
     my $self = shift @_;
 
     $self->dataflow_output_id({
         'result'       => $self->param('result'),
     }, 1);
 }
+
+=head2 _calc_pct
+
+    Description : This is a private method that does the actual %GC calculation.
+                  $at_count is an arrayref pointing to a list of AT counts;
+                  likewise, $gc_count is an arrayref pointint to a list of GC counts. In the
+                  %GC pipeline, each element in the array is the count of AT or GC in one of the chunked
+                  sequence files.
+
+                  Here, we sum up the counts from all of the chunks, then divide the total GC count by the
+                  total AT + GC count to determine a percentage.
+                  
+=cut
 
 sub _calc_pct {
   my ($self, $at_count, $gc_count) = @_;
