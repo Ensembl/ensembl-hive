@@ -14,4 +14,5 @@ on 'test' => sub {
 };
 
 recommends 'Getopt::ArgvFile';
+recommends 'BSD::Resource';
 
