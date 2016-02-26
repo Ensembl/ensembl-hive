@@ -52,6 +52,22 @@ sub default_table_name {
     return 'analysis_data';
 }
 
+=head2 fetch_by_data_to_analysis_data_id
+
+  Arg [1]    : String $input_id
+  Example    : $ext_data_id = $analysis_data_adaptor->fetch_by_data_to_analysis_data_id( $input_id );
+  Description: Attempts to find an entry in the analysis_data table by its content (data + MD5 checksum)
+  Returntype : Integer (dbID of the analysis_data table)
+
+=cut
+
+sub fetch_by_data_to_analysis_data_id {     # It is a special case not covered by AUTOLOAD; note the lowercase _to_
+    my ($self, $input_id) = @_;
+
+    my $md5sum = md5_hex($input_id);
+    return $self->fetch_by_data_AND_md5sum_TO_analysis_data_id($input_id, $md5sum);
+}
+
 
 sub store_if_needed {
     my ($self, $data) = @_;

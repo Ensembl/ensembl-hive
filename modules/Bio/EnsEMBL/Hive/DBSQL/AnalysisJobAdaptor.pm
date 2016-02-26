@@ -86,7 +86,7 @@ sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered b
     my $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, $input_id);
 
     if(!$job and length($input_id)>$self->default_overflow_limit->{input_id}) {
-        if(my $ext_data_id = $self->db->get_AnalysisDataAdaptor->fetch_by_data_TO_analysis_data_id( $input_id )) {
+        if(my $ext_data_id = $self->db->get_AnalysisDataAdaptor->fetch_by_data_to_analysis_data_id( $input_id )) {
             $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, "_extended_data_id $ext_data_id");
         }
     }
