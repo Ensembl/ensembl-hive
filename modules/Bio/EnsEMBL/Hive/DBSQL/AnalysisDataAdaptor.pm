@@ -74,9 +74,22 @@ sub store_if_needed {
 
     my $storable_hash = {'data' => $data, 'md5sum' => md5_hex($data)};
 
-    $self->store_or_update_one( $storable_hash  );
+    $self->store( $storable_hash );
 
-    return '_extended_data_id ' . $storable_hash->{'analysis_data_id'};
+    # We now need to check for collisions ourselves since there is no
+    # UNIQUE KEY in the table definition.
+    # This is very similar to check_object_present_in_db_by_content()
+    # but it returns the *first* analysis_data_id that's been stored
+    my $sql = 'SELECT MIN(analysis_data_id) FROM analysis_data WHERE md5sum = ? AND data = ?';
+    my $sth = $self->prepare( $sql );
+    $sth->execute( $storable_hash->{md5sum}, $data );
+    my ($first_dbID) = $sth->fetchrow_array();
+    $sth->finish;
+    if ($first_dbID != $storable_hash->{analysis_data_id}) {
+        # Our row duplicates a previous one, so we need to clean up
+        $self->remove($storable_hash);
+    }
+    return '_extended_data_id ' . $first_dbID;
 }
 
 1;
