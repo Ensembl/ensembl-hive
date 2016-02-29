@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
@@ -102,6 +102,7 @@ sub fetch_input {
     $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 
     if($mode ne 'overwrite') {
+        $self->_assert_same_table_schema($src_dbc, $dest_dbc, $table);
         $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
 
@@ -183,6 +184,21 @@ sub get_row_count {
 
     return $row_count;
 }
+
+sub _assert_same_table_schema {
+    my ($self, $src_dbc, $dest_dbc, $table) = @_;
+
+    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_schema = $src_sth->fetchall_arrayref;
+    $src_sth->finish();
+
+    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_schema = $dest_sth->fetchall_arrayref;
+    $dest_sth->finish();
+
+    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+}
+
 
 1;
 
