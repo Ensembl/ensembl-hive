@@ -50,7 +50,6 @@ sub param_defaults {
         'src_db_conn'   => '',
         'dest_db_conn'  => '',
         'mode'          => 'overwrite',
-        'table'         => '',
         'where'         => undef,
         'filter_cmd'    => undef,
 
