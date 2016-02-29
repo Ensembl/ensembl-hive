@@ -7,7 +7,7 @@
 =head1 SYNOPSIS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::GCPct_conf pipeline configuration file
-    to understand how this particular example pipeline is configured and run.
+    to see how this runnable fits into the %GC example pipeline.
 
 =head1 DESCRIPTION
 
@@ -75,15 +75,15 @@ sub fetch_input {
   my $self = shift @_;
 
     my $chunkfile = $self->param_required('chunk_name');
-    my $chunkin = Bio::SeqIO->new(-file => "$chunkfile");
-    $self->param('chunkin', $chunkin);
+    my $chunk_in = Bio::SeqIO->new(-file => "$chunkfile");
+    $self->param('chunk_in', $chunk_in);
 
 }
 
 =head2 run
 
     Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job.
-                  Here, we use the file opened in fetch_input, read in the sequence from the file, and tally up the number of 
+                  Here, we use the file opened in fetch_input, read in the sequences from the file, and tally up the number of 
                   AT and GC bases seen. We then store these in parameters named at_count and gc_count.
 
 =cut
@@ -93,7 +93,7 @@ sub run {
 
     my $at_count = 0;
     my $gc_count = 0;
-    foreach my $chunkseq ($self->param('chunkin')->next_seq()) {
+    foreach my $chunkseq ($self->param('chunk_in')->next_seq()) {
       my $seqstring = $chunkseq->seq();
       $at_count += @{[$seqstring =~ /([AaTt])/g]};
       $gc_count += @{[$seqstring =~ /([GgCc])/g]};
@@ -107,8 +107,9 @@ sub run {
 
 =head2 write_output
 
-    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
-                  Dataflows the AT and GC counts down branch 1 in two parameters: 'at_count' and 'gc_count'.
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with  the 
+                  job's output after the execution.
+                  The AT and GC counts dataflow down branch 1 in two parameters: 'at_count' and 'gc_count'.
 
 =cut
 

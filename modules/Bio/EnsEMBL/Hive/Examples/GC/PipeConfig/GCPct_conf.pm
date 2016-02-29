@@ -111,9 +111,10 @@ sub default_options {
 
 =head2 pipeline_create_commands
 
-    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates a pipeline-specific table called 'final_result'
-                  to store the results of the computation.
+    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf 
+                  that lists the commands that will create and set up the Hive database.
+                  In addition to the standard creation of the database and populating it with Hive tables and procedures it 
+                  also creates a pipeline-specific table called 'final_result' to store the results of the computation.
 
 =cut
 
@@ -130,9 +131,10 @@ sub pipeline_create_commands {
 
 =head2 pipeline_wide_parameters
 
-    Description : Interface method that should return a hash of pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
-                  The value doesn't have to be a scalar, can be any Perl structure now (will be stringified and de-stringified automagically).
-                  Please see existing PipeConfig modules for examples.
+    Description : Interface method that should return a hash of 
+                  pipeline_wide_parameter_name->pipeline_wide_parameter_value pairs.
+                  The value doesn't have to be a scalar, it can be any Perl structure. (They will be stringified and
+                  de-stringified automagically).
 
 =cut
 
@@ -152,17 +154,18 @@ sub pipeline_wide_parameters {
 
 =head2 pipeline_analyses
 
-    Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
+    Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that 
+                  defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
                     * 'chunk_sequences' which uses the FastaFactory runnable to split sequences in an input file
                        into smaller chunks
 
-                    * 'count_atgc' which takes a chunk produced by chunk_sequences, and tallies the number of occurrences of each base
-                      in the sequence(s) in the file
+                    * 'count_atgc' which takes a chunk produced by chunk_sequences, and tallies the number of occurrences 
+                       of each base in the sequence(s) in the file
 
-                    * 'calc_overall_percentage' which takes the base count subtotals from all count_atgc jobs and calculates the
-                      overall %GC in the sequence(s) in the original input file. The 'calc_overall_percentage' job is blocked by a semaphore.
-                      until all count_atgc jobs have completed.
+                    * 'calc_overall_percentage' which takes the base count subtotals from all count_atgc jobs and calculates 
+                      the overall %GC in the sequence(s) in the original input file. The 'calc_overall_percentage' job is 
+                      blocked by a semaphore until all count_atgc jobs have completed.
 
 =cut
 
@@ -198,7 +201,7 @@ sub pipeline_analyses {
         {   -logic_name => 'calc_overall_percentage',
             -module     => 'Bio::EnsEMBL::Hive::Examples::GC::RunnableDB::CalcOverallPercentage',
             -flow_into => {
-                1 => [ '?table_name=final_result' ],
+                1 => [ '?table_name=final_result' ], #Flows output into the DB table 'final_result'
             },
         },
      ];

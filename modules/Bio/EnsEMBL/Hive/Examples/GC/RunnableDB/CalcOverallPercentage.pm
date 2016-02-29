@@ -7,7 +7,7 @@
 =head1 SYNOPSIS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::GCPct_conf pipeline configuration file
-    to understand how this particular example pipeline is configured and run.
+    to see how this runnable fits into the %GC example pipeline.
 
 =head1 DESCRIPTION
 
@@ -45,17 +45,6 @@ use List::Util qw(sum);
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-=head2 param_defaults
-
-    Description : Implements param_defaults() interface method of Bio::EnsEMBL::Hive::Process that defines module defaults for parameters.
-
-=cut
-
-sub param_defaults {
-
-}
-
-
 =head2 fetch_input
 
     Description : Implements fetch_input() interface method of Bio::EnsEMBL::Hive::Process that is used to read in parameters and load data.
@@ -68,7 +57,7 @@ sub param_defaults {
 =cut
 
 sub fetch_input {   
-    my $self = shift @_;
+
 }
 
 =head2 run
@@ -93,7 +82,8 @@ sub run {
 
 =head2 write_output
 
-    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
+    Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output 
+                  after the execution.
                   Here, it flows the result from the %GC calculation out into branch 1 in a parameter called 'result'.
 
 =cut
@@ -123,7 +113,7 @@ sub write_output {  # dataflow
 sub _calc_pct {
   my ($self, $at_count, $gc_count) = @_;
 
-  # using reduce from List::Util
+  # using sum from List::Util
   my $at_sum = sum @{$at_count};
   my $gc_sum = sum @{$gc_count};
 
