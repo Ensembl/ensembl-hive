@@ -559,9 +559,12 @@ sub _twopart_arrow {
     #my $label               = scalar(@$df_targets)==1 ? 'Filter' : 'Switch';
     my $tablabel            = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr>};
 
-    foreach my $i (0..scalar(@$df_targets)-1) {
-        my $df_target = $df_targets->[$i];
-        my $condition = $df_target->on_condition;
+    my $targets_grouped_by_condition = $df_rule->get_my_targets_grouped_by_condition( $df_targets );
+
+    foreach my $i (0..scalar(@$targets_grouped_by_condition)-1) {
+
+        my $condition = $targets_grouped_by_condition->[$i]->[0];
+
         if($display_cond_length) {
             if(defined($condition)) {
                 $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
@@ -607,8 +610,13 @@ sub _twopart_arrow {
         ),
     );
 
-    foreach my $i (0..scalar(@$df_targets)-1) {
-        $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_targets->[$i], $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
+    foreach my $i (0..scalar(@$targets_grouped_by_condition)-1) {
+
+        my $target_group = $targets_grouped_by_condition->[$i]->[1];
+
+        foreach my $df_target (@$target_group) {
+            $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_target, $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
+        }
     }
 
     return $midpoint_name;

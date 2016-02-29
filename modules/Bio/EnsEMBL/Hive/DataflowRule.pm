@@ -95,10 +95,13 @@ sub get_my_targets {
 
 
 sub get_my_targets_grouped_by_condition {
-    my $self = shift @_;
+    my $self        = shift @_;
+    my $df_targets  = shift @_;
+
+    $df_targets //= $self->get_my_targets;
 
     my %my_targets_by_condition = ();
-    foreach my $df_target (@{ $self->get_my_targets }) {
+    foreach my $df_target (@$df_targets) {
         my $this_pair = $my_targets_by_condition{ $df_target->on_condition || ''} ||= [ $df_target->on_condition, []];
         push @{$this_pair->[1]}, $df_target;
     }
