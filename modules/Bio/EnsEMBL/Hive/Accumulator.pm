@@ -76,7 +76,7 @@ sub url {
 
 sub display_name {
     my ($self) = @_;
-    return $self->accu_name . $self->accu_address;
+    return $self->accu_name . ($self->accu_address // '');
 }
 
 
@@ -112,7 +112,7 @@ sub dataflow {
 sub toString {
     my $self = shift @_;
 
-    return 'Accumulator(' . $self->accu_name . '<--' . $self->accu_address . ')';
+    return 'Accumulator(' . $self->accu_name . '<--' . ($self->accu_address // ''). ')';
 }
 
 1;
