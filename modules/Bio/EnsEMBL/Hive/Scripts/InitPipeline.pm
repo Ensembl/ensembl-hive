@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 
 
 sub init_pipeline {
-    my ($file_or_module) = @_;
+    my ($file_or_module, $tweaks) = @_;
 
     my $pipeconfig_package_name = load_file_or_module( $file_or_module );
 
@@ -47,6 +47,10 @@ sub init_pipeline {
         or die "HivePipeline could not be created for ".$pipeconfig_object->pipeline_url();
 
     $pipeconfig_object->add_objects_from_config( $pipeline );
+
+    if($tweaks and @$tweaks) {
+        $pipeline->apply_tweaks( $tweaks );
+    }
 
     $pipeline->save_collections();
 

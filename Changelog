@@ -15,6 +15,15 @@ Main highlights of the release:
 NB: see these three features in action in the Long-multiplication pipelines
 All the example pipelines have been grouped together under a new directory: Bio/EnsEMBL/Hive/Examples
 
+    (in beta) new configuration mechanism to -tweak parameters and attributes of pipelines during pipeline initialization:
+            -tweak 'global.param[take_time]=20'                     # override a value of a pipeline-wide parameter; can also create an inexistent parameter
+            -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create an inexistent parameter
+            -tweak 'analysis[add_together].analysis_capacity=3'     # override a value of an analysis attribute
+            -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
+            -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
+            -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+    The new mechanism does not require that you prepare the PipeConfig files with $self->o() references, which significantly simplifies PipeConfigs.
+
 Universal Runnables:
 * JobFactory: non-contiguous split option has been added for those who have to use minibatching
 * FastaFactory has been improved: more input file-formats -which can be compressed-, target output directory

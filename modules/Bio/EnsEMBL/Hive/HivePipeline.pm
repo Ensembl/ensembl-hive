@@ -283,4 +283,125 @@ sub print_diagram {
 }
 
 
+sub apply_tweaks {
+    my $self    = shift @_;
+    my $tweaks  = shift @_;
+
+    foreach my $tweak (@$tweaks) {
+        print "Tweak request: ".stringify($tweak)."\n";
+
+        if($tweak=~/^global\.param\[(\w+)\]=(.+)$/) {
+            my ($param_name, $new_value) = ($1, $2);
+            print "\tRequest: $tweak :: global variable $param_name := '$new_value'\n";
+
+            if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $1)) {
+                print "\tFound the global var $param_name, its current value is '$hash_pair->{param_value}'\n";
+
+                $hash_pair->{'param_value'} = $new_value;
+
+                print "\tSet the new value to '$new_value'\n";
+            } else {
+                print "\tCould not find the global var $param_name, creating it\n";
+
+                $self->add_new_or_update( 'PipelineWideParameters',
+                    'param_name'    => $param_name,
+                    'param_value'   => stringify($new_value),
+                );
+            }
+
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(?:param\[(\w+)\]|(\w+))=(.+)$/) {
+            my ($analyses_pattern, $param_name, $attrib_name, $new_value) = ($1, $2, $3, $4);
+            my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+
+            if($param_name) {
+                $attrib_name = 'parameters';
+                print "\tRequest: $tweak :: analysis($analyses_pattern) variable $param_name := '$new_value'\n";
+            } else {
+                print "\tRequest: $tweak :: analysis($analyses_pattern) attribute $attrib_name := '$new_value'\n";
+            }
+
+            print "Found ".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
+            foreach my $analysis (@$analyses) {
+
+                my $old_value   = $analysis->$attrib_name();
+
+                print "Analysis '".$analysis->logic_name."' :\n";
+
+                if($param_name) {
+                    my $param_hash  = destringify( $old_value );
+                    $old_value      = $param_hash->{ $param_name };
+
+                    print "\t the old '$param_name' var is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+
+                    $param_hash->{ $param_name } = $new_value;
+                    $analysis->$attrib_name( stringify($param_hash) );
+
+                    print "\t the new '$param_name' var is '$new_value'\n";
+                } elsif( $attrib_name eq 'resource_class' ) {
+                    print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'".$old_value->name."'" : 'undef')."\n";
+
+                    if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
+                        print "\t found the RC object with name='$new_value', reassigning\n";
+
+                        $analysis->$attrib_name( $resource_class );
+                    } else {
+                        my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
+                            'name'  => $new_value,
+                        );
+                        print "\t created a new RC object with name='$new_value', reassigning\n";
+
+                        $analysis->$attrib_name( $resource_class );
+                    }
+
+                } else {
+                    print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+
+                    $analysis->$attrib_name( $new_value );
+
+                    print "\t the new '$attrib_name' attribute is '$new_value'\n";
+                }
+            }
+
+        } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)=(.+)$/) {
+            my ($rc_pattern, $meadow_type, $new_value) = ($1, $2, $3);
+            print "\tRequest: $tweak :: resource_class($rc_pattern) attribute $meadow_type := '$new_value'\n";
+
+            my ($new_submission_cmd_args, $new_worker_cmd_args);
+
+            if($new_value=~/^\[.+\]$/) {
+                ($new_submission_cmd_args, $new_worker_cmd_args) = @{ destringify($new_value) };
+            } else {
+                ($new_submission_cmd_args, $new_worker_cmd_args) = ($new_value, '');
+            }
+
+            my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
+            print "Found ".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
+
+            foreach my $rc (@$resource_classes) {
+                print "ResourceClass '".$rc->name."' :\n";
+
+                if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
+                    my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
+                    print "\t description for meadow '$meadow_type' found: submission_cmd_args='$submission_cmd_args', worker_cmd_args='$worker_cmd_args'\n";
+
+                    $rd->submission_cmd_args(   $new_submission_cmd_args );
+                    $rd->worker_cmd_args(       $new_worker_cmd_args     );
+                } else {
+                    print "\t description for meadow '$meadow_type' not found, creating it\n";
+
+                    my ($rd) = $self->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
+                        'resource_class'        => $rc,
+                        'meadow_type'           => $meadow_type,
+                        'submission_cmd_args'   => $new_submission_cmd_args,
+                        'worker_cmd_args'       => $new_worker_cmd_args,
+                    );
+                }
+            }
+
+        } else {
+            print "Could not parse '$tweak'\n";
+        }
+    }
+}
+
 1;

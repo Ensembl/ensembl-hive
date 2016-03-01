@@ -18,22 +18,25 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 
 sub main {
-    my %deprecated_option = ();
-    GetOptions( \%deprecated_option,
-        'analysis_topup!',  # always on
-        'job_topup!',       # never, use seed_pipeline.pl
+    my $deprecated_option   = {};
+    my $tweaks              = [];
+
+    GetOptions(
+        'analysis_topup!'   => \$deprecated_option->{'analysis_topup'},     # always on
+        'job_topup!'        => \$deprecated_option->{'job_topup'},          # never, use seed_pipeline.pl
+        'tweak|SET=s@'            => \$tweaks,
     );
 
-    if($deprecated_option{'job_topup'}) {
+    if($deprecated_option->{'job_topup'}) {
         die "-job_topup mode has been discontinued. Please use seed_pipeline.pl instead.\n";
     }
-    if($deprecated_option{'analysis_topup'}) {
+    if($deprecated_option->{'analysis_topup'}) {
         die "-analysis_topup has been deprecated. Please note this script now *always* runs in -analysis_topup mode.\n";
     }
 
     my $file_or_module = shift @ARGV or script_usage(0);
 
-    Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
+    Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
 }
 
 main();
