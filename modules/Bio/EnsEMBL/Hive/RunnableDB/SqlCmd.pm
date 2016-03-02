@@ -84,6 +84,7 @@ sub run {
                   command depending on the outcome of _exec_sql().
                   It also has to temporarily set disconnect_when_inactive() to 1 because a value of 0 would cause the
                   DBConnection object to disconnect early, which would rollback the transaction.
+                  NB: This is essentially a copy of Ensembl's Utils::SqlHelper::transaction()
 
 =cut
 
@@ -95,6 +96,8 @@ sub _run_in_transaction {
     # Save the original value of disconnect_when_inactive()
     my $original_dwi = $dbc->disconnect_when_inactive();
     $dbc->disconnect_when_inactive(0);
+
+    $dbc->reconnect() unless $dbc->db_handle()->ping();
 
     # Save the original value of "AutoCommit"
     my $original_ac = $dbc->db_handle()->{'AutoCommit'};
