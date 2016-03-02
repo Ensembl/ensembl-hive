@@ -49,6 +49,7 @@ use Scalar::Util qw(weaken);
 use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
+use base ( 'Bio::EnsEMBL::Hive::Cacheable' );   # All the Storable objects are attached to a pipeline, i.e. are Cacheable
 
 =head2 new
 
@@ -158,8 +159,7 @@ sub AUTOLOAD {
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                my $collection = $self->can('hive_pipeline') && $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
-                   $collection = $self->adaptor && $self->adaptor->db->hive_pipeline->collection_of($AdaptorType) unless $collection;
+                my $collection = $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
 
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
 #                    warn "Lazy-loading object from $AdaptorType collection\n";

@@ -247,7 +247,7 @@ sub specialize_worker {
     } else {
 
         $analyses_pattern //= '%';  # for printing
-        my $analyses_matching_pattern   = $self->db->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+        my $analyses_matching_pattern   = $worker->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
             # refresh the stats of matching analyses before re-specialization:
         foreach my $analysis ( @$analyses_matching_pattern ) {

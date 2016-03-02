@@ -41,7 +41,7 @@ package Bio::EnsEMBL::Hive::ResourceClass;
 use strict;
 use warnings;
 
-use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Storable' );
  
 
 sub unikey {    # override the default from Cacheable parent
