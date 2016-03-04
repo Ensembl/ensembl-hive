@@ -77,9 +77,9 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $final_results = $final_result_nta->fetch_all();
 
         is(scalar(@$final_results), 1, 'There is exactly 1 final_results');
+        my $expected_result = '0.4875';
         foreach ( @$final_results ) {
-            ok( 0.4875 eq $_->{'result'},
-                sprintf("%f=%f", , $_->{'result'}) );
+            is($expected_result, $_->{'result'}, 'Got the correct result');
         }
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
