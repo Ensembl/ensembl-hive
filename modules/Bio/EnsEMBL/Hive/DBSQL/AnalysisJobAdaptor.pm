@@ -765,14 +765,39 @@ sub reset_jobs_for_analysis_id {
             ? "AND status='FAILED'"             # compatibility mode (to be deprecated)
             : "AND status IN ('FAILED','DONE','PASSED_ON')";
 
+    # Get the list of semaphored jobs, and by how much their
+    # semaphore_count should be increased. Only DONE and PASSED_ON jobs of
+    # the matching analyses and statuses should be counted
+    # NB: the order of the columns must match the order of the placeholders in $sql2
+    my $sql1 = qq{
+        SELECT COUNT(*) AS n_jobs, semaphored_job_id
+        FROM job
+        WHERE semaphored_job_id IS NOT NULL
+              AND $analyses_filter $statuses_filter AND status IN ('DONE', 'PASSED_ON')
+        GROUP BY semaphored_job_id
+    };
+
+    my $sql2 = qq{
+        UPDATE job
+        SET semaphore_count=semaphore_count+?, status = }.$self->job_status_cast("'SEMAPHORED'").q{
+        WHERE job_id=?
+    };
+
+    # Update all the semaphored jobs one by one
+    my $sth1 = $self->prepare($sql1);
+    my $sth2 = $self->prepare($sql2);
+    $sth1->execute();
+    while (my @cols = $sth1->fetchrow_array()) {
+        $sth2->execute(@cols);
+    }
+    $sth1->finish;
+    $sth2->finish;
+
     my $sql = qq{
             UPDATE job
-           SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
-        }. ( ($self->dbc->driver eq 'pgsql')
-            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
-            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
-        )." WHERE ".$analyses_filter
-        .' '. $statuses_filter;
+            SET retry_count = CASE WHEN status='READY' THEN 0 ELSE 1 END,
+               status = }.$self->job_status_cast("CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
+            WHERE $analyses_filter $statuses_filter};
 
     my $sth = $self->prepare($sql);
     $sth->execute();
