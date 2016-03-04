@@ -44,15 +44,17 @@ foreach my $gcpct_version ( @pipeline_cfgs ) {
 warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
     foreach my $pipeline_url (@pipeline_urls) {
-        my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version, [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"]);
+            # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
+        my $url         = init_pipeline(
+                            'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
+                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"],
+                            ['global.param[take_time]=0'],
+                        );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                        => $url,
             -disconnect_when_inactive   => 1,
         );
-
-            # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
-        $pipeline->collection_of('PipelineWideParameters')->find_one_by('param_name', 'take_time')->{'param_value'} = 0;
 
         # First run a single worker in this process
         runWorker($pipeline, { can_respecialize => 1 });
@@ -63,9 +65,6 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
         {
-                # override the 'take_time' PipelineWideParameter directly in the database to make the external test Workers run quicker:
-            $hive_dba->get_PipelineWideParametersAdaptor->update( {'param_name' => 'take_time', 'param_value' => 0} );
-
             my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.02, '-loop', '-local');
 
             system(@beekeeper_cmd);
