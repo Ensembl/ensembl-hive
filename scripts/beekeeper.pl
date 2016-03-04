@@ -63,6 +63,7 @@ sub main {
     my $reset_all_jobs              = 0;    # Mark DONE, PASSED_ON and FAILED jobs to READY
     my $reset_failed_jobs           = 0;    # Mark FAILED jobs to READY
     my $reset_done_jobs             = 0;    # Mark DONE and PASSED_ON jobs to READY
+    my $unblock_semaphored_jobs     = 0;    # Mark SEMAPHORED jobs to READY
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
@@ -141,6 +142,7 @@ sub main {
                'reset_failed_jobs' => \$reset_failed_jobs,
                'reset_all_jobs'    => \$reset_all_jobs,
                'reset_done_jobs'   => \$reset_done_jobs,
+               'unblock_semaphored_jobs'    => \$unblock_semaphored_jobs,
                'job_output=i'      => \$job_id_for_output,
     );
 
@@ -341,6 +343,11 @@ sub main {
         }
         my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
+        $queen->synchronize_hive( $list_of_analyses );
+    }
+
+    if ($unblock_semaphored_jobs) {
+        $self->{'dba'}->get_AnalysisJobAdaptor->unblock_jobs_for_analysis_id( $list_of_analyses );
         $queen->synchronize_hive( $list_of_analyses );
     }
 
@@ -818,6 +825,7 @@ __DATA__
     -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_done_jobs       : reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_all_jobs        : reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -unblock_semaphored_jobs : set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
 
 =head1 LICENSE
 

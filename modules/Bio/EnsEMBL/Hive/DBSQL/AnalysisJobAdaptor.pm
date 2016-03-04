@@ -813,6 +813,33 @@ sub reset_jobs_for_analysis_id {
 }
 
 
+=head2 unblock_jobs_for_analysis_id
+
+  Arg [1]    : list-ref of int $analysis_id
+  Description: Sets all the SEMAPHORED jobs to READY regardless of their current semaphore_count
+  Caller     : beekeeper.pl and guiHive
+
+=cut
+
+sub unblock_jobs_for_analysis_id {
+    my ($self, $list_of_analyses) = @_;
+
+    my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
+
+    my $sql = qq{
+        UPDATE job
+        SET semaphore_count=0, status = }.$self->job_status_cast("'READY'").qq{
+        WHERE $analyses_filter AND status = 'SEMAPHORED'
+    };
+
+    $self->do($sql);
+
+    foreach my $analysis ( @$list_of_analyses ) {
+        $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
+    }
+}
+
+
 =head2 balance_semaphores
 
   Description: Reset all semaphore_counts to the numbers of unDONE semaphoring jobs.
