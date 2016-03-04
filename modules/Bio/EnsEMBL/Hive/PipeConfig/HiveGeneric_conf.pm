@@ -554,7 +554,9 @@ sub add_objects_from_config {
             );
         }
 
-        Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($pipeline, $analysis, $flow_into || {});
+        if($flow_into) {
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($pipeline, $analysis, $flow_into);
+        }
 
     }
     warn "Done.\n\n";

@@ -6,6 +6,7 @@ use warnings;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
+use Bio::EnsEMBL::Hive::Utils::PCL;
 
     # needed for offline graph generation:
 use Bio::EnsEMBL::Hive::Accumulator;
@@ -323,42 +324,49 @@ sub apply_tweaks {
             print "Found ".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
             foreach my $analysis (@$analyses) {
 
-                my $old_value   = $analysis->$attrib_name();
-
-                print "Analysis '".$analysis->logic_name."' :\n";
-
-                if($param_name) {
-                    my $param_hash  = destringify( $old_value );
-                    $old_value      = $param_hash->{ $param_name };
-
-                    print "\t the old '$param_name' var is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
-
-                    $param_hash->{ $param_name } = $new_value;
-                    $analysis->$attrib_name( stringify($param_hash) );
-
-                    print "\t the new '$param_name' var is '$new_value'\n";
-                } elsif( $attrib_name eq 'resource_class' ) {
-                    print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'".$old_value->name."'" : 'undef')."\n";
-
-                    if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
-                        print "\t found the RC object with name='$new_value', reassigning\n";
-
-                        $analysis->$attrib_name( $resource_class );
-                    } else {
-                        my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
-                            'name'  => $new_value,
-                        );
-                        print "\t created a new RC object with name='$new_value', reassigning\n";
-
-                        $analysis->$attrib_name( $resource_class );
-                    }
+                if( $attrib_name eq 'flow_into' ) {
+                    Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, destringify($new_value) );
 
                 } else {
-                    print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
 
-                    $analysis->$attrib_name( $new_value );
+                    my $old_value   = $analysis->$attrib_name();
 
-                    print "\t the new '$attrib_name' attribute is '$new_value'\n";
+                    print "Analysis '".$analysis->logic_name."' :\n";
+
+                    if($param_name) {
+                        my $param_hash  = destringify( $old_value );
+                        $old_value      = $param_hash->{ $param_name };
+
+                        print "\t the old '$param_name' var is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+
+                        $param_hash->{ $param_name } = $new_value;
+                        $analysis->$attrib_name( stringify($param_hash) );
+
+                        print "\t the new '$param_name' var is '$new_value'\n";
+
+                    } elsif( $attrib_name eq 'resource_class' ) {
+                        print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'".$old_value->name."'" : 'undef')."\n";
+
+                        if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
+                            print "\t found the RC object with name='$new_value', reassigning\n";
+
+                            $analysis->$attrib_name( $resource_class );
+                        } else {
+                            my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
+                                'name'  => $new_value,
+                            );
+                            print "\t created a new RC object with name='$new_value', reassigning\n";
+
+                            $analysis->$attrib_name( $resource_class );
+                        }
+
+                    } else {
+                        print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+
+                        $analysis->$attrib_name( $new_value );
+
+                        print "\t the new '$attrib_name' attribute is '$new_value'\n";
+                    }
                 }
             }
 

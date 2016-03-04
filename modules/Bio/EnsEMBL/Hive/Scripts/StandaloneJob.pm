@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::PCL;
 
 
@@ -59,8 +59,9 @@ sub standaloneJob {
     $job->load_parameters( $runnable_object );
 
 
-    Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($hive_pipeline, $dummy_analysis, $flow_into ? eval($flow_into) : {});   # empty dataflow for branch 1 by default
-
+    if($flow_into) {
+        Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($hive_pipeline, $dummy_analysis, destringify($flow_into) );
+    }
 
     $runnable_object->input_job($job);
     $runnable_object->life_cycle();
