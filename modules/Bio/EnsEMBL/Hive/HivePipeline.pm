@@ -292,15 +292,18 @@ sub apply_tweaks {
         print "Tweak request: ".stringify($tweak)."\n";
 
         if($tweak=~/^global\.param\[(\w+)\]=(.+)$/) {
-            my ($param_name, $new_value) = ($1, $2);
-            print "\tRequest: $tweak :: global variable $param_name := '$new_value'\n";
+            my ($param_name, $new_value_str) = ($1, $2);
+
+            print "\tRequest: $tweak :: global variable $param_name := $new_value_str\n";
+
+            my $new_value = destringify( $new_value_str );
 
             if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $1)) {
                 print "\tFound the global var $param_name, its current value is '$hash_pair->{param_value}'\n";
 
-                $hash_pair->{'param_value'} = $new_value;
+                $hash_pair->{'param_value'} = stringify($new_value);
 
-                print "\tSet the new value to '$new_value'\n";
+                print "\tSet the new value to $new_value_str\n";
             } else {
                 print "\tCould not find the global var $param_name, creating it\n";
 
@@ -311,21 +314,23 @@ sub apply_tweaks {
             }
 
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.(?:param\[(\w+)\]|(\w+))=(.+)$/) {
-            my ($analyses_pattern, $param_name, $attrib_name, $new_value) = ($1, $2, $3, $4);
+            my ($analyses_pattern, $param_name, $attrib_name, $new_value_str) = ($1, $2, $3, $4);
             my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+
+            my $new_value = destringify( $new_value_str );
 
             if($param_name) {
                 $attrib_name = 'parameters';
-                print "\tRequest: $tweak :: analysis($analyses_pattern) variable $param_name := '$new_value'\n";
+                print "\tRequest: $tweak :: analysis($analyses_pattern) variable $param_name := $new_value_str\n";
             } else {
-                print "\tRequest: $tweak :: analysis($analyses_pattern) attribute $attrib_name := '$new_value'\n";
+                print "\tRequest: $tweak :: analysis($analyses_pattern) attribute $attrib_name := $new_value_str\n";
             }
 
             print "Found ".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
             foreach my $analysis (@$analyses) {
 
                 if( $attrib_name eq 'flow_into' ) {
-                    Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, destringify($new_value) );
+                    Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
 
                 } else {
 
@@ -342,20 +347,20 @@ sub apply_tweaks {
                         $param_hash->{ $param_name } = $new_value;
                         $analysis->$attrib_name( stringify($param_hash) );
 
-                        print "\t the new '$param_name' var is '$new_value'\n";
+                        print "\t the new '$param_name' var is $new_value_str\n";
 
                     } elsif( $attrib_name eq 'resource_class' ) {
                         print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'".$old_value->name."'" : 'undef')."\n";
 
                         if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
-                            print "\t found the RC object with name='$new_value', reassigning\n";
+                            print "\t found the RC object with name=$new_value_str, reassigning\n";
 
                             $analysis->$attrib_name( $resource_class );
                         } else {
                             my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
                                 'name'  => $new_value,
                             );
-                            print "\t created a new RC object with name='$new_value', reassigning\n";
+                            print "\t created a new RC object with name=$new_value_str, reassigning\n";
 
                             $analysis->$attrib_name( $resource_class );
                         }
@@ -371,16 +376,12 @@ sub apply_tweaks {
             }
 
         } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)=(.+)$/) {
-            my ($rc_pattern, $meadow_type, $new_value) = ($1, $2, $3);
-            print "\tRequest: $tweak :: resource_class($rc_pattern) attribute $meadow_type := '$new_value'\n";
+            my ($rc_pattern, $meadow_type, $new_value_str) = ($1, $2, $3);
+            print "\tRequest: $tweak :: resource_class($rc_pattern) attribute $meadow_type := $new_value_str\n";
 
-            my ($new_submission_cmd_args, $new_worker_cmd_args);
+            my $new_value = destringify( $new_value_str );
 
-            if($new_value=~/^\[.+\]$/) {
-                ($new_submission_cmd_args, $new_worker_cmd_args) = @{ destringify($new_value) };
-            } else {
-                ($new_submission_cmd_args, $new_worker_cmd_args) = ($new_value, '');
-            }
+            my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
 
             my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
             print "Found ".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
