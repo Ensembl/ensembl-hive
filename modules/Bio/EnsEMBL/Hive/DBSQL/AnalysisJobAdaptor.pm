@@ -743,7 +743,7 @@ sub reset_jobs_for_analysis_id {
         ? 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')'
         : (!$input_statuses)
             ? "AND status='FAILED'"             # compatibility mode (to be deprecated)
-            : '';
+            : "AND status IN ('FAILED','DONE','PASSED_ON')";
 
     my $sql = qq{
             UPDATE job

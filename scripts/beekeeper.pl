@@ -813,7 +813,7 @@ __DATA__
     -job_output <job_id>   : print details for one job
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
     -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -reset_all_jobs        : reset ALL jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -reset_all_jobs        : reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
 
 =head1 LICENSE
 
