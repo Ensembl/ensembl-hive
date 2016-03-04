@@ -119,7 +119,7 @@ sub standaloneJob {
 
 
 sub init_pipeline {
-    my ($file_or_module, $options) = @_;
+    my ($file_or_module, $options, $tweaks) = @_;
 
     $options ||= [];
 
@@ -127,7 +127,7 @@ sub init_pipeline {
     local @ARGV = @$options;
 
     lives_ok(sub {
-        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
+        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
         ok($url, 'pipeline initialized');
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
 
