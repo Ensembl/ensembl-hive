@@ -60,8 +60,9 @@ sub main {
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;        # DEPRECATED
     my $reset_failed_jobs_for_analysis = 0;     # DEPRECATED
-    my $reset_all_jobs              = 0;
-    my $reset_failed_jobs           = 0;
+    my $reset_all_jobs              = 0;    # Mark DONE, PASSED_ON and FAILED jobs to READY
+    my $reset_failed_jobs           = 0;    # Mark FAILED jobs to READY
+    my $reset_done_jobs             = 0;    # Mark DONE and PASSED_ON jobs to READY
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
@@ -139,6 +140,7 @@ sub main {
                'reset_all_jobs_for_analysis=s' => \$reset_all_jobs_for_analysis,
                'reset_failed_jobs' => \$reset_failed_jobs,
                'reset_all_jobs'    => \$reset_all_jobs,
+               'reset_done_jobs'   => \$reset_done_jobs,
                'job_output=i'      => \$job_id_for_output,
     );
 
@@ -332,12 +334,12 @@ sub main {
         }
     }
 
-    if($reset_all_jobs || $reset_failed_jobs) {
-        if ($reset_all_jobs and not $self->{'analyses_pattern'}) {
+    if($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs) {
+        if (($reset_all_jobs || $reset_done_jobs) and not $self->{'analyses_pattern'}) {
             update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
         }
-        my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ];
+        my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
         $queen->synchronize_hive( $list_of_analyses );
     }
@@ -814,6 +816,7 @@ __DATA__
     -job_output <job_id>   : print details for one job
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
     -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -reset_done_jobs       : reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_all_jobs        : reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
 
 =head1 LICENSE
