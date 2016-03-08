@@ -321,11 +321,18 @@ sub submit_workers {
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_array_name_with_indices}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args "$worker_cmd"};
+    my @cmd = ('bsub',
+        '-o', $submit_stdout_file,
+        '-e', $submit_stderr_file,
+        '-J', $job_array_name_with_indices,
+        ($rc_specific_submission_cmd_args       =~ /((?:".*?"|'.*?'|\S)+)/g),   # split back into cmdline arguments except for quoted strings
+        ($meadow_specific_submission_cmd_args   =~ /((?:".*?"|'.*?'|\S)+)/g),   # split back into cmdline arguments except for quoted strings
+        $worker_cmd
+    );
 
-    print "Executing [ ".$self->signature." ] \t\t$cmd\n";
+    print "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
 
-    system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    system( @cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
 }
 
 1;
