@@ -266,6 +266,12 @@ sub params_as_hash {
 }
 
 
+=head2 print_diagram
+
+    Description: prints a "Unicode art" textual representation of the pipeline's flow diagram
+
+=cut
+
 sub print_diagram {
     my $self = shift @_;
 
@@ -284,28 +290,30 @@ sub print_diagram {
 }
 
 
+=head2 apply_tweaks
+
+    Description: changes attributes of Analyses|ResourceClasses|ResourceDescriptions or values of global/analysis parameters
+
+=cut
+
 sub apply_tweaks {
     my $self    = shift @_;
     my $tweaks  = shift @_;
 
     foreach my $tweak (@$tweaks) {
-        print "Tweak request: ".stringify($tweak)."\n";
+        print "\nTweak.Request\t$tweak\n";
 
         if($tweak=~/^global\.param\[(\w+)\]=(.+)$/) {
             my ($param_name, $new_value_str) = ($1, $2);
 
-            print "\tRequest: $tweak :: global variable $param_name := $new_value_str\n";
-
             my $new_value = destringify( $new_value_str );
 
             if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $1)) {
-                print "\tFound the global var $param_name, its current value is '$hash_pair->{param_value}'\n";
+                print "Tweak.Changing\tglobal.param[$param_name] :: $hash_pair->{param_value} --> $new_value_str\n";
 
                 $hash_pair->{'param_value'} = stringify($new_value);
-
-                print "\tSet the new value to $new_value_str\n";
             } else {
-                print "\tCould not find the global var $param_name, creating it\n";
+                print "Tweak.Adding  \tglobal.param[$param_name] :: (missing value) --> $new_value_str\n";
 
                 $self->add_new_or_update( 'PipelineWideParameters',
                     'param_name'    => $param_name,
@@ -321,13 +329,12 @@ sub apply_tweaks {
 
             if($param_name) {
                 $attrib_name = 'parameters';
-                print "\tRequest: $tweak :: analysis($analyses_pattern) variable $param_name := $new_value_str\n";
-            } else {
-                print "\tRequest: $tweak :: analysis($analyses_pattern) attribute $attrib_name := $new_value_str\n";
             }
 
-            print "Found ".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
+            print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
             foreach my $analysis (@$analyses) {
+
+                my $analysis_name = $analysis->logic_name;
 
                 if( $attrib_name eq 'flow_into' ) {
                     Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
@@ -336,67 +343,70 @@ sub apply_tweaks {
 
                     my $old_value   = $analysis->$attrib_name();
 
-                    print "Analysis '".$analysis->logic_name."' :\n";
-
                     if($param_name) {
                         my $param_hash  = destringify( $old_value );
-                        $old_value      = $param_hash->{ $param_name };
 
-                        print "\t the old '$param_name' var is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+                        if(exists($param_hash->{ $param_name })) {
+                            print "Tweak.Changing\tanalysis[$analysis_name].param[$param_name] :: ".stringify($param_hash->{ $param_name })." --> $new_value_str\n";
+                        } else {
+                            print "Tweak.Adding  \tanalysis[$analysis_name].param[$param_name] :: (missing value) --> $new_value_str\n";
+                        }
 
                         $param_hash->{ $param_name } = $new_value;
                         $analysis->$attrib_name( stringify($param_hash) );
 
-                        print "\t the new '$param_name' var is $new_value_str\n";
-
                     } elsif( $attrib_name eq 'resource_class' ) {
-                        print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'".$old_value->name."'" : 'undef')."\n";
+                        if(defined($old_value)) {
+                            print "Tweak.Changing\tanalysis[$analysis_name].resource_class :: ".$old_value->name." --> $new_value_str\n";
+                        } else {
+                            print "Tweak.Adding  \tanalysis[$analysis_name].resource_class :: (missing value) --> $new_value_str\n";
+                        }
 
                         if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
-                            print "\t found the RC object with name=$new_value_str, reassigning\n";
+                            print "Tweak.Found   \tresource_class[$new_value_str]\n";
 
                             $analysis->$attrib_name( $resource_class );
                         } else {
+                            print "Tweak.Adding  \tresource_class[$new_value_str]\n";
+
                             my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
                                 'name'  => $new_value,
                             );
-                            print "\t created a new RC object with name=$new_value_str, reassigning\n";
-
                             $analysis->$attrib_name( $resource_class );
                         }
 
                     } else {
-                        print "\t the old '$attrib_name' attribute is ".(defined($old_value) ? "'$old_value'" : 'undef')."\n";
+                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name :: ".stringify($old_value)." --> $new_value_str\n";
 
                         $analysis->$attrib_name( $new_value );
-
-                        print "\t the new '$attrib_name' attribute is '$new_value'\n";
                     }
                 }
             }
 
         } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)=(.+)$/) {
             my ($rc_pattern, $meadow_type, $new_value_str) = ($1, $2, $3);
-            print "\tRequest: $tweak :: resource_class($rc_pattern) attribute $meadow_type := $new_value_str\n";
 
             my $new_value = destringify( $new_value_str );
 
             my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
 
             my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
-            print "Found ".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
+            print "Tweak.Found   \t".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
 
             foreach my $rc (@$resource_classes) {
-                print "ResourceClass '".$rc->name."' :\n";
+                my $rc_name = $rc->name;
 
                 if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                     my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
-                    print "\t description for meadow '$meadow_type' found: submission_cmd_args='$submission_cmd_args', worker_cmd_args='$worker_cmd_args'\n";
+                    print "Tweak.Changing\tresource_class[$rc_name].meadow :: "
+                            .stringify([$submission_cmd_args, $worker_cmd_args])." --> "
+                            .stringify([$new_submission_cmd_args, $new_worker_cmd_args])."\n";
 
                     $rd->submission_cmd_args(   $new_submission_cmd_args );
                     $rd->worker_cmd_args(       $new_worker_cmd_args     );
                 } else {
-                    print "\t description for meadow '$meadow_type' not found, creating it\n";
+                    print "Tweak.Adding  \tresource_class[$rc_name].meadow :: (missing values) --> "
+                            .stringify([$new_submission_cmd_args, $new_worker_cmd_args])."\n";
 
                     my ($rd) = $self->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
                         'resource_class'        => $rc,
@@ -408,7 +418,7 @@ sub apply_tweaks {
             }
 
         } else {
-            print "Could not parse '$tweak'\n";
+            print "Tweak.FailedToParse\n";
         }
     }
 }
