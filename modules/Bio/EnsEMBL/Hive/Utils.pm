@@ -59,7 +59,7 @@ use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage go_figure_dbc report_versions throw join_command_args);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -273,6 +273,32 @@ sub script_usage {
         <main::DATA>;   # this is just to stop the 'used once' warnings
     }
     exit($retvalue);
+}
+
+
+=head2 split_for_bash
+
+    Description: This function takes one argument (String) and splits it assuming it represents bash command line parameters.
+                 It mainly splits on whitespace, except for cases when spaces are trapped between quotes or apostrophes.
+                 In the latter case the outer quotes are removed.
+    Returntype : list of Strings
+
+=cut
+
+sub split_for_bash {
+    my $cmd = pop @_;
+
+    my @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+
+    foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
+        if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
+            $syll = $1 . $2 . $3;
+        } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
+            $syll = $1 . $2 . $3;
+        }
+    }
+
+    return @cmd;
 }
 
 
