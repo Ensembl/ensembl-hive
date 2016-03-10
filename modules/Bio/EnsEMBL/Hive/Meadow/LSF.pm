@@ -35,6 +35,8 @@ use warnings;
 use Time::Piece;
 use Time::Seconds;
 
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
@@ -325,8 +327,8 @@ sub submit_workers {
         '-o', $submit_stdout_file,
         '-e', $submit_stderr_file,
         '-J', $job_array_name_with_indices,
-        ($rc_specific_submission_cmd_args       =~ /((?:".*?"|'.*?'|\S)+)/g),   # split back into cmdline arguments except for quoted strings
-        ($meadow_specific_submission_cmd_args   =~ /((?:".*?"|'.*?'|\S)+)/g),   # split back into cmdline arguments except for quoted strings
+        split_for_bash($rc_specific_submission_cmd_args),
+        split_for_bash($meadow_specific_submission_cmd_args),
         $worker_cmd
     );
 
