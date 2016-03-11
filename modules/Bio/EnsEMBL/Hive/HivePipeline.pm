@@ -214,41 +214,56 @@ sub get_source_analyses {
 
 =head2 get_meta_value_by_key
 
-    Description: returns a particular meta_value from 'MetaParameters' collection given meta_key
+    Description: (no longer just a getter, needs a rename) returns a particular meta_value from 'MetaParameters' collection given meta_key
 
 =cut
 
 sub get_meta_value_by_key {
-    my ($self, $meta_key) = @_;
+    my $self    = shift @_;
+    my $meta_key= shift @_;
 
     my $hash = $self->collection_of( 'MetaParameters' )->find_one_by( 'meta_key', $meta_key );
+
+    if(@_) {
+        my $new_value = shift @_;
+
+        if($hash) {
+            $hash->{'meta_value'} = $new_value;
+        } else {
+            ($hash) = $self->add_new_or_update( 'MetaParameters',
+                'meta_key'      => $meta_key,
+                'meta_value'    => $new_value,
+            );
+        }
+    }
+
     return $hash && $hash->{'meta_value'};
 }
 
 
 =head2 hive_use_param_stack
 
-    Description: (getter only) defines which one of two modes of parameter propagation is used in this pipeline
+    Description: defines which one of two modes of parameter propagation is used in this pipeline
 
 =cut
 
 sub hive_use_param_stack {
     my $self = shift @_;
 
-    return $self->get_meta_value_by_key('hive_use_param_stack') // 0;
+    return $self->get_meta_value_by_key('hive_use_param_stack', @_) // 0;
 }
 
 
 =head2 hive_pipeline_name
 
-    Description: (getter only) defines the symbolic name of the pipeline
+    Description: defines the symbolic name of the pipeline
 
 =cut
 
 sub hive_pipeline_name {
     my $self = shift @_;
 
-    return $self->get_meta_value_by_key('hive_pipeline_name') // '';
+    return $self->get_meta_value_by_key('hive_pipeline_name', @_) // '';
 }
 
 
@@ -323,7 +338,14 @@ sub apply_tweaks {
                 }
 
             } else {
-                if(my $hash_pair = $self->collection_of( 'MetaParameters' )->find_one_by('meta_key', $attrib_name)) {
+                if($self->can($attrib_name)) {
+                    my $old_value = $self->$attrib_name();
+
+                    print "Tweak.Changing\tglobal.$attrib_name :: $old_value --> $new_value_str\n";
+
+                    $self->$attrib_name( $new_value_str );
+
+                } elsif(my $hash_pair = $self->collection_of( 'MetaParameters' )->find_one_by('meta_key', $attrib_name)) {
                     print "Tweak.Changing\tglobal.$attrib_name :: $hash_pair->{'meta_value'} --> $new_value_str\n";
 
                     $hash_pair->{'meta_value'} = $new_value_str;
