@@ -303,22 +303,38 @@ sub apply_tweaks {
     foreach my $tweak (@$tweaks) {
         print "\nTweak.Request\t$tweak\n";
 
-        if($tweak=~/^global\.param\[(\w+)\]=(.+)$/) {
-            my ($param_name, $new_value_str) = ($1, $2);
+        if($tweak=~/^global\.(?:param\[(\w+)\]|(\w+))=(.+)$/) {
+            my ($param_name, $attrib_name, $new_value_str) = ($1, $2, $3);
 
-            my $new_value = destringify( $new_value_str );
+            if($param_name) {
+                my $new_value = destringify( $new_value_str );
 
-            if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $1)) {
-                print "Tweak.Changing\tglobal.param[$param_name] :: $hash_pair->{param_value} --> $new_value_str\n";
+                if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name)) {
+                    print "Tweak.Changing\tglobal.param[$param_name] :: $hash_pair->{'param_value'} --> $new_value_str\n";
 
-                $hash_pair->{'param_value'} = stringify($new_value);
+                    $hash_pair->{'param_value'} = stringify($new_value);
+                } else {
+                    print "Tweak.Adding  \tglobal.param[$param_name] :: (missing value) --> $new_value_str\n";
+
+                    $self->add_new_or_update( 'PipelineWideParameters',
+                        'param_name'    => $param_name,
+                        'param_value'   => stringify($new_value),
+                    );
+                }
+
             } else {
-                print "Tweak.Adding  \tglobal.param[$param_name] :: (missing value) --> $new_value_str\n";
+                if(my $hash_pair = $self->collection_of( 'MetaParameters' )->find_one_by('meta_key', $attrib_name)) {
+                    print "Tweak.Changing\tglobal.$attrib_name :: $hash_pair->{'meta_value'} --> $new_value_str\n";
 
-                $self->add_new_or_update( 'PipelineWideParameters',
-                    'param_name'    => $param_name,
-                    'param_value'   => stringify($new_value),
-                );
+                    $hash_pair->{'meta_value'} = $new_value_str;
+                } else {
+                    print "Tweak.Adding  \tglobal.$attrib_name :: (missing value) --> $new_value_str\n";
+
+                    $self->add_new_or_update( 'MetaParameters',
+                        'meta_key'      => $attrib_name,
+                        'meta_value'    => $new_value_str,
+                    );
+                }
             }
 
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.(?:param\[(\w+)\]|(\w+))=(.+)$/) {
