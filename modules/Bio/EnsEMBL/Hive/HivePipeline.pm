@@ -355,9 +355,29 @@ sub apply_tweaks {
                 if( $attrib_name eq 'flow_into' ) {
                     Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
 
-                } else {
+                } elsif( $attrib_name eq 'resource_class' ) {
 
-                    my $old_value   = $analysis->$attrib_name();
+                    if(my $old_value = $analysis->resource_class) {
+                        print "Tweak.Changing\tanalysis[$analysis_name].resource_class :: ".$old_value->name." --> $new_value_str\n";
+                    } else {
+                        print "Tweak.Adding  \tanalysis[$analysis_name].resource_class :: (missing value) --> $new_value_str\n";    # do we ever NOT have resource_class set?
+                    }
+
+                    my $resource_class;
+                    if($resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
+                        print "Tweak.Found   \tresource_class[$new_value_str]\n";
+
+                    } else {
+                        print "Tweak.Adding  \tresource_class[$new_value_str]\n";
+
+                        my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
+                            'name'  => $new_value,
+                        );
+                    }
+                    $analysis->resource_class( $resource_class );
+
+                } elsif($analysis->can($attrib_name)) {
+                    my $old_value = $analysis->$attrib_name();
 
                     if($param_name) {
                         my $param_hash  = destringify( $old_value );
@@ -371,31 +391,14 @@ sub apply_tweaks {
                         $param_hash->{ $param_name } = $new_value;
                         $analysis->$attrib_name( stringify($param_hash) );
 
-                    } elsif( $attrib_name eq 'resource_class' ) {
-                        if(defined($old_value)) {
-                            print "Tweak.Changing\tanalysis[$analysis_name].resource_class :: ".$old_value->name." --> $new_value_str\n";
-                        } else {
-                            print "Tweak.Adding  \tanalysis[$analysis_name].resource_class :: (missing value) --> $new_value_str\n";
-                        }
-
-                        if(my $resource_class = $self->collection_of( 'ResourceClass' )->find_one_by( 'name', $new_value )) {
-                            print "Tweak.Found   \tresource_class[$new_value_str]\n";
-
-                            $analysis->$attrib_name( $resource_class );
-                        } else {
-                            print "Tweak.Adding  \tresource_class[$new_value_str]\n";
-
-                            my ($resource_class) = $self->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
-                                'name'  => $new_value,
-                            );
-                            $analysis->$attrib_name( $resource_class );
-                        }
 
                     } else {
-                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name :: ".stringify($old_value)." --> $new_value_str\n";
+                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name :: ".stringify($old_value)." --> ".stringify($new_value)."\n";
 
                         $analysis->$attrib_name( $new_value );
                     }
+                } else {
+                    print "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
                 }
             }
 
@@ -434,7 +437,7 @@ sub apply_tweaks {
             }
 
         } else {
-            print "Tweak.FailedToParse\n";
+            print "Tweak.Error   \tFailed to parse the tweak\n";
         }
     }
 }
