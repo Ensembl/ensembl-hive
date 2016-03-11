@@ -95,9 +95,17 @@ B<--reg_conf>
 
     path to a Registry configuration file
 
+B<--reg_type>
+
+    Registry type of the Hive DBAdaptor
+
 B<--reg_alias>
 
     species/alias name for the Hive DBAdaptor
+
+B<--nosqlvc>
+
+    "No SQL Version Check" - set this to one if you want to force working with a database created by a potentially schema-incompatible API (0 by default)
 
 B<--tweak>
 
