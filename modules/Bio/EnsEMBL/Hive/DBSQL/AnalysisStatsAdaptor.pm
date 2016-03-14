@@ -67,6 +67,11 @@ sub default_input_column_mapping {
 }
 
 
+sub do_not_update_columns {
+    return ['last_update'];
+}
+
+
 sub object_class {
     return 'Bio::EnsEMBL::Hive::AnalysisStats';
 }
