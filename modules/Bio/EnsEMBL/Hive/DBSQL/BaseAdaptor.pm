@@ -69,6 +69,10 @@ sub default_input_column_mapping {
     };
 }
 
+sub do_not_update_columns {
+    return [];
+}
+
 # ---------------------------------------------------------------------------
 
 sub new {
@@ -200,9 +204,10 @@ sub updatable_column_list {    # it's just a cashed view, you cannot set it dire
     my $self = shift @_;
 
     unless($self->{_updatable_column_list}) {
-        my %primary_key_set = map { $_ => 1 } @{$self->primary_key()};
-        my $column_set      = $self->column_set();
-        $self->{_updatable_column_list} = [ grep { not $primary_key_set{$_} } keys %$column_set ];
+        my %primary_key_set     = map { $_ => 1 } @{$self->primary_key};
+        my %non_updatable_set   = map { $_ => 1 } @{$self->do_not_update_columns};
+        my $column_set          = $self->column_set();
+        $self->{_updatable_column_list} = [ grep { not ($primary_key_set{$_} || $non_updatable_set{$_}) } keys %$column_set ];
     }
     return $self->{_updatable_column_list};
 }
