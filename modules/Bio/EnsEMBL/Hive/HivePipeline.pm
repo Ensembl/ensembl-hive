@@ -297,6 +297,40 @@ sub hive_use_triggers {
 }
 
 
+=head2 list_all_hive_tables
+
+    Description: getter via MetaParameters. Lists the (MySQL) table names used by the HivePipeline
+
+=cut
+
+sub list_all_hive_tables {
+    my $self = shift @_;
+
+    if(@_) {
+        throw('HivePipeline::list_all_hive_tables is not settable, it is only a getter');
+    }
+
+    return [ split /,/, ($self->get_meta_value_by_key('hive_all_base_tables') // '') ];
+}
+
+
+=head2 list_all_hive_views
+
+    Description: getter via MetaParameters. Lists the (MySQL) view names used by the HivePipeline
+
+=cut
+
+sub list_all_hive_views {
+    my $self = shift @_;
+
+    if(@_) {
+        throw('HivePipeline::list_all_hive_views is not settable, it is only a getter');
+    }
+
+    return [ split /,/, ($self->get_meta_value_by_key('hive_all_views') // '') ];
+}
+
+
 =head2 params_as_hash
 
     Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash

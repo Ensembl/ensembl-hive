@@ -183,22 +183,9 @@ sub hive_pipeline {
         $self->{'_hive_pipeline'} = shift @_;
     }
     unless ($self->{'_hive_pipeline'}) {
-        $self->{'_hive_pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new( -dba => $self );
+        $self->{'_hive_pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new( -dba => $self );     # ToDo: this lazy-loaded object is not registered in TheApiary (yet)
     }
     return $self->{'_hive_pipeline'};
-}
-
-
-sub list_all_hive_tables {
-    my $self = shift @_;
-
-    return [ split /,/, ($self->hive_pipeline->get_meta_value_by_key('hive_all_base_tables') // '') ];
-}
-
-sub list_all_hive_views {
-    my $self = shift @_;
-
-    return [ split /,/, ($self->hive_pipeline->get_meta_value_by_key('hive_all_views') // '') ];
 }
 
 

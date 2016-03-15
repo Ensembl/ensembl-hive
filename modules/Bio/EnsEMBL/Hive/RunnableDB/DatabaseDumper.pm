@@ -126,7 +126,7 @@ sub fetch_input {
         my $meta_sth = $src_dbc->db_handle->table_info(undef, undef, 'hive_meta');
         if ($meta_sth->fetchrow_arrayref) {
             my $src_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -dbconn => $src_dbc, -disconnect_when_inactive => 1, -no_sql_schema_version_check => 1 );
-            @ehive_tables = (@{$src_dba->list_all_hive_tables}, @{$src_dba->list_all_hive_views});
+            @ehive_tables = (@{$src_dba->hive_pipeline->list_all_hive_tables}, @{$src_dba->hive_pipeline->list_all_hive_views});
         }
         $meta_sth->finish();
     }
