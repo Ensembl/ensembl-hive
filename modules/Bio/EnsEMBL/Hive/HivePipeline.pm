@@ -426,17 +426,8 @@ sub apply_tweaks {
 
                     $self->$attrib_name( $new_value_str );
 
-                } elsif(my $hash_pair = $self->collection_of( 'MetaParameters' )->find_one_by('meta_key', $attrib_name)) {
-                    print "Tweak.Changing\tglobal.$attrib_name :: $hash_pair->{'meta_value'} --> $new_value_str\n";
-
-                    $hash_pair->{'meta_value'} = $new_value_str;
                 } else {
-                    print "Tweak.Adding  \tglobal.$attrib_name :: (missing value) --> $new_value_str\n";
-
-                    $self->add_new_or_update( 'MetaParameters',
-                        'meta_key'      => $attrib_name,
-                        'meta_value'    => $new_value_str,
-                    );
+                    print "Tweak.Error   \tCould not find the global '$attrib_name' method\n";
                 }
             }
 
