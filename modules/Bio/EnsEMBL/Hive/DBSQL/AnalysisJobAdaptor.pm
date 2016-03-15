@@ -136,7 +136,7 @@ sub store_jobs_and_adjust_counters {
                 $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
             }
 
-            unless($job_adaptor->db->hive_use_triggers()) {
+            unless($job_adaptor->db->hive_pipeline->hive_use_triggers()) {
                 $job_adaptor->dbc->do(qq{
                         UPDATE analysis_stats
                         SET total_job_count=total_job_count+1

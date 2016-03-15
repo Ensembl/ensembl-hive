@@ -280,6 +280,23 @@ sub hive_auto_rebalance_semaphores {
 }
 
 
+=head2 hive_use_triggers
+
+    Description: getter via MetaParameters. Defines whether SQL triggers are used to automatically update AnalysisStats counters
+
+=cut
+
+sub hive_use_triggers {
+    my $self = shift @_;
+
+    if(@_) {
+        throw('HivePipeline::hive_use_triggers is not settable, it is only a getter');
+    }
+
+    return $self->get_meta_value_by_key('hive_use_triggers') // '0';
+}
+
+
 =head2 params_as_hash
 
     Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash

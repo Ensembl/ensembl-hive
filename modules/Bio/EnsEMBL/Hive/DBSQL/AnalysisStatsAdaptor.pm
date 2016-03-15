@@ -134,7 +134,7 @@ sub update_stats_and_monitor {
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
 
-  unless( $self->db->hive_use_triggers() ) {
+  unless( $stats->hive_pipeline->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
       $sql .= ",semaphored_job_count=" . $stats->semaphored_job_count();
       $sql .= ",ready_job_count=" . $stats->ready_job_count();
@@ -192,7 +192,7 @@ sub interval_update_work_done {
 
   $weight_factor ||= 3; # makes it more sensitive to the dynamics of the farm
 
-  my $sql = $self->db->hive_use_triggers()
+  my $sql = $self->db->hive_pipeline->hive_use_triggers()
   ? qq{
     UPDATE analysis_stats SET
         avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
@@ -218,7 +218,7 @@ sub interval_update_work_done {
 sub increment_a_counter {
     my ($self, $counter, $increment, $analysis_id) = @_;
 
-    unless( $self->db->hive_use_triggers() ) {
+    unless( $self->db->hive_pipeline->hive_use_triggers() ) {
         if($increment) {    # can either be positive or negative
 ## ToDo: does it make sense to update the timestamp as well, to signal to the sync-allowed workers that they should wait?
 #            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment), when_updated=CURRENT_TIMESTAMP WHERE sync_lock=0 AND analysis_id='$analysis_id'" );
