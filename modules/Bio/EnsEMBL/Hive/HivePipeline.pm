@@ -243,7 +243,7 @@ sub get_meta_value_by_key {
 
 =head2 hive_use_param_stack
 
-    Description: defines which one of two modes of parameter propagation is used in this pipeline
+    Description: getter/setter via MetaParameters. Defines which one of two modes of parameter propagation is used in this pipeline
 
 =cut
 
@@ -256,7 +256,7 @@ sub hive_use_param_stack {
 
 =head2 hive_pipeline_name
 
-    Description: defines the symbolic name of the pipeline
+    Description: getter/setter via MetaParameters. Defines the symbolic name of the pipeline.
 
 =cut
 
@@ -264,6 +264,19 @@ sub hive_pipeline_name {
     my $self = shift @_;
 
     return $self->get_meta_value_by_key('hive_pipeline_name', @_) // '';
+}
+
+
+=head2 hive_auto_rebalance_semaphores
+
+    Description: getter/setter via MetaParameters. Defines whether beekeeper should attempt to rebalance semaphores on each iteration.
+
+=cut
+
+sub hive_auto_rebalance_semaphores {
+    my $self = shift @_;
+
+    return $self->get_meta_value_by_key('hive_auto_rebalance_semaphores', @_) // '0';
 }
 
 
