@@ -620,7 +620,7 @@ sub synchronize_AnalysisStats {
 
         $stats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
-        my $job_counts = $stats->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
+        my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 
         $stats->recalculate_from_job_counts( $job_counts );
 
