@@ -212,13 +212,13 @@ sub get_source_analyses {
 }
 
 
-=head2 get_meta_value_by_key
+=head2 _meta_value_by_key
 
-    Description: (no longer just a getter, needs a rename) returns a particular meta_value from 'MetaParameters' collection given meta_key
+    Description: getter/setter for a particular meta_value from 'MetaParameters' collection given meta_key
 
 =cut
 
-sub get_meta_value_by_key {
+sub _meta_value_by_key {
     my $self    = shift @_;
     my $meta_key= shift @_;
 
@@ -250,7 +250,7 @@ sub get_meta_value_by_key {
 sub hive_use_param_stack {
     my $self = shift @_;
 
-    return $self->get_meta_value_by_key('hive_use_param_stack', @_) // 0;
+    return $self->_meta_value_by_key('hive_use_param_stack', @_) // 0;
 }
 
 
@@ -263,7 +263,7 @@ sub hive_use_param_stack {
 sub hive_pipeline_name {
     my $self = shift @_;
 
-    return $self->get_meta_value_by_key('hive_pipeline_name', @_) // '';
+    return $self->_meta_value_by_key('hive_pipeline_name', @_) // '';
 }
 
 
@@ -276,7 +276,7 @@ sub hive_pipeline_name {
 sub hive_auto_rebalance_semaphores {
     my $self = shift @_;
 
-    return $self->get_meta_value_by_key('hive_auto_rebalance_semaphores', @_) // '0';
+    return $self->_meta_value_by_key('hive_auto_rebalance_semaphores', @_) // '0';
 }
 
 
@@ -293,7 +293,7 @@ sub hive_use_triggers {
         throw('HivePipeline::hive_use_triggers is not settable, it is only a getter');
     }
 
-    return $self->get_meta_value_by_key('hive_use_triggers') // '0';
+    return $self->_meta_value_by_key('hive_use_triggers') // '0';
 }
 
 
@@ -310,7 +310,7 @@ sub list_all_hive_tables {
         throw('HivePipeline::list_all_hive_tables is not settable, it is only a getter');
     }
 
-    return [ split /,/, ($self->get_meta_value_by_key('hive_all_base_tables') // '') ];
+    return [ split /,/, ($self->_meta_value_by_key('hive_all_base_tables') // '') ];
 }
 
 
@@ -327,7 +327,7 @@ sub list_all_hive_views {
         throw('HivePipeline::list_all_hive_views is not settable, it is only a getter');
     }
 
-    return [ split /,/, ($self->get_meta_value_by_key('hive_all_views') // '') ];
+    return [ split /,/, ($self->_meta_value_by_key('hive_all_views') // '') ];
 }
 
 
@@ -344,7 +344,7 @@ sub hive_sql_schema_version {
         throw('HivePipeline::hive_sql_schema_version is not settable, it is only a getter');
     }
 
-    return $self->get_meta_value_by_key('hive_sql_schema_version') // 'N/A';
+    return $self->_meta_value_by_key('hive_sql_schema_version') // 'N/A';
 }
 
 
