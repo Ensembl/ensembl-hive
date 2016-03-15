@@ -320,7 +320,7 @@ sub dataflow_output_id {
                 }
 
                 push @{$targets_grouped_by_condition->[$condition_idx][2]}, $output_id;
-                ++$total_output_ids_for_the_rule;
+                $total_output_ids_for_the_rule += scalar( @{ $targets_grouped_by_condition->[$condition_idx][1] } );
             }
         }
 
