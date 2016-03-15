@@ -331,6 +331,23 @@ sub list_all_hive_views {
 }
 
 
+=head2 hive_sql_schema_version
+
+    Description: getter via MetaParameters. Defines the Hive SQL schema version of the database if it has been stored
+
+=cut
+
+sub hive_sql_schema_version {
+    my $self = shift @_;
+
+    if(@_) {
+        throw('HivePipeline::hive_sql_schema_version is not settable, it is only a getter');
+    }
+
+    return $self->get_meta_value_by_key('hive_sql_schema_version') // 'N/A';
+}
+
+
 =head2 params_as_hash
 
     Description: returns the destringified contents of the 'PipelineWideParameters' collection as a hash
