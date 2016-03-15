@@ -137,7 +137,7 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
         {   -logic_name => 'take_b_apart',
-            -module     => 'LongMult.DigitFactory',
+            -module     => 'eHive.examples.LongMult.DigitFactory',
             -language   => 'python3',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
             -analysis_capacity  =>  2,  # use per-analysis limiter
@@ -152,7 +152,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'part_multiply',
-            -module     => 'LongMult.PartMultiply',
+            -module     => 'eHive.examples.LongMult.PartMultiply',
             -language   => 'python3',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
@@ -161,7 +161,7 @@ sub pipeline_analyses {
         },
         
         {   -logic_name => 'add_together',
-            -module     => 'LongMult.AddTogether',
+            -module     => 'eHive.examples.LongMult.AddTogether',
             -language   => 'python3',
             -flow_into => {
                 1 => [ '?table_name=final_result', 'last' ],

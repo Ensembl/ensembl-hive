@@ -32,7 +32,7 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 plan tests => 1;
 
 standaloneJob(
-    'TestRunnable',
+    'eHive.examples.TestRunnable',
     {
         'alpha' => 2,
     },
