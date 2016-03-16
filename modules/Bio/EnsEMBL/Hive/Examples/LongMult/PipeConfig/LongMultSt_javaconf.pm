@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_javaconf;
+    Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_javaconf;
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_javaconf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_javaconf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name take_b_apart -input_id '{ "a_multiplier" => "12345678", "b_multiplier" => "3359559666" }'
@@ -62,7 +62,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::PipeConfig::LongMultSt_javaconf;
+package Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultSt_javaconf;
 
 use strict;
 use warnings;
@@ -140,11 +140,11 @@ sub pipeline_analyses {
             -module     => 'org.ensembl.hive.longmult.DigitFactory',
             -language   => 'java',
             -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
-            -analysis_capacity  =>  1,  # use per-analysis limiter
+            -analysis_capacity  =>  2,  # use per-analysis limiter
             -input_ids => [
             #{ 'a_multiplier' => '123', 'b_multiplier' => '456' }
                 { 'a_multiplier' => '9650156169', 'b_multiplier' => '327358788' },
-                #{ 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
+                { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
                 '2->A' => [ 'part_multiply' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
@@ -155,9 +155,9 @@ sub pipeline_analyses {
         {   -logic_name => 'part_multiply',
             -module     => 'org.ensembl.hive.longmult.PartMultiply',
             -language   => 'java',
-            -analysis_capacity  =>  1,  # use per-analysis limiter
+            -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ ':////accu?partial_product={digit}' ],
+                1 => [ '?accu_name=partial_product&accu_address={digit}' ],
             },
         },
         
@@ -165,7 +165,7 @@ sub pipeline_analyses {
             -module     => 'org.ensembl.hive.longmult.AddTogether',
             -language   => 'java',
             -flow_into => {
-                1 => [ ':////final_result', 'last' ],
+                1 => [ '?table_name=final_result', 'last' ],
             },
         },
 

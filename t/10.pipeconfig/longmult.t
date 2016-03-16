@@ -31,7 +31,7 @@ my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf';
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf LongMultSt_javaconf';
 
 my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
