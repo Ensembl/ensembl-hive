@@ -1,0 +1,16 @@
+###########################################################################################################################################
+#
+#   Bio::EnsEMBL::Hive::RunnableDB::LongMult is an example eHive pipeline.
+#
+#
+#   Please have a look at the pipeline configuration file
+#
+#       ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMult_conf.pm
+#
+#   which is used to load the Long Multiplication pipeline either in "analysis control" or "semaphore job control" mode.
+#
+#
+#   Create this pipeline using init_pipeline.pl and run it using beekeeper.pl in step-by-step mode (use -run instead of -loop option).
+#
+###########################################################################################################################################
+

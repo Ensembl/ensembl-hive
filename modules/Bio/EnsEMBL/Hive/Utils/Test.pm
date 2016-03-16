@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ no warnings qw( redefine );
 use Exporter;
 use Carp qw{croak};
 
+use Data::Dumper;
+
 use Test::More;
 use Test::Exception;
 
@@ -45,6 +47,24 @@ our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker );
 
 our $VERSION = '0.00';
 
+sub _compare_job_warnings {
+    my ($got, $expects) = @_;
+    subtest "WARNING content as expected" => sub {
+        plan tests => 2;
+        my $exp_mess = shift @$expects;
+        if (re::is_regexp($exp_mess)) {
+            like(shift @$got, $exp_mess, 'WARNING message as expected');
+        } else {
+            is(shift @$got, $exp_mess, 'WARNING message as expected');
+        }
+        is_deeply($got, $expects, 'remaining WARNING arguments');
+    };
+}
+
+sub _compare_job_dataflows {
+    my ($got, $expects) = @_;
+    is_deeply($got, $expects, 'DATAFLOW content as expected');
+}
 
 sub standaloneJob {
     my ($module_or_file, $param_hash, $expected_events, $flags) = @_;
@@ -54,11 +74,19 @@ sub standaloneJob {
     my $input_id = stringify($param_hash);
 
     my $_test_event = sub {
+        my ($triggered_type, @got) = @_;
         if (@$events_to_test) {
-            is_deeply([@_], (shift @$events_to_test), "$_[0] event");
+            my $expects = shift @$events_to_test;
+            my $expected_type = shift @$expects;
+            if ($triggered_type ne $expected_type) {
+                fail("Got a $triggered_type event but was expecting $expected_type");
+            } elsif ($triggered_type eq 'WARNING') {
+                _compare_job_warnings(\@got, $expects);
+            } else {
+                _compare_job_dataflows(\@got, $expects);
+            }
         } else {
-            fail("event-stack is empty, cannot get the next expected event");
-            use Data::Dumper;
+            fail("event-stack is empty but the job emitted an event");
             print Dumper([@_]);
         }
     };
@@ -77,7 +105,12 @@ sub standaloneJob {
     subtest "standalone run of $module_or_file" => sub {
         plan tests => 2 + ($expected_events ? 1+scalar(@$expected_events) : 0);
         lives_ok(sub {
-            ok(Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef, $flags->{language}), 'job completed');
+            my $is_success = Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef, $flags->{language});
+            if ($flags->{expect_failure}) {
+                ok(!$is_success, 'job failed as expected');
+            } else {
+                ok($is_success, 'job completed');
+            }
         }, sprintf('standaloneJob("%s", %s, (...), %s)', $module_or_file, stringify($param_hash), stringify($flags)));
 
         ok(!scalar(@$events_to_test), 'no untriggered events') if $expected_events;
@@ -86,16 +119,15 @@ sub standaloneJob {
 
 
 sub init_pipeline {
-    my ($file_or_module, $options) = @_;
+    my ($file_or_module, $options, $tweaks) = @_;
 
     $options ||= [];
 
     my $url;
     local @ARGV = @$options;
-    local %Bio::EnsEMBL::Hive::Cacheable::cache_by_class;
 
     lives_ok(sub {
-        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module);
+        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
         ok($url, 'pipeline initialized');
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
 

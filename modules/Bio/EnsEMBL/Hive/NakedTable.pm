@@ -11,7 +11,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -34,7 +34,12 @@ package Bio::EnsEMBL::Hive::NakedTable;
 use strict;
 use warnings;
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
+
+
+sub unikey {    # override the default from Cacheable parent
+    return [ 'table_name' ];
+}
 
 
 sub table_name {
@@ -61,29 +66,22 @@ sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : ':///' )
-        . '/' . $self->table_name . '?insertion_method=' . $self->insertion_method;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
+        . '?table_name=' . $self->table_name
+        . ( $self->insertion_method ? '&insertion_method='.$self->insertion_method : '');
 }
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter display_name is generated
-
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->dbname.'/' : '') . $self->table_name;
+    my ($self) = @_;
+    return $self->table_name;
 }
 
 
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-        # we have to do this the ugly way
-        # because Registry code currently prevents us from passing arguments to adaptors' new() methods
-        # (and by caching guarantees there is only one instance of each adaptor per DBAdaptor)
-    my $adaptor = $self->adaptor();
-    $adaptor->table_name( $self->table_name() );
-    $adaptor->insertion_method( $self->insertion_method() );
-
+    my $adaptor      = $self->adaptor();
     my @column_names = keys %{$self->adaptor->column_set};
     my @rows = ();
 
@@ -95,6 +93,13 @@ sub dataflow {
         push @rows, \%row_hash;
     }
     $adaptor->store( \@rows );
+}
+
+
+sub toString {
+    my $self = shift @_;
+
+    return 'NakedTable('.$self->table_name.')';
 }
 
 1;

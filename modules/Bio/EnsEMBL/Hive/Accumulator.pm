@@ -11,7 +11,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -36,26 +36,31 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify');
 
-use base ( 'Bio::EnsEMBL::Hive::Storable' );
+use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
-sub struct_name {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_struct_name'} = shift @_;
-    }
-    return $self->{'_struct_name'};
+sub unikey {    # override the default from Cacheable parent
+    return [ 'accu_name', 'accu_address' ];
 }
 
 
-sub signature_template {
+sub accu_name {
     my $self = shift @_;
 
     if(@_) {
-        $self->{'_signature_template'} = shift @_;
+        $self->{'_accu_name'} = shift @_;
     }
-    return $self->{'_signature_template'};
+    return $self->{'_accu_name'};
+}
+
+
+sub accu_address {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_accu_address'} = shift @_;
+    }
+    return $self->{'_accu_address'};
 }
 
 
@@ -63,45 +68,51 @@ sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : ':///' )
-        . '/accu?' . $self->struct_name . '=' . $self->signature_template;
+    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
+        . '?accu_name=' . $self->accu_name
+        . ( $self->accu_address ? '&accu_address='.$self->accu_address : '');
 }
 
 
 sub display_name {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter display_name is generated
-
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->dbname.'/' : '') . $self->struct_name . $self->signature_template;
+    my ($self) = @_;
+    return $self->accu_name . ($self->accu_address // '');
 }
 
 
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    my $sending_job_id      = $emitting_job->dbID();
-    my $receiving_job_id    = $emitting_job->semaphored_job_id() || die "No semaphored job, cannot perform accumulated dataflow";
+    my $sending_job_id      = $emitting_job->dbID;
+    my $receiving_job_id    = $emitting_job->semaphored_job_id || die "No semaphored job, cannot perform accumulated dataflow";
 
-    my $struct_name         = $self->struct_name();
-    my $signature_template  = $self->signature_template();
+    my $accu_name           = $self->accu_name;
+    my $accu_address        = $self->accu_address;
 
     my @rows = ();
 
     foreach my $output_id (@$output_ids) {
 
-        my $key_signature = $signature_template;
+        my $key_signature = $accu_address;
         $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
 
         push @rows, {
             'sending_job_id'    => $sending_job_id,
             'receiving_job_id'  => $receiving_job_id,
-            'struct_name'       => $struct_name,
+            'struct_name'       => $accu_name,
             'key_signature'     => $key_signature,
-            'value'             => stringify( $emitting_job->_param_possibly_overridden($struct_name, $output_id) ),
+            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_name, $output_id) ),
         };
     }
 
     $self->adaptor->store( \@rows );
+}
+
+
+sub toString {
+    my $self = shift @_;
+
+    return 'Accumulator(' . $self->accu_name . '<--' . ($self->accu_address // ''). ')';
 }
 
 1;

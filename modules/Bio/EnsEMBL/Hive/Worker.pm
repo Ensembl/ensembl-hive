@@ -46,7 +46,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -623,7 +623,6 @@ sub specialize_and_compile_wrapper {
             $self->runnable_object( $runnable_object );
             $self->enter_status('READY');
 
-#            $self->adaptor->db->dbc->disconnect_when_inactive(0);
             1;
         } or do {
             my $msg = $@;

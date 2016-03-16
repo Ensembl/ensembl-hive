@@ -15,10 +15,11 @@ By inheriting from this module you make your module able to deal with parameters
             #
             ## typical usage:
             # $job->param_init( 
-            #       $runObj->param_defaults(),                      # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
-            #       $self->db->get_PipelineWideParametersAdaptor->fetch_param_hash(), # then come the pipeline-wide parameters from the 'meta' table (define things common to all modules in this pipeline)
-            #       $self->analysis->parameters(),                  # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
-            #       $job->input_id(),                               # job-specific 'input_id' parameters have the highest precedence
+            #       $runObj->param_defaults(),          # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
+            #       $hive_pipeline->params_as_hash(),   # then come the pipeline-wide parameters from the 'pipeline_wide_parameters' table (define things common to all analyses in this pipeline)
+            #       $self->analysis->parameters(),      # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
+            #       $job->input_id(),                   # job-specific 'input_id' parameters have the highest precedence
+            #       $job->accu_hash(),                  # parameters accumulated and sent for this job by other preceding jobs
             # );
           
 
@@ -50,7 +51,7 @@ By inheriting from this module you make your module able to deal with parameters
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -121,6 +122,7 @@ sub param_init {
     }
 
     $self->{'_unsubstituted_param_hash'} = \%unsubstituted_param_hash;
+    $self->{'_param_hash'} = {};
 }
 
 
@@ -140,12 +142,32 @@ sub _param_silent {
         or die "ParamError: calling param() without arguments\n";
 
     if(@_) { # If there is a value (even if undef), then set it!
-        $self->{'_param_hash'}{$param_name} = shift @_;
-    } elsif( !exists( $self->{'_param_hash'}{$param_name} )
-       and    exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
-        my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
-
-        $self->{'_param_hash'}{$param_name} = $self->param_substitute( $unsubstituted );
+        my $new_val = shift @_;
+        if (@_ and (shift)) {
+            # If there is an extra parameter after the value, it means that
+            # the value is unsubstituted
+            $self->{'_unsubstituted_param_hash'}{$param_name} = $new_val;
+        } else {
+            $self->{'_param_hash'}{$param_name} = $new_val;
+        }
+    } elsif( !exists( $self->{'_param_hash'}{$param_name}) ) {
+        if (exists( $self->{'_unsubstituted_param_hash'}{$param_name} ) ) {
+            my $ini_used_missing_param = $self->{'_used_missing_params'};
+            delete $self->{'_used_missing_params'};
+            my $unsubstituted = $self->{'_unsubstituted_param_hash'}{$param_name};
+            my $substituted = $self->param_substitute( $unsubstituted );
+            if (my $failed_dep = $self->{'_used_missing_params'}) {
+                delete $self->{'_used_missing_params'};
+                delete $self->{'_substitution_in_progress'};
+                die "ParamError: the evaluation of '$param_name' requires '$failed_dep' which is missing\n";
+            }
+            $self->{'_param_hash'}{$param_name} = $substituted;
+            $self->{'_used_missing_params'} = $ini_used_missing_param if $ini_used_missing_param;
+        } else {
+            $self->{'_used_missing_params'} = $param_name;
+        }
+    } else {
+        # The parameter has already been substituted
     }
 
     return exists( $self->{'_param_hash'}{$param_name} )
@@ -194,9 +216,15 @@ sub param_exists {
     my $self        = shift @_;
     my $param_name  = shift @_;
 
-    return exists( $self->{'_param_hash'}{$param_name} )
-            ? 1
-            : 0;
+    $self->_param_silent($param_name);
+    if (exists( $self->{'_param_hash'}{$param_name} )) {
+        return 1;
+    } elsif (exists( $self->{'_unsubstituted_param_hash'}{$param_name} )) {
+        # In this case, the substitution failed
+        return undef;
+    } else {
+        return 0;
+    }
 }
 
 =head2 param_is_defined
@@ -215,9 +243,15 @@ sub param_is_defined {
     my $self        = shift @_;
     my $param_name  = shift @_;
 
-    return defined( $self->_param_silent($param_name) )
-            ? 1
-            : 0;
+    my $value = $self->_param_silent($param_name);
+    if (exists( $self->{'_param_hash'}{$param_name} )) {
+        return (defined $value ? 1 : 0);
+    } elsif (exists( $self->{'_unsubstituted_param_hash'}{$param_name} )) {
+        # In this case, the substitution failed
+        return undef;
+    } else {
+        return 0;
+    }
 }
 
 
@@ -226,6 +260,8 @@ sub param_is_defined {
     Arg [1]    : string $param_name
 
     Arg [2]    : (optional) $param_value
+
+    Arg [3]    : (optional) $value_needs_substitution (in case you want to define a parameter with '#other_param#' and let the system compute its true value later)
 
     Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see param_init() )
 
@@ -244,7 +280,7 @@ sub param {
 
     my $value = $self->_param_silent( $param_name, @_ );
     
-    unless( $self->param_exists( $param_name ) ) {
+    unless( exists( $self->{'_param_hash'}{$param_name} )) {
         warn "ParamWarning: value for param('$param_name') is used before having been initialized!\n";
     }
 
@@ -367,10 +403,15 @@ sub _subst_one_hashpair {
 
         $expression=~s{(?:#(\w+)#)}{\$self->_param_possibly_overridden('$1', \$overriding_hash)}g;
 
-        $value = eval "return $expression";     # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
-    }
+        $value = eval "return ($expression)";   # NB: 'return' is needed to protect the hashrefs from being interpreted as scoping blocks
+                                                #       and parentheses are needed because return binds stronger than 'and' and 'or'
 
-    warn "ParamWarning: substituting an undefined value of #$inside_hashes#\n" unless(defined($value));
+        if ($@) {
+            delete $self->{'_substitution_in_progress'}{$inside_hashes};    # to allow re-entering the sub
+            die $@ if $@ =~ /^ParamError/;                                  # re-raise the underlying Param error
+            die "ParamError: Cannot evaluate the expression: '$inside_hashes' ==> '$expression'\n$@";
+        }
+    }
 
     delete $self->{'_substitution_in_progress'}{$inside_hashes};
     return $value;

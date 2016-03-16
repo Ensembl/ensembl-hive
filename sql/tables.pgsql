@@ -16,7 +16,7 @@
 
 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -192,37 +192,49 @@ CREATE TABLE analysis_stats (
 
 @colour #C70C09
 
-@desc Extension of simple_rule design except that goal(to) is now in extended URL format e.g.
-        mysql://ensadmin:<pass>@ecs2:3361/compara_hive_test?analysis.logic_name='blast_NCBI34'
-        (full network address of an analysis).
-        The only requirement is that there are rows in the job, analysis, dataflow_rule,
-        and worker tables so that the following join works on the same database 
-            WHERE analysis.analysis_id = dataflow_rule.from_analysis_id 
-            AND   analysis.analysis_id = job.analysis_id
-            AND   analysis.analysis_id = worker.analysis_id
-        These are the rules used to create entries in the job table where the
-        input_id (control data) is passed from one analysis to the next to define work.
-        The analysis table will be extended so that it can specify different read and write
-        databases, with the default being the database the analysis is on
+@desc Each entry of this table defines a starting point for dataflow (via from_analysis_id and branch_code)
+      to which point a group of dataflow_target entries can be linked. This grouping is used in two ways:
+      (1) dataflow_target entries that link into the same dataflow_rule share the same from_analysis, branch_code and funnel_dataflow_rule
+      (2) to define the conditions for DEFAULT or ELSE case (via excluding all conditions explicitly listed in the group)
 
 @column dataflow_rule_id        internal ID
 @column from_analysis_id        foreign key to analysis table analysis_id
 @column branch_code             branch_code of the fan
 @column funnel_dataflow_rule_id dataflow_rule_id of the semaphored funnel (is NULL by default, which means dataflow is not semaphored)
-@column to_analysis_url         foreign key to net distributed analysis logic_name reference
-@column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
 */
 
 CREATE TABLE dataflow_rule (
     dataflow_rule_id        SERIAL PRIMARY KEY,
     from_analysis_id        INTEGER     NOT NULL,
     branch_code             INTEGER     NOT NULL DEFAULT 1,
-    funnel_dataflow_rule_id INTEGER              DEFAULT NULL,
-    to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',
-    input_id_template       TEXT                 DEFAULT NULL,
-
-    UNIQUE (from_analysis_id, branch_code, funnel_dataflow_rule_id, to_analysis_url, input_id_template)
+    funnel_dataflow_rule_id INTEGER              DEFAULT NULL
 );
+
+
+/**
+@table  dataflow_target
+
+@colour #C70C09
+
+@desc This table links specific conditions with the target object (Analysis/Table/Accu) and optional input_id_template.
+
+@column source_dataflow_rule_id foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)
+@column on_condition            param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE
+@column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
+@column extend_param_stack      the boolean value defines whether the newly created jobs will inherit both the parameters and the accu of the prev_job
+@column to_analysis_url         the URL of the dataflow target object (Analysis/Table/Accu)
+*/
+
+CREATE TABLE dataflow_target (
+    source_dataflow_rule_id INTEGER     NOT NULL,
+    on_condition            VARCHAR(255)          DEFAULT NULL,
+    input_id_template       TEXT                  DEFAULT NULL,
+    extend_param_stack      SMALLINT     NOT NULL DEFAULT 0,
+    to_analysis_url         VARCHAR(255) NOT NULL DEFAULT '',       -- to be renamed 'target_url'
+
+    UNIQUE (source_dataflow_rule_id, on_condition, input_id_template, to_analysis_url)
+);
+
 
 
 /**
@@ -327,6 +339,7 @@ CREATE TABLE resource_description (
 @column semaphored_job_id       the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".
 */
 
+CREATE TYPE job_status AS ENUM ('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON');
 CREATE TABLE job (
     job_id                  SERIAL PRIMARY KEY,
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
@@ -335,7 +348,7 @@ CREATE TABLE job (
     param_id_stack          TEXT        NOT NULL DEFAULT '',
     accu_id_stack           TEXT        NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
-    status                  TEXT        NOT NULL DEFAULT 'READY',   -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
+    status                  job_status  NOT NULL DEFAULT 'READY',
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     when_completed          TIMESTAMP            DEFAULT NULL,
     runtime_msec            INTEGER              DEFAULT NULL,
@@ -415,14 +428,16 @@ CREATE INDEX ON accu (receiving_job_id);
         and the input_id contains the corresponding analysis_data_id.
 
 @column analysis_data_id    primary id
+@column md5sum              checksum over the data to quickly detect (potential) collisions
 @column data                text blob which holds the data
 */
 
 CREATE TABLE analysis_data (
     analysis_data_id        SERIAL PRIMARY KEY,
-    data                    TEXT
+    md5sum                  CHAR(32) NOT NULL,
+    data                    TEXT     NOT NULL
 );
-CREATE INDEX ON analysis_data (data);
+CREATE INDEX ON analysis_data (md5sum);
 
 
 /**
@@ -521,14 +536,17 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 @colour #F4D20C
 
 @desc   A table with post-mortem resource usage statistics of a Worker.
+	This table is not automatically populated: you first need to run
+	load_resource_usage.pl. Note that some meadows (like LOCAL) do not
+	support post-mortem inspection of resource usage
 
 @column          worker_id  links to the worker table
 @column        exit_status  meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)
 @column           mem_megs  how much memory the Worker process used
 @column          swap_megs  how much swap the Worker process used
 @column        pending_sec  time spent by the process in the queue before it became a Worker
-@column            cpu_sec  cpu time used by the Worker process
-@column       lifespan_sec  walltime used by the Worker process
+@column            cpu_sec  cpu time (in seconds) used by the Worker process. It is often lower than the walltime because of time spent in I/O waits, but it can also be higher if the process is multi-threaded
+@column       lifespan_sec  walltime (in seconds) used by the Worker process. It is often higher than the sum of its jobs' "runtime_msec" because of the overhead from the Worker itself
 @column   exception_status  meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'
 */
 

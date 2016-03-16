@@ -50,22 +50,6 @@ sub main {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
 
-    if(! $self->{'output'}) {
-        pod2usage({
-            -message => 'ERROR: No -output flag given',
-            -exitvalue => 1,
-            -verbose => 2
-        });
-    }
-  
-    if(!$self->{'format'}) {
-        if($self->{'output'}=~/\.(\w+)$/) {
-            $self->{'format'} = $1;
-        } else {
-            die "Format was not set and could not guess from ".$self->{'output'}.". Please use either way to select it.\n";
-        }
-    }
-
     if($self->{'url'} or $self->{'reg_alias'}) {
         $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                            => $self->{'url'},
@@ -89,15 +73,34 @@ sub main {
         $pipeconfig_object->add_objects_from_config( $self->{'pipeline'} );
     }
 
-    my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
-        $self->{'pipeline'},
-        $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
-    );
-    my $graphviz = $graph->build();
+    if($self->{'output'}) {
 
-    my $call = 'as_'.$self->{'format'};
+        if(!$self->{'format'}) {
+            if($self->{'output'}=~/\.(\w+)$/) {
+                $self->{'format'} = $1;
+            } else {
+                die "Format was not set and could not guess from ".$self->{'output'}.". Please use either way to select it.\n";
+            }
+        }
 
-    $graphviz->$call($self->{'output'});
+        my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
+            $self->{'pipeline'},
+            $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
+        );
+        my $graphviz = $graph->build();
+
+        my $call = 'as_'.$self->{'format'};
+
+        $graphviz->$call($self->{'output'});
+
+    } else {
+        $self->{'pipeline'}->print_diagram;
+
+        print "\n";
+        print "----------------------------------------------------------\n";
+        print "   Did you forget to specify the -output flowchart.png ?  \n";
+        print "----------------------------------------------------------\n";
+    }
 }
 
 
@@ -153,7 +156,7 @@ B<--output>
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

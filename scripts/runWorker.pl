@@ -91,7 +91,6 @@ sub main {
             -reg_type                       => $reg_type,
             -reg_alias                      => $reg_alias,
             -no_sql_schema_version_check    => $nosqlvc,
-            -load_collections               => [ 'Analysis', 'AnalysisStats', 'DataflowRule', 'AnalysisCtrlRule' ],
         );
 
     } else {
@@ -99,9 +98,7 @@ sub main {
         script_usage(1);
     }
 
-    my $hive_dba = $pipeline->hive_dba;
-
-    unless($hive_dba and $hive_dba->isa("Bio::EnsEMBL::Hive::DBSQL::DBAdaptor")) {
+    unless($pipeline->hive_dba) {
         print "ERROR : no database connection\n\n";
         script_usage(1);
     }
@@ -208,7 +205,7 @@ __DATA__
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

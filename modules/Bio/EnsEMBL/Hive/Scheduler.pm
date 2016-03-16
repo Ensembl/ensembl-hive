@@ -13,7 +13,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -84,7 +84,7 @@ sub schedule_workers_resync_if_necessary {
         scheduler_say( "re-synchronizing..." );
         $queen->synchronize_hive( $list_of_analyses );
 
-        if( $queen->db->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
+        if( $queen->db->hive_pipeline->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
             if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # and double-check on our side
                 scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
                 if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ) ) {

@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -38,6 +38,7 @@ use strict;
 use warnings;
 
 use Time::HiRes ('usleep');
+use Bio::EnsEMBL::Hive::Utils ('throw');
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
@@ -60,7 +61,7 @@ sub new {
             return $class->SUPER::new( %flags );
 
         } else {
-            die "Could not create DBC because could not parse the URL '$url'";
+            throw("Could not create DBC because could not parse the URL '$url'");
         }
     } else {
         return $class->SUPER::new( @_ );
@@ -133,6 +134,7 @@ sub connect {       # a wrapper that imitates CSMA/CD protocol's incremental bac
         } or do {
             if( ($@ =~ /Could not connect to database.+?failed: Too many connections/s)                             # problem on server side (configured with not enough connections)
              or ($@ =~ /Could not connect to database.+?failed: Can't connect to \w+? server on '.+?' \(99\)/s)     # problem on client side (cooling down period after a disconnect)
+             or ($@ =~ /Could not connect to database.+?failed: Lost connection to MySQL server at 'reading authorization packet', system error: 0/s)     # problem on server side (server too busy ?)
             ) {
 
                 warn "Possibly transient problem conecting to the database (attempt #$attempt). Will try again in $sleep_sec sec";

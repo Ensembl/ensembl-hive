@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,67 +29,43 @@ package Bio::EnsEMBL::Hive::Cacheable;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify');
-use Bio::EnsEMBL::Hive::Utils::Collection;
-
-our %cache_by_class;    # global Hash-of-Hashes
+use Scalar::Util qw(weaken);
 
 
-sub collection {
-    my $class = shift @_;
-
-    if(@_) {
-        $cache_by_class{$class} = shift @_;
+sub hive_pipeline {
+    my $self = shift @_;
+    if (@_) {
+        $self->{'_hive_pipeline'} = shift @_;
+        weaken($self->{'_hive_pipeline'});
     }
+    return $self->{'_hive_pipeline'};
+}
 
-    return $cache_by_class{$class};
+
+sub is_local_to {
+    my $self            = shift @_;
+    my $rel_pipeline    = shift @_;
+
+    return $self->hive_pipeline == $rel_pipeline;
+}
+
+
+sub relative_display_name {
+    my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter display_name is generated
+
+    my $my_pipeline = $self->hive_pipeline;
+    my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
+    return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->display_name;
+}
+
+sub display_name {
+    my ($self) = @_;
+    return "$self";     # Default implementation
 }
 
 
 sub unikey {    # to be redefined by individual Cacheable classes
     return undef;
-}
-
-
-sub add_new_or_update {
-    my $class = shift @_;
-
-    my $self;
-
-    if( my $unikey_keys = $class->unikey() ) {
-        my %other_pairs = @_;
-        my %unikey_pairs;
-        @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
-
-        if( $self = $class->collection()->find_one_by( %unikey_pairs ) ) {
-            my $found_display = UNIVERSAL::can($self, 'toString') ? $self->toString : stringify($self);
-            if(keys %other_pairs) {
-                warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
-                if( ref($self) eq 'HASH' ) {
-                    @$self{ keys %other_pairs } = values %other_pairs;
-                } else {
-                    while( my ($key, $value) = each %other_pairs ) {
-                        $self->$key($value);
-                    }
-                }
-            } else {
-                warn "Found a matching $found_display\n";
-            }
-        }
-    } else {
-        warn "$class doesn't redefine unikey(), so unique objects cannot be identified";
-    }
-
-    unless( $self ) {
-        $self = $class->can('new') ? $class->new( @_ ) : { @_ };
-
-        my $found_display = UNIVERSAL::can($self, 'toString') ? $self->toString : 'naked entry '.stringify($self);
-        warn "Created a new $found_display\n";
-
-        $class->collection()->add( $self );
-    }
-
-    return $self;
 }
 
 

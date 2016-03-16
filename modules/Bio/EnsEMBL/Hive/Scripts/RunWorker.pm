@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,9 +24,14 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 sub runWorker {
     my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
+
+    my $worker_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
+    $worker_stopwatch->_unit(1); # lifespan_sec is in seconds
+    $worker_stopwatch->restart();
 
     my $hive_dba = $pipeline->hive_dba;
 
@@ -81,6 +86,7 @@ sub runWorker {
              -job_id                => $specialization_options->{'job_id'},
              -force                 => $specialization_options->{'force'},
         } );
+        _update_resource_usage($worker, $worker_stopwatch);
         1;
 
     } or do {
@@ -90,9 +96,62 @@ sub runWorker {
 
         $worker->cause_of_death( 'SEE_MSG' );
         $queen->register_worker_death($worker, 1);
+        _update_resource_usage($worker, $worker_stopwatch, 'error');
 
         die $msg;
     };
+}
+
+sub _update_resource_usage {
+    my ($worker, $worker_stopwatch, $exception_status) = @_;
+
+    $worker_stopwatch->pause();
+    my $resource_usage;
+    eval {
+        # Try BSD::Resource if present
+        my $res_self;
+        my $res_child;
+        # NOTE: I couldn't find a way of require-ing the module and getting
+        # the barewords RUSAGE_* imported
+        eval q{
+            use BSD::Resource;
+            $res_self = BSD::Resource::getrusage(RUSAGE_SELF);
+            $res_child = BSD::Resource::getrusage(RUSAGE_CHILDREN);
+            };
+        return 0 if $@;
+        $resource_usage = {
+            'exit_status'   => 'done',
+            'mem_megs'      => ($res_self->maxrss + $res_child->maxrss) / 1024.,
+            'swap_megs'     => undef,
+            'pending_sec'   => 0,
+            'cpu_sec'       => $res_self->utime + $res_self->stime + $res_child->utime + $res_child->stime,
+            'lifespan_sec'  => $worker_stopwatch->get_elapsed(),
+            'exception_status' => $exception_status,
+        };
+
+    } or eval {
+        # Unix::Getrusage otherwise
+        require Unix::Getrusage;
+        my $res_self = Unix::Getrusage::getrusage();
+        my $res_child = Unix::Getrusage::getrusage_children();
+        $resource_usage = {
+            'exit_status'   => 'done',
+            'mem_megs'      => ($res_self->{ru_maxrss} + $res_child->{ru_maxrss}) / 1024.,
+            'swap_megs'     => undef,
+            'pending_sec'   => 0,
+            'cpu_sec'       => $res_self->{ru_utime} + $res_self->{ru_stime} + $res_child->{ru_utime} + $res_child->{ru_stime},
+            'lifespan_sec'  => $worker_stopwatch->get_elapsed(),
+            'exception_status' => $exception_status,
+        };
+    };
+
+    # Store the data if one of the above calls was successful
+    if ($resource_usage) {
+        $worker->adaptor->store_resource_usage(
+            {$worker->process_id => $resource_usage},
+            {$worker->process_id => $worker->dbID},
+        );
+    }
 }
 
 1;

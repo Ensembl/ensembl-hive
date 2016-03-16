@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -39,8 +39,6 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::PipelineWideParameters;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
-
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
@@ -48,27 +46,5 @@ sub default_table_name {
     return 'pipeline_wide_parameters';
 }
 
-
-=head2 fetch_param_hash
-
-    Description: returns the contents of the 'pipeline_wide_parameters' table as a hash
-
-=cut
-
-sub fetch_param_hash {
-    my $self = shift @_;
-
-    if( my $collection = Bio::EnsEMBL::Hive::PipelineWideParameters->collection() ) {
-
-        return { map { $_->{'param_name'} => destringify($_->{'param_value'}) } $collection->list() };
-
-    } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
-
-        my $original_value      = $self->fetch_HASHED_FROM_param_name_TO_param_value();
-        my %destringified_hash  = map { $_, destringify($original_value->{$_}) } keys %$original_value;
-
-        return \%destringified_hash;
-    }
-}
 
 1;

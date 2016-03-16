@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -70,6 +70,30 @@ sub default_overflow_limit {
 }
 
 
+=head2 fetch_by_analysis_id_and_input_id
+
+  Arg [1]    : Integer $analysis_id
+  Arg [2]    : String $input_id
+  Example    : $funnel_job = $job_adaptor->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id);
+  Description: Attempts to find the job by contents, then makes another attempt if the input_id is expected to have overflown into analysis_data
+  Returntype : AnalysisJob object
+
+=cut
+
+sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered by AUTOLOAD; note the lowercase _and_
+    my ($self, $analysis_id, $input_id) = @_;
+
+    my $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, $input_id);
+
+    if(!$job and length($input_id)>$self->default_overflow_limit->{input_id}) {
+        if(my $ext_data_id = $self->db->get_AnalysisDataAdaptor->fetch_by_data_to_analysis_data_id( $input_id )) {
+            $job = $self->fetch_by_analysis_id_AND_input_id( $analysis_id, "_extended_data_id $ext_data_id");
+        }
+    }
+    return $job;
+}
+
+
 =head2 store_jobs_and_adjust_counters
 
   Arg [1]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $jobs_to_store
@@ -94,7 +118,8 @@ sub store_jobs_and_adjust_counters {
 
         my $analysis    = $job->analysis;
         my $job_adaptor = $analysis ? $analysis->adaptor->db->get_AnalysisJobAdaptor : $self;   # if analysis object is undefined, consider the job local
-        my $local_job   = $job_adaptor eq $self;
+        my $prev_adaptor= ($job->prev_job && $job->prev_job->adaptor) || '';
+        my $local_job   = $prev_adaptor eq $job_adaptor;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
         if($need_to_increase_semaphore_count and $local_job and ($job_adaptor->dbc->driver ne 'sqlite')) {
@@ -111,7 +136,7 @@ sub store_jobs_and_adjust_counters {
                 $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
             }
 
-            unless($job_adaptor->db->hive_use_triggers()) {
+            unless($job_adaptor->db->hive_pipeline->hive_use_triggers()) {
                 $job_adaptor->dbc->do(qq{
                         UPDATE analysis_stats
                         SET total_job_count=total_job_count+1
@@ -241,8 +266,11 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         # NB: BOTH THE ORDER OF UPDATES AND EXACT WORDING IS ESSENTIAL FOR SYNCHRONOUS ATOMIC OPERATION,
         #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
         #
-    my $sql = qq{
-            UPDATE job SET status = CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END,
+    my $sql = "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "SET status = CAST(CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END AS job_status), "
+            : "SET status =      CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END, "
+        ).qq{
             semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
     };
@@ -540,13 +568,16 @@ sub release_and_age_job {
         #
         # FIXME: would it be possible to retain role_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
         #
-    $self->dbc->do( qq{
-        UPDATE job
-        SET status = CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END,
-            retry_count=retry_count+1,
-            runtime_msec=$runtime_msec
-        WHERE job_id=$job_id
-          AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+    $self->dbc->do( 
+        "UPDATE job "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "SET status = CAST(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS job_status), "
+            : "SET status =      CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END, "
+         ).qq{
+               retry_count=retry_count+1,
+               runtime_msec=$runtime_msec
+         WHERE job_id=$job_id
+           AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
     } );
 
         # FIXME: move the decision making completely to the API side and so avoid the potential race condition.
@@ -616,10 +647,13 @@ sub reset_jobs_for_analysis_id {
             : '';
 
     my $sql = qq{
-           UPDATE job
+            UPDATE job
            SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN 0 ELSE 1 END,
-               status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END
-           WHERE } . $analyses_filter .' '. $statuses_filter;
+        }. ( ($self->dbc->driver eq 'pgsql')
+            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
+            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        )." WHERE ".$analyses_filter
+        .' '. $statuses_filter;
 
     my $sth = $self->prepare($sql);
     $sth->execute();
@@ -659,12 +693,12 @@ sub balance_semaphores {
                          ) AS internal WHERE was<>should OR should=0
                      };
 
-    my $update_sql  = qq{
-        UPDATE job
-        SET semaphore_count=semaphore_count+? ,
-            status         = CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END
-        WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')
-    };
+    my $update_sql  = "UPDATE job SET "
+        ." semaphore_count=semaphore_count+? , "
+        .( ($self->dbc->driver eq 'pgsql')
+            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
+            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
+        )." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);

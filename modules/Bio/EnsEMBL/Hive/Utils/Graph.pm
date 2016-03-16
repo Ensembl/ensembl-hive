@@ -19,7 +19,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -47,14 +47,11 @@ package Bio::EnsEMBL::Hive::Utils::Graph;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils qw(destringify);
-use Bio::EnsEMBL::Hive::Utils::GraphViz;
-use Bio::EnsEMBL::Hive::Utils::Collection;
-use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Analysis;
-use Bio::EnsEMBL::Hive::AnalysisStats;
-use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
-use Bio::EnsEMBL::Hive::DataflowRule;
+use Bio::EnsEMBL::Hive::Utils qw(destringify throw);
+use Bio::EnsEMBL::Hive::Utils::GraphViz;
+use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::TheApiary;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -102,8 +99,12 @@ sub graph {
     my ($self) = @_;
 
     if(! exists $self->{'_graph'}) {
-        my $padding  = $self->config_get('Pad') || 0;
-        $self->{'_graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new( name => 'AnalysisWorkflow', ratio => qq{compress"; pad = "$padding}  ); # injection hack!
+
+        $self->{'_graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
+            'name'          => 'AnalysisWorkflow',
+            'concentrate'   => 'true',
+            'pad'           => $self->config_get('Pad') || 0,
+        );
     }
     return $self->{'_graph'};
 }
@@ -127,32 +128,56 @@ sub pipeline {
 }
 
 
+sub _grouped_dataflow_rules {
+    my ($self, $analysis) = @_;
+
+    my $gdr = $self->{'_gdr'} ||= {};
+
+    return $gdr->{$analysis} ||= $analysis->get_grouped_dataflow_rules;
+}
+
+
 sub _analysis_node_name {
     my ($self, $analysis) = @_;
 
-    my $analysis_node_name = 'analysis_' . $analysis->display_name( $self->pipeline->hive_dba );
-    $analysis_node_name=~s/\W/__/g;
+    my $analysis_node_name = 'analysis_' . $analysis->relative_display_name( $self->pipeline );
+    if($analysis_node_name=~s/\W/__/g) {
+        $analysis_node_name = 'foreign_' . $analysis_node_name;
+    }
     return $analysis_node_name;
 }
 
 
 sub _table_node_name {
-    my ($self, $df_rule) = @_;
+    my ($self, $naked_table) = @_;
 
-    my $table_node_name = 'table_' . $df_rule->to_analysis->display_name( $self->pipeline->hive_dba ) .
-                ($self->config_get('DuplicateTables') ?  '_'.$df_rule->from_analysis->logic_name : '');
+    my $table_node_name = 'table_' . $naked_table->relative_display_name( $self->pipeline );
     $table_node_name=~s/\W/__/g;
     return $table_node_name;
+}
+
+
+sub _accu_sink_node_name {
+    my ($funnel_dfr) = @_;
+
+    return 'sink_'.(UNIVERSAL::isa($funnel_dfr, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($funnel_dfr) : ($funnel_dfr || ''));
+}
+
+
+sub _cluster_name {
+    my ($df_rule) = @_;
+
+    return UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '');
 }
 
 
 sub _midpoint_name {
     my ($df_rule) = @_;
 
-    if(scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
+    if($df_rule and scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
         return 'dfr_'.$1.'_mp';
     } else {
-        die "Wrong argument to _midpoint_name";
+        throw("Wrong argument to _midpoint_name");
     }
 }
 
@@ -169,117 +194,87 @@ sub _midpoint_name {
 sub build {
     my ($self) = @_;
 
-    my $pipeline    = $self->pipeline;
-    my $hive_dba    = $pipeline->hive_dba;
+    my $main_pipeline    = $self->pipeline;
 
-    if( my $job_limit = $self->config_get('DisplayJobs') and my $job_adaptor = $hive_dba && $hive_dba->get_AnalysisJobAdaptor ) {
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
-            $analysis->jobs_collection( \@jobs );
-        }
+    foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
+            # run the recursion in each component that has a non-cyclic start:
+        $self->_propagate_allocation( $source_analysis );
+    }
+    foreach my $cyclic_analysis ( $main_pipeline->collection_of( 'Analysis' )->list ) {
+        next if(defined $cyclic_analysis->{'_funnel_dfr'});
+        $self->_propagate_allocation( $cyclic_analysis );
     }
 
-    foreach my $df_rule ( $pipeline->collection_of('DataflowRule')->list ) {
-
-        if(my $target_object = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $df_rule->to_analysis_url )) {
-            $df_rule->to_analysis( $target_object );
-            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-                $target_object->{'_inflow_count'}++;
-            }
-        } else {
-            $target_object = $df_rule->to_analysis
-                or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
-
-            if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis') ) { # dataflow target is a foreign Analysis
-                $target_object->{'_foreign'}=1;
-                $pipeline->collection_of('Analysis')->add( $target_object );  # add it to the collection
-                my $foreign_stats = $target_object->stats or die "Could not fetch foreign stats for ".$target_object->display_name( $hive_dba );
-                $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
-            } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {
-            } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {
-            } else {
-                warn "Do not know how to handle the type '".ref($target_object)."'";
-            }
-        }
-
-        if( my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule ) {
-            $funnel_dataflow_rule->{'_is_a_funnel'}++;
-        }
+    foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
+            # run the recursion in each component that has a non-cyclic start:
+        $self->_add_analysis_node( $source_analysis );
     }
-
-    foreach my $c_rule ( $pipeline->collection_of('AnalysisCtrlRule')->list ) {   # control rule's condition is a foreign Analysis
-        unless( $pipeline->collection_of('Analysis')->find_one_by('logic_name', $c_rule->condition_analysis_url )) {
-            my $condition_analysis = $c_rule->condition_analysis();
-            $condition_analysis->{'_foreign'}=1;
-            $pipeline->collection_of('Analysis')->add( $condition_analysis ); # add it to the collection
-            my $foreign_stats = $condition_analysis->stats or die "Could not fetch foreign stats for ".$condition_analysis->display_name( $hive_dba );
-            $pipeline->collection_of('AnalysisStats')->add( $foreign_stats ); # add it to the collection
-        }
-    }
-
-        # NB: this is a very approximate algorithm with rough edges!
-        # It will not find all start nodes in cyclic components!
-    foreach my $source_analysis ( $pipeline->collection_of('Analysis')->list ) {
-        unless( $source_analysis->{'_inflow_count'} or $source_analysis->{'_foreign'} ) {    # if there is no dataflow into this analysis
-                # run the recursion in each component that has a non-cyclic start:
-            $self->_propagate_allocation( $source_analysis );
-        }
-    }
-
-    if( $self->config_get('DisplayDetails') and my $dbc = $hive_dba && $hive_dba->dbc ) {
-        my $pipeline_label = sprintf('%s@%s', $dbc->dbname, $dbc->host || '-');
-        $self->_add_pipeline_label( $pipeline_label );
-    }
-    foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-        $self->_add_analysis_node($analysis);
-    }
-    foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-        $self->_add_control_rules( $analysis->control_rules_collection );
-        $self->_add_dataflow_rules( $analysis->dataflow_rules_collection );
+    foreach my $cyclic_analysis ( $main_pipeline->collection_of( 'Analysis' )->list ) {
+        next if($self->{'_created_analysis'}{ $cyclic_analysis });
+        $self->_add_analysis_node( $cyclic_analysis );
     }
 
     if($self->config_get('DisplayStretched') ) {    # put each analysis before its' funnel midpoint
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            if($analysis->{'_funnel_dfr'}) {    # this should only affect analyses that have a funnel
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list ) {
+            if(ref($analysis->{'_funnel_dfr'})) {    # this should only affect analyses that have a funnel
                 my $from = $self->_analysis_node_name( $analysis );
                 my $to   = _midpoint_name( $analysis->{'_funnel_dfr'} );
                 $self->graph->add_edge( $from => $to,
-                    color     => 'black',
                     style     => 'invis',   # toggle visibility by changing 'invis' to 'dashed'
+                    color     => 'black',
                 );
             }
         }
     }
 
+    my %cluster_2_nodes = ();
+
+    if( $self->config_get('DisplayDetails') ) {
+        foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
+            my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
+
+            push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
+        }
+    }
+
     if($self->config_get('DisplaySemaphoreBoxes') ) {
-        my %cluster_2_nodes = ();
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, values %{ $self->{'_foreign_analyses'} } ) {
 
-        foreach my $analysis ( $pipeline->collection_of('Analysis')->list ) {
-            if(my $funnel = $analysis->{'_funnel_dfr'}) {
-                push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_analysis_node_name( $analysis );
-            }
+            push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
-            foreach my $df_rule ( @{ $analysis->dataflow_rules_collection } ) {
-                if( $df_rule->{'_is_a_funnel'} and ! $df_rule->{'_funnel_dfr'} ) {
+            foreach my $group ( @{ $self->_grouped_dataflow_rules($analysis) } ) {
 
-                    push @{$cluster_2_nodes{ '' }}, _midpoint_name( $df_rule );     # top-level funnels define clusters (top-level "boxes")
+                my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
-                } elsif( UNIVERSAL::isa($df_rule->to_analysis, 'Bio::EnsEMBL::Hive::NakedTable') ) {
+                my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
-                    if(my $funnel = $df_rule->to_analysis->{'_funnel_dfr'}) {
-                        push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, $self->_table_node_name( $df_rule );    # table belongs to the same "box" as the dataflow source
+                if(@$fan_dfrs or $choice) {
+                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule ); # top-level funnels define clusters (top-level "boxes")
+
+                    foreach my $fan_dfr (@$fan_dfrs) {
+                        push @{$cluster_2_nodes{ _cluster_name( $fan_dfr->{'_funnel_dfr'} ) } }, _midpoint_name( $fan_dfr ); # midpoints of rules that have a funnel live inside "boxes"
                     }
                 }
 
-                if(my $funnel = $df_rule->{'_funnel_dfr'}) {
-                    push @{$cluster_2_nodes{ _midpoint_name( $funnel ) } }, _midpoint_name( $df_rule ); # midpoints of rules that have a funnel live inside "boxes"
+                foreach my $df_target (@$df_targets) {
+                    my $target_object = $df_target->to_analysis;
+                    if( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable') ) {        # put the table into the same "box" as the dataflow source:
+
+                        push @{$cluster_2_nodes{ _cluster_name( $target_object->{'_funnel_dfr'} ) } }, $self->_table_node_name( $target_object );
+
+                    } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {  # put the accu sink into the same "box" as the dataflow source:
+
+                        push @{$cluster_2_nodes{ _cluster_name( $target_object->{'_funnel_dfr'} ) } }, _accu_sink_node_name( $target_object->{'_funnel_dfr'} );
+                    }
                 }
-            }
+            } # /foreach group
         }
 
         $self->graph->cluster_2_nodes( \%cluster_2_nodes );
-        $self->graph->colour_scheme( $self->config_get('Box', 'ColourScheme') );
-        $self->graph->colour_offset( $self->config_get('Box', 'ColourOffset') );
+        $self->graph->main_pipeline_name( $main_pipeline->hive_pipeline_name );
+        $self->graph->semaphore_bgcolour(       [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
+        $self->graph->main_pipeline_bgcolour(   [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')] );
+        $self->graph->other_pipeline_bgcolour(  [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')] );
     }
 
     return $self->graph();
@@ -287,89 +282,79 @@ sub build {
 
 
 sub _propagate_allocation {
-    my ($self, $source_analysis ) = @_;
+    my ($self, $source_object, $curr_allocation ) = @_;
 
-    foreach my $df_rule ( @{ $source_analysis->dataflow_rules_collection } ) {    # this will only work if the analyses objects are ALL cached before loading DFRs
-        my $target_object       = $df_rule->to_analysis
-            or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
+    $curr_allocation ||= $source_object->hive_pipeline->hive_pipeline_name;
 
-        my $target_node_name;
+    if(!exists $source_object->{'_funnel_dfr'} ) {     # only allocate on the first-come basis:
+        $source_object->{'_funnel_dfr'} = $curr_allocation;
 
-        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-            $target_node_name = $self->_analysis_node_name( $target_object );
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
-            $target_node_name = $self->_table_node_name( $df_rule );
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-            next;
-        } else {
-            warn("Do not know how to handle the type '".ref($target_object)."'");
-            next;
-        }
+        if(UNIVERSAL::isa($source_object, 'Bio::EnsEMBL::Hive::Analysis')) {
 
-        my $proposed_funnel_dfr;    # will depend on whether we start a new semaphore
+            foreach my $group ( @{ $self->_grouped_dataflow_rules($source_object) } ) {
 
-        my $funnel_dataflow_rule  = $df_rule->funnel_dataflow_rule();
-        if( $funnel_dataflow_rule ) {   # if there is a new semaphore, the dfrs involved (their midpoints) will also have to be allocated
-            $proposed_funnel_dfr = $funnel_dataflow_rule;       # if we do start a new semaphore, report to the new funnel (based on common funnel rule's midpoint)
+                my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
-            $df_rule->{'_funnel_dfr'} = $proposed_funnel_dfr;
+                $df_rule->{'_funnel_dfr'} = $curr_allocation;
 
-            $funnel_dataflow_rule->{'_funnel_dfr'} = $source_analysis->{'_funnel_dfr'}; # draw the funnel's midpoint outside of the box
-        } else {
-            $proposed_funnel_dfr = $source_analysis->{'_funnel_dfr'} || ''; # if we don't start a new semaphore, inherit the allocation of the source
-        }
+                foreach my $df_target (@$df_targets) {
+                    my $target_object       = $df_target->to_analysis;
 
-            # we allocate on first-come basis at the moment:
-        if( exists $target_object->{'_funnel_dfr'} ) {  # node is already allocated?
+                        #   In case we have crossed pipeline borders, let the next call decide its own allocation by resetting it.
+                    $self->_propagate_allocation( $target_object, ($source_object->hive_pipeline == $target_object->hive_pipeline) ? $curr_allocation : '' );
+                }
 
-            my $known_funnel_dfr = $target_object->{'_funnel_dfr'};
+                    # all fan members point to the funnel.
+                    #   Request midpoint's allocation since we definitely have a funnel to link to.
+                foreach my $fan_dfr (@$fan_dfrs) {
+                    $fan_dfr->{'_funnel_dfr'} = $curr_allocation;
 
-            if( $known_funnel_dfr eq $proposed_funnel_dfr) {
-                # warn "analysis '$target_node_name' has already been allocated to the same '$known_funnel_dfr' by another branch";
-            } else {
-                # warn "analysis '$target_node_name' has already been allocated to '$known_funnel_dfr' however this branch would allocate it to '$proposed_funnel_dfr'";
-            }
+                    foreach my $df_target (@{ $fan_dfr->get_my_targets }) {
+                        my $fan_target_object = $df_target->to_analysis;
+                        $self->_propagate_allocation( $fan_target_object, ($source_object->hive_pipeline == $fan_target_object->hive_pipeline) ? $df_rule : '' );
+                    }
+                }
 
-            if($funnel_dataflow_rule) {  # correction for multiple entries into the same box (probably needs re-thinking)
-                $df_rule->{'_funnel_dfr'} = $target_object->{'_funnel_dfr'};
-            }
-
-        } else {
-            # warn "allocating analysis '$target_node_name' to '$proposed_funnel_dfr'";
-            $target_object->{'_funnel_dfr'} = $proposed_funnel_dfr;
-
-            if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
-                $self->_propagate_allocation( $target_object );
-            }
-        }
+            } # /foreach group
+        } # if source_object isa Analysis
     }
 }
 
 
 sub _add_pipeline_label {
-    my ($self, $pipeline_label) = @_;
+    my ($self, $pipeline) = @_;
 
-    my $node_fontname  = $self->config_get('Node', 'Details', 'Font');
-    $self->graph()->add_node( 'Details',
-        label     => $pipeline_label,
-        fontname  => $node_fontname,
+    my $node_fontname       = $self->config_get('Node', 'Details', 'Font');
+    my $pipeline_label      = $pipeline->display_name;
+    my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
+
+    $self->graph()->add_node( $pipelabel_node_name,
         shape     => 'plaintext',
+        fontname  => $node_fontname,
+        label     => $pipeline_label,
     );
+
+    return $pipelabel_node_name;
 }
 
 
 sub _add_analysis_node {
     my ($self, $analysis) = @_;
 
+    my $this_analysis_node_name                           = $self->_analysis_node_name( $analysis );
+
+    return $this_analysis_node_name if($self->{'_created_analysis'}{ $analysis }++);   # making sure every Analysis node gets created no more than once
+
     my $analysis_stats = $analysis->stats();
 
     my ($breakout_label, $total_job_count, $count_hash)   = $analysis_stats->job_count_breakout();
     my $analysis_status                                   = $analysis_stats->status;
     my $analysis_status_colour                            = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Colour');
-    my $style                                             = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
+    my $analysis_shape                                    = $self->config_get('Node', 'AnalysisStatus', 'Shape');
+    my $analysis_style                                    = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
-    my $hive_dba                                          = $self->pipeline->hive_dba;
+    my $hive_pipeline                                     = $self->pipeline;
 
     my $colspan = 0;
     my $bar_chart = '';
@@ -388,7 +373,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->display_name( $hive_dba ).' ('.($analysis->dbID || '?').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {
@@ -399,6 +384,11 @@ sub _add_analysis_node {
     }
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
+            my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
+            $analysis->jobs_collection( \@jobs );
+        }
+
         my @jobs = @{ $analysis->jobs_collection };
 
         my $hit_limit;
@@ -411,155 +401,288 @@ sub _add_analysis_node {
         foreach my $job (@jobs) {
             my $input_id = $job->input_id;
             my $status   = $job->status;
-            my $job_id   = $job->dbID;
+            my $job_id   = $job->dbID || 'unstored';
             $input_id=~s/\>/&gt;/g;
             $input_id=~s/\</&lt;/g;
             $input_id=~s/\{|\}//g;
-            $analysis_label    .= qq{<tr><td colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
+            $analysis_label    .= qq{<tr><td align="left" colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
         }
 
         if($hit_limit) {
-            $analysis_label    .= qq{<tr><td colspan="$colspan">[ and }.($total_job_count-$job_limit).qq{ more ]</td></tr>};
+            $analysis_label    .= qq{<tr><td colspan="$colspan">[ + }.($total_job_count-$job_limit).qq{ more jobs ]</td></tr>};
         }
     }
     $analysis_label    .= '</table>>';
   
-    $self->graph->add_node( $self->_analysis_node_name( $analysis ),
-        label       => $analysis_label,
+    $self->graph->add_node( $this_analysis_node_name,
         shape       => 'record',
-        fontname    => $node_fontname,
-        style       => $style,
+        comment     => qq{new_shape:$analysis_shape},
+        style       => $analysis_style,
         fillcolor   => $analysis_status_colour,
+        fontname    => $node_fontname,
+        label       => $analysis_label,
     );
+
+    $self->_add_control_rules( $analysis->control_rules_collection );
+    $self->_add_dataflow_rules( $analysis );
+
+    return $this_analysis_node_name;
+}
+
+
+sub _add_accu_sink_node {
+    my ($self, $funnel_dfr) = @_;
+
+    my $accusink_shape      = $self->config_get('Node', 'AccuSink', 'Shape');
+    my $accusink_style      = $self->config_get('Node', 'AccuSink', 'Style');
+    my $accusink_colour     = $self->config_get('Node', 'AccuSink', 'Colour');
+    my $accusink_font       = $self->config_get('Node', 'AccuSink', 'Font');
+    my $accusink_fontcolour = $self->config_get('Node', 'AccuSink', 'FontColour');
+
+    my $accu_sink_node_name = _accu_sink_node_name( $funnel_dfr );
+
+    $self->graph->add_node( $accu_sink_node_name,
+        style       => $accusink_style,
+        shape       => $accusink_shape,
+        fillcolor   => $accusink_colour,
+        fontname    => $accusink_font,
+        fontcolor   => $accusink_fontcolour,
+        label       => 'Accu',
+    );
+
+    return $accu_sink_node_name;
 }
 
 
 sub _add_control_rules {
-  my ($self, $ctrl_rules) = @_;
-  
-  my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
-  my $graph = $self->graph();
+    my ($self, $ctrl_rules) = @_;
 
-      #The control rules are always from and to an analysis so no need to search for odd cases here
-  foreach my $c_rule ( @$ctrl_rules ) {
-    my $from_node_name = $self->_analysis_node_name( $c_rule->condition_analysis );
-    my $to_node_name   = $self->_analysis_node_name( $c_rule->ctrled_analysis );
+    my $control_colour = $self->config_get('Edge', 'Control', 'Colour');
+    my $graph = $self->graph();
 
-    $graph->add_edge( $from_node_name => $to_node_name,
-      color => $control_colour,
-      arrowhead => 'tee',
+        #The control rules are always from and to an analysis so no need to search for odd cases here
+    foreach my $c_rule ( @$ctrl_rules ) {
+        my $condition_analysis  = $c_rule->condition_analysis;
+        my $ctrled_analysis     = $c_rule->ctrled_analysis;
+
+        my $ctrled_is_local     = $ctrled_analysis->is_local_to( $self->pipeline );
+        my $condition_is_local  = $condition_analysis->is_local_to( $self->pipeline );
+
+        if($ctrled_is_local and !$condition_is_local) {     # register a new "near neighbour" node if it's reachable by following one rule "out":
+            $self->{'_foreign_analyses'}{ $condition_analysis->relative_display_name($self->pipeline) } = $condition_analysis;
+        }
+
+        next unless( $ctrled_is_local or $condition_is_local or $self->{'_foreign_analyses'}{ $condition_analysis->relative_display_name($self->pipeline) } );
+
+        my $from_node_name      = $self->_analysis_node_name( $condition_analysis );
+        my $to_node_name        = $self->_analysis_node_name( $ctrled_analysis );
+
+        $graph->add_edge( $from_node_name => $to_node_name,
+            color => $control_colour,
+            arrowhead => 'tee',
+        );
+    }
+}
+
+
+sub _last_part_arrow {
+    my ($self, $from_analysis, $source_node_name, $label_prefix, $df_target, $extras) = @_;
+
+    my $graph               = $self->graph();
+    my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
+    my $accu_colour         = $self->config_get('Edge', 'Accu', 'Colour');
+    my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
+
+    my $target_object       = $df_target->to_analysis;
+    my $target_node_name    =
+            UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')      ? $self->_add_analysis_node( $target_object )
+        :   UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')    ? $self->_add_table_node( $target_object )
+        :   UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')   ? $self->_add_accu_sink_node( $from_analysis->{'_funnel_dfr'} )
+        :   die "Unknown node type";
+
+    if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {    # skip some *really* foreign dataflow rules:
+
+        my $from_is_local   = $from_analysis->is_local_to( $self->pipeline );
+        my $target_is_local = $target_object->is_local_to( $self->pipeline );
+
+        if($from_is_local and !$target_is_local) {  # register a new "near neighbour" node if it's reachable by following one rule "out":
+            $self->{'_foreign_analyses'}{ $target_object->relative_display_name($self->pipeline) } = $target_object;
+        }
+
+        return unless( $from_is_local or $target_is_local or $self->{'_foreign_analyses'}{ $target_object->relative_display_name($self->pipeline) } );
+    }
+
+    my $input_id_template   = $self->config_get('DisplayInputIDTemplate') ? $df_target->input_id_template : undef;
+    my $extend_param_stack  = $df_target->extend_param_stack;
+    my $multistring_template= ($extend_param_stack ? "INPUT_PLUS " : '')
+                             .($input_id_template  ?  '{'.join(",\n", sort keys( %{destringify($input_id_template)} )).'}'
+                                                   : ($extend_param_stack ? '' : '') );
+
+    $graph->add_edge( $source_node_name => $target_node_name,
+        @$extras,
+        UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')
+            ? (
+                color       => $accu_colour,
+                fontcolor   => $accu_colour,
+                style       => 'dashed',
+                dir         => 'both',
+                arrowtail   => 'crow',
+                label       => $label_prefix."\n=> ".$target_object->relative_display_name( $self->pipeline ),
+            ) : (
+                color       => $dataflow_colour,
+                fontcolor   => $dataflow_colour,
+                label       => $label_prefix."\n".$multistring_template,
+            ),
+        fontname    => $df_edge_fontname,
     );
-  }
+}
+
+
+sub _twopart_arrow {
+    my ($self, $df_rule, $df_targets) = @_;
+
+    my $graph               = $self->graph();
+    my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
+    my $switch_shape        = $self->config_get('Node', 'Switch', 'Shape');
+    my $switch_style        = $self->config_get('Node', 'Switch', 'Style');
+    my $switch_colour       = $self->config_get('Node', 'Switch', 'Colour');
+    my $switch_font         = $self->config_get('Node', 'Switch', 'Font');
+    my $switch_fontcolour   = $self->config_get('Node', 'Switch', 'FontColour');
+    my $display_cond_length = $self->config_get('DisplayConditionLength');
+
+    my $from_analysis       = $df_rule->from_analysis;
+    my $from_node_name      = $self->_analysis_node_name( $from_analysis );
+    my $midpoint_name       = _midpoint_name( $df_rule );
+
+       $df_targets        ||= $df_rule->get_my_targets;
+    my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
+    #my $label               = scalar(@$df_targets)==1 ? 'Filter' : 'Switch';
+    my $tablabel            = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr>};
+
+    my $targets_grouped_by_condition = $df_rule->get_my_targets_grouped_by_condition( $df_targets );
+
+    foreach my $i (0..scalar(@$targets_grouped_by_condition)-1) {
+
+        my $condition = $targets_grouped_by_condition->[$i]->[0];
+
+        if($display_cond_length) {
+            if(defined($condition)) {
+                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
+
+                $condition=~s{&}{&amp;}g;   # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
+                $condition=~s{"}{&quot;}g;  # should fix a string display bug for pre-2.16 GraphViz'es
+                $condition=~s{<}{&lt;}g;
+                $condition=~s{>}{&gt;}g;
+            }
+        } else {
+            $condition &&= 'condition_'.$i;
+        }
+        $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
+    }
+    $tablabel .= '</table>>';
+
+    $graph->add_node( $midpoint_name,   # midpoint itself
+        $choice ? (
+            shape       => 'record',
+            comment     => qq{new_shape:$switch_shape},
+            style       => $switch_style,
+            fillcolor   => $switch_colour,
+            fontname    => $switch_font,
+            fontcolor   => $switch_fontcolour,
+            label       => $tablabel,
+        ) : (
+            shape       => 'point',
+            fixedsize   => 1,
+            width       => 0.01,
+            height      => 0.01,
+        ),
+    );
+    $graph->add_edge( $from_node_name => $midpoint_name, # first half of the two-part arrow
+        color       => 'black',
+        fontcolor   => 'black',
+        fontname    => $df_edge_fontname,
+        label       => '#'.$df_rule->branch_code,
+        headport    => 'n',
+        $choice ? (
+            arrowhead   => 'normal',
+        ) : (
+            arrowhead   => 'none',
+        ),
+    );
+
+    foreach my $i (0..scalar(@$targets_grouped_by_condition)-1) {
+
+        my $target_group = $targets_grouped_by_condition->[$i]->[1];
+
+        foreach my $df_target (@$target_group) {
+            $self->_last_part_arrow($from_analysis, $midpoint_name, '', $df_target, $choice ? [ tailport => "cond_$i" ] : [ tailport => 's' ]);
+        }
+    }
+
+    return $midpoint_name;
 }
 
 
 sub _add_dataflow_rules {
-    my ($self, $dataflow_rules) = @_;
+    my ($self, $from_analysis) = @_;
 
-    my $graph = $self->graph();
-    my $dataflow_colour     = $self->config_get('Edge', 'Data', 'Colour');
+    my $graph               = $self->graph();
     my $semablock_colour    = $self->config_get('Edge', 'Semablock', 'Colour');
-    my $accu_colour         = $self->config_get('Edge', 'Accu', 'Colour');
-    my $df_edge_fontname    = $self->config_get('Edge', 'Data', 'Font');
 
-    foreach my $df_rule ( @$dataflow_rules ) {
-    
-        my ($from_analysis, $branch_code, $funnel_dataflow_rule) =
-            ($df_rule->from_analysis, $df_rule->branch_code, $df_rule->funnel_dataflow_rule);
+    foreach my $group ( @{ $self->_grouped_dataflow_rules($from_analysis) } ) {
 
-        my $input_id_template = $self->config_get('DisplayInputIDTemplate') ? $df_rule->input_id_template : undef;
-        $input_id_template = join(",\n", sort keys( %{destringify($input_id_template)} )) if $input_id_template;
+        my ($df_rule, $fan_dfrs, $df_targets) = @$group;
 
-        my $target_object       = $df_rule->to_analysis
-            or die "Could not fetch a target object for url='".$df_rule->to_analysis_url."', please check your database for consistency.\n";
+        if(@$fan_dfrs) {    # semaphored funnel case => all rules have an Analysis target and have two parts:
 
-        my $from_node_name = $self->_analysis_node_name( $from_analysis );
-        my $target_node_name;
-    
-            # Different treatment for analyses and tables:
-        if(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Analysis')) {
+            my $funnel_midpoint_name = $self->_twopart_arrow( $df_rule, $df_targets );
 
-            $target_node_name = $self->_analysis_node_name( $target_object );
+            foreach my $fan_dfr (@$fan_dfrs) {
+                my $fan_midpoint_name = $self->_twopart_arrow( $fan_dfr );
 
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::NakedTable')) {
-
-            $target_node_name = $self->_table_node_name( $df_rule );
-            $self->_add_table_node($target_node_name, $target_object);
-
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-
-            $target_node_name = _midpoint_name( $from_analysis->{'_funnel_dfr'} );
-
-        } else {
-            warn("Do not know how to handle the type '".ref($target_object)."'");
-            next;
-        }
-
-            # a rule needs a midpoint either if it HAS a funnel or if it IS a funnel
-        if( $funnel_dataflow_rule or $df_rule->{'_is_a_funnel'} ) {
-            my $midpoint_name = _midpoint_name( $df_rule );
-
-            $graph->add_node( $midpoint_name,   # midpoint itself
-                color       => $dataflow_colour,
-                label       => '',
-                shape       => 'point',
-                fixedsize   => 1,
-                width       => 0.01,
-                height      => 0.01,
-            );
-            $graph->add_edge( $from_node_name => $midpoint_name, # first half of the two-part arrow
-                color       => $dataflow_colour,
-                arrowhead   => 'none',
-                fontname    => $df_edge_fontname,
-                fontcolor   => $dataflow_colour,
-                label       => '#'.$branch_code.($input_id_template ? ":\n".$input_id_template : ''),
-            );
-            $graph->add_edge( $midpoint_name => $target_node_name,   # second half of the two-part arrow
-                color     => $dataflow_colour,
-            );
-            if($funnel_dataflow_rule) {
-                $graph->add_edge( $midpoint_name => _midpoint_name( $funnel_dataflow_rule ),   # semaphore inter-rule link
+                    # add a semaphore inter-rule blocking arc:
+                $graph->add_edge( $fan_midpoint_name => $funnel_midpoint_name,
                     color     => $semablock_colour,
                     style     => 'dashed',
-                    arrowhead => 'tee',
                     dir       => 'both',
+                    arrowhead => 'tee',
                     arrowtail => 'crow',
                 );
             }
-        } elsif(UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator')) {
-                # one-part dashed arrow:
-            $graph->add_edge( $from_node_name => $target_node_name,
-                color       => $accu_colour,
-                style       => 'dashed',
-                label       => '#'.$branch_code.":\n".$target_object->display_name( $self->pipeline->hive_dba ),
-                fontname    => $df_edge_fontname,
-                fontcolor   => $accu_colour,
-                dir         => 'both',
-                arrowtail   => 'crow',
-            );
-        } else {
-                # one-part solid arrow:
-            $graph->add_edge( $from_node_name => $target_node_name,
-                color       => $dataflow_colour,
-                fontname    => $df_edge_fontname,
-                fontcolor   => $dataflow_colour,
-                label       => '#'.$branch_code.($input_id_template ? ":\n".$input_id_template : ''),
-            );
-        } # /if( "$df_rule needs a midpoint" )
-    } # /foreach my $df_rule (@$dataflow_rules)
 
+        } else {
+            my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
+
+            if($choice) {
+                $self->_twopart_arrow( $df_rule, $df_targets );
+            } else {
+                my $from_node_name  = $self->_analysis_node_name( $from_analysis );
+                my $df_target       = $df_targets->[0];
+
+                $self->_last_part_arrow($from_analysis, $from_node_name, '#'.$df_rule->branch_code, $df_target, []);
+            }
+        }
+
+    } # /foreach my $group
 }
 
 
 sub _add_table_node {
-    my ($self, $table_node_name, $naked_table) = @_;
+    my ($self, $naked_table) = @_;
 
-    my $node_fontname   = $self->config_get('Node', 'Table', 'Font');
+    my $table_shape             = $self->config_get('Node', 'Table', 'Shape');
+    my $table_style             = $self->config_get('Node', 'Table', 'Style');
+    my $table_colour            = $self->config_get('Node', 'Table', 'Colour');
+    my $table_header_colour     = $self->config_get('Node', 'Table', 'HeaderColour');
+    my $table_fontcolour        = $self->config_get('Node', 'Table', 'FontColour');
+    my $table_fontname          = $self->config_get('Node', 'Table', 'Font');
+
+    my $hive_pipeline           = $self->pipeline;
+    my $this_table_node_name    = $self->_table_node_name( $naked_table );
+
     my (@column_names, $columns, $table_data, $data_limit, $hit_limit);
 
-    my $hive_dba        = $self->pipeline->hive_dba;
-
-    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $hive_dba && $hive_dba->get_NakedTableAdaptor( 'table_name' => $naked_table->table_name ) ) {
+    if( $data_limit = $self->config_get('DisplayData') and my $naked_table_adaptor = $naked_table->adaptor ) {
 
         @column_names = sort keys %{$naked_table_adaptor->column_set};
         $columns = scalar(@column_names);
@@ -571,11 +694,11 @@ sub _add_table_node {
         }
     }
 
-    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->display_name( $hive_dba ) .'</td></tr>';
+    my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->relative_display_name( $hive_pipeline ) .'</td></tr>';
 
-    if( $self->config_get('DisplayData') ) {
+    if( $self->config_get('DisplayData') and $columns) {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
-        $table_label .= '<tr>'.join('', map { qq{<td bgcolor="lightblue" border="1">$_</td>} } @column_names).'</tr>';
+        $table_label .= '<tr>'.join('', map { qq{<td bgcolor="$table_header_colour" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
             $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
         }
@@ -585,12 +708,17 @@ sub _add_table_node {
     }
     $table_label .= '</table>>';
 
-    $self->graph()->add_node( $table_node_name, 
-        label => $table_label,
-        shape => 'record',
-        fontname => $node_fontname,
-        color => $self->config_get('Node', 'Table', 'Colour'),
+    $self->graph()->add_node( $this_table_node_name,
+        shape       => 'record',
+        comment     => qq{new_shape:$table_shape},
+        style       => $table_style,
+        fillcolor   => $table_colour,
+        fontname    => $table_fontname,
+        fontcolor   => $table_fontcolour,
+        label       => $table_label,
     );
+
+    return $this_table_node_name;
 }
 
 1;

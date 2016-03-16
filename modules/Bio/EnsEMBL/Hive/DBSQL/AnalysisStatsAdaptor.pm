@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -67,6 +67,11 @@ sub default_input_column_mapping {
 }
 
 
+sub do_not_update_columns {
+    return ['when_updated'];
+}
+
+
 sub object_class {
     return 'Bio::EnsEMBL::Hive::AnalysisStats';
 }
@@ -85,7 +90,10 @@ sub refresh {
 
     my $new_stats = $self->fetch_by_analysis_id( $stats->analysis_id );     # fetch into a separate object
 
+    my $has_hive_pipeline = exists $stats->{'_hive_pipeline'};
+    my $orig_hive_pipeline = $stats->hive_pipeline;
     %$stats = %$new_stats;                                                  # copy the data over
+    $stats->hive_pipeline($orig_hive_pipeline) if $has_hive_pipeline;
 
     return $stats;
 }
@@ -98,24 +106,14 @@ sub refresh {
 ################
 
 
-=head2 update
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Example    :
-  Description:
-  Returntype : Bio::EnsEMBL::Hive::Worker
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub update {
+sub update_stats_and_monitor {
   my ($self, $stats) = @_;
 
-  my $hive_capacity = $stats->hive_capacity;
+  my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
 
   if ($stats->behaviour eq "DYNAMIC") {
 
+    my $hive_capacity = $stats->hive_capacity;
     my $max_hive_capacity = $stats->avg_input_msec_per_job
         ? int($stats->input_capacity * $stats->avg_msec_per_job / $stats->avg_input_msec_per_job)
         : $hive_capacity;
@@ -128,18 +126,15 @@ sub update {
     }
 
     $stats->hive_capacity( int( ($hive_capacity+$max_hive_capacity+1)/2 ) );
+    $sql .= ",hive_capacity=" . (defined($stats->hive_capacity()) ? $stats->hive_capacity() : 'NULL');
   }
-
-  my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
-  $sql .= ",batch_size=" . $stats->batch_size();
-  $sql .= ",hive_capacity=" . (defined($stats->hive_capacity()) ? $stats->hive_capacity() : 'NULL');
 
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
 
-  unless( $self->db->hive_use_triggers() ) {
+  unless( $stats->hive_pipeline->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();
       $sql .= ",semaphored_job_count=" . $stats->semaphored_job_count();
       $sql .= ",ready_job_count=" . $stats->ready_job_count();
@@ -197,7 +192,7 @@ sub interval_update_work_done {
 
   $weight_factor ||= 3; # makes it more sensitive to the dynamics of the farm
 
-  my $sql = $self->db->hive_use_triggers()
+  my $sql = $self->db->hive_pipeline->hive_use_triggers()
   ? qq{
     UPDATE analysis_stats SET
         avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
@@ -223,7 +218,7 @@ sub interval_update_work_done {
 sub increment_a_counter {
     my ($self, $counter, $increment, $analysis_id) = @_;
 
-    unless( $self->db->hive_use_triggers() ) {
+    unless( $self->db->hive_pipeline->hive_use_triggers() ) {
         if($increment) {    # can either be positive or negative
 ## ToDo: does it make sense to update the timestamp as well, to signal to the sync-allowed workers that they should wait?
 #            $self->dbc->do( "UPDATE analysis_stats SET $counter = $counter + ($increment), when_updated=CURRENT_TIMESTAMP WHERE sync_lock=0 AND analysis_id='$analysis_id'" );

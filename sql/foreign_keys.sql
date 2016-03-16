@@ -9,7 +9,7 @@ DESCRIPTION
 
 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -35,6 +35,7 @@ ALTER TABLE job                     ADD CONSTRAINT  job_analysis_id_fkey        
 ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (funnel_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
+ALTER TABLE dataflow_target         ADD FOREIGN KEY (source_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 
 ALTER TABLE accu                    ADD FOREIGN KEY (sending_job_id)            REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE accu                    ADD FOREIGN KEY (receiving_job_id)          REFERENCES job(job_id)                          ON DELETE CASCADE;

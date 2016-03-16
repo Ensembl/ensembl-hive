@@ -33,7 +33,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -75,6 +75,8 @@ sub param_defaults {
         'inputcmd'          => undef,
 
         'fan_branch_code'   => 2,
+
+        'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
     };
 }
 
@@ -134,7 +136,7 @@ sub run {
               $inputlist    ? $self->_get_rows_from_list(  $inputlist  )
             : $inputquery   ? $self->_get_rows_from_query( $inputquery )
             : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , $delimiter, $parse_column_names )
-            : $inputcmd     ? $self->_get_rows_from_open( "$inputcmd |", $delimiter, $parse_column_names )
+            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '')."$inputcmd |", $delimiter, $parse_column_names )
             : die "range of values should be defined by setting 'inputlist', 'inputquery', 'inputfile' or 'inputcmd'";
 
     if( $column_names_from_data                                             # column data is available
@@ -222,6 +224,8 @@ sub _get_rows_from_query {
     }
     $sth->finish();
 
+    $self->data_dbc()->disconnect_if_idle();
+
     return (\@rows, \@column_names_from_data);
 }
 
@@ -246,6 +250,8 @@ sub _get_rows_from_open {
         push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];
     }
     close FILE;
+    my $exit = $? >> 8;
+    die "Could not read from '$input_file_or_pipe'. Received the error $exit\n" if $exit;
 
     my $column_names_from_data = $parse_header ? shift @rows : 0;
 

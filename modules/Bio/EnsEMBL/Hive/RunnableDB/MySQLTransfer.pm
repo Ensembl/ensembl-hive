@@ -18,7 +18,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -41,18 +41,21 @@ package Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
     return {
         'src_db_conn'   => '',
         'dest_db_conn'  => '',
         'mode'          => 'overwrite',
-        'table'         => '',
         'where'         => undef,
         'filter_cmd'    => undef,
+
+        # Needed by SystemCmd
+        'use_bash_pipefail'         => 1,
+        'return_codes_2_branches'   => {},
     };
 }
 
@@ -84,7 +87,7 @@ sub fetch_input {
     if($src_db_conn eq $dest_db_conn) {
         die "Please either specify 'src_db_conn' or 'dest_db_conn' or make them different\n";
     }
-    my $table = $self->param('table') or die "Please specify 'table' parameter\n";
+    my $table = $self->param_required('table');
     $self->input_job->transient_error(1);
 
     my $src_dbc     = $src_db_conn  ? go_figure_dbc( $src_db_conn )  : $self->data_dbc;
@@ -94,33 +97,19 @@ sub fetch_input {
     $self->param('dest_dbc',        $dest_dbc);
 
     my $where = $self->param('where');
+    my $mode  = $self->param_required('mode');
 
     $self->param('src_before',  $self->get_row_count($src_dbc,  $table, $where) );
 
-    if($self->param('mode') ne 'overwrite') {
+    if($mode ne 'overwrite') {
+        $self->_assert_same_table_schema($src_dbc, $dest_dbc, $table);
         $self->param('dest_before_all', $self->get_row_count($dest_dbc, $table) );
     }
-}
 
-=head2 run
-
-    Description : Implements run() interface method of Bio::EnsEMBL::Hive::Process that is used to perform the main bulk of the job (minus input and output).
-                  Here the actual data transfer is attempted.
-
-=cut
-
-sub run {
-    my $self = shift;
-
-    my $src_dbc     = $self->param('src_dbc');
-    my $dest_dbc    = $self->param('dest_dbc');
-
-    my $mode        = $self->param('mode');
-    my $table       = $self->param('table');
-    my $where       = $self->param('where');
     my $filter_cmd  = $self->param('filter_cmd');
 
     my $mode_options = { 'overwrite' => [], 'topup' => ['--no-create-info'], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
+    die "Mode '$mode' not recognized. Should be 'overwrite', 'topup' or 'insertignore'\n" unless $mode_options;
 
     # Must be joined because of the pipe
     my $cmd = join(' ',
@@ -131,12 +120,7 @@ sub run {
                 ($filter_cmd ? "$filter_cmd | " : ''),
                 @{$dest_dbc->to_cmd(undef, undef, undef, undef, 1)}
             );
-
-    print "$cmd\n" if $self->debug;
-    if(my $return_value = system($cmd)) {   # NB: unfortunately, this code won't catch many errors because of the pipe
-        $return_value >>= 8;
-        die "system( $cmd ) failed: $return_value";
-    }
+    $self->param('cmd', $cmd);
 }
 
 =head2 write_output
@@ -148,6 +132,9 @@ sub run {
 
 sub write_output {
     my $self = shift;
+
+    # Error processing
+    $self->SUPER::write_output();
 
     my $dest_dbc    = $self->param('dest_dbc');
 
@@ -193,8 +180,25 @@ sub get_row_count {
     my ($row_count) = $sth->fetchrow_array();
     $sth->finish;
 
+    $dbc->disconnect_if_idle();
+
     return $row_count;
 }
+
+sub _assert_same_table_schema {
+    my ($self, $src_dbc, $dest_dbc, $table) = @_;
+
+    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_schema = $src_sth->fetchall_arrayref;
+    $src_sth->finish();
+
+    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_schema = $dest_sth->fetchall_arrayref;
+    $dest_sth->finish();
+
+    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+}
+
 
 1;
 

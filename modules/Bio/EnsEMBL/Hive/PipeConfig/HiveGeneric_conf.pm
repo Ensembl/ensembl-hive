@@ -37,7 +37,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -60,9 +60,13 @@ package Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 use strict;
 use warnings;
 
+use Exporter 'import';
+our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
+
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Collection;
+use Bio::EnsEMBL::Hive::Utils::PCL;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
@@ -132,9 +136,14 @@ sub pipeline_create_commands {
     my $self    = shift @_;
 
     my $pipeline_url    = $self->pipeline_url();
-    my $parsed_url      = Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
-    my $driver          = $parsed_url ? $parsed_url->{'driver'} : '';
+    my $second_pass     = $pipeline_url!~ /^#:subst/;
+
+    my $parsed_url      = $second_pass && Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
+    my $driver          = $second_pass ? $parsed_url->{'driver'} : '';
     my $hive_force_init = $self->o('hive_force_init');
+
+    # Will insert two keys: "hive_all_base_tables" and "hive_all_views"
+    my $hive_tables_sql = 'INSERT INTO hive_meta SELECT CONCAT("hive_all_", REPLACE(LOWER(TABLE_TYPE), " ", "_"), "s"), GROUP_CONCAT(TABLE_NAME) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "%s" GROUP BY TABLE_TYPE';
 
     return [
             $hive_force_init ? $self->db_cmd('DROP DATABASE IF EXISTS') : (),
@@ -151,6 +160,8 @@ sub pipeline_create_commands {
 
                 # we got procedure definitions for all drivers:
             $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
+
+            ($driver eq 'mysql' ? ($self->db_cmd(sprintf($hive_tables_sql, $parsed_url->{'dbname'}))) : ()),
     ];
 }
 
@@ -410,14 +421,14 @@ sub add_objects_from_config {
             die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
         }
 
-        my $resource_class = $pipeline->add_new_or_update( 'ResourceClass',
+        my ($resource_class) = $pipeline->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
             'name'  => $rc_name,
         );
 
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-            my $resource_description = $pipeline->add_new_or_update( 'ResourceDescription',
+            my ($resource_description) = $pipeline->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
                 'resource_class'        => $resource_class,
                 'meadow_type'           => $meadow_type,
                 'submission_cmd_args'   => $resource_param_list->[0],
@@ -429,7 +440,7 @@ sub add_objects_from_config {
     warn "Done.\n\n";
 
 
-    my $valley = Bio::EnsEMBL::Hive::Valley->new( {}, 'LOCAL' );
+    my $amh = Bio::EnsEMBL::Hive::Valley->new()->available_meadow_hash();
 
     my %seen_logic_name = ();
 
@@ -467,14 +478,14 @@ sub add_objects_from_config {
             my $resource_class = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name)
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
-            if ($meadow_type and not exists $valley->available_meadow_hash()->{$meadow_type}) {
-                die "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
+            if ($meadow_type and not exists $amh->{$meadow_type}) {
+                warn "The meadow '$meadow_type' is currently not registered (analysis '$logic_name')\n";
             }
 
             $parameters_hash ||= {};    # in case nothing was given
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
-            $analysis = $pipeline->add_new_or_update( 'Analysis',
+            ($analysis) = $pipeline->add_new_or_update( 'Analysis',   # NB: add_new_or_update returns a list
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'language'              => $language,
@@ -489,7 +500,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            $stats = $pipeline->add_new_or_update( 'AnalysisStats',
+            ($stats) = $pipeline->add_new_or_update( 'AnalysisStats',   # NB: add_new_or_update returns a list
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
                 'hive_capacity'         => $hive_capacity,
@@ -522,6 +533,7 @@ sub add_objects_from_config {
 
     warn "Adding Control and Dataflow Rules ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
+
         my ($logic_name, $wait_for, $flow_into)
              = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
@@ -532,82 +544,21 @@ sub add_objects_from_config {
 
             # create control rules:
         foreach my $condition_url (@$wait_for) {
-            unless ($condition_url =~ m{^\w*://}) {
+            if($condition_url =~ m{^\w+$/}) {
                 my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                     or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
             }
-            my $c_rule = $pipeline->add_new_or_update( 'AnalysisCtrlRule',
+            my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
                     'condition_analysis_url'    => $condition_url,
                     'ctrled_analysis'           => $analysis,
             );
         }
 
-        $flow_into ||= {};
-        $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
+        if($flow_into) {
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($pipeline, $analysis, $flow_into);
+        }
 
-        my %group_tag_to_funnel_dataflow_rule = ();
-
-        my $semaphore_sign = '->';
-
-        my @all_branch_tags = keys %$flow_into;
-        foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {
-
-            my ($branch_name_or_code, $group_role, $group_tag);
-
-            if($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {
-                ($branch_name_or_code, $group_role, $group_tag) = ($2, 'funnel', $1);
-            } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {
-                ($branch_name_or_code, $group_role, $group_tag) = ($1, 'fan', $2);
-            } elsif($branch_tag=~/^(-?\w+)$/) {
-                ($branch_name_or_code, $group_role, $group_tag) = ($1, '');
-            } elsif($branch_tag=~/:/) {
-                die "Please use newer '2${semaphore_sign}A' and 'A${semaphore_sign}1' notation instead of '2:1' and '1'\n";
-            } else {
-                die "Error parsing the group tag '$branch_tag'\n";
-            }
-
-            my $funnel_dataflow_rule = undef;    # NULL by default
-
-            if($group_role eq 'fan') {
-                unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                    die "No funnel dataflow_rule defined for group '$group_tag'\n";
-                }
-            }
-
-            my $heirs = $flow_into->{$branch_tag};
-            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first
-            $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY'); # now force it into a hash if it wasn't
-
-            while(my ($heir_url, $input_id_template_list) = each %$heirs) {
-
-                unless ($heir_url =~ m{^\w*://}) {
-                    my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
-                        or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($analysis->logic_name)."')\n";
-                }
-
-                $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
-
-                foreach my $input_id_template (@$input_id_template_list) {
-
-                    my $df_rule = $pipeline->add_new_or_update( 'DataflowRule',
-                        'from_analysis'             => $analysis,
-                        'to_analysis_url'           => $heir_url,
-                        'branch_code'               => $branch_name_or_code,
-                        'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-                        'input_id_template'         => $input_id_template,
-                    );
-
-                    if($group_role eq 'funnel') {
-                        if($group_tag_to_funnel_dataflow_rule{$group_tag}) {
-                            die "More than one funnel dataflow_rule defined for group '$group_tag'\n";
-                        } else {
-                            $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;
-                        }
-                    }
-                } # /for all templates
-            } # /for all heirs
-        } # /for all branch_tags
-    } # /for all pipeline_analyses
+    }
     warn "Done.\n\n";
 }
 

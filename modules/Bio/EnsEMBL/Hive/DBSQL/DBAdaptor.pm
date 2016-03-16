@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -37,7 +37,10 @@ package Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Hive;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
@@ -51,6 +54,7 @@ use Bio::EnsEMBL::Hive::Analysis;
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
+use Bio::EnsEMBL::Hive::DataflowTarget;
 
 
 sub new {
@@ -114,7 +118,8 @@ sub new {
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
             || die "DB($safe_url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
 
-        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->get_value_by_key( 'hive_sql_schema_version' ); };
+        my $db_sql_schema_version   = eval { $self->get_MetaAdaptor->fetch_by_meta_key( 'hive_sql_schema_version' )->{'meta_value'}; };
+
         if($@) {
             if($@ =~ /hive_meta.*doesn't exist/) {
 
@@ -172,36 +177,15 @@ sub dbc {
 }
 
 
-sub hive_use_triggers {  # getter only, not setter
+sub hive_pipeline {
     my $self = shift @_;
-
-    unless( defined($self->{'_hive_use_triggers'}) ) {
-        my $hive_use_triggers = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_triggers' );
-        $self->{'_hive_use_triggers'} = $hive_use_triggers // 0;
-    } 
-    return $self->{'_hive_use_triggers'};
-}
-
-
-sub hive_use_param_stack {  # getter only, not setter
-    my $self = shift @_;
-
-    unless( defined($self->{'_hive_use_param_stack'}) ) {
-        my $hive_use_param_stack = $self->get_MetaAdaptor->get_value_by_key( 'hive_use_param_stack' );
-        $self->{'_hive_use_param_stack'} = $hive_use_param_stack // 0;
-    } 
-    return $self->{'_hive_use_param_stack'};
-}
-
-
-sub hive_auto_rebalance_semaphores {  # getter only, not setter
-    my $self = shift @_;
-
-    unless( defined($self->{'_hive_auto_rebalance_semaphores'}) ) {
-        my $hive_auto_rebalance_semaphores = $self->get_MetaAdaptor->get_value_by_key( 'hive_auto_rebalance_semaphores' );
-        $self->{'_hive_auto_rebalance_semaphores'} = $hive_auto_rebalance_semaphores // 0;
-    } 
-    return $self->{'_hive_auto_rebalance_semaphores'};
+    if (@_) {
+        $self->{'_hive_pipeline'} = shift @_;
+    }
+    unless ($self->{'_hive_pipeline'}) {
+        $self->{'_hive_pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new( -dba => $self );     # ToDo: this lazy-loaded object is not registered in TheApiary (yet)
+    }
+    return $self->{'_hive_pipeline'};
 }
 
 
@@ -213,6 +197,7 @@ our %adaptor_type_2_package_name = (
     'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
     'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
     'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
+    'DataflowTarget'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
     'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
     'PipelineWideParameters'=> 'Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor',

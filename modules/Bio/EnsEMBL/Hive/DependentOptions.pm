@@ -10,7 +10,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -60,11 +60,27 @@ sub load_cmdline_options {
     my $self        = shift @_;
     my $expected    = shift @_;
     my $target      = shift @_ || {};
+    my $check_extra = shift @_;
 
     local @ARGV = @ARGV;    # make this function reenterable by forbidding it to modify the original parameters
+
+    # Enable passing of long commandline options by file.
+    # Example: perl init_pipeline.pl B::E::H::P::Whaterver_conf  @my_file.conf
+    # See CPAN Getopt::ArgvFile for more info.
+    my $getopt_argvfile_loaded = 0;
+    eval {require Getopt::ArgvFile; Getopt::ArgvFile::argvFile(); $getopt_argvfile_loaded = 1; };
+
     GetOptions( $target,
         map { my $ref_type = ref($expected->{$_}); $_=~m{\!$} ? $_ : ($ref_type eq 'HASH') ? "$_=s%" : ($ref_type eq 'ARRAY') ? "$_=s@" : "$_=s" } keys %$expected
     );
+
+    if ($check_extra && scalar(@ARGV)) {
+        warn "These command-line arguments were not used: ", join(" ", @ARGV), "\n";
+        if (!$getopt_argvfile_loaded && scalar(grep {$_ =~ /^@/} @ARGV)) {
+            die "Getopt:ArgvFile is not installed on your system. Arguments starting with '\@' could not be processed.\n";
+        }
+    }
+
     return $target;
 }
 
@@ -219,7 +235,7 @@ sub process_options {
         # the first run of this method allows us to collect possibly_used_options
     my $rules = $self->default_options();
 
-    $self->load_cmdline_options( { %$definitely_used_options, %$possibly_used_options }, $rules );
+    $self->load_cmdline_options( { %$definitely_used_options, %$possibly_used_options }, $rules, "check_extra" );
 
     $self->root( $definitely_used_options );
 

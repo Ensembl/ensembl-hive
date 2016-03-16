@@ -12,9 +12,6 @@
         dataflow_rule_id    int(10) unsigned NOT NULL AUTO_INCREMENT,
         from_analysis_id    int(10) unsigned NOT NULL,
         branch_code         int(10) default 1 NOT NULL,
-        funnel_dataflow_rule_id  int(10) unsigned default NULL,
-        to_analysis_url     varchar(255) default '' NOT NULL,
-        input_id_template   TEXT DEFAULT NULL,
 
         PRIMARY KEY (dataflow_rule_id),
         UNIQUE (from_analysis_id, to_analysis_url)
@@ -31,7 +28,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -54,14 +51,13 @@ package Bio::EnsEMBL::Hive::DataflowRule;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor;
+use Bio::EnsEMBL::Hive::TheApiary;
 
 use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
-sub unikey {    # override the default from Cacheable parent
-    return [ 'from_analysis', 'to_analysis_url', 'branch_code', 'funnel_dataflow_rule', 'input_id_template' ];
+sub unikey {
+    return [ 'from_analysis', 'branch_code', 'funnel_dataflow_rule', 'unitargets' ];
 } 
 
 
@@ -91,88 +87,41 @@ sub branch_code {
 }
 
 
-=head2 input_id_template
-
-    Function: getter/setter method for the input_id_template of the dataflow rule
-
-=cut
-
-sub input_id_template {
+sub get_my_targets {
     my $self = shift @_;
 
-    if(@_) {
-        my $input_id_template = shift @_;
-        $self->{'_input_id_template'} = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template),
-    }
-    return $self->{'_input_id_template'};
+    return $self->hive_pipeline->collection_of( 'DataflowTarget' )->find_all_by('source_dataflow_rule', $self);
 }
 
 
-=head2 to_analysis_url
+sub get_my_targets_grouped_by_condition {
+    my $self        = shift @_;
+    my $df_targets  = shift @_;
 
-    Arg[1]  : (optional) string $url
-    Usage   : $self->to_analysis_url($url);
-    Function: Get/set method for the 'to' analysis objects URL for this rule
-    Returns : string
-  
-=cut
+    $df_targets //= $self->get_my_targets;
 
-sub to_analysis_url {
-    my $self = shift @_;
-
-    if(@_) {
-        $self->{'_to_analysis_url'} = shift @_;
-        if( $self->{'_to_analysis'} ) {
-#            warn "setting to_analysis_url() in an object that had to_analysis() defined";
-            $self->{'_to_analysis'} = undef;
-        }
-    } elsif( !$self->{'_to_analysis_url'} and my $target_object=$self->{'_to_analysis'} ) {
-
-        my $ref_dba = $self->from_analysis && $self->from_analysis->adaptor && $self->from_analysis->adaptor->db;
-        $self->{'_to_analysis_url'} = $target_object->url( $ref_dba );      # the URL may be shorter if DBA is the same for source and target
-
-#        warn "Lazy-loaded to_analysis_url\n";
+    my %my_targets_by_condition = ();
+    foreach my $df_target (@$df_targets) {
+        my $this_pair = $my_targets_by_condition{ $df_target->on_condition || ''} ||= [ $df_target->on_condition, []];
+        push @{$this_pair->[1]}, $df_target;
     }
 
-    return $self->{'_to_analysis_url'};
+    return [ sort { ($b->[0]//'') cmp ($a->[0]//'') } values %my_targets_by_condition ];
 }
 
 
-=head2 to_analysis
+sub unitargets {
+    my $self    = shift @_;
+    my $targets = shift @_ || $self->get_my_targets;
 
-    Usage   : $self->to_analysis($analysis);
-    Function: Get/set method for the goal analysis object of this rule.
-    Returns : Bio::EnsEMBL::Hive::Analysis
-    Args    : Bio::EnsEMBL::Hive::Analysis
-  
-=cut
+    if(ref($targets)) {
+        my $unitargets = join( ';', map { ($_->on_condition//'').':'.($_->input_id_template//'').':'.$_->to_analysis_url }
+                                        sort { ($a->on_condition//'') cmp ($b->on_condition//'')
+                                            or ($a->input_id_template//'') cmp ($b->input_id_template//'') }
+                                            @$targets);
 
-sub to_analysis {
-    my ($self, $analysis_or_nt) = @_;
-
-    if( defined $analysis_or_nt ) {
-        unless ($analysis_or_nt->can('url')) {
-            throw( "to_analysis arg must support 'url' method, '$analysis_or_nt' does not know how to do it");
-        }
-        $self->{'_to_analysis'} = $analysis_or_nt;
+        return $unitargets;
     }
-
-        # lazy load the analysis object if I can
-    if( !$self->{'_to_analysis'} and my $to_analysis_url = $self->to_analysis_url ) {
-        my $collection = Bio::EnsEMBL::Hive::Analysis->collection();
-
-        if( $collection and $self->{'_to_analysis'} = $collection->find_one_by('logic_name', $to_analysis_url) ) {
-#            warn "Lazy-loading object from 'Analysis' collection\n";
-        } elsif(my $adaptor = $self->adaptor) {
-#            warn "Lazy-loading object from AnalysisAdaptor\n";
-            $self->{'_to_analysis'} = $adaptor->db->get_AnalysisAdaptor->fetch_by_logic_name_or_url($to_analysis_url);
-        } else {
-#            warn "Lazy-loading object from full URL\n";
-            $self->{'_to_analysis'} = Bio::EnsEMBL::Hive::DBSQL::AnalysisAdaptor->fetch_by_logic_name_or_url($to_analysis_url);
-        }
-    }
-
-    return $self->{'_to_analysis'};
 }
 
 
@@ -198,9 +147,9 @@ sub toString {
             ),
             ' --#',
             $self->branch_code,
-            '--> ',
-            $self->to_analysis_url,
-            ($self->input_id_template ? (' WITH TEMPLATE: '.$self->input_id_template) : ''),
+            '--> [ ',
+            join(', ', map { $_->toString($short) } sort { ($b->on_condition // '') cmp ($a->on_condition // '') } (@{$self->get_my_targets()})),
+            ' ]',
             ($self->funnel_dataflow_rule ? ' ---|| ('.$self->funnel_dataflow_rule->toString(1).' )'  : ''),
     );
 }

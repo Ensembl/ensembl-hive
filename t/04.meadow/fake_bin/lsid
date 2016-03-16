@@ -1,0 +1,4 @@
+#!/bin/bash
+
+echo 'My cluster name is test_clUster'
+

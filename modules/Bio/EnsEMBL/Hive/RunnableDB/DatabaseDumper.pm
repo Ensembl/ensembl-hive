@@ -59,7 +59,7 @@ EL EH    List of tables to dump
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -84,7 +84,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
     return {
@@ -100,6 +100,9 @@ sub param_defaults {
 
         # Other options
         'skip_dump'     => 0,       # boolean
+
+        # SystemCmd's options
+        'use_bash_pipefail' => 1,   # We need to make sure the whole command succeeded
     }
 }
 
@@ -108,13 +111,7 @@ sub fetch_input {
 
     # The final list of tables
     my @tables = ();
-    $self->param('tables', \@tables);
     my @ignores = ();
-    $self->param('ignores', \@ignores);
-
-    # Would be good to have this from eHive
-    my @ehive_tables = qw(hive_meta pipeline_wide_parameters worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor role msg progress resource_class worker_resource_usage);
-    $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
@@ -124,8 +121,20 @@ sub fetch_input {
     $self->input_job->transient_error(0);
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
 
+    my @ehive_tables = ();
+    {
+        ## Only query the list of eHive tables if there is a "hive_meta" table
+        my $meta_sth = $src_dbc->db_handle->table_info(undef, undef, 'hive_meta');
+        if ($meta_sth->fetchrow_arrayref) {
+            my $src_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -dbconn => $src_dbc, -disconnect_when_inactive => 1, -no_sql_schema_version_check => 1 );
+            @ehive_tables = (@{$src_dba->hive_pipeline->list_all_hive_tables}, @{$src_dba->hive_pipeline->list_all_hive_views});
+        }
+        $meta_sth->finish();
+    }
+    $self->param('nb_ehive_tables', scalar(@ehive_tables));
+
     # Get the table list in either "tables" or "ignores"
-    my $table_list = $self->_get_table_list;
+    my $table_list = $self->_get_table_list($src_dbc, $self->param('table_list') || '');
     print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
 
     if ($self->param('exclude_list')) {
@@ -151,43 +160,12 @@ sub fetch_input {
     }
 
     $self->input_job->transient_error(1);
-}
 
-
-# Splits a string into a list of strings
-# Ask the database for the list of tables that match the wildcard "%"
-
-sub _get_table_list {
-    my $self = shift @_;
-
-    my $table_list = $self->param('table_list') || '';
-    my @newtables = ();
-    my $dbc = $self->param('src_dbc');
-    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
-        if ($initable =~ /%/) {
-            $initable =~ s/_/\\_/g;
-            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
-            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
-        } else {
-            push @newtables, $initable;
-        }
-    }
-    return \@newtables;
-}
-
-
-sub run {
-    my $self = shift @_;
-
-    my $src_dbc = $self->param('src_dbc');
-    my $tables = $self->param('tables');
-    my $ignores = $self->param('ignores');
-
-    print "tables: ", scalar(@$tables), " ", join('/', @$tables), "\n" if $self->debug;
-    print "ignores: ", scalar(@$ignores), " ", join('/', @$ignores), "\n" if $self->debug;
+    print "tables: ", scalar(@tables), " ", join('/', @tables), "\n" if $self->debug;
+    print "ignores: ", scalar(@ignores), " ", join('/', @ignores), "\n" if $self->debug;
 
     # We have to exclude everything
-    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
+    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@ignores) == $self->param('nb_ehive_tables'));
 
     # mysqldump command
     my $output = "";
@@ -205,32 +183,53 @@ sub run {
     my $cmd = join(' ', 
         @{ $src_dbc->to_cmd('mysqldump', undef, undef, undef, 1) },
         '--skip-lock-tables',
-        @$tables,
-        (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
+        @tables,
+        (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @ignores),
         $output
     );
-    print "$cmd\n" if $self->debug;
 
     # Check whether the current database has been restored from a snapshot.
     # If it is the case, we shouldn't re-dump and overwrite the file.
     # We also check here the value of the "skip_dump" parameter
     my $completion_signature = sprintf('dump_%d_restored', $self->input_job->dbID < 0 ? 0 : $self->input_job->dbID);
-    return if $self->param('skip_dump') or $self->param($completion_signature);
 
-    # OK, we can dump
-    if(my $return_value = system($cmd)) {
-        die "system( $cmd ) failed: $return_value";
+    if ($self->param('skip_dump') or $self->param($completion_signature)) {
+        # A command that always succeeds
+        $self->param('cmd', 'true');
+        if ($self->param('skip_dump')) {
+            $self->warning('Skipping the dump because "skip_dump" is defined');
+        } else {
+            $self->warning("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
+        }
+    } else {
+        # OK, we can dump. We add the signature to the dump, so that the
+        # job won't rerun on a restored database
+        # We're very lucky that gzipped streams can be concatenated and the
+        # output is still valid !
+        my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
+        $extra_sql =~ s/>/>>/;
+        $self->param('cmd', "$cmd; $extra_sql");
     }
+}
 
-    # We add the signature to the dump, so that the job won't rerun on a
-    # restored database
-    my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
-    # We're very lucky that gzipped streams can be concatenated and the
-    # output is still valid !
-    $extra_sql =~ s/>/>>/;
-    if(my $return_value = system($extra_sql)) {
-        die "system( $extra_sql ) failed: $return_value";
+
+# Splits a string into a list of strings
+# Ask the database for the list of tables that match the wildcard "%"
+
+sub _get_table_list {
+    my ($self, $dbc, $table_list) = @_;
+
+    my @newtables = ();
+    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
+        if ($initable =~ /%/) {
+            $initable =~ s/_/\\_/g;
+            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
+            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
+        } else {
+            push @newtables, $initable;
+        }
     }
+    return \@newtables;
 }
 
 

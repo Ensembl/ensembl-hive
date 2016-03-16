@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -52,7 +52,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 =head2 new
 
     Args            : pairs of ($method_name, $value)
-    Caller          : ObjectAdaptor, AnalysisJob, URLFactory.pm, HiveGeneric_conf, seed_pipeline.pl, standaloneJob.pl
+    Caller          : ObjectAdaptor, AnalysisJob, HivePipeline, seed_pipeline.pl, standaloneJob.pl
     Description     : create a new Storable object 
     Returntype      : Bio::EnsEMBL::Hive::Storable
     Status          : stable
@@ -153,10 +153,13 @@ sub AUTOLOAD {
             if(@_) {    # setter of the object itself
                 $self->{$foo_obj_method_name} = shift @_;
 
+                $self->{$foo_id_method_name} = undef;   # invalidate the object_id
+
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_obj_method_name} and my $foo_object_id = $self->{$foo_id_method_name}) {
-                my $foo_class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-                my $collection = $foo_class->can('collection') && $foo_class->collection();
+                my $collection = $self->can('hive_pipeline') && $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
+                   $collection = $self->adaptor && $self->adaptor->db->hive_pipeline->collection_of($AdaptorType) unless $collection;
+
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {

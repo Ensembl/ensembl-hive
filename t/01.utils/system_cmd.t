@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,16 +19,11 @@ use strict;
 use warnings;
 
 use Test::More tests => 4;
-use Data::Dumper;
-use File::Temp qw{tempdir};
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Utils', 'join_command_args' );
 }
 #########################
-
-my $dir = tempdir CLEANUP => 1;
-chdir $dir;
 
 subtest 'The command line is given as a string' => sub
 {
@@ -55,3 +50,4 @@ subtest 'The command line is given as an arrayref and contains redirections / pi
 };
 
 done_testing();
+

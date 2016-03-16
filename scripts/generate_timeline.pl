@@ -21,13 +21,15 @@ use Data::Dumper;
 use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 no warnings qw{qw};
 
 # This replaces "when_died" when a role is still active
 my $now = localtime;
+# To compare things to 0
+my $rounding_error_threshold = 0.005;
 
 main();
 exit(0);
@@ -59,9 +61,9 @@ sub main {
 
     if ($help) { script_usage(0); }
 
-    my $hive_dba;
+    my $pipeline;
     if($url or $reg_alias) {
-        $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
+        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                            => $url,
                 -reg_conf                       => $reg_conf,
                 -reg_type                       => $reg_type,
@@ -119,14 +121,14 @@ sub main {
 
     }
 
-
-    my $dbh = $hive_dba->dbc->db_handle();
+    my $hive_dbc = $pipeline->hive_dba->dbc;
+    my $dbh = $hive_dbc->db_handle();
 
     # Get the memory usage from each resource_class
     my %mem_resources = ();
     my %cpu_resources = ();
     {
-        foreach my $rd (@{$hive_dba->get_ResourceDescriptionAdaptor->fetch_all()}) {
+        foreach my $rd ($pipeline->collection_of('ResourceDescription')->list) {
             if ($rd->meadow_type eq 'LSF') {
                 $mem_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
                 $cpu_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/-n\s*(\d+)/;
@@ -150,14 +152,9 @@ sub main {
     }
 
     # Get the info about the analysis
-    my $analysis_adaptor        = $hive_dba->get_AnalysisAdaptor;
-    my %default_resource_class  = %{ $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id() };
-    my $rc_adaptor              = $hive_dba->get_ResourceClassAdaptor;
+    my %default_resource_class  = map {$_->dbID => $_->resource_class_id} $pipeline->collection_of('Analysis')->list;
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name = %{$key eq 'analysis'
-        ? $analysis_adaptor->fetch_HASHED_FROM_analysis_id_TO_logic_name()
-        : $rc_adaptor->fetch_HASHED_FROM_resource_class_id_TO_name()
-    };
+    my %key_name = map {$_->dbID => $_->display_name} $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
     $key_name{-1} = 'UNSPECIALIZED';
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
@@ -262,10 +259,26 @@ sub main {
             [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
+    my $safe_database_location = sprintf('%s@%s', $hive_dbc->dbname, $hive_dbc->host || '-');
+    my $plotted_analyses_desc = '';
+    if ($n_relevant_analysis < scalar(@sorted_key_ids)) {
+        if ($real_top) {
+            if ($real_top < 1) {
+                $plotted_analyses_desc = sprintf('the top %.1f%% of ', 100*$real_top);
+            } else {
+                $plotted_analyses_desc = "the top $real_top analyses of ";
+            }
+        } else {
+            $plotted_analyses_desc = "the top $n_relevant_analysis analyses of ";
+        }
+    }
+    my $title = "Profile of ${plotted_analyses_desc}${safe_database_location}";
+    $title .= " from $start_date" if $start_date;
+    $title .= " to $end_date" if $end_date;
+
     # The main Gnuplot object
     my $chart = Chart::Gnuplot->new(
-        title => sprintf('Profile of %s%s', $n_relevant_analysis < scalar(@sorted_key_ids) ? sprintf('the %s top-analysis of ', $real_top ? ($real_top < 1 ? sprintf('%.1f%%', 100*$real_top) : $real_top) : $n_relevant_analysis) : '', $url)
-                 .($start_date ? " from $start_date" : "").($end_date ? " to $end_date" : ""),
+        title => $title,
         timeaxis => 'x',
         legend => {
             position => 'outside right',
@@ -303,7 +316,7 @@ sub add_dataset {
     foreach my $row (@$data_timings) {
         my $y = sum(map {$row->{$_} || 0} @$key_ids_to_sum) || $pseudo_zero_value;
         # Due to rounding errors, values are not always decreased to 0
-        push @ydata, $y < 0.05 ? $pseudo_zero_value : $y;
+        push @ydata, $y < $rounding_error_threshold ? $pseudo_zero_value : $y;
     }
     my $dataset = Chart::Gnuplot::DataSet->new(
         xdata => $xdata,
@@ -326,7 +339,7 @@ sub add_dataset {
             foreach my $i (@$analysis_ids_pattern) {
                 $y += ($lt->{$i} || 0) - ($dt->{$i} || 0);
             }
-            $ydatal[$j-1] = $y < 0.05 ? $pseudo_zero_value : $y;
+            $ydatal[$j-1] = $y < $rounding_error_threshold ? $pseudo_zero_value : $y;
         }
         $dataset = Chart::Gnuplot::DataSet->new(
             xdata => $xdata,
@@ -398,25 +411,29 @@ sub cumulate_events {
         last if $end_date and ($event_date gt $end_date);
         next unless exists $events->{$event_date};
 
+        if ((scalar(@data_timings) == 0) and $start_date and ($event_date gt $start_date)) {
+            push @data_timings, [$start_date, { %hash_curr_workers }];
+            %tot_area = %hash_curr_workers;
+        }
+
         my $topup_hash = $events->{$event_date};
         foreach my $key_id (keys %$topup_hash) {
             $hash_curr_workers{$key_id} += $topup_hash->{$key_id};
             $num_curr_workers += $topup_hash->{$key_id};
         }
         # Due to rounding errors, the sums may be slightly different
-        die sum(values %hash_curr_workers)."!=$num_curr_workers" if abs(sum(values %hash_curr_workers) - $num_curr_workers) > 0.05;
+        die sum(values %hash_curr_workers)."!=$num_curr_workers" if abs(sum(values %hash_curr_workers) - $num_curr_workers) > $rounding_error_threshold;
 
         next if $start_date and ($event_date lt $start_date);
 
-        my %hash_interval = %hash_curr_workers;
         #FIXME It should be normalised by the length of the time interval
-        map {$tot_area{$_} += $hash_interval{$_}} keys %hash_interval;
+        map {$tot_area{$_} += $hash_curr_workers{$_}} keys %hash_curr_workers;
 
         $max_workers = $num_curr_workers if ($num_curr_workers > $max_workers);
 
         # We need to repeat the previous value to have an histogram shape
         push @data_timings, [$event_date, { %{$data_timings[-1]->[1]} }] if @data_timings;
-        push @data_timings, [$event_date, \%hash_interval];
+        push @data_timings, [$event_date, { %hash_curr_workers }];
     }
     push @data_timings, [$end_date, { %{$data_timings[-1]->[1]} }] if @data_timings and $end_date and ($data_timings[-1]->[0] lt $end_date);
     warn "Last timing: ", Dumper $data_timings[-1] if $verbose and @data_timings;
@@ -530,7 +547,7 @@ You can optionally ask the script to generate an image with Gnuplot.
 
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
 You may obtain a copy of the License at

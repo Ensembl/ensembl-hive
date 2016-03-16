@@ -10,7 +10,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -125,19 +125,28 @@ sub check_worker_is_alive_and_mine {
 sub kill_worker {
     my ($self, $worker, $fast) = @_;
 
-    my $cmd = 'kill -9 '.$worker->process_id();
-    system($cmd);
+    system('kill', '-9', $worker->process_id());
 }
 
 
 sub submit_workers {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
-    my $cmd = "$worker_cmd &";
+    my ($submit_stdout_file, $submit_stderr_file);
 
+    if($submit_log_subdir) {
+        $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.out";
+        $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.err";
+    } else {
+        $submit_stdout_file = '/dev/null';
+        $submit_stderr_file = '/dev/null';
+    }
+
+    my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
+
+    print "Executing [ ".$self->signature." ] x$required_worker_count \t\t$cmd\n";
     foreach (1..$required_worker_count) {
-        print "Executing [ ".$self->signature." ] \t\t$cmd\n";
-        system( $cmd );
+        system( $cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax;
     }
 }
 

@@ -21,7 +21,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -92,13 +92,18 @@ sub fetch {
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
+        my $table_name      = $parsed_url->{'table_name'};
+        my $tparam_name     = $parsed_url->{'tparam_name'};
+        my $tparam_value    = $parsed_url->{'tparam_value'};
+
+        unless($table_name=~/^(analysis|job|accu)$/) {  # do not check schema version version when performing table dataflow:
+            $parsed_url->{'conn_params'}{'no_sql_schema_version_check'} = 1;
+        }
+
         my $dba = ($parsed_url->{'dbconn_part'} =~ m{^\w*:///$} )
             ? $default_dba
             : $class->create_cached_dba( @$parsed_url{qw(dbconn_part driver user pass host port dbname conn_params)} );
 
-        my $table_name      = $parsed_url->{'table_name'};
-        my $tparam_name     = $parsed_url->{'tparam_name'};
-        my $tparam_value    = $parsed_url->{'tparam_value'};
 
         if(not $table_name) {
         
@@ -116,8 +121,8 @@ sub fetch {
 
             return Bio::EnsEMBL::Hive::Accumulator->new(
                     $dba ? (adaptor => $dba->get_AccumulatorAdaptor) : (),
-                    struct_name        => $tparam_name,
-                    signature_template => $tparam_value,
+                    accu_name       => $tparam_name,
+                    accu_address    => $tparam_value,
             );
 
         } else {
@@ -138,18 +143,11 @@ sub fetch {
 sub create_cached_dba {
     my ($class, $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;
 
-    if($driver eq 'mysql') {
-        $user ||= 'ensro';
-        $pass ||= '';
-        $host ||= '';
-        $port ||= 3306;
-    }
-
     my $type                        = $conn_params->{'type'};
     my $disconnect_when_inactive    = $conn_params->{'disconnect_when_inactive'};
     my $no_sql_schema_version_check = $conn_params->{'no_sql_schema_version_check'};
 
-    my $connectionKey = "$driver://$user:$pass\@$host:$port/$dbname;$type";
+    my $connectionKey = $driver.'://'.($user//'').':'.($pass//'').'@'.($host//'').':'.($port//'').'/'.($dbname//'').';'.$type;
     my $dba = $_URLFactory_global_instance->{$connectionKey};
 
     unless($dba) {

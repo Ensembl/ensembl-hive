@@ -15,6 +15,7 @@ BEGIN {
 use Getopt::Long;
 use File::Path 'make_path';
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
+use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Queen;
@@ -123,7 +124,6 @@ sub main {
                'killworker=i'      => \$kill_worker_id,
                'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
-               'no_analysis_stats' => \$self->{'no_analysis_stats'},
                'worker_stats'      => \$show_worker_stats,
                'failed_jobs'       => \$show_failed_jobs,
                'reset_job_id=i'    => \$reset_job_id,
@@ -159,7 +159,6 @@ sub main {
             -reg_type                       => $self->{'reg_type'},
             -reg_alias                      => $self->{'reg_alias'},
             -no_sql_schema_version_check    => $self->{'nosqlvc'},
-            -load_collections               => [ 'ResourceClass', 'ResourceDescription', 'Analysis' ],
         );
 
         $self->{'dba'} = $self->{'pipeline'}->hive_dba();
@@ -173,7 +172,7 @@ sub main {
         $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
     }
 
-    my $pipeline_name = $self->{'pipeline'}->get_meta_value_by_key( 'hive_pipeline_name' );
+    my $pipeline_name = $self->{'pipeline'}->hive_pipeline_name;
 
     if($pipeline_name) {
         warn "Pipeline name: $pipeline_name\n";
@@ -238,7 +237,7 @@ sub main {
 
                 if( $meadow->check_worker_is_alive_and_mine ) {
                     printf("Killing worker: %10d %35s %15s  %20s(%d) : ", 
-                            $kill_worker->dbID, $kill_worker->host, $kill_worker->process_id, 
+                            $kill_worker->dbID, $kill_worker->meadow_host, $kill_worker->process_id,
                             $kill_worker->analysis->logic_name, $kill_worker->analysis_id);
 
                     $meadow->kill_worker($kill_worker);
@@ -303,7 +302,7 @@ sub main {
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} );
+        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses );
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -385,7 +384,7 @@ sub run_autonomously {
 
         $queen->check_for_dead_workers($valley, 0);
 
-        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, !$self->{'no_analysis_stats'} )) {
+        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses ) ) {
             if($keep_alive) {
                 print "Beekeeper : detected exit condition, but staying alive because of -keep_alive : ".$reasons_to_exit;
             } else {
@@ -444,7 +443,8 @@ sub run_autonomously {
 
                 # after waking up reload Resources and Analyses to stay current:
             unless($run_job_id) {
-                $pipeline->load_collections( [ 'ResourceClass', 'ResourceDescription', 'Analysis' ] );
+                    # reset all the collections so that fresher data will be used at this iteration:
+                $pipeline->invalidate_collections();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
             }
@@ -452,6 +452,9 @@ sub run_autonomously {
     }
 
     print "Beekeeper : stopped looping because ".( $reasons_to_exit || "the number of loops was limited by $max_loops and this limit expired\n");
+    if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
+        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $reasons_to_exit);
+    }
 
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
 }
@@ -531,7 +534,7 @@ __DATA__
 
     -analyses_pattern <string>  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
     -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
-    -life_span <num>            : life_span limit for each worker
+    -life_span <num>            : number of minutes each worker is allowed to run
     -job_limit <num>            : #jobs to run before worker can die naturally
     -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected
@@ -545,7 +548,6 @@ __DATA__
     -unkwn                 : detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
     -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
     -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
-    -no_analysis_stats     : don't show status of each analysis
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
@@ -554,7 +556,7 @@ __DATA__
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at

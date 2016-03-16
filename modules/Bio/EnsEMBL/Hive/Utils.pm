@@ -31,7 +31,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -59,7 +59,7 @@ use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage url2dbconn_hash go_figure_dbc report_versions throw join_command_args);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -276,23 +276,29 @@ sub script_usage {
 }
 
 
-sub url2dbconn_hash {
-    my $url = pop @_;
+=head2 split_for_bash
 
-    if( my ($driver, $user, $pass, $host, $port, $dbname) =
-        $url =~ m{^(\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {
+    Description: This function takes one argument (String) and splits it assuming it represents bash command line parameters.
+                 It mainly splits on whitespace, except for cases when spaces are trapped between quotes or apostrophes.
+                 In the latter case the outer quotes are removed.
+    Returntype : list of Strings
 
-        return {
-            '-driver' => $driver    || 'mysql',
-            '-host'   => $host      || 'localhost',
-            '-port'   => $port      || 3306,
-            '-user'   => $user      || '',
-            '-pass'   => $pass      || '',
-            '-dbname' => $dbname,
-        };
-    } else {
-        return 0;
+=cut
+
+sub split_for_bash {
+    my $cmd = pop @_;
+
+    my @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+
+    foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
+        if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
+            $syll = $1 . $2 . $3;
+        } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
+            $syll = $1 . $2 . $3;
+        }
     }
+
+    return @cmd;
 }
 
 
@@ -314,9 +320,13 @@ sub go_figure_dbc {
 
         return $foo->db->dbc;
 
-    } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
+    } elsif(ref($foo) eq 'HASH') {
 
-        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( %$db_conn );
+        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( %$foo );
+
+    } elsif($foo =~ m{^(\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {  # We can probably use a simpler regexp
+
+        return Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $foo );
 
     } else {
         unless(ref($foo)) {    # maybe it is simply a registry key?
@@ -388,13 +398,13 @@ sub join_command_args {
     return (0,$args) unless ref($args);
 
     # system() can only spawn 1 process. For multiple commands piped
-    # together or if redirections are used, we need a shell to parse
-    # a joined string representing the command
+    # together or if redirections are used, it needs a shell to parse
+    # a string representing the whole command
     my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;
 
     my @new_args = ();
     foreach my $a (@$args) {
-        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {
+        if ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\/\-]+\z/) {
             push @new_args, $a;
         } else {
             # Escapes the single-quotes and protects the arguments

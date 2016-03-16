@@ -14,7 +14,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -46,20 +46,4 @@ sub default_table_name {
 }
 
 
-sub get_value_by_key {
-    my ($self, $meta_key) = @_;
-
-    if( my $collection = Bio::EnsEMBL::Hive::MetaParameters->collection() ) {
-
-        my $hash = $collection->find_one_by( 'meta_key', $meta_key );
-        return $hash && $hash->{'meta_value'};
-
-    } else {    # TODO: to be removed when beekeeper.pl/runWorker.pl become collection-aware
-
-        my $pair = $self->fetch_by_meta_key( $meta_key );
-        return $pair && $pair->{'meta_value'};
-    }
-}
-
 1;
-

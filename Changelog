@@ -1,4 +1,75 @@
 
+Version 2.4     - Spring 2016 edition
+===========
+
+Main highlights of the release:
+    Conditional dataflow on the pipeline structure level. For every dataflow rule you can set up conditions
+        that will be computed based on the parameters of the context.
+        Multiple conditions can be grouped with an optional common ELSE branch where the dataflow will happen by default.
+    INPUT_PLUS is a lightweight mechanism that allows a parent job to selectively pass its parameters to its children
+        without the need to specify which parameters are being passed. It's a significant simplification in comparison
+        with what could be achieved with templates, although templates will keep their niche for renaming and evaluating params.
+    New style URL parser that understands shorter URLs like "?table_name=foo", "?accu_name=bar&accu_address=[]" for referring to local objects.
+        It also allows to refer to the absoulte/relative SQLite filepath in full. Some compatibility sacrifices had to be made,
+        but in version/2.4 the old parsing way has priority over the new one, with a warning to encourage switching to the new format.
+NB: see these three features in action in the Long-multiplication pipelines
+All the example pipelines have been grouped together under a new directory: Bio/EnsEMBL/Hive/Examples
+
+    (in beta) new configuration mechanism to -tweak parameters and attributes of pipelines either during pipeline initialization or afterwards.
+    For tweaking things during initialization we have extended init_pipeline.pl to understand -tweak commands.
+    For tweaking things after the pipeline database has been created there is a new tweak_pipeline.pl script that understands the same -tweaks :
+            -tweak 'global.param[take_time]=20'                     # override a value of a pipeline-wide parameter; can also create an inexistent parameter
+            -tweak 'global.hive_pipeline_name=new_name'             # override a value of a hive_meta attribute
+            -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create an inexistent parameter
+            -tweak 'analysis[add_together].analysis_capacity=3'     # override a value of an analysis attribute
+            -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
+            -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
+            -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+    In both cases you can print out the current value of things by using the '?' instead of the assignment:
+            -tweak 'global.hive_pipeline_name?'                     # show the pipeline_name
+            -tweak 'global.param[take_time]?'                       # show the value of a pipeline-wide parameter
+            -tweak 'analysis[add_together].analysis_capacity?'      # show the value of an analysis attribute
+            -tweak 'analysis[add_together].param[foo]?'             # show the value of an analysis parameter
+            -tweak 'resource_class[urgent].LSF?'                    # show the description of a particular meadow of a resource_class
+    The new mechanism does not require that you prepare the PipeConfig files with $self->o() references, which significantly simplifies PipeConfigs.
+
+Universal Runnables:
+* JobFactory: non-contiguous split option has been added for those who have to use minibatching
+* FastaFactory has been improved: more input file-formats -which can be compressed-, target output directory
+* SqlCmd supports transactions
+* new run_system_command() method available to all Runnables (defined in Process). It takes care of disconnecting from the eHive database and can capture stderr
+* "Bash pipefail" mode is used to catch errors on both sides of pipes in many system() calls
+
+Developer tools:
+* Registry names can generally be used to refer to databases (go_figure_dbc())
+* The parameter substitution behaviour when some components are unavailable has been standardised, param_exists() has been fixed
+* An extra post_healthcheck() API method has been added to Runnables (and the POST_HEALTHCHECK status to Jobs) to stop failures in their tracks
+* We reenabled cross-database dataflow and control rules and added a special Client/Server version of LongMult pipeline.
+* The diagram display code can now display the newly added conditions (with a length limit) and cross-database dataflow or control rules (parts of "foreign" pipelines are shown on different colour background).
+* An experimental "Unicode-art" flow diagram drawing code has been implemented (skip the -output parameter in generate_graph.pl to see)
+* eHive's DBAdaptor now has methods to get the list of eHive tables and views
+* standaloneJob test method: warnings can be assessed via a regular expression
+* Support for Slack WebHook integrations in beekeeper and a dedicated Runnable
+
+Under the hood:
+* HivePipeline object with its collections becomes the center of things, and TheApiary becomes the centralized way of accessing foreign objects
+* A lot of work has been done on improving the test suite to run faster and cover more modules
+* A failed prepare() shows a full stack trace on error
+* Speed improvement of storing extended job parameters via adding an MD5 checksum based index
+* The parsers of both 'bjobs' and 'bacct' have been extended to also support the output format of LSF v.9.1.2.0
+
+* + numerous bug fixes, many of which have been ported to the previous version branches.
+
+Example pipelines and runnables:
+* A new example pipeline that calculates %GC for a collection of sequences has been created. It is configured using the 'GCPct_conf' PipeConfig.
+* Example Runnables and PipeConfigs are now grouped together under Bio/EnsEMBL/Hive/Examples.
+	** DbCmd contains the TableDumperZipper_conf PipeConfig, which illustrates usage of the DbCmd Runnable
+	** FailureTest contains the FailureTest_conf and MemlimitTest_conf PipeConfigs, along with the FailureTest runnable, which illustrate eHive error handling
+	** GC contains the GCPct_conf PipeConfig and two new Runnables, CalcOverallPercentage and CountATGC, which together form a simple example pipeline illustrating the eHive fan and accumulator features.
+	** Factories contains four PipeConfigs illustrating the use of a 'factory' runnable to create fans of jobs. CompressFiles_conf, RunListOfCommandsOnFarm_conf, and ApplyToDatabases_conf use the JobFactory runnable to create the fan, whilst FastaFactory_conf illustrates the use of the more specialised FastaFactory runnable.
+	** LongMult contains the long multiplication example pipeline. There are several PipeConfigs that implement this pipeline using different eHive features, such as the parameter stack, the new Input_Plus mechanism, and client-server interactions.
+	** SystemCmd contains AnyCommand_conf, a very simple PipeConfig that runs a single command using SystemCmd.
+
 Version 2.3     - Spring 2015 edition
 ===========
 

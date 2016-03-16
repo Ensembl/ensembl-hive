@@ -12,14 +12,8 @@
 
     This RunnableDB module acts as a wrapper for shell-level command lines. If you behave you may also use parameter substitution.
 
-    The command can be given using two different syntaxes:
-
-    1) Command line is stored in the input_id() or parameters() as the value corresponding to the 'cmd' key.
-        THIS IS THE RECOMMENDED WAY as it allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
-
-    2) Command line is stored in the 'input_id' field of the job table.
-        (only works with command lines shorter than 255 bytes).
-        This is a legacy syntax. Most people tend to use it not realizing there are other possiblities.
+    The command line must be stored in the parameters() as the value corresponding to the 'cmd' key.
+    It allows to pass in other parameters and use the parameter substitution mechanism in its full glory.
 
 =head1 CONFIGURATION EXAMPLE
 
@@ -39,7 +33,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -62,16 +56,13 @@ package Bio::EnsEMBL::Hive::RunnableDB::SystemCmd;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils qw(join_command_args);
-
-use Capture::Tiny ':all';
-
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
 sub param_defaults {
     return {
         return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
+        'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
     }
 }
 
@@ -91,25 +82,7 @@ sub param_defaults {
 sub run {
     my $self = shift;
  
-    my $cmd = $self->param_required('cmd');
-    my ($join_needed, $flat_cmd) = join_command_args($cmd);
-    # Let's use the array if possible, it saves us from running a shell
-    my @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd);
-
-    if($self->debug()) {
-        use Data::Dumper;
-        local $Data::Dumper::Terse = 1;
-        local $Data::Dumper::Indent = 0;
-        warn "Command given: ", Dumper($cmd), "\n";
-        warn "Command to run: ", Dumper(\@cmd_to_run), "\n";
-    }
-
-    $self->dbc and $self->dbc->disconnect_when_inactive(1);    # release this connection for the duration of system() call
-    my $return_value;
-    my $stderr = tee_stderr {
-        $return_value = system(@cmd_to_run);
-    };
-    $self->dbc and $self->dbc->disconnect_when_inactive(0);    # allow the worker to keep the connection open again
+    my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), {'use_bash_pipefail' => $self->param('use_bash_pipefail')});
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
@@ -129,17 +102,23 @@ sub write_output {
     my $self = shift;
 
     my $return_value = $self->param('return_value');
+    return unless $return_value;
+
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 
-    if ($return_value and not ($return_value >> 8)) {
+    if ($return_value < 0) {
+        # system() could not start, or wait() failed
+        die sprintf( "Could not start '%s': %s\n", $flat_cmd, $stderr);
+
+    } elsif (not ($return_value >> 8)) {
         # The job has been killed. The best is to wait a bit that LSF kills
         # the worker too
         sleep 30;
         # If we reach this point, perhaps it was killed by a user
         die sprintf( "'%s' was killed with code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
 
-    } elsif ($return_value) {
+    } else {
         # "Normal" process exit with a non-zero code
         $return_value >>= 8;
 

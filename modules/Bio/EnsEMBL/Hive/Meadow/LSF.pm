@@ -10,7 +10,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -34,6 +34,8 @@ use strict;
 use warnings;
 use Time::Piece;
 use Time::Seconds;
+
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
@@ -134,7 +136,7 @@ sub status_of_all_our_workers { # returns a hashref
             next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
 
             my $worker_pid = $group_pid;
-            if($job_name=~/(\[\d+\])/) {
+            if($job_name=~/(\[\d+\])$/ and $worker_pid!~/\[\d+\]$/) {   # account for the difference in LSF 9.1.1.1 vs LSF 9.1.2.0  bjobs' output
                 $worker_pid .= $1;
             }
             $status_hash{$worker_pid} = $status;
@@ -162,28 +164,31 @@ sub check_worker_is_alive_and_mine {
 sub kill_worker {
     my ($self, $worker, $fast) = @_;
 
-    my $fast_flag = $fast ? '-r ' : '';
-
-    my $cmd = "bkill $fast_flag".$worker->process_id();
-
-#    warn "LSF::kill_worker() running cmd:\n\t$cmd\n";
-
-    system($cmd);
+    if ($fast) {
+        system('bkill', '-r', $worker->process_id());
+    } else {
+        system('bkill', $worker->process_id());
+    }
 }
 
 
-sub _yearless_2_datetime {      # a private subroutine that recovers missing year from a date and transforms it into SQL's datetime for storage
-    my $wd_yearless = shift @_;
+sub _convert_to_datetime {      # a private subroutine that can recover missing year from an incomplete date and then transforms it into SQL's datetime for storage
+    my ($weekday, $yearless, $real_year) = @_;
 
-    my ($wd, $yearless) = split(' ', $wd_yearless, 2);
-    my $curr_year = Time::Piece->new->year();
+    if($real_year) {
+        my $datetime = Time::Piece->strptime("$yearless $real_year", '%b %d %T %Y');
+        return $datetime->date.' '.$datetime->hms;
+    } else {
+        my $curr_year = Time::Piece->new->year();
 
-    foreach my $year ($curr_year, $curr_year-1) {
-        my $datetime = Time::Piece->strptime("$yearless $year", '%b %d %T %Y');
-        if($datetime->wdayname eq $wd) {
-            return $datetime->date.' '.$datetime->hms;
+        foreach my $candidate_year ($curr_year, $curr_year-1) {
+            my $datetime = Time::Piece->strptime("$yearless $candidate_year", '%b %d %T %Y');
+            if($datetime->wdayname eq $weekday) {
+                return $datetime->date.' '.$datetime->hms;
+            }
         }
     }
+
     return; # could not guess the year
 }
 
@@ -226,10 +231,10 @@ sub parse_report_source_line {
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+\s+\w+\s+\d+\s+\d+:\d+:\d+):\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
-                    $when_died      = _yearless_2_datetime($1);
-                    $cause_of_death = $3 && $status_2_cod{$3};
-                    $exit_status = $2 . ($3 ? "/$3" : '');
+                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                    $when_died      = _convert_to_datetime($1, $2, $3);
+                    $cause_of_death = $5 && $status_2_cod{$5};
+                    $exit_status = $4 . ($5 ? "/$5" : '');
                 }
                 elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
                     $exception_status = $1;
@@ -269,6 +274,8 @@ sub parse_report_source_line {
         }
     }
     close $bacct_fh;
+    my $exit = $? >> 8;
+    die "Could not read from '$bacct_source_line'. Received the error $exit\n" if $exit;
 
     return \%report_entry;
 }
@@ -331,11 +338,18 @@ sub submit_workers {
 
     $ENV{'LSB_STDOUT_DIRECT'} = 'y';  # unbuffer the output of the bsub command
 
-    my $cmd = qq{bsub -o $submit_stdout_file -e $submit_stderr_file -J "${job_array_name_with_indices}" $rc_specific_submission_cmd_args $meadow_specific_submission_cmd_args $worker_cmd};
+    my @cmd = ('bsub',
+        '-o', $submit_stdout_file,
+        '-e', $submit_stderr_file,
+        '-J', $job_array_name_with_indices,
+        split_for_bash($rc_specific_submission_cmd_args),
+        split_for_bash($meadow_specific_submission_cmd_args),
+        $worker_cmd
+    );
 
-    print "Executing [ ".$self->signature." ] \t\t$cmd\n";
+    print "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
 
-    system($cmd) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    system( @cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
 }
 
 1;

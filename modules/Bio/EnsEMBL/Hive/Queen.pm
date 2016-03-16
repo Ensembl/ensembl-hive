@@ -40,7 +40,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -176,7 +176,7 @@ sub create_new_worker {
       $worker->life_span(0);
     }
 
-    $worker->life_span($life_span * 60)                 if($life_span);
+    $worker->life_span($life_span * 60)                 if($life_span); # $life_span min -> sec
 
     $worker->execute_writes(0)                          if($no_write);
 
@@ -230,17 +230,20 @@ sub specialize_worker {
             die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
         }
 
+        $analysis = $job->analysis;
+        if(($analysis->stats->status eq 'BLOCKED') and !$force) {
+            die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
+        }
+
         if(($job_status eq 'DONE') and $job->semaphored_job_id) {
             warn "Increasing the semaphore count of the dependent job";
             $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
         }
 
-        $analysis = $job->analysis;
-
     } else {
 
         $analyses_pattern //= '%';  # for printing
-        my $analyses_matching_pattern   = Bio::EnsEMBL::Hive::Analysis->collection()->find_all_by_pattern( $analyses_pattern );
+        my $analyses_matching_pattern   = $self->db->hive_pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
             # refresh the stats of matching analyses before re-specialization:
         foreach my $analysis ( @$analyses_matching_pattern ) {
@@ -423,12 +426,9 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             if($this_meadow->can('find_out_causes')) {
                 die "Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n";
 
-            } elsif($this_meadow->can('get_report_entries_for_process_ids')) {
-                $report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker );
+            } elsif ($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
-            } else {
-                warn "GarbageCollector:\t$meadow_type meadow does not support post-mortem examination\n";
             }
 
             warn "GarbageCollector:\tReleasing the jobs\n";
@@ -620,7 +620,7 @@ sub synchronize_AnalysisStats {
 
         $stats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
 
-        my $job_counts = $self->db->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
+        my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 
         $stats->recalculate_from_job_counts( $job_counts );
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 # limitations under the License.
 
 
-export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/modules
+export PERL5LIB=$PWD/bioperl-live:$PWD/modules
 
     # for the t/10.pipeconfig/longmult.t test
-export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db pgsql://postgres@127.0.0.1/ehive_test_pipeline_db'
+export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db pgsql://postgres@127.0.0.1/ehive_test_pipeline_db sqlite:///ehive_test_pipeline_db'
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test,-db,$PWD/cover_db/" perl $PWD/scripts/all_tests.pl -verbose t
+  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test,+ignore,/usr/bin/psql,+ignore,scripts/all_tests.pl,-db,$PWD/cover_db/" perl $PWD/scripts/all_tests.pl -verbose t
 else
   perl $PWD/scripts/all_tests.pl t
 fi

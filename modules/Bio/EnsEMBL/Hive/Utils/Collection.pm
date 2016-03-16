@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,10 +58,45 @@ sub list {
 }
 
 
+sub present {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    foreach my $element (@{ $self->listref }) {
+        return 1 if($element eq $candidate);
+    }
+    return 0;
+}
+
+
 sub add {
     my $self = shift @_;
 
     push @{ $self->listref }, @_;
+}
+
+
+sub add_once {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    unless( $self->present( $candidate ) ) {
+        $self->add( $candidate );
+    }
+}
+
+
+sub forget {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    my $listref = $self->listref;
+
+    for(my $i=scalar(@$listref)-1;$i>=0;$i--) {
+        if($listref->[$i] eq $candidate) {
+            splice @$listref, $i, 1;
+        }
+    }
 }
 
 
@@ -112,7 +147,8 @@ sub find_all_by {
 sub _find_all_by_subpattern {    # subpatterns can be combined into full patterns using +-,
     my ($self, $pattern) = @_;
 
-    my $filtered_elements;
+    my $filtered_elements = [];
+    $pattern //= '';
 
     if( $pattern=~/^\d+$/ ) {
 
@@ -138,6 +174,30 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
 
         $pattern=~s/\%/.*/g;
         $filtered_elements = $self->find_all_by( 'name', sub { return $_[0]=~/^${pattern}$/; } );
+
+    } elsif( $pattern=~/^(\w+)==(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, $2 );
+
+    } elsif( $pattern=~/^(\w+)!=(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] ne $2; } );
+
+    } elsif( $pattern=~/^(\w+)<=(.*)$/) {       # NB: the order is important - all digraphs should be parsed before their proper prefixes
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] <= $2; } );
+
+    } elsif( $pattern=~/^(\w+)>=(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] >= $2; } );
+
+    } elsif( $pattern=~/^(\w+)<(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] < $2; } );
+
+    } elsif( $pattern=~/^(\w+)>(.*)$/) {
+
+        $filtered_elements = $self->find_all_by( $1, sub { return $_[0] > $2; } );
     }
 
     return $filtered_elements;
@@ -147,11 +207,11 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
 =head2 find_all_by_pattern
 
   Arg [1]    : (optional) string $pattern
-  Example    : my $first_fifteen_analyses_and_two_more = Bio::EnsEMBL::Hive::Analysis->collection()->fetch_all_by_pattern( '1..15,analysis_X,21' );
-  Example    : my $two_open_ranges = Bio::EnsEMBL::Hive::Analysis->collection()->fetch_all_by_pattern( '..7,10..' );
-  Example    : my $double_exclusion = Bio::EnsEMBL::Hive::Analysis->collection()->fetch_all_by_pattern( '1..15-3..5+4' );
-  Example    : my $blast_related_with_exceptions = Bio::EnsEMBL::Hive::Analysis->collection()->fetch_all_by_pattern( 'blast%-12-%funnel' );
-  Description: Fetches an arrayref of non-repeating Analyses objects by interpreting a pattern.
+  Example    : my $first_fifteen_analyses_and_two_more = $collection->find_all_by_pattern( '1..15,analysis_X,21' );
+  Example    : my $two_open_ranges = $collection->>find_all_by_pattern( '..7,10..' );
+  Example    : my $double_exclusion = $collection->find_all_by_pattern( '1..15-3..5+4' );
+  Example    : my $blast_related_with_exceptions = $collection->find_all_by_pattern( 'blast%-12-%funnel' );
+  Description: Filters an arrayref of non-repeating objects from the given collection by interpreting a pattern.
                 The pattern can contain individual analyses_ids, individual logic_names,
                 open and closed ranges of analysis_ids, wildcard patterns of logic_names,
                 merges (+ or ,) and exclusions (-) of the above subsets.
@@ -169,21 +229,20 @@ sub find_all_by_pattern {
 
     } else {
 
+        # By using the grouping, we ask Perl to return the pattern and their delimiters
         my @syll = split(/([+\-,])/, $pattern);
 
         my %uniq = map { ("$_" => $_) } @{ $self->_find_all_by_subpattern( shift @syll ) };   # initialize with the first syllable
 
         while(@syll) {
-            my $operation   = shift @syll;
-            my $subpattern  = shift @syll;
+            my $operation   = shift @syll;  # by construction this is one of [+-,]
+            my $subpattern  = shift @syll;  # can be an empty string
 
             foreach my $element (@{ $self->_find_all_by_subpattern( $subpattern ) }) {
                 if($operation eq '-') {
                     delete $uniq{ "$element" };
-                } elsif ($operation eq '+' or $operation eq ',') {
-                    $uniq{ "$element" } = $element;
                 } else {
-                    throw( "Complex pattern '$pattern' not recognized" );
+                    $uniq{ "$element" } = $element;
                 }
             }
         }

@@ -1,0 +1,82 @@
+#!/bin/bash
+
+read -r -d '' bjobs_header << EOF
+JOBID   USER    STAT  QUEUE      FROM_HOST   EXEC_HOST   JOB_NAME   SUBMIT_TIME
+EOF
+
+read -r -d '' bjobs_content << EOF
+6388676 jt8     RUN   basement   farm3-head2 12*bc-27-1- *filter.fa Oct 19 15:29
+1997948 tc9     RUN   normal     bc-27-1-15  16*bc-27-1- *agle.1.72 Nov 16 10:25
+2067769 il4     RUN   normal     farm3-head1 bc-25-1-08  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[9] Nov 16 22:42
+2067769 il4     RUN   normal     farm3-head1 bc-25-1-08  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[10] Nov 16 22:42
+2067769 il4     RUN   normal     farm3-head1 bc-25-1-08  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[11] Nov 16 22:42
+2067769 il4     RUN   normal     farm3-head1 bc-25-1-08  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[12] Nov 16 22:42
+2067769 il4     RUN   normal     farm3-head1 bc-25-1-08  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[13] Nov 16 22:42
+2037301 il4     RUN   yesterday  farm3-head1 bc-25-1-13  bash       Nov 16 15:44
+2067769 il4     RUN   normal     farm3-head1 bc-27-2-11  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[8] Nov 16 22:42
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[26] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[27] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[28] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[30] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[31] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[32] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[33] Nov 16 22:40
+2067754 il4     RUN   normal     farm3-head1 bc-26-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[34] Nov 16 22:40
+2067765 il4     RUN   normal     farm3-head1 bc-32-1-07  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-339[4] Nov 16 22:41
+2067765 il4     RUN   normal     farm3-head1 bc-25-2-04  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-339[13] Nov 16 22:41
+2068245 mm14    RUN   normal     farm3-head1 2*bc-29-3-08 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-359 Nov 16 23:01
+2068410 il4     PEND  normal     farm3-head1 2*bc-29-3-08 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-362 Nov 16 23:04
+2067769 il4     RUN   normal     farm3-head1 bc-27-3-12  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[14] Nov 16 22:42
+2067769 il4     RUN   normal     farm3-head1 bc-27-3-12  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[15] Nov 16 22:42
+2068463 mm14    PEND  normal     farm3-head1 2*bc-31-3-05 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-364 Nov 16 23:06
+2067754 il4     RUN   normal     farm3-head1 bc-30-3-11  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[14] Nov 16 22:40
+2068349 il4     RUN   normal     farm3-head1 2*bc-31-1-16 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-361[2] Nov 16 23:03
+2067769 il4     RUN   normal     farm3-head1 bc-27-2-15  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[16] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-27-2-15  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[17] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-27-2-15  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[18] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-27-2-15  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[19] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-31-3-03  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[6] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-26-2-01  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[3] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-26-2-01  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[4] Nov 16 22:42
+2067769 il4     PEND  normal     farm3-head1 bc-26-2-01  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[5] Nov 16 22:42
+2068349 il4     RUN   normal     farm3-head1 2*bc-31-2-08 tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_30GB_2cpu-361[1] Nov 16 23:03
+2067754 il4     RUN   normal     farm3-head1 bc-29-3-02  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-338[7] Nov 16 22:40
+2067769 il4     RUN   normal     farm3-head1 bc-26-2-04  tracking_homo_sapiens_funcgen_81_38_hive-Hive-normal_10gb-340[2] Nov 16 22:42
+276335[13] tmpseq RUN verylong   node5005    node1322    tracking_homo_sapiens_funcgen_81_38_hive-Hive-verylong_rc-1[13] Jan 27 22:08
+EOF
+
+USER_FILTER=all
+JOB_NAME=
+JOB_ID=
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -J)
+            JOB_NAME=$2
+            shift
+            ;;
+        -u)
+            USER_FILTER=$2
+            shift
+            ;;
+        -w)
+            ;;
+        *)
+            JOB_ID=$1
+            ;;
+    esac
+    shift
+done
+
+echo "$bjobs_header"
+if [ "x$JOB_ID" == "x" ]; then
+    if [ "x$USER_FILTER" == "xall" ]; then
+        echo "$bjobs_content" | awk '$7 ~ /'"${JOB_NAME}"'/'
+    else
+        echo "$bjobs_content" | awk '$7 ~ /'"${JOB_NAME}"'/ && $2 == "'"${USER_FILTER}"'"'
+    fi
+else
+    echo "$bjobs_content" | awk '$1 == "'"${JOB_ID}"'" && $2 == "'"${USER_FILTER}"'"'
+fi
+
+

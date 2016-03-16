@@ -72,7 +72,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -100,7 +100,9 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc');
+use Capture::Tiny ':all';
+
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 
@@ -181,7 +183,7 @@ sub life_cycle {
         my @zombie_funnel_dataflow_rule_ids = keys %{$job->fan_cache};
         if( scalar(@zombie_funnel_dataflow_rule_ids) ) {
             $job->transient_error(0);
-            die "There are cached semaphored fans for which a funnel job (dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") has never been dataflown";
+            die "The group of semaphored jobs is incomplete ! Some fan jobs (coming from dataflow_rule_id(s) ".join(',',@zombie_funnel_dataflow_rule_ids).") are missing a job on their funnel. Check the order of your dataflow_output_id() calls.";
         }
 
         $job->incomplete(0);
@@ -430,6 +432,42 @@ sub data_dbc {
 }
 
 
+=head2 run_system_command
+
+    Title   :  run_system_command
+    Usage   :  my $return_code = $self->run_system_command('script.sh with many_arguments');   # Command as a single string
+               my $return_code = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Command as an array-ref
+               my ($return_code, $stderr, $string_command) = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Same in list-context. $string_command will be "script.sh arg1 arg2"
+               my $return_code = $self->run_system_command('script1.sh with many_arguments | script2.sh', {'use_bash_pipefail' => 1});  # Command with pipes evaluated in a bash "pipefail" environment
+    Function:  Runs a command given as a single-string or an array-ref. The second argument is
+               a list of options. Currently only "use_bash_pipefail" is supported (to change the
+               way the exit-code is computed when the command contains pipes (bash-only)).
+    Returns :  Returns the return-code in scalar context, or a triplet (return-code, standard-error, command) in list context
+
+=cut
+
+sub run_system_command {
+    my ($self, $cmd, $options) = @_;
+
+    my ($join_needed, $flat_cmd) = join_command_args($cmd);
+    # Let's use the array if possible, it saves us from running a shell
+    my @cmd_to_run = $options->{'use_bash_pipefail'} ? ('bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)) : ($join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd));
+
+    $self->say_with_header("Command given: " . stringify($cmd));
+    $self->say_with_header("Command to run: " . stringify(\@cmd_to_run));
+
+    $self->dbc and $self->dbc->disconnect_if_idle();    # release this connection for the duration of system() call
+
+    my $return_value;
+    my $stderr = tee_stderr {
+        $return_value = system(@cmd_to_run);
+    };
+
+    return ($return_value, $stderr, $flat_cmd) if wantarray;
+    return $return_value;
+}
+
+
 =head2 input_job
 
     Title   :  input_job
@@ -492,6 +530,7 @@ sub param_substitute {
 sub dataflow_output_id {
     my $self = shift @_;
 
+    $self->say_with_header(sprintf("Dataflow on branch #%d of %s", $_[1] || 1, stringify($_[0])));
     return $self->input_job->dataflow_output_id(@_);
 }
 
@@ -582,8 +621,7 @@ sub cleanup_worker_temp_directory {
 
     my $tmp_dir = $self->worker_temp_directory_name();
     if(-e $tmp_dir) {
-        my $cmd = "rm -r $tmp_dir";
-        system($cmd);
+        system('rm', '-r', $tmp_dir);
     }
 }
 

@@ -17,7 +17,11 @@
 =head1 DESCRIPTION
 
     This is a Bioinformatics-specific "Factory" Runnable that splits a given Fasta file into smaller chunks
-    and dataflows one job per chunk.
+    and dataflows one job per chunk. Note that:
+        - the files are created in the current directory.
+        - the Runnable does not split the individual sequences, it only groups them in a way that none of the output files will
+          be longer than param('max_chunk_length').
+        - Thanks to BioPerl's versatility, the Runnable can in fact read many formats. Tune param('input_format') to do so.
 
     The following parameters are supported:
 
@@ -29,9 +33,17 @@
 
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
 
+        param('hash_directories');  # Boolean (default to 0): should the output files be put in different ("hashed") directories
+
+        param('input_format');      # The format of the input file (defaults to "fasta")
+
+        param('output_format');     # The format of the output file (defaults to the same as param('input_format'))
+
+        param('output_dir');        # Where to create the chunks (defaults to the current directory)
+
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -54,8 +66,14 @@ package Bio::EnsEMBL::Hive::RunnableDB::FastaFactory;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::SeqIO;
+use File::Path;
+use File::Spec;
+
+
+use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
+
+use base ('Bio::EnsEMBL::Hive::Process');
 
 
 =head2 param_defaults
@@ -69,7 +87,11 @@ sub param_defaults {
     return {
         'max_chunk_length'  => 100000,
         'output_prefix'     => 'my_chunk_',
-        'output_suffix'     => '.fasta',
+        'output_suffix'     => '.#input_format#',
+        'hash_directories'  => 0,
+        'input_format'      => 'fasta',
+        'output_dir'        => '',
+        'output_format'     => '#input_format#',
     };
 }
 
@@ -87,10 +109,15 @@ sub fetch_input {
     my $inputfile   = $self->param_required('inputfile');
     die "Cannot read '$inputfile'" unless(-r $inputfile);
 
+    my $input_seqio;
     if($inputfile=~/\.(?:gz|Z)$/) {
-        $inputfile = "gunzip -c $inputfile |";
+        open(my $in_fh, '-|', "gunzip -c $inputfile");
+        $input_seqio = Bio::SeqIO->new(-fh => $in_fh, -format => $self->param_required('input_format'));
+        $self->param('input_fh', $in_fh);
+    } else {
+        $input_seqio = Bio::SeqIO->new(-file => $inputfile);
     }
-    my $input_seqio = Bio::SeqIO->new(-file => $inputfile)  || die "Could not open or parse '$inputfile', please investigate";
+    die "Could not open or parse '$inputfile', please investigate" unless $input_seqio;
 
     $self->param('input_seqio', $input_seqio);
 }
@@ -122,22 +149,28 @@ sub write_output {
     my $max_chunk_length    = $self->param('max_chunk_length');
     my $output_prefix       = $self->param('output_prefix');
     my $output_suffix       = $self->param('output_suffix');
+    my $output_dir          = $self->param('output_dir');
 
     my $chunk_number = 1;   # counts the chunks
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
-    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+
+    # No need to check param('hash_directories') because even in this mode
+    # the first file is in the required directory
+    if ($output_dir) {
+        mkpath($output_dir);
+        $chunk_name = File::Spec->catfile($output_dir, $chunk_name);
+    }
+    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => $self->param_required('output_format'));
     
     while (my $seq_object = $input_seqio->next_seq) {
 
         $chunk_seqio->write_seq( $seq_object );
+        $chunk_length += $seq_object->length();
+        $chunk_size   += 1;
 	
-        if((my $seq_length = $seq_object->length()) + $chunk_length <= $max_chunk_length) {
-            $chunk_length += $seq_length;
-            $chunk_size   += 1;
-
-        } else {
+        if ($chunk_length > $max_chunk_length) {
 
                 # dataflow the current chunk:
             $self->dataflow_output_id( {
@@ -152,7 +185,23 @@ sub write_output {
             $chunk_size     = 0;
             $chunk_number++;
             $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
-            $chunk_seqio    = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+
+            my @partial_dirs;
+            if ((defined $output_dir) and ($output_dir ne '')) {
+                push @partial_dirs, $output_dir;
+            }
+            if ($self->param('hash_directories')) {
+                my $hash_dir = dir_revhash($chunk_number);
+                if ($hash_dir ne '') {
+                    push @partial_dirs, $hash_dir;
+                }
+            }
+            my $dir_tree = File::Spec->catdir(@partial_dirs);
+            if ($dir_tree ne '') {
+                mkpath($dir_tree);
+                $chunk_name = File::Spec->catfile($dir_tree, $chunk_name);
+            }
+            $chunk_seqio    = $chunk_seqio->new(-file => '>'.$chunk_name);
         }
     }
 
@@ -168,6 +217,18 @@ sub write_output {
     } else {
         unlink $chunk_name unless (stat($chunk_name))[7];
     }
+}
+
+
+=head2 post_cleanup
+
+    Description : Close the file handle open in fetch_input()
+
+=cut
+
+sub post_cleanup {
+    my $self = shift;
+    close( $self->param('input_fh') ) if $self->param('input_fh');
 }
 
 1;

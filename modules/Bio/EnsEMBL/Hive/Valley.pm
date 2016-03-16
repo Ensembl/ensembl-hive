@@ -13,7 +13,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -59,7 +59,7 @@ sub new {
     my $amh = $self->available_meadow_hash( {} );
 
         # make sure modules are loaded and available ones are checked prior to setting the current one
-    foreach my $meadow_class (@{ find_submodules( $self->meadow_class_path ) }) {
+    foreach my $meadow_class (@{ $self->get_implemented_meadow_list }) {
         eval "require $meadow_class";
         if( $meadow_class->name ) {
             my $meadow_object            = $meadow_class->new( $config );
@@ -92,6 +92,12 @@ sub get_available_meadow_list {     # this beautiful one-liner pushes $local to 
     my $local = $self->meadow_class_path . '::LOCAL';
 
     return [ sort { (ref($a) eq $local) or -(ref($b) eq $local) } values %{ $self->available_meadow_hash } ];
+}
+
+
+sub get_implemented_meadow_list {
+    my $self = shift @_;
+    return find_submodules( $self->meadow_class_path );
 }
 
 

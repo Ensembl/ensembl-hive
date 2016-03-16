@@ -26,7 +26,7 @@ def find_module(module_name):
         import_error("No module named '{0}'".format(module_name))
 
     # Traverse the namespaces down to the module
-    # e.g. If module_name is "LongMult.AddTogether", module represents "LongMult" at this stage
+    # e.g. If module_name is "eHive.examples.LongMult.AddTogether", module represents "LongMult" at this stage
     for submodule in module_name.split('.')[1:]:
         if hasattr(module, submodule):
             module = getattr(module, submodule)

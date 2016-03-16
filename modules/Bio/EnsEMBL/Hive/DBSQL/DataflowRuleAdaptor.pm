@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -42,6 +42,11 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 use Bio::EnsEMBL::Hive::DataflowRule;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
+
+
+sub check_object_present_in_db_by_content {
+    return 0;
+}
 
 
 sub default_table_name {

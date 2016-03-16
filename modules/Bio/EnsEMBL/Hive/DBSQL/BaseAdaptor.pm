@@ -15,7 +15,7 @@
 
 =head1 LICENSE
 
-    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -44,7 +44,7 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 
 
 sub default_table_name {
-    die "Please define table_name either by setting it via table_name() method or by redefining default_table_name() in your adaptor class";
+    throw("Please define table_name either by setting it via table_name() method or by redefining default_table_name() in your adaptor class");
 }
 
 
@@ -67,6 +67,10 @@ sub default_input_column_mapping {
         # 'original_column2' => "original_column2+1 AS c2_plus_one",
         # ...
     };
+}
+
+sub do_not_update_columns {
+    return [];
 }
 
 # ---------------------------------------------------------------------------
@@ -200,9 +204,10 @@ sub updatable_column_list {    # it's just a cashed view, you cannot set it dire
     my $self = shift @_;
 
     unless($self->{_updatable_column_list}) {
-        my %primary_key_set = map { $_ => 1 } @{$self->primary_key()};
-        my $column_set      = $self->column_set();
-        $self->{_updatable_column_list} = [ grep { not $primary_key_set{$_} } keys %$column_set ];
+        my %primary_key_set     = map { $_ => 1 } @{$self->primary_key};
+        my %non_updatable_set   = map { $_ => 1 } @{$self->do_not_update_columns};
+        my $column_set          = $self->column_set();
+        $self->{_updatable_column_list} = [ grep { not ($primary_key_set{$_} || $non_updatable_set{$_}) } keys %$column_set ];
     }
     return $self->{_updatable_column_list};
 }
@@ -375,7 +380,7 @@ sub primary_key_constraint {
         return join (' AND ', map { $primary_key->[$_]."='".$sliceref->[$_]."'" } (0..scalar(@$primary_key)-1));
     } else {
         my $table_name = $self->table_name();
-        die "Table '$table_name' doesn't have a primary_key";
+        throw("Table '$table_name' doesn't have a primary_key");
     }
 }
 
@@ -420,7 +425,7 @@ sub update {    # update (some or all) non_primary columns from the primary
     my $values_to_update        = $self->slicer( $object, $columns_to_update );
 
     unless(@$columns_to_update) {
-        die "There are no dependent columns to update, as everything seems to belong to the primary key";
+        throw("There are no dependent columns to update, as everything seems to belong to the primary key");
     }
 
     my $sql = "UPDATE $table_name SET ".join(', ', map { "$_=?" } @$columns_to_update)." WHERE $primary_key_constraint";
@@ -487,11 +492,11 @@ sub check_object_present_in_db_by_content {    # return autoinc_id/undef if the 
     }
 
     my $sql = 'SELECT '.($autoinc_id or 1)." FROM $table_name WHERE ".  join(' AND ', @constraints);
-#warn "check_object_present_in_db_by_content: sql= $sql WITH VALUES (".join(', ', @values).")\n";
     my $sth = $self->prepare( $sql );
     $sth->execute( @values );
 
     my ($return_value) = $sth->fetchrow_array();
+#warn "check_object_present_in_db_by_content: sql= $sql WITH VALUES (".join(', ', @values).") ---> return_value=".($return_value//'undef')."\n";
     $sth->finish;
 
     return $return_value;
@@ -504,7 +509,7 @@ sub store {
     my $objects = (ref($object_or_list) eq 'ARRAY')     # ensure we get an array of objects to store
         ? $object_or_list
         : [ $object_or_list ];
-    return unless(scalar(@$objects));
+    return ([], 0) unless(scalar(@$objects));
 
     my $table_name              = $self->table_name();
     my $autoinc_id              = $self->autoinc_id();
@@ -533,7 +538,7 @@ sub store {
                     # By using question marks we can insert true NULLs by setting corresponding values to undefs:
                 my $sql = "$insertion_method INTO $table_name (".join(', ', @$columns_being_stored).') VALUES ('.join(',', (('?') x scalar(@$columns_being_stored))).')';
                 # warn "STORE: $sql\n";
-                $this_sth = $hashed_sth{$column_key} = $self->prepare( $sql ) or die "Could not prepare statement: $sql";
+                $this_sth = $hashed_sth{$column_key} = $self->prepare( $sql ) or throw("Could not prepare statement: $sql");
             }
 
             # warn "STORED_COLUMNS: ".stringify($columns_being_stored)."\n";
@@ -542,7 +547,7 @@ sub store {
 
             my $return_code = $this_sth->execute( @$values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
-                or die "Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')';
+                or throw("Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')');
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
                 my $liid = $autoinc_id && $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id);
                 $self->mark_stored($object, $liid );
@@ -572,11 +577,12 @@ sub AUTOLOAD {
         my ($self) = @_;
         my $column_set = $self->column_set();
 
+            # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
         my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
         if($filter_components) {
             foreach my $column_name ( @$filter_components ) {
                 unless($column_set->{$column_name}) {
-                    die "unknown column '$column_name'";
+                    throw("unknown column '$column_name'");
                 }
             }
         }
@@ -585,13 +591,13 @@ sub AUTOLOAD {
         if($key_components) {
             foreach my $column_name ( @$key_components ) {
                 unless($column_set->{$column_name}) {
-                    die "unknown column '$column_name'";
+                    throw("unknown column '$column_name'");
                 }
             }
         }
 
         if($value_column && !$column_set->{$value_column}) {
-            die "unknown column '$value_column'";
+            throw("unknown column '$value_column'");
         }
 
 #        warn "Setting up '$AUTOLOAD' method\n";
@@ -617,7 +623,7 @@ sub AUTOLOAD {
         if($filter_components) {
             foreach my $column_name ( @$filter_components ) {
                 unless($column_set->{$column_name}) {
-                    die "unknown column '$column_name'";
+                    throw("unknown column '$column_name'");
                 }
             }
         }
@@ -626,7 +632,7 @@ sub AUTOLOAD {
         if($key_components) {
             foreach my $column_name ( @$key_components ) {
                 unless($column_set->{$column_name}) {
-                    die "unknown column '$column_name'";
+                    throw("unknown column '$column_name'");
                 }
             }
         }
@@ -652,7 +658,7 @@ sub AUTOLOAD {
             *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->remove_all("$filter_name='$filter_value'"); };
             goto &$AUTOLOAD;    # restart the new method
         } else {
-            die "unknown column '$filter_name'";
+            throw("unknown column '$filter_name'");
         }
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
         my @columns_to_update = split(/_AND_/i, $1);
