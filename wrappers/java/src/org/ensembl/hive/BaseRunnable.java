@@ -56,7 +56,7 @@ public abstract class BaseRunnable {
 	private static final String JOB_END_TYPE = "JOB_END";
 	private static final String OK = "OK";
 
-	public final static String VERSION = "0.2";
+	public final static String VERSION = "0.3";
 
 	protected final static Map<String, Object> DEFAULT_PARAMS = new HashMap<>();
 

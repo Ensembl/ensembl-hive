@@ -132,7 +132,7 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-our $VERSION = '0.2';
+our $VERSION = '0.3';
 
 =head2 get_protocol_version
 
@@ -162,7 +162,7 @@ sub get_protocol_version {
 
 sub new {
 
-    my ($class, $language, $module, $debug) = @_;
+    my ($class, $debug, $language, $module) = @_;
 
     die "GuestProcess must be told which language to interface with" unless $language;
 
@@ -173,10 +173,12 @@ sub new {
     pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
     pipe($CHILD_RDR,  $PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
 
-    print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
-    print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
-    print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
-    print STDERR "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
+    if ($debug) {
+        print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
+        print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
+        print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
+        print STDERR "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
+    }
 
     my $pid;
 
@@ -184,13 +186,13 @@ sub new {
         # In the parent
         close $PARENT_RDR;
         close $PARENT_WTR;
-        print STDERR "parent is PID $$\n";
+        print STDERR "parent is PID $$\n" if $debug;
     } else {
         die "cannot fork: $!" unless defined $pid;
         # In the child
         close $CHILD_RDR;
         close $CHILD_WTR;
-        print STDERR "child is PID $$\n";
+        print STDERR "child is PID $$\n" if $debug;
 
         # Do not close the non-standard file descriptors on exec(): the child process will need them !
         use Fcntl;
