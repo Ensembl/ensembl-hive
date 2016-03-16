@@ -108,9 +108,7 @@ sub fetch_input {
 
     # The final list of tables
     my @tables = ();
-    $self->param('tables', \@tables);
     my @ignores = ();
-    $self->param('ignores', \@ignores);
 
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
@@ -159,22 +157,12 @@ sub fetch_input {
     }
 
     $self->input_job->transient_error(1);
-}
 
-
-
-sub run {
-    my $self = shift @_;
-
-    my $src_dbc = $self->param('src_dbc');
-    my $tables = $self->param('tables');
-    my $ignores = $self->param('ignores');
-
-    print "tables: ", scalar(@$tables), " ", join('/', @$tables), "\n" if $self->debug;
-    print "ignores: ", scalar(@$ignores), " ", join('/', @$ignores), "\n" if $self->debug;
+    print "tables: ", scalar(@tables), " ", join('/', @tables), "\n" if $self->debug;
+    print "ignores: ", scalar(@ignores), " ", join('/', @ignores), "\n" if $self->debug;
 
     # We have to exclude everything
-    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
+    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@ignores) == $self->param('nb_ehive_tables'));
 
     # mysqldump command
     my $output = "";
@@ -192,8 +180,8 @@ sub run {
     my $cmd = join(' ', 
         @{ $src_dbc->to_cmd('mysqldump', undef, undef, undef, 1) },
         '--skip-lock-tables',
-        @$tables,
-        (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
+        @tables,
+        (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @ignores),
         $output
     );
     print "$cmd\n" if $self->debug;
