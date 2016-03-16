@@ -38,7 +38,6 @@ use warnings;
 
 use List::Util ('shuffle');
 
-use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Limiter;
 
 

@@ -15,8 +15,6 @@ BEGIN {
 use Getopt::Long;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Queen;
-use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 
 

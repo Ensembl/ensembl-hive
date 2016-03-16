@@ -18,7 +18,6 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions')
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Queen;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Scheduler;
 

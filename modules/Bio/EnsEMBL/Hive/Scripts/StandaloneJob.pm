@@ -25,7 +25,6 @@ use warnings;
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::GuestProcess;
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::PCL;
 

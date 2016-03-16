@@ -32,7 +32,6 @@ use Test::More;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
