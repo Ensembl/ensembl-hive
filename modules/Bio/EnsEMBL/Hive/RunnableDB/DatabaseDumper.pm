@@ -133,7 +133,7 @@ sub fetch_input {
     $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Get the table list in either "tables" or "ignores"
-    my $table_list = $self->_get_table_list;
+    my $table_list = $self->_get_table_list($src_dbc, $self->param('table_list') || '');
     print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
 
     if ($self->param('exclude_list')) {
@@ -161,27 +161,6 @@ sub fetch_input {
     $self->input_job->transient_error(1);
 }
 
-
-# Splits a string into a list of strings
-# Ask the database for the list of tables that match the wildcard "%"
-
-sub _get_table_list {
-    my $self = shift @_;
-
-    my $table_list = $self->param('table_list') || '';
-    my @newtables = ();
-    my $dbc = $self->param('src_dbc');
-    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
-        if ($initable =~ /%/) {
-            $initable =~ s/_/\\_/g;
-            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
-            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
-        } else {
-            push @newtables, $initable;
-        }
-    }
-    return \@newtables;
-}
 
 
 sub run {
@@ -239,6 +218,26 @@ sub run {
     if(my $return_value = system($extra_sql)) {
         die "system( $extra_sql ) failed: $return_value";
     }
+}
+
+
+# Splits a string into a list of strings
+# Ask the database for the list of tables that match the wildcard "%"
+
+sub _get_table_list {
+    my ($self, $dbc, $table_list) = @_;
+
+    my @newtables = ();
+    foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
+        if ($initable =~ /%/) {
+            $initable =~ s/_/\\_/g;
+            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
+            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
+        } else {
+            push @newtables, $initable;
+        }
+    }
+    return \@newtables;
 }
 
 
