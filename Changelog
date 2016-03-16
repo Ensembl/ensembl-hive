@@ -25,6 +25,12 @@ All the example pipelines have been grouped together under a new directory: Bio/
             -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
             -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
             -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+    In both cases you can print out the current value of things by using the '?' instead of the assignment:
+            -tweak 'global.hive_pipeline_name?'                     # show the pipeline_name
+            -tweak 'global.param[take_time]?'                       # show the value of a pipeline-wide parameter
+            -tweak 'analysis[add_together].analysis_capacity?'      # show the value of an analysis attribute
+            -tweak 'analysis[add_together].param[foo]?'             # show the value of an analysis parameter
+            -tweak 'resource_class[urgent].LSF?'                    # show the description of a particular meadow of a resource_class
     The new mechanism does not require that you prepare the PipeConfig files with $self->o() references, which significantly simplifies PipeConfigs.
 
 Universal Runnables:
