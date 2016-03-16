@@ -74,6 +74,7 @@ use List::Util qw(max);
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
+use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Worker;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
@@ -111,10 +112,13 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name, $beekeeper_id,
+    my ($resource_class_id, $resource_class_name, $beekeeper_id,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name -beekeeper_id
+     = @flags{qw(-resource_class_id -resource_class_name -beekeeper_id
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
+
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    die "Valley is not fully defined" unless ($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user);
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
             # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100

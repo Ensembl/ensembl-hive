@@ -44,9 +44,6 @@ sub runWorker {
     my $queen = $hive_dba->get_Queen();
     die "No Queen, God Bless Her\n" unless $queen and $queen->isa('Bio::EnsEMBL::Hive::Queen');
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-    die "Valley is not fully defined" unless ($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user);
-
     if( $specialization_options->{'force_sync'} ) {       # sync the Hive in Test mode:
         my $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $specialization_options->{'analyses_pattern'} );
 
@@ -55,12 +52,7 @@ sub runWorker {
 
     # Create the worker
     my $worker = $queen->create_new_worker(
-          # Worker identity:
-             -meadow_type           => $meadow_type,
-             -meadow_name           => $meadow_name,
-             -process_id            => $process_id,
-             -meadow_host           => $meadow_host,
-             -meadow_user           => $meadow_user,
+          # Resource class:
              -resource_class_id     => $specialization_options->{'resource_class_id'},
              -resource_class_name   => $specialization_options->{'resource_class_name'},
              -beekeeper_id          => $specialization_options->{'beekeeper_id'},
