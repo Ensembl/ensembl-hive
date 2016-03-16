@@ -5,7 +5,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Bean wrapping information about a job
@@ -14,6 +15,8 @@ import com.google.gson.Gson;
  *
  */
 public class Job {
+	
+	private final transient ObjectMapper mapper = new ObjectMapper();
 	
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -34,8 +37,6 @@ public class Job {
 	private boolean lethalForWorker = false;
 	private boolean transientError = true;
 	private boolean complete = false;
-
-	private transient final Gson gson = new Gson();
 
 	public Job(Map<String, Object> jobParams) {
 		log.debug("Building job with params with "+String.valueOf(jobParams.get(PARAMETERS_KEY)));
@@ -98,7 +99,11 @@ public class Job {
 	}
 
 	public String toString() {
-		return gson.toJson(this);
+		try {
+			return mapper.writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Could not write job as JSON", e);
+		}
 	}
 
 	public boolean isComplete() {
