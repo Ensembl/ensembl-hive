@@ -84,7 +84,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
     return {
@@ -100,6 +100,9 @@ sub param_defaults {
 
         # Other options
         'skip_dump'     => 0,       # boolean
+
+        # SystemCmd's options
+        'use_bash_pipefail' => 1,   # We need to make sure the whole command succeeded
     }
 }
 
@@ -184,27 +187,28 @@ sub fetch_input {
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @ignores),
         $output
     );
-    print "$cmd\n" if $self->debug;
 
     # Check whether the current database has been restored from a snapshot.
     # If it is the case, we shouldn't re-dump and overwrite the file.
     # We also check here the value of the "skip_dump" parameter
     my $completion_signature = sprintf('dump_%d_restored', $self->input_job->dbID < 0 ? 0 : $self->input_job->dbID);
-    return if $self->param('skip_dump') or $self->param($completion_signature);
 
-    # OK, we can dump
-    if(my $return_value = system(bash => (-o => 'pipefail', -c => $cmd))) {
-        die "system( $cmd ) failed: $return_value";
-    }
-
-    # We add the signature to the dump, so that the job won't rerun on a
-    # restored database
-    my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
-    # We're very lucky that gzipped streams can be concatenated and the
-    # output is still valid !
-    $extra_sql =~ s/>/>>/;
-    if(my $return_value = system($extra_sql)) {
-        die "system( $extra_sql ) failed: $return_value";
+    if ($self->param('skip_dump') or $self->param($completion_signature)) {
+        # A command that always succeeds
+        $self->param('cmd', 'true');
+        if ($self->param('skip_dump')) {
+            $self->warning('Skipping the dump because "skip_dump" is defined');
+        } else {
+            $self->warning("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
+        }
+    } else {
+        # OK, we can dump. We add the signature to the dump, so that the
+        # job won't rerun on a restored database
+        # We're very lucky that gzipped streams can be concatenated and the
+        # output is still valid !
+        my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
+        $extra_sql =~ s/>/>>/;
+        $self->param('cmd', "$cmd; $extra_sql");
     }
 }
 
