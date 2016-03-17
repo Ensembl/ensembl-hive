@@ -26,19 +26,27 @@ public class Wrapper {
 		switch(args[3]) {
 			case "0":
 				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"INFO");
+						"ERROR");
 				break;
 			case "1":
 				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"DEBUG");
+						"WARN");
 				break;
 			case "2":
+				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
+						"INFO");
+				break;
+			case "3":
+				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
+						"DEBUG");
+				break;
+			case "4":
 				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
 						"TRACE");
 				break;
 			default:
 				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"WARN");
+						"ALL");
 				break;
 		}
 

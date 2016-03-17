@@ -82,7 +82,7 @@ public abstract class BaseRunnable {
 	protected final BufferedWriter output;
 	protected final ObjectMapper mapper;
 
-	private int debug = 1;
+	private int debug = 0;
 	private String workerTempDirectory;
 
 	private Logger log;
