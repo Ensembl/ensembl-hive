@@ -388,7 +388,7 @@ sub print_diagram {
 
 =head2 apply_tweaks
 
-    Description: changes attributes of Analyses|ResourceClasses|ResourceDescriptions or values of global/analysis parameters
+    Description: changes attributes of Analyses|ResourceClasses|ResourceDescriptions or values of pipeline/analysis parameters
 
 =cut
 
@@ -399,23 +399,23 @@ sub apply_tweaks {
     foreach my $tweak (@$tweaks) {
         print "\nTweak.Request\t$tweak\n";
 
-        if($tweak=~/^global\.param\[(\w+)\](\?|#|=(.+))$/) {
+        if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($param_name, $operation, $new_value_str) = ($1, $2, $3);
 
             my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name);
 
             if($operation eq '?') {
-                print "Tweak.Show    \tglobal.param[$param_name] ::\t"
+                print "Tweak.Show    \tpipeline.param[$param_name] ::\t"
                      . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } else {
                 my $new_value = destringify( $new_value_str );
 
                 if($hash_pair) {
-                    print "Tweak.Changing\tglobal.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
+                    print "Tweak.Changing\tpipeline.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
 
                     $hash_pair->{'param_value'} = stringify($new_value);
                 } else {
-                    print "Tweak.Adding  \tglobal.param[$param_name] ::\t(missing value) --> $new_value_str\n";
+                    print "Tweak.Adding  \tpipeline.param[$param_name] ::\t(missing value) --> $new_value_str\n";
 
                     $self->add_new_or_update( 'PipelineWideParameters',
                         'param_name'    => $param_name,
@@ -424,16 +424,16 @@ sub apply_tweaks {
                 }
             }
 
-        } elsif($tweak=~/^global\.(\w+)(\?|=(.+))$/) {
+        } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
             my ($attrib_name, $operation, $new_value_str) = ($1, $2, $3);
 
             if($self->can($attrib_name)) {
                 my $old_value = stringify( $self->$attrib_name() );
 
                 if($operation eq '?') {
-                    print "Tweak.Show    \tglobal.$attrib_name ::\t$old_value\n";
+                    print "Tweak.Show    \tpipeline.$attrib_name ::\t$old_value\n";
                 } else {
-                    print "Tweak.Changing\tglobal.$attrib_name ::\t$old_value --> $new_value_str\n";
+                    print "Tweak.Changing\tpipeline.$attrib_name ::\t$old_value --> $new_value_str\n";
 
                     $self->$attrib_name( $new_value_str );
                 }
