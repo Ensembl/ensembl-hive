@@ -540,7 +540,7 @@ sub release_and_age_job {
     $self->dbc->do( 
         "UPDATE job "
         .( ($self->dbc->driver eq 'pgsql')
-            ? "SET status = CAST(CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS jw_status), "
+            ? "SET status = CAST(CASE WHEN ($may_retry != 0) AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS jw_status), "
             : "SET status =      CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END, "
          ).qq{
                retry_count=retry_count+1,
