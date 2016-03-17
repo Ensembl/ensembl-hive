@@ -60,7 +60,7 @@ public class Wrapper {
 		}
 		Constructor<?> ctor = clazz.getConstructor(File.class, File.class);
 		log.debug("Initializing runnable module " + clazz.getName() + " from "
-				+ args[1] + "/" + args[2]);
+				+ args[1] + " and " + args[2]);
 		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance(new File(
 				args[1]), new File(args[2])));
 		runnable.processLifeCycle();
