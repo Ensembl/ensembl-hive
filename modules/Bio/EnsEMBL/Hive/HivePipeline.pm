@@ -541,9 +541,9 @@ sub apply_tweaks {
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
-                        print "Tweak.Show    \tresource_description[$rc_name].$meadow_type ::\t".stringify([$submission_cmd_args, $worker_cmd_args])."\n";
+                        print "Tweak.Show    \tresource_class[$rc_name].$meadow_type ::\t".stringify([$submission_cmd_args, $worker_cmd_args])."\n";
                     } else {
-                        print "Tweak.Show    \tresource_description[$rc_name].$meadow_type ::\t(missing values)\n";
+                        print "Tweak.Show    \tresource_class[$rc_name].$meadow_type ::\t(missing values)\n";
                     }
                 }
 
