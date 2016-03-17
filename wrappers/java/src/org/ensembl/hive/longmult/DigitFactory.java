@@ -38,7 +38,7 @@ public class DigitFactory extends BaseRunnable {
 		// split the multiplier by digits and store each digit in a hash
 		List<Map<String, Object>> subTasks = Arrays
 				.asList(bMultiplier.split("(?!^)")).stream()
-				.filter(c -> c.matches("[2-9]")).map(c -> toMap(DIGIT, c))
+				.filter(c -> c.matches("[2-9]")).distinct().map(c -> toMap(DIGIT, c))
 				.collect(Collectors.toList());
 		getLog().debug("subTasks=" + subTasks);
 		job.getParameters().setParam(SUB_TASKS, subTasks);
