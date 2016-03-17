@@ -63,7 +63,7 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
         {
             my @seed_pipeline_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/seed_pipeline.pl', -url => $hive_dba->dbc->url, -logic_name => 'take_b_apart', -input_id => '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
-            my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.02, '-loop', '-local');
+            my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.1, '-loop', '-local');
 
             system(@seed_pipeline_cmd);
             ok(!$?, 'seed_pipeline exited with the return code 0');
