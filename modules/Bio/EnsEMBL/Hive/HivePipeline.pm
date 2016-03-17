@@ -400,11 +400,11 @@ sub apply_tweaks {
         print "\nTweak.Request\t$tweak\n";
 
         if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
-            my ($param_name, $operation, $new_value_str) = ($1, $2, $3);
+            my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
 
             my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name);
 
-            if($operation eq '?') {
+            if($operator eq '?') {
                 print "Tweak.Show    \tpipeline.param[$param_name] ::\t"
                      . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } else {
@@ -425,12 +425,12 @@ sub apply_tweaks {
             }
 
         } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
-            my ($attrib_name, $operation, $new_value_str) = ($1, $2, $3);
+            my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
 
             if($self->can($attrib_name)) {
                 my $old_value = stringify( $self->$attrib_name() );
 
-                if($operation eq '?') {
+                if($operator eq '?') {
                     print "Tweak.Show    \tpipeline.$attrib_name ::\t$old_value\n";
                 } else {
                     print "Tweak.Changing\tpipeline.$attrib_name ::\t$old_value --> $new_value_str\n";
@@ -442,24 +442,56 @@ sub apply_tweaks {
                 print "Tweak.Error   \tCould not find the pipeline-wide '$attrib_name' method\n";
             }
 
-        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(?:param\[(\w+)\]|(\w+))(\?|=(.+))$/) {
-            my ($analyses_pattern, $param_name, $attrib_name, $operation, $new_value_str) = ($1, $2, $3, $4, $5);
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.param\[(\w+)\](\?|#|=(.+))$/) {
+            my ($analyses_pattern, $param_name, $operator, $new_value_str) = ($1, $2, $3, $4);
 
             my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
-
-            if($param_name) {
-                $attrib_name = 'parameters';
-            }
+            print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
 
             my $new_value = destringify( $new_value_str );
 
+            foreach my $analysis (@$analyses) {
+                my $analysis_name = $analysis->logic_name;
+
+                my $old_value = $analysis->parameters;
+
+                my $param_hash  = destringify( $old_value );
+
+                if($operator eq '?') {
+                    print "Tweak.Show    \tanalysis[$analysis_name].param[$param_name] ::\t"
+                        . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
+                        ."\n";
+                } elsif($operator eq '#') {
+                    print "Tweak.Deleting\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> (missing value)\n";
+
+                    delete $param_hash->{ $param_name };
+                    $analysis->parameters( stringify($param_hash) );
+                } else {
+                    if(exists($param_hash->{ $param_name })) {
+                        print "Tweak.Changing\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> $new_value_str\n";
+                    } else {
+                        print "Tweak.Adding  \tanalysis[$analysis_name].param[$param_name] ::\t(missing value) --> $new_value_str\n";
+                    }
+
+                    $param_hash->{ $param_name } = $new_value;
+                    $analysis->parameters( stringify($param_hash) );
+                }
+            }
+
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|=(.+))$/) {
+            my ($analyses_pattern, $attrib_name, $operator, $new_value_str) = ($1, $2, $3, $4);
+
+            my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
             print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
+
+            my $new_value = destringify( $new_value_str );
+
             foreach my $analysis (@$analyses) {
 
                 my $analysis_name = $analysis->logic_name;
 
                 if( $attrib_name eq 'flow_into' ) {
-                    if($operation eq '?') {
+                    if($operator eq '?') {
                         $analysis->print_diagram_node($self, '', {});
                     } else {
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
@@ -467,7 +499,7 @@ sub apply_tweaks {
 
                 } elsif( $attrib_name eq 'resource_class' ) {
 
-                    if($operation eq '?') {
+                    if($operator eq '?') {
                         if(my $old_value = $analysis->resource_class) {
                             print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
                         } else {
@@ -497,32 +529,12 @@ sub apply_tweaks {
                 } elsif($analysis->can($attrib_name)) {
                     my $old_value = $analysis->$attrib_name();
 
-                    if($param_name) {
-                        my $param_hash  = destringify( $old_value );
-
-                        if($operation eq '?') {
-                            print "Tweak.Show    \tanalysis[$analysis_name].param[$param_name] ::\t"
-                                . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
-                                ."\n";
-                        } else {
-                            if(exists($param_hash->{ $param_name })) {
-                                print "Tweak.Changing\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> $new_value_str\n";
-                            } else {
-                                print "Tweak.Adding  \tanalysis[$analysis_name].param[$param_name] ::\t(missing value) --> $new_value_str\n";
-                            }
-
-                            $param_hash->{ $param_name } = $new_value;
-                            $analysis->$attrib_name( stringify($param_hash) );
-                        }
-
+                    if($operator eq '?') {
+                        print "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } else {
-                        if($operation eq '?') {
-                            print "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
-                        } else {
-                            print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t".stringify($old_value)." --> ".stringify($new_value)."\n";
+                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t".stringify($old_value)." --> ".stringify($new_value)."\n";
 
-                            $analysis->$attrib_name( $new_value );
-                        }
+                        $analysis->$attrib_name( $new_value );
                     }
                 } else {
                     print "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
@@ -530,12 +542,12 @@ sub apply_tweaks {
             }
 
         } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)(\?|=(.+))$/) {
-            my ($rc_pattern, $meadow_type, $operation, $new_value_str) = ($1, $2, $3, $4);
+            my ($rc_pattern, $meadow_type, $operator, $new_value_str) = ($1, $2, $3, $4);
 
             my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
             print "Tweak.Found   \t".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
 
-            if($operation eq '?') {
+            if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
                     my $rc_name = $rc->name;
 
