@@ -9,7 +9,9 @@ pipe_in="/proc/$$/fd/$fd_in"
 pipe_out="/proc/$$/fd/$fd_out"
 # change to java subdirectory
 cd $(dirname $0)
-if [ "$action" == "compile" ]; then
+if [ "$action" == "version" ]; then
+	ant -S -q version
+elif [ "$action" == "compile" ]; then
 	echo "compiling"
 	ant compile
 elif [ "$action" == "run" ]; then

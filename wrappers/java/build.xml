@@ -44,4 +44,8 @@
 		</java>
 	</target>
 
+	<target name="version" description="print the version number">
+		<echo>${version}</echo>
+	</target>
+
 </project>
