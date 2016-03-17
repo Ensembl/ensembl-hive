@@ -399,59 +399,59 @@ sub apply_tweaks {
     foreach my $tweak (@$tweaks) {
         print "\nTweak.Request\t$tweak\n";
 
-        if($tweak=~/^global\.(?:param\[(\w+)\]|(\w+))(\?|=(.+))$/) {
-            my ($param_name, $attrib_name, $operation, $new_value_str) = ($1, $2, $3, $4);
+        if($tweak=~/^global\.param\[(\w+)\](\?|#|=(.+))$/) {
+            my ($param_name, $operation, $new_value_str) = ($1, $2, $3);
 
-            if($param_name) {
+            my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name);
+
+            if($operation eq '?') {
+                print "Tweak.Show    \tglobal.param[$param_name] ::\t"
+                     . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+            } else {
                 my $new_value = destringify( $new_value_str );
 
-                if(my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name)) {
-                    if($operation eq '?') {
-                        print "Tweak.Show    \tglobal.param[$param_name] ::\t$hash_pair->{'param_value'}\n";
-                    } else {
-                        print "Tweak.Changing\tglobal.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
+                if($hash_pair) {
+                    print "Tweak.Changing\tglobal.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
 
-                        $hash_pair->{'param_value'} = stringify($new_value);
-                    }
+                    $hash_pair->{'param_value'} = stringify($new_value);
                 } else {
-                    if($operation eq '?') {
-                        print "Tweak.Show    \tglobal.param[$param_name] ::\t(missing value)\n";
-                    } else {
-                        print "Tweak.Adding  \tglobal.param[$param_name] ::\t(missing value) --> $new_value_str\n";
+                    print "Tweak.Adding  \tglobal.param[$param_name] ::\t(missing value) --> $new_value_str\n";
 
-                        $self->add_new_or_update( 'PipelineWideParameters',
-                            'param_name'    => $param_name,
-                            'param_value'   => stringify($new_value),
-                        );
-                    }
+                    $self->add_new_or_update( 'PipelineWideParameters',
+                        'param_name'    => $param_name,
+                        'param_value'   => stringify($new_value),
+                    );
+                }
+            }
+
+        } elsif($tweak=~/^global\.(\w+)(\?|=(.+))$/) {
+            my ($attrib_name, $operation, $new_value_str) = ($1, $2, $3);
+
+            if($self->can($attrib_name)) {
+                my $old_value = stringify( $self->$attrib_name() );
+
+                if($operation eq '?') {
+                    print "Tweak.Show    \tglobal.$attrib_name ::\t$old_value\n";
+                } else {
+                    print "Tweak.Changing\tglobal.$attrib_name ::\t$old_value --> $new_value_str\n";
+
+                    $self->$attrib_name( $new_value_str );
                 }
 
             } else {
-                if($self->can($attrib_name)) {
-                    my $old_value = stringify( $self->$attrib_name() );
-
-                    if($operation eq '?') {
-                        print "Tweak.Show    \tglobal.$attrib_name ::\t$old_value\n";
-                    } else {
-                        print "Tweak.Changing\tglobal.$attrib_name ::\t$old_value --> $new_value_str\n";
-
-                        $self->$attrib_name( $new_value_str );
-                    }
-
-                } else {
-                    print "Tweak.Error   \tCould not find the global '$attrib_name' method\n";
-                }
+                print "Tweak.Error   \tCould not find the pipeline-wide '$attrib_name' method\n";
             }
 
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.(?:param\[(\w+)\]|(\w+))(\?|=(.+))$/) {
             my ($analyses_pattern, $param_name, $attrib_name, $operation, $new_value_str) = ($1, $2, $3, $4, $5);
-            my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
-            my $new_value = destringify( $new_value_str );
+            my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
 
             if($param_name) {
                 $attrib_name = 'parameters';
             }
+
+            my $new_value = destringify( $new_value_str );
 
             print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
             foreach my $analysis (@$analyses) {
