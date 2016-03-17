@@ -111,7 +111,7 @@ B<--tweak>
 
     An assignment command that performs one individual "tweak". You can "tweak" global/analysis parameters, analysis attributes and resource classes:
 
-        -tweak 'global.param[take_time]=20'                     # override a value of a pipeline-wide parameter; can also create an inexistent parameter
+        -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create an inexistent parameter
         -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create an inexistent parameter
         -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an analysis attribute
         -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute

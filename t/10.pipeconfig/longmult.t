@@ -45,7 +45,7 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
         my $url         = init_pipeline(
                             'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version,
                             [-pipeline_url => $pipeline_url, -hive_force_init => 1],
-                            ['global.param[take_time]=0'],
+                            ['pipeline.param[take_time]=0'],
                         );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(

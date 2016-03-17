@@ -48,7 +48,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $url         = init_pipeline(
                             'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
                             [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"],
-                            ['global.param[take_time]=0'],
+                            ['pipeline.param[take_time]=0'],
                         );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
