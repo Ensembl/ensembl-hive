@@ -201,7 +201,7 @@ sub new {
         $flags = fcntl($PARENT_WTR, F_GETFD, 0);
         fcntl($PARENT_WTR, F_SETFD, $flags & ~FD_CLOEXEC);
 
-        exec($wrapper, 'run', $module, fileno($PARENT_RDR), fileno($PARENT_WTR), $debug);
+        exec($wrapper, 'run', $module, fileno($PARENT_RDR), fileno($PARENT_WTR), $debug//0);
     }
 
 
