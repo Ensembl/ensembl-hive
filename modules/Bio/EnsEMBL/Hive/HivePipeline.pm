@@ -125,10 +125,19 @@ sub save_collections {
 
     foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule', 'DataflowTarget') {
         my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        my $class = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-        foreach my $storable_object ( $self->collection_of( $AdaptorType )->list ) {
+        my $class   = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        my $coll    = $self->collection_of( $AdaptorType );
+        foreach my $storable_object ( $coll->list ) {
             $adaptor->store_or_update_one( $storable_object, $class->unikey() );
 #            warn "Stored/updated ".$storable_object->toString()."\n";
+        }
+
+        if( my $dark_collection = $coll->dark_collection) {
+            foreach my $obj_to_be_deleted ( $coll->dark_collection->list ) {
+                $adaptor->remove( $obj_to_be_deleted );
+#                warn "Deleted ".(UNIVERSAL::can($obj_to_be_deleted, 'toString') ? $obj_to_be_deleted->toString : stringify($obj_to_be_deleted))."\n";
+            }
+            $coll->dark_collection( undef );
         }
     }
 
@@ -148,7 +157,8 @@ sub add_new_or_update {
     my $self = shift @_;
     my $type = shift @_;
 
-    my $class = 'Bio::EnsEMBL::Hive::'.$type;
+    my $class   = 'Bio::EnsEMBL::Hive::'.$type;
+    my $coll    = $self->collection_of( $type );
 
     my $object;
     my $newly_made = 0;
@@ -158,7 +168,7 @@ sub add_new_or_update {
         my %unikey_pairs;
         @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
 
-        if( $object = $self->collection_of( $type )->find_one_by( %unikey_pairs ) ) {
+        if( $object = $coll->find_one_by( %unikey_pairs ) ) {
             my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object);
             if(keys %other_pairs) {
                 warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
@@ -172,6 +182,11 @@ sub add_new_or_update {
             } else {
                 warn "Found a matching $found_display\n";
             }
+        } elsif( my $dark_coll = $coll->dark_collection) {
+            if( my $shadow_object = $dark_coll->find_one_by( %unikey_pairs ) ) {
+                $dark_coll->forget( $shadow_object );
+#                warn "Found a shadow on the dark side, forgetting it\n";
+            }
         }
     } else {
         warn "$class doesn't redefine unikey(), so unique objects cannot be identified";
@@ -181,7 +196,7 @@ sub add_new_or_update {
         $object = $class->can('new') ? $class->new( @_ ) : { @_ };
         $newly_made = 1;
 
-        $self->collection_of( $type )->add( $object );
+        $coll->add( $object );
 
         $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
 
