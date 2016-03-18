@@ -16,12 +16,17 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Basename;
 use JSON;
 use Test::More;
 
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
+
+# Need EHIVE_ROOT_DIR to access the wrapper
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 plan tests => 1;
 
