@@ -1,0 +1,14 @@
+#!/bin/bash
+
+received="$*"
+expected="$EHIVE_EXPECTED_BSUB"
+
+if [ "$received" = "$expected" ];
+then
+  exit 0
+else
+  echo "diff: received $received"
+  echo "diff: was expecting $expected"
+  exit 1
+fi
+

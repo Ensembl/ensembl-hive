@@ -1,0 +1,40 @@
+language: "perl"
+
+perl:
+  - "5.10"
+  - "5.14"
+
+env:
+  - COVERALLS=true
+  - COVERALLS=false
+
+sudo: false
+
+before_install:
+    - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
+    - chmod +x psql
+    - export PATH=$PWD:$PATH
+    - ln -s /usr/share/perl5/PgCommon.pm modules/
+
+
+install:
+    - cpanm -v --installdeps --notest .
+    - cpanm -n Devel::Cover::Report::Coveralls
+
+script: "./scripts/travis_run_tests.sh"
+
+notifications:
+  email:
+    on_success: always
+    on_failure: always
+  slack:
+    secure: "fbxQ+yuUAKKI10MUmNeCUbLqmVoOHUhGdM2KetqT5DmSn2rHxb099040Ira2tBYmUEPb5QvIMfPZ1xgS27he4xsZIpvOLsd1Or9OOL8XqyeTLcZ/IG4rpky0ehltVXs3s4ClM+YXwCHIoR2FwVghLVn6znmRkYm3TreSDtEUC2o="
+
+# Get the matrix to only build coveralls support when on 5.10
+matrix:
+  exclude:
+    - perl: "5.10"
+      env: COVERALLS=false
+    - perl: "5.14"
+      env: COVERALLS=true
+
