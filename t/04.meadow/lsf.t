@@ -142,7 +142,7 @@ lives_ok( sub {
 }, 'Can submit 4 workers');
 
 lives_ok( sub {
-    local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir/ -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
+    local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir//log_/resource_class/_%J_%I.out -e /submit_log_dir//log_/resource_class/_%J_%I.err -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
     $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
 }, 'Can submit 1 worker with a submit_log_dir');
 
