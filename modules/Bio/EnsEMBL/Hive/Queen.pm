@@ -806,8 +806,11 @@ sub monitor {
                             sum(work_done/(strftime('%s','now')-strftime('%s',born)))/count(*), },
         'pgsql'     =>  qq{ sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born))),
                             sum(work_done/(EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - born)))/count(*), },
+    }->{ $self->dbc->driver }. {
+        'mysql'     =>  qq{ group_concat(DISTINCT logic_name) },
+        'sqlite'    =>  qq{ group_concat(DISTINCT logic_name) },
+        'pgsql'     =>  qq{ string_agg(DISTINCT logic_name, '') },
     }->{ $self->dbc->driver }. qq{
-        group_concat(DISTINCT logic_name)
         FROM worker w
         LEFT JOIN analysis_base USING (analysis_id)
         WHERE w.status!='DEAD'
