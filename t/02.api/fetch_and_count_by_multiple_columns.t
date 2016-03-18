@@ -62,8 +62,8 @@ is($dfr_a->count_all_by_branch_code(1), 3, 'There are 2 #1 branches in the pipel
 
 my $long_input_id = sprintf('{ "long_param" => "%s" }', 'tmp' x 1000);
 my $new_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-    '-input_id'      => $long_input_id,
-    '-analysis_id'   => 1,
+    'input_id'      => $long_input_id,
+    'analysis_id'   => 1,
 );
 
 # Test the overflow to the analysis_data table
@@ -77,8 +77,8 @@ my $ext_data_id = $ada_a->fetch_by_data_TO_analysis_data_id($long_input_id);
 is($ext_data_id, 1, 'analysis_data_id starts at 1');
 
 my $another_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-    '-input_id'      => $long_input_id,
-    '-analysis_id'   => 2,
+    'input_id'      => $long_input_id,
+    'analysis_id'   => 2,
 );
 
 $job_a->store($another_job);
