@@ -20,7 +20,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -145,6 +145,54 @@ lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir/ -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
     $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
 }, 'Can submit 1 worker with a submit_log_dir');
+
+my $expected_bacct = {
+    '2581807[1]' => {
+        'died' => '2015-11-26 14:25:12',
+        'pending_sec' => '147',
+        'exception_status' => 'underrun',
+        'cause_of_death' => undef,
+        'lifespan_sec' => '150',
+        'mem_megs' => 28,
+        'cpu_sec' => '2.74',
+        'exit_status' => 'done',
+        'swap_megs' => 144
+    },
+    '2581801[48]' => {
+        'died' => '2015-11-26 14:25:16',
+        'pending_sec' => '196',
+        'exception_status' => 'underrun',
+        'mem_megs' => 50,
+        'lifespan_sec' => '215',
+        'cause_of_death' => undef,
+        'cpu_sec' => '2.61',
+        'exit_status' => 'done',
+        'swap_megs' => 269
+    },
+    '3194397[75]' => {
+        'cpu_sec' => '6.97',
+        'lifespan_sec' => '57',
+        'pending_sec' => '2',
+        'exception_status' => 'underrun',
+        'swap_megs' => 218,
+        'died' => '2015-12-02 13:53:29',
+        'cause_of_death' => 'MEMLIMIT',
+        'exit_status' => 'exit/TERM_MEMLIMIT',
+        'mem_megs' => 102
+    },
+};
+
+lives_and( sub {
+    local $ENV{EHIVE_EXPECTED_BACCT} = '-l 34 56[7]';
+    my $h = $lsf_meadow->get_report_entries_for_process_ids(34, '56[7]');
+    is_deeply($h, $expected_bacct, 'Got bacct output');
+}, 'Can call bacct on process_ids');
+
+lives_and( sub {
+    local $ENV{EHIVE_EXPECTED_BACCT} = '-l -C 2015/10/11/12:23,2015/12/12/23:58 -u kb3';
+    my $h = $lsf_meadow->get_report_entries_for_time_interval('2015-10-11 12:23:45', '2015-12-12 23:56:59', 'kb3');
+    is_deeply($h, $expected_bacct, 'Got bacct output');
+}, 'Can call bacct on a date range');
 
 done_testing();
 
