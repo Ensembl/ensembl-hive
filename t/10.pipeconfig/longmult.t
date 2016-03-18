@@ -34,8 +34,7 @@ my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-# LongMultWf_conf has to be excluded because runWorker is not able to resync the pipeline in can_respecialize mode, leading to the first worker not completing the pipeline
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf';
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf';
 
 my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
