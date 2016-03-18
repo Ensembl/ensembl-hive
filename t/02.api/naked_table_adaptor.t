@@ -38,13 +38,18 @@ my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -n
 my $dbc = $hive_dba->dbc();
 
 system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $sqlite_url, '-sql', 'CREATE DATABASE' );
-$dbc->do('CREATE TABLE meta (meta_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, species_id INTEGER DEFAULT 1, meta_key VARCHAR(255) NOT NULL, meta_value TEXT NOT NULL)');
 $dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
+my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
+my $final_result2_nta   = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
+
+is($final_result_nta, $final_result2_nta, "Adaptors with identical creation parameters are cached as expected");
+isnt($final_result_nta, $analysis_nta, "Adaptors with different creation parameters are cached separately as expected");
 
 # Unfortunately this isn't set by the constructor
 $final_result_nta->table_name('final_result');
+$analysis_nta->table_name('analysis_base');
 
 my $first_hash  = { 'a_multiplier' => '9650156169', 'b_multiplier' => '327358788', 'result' => '3159063427494563172' };
 my $second_hash = { 'b_multiplier' => '9650156169', 'a_multiplier' => '327358788', 'result' => '3159063427494563172' };
