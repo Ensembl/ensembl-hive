@@ -1,0 +1,10 @@
+{
+    "Meadow" : {
+        "OPENLAVA"  : {
+	    "TotalRunningWorkersMax" : 1000,
+	    "omics" : {
+		"SubmissionOptions" : "-q special-branch"
+	    }
+	}
+    }
+}
