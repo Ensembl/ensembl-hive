@@ -20,13 +20,13 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 14;
+use Test::More tests => 16;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
 
 BEGIN {
-    use_ok( 'Bio::EnsEMBL::Hive::Meadow::LSF' );
+    use_ok( 'Bio::EnsEMBL::Hive::Valley' );
 }
 
 # Need EHIVE_ROOT_DIR to access the default config file
@@ -38,15 +38,17 @@ my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
 # binaries output
 $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
 
-my $lsf_meadow = Bio::EnsEMBL::Hive::Meadow::LSF->new($config);
+my $test_pipeline_name = 'tracking_homo_sapiens_funcgen_81_38_hive';
+my $test_meadow_name = 'test_clUster';
 
+my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LSF', $test_pipeline_name);
+
+my $lsf_meadow = $valley->available_meadow_hash->{'LSF'};
 ok($lsf_meadow, 'Can build the meadow');
 
-is($lsf_meadow->name, 'test_clUster', 'Found the LSF farm name');
-
-my $test_pipeline = 'tracking_homo_sapiens_funcgen_81_38_hive';
-$lsf_meadow->pipeline_name($test_pipeline);
-is($lsf_meadow->pipeline_name, $test_pipeline, 'Getter/setter pipeline_name() works');
+# Check that the meadow has been initialised correctly
+is($lsf_meadow->name, $test_meadow_name, 'Found the LSF farm name');
+is($lsf_meadow->pipeline_name, $test_pipeline_name, 'Getter/setter pipeline_name() works');
 
 subtest 'get_current_worker_process_id()' => sub
 {
@@ -110,6 +112,14 @@ is_deeply(
 
 use Bio::EnsEMBL::Hive::Worker;
 my $worker = Bio::EnsEMBL::Hive::Worker->new();
+
+{
+    $worker->meadow_type('LSF');
+    $worker->meadow_name('imaginary_meadow');
+    is($valley->find_available_meadow_responsible_for_worker($worker), undef, 'find_available_meadow_responsible_for_worker() with a worker from another meadow');
+    $worker->meadow_name($test_meadow_name);
+    is($valley->find_available_meadow_responsible_for_worker($worker), $lsf_meadow, 'find_available_meadow_responsible_for_worker() with a worker from that meadow');
+}
 
 {
     local $ENV{USER} = 'mm14';
