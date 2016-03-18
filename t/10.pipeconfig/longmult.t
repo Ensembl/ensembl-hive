@@ -28,10 +28,10 @@ use File::Temp qw{tempdir};
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
-$ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
-chdir $dir;
+my $original = chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
 # LongMultWf_conf has to be excluded because runWorker is not able to resync the pipeline in can_respecialize mode, leading to the first worker not completing the pipeline
@@ -82,3 +82,6 @@ warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 }
 
 done_testing();
+
+chdir $original;
+

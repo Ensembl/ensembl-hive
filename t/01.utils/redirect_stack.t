@@ -29,7 +29,7 @@ BEGIN {
 #########################
 
 my $dir = tempdir CLEANUP => 1;
-chdir $dir;
+my $original = chdir $dir;
 
 my $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
 my $stdout = capture_stdout {
@@ -59,3 +59,6 @@ ok(-e 'baz', '"bar" exists');
 is(`cat baz`, qq{Message 5\n}, 'baz output');
 
 done_testing();
+
+chdir $original;
+
