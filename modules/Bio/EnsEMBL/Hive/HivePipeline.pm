@@ -417,11 +417,16 @@ sub apply_tweaks {
         if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
 
-            my $hash_pair = $self->collection_of( 'PipelineWideParameters' )->find_one_by('param_name', $param_name);
+            my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
+            my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
 
             if($operator eq '?') {
                 print "Tweak.Show    \tpipeline.param[$param_name] ::\t"
                      . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+            } elsif($operator eq '#') {
+                $pwp_collection->forget_and_mark_for_deletion( $hash_pair );
+
+                print "Tweak.Deleting\tpipeline.param[$param_name] ::\t".stringify($hash_pair->{'param_value'})." --> (missing value)\n";
             } else {
                 my $new_value = destringify( $new_value_str );
 
