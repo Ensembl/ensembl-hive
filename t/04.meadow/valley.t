@@ -17,6 +17,9 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Basename;
+
 use Test::More; # tests => 22;
 use Test::Exception;
 use Test::Warn;
