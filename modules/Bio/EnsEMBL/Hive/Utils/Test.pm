@@ -78,7 +78,8 @@ sub runWorker {
         foreach my $option (keys %super_hash) {
             push @cmd, ('-'.$option, $super_hash{$option});
         }
-        system(@cmd);
+        my $rc = system(@cmd);
+        ok(!$rc, 'worker successful');
     }, sprintf('runWorker()'));
 }
 
