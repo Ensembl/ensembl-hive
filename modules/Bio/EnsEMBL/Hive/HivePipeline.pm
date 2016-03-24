@@ -123,21 +123,27 @@ sub save_collections {
 
     my $hive_dba = $self->hive_dba();
 
-    foreach my $AdaptorType ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule', 'DataflowTarget') {
-        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
-        my $class   = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
-        my $coll    = $self->collection_of( $AdaptorType );
-        foreach my $storable_object ( $coll->list ) {
-            $adaptor->store_or_update_one( $storable_object, $class->unikey() );
-#            warn "Stored/updated ".$storable_object->toString()."\n";
-        }
+    my @adaptor_types = ('MetaParameters', 'PipelineWideParameters', 'ResourceClass', 'ResourceDescription', 'Analysis', 'AnalysisStats', 'AnalysisCtrlRule', 'DataflowRule', 'DataflowTarget');
 
+    foreach my $AdaptorType (reverse @adaptor_types) {
+        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
+        my $coll    = $self->collection_of( $AdaptorType );
         if( my $dark_collection = $coll->dark_collection) {
             foreach my $obj_to_be_deleted ( $coll->dark_collection->list ) {
                 $adaptor->remove( $obj_to_be_deleted );
 #                warn "Deleted ".(UNIVERSAL::can($obj_to_be_deleted, 'toString') ? $obj_to_be_deleted->toString : stringify($obj_to_be_deleted))."\n";
             }
             $coll->dark_collection( undef );
+        }
+    }
+
+    foreach my $AdaptorType (@adaptor_types) {
+        my $adaptor = $hive_dba->get_adaptor( $AdaptorType );
+        my $class   = 'Bio::EnsEMBL::Hive::'.$AdaptorType;
+        my $coll    = $self->collection_of( $AdaptorType );
+        foreach my $storable_object ( $coll->list ) {
+            $adaptor->store_or_update_one( $storable_object, $class->unikey() );
+#            warn "Stored/updated ".$storable_object->toString()."\n";
         }
     }
 
@@ -498,7 +504,7 @@ sub apply_tweaks {
                 }
             }
 
-        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|=(.+))$/) {
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|#|=(.+))$/) {
             my ($analyses_pattern, $attrib_name, $operator, $new_value_str) = ($1, $2, $3, $4);
 
             my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
@@ -513,6 +519,25 @@ sub apply_tweaks {
                 if( $attrib_name eq 'flow_into' ) {
                     if($operator eq '?') {
                         $analysis->print_diagram_node($self, '', {});
+                    } elsif($operator eq '#') {
+                        my $dfr_collection = $self->collection_of( 'DataflowRule' );
+                        my $dft_collection = $self->collection_of( 'DataflowTarget' );
+
+                        foreach my $group ( @{$analysis->get_grouped_dataflow_rules} ) {
+                            my ($funnel_dfr, $fan_dfrs, $funnel_df_targets) = @$group;
+
+                            foreach my $df_rule (@$fan_dfrs, $funnel_dfr) {
+
+                                foreach my $df_target ( @{$df_rule->get_my_targets} ) {
+                                    $dft_collection->forget_and_mark_for_deletion( $df_target );
+
+                                    print "Tweak.Deleting\t".$df_target->toString." --> (missing value)\n";
+                                }
+                                $dfr_collection->forget_and_mark_for_deletion( $df_rule );
+
+                                print "Tweak.Deleting\t".$df_rule->toString." --> (missing value)\n";
+                            }
+                        }
                     } else {
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
                     }
@@ -525,6 +550,8 @@ sub apply_tweaks {
                         } else {
                             print "Tweak.Show    \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
                         }
+                    } elsif($operator eq '#') {
+                        print "Tweak.Error   \tDeleting of ResourceClasses is not supported\n";
                     } else {
 
                         if(my $old_value = $analysis->resource_class) {
@@ -551,6 +578,8 @@ sub apply_tweaks {
 
                     if($operator eq '?') {
                         print "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
+                    } elsif($operator eq '#') {
+                        print "Tweak.Error   \tDeleting of Analysis attributes is not supported\n";
                     } else {
                         print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t".stringify($old_value)." --> ".stringify($new_value)."\n";
 
