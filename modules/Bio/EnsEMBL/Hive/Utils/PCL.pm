@@ -60,6 +60,26 @@ sub INPUT_PLUS {
 }
 
 
+sub parse_wait_for {
+    my ($pipeline, $ctrled_analysis, $wait_for) = @_;
+
+    $wait_for ||= [];
+    $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
+
+        # create control rules:
+    foreach my $condition_url (@$wait_for) {
+        if($condition_url =~ m{^\w+$/}) {
+            my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
+                or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+        }
+        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
+                'condition_analysis_url'    => $condition_url,
+                'ctrled_analysis'           => $ctrled_analysis,
+        );
+    }
+}
+
+
 sub parse_flow_into {
     my ($pipeline, $from_analysis, $flow_into) = @_;
 

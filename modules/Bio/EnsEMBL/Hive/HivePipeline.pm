@@ -516,7 +516,24 @@ sub apply_tweaks {
 
                 my $analysis_name = $analysis->logic_name;
 
-                if( $attrib_name eq 'flow_into' ) {
+                if( $attrib_name eq 'wait_for' ) {
+
+                    my $cr_collection   = $self->collection_of( 'AnalysisCtrlRule' );
+                    my $acr_collection  = $analysis->control_rules_collection;
+
+                    if($operator eq '?') {
+                        print "Tweak.Show    \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
+                    } elsif($operator eq '#') {
+                        foreach my $c_rule ( @$acr_collection ) {
+                            $cr_collection->forget_and_mark_for_deletion( $c_rule );
+
+                            print "Tweak.Deleting\t".$c_rule->toString." --> (missing value)\n";
+                        }
+                    } else {
+                        Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
+                    }
+
+                } elsif( $attrib_name eq 'flow_into' ) {
                     if($operator eq '?') {
                         $analysis->print_diagram_node($self, '', {});
                     } elsif($operator eq '#') {

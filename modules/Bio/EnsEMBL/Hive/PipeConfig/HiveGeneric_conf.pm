@@ -539,19 +539,8 @@ sub add_objects_from_config {
 
         my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);
 
-        $wait_for ||= [];
-        $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
-
-            # create control rules:
-        foreach my $condition_url (@$wait_for) {
-            if($condition_url =~ m{^\w+$/}) {
-                my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
-                    or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
-            }
-            my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
-                    'condition_analysis_url'    => $condition_url,
-                    'ctrled_analysis'           => $analysis,
-            );
+        if($wait_for) {
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($pipeline, $analysis, $wait_for);
         }
 
         if($flow_into) {
