@@ -504,8 +504,10 @@ sub apply_tweaks {
                 }
             }
 
-        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|#|=(.+))$/) {
-            my ($analyses_pattern, $attrib_name, $operator, $new_value_str) = ($1, $2, $3, $4);
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(wait_for|flow_into)(\?|#|\+?=(.+))$/) {
+            my ($analyses_pattern, $attrib_name, $operation, $new_value_str) = ($1, $2, $3, $4);
+            $operation=~/^(\?|#|\+?=)/;
+            my $operator = $1;
 
             my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
             print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
@@ -523,20 +525,27 @@ sub apply_tweaks {
 
                     if($operator eq '?') {
                         print "Tweak.Show    \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
-                    } elsif($operator eq '#') {
+                    }
+
+                    if($operator eq '#' or $operator eq '=') {     # delete the existing rules
                         foreach my $c_rule ( @$acr_collection ) {
                             $cr_collection->forget_and_mark_for_deletion( $c_rule );
 
                             print "Tweak.Deleting\t".$c_rule->toString." --> (missing value)\n";
                         }
-                    } else {
+                    }
+
+                    if($operator eq '=' or $operator eq '+=') {     # create new rules
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                     }
 
                 } elsif( $attrib_name eq 'flow_into' ) {
+
                     if($operator eq '?') {
                         $analysis->print_diagram_node($self, '', {});
-                    } elsif($operator eq '#') {
+                    }
+
+                    if($operator eq '#' or $operator eq '=') {     # delete the existing rules
                         my $dfr_collection = $self->collection_of( 'DataflowRule' );
                         my $dft_collection = $self->collection_of( 'DataflowTarget' );
 
@@ -555,11 +564,27 @@ sub apply_tweaks {
                                 print "Tweak.Deleting\t".$df_rule->toString." --> (missing value)\n";
                             }
                         }
-                    } else {
-                        Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
                     }
 
-                } elsif( $attrib_name eq 'resource_class' ) {
+                    if($operator eq '=' or $operator eq '+=') {     # create new rules
+                        Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
+                    }
+                }
+            }
+
+        } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|#|=(.+))$/) {
+            my ($analyses_pattern, $attrib_name, $operator, $new_value_str) = ($1, $2, $3, $4);
+
+            my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
+            print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
+
+            my $new_value = destringify( $new_value_str );
+
+            foreach my $analysis (@$analyses) {
+
+                my $analysis_name = $analysis->logic_name;
+
+                if( $attrib_name eq 'resource_class' ) {
 
                     if($operator eq '?') {
                         if(my $old_value = $analysis->resource_class) {
