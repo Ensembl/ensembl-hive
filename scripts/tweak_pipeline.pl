@@ -37,6 +37,8 @@ sub main {
         'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
         'tweak|SET=s@'          => \$tweaks,
+        'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
+        'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
 
         'h|help'                => \$self->{'help'},
     );
