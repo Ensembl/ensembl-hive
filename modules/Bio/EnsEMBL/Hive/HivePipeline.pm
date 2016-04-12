@@ -616,14 +616,14 @@ sub apply_tweaks {
                     }
 
                 } elsif($analysis->can($attrib_name)) {
-                    my $old_value = $analysis->$attrib_name();
+                    my $old_value = stringify($analysis->$attrib_name());
 
                     if($operator eq '?') {
                         print "Tweak.Show    \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } elsif($operator eq '#') {
                         print "Tweak.Error   \tDeleting of Analysis attributes is not supported\n";
                     } else {
-                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t".stringify($old_value)." --> ".stringify($new_value)."\n";
+                        print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t$old_value --> ".stringify($new_value)."\n";
 
                         $analysis->$attrib_name( $new_value );
                     }
