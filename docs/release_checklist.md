@@ -1,4 +1,3 @@
-
 Checklist to release a new eHive version
 ========================================
 
@@ -12,11 +11,11 @@ Checklist to release a new eHive version
 
 5. Check all of the above into "master" branch
 
-6. On the "master" branch in README.md file substitute the occurences of "HEAD" in the URLs by "version/x.y" (for rawgit) and commit it.
+6. git checkout -b version/x.y
 
-7. "git branch version/x.y" at this commit (but do not switch to this branch)
+7. On the "version/x.y" branch in README.md file substitute the occurences of "HEAD" in the URLs by "version/x.y" (for rawgit) and commit it.
 
-8. On the "master" branch revert this commit to retain the "HEAD" references in README.md on "master"
+8. git checkout master
 
 9. On the "master" branch increment the version of Bio::EnsEMBL::Hive::Version to x.(y+1)
 
