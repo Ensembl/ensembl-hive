@@ -6,7 +6,7 @@
 
 =head1 SYNOPSIS
 
-    Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
+    Please refer to Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf pipeline configuration file
     to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
