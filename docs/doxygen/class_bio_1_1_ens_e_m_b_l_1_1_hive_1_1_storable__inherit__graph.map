@@ -5,9 +5,10 @@
 <area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html" title="Bio::EnsEMBL::Hive\l::AnalysisJob" alt="" coords="203,201,346,242"/>
 <area shape="rect" id="node6" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html" title="Bio::EnsEMBL::Hive\l::AnalysisStats" alt="" coords="203,266,346,307"/>
 <area shape="rect" id="node7" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html" title="Bio::EnsEMBL::Hive\l::DataflowRule" alt="" coords="203,331,346,373"/>
-<area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html" title="Bio::EnsEMBL::Hive\l::NakedTable" alt="" coords="203,397,346,438"/>
-<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="203,462,346,503"/>
-<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="198,527,351,569"/>
-<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html" title="Bio::EnsEMBL::Hive\l::Role" alt="" coords="203,593,346,634"/>
-<area shape="rect" id="node12" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html" title="Bio::EnsEMBL::Hive\l::Worker" alt="" coords="203,658,346,699"/>
+<area shape="rect" id="node8" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_target.html" title="Bio::EnsEMBL::Hive\l::DataflowTarget" alt="" coords="203,397,346,438"/>
+<area shape="rect" id="node9" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html" title="Bio::EnsEMBL::Hive\l::NakedTable" alt="" coords="203,462,346,503"/>
+<area shape="rect" id="node10" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_class.html" title="Bio::EnsEMBL::Hive\l::ResourceClass" alt="" coords="203,527,346,569"/>
+<area shape="rect" id="node11" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_resource_description.html" title="Bio::EnsEMBL::Hive\l::ResourceDescription" alt="" coords="198,593,351,634"/>
+<area shape="rect" id="node12" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_role.html" title="Bio::EnsEMBL::Hive\l::Role" alt="" coords="203,658,346,699"/>
+<area shape="rect" id="node13" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_worker.html" title="Bio::EnsEMBL::Hive\l::Worker" alt="" coords="203,723,346,765"/>
 </map>

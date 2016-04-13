@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -137,7 +137,7 @@ Public Member Functions</h2></td></tr>
 <div id='codesection-init_pipeline-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-init_pipeline-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_init_pipeline.html#a20ae94e5207096eb0b868d9bd1525008">init_pipeline</a> {</div>
-<div class="line">    my ($file_or_module) = @_;</div>
+<div class="line">    my ($file_or_module, $tweaks) = @_;</div>
 <div class="line"></div>
 <div class="line">    my $pipeconfig_package_name = load_file_or_module( $file_or_module );</div>
 <div class="line"></div>
@@ -149,20 +149,26 @@ Public Member Functions</h2></td></tr>
 <div class="line"></div>
 <div class="line">    $pipeconfig_object-&gt;run_pipeline_create_commands();</div>
 <div class="line"></div>
-<div class="line">    my $hive_dba = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html">Bio::EnsEMBL::Hive::DBSQL::DBAdaptor</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html#abf2b541c5d7e3b124323a34356e3ace6">new</a>(</div>
+<div class="line">    my $pipeline = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_hive_pipeline.html">Bio::EnsEMBL::Hive::HivePipeline</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_hive_pipeline.html#a1d9f11c3864d9c8acd2571557c702be7">new</a>(</div>
 <div class="line">                -url =&gt; $pipeconfig_object-&gt;pipeline_url(),</div>
-<div class="line">                -no_sql_schema_version_check =&gt; !$pipeconfig_object-&gt;is_analysis_topup )</div>
-<div class="line">        or die <span class="stringliteral">&quot;Hive&#39;s DBAdaptor could not be created for &quot;</span>.$pipeconfig_object-&gt;pipeline_url();</div>
+<div class="line">                -no_sql_schema_version_check =&gt; !$pipeconfig_object-&gt;is_analysis_topup );</div>
 <div class="line"></div>
-<div class="line">    $hive_dba-&gt;load_collections();</div>
+<div class="line">    my $hive_dba = $pipeline-&gt;hive_dba()</div>
+<div class="line">        or die <span class="stringliteral">&quot;HivePipeline could not be created for &quot;</span>.$pipeconfig_object-&gt;pipeline_url();</div>
 <div class="line"></div>
-<div class="line">    $pipeconfig_object-&gt;add_objects_from_config();</div>
+<div class="line">    $pipeconfig_object-&gt;add_objects_from_config( $pipeline );</div>
 <div class="line"></div>
-<div class="line">    $hive_dba-&gt;save_collections();</div>
+<div class="line">    <span class="keywordflow">if</span>($tweaks and @$tweaks) {</div>
+<div class="line">        $pipeline-&gt;apply_tweaks( $tweaks );</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    $pipeline-&gt;save_collections();</div>
 <div class="line"></div>
 <div class="line">    print $pipeconfig_object-&gt;useful_commands_legend();</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> $hive_dba;</div>
+<div class="line">    $hive_dba-&gt;dbc-&gt;disconnect_if_idle;     # This is necessary because the current lack of global DBC caching may leave <span class="keyword">this</span> DBC connected and prevent deletion of the DB in pgsql mode</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> $hive_dba-&gt;dbc-&gt;url;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

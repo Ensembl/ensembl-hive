@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -190,6 +190,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac73267d0e33aad126c188108f7e7c468 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f77cbefb20d4b4e3a40cf75ce420036 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a2f77cbefb20d4b4e3a40cf75ce420036">default_input_column_mapping</a> ()</td></tr>
 <tr class="separator:a2f77cbefb20d4b4e3a40cf75ce420036 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6dd48172b1890159471713c1b1dc3e24 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a6dd48172b1890159471713c1b1dc3e24">do_not_update_columns</a> ()</td></tr>
+<tr class="separator:a6dd48172b1890159471713c1b1dc3e24 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac927d7b53cdbc9497b9dd501cbfa5cc1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ac927d7b53cdbc9497b9dd501cbfa5cc1">new</a> ()</td></tr>
 <tr class="separator:ac927d7b53cdbc9497b9dd501cbfa5cc1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a020d1ee154f436e472e855e746b5467d inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a020d1ee154f436e472e855e746b5467d">db</a> ()</td></tr>
@@ -386,12 +388,9 @@ Description</h1>
 <div class="line"><span class="stringliteral">            if($this_meadow-&gt;can(&#39;</span>find_out_causes<span class="stringliteral">&#39;)) {</span></div>
 <div class="line"><span class="stringliteral">                die &quot;Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n&quot;;</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            } elsif($this_meadow-&gt;can(&#39;</span>get_report_entries_for_process_ids<span class="stringliteral">&#39;)) {</span></div>
-<div class="line"><span class="stringliteral">                $report_entries = $this_meadow-&gt;get_report_entries_for_process_ids( keys %$pid_to_lost_worker );</span></div>
+<div class="line"><span class="stringliteral">            } elsif ($report_entries = $this_meadow-&gt;get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {</span></div>
 <div class="line"><span class="stringliteral">                my $lost_with_known_cod = scalar( grep { $_-&gt;{&#39;</span>cause_of_death<span class="stringliteral">&#39;} } values %$report_entries);</span></div>
 <div class="line"><span class="stringliteral">                warn &quot;GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">            } else {</span></div>
-<div class="line"><span class="stringliteral">                warn &quot;GarbageCollector:\t$meadow_type meadow does not support post-mortem examination\n&quot;;</span></div>
 <div class="line"><span class="stringliteral">            }</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            warn &quot;GarbageCollector:\tReleasing the jobs\n&quot;;</span></div>
@@ -1051,17 +1050,20 @@ Description</h1>
 <div class="line">            die <span class="stringliteral">&quot;Job with dbID=&#39;$job_id&#39; is $job_status, please use -force 1 to override&quot;</span>;</div>
 <div class="line">        }</div>
 <div class="line"></div>
+<div class="line">        $analysis = $job-&gt;analysis;</div>
+<div class="line">        <span class="keywordflow">if</span>(($analysis-&gt;stats-&gt;status eq <span class="stringliteral">&#39;BLOCKED&#39;</span>) and !$force) {</div>
+<div class="line">            die <span class="stringliteral">&quot;Analysis is BLOCKED, can&#39;t specialize a worker. Please use -force 1 to override&quot;</span>;</div>
+<div class="line">        }</div>
+<div class="line"></div>
 <div class="line">        <span class="keywordflow">if</span>(($job_status eq <span class="stringliteral">&#39;DONE&#39;</span>) and $job-&gt;semaphored_job_id) {</div>
 <div class="line">            warn <span class="stringliteral">&quot;Increasing the semaphore count of the dependent job&quot;</span>;</div>
 <div class="line">            $job_adaptor-&gt;increase_semaphore_count_for_jobid( $job-&gt;semaphored_job_id );</div>
 <div class="line">        }</div>
 <div class="line"></div>
-<div class="line">        $analysis = $job-&gt;analysis;</div>
-<div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
 <div class="line">        $analyses_pattern <span class="comment">//= &#39;%&#39;;  # for printing</span></div>
-<div class="line">        my $analyses_matching_pattern   = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_all_by_pattern( $analyses_pattern );</div>
+<div class="line">        my $analyses_matching_pattern   = $self-&gt;db-&gt;hive_pipeline-&gt;collection_of( <span class="stringliteral">&#39;Analysis&#39;</span> )-&gt;find_all_by_pattern( $analyses_pattern );</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">            # refresh the stats of matching analyses before re-specialization:</span></div>
 <div class="line"><span class="preprocessor"></span>        <span class="keywordflow">foreach</span> my $analysis ( @$analyses_matching_pattern ) {</div>
@@ -1186,7 +1188,7 @@ Description</h1>
 <div class="line"></div>
 <div class="line">        $stats-&gt;refresh(); ## Need to <span class="keyword">get</span> the <span class="keyword">new</span> hive_capacity <span class="keywordflow">for</span> dynamic analyses</div>
 <div class="line"></div>
-<div class="line">        my $job_counts = $self-&gt;db-&gt;hive_use_triggers() ? undef : $self-&gt;db-&gt;get_AnalysisJobAdaptor-&gt;fetch_job_counts_hashed_by_status( $stats-&gt;analysis_id );</div>
+<div class="line">        my $job_counts = $stats-&gt;hive_pipeline-&gt;hive_use_triggers() ? undef : $self-&gt;db-&gt;get_AnalysisJobAdaptor-&gt;fetch_job_counts_hashed_by_status( $stats-&gt;analysis_id );</div>
 <div class="line"></div>
 <div class="line">        $stats-&gt;recalculate_from_job_counts( $job_counts );</div>
 <div class="line"></div>

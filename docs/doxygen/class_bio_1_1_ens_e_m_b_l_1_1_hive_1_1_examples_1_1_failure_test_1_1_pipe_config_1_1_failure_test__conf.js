@@ -1,0 +1,5 @@
+var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_failure_test_1_1_pipe_config_1_1_failure_test__conf =
+[
+    [ "default_options", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_failure_test_1_1_pipe_config_1_1_failure_test__conf.html#abc20107bb340810b7b8f0bd28ff3e359", null ],
+    [ "pipeline_analyses", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_failure_test_1_1_pipe_config_1_1_failure_test__conf.html#afbc408c27931a96215ee866d59808f6a", null ]
+];

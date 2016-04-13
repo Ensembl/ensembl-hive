@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -128,8 +128,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1956b39203f4df86e8d7aac981462ee5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8abe58a987444c45b366ef5dba4e218"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#ad8abe58a987444c45b366ef5dba4e218">script_usage</a> ()</td></tr>
 <tr class="separator:ad8abe58a987444c45b366ef5dba4e218"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af7e04ac99c85db0534b11541b99c96da"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af7e04ac99c85db0534b11541b99c96da">url2dbconn_hash</a> ()</td></tr>
-<tr class="separator:af7e04ac99c85db0534b11541b99c96da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a436607946c20c76c08db79c35a3f7d93"><td class="memItemLeft" align="right" valign="top">public List&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a436607946c20c76c08db79c35a3f7d93">split_for_bash</a> ()</td></tr>
+<tr class="separator:a436607946c20c76c08db79c35a3f7d93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1cbcb45d800cf3c5b47079e0b27e237"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#aa1cbcb45d800cf3c5b47079e0b27e237">go_figure_dbc</a> ()</td></tr>
 <tr class="separator:aa1cbcb45d800cf3c5b47079e0b27e237"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af71b51b03c60163952912de68e5eabf6"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af71b51b03c60163952912de68e5eabf6">throw</a> ()</td></tr>
@@ -296,7 +296,7 @@ Description</h1>
 <div id='codesection-go_figure_dbc-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-go_figure_dbc-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#aa1cbcb45d800cf3c5b47079e0b27e237">go_figure_dbc</a> {</div>
-<div class="line">    my ($foo, $schema_type) = @_;</div>
+<div class="line">    my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">#    if(UNIVERSAL::isa($foo, &#39;Bio::EnsEMBL::DBSQL::DBConnection&#39;)) { # already a DBConnection, return it:</span></div>
 <div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, <span class="keywordflow">return</span> it:</div>
@@ -313,20 +313,40 @@ Description</h1>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">return</span> $foo-&gt;db-&gt;dbc;</div>
 <div class="line"></div>
-<div class="line">    } elsif(my $db_conn = (ref($foo) eq <span class="stringliteral">&#39;HASH&#39;</span>) ? $foo : <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af7e04ac99c85db0534b11541b99c96da">url2dbconn_hash</a>( $foo ) ) {  # either a hash or a URL that translates into a hash</div>
+<div class="line">    } elsif(ref($foo) eq <span class="stringliteral">&#39;HASH&#39;</span>) {</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( %$db_conn );</div>
+<div class="line">        <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html#a7931542229862db93f899aef0eb983f0">new</a>( %$foo );</div>
+<div class="line"></div>
+<div class="line">    } elsif($foo =~ m{^(\w*):<span class="comment">//(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {  # We can probably use a simpler regexp</span></div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>-&gt;<span class="keyword">new</span>( -url =&gt; $foo );</div>
 <div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line">        unless(ref($foo)) {    # maybe it is simply a registry key?</div>
 <div class="line">            my $dba;</div>
+<div class="line"></div>
 <div class="line">            eval {</div>
-<div class="line">                $schema_type ||= <span class="stringliteral">&#39;hive&#39;</span>;</div>
 <div class="line">                require Bio::EnsEMBL::Registry;</div>
-<div class="line">                $dba = Bio::EnsEMBL::Registry-&gt;get_DBAdaptor($foo, $schema_type);</div>
+<div class="line"></div>
+<div class="line">                <span class="keywordflow">if</span>($foo=~/^(\w+):(\w+)$/) {</div>
+<div class="line">                    ($reg_type, $foo) = ($1, $2);</div>
+<div class="line">                }</div>
+<div class="line"></div>
+<div class="line">                <span class="keywordflow">if</span>($reg_type) {</div>
+<div class="line">                    $dba = Bio::EnsEMBL::Registry-&gt;get_DBAdaptor($foo, $reg_type);</div>
+<div class="line">                } <span class="keywordflow">else</span> {</div>
+<div class="line">                    my $dbas = Bio::EnsEMBL::Registry-&gt;get_all_DBAdaptors(-species =&gt; $foo);</div>
+<div class="line"></div>
+<div class="line">                    <span class="keywordflow">if</span>( scalar(@$dbas) == 1 ) {</div>
+<div class="line">                        $dba = $dbas-&gt;[0];</div>
+<div class="line">                    } elsif( @$dbas ) {</div>
+<div class="line">                        warn <span class="stringliteral">&quot;The registry contains multiple entries for &#39;$foo&#39;, please prepend the reg_alias with the desired type&quot;</span>;</div>
+<div class="line">                    }</div>
+<div class="line">                }</div>
 <div class="line">            };</div>
+<div class="line"></div>
 <div class="line">            <span class="keywordflow">if</span>(UNIVERSAL::can($dba, <span class="stringliteral">&#39;dbc&#39;</span>)) {</div>
-<div class="line">                <span class="keywordflow">return</span> $dba-&gt;dbc;</div>
+<div class="line">                <span class="keywordflow">return</span> bless $dba-&gt;dbc, <span class="stringliteral">&#39;Bio::EnsEMBL::Hive::DBSQL::DBConnection&#39;</span>;</div>
 <div class="line">            }</div>
 <div class="line">        }</div>
 <div class="line">        die <span class="stringliteral">&quot;Sorry, could not figure out how to make a DBConnection object out of &#39;$foo&#39;&quot;</span>;</div>
@@ -366,13 +386,13 @@ Description</h1>
 <div class="line">    <span class="keywordflow">return</span> (0,$args) unless ref($args);</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">    # system() can only spawn 1 process. For multiple commands piped</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # together or if redirections are used, we need a shell to parse</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # a joined string representing the command</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # together or if redirections are used, it needs a shell to parse</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # a string representing the whole command</span></div>
 <div class="line"><span class="preprocessor"></span>    my $join_needed = (grep {$shell_characters{$_}} @$args) ? 1 : 0;</div>
 <div class="line"></div>
 <div class="line">    my @new_args = ();</div>
 <div class="line">    <span class="keywordflow">foreach</span> my $a (@$args) {</div>
-<div class="line">        <span class="keywordflow">if</span> ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\-]+\z/) {</div>
+<div class="line">        <span class="keywordflow">if</span> ($shell_characters{$a} or $a =~ /^[a-zA-Z0-9_\/\-]+\z/) {</div>
 <div class="line">            push @new_args, $a;</div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line"><span class="preprocessor">            # Escapes the single-quotes and protects the arguments</span></div>
@@ -526,6 +546,45 @@ Description</h1>
 </div><!-- fragment --> </div> 
 </div>
 </div>
+<a class="anchor" id="a436607946c20c76c08db79c35a3f7d93"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public List Bio::EnsEMBL::Hive::Utils::split_for_bash </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre>
+    Description: This function takes one argument (String) and splits it assuming it represents bash command line parameters.
+                 It mainly splits on whitespace, except for cases when spaces are trapped between quotes or apostrophes.
+                 In the latter case the outer quotes are removed.
+    Returntype : list of Strings</pre><pre> </pre><div id="codesection-split_for_bash" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-split_for_bash-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-split_for_bash-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-split_for_bash-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a436607946c20c76c08db79c35a3f7d93">split_for_bash</a> {</div>
+<div class="line">    my $cmd = pop @_;</div>
+<div class="line"></div>
+<div class="line">    my @cmd = ($cmd =~ /((?:<span class="stringliteral">&quot;.*?&quot;</span>|<span class="stringliteral">&#39;.*?&#39;</span>|\S)+)/g);   # split on space except <span class="keywordflow">for</span> quoted strings</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">foreach</span> my $syll (@cmd) {                       # <span class="keyword">remove</span> the outer quotes or apostrophes</div>
+<div class="line">        <span class="keywordflow">if</span>($syll=~/^(\S*?)<span class="stringliteral">&quot;(.*?)&quot;</span>(\S*?)$/) {</div>
+<div class="line">            $syll = $1 . $2 . $3;</div>
+<div class="line">        } elsif($syll=~/^(\S*?)<span class="stringliteral">&#39;(.*?)&#39;</span>(\S*?)$/) {</div>
+<div class="line">            $syll = $1 . $2 . $3;</div>
+<div class="line">        }</div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">return</span> @cmd;</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="a38ef61e77ea6ba6bb1e08c35228cb7c3"></a>
 <div class="memitem">
 <div class="memproto">
@@ -586,45 +645,6 @@ Description</h1>
 <div class="line"><span class="preprocessor">        # TODO: newer versions of Carp are much more tunable, but I am stuck with v1.08 .</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">        #       Alternatively, we could implement our own stack reporter instead of Carp::confess.</span></div>
 <div class="line"><span class="preprocessor"></span>    confess $msg;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
-<a class="anchor" id="af7e04ac99c85db0534b11541b99c96da"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::Utils::url2dbconn_hash </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Undocumented method</p>
-<div id="codesection-url2dbconn_hash" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-url2dbconn_hash-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-url2dbconn_hash-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-url2dbconn_hash-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#af7e04ac99c85db0534b11541b99c96da">url2dbconn_hash</a> {</div>
-<div class="line">    my $url = pop @_;</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>( my ($driver, $user, $pass, $host, $port, $dbname) =</div>
-<div class="line">        $url =~ m{^(\w*):<span class="comment">//(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d+))?)?/(\w*)} ) {</span></div>
-<div class="line"></div>
-<div class="line">        <span class="keywordflow">return</span> {</div>
-<div class="line">            <span class="stringliteral">&#39;-driver&#39;</span> =&gt; $driver    || <span class="stringliteral">&#39;mysql&#39;</span>,</div>
-<div class="line">            <span class="stringliteral">&#39;-host&#39;</span>   =&gt; $host      || <span class="stringliteral">&#39;localhost&#39;</span>,</div>
-<div class="line">            <span class="stringliteral">&#39;-port&#39;</span>   =&gt; $port      || 3306,</div>
-<div class="line">            <span class="stringliteral">&#39;-user&#39;</span>   =&gt; $user      || <span class="stringliteral">&#39;&#39;</span>,</div>
-<div class="line">            <span class="stringliteral">&#39;-pass&#39;</span>   =&gt; $pass      || <span class="stringliteral">&#39;&#39;</span>,</div>
-<div class="line">            <span class="stringliteral">&#39;-dbname&#39;</span> =&gt; $dbname,</div>
-<div class="line">        };</div>
-<div class="line">    } <span class="keywordflow">else</span> {</div>
-<div class="line">        <span class="keywordflow">return</span> 0;</div>
-<div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

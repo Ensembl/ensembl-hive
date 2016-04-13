@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -148,7 +148,7 @@ Functions</h2></td></tr>
 <div class="line">    <span class="keywordflow">foreach</span> my $row (@$data_timings) {</div>
 <div class="line">        my $y = sum(map {$row-&gt;{$_} || 0} @$key_ids_to_sum) || $pseudo_zero_value;</div>
 <div class="line"><span class="preprocessor">        # Due to rounding errors, values are not always decreased to 0</span></div>
-<div class="line"><span class="preprocessor"></span>        push @ydata, $y &lt; 0.05 ? $pseudo_zero_value : $y;</div>
+<div class="line"><span class="preprocessor"></span>        push @ydata, $y &lt; $rounding_error_threshold ? $pseudo_zero_value : $y;</div>
 <div class="line">    }</div>
 <div class="line">    my $dataset = Chart::Gnuplot::DataSet-&gt;new(</div>
 <div class="line">        xdata =&gt; $xdata,</div>
@@ -171,7 +171,7 @@ Functions</h2></td></tr>
 <div class="line">            <span class="keywordflow">foreach</span> my $i (@$analysis_ids_pattern) {</div>
 <div class="line">                $y += ($lt-&gt;{$i} || 0) - ($dt-&gt;{$i} || 0);</div>
 <div class="line">            }</div>
-<div class="line">            $ydatal[$j-1] = $y &lt; 0.05 ? $pseudo_zero_value : $y;</div>
+<div class="line">            $ydatal[$j-1] = $y &lt; $rounding_error_threshold ? $pseudo_zero_value : $y;</div>
 <div class="line">        }</div>
 <div class="line">        $dataset = Chart::Gnuplot::DataSet-&gt;new(</div>
 <div class="line">            xdata =&gt; $xdata,</div>
@@ -311,25 +311,29 @@ Functions</h2></td></tr>
 <div class="line">        last <span class="keywordflow">if</span> $end_date and ($event_date gt $end_date);</div>
 <div class="line">        next unless exists $events-&gt;{$event_date};</div>
 <div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span> ((scalar(@data_timings) == 0) and $start_date and ($event_date gt $start_date)) {</div>
+<div class="line">            push @data_timings, [$start_date, { %hash_curr_workers }];</div>
+<div class="line">            %tot_area = %hash_curr_workers;</div>
+<div class="line">        }</div>
+<div class="line"></div>
 <div class="line">        my $topup_hash = $events-&gt;{$event_date};</div>
 <div class="line">        <span class="keywordflow">foreach</span> my $key_id (keys %$topup_hash) {</div>
 <div class="line">            $hash_curr_workers{$key_id} += $topup_hash-&gt;{$key_id};</div>
 <div class="line">            $num_curr_workers += $topup_hash-&gt;{$key_id};</div>
 <div class="line">        }</div>
 <div class="line"><span class="preprocessor">        # Due to rounding errors, the sums may be slightly different</span></div>
-<div class="line"><span class="preprocessor"></span>        die sum(values %hash_curr_workers).<span class="stringliteral">&quot;!=$num_curr_workers&quot;</span> <span class="keywordflow">if</span> abs(sum(values %hash_curr_workers) - $num_curr_workers) &gt; 0.05;</div>
+<div class="line"><span class="preprocessor"></span>        die sum(values %hash_curr_workers).<span class="stringliteral">&quot;!=$num_curr_workers&quot;</span> <span class="keywordflow">if</span> abs(sum(values %hash_curr_workers) - $num_curr_workers) &gt; $rounding_error_threshold;</div>
 <div class="line"></div>
 <div class="line">        next <span class="keywordflow">if</span> $start_date and ($event_date lt $start_date);</div>
 <div class="line"></div>
-<div class="line">        my %hash_interval = %hash_curr_workers;</div>
 <div class="line"><span class="preprocessor">        #FIXME It should be normalised by the length of the time interval</span></div>
-<div class="line"><span class="preprocessor"></span>        map {$tot_area{$_} += $hash_interval{$_}} keys %hash_interval;</div>
+<div class="line"><span class="preprocessor"></span>        map {$tot_area{$_} += $hash_curr_workers{$_}} keys %hash_curr_workers;</div>
 <div class="line"></div>
 <div class="line">        $max_workers = $num_curr_workers <span class="keywordflow">if</span> ($num_curr_workers &gt; $max_workers);</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # We need to repeat the previous value to have an histogram shape</span></div>
 <div class="line"><span class="preprocessor"></span>        push @data_timings, [$event_date, { %{$data_timings[-1]-&gt;[1]} }] <span class="keywordflow">if</span> @data_timings;</div>
-<div class="line">        push @data_timings, [$event_date, \%hash_interval];</div>
+<div class="line">        push @data_timings, [$event_date, { %hash_curr_workers }];</div>
 <div class="line">    }</div>
 <div class="line">    push @data_timings, [$end_date, { %{$data_timings[-1]-&gt;[1]} }] <span class="keywordflow">if</span> @data_timings and $end_date and ($data_timings[-1]-&gt;[0] lt $end_date);</div>
 <div class="line">    warn <span class="stringliteral">&quot;Last timing: &quot;</span>, Dumper $data_timings[-1] <span class="keywordflow">if</span> $verbose and @data_timings;</div>

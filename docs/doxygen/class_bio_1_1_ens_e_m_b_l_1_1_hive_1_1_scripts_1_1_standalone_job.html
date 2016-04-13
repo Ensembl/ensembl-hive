@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -147,94 +147,35 @@ Public Member Functions</h2></td></tr>
 <div class="line">    $runnable_object-&gt;debug($flags-&gt;{debug}) <span class="keywordflow">if</span> $flags-&gt;{debug};</div>
 <div class="line">    $runnable_object-&gt;execute_writes(not $flags-&gt;{no_write});</div>
 <div class="line"></div>
-<div class="line">    my $dummy_analysis = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
+<div class="line">    my $hive_pipeline = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_hive_pipeline.html">Bio::EnsEMBL::Hive::HivePipeline</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_hive_pipeline.html#a1d9f11c3864d9c8acd2571557c702be7">new</a>();</div>
+<div class="line"></div>
+<div class="line">    my ($dummy_analysis) = $hive_pipeline-&gt;add_new_or_update( <span class="stringliteral">&#39;Analysis&#39;</span>,   # NB: add_new_or_update returns a list</div>
 <div class="line">        <span class="stringliteral">&#39;logic_name&#39;</span>    =&gt; <span class="stringliteral">&#39;Standalone_Dummy_Analysis&#39;</span>,     # looks nicer when printing out DFRs</div>
+<div class="line">        <span class="stringliteral">&#39;module&#39;</span>        =&gt; ref($runnable_object),</div>
 <div class="line">        <span class="stringliteral">&#39;dbID&#39;</span>          =&gt; -1,</div>
 <div class="line">    );</div>
 <div class="line"></div>
 <div class="line">    my $job = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
-<div class="line">        <span class="stringliteral">&#39;analysis&#39;</span>  =&gt; $dummy_analysis,</div>
-<div class="line">        <span class="stringliteral">&#39;input_id&#39;</span>  =&gt; $input_id,</div>
-<div class="line">        <span class="stringliteral">&#39;dbID&#39;</span>      =&gt; -1,</div>
+<div class="line">        <span class="stringliteral">&#39;hive_pipeline&#39;</span> =&gt; $hive_pipeline,</div>
+<div class="line">        <span class="stringliteral">&#39;analysis&#39;</span>      =&gt; $dummy_analysis,</div>
+<div class="line">        <span class="stringliteral">&#39;input_id&#39;</span>      =&gt; $input_id,</div>
+<div class="line">        <span class="stringliteral">&#39;dbID&#39;</span>          =&gt; -1,</div>
 <div class="line">    );</div>
 <div class="line"></div>
 <div class="line">    $job-&gt;load_parameters( $runnable_object );</div>
 <div class="line"></div>
-<div class="line">    <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html">Bio::EnsEMBL::Hive::DataflowRule</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>( <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html">Bio::EnsEMBL::Hive::Utils::Collection</a>-&gt;<span class="keyword">new</span>() );</div>
 <div class="line"></div>
-<div class="line">    $flow_into = $flow_into ? destringify($flow_into) : []; # empty dataflow <span class="keywordflow">for</span> branch 1 by <span class="keywordflow">default</span></div>
+<div class="line">    <span class="keywordflow">if</span>($flow_into) {</div>
+<div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_p_c_l.html#a3001688563385aae55faf7fd7a39e648">Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into</a>($hive_pipeline, $dummy_analysis, destringify($flow_into) );</div>
+<div class="line">    }</div>
 <div class="line"></div>
-<div class="line"><span class="preprocessor">    # -------------------------------------------- DFR parser cloned from HiveGeneric_conf</span></div>
-<div class="line"><span class="preprocessor"></span></div>
-<div class="line">        $flow_into   = { 1 =&gt; $flow_into } unless(ref($flow_into) eq <span class="stringliteral">&#39;HASH&#39;</span>); # force non-hash into a hash</div>
+<div class="line">    $runnable_object-&gt;input_job($job);</div>
+<div class="line">    $runnable_object-&gt;life_cycle();</div>
 <div class="line"></div>
-<div class="line">        my %group_tag_to_funnel_dataflow_rule = ();</div>
+<div class="line">    $runnable_object-&gt;cleanup_worker_temp_directory() unless $flags-&gt;{no_cleanup};</div>
 <div class="line"></div>
-<div class="line">        my $semaphore_sign = <span class="stringliteral">&#39;-&gt;&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">        my @all_branch_tags = keys %$flow_into;</div>
-<div class="line">        <span class="keywordflow">foreach</span> my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {</div>
-<div class="line"></div>
-<div class="line">            my ($branch_name_or_code, $group_role, $group_tag);</div>
-<div class="line"></div>
-<div class="line">            <span class="keywordflow">if</span>($branch_tag=~/^([A-Z])$semaphore_sign(-?\w+)$/) {</div>
-<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($2, <span class="stringliteral">&#39;funnel&#39;</span>, $1);</div>
-<div class="line">            } elsif($branch_tag=~/^(-?\w+)$semaphore_sign([A-Z])$/) {</div>
-<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($1, <span class="stringliteral">&#39;fan&#39;</span>, $2);</div>
-<div class="line">            } elsif($branch_tag=~/^(-?\w+)$/) {</div>
-<div class="line">                ($branch_name_or_code, $group_role, $group_tag) = ($1, <span class="stringliteral">&#39;&#39;</span>);</div>
-<div class="line">            } elsif($branch_tag=~/:/) {</div>
-<div class="line">                die <span class="stringliteral">&quot;Please use newer &#39;2${semaphore_sign}A&#39; and &#39;A${semaphore_sign}1&#39; notation instead of &#39;2:1&#39; and &#39;1&#39;\n&quot;</span>;</div>
-<div class="line">            } <span class="keywordflow">else</span> {</div>
-<div class="line">                die <span class="stringliteral">&quot;Error parsing the group tag &#39;$branch_tag&#39;\n&quot;</span>;</div>
-<div class="line">            }</div>
-<div class="line"></div>
-<div class="line">            my $funnel_dataflow_rule = undef;    # NULL by <span class="keywordflow">default</span></div>
-<div class="line"></div>
-<div class="line">            <span class="keywordflow">if</span>($group_role eq <span class="stringliteral">&#39;fan&#39;</span>) {</div>
-<div class="line">                unless($funnel_dataflow_rule = $group_tag_to_funnel_dataflow_rule{$group_tag}) {</div>
-<div class="line">                    die <span class="stringliteral">&quot;No funnel dataflow_rule defined for group &#39;$group_tag&#39;\n&quot;</span>;</div>
-<div class="line">                }</div>
-<div class="line">            }</div>
-<div class="line"></div>
-<div class="line">            my $heirs = $flow_into-&gt;{$branch_tag};</div>
-<div class="line">            $heirs = [ $heirs ] unless(ref($heirs)); # force scalar into an arrayref first</div>
-<div class="line">            $heirs = { map { ($_ =&gt; undef) } @$heirs } <span class="keywordflow">if</span>(ref($heirs) eq <span class="stringliteral">&#39;ARRAY&#39;</span>); # now force it into a hash <span class="keywordflow">if</span> it wasn<span class="stringliteral">&#39;t</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            while(my ($heir_url, $input_id_template_list) = each %$heirs) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq &#39;</span>ARRAY<span class="stringliteral">&#39;);  # allow for more than one template per analysis</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                foreach my $input_id_template (@$input_id_template_list) {</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                    my $df_rule = Bio::EnsEMBL::Hive::DataflowRule-&gt;add_new_or_update(</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>from_analysis<span class="stringliteral">&#39;             =&gt; $dummy_analysis,</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>to_analysis_url<span class="stringliteral">&#39;           =&gt; $heir_url,</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>branch_code<span class="stringliteral">&#39;               =&gt; $branch_name_or_code,</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>funnel_dataflow_rule<span class="stringliteral">&#39;      =&gt; $funnel_dataflow_rule,</span></div>
-<div class="line"><span class="stringliteral">                        &#39;</span>input_id_template<span class="stringliteral">&#39;         =&gt; $input_id_template,</span></div>
-<div class="line"><span class="stringliteral">                    );</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">                    if($group_role eq &#39;</span>funnel<span class="stringliteral">&#39;) {</span></div>
-<div class="line"><span class="stringliteral">                        if($group_tag_to_funnel_dataflow_rule{$group_tag}) {</span></div>
-<div class="line"><span class="stringliteral">                            die &quot;More than one funnel dataflow_rule defined for group &#39;</span>$group_tag<span class="stringliteral">&#39;\n&quot;;</span></div>
-<div class="line"><span class="stringliteral">                        } else {</span></div>
-<div class="line"><span class="stringliteral">                            $group_tag_to_funnel_dataflow_rule{$group_tag} = $df_rule;</span></div>
-<div class="line"><span class="stringliteral">                        }</span></div>
-<div class="line"><span class="stringliteral">                    }</span></div>
-<div class="line"><span class="stringliteral">                } # /for all templates</span></div>
-<div class="line"><span class="stringliteral">            } # /for all heirs</span></div>
-<div class="line"><span class="stringliteral">        } # /for all branch_tags</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    # -------------------------------------------- / DFR parser cloned from HiveGeneric_conf</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;input_job($job);</span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;life_cycle();</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    $runnable_object-&gt;cleanup_worker_temp_directory() unless $flags-&gt;{no_cleanup};</span></div>
-<div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">    return !$job-&gt;died_somewhere()</span></div>
-<div class="line"><span class="stringliteral">}</span></div>
+<div class="line">    <span class="keywordflow">return</span> !$job-&gt;died_somewhere()</div>
+<div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>

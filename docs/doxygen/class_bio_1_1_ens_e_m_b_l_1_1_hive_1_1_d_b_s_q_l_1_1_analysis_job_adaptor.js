@@ -7,6 +7,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor =
     [ "default_table_name", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a0c5b6bbd627a70f5d1eb35b24b6e2d91", null ],
     [ "fetch_all_by_analysis_id_status", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#aad1bc73bd8052820705590bf853e34f0", null ],
     [ "fetch_all_incomplete_jobs_by_role_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a217294b6ab8e75844cb946b2a5cf600d", null ],
+    [ "fetch_by_analysis_id_and_input_id", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a38f1898dbd023bd6054c4eb5310a3237", null ],
     [ "fetch_by_url_query", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#ab3ffe9d373143c197120510bbd7f85d7", null ],
     [ "fetch_input_ids_for_job_ids", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#a33703ebaa739dc4c4924cad07e2abd25", null ],
     [ "fetch_job_counts_hashed_by_status", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_analysis_job_adaptor.html#aa9f6c9d54c47acd37229db8f4b0f4e92", null ],

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.6"/>
-<title>ensembl-hive: modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/PartMultiply.pm File Reference</title>
+<title>ensembl-hive: modules/Bio/EnsEMBL/Hive/Examples/LongMult/RunnableDB/PartMultiply.pm File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -112,7 +112,7 @@ $(document).ready(function(){initNavTree('_part_multiply_8pm.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_long_mult_1_1_part_multiply.html">Bio::EnsEMBL::Hive::RunnableDB::LongMult::PartMultiply</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_runnable_d_b_1_1_part_multiply.html">Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -123,9 +123,11 @@ Namespaces</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive.html">Bio::EnsEMBL::Hive</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b.html">Bio::EnsEMBL::Hive::RunnableDB</a></td></tr>
+<tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples.html">Bio::EnsEMBL::Hive::Examples</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_long_mult"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_long_mult.html">Bio::EnsEMBL::Hive::RunnableDB::LongMult</a></td></tr>
+<tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult.html">Bio::EnsEMBL::Hive::Examples::LongMult</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_runnable_d_b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_runnable_d_b.html">Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
@@ -133,7 +135,7 @@ Namespaces</h2></td></tr>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_065c59eb2c71fadda5923c01f75cc75b.html">modules</a></li><li class="navelem"><a class="el" href="dir_20466407930c478fcd85cb6ad2b1b99f.html">Bio</a></li><li class="navelem"><a class="el" href="dir_e7d83aa5fc7c578e9be06d559b5318a5.html">EnsEMBL</a></li><li class="navelem"><a class="el" href="dir_14b170e6545fcb877408bdbd8871dc27.html">Hive</a></li><li class="navelem"><a class="el" href="dir_f39db55b5bf7e906d7fbeb5965c692b9.html">RunnableDB</a></li><li class="navelem"><a class="el" href="dir_9bda1baf665a585004f0bb1d8e964400.html">LongMult</a></li><li class="navelem"><a class="el" href="_part_multiply_8pm.html">PartMultiply.pm</a></li>
+    <li class="navelem"><a class="el" href="dir_065c59eb2c71fadda5923c01f75cc75b.html">modules</a></li><li class="navelem"><a class="el" href="dir_20466407930c478fcd85cb6ad2b1b99f.html">Bio</a></li><li class="navelem"><a class="el" href="dir_e7d83aa5fc7c578e9be06d559b5318a5.html">EnsEMBL</a></li><li class="navelem"><a class="el" href="dir_14b170e6545fcb877408bdbd8871dc27.html">Hive</a></li><li class="navelem"><a class="el" href="dir_f9f4ee8cb3ff39390a0d9e3ac7bc38bf.html">Examples</a></li><li class="navelem"><a class="el" href="dir_4be46877f751a21c40d36a752c407b61.html">LongMult</a></li><li class="navelem"><a class="el" href="dir_a83954dd03856c5c2823756f355d3fa4.html">RunnableDB</a></li><li class="navelem"><a class="el" href="_part_multiply_8pm.html">PartMultiply.pm</a></li>
     <li class="footer">Generated by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.6 </li>

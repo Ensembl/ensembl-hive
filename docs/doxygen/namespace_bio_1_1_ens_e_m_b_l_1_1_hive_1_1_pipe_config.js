@@ -1,20 +1,18 @@
 var namespace_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config =
 [
-    [ "AnyCommands_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_any_commands__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_any_commands__conf" ],
-    [ "ApplyToDatabases_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_apply_to_databases__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_apply_to_databases__conf" ],
-    [ "CompressFiles_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_compress_files__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_compress_files__conf" ],
+    [ "TopUp_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf" ],
+    [ "DF01_Basic_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f01___basic__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f01___basic__conf" ],
+    [ "DF02_Spider_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f02___spider__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f02___spider__conf" ],
+    [ "DF03_Semaphores_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f03___semaphores__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f03___semaphores__conf" ],
+    [ "DF04_Semaphores_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f04___semaphores__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f04___semaphores__conf" ],
+    [ "DF05_Conditional_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f05___conditional__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f05___conditional__conf" ],
+    [ "DF06_SimpleFilter_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f06___simple_filter__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f06___simple_filter__conf" ],
+    [ "DF07_Skipping_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f07___skipping__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f07___skipping__conf" ],
+    [ "DF08_BigChoice_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f08___big_choice__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f08___big_choice__conf" ],
+    [ "DF09_MultiBranch_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f09___multi_branch__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f09___multi_branch__conf" ],
+    [ "DFTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f_test__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_d_f_test__conf" ],
     [ "EnsemblGeneric_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_ensembl_generic__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_ensembl_generic__conf" ],
-    [ "FailureTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_failure_test__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_failure_test__conf" ],
-    [ "FastaSplitter_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_fasta_splitter__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_fasta_splitter__conf" ],
     [ "HiveGeneric_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_hive_generic__conf" ],
-    [ "LongMult_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult__conf" ],
-    [ "LongMultForeign_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_foreign__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_foreign__conf" ],
-    [ "LongMultSt_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__conf" ],
-    [ "LongMultSt_pyconf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__pyconf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_st__pyconf" ],
-    [ "LongMultWf_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_long_mult_wf__conf" ],
-    [ "MemlimitTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf" ],
     [ "OverloadTest_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_overload_test__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_overload_test__conf" ],
-    [ "RunListOfCommandsOnFarm_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_run_list_of_commands_on_farm__conf" ],
-    [ "TableDumperZipper_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_table_dumper_zipper__conf" ],
-    [ "TopUp_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_top_up__conf" ]
+    [ "ReproduceADbug_conf", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_reproduce_a_dbug__conf.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_reproduce_a_dbug__conf" ]
 ];

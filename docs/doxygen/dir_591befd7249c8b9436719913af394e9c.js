@@ -27,6 +27,9 @@ var dir_591befd7249c8b9436719913af394e9c =
     [ "DataflowRuleAdaptor.pm", "_dataflow_rule_adaptor_8pm.html", [
       [ "DataflowRuleAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_rule_adaptor" ]
     ] ],
+    [ "DataflowTargetAdaptor.pm", "_dataflow_target_adaptor_8pm.html", [
+      [ "DataflowTargetAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_target_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_dataflow_target_adaptor" ]
+    ] ],
     [ "DBAdaptor.pm", "_d_b_adaptor_8pm.html", [
       [ "DBAdaptor", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor.html", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_adaptor" ]
     ] ],

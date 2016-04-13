@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -151,21 +151,15 @@ Functions</h2></td></tr>
 <div id='codesection-show_seedable_analyses-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-show_seedable_analyses-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="seed__pipeline_8pl.html#ae56eff1c83733ae5dcc4d7f7d6d25ff8">show_seedable_analyses</a> {</div>
-<div class="line">    my ($hive_dba) = @_;</div>
+<div class="line">    my ($pipeline) = @_;</div>
 <div class="line"></div>
-<div class="line">    my $analyses    = $hive_dba-&gt;get_AnalysisAdaptor-&gt;fetch_all();</div>
-<div class="line">    my $incoming    = $hive_dba-&gt;get_DataflowRuleAdaptor-&gt;fetch_HASHED_FROM_to_analysis_url_TO_dataflow_rule_id();</div>
-<div class="line">    my $job_adaptor = $hive_dba-&gt;get_AnalysisJobAdaptor;</div>
+<div class="line">    my $job_adaptor = $pipeline-&gt;hive_dba-&gt;get_AnalysisJobAdaptor;</div>
 <div class="line"></div>
-<div class="line">    print <span class="stringliteral">&quot;\nYou haven&#39;t specified neither -logic_name nor -analysis_id of the analysis being seeded.\n&quot;</span>;</div>
-<div class="line">    print <span class="stringliteral">&quot;\nSeedable analyses without incoming dataflow:\n&quot;</span>;</div>
-<div class="line">    <span class="keywordflow">foreach</span> my $analysis (@$analyses) {</div>
-<div class="line">        my $logic_name = $analysis-&gt;logic_name;</div>
-<div class="line">        unless($incoming-&gt;{$logic_name}) {</div>
-<div class="line">            my $analysis_id = $analysis-&gt;dbID;</div>
-<div class="line">            my ($example_job) = @{ $job_adaptor-&gt;fetch_some_by_analysis_id_limit( $analysis_id, 1 ) };</div>
-<div class="line">            print <span class="stringliteral">&quot;\t$logic_name ($analysis_id)\t\t&quot;</span>.($example_job ? <span class="stringliteral">&quot;Example input_id:   &#39;&quot;</span>.$example_job-&gt;input_id.<span class="stringliteral">&quot;&#39;&quot;</span> : <span class="stringliteral">&quot;[not populated yet]&quot;</span>).<span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line">        }</div>
+<div class="line">    <span class="keywordflow">foreach</span> my $source_analysis ( @{ $pipeline-&gt;get_source_analyses } ) {</div>
+<div class="line">        my $logic_name = $source_analysis-&gt;logic_name;</div>
+<div class="line">        my $analysis_id = $source_analysis-&gt;dbID;</div>
+<div class="line">        my ($example_job) = @{ $job_adaptor-&gt;fetch_some_by_analysis_id_limit( $analysis_id, 1 ) };</div>
+<div class="line">        print <span class="stringliteral">&quot;\t$logic_name ($analysis_id)\t\t&quot;</span>.($example_job ? <span class="stringliteral">&quot;Example input_id:   &#39;&quot;</span>.$example_job-&gt;input_id.<span class="stringliteral">&quot;&#39;&quot;</span> : <span class="stringliteral">&quot;[not populated yet]&quot;</span>).<span class="stringliteral">&quot;\n&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 

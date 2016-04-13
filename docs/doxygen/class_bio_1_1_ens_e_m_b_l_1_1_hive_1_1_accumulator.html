@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -118,7 +118,7 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-0-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator__inherit__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_inherit__map" alt="Inheritance graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_inherit__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_inherit__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,147,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html" title="Bio::EnsEMBL::Hive\l::Cacheable" alt="" coords="5,6,147,47"/><area shape="rect" id="node3" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="171,6,313,47"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div id="dynsection-1" onclick="return toggleVisibility(this)" class="dynheader closed" style="cursor:pointer;">
   <img id="dynsection-1-trigger" src="closed.png" alt="+"/> Collaboration diagram for Bio::EnsEMBL::Hive::Accumulator:</div>
@@ -127,21 +127,36 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 <div id="dynsection-1-content" class="dyncontent" style="display:none;">
 <div class="center"><img src="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator__coll__graph.png" border="0" usemap="#_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_coll__map" alt="Collaboration graph"/></div>
 <map name="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_coll__map" id="_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator_coll__map">
-<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="5,6,147,47"/></map>
+<area shape="rect" id="node2" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html" title="Bio::EnsEMBL::Hive\l::Cacheable" alt="" coords="5,6,147,47"/><area shape="rect" id="node3" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html" title="Bio::EnsEMBL::Hive\l::Storable" alt="" coords="171,6,313,47"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0a2118e2f81d95101bf4d0e69d90852a"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a0a2118e2f81d95101bf4d0e69d90852a">struct_name</a> ()</td></tr>
-<tr class="separator:a0a2118e2f81d95101bf4d0e69d90852a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9348142e49053884868319ec512435cd"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a9348142e49053884868319ec512435cd">signature_template</a> ()</td></tr>
-<tr class="separator:a9348142e49053884868319ec512435cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a208a1a838d0d34828360caa57c4c0101"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a208a1a838d0d34828360caa57c4c0101">unikey</a> ()</td></tr>
+<tr class="separator:a208a1a838d0d34828360caa57c4c0101"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96a20586ae038e28b1ca53a3b3812453"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a96a20586ae038e28b1ca53a3b3812453">accu_name</a> ()</td></tr>
+<tr class="separator:a96a20586ae038e28b1ca53a3b3812453"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7acebb7603fa8f35331ae2b93ed27a6b"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a7acebb7603fa8f35331ae2b93ed27a6b">accu_address</a> ()</td></tr>
+<tr class="separator:a7acebb7603fa8f35331ae2b93ed27a6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5ca59dde1b1f4f1dba1c9154490a23a"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#af5ca59dde1b1f4f1dba1c9154490a23a">url</a> ()</td></tr>
 <tr class="separator:af5ca59dde1b1f4f1dba1c9154490a23a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad59a96090e1abd3ec356a6dc18838378"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#ad59a96090e1abd3ec356a6dc18838378">display_name</a> ()</td></tr>
 <tr class="separator:ad59a96090e1abd3ec356a6dc18838378"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16b156d26595a7d16e0e04b60d5f6f36"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a16b156d26595a7d16e0e04b60d5f6f36">dataflow</a> ()</td></tr>
 <tr class="separator:a16b156d26595a7d16e0e04b60d5f6f36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a007c3da4f94bc7790734ed394b8a943c"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a007c3da4f94bc7790734ed394b8a943c">toString</a> ()</td></tr>
+<tr class="separator:a007c3da4f94bc7790734ed394b8a943c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html">Bio::EnsEMBL::Hive::Cacheable</a></td></tr>
+<tr class="memitem:a6b2e7b3ac51d1bf55b6e1370f5eae477 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a6b2e7b3ac51d1bf55b6e1370f5eae477">hive_pipeline</a> ()</td></tr>
+<tr class="separator:a6b2e7b3ac51d1bf55b6e1370f5eae477 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a768f78fe0927d9fdc687e0a9233ef967 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a768f78fe0927d9fdc687e0a9233ef967">is_local_to</a> ()</td></tr>
+<tr class="separator:a768f78fe0927d9fdc687e0a9233ef967 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a292bc2bb488a6cea5c7fa044a658e4bf inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a292bc2bb488a6cea5c7fa044a658e4bf">relative_display_name</a> ()</td></tr>
+<tr class="separator:a292bc2bb488a6cea5c7fa044a658e4bf inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7050959d601d20c042bc26f600a400c2 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a7050959d601d20c042bc26f600a400c2">display_name</a> ()</td></tr>
+<tr class="separator:a7050959d601d20c042bc26f600a400c2 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2faa60df1b75b8c05e08975146e35412 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a2faa60df1b75b8c05e08975146e35412">unikey</a> ()</td></tr>
+<tr class="separator:a2faa60df1b75b8c05e08975146e35412 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html">Bio::EnsEMBL::Hive::Storable</a></td></tr>
 <tr class="memitem:a52efcf0d0755525a7bc059b68442c620 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable"><td class="memItemLeft" align="right" valign="top">public <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html">Bio::EnsEMBL::Hive::Storable</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a> ()</td></tr>
 <tr class="separator:a52efcf0d0755525a7bc059b68442c620 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -163,6 +178,64 @@ Description</h1>
     This object is generated from specially designed datalow URLs.
 
 </pre> </div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a7acebb7603fa8f35331ae2b93ed27a6b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::accu_address </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-accu_address" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-accu_address-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-accu_address-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-accu_address-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a7acebb7603fa8f35331ae2b93ed27a6b">accu_address</a> {</div>
+<div class="line">    my $self = shift @_;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>(@_) {</div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_accu_address&#39;</span>} = shift @_;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_accu_address&#39;</span>};</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="a96a20586ae038e28b1ca53a3b3812453"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::accu_name </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-accu_name" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-accu_name-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-accu_name-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-accu_name-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a96a20586ae038e28b1ca53a3b3812453">accu_name</a> {</div>
+<div class="line">    my $self = shift @_;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>(@_) {</div>
+<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_accu_name&#39;</span>} = shift @_;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_accu_name&#39;</span>};</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="a16b156d26595a7d16e0e04b60d5f6f36"></a>
 <div class="memitem">
 <div class="memproto">
@@ -184,25 +257,25 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a16b156d26595a7d16e0e04b60d5f6f36">dataflow</a> {</div>
 <div class="line">    my ( $self, $output_ids, $emitting_job ) = @_;</div>
 <div class="line"></div>
-<div class="line">    my $sending_job_id      = $emitting_job-&gt;dbID();</div>
-<div class="line">    my $receiving_job_id    = $emitting_job-&gt;semaphored_job_id() || die <span class="stringliteral">&quot;No semaphored job, cannot perform accumulated dataflow&quot;</span>;</div>
+<div class="line">    my $sending_job_id      = $emitting_job-&gt;dbID;</div>
+<div class="line">    my $receiving_job_id    = $emitting_job-&gt;semaphored_job_id || die <span class="stringliteral">&quot;No semaphored job, cannot perform accumulated dataflow&quot;</span>;</div>
 <div class="line"></div>
-<div class="line">    my $struct_name         = $self-&gt;struct_name();</div>
-<div class="line">    my $signature_template  = $self-&gt;signature_template();</div>
+<div class="line">    my $accu_name           = $self-&gt;accu_name;</div>
+<div class="line">    my $accu_address        = $self-&gt;accu_address;</div>
 <div class="line"></div>
 <div class="line">    my @rows = ();</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">foreach</span> my $output_id (@$output_ids) {</div>
 <div class="line"></div>
-<div class="line">        my $key_signature = $signature_template;</div>
+<div class="line">        my $key_signature = $accu_address;</div>
 <div class="line">        $key_signature=~s/(\w+)/$emitting_job-&gt;_param_possibly_overridden($1,$output_id)/eg;</div>
 <div class="line"></div>
 <div class="line">        push @rows, {</div>
 <div class="line">            <span class="stringliteral">&#39;sending_job_id&#39;</span>    =&gt; $sending_job_id,</div>
 <div class="line">            <span class="stringliteral">&#39;receiving_job_id&#39;</span>  =&gt; $receiving_job_id,</div>
-<div class="line">            <span class="stringliteral">&#39;struct_name&#39;</span>       =&gt; $struct_name,</div>
+<div class="line">            <span class="stringliteral">&#39;struct_name&#39;</span>       =&gt; $accu_name,</div>
 <div class="line">            <span class="stringliteral">&#39;key_signature&#39;</span>     =&gt; $key_signature,</div>
-<div class="line">            <span class="stringliteral">&#39;value&#39;</span>             =&gt; stringify( $emitting_job-&gt;_param_possibly_overridden($struct_name, $output_id) ),</div>
+<div class="line">            <span class="stringliteral">&#39;value&#39;</span>             =&gt; stringify( $emitting_job-&gt;_param_possibly_overridden($accu_name, $output_id) ),</div>
 <div class="line">        };</div>
 <div class="line">    }</div>
 <div class="line"></div>
@@ -230,20 +303,18 @@ Description</h1>
 <div id='codesection-display_name-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-display_name-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#ad59a96090e1abd3ec356a6dc18838378">display_name</a> {</div>
-<div class="line">    my ($self, $ref_dba) = @_;  # <span class="keywordflow">if</span> reference dba is the same as <span class="stringliteral">&#39;my&#39;</span> dba, a shorter <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#ad59a96090e1abd3ec356a6dc18838378">display_name</a> is generated</div>
-<div class="line"></div>
-<div class="line">    my $my_dba = $self-&gt;adaptor &amp;&amp; $self-&gt;adaptor-&gt;db;</div>
-<div class="line">    <span class="keywordflow">return</span> ( ($my_dba and $my_dba ne ($ref_dba<span class="comment">//&#39;&#39;) ) ? $my_dba-&gt;dbc-&gt;dbname.&#39;/&#39; : &#39;&#39;) . $self-&gt;struct_name . $self-&gt;signature_template;</span></div>
+<div class="line">    my ($self) = @_;</div>
+<div class="line">    <span class="keywordflow">return</span> $self-&gt;accu_name . ($self-&gt;accu_address <span class="comment">// &#39;&#39;);</span></div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
-<a class="anchor" id="a9348142e49053884868319ec512435cd"></a>
+<a class="anchor" id="a007c3da4f94bc7790734ed394b8a943c"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::signature_template </td>
+          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::toString </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -251,28 +322,25 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <p>Undocumented method</p>
-<div id="codesection-signature_template" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-signature_template-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+<div id="codesection-toString" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-toString-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
-<div id='codesection-signature_template-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-signature_template-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a9348142e49053884868319ec512435cd">signature_template</a> {</div>
+<div id='codesection-toString-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-toString-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a007c3da4f94bc7790734ed394b8a943c">toString</a> {</div>
 <div class="line">    my $self = shift @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>(@_) {</div>
-<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_signature_template&#39;</span>} = shift @_;</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_signature_template&#39;</span>};</div>
+<div class="line">    <span class="keywordflow">return</span> <span class="stringliteral">&#39;Accumulator(&#39;</span> . $self-&gt;accu_name . <span class="stringliteral">&#39;&lt;--&#39;</span> . ($self-&gt;accu_address <span class="comment">// &#39;&#39;). &#39;)&#39;;</span></div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
-<a class="anchor" id="a0a2118e2f81d95101bf4d0e69d90852a"></a>
+<a class="anchor" id="a208a1a838d0d34828360caa57c4c0101"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::struct_name </td>
+          <td class="memname">public Bio::EnsEMBL::Hive::Accumulator::unikey </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -280,18 +348,13 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <p>Undocumented method</p>
-<div id="codesection-struct_name" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-struct_name-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+<div id="codesection-unikey" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-unikey-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
-<div id='codesection-struct_name-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-struct_name-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a0a2118e2f81d95101bf4d0e69d90852a">struct_name</a> {</div>
-<div class="line">    my $self = shift @_;</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>(@_) {</div>
-<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_struct_name&#39;</span>} = shift @_;</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">return</span> $self-&gt;{<span class="stringliteral">&#39;_struct_name&#39;</span>};</div>
+<div id='codesection-unikey-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-unikey-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#a208a1a838d0d34828360caa57c4c0101">unikey</a> {    # <span class="keyword">override</span> the <span class="keywordflow">default</span> from Cacheable parent</div>
+<div class="line">    <span class="keywordflow">return</span> [ <span class="stringliteral">&#39;accu_name&#39;</span>, <span class="stringliteral">&#39;accu_address&#39;</span> ];</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -318,8 +381,9 @@ Description</h1>
 <div class="line">    my ($self, $ref_dba) = @_;  # <span class="keywordflow">if</span> reference dba is the same as <span class="stringliteral">&#39;my&#39;</span> dba, a shorter <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html#af5ca59dde1b1f4f1dba1c9154490a23a">url</a> is generated</div>
 <div class="line"></div>
 <div class="line">    my $my_dba = $self-&gt;adaptor &amp;&amp; $self-&gt;adaptor-&gt;db;</div>
-<div class="line">    <span class="keywordflow">return</span> ( ($my_dba and $my_dba ne ($ref_dba<span class="comment">//&#39;&#39;) ) ? $my_dba-&gt;dbc-&gt;url : &#39;:///&#39; )</span></div>
-<div class="line">        . <span class="stringliteral">&#39;/accu?&#39;</span> . $self-&gt;struct_name . <span class="charliteral">&#39;=&#39;</span> . $self-&gt;signature_template;</div>
+<div class="line">    <span class="keywordflow">return</span> ( ($my_dba and $my_dba ne ($ref_dba<span class="comment">//&#39;&#39;) ) ? $my_dba-&gt;dbc-&gt;url : &#39;&#39; )</span></div>
+<div class="line">        . <span class="stringliteral">&#39;?accu_name=&#39;</span> . $self-&gt;accu_name</div>
+<div class="line">        . ( $self-&gt;accu_address ? <span class="stringliteral">&#39;&amp;accu_address=&#39;</span>.$self-&gt;accu_address : <span class="stringliteral">&#39;&#39;</span>);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

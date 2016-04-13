@@ -1,7 +1,7 @@
 var searchData=
 [
   ['meadow',['Meadow',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meadow.html',1,'Bio::EnsEMBL::Hive']]],
-  ['memlimittest_5fconf',['MemlimitTest_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipe_config_1_1_memlimit_test__conf.html',1,'Bio::EnsEMBL::Hive::PipeConfig']]],
+  ['memlimittest_5fconf',['MemlimitTest_conf',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_failure_test_1_1_pipe_config_1_1_memlimit_test__conf.html',1,'Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig']]],
   ['metaadaptor',['MetaAdaptor',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_meta_adaptor.html',1,'Bio::EnsEMBL::Hive::DBSQL']]],
   ['metaparameters',['MetaParameters',['../class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_meta_parameters.html',1,'Bio::EnsEMBL::Hive']]],
   ['minipecanmulti_5fconf',['MiniPecanMulti_conf',['../class_mini_pecan_multi__conf.html',1,'']]],

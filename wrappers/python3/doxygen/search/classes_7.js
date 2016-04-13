@@ -6,5 +6,5 @@ var searchData=
   ['paramnameexception',['ParamNameException',['../classe_hive_1_1_params_1_1_param_name_exception.html',1,'eHive::Params']]],
   ['paramsubstitutionexception',['ParamSubstitutionException',['../classe_hive_1_1_params_1_1_param_substitution_exception.html',1,'eHive::Params']]],
   ['paramwarning',['ParamWarning',['../classe_hive_1_1_params_1_1_param_warning.html',1,'eHive::Params']]],
-  ['partmultiply',['PartMultiply',['../class_long_mult_1_1_part_multiply_1_1_part_multiply.html',1,'LongMult::PartMultiply']]]
+  ['partmultiply',['PartMultiply',['../classe_hive_1_1examples_1_1_long_mult_1_1_part_multiply_1_1_part_multiply.html',1,'eHive::examples::LongMult::PartMultiply']]]
 ];

@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -182,6 +182,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a2d0ad25d584c63aee8a7b45d30afb0e6">data_dbc</a> ()</td></tr>
 <tr class="separator:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public Returns&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a98a23f9308eb85ce1afcbbcad687aeb1">run_system_command</a> ()</td></tr>
+<tr class="separator:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#abaf96e66f6740ec51a294e4164363166">input_job</a> ()</td></tr>
 <tr class="separator:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -329,6 +331,8 @@ Description</h1>
 <div class="line">        push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];</div>
 <div class="line">    }</div>
 <div class="line">    close FILE;</div>
+<div class="line">    my $exit = $? &gt;&gt; 8;</div>
+<div class="line">    die <span class="stringliteral">&quot;Could not read from &#39;$input_file_or_pipe&#39;. Received the error $exit\n&quot;</span> <span class="keywordflow">if</span> $exit;</div>
 <div class="line"></div>
 <div class="line">    my $column_names_from_data = $parse_header ? shift @rows : 0;</div>
 <div class="line"></div>
@@ -371,6 +375,8 @@ Description</h1>
 <div class="line">    }</div>
 <div class="line">    $sth-&gt;finish();</div>
 <div class="line"></div>
+<div class="line">    $self-&gt;data_dbc()-&gt;disconnect_if_idle();</div>
+<div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> (\@rows, \@column_names_from_data);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
@@ -395,25 +401,30 @@ Description</h1>
 <div id='codesection-_substitute_minibatched_rows-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-_substitute_minibatched_rows-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a1d866fc6d59bb185b2a7630583b6a93a">_substitute_minibatched_rows</a> {</div>
-<div class="line">    my ($self, $rows, $column_names, $step, $key_column) = @_;</div>
+<div class="line">    my ($self, $rows, $column_names, $step, $contiguous, $key_column) = @_;</div>
 <div class="line"></div>
 <div class="line">    my @ranges = ();</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">while</span>(@$rows) {</div>
 <div class="line">        my $start_row  = shift @$rows;</div>
 <div class="line">        my $range_start = $start_row-&gt;[$key_column];</div>
+<div class="line">        my @range_list  = ( $range_start );</div>
 <div class="line"></div>
 <div class="line">        my $range_end   = $range_start;</div>
 <div class="line">        my $range_count = 1;</div>
-<div class="line">        my $next_row    = $start_row; # safety, in <span class="keywordflow">case</span> the <span class="keyword">internal</span> <span class="keywordflow">while</span> doesn<span class="stringliteral">&#39;t execute even once</span></div>
+<div class="line">        my $next_row    = $start_row;   # safety, in <span class="keywordflow">case</span> the <span class="keyword">internal</span> <span class="keywordflow">while</span> doesn<span class="stringliteral">&#39;t execute even once</span></div>
+<div class="line"><span class="stringliteral">        my $last_row    = $next_row;    # last row in the current minibatch</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">        while($range_count&lt;$step &amp;&amp; @$rows) {</span></div>
 <div class="line"><span class="stringliteral">               $next_row    = shift @$rows;</span></div>
 <div class="line"><span class="stringliteral">            my $next_value  = $next_row-&gt;[$key_column];</span></div>
 <div class="line"><span class="stringliteral"></span></div>
-<div class="line"><span class="stringliteral">            my $predicted_next = $range_end;</span></div>
-<div class="line"><span class="stringliteral">            if(++$predicted_next eq $next_value) {</span></div>
-<div class="line"><span class="stringliteral">                $range_end = $next_value;</span></div>
+<div class="line"><span class="stringliteral">            my $predicted_next = $range_end;        # ++$predicted_next is used instead of ($range_end+1) as &quot;string increment&quot; to turn &#39;</span>aa<span class="stringliteral">&#39; into &#39;</span>ab<span class="stringliteral">&#39; into &#39;</span>ac<span class="stringliteral">&#39;, etc.</span></div>
+<div class="line"><span class="stringliteral">            if(!$contiguous or (++$predicted_next eq $next_value)) {</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                push @range_list, $next_value;</span></div>
+<div class="line"><span class="stringliteral">                $range_end      = $next_value;</span></div>
+<div class="line"><span class="stringliteral">                $last_row       = $next_row;</span></div>
 <div class="line"><span class="stringliteral">                $range_count++;</span></div>
 <div class="line"><span class="stringliteral">            } else {</span></div>
 <div class="line"><span class="stringliteral">                unshift @$rows, $next_row;</span></div>
@@ -425,10 +436,11 @@ Description</h1>
 <div class="line"><span class="stringliteral">            &#39;</span>_range_start<span class="stringliteral">&#39;  =&gt; $range_start,</span></div>
 <div class="line"><span class="stringliteral">            &#39;</span>_range_end<span class="stringliteral">&#39;    =&gt; $range_end,</span></div>
 <div class="line"><span class="stringliteral">            &#39;</span>_range_count<span class="stringliteral">&#39;  =&gt; $range_count,</span></div>
+<div class="line"><span class="stringliteral">            &#39;</span>_range_list<span class="stringliteral">&#39;   =&gt; \@range_list,</span></div>
 <div class="line"><span class="stringliteral"></span></div>
 <div class="line"><span class="stringliteral">            $column_names</span></div>
-<div class="line"><span class="stringliteral">                ?  map { (&#39;</span>_start_<span class="stringliteral">&#39;.$column_names-&gt;[$_] =&gt; $start_row-&gt;[$_], &#39;</span>_end_<span class="stringliteral">&#39;.$column_names-&gt;[$_] =&gt; $next_row-&gt;[$_]) } (0..scalar(@$start_row)-1)</span></div>
-<div class="line"><span class="stringliteral">                :  map { (&quot;_start_$_&quot;                   =&gt; $start_row-&gt;[$_], &quot;_end_$_&quot;                   =&gt; $next_row-&gt;[$_]) } (0..scalar(@$start_row)-1)</span></div>
+<div class="line"><span class="stringliteral">                ?  map { (&#39;</span>_start_<span class="stringliteral">&#39;.$column_names-&gt;[$_] =&gt; $start_row-&gt;[$_], &#39;</span>_end_<span class="stringliteral">&#39;.$column_names-&gt;[$_] =&gt; $last_row-&gt;[$_]) } (0..scalar(@$start_row)-1)</span></div>
+<div class="line"><span class="stringliteral">                :  map { (&quot;_start_$_&quot;                   =&gt; $start_row-&gt;[$_], &quot;_end_$_&quot;                   =&gt; $last_row-&gt;[$_]) } (0..scalar(@$start_row)-1)</span></div>
 <div class="line"><span class="stringliteral">        };</span></div>
 <div class="line"><span class="stringliteral">        push @ranges, $job_range;</span></div>
 <div class="line"><span class="stringliteral">    }</span></div>
@@ -496,6 +508,7 @@ Description</h1>
 <div class="line">        <span class="stringliteral">&#39;delimiter&#39;</span>         =&gt; undef,</div>
 <div class="line">        <span class="stringliteral">&#39;randomize&#39;</span>         =&gt; 0,</div>
 <div class="line">        <span class="stringliteral">&#39;step&#39;</span>              =&gt; 0,</div>
+<div class="line">        <span class="stringliteral">&#39;contiguous&#39;</span>        =&gt; 0,</div>
 <div class="line">        <span class="stringliteral">&#39;key_column&#39;</span>        =&gt; 0,</div>
 <div class="line">        <span class="stringliteral">&#39;input_id&#39;</span>          =&gt; 0,   # <span class="keyword">this</span> parameter is no longer supported and should stay at 0</div>
 <div class="line"></div>
@@ -505,6 +518,8 @@ Description</h1>
 <div class="line">        <span class="stringliteral">&#39;inputcmd&#39;</span>          =&gt; undef,</div>
 <div class="line"></div>
 <div class="line">        <span class="stringliteral">&#39;fan_branch_code&#39;</span>   =&gt; 2,</div>
+<div class="line"></div>
+<div class="line">        <span class="stringliteral">&#39;use_bash_pipefail&#39;</span> =&gt; 0,           # Boolean. When <span class="keyword">true</span>, the command will be <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a8f3a3f15b7d15493a3e0522a27a2edf5">run</a> with <span class="stringliteral">&quot;bash -o pipefail -c $cmd&quot;</span>. Useful to capture errors in a command that contains pipes</div>
 <div class="line">    };</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
@@ -523,7 +538,7 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <pre>
-    Description : Implements <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a8f3a3f15b7d15493a3e0522a27a2edf5">run()</a> interface method of <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html">Bio::EnsEMBL::Hive::Process</a> that is used to perform the main bulk of the job (minus input and output).</pre><pre>    param('column_names'):  Controls the column names that come out of the parser: 0 = "no names", 1 = "parse names from data", arrayref = "take names from this array"</pre><pre>    param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the input_id_template hash.</pre><pre>    param('randomize'): Shuffles the rows before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step&gt;1).</pre><pre>    param('step'):      The requested size of the minibatch (1 by default). The real size of a range may be smaller than the requested size.</pre><pre>    param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
+    Description : Implements <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a8f3a3f15b7d15493a3e0522a27a2edf5">run()</a> interface method of <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html">Bio::EnsEMBL::Hive::Process</a> that is used to perform the main bulk of the job (minus input and output).</pre><pre>    param('column_names'):  Controls the column names that come out of the parser: 0 = "no names", 1 = "parse names from data", arrayref = "take names from this array"</pre><pre>    param('delimiter'): If you set it your lines in file/cmd mode will be split into columns that you can use individually when constructing the input_id_template hash.</pre><pre>    param('randomize'): Shuffles the rows before creating jobs - can sometimes lead to better overall performance of the pipeline. Doesn't make any sence for minibatches (step&gt;1).</pre><pre>    param('step'):      The requested size of the minibatch (1 by default). The real size of a range may be smaller than the requested size.</pre><pre>    param('contiguous'): Whether the key_column range of each minibatch should be contiguous (0 by default).</pre><pre>    param('key_column'): If every line of your input is a list (it happens, for example, when your SQL returns multiple columns or you have set the 'delimiter' in file/cmd mode)
                          this is the way to say which column is undergoing 'ranging'</pre><pre>        # The following 4 parameters are mutually exclusive and define the source of ids for the jobs:</pre><pre>    param('inputlist');  The list is explicitly given in the parameters, can be abbreviated: 'inputlist' =&gt; ['a'..'z']</pre><pre>    param('inputfile');  The list is contained in a file whose name is supplied as parameter: 'inputfile' =&gt; 'myfile.txt'</pre><pre>    param('inputquery'); The list is generated by an SQL query (against the production database by default) : 'inputquery' =&gt; 'SELECT object_id FROM object WHERE x=y'</pre><pre>    param('inputcmd');   The list is generated by running a system command: 'inputcmd' =&gt; 'find /tmp/big_directory -type f'</pre><pre> </pre><div id="codesection-run" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-run-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
@@ -539,6 +554,7 @@ Description</h1>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # minibatching-related:</span></div>
 <div class="line"><span class="preprocessor"></span>    my $step            = $self-&gt;param(<span class="stringliteral">&#39;step&#39;</span>);</div>
+<div class="line">    my $contiguous      = $self-&gt;param(<span class="stringliteral">&#39;contiguous&#39;</span>);</div>
 <div class="line">    my $key_column      = $self-&gt;param(<span class="stringliteral">&#39;key_column&#39;</span>);</div>
 <div class="line"></div>
 <div class="line">    my $inputlist       = $self-&gt;param(<span class="stringliteral">&#39;inputlist&#39;</span>);</div>
@@ -552,7 +568,7 @@ Description</h1>
 <div class="line">              $inputlist    ? $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a046e795740452e442df65849921da767">_get_rows_from_list</a>(  $inputlist  )</div>
 <div class="line">            : $inputquery   ? $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#a66dd4176925958a32b1e09ec6b381f6e">_get_rows_from_query</a>( $inputquery )</div>
 <div class="line">            : $inputfile    ? $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#ac5c6183dcd03bbfdb054253cbd4b7405">_get_rows_from_open</a>(  $inputfile  , $delimiter, $parse_column_names )</div>
-<div class="line">            : $inputcmd     ? $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#ac5c6183dcd03bbfdb054253cbd4b7405">_get_rows_from_open</a>( &quot;$inputcmd |&quot;, $delimiter, $parse_column_names )</div>
+<div class="line">            : $inputcmd     ? $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_job_factory.html#ac5c6183dcd03bbfdb054253cbd4b7405">_get_rows_from_open</a>( ($self-&gt;param(&#39;use_bash_pipefail&#39;) ? &#39;set -o pipefail; &#39;: &#39;&#39;).&quot;$inputcmd |&quot;, $delimiter, $parse_column_names )</div>
 <div class="line">            : die &quot;range of values should be defined by setting &#39;inputlist&#39;, &#39;inputquery&#39;, &#39;inputfile&#39; or &#39;inputcmd&#39;&quot;;</div>
 <div class="line"></div>
 <div class="line">    if( $column_names_from_data                                             <span class="preprocessor"># column data is available</span></div>
@@ -571,7 +587,7 @@ Description</h1>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    my $output_ids = $step</div>
-<div class="line">        ? $self-&gt;_substitute_minibatched_rows($rows, $column_names, $step, $key_column)</div>
+<div class="line">        ? $self-&gt;_substitute_minibatched_rows($rows, $column_names, $step, $contiguous, $key_column)</div>
 <div class="line">        : $self-&gt;_substitute_rows($rows, $column_names);</div>
 <div class="line"></div>
 <div class="line">    $self-&gt;param(<span class="stringliteral">&#39;output_ids&#39;</span>, $output_ids);</div>

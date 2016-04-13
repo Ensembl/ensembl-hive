@@ -1,0 +1,4 @@
+<map id="eHive.examples.LongMult.AddTogether.AddTogether.fetch_input" name="eHive.examples.LongMult.AddTogether.AddTogether.fetch_input">
+<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#a49c5b1633c7c62d7cd7d893a68390082" title="Returns the value of the parameter &quot;param_name&quot; or raises an exception if anything wrong happens..." alt="" coords="304,5,544,46"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#aef94af8ebb478c65e2782c92e5d81d37" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="304,71,544,97"/>
+</map>

@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -185,12 +185,6 @@ Bio::EnsEMBL::DBSQL::DBConnection&#160;</td><td class="memItemRight" valign="bot
 <tr class="separator:a3c086bf7eca0f812311bf381c862e5c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a9d2cfe84a134fdf678ba566582bf5f"><td class="memItemLeft" align="right" valign="top">public Boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a4a9d2cfe84a134fdf678ba566582bf5f">disconnect_if_idle</a> ()</td></tr>
 <tr class="separator:a4a9d2cfe84a134fdf678ba566582bf5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a646a94723dda7c144400a87c67816e68"><td class="memItemLeft" align="right" valign="top">public SQLStatement&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a646a94723dda7c144400a87c67816e68">add_limit_clause</a> ()</td></tr>
-<tr class="separator:a646a94723dda7c144400a87c67816e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3d9aebeba7a86e48cc7c1ebe2934b27"><td class="memItemLeft" align="right" valign="top">public String&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27">from_date_to_seconds</a> ()</td></tr>
-<tr class="separator:aa3d9aebeba7a86e48cc7c1ebe2934b27"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7abaf113d8686eaa7112c6fe9616dd99"><td class="memItemLeft" align="right" valign="top">public String&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99">from_seconds_to_date</a> ()</td></tr>
-<tr class="separator:a7abaf113d8686eaa7112c6fe9616dd99"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h1><a class="anchor" id="Synopsis"></a>
@@ -223,55 +217,6 @@ Generally this class will be used through one of the object adaptors or
 the Bio::EnsEMBL::Registry and will not be instantiated directly.
 
 </pre> </div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a646a94723dda7c144400a87c67816e68"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public SQLStatement Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection::add_limit_clause </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<pre>
-  Arg [1]    : string $sql
-  Arg [2]    : int $max_number
-  Example    :</pre><div class="fragment"><div class="line">my $new_sql = $dbc-&gt;add_limit_clause($sql,$max_number);</div>
-</div><!-- fragment --> <pre>  Description: Giving an SQL statement, it adds a limit clause, dependent on the database 
-               (in MySQL, should add a LIMIT at the end, MSSQL uses a TOP clause)                                    
-  Returntype : String containing the new valid SQL statement        
-  Exceptions : none
-  Caller     : general
-  Status     : at risk</pre><pre> </pre><div id="codesection-add_limit_clause" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-add_limit_clause-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-add_limit_clause-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-add_limit_clause-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a646a94723dda7c144400a87c67816e68">add_limit_clause</a>{</div>
-<div class="line">    my $self = shift;</div>
-<div class="line">    my $sql = shift;</div>
-<div class="line">    my $max_number = shift;</div>
-<div class="line"></div>
-<div class="line">    my $new_sql = <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">    <span class="keywordflow">if</span> ($self-&gt;driver eq <span class="stringliteral">&#39;mysql&#39;</span>){</div>
-<div class="line">        $new_sql = $sql . <span class="stringliteral">&#39; LIMIT &#39;</span> . $max_number;</div>
-<div class="line">    }</div>
-<div class="line">    elsif ($self-&gt;driver eq <span class="stringliteral">&#39;odbc&#39;</span>){</div>
-<div class="line"><span class="preprocessor">        #need to get anything after the SELECT statement</span></div>
-<div class="line"><span class="preprocessor"></span>        $sql =~ /select(.*)/i;</div>
-<div class="line">        $new_sql = <span class="stringliteral">&#39;SELECT TOP &#39;</span> . $max_number . $1;</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">else</span>{</div>
-<div class="line">        warn(<span class="stringliteral">&quot;Not possible to convert $sql to an unknow database driver: &quot;</span>, $self-&gt;driver, <span class="stringliteral">&quot; no limit applied&quot;</span>);</div>
-<div class="line">        $new_sql = $sql;</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">return</span> $new_sql;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
 <a class="anchor" id="a06a88cf2f46772a4b1a5d780ffcb4242"></a>
 <div class="memitem">
 <div class="memproto">
@@ -645,7 +590,7 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
                many (often inactive) open connections to a database at once.
   Returntype : boolean
   Exceptions : none
-  Caller     : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html">Pipeline</a>
+  Caller     : Pipeline
   Status     : Stable</pre><pre> </pre><div id="codesection-disconnect_when_inactive" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-disconnect_when_inactive-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
@@ -792,118 +737,6 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
 <div class="line">  );</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordflow">return</span> $return;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
-<a class="anchor" id="aa3d9aebeba7a86e48cc7c1ebe2934b27"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public String Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection::from_date_to_seconds </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<pre>
-  Arg [1]    : date $date
-  Example    :</pre><div class="fragment"><div class="line">my $string = $dbc-&gt;from_date_to_seconds($date);</div>
-</div><!-- fragment --> <pre>  Description: Giving a string representing a column of type date 
-                applies the database function to convert to the number of seconds from 01-01-1970
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : at risk</pre><pre> </pre><div id="codesection-from_date_to_seconds" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-from_date_to_seconds-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-from_date_to_seconds-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-from_date_to_seconds-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27">from_date_to_seconds</a>{</div>
-<div class="line">    my $self=  shift;</div>
-<div class="line">    my $column = shift;</div>
-<div class="line"></div>
-<div class="line">    my $string;</div>
-<div class="line">    <span class="keywordflow">if</span> ($self-&gt;driver eq <span class="stringliteral">&#39;mysql&#39;</span>){</div>
-<div class="line">        $string = <span class="stringliteral">&quot;UNIX_TIMESTAMP($column)&quot;</span>;</div>
-<div class="line">    }</div>
-<div class="line">    elsif ($self-&gt;driver eq <span class="stringliteral">&#39;odbc&#39;</span>){</div>
-<div class="line">        $string = <span class="stringliteral">&quot;DATEDIFF(second,&#39;JAN 1 1970&#39;,$column)&quot;</span>;</div>
-<div class="line">    }</div>
-<div class="line">    elsif ($self-&gt;driver eq <span class="stringliteral">&#39;SQLite&#39;</span>){</div>
-<div class="line">        $string = <span class="stringliteral">&quot;STRFTIME(&#39;%s&#39;, $column)&quot;</span>;</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">else</span>{</div>
-<div class="line">        warn(<span class="stringliteral">&quot;Not possible to convert $column due to an unknown database driver: &quot;</span>, $self-&gt;driver);</div>
-<div class="line">        <span class="keywordflow">return</span> <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">    }    </div>
-<div class="line">    <span class="keywordflow">return</span> $string;</div>
-<div class="line">}</div>
-</div><!-- fragment --> </div> 
-</div>
-</div>
-<a class="anchor" id="a7abaf113d8686eaa7112c6fe9616dd99"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">public String Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection::from_seconds_to_date </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<pre>
-  Arg [1]    : int $seconds
-  Example    :</pre><div class="fragment"><div class="line">my $string = $dbc-&gt;from_seconds_to_date($seconds);</div>
-</div><!-- fragment --> <pre>  Description: Giving an int representing number of seconds
-                applies the database function to convert to a date 
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : at risk</pre><pre> </pre><div id="codesection-from_seconds_to_date" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
-    <img id='codesection-from_seconds_to_date-trigger' src='closed.png' style='display:inline'><b>Code:</b>
-</div>
-<div id='codesection-from_seconds_to_date-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
-<div id='codesection-from_seconds_to_date-content' class='dyncontent' style='display: none;'> 
- <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99">from_seconds_to_date</a>{</div>
-<div class="line">    my $self=  shift;</div>
-<div class="line">    my $seconds = shift;</div>
-<div class="line"></div>
-<div class="line">    my $string;</div>
-<div class="line">    <span class="keywordflow">if</span> ($self-&gt;driver eq <span class="stringliteral">&#39;mysql&#39;</span>){</div>
-<div class="line">        <span class="keywordflow">if</span> ($seconds){</div>
-<div class="line">            $string = <span class="stringliteral">&quot;from_unixtime( &quot;</span>.$seconds.<span class="stringliteral">&quot;)&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">        <span class="keywordflow">else</span>{</div>
-<div class="line">            $string = <span class="stringliteral">&quot;\&quot;0000-00-00 00:00:00\&quot;&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
-<div class="line">    elsif ($self-&gt;driver eq <span class="stringliteral">&#39;odbc&#39;</span>){</div>
-<div class="line">        <span class="keywordflow">if</span> ($seconds){</div>
-<div class="line">            $string = <span class="stringliteral">&quot;DATEDIFF(date,&#39;JAN 1 1970&#39;,$seconds)&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">        <span class="keywordflow">else</span>{</div>
-<div class="line">            $string = <span class="stringliteral">&quot;\&quot;0000-00-00 00:00:00\&quot;&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
-<div class="line">    elsif ($self-&gt;driver eq <span class="stringliteral">&#39;SQLite&#39;</span>){</div>
-<div class="line">        <span class="keywordflow">if</span> ($seconds){</div>
-<div class="line">            $string = <span class="stringliteral">&quot;DATETIME($seconds)&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">        <span class="keywordflow">else</span>{</div>
-<div class="line">            $string = <span class="stringliteral">&quot;\&quot;0000-00-00 00:00:00\&quot;&quot;</span>;</div>
-<div class="line">        }</div>
-<div class="line">    }</div>
-<div class="line">    <span class="keywordflow">else</span>{</div>
-<div class="line">        warn(<span class="stringliteral">&quot;Not possible to convert $seconds due to an unknown database driver: &quot;</span>, $self-&gt;driver);</div>
-<div class="line">        <span class="keywordflow">return</span> <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line"></div>
-<div class="line">    }    </div>
-<div class="line">    <span class="keywordflow">return</span> $string;</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -1298,21 +1131,14 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
 <div class="line">     <span class="keywordflow">throw</span>(<span class="stringliteral">&quot;Attempting to prepare an empty SQL query.&quot;</span>);</div>
 <div class="line">   }</div>
 <div class="line"></div>
-<div class="line"><span class="preprocessor">   #warn &quot;SQL(&quot;.$self-&gt;dbname.&quot;):&quot; . join(&#39; &#39;, @args) . &quot;\n&quot;;</span></div>
+<div class="line"><span class="preprocessor">   #warn &quot;SQL(&quot;.$self-&gt;dbname.&quot;): &quot; . join(&#39; &#39;, @args) . &quot;\n&quot;;</span></div>
 <div class="line"><span class="preprocessor"></span>   <span class="keywordflow">if</span> ( ($self-&gt;reconnect_when_lost()) and (!$self-&gt;db_handle()-&gt;ping()) ) { </div>
 <div class="line">       $self-&gt;reconnect();</div>
 <div class="line">   }</div>
-<div class="line">   my $sth = $self-&gt;db_handle-&gt;prepare(@args);</div>
-<div class="line"></div>
-<div class="line"><span class="preprocessor">   # return an overridden statement handle that provides us with</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">   # the means to disconnect inactive statement handles automatically</span></div>
-<div class="line"><span class="preprocessor"></span>   bless $sth, <span class="stringliteral">&quot;Bio::EnsEMBL::Hive::DBSQL::StatementHandle&quot;</span>;</div>
-<div class="line">   $sth-&gt;dbc($self);</div>
-<div class="line">   $sth-&gt;sql($args[0]);</div>
-<div class="line"></div>
-<div class="line">   $self-&gt;query_count($self-&gt;query_count()+1);</div>
-<div class="line">   <span class="keywordflow">return</span> $sth;</div>
-<div class="line">}</div>
+<div class="line">   my $sth;</div>
+<div class="line">   eval {</div>
+<div class="line">       $sth = $self-&gt;db_handle-&gt;prepare(@args);</div>
+<div class="line">       1;</div>
 </div><!-- fragment --> </div> 
 </div>
 </div>
@@ -1451,7 +1277,7 @@ the Bio::EnsEMBL::Registry and will not be instantiated directly.
                connection may be lost.
   Returntype : boolean
   Exceptions : none
-  Caller     : <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_pipeline.html">Pipeline</a>
+  Caller     : Pipeline
   Status     : Stable</pre><pre> </pre><div id="codesection-reconnect_when_lost" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-reconnect_when_lost-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>

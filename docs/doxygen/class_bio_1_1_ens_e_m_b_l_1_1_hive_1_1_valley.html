@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -140,6 +140,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3d03fc09525b8349ab06bff8e387686e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a77f0a0b7a8de56d43c0271065bef6ebe"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a77f0a0b7a8de56d43c0271065bef6ebe">get_available_meadow_list</a> ()</td></tr>
 <tr class="separator:a77f0a0b7a8de56d43c0271065bef6ebe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1aee9cdb9d663df0d2704727f9cbb51"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#ad1aee9cdb9d663df0d2704727f9cbb51">get_implemented_meadow_list</a> ()</td></tr>
+<tr class="separator:ad1aee9cdb9d663df0d2704727f9cbb51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af85407f558029e59470a282e82c4f8ad"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#af85407f558029e59470a282e82c4f8ad">set_default_meadow_type</a> ()</td></tr>
 <tr class="separator:af85407f558029e59470a282e82c4f8ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80eeade51960beb35d31f35cf61f4c79"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a80eeade51960beb35d31f35cf61f4c79">get_default_meadow</a> ()</td></tr>
@@ -329,6 +331,31 @@ Description</h1>
 </div><!-- fragment --> </div> 
 </div>
 </div>
+<a class="anchor" id="ad1aee9cdb9d663df0d2704727f9cbb51"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::Valley::get_implemented_meadow_list </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-get_implemented_meadow_list" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-get_implemented_meadow_list-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-get_implemented_meadow_list-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-get_implemented_meadow_list-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#ad1aee9cdb9d663df0d2704727f9cbb51">get_implemented_meadow_list</a> {</div>
+<div class="line">    my $self = shift @_;</div>
+<div class="line">    <span class="keywordflow">return</span> find_submodules( $self-&gt;meadow_class_path );</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="aee959b792ccd1f79a3edb5e0f53cd38b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -418,7 +445,7 @@ Description</h1>
 <div class="line">    my $amh = $self-&gt;available_meadow_hash( {} );</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">        # make sure modules are loaded and available ones are checked prior to setting the current one</span></div>
-<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">foreach</span> my $meadow_class (@{ find_submodules( $self-&gt;meadow_class_path ) }) {</div>
+<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">foreach</span> my $meadow_class (@{ $self-&gt;get_implemented_meadow_list }) {</div>
 <div class="line">        eval <span class="stringliteral">&quot;require $meadow_class&quot;</span>;</div>
 <div class="line">        <span class="keywordflow">if</span>( $meadow_class-&gt;name ) {</div>
 <div class="line">            my $meadow_object            = $meadow_class-&gt;new( $config );</div>

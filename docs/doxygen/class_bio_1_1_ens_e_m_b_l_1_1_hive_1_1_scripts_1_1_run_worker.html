@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -116,8 +116,82 @@ $(document).ready(function(){initNavTree('class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1
 Public Member Functions</h2></td></tr>
 <tr class="memitem:ab18652111ead2fcde6332f271e47237f"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#ab18652111ead2fcde6332f271e47237f">runWorker</a> ()</td></tr>
 <tr class="separator:ab18652111ead2fcde6332f271e47237f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18f1d9de0460582b4b6eeb2fec7e515c"><td class="memItemLeft" align="right" valign="top">protected&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#a18f1d9de0460582b4b6eeb2fec7e515c">_update_resource_usage</a> ()</td></tr>
+<tr class="separator:a18f1d9de0460582b4b6eeb2fec7e515c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a18f1d9de0460582b4b6eeb2fec7e515c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">protected Bio::EnsEMBL::Hive::Scripts::RunWorker::_update_resource_usage </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Undocumented method</p>
+<div id="codesection-_update_resource_usage" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-_update_resource_usage-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-_update_resource_usage-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-_update_resource_usage-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#a18f1d9de0460582b4b6eeb2fec7e515c">_update_resource_usage</a> {</div>
+<div class="line">    my ($worker, $worker_stopwatch, $exception_status) = @_;</div>
+<div class="line"></div>
+<div class="line">    $worker_stopwatch-&gt;pause();</div>
+<div class="line">    my $resource_usage;</div>
+<div class="line">    eval {</div>
+<div class="line"><span class="preprocessor">        # Try BSD::Resource if present</span></div>
+<div class="line"><span class="preprocessor"></span>        my $res_self;</div>
+<div class="line">        my $res_child;</div>
+<div class="line"><span class="preprocessor">        # NOTE: I couldn&#39;t find a way of require-ing the module and getting</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">        # the barewords RUSAGE_* imported</span></div>
+<div class="line"><span class="preprocessor"></span>        eval q{</div>
+<div class="line">            use BSD::Resource;</div>
+<div class="line">            $res_self = BSD::Resource::getrusage(RUSAGE_SELF);</div>
+<div class="line">            $res_child = BSD::Resource::getrusage(RUSAGE_CHILDREN);</div>
+<div class="line">            };</div>
+<div class="line">        <span class="keywordflow">return</span> 0 <span class="keywordflow">if</span> $@;</div>
+<div class="line">        $resource_usage = {</div>
+<div class="line">            <span class="stringliteral">&#39;exit_status&#39;</span>   =&gt; <span class="stringliteral">&#39;done&#39;</span>,</div>
+<div class="line">            <span class="stringliteral">&#39;mem_megs&#39;</span>      =&gt; ($res_self-&gt;maxrss + $res_child-&gt;maxrss) / 1024.,</div>
+<div class="line">            <span class="stringliteral">&#39;swap_megs&#39;</span>     =&gt; undef,</div>
+<div class="line">            <span class="stringliteral">&#39;pending_sec&#39;</span>   =&gt; 0,</div>
+<div class="line">            <span class="stringliteral">&#39;cpu_sec&#39;</span>       =&gt; $res_self-&gt;utime + $res_self-&gt;stime + $res_child-&gt;utime + $res_child-&gt;stime,</div>
+<div class="line">            <span class="stringliteral">&#39;lifespan_sec&#39;</span>  =&gt; $worker_stopwatch-&gt;get_elapsed(),</div>
+<div class="line">            <span class="stringliteral">&#39;exception_status&#39;</span> =&gt; $exception_status,</div>
+<div class="line">        };</div>
+<div class="line"></div>
+<div class="line">    } or eval {</div>
+<div class="line"><span class="preprocessor">        # Unix::Getrusage otherwise</span></div>
+<div class="line"><span class="preprocessor"></span>        require Unix::Getrusage;</div>
+<div class="line">        my $res_self = Unix::Getrusage::getrusage();</div>
+<div class="line">        my $res_child = Unix::Getrusage::getrusage_children();</div>
+<div class="line">        $resource_usage = {</div>
+<div class="line">            <span class="stringliteral">&#39;exit_status&#39;</span>   =&gt; <span class="stringliteral">&#39;done&#39;</span>,</div>
+<div class="line">            <span class="stringliteral">&#39;mem_megs&#39;</span>      =&gt; ($res_self-&gt;{ru_maxrss} + $res_child-&gt;{ru_maxrss}) / 1024.,</div>
+<div class="line">            <span class="stringliteral">&#39;swap_megs&#39;</span>     =&gt; undef,</div>
+<div class="line">            <span class="stringliteral">&#39;pending_sec&#39;</span>   =&gt; 0,</div>
+<div class="line">            <span class="stringliteral">&#39;cpu_sec&#39;</span>       =&gt; $res_self-&gt;{ru_utime} + $res_self-&gt;{ru_stime} + $res_child-&gt;{ru_utime} + $res_child-&gt;{ru_stime},</div>
+<div class="line">            <span class="stringliteral">&#39;lifespan_sec&#39;</span>  =&gt; $worker_stopwatch-&gt;get_elapsed(),</div>
+<div class="line">            <span class="stringliteral">&#39;exception_status&#39;</span> =&gt; $exception_status,</div>
+<div class="line">        };</div>
+<div class="line">    };</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">    # Store the data if one of the above calls was successful</span></div>
+<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ($resource_usage) {</div>
+<div class="line">        $worker-&gt;adaptor-&gt;store_resource_usage(</div>
+<div class="line">            {$worker-&gt;process_id =&gt; $resource_usage},</div>
+<div class="line">            {$worker-&gt;process_id =&gt; $worker-&gt;dbID},</div>
+<div class="line">        );</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
 <a class="anchor" id="ab18652111ead2fcde6332f271e47237f"></a>
 <div class="memitem">
 <div class="memproto">
@@ -137,7 +211,13 @@ Public Member Functions</h2></td></tr>
 <div id='codesection-runWorker-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
 <div id='codesection-runWorker-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#ab18652111ead2fcde6332f271e47237f">runWorker</a> {</div>
-<div class="line">    my ($hive_dba, $specialization_options, $life_options, $execution_options) = @_;</div>
+<div class="line">    my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;</div>
+<div class="line"></div>
+<div class="line">    my $worker_stopwatch = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html">Bio::EnsEMBL::Hive::Utils::Stopwatch</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_stopwatch.html#a1cbc5b3e6c40f0a5862e55e228dc34a3">new</a>();</div>
+<div class="line">    $worker_stopwatch-&gt;_unit(1); # lifespan_sec is in seconds</div>
+<div class="line">    $worker_stopwatch-&gt;restart();</div>
+<div class="line"></div>
+<div class="line">    my $hive_dba = $pipeline-&gt;hive_dba;</div>
 <div class="line"></div>
 <div class="line">    die <span class="stringliteral">&quot;Hive&#39;s DBAdaptor is not a defined Bio::EnsEMBL::Hive::DBSQL::DBAdaptor\n&quot;</span> unless $hive_dba and $hive_dba-&gt;isa(<span class="stringliteral">&#39;Bio::EnsEMBL::Hive::DBSQL::DBAdaptor&#39;</span>);</div>
 <div class="line"></div>
@@ -151,22 +231,11 @@ Public Member Functions</h2></td></tr>
 <div class="line">    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html">Bio::EnsEMBL::Hive::Valley</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_valley.html#a51140e4714459dccef65cb34d97bfe13">new</a>()-&gt;whereami();</div>
 <div class="line">    die <span class="stringliteral">&quot;Valley is not fully defined&quot;</span> unless ($meadow_type &amp;&amp; $meadow_name &amp;&amp; $process_id &amp;&amp; $meadow_host &amp;&amp; $meadow_user);</div>
 <div class="line"></div>
-<div class="line"><span class="preprocessor">        #       preloading all Analysis objects now:</span></div>
-<div class="line"><span class="preprocessor"></span>    <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>( <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html">Bio::EnsEMBL::Hive::Utils::Collection</a>-&gt;<span class="keyword">new</span>( $hive_dba-&gt;get_AnalysisAdaptor-&gt;fetch_all ) );</div>
-<div class="line"><span class="preprocessor">        #</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">        #       and all AnalysisStats objects as well:</span></div>
-<div class="line"><span class="preprocessor"></span>    <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_stats.html">Bio::EnsEMBL::Hive::AnalysisStats</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>( <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html">Bio::EnsEMBL::Hive::Utils::Collection</a>-&gt;<span class="keyword">new</span>( $hive_dba-&gt;get_AnalysisStatsAdaptor-&gt;fetch_all ) );</div>
-<div class="line"><span class="preprocessor">        #</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">        #       and all DataflowRule objects too:</span></div>
-<div class="line"><span class="preprocessor"></span>    <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_dataflow_rule.html">Bio::EnsEMBL::Hive::DataflowRule</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>( <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_collection.html">Bio::EnsEMBL::Hive::Utils::Collection</a>-&gt;<span class="keyword">new</span>( $hive_dba-&gt;get_DataflowRuleAdaptor-&gt;fetch_all ) );</div>
-<div class="line"></div>
-<div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( $specialization_options-&gt;{<span class="stringliteral">&#39;force_sync&#39;</span>} ) {       # sync the Hive in Test mode:</div>
-<div class="line">        my $list_of_analyses = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis.html">Bio::EnsEMBL::Hive::Analysis</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_cacheable.html#a1c4430cb41931838b7bcf32ddc0e76a6">collection</a>()-&gt;find_all_by_pattern( $specialization_options-&gt;{<span class="stringliteral">&#39;analyses_pattern&#39;</span>} );</div>
+<div class="line">        my $list_of_analyses = $pipeline-&gt;collection_of(<span class="stringliteral">&#39;Analysis&#39;</span>)-&gt;find_all_by_pattern( $specialization_options-&gt;{<span class="stringliteral">&#39;analyses_pattern&#39;</span>} );</div>
 <div class="line"></div>
 <div class="line">        $queen-&gt;synchronize_hive( $list_of_analyses );</div>
 <div class="line">    }</div>
-<div class="line"></div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">    # Create the worker</span></div>
 <div class="line"><span class="preprocessor"></span>    my $worker = $queen-&gt;create_new_worker(</div>
@@ -201,6 +270,7 @@ Public Member Functions</h2></td></tr>
 <div class="line">             -job_id                =&gt; $specialization_options-&gt;{<span class="stringliteral">&#39;job_id&#39;</span>},</div>
 <div class="line">             -force                 =&gt; $specialization_options-&gt;{<span class="stringliteral">&#39;force&#39;</span>},</div>
 <div class="line">        } );</div>
+<div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scripts_1_1_run_worker.html#a18f1d9de0460582b4b6eeb2fec7e515c">_update_resource_usage</a>($worker, $worker_stopwatch);</div>
 <div class="line">        1;</div>
 </div><!-- fragment --> </div> 
 </div>

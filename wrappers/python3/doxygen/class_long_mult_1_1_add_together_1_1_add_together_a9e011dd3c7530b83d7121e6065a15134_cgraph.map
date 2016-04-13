@@ -1,5 +1,0 @@
-<map id="LongMult.AddTogether.AddTogether.run" name="LongMult.AddTogether.AddTogether.run">
-<area shape="rect" id="node2" href="$classe_hive_1_1_process_1_1_base_runnable.html#a49c5b1633c7c62d7cd7d893a68390082" title="Returns the value of the parameter &quot;param_name&quot; or raises an exception if anything wrong happens..." alt="" coords="240,5,480,46"/>
-<area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#aef94af8ebb478c65e2782c92e5d81d37" title="When called as a setter: sets the value of the parameter &quot;param_name&quot;. " alt="" coords="240,71,480,97"/>
-<area shape="rect" id="node4" href="$namespace_long_mult_1_1_add_together.html#a69a223a80f8c87227138d66aa57ed0aa" title="LongMult.AddTogether.add\l_together" alt="" coords="268,122,452,163"/>
-</map>

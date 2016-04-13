@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive-python3
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -115,7 +115,7 @@ $(document).ready(function(){initNavTree('_process_8py_source.html','');});
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="keyword">import</span> warnings</div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="keyword">import</span> traceback</div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;</div>
-<div class="line"><a name="l00011"></a><span class="lineno"><a class="line" href="namespacee_hive_1_1_process.html#ab7a19c19c7438eadf82e7f8ca22bb6a6">   11</a></span>&#160;__version__ = <span class="stringliteral">&quot;0.1&quot;</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno"><a class="line" href="namespacee_hive_1_1_process.html#ab7a19c19c7438eadf82e7f8ca22bb6a6">   11</a></span>&#160;__version__ = <span class="stringliteral">&quot;0.2&quot;</span></div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
 <div class="line"><a name="l00013"></a><span class="lineno"><a class="line" href="namespacee_hive_1_1_process.html#aad991b4e548ab9e598e363431749cc2d">   13</a></span>&#160;__doc__ = <span class="stringliteral">&quot;&quot;&quot;</span></div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="stringliteral">This module mainly implements python&#39;s counterpart of GuestProcess. Read</span></div>
@@ -305,7 +305,7 @@ $(document).ready(function(){initNavTree('_process_8py_source.html','');});
 <div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        <span class="keywordflow">if</span> branch_name_or_code == 1:</div>
 <div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;            self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#ae190e1887f247a0408634544d9d7014f">autoflow</a> = <span class="keyword">False</span></div>
 <div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;        self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a463f8fe480a9aeebec35cb0ec486b362">__send_message</a>(<span class="stringliteral">&#39;DATAFLOW&#39;</span>, {<span class="stringliteral">&#39;output_ids&#39;</span>: output_ids, <span class="stringliteral">&#39;branch_name_or_code&#39;</span>: branch_name_or_code, <span class="stringliteral">&#39;params&#39;</span>: {<span class="stringliteral">&#39;substituted&#39;</span>: self.__params.param_hash, <span class="stringliteral">&#39;unsubstituted&#39;</span>: self.__params.unsubstituted_param_hash}})</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;        <span class="keywordflow">return</span> self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e">__read_message</a>()</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;        <span class="keywordflow">return</span> self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e">__read_message</a>()[<span class="stringliteral">&#39;response&#39;</span>]</div>
 <div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;</div>
 <div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    <span class="keyword">def </span><a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#aa4d37984c3b82369705632c03d33f3b8">worker_temp_directory</a>(self):</div>
 <div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;        <span class="stringliteral">&quot;&quot;&quot;Returns the full path of the temporary directory created by the worker.</span></div>
@@ -315,7 +315,7 @@ $(document).ready(function(){initNavTree('_process_8py_source.html','');});
 <div class="line"><a name="l00208"></a><span class="lineno"><a class="line" href="classe_hive_1_1_process_1_1_base_runnable.html#af3c999502afdc346070e50c4fc42905b">  208</a></span>&#160;        <span class="keywordflow">if</span> self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a6a6fc938774bcdb348cbc6610f3d0cad">__created_worker_temp_directory</a> <span class="keywordflow">is</span> <span class="keywordtype">None</span>:</div>
 <div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;            template_name = self.worker_temp_directory_name() <span class="keywordflow">if</span> hasattr(self, <span class="stringliteral">&#39;worker_temp_directory_name&#39;</span>) <span class="keywordflow">else</span> <span class="keywordtype">None</span></div>
 <div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;            self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a463f8fe480a9aeebec35cb0ec486b362">__send_message</a>(<span class="stringliteral">&#39;WORKER_TEMP_DIRECTORY&#39;</span>, template_name)</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a6a6fc938774bcdb348cbc6610f3d0cad">__created_worker_temp_directory</a> = self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e">__read_message</a>()</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;            self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a6a6fc938774bcdb348cbc6610f3d0cad">__created_worker_temp_directory</a> = self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a4ccb553ce3f4f661df7e1ec2d7be615e">__read_message</a>()[<span class="stringliteral">&#39;response&#39;</span>]</div>
 <div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;        <span class="keywordflow">return</span> self.<a class="code" href="classe_hive_1_1_process_1_1_base_runnable.html#a6a6fc938774bcdb348cbc6610f3d0cad">__created_worker_temp_directory</a></div>
 <div class="line"><a name="l00213"></a><span class="lineno"><a class="line" href="classe_hive_1_1_process_1_1_base_runnable.html#af8bdfe695b9b9a0bb3c6837f22883057">  213</a></span>&#160;</div>
 <div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;    <span class="comment"># Param interface</span></div>
