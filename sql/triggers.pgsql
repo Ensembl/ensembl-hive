@@ -25,20 +25,26 @@ CONTACT
 */
 
 
-CREATE TRIGGER add_job AFTER INSERT ON job
-FOR EACH ROW
+CREATE FUNCTION add_job() RETURNS TRIGGER AS $add_job$
+BEGIN
     UPDATE analysis_stats SET
         total_job_count         = total_job_count       + 1,
         semaphored_job_count    = semaphored_job_count  + (CASE NEW.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
         ready_job_count         = ready_job_count       + (CASE NEW.status WHEN 'READY'         THEN 1                         ELSE 0 END),
         done_job_count          = done_job_count        + (CASE NEW.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
         failed_job_count        = failed_job_count      + (CASE NEW.status WHEN 'FAILED'        THEN 1                         ELSE 0 END),
-        status                  = (CASE WHEN status='EMPTY' THEN 'READY' ELSE status END)
+        status              = (CASE WHEN status='EMPTY' THEN 'READY' ELSE status END)
     WHERE analysis_id = NEW.analysis_id;
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$add_job$ LANGUAGE plpgsql;
+
+CREATE TRIGGER add_job AFTER INSERT ON job FOR EACH ROW EXECUTE PROCEDURE add_job();
 
 
-CREATE TRIGGER delete_job AFTER DELETE ON job
-FOR EACH ROW
+
+CREATE FUNCTION delete_job() RETURNS TRIGGER AS $delete_job$
+BEGIN
     UPDATE analysis_stats SET
         total_job_count         = total_job_count       - 1,
         semaphored_job_count    = semaphored_job_count  - (CASE OLD.status WHEN 'SEMAPHORED'    THEN 1                         ELSE 0 END),
@@ -46,13 +52,16 @@ FOR EACH ROW
         done_job_count          = done_job_count        - (CASE OLD.status WHEN 'DONE'          THEN 1 WHEN 'PASSED_ON' THEN 1 ELSE 0 END),
         failed_job_count        = failed_job_count      - (CASE OLD.status WHEN 'FAILED'        THEN 1                         ELSE 0 END)
     WHERE analysis_id = OLD.analysis_id;
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$delete_job$ LANGUAGE plpgsql;
+
+CREATE TRIGGER delete_job AFTER DELETE ON job FOR EACH ROW EXECUTE PROCEDURE delete_job();
 
 
 
-DELIMITER $$
-
-CREATE TRIGGER update_job AFTER UPDATE ON job
-FOR EACH ROW
+CREATE FUNCTION update_job() RETURNS TRIGGER AS $update_job$
+BEGIN
     CASE WHEN (OLD.status<>NEW.status OR OLD.analysis_id<>NEW.analysis_id) THEN
         BEGIN
             UPDATE analysis_stats SET
@@ -71,26 +80,43 @@ FOR EACH ROW
             WHERE analysis_id = NEW.analysis_id;
         END;
     ELSE BEGIN END;
-    END CASE$$
+    END CASE;
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$update_job$ LANGUAGE plpgsql;
 
-DELIMITER ;
+CREATE TRIGGER update_job AFTER UPDATE ON job FOR EACH ROW EXECUTE PROCEDURE update_job();
 
 
 
-CREATE TRIGGER add_role AFTER INSERT ON role
-FOR EACH ROW
+CREATE FUNCTION add_role() RETURNS TRIGGER AS $add_role$
+BEGIN
     UPDATE analysis_stats SET
         num_running_workers = num_running_workers + 1
     WHERE analysis_id = NEW.analysis_id;
 
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$add_role$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_role AFTER UPDATE ON role
-FOR EACH ROW
+CREATE TRIGGER add_role AFTER INSERT ON role FOR EACH ROW EXECUTE PROCEDURE add_role();
+
+
+
+CREATE FUNCTION update_role() RETURNS TRIGGER AS $update_role$
+BEGIN
     UPDATE analysis_stats SET
         num_running_workers = num_running_workers - 1
     WHERE analysis_id = NEW.analysis_id
       AND OLD.when_finished IS NULL
       AND NEW.when_finished IS NOT NULL;
+
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+END;
+$update_role$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_role AFTER UPDATE ON role FOR EACH ROW EXECUTE PROCEDURE update_role();
+
 
 
     -- inform the runtime part of the system that triggers are in place:

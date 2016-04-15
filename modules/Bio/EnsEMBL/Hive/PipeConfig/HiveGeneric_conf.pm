@@ -152,8 +152,8 @@ sub pipeline_create_commands {
                 # we got table definitions for all drivers:
             $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
-                # auto-sync'ing triggers are off by default and not yet available in pgsql:
-            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+                # auto-sync'ing triggers are off by default:
+            $self->o('hive_use_triggers') ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
 
                 # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
                                              ($driver ne 'sqlite') ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
@@ -526,7 +526,9 @@ sub add_objects_from_config {
                 'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;
 
-            $stats->recalculate_from_job_counts( { 'READY' => scalar(@$input_ids) } );
+            unless( $pipeline->hive_use_triggers() ) {
+                $stats->recalculate_from_job_counts( { 'READY' => scalar(@$input_ids) } );
+            }
         }
     }
     warn "Done.\n\n";
