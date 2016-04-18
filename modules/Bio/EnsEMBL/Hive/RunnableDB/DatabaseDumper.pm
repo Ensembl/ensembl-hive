@@ -36,13 +36,20 @@ The following parameters are accepted:
 
  - skip_dump [boolean=0] : set this to 1 to skip the dump
 
+
+The decision process regarding which tables should be dumped is quite complex.
+The following sections explain the various scenarios.
+
+1. eHive database
+
+1.a. Hybrid database
+
 If "table_list" is undefined or maps to an empty list, the list
 of tables to be dumped is decided accordingly to "exclude_list" (EL)
 and "exclude_ehive" (EH). "exclude_list" controls the whole list of
 non-eHive tables.
 
 EL EH    List of tables to dump
-
 0  0  => all the tables
 0  1  => all the tables, except the eHive ones
 1  0  => all the tables, except the non-eHive ones = only the eHive tables
@@ -51,11 +58,34 @@ EL EH    List of tables to dump
 If "table_list" is defined to non-empty list T, the table of decision is:
 
 EL EH    List of tables to dump
-
 0  0  => all the tables in T + the eHive tables
 0  1  => all the tables in T
 1  0  => all the tables, except the ones in T
 1  1  => all the tables, except the ones in T and the eHive ones
+
+1.b. eHive-only database
+
+The decision table can be simplified if the database only contains eHive tables.
+In particular, the "exclude_list" and "table_list" parameters have no effect.
+
+EH    List of tables to dump
+0  => All the eHive tables, i.e. the whole database
+1  => No eHive tables, i.e. nothing
+
+2. non-eHive database
+
+The "exclude_ehive" parameter is ignored.
+
+empty "table_list":
+EL    List of tables to dump
+0  => all the tables
+1  => all the tables are excluded = nothing is dumped
+
+non-empty "table_list" T:
+EL    List of tables to dump
+0  => all the tables in T
+1  => all the tables, except the ones in T
+
 
 =head1 LICENSE
 
@@ -112,10 +142,6 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    # Would be good to have this from eHive
-    my @ehive_tables = qw(hive_meta worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
-    $self->param('nb_ehive_tables', scalar(@ehive_tables));
-
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
     my $src_dbc = $src_db_conn ? go_figure_dbc($src_db_conn) : $self->data_dbc;
@@ -125,23 +151,42 @@ sub fetch_input {
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
 
     # Get the table list in either "tables" or "ignores"
-    my $table_list = $self->_get_table_list;
+    my $table_list = $self->_get_table_list($self->param('table_list') || '');
     print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
+    my $nothing_to_dump = 0;
 
     if ($self->param('exclude_list')) {
         push @ignores, @$table_list;
+        $nothing_to_dump = 1 if !$self->param('table_list');
     } else {
         push @tables, @$table_list;
+        $nothing_to_dump = 1 if $self->param('table_list') and !@$table_list;
     }
 
-    # eHive tables are dumped unless exclude_ehive is defined
+    # Would be good to have this from eHive
+    my @ref_ehive_tables = qw(hive_meta worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
+
+    ## Only eHive databases have a table named "hive_meta"
+    my $meta_sth = $src_dbc->db_handle->table_info(undef, undef, 'hive_meta');
+    my @ehive_tables;
+    if ($meta_sth->fetchrow_arrayref) {
+        # The hard-coded list is comprehensive, so some tables may not be
+        # in this database (which may be on a different version)
+        push @ehive_tables, @{$self->_get_table_list($_)} for @ref_ehive_tables;
+    }
+    $meta_sth->finish();
+
+    # eHive tables are ignored if exclude_ehive is set
     if ($self->param('exclude_ehive')) {
         push @ignores, @ehive_tables;
-    } elsif (scalar(@$table_list) and not $self->param('exclude_list')) {
-        push @tables, @ehive_tables;
-    } elsif (not scalar(@$table_list) and $self->param('exclude_list')) {
-        push @tables, @ehive_tables;
+    } elsif (@ehive_tables) {
+        if (@tables || $nothing_to_dump) {
+            push @tables, @ehive_tables;
+            $nothing_to_dump = 0;
+        }
     }
+
+    $self->param('nothing_to_dump', $nothing_to_dump);
 
     # Output file / output database
     $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
@@ -156,21 +201,18 @@ sub fetch_input {
 
 # Splits a string into a list of strings
 # Ask the database for the list of tables that match the wildcard "%"
-
+# and also select the tables that actually exist
 sub _get_table_list {
-    my $self = shift @_;
+    my ($self, $table_list) = @_;
 
-    my $table_list = $self->param('table_list') || '';
     my @newtables = ();
     my $dbc = $self->param('src_dbc');
     foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
         if ($initable =~ /%/) {
             $initable =~ s/_/\\_/g;
-            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
-            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
-        } else {
-            push @newtables, $initable;
         }
+        my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
+        push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
     }
     return \@newtables;
 }
@@ -186,8 +228,14 @@ sub run {
     print "tables: ", scalar(@$tables), " ", join('/', @$tables), "\n" if $self->debug;
     print "ignores: ", scalar(@$ignores), " ", join('/', @$ignores), "\n" if $self->debug;
 
-    # We have to exclude everything
-    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
+    my @options = qw(--skip-lock-tables);
+    # Without any table names, mysqldump thinks that it should dump
+    # everything. We need to add special arguments to handle this
+    if ($self->param('nothing_to_dump')) {
+        print "everything is excluded, nothing to dump !\n" if $self->debug;
+        push @options, qw(--no-create-info --no-data);
+        $ignores = [];  # to clean-up the command-line
+    }
 
     # mysqldump command
     my $output = "";
@@ -204,7 +252,7 @@ sub run {
     my $cmd = join(' ', 
         'mysqldump',
         $self->mysql_conn_from_dbc($src_dbc),
-        '--skip-lock-tables',
+        @options,
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
         $output
