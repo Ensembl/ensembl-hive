@@ -113,7 +113,6 @@ sub fetch_input {
     $self->param('ignores', \@ignores);
 
     # Would be good to have this from eHive
-    my @ehive_tables = qw(hive_meta worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
     $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # Connection parameters
@@ -125,7 +124,7 @@ sub fetch_input {
     die 'Only the "mysql" driver is supported.' if $src_dbc->driver ne 'mysql';
 
     # Get the table list in either "tables" or "ignores"
-    my $table_list = $self->_get_table_list;
+    my $table_list = $self->_get_table_list($self->param('table_list') || '');
     print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
 
     if ($self->param('exclude_list')) {
@@ -134,7 +133,20 @@ sub fetch_input {
         push @tables, @$table_list;
     }
 
-    # eHive tables are dumped unless exclude_ehive is defined
+    # Would be good to have this from eHive
+    my @ref_ehive_tables = qw(hive_meta worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor monitor msg progress resource_class);
+
+    ## Only eHive databases have a table named "hive_meta"
+    my $meta_sth = $src_dbc->db_handle->table_info(undef, undef, 'hive_meta');
+    my @ehive_tables;
+    if ($meta_sth->fetchrow_arrayref) {
+        # The hard-coded list is comprehensive, so some tables may not be
+        # in this database (which may be on a different version)
+        push @ehive_tables, @{$self->_get_table_list($_)} for @ref_ehive_tables;
+    }
+    $meta_sth->finish();
+
+    # eHive tables are ignored if exclude_ehive is set
     if ($self->param('exclude_ehive')) {
         push @ignores, @ehive_tables;
     } elsif (scalar(@$table_list) and not $self->param('exclude_list')) {
@@ -156,21 +168,18 @@ sub fetch_input {
 
 # Splits a string into a list of strings
 # Ask the database for the list of tables that match the wildcard "%"
-
+# and also select the tables that actually exist
 sub _get_table_list {
-    my $self = shift @_;
+    my ($self, $table_list) = @_;
 
-    my $table_list = $self->param('table_list') || '';
     my @newtables = ();
     my $dbc = $self->param('src_dbc');
     foreach my $initable (ref($table_list) eq 'ARRAY' ? @$table_list : split(' ', $table_list)) {
         if ($initable =~ /%/) {
             $initable =~ s/_/\\_/g;
-            my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
-            push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
-        } else {
-            push @newtables, $initable;
         }
+        my $sth = $dbc->db_handle->table_info(undef, undef, $initable, undef);
+        push @newtables, map( {$_->[2]} @{$sth->fetchall_arrayref});
     }
     return \@newtables;
 }
