@@ -186,8 +186,14 @@ sub run {
     print "tables: ", scalar(@$tables), " ", join('/', @$tables), "\n" if $self->debug;
     print "ignores: ", scalar(@$ignores), " ", join('/', @$ignores), "\n" if $self->debug;
 
-    # We have to exclude everything
-    return if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables'));
+    my @options = qw(--skip-lock-tables);
+    # Without any table names, mysqldump thinks that it should dump
+    # everything. We need to add special arguments to handle this
+    if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables')) {
+        print "everything is excluded, nothing to dump !\n" if $self->debug;
+        push @options, qw(--no-create-info --no-data);
+        $ignores = [];  # to clean-up the command-line
+    }
 
     # mysqldump command
     my $output = "";
@@ -204,7 +210,7 @@ sub run {
     my $cmd = join(' ', 
         'mysqldump',
         $self->mysql_conn_from_dbc($src_dbc),
-        '--skip-lock-tables',
+        @options,
         @$tables,
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @$ignores),
         $output
