@@ -147,9 +147,13 @@ sub write_output {
         }
 
         if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
-            $self->dataflow_output_id( $self->input_id, -1 );
-            $self->input_job->autoflow(0);
-            $self->complete_early("Java heap space is out of memory.\n");
+            my $job_ids = $self->dataflow_output_id( $self->input_id, -1 );
+            if (scalar(@$job_ids)) {
+                $self->input_job->autoflow(0);
+                $self->complete_early("Java heap space is out of memory. A job has been dataflown to the -1 branch.\n");
+            } else {
+                die $stderr;
+            }
         }
 
         die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
