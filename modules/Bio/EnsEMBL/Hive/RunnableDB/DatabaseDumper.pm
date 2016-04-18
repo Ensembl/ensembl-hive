@@ -112,9 +112,6 @@ sub fetch_input {
     my @ignores = ();
     $self->param('ignores', \@ignores);
 
-    # Would be good to have this from eHive
-    $self->param('nb_ehive_tables', scalar(@ehive_tables));
-
     # Connection parameters
     my $src_db_conn  = $self->param('src_db_conn');
     my $src_dbc = $src_db_conn ? go_figure_dbc($src_db_conn) : $self->data_dbc;
@@ -126,11 +123,14 @@ sub fetch_input {
     # Get the table list in either "tables" or "ignores"
     my $table_list = $self->_get_table_list($self->param('table_list') || '');
     print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
+    my $nothing_to_dump = 0;
 
     if ($self->param('exclude_list')) {
         push @ignores, @$table_list;
+        $nothing_to_dump = 1 if !$self->param('table_list');
     } else {
         push @tables, @$table_list;
+        $nothing_to_dump = 1 if $self->param('table_list') and !@$table_list;
     }
 
     # Would be good to have this from eHive
@@ -149,11 +149,14 @@ sub fetch_input {
     # eHive tables are ignored if exclude_ehive is set
     if ($self->param('exclude_ehive')) {
         push @ignores, @ehive_tables;
-    } elsif (scalar(@$table_list) and not $self->param('exclude_list')) {
-        push @tables, @ehive_tables;
-    } elsif (not scalar(@$table_list) and $self->param('exclude_list')) {
-        push @tables, @ehive_tables;
+    } elsif (@ehive_tables) {
+        if (@tables || $nothing_to_dump) {
+            push @tables, @ehive_tables;
+            $nothing_to_dump = 0;
+        }
     }
+
+    $self->param('nothing_to_dump', $nothing_to_dump);
 
     # Output file / output database
     $self->param('output_file') || $self->param('output_db') || die 'One of the parameters "output_file" and "output_db" is mandatory';
@@ -198,7 +201,7 @@ sub run {
     my @options = qw(--skip-lock-tables);
     # Without any table names, mysqldump thinks that it should dump
     # everything. We need to add special arguments to handle this
-    if ($self->param('exclude_ehive') and $self->param('exclude_list') and scalar(@$ignores) == $self->param('nb_ehive_tables')) {
+    if ($self->param('nothing_to_dump')) {
         print "everything is excluded, nothing to dump !\n" if $self->debug;
         push @options, qw(--no-create-info --no-data);
         $ignores = [];  # to clean-up the command-line
