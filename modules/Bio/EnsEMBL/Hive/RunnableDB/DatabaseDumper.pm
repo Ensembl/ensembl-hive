@@ -36,13 +36,20 @@ The following parameters are accepted:
 
  - skip_dump [boolean=0] : set this to 1 to skip the dump
 
+
+The decision process regarding which tables should be dumped is quite complex.
+The following sections explain the various scenarios.
+
+1. eHive database
+
+1.a. Hybrid database
+
 If "table_list" is undefined or maps to an empty list, the list
 of tables to be dumped is decided accordingly to "exclude_list" (EL)
 and "exclude_ehive" (EH). "exclude_list" controls the whole list of
 non-eHive tables.
 
 EL EH    List of tables to dump
-
 0  0  => all the tables
 0  1  => all the tables, except the eHive ones
 1  0  => all the tables, except the non-eHive ones = only the eHive tables
@@ -51,11 +58,34 @@ EL EH    List of tables to dump
 If "table_list" is defined to non-empty list T, the table of decision is:
 
 EL EH    List of tables to dump
-
 0  0  => all the tables in T + the eHive tables
 0  1  => all the tables in T
 1  0  => all the tables, except the ones in T
 1  1  => all the tables, except the ones in T and the eHive ones
+
+1.b. eHive-only database
+
+The decision table can be simplified if the database only contains eHive tables.
+In particular, the "exclude_list" and "table_list" parameters have no effect.
+
+EH    List of tables to dump
+0  => All the eHive tables, i.e. the whole database
+1  => No eHive tables, i.e. nothing
+
+2. non-eHive database
+
+The "exclude_ehive" parameter is ignored.
+
+empty "table_list":
+EL    List of tables to dump
+0  => all the tables
+1  => all the tables are excluded = nothing is dumped
+
+non-empty "table_list" T:
+EL    List of tables to dump
+0  => all the tables in T
+1  => all the tables, except the ones in T
+
 
 =head1 LICENSE
 
