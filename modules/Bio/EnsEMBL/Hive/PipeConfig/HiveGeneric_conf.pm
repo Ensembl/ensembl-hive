@@ -533,17 +533,23 @@ sub run {
     my %seen_logic_name = ();
 
     foreach my $aha (@{$self->pipeline_analyses}) {
+        my %aha_copy = %$aha;
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
-                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
-         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
-                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
+                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $wait_for, $flow_into)
+         = delete @aha_copy{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
+                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -wait_for -flow_into)};   # slicing a hash reference
+
+         my @unparsed_attribs = keys %aha_copy;
+         if(@unparsed_attribs) {
+             die "Could not parse the following analysis attributes: ".join(', ',@unparsed_attribs);
+         }
 
         unless($logic_name) {
-            die "logic_name' must be defined in every analysis";
+            die "'-logic_name' must be defined in every analysis";
         }
 
         if($seen_logic_name{$logic_name}++) {
-            die "an entry with logic_name '$logic_name' appears at least twice in the configuration file, can't continue";
+            die "an entry with -logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
         }
 
         my $analysis = $analysis_adaptor->fetch_by_logic_name($logic_name);
