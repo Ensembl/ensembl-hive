@@ -514,19 +514,25 @@ sub add_objects_from_config {
 
     warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
+        my %aha_copy = %$aha;
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
-                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity)
-         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
-                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity)};   # slicing a hash reference
+                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $wait_for, $flow_into)
+         = delete @aha_copy{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
+                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -wait_for -flow_into)};   # slicing a hash reference
+
+         my @unparsed_attribs = keys %aha_copy;
+         if(@unparsed_attribs) {
+             die "Could not parse the following analysis attributes: ".join(', ',@unparsed_attribs);
+         }
 
         if( not $logic_name ) {
-            die "logic_name' must be defined in every analysis";
+            die "'-logic_name' must be defined in every analysis";
         } elsif( $logic_name =~ /[+\-\%\.,]/ ) {
             die "Characters + - % . , are no longer allowed to be a part of an Analysis name. Please rename Analysis '$logic_name' and try again.\n";
         }
 
         if($seen_logic_name{$logic_name}++) {
-            die "an entry with logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
+            die "an entry with -logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
         }
 
         if($rc_id) {
