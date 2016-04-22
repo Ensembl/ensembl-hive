@@ -151,9 +151,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [
-                    '?table_name=intermediate_result',
-                ],
+                1 => {
+                    '?table_name=intermediate_result' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'partial_product' => '#product#' },
+                },
             },
             -can_be_empty       => 1,
         },

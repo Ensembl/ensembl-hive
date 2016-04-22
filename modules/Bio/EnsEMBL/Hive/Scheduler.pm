@@ -56,19 +56,14 @@ sub scheduler_say {
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
-    my $analysis_id2rc_id                       = $queen->db->get_AnalysisAdaptor->fetch_HASHED_FROM_analysis_id_TO_resource_class_id();
-    my $rc_id2name                              = $queen->db->get_ResourceClassAdaptor->fetch_HASHED_FROM_resource_class_id_TO_name();
     my $meadow_type_2_name_2_users              = $queen->meadow_type_2_name_2_users_of_running_workers();
-        # combined mapping:
-    my $analysis_id2rc_name                     = { map { $_ => $rc_id2name->{ $analysis_id2rc_id->{ $_ }} } keys %$analysis_id2rc_id };
-
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
     my ($valley_running_worker_count,
         $meadow_capacity_limiter_hashed_by_type)= $valley->count_running_workers_and_generate_limiters( $meadow_type_2_name_2_users );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-        = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+        = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type);
 
     scheduler_say( $log_buffer );
 
@@ -102,7 +97,7 @@ sub schedule_workers_resync_if_necessary {
         }
 
         ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
-            = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name);
+            = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type);
 
         scheduler_say( $log_buffer );
     }
@@ -182,7 +177,7 @@ sub suggest_analysis_to_specialize_a_worker {
 
 
 sub schedule_workers {
-    my ($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type, $analysis_id2rc_name) = @_;
+    my ($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type) = @_;
 
     my @workers_to_submit_by_analysis               = ();   # The down-to-analysis "plan" that may completely change by the time the Workers are born and specialized
     my %workers_to_submit_by_meadow_type_rc_name    = ();   # Pre-pending-adjusted per-resource breakout
@@ -202,7 +197,7 @@ sub schedule_workers {
 
         ANALYSIS: foreach my $pair (@$pairs_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
-                if( $analysis_id2rc_name ) {    # only add this message when scheduling and not during a Worker's specialization
+                if( $meadow_capacity_limiter_hashed_by_type ) {    # only add this message when scheduling and not during a Worker's specialization
                     push @$log_buffer, "Submission capacity (=".$submit_capacity_limiter->original_capacity.") has been reached.";
                 }
                 last ANALYSIS;
@@ -282,8 +277,8 @@ sub schedule_workers {
             push @workers_to_submit_by_analysis, [ $analysis, $extra_workers_this_analysis];
             push @$log_buffer, $analysis_stats->toString;
 
-            if($analysis_id2rc_name) {
-                my $this_rc_name    = $analysis_id2rc_name->{ $analysis_stats->analysis_id };
+            if($meadow_capacity_limiter_hashed_by_type) {
+                my $this_rc_name    = $analysis->resource_class->name;
                 $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
                 push @$log_buffer, sprintf("Before checking the Valley for pending jobs, the Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
                                     $logic_name,
