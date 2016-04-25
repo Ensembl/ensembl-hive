@@ -22,6 +22,7 @@ before_install:
     - chmod +x psql
     - export PATH=$PWD:$PATH
     - ln -s /usr/share/perl5/PgCommon.pm modules/
+    - mysql -hlocalhost -utravis -e "SET GLOBAL sql_mode = 'TRADITIONAL'"
 
 
 install:
