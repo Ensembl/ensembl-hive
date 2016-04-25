@@ -131,18 +131,18 @@ sub life_cycle {
         $self->enter_status('FETCH_INPUT');
         $partial_stopwatch->restart();
         $self->fetch_input;
-        $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->get_elapsed();
+        $job_partial_timing{'FETCH_INPUT'} = $partial_stopwatch->pause->get_elapsed;
 
         $self->enter_status('RUN');
         $partial_stopwatch->restart();
         $self->run;
-        $job_partial_timing{'RUN'} = $partial_stopwatch->get_elapsed();
+        $job_partial_timing{'RUN'} = $partial_stopwatch->pause->get_elapsed;
 
         if($self->execute_writes) {
             $self->enter_status('WRITE_OUTPUT');
             $partial_stopwatch->restart();
             $self->write_output;
-            $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->get_elapsed();
+            $job_partial_timing{'WRITE_OUTPUT'} = $partial_stopwatch->pause->get_elapsed;
         } else {
             $self->say_with_header( ": *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW" );
         }
