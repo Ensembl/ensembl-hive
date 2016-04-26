@@ -77,25 +77,6 @@ sub object_class {
 }
 
 
-=head2 refresh
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Description: reload the AnalysisStats object from the database
-  Returntype : Bio::EnsEMBL::Hive::AnalysisStats object - same one with reloaded data
-
-=cut
-
-sub refresh {
-    my ($self, $stats) = @_;
-
-    my $new_stats = $self->fetch_by_analysis_id( $stats->analysis_id );     # fetch into a separate object
-
-    %$stats = %$new_stats;                                                  # copy the data over
-
-    return $stats;
-}
-
-
 ################
 #
 # UPDATE METHODS

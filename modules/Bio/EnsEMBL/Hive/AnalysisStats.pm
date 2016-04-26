@@ -63,6 +63,13 @@ sub min_batch_time {
 =cut
 
 
+sub dbID {
+    my $self = shift;
+
+    return $self->analysis_id(@_);
+}
+
+
 sub batch_size {
     my $self = shift;
     $self->{'_batch_size'} = shift if(@_);
