@@ -96,6 +96,25 @@ sub keys_to_columns {
 }
 
 
+=head2 refresh
+
+  Arg [1]    : Bio::EnsEMBL::Hive::Storable and Bio::EnsEMBL::Hive::Cacheable object
+  Description: reload the object from the database
+  Returntype : The object with the same reference but with reloaded data.
+
+=cut
+
+sub refresh {
+    my ($self, $object) = @_;
+
+    my $new_object = $self->fetch_by_dbID( $object->dbID );     # fetch into a separate object
+
+    my $orig_hive_pipeline = exists $object->{'_hive_pipeline'} && $object->hive_pipeline;
+    %$object = %$new_object;                                    # copy the data over
+    $object->hive_pipeline($orig_hive_pipeline) if $orig_hive_pipeline;
+
+    return $object;
+}
 
 1;
 
