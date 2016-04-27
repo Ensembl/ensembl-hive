@@ -57,85 +57,87 @@ my $kmer_param_configs       = {'short' => [-seqtype => "short",
 			       };
 
 
-
+my @pipeline_urls = split( /[\s,]+/, $base_ehive_test_pipeline_url );
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 my @kmer_pipeline_modes = split( /[\s,]+/, $kmer_pipeline_modes ) ;
 
-foreach my $kmer_version ( @pipeline_cfgs ) {
+foreach my $pipeline_url ( @pipeline_urls ) {
 
-  foreach my $kmer_pipeline_mode ( @kmer_pipeline_modes ) {
-    my $pipeline_url = $base_ehive_test_pipeline_url . "_" . $kmer_pipeline_mode;
-    warn "\nInitializing the $kmer_version $kmer_pipeline_mode sequence pipeline into $pipeline_url ...\n\n";
+  foreach my $kmer_version ( @pipeline_cfgs ) {
 
-    my $pipeline_options = [@{$kmer_param_configs->{$kmer_pipeline_mode}}, -pipeline_url => $pipeline_url, -hive_force_init => 1,];
-
-    my $url              = init_pipeline('Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::'.$kmer_version, $pipeline_options );
-
-    my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-							 -url                        => $url,
-							 -disconnect_when_inactive   => 1,
-							);
-
-    # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
-
-    # First run a single worker in this process
-    runWorker($pipeline, { can_respecialize => 1 });
-    
-    my $hive_dba    = $pipeline->hive_dba;
-    my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
-    is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
-    
-    # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
-    {
-      # override the 'take_time' PipelineWideParameter directly in the database to make the external test Workers run quicker:
-      $hive_dba->get_PipelineWideParametersAdaptor->update( {'param_name' => 'take_time', 'param_value' => 0} );
+    foreach my $kmer_pipeline_mode ( @kmer_pipeline_modes ) {
       
-      my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.02, '-loop', '-local');
+      warn "\nInitializing the $kmer_version $kmer_pipeline_mode sequence pipeline into $pipeline_url ...\n\n";
       
-      system(@beekeeper_cmd);
-      ok(!$?, 'beekeeper exited with the return code 0');
-      is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
-    }
-    
-    my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
-    my $final_results = $final_result_nta->fetch_all();
-
-    if ($kmer_pipeline_mode eq 'long') {
-      is(scalar(@$final_results), 66, 'There are exactly 66 final_results');
+      my $pipeline_options = [@{$kmer_param_configs->{$kmer_pipeline_mode}}, -pipeline_url => $pipeline_url, -hive_force_init => 1,];
       
-      my $sum_of_spotchecks = 0;
-      foreach ( @$final_results ) {
-	if ($_->{'kmer'} eq 'ACGAT') {
-	  $sum_of_spotchecks += $_->{'frequency'};
-	}
-	if ($_->{'kmer'} eq 'ACGTA') {
-	  $sum_of_spotchecks += $_->{'frequency'};
-	}
+      my $url              = init_pipeline('Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::'.$kmer_version, $pipeline_options );
+      
+      my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+							   -url                        => $url,
+							   -disconnect_when_inactive   => 1,
+							  );
+      
+      # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
+      
+      # First run a single worker in this process
+      runWorker($pipeline, { can_respecialize => 1 });
+      
+      my $hive_dba    = $pipeline->hive_dba;
+      my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+      is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
+      
+      # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
+      {
+	# override the 'take_time' PipelineWideParameter directly in the database to make the external test Workers run quicker:
+	$hive_dba->get_PipelineWideParametersAdaptor->update( {'param_name' => 'take_time', 'param_value' => 0} );
 	
+	my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.02, '-loop', '-local');
+	
+	system(@beekeeper_cmd);
+	ok(!$?, 'beekeeper exited with the return code 0');
+	is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
       }
-      ok( 16 == $sum_of_spotchecks, # if last kmer isn't correctly discarded, this will be 17
-	  sprintf("f(ACGAT) + f(ACGTA)=%f", , $sum_of_spotchecks) );
-    }
-
-    if ($kmer_pipeline_mode eq 'short') {
-      is(scalar(@$final_results), 407, 'There are exactly 407 final_results');
-
-      my $sum_of_spotchecks = 0;
-      foreach ( @$final_results ) {
-	if ($_->{'kmer'} eq 'AGCGC') {
-	  $sum_of_spotchecks += $_->{'frequency'};
+      
+      my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
+      my $final_results = $final_result_nta->fetch_all();
+      
+      if ($kmer_pipeline_mode eq 'long') {
+	is(scalar(@$final_results), 66, 'There are exactly 66 final_results');
+	
+	my $sum_of_spotchecks = 0;
+	foreach ( @$final_results ) {
+	  if ($_->{'kmer'} eq 'ACGAT') {
+	    $sum_of_spotchecks += $_->{'frequency'};
+	  }
+	  if ($_->{'kmer'} eq 'ACGTA') {
+	    $sum_of_spotchecks += $_->{'frequency'};
+	  }
+	  
 	}
-	if ($_->{'kmer'} eq 'ATGAT') {
-	  $sum_of_spotchecks += $_->{'frequency'};
-	}
+	ok( 16 == $sum_of_spotchecks, # if last kmer isn't correctly discarded, this will be 17
+	    sprintf("f(ACGAT) + f(ACGTA)=%f", , $sum_of_spotchecks) );
       }
-      ok( 5 == $sum_of_spotchecks,
-	  sprintf("f(AGCGC) + f(ATGAT)=%f", , $sum_of_spotchecks) );
+      
+      if ($kmer_pipeline_mode eq 'short') {
+	is(scalar(@$final_results), 407, 'There are exactly 407 final_results');
+	
+	my $sum_of_spotchecks = 0;
+	foreach ( @$final_results ) {
+	  if ($_->{'kmer'} eq 'AGCGC') {
+	    $sum_of_spotchecks += $_->{'frequency'};
+	  }
+	  if ($_->{'kmer'} eq 'ATGAT') {
+	    $sum_of_spotchecks += $_->{'frequency'};
+	  }
+	}
+	ok( 5 == $sum_of_spotchecks,
+	    sprintf("f(AGCGC) + f(ATGAT)=%f", , $sum_of_spotchecks) );
+      }
+      #    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
-#    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
   }
 }
-
 
 done_testing();
 
