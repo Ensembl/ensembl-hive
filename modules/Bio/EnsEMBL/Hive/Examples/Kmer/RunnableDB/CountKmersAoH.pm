@@ -106,9 +106,8 @@ sub run {
   }
   die "Could not open or parse '$sequence_file', please investigate" unless $input_seqio;
 
-  my $seq = $input_seqio->next_seq()->seq();
-  my $kmer_freqs = _count_kmers($seq, $k, $discard_last_kmer);
-  $self->param('kmer_freqs', $kmer_freqs);
+  my $kmer_counts = _count_kmers($input_seqio, $k);
+  $self->param('kmer_counts', $kmer_counts);
 }
 
 =head2 write_output
@@ -123,11 +122,11 @@ sub run {
 sub write_output {
   my $self = shift @_;
 
-  my $kmer_freqs = $self->param('kmer_freqs');
+  my $kmer_counts = $self->param('kmer_counts');
 
-  foreach my $kmer(keys(%{$kmer_freqs})) {
+  foreach my $kmer(keys(%{$kmer_counts})) {
     $self->dataflow_output_id( {'kmer' => $kmer,
-				'freq' => $kmer_freqs->{$kmer}
+				'freq' => $kmer_counts->{$kmer}
 			       }, 1);
   }
 
@@ -137,7 +136,7 @@ sub write_output {
 
     Description: Private method to identify and count k-mers in a sequence.
 
-    Arg [1] : The sequence, as a string.
+    Arg [1] : A Bio::SeqIO input filehandle.
     Arg [2] : k
     Arg [3] : If not 0, then discard (do not count) the last k-mer in the string
 
@@ -145,22 +144,32 @@ sub write_output {
 =cut
 
 sub _count_kmers {
+<<<<<<< d4809427f82c63899ae7bbcdef56cf6d692fec95
   my ($seq, $k, $discard_last_kmer) = @_;
+=======
+  my ($seqio, $k) = @_;
+>>>>>>> loop over all sequences, and make variable and param names more sensible
 
-  my %kmer_freqs;
+  my %kmer_counts;
 
+<<<<<<< d4809427f82c63899ae7bbcdef56cf6d692fec95
   my @seq_arr = split(//, $seq); #hack to make string operations faster
   my $last_kmer_start = scalar(@seq_arr) - $k;
   if ($discard_last_kmer != 0) {
     $last_kmer_start -= 1;
   }
+=======
+  while (my $seqobj = $seqio->next_seq()) { 
+    my $seq = $seqobj->seq();
+    my $last_kmer_start = length($seq) - $k;
+>>>>>>> loop over all sequences, and make variable and param names more sensible
 
-  for (my $i = 0; $i < $last_kmer_start; $i++) {
-    my $kmer = join("", @seq_arr[$i..(($i + $k) - 1)]);
-    $kmer_freqs{$kmer}++;
+    for (my $i = 0; $i < $last_kmer_start; $i++) {
+      my $kmer = substr($seq, $i, $k);
+      $kmer_counts{$kmer}++;
+    }
   }
-
-  return \%kmer_freqs;
+  return \%kmer_counts;
 }
 
 1;

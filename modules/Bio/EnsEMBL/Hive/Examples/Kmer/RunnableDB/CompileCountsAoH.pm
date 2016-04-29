@@ -35,7 +35,7 @@
 =cut
 
 
-package Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileFrequenciesAoH;
+package Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCountsAoH;
 
 use strict;
 use warnings;
@@ -123,7 +123,7 @@ sub write_output {
   foreach my $kmer (keys(%{$sum_of_frequencies})) {
     $self->dataflow_output_id({
 			       'kmer' => $kmer,
-			       'frequency' => $sum_of_frequencies->{$kmer}
+			       'count' => $sum_of_frequencies->{$kmer}
 			      }, 1);
   }
 }
