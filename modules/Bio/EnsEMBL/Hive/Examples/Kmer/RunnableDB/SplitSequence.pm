@@ -100,7 +100,7 @@ sub fetch_input {
     Here, run() reads in the filename of a file containing a DNA sequence, an integer chunk-size in bases,
     and an integer overlap size in bases. The file needs to be in a format supported by Bio::SeqIO.
 
-    param('inputfile'): Name of the file containing the sequence to split
+    param('inputfile'):     Name of the file containing the sequence to split
     param('input_format'):  Format of the sequence file (e.g. FASTA)
     param('chunk_size'):    Desired chunk size in base-pairs
     param('overlap_size'):  Desired length of overlap between chunks, in base-pairs
@@ -133,10 +133,8 @@ sub run {
     die "chunk_size must be > overlap_size, and both must be positive";
   }
 
-  my $seq = $input_seqio->next_seq()->seq();
-  my $split_sequences = _split_sequence($seq, $chunk_size, $overlap_size);
+  my $split_sequences = _split_sequences($input_seqio, $chunk_size, $overlap_size);
   $self->param('split_sequences', $split_sequences);
-
 }
 
 =head2 write_output
@@ -160,11 +158,13 @@ sub write_output {
   my @split_sequences = @{$self->param('split_sequences')};
 
   for (my $i = 0; $i <= $#split_sequences; $i++) {
+    my $seq_object = Bio::Seq->new(-seq => $split_sequences[$i],
+				   -id => "split_" . $i);
+
     my $chunk_filename = $self->param('output_prefix') . $i . $self->param('output_suffix');
     my $chunk_seqio = Bio::SeqIO->new(-file => '>' . $chunk_filename,
 				      -format => 'fasta');
-    my $seq_object = Bio::Seq->new(-seq => $split_sequences[$i],
-				   -id => $chunk_filename);
+
     $chunk_seqio->write_seq($seq_object);
 
     if ($i == $#split_sequences) {
@@ -205,26 +205,30 @@ sub post_cleanup {
 
 =cut
 
-sub _split_sequence {
-  my ($seq, $chunk_size, $overlap_size) = @_;
+sub _split_sequences {
+  my ($seqio, $chunk_size, $overlap_size) = @_;
 
   my @split_sequences;
 
-  my @seqarr = split (//, $seq); # substring operations more efficient if string is put into an array
+  while (my $seq = $seqio->next_seq()) {
+    my $seq_str = $seq->seq();
 
-  my $chunk_pointer = 0;
-  my $last_chunk = 0;
-  do {
-    my $chunk_end = ($chunk_pointer + $chunk_size) - 1;
-    if ($chunk_end >= $#seqarr) {
-      $chunk_end = $#seqarr;
-      $last_chunk = 1;
-    }
-    my $subseq = join("", @seqarr[$chunk_pointer..$chunk_end]);
-    push(@split_sequences, $subseq);
-    
-    $chunk_pointer = $chunk_end - $overlap_size;
-  } while ($last_chunk == 0);
+    my $chunk_pointer = 0;
+    my $last_chunk = 0;
+    my $chunk_substring_size = $chunk_size;
+    do {
+      my $chunk_end = ($chunk_pointer + $chunk_size) - 1;
+      if ($chunk_end > length($seq_str)) {
+	$chunk_end = length($seq_str) - 1;
+	$chunk_substring_size = ($chunk_end - $chunk_pointer) + 1;
+	$last_chunk = 1;
+      }
+      my $subseq = substr($seq_str, $chunk_pointer, $chunk_substring_size);
+      push(@split_sequences, $subseq);
+      
+      $chunk_pointer = (($chunk_end + 1) - $overlap_size);
+    } while ($last_chunk == 0);
+  }
 
   return \@split_sequences;
 }

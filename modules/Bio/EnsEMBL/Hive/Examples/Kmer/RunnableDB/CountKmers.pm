@@ -145,31 +145,13 @@ sub write_output {
 =cut
 
 sub _count_kmers {
-<<<<<<< d4809427f82c63899ae7bbcdef56cf6d692fec95
-  my ($seq, $k, $discard_last_kmer) = @_;
-=======
-  my ($seqio, $k) = @_;
->>>>>>> loop over all sequences, and make variable and param names more sensible
 
+  my ($seqio, $k) = @_;
   my %kmer_counts;
 
-<<<<<<< d4809427f82c63899ae7bbcdef56cf6d692fec95
-  my @seq_arr = split(//, $seq); #hack to make string operations faster
-  my $last_kmer_start = scalar(@seq_arr) - $k;
-  if ($discard_last_kmer != 0) {
-    $last_kmer_start -= 1;
-  }
-
-  for (my $i = 0; $i < $last_kmer_start; $i++) {
-    my $kmer = join("", @seq_arr[$i..(($i + $k) - 1)]);
-    $kmer_freqs{$kmer}++;
-  }
-=======
   while (my $seqobj = $seqio->next_seq()) { 
     my $seq = $seqobj->seq();
-    my $last_kmer_start = length($seq) - $k;
->>>>>>> loop over all sequences, and make variable and param names more sensible
-
+    my $last_kmer_start = (length($seq) - $k) + 1;
     for (my $i = 0; $i < $last_kmer_start; $i++) {
       my $kmer = substr($seq, $i, $k);
       $kmer_counts{$kmer}++;
