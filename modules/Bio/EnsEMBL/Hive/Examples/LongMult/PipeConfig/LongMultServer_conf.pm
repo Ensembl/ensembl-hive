@@ -63,6 +63,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use INPUT_PLUS
 
 sub pipeline_create_commands {
     my ($self) = @_;
@@ -93,7 +94,7 @@ sub pipeline_analyses {
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
                 1 => {
-                    '?table_name=intermediate_result' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'partial_product' => '#product#' },
+                    '?table_name=intermediate_result' => INPUT_PLUS( { 'partial_product' => '#product#' } ),
                 }
             },
         },

@@ -264,7 +264,7 @@ sub build {
 
                     } elsif( UNIVERSAL::isa($target_object, 'Bio::EnsEMBL::Hive::Accumulator') ) {  # put the accu sink into the same "box" as the dataflow source:
 
-                        push @{$cluster_2_nodes{ _cluster_name( $target_object->{'_funnel_dfr'} ) } }, _accu_sink_node_name( $target_object->{'_funnel_dfr'} );
+                        push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, _accu_sink_node_name( $analysis->{'_funnel_dfr'} );
                     }
                 }
             } # /foreach group
@@ -311,6 +311,7 @@ sub _propagate_allocation {
 
                     foreach my $df_target (@{ $fan_dfr->get_my_targets }) {
                         my $fan_target_object = $df_target->to_analysis;
+
                         $self->_propagate_allocation( $fan_target_object, ($source_object->hive_pipeline == $fan_target_object->hive_pipeline) ? $df_rule : '' );
                     }
                 }
