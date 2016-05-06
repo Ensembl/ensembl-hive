@@ -151,6 +151,7 @@ sub _count_kmers {
 
   while (my $seqobj = $seqio->next_seq()) { 
     my $seq = $seqobj->seq();
+
     my $last_kmer_start = (length($seq) - $k) + 1;
     for (my $i = 0; $i < $last_kmer_start; $i++) {
       my $kmer = substr($seq, $i, $k);

@@ -37,7 +37,7 @@ my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
 my $base_ehive_test_pipeline_url = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || qw(KmerPipeline_conf KmerPipelineAoH_conf); 
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || "KmerPipeline_conf KmerPipelineAoH_conf"; 
 
 my $kmer_pipeline_modes      = 'short long';
 my $kmer_param_configs       = {'short' => [-seqtype => "short",
@@ -103,36 +103,53 @@ foreach my $pipeline_url ( @pipeline_urls ) {
       my $final_results = $final_result_nta->fetch_all();
       
       if ($kmer_pipeline_mode eq 'long') {
-	is(scalar(@$final_results), 66, 'There are exactly 66 final_results');
+	is(scalar(@$final_results), 68, 'There are exactly 68 final_results');
 	
 	my $sum_of_spotchecks = 0;
+	my $total_kmers = 0;
 	foreach ( @$final_results ) {
-	  if ($_->{'kmer'} eq 'ACGAT') {
-	    $sum_of_spotchecks += $_->{'frequency'};
+	  $total_kmers += $_->{'count'};
+	  if ($_->{'kmer'} eq 'ACTGA') {
+	    $sum_of_spotchecks += $_->{'count'};
 	  }
-	  if ($_->{'kmer'} eq 'ACGTA') {
-	    $sum_of_spotchecks += $_->{'frequency'};
+	  if ($_->{'kmer'} eq 'CGTAG') {
+	    $sum_of_spotchecks += $_->{'count'};
+	  }
+	  if ($_->{'kmer'} eq 'GAGTC') {
+	    $sum_of_spotchecks += $_->{'count'};
+	  }
+	  if ($_->{'kmer'} eq 'TGTTT') {
+	    $sum_of_spotchecks += $_->{'count'};
 	  }
 	  
 	}
-	ok( 16 == $sum_of_spotchecks, # if last kmer isn't correctly discarded, this will be 17
-	    sprintf("f(ACGAT) + f(ACGTA)=%f", , $sum_of_spotchecks) );
+	ok( 210 == $sum_of_spotchecks, 
+	    sprintf("For FASTA: ACTGA + CGTAG + GAGTC + TGTTT = %f", , $sum_of_spotchecks) );
+	ok( 3348 == $total_kmers,
+	    sprintf("%f kmers found in input fasta file", , $total_kmers) );
       }
       
       if ($kmer_pipeline_mode eq 'short') {
-	is(scalar(@$final_results), 407, 'There are exactly 407 final_results');
+	is(scalar(@$final_results), 411, 'There are exactly 411 final_results');
 	
 	my $sum_of_spotchecks = 0;
+	my $total_kmers = 0;
 	foreach ( @$final_results ) {
-	  if ($_->{'kmer'} eq 'AGCGC') {
-	    $sum_of_spotchecks += $_->{'frequency'};
+	  $total_kmers += $_->{'count'};
+	  if ($_->{'kmer'} eq 'AACCG') { # last in a sequence
+	    $sum_of_spotchecks += $_->{'count'};
 	  }
-	  if ($_->{'kmer'} eq 'ATGAT') {
-	    $sum_of_spotchecks += $_->{'frequency'};
+	  if ($_->{'kmer'} eq 'CCAAC') { # first in a sequence
+	    $sum_of_spotchecks += $_->{'count'};
+	  }
+	  if ($_->{'kmer'} eq 'TTGTC') { # most common
+	    $sum_of_spotchecks += $_->{'count'};
 	  }
 	}
-	ok( 5 == $sum_of_spotchecks,
-	    sprintf("f(AGCGC) + f(ATGAT)=%f", , $sum_of_spotchecks) );
+	ok( 6 == $sum_of_spotchecks,
+	    sprintf("in FASTQ: AACCG + CCAAC + TTGTC =%f", , $sum_of_spotchecks) );
+	ok ( 520 == $total_kmers,
+	     sprintf("%f kmers found in input FASTQ file", , $total_kmers));
       }
       #    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
