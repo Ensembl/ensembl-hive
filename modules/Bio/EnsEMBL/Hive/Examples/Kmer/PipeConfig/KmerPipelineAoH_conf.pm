@@ -210,8 +210,10 @@ sub pipeline_analyses {
 	  		  }
 	  		 ],
 	   -flow_into => {
-	  		  1 => WHEN('#seqtype# eq "short"' => { 'chunk_sequence' => {'is_last_chunk' => 1} },
-	  			    ELSE [ 'split_sequence' ]),
+	  		  '1->A' => WHEN('#seqtype# eq "short"' => [ 'chunk_sequence' ],
+					 ELSE [ 'split_sequence' ]),
+			  # creating a semaphored funnel job to wait for the fan to complete and add the results:
+			  'A->1' => [ 'compile_counts' ],
 	  		 },
 	   
 	  },
@@ -221,11 +223,8 @@ sub pipeline_analyses {
 	      -parameters => { "overlap_size" => "#expr(#k#-1)expr#"},
 	      -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
 	      -analysis_capacity  =>  2,  # use per-analysis limiter
-	      -flow_into => {
-			     
-	  		     '2->A' => ['count_kmers'],
-	  		     # creating a semaphored funnel job to wait for the fan to complete and add the results:
-	  		     'A->1' => [ 'compile_counts'  ],
+	      -flow_into => {  
+	  		     '2' => ['count_kmers'],
 	  		    },
 	  },
 	  
@@ -233,11 +232,8 @@ sub pipeline_analyses {
 	    -module => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
 	    -parameters => { "max_chunk_length" => "#chunk_size#" },
 	    -meadow_type => 'LOCAL',
-	    -flow_into => {
-			   
-	  		   '2->A' => ['count_kmers'],
-	  		   # creating a semaphored funnel job to wait for the fan to complete and add the results:
-	  		   'A->1' => [ 'compile_counts'  ],
+	    -flow_into => {			   
+	  		   '2' => ['count_kmers'],
 	  		  },
 	  },
 	  
@@ -257,7 +253,7 @@ sub pipeline_analyses {
 			     # the accu_address=[]{kmer} section of this url). The value for each key is dataflown out in a parameter
 			     # called 'freq'; the 'accu_input_variable=freq' portion of the url is where it's set as the value.
 			     # Each jobs hash is then stored in a seperate element in the array, in arbitrary order.
-	  		     1 => [ '?accu_name=freq&accu_address=[]{kmer}&accu_input_variable=freq' ],
+	  		     3 => [ '?accu_name=freq&accu_address=[]{kmer}&accu_input_variable=freq' ],
 	  		    },
 	  },
 	  
@@ -269,7 +265,7 @@ sub pipeline_analyses {
 			     # We created this table earlier in this conf file during pipeline_create_commands().
 			     # It has two columns, 'kmer' and 'frequency', which are filled in by params with matching
 			     # names that are dataflown out.
-	  		     1 => [ '?table_name=final_result' ],
+	  		     4 => [ '?table_name=final_result' ],
 	  		    },
 	  },
 	 ];

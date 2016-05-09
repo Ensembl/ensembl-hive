@@ -129,7 +129,7 @@ sub write_output {
     $self->dataflow_output_id({
 			       'kmer' => $kmer,
 			       'count' => $sum_of_frequencies->{$kmer}
-			      }, 1);
+			      }, 4);
   }
 }
 

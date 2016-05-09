@@ -128,7 +128,7 @@ sub write_output {
   foreach my $kmer(keys(%{$kmer_counts})) {
     $self->dataflow_output_id( {'kmer_with_source' => $self->param('sequence_file') . ":" . $kmer,
 				'freq' => $kmer_counts->{$kmer}
-			       }, 1);
+			       }, 3);
   }
 
 }
