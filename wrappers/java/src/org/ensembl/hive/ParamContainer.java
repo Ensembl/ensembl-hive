@@ -118,8 +118,7 @@ public class ParamContainer {
 			} else {
 				return substituteAllHashPairs(param);
 			}
-		} else if (Integer.class.isAssignableFrom(clazz)
-				|| Double.class.isAssignableFrom(clazz)) {
+		} else if (Number.class.isAssignableFrom(clazz)) {
 			return input;
 		} else {
 			throw new ParamSubstitutionException("Cannot substitute " + input);
