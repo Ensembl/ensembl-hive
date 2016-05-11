@@ -34,6 +34,10 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
+# To avoid overloading the main loop, the guest-language is tested in
+# guest_language.t which is in fact a symlink to the present script
+my $doing_guest_language = ($0 =~ /guest/);
+
 my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig';
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
@@ -48,7 +52,10 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
     next if $long_mult_version =~ /Server/;
     next if $long_mult_version =~ /Client/;
 
-warn "\nInitializing the $long_mult_version pipeline ...\n\n";
+    # "Exclusive or" to filter the config files
+    next unless (($long_mult_version =~ /_conf/) xor $doing_guest_language);
+
+    warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
     foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
