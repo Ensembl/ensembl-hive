@@ -24,6 +24,7 @@ CONTACT
 
 */
 
+SET SESSION sql_mode = '';
 
 -- show hive progress for analyses (turned into a view to give extra flexibility) ----------------
 --
