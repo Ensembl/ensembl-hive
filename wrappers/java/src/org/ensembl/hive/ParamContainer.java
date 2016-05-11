@@ -49,12 +49,13 @@ public class ParamContainer {
 	 * @return
 	 */
 	private Object getParamRecurse(String paramName) {
-		Object value = params.get(paramName);
 		if (!params.containsKey(paramName)) {
-			value = paramSubstitute(unsubParameters.get(paramName));
+			Object value = paramSubstitute(unsubParameters.get(paramName));
 			params.put(paramName, value);
+			return value;
+		} else {
+			return params.get(paramName);
 		}
-		return value;
 	}
 
 	public Map<String, Object> getParams() {
