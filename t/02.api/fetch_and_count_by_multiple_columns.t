@@ -63,8 +63,6 @@ is($n_from_1_on_2, 1, '1 dataflow-rule starting from this analysis_id on this br
 $matching_analyses = $dfr_a->fetch_all_by_from_analysis_id_AND_branch_code($take_b_apart_analysis->dbID, 2);
 is(scalar(@$matching_analyses), 1, '1 dataflow-rule starting from this analysis_id on this branch');
 
-#is($matching_analyses->[0]->logic_name, $take_b_apart_analysis->logic_name, 'Correct logic_name');
-
 is($dfr_a->count_all_by_branch_code(1), 3, 'There are 2 #1 branches in the pipeline');
 
 is_deeply($job_a->count_all_HASHED_FROM_status(), { 'READY' => 2 }, 'There are two jobs and both are READY');

@@ -152,8 +152,8 @@ sub pipeline_create_commands {
                 # we got table definitions for all drivers:
             $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/tables.'.$driver,
 
-                # auto-sync'ing triggers are off by default and not yet available in pgsql:
-            $self->o('hive_use_triggers') && ($driver ne 'pgsql')  ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
+                # auto-sync'ing triggers are off by default:
+            $self->o('hive_use_triggers') ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/triggers.'.$driver ) : (),
 
                 # FOREIGN KEY constraints cannot be defined in sqlite separately from table definitions, so they are off there:
                                              ($driver ne 'sqlite') ? ( $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/foreign_keys.sql' ) : (),
@@ -446,19 +446,25 @@ sub add_objects_from_config {
 
     warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
+        my %aha_copy = %$aha;
         my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
-                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $language)
-         = @{$aha}{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
-                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -language)};   # slicing a hash reference
+                $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $language, $wait_for, $flow_into)
+         = delete @aha_copy{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
+                 -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -language -wait_for -flow_into)};   # slicing a hash reference
+
+         my @unparsed_attribs = keys %aha_copy;
+         if(@unparsed_attribs) {
+             die "Could not parse the following analysis attributes: ".join(', ',@unparsed_attribs);
+         }
 
         if( not $logic_name ) {
-            die "logic_name' must be defined in every analysis";
+            die "'-logic_name' must be defined in every analysis";
         } elsif( $logic_name =~ /[+\-\%\.,]/ ) {
             die "Characters + - % . , are no longer allowed to be a part of an Analysis name. Please rename Analysis '$logic_name' and try again.\n";
         }
 
         if($seen_logic_name{$logic_name}++) {
-            die "an entry with logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
+            die "an entry with -logic_name '$logic_name' appears at least twice in the same configuration file, probably a typo";
         }
 
         if($rc_id) {
@@ -526,7 +532,9 @@ sub add_objects_from_config {
                 'input_id'      => $_,              # input_ids are now centrally stringified in the AnalysisJob itself
             ) } @$input_ids;
 
-            $stats->recalculate_from_job_counts( { 'READY' => scalar(@$input_ids) } );
+            unless( $pipeline->hive_use_triggers() ) {
+                $stats->recalculate_from_job_counts( { 'READY' => scalar(@$input_ids) } );
+            }
         }
     }
     warn "Done.\n\n";
@@ -539,19 +547,8 @@ sub add_objects_from_config {
 
         my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);
 
-        $wait_for ||= [];
-        $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
-
-            # create control rules:
-        foreach my $condition_url (@$wait_for) {
-            if($condition_url =~ m{^\w+$/}) {
-                my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
-                    or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($analysis->logic_name)."')\n";
-            }
-            my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
-                    'condition_analysis_url'    => $condition_url,
-                    'ctrled_analysis'           => $analysis,
-            );
+        if($wait_for) {
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($pipeline, $analysis, $wait_for);
         }
 
         if($flow_into) {

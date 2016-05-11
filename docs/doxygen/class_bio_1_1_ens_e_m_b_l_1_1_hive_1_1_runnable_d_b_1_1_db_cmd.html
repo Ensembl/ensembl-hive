@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -175,6 +175,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a2d0ad25d584c63aee8a7b45d30afb0e6">data_dbc</a> ()</td></tr>
 <tr class="separator:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public Returns&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a98a23f9308eb85ce1afcbbcad687aeb1">run_system_command</a> ()</td></tr>
+<tr class="separator:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#abaf96e66f6740ec51a294e4164363166">input_job</a> ()</td></tr>
 <tr class="separator:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -242,7 +244,7 @@ Description</h1>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">    # There can be only 1 input</span></div>
 <div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> (not $self-&gt;param(<span class="stringliteral">&#39;executable&#39;</span>) and not ($self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>) or $self-&gt;param(<span class="stringliteral">&#39;input_query&#39;</span>) or $self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>))) {</div>
 <div class="line">        die <span class="stringliteral">&quot;No input defined (missing &#39;input_file&#39;, &#39;input_query&#39; and &#39;command_in&#39;)\n&quot;</span>;</div>
-<div class="line">    } elsif (($self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>) and ($self-&gt;param(<span class="stringliteral">&#39;input_query&#39;</span>) or $self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>))) or ($self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a6217efee02c3fc309ae8705356e5d8dd">param</a>(&#39;input_query&#39;) and $self-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a6217efee02c3fc309ae8705356e5d8dd">param</a>(&#39;command_in&#39;))) {</div>
+<div class="line">    } elsif (($self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>) and ($self-&gt;param(<span class="stringliteral">&#39;input_query&#39;</span>) or $self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>))) or ($self-&gt;param(&#39;input_query&#39;) and $self-&gt;param(&#39;command_in&#39;))) {</div>
 <div class="line">        die <span class="stringliteral">&quot;Only 1 input (&#39;input_file&#39;, &#39;input_query&#39; and &#39;command_in&#39;) can be defined\n&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"><span class="preprocessor">    # And 1 output</span></div>
@@ -263,32 +265,29 @@ Description</h1>
 <div class="line">    ) };</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">    # Add the input data</span></div>
-<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ($self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>)) {</div>
+<div class="line"><span class="preprocessor"></span>    my $prefix = <span class="stringliteral">&#39;&#39;</span>;</div>
+<div class="line">    <span class="keywordflow">if</span> ($self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>)) {</div>
 <div class="line">        push @cmd, <span class="charliteral">&#39;&lt;&#39;</span>, $self-&gt;param(<span class="stringliteral">&#39;input_file&#39;</span>);</div>
 <div class="line">    } elsif ($self-&gt;param(<span class="stringliteral">&#39;input_query&#39;</span>)) {</div>
 <div class="line"><span class="preprocessor">        # the query as already been fed into @cmd by to_cmd()</span></div>
 <div class="line"><span class="preprocessor"></span>    } elsif ($self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>)) {</div>
-<div class="line">        unshift @cmd, (ref($self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>)) ? @{$self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>)} : $self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>)), <span class="charliteral">&#39;|&#39;</span>;</div>
+<div class="line">        $prefix = (join_command_args($self-&gt;param(<span class="stringliteral">&#39;command_in&#39;</span>)))[1] . <span class="stringliteral">&#39; | &#39;</span>;</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">    # Add the output data</span></div>
-<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ($self-&gt;param(<span class="stringliteral">&#39;output_file&#39;</span>)) {</div>
+<div class="line"><span class="preprocessor"></span>    my $postfix = <span class="stringliteral">&#39;&#39;</span>;</div>
+<div class="line">    <span class="keywordflow">if</span> ($self-&gt;param(<span class="stringliteral">&#39;output_file&#39;</span>)) {</div>
 <div class="line">        push @cmd, <span class="charliteral">&#39;&gt;&#39;</span>, $self-&gt;param(<span class="stringliteral">&#39;output_file&#39;</span>);</div>
 <div class="line">    } elsif ($self-&gt;param(<span class="stringliteral">&#39;command_out&#39;</span>)) {</div>
-<div class="line">        push @cmd, <span class="charliteral">&#39;|&#39;</span>, (ref($self-&gt;param(<span class="stringliteral">&#39;command_out&#39;</span>)) ? @{$self-&gt;param(<span class="stringliteral">&#39;command_out&#39;</span>)} : $self-&gt;param(<span class="stringliteral">&#39;command_out&#39;</span>));</div>
+<div class="line">        $postfix = <span class="stringliteral">&#39; | &#39;</span> . (join_command_args($self-&gt;param(<span class="stringliteral">&#39;command_out&#39;</span>)))[1];</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span> ($need_a_shell) {</div>
 <div class="line">        my ($join_needed, $flat_cmd) = join_command_args(\@cmd);</div>
 <div class="line">        $flat_cmd =~ s/ <span class="stringliteral">&#39;(-p\$EHIVE_TMP_PASSWORD_\d+)&#39;</span> / $1 /g;</div>
-<div class="line">        $self-&gt;param(<span class="stringliteral">&#39;cmd&#39;</span>, $flat_cmd);</div>
+<div class="line">        $self-&gt;param(<span class="stringliteral">&#39;cmd&#39;</span>, $prefix.$flat_cmd.$postfix);</div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line">        $self-&gt;param(<span class="stringliteral">&#39;cmd&#39;</span>, \@cmd);</div>
-<div class="line">    }</div>
-<div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span> ($self-&gt;debug) {</div>
-<div class="line">        use Data::Dumper;</div>
-<div class="line">        warn <span class="stringliteral">&quot;db_cmd command: &quot;</span>, Dumper($self-&gt;param(<span class="stringliteral">&#39;cmd&#39;</span>));</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 

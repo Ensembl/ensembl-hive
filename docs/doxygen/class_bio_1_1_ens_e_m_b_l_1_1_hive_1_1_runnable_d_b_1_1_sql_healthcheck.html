@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -174,6 +174,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a2d0ad25d584c63aee8a7b45d30afb0e6">data_dbc</a> ()</td></tr>
 <tr class="separator:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public Returns&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a98a23f9308eb85ce1afcbbcad687aeb1">run_system_command</a> ()</td></tr>
+<tr class="separator:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#abaf96e66f6740ec51a294e4164363166">input_job</a> ()</td></tr>
 <tr class="separator:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -392,7 +394,9 @@ Description</h1>
 <div id='codesection-param_defaults-content' class='dyncontent' style='display: none;'> 
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_sql_healthcheck.html#a454164834bbb0e68d7cd321a4416a506">param_defaults</a> {</div>
 <div class="line">    <span class="keywordflow">return</span> {</div>
-<div class="line">        description =&gt; <span class="stringliteral">&#39;/no description/&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;description&#39;</span>   =&gt; <span class="stringliteral">&#39;/no description/&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;expected_size&#39;</span> =&gt; undef,</div>
+<div class="line">        <span class="stringliteral">&#39;inputquery&#39;</span>    =&gt; undef,</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 

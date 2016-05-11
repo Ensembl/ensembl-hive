@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -157,15 +157,16 @@ Synopsis</h1>
 <div class="line"></div>
 <div class="line">    1) parsing of parameters in the order of precedence, starting with the lowest:</div>
 <div class="line">            #</div>
-<div class="line">            ## general <a class="code" href="all__tests_8pl.html#a9449f3118943816afb79e9c3394972ca">usage</a>:</div>
+<div class="line">            ## general <a class="code" href="create__sql__patches_8pl.html#a9449f3118943816afb79e9c3394972ca">usage</a>:</div>
 <div class="line">            # $self-&gt;param_init( $lowest_precedence_hashref, $middle_precedence_hashref, $highest_precedence_hashref );</div>
 <div class="line"><span class="preprocessor">            #</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            ## typical usage:</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            # $job-&gt;param_init( </span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $runObj-&gt;param_defaults(),                      # module-wide built-in defaults have the lowest precedence (will always be the same for this module)</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;db-&gt;get_PipelineWideParametersAdaptor-&gt;fetch_param_hash(), # then come the pipeline-wide parameters from the &#39;meta&#39; table (define things common to all modules in this pipeline)</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;analysis-&gt;parameters(),                  # analysis-wide &#39;parameters&#39; are even more specific (can be defined differently for several occurence of the same module)</span></div>
-<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $job-&gt;input_id(),                               # job-specific &#39;input_id&#39; parameters have the highest precedence</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $runObj-&gt;param_defaults(),          # module-wide built-in defaults have the lowest precedence (will always be the same for this module)</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $hive_pipeline-&gt;params_as_hash(),   # then come the pipeline-wide parameters from the &#39;pipeline_wide_parameters&#39; table (define things common to all analyses in this pipeline)</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $self-&gt;analysis-&gt;parameters(),      # analysis-wide &#39;parameters&#39; are even more specific (can be defined differently for several occurence of the same module)</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $job-&gt;input_id(),                   # job-specific &#39;input_id&#39; parameters have the highest precedence</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            #       $job-&gt;accu_hash(),                  # parameters accumulated and sent for this job by other preceding jobs</span></div>
 <div class="line"><span class="preprocessor"></span><span class="preprocessor">            # );</span></div>
 <div class="line"><span class="preprocessor"></span>          </div>
 <div class="line"></div>
@@ -249,13 +250,33 @@ Description</h1>
 <div class="line">        or die <span class="stringliteral">&quot;ParamError: calling param() without arguments\n&quot;</span>;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>(@_) { # If there is a value (even <span class="keywordflow">if</span> undef), then set it!</div>
-<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} = shift @_;</div>
-<div class="line">    } elsif( !exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )</div>
-<div class="line">       and    exists( $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name} ) ) {</div>
-<div class="line">        my $unsubstituted = $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name};</div>
-<div class="line"></div>
-<div class="line">        $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} = $self-&gt;param_substitute( $unsubstituted );</div>
-<div class="line">    }</div>
+<div class="line">        my $new_val = shift @_;</div>
+<div class="line">        <span class="keywordflow">if</span> (@_ and (shift)) {</div>
+<div class="line"><span class="preprocessor">            # If there is an extra parameter after the value, it means that</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">            # the value is unsubstituted</span></div>
+<div class="line"><span class="preprocessor"></span>            $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name} = $new_val;</div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line">            $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} = $new_val;</div>
+<div class="line">        }</div>
+<div class="line">    } elsif( !exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name}) ) {</div>
+<div class="line">        <span class="keywordflow">if</span> (exists( $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name} ) ) {</div>
+<div class="line">            my $ini_used_missing_param = $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>};</div>
+<div class="line">            <span class="keyword">delete</span> $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>};</div>
+<div class="line">            my $unsubstituted = $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name};</div>
+<div class="line">            my $substituted = $self-&gt;param_substitute( $unsubstituted );</div>
+<div class="line">            <span class="keywordflow">if</span> (my $failed_dep = $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>}) {</div>
+<div class="line">                <span class="keyword">delete</span> $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>};</div>
+<div class="line">                <span class="keyword">delete</span> $self-&gt;{<span class="stringliteral">&#39;_substitution_in_progress&#39;</span>};</div>
+<div class="line">                die <span class="stringliteral">&quot;ParamError: the evaluation of &#39;$param_name&#39; requires &#39;$failed_dep&#39; which is missing\n&quot;</span>;</div>
+<div class="line">            }</div>
+<div class="line">            $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} = $substituted;</div>
+<div class="line">            $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>} = $ini_used_missing_param <span class="keywordflow">if</span> $ini_used_missing_param;</div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line">            $self-&gt;{<span class="stringliteral">&#39;_used_missing_params&#39;</span>} = $param_name;</div>
+<div class="line">        }</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line"><span class="preprocessor">        # The parameter has already been substituted</span></div>
+<div class="line"><span class="preprocessor"></span>    }</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">return</span> exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )</div>
 <div class="line">                ? $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name}</div>
@@ -309,10 +330,15 @@ Description</h1>
 <div class="line"></div>
 <div class="line">        $expression=~s{(?:#(\w+)#)}{\$self-&gt;_param_possibly_overridden(<span class="stringliteral">&#39;$1&#39;</span>, \$overriding_hash)}g;</div>
 <div class="line"></div>
-<div class="line">        $value = eval <span class="stringliteral">&quot;return $expression&quot;</span>;     # NB: <span class="stringliteral">&#39;return&#39;</span> is needed to protect the hashrefs from being interpreted as scoping blocks</div>
+<div class="line">        $value = eval <span class="stringliteral">&quot;return ($expression)&quot;</span>;   # NB: <span class="stringliteral">&#39;return&#39;</span> is needed to protect the hashrefs from being interpreted as scoping blocks</div>
+<div class="line"><span class="preprocessor">                                                #       and parentheses are needed because return binds stronger than &#39;and&#39; and &#39;or&#39;</span></div>
+<div class="line"><span class="preprocessor"></span></div>
+<div class="line">        <span class="keywordflow">if</span> ($@) {</div>
+<div class="line">            <span class="keyword">delete</span> $self-&gt;{<span class="stringliteral">&#39;_substitution_in_progress&#39;</span>}{$inside_hashes};    # to allow re-entering the sub</div>
+<div class="line">            die $@ <span class="keywordflow">if</span> $@ =~ /^ParamError/;                                  # re-<span class="keyword">raise</span> the underlying Param error</div>
+<div class="line">            die <span class="stringliteral">&quot;ParamError: Cannot evaluate the expression: &#39;$inside_hashes&#39; ==&gt; &#39;$expression&#39;\n$@&quot;</span>;</div>
+<div class="line">        }</div>
 <div class="line">    }</div>
-<div class="line"></div>
-<div class="line">    warn <span class="stringliteral">&quot;ParamWarning: substituting an undefined value of #$inside_hashes#\n&quot;</span> unless(defined($value));</div>
 <div class="line"></div>
 <div class="line">    <span class="keyword">delete</span> $self-&gt;{<span class="stringliteral">&#39;_substitution_in_progress&#39;</span>}{$inside_hashes};</div>
 <div class="line">    <span class="keywordflow">return</span> $value;</div>
@@ -447,7 +473,7 @@ Description</h1>
       </table>
 </div><div class="memdoc">
 <pre>
-    Arg [1]    : string $param_name</pre><pre>    Arg [2]    : (optional) $param_value</pre><pre>    Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a03f67c01a12beaa839338be4da9bf9cb">param_init()</a> )</pre><pre>    Example 1  : my $source = $self-&gt;param('source'); # acting as a getter</pre><pre>    Example 2  : $self-&gt;param('binpath', '/software/ensembl/compara');  # acting as a setter</pre><pre>    Returntype : any Perl structure or object that you dared to store</pre><pre> </pre><div id="codesection-param" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    Arg [1]    : string $param_name</pre><pre>    Arg [2]    : (optional) $param_value</pre><pre>    Arg [3]    : (optional) $value_needs_substitution (in case you want to define a parameter with '#other_param#' and let the system compute its true value later)</pre><pre>    Description: A getter/setter method for a job's parameters that are initialized through multiple levels of precedence (see <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_params.html#a03f67c01a12beaa839338be4da9bf9cb">param_init()</a> )</pre><pre>    Example 1  : my $source = $self-&gt;param('source'); # acting as a getter</pre><pre>    Example 2  : $self-&gt;param('binpath', '/software/ensembl/compara');  # acting as a setter</pre><pre>    Returntype : any Perl structure or object that you dared to store</pre><pre> </pre><div id="codesection-param" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
     <img id='codesection-param-trigger' src='closed.png' style='display:inline'><b>Code:</b>
 </div>
 <div id='codesection-param-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
@@ -459,7 +485,7 @@ Description</h1>
 <div class="line"></div>
 <div class="line">    my $value = $self-&gt;_param_silent( $param_name, @_ );</div>
 <div class="line">    </div>
-<div class="line">    unless( $self-&gt;param_exists( $param_name ) ) {</div>
+<div class="line">    unless( exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )) {</div>
 <div class="line">        warn <span class="stringliteral">&quot;ParamWarning: value for param(&#39;$param_name&#39;) is used before having been initialized!\n&quot;</span>;</div>
 <div class="line">    }</div>
 <div class="line"></div>
@@ -491,9 +517,15 @@ Description</h1>
 <div class="line">    my $self        = shift @_;</div>
 <div class="line">    my $param_name  = shift @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )</div>
-<div class="line">            ? 1</div>
-<div class="line">            : 0;</div>
+<div class="line">    $self-&gt;_param_silent($param_name);</div>
+<div class="line">    <span class="keywordflow">if</span> (exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )) {</div>
+<div class="line">        <span class="keywordflow">return</span> 1;</div>
+<div class="line">    } elsif (exists( $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name} )) {</div>
+<div class="line"><span class="preprocessor">        # In this case, the substitution failed</span></div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">return</span> undef;</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        <span class="keywordflow">return</span> 0;</div>
+<div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -541,6 +573,7 @@ Description</h1>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>} = \%unsubstituted_param_hash;</div>
+<div class="line">    $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>} = {};</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -568,9 +601,15 @@ Description</h1>
 <div class="line">    my $self        = shift @_;</div>
 <div class="line">    my $param_name  = shift @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">return</span> defined( $self-&gt;_param_silent($param_name) )</div>
-<div class="line">            ? 1</div>
-<div class="line">            : 0;</div>
+<div class="line">    my $value = $self-&gt;_param_silent($param_name);</div>
+<div class="line">    <span class="keywordflow">if</span> (exists( $self-&gt;{<span class="stringliteral">&#39;_param_hash&#39;</span>}{$param_name} )) {</div>
+<div class="line">        <span class="keywordflow">return</span> (defined $value ? 1 : 0);</div>
+<div class="line">    } elsif (exists( $self-&gt;{<span class="stringliteral">&#39;_unsubstituted_param_hash&#39;</span>}{$param_name} )) {</div>
+<div class="line"><span class="preprocessor">        # In this case, the substitution failed</span></div>
+<div class="line"><span class="preprocessor"></span>        <span class="keywordflow">return</span> undef;</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        <span class="keywordflow">return</span> 0;</div>
+<div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>

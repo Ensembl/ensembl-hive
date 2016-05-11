@@ -69,7 +69,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         ],
         [
             'WARNING',
-            "Java heap space is out of memory.\n",
+            qr/Java heap space is out of memory. A job has been dataflown to the -1 branch/,
             0
         ],
     ],

@@ -1,7 +1,7 @@
 <map id="eHive.Process.BaseRunnable.param_required" name="eHive.Process.BaseRunnable.param_required">
-<area shape="rect" id="node2" href="$class_long_mult_1_1_add_together_1_1_add_together.html#afe3cd6ec9890ea16d20db16e9efe045c" title="LongMult.AddTogether.Add\lTogether.fetch_input" alt="" coords="313,5,498,46"/>
-<area shape="rect" id="node3" href="$class_long_mult_1_1_add_together_1_1_add_together.html#a9e011dd3c7530b83d7121e6065a15134" title="LongMult.AddTogether.Add\lTogether.run" alt="" coords="313,70,498,111"/>
-<area shape="rect" id="node4" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html#a54ae307978a6283824a3f989da19d100" title="LongMult.DigitFactory.Digit\lFactory.fetch_input" alt="" coords="314,135,497,177"/>
-<area shape="rect" id="node5" href="$class_long_mult_1_1_part_multiply_1_1_part_multiply.html#a78dbdaa3837963014a671152c00dbc1d" title="LongMult.PartMultiply.Part\lMultiply.run" alt="" coords="316,201,495,242"/>
-<area shape="rect" id="node6" href="$class_test_runnable_1_1_test_runnable.html#a7fe88677b553ce139e9a47c305c6470a" title="TestRunnable.TestRunnable.fetch\l_input" alt="" coords="293,266,517,307"/>
+<area shape="rect" id="node2" href="$classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html#ac72c99a15c07a35fd8948be75d8332ce" title="eHive.examples.LongMult.\lAddTogether.AddTogether.fetch_input" alt="" coords="294,5,543,46"/>
+<area shape="rect" id="node3" href="$classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html#aad9ebe87b0c9306989002fab3d2a904d" title="eHive.examples.LongMult.\lAddTogether.AddTogether.run" alt="" coords="317,70,520,111"/>
+<area shape="rect" id="node4" href="$classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html#a2e6b7f959530ebea7d2738c69136a135" title="eHive.examples.LongMult.\lDigitFactory.DigitFactory.fetch_input" alt="" coords="300,135,537,177"/>
+<area shape="rect" id="node5" href="$classe_hive_1_1examples_1_1_long_mult_1_1_part_multiply_1_1_part_multiply.html#a7387ad9a72f74a45596a5f038d78a0b2" title="eHive.examples.LongMult.\lPartMultiply.PartMultiply.run" alt="" coords="325,201,513,242"/>
+<area shape="rect" id="node6" href="$classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html#abd2b947a68b93efa931238fc14b70f95" title="eHive.examples.TestRunnable.\lTestRunnable.fetch_input" alt="" coords="315,266,522,307"/>
 </map>

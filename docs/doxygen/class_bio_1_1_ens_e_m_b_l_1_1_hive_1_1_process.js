@@ -20,6 +20,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process =
     [ "param_required", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#ac4d8269232076e9956fbf09e32680c48", null ],
     [ "param_substitute", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a43ada6306f2f629c9d727ea5a0146f89", null ],
     [ "run", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a346410a6c7d0e5f2541bc304048efdb9", null ],
+    [ "run_system_command", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a98a23f9308eb85ce1afcbbcad687aeb1", null ],
     [ "say_with_header", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a229788fa442d0070fdd3753b835f0e82", null ],
     [ "throw", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#adfc1461a9ef5da83597f054172e10c42", null ],
     [ "warning", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a5fef0ffecdd8b254a622f83baa8e03e3", null ],

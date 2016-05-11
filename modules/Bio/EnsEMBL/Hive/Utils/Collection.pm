@@ -252,10 +252,34 @@ sub find_all_by_pattern {
 }
 
 
+sub dark_collection {       # contain another collection of objects marked for deletion
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_dark_collection'} = shift @_;
+    }
+    return $self->{'_dark_collection'};
+}
+
+
+sub forget_and_mark_for_deletion {
+    my $self        = shift @_;
+    my $candidate   = shift @_;
+
+    $self->forget( $candidate );
+
+    unless( $self->dark_collection ) {
+        $self->dark_collection( Bio::EnsEMBL::Hive::Utils::Collection->new );
+    }
+    $self->dark_collection->add( $candidate );
+}
+
+
 sub DESTROY {
     my $self = shift @_;
 
     $self->listref( [] );
+    $self->dark_collection( undef );
 }
 
 1;

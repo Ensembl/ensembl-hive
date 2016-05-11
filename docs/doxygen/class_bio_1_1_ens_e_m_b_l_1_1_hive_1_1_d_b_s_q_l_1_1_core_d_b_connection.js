@@ -1,6 +1,5 @@
 var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection =
 [
-    [ "add_limit_clause", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a646a94723dda7c144400a87c67816e68", null ],
     [ "connect", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a06a88cf2f46772a4b1a5d780ffcb4242", null ],
     [ "connected", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#ad5898fcb340f9986c023175115ef20a0", null ],
     [ "db_handle", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a8ca48fddb8caeef6f023b0f355359623", null ],
@@ -11,8 +10,6 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection =
     [ "do", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a0dc722d1dd6516ad7ed6d4df2f2b461d", null ],
     [ "driver", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a497b676b381ee418552294fbe96defbd", null ],
     [ "equals", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a4942dd4cf65e6e94ac8a3135853e4314", null ],
-    [ "from_date_to_seconds", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27", null ],
-    [ "from_seconds_to_date", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99", null ],
     [ "host", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a52db0b1ea34968d7f823d74aa6de462a", null ],
     [ "hostname", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a716c1f4c6dab3f80cb8ba46fb95b2835", null ],
     [ "locator", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a33c540b343d16f5f0f00247c692d1752", null ],

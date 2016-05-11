@@ -1,4 +1,6 @@
 <map id="Bio::EnsEMBL::Hive::RunnableDB::SystemCmd" name="Bio::EnsEMBL::Hive::RunnableDB::SystemCmd">
-<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_db_cmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::DbCmd" alt="" coords="19,187,176,229"/>
-<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="26,6,168,47"/>
+<area shape="rect" id="node3" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_database_dumper.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::DatabaseDumper" alt="" coords="433,5,650,46"/>
+<area shape="rect" id="node4" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_db_cmd.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::DbCmd" alt="" coords="463,70,620,111"/>
+<area shape="rect" id="node5" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_my_s_q_l_transfer.html" title="Bio::EnsEMBL::Hive\l::RunnableDB::MySQLTransfer" alt="" coords="438,135,645,177"/>
+<area shape="rect" id="node2" href="$class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html" title="Bio::EnsEMBL::Hive\l::Process" alt="" coords="6,70,149,111"/>
 </map>

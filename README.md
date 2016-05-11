@@ -53,12 +53,12 @@ etc.
 
 Available documentation
 -----------------------
-The main entry point is in [**docs/index.html**](https://rawgit.com/Ensembl/ensembl-hive/HEAD/docs/index.html) and can also be browsed offline.
+The main entry point is in [**docs/index.html**](https://rawgit.com/Ensembl/ensembl-hive/version/2.4/docs/index.html) and can also be browsed offline.
 
 There is preliminary support for Python3, see [the Doxygen
-documentation](https://rawgit.com/Ensembl/ensembl-hive/HEAD/wrappers/python3/doxygen/index.html) and
+documentation](https://rawgit.com/Ensembl/ensembl-hive/version/2.4/wrappers/python3/doxygen/index.html) and
 [an example PipeConfig
-file](modules/Bio/EnsEMBL/Hive/PipeConfig/LongMultSt_pyconf.pm#L139).
+file](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_pyconf.pm#L139).
 
 Contact us (mailing list)
 -------------------------

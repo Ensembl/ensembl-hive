@@ -6,13 +6,13 @@
 
 =head1 SYNOPSIS
 
-    Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
+    Please refer to Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf pipeline configuration file
     to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
 
-    'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether' is the final step of the pipeline that, naturally, adds the products together
-    and stores the result in 'final_result' database table.
+    'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::AddTogether' is the final step of the pipeline that, naturally,
+    adds the products together and dataflows the result (which gets normally stored in 'final_result' table).
 
 =head1 LICENSE
 
@@ -53,9 +53,10 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
 
     return {
-        'intermediate_table_url'    => undef,   # if defined, take data from there rather than from accu
-        'partial_product'           => { },     # to be used when b_multiplier only contains digits '0' and '1'
-        'take_time'                 => 0,       # how much time run() method will spend in sleeping state
+        'intermediate_table_url'    => undef,                       # if defined, take data from there rather than from accu
+        'final_table_url'           => '?table_name=final_result',  # used by post_healthcheck() to fetch the final result from
+        'partial_product'           => { },                         # to be used when b_multiplier only contains digits '0' and '1'
+        'take_time'                 => 0,                           # how much time run() method will spend in sleeping state
     };
 }
 
@@ -130,8 +131,8 @@ sub write_output {  # store and dataflow
 =head2 post_healthcheck
 
     Description : Implements post_healthcheck() interface method of Bio::EnsEMBL::Hive::Process that is used to healthcheck the result of the job's execution.
-                  Here it assumes (which is not general enough but ok for most of our cases) that the result will be deposited in 'final_result' table.
-                  Warning: it may stop working once you plug this runnable in a different PipeConfig.
+                  Here it assumes that the location of the final result has been given through the 'final_table_url' parameter (it can be a partial URL).
+                  If the destination of the data changes, make sure you either set this URL correctly or undefine it (in which case the healthcheck will not be run).
 
 =cut
 
@@ -140,13 +141,22 @@ sub post_healthcheck {
 
     my $a_multiplier    = $self->param_required('a_multiplier');
     my $b_multiplier    = $self->param_required('b_multiplier');
+    my $final_result;
+    my $location_desc;
 
-    my $final_result_nta = $self->db->get_NakedTableAdaptor( 'table_name' => 'final_result' );
-    my $final_result = $final_result_nta->fetch_by_a_multiplier_AND_b_multiplier_TO_result( $a_multiplier, $b_multiplier);
+    if( my $final_table_url = $self->param('final_table_url') ) {
 
-    my $correct_or_not = ($a_multiplier * $b_multiplier == $final_result) ? 'CORRECT' : 'INCORRECT';
+        my $final_table     = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $final_table_url, $self->input_job->hive_pipeline );
+           $final_result    = $final_table->adaptor->fetch_by_a_multiplier_AND_b_multiplier_TO_result( $a_multiplier, $b_multiplier);
+           $location_desc   = "stored in '$final_table_url' table";
+    } else {
+           $final_result    = $self->param('result');
+           $location_desc   = "not stored";
+    }
 
-    $self->warning("The result stored in 'final_result' table for ${a_multiplier} x ${b_multiplier} is $final_result, this result is $correct_or_not");
+    my $correct_or_not  = ($a_multiplier * $b_multiplier == $final_result) ? 'CORRECT' : 'INCORRECT';
+
+    $self->warning("The result ($location_desc) for ${a_multiplier} x ${b_multiplier} is $final_result, this result is $correct_or_not");
 }
 
 

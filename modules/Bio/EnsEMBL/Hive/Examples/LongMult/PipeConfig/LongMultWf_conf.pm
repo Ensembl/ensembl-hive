@@ -66,7 +66,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 
 =head2 pipeline_create_commands
@@ -141,7 +141,7 @@ sub pipeline_analyses {
             -flow_into => {
                     # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
                 2 => WHEN(
-                    '#digit#>1' => { 'part_multiply' => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#' } }, # do not need to include "take_time" because it is already "pipeline-wide"
+                    '#digit#>1' => { 'part_multiply' => INPUT_PLUS() },     # make parent job's parameters available to the kids
                 ),
                 1 => [ 'add_together'  ],
             },
@@ -151,9 +151,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [
-                    '?table_name=intermediate_result',
-                ],
+                1 => {
+                    '?table_name=intermediate_result' => INPUT_PLUS( { 'partial_product' => '#product#' } ),
+                },
             },
             -can_be_empty       => 1,
         },

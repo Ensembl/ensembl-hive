@@ -66,7 +66,7 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 
 =head2 pipeline_create_commands
@@ -150,7 +150,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ '?accu_name=partial_product&accu_address={digit}' ],
+                1 => [ '?accu_name=partial_product&accu_address={digit}&accu_input_variable=product' ],
             },
         },
         

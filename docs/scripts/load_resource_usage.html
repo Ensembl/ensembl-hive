@@ -40,14 +40,15 @@
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
         # Provide your own command to fetch and parse the worker_resource_usage data from:
-    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source &quot;bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |&quot;</code></pre>
+    load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source &quot;bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |&quot; -meadow_type LSF</code></pre>
 
 <h1 id="OPTIONS">OPTIONS</h1>
 
 <pre><code>    -help                   : print this help
     -url &lt;url string&gt;       : url defining where hive database is located
     -username &lt;username&gt;    : if it wasn&#39;t you who ran the pipeline, the name of that user can be provided
-    -source &lt;filename&gt;      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.</code></pre>
+    -source &lt;filename&gt;      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
+    -meadow_type &lt;type&gt;     : only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)</code></pre>
 
 <h1 id="LICENSE">LICENSE</h1>
 

@@ -57,7 +57,7 @@
                         -flow_into &quot;{ 1 =&gt; &#39;mysql://ensadmin:xxxxxxx@127.0.0.1/lg4_long_mult/analysis?logic_name=start&#39; }&quot;
 
         # Produce a semaphore group of jobs from a database-less DigitFactory job:
-    standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::LongMult::DigitFactory -input_id &quot;{ &#39;a_multiplier&#39; =&gt; &#39;2222222222&#39;, &#39;b_multiplier&#39; =&gt; &#39;3434343434&#39;}&quot; \
+    standaloneJob.pl Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::DigitFactory -input_id &quot;{ &#39;a_multiplier&#39; =&gt; &#39;2222222222&#39;, &#39;b_multiplier&#39; =&gt; &#39;3434343434&#39;}&quot; \
         -flow_into &quot;{ &#39;2-&gt;A&#39; =&gt; &#39;mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=part_multiply&#39;, &#39;A-&gt;1&#39; =&gt; &#39;mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=add_together&#39; }&quot; </code></pre>
 
 <h1 id="SCRIPT-SPECIFIC-OPTIONS">SCRIPT-SPECIFIC OPTIONS</h1>

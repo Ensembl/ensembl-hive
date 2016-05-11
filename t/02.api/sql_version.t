@@ -18,12 +18,17 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Basename;
+
 use Test::More;
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor' );
 }
 #########################
+
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 # This test assumes that the MySQL schema can and is always patched
 my $from_version = 60;

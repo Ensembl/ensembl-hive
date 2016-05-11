@@ -330,9 +330,11 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
   <div id="div_dataflow_target" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>source_dataflow_rule_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>on_condition</b></td><td>VARCHAR(255)</td><td>NULL</td><td>param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE</td><td>unique: key</td></tr>
-      <tr class="bg1"><td><b>input_id_template</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>dataflow_target_id</b></td><td>INTEGER</td><td>-</td><td>internal ID</td><td></td></tr>
+      <tr class="bg2"><td><b>source_dataflow_rule_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>on_condition</b></td><td>VARCHAR(255)</td><td>NULL</td><td>param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE</td><td>unique: key</td></tr>
+      <tr class="bg2"><td><b>input_id_template</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>extend_param_stack</b></td><td>SMALLINT</td><td>0</td><td>the boolean value defines whether the newly created jobs will inherit both the parameters and the accu of the prev_job</td><td></td></tr>
       <tr class="bg2"><td><b>to_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>the URL of the dataflow target object (Analysis/Table/Accu)</td><td>unique: key</td></tr>
     </table>
   </div>
@@ -355,8 +357,9 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
   <div id="div_analysis_ctrl_rule" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>condition_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td>unique: key</td></tr>
-      <tr class="bg2"><td><b>ctrled_analysis_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>analysis_ctrl_rule_id</b></td><td>INTEGER</td><td>-</td><td>internal ID</td><td></td></tr>
+      <tr class="bg2"><td><b>condition_analysis_url</b></td><td>VARCHAR(255)</td><td>''</td><td>foreign key to net distributed analysis reference</td><td>unique: key</td></tr>
+      <tr class="bg1"><td><b>ctrled_analysis_id</b></td><td>INTEGER</td><td>-</td><td>foreign key to analysis table analysis_id</td><td>unique: key</td></tr>
     </table>
   </div>
 
@@ -445,7 +448,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>param_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose input_ids contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg2"><td><b>accu_id_stack</b></td><td>CHAR(64)</td><td>''</td><td>a CSV of job_ids whose accu's contribute to the stack of local variables for the job</td><td>unique  key: input_id_stacks_analysis</td></tr>
       <tr class="bg1"><td><b>role_id</b></td><td>INTEGER</td><td>NULL</td><td>links to the Role that claimed this job (NULL means it has never been claimed)</td><td>key: role_status</td></tr>
-      <tr class="bg2"><td><b>status</b></td><td>CHAR(32)</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
+      <tr class="bg2"><td><b>status</b></td><td>ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON')</td><td>'READY'</td><td>state the job is in</td><td>key: analysis_status_retry<br />key: role_status</td></tr>
       <tr class="bg1"><td><b>retry_count</b></td><td>INTEGER</td><td>0</td><td>number times job had to be reset when worker failed to run it</td><td>key: analysis_status_retry</td></tr>
       <tr class="bg2"><td><b>when_completed</b></td><td>TIMESTAMP</td><td>NULL</td><td>when the job was completed</td><td></td></tr>
       <tr class="bg1"><td><b>runtime_msec</b></td><td>INTEGER</td><td>NULL</td><td>how long did it take to execute the job (or until the moment it failed)</td><td></td></tr>
@@ -526,7 +529,8 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>analysis_data_id</b></td><td>INTEGER</td><td>-</td><td>primary id</td><td></td></tr>
-      <tr class="bg2"><td><b>data</b></td><td>MEDIUMTEXT</td><td>NULL</td><td>text blob which holds the data</td><td>key: data(100)</td></tr>
+      <tr class="bg2"><td><b>md5sum</b></td><td>CHAR(32)</td><td>-</td><td>checksum over the data to quickly detect (potential) collisions</td><td>key: md5sum</td></tr>
+      <tr class="bg1"><td><b>data</b></td><td>MEDIUMTEXT</td><td>-</td><td>text blob which holds the data</td><td></td></tr>
     </table>
   </div>
 
@@ -619,7 +623,7 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
     </div>
     <div style="clear:both"></div>
   </div>
-  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A table with post-mortem resource usage statistics of a Worker.</p>
+  <p style="padding:5px 0px;margin-bottom:0px;width:800px">A table with post-mortem resource usage statistics of a Worker. This table is not automatically populated: you first need to run load_resource_usage.pl. Note that some meadows (like LOCAL) do not support post-mortem inspection of resource usage</p>
 
   <div id="div_worker_resource_usage" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
@@ -629,8 +633,8 @@ You can toggle the display of individual columns using [Show/Hide columns] butto
       <tr class="bg1"><td><b>mem_megs</b></td><td>FLOAT</td><td>NULL</td><td>how much memory the Worker process used</td><td></td></tr>
       <tr class="bg2"><td><b>swap_megs</b></td><td>FLOAT</td><td>NULL</td><td>how much swap the Worker process used</td><td></td></tr>
       <tr class="bg1"><td><b>pending_sec</b></td><td>FLOAT</td><td>NULL</td><td>time spent by the process in the queue before it became a Worker</td><td></td></tr>
-      <tr class="bg2"><td><b>cpu_sec</b></td><td>FLOAT</td><td>NULL</td><td>cpu time used by the Worker process</td><td></td></tr>
-      <tr class="bg1"><td><b>lifespan_sec</b></td><td>FLOAT</td><td>NULL</td><td>walltime used by the Worker process</td><td></td></tr>
+      <tr class="bg2"><td><b>cpu_sec</b></td><td>FLOAT</td><td>NULL</td><td>cpu time (in seconds) used by the Worker process. It is often lower than the walltime because of time spent in I/O waits, but it can also be higher if the process is multi-threaded</td><td></td></tr>
+      <tr class="bg1"><td><b>lifespan_sec</b></td><td>FLOAT</td><td>NULL</td><td>walltime (in seconds) used by the Worker process. It is often higher than the sum of its jobs' "runtime_msec" because of the overhead from the Worker itself</td><td></td></tr>
       <tr class="bg2"><td><b>exception_status</b></td><td>VARCHAR(255)</td><td>NULL</td><td>meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'</td><td></td></tr>
     </table>
   </div>

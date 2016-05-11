@@ -540,8 +540,9 @@ sub run {
 
             # A mechanism whereby workers can be caused to exit even if they were doing fine:
         if (!$self->cause_of_death) {
-            my $analysis = $self->current_role->analysis;
-            my $stats = $analysis->stats;     # make sure it is fresh from the DB
+            my $analysis    = $self->current_role->analysis;
+            $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
+            my $stats       = $analysis->stats->refresh;
             if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($self->adaptor->db->get_RoleAdaptor->get_hive_current_load >= 1.1)
              or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
             ) {
@@ -742,7 +743,12 @@ sub run_one_batch {
             my $ready_job_count = $stats->ready_job_count;
             my $optimal_batch_now = $stats->get_or_estimate_batch_size( $remaining_jobs_in_batch );
             my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Check-point: rdy=$ready_job_count, rem=$remaining_jobs_in_batch, opt=$optimal_batch_now, 2unc=$jobs_to_unclaim", 0 );
+            if($self->debug) {
+                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self,
+                    "Check-point: rdy=$ready_job_count, rem=$remaining_jobs_in_batch, "
+                  . "opt=$optimal_batch_now, 2unc=$jobs_to_unclaim",
+                0 );
+            }
             if( $jobs_to_unclaim > 0 ) {
                 # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
                     # currently we just dump all the remaining jobs and prepare to take a fresh batch:

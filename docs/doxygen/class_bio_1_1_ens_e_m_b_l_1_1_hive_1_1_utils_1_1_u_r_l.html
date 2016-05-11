@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -145,29 +145,141 @@ Description</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html#ac80cc911eba215fb0ed17104861fe5f7">parse</a> {</div>
 <div class="line">    my $url = shift @_ or <span class="keywordflow">return</span>;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>( my ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =</div>
-<div class="line">        $url =~ m{^((\w*):<span class="comment">//(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([\w\-]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]*))?)?((?:;(\w+)=(\w+))*)$} ) {</span></div>
+<div class="line">    my ($old_parse, $new_parse,</div>
+<div class="line">        $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string, $query_part);</div>
 <div class="line"></div>
-<div class="line">        my %conn_params = split(/[;=]/, <span class="stringliteral">&#39;type=hive;disconnect_when_inactive=0&#39;</span>.$conn_param_string );</div>
+<div class="line">    <span class="keywordflow">if</span>( $url=~/^\w+$/ ) {</div>
 <div class="line"></div>
-<div class="line">        my $parsed_url = {</div>
-<div class="line">            <span class="stringliteral">&#39;dbconn_part&#39;</span>   =&gt; $dbconn_part,</div>
-<div class="line">            <span class="stringliteral">&#39;driver&#39;</span>        =&gt; $driver,</div>
-<div class="line">            <span class="stringliteral">&#39;user&#39;</span>          =&gt; $user,</div>
-<div class="line">            <span class="stringliteral">&#39;pass&#39;</span>          =&gt; $pass,</div>
-<div class="line">            <span class="stringliteral">&#39;host&#39;</span>          =&gt; $host,</div>
-<div class="line">            <span class="stringliteral">&#39;port&#39;</span>          =&gt; $port,</div>
-<div class="line">            <span class="stringliteral">&#39;dbname&#39;</span>        =&gt; $dbname,</div>
-<div class="line">            <span class="stringliteral">&#39;table_name&#39;</span>    =&gt; $table_name,</div>
-<div class="line">            <span class="stringliteral">&#39;tparam_name&#39;</span>   =&gt; $tparam_name,</div>
-<div class="line">            <span class="stringliteral">&#39;tparam_value&#39;</span>  =&gt; $tparam_value,</div>
-<div class="line">            <span class="stringliteral">&#39;conn_params&#39;</span>   =&gt; \%conn_params,</div>
+<div class="line">        $new_parse = {</div>
+<div class="line">            <span class="stringliteral">&#39;unambig_url&#39;</span>   =&gt; <span class="stringliteral">&#39;:///&#39;</span>,</div>
+<div class="line">            <span class="stringliteral">&#39;query_params&#39;</span>  =&gt; { <span class="stringliteral">&#39;object_type&#39;</span> =&gt; <span class="stringliteral">&#39;Analysis&#39;</span>, <span class="stringliteral">&#39;logic_name&#39;</span> =&gt; $url, },</div>
 <div class="line">        };</div>
-<div class="line"></div>
-<div class="line">        <span class="keywordflow">return</span> $parsed_url;</div>
 <div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =</div>
+<div class="line">            $url =~ m{^((\w*):<span class="comment">//(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([\w\-\.]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]*))?)?((?:;(\w+)=(\w+))*)$} ) {</span></div>
+<div class="line"></div>
+<div class="line">            my %conn_params = split(/[;=]/, <span class="stringliteral">&#39;type=hive;disconnect_when_inactive=0&#39;</span>.$conn_param_string );</div>
+<div class="line">            my $query_params;</div>
+<div class="line">            my $exception_from_OLD_format;</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span>($table_name) {</div>
+<div class="line">                <span class="keywordflow">if</span>($table_name eq <span class="stringliteral">&#39;analysis&#39;</span>) {</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;object_type&#39;</span>}          = <span class="stringliteral">&#39;Analysis&#39;</span>;</div>
+<div class="line">                    $query_params-&gt;{$tparam_name}           = $tparam_value;    # $tparam_name is <span class="stringliteral">&#39;logic_name&#39;</span> or <span class="stringliteral">&#39;dbID&#39;</span>, $tparam_value is the analysis_name or dbID</div>
+<div class="line">                } elsif($table_name eq <span class="stringliteral">&#39;accu&#39;</span>) {</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;object_type&#39;</span>}          = <span class="stringliteral">&#39;Accumulator&#39;</span>;</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;accu_name&#39;</span>}            = $tparam_name;</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;accu_address&#39;</span>}         = $tparam_value;</div>
+<div class="line">                } elsif($table_name eq <span class="stringliteral">&#39;job&#39;</span>) {</div>
+<div class="line">                    die <span class="stringliteral">&quot;Jobs cannot yet be located by URLs, sorry&quot;</span>;</div>
+<div class="line">                } <span class="keywordflow">else</span> {</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;object_type&#39;</span>}          = <span class="stringliteral">&#39;NakedTable&#39;</span>;</div>
+<div class="line">                    $query_params-&gt;{<span class="stringliteral">&#39;table_name&#39;</span>}           = $table_name;</div>
+<div class="line">                    <span class="keywordflow">if</span>($tparam_name) {</div>
+<div class="line">                        <span class="keywordflow">if</span>( $tparam_name eq <span class="stringliteral">&#39;insertion_method&#39;</span> ) {  # extra hint on the OLD format from the insertion_method</div>
+<div class="line">                            $query_params-&gt;{<span class="stringliteral">&#39;insertion_method&#39;</span>} = $tparam_value;</div>
+<div class="line">                        } elsif( $tparam_name eq <span class="stringliteral">&#39;table_name&#39;</span> ) {   # hinting <span class="keyword">this</span> is NEW format with a bipartite dbpath</div>
+<div class="line">                            $exception_from_OLD_format = 1;</div>
+<div class="line">                        }</div>
+<div class="line">                    }</div>
+<div class="line">                }</div>
+<div class="line">            }</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span>($exception_from_OLD_format) {</div>
+<div class="line">                warn <span class="stringliteral">&quot;\nOLD URL parser thinks you are using the NEW URL syntax for a remote $query_params-&gt;{&#39;object_type&#39;}, so skipping it (it may be wrong!)\n&quot;</span>;</div>
+<div class="line">            } <span class="keywordflow">else</span> {</div>
+<div class="line">                my $unambig_port    = $port <span class="comment">// { &#39;mysql&#39; =&gt; 3306, &#39;pgsql&#39; =&gt; 5432, &#39;sqlite&#39; =&gt; &#39;&#39; }-&gt;{$driver//&#39;&#39;} // &#39;&#39;;</span></div>
+<div class="line">                my $unambig_host    = ($host<span class="comment">//&#39;&#39;) eq &#39;localhost&#39; ? &#39;127.0.0.1&#39; : ($host//&#39;&#39;);</span></div>
+<div class="line">                my $unambig_url     = ($driver<span class="comment">//&#39;&#39;) .&#39;://&#39;. ($user ? $user.&#39;@&#39; : &#39;&#39;) . $unambig_host . ( $unambig_port ? &#39;:&#39;.$unambig_port : &#39;&#39;) .&#39;/&#39;. ($dbname//&#39;&#39;);</span></div>
+<div class="line"></div>
+<div class="line">                $old_parse = {</div>
+<div class="line">                    <span class="stringliteral">&#39;dbconn_part&#39;</span>   =&gt; $dbconn_part,</div>
+<div class="line">                    <span class="stringliteral">&#39;driver&#39;</span>        =&gt; $driver,</div>
+<div class="line">                    <span class="stringliteral">&#39;user&#39;</span>          =&gt; $user,</div>
+<div class="line">                    <span class="stringliteral">&#39;pass&#39;</span>          =&gt; $pass,</div>
+<div class="line">                    <span class="stringliteral">&#39;host&#39;</span>          =&gt; $host,</div>
+<div class="line">                    <span class="stringliteral">&#39;port&#39;</span>          =&gt; $port,</div>
+<div class="line">                    <span class="stringliteral">&#39;dbname&#39;</span>        =&gt; $dbname,</div>
+<div class="line">                    <span class="stringliteral">&#39;conn_params&#39;</span>   =&gt; \%conn_params,</div>
+<div class="line">                    <span class="stringliteral">&#39;query_params&#39;</span>  =&gt; $query_params,</div>
+<div class="line">                    <span class="stringliteral">&#39;unambig_url&#39;</span>   =&gt; $unambig_url,</div>
+<div class="line">                };</div>
+<div class="line">            }</div>
+<div class="line">        } # /<span class="keywordflow">if</span> OLD format</div>
+<div class="line">    </div>
+<div class="line">        <span class="keywordflow">if</span>( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =</div>
+<div class="line">            $url =~ m{^((\w+):<span class="comment">//(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&amp;\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {</span></div>
+<div class="line"></div>
+<div class="line">            my %conn_params  = split(/[;=]/, <span class="stringliteral">&#39;type=hive;disconnect_when_inactive=0&#39;</span>.($conn_param_string <span class="comment">// &#39;&#39;) );</span></div>
+<div class="line">            my $query_params = $query_part ? { split(/[&amp;=]/, $query_part ) } : undef;</div>
+<div class="line">            my $exception_from_NEW_format;</div>
+<div class="line"></div>
+<div class="line">            <span class="keywordflow">if</span>(!$query_params and ($driver eq <span class="stringliteral">&#39;mysql&#39;</span> or $driver eq <span class="stringliteral">&#39;pgsql&#39;</span>) and $dbname=~m{/}) {   # a special <span class="keywordflow">case</span> of multipart dbpath hints at the OLD format (or none at all)</div>
+<div class="line"></div>
+<div class="line">                $query_params = { <span class="stringliteral">&#39;object_type&#39;</span> =&gt; <span class="stringliteral">&#39;NakedTable&#39;</span> };</div>
+<div class="line">                $exception_from_NEW_format = 1;</div>
+<div class="line"></div>
+<div class="line">            } elsif($query_params and not (my $object_type = $query_params-&gt;{<span class="stringliteral">&#39;object_type&#39;</span>})) {    # <span class="keywordflow">do</span> a bit of guesswork:</div>
+<div class="line"></div>
+<div class="line">                <span class="keywordflow">if</span>($query_params-&gt;{<span class="stringliteral">&#39;logic_name&#39;</span>}) {</div>
+<div class="line">                    $object_type = <span class="stringliteral">&#39;Analysis&#39;</span>;</div>
+<div class="line">                    <span class="keywordflow">if</span>($dbname=~m{^([/~\w\-\.]*)/analysis$}) {</div>
+<div class="line">                        $exception_from_NEW_format = 1;</div>
+<div class="line">                    }</div>
+<div class="line">                } elsif($query_params-&gt;{<span class="stringliteral">&#39;accu_name&#39;</span>}) { # we don<span class="stringliteral">&#39;t require $query_params-&gt;{&#39;</span>accu_address<span class="stringliteral">&#39;} to support scalar accu</span></div>
+<div class="line"><span class="stringliteral">                    $object_type = &#39;</span>Accumulator<span class="stringliteral">&#39;;</span></div>
+<div class="line"><span class="stringliteral">                } elsif($query_params-&gt;{&#39;</span>table_name<span class="stringliteral">&#39;}) {  # NB: the order is important here, in case table_name is reset for non-NakedTables</span></div>
+<div class="line"><span class="stringliteral">                    $object_type = &#39;</span>NakedTable<span class="stringliteral">&#39;;</span></div>
+<div class="line"><span class="stringliteral">                } elsif($query_params-&gt;{&#39;</span>insertion_method<span class="stringliteral">&#39;}) {</span></div>
+<div class="line"><span class="stringliteral">                    $object_type = &#39;</span>NakedTable<span class="stringliteral">&#39;;</span></div>
+<div class="line"><span class="stringliteral">                    if($dbname=~m{^([/~\w\-\.]*)/(\w+)$}) {</span></div>
+<div class="line"><span class="stringliteral">                        $exception_from_NEW_format = 1;</span></div>
+<div class="line"><span class="stringliteral">                    }</span></div>
+<div class="line"><span class="stringliteral">                }</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">                $query_params-&gt;{&#39;</span>object_type<span class="stringliteral">&#39;} = $object_type;</span></div>
+<div class="line"><span class="stringliteral">            }</span></div>
+<div class="line"><span class="stringliteral"></span></div>
+<div class="line"><span class="stringliteral">            if($exception_from_NEW_format) {</span></div>
+<div class="line"><span class="stringliteral">                warn &quot;\nNEW URL parser thinks you are using the OLD URL syntax for a remote $query_params-&gt;{&#39;</span>object_type<span class="stringliteral">&#39;}, so skipping it (it may be wrong!)\n&quot;;</span></div>
+<div class="line"><span class="stringliteral">            } else {</span></div>
+<div class="line"><span class="stringliteral">                my $unambig_port    = $port // { &#39;</span>mysql<span class="stringliteral">&#39; =&gt; 3306, &#39;</span>pgsql<span class="stringliteral">&#39; =&gt; 5432, &#39;</span>sqlite<span class="stringliteral">&#39; =&gt; &#39;</span><span class="stringliteral">&#39; }-&gt;{$driver//&#39;</span><span class="stringliteral">&#39;} // &#39;</span><span class="stringliteral">&#39;;</span></div>
+<div class="line"><span class="stringliteral">                my $unambig_host    = ($host//&#39;</span><span class="stringliteral">&#39;) eq &#39;</span>localhost<span class="stringliteral">&#39; ? &#39;</span>127.0.0.1<span class="stringliteral">&#39; : ($host//&#39;</span><span class="stringliteral">&#39;);</span></div>
+<div class="line"><span class="stringliteral">                my $unambig_url     = ($driver//&#39;</span><span class="stringliteral">&#39;) .&#39;</span>:<span class="comment">//&#39;. ($user ? $user.&#39;@&#39; : &#39;&#39;) . $unambig_host . ( $unambig_port ? &#39;:&#39;.$unambig_port : &#39;&#39;) .&#39;/&#39;. ($dbname//&#39;&#39;);</span></div>
+<div class="line"></div>
+<div class="line">                $new_parse = {</div>
+<div class="line">                    <span class="stringliteral">&#39;dbconn_part&#39;</span>   =&gt; $dbconn_part,</div>
+<div class="line">                    <span class="stringliteral">&#39;driver&#39;</span>        =&gt; $driver,</div>
+<div class="line">                    <span class="stringliteral">&#39;user&#39;</span>          =&gt; $user,</div>
+<div class="line">                    <span class="stringliteral">&#39;pass&#39;</span>          =&gt; $pass,</div>
+<div class="line">                    <span class="stringliteral">&#39;host&#39;</span>          =&gt; $host,</div>
+<div class="line">                    <span class="stringliteral">&#39;port&#39;</span>          =&gt; $port,</div>
+<div class="line">                    <span class="stringliteral">&#39;dbname&#39;</span>        =&gt; $dbname,</div>
+<div class="line">                    <span class="stringliteral">&#39;conn_params&#39;</span>   =&gt; \%conn_params,</div>
+<div class="line">                    <span class="stringliteral">&#39;query_params&#39;</span>  =&gt; $query_params,</div>
+<div class="line">                    <span class="stringliteral">&#39;unambig_url&#39;</span>   =&gt; $unambig_url,</div>
+<div class="line">                };</div>
+<div class="line">            }</div>
+<div class="line">        } # /<span class="keywordflow">if</span> NEW format</div>
+<div class="line"></div>
+<div class="line">    }</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">if</span>($new_parse and $old_parse) {</div>
+<div class="line">        <span class="keywordflow">if</span>(<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a38ef61e77ea6ba6bb1e08c35228cb7c3">stringify</a>($old_parse) eq <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a38ef61e77ea6ba6bb1e08c35228cb7c3">stringify</a>($new_parse)) {</div>
+<div class="line">            <span class="keywordflow">return</span> $new_parse;</div>
+<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line">            warn <span class="stringliteral">&quot;\nThe URL &#39;$url&#39; can be parsed ambiguously:\n\t&quot;</span>.stringify($old_parse).<span class="stringliteral">&quot;\nvs\n\t&quot;</span>.<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils.html#a38ef61e77ea6ba6bb1e08c35228cb7c3">stringify</a>($new_parse).<span class="stringliteral">&quot;\n). Using the OLD parser at the moment.\nPlease change your URL to match the new format if you see weird behaviour\n\n&quot;</span>;</div>
+<div class="line">            <span class="keywordflow">return</span> $old_parse;</div>
+<div class="line">        }</div>
+<div class="line">    } elsif($new_parse) {</div>
+<div class="line">        <span class="keywordflow">return</span> $new_parse;</div>
+<div class="line">    } elsif($old_parse) {</div>
+<div class="line">        warn <span class="stringliteral">&quot;\nThe URL &#39;$url&#39; only works with the old parser, please start using the new syntax as the old parser will soon be deprecated\n\n&quot;</span>;</div>
+<div class="line">        <span class="keywordflow">return</span> $old_parse;</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        warn <span class="stringliteral">&quot;\nThe URL &#39;$url&#39; could not be parsed, please check it\n&quot;</span>;</div>
 <div class="line">        <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
 <div class="line">}</div>

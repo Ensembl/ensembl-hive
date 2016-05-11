@@ -24,7 +24,10 @@ sub main {
     GetOptions(
         'analysis_topup!'   => \$deprecated_option->{'analysis_topup'},     # always on
         'job_topup!'        => \$deprecated_option->{'job_topup'},          # never, use seed_pipeline.pl
-        'tweak|SET=s@'            => \$tweaks,
+        'tweak|SET=s@'      => \$tweaks,
+        'DELETE=s'          => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
+        'SHOW=s'            => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
+
     );
 
     if($deprecated_option->{'job_topup'}) {

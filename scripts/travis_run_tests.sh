@@ -21,9 +21,9 @@ export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ehive_test_pipeline_db
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,ensembl-test,+ignore,/usr/bin/psql,+ignore,scripts/all_tests.pl,-db,$PWD/cover_db/" perl $PWD/scripts/all_tests.pl -verbose t
+  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,-db,$PWD/cover_db/" prove -rv t
 else
-  perl $PWD/scripts/all_tests.pl t
+  prove -r t
 fi
 
 rt=$?

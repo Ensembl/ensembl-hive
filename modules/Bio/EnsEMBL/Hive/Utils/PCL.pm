@@ -60,6 +60,26 @@ sub INPUT_PLUS {
 }
 
 
+sub parse_wait_for {
+    my ($pipeline, $ctrled_analysis, $wait_for) = @_;
+
+    $wait_for ||= [];
+    $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
+
+        # create control rules:
+    foreach my $condition_url (@$wait_for) {
+        if($condition_url =~ m{^\w+$/}) {
+            my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
+                or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+        }
+        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
+                'condition_analysis_url'    => $condition_url,
+                'ctrled_analysis'           => $ctrled_analysis,
+        );
+    }
+}
+
+
 sub parse_flow_into {
     my ($pipeline, $from_analysis, $flow_into) = @_;
 
@@ -99,7 +119,7 @@ sub parse_flow_into {
             # [first pass] force pre_cond_groups into a list:
         if( !ref($pre_cond_groups)                  # a scalar (a single target)
          or (ref($pre_cond_groups) eq 'HASH')       # a hash (a combination of targets with templates)
-         or ((ref($pre_cond_groups) eq 'ARRAY') and !ref($pre_cond_groups->[0]) and ($pre_cond_groups->[0] eq $cond_group_marker)) # a single WHEN group
+         or ((ref($pre_cond_groups) eq 'ARRAY') and @$pre_cond_groups and !ref($pre_cond_groups->[0]) and ($pre_cond_groups->[0] eq $cond_group_marker)) # a single WHEN group
         ) {
             $pre_cond_groups = [ $pre_cond_groups ];
         }

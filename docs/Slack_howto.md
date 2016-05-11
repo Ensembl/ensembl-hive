@@ -45,7 +45,7 @@ overriden in the Runnable SlackNotification
 3. Use the WebHook in eHive
 
    1.  Define the `EHIVE_SLACK_WEBHOOK` environment variable when running your
-   beekeepe
+   beekeeper
 
    2. Configure the `slack_webhook` parameter in the SlackNotification Runnable
 

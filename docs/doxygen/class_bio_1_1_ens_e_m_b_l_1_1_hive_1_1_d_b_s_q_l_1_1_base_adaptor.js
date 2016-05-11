@@ -13,6 +13,7 @@ var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor =
     [ "default_overflow_limit", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ac73267d0e33aad126c188108f7e7c468", null ],
     [ "default_table_name", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ae3e95ef6cee275aa2ace188e45da854a", null ],
     [ "DESTROY", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#aeac6bf08072f89a153165ea39b8ed7a1", null ],
+    [ "do_not_update_columns", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a6dd48172b1890159471713c1b1dc3e24", null ],
     [ "fetch_all", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a18c6bfae797d67669e16242c2390c379", null ],
     [ "fetch_by_dbID", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#a29854e14eb6854bc6871db82fdb89d1f", null ],
     [ "input_column_mapping", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_base_adaptor.html#ac7e056384281180e1b314889fc7c317f", null ],

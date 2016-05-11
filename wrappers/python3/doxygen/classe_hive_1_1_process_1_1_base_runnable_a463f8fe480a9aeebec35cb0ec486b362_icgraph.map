@@ -4,8 +4,8 @@
 <area shape="rect" id="node3" href="$classe_hive_1_1_process_1_1_base_runnable.html#aa24e911fed2a086627fd7959288d31b8" title="Simple loop: wait for job parameters, do the job&#39;s life&#45;cycle. " alt="" coords="571,5,773,46"/>
 <area shape="rect" id="node4" href="$classe_hive_1_1_process_1_1_base_runnable.html#adb681425aa6f351938bb2ed801ca66ad" title="method is one of &quot;pre_cleanup&quot;, &quot;fetch_input&quot;, &quot;run&quot;, &quot;write_output&quot;, &quot;post_cleanup&quot;. " alt="" coords="571,70,773,111"/>
 <area shape="rect" id="node5" href="$classe_hive_1_1_process_1_1_base_runnable.html#af3c999502afdc346070e50c4fc42905b" title="Store a message in the log_message table with is_error indicating whether the warning is actually an ..." alt="" coords="547,136,797,163"/>
-<area shape="rect" id="node6" href="$class_long_mult_1_1_digit_factory_1_1_digit_factory.html#a019e049fb5a45e6be23f2878eaa2b4e2" title="LongMult.DigitFactory.Digit\lFactory.write_output" alt="" coords="866,34,1049,75"/>
-<area shape="rect" id="node7" href="$class_test_runnable_1_1_test_runnable.html#a7fe88677b553ce139e9a47c305c6470a" title="TestRunnable.TestRunnable.fetch\l_input" alt="" coords="845,99,1069,141"/>
-<area shape="rect" id="node8" href="$class_test_runnable_1_1_test_runnable.html#a4a992aab947c0bd8857e8c99471f2cec" title="TestRunnable.TestRunnable.run" alt="" coords="850,165,1065,192"/>
-<area shape="rect" id="node9" href="$class_test_runnable_1_1_test_runnable.html#a44b70d4b32623732bccd2af7dbcf81cd" title="TestRunnable.TestRunnable.write\l_output" alt="" coords="845,217,1069,258"/>
+<area shape="rect" id="node6" href="$classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html#ab7d62c5b790ec53ddf73fb2d4fda55b4" title="eHive.examples.LongMult.\lDigitFactory.DigitFactory.write\l_output" alt="" coords="849,15,1049,71"/>
+<area shape="rect" id="node7" href="$classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html#abd2b947a68b93efa931238fc14b70f95" title="eHive.examples.TestRunnable.\lTestRunnable.fetch_input" alt="" coords="846,95,1053,137"/>
+<area shape="rect" id="node8" href="$classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html#a05be4c631a3cb9ad28c9c0c730244601" title="eHive.examples.TestRunnable.\lTestRunnable.run" alt="" coords="846,161,1053,202"/>
+<area shape="rect" id="node9" href="$classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html#ae60d71e52723b2a82c169811065bcec0" title="eHive.examples.TestRunnable.\lTestRunnable.write_output" alt="" coords="846,226,1053,267"/>
 </map>

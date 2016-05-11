@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -140,6 +140,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad2334d5ffe5a01936cb8c9c365da979c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac3d886006c17c1e6578d622455bda2f"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_fasta_factory.html#aac3d886006c17c1e6578d622455bda2f">write_output</a> ()</td></tr>
 <tr class="separator:aac3d886006c17c1e6578d622455bda2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8ace394d55f0cf958acff3dd4e7a381"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_fasta_factory.html#ab8ace394d55f0cf958acff3dd4e7a381">post_cleanup</a> ()</td></tr>
+<tr class="separator:ab8ace394d55f0cf958acff3dd4e7a381"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html">Bio::EnsEMBL::Hive::Process</a></td></tr>
 <tr class="memitem:ae2f3da1c5a538fc990739595101bbfc5 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#ae2f3da1c5a538fc990739595101bbfc5">new</a> ()</td></tr>
 <tr class="separator:ae2f3da1c5a538fc990739595101bbfc5 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -172,6 +174,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_d_b_connection.html">Bio::EnsEMBL::Hive::DBSQL::DBConnection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a2d0ad25d584c63aee8a7b45d30afb0e6">data_dbc</a> ()</td></tr>
 <tr class="separator:a2d0ad25d584c63aee8a7b45d30afb0e6 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public Returns&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#a98a23f9308eb85ce1afcbbcad687aeb1">run_system_command</a> ()</td></tr>
+<tr class="separator:a98a23f9308eb85ce1afcbbcad687aeb1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memItemLeft" align="right" valign="top">public <br class="typebreak"/>
 <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_analysis_job.html">Bio::EnsEMBL::Hive::AnalysisJob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process.html#abaf96e66f6740ec51a294e4164363166">input_job</a> ()</td></tr>
 <tr class="separator:abaf96e66f6740ec51a294e4164363166 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_process"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -214,7 +218,11 @@ Synopsis</h1>
 Description</h1>
  <pre>
     This is a Bioinformatics-specific "Factory" Runnable that splits a given Fasta file into smaller chunks
-    and dataflows one job per chunk.
+    and dataflows one job per chunk. Note that:
+        - the files are created in the current directory.
+        - the Runnable does not split the individual sequences, it only groups them in a way that none of the output files will
+          be longer than param('max_chunk_length').
+        - Thanks to BioPerl's versatility, the Runnable can in fact read many formats. Tune param('input_format') to do so.
 
     The following parameters are supported:
 
@@ -225,6 +233,14 @@ Description</h1>
         param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
 
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
+
+        param('hash_directories');  # Boolean (default to 0): should the output files be put in different ("hashed") directories
+
+        param('input_format');      # The format of the input file (defaults to "fasta")
+
+        param('output_format');     # The format of the output file (defaults to the same as param('input_format'))
+
+        param('output_dir');        # Where to create the chunks (defaults to the current directory)
 
 </pre> </div><h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="a364bc206bd7c1d93307258ff83b3fcce"></a>
@@ -252,10 +268,15 @@ Description</h1>
 <div class="line">    my $inputfile   = $self-&gt;param_required(<span class="stringliteral">&#39;inputfile&#39;</span>);</div>
 <div class="line">    die <span class="stringliteral">&quot;Cannot read &#39;$inputfile&#39;&quot;</span> unless(-r $inputfile);</div>
 <div class="line"></div>
+<div class="line">    my $input_seqio;</div>
 <div class="line">    <span class="keywordflow">if</span>($inputfile=~/\.(?:gz|Z)$/) {</div>
-<div class="line">        $inputfile = <span class="stringliteral">&quot;gunzip -c $inputfile |&quot;</span>;</div>
+<div class="line">        open(my $in_fh, <span class="stringliteral">&#39;-|&#39;</span>, <span class="stringliteral">&quot;gunzip -c $inputfile&quot;</span>);</div>
+<div class="line">        $input_seqio = Bio::SeqIO-&gt;new(-fh =&gt; $in_fh, -format =&gt; $self-&gt;param_required(<span class="stringliteral">&#39;input_format&#39;</span>));</div>
+<div class="line">        $self-&gt;param(<span class="stringliteral">&#39;input_fh&#39;</span>, $in_fh);</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        $input_seqio = Bio::SeqIO-&gt;new(-file =&gt; $inputfile);</div>
 <div class="line">    }</div>
-<div class="line">    my $input_seqio = Bio::SeqIO-&gt;new(-file =&gt; $inputfile)  || die <span class="stringliteral">&quot;Could not open or parse &#39;$inputfile&#39;, please investigate&quot;</span>;</div>
+<div class="line">    die <span class="stringliteral">&quot;Could not open or parse &#39;$inputfile&#39;, please investigate&quot;</span> unless $input_seqio;</div>
 <div class="line"></div>
 <div class="line">    $self-&gt;param(<span class="stringliteral">&#39;input_seqio&#39;</span>, $input_seqio);</div>
 <div class="line">}</div>
@@ -285,8 +306,37 @@ Description</h1>
 <div class="line">    <span class="keywordflow">return</span> {</div>
 <div class="line">        <span class="stringliteral">&#39;max_chunk_length&#39;</span>  =&gt; 100000,</div>
 <div class="line">        <span class="stringliteral">&#39;output_prefix&#39;</span>     =&gt; <span class="stringliteral">&#39;my_chunk_&#39;</span>,</div>
-<div class="line">        <span class="stringliteral">&#39;output_suffix&#39;</span>     =&gt; <span class="stringliteral">&#39;.fasta&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;output_suffix&#39;</span>     =&gt; <span class="stringliteral">&#39;.#input_format#&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;hash_directories&#39;</span>  =&gt; 0,</div>
+<div class="line">        <span class="stringliteral">&#39;input_format&#39;</span>      =&gt; <span class="stringliteral">&#39;fasta&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;output_dir&#39;</span>        =&gt; <span class="stringliteral">&#39;&#39;</span>,</div>
+<div class="line">        <span class="stringliteral">&#39;output_format&#39;</span>     =&gt; <span class="stringliteral">&#39;#input_format#&#39;</span>,</div>
 <div class="line">    };</div>
+<div class="line">}</div>
+</div><!-- fragment --> </div> 
+</div>
+</div>
+<a class="anchor" id="ab8ace394d55f0cf958acff3dd4e7a381"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">public Bio::EnsEMBL::Hive::RunnableDB::FastaFactory::post_cleanup </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<pre>
+    Description : Close the file handle open in <a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_fasta_factory.html#a364bc206bd7c1d93307258ff83b3fcce">fetch_input()</a></pre><pre> </pre><div id="codesection-post_cleanup" class="dynheader closed" style="cursor:pointer;" onclick="return toggleVisibility(this)">  
+    <img id='codesection-post_cleanup-trigger' src='closed.png' style='display:inline'><b>Code:</b>
+</div>
+<div id='codesection-post_cleanup-summary' class='dyncontent' style='display:block;font-size:small;'>click to view</div>
+<div id='codesection-post_cleanup-content' class='dyncontent' style='display: none;'> 
+ <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_runnable_d_b_1_1_fasta_factory.html#ab8ace394d55f0cf958acff3dd4e7a381">post_cleanup</a> {</div>
+<div class="line">    my $self = shift;</div>
+<div class="line">    close( $self-&gt;param(<span class="stringliteral">&#39;input_fh&#39;</span>) ) <span class="keywordflow">if</span> $self-&gt;param(<span class="stringliteral">&#39;input_fh&#39;</span>);</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 
 </div>
@@ -342,28 +392,35 @@ Description</h1>
 <div class="line">    my $max_chunk_length    = $self-&gt;param(<span class="stringliteral">&#39;max_chunk_length&#39;</span>);</div>
 <div class="line">    my $output_prefix       = $self-&gt;param(<span class="stringliteral">&#39;output_prefix&#39;</span>);</div>
 <div class="line">    my $output_suffix       = $self-&gt;param(<span class="stringliteral">&#39;output_suffix&#39;</span>);</div>
+<div class="line">    my $output_dir          = $self-&gt;param(<span class="stringliteral">&#39;output_dir&#39;</span>);</div>
 <div class="line"></div>
 <div class="line">    my $chunk_number = 1;   # counts the chunks</div>
 <div class="line">    my $chunk_length = 0;   # total length of the current chunk</div>
 <div class="line">    my $chunk_size   = 0;   # number of sequences in the current chunk</div>
 <div class="line">    my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;</div>
-<div class="line">    my $chunk_seqio  = Bio::SeqIO-&gt;new(-file =&gt; <span class="charliteral">&#39;&gt;&#39;</span>.$chunk_name, -format =&gt; <span class="stringliteral">&#39;fasta&#39;</span>);</div>
+<div class="line"></div>
+<div class="line"><span class="preprocessor">    # No need to check param(&#39;hash_directories&#39;) because even in this mode</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">    # the first file is in the required directory</span></div>
+<div class="line"><span class="preprocessor"></span>    <span class="keywordflow">if</span> ($output_dir) {</div>
+<div class="line">        mkpath($output_dir);</div>
+<div class="line">        $chunk_name = File::Spec-&gt;catfile($output_dir, $chunk_name);</div>
+<div class="line">    }</div>
+<div class="line">    my $chunk_seqio  = Bio::SeqIO-&gt;new(-file =&gt; <span class="charliteral">&#39;&gt;&#39;</span>.$chunk_name, -format =&gt; $self-&gt;param_required(<span class="stringliteral">&#39;output_format&#39;</span>));</div>
 <div class="line">    </div>
 <div class="line">    <span class="keywordflow">while</span> (my $seq_object = $input_seqio-&gt;next_seq) {</div>
-<div class="line">    $chunk_seqio-&gt;write_seq( $seq_object );</div>
-<div class="line">    </div>
-<div class="line">        <span class="keywordflow">if</span>((my $seq_length = $seq_object-&gt;length()) + $chunk_length &lt;= $max_chunk_length) {</div>
-<div class="line">            $chunk_length += $seq_length;</div>
-<div class="line">            $chunk_size   += 1;</div>
 <div class="line"></div>
-<div class="line">        } <span class="keywordflow">else</span> {</div>
+<div class="line">        $chunk_seqio-&gt;write_seq( $seq_object );</div>
+<div class="line">        $chunk_length += $seq_object-&gt;length();</div>
+<div class="line">        $chunk_size   += 1;</div>
+<div class="line">    </div>
+<div class="line">        <span class="keywordflow">if</span> ($chunk_length &gt; $max_chunk_length) {</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">                # dataflow the current chunk:</span></div>
 <div class="line"><span class="preprocessor"></span>            $self-&gt;dataflow_output_id( {</div>
-<div class="line">                <span class="stringliteral">&#39;chunk_name&#39;</span> =&gt; $chunk_name,</div>
-<div class="line">                <span class="stringliteral">&#39;chunk_number&#39;</span> =&gt; $chunk_number,</div>
-<div class="line">                <span class="stringliteral">&#39;chunk_length&#39;</span> =&gt; $chunk_length,</div>
-<div class="line">                <span class="stringliteral">&#39;chunk_size&#39;</span> =&gt; $chunk_size</div>
+<div class="line">                <span class="stringliteral">&#39;chunk_name&#39;</span>    =&gt; $chunk_name,</div>
+<div class="line">                <span class="stringliteral">&#39;chunk_number&#39;</span>  =&gt; $chunk_number,</div>
+<div class="line">                <span class="stringliteral">&#39;chunk_length&#39;</span>  =&gt; $chunk_length,</div>
+<div class="line">                <span class="stringliteral">&#39;chunk_size&#39;</span>    =&gt; $chunk_size</div>
 <div class="line">            }, 2);</div>
 <div class="line"></div>
 <div class="line"><span class="preprocessor">                # start writing to the next one:</span></div>
@@ -371,20 +428,37 @@ Description</h1>
 <div class="line">            $chunk_size     = 0;</div>
 <div class="line">            $chunk_number++;</div>
 <div class="line">            $chunk_name     = $output_prefix.$chunk_number.$output_suffix;</div>
-<div class="line">            $chunk_seqio    = Bio::SeqIO-&gt;new(-file =&gt; <span class="charliteral">&#39;&gt;&#39;</span>.$chunk_name, -format =&gt; <span class="stringliteral">&#39;fasta&#39;</span>);</div>
+<div class="line"></div>
+<div class="line">            my @partial_dirs;</div>
+<div class="line">            <span class="keywordflow">if</span> ((defined $output_dir) and ($output_dir ne <span class="stringliteral">&#39;&#39;</span>)) {</div>
+<div class="line">                push @partial_dirs, $output_dir;</div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">if</span> ($self-&gt;param(<span class="stringliteral">&#39;hash_directories&#39;</span>)) {</div>
+<div class="line">                my $hash_dir = dir_revhash($chunk_number);</div>
+<div class="line">                <span class="keywordflow">if</span> ($hash_dir ne <span class="stringliteral">&#39;&#39;</span>) {</div>
+<div class="line">                    push @partial_dirs, $hash_dir;</div>
+<div class="line">                }</div>
+<div class="line">            }</div>
+<div class="line">            my $dir_tree = File::Spec-&gt;catdir(@partial_dirs);</div>
+<div class="line">            <span class="keywordflow">if</span> ($dir_tree ne <span class="stringliteral">&#39;&#39;</span>) {</div>
+<div class="line">                mkpath($dir_tree);</div>
+<div class="line">                $chunk_name = File::Spec-&gt;catfile($dir_tree, $chunk_name);</div>
+<div class="line">            }</div>
+<div class="line">            $chunk_seqio    = $chunk_seqio-&gt;new(-file =&gt; <span class="charliteral">&#39;&gt;&#39;</span>.$chunk_name);</div>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>($chunk_size) {   # flush the last chunk:</div>
 <div class="line"></div>
 <div class="line">        $self-&gt;dataflow_output_id( {</div>
-<div class="line">            <span class="stringliteral">&#39;chunk_name&#39;</span> =&gt; $chunk_name,</div>
-<div class="line">            <span class="stringliteral">&#39;chunk_number&#39;</span> =&gt; $chunk_number,</div>
-<div class="line">            <span class="stringliteral">&#39;chunk_length&#39;</span> =&gt; $chunk_length,</div>
-<div class="line">            <span class="stringliteral">&#39;chunk_size&#39;</span> =&gt; $chunk_size</div>
+<div class="line">            <span class="stringliteral">&#39;chunk_name&#39;</span>    =&gt; $chunk_name,</div>
+<div class="line">            <span class="stringliteral">&#39;chunk_number&#39;</span>  =&gt; $chunk_number,</div>
+<div class="line">            <span class="stringliteral">&#39;chunk_length&#39;</span>  =&gt; $chunk_length,</div>
+<div class="line">            <span class="stringliteral">&#39;chunk_size&#39;</span>    =&gt; $chunk_size</div>
 <div class="line">        }, 2);</div>
+<div class="line"></div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
-<div class="line">    unlink $chunk_name unless (stat($chunk_name))[7];</div>
+<div class="line">        unlink $chunk_name unless (stat($chunk_name))[7];</div>
 <div class="line">    }</div>
 <div class="line">}</div>
 </div><!-- fragment --> </div> 

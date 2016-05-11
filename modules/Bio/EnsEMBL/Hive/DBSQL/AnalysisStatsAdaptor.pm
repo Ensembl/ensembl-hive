@@ -77,28 +77,6 @@ sub object_class {
 }
 
 
-=head2 refresh
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisStats object
-  Description: reload the AnalysisStats object from the database
-  Returntype : Bio::EnsEMBL::Hive::AnalysisStats object - same one with reloaded data
-
-=cut
-
-sub refresh {
-    my ($self, $stats) = @_;
-
-    my $new_stats = $self->fetch_by_analysis_id( $stats->analysis_id );     # fetch into a separate object
-
-    my $has_hive_pipeline = exists $stats->{'_hive_pipeline'};
-    my $orig_hive_pipeline = $stats->hive_pipeline;
-    %$stats = %$new_stats;                                                  # copy the data over
-    $stats->hive_pipeline($orig_hive_pipeline) if $has_hive_pipeline;
-
-    return $stats;
-}
-
-
 ################
 #
 # UPDATE METHODS
@@ -195,19 +173,19 @@ sub interval_update_work_done {
   my $sql = $self->db->hive_pipeline->hive_use_triggers()
   ? qq{
     UPDATE analysis_stats SET
-        avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count))
+        avg_msec_per_job = ROUND(((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_input_msec_per_job = ROUND(((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_run_msec_per_job = ROUND(((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_output_msec_per_job = ROUND(((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count))
     WHERE analysis_id= $analysis_id
   }
   : qq{
     UPDATE analysis_stats SET
-        avg_msec_per_job = (((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_input_msec_per_job = (((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_run_msec_per_job = (((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)), 
-        avg_output_msec_per_job = (((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)), 
-        done_job_count = done_job_count + $job_count 
+        avg_msec_per_job = ROUND(((done_job_count*avg_msec_per_job)/$weight_factor + $interval_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_input_msec_per_job = ROUND(((done_job_count*avg_input_msec_per_job)/$weight_factor + $fetching_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_run_msec_per_job = ROUND(((done_job_count*avg_run_msec_per_job)/$weight_factor + $running_msec) / (done_job_count/$weight_factor + $job_count)),
+        avg_output_msec_per_job = ROUND(((done_job_count*avg_output_msec_per_job)/$weight_factor + $writing_msec) / (done_job_count/$weight_factor + $job_count)),
+        done_job_count = done_job_count + $job_count
     WHERE analysis_id= $analysis_id
   };
 

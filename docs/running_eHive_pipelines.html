@@ -58,7 +58,7 @@
 	This is done by feeding the PipeConfig file to ensembl-hive/scripts/<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> script.<br/>
 	A typical example:
     <pre>
-		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url mysql://user:password@host:port/long_mult
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -pipeline_url mysql://user:password@host:port/long_mult
     </pre>
 
     <p>It will create a MySQL pipeline database called 'long_mult' with the given connection parameters.
@@ -66,7 +66,7 @@
 
     <p>If heavy concurrent traffic to the database is not expected, we may choose to keep the blackboard in a local SQLite file:
     <pre>
-		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -pipeline_url sqlite:///long_mult
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -pipeline_url sqlite:///long_mult
     </pre>
     <p>
     In the latter case no other connection parameters except for the filename are necessary, so they are skipped.
@@ -74,7 +74,7 @@
 
 	<p>A couple of more complicated examples:
     <pre>
-		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -user "my_db_username" -password "my_db_password" -mlss_id 12345
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf -user "my_db_username" -password "my_db_password" -mlss_id 12345
     </pre>
 	<p>It sets 'user', 'password' and 'mlss_id' parameters via command line options.
 	At this stage you can also override any of the other options mentioned in the default_options section of the PipeConfig file.</p>
@@ -82,7 +82,7 @@
 	<p>If you need to modify second-level values of a "hash option" (such as the '-host' or '-port' of the 'pipeline_db' option),
 	the syntax is the following (follows the extended syntax of Getopt::Long) :
     <pre>
-		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -port=5306
+		<a href=scripts/init_pipeline.html><b>init_pipeline.pl</b></a> Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf -pipeline_db -host=myhost -pipeline_db -port=5306
     </pre>
 
     <p><font color=red>PLEASE NOTE</font>:
@@ -169,7 +169,7 @@
     <p>Actually, you don't even need to generate a pipeline database to see its diagram,
         as the diagram can be generated directly from the PipeConfig file:
     <pre>
-        <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> -pipeconfig Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf -out my_diagram2.png
+        <a href=scripts/generate_graph.html><b>generate_graph.pl</b></a> -pipeconfig Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -out my_diagram2.png
     </pre>
     <p>
         Such a "standalone" diagram may look slightly different (analysis_ids will be missing).
@@ -285,7 +285,7 @@ coding_exon_stats_summary  (39)     <span style="color:black; background-color:g
          ======= TOTAL ======= : 100 active Roles
 
 Not submitting any workers this iteration
-                          hive 2.651% complete (< 432.133 CPU_hrs) (162726 todo + 4432 done + 0 failed = 167158 total)
+                          hive 2.651% complete (&lt; 432.133 CPU_hrs) (162726 todo + 4432 done + 0 failed = 167158 total)
 sleep 1.00 minutes. Next loop at Mon Sep  8 15:27:48 2014
 </pre>
 <p>NB: colours are normally not used in beekeeper's output. They have been inserted here to refer to the above-mentioned legend</p>

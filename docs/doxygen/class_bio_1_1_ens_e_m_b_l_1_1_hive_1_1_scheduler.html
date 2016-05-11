@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -320,7 +320,7 @@ Description</h1>
 <div class="line">        <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a8bd3190564f0e48f010e1a88650d5e41">scheduler_say</a>( <span class="stringliteral">&quot;re-synchronizing...&quot;</span> );</div>
 <div class="line">        $queen-&gt;synchronize_hive( $list_of_analyses );</div>
 <div class="line"></div>
-<div class="line">        <span class="keywordflow">if</span>( $queen-&gt;db-&gt;hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens <span class="keywordflow">for</span> the pipelines that asked <span class="keywordflow">for</span> it</div>
+<div class="line">        <span class="keywordflow">if</span>( $queen-&gt;db-&gt;hive_pipeline-&gt;hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens <span class="keywordflow">for</span> the pipelines that asked <span class="keywordflow">for</span> it</div>
 <div class="line">            <span class="keywordflow">if</span>( $queen-&gt;check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # and <span class="keywordtype">double</span>-check on our side</div>
 <div class="line">                <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_scheduler.html#a8bd3190564f0e48f010e1a88650d5e41">scheduler_say</a>( <span class="stringliteral">&quot;looks like we may need re-balancing semaphore_counts...&quot;</span> );</div>
 <div class="line">                <span class="keywordflow">if</span>( my $rebalanced_jobs_counter = $queen-&gt;db-&gt;get_AnalysisJobAdaptor-&gt;balance_semaphores( $list_of_analyses ) ) {</div>

@@ -18,13 +18,13 @@
 
 4.2 The pipeline is defined in 4 files:
 
-        * ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/DigitFactory.pm     splits a multiplication job into sub-tasks and creates corresponding jobs
+        * ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/RunnableDB/DigitFactory.pm     splits a multiplication job into sub-tasks and creates corresponding jobs
 
-        * ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/PartMultiply.pm     performs a partial multiplication and stores the intermediate result in a table
+        * ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/RunnableDB/PartMultiply.pm     performs a partial multiplication and stores the intermediate result in a table
 
-        * ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/LongMult/AddTogether.pm      waits for partial multiplication results to compute and adds them together into final result
+        * ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/RunnableDB/AddTogether.pm      waits for partial multiplication results to compute and adds them together into final result
 
-        * ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig/LongMult_conf.pm             the pipeline configuration module that links the previous Runnables into one pipeline
+        * ensembl-hive/modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMult_conf.pm    the pipeline configuration module that links the previous Runnables into one pipeline
 
 4.3 The main part of any PipeConfig file, pipeline_analyses() method, defines the pipeline graph whose nodes are analyses and whose arcs are control and dataflow rules.
     Each analysis hash must have:
@@ -45,7 +45,7 @@
     Have another look at LongMult_conf.pm file. The default_options() method returns a hash that pretty much defines what parameters you can/should supply to init_pipeline.pl .
     You will probably need to specify the following:
 
-        $ init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf \
+        $ init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf \
             -host=<your_mysql_host> \
             -port=<your_mysql_port> \
             -user=<your_mysql_username> \

@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -256,8 +256,8 @@ Public Member Functions</h2></td></tr>
 <div class="line">    <span class="keywordflow">return</span> [</div>
 <div class="line">        {   -logic_name =&gt; <span class="stringliteral">&#39;add_together&#39;</span>,</div>
 <div class="line">            -module     =&gt; <span class="stringliteral">&#39;Bio::EnsEMBL::Hive::RunnableDB::LongMult::AddTogether&#39;</span>,</div>
-<div class="line">            -wait_for =&gt; [ <span class="stringliteral">&#39;part_multiply&#39;</span> ],</div>
-<div class="line">            -flow_into =&gt; {</div>
+<div class="line"><span class="preprocessor">#            -wait_for =&gt; [ &#39;part_multiply&#39; ],</span></div>
+<div class="line"><span class="preprocessor"></span>            -flow_into =&gt; {</div>
 <div class="line">                1 =&gt; [ <span class="stringliteral">&#39;:////final_result&#39;</span>,</div>
 <div class="line">                       <span class="stringliteral">&#39;foo&#39;</span></div>
 <div class="line">                     ],</div>
@@ -356,7 +356,7 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>modules/Bio/EnsEMBL/Hive/PipeConfig/<a class="el" href="_top_up__conf_8pm.html">TopUp_conf.pm</a></li>
+<li>modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/<a class="el" href="_top_up__conf_8pm.html">TopUp_conf.pm</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

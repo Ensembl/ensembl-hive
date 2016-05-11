@@ -14,10 +14,10 @@ var hierarchy =
     [ "object", null, [
       [ "eHive.Params.ParamContainer", "classe_hive_1_1_params_1_1_param_container.html", null ],
       [ "eHive.Process.BaseRunnable", "classe_hive_1_1_process_1_1_base_runnable.html", [
-        [ "LongMult.AddTogether.AddTogether", "class_long_mult_1_1_add_together_1_1_add_together.html", null ],
-        [ "LongMult.DigitFactory.DigitFactory", "class_long_mult_1_1_digit_factory_1_1_digit_factory.html", null ],
-        [ "LongMult.PartMultiply.PartMultiply", "class_long_mult_1_1_part_multiply_1_1_part_multiply.html", null ],
-        [ "TestRunnable.TestRunnable", "class_test_runnable_1_1_test_runnable.html", null ]
+        [ "eHive.examples.LongMult.AddTogether.AddTogether", "classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html", null ],
+        [ "eHive.examples.LongMult.DigitFactory.DigitFactory", "classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html", null ],
+        [ "eHive.examples.LongMult.PartMultiply.PartMultiply", "classe_hive_1_1examples_1_1_long_mult_1_1_part_multiply_1_1_part_multiply.html", null ],
+        [ "eHive.examples.TestRunnable.TestRunnable", "classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html", null ]
       ] ],
       [ "eHive.Process.Job", "classe_hive_1_1_process_1_1_job.html", null ]
     ] ],

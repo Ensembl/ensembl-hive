@@ -6,13 +6,13 @@
 
 =head1 SYNOPSIS
 
-    Please refer to Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf pipeline configuration file
+    Please refer to Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf pipeline configuration file
     to understand how this particular example pipeline is configured and ran.
 
 =head1 DESCRIPTION
 
     'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply' has a separate task of multiplying 'a_multiplier' by the given 'digit',
-    then it passes its partial_product on.
+    then it passes its partial product on.
 
 =head1 LICENSE
 
@@ -85,7 +85,7 @@ sub run {   # call the recursive function that will compute the stuff
     my $a_multiplier = $self->param_required('a_multiplier');
     my $digit        = $self->param_required('digit');
 
-    $self->param('partial_product', _rec_multiply($a_multiplier, $digit, 0) || 0);
+    $self->param('product', _rec_multiply($a_multiplier, $digit, 0) || 0);
 
     sleep( $self->param('take_time') );
 }
@@ -101,7 +101,7 @@ sub write_output {  # but this time we have something to store
     my $self = shift @_;
 
     $self->dataflow_output_id( {
-        'partial_product'   => $self->param('partial_product')
+        'product'   => $self->param('product')
     }, 1);
 }
 

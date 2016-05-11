@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -196,12 +196,6 @@ Bio::EnsEMBL::DBSQL::DBConnection&#160;</td><td class="memItemRight" valign="bot
 <tr class="separator:a3c086bf7eca0f812311bf381c862e5c1 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4a9d2cfe84a134fdf678ba566582bf5f inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memItemLeft" align="right" valign="top">public Boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a4a9d2cfe84a134fdf678ba566582bf5f">disconnect_if_idle</a> ()</td></tr>
 <tr class="separator:a4a9d2cfe84a134fdf678ba566582bf5f inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a646a94723dda7c144400a87c67816e68 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memItemLeft" align="right" valign="top">public SQLStatement&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a646a94723dda7c144400a87c67816e68">add_limit_clause</a> ()</td></tr>
-<tr class="separator:a646a94723dda7c144400a87c67816e68 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa3d9aebeba7a86e48cc7c1ebe2934b27 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memItemLeft" align="right" valign="top">public String&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#aa3d9aebeba7a86e48cc7c1ebe2934b27">from_date_to_seconds</a> ()</td></tr>
-<tr class="separator:aa3d9aebeba7a86e48cc7c1ebe2934b27 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7abaf113d8686eaa7112c6fe9616dd99 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memItemLeft" align="right" valign="top">public String&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection.html#a7abaf113d8686eaa7112c6fe9616dd99">from_seconds_to_date</a> ()</td></tr>
-<tr class="separator:a7abaf113d8686eaa7112c6fe9616dd99 inherit pub_methods_class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_d_b_s_q_l_1_1_core_d_b_connection"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h1><a class="anchor" id="Synopsis"></a>
@@ -270,16 +264,17 @@ Description</h1>
 <div class="line">    <span class="keywordflow">if</span>(my $url = <span class="keyword">delete</span> $flags{<span class="stringliteral">&#39;-url&#39;</span>}) {</div>
 <div class="line">        <span class="keywordflow">if</span>(my $parsed_url = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html#ac80cc911eba215fb0ed17104861fe5f7">Bio::EnsEMBL::Hive::Utils::URL::parse</a>( $url )) {</div>
 <div class="line"></div>
-<div class="line">            <span class="keywordflow">return</span> $class-&gt;SUPER::new(</div>
-<div class="line">                %flags,     # they act as overridable defaults</div>
+<div class="line">            <span class="keywordflow">foreach</span> my $name ( <span class="stringliteral">&#39;driver&#39;</span>, <span class="stringliteral">&#39;host&#39;</span>, <span class="stringliteral">&#39;port&#39;</span>, <span class="stringliteral">&#39;user&#39;</span>, <span class="stringliteral">&#39;pass&#39;</span>, <span class="stringliteral">&#39;dbname&#39;</span> ) {</div>
+<div class="line">                $flags{ <span class="stringliteral">&quot;-$name&quot;</span> } <span class="comment">//= $parsed_url-&gt;{$name};</span></div>
+<div class="line">            }</div>
+<div class="line">            <span class="keywordflow">foreach</span> my $name ( keys %{$parsed_url-&gt;{<span class="stringliteral">&#39;conn_params&#39;</span>}} ) {</div>
+<div class="line">                $flags{ <span class="stringliteral">&quot;-$name&quot;</span> } <span class="comment">//= $parsed_url-&gt;{&#39;conn_params&#39;}-&gt;{$name};</span></div>
+<div class="line">            }</div>
 <div class="line"></div>
-<div class="line">                ( map { (<span class="stringliteral">&quot;-$_&quot;</span> =&gt; $parsed_url-&gt;{$_}) } ( <span class="stringliteral">&#39;driver&#39;</span>, <span class="stringliteral">&#39;host&#39;</span>, <span class="stringliteral">&#39;port&#39;</span>, <span class="stringliteral">&#39;user&#39;</span>, <span class="stringliteral">&#39;pass&#39;</span>, <span class="stringliteral">&#39;dbname&#39;</span> ) ),    # parentheses are essential</div>
-<div class="line"></div>
-<div class="line">                ( map { (<span class="stringliteral">&quot;-$_&quot;</span> =&gt; $parsed_url-&gt;{<span class="stringliteral">&#39;conn_params&#39;</span>}-&gt;{$_}) } keys %{$parsed_url-&gt;{<span class="stringliteral">&#39;conn_params&#39;</span>}}  ),    # parentheses are essential</div>
-<div class="line">            );</div>
+<div class="line">            <span class="keywordflow">return</span> $class-&gt;SUPER::new( %flags );</div>
 <div class="line"></div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
-<div class="line">            die <span class="stringliteral">&quot;Could not create DBC because could not parse the URL &#39;$url&#39;&quot;</span>;</div>
+<div class="line">            <span class="keywordflow">throw</span>(<span class="stringliteral">&quot;Could not create DBC because could not parse the URL &#39;$url&#39;&quot;</span>);</div>
 <div class="line">        }</div>
 <div class="line">    } <span class="keywordflow">else</span> {</div>
 <div class="line">        <span class="keywordflow">return</span> $class-&gt;SUPER::new( @_ );</div>

@@ -40,7 +40,7 @@ use base ( 'Bio::EnsEMBL::Hive::Cacheable', 'Bio::EnsEMBL::Hive::Storable' );
 
 
 sub unikey {    # override the default from Cacheable parent
-    return [ 'accu_name', 'accu_address' ];
+    return [ 'accu_name', 'accu_address', 'accu_input_variable' ];
 }
 
 
@@ -64,19 +64,36 @@ sub accu_address {
 }
 
 
+sub accu_input_variable {
+    my $self = shift @_;
+
+    if(@_) {
+        $self->{'_accu_input_variable'} = shift @_;
+    }
+    return ( $self->{'_accu_input_variable'} // $self->accu_name );
+}
+
+
 sub url {
     my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
 
     my $my_dba = $self->adaptor && $self->adaptor->db;
     return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
-        . '?accu_name=' . $self->accu_name
-        . ( $self->accu_address ? '&accu_address='.$self->accu_address : '');
+        . '?'
+        . join('&',
+            'accu_name='.$self->accu_name,
+            ( $self->accu_address ? ('accu_address='.$self->accu_address) : () ),
+            'accu_input_variable='.$self->accu_input_variable,
+        );
 }
 
 
 sub display_name {
     my ($self) = @_;
-    return $self->accu_name . ($self->accu_address // '');
+    return  $self->accu_name
+            . ($self->accu_address // '')
+            . ':='
+            . $self->accu_input_variable;
 }
 
 
@@ -88,6 +105,7 @@ sub dataflow {
 
     my $accu_name           = $self->accu_name;
     my $accu_address        = $self->accu_address;
+    my $accu_input_variable = $self->accu_input_variable;
 
     my @rows = ();
 
@@ -101,7 +119,7 @@ sub dataflow {
             'receiving_job_id'  => $receiving_job_id,
             'struct_name'       => $accu_name,
             'key_signature'     => $key_signature,
-            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_name, $output_id) ),
+            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
         };
     }
 
@@ -112,7 +130,7 @@ sub dataflow {
 sub toString {
     my $self = shift @_;
 
-    return 'Accumulator(' . $self->accu_name . '<--' . ($self->accu_address // ''). ')';
+    return 'Accumulator(' . $self->display_name . ')';
 }
 
 1;

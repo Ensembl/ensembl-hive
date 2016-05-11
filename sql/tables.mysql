@@ -215,6 +215,7 @@ CREATE TABLE dataflow_rule (
 
 @desc This table links specific conditions with the target object (Analysis/Table/Accu) and optional input_id_template.
 
+@column dataflow_target_id      internal ID
 @column source_dataflow_rule_id foreign key to the dataflow_rule object that defines grouping (see description of dataflow_rule table)
 @column on_condition            param-substitutable string evaluated at the moment of dataflow event that defines whether or not this case produces any dataflow; NULL means DEFAULT or ELSE
 @column input_id_template       a template for generating a new input_id (not necessarily a hashref) in this dataflow; if undefined is kept original
@@ -223,6 +224,7 @@ CREATE TABLE dataflow_rule (
 */
 
 CREATE TABLE dataflow_target (
+    dataflow_target_id      INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
     source_dataflow_rule_id INTEGER     NOT NULL,
     on_condition            VARCHAR(255)          DEFAULT NULL,
     input_id_template       MEDIUMTEXT            DEFAULT NULL,
@@ -245,11 +247,13 @@ CREATE TABLE dataflow_target (
         The workers switch the analysis.status to 'WORKING' and 'DONE'.
         But any moment if a condition goes false, the analysis is reset to BLOCKED.
 
+@column analysis_ctrl_rule_id  internal ID
 @column condition_analysis_url foreign key to net distributed analysis reference
 @column ctrled_analysis_id     foreign key to analysis table analysis_id
 */
 
 CREATE TABLE analysis_ctrl_rule (
+    analysis_ctrl_rule_id   INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
     condition_analysis_url  VARCHAR(255) NOT NULL DEFAULT '',
     ctrled_analysis_id      INTEGER     NOT NULL,
 

@@ -30,7 +30,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">ensembl-hive
-   &#160;<span id="projectnumber">2.3</span>
+   &#160;<span id="projectnumber">2.4</span>
    </div>
   </td>
  </tr>
@@ -155,18 +155,11 @@ Synopsis</h1>
  <div class="fragment"><div class="line">sub <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_u_r_l_factory.html#a1cdc4eafa4fb5abf83942dfe21e3a7ff">create_cached_dba</a> {</div>
 <div class="line">    my ($class, $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $conn_params) = @_;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">if</span>($driver eq <span class="stringliteral">&#39;mysql&#39;</span>) {</div>
-<div class="line">        $user ||= <span class="stringliteral">&#39;ensro&#39;</span>;</div>
-<div class="line">        $pass ||= <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">        $host ||= <span class="stringliteral">&#39;&#39;</span>;</div>
-<div class="line">        $port ||= 3306;</div>
-<div class="line">    }</div>
-<div class="line"></div>
 <div class="line">    my $type                        = $conn_params-&gt;{<span class="stringliteral">&#39;type&#39;</span>};</div>
 <div class="line">    my $disconnect_when_inactive    = $conn_params-&gt;{<span class="stringliteral">&#39;disconnect_when_inactive&#39;</span>};</div>
 <div class="line">    my $no_sql_schema_version_check = $conn_params-&gt;{<span class="stringliteral">&#39;no_sql_schema_version_check&#39;</span>};</div>
 <div class="line"></div>
-<div class="line">    my $connectionKey = <span class="stringliteral">&quot;$driver://$user:$pass\@$host:$port/$dbname;$type&quot;</span>;</div>
+<div class="line">    my $connectionKey = $driver.<span class="stringliteral">&#39;://&#39;</span>.($user<span class="comment">//&#39;&#39;).&#39;:&#39;.($pass//&#39;&#39;).&#39;@&#39;.($host//&#39;&#39;).&#39;:&#39;.($port//&#39;&#39;).&#39;/&#39;.($dbname//&#39;&#39;).&#39;;&#39;.$type;</span></div>
 <div class="line">    my $dba = $_URLFactory_global_instance-&gt;{$connectionKey};</div>
 <div class="line"></div>
 <div class="line">    unless($dba) {</div>
@@ -264,13 +257,18 @@ Synopsis</h1>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>(my $parsed_url = <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_utils_1_1_u_r_l.html#ac80cc911eba215fb0ed17104861fe5f7">Bio::EnsEMBL::Hive::Utils::URL::parse</a>( $url )) {</div>
 <div class="line"></div>
+<div class="line">        my $table_name      = $parsed_url-&gt;{<span class="stringliteral">&#39;table_name&#39;</span>};</div>
+<div class="line">        my $tparam_name     = $parsed_url-&gt;{<span class="stringliteral">&#39;tparam_name&#39;</span>};</div>
+<div class="line">        my $tparam_value    = $parsed_url-&gt;{<span class="stringliteral">&#39;tparam_value&#39;</span>};</div>
+<div class="line"></div>
+<div class="line">        unless($table_name=~/^(analysis|job|accu)$/) {  # <span class="keywordflow">do</span> not check schema version version when performing table dataflow:</div>
+<div class="line">            $parsed_url-&gt;{<span class="stringliteral">&#39;conn_params&#39;</span>}{<span class="stringliteral">&#39;no_sql_schema_version_check&#39;</span>} = 1;</div>
+<div class="line">        }</div>
+<div class="line"></div>
 <div class="line">        my $dba = ($parsed_url-&gt;{<span class="stringliteral">&#39;dbconn_part&#39;</span>} =~ m{^\w*:</div>
 <div class="line">            ? $default_dba</div>
 <div class="line">            : $class-&gt;create_cached_dba( @$parsed_url{qw(dbconn_part driver user pass host port dbname conn_params)} );</div>
 <div class="line"></div>
-<div class="line">        my $table_name      = $parsed_url-&gt;{<span class="stringliteral">&#39;table_name&#39;</span>};</div>
-<div class="line">        my $tparam_name     = $parsed_url-&gt;{<span class="stringliteral">&#39;tparam_name&#39;</span>};</div>
-<div class="line">        my $tparam_value    = $parsed_url-&gt;{<span class="stringliteral">&#39;tparam_value&#39;</span>};</div>
 <div class="line"></div>
 <div class="line">        <span class="keywordflow">if</span>(not $table_name) {</div>
 <div class="line">        </div>
@@ -288,14 +286,14 @@ Synopsis</h1>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_accumulator.html">Bio::EnsEMBL::Hive::Accumulator</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
 <div class="line">                    $dba ? (adaptor =&gt; $dba-&gt;get_AccumulatorAdaptor) : (),</div>
-<div class="line">                    struct_name        =&gt; $tparam_name,</div>
-<div class="line">                    signature_template =&gt; $tparam_value,</div>
+<div class="line">                    accu_name       =&gt; $tparam_name,</div>
+<div class="line">                    accu_address    =&gt; $tparam_value,</div>
 <div class="line">            );</div>
 <div class="line"></div>
 <div class="line">        } <span class="keywordflow">else</span> {</div>
 <div class="line"></div>
 <div class="line">            <span class="keywordflow">return</span> <a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_naked_table.html">Bio::EnsEMBL::Hive::NakedTable</a>-&gt;<a class="code" href="class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_storable.html#a52efcf0d0755525a7bc059b68442c620">new</a>(</div>
-<div class="line">                $dba ? (adaptor =&gt; $dba-&gt;get_NakedTableAdaptor) : (),</div>
+<div class="line">                $dba ? (adaptor =&gt; $dba-&gt;get_NakedTableAdaptor( <span class="stringliteral">&#39;table_name&#39;</span> =&gt; $table_name ) ) : (),</div>
 <div class="line">                table_name =&gt; $table_name,</div>
 <div class="line">                $tparam_value ? (insertion_method =&gt; $tparam_value) : (),</div>
 <div class="line">            );</div>

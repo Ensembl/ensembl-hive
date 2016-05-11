@@ -92,11 +92,18 @@ sub main {
         $input_id = '{}';
         warn "Since -input_id has not been set, assuming input_id='$input_id'\n";
     }
+    my $dinput_id = destringify($input_id);
+    if (!ref($dinput_id)) {
+        die "'$input_id' cannot be eval'ed, likely because of a syntax error\n";
+    }
+    if (ref($dinput_id) ne 'HASH') {
+        die "'$input_id' is not a hash\n";
+    }
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
         'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
         'analysis'      => $analysis,
-        'input_id'      => destringify( $input_id ),    # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
+        'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
     );
 
     my ($job_id) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
