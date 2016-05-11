@@ -27,6 +27,8 @@ before_install:
     - export PATH=/usr/lib/jvm/java-8-oracle/jre/bin/:$PATH
     - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - java -version
+    - ant -version
+    - env
     - cd wrappers/java
     - ant clean jar
     - cd ../..
