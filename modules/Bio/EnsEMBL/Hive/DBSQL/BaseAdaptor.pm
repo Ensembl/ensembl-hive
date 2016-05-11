@@ -518,7 +518,9 @@ sub store {
     $insertion_method           =~ s/_/ /g;
     if($driver eq 'sqlite') {
         $insertion_method =~ s/INSERT IGNORE/INSERT OR IGNORE/ig;
-    } elsif($driver eq 'pgsql') {   # FIXME! temporary hack
+    } elsif($driver eq 'pgsql') {
+        # Rules have been created to mimic the behaviour INSERT IGNORE / REPLACE
+        # Here we can do fall-back to a standard INSERT
         $insertion_method = 'INSERT';
     }
 
