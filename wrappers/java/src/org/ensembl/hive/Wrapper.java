@@ -22,32 +22,30 @@ public class Wrapper {
 			System.exit(1);
 		}
 
+		int d = 0;
+		try {
+			d = Integer.parseInt(args[3]);
+		} catch (NumberFormatException e) {
+			System.err.println("The debug level '" + args[3] + "' is not an integer. Aborting");
+			System.exit(1);
+		}
 		// set the debug level accordingly
-		switch(args[3]) {
-			case "0":
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"ERROR");
-				break;
-			case "1":
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"WARN");
-				break;
-			case "2":
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"INFO");
-				break;
-			case "3":
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"DEBUG");
-				break;
-			case "4":
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"TRACE");
-				break;
-			default:
-				System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY,
-						"ALL");
-				break;
+		if (d < 0) {
+			System.err.println("The debug level must be positive. Aborting");
+			System.exit(1);
+
+		} else if (d == 0) {
+			System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "WARN");
+
+		} else if (d == 1) {
+			System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
+
+		} else if (d == 2) {
+			System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "DEBUG");
+
+		} else  {
+			System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "TRACE");
+
 		}
 
 		Logger log = LoggerFactory.getLogger(Wrapper.class);
