@@ -119,7 +119,7 @@ sub parse_flow_into {
             # [first pass] force pre_cond_groups into a list:
         if( !ref($pre_cond_groups)                  # a scalar (a single target)
          or (ref($pre_cond_groups) eq 'HASH')       # a hash (a combination of targets with templates)
-         or ((ref($pre_cond_groups) eq 'ARRAY') and !ref($pre_cond_groups->[0]) and ($pre_cond_groups->[0] eq $cond_group_marker)) # a single WHEN group
+         or ((ref($pre_cond_groups) eq 'ARRAY') and @$pre_cond_groups and !ref($pre_cond_groups->[0]) and ($pre_cond_groups->[0] eq $cond_group_marker)) # a single WHEN group
         ) {
             $pre_cond_groups = [ $pre_cond_groups ];
         }
