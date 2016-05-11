@@ -1,0 +1,25 @@
+#!/bin/bash
+
+action=$1
+module=$2
+fd_in=$3
+fd_out=$4
+debug=$5
+pipe_in="/proc/$$/fd/$fd_in"
+pipe_out="/proc/$$/fd/$fd_out"
+# change to java subdirectory
+cd $(dirname $0)
+if [ "$action" == "version" ]; then
+	ant -S -q version
+elif [ "$action" == "compile" ]; then
+	echo "compiling"
+	ant compile
+elif [ "$action" == "run" ]; then
+	CLASSPATH=$PWD/build:$CLASSPATH
+	if [ -z "$debug" ]; then
+		debug=0
+	fi
+	echo "Running $module $fd_int $fd_out with classpath $CLASSPATH in $dir"
+	java -cp "lib/*" org.ensembl.hive.Wrapper "$module" "$pipe_in" "$pipe_out" "$debug"
+	#ant -Dorg.ensembl.hive.module=$module -Dorg.ensembl.hive.pipe_in=$pipe_in -Dorg.ensembl.hive.pipe_out=$pipe_out -Dorg.ensembl.hive.debug=$debug run_wrapper
+fi

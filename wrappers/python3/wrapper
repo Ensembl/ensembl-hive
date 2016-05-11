@@ -76,9 +76,10 @@ def do_run():
     try:
         fd_in = int(sys.argv[3])
         fd_out = int(sys.argv[4])
+        debug = int(sys.argv[5])
     except:
         usage('Cannot read the file descriptors as integers', 'run')
-    runnable(fd_in, fd_out)
+    runnable(fd_in, fd_out, debug)
 
 
 ## And here we select the mode
@@ -86,7 +87,7 @@ def do_run():
 available_modes = {
         'version' : (do_version, []),
         'compile' : (do_compile, ['module_name']),
-        'run'     : (do_run, ['module_name', 'fd_in', 'fd_out'])
+        'run'     : (do_run, ['module_name', 'fd_in', 'fd_out', 'debug'])
     }
 
 def usage(msg):

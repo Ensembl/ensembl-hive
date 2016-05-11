@@ -8,7 +8,7 @@ import numbers
 import warnings
 import traceback
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read
@@ -46,12 +46,12 @@ class BaseRunnable(object):
     # Private BaseRunnable interface
     #################################
 
-    def __init__(self, read_fileno, write_fileno):
+    def __init__(self, read_fileno, write_fileno, debug):
         # We need the binary mode to disable the buffering
         self.__read_pipe = os.fdopen(read_fileno, mode='rb', buffering=0)
         self.__write_pipe = os.fdopen(write_fileno, mode='wb', buffering=0)
         self.__pid = os.getpid()
-        self.debug = 0
+        self.debug = debug
         self.__process_life_cycle()
 
     def __print_debug(self, *args):

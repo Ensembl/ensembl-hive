@@ -111,6 +111,8 @@ sub new {
 
     my $self = bless {}, $class;
 
+    $self->debug(shift @_) if @_;
+
     return $self;
 }
 
