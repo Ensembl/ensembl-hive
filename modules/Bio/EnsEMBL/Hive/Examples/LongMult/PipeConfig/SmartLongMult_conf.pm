@@ -173,7 +173,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::Examples::LongMult::RunnableDB::PartMultiply',
             -analysis_capacity  =>  4,  # use per-analysis limiter
             -flow_into => {
-                1 => [ '?accu_name=partial_product&accu_address={digit}' ],
+                1 => [ '?accu_name=partial_product&accu_address={digit}&accu_input_variable=product' ],
             },
         },
         

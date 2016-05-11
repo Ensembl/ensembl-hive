@@ -25,6 +25,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
+use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -33,20 +34,26 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
+my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig';
+
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf LongMultSt_javaconf';
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || join(' ', @$all_longmult_configs);
 
 my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls ) ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 
 foreach my $long_mult_version ( @pipeline_cfgs ) {
 
+    # These have to be tested in a special way. See client_server.t
+    next if $long_mult_version =~ /Server/;
+    next if $long_mult_version =~ /Client/;
+
 warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
     foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         my $url         = init_pipeline(
-                            'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version,
+                            ($long_mult_version =~ /::/ ? $long_mult_version : 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version),
                             [-pipeline_url => $pipeline_url, -hive_force_init => 1],
                             ['pipeline.param[take_time]=0'],
                         );
