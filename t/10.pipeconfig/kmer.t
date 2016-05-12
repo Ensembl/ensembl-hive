@@ -37,7 +37,7 @@ my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
 my $base_ehive_test_pipeline_url = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || "KmerPipeline_conf KmerPipelineAoH_conf"; 
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || "KmerPipeline_conf KmerPipelineAoH_conf KmerPipelineIP_conf"; 
 
 my $kmer_pipeline_modes      = 'short long';
 my $kmer_param_configs       = {'short' => [-seqtype => "short",
