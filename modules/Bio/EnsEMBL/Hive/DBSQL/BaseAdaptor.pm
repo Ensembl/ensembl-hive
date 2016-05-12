@@ -563,6 +563,25 @@ sub store {
 }
 
 
+sub _multi_column_filter {
+    my ($self, $filter_string, $filter_values, $column_set) = @_;
+
+        # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
+    my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
+    if($filter_components) {
+        foreach my $column_name ( @$filter_components ) {
+            unless($column_set->{$column_name}) {
+                throw("unknown column '$column_name'");
+            }
+        }
+    }
+
+    my $filter_sql = $filter_components && join(' AND ', map { defined($filter_values->[$_]) ? "$filter_components->[$_]='$filter_values->[$_]'" : $filter_components->[$_].' IS NULL' } 0..scalar(@$filter_components)-1);
+
+    return $filter_sql;
+}
+
+
 sub DESTROY { }   # to simplify AUTOLOAD
 
 sub AUTOLOAD {
@@ -576,16 +595,6 @@ sub AUTOLOAD {
 
         my ($self) = @_;
         my $column_set = $self->column_set();
-
-            # NB: this filtering happens BEFORE any possible overflow via analysis_data, so will not be done on overflow_columns
-        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        if($filter_components) {
-            foreach my $column_name ( @$filter_components ) {
-                unless($column_set->{$column_name}) {
-                    throw("unknown column '$column_name'");
-                }
-            }
-        }
 
         my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
         if($key_components) {
@@ -604,7 +613,7 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->fetch_all(
-                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
                 !$all,
                 $key_components,
                 $value_column
@@ -619,15 +628,6 @@ sub AUTOLOAD {
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        my $filter_components = $filter_string && [ split(/_AND_/i, $filter_string) ];
-        if($filter_components) {
-            foreach my $column_name ( @$filter_components ) {
-                unless($column_set->{$column_name}) {
-                    throw("unknown column '$column_name'");
-                }
-            }
-        }
-
         my $key_components = $key_string && [ split(/_AND_/i, $key_string) ];
         if($key_components) {
             foreach my $column_name ( @$key_components ) {
@@ -641,25 +641,27 @@ sub AUTOLOAD {
         *$AUTOLOAD = sub {
             my $self = shift @_;
             return $self->count_all(
-                $filter_components && join(' AND ', map { "$filter_components->[$_]='$_[$_]'" } 0..scalar(@$filter_components)-1),
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
                 $key_components,
             );
         };
         goto &$AUTOLOAD;    # restart the new method
 
     } elsif($AUTOLOAD =~ /::remove_all_by_(\w+)$/) {
-        my $filter_name = $1;
+        my $filter_string   = $1;
 
         my ($self) = @_;
         my $column_set = $self->column_set();
 
-        if($column_set->{$filter_name}) {
-#            warn "Setting up '$AUTOLOAD' method\n";
-            *$AUTOLOAD = sub { my ($self, $filter_value) = @_; return $self->remove_all("$filter_name='$filter_value'"); };
-            goto &$AUTOLOAD;    # restart the new method
-        } else {
-            throw("unknown column '$filter_name'");
-        }
+#        warn "Setting up '$AUTOLOAD' method\n";
+        *$AUTOLOAD = sub {
+            my $self = shift @_;
+            return $self->remove_all(
+                $self->_multi_column_filter($filter_string, \@_, $column_set),
+            );
+        };
+        goto &$AUTOLOAD;    # restart the new method
+
     } elsif($AUTOLOAD =~ /::update_(\w+)$/) {
         my @columns_to_update = split(/_AND_/i, $1);
 #        warn "Setting up '$AUTOLOAD' method\n";
