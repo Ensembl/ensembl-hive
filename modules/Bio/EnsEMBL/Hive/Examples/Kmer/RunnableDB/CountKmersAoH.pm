@@ -94,7 +94,6 @@ sub run {
   my $sequence_file = $self->param_required('sequence_file');
   my $input_format = $self->param('input_format');
   my $k = $self->param_required('k');
-  my $discard_last_kmer = $self->param_required('discard_last_kmer');
 
   my $input_seqio;
   if ( $sequence_file =~ /\.(?:gz|Z)$/) {
