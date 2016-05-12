@@ -203,48 +203,16 @@ sub get_current_worker_process_id {
 }
 
 
-=head2 count_pending_workers_by_rc_name
-
-    Title   :  count_pending_workers_by_rc_name
-    Function:  Called by the scheduler to decide how many more workers to
-               submit for each resource-class.
-
-=cut
-
-sub count_pending_workers_by_rc_name {
-    my ($self) = @_;
-
-    die "Please use a derived method";
-}
-
-
-=head2 count_running_workers
-
-    Title   :  count_running_workers
-    Function:  Called by the scheduler to decide the number of additional
-               workers that can be submitted (within the defined
-               capacities).
-
-=cut
-
-sub count_running_workers {
-    my ($self, $meadow_users_of_interest) = @_;
-
-    die "Please use a derived method";
-}
-
-
 =head2 status_of_all_our_workers
 
     Title   :  status_of_all_our_workers
-    Function:  Returns a hashref that maps workers' process_id to their status.
-               Statuses are mainly free-text strings. Only "UNKWN" is a special
-               status that beekeeper can understand.
-               Typical statuses are "RUN", "PEND", "SSUSP", "UNKWN"
+    Function:  Returns an arrayref of arrayrefs [worker_pid, meadow_user, status, rc_name]
+               listing the workers that this Meadow can see.
+               Allowed statuses are "RUN", "PEND", "SSUSP", "UNKWN"
 
 =cut
 
-sub status_of_all_our_workers { # returns a hashref
+sub status_of_all_our_workers { # returns an arrayref
     my ($self, $meadow_users_of_interest) = @_;
 
     die "Please use a derived method";

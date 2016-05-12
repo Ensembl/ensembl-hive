@@ -35,6 +35,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
+use List::Util ('sum0');
 use Sys::Hostname ('hostname');
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Limiter;
@@ -161,30 +162,34 @@ sub whereami {
 
 
 sub get_pending_worker_counts_by_meadow_type_rc_name {
-    my $self = shift @_;
+    my ($self, $statuses) = @_;
 
     my %pending_counts = ();
     my $total_pending_all_meadows = 0;
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my ($pending_this_meadow_by_rc_name, $total_pending_this_meadow) = ($meadow->count_pending_workers_by_rc_name());
-        $pending_counts{ $meadow->type } = $pending_this_meadow_by_rc_name;
-        $total_pending_all_meadows += $total_pending_this_meadow;
+        my $pending_workers_per_rc_name = $statuses->{ $meadow->type }->{ 'PEND' } || {};
+
+        $pending_counts{ $meadow->type } = {};
+        while (my ($rc_name,$process_ids) = each %$pending_workers_per_rc_name) {
+            my $n_pending = scalar(@$process_ids);
+            $pending_counts{ $meadow->type }->{ $rc_name } = $n_pending;
+            $total_pending_all_meadows += $n_pending;
+        }
     }
 
     return (\%pending_counts, $total_pending_all_meadows);
 }
 
 
-sub count_running_workers_and_generate_limiters {
-    my ($self, $meadow_type_2_name_2_users) = @_;
+sub generate_limiters {
+    my ($self, $statuses) = @_;
 
     my $valley_running_worker_count             = 0;
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $meadow_users_of_interest = [keys %{ $meadow_type_2_name_2_users->{$meadow->type}{$meadow->cached_name} || {} }];
-        my $this_worker_count   = $meadow->count_running_workers( $meadow_users_of_interest );
+        my $this_worker_count   = sum0(map {scalar(@$_)} values( %{ $statuses->{ $meadow->type }->{ 'RUN' } } ));
 
         $valley_running_worker_count                           += $this_worker_count;
 
@@ -198,5 +203,42 @@ sub count_running_workers_and_generate_limiters {
 
     return ($valley_running_worker_count, \%meadow_capacity_limiter_hashed_by_type);
 }
+
+sub query_worker_statuses {
+    my ($self, $all_registered_running_workers) = @_;
+
+    my %statuses            = ();
+
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $process_ids_by_meadow_user      = $all_registered_running_workers->{$meadow->type}{$meadow->cached_name};
+        my $this_status_list                = $meadow->status_of_all_our_workers( [keys %$process_ids_by_meadow_user] );
+        $statuses{ $meadow->type }          = {};
+        foreach my $ra (@$this_status_list) {
+            my ($worker_pid, $meadow_user, $status, $rc_name) = @$ra;
+            if (($status eq 'RUN') and !$process_ids_by_meadow_user->{$meadow_user}->{$worker_pid}) {
+                $status = 'PEND';
+            }
+            push @{ $statuses{ $meadow->type }->{ $status }->{ $rc_name } }, $worker_pid;
+        }
+    }
+    return \%statuses;
+}
+
+sub status_of_all_our_workers_by_meadow_signature {
+    my ($self, $statuses) = @_;
+
+    my %worker_statuses = ();
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $meadow_signature = $meadow->type.'/'.$meadow->cached_name;
+        my $statuses_rc_name = $statuses->{ $meadow->type };
+        foreach my $status (keys %$statuses_rc_name) {
+            foreach my $pid_list (values %{ $statuses_rc_name->{$status} }) {
+                $worker_statuses{$meadow_signature}{$_} = $status for @$pid_list;
+            }
+        }
+    }
+    return \%worker_statuses;
+}
+
 
 1;

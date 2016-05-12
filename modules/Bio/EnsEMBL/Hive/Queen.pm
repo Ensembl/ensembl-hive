@@ -329,10 +329,10 @@ sub register_worker_death {
 }
 
 
-sub meadow_type_2_name_2_users_of_running_workers {
+sub running_process_ids_hashed_by_meadow_parameters {
     my $self = shift @_;
 
-    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user']);
+    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'])
 }
 
 
@@ -343,23 +343,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $meadow_type_2_name_2_users      = $self->meadow_type_2_name_2_users_of_running_workers();
-    my %signature_and_pid_to_worker_status = ();
-
-    while(my ($meadow_type, $level2) = each %$meadow_type_2_name_2_users) {
-
-        if(my $meadow = $valley->available_meadow_hash->{$meadow_type}) {   # if this Valley supports $meadow_type at all...
-            while(my ($meadow_name, $level3) = each %$level2) {
-
-                if($meadow->cached_name eq $meadow_name) {  # and we can reach the same $meadow_name from this Valley...
-                    my $meadow_users_of_interest    = [ keys %$level3 ];
-                    my $meadow_signature            = $meadow_type.'/'.$meadow_name;
-
-                    $signature_and_pid_to_worker_status{$meadow_signature} ||= $meadow->status_of_all_our_workers( $meadow_users_of_interest );
-                }
-            }
-        }
-    }
+    my $signature_and_pid_to_worker_status = $valley->status_of_all_our_workers_by_meadow_signature($valley->query_worker_statuses($self->running_process_ids_hashed_by_meadow_parameters));
 
     my $queen_overdue_workers       = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
@@ -372,7 +356,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     foreach my $worker (@$queen_overdue_workers) {
 
         my $meadow_signature    = $worker->meadow_type.'/'.$worker->meadow_name;
-        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
+        if(my $pid_to_worker_status = $signature_and_pid_to_worker_status->{$meadow_signature}) {   # the whole Meadow subhash is either present or the Meadow is unreachable
 
             my $meadow_type = $worker->meadow_type;
             my $process_id  = $worker->process_id;

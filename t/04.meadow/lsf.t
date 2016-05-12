@@ -20,7 +20,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 20;
+use Test::More tests => 17;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -62,60 +62,54 @@ subtest 'get_current_worker_process_id()' => sub
 };
 
 is_deeply(
-    [$lsf_meadow->count_pending_workers_by_rc_name],
-    [ { 'normal_30GB_2cpu' => 2, 'normal_10gb' => 7 }, 9 ],
-    'count_pending_workers_by_rc_name()',
-);
-
-is($lsf_meadow->count_running_workers, 26, 'count_running_workers()');
-is($lsf_meadow->count_running_workers(['il4']), 24, 'count_running_workers("il4")');
-
-is_deeply(
     $lsf_meadow->status_of_all_our_workers,
-    {
-        '2068349[1]' => 'RUN',
-        '2067769[11]' => 'RUN',
-        '2067765[4]' => 'RUN',
-        '2067754[31]' => 'RUN',
-        '2068245' => 'RUN',
-        '2067754[27]' => 'RUN',
-        '2067769[2]' => 'RUN',
-        '2068349[2]' => 'RUN',
-        '2067769[14]' => 'RUN',
-        '2067754[32]' => 'RUN',
-        '2067754[34]' => 'RUN',
-        '2067754[7]' => 'RUN',
-        '2067769[10]' => 'RUN',
-        '2067769[3]' => 'PEND',
-        '2067769[9]' => 'RUN',
-        '2067769[17]' => 'PEND',
-        '2067754[14]' => 'RUN',
-        '2067769[4]' => 'PEND',
-        '2067769[6]' => 'PEND',
-        '2068410' => 'PEND',
-        '2067769[19]' => 'PEND',
-        '2067769[18]' => 'PEND',
-        '2067754[30]' => 'RUN',
-        '2067769[12]' => 'RUN',
-        '2067754[26]' => 'RUN',
-        '2067765[13]' => 'RUN',
-        '2068463' => 'PEND',
-        '2067769[13]' => 'RUN',
-        '2067769[15]' => 'RUN',
-        '2067769[16]' => 'RUN',
-        '2067769[8]' => 'RUN',
-        '2067754[28]' => 'RUN',
-        '2067754[33]' => 'RUN',
-        '2067769[5]' => 'PEND',
-        '276335[13]' => 'RUN',
-    },
+    [
+        [ '2067769[9]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[10]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[11]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[12]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[13]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[8]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[26]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[27]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[28]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[30]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[31]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[32]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[33]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067754[34]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067765[4]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067765[13]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2068245', 'mm14', 'RUN', 'normal_30GB_2cpu' ],
+        [ '2068410', 'il4', 'PEND', 'normal_30GB_2cpu' ],
+        [ '2067769[14]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[15]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2068463', 'mm14', 'PEND', 'normal_30GB_2cpu' ],
+        [ '2067754[14]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2068349[2]', 'il4', 'RUN', 'normal_30GB_2cpu' ],
+        [ '2067769[16]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[17]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[18]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[19]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[6]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[3]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[4]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2067769[5]', 'il4', 'PEND', 'normal_10gb' ],
+        [ '2068349[1]', 'il4', 'RUN', 'normal_30GB_2cpu' ],
+        [ '2067754[7]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2067769[2]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '276335[13]', 'tmpseq', 'RUN', 'verylong_rc' ]
+    ],
     'status_of_all_our_workers()',
 );
 
 is_deeply(
     $lsf_meadow->status_of_all_our_workers(["mm14"]),
-    { '2068245' => 'RUN', '2068463' => 'PEND' },
-    'status_of_all_our_workers("mm14")',
+    [
+        [ '2068245', 'mm14', 'RUN', 'normal_30GB_2cpu' ],
+        [ '2068463', 'mm14', 'PEND', 'normal_30GB_2cpu' ]
+    ],
+    'status_of_all_our_workers(["mm14"])',
 );
 
 use Bio::EnsEMBL::Hive::Worker;

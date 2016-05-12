@@ -50,33 +50,15 @@ sub get_current_worker_process_id {
 }
 
 
-sub count_pending_workers_by_rc_name {
-    my ($self) = @_;
-
-    return ({}, 0);     # LOCAL has no concept of pending workers
-}
-
-
 sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;
 
         # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
-    return q{ps x -o state,pid,command -w -w | awk '(/runWorker.pl/ && ($3 ~ /perl$/) )'};
+    return q{ps x -o state,user,pid,command -w -w | awk '(/runWorker.pl/ && ($4 ~ /perl$/) )'};
 }
 
 
-sub count_running_workers {
-    my $self = shift @_;
-
-    my $cmd = $self->_command_line_to_extract_all_running_workers . ' | wc -l';
-    my $run_count = qx/$cmd/;
-    chomp($run_count);
-
-    return $run_count;
-}
-
-
-sub status_of_all_our_workers { # returns a hashref
+sub status_of_all_our_workers { # returns an arrayref
     my ($self) = @_;
 
     my $cmd = $self->_command_line_to_extract_all_running_workers;
@@ -87,9 +69,9 @@ sub status_of_all_our_workers { # returns a hashref
         #        working for different hives
         #        (but at the moment such a feature is unlikely to be be in demand).
 
-    my %status_hash = ();
+    my @status_list = ();
     foreach my $line (`$cmd`) {
-        my ($pre_status, $worker_pid, $job_name) = split(/\s+/, $line);
+        my ($pre_status, $meadow_user, $worker_pid, @job_name) = split(/\s+/, $line);
 
         my $status = {
             'R' => 'RUN',   # running
@@ -105,9 +87,14 @@ sub status_of_all_our_workers { # returns a hashref
 
         # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
 
-        $status_hash{$worker_pid} = $status;
+        my $rc_name = '__unknown_rc_name__';
+        if (join(' ', @job_name) =~ / -rc_name (\S+)/) {
+            $rc_name = $1;
+        }
+
+        push @status_list, [$worker_pid, $meadow_user, $status, $rc_name];
     }
-    return \%status_hash;
+    return \@status_list;
 }
 
 
