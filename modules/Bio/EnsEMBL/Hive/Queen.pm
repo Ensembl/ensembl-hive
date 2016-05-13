@@ -159,18 +159,7 @@ sub create_new_worker {
     $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
         or die "Could not fetch worker with dbID=$worker_id";
 
-    if($hive_log_dir or $worker_log_dir) {
-        my $dir_revhash = dir_revhash($worker_id);
-        $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$worker_id;
-
-        eval {
-            make_path( $worker_log_dir );
-            1;
-        } or die "Could not create '$worker_log_dir' directory : $@";
-
-        $worker->log_dir( $worker_log_dir );
-        $self->update_log_dir( $worker );   # autoloaded
-    }
+    $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
 
     $worker->init;
 

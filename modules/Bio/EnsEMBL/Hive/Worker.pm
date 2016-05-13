@@ -864,4 +864,22 @@ sub check_analysis_for_exclusion {
     }
 }
 
+sub set_log_directory_name {
+    my ($self, $hive_log_dir, $worker_log_dir);
+
+    return unless ($hive_log_dir or $worker_log_dir);
+
+    my $dir_revhash = dir_revhash($self->dbID);
+    $worker_log_dir ||= $hive_log_dir .'/'. ($dir_revhash ? "$dir_revhash/" : '') .'worker_id_'.$self->dbID;
+
+    eval {
+        make_path( $worker_log_dir );
+        1;
+    } or die "Could not create '$worker_log_dir' directory : $@";
+
+    $self->log_dir( $worker_log_dir );
+    $self->adaptor->update_log_dir( $self );   # autoloaded
+}
+
+
 1;
