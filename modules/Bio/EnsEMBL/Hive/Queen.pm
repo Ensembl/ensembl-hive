@@ -122,7 +122,7 @@ sub create_new_worker {
     my $meadow_type = $meadow->type;
     my $meadow_name = $meadow->cached_name;
 
-    foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
+    foreach my $prev_worker_incarnation (@{ $self->find_previous_worker_incarnations($meadow_type, $meadow_name, $process_id) }) {
             # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
             # Since I don't know how to avoid them, I am trying to register them when they happen.
             # The following snippet buries the previous incarnation of the Worker before starting a new one.
@@ -463,6 +463,14 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             warn "GarbageCollector:\tfound none\n";
         }
     }
+}
+
+
+    # To tackle the RELOCATED event: this method checks whether there are already workers with these attributes
+sub find_previous_worker_incarnations {
+    my ($self, $meadow_type, $meadow_name, $process_id) = @_;
+
+    return $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" );
 }
 
 
