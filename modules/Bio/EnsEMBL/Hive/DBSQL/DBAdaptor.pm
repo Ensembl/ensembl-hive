@@ -201,6 +201,7 @@ our %adaptor_type_2_package_name = (
     'DataflowTarget'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',
     'Meta'                  => 'Bio::EnsEMBL::Hive::DBSQL::MetaAdaptor',
+    'Parameters'            => 'Bio::EnsEMBL::Hive::DBSQL::ParametersAdaptor',
     'PipelineWideParameters'=> 'Bio::EnsEMBL::Hive::DBSQL::PipelineWideParametersAdaptor',
     'NakedTable'            => 'Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor',
     'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',

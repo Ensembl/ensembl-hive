@@ -418,6 +418,20 @@ CREATE TABLE accu (
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 
+CREATE TABLE parameters (
+    param_id                INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    job_id                  INTEGER              DEFAULT NULL,
+    analysis_id             INTEGER              DEFAULT NULL,
+    param_name              VARCHAR(255) NOT NULL,
+    param_value             MEDIUMTEXT,
+    origin_param_id         INTEGER              DEFAULT NULL,
+
+    KEY job_param (job_id, analysis_id, param_name)         /* It would be great to also enforce UNIQUEness of this key,
+                                                               but in MySQL as soon as you allow NULLs the UNIQUEness is no longer checked
+                                                            */
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+
 /**
 @table  analysis_data
 

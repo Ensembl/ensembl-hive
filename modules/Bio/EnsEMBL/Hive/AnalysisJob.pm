@@ -68,6 +68,17 @@ sub input_id {
     return $self->{'_input_id'};
 }
 
+sub own_params_hashref {        # temporarily hard-wired to the input_id
+    my $self = shift;
+
+    my $own_params = $self->input_id;
+    if($own_params && !ref($own_params)) {
+        $own_params = destringify( $own_params );
+    }
+
+    return $own_params;
+}
+
 sub param_id_stack {
     my $self = shift;
     $self->{'_param_id_stack'} = shift if(@_);

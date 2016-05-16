@@ -132,6 +132,7 @@ sub store_jobs_and_adjust_counters {
         my ($job, $stored_this_time) = $job_adaptor->store( $job );
 
         if($stored_this_time) {
+
             if($need_to_increase_semaphore_count and $local_job) {  # if we are not creating a new semaphore (where dependent jobs have already been counted),
                                                                     # but rather propagating an existing one (same or other level), we have to up-adjust the counter
                 $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
@@ -748,6 +749,18 @@ sub fetch_input_ids_for_job_ids {
         }
     }
     return \%input_ids;
+}
+
+
+sub mark_stored {
+    my ($self, $job, $job_id) = @_;
+
+    my $own_params_hashref  = $job->own_params_hashref;     # temporarily comes from input_id
+    my $own_params_listref  = [ map { {'job_id' => $job_id, 'param_name' => $_, 'param_value' => $own_params_hashref->{$_}} } keys %$own_params_hashref ];
+
+    $self->db->get_ParametersAdaptor->store( $own_params_listref );
+
+    $self->SUPER::mark_stored( $job, $job_id );
 }
 
 
