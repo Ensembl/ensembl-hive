@@ -245,23 +245,28 @@ sub load_parameters {
 
     push @params_precedence, $self->hive_pipeline->params_as_hash;
 
+    push @params_precedence, $self->analysis->parameters if($self->analysis);
+
+    my $job_params = {};
+
     if(my $job_adaptor = $self->adaptor) {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
+        my $param_adaptor   = $job_adaptor->db->get_ParametersAdaptor;
+
+        $job_params = $param_adaptor->fetch_param_hashrefs_for_job_ids( $job_id )->{ $job_id };
 
         $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
 
-        push @params_precedence, $self->analysis->parameters if($self->analysis);
-
         if($self->param_id_stack or $self->accu_id_stack) {
-            my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
-            my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
-            my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
+            my $job_params_hashes   = $param_adaptor->fetch_param_hashrefs_for_job_ids( $self->param_id_stack, 2, 0 );  # params have lower precedence (FOR EACH ID)
+            my $accu_hashes         = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );        # accus have higher precedence (FOR EACH ID)
+            my %input_id_accu_hash  = ( %$job_params_hashes, %$accu_hashes );
             push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
         }
     }
 
-    push @params_precedence, $self->input_id, $self->accu_hash;
+    push @params_precedence, $job_params, $self->accu_hash;
 
     $self->param_init( @params_precedence );
 }
