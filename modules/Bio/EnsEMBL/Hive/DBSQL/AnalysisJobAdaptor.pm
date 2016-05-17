@@ -64,7 +64,7 @@ sub object_class {
 
 sub default_overflow_limit {
     return {
-        'input_id'          => 255,
+#        'input_id'          => 255,
         'param_id_stack'    =>  64,
         'accu_id_stack'     =>  64,
     };
@@ -755,7 +755,7 @@ sub fetch_input_ids_for_job_ids {
 sub mark_stored {
     my ($self, $job, $job_id) = @_;
 
-    my $own_params_hashref  = $job->own_params_hashref;     # temporarily comes from input_id
+    my $own_params_hashref  = $job->own_params_hashref;
     my $own_params_listref  = [ map { {'job_id' => $job_id, 'param_name' => $_, 'param_value' => $own_params_hashref->{$_}} } keys %$own_params_hashref ];
 
     $self->db->get_ParametersAdaptor->store( $own_params_listref );

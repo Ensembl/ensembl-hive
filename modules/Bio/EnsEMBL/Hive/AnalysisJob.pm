@@ -58,25 +58,20 @@ use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() 
 =cut
 
 
-sub input_id {
+sub input_id {          # keep the actual parameters in _own_params_hashref, only stringify on return
     my $self = shift;
     if(@_) {
         my $input_id = shift @_;
-        $self->{'_input_id'} = ref($input_id) ? stringify($input_id) : $input_id;
+        $self->{'_own_params_hashref'} = ref($input_id) ? $input_id : destringify($input_id);
     }
 
-    return $self->{'_input_id'};
+    return stringify( $self->own_params_hashref );
 }
 
-sub own_params_hashref {        # temporarily hard-wired to the input_id
+sub own_params_hashref {
     my $self = shift;
-
-    my $own_params = $self->input_id;
-    if($own_params && !ref($own_params)) {
-        $own_params = destringify( $own_params );
-    }
-
-    return $own_params;
+    $self->{'_own_params_hashref'} = shift if(@_);
+    return $self->{'_own_params_hashref'};
 }
 
 sub param_id_stack {
@@ -247,14 +242,12 @@ sub load_parameters {
 
     push @params_precedence, $self->analysis->parameters if($self->analysis);
 
-    my $job_params = {};
-
     if(my $job_adaptor = $self->adaptor) {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
         my $param_adaptor   = $job_adaptor->db->get_ParametersAdaptor;
 
-        $job_params = $param_adaptor->fetch_param_hashrefs_for_job_ids( $job_id )->{ $job_id };
+        $self->own_params_hashref( $param_adaptor->fetch_job_parameters_hashref( $job_id ) );
 
         $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
 
@@ -266,7 +259,7 @@ sub load_parameters {
         }
     }
 
-    push @params_precedence, $job_params, $self->accu_hash;
+    push @params_precedence, $self->own_params_hashref, $self->accu_hash;
 
     $self->param_init( @params_precedence );
 }
