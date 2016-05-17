@@ -669,8 +669,6 @@ sub run_one_batch {
             $self->adaptor->db->dbc->query_count(0);
             $job_stopwatch->restart();
 
-            $job->analysis( $current_role->analysis );
-
             my $runnable_object = $self->runnable_object();
             $job->load_parameters( $runnable_object );
 
