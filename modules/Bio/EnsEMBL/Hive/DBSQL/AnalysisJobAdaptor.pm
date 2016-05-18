@@ -608,7 +608,7 @@ sub gc_dataflow {
 
     $job->load_parameters();    # input_id_templates still supported, however to a limited extent
 
-    $job->dataflow_output_id( $job->input_id() , $branch_name );
+    $job->dataflow_output_id( undef, $branch_name );
 
     $job->set_and_update_status('PASSED_ON');
 
