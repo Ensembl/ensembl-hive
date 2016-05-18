@@ -70,7 +70,12 @@ sub input_id {          # keep the actual parameters in _own_params_hashref, onl
 
 sub own_params_hashref {
     my $self = shift;
+
     $self->{'_own_params_hashref'} = shift if(@_);
+
+    if(!defined( $self->{'_own_params_hashref'} ) and $self->adaptor and $self->dbID) {     # lazy loading
+        $self->{'_own_params_hashref'} = $self->adaptor->db->get_ParametersAdaptor->fetch_job_parameters_hashref( $self->dbID );
+    }
     return $self->{'_own_params_hashref'};
 }
 
@@ -246,8 +251,6 @@ sub load_parameters {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
         my $param_adaptor   = $job_adaptor->db->get_ParametersAdaptor;
-
-        $self->own_params_hashref( $param_adaptor->fetch_job_parameters_hashref( $job_id ) );
 
         $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
 
