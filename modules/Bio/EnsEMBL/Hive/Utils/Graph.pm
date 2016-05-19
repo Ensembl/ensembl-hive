@@ -339,6 +339,27 @@ sub _add_pipeline_label {
 }
 
 
+sub _protect_for_display {
+    my ($string, $length_limit, $drop_framing_curlies) = @_;
+
+    if($drop_framing_curlies) {
+        $string=~s/^\{//;       # drop leading curly
+        $string=~s/\}$//;       # drop trailing curly
+    }
+
+    if(defined( $length_limit )) {
+        $string=~s{^(.{$length_limit}).+}{$1 \.\.\.};   # shorten down to $length_limit characters
+    }
+
+    $string=~s{&}{&amp;}g;      # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
+    $string=~s{"}{&quot;}g;     # should fix a string display bug for pre-2.16 GraphViz'es
+    $string=~s{<}{&lt;}g;
+    $string=~s{>}{&gt;}g;
+
+    return $string;
+}
+
+
 sub _add_analysis_node {
     my ($self, $analysis) = @_;
 
@@ -385,6 +406,8 @@ sub _add_analysis_node {
     }
 
     if( my $job_limit = $self->config_get('DisplayJobs') ) {
+        my $display_job_length = $self->config_get('DisplayJobLength');
+
         if(my $job_adaptor = $analysis->adaptor && $analysis->adaptor->db->get_AnalysisJobAdaptor) {
             my @jobs = sort {$a->dbID <=> $b->dbID} @{ $job_adaptor->fetch_some_by_analysis_id_limit( $analysis->dbID, $job_limit+1 )};
             $analysis->jobs_collection( \@jobs );
@@ -400,12 +423,10 @@ sub _add_analysis_node {
 
         $analysis_label    .= '<tr><td colspan="'.$colspan.'"> </td></tr>';
         foreach my $job (@jobs) {
-            my $input_id = $job->input_id;
+            my $input_id = _protect_for_display( $job->input_id, $display_job_length, 1 );
             my $status   = $job->status;
             my $job_id   = $job->dbID || 'unstored';
-            $input_id=~s/\>/&gt;/g;
-            $input_id=~s/\</&lt;/g;
-            $input_id=~s/\{|\}//g;
+
             $analysis_label    .= qq{<tr><td align="left" colspan="$colspan" bgcolor="}.$self->config_get('Node', 'JobStatus', $status, 'Colour').qq{">$job_id [$status]: $input_id</td></tr>};
         }
 
@@ -557,7 +578,6 @@ sub _twopart_arrow {
 
        $df_targets        ||= $df_rule->get_my_targets;
     my $choice              = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
-    #my $label               = scalar(@$df_targets)==1 ? 'Filter' : 'Switch';
     my $tablabel            = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr>};
 
     my $targets_grouped_by_condition = $df_rule->get_my_targets_grouped_by_condition( $df_targets );
@@ -566,17 +586,10 @@ sub _twopart_arrow {
 
         my $condition = $targets_grouped_by_condition->[$i]->[0];
 
-        if($display_cond_length) {
-            if(defined($condition)) {
-                $condition=~s{^(.{$display_cond_length}).+}{$1 \.\.\.};     # shorten down to $display_cond_length characters
-
-                $condition=~s{&}{&amp;}g;   # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
-                $condition=~s{"}{&quot;}g;  # should fix a string display bug for pre-2.16 GraphViz'es
-                $condition=~s{<}{&lt;}g;
-                $condition=~s{>}{&gt;}g;
-            }
-        } else {
-            $condition &&= 'condition_'.$i;
+        if(defined($condition)) {
+            $condition = $display_cond_length
+                       ? _protect_for_display( $condition, $display_cond_length )   # trim and protect it
+                       : 'condition_'.$i;                                           # override it completely with a numbered label
         }
         $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
     }
