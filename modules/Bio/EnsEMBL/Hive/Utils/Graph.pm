@@ -710,11 +710,13 @@ sub _add_table_node {
 
     my $table_label = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.($columns||1).'">'. $naked_table->relative_display_name( $hive_pipeline ) .'</td></tr>';
 
-    if( $self->config_get('DisplayData') and $columns) {
+    if( $data_limit and $columns) {
+        my $display_column_length = $self->config_get('DisplayColumnLength');
+
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
         $table_label .= '<tr>'.join('', map { qq{<td bgcolor="$table_header_colour" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
-            $table_label .= '<tr>'.join('', map { qq{<td>$_</td>} } @{$row}{@column_names}).'</tr>';
+            $table_label .= '<tr>'.join('', map { '<td>'._protect_for_display($_,  $display_column_length).'</td>' } @{$row}{@column_names}).'</tr>';
         }
         if($hit_limit) {
             $table_label  .= qq{<tr><td colspan="$columns">[ more data ]</td></tr>};
