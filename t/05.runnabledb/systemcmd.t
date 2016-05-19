@@ -64,7 +64,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     [
         [
             'DATAFLOW',
-            stringify($input_hash),
+            undef,
             -1,
         ],
         [
@@ -92,7 +92,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     $input_hash, [
         [
             'DATAFLOW',
-            stringify($input_hash),
+            undef,
             4,
         ], [
             'WARNING',
