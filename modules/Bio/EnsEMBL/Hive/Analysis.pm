@@ -39,7 +39,7 @@ package Bio::EnsEMBL::Hive::Analysis;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 use Bio::EnsEMBL::Hive::DataflowRule;
@@ -92,11 +92,24 @@ sub language {
 
 sub parameters {
     my $self = shift;
+
     if(@_) {
         my $parameters = shift @_;
-        $self->{'_parameters'} = ref($parameters) ? stringify($parameters) : $parameters;
+        $self->{'_own_params_hashref'} = ref($parameters) ? $parameters : destringify($parameters);
     }
-    return $self->{'_parameters'};
+    return stringify( $self->own_params_hashref );
+}
+
+
+sub own_params_hashref {
+    my $self = shift;
+
+    $self->{'_own_params_hashref'} = shift if(@_);
+
+    if(!defined( $self->{'_own_params_hashref'} ) and $self->adaptor and $self->dbID) {     # lazy loading
+        $self->{'_own_params_hashref'} = $self->adaptor->db->get_ParametersAdaptor->fetch_analysis_parameters_hashref( $self->dbID );
+    }
+    return $self->{'_own_params_hashref'};
 }
 
 

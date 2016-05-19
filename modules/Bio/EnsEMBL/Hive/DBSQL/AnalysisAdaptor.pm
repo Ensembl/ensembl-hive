@@ -86,4 +86,16 @@ sub fetch_by_url_query {
 }
 
 
+sub mark_stored {
+    my ($self, $analysis, $analysis_id) = @_;
+
+    my $own_params_hashref  = $analysis->own_params_hashref;
+    my $own_params_listref  = [ map { {'analysis_id' => $analysis_id, 'param_name' => $_, 'param_value' => $own_params_hashref->{$_}} } keys %$own_params_hashref ];
+
+    $self->db->get_ParametersAdaptor->store( $own_params_listref );
+
+    $self->SUPER::mark_stored( $analysis, $analysis_id );
+}
+
+
 1;
