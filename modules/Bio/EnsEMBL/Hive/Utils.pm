@@ -105,10 +105,10 @@ sub destringify {
     my $value = pop @_;
 
     if($value) {
-        if($value=~/^'.*'$/
-        or $value=~/^".*"$/
-        or $value=~/^{.*}$/
-        or $value=~/^\[.*\]$/
+        if($value=~/^'.*'$/s
+        or $value=~/^".*"$/s
+        or $value=~/^{.*}$/s
+        or $value=~/^\[.*\]$/s
         or $value eq 'undef') {
 
             $value = eval($value);
