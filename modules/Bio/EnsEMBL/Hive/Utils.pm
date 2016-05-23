@@ -104,10 +104,10 @@ sub destringify {
     my $value = pop @_;
 
     if(defined $value) {
-        if($value=~/^'.*'$/
-        or $value=~/^".*"$/
-        or $value=~/^{.*}$/
-        or $value=~/^\[.*\]$/
+        if($value=~/^'.*'$/s
+        or $value=~/^".*"$/s
+        or $value=~/^{.*}$/s
+        or $value=~/^\[.*\]$/s
         or looks_like_number($value)    # Needed for pipeline_wide_parameters as each value is destringified independently and the JSON writer would otherwise force writing numbers as strings
         or $value eq 'undef') {
 
