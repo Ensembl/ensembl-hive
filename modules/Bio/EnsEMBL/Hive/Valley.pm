@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Hive::Valley;
 
 use strict;
 use warnings;
-use List::Util ('sum0');
+use List::Util ('sum');
 use Sys::Hostname ('hostname');
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Limiter;
@@ -189,7 +189,7 @@ sub generate_limiters {
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $this_worker_count   = sum0(map {scalar(@$_)} values( %{ $statuses->{ $meadow->type }->{ 'RUN' } } ));
+        my $this_worker_count   = sum(0, (map {scalar(@$_)} values( %{ $statuses->{ $meadow->type }->{ 'RUN' } } )));
 
         $valley_running_worker_count                           += $this_worker_count;
 
