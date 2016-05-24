@@ -40,6 +40,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use warnings;
 
+use Digest::MD5 qw(md5_hex);
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
@@ -77,6 +78,19 @@ sub own_params_hashref {
         $self->{'_own_params_hashref'} = $self->adaptor->db->get_ParametersAdaptor->fetch_job_parameters_hashref( $self->dbID );
     }
     return $self->{'_own_params_hashref'};
+}
+
+sub param_checksum {
+    my $self = shift;
+    $self->{'_param_checksum'} = shift if(@_);
+
+    unless(defined($self->{'_param_checksum'})) {
+        my $own_params_hashref = $self->own_params_hashref;     # this should trigger lazy-loading if parameters have not been seen yet
+        my $group_concat = join(',', map { md5_hex( $_.'=>'.stringify($own_params_hashref->{$_} ) ) } sort keys %$own_params_hashref );
+        $self->{'_param_checksum'} = md5_hex( $group_concat );
+    }
+
+    return $self->{'_param_checksum'};
 }
 
 sub param_id_stack {

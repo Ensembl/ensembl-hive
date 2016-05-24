@@ -345,10 +345,11 @@ CREATE TABLE job (
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
     analysis_id             INTEGER     NOT NULL,
 --    input_id                CHAR(255)   NOT NULL,
+    param_checksum          CHAR(32)             DEFAULT NULL,
     param_id_stack          CHAR(64)    NOT NULL DEFAULT '',
     accu_id_stack           CHAR(64)    NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
-    status                  ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
+    status                  ENUM('BORN','SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
     retry_count             INTEGER     NOT NULL DEFAULT 0,
     when_completed          TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
     runtime_msec            INTEGER              DEFAULT NULL,
@@ -358,6 +359,7 @@ CREATE TABLE job (
     semaphored_job_id       INTEGER              DEFAULT NULL,
 
 --    UNIQUE  KEY input_id_stacks_analysis    (input_id, param_id_stack, accu_id_stack, analysis_id), -- to avoid repeating tasks
+    UNIQUE  KEY analysis_params_stacks      (analysis_id, param_checksum, param_id_stack, accu_id_stack), -- to avoid repeating tasks
             KEY analysis_status_retry       (analysis_id, status, retry_count),                     -- for claiming jobs
             KEY role_status                 (role_id, status)                                       -- for fetching and releasing claimed jobs
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
