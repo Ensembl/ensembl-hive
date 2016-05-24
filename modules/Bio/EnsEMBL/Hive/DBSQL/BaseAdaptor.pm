@@ -70,6 +70,12 @@ sub default_input_column_mapping {
     };
 }
 
+sub default_load_transform {
+    return {
+        # 'param_value' => sub { return destringify(pop @_); },
+    };
+}
+
 sub do_not_update_columns {
     return [];
 }
@@ -174,6 +180,16 @@ sub insertion_method {
         $self->{_insertion_method} = shift @_;
     }
     return $self->{_insertion_method} || $self->default_insertion_method();
+}
+
+
+sub load_transform {
+    my $self = shift @_;
+
+    if(@_) {    # setter
+        $self->{_load_transform} = shift @_;
+    }
+    return $self->{_load_transform} || $self->default_load_transform();
 }
 
 
@@ -311,6 +327,7 @@ sub fetch_all {
     
     my $table_name              = $self->table_name();
     my $input_column_mapping    = $self->input_column_mapping();
+    my $load_transform          = $self->load_transform();
 
     my $sql = 'SELECT ' . join(', ', map { $input_column_mapping->{$_} // "$table_name.$_" } keys %{$self->column_set()}) . " FROM $table_name";
 
@@ -344,7 +361,9 @@ sub fetch_all {
             }
         }
         my $object = $value_column
-            ? $hashref->{$value_column}
+            ? ( exists($load_transform->{$value_column})
+                ? &{$load_transform->{$value_column}}($hashref->{$value_column})
+                : $hashref->{$value_column} )
             : $self->objectify($hashref);
 
         if($one_per_key) {

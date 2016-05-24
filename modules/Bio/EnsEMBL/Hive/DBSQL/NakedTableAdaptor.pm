@@ -52,6 +52,20 @@ sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
 
 sub objectify {    # pretend the hashref becomes an object (if only we could inline in Perl!)
     return pop @_;
+
+####### Uncomment these lines if you need objectify to obey load_transform (may slow down the loading somewhat)
+#
+#    my ($self, $hashref) = @_;
+#
+#    my $load_transform          = $self->load_transform();
+#
+#    return (keys %$load_transform)
+#        ? { map { $_ => ( exists($load_transform->{$_})
+#                        ? &{$load_transform->{$_}}($hashref->{$_})
+#                        : $hashref->{$_} )
+#                } keys %$load_transform
+#          }
+#        : $hashref;
 }
 
 

@@ -37,11 +37,27 @@ package Bio::EnsEMBL::Hive::DBSQL::ParametersAdaptor;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
+
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
 
 sub default_table_name {
     return 'parameters';
+}
+
+
+sub default_load_transform {
+    return {
+        'param_value' => sub { return destringify(pop @_); },
+    };
+}
+
+
+sub slicer {    # take a slice of the object (if only we could inline in Perl!)
+    my ($self, $hashref, $fields) = @_;
+
+    return [ map { ($_ eq 'param_value') ? stringify($hashref->{$_}) : $hashref->{$_}; } @$fields ];
 }
 
 
@@ -59,7 +75,7 @@ sub fetch_param_hashrefs_for_job_ids {
         $sth->execute();
 
         while(my ($job_id, $param_name, $param_value) = $sth->fetchrow_array() ) {
-            $param_hashrefs{$job_id * $id_scale + $id_offset}{ $param_name } = $param_value;
+            $param_hashrefs{$job_id * $id_scale + $id_offset}{ $param_name } = destringify($param_value);
         }
     }
     return \%param_hashrefs;
