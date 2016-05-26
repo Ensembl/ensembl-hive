@@ -105,7 +105,6 @@ CREATE TABLE analysis_base (
     logic_name              VARCHAR(255) NOT NULL,
     module                  VARCHAR(255) NOT NULL,
     language                VARCHAR(255),
---    parameters              MEDIUMTEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
     max_retry_count         INTEGER     NOT NULL DEFAULT 3,
@@ -329,7 +328,6 @@ CREATE TABLE resource_description (
 @column analysis_id             the analysis_id needed to accomplish this job.
 @column input_id                input data passed into Analysis:RunnableDB to control the work
 @column param_id_stack          a CSV of job_ids whose input_ids contribute to the stack of local variables for the job
-@column accu_id_stack           a CSV of job_ids whose accu's contribute to the stack of local variables for the job
 @column role_id                 links to the Role that claimed this job (NULL means it has never been claimed)
 @column status                  state the job is in
 @column retry_count             number times job had to be reset when worker failed to run it
@@ -344,10 +342,8 @@ CREATE TABLE job (
     job_id                  INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
     analysis_id             INTEGER     NOT NULL,
---    input_id                CHAR(255)   NOT NULL,
     param_checksum          CHAR(32)             DEFAULT NULL,
     param_id_stack          CHAR(64)    NOT NULL DEFAULT '',
-    accu_id_stack           CHAR(64)    NOT NULL DEFAULT '',
     role_id                 INTEGER              DEFAULT NULL,
     status                  ENUM('BORN','SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
     retry_count             INTEGER     NOT NULL DEFAULT 0,
@@ -358,8 +354,7 @@ CREATE TABLE job (
     semaphore_count         INTEGER     NOT NULL DEFAULT 0,
     semaphored_job_id       INTEGER              DEFAULT NULL,
 
---    UNIQUE  KEY input_id_stacks_analysis    (input_id, param_id_stack, accu_id_stack, analysis_id), -- to avoid repeating tasks
-    UNIQUE  KEY analysis_params_stacks      (analysis_id, param_checksum, param_id_stack, accu_id_stack), -- to avoid repeating tasks
+    UNIQUE  KEY analysis_params_stacks      (analysis_id, param_checksum, param_id_stack),          -- to avoid repeating tasks
             KEY analysis_status_retry       (analysis_id, status, retry_count),                     -- for claiming jobs
             KEY role_status                 (role_id, status)                                       -- for fetching and releasing claimed jobs
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;

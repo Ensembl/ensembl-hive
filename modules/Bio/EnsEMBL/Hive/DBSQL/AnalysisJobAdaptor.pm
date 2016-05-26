@@ -64,9 +64,7 @@ sub object_class {
 
 sub default_overflow_limit {
     return {
-#        'input_id'          => 255,
         'param_id_stack'    =>  64,
-        'accu_id_stack'     =>  64,
     };
 }
 

@@ -448,9 +448,11 @@ sub update {    # update (some or all) non_primary columns from the primary
     # warn "SQL: $sql\n";
     my $sth = $self->prepare($sql);
     # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
-    $sth->execute( @$values_to_update);
+    my $retval = $sth->execute( @$values_to_update);
 
     $sth->finish();
+
+    return $retval;
 }
 
 

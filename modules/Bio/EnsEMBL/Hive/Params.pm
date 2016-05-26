@@ -18,8 +18,7 @@ By inheriting from this module you make your module able to deal with parameters
             #       $runObj->param_defaults(),          # module-wide built-in defaults have the lowest precedence (will always be the same for this module)
             #       $hive_pipeline->params_as_hash(),   # then come the pipeline-wide parameters from the 'pipeline_wide_parameters' table (define things common to all analyses in this pipeline)
             #       $self->analysis->parameters(),      # analysis-wide 'parameters' are even more specific (can be defined differently for several occurence of the same module)
-            #       $job->input_id(),                   # job-specific 'input_id' parameters have the highest precedence
-            #       $job->accu_hash(),                  # parameters accumulated and sent for this job by other preceding jobs
+            #       $job->own_params_hashref(),         # job-specific parameters (including all the accumulators sent to it) have the highest precedence
             # );
           
 

@@ -82,6 +82,7 @@ sub own_params_hashref {
 
 sub param_checksum {
     my $self = shift;
+
     $self->{'_param_checksum'} = shift if(@_);
 
     unless(defined($self->{'_param_checksum'})) {
@@ -98,13 +99,6 @@ sub param_id_stack {
     $self->{'_param_id_stack'} = shift if(@_);
     $self->{'_param_id_stack'} = '' unless(defined($self->{'_param_id_stack'}));
     return $self->{'_param_id_stack'};
-}
-
-sub accu_id_stack {
-    my $self = shift;
-    $self->{'_accu_id_stack'} = shift if(@_);
-    $self->{'_accu_id_stack'} = '' unless(defined($self->{'_accu_id_stack'}));
-    return $self->{'_accu_id_stack'};
 }
 
 sub role_id {
@@ -180,13 +174,6 @@ sub stderr_file {
   my $self = shift;
   $self->{'_stderr_file'} = shift if(@_);
   return $self->{'_stderr_file'};
-}
-
-sub accu_hash {
-    my $self = shift;
-    $self->{'_accu_hash'} = shift if(@_);
-    $self->{'_accu_hash'} = {} unless(defined($self->{'_accu_hash'}));
-    return $self->{'_accu_hash'};
 }
 
 
@@ -266,17 +253,37 @@ sub load_parameters {
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
         my $param_adaptor   = $job_adaptor->db->get_ParametersAdaptor;
 
-        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
+        unless($self->retry_count) {
+            my $own_params_hashref  = $self->own_params_hashref;
+            my $accu_hashref        = $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id };
+            if(keys %$accu_hashref) {
+                foreach my $param_name (keys %$accu_hashref) {
+                    $own_params_hashref->{$param_name} = $accu_hashref->{$param_name};
+                }
+                $self->param_checksum(undef);   # trigger re-computation
 
-        if($self->param_id_stack or $self->accu_id_stack) {
-            my $job_params_hashes   = $param_adaptor->fetch_param_hashrefs_for_job_ids( $self->param_id_stack, 2, 0 );  # params have lower precedence (FOR EACH ID)
-            my $accu_hashes         = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );        # accus have higher precedence (FOR EACH ID)
-            my %input_id_accu_hash  = ( %$job_params_hashes, %$accu_hashes );
-            push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
+                my $return_code = $self->adaptor->update( $self )
+                        # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
+                    or throw("Could not update job's param_checksum : likely collision, please investigate");
+                if($return_code == 1) {     # <--- for the same reason we have to be explicitly numeric here (number of updated rows)
+
+                        # if param_checksum got updated, we need to upsert all the accumulated parameters:
+                    foreach my $param_name (keys %$accu_hashref) {
+                        my $param_entry = { 'job_id' => $job_id, 'param_name' => $param_name, 'param_value' => $own_params_hashref->{$param_name} };
+
+                        $param_adaptor->store_or_update_one( $param_entry, ['job_id', 'param_name', 'param_value'] );
+                    }
+                }
+            }
+        }
+
+        if($self->param_id_stack) {
+            my $job_params_hashes   = $param_adaptor->fetch_param_hashrefs_for_job_ids( $self->param_id_stack );
+            push @params_precedence, @{$job_params_hashes}{ sort { $a <=> $b } keys %$job_params_hashes }; # take a slice. Mmm...
         }
     }
 
-    push @params_precedence, $self->own_params_hashref, $self->accu_hash;
+    push @params_precedence, $self->own_params_hashref;
 
     $self->param_init( @params_precedence );
 }

@@ -347,18 +347,13 @@ sub dataflow {
     my ( $self, $output_ids_for_this_rule, $emitting_job, $push_emitting_job_on_stack, $df_rule ) = @_;
 
     my $param_id_stack  = $emitting_job->param_id_stack;
-    my $accu_id_stack   = $emitting_job->accu_id_stack;
 
     if($push_emitting_job_on_stack) {
         my $input_id        = $emitting_job->input_id;
-        my $accu_hash       = $emitting_job->accu_hash;
         my $emitting_job_id = $emitting_job->dbID;
 
         if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
             $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$emitting_job_id;
-        }
-        if(scalar(keys %$accu_hash)) {    # add the parent to the accu_id_stack if it had "own" accumulator
-            $accu_id_stack = ($accu_id_stack ? $accu_id_stack.',' : '').$emitting_job_id;
         }
     }
 
@@ -366,7 +361,6 @@ sub dataflow {
         'prev_job'          => $emitting_job,
         'analysis'          => $self,
         'param_id_stack'    => $param_id_stack,
-        'accu_id_stack'     => $accu_id_stack,
     ];
 
     my $job_adaptor     = $self->adaptor->db->get_AnalysisJobAdaptor;
