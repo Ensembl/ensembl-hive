@@ -23,6 +23,7 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
      * Accumulator hashes
      * Semaphores
      * Conditional pipeline flow
+     * Controlling parameter flow using INPUT_PLUS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
@@ -210,8 +211,9 @@ sub pipeline_analyses {
 	  		  },
 	  		 ],
 	   -flow_into => {
+			  # using INPUT_PLUS to pass parameters through to the next analysis in the pipeline
 	  		  '1->A' => WHEN('#seqtype# eq "short"' => { 'chunk_sequence' => INPUT_PLUS },
-					 ELSE { 'split_sequence' => INPUT_PLUS} ),
+			  		 ELSE { 'split_sequence' => INPUT_PLUS} ),
 			  # creating a semaphored funnel job to wait for the fan to complete and add the results:
 			  'A->1' => [ 'compile_counts' ],
 	  		 },
@@ -225,8 +227,7 @@ sub pipeline_analyses {
 	      -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
 	      -analysis_capacity  =>  2,  # use per-analysis limiter
 	      -flow_into => {
-	  		     '2' => { 'count_kmers' => INPUT_PLUS },
-#			     '2' => [ 'count_kmers' ],
+			     '2' => [ 'count_kmers' ],
 	  		    },
 	  },
 	  
@@ -235,8 +236,7 @@ sub pipeline_analyses {
 	    -parameters => { "max_chunk_legth" => "#chunk_size#" },
 	    -meadow_type => 'LOCAL',
 	    -flow_into => {			   
-	  		   '2' => { 'count_kmers' => INPUT_PLUS },
-#			   '2' => [ 'count_kmers' ],
+			   '2' => [ 'count_kmers' ],
 	  		  },
 	  },
 	  
@@ -255,9 +255,7 @@ sub pipeline_analyses {
 			     # 'accu_input_variable=freq' portion of the url is where it's set as the value.
 			     # The name of the Accumulator is 'freq', as designated by 'accu_name=freq' in the url.
 			     # It is not required to match the name of a param, but it is allowed.
-
 	  		     '3' => [ '?accu_name=freq&accu_address={kmer_with_source}&accu_input_variable=freq' ],
-#			     '3' => { '?accu_name=freq&accu_address={kmer_with_source}&accu_input_variable=freq' => INPUT_PLUS },
 	  		    },
 	  },
 	  
@@ -270,7 +268,6 @@ sub pipeline_analyses {
 			     # It has two columns, 'kmer' and 'frequency', which are filled in by params with matching
 			     # names that are dataflown out.
 	  		     4 => [ '?table_name=final_result' ],
-#			     '4' => { '?table_name=final_result' => INPUT_PLUS },
 	  		    },
 	  },
 	 ];
