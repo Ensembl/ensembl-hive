@@ -241,7 +241,7 @@ sub pipeline_analyses {
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmersAoH',
 	      -meadow_type => 'LOCAL',
 	      # Here, templates are used to control analysis flow, and rename paramaters.
-	      -parameters => { "discard_last_kmer" => '#expr(#is_last_chunk# ? 0 : 1)expr#',
+	      -parameters => { 
 	  		       "sequence_file" => '#chunk_name#',
 	  		     },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter

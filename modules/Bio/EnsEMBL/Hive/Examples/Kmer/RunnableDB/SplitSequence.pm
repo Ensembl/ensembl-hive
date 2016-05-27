@@ -143,7 +143,6 @@ sub run {
 
     Here, we flow out three values:
     * chunk_name    -- the name of a file containing a sequence chunk
-    * is_last_chunk -- a flag indicating if this is the last chunk of the chunked sequence
     * output_format -- the format of the output file. For this runnable, this is hard-coded as 'FASTA'
                        as it always outputs FASTA format files
 
@@ -152,8 +151,6 @@ sub run {
 
 sub write_output {
   my $self = shift @_;
-
-  my $is_last_chunk = 0;
 
   my @split_sequences = @{$self->param('split_sequences')};
 
@@ -167,12 +164,8 @@ sub write_output {
 
     $chunk_seqio->write_seq($seq_object);
 
-    if ($i == $#split_sequences) {
-      $is_last_chunk = 1;
-    }
 
     $self->dataflow_output_id( {'chunk_name' => $chunk_filename,
-				'is_last_chunk' => $is_last_chunk,
 				'output_format' => 'FASTA',
 			       }, 2);
   }

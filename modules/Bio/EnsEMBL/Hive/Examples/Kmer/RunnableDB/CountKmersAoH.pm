@@ -16,13 +16,6 @@
     As input, it takes the name of a file with a DNA sequence,
     the format of that file (which must be supported by Bio::SeqIO), 
     k (in bases),
-    and a "discard last k-mer" flag.
-
-    The "discard last k-mer" flag exists to prevent double-counting k-mers if the sequence is part
-    of a series of overlapping subsequences. If "discard last k-mer" is non-zero, then the final k-mer 
-    in the sequence will be discarded
-
-    k must be >= 1.
 
     It flows out each k-mer seen, and the frequency of the k-mer in the (sub)sequence as key-value pairs.
     The key is the k-mer, and the value being the frequency.
@@ -78,13 +71,12 @@ sub fetch_input {
 
     Here, run() reads in the filename of a file containing a DNA sequence, 
     the format of that file (e.g. 'FASTA' - the format must be supported by Bio::SeqIO),
-    k,
-    and the 'discard last k-mer' option.
+    and k
+
 
     param('sequence_file'):      Name of the file containing the sequence
     param('input_format'):       Format of the sequence file (e.g. FASTA)
     param('k'):                  k
-    param('discard_last_kmer'):  Discard the last k-mer found in the sequence (useful if this sequence is part of a series of overlapping sub-sequences, to prevent double-counting overlapping k-mers).
 
 =cut
 
@@ -137,7 +129,6 @@ sub write_output {
 
     Arg [1] : A Bio::SeqIO input filehandle.
     Arg [2] : k
-    Arg [3] : If not 0, then discard (do not count) the last k-mer in the string
 
     Return  : A hashref of k-mer frequencies. key = k-mer, value = frequency
 =cut
