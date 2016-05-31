@@ -25,11 +25,11 @@ Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf -pipeline_url db://hive@database/to_track_jobs -db_to_myisamise db://to/turn_into_mysam
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf -pipeline_url db://hive@database/to_track_jobs -target_db db://to/turn_into_innodb -target_engine InnoDB
 
 =head1 DESCRIPTION  
 
-A pipeline to turn all release tables into MyISAM
+A pipeline to change MySQL engine for all tables in a given database
 
 =head1 CONTACT
 
@@ -47,12 +47,13 @@ use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
                   In addition to the standard things it defines four options:
-                    o('fixing_capacity')   defines how many tables can be worked on in parallel
+                    o('concurrent_jobs')   defines how many tables can be worked on in parallel
 
 =cut
 
@@ -61,7 +62,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options(@_)},
 
-        'fixing_capacity'  => 10,                                  # how many tables can be worked on in parallel (too many will slow the process down)
+        'concurrent_jobs'  => 2,    # how many tables can be worked on in parallel (too many will slow the process down)
     };
 }
 
@@ -72,7 +73,7 @@ sub default_options {
 
                     * 'generate_job_list'   generates a list of tables to be copied from master_db
 
-                    * 'myisamise_table'     turn that table's engine into MyISAM
+                    * 'change_engine' changes table's engine into the target engine 
 
 =cut
 
@@ -82,23 +83,26 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'         => $self->o('db_to_myisamise'),
-                'inputquery'      => "SHOW TABLE STATUS WHERE Engine = 'InnoDB'",
-                'fan_branch_code' => 2,
+                'db_conn'         => '#target_db#',
+                'inputquery'      => "SELECT table_name, engine FROM information_schema.TABLES WHERE Engine != '#target_engine#' AND table_schema=DATABASE();",
             },
-            -input_ids => [ {} ],
-            -flow_into => {
-                2 => { 'myisamise_table' => { 'table_name' => '#Name#' } },
-            },
+            -input_ids => [
+                {
+                    'target_db'     => $self->o('target_db'),
+                    'target_engine' => $self->o('target_engine'),
+                }
+            ],
+
+            -flow_into  => { 2 => { 'change_engine' => INPUT_PLUS() } },
         },
 
-        {   -logic_name    => 'myisamise_table',
+        {   -logic_name    => 'change_engine',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'db_conn'     => $self->o('db_to_myisamise'),
-                'sql'         => "ALTER TABLE #table_name# ENGINE=MyISAM",
+                'db_conn'     => '#target_db#',
+                'sql'         => "ALTER TABLE #table_name# ENGINE='#target_engine#'",
             },
-            -hive_capacity => $self->o('fixing_capacity'),       # allow several workers to perform identical tasks in parallel
+            -hive_capacity => $self->o('concurrent_jobs'),       # allow several workers to perform identical tasks in parallel
         },
     ];
 }
