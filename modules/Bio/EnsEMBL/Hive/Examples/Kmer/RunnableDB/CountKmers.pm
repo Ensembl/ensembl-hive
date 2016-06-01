@@ -19,8 +19,8 @@
 
     k must be >= 1.
 
-    It flows out each k-mer seen, and the frequency of the k-mer in the (sub)sequence as key-value pairs.
-    The key is the k-mer, and the value being the frequency.
+    It flows out each k-mer seen, and the count of the k-mer in the (sub)sequence as key-value pairs.
+    The key is the k-mer, and the value being the count.
 
 =head1 LICENSE
 
@@ -106,10 +106,10 @@ sub run {
 =head2 write_output
 
     Description: Implements the write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to flow output to the rest of the pipeline.
-                 Here, we flow out two values:
-                 * kmer_with_source -- for each k-mer, we output the k-mer sequence, tagged with the name of the source
-                                       file where it was found, separated by a ':' (e.g. source.fa:ACGT)
-                 * freq             -- the frequency of that k-mer in the given source file
+
+    This is where we dataflow the kmer counts out to the rest of the pipeline. We do this in three different ways on three
+    different branches. Later on, we can choose a runnable to work with the counts we've generated here -- we choose
+    one of the branches to match the output format here to the input format that runnable expects.
 
 =cut
 
@@ -118,12 +118,24 @@ sub write_output {
 
   my $kmer_counts = $self->param('kmer_counts');
 
+  # Output the entire hash of kmer counts to an accu called kmer_counts_for_file, on flow 3
+  $self->dataflow_output_id( {'counts' => $kmer_counts},
+  			     3);
+
+  # Output each kmer and count, tagged with the name of the sequence file it was counted in,
+  # as a separate event, on flow 4
   foreach my $kmer(keys(%{$kmer_counts})) {
     $self->dataflow_output_id( {'kmer_with_source' => $self->param('sequence_file') . ":" . $kmer,
-				'freq' => $kmer_counts->{$kmer}
-			       }, 3);
+				'count' => $kmer_counts->{$kmer}
+			       }, 4);
   }
-
+  
+  # Output each kmer on it's own, along with its count, as a separate event on flow 5
+  foreach my $kmer(keys(%{$kmer_counts})) {
+    $self->dataflow_output_id( {'kmer' => $kmer,
+				'count' => $kmer_counts->{$kmer}
+			       }, 5);
+  }
 }
 
 =head2 _count_kmers
@@ -133,17 +145,17 @@ sub write_output {
     Arg [1] : A Bio::SeqIO input filehandle.
     Arg [2] : k
 
-    Return  : A hashref of k-mer frequencies. key = k-mer, value = frequency
+    Return  : A hashref of k-mer counts. key = k-mer, value = count
 =cut
 
 sub _count_kmers {
 
   my ($seqio, $k) = @_;
   my %kmer_counts;
-
+  
   while (my $seqobj = $seqio->next_seq()) { 
     my $seq = $seqobj->seq();
-
+    
     my $last_kmer_start = (length($seq) - $k) + 1;
     for (my $i = 0; $i < $last_kmer_start; $i++) {
       my $kmer = substr($seq, $i, $k);

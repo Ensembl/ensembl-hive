@@ -141,7 +141,7 @@ sub run {
 
     Description: Implements the write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to flow output to the rest of the pipeline.
 
-    Here, we flow out three values:
+    Here, we flow out two values:
     * chunk_name    -- the name of a file containing a sequence chunk
     * output_format -- the format of the output file. For this runnable, this is hard-coded as 'FASTA'
                        as it always outputs FASTA format files
@@ -177,7 +177,10 @@ sub write_output {
     Description: Here, we implement the post_cleanup method of Bio::EnsEMBL::Hive::Process that is used to take care
 of housekeeping details after a runnable finishes.
 
-    In this case, it closes the input filehandle, as it is no longer needed
+    This method will run even if the job fails, or write_output never gets called - so it's somewhat analogous to
+    the finalize methods many languages implement as part of exception handling.
+
+    In this case, it ensures the input filehandle gets closed.
 
 =cut
 
@@ -206,6 +209,7 @@ sub _split_sequences {
   while (my $seq = $seqio->next_seq()) {
     my $seq_str = $seq->seq();
 
+    $seq_str = uc($seq_str);
     my $chunk_pointer = 0;
     my $last_chunk = 0;
     my $chunk_substring_size = $chunk_size;

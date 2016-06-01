@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileFrequencies
+    Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts
 
 =head1 SYNOPSIS
 
@@ -11,9 +11,9 @@
 
 =head1 DESCRIPTION
 
-     Kmer::RunnableDB::CompileFrequencies is the last runnable in the kmer frequency pipleine (using a hash Accumulator).
-     This runnable fetches kmer frequencies that the previous jobs stored in the hash Accumulator, and combines them to determine
-     the overall kmer frequencies from the sequences in the original input file.
+     Kmer::RunnableDB::CompileCounts is the last runnable in the kmer counting pipleine (using a hash Accumulator).
+     This runnable fetches kmer counts that the previous jobs stored in a hash Accumulator, and combines them to determine
+     the overall kmer counts from the sequences in the original input file.
 
 =head1 LICENSE
 
@@ -74,7 +74,7 @@ sub fetch_input {
     number of times each kmer is found over all the chunks, and store the sums in a param. Storing the results
     in a param makes them available to other methods in this runnable -- specifically write_output.
 
-    In this pipeline, each kmer, and its frequency, have been stored in an Accumulator as key-value pairs - 
+    In this pipeline, each kmer, and its count, have been stored in an Accumulator as key-value pairs - 
     much like a Perl hash. The value is simply the number of times that kmer appeared in a given chunk.
 
     The key is a bit more complicated because in Accumulators, as with Perl hashes, keys need to be unique.
@@ -88,26 +88,26 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    # Accessing the Accumulator by it's name ('freq'), as a param.
+    # Accessing the Accumulator by it's name ('count'), as a param.
     # We get a hashref back.
-    my $freq = $self->param('freq'); 
+    my $count = $self->param('count'); 
 
-    my %sum_of_frequencies;
+    my %sum_of_counts;
 
-    # $freq is a hashref - the keys are chunk:kmer,
+    # $count is a hashref - the keys are chunk:kmer,
     # the values are the counts for kmer in that chunk.
-    foreach my $kmer_with_chunk (keys(%{$freq})) {
+    foreach my $kmer_with_chunk (keys(%{$count})) {
       # separate the kmer from the chunk name with a regex...
       if ($kmer_with_chunk =~ m/:(\w+)$/) {
 	my $kmer = $1;
-	$sum_of_frequencies{$kmer} += $freq->{$kmer_with_chunk};
+	$sum_of_counts{$kmer} += $count->{$kmer_with_chunk};
       } else {
 	$self->warning("Bad accumulator key found: $kmer_with_chunk");
 	die;
       }
     }
 
-    $self->param('sum_of_frequencies', \%sum_of_frequencies);
+    $self->param('sum_of_counts', \%sum_of_counts);
 }
 
 =head2 write_output
@@ -115,20 +115,20 @@ sub run {
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
 
     Here, we flow out two values:
-    * kmer      -- the kmer being counted
-    * frequency -- frequency of that kmer across all files
+    * kmer  -- the kmer being counted
+    * count -- count of that kmer across all files
 
 =cut
 
 sub write_output {
   my $self = shift(@_);
 
-  my $sum_of_frequencies = $self->param('sum_of_frequencies');
+  my $sum_of_counts = $self->param('sum_of_counts');
 
-  foreach my $kmer (keys(%{$sum_of_frequencies})) {
+  foreach my $kmer (keys(%{$sum_of_counts})) {
     $self->dataflow_output_id({
 			       'kmer' => $kmer,
-			       'count' => $sum_of_frequencies->{$kmer}
+			       'count' => $sum_of_counts->{$kmer}
 			      }, 4);
   }
 }

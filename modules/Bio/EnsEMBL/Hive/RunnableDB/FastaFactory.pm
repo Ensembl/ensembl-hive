@@ -222,7 +222,7 @@ sub write_output {
 
 =head2 post_cleanup
 
-    Description : Close the file handle open in fetch_input()
+    Description : Close the file handle open in fetch_input() even if the job fails or write_output never runs
 
 =cut
 

@@ -28,7 +28,7 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
 
     Determining the frequency of k-mers (runs of nucleotides k bases long) is an important part of sequence analysis.
     This pipeline takes a flat file containing one or more sequences, counts the k-mers in them, then records
-    the frequency of each k-mer in a table in the hive database.
+    the count of each k-mer in a table in the hive database.
 
     The pipeline can be run in two modes: short-sequence mode and long-sequence mode. These modes reflect two k-mer
     analysis use cases. 
@@ -185,11 +185,11 @@ sub hive_meta_table {
                   * count_kmers         -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers, which
                                            identifies and tallies k-mers in the sequences in an input file. This pipeline is designed to create
                                            several count_kmers jobs in parallel, the fan of jobs being created by either split_sequence or chunk_sequence.
-                  * compile_counts -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileFrequencies.
+                  * compile_counts -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts.
                                            In this pipeline, a compile_counts job is created but it is initially blocked from running
                                            by a semaphore. When all count_kmers jobs have finished, the semaphore is cleared, allowing a worker
-                                           to claim the compile_counts job and run it. This job compiles all the k-mer frequencies from
-                                           the previous count_kmers jobs into overall frequencies for each k-mer.
+                                           to claim the compile_counts job and run it. This job compiles all the k-mer counts from
+                                           the previous count_kmers jobs into overall counts for each k-mer.
 
 =cut
 
@@ -238,7 +238,7 @@ sub pipeline_analyses {
 	  },
 	  
 	  {   -logic_name => 'count_kmers',
-	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmersAoH',
+	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers',
 	      -meadow_type => 'LOCAL',
 	      # Here, templates are used to control analysis flow, and rename paramaters.
 	      -parameters => { 
@@ -246,14 +246,14 @@ sub pipeline_analyses {
 	  		     },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter
 	      -flow_into => {
-			     # Flows into a "pile of hashes" accumulator called 'freq'. This is analogous to an array of hashes in Perl:
+			     # Flows into a "pile of hashes" accumulator called 'count'. This is analogous to an array of hashes in Perl:
 			     # Each job is going to create a hash table where the key is a kmer sequence, and the value is
-			     # the frequency of that kmer. The kmer sequence is flowed out in a param called 'kmer', and
+			     # the count of that kmer. The kmer sequence is flowed out in a param called 'kmer', and
 			     # becomes the key in the hash part of the accumulator (as directed by the 'kmer' in
 			     # the accu_address=[]{kmer} section of this url). The value for each key is dataflown out in a parameter
-			     # called 'freq'; the 'accu_input_variable=freq' portion of the url is where it's set as the value.
+			     # called 'count'; the 'accu_input_variable=count' portion of the url is where it's set as the value.
 			     # Each jobs hash is then stored in a seperate element in the array, in arbitrary order.
-	  		     3 => [ '?accu_name=freq&accu_address=[]{kmer}&accu_input_variable=freq' ],
+	  		     3 => [ '?accu_name=count&accu_address=[]&accu_input_variable=counts' ],
 	  		    },
 	  },
 	  
@@ -263,7 +263,7 @@ sub pipeline_analyses {
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().
-			     # It has two columns, 'kmer' and 'frequency', which are filled in by params with matching
+			     # It has two columns, 'kmer' and 'count', which are filled in by params with matching
 			     # names that are dataflown out.
 	  		     4 => [ '?table_name=final_result' ],
 	  		    },
