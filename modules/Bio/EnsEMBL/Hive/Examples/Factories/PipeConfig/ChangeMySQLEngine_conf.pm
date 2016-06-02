@@ -21,11 +21,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf
+Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ChangeMySQLEngine_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf -pipeline_url db://hive@database/to_track_jobs -target_db db://to/turn_into_innodb -target_engine InnoDB
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ChangeMySQLEngine_conf -pipeline_url db://hive@database/to_track_jobs -target_db db://to/turn_into_innodb -target_engine InnoDB
 
 =head1 DESCRIPTION  
 
@@ -41,7 +41,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf;
+package Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::ChangeMySQLEngine_conf;
 
 use strict;
 use warnings;
