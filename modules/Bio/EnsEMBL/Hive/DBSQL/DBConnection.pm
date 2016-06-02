@@ -298,5 +298,50 @@ sub to_cmd {
 
     return \@cmd;
 }
+
+
+=head2 run_in_transaction
+
+    Description : Wrapper that first sets AutoCommit to 0, runs some user code, and at the end issues a commit() / rollback()
+                  It also has to temporarily set disconnect_when_inactive() to 1 because a value of 0 would cause the
+                  DBConnection object to disconnect early, which would rollback the transaction.
+                  NB: This is essentially a trimmed copy of Ensembl's Utils::SqlHelper::transaction()
+
+=cut
+
+sub run_in_transaction {
+    my ($self, $callback) = @_;
+
+    # Save the original value of disconnect_when_inactive()
+    my $original_dwi = $self->disconnect_when_inactive();
+    $self->disconnect_when_inactive(0);
+
+    $self->reconnect() unless $self->db_handle()->ping();
+
+    # Save the original value of "AutoCommit"
+    my $original_ac = $self->db_handle()->{'AutoCommit'};
+    $self->db_handle()->{'AutoCommit'} = 0;
+
+    my $result;
+    eval {
+        $result = $callback->();
+        $self->db_handle()->commit();
+    };
+    my $error = $@;
+
+    #If there is an error then we apply rollbacks
+    if($error) {
+        eval { $self->db_handle()->rollback(); };
+    }
+
+    # Restore the original values
+    $self->db_handle()->{'AutoCommit'} = $original_ac;
+    $self->disconnect_when_inactive($original_dwi);
+
+    die "ABORT: Transaction aborted because of error: ${error}" if $error;
+    return $result;
+}
+
+
 1;
 
