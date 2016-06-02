@@ -196,7 +196,7 @@ sub _assert_same_table_schema {
     my $dest_schema = $dest_sth->fetchall_arrayref;
     $dest_sth->finish();
 
-    die "'$table' has a different schema in the two databases." if stringify($src_schema) ne stringify($dest_schema);
+    die "'$table' has a different schema in the two databases. Do SHOW CREATE TABLE in both databases and compare the outputs." if stringify($src_schema) ne stringify($dest_schema);
 }
 
 
