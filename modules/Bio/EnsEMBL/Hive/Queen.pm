@@ -224,7 +224,7 @@ sub specialize_worker {
             or die "Could not fetch job with dbID='$job_id'";
         my $job_status = $job->status();
 
-        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_CLEANUP)/ ) {
+        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_HEALTHCHECK|POST_CLEANUP)/ ) {
             die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
         } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
             die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
@@ -239,6 +239,9 @@ sub specialize_worker {
             warn "Increasing the semaphore count of the dependent job";
             $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
         }
+
+        my %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');
+        $analysis->stats->adaptor->increment_a_counter( $status2counter{$job->status}, -1, $job->analysis_id );
 
     } else {
 
