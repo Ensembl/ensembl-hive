@@ -224,7 +224,7 @@ sub specialize_worker {
             or die "Could not fetch job with dbID='$job_id'";
         my $job_status = $job->status();
 
-        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_CLEANUP)/ ) {
+        if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_HEALTHCHECK|POST_CLEANUP)/ ) {
             die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
         } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
             die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
