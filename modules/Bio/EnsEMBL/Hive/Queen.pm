@@ -240,6 +240,9 @@ sub specialize_worker {
             $job_adaptor->increase_semaphore_count_for_jobid( $job->semaphored_job_id );
         }
 
+        my %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');
+        $analysis->stats->adaptor->increment_a_counter( $status2counter{$job->status}, -1, $job->analysis_id );
+
     } else {
 
         $analyses_pattern //= '%';  # for printing
