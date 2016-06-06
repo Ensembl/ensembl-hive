@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
+Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::Kmer_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name split_sequence -input_id '{ "sequence_file" => "my_sequence.fa", "chunk_size" => 1000, "overlap_size" => 12 }'
@@ -42,8 +42,10 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
     Long-sequence mode is useful for counting k-mers when the input contains a few very long (> hundreds of kb) sequences.
     In this mode, the sequence or sequences in the input file are split into shorter subsequences, with overlapping ends.
     The k-mers in these subsequences are counted up in parallel. Then, the pipeline sums up all the k-mer counts from
-    those individual subcounts. The pipeline keeps track of overlapping sequence regions so that k-mers in those overlapping
-    regions are not double-counted. 
+    those individual subcounts.
+
+    Selection of short- and long- sequence mode is done by setting the "seqtype" parameter. This parameter determines
+    which analyses are included in the pipeline via eHive's conditional dataflow mechanism.
 
     Parameters:
     seqtype          => Can be 'short' or 'long' which determines whether the pipeline runs in short-sequence mode
@@ -199,7 +201,7 @@ sub pipeline_analyses {
   return [
 	  {-logic_name => 'split_strategy',
 	   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-	   -meadow_type => 'LOCAL',
+	   -meadow_type => 'LOCAL',  # do not bother the farm with such a simple task (and get it done faster)
 	   -input_ids => [
 	  		  { 'seqtype' => $self->o('seqtype'),
 	  		    'input_format' => $self->o('input_format'),
@@ -211,6 +213,7 @@ sub pipeline_analyses {
 	  		  },
 	  		 ],
 	   -flow_into => {
+			  # use conditional dataflow to determine the next analysis, based on the value of the "seqtype" parameter
 			  # using INPUT_PLUS to pass parameters through to the next analysis in the pipeline
 	  		  '1->A' => WHEN('#seqtype# eq "short"' => { 'chunk_sequence' => INPUT_PLUS() },
 			  		 ELSE { 'split_sequence' => INPUT_PLUS() } ),
@@ -233,8 +236,8 @@ sub pipeline_analyses {
 	  
 	  { -logic_name => 'chunk_sequence',
 	    -module => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
-	    -parameters => { "max_chunk_legth" => "#chunk_size#" },
-	    -meadow_type => 'LOCAL',
+	    -parameters => { "max_chunk_length" => "#chunk_size#" },
+	    -meadow_type => 'LOCAL',  # do not bother the farm with such a simple task (and get it done faster)
 	    -flow_into => {			   
 			   '2' => [ 'count_kmers' ],
 	  		  },
@@ -242,7 +245,6 @@ sub pipeline_analyses {
 	  
 	  {   -logic_name => 'count_kmers',
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers',
-	      -meadow_type => 'LOCAL',
 	      # Here, templates are used to rename a parameter
 	      -parameters => { "sequence_file" => '#chunk_name#', },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter
@@ -261,7 +263,6 @@ sub pipeline_analyses {
 	  
 	  {   -logic_name => 'compile_counts',
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts',
-	      -meadow_type => 'LOCAL',
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().
