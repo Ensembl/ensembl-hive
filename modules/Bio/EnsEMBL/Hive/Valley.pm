@@ -231,6 +231,7 @@ sub status_of_all_our_workers_by_meadow_signature {
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
         my $meadow_signature = $meadow->type.'/'.$meadow->cached_name;
         my $statuses_rc_name = $statuses->{ $meadow->type };
+        $worker_statuses{$meadow_signature} = {};
         foreach my $status (keys %$statuses_rc_name) {
             foreach my $pid_list (values %{ $statuses_rc_name->{$status} }) {
                 $worker_statuses{$meadow_signature}{$_} = $status for @$pid_list;
