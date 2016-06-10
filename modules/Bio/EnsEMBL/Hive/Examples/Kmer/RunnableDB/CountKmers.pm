@@ -119,22 +119,17 @@ sub write_output {
   my $kmer_counts = $self->param('kmer_counts');
 
   # Output the entire hash of kmer counts to an accu called kmer_counts_for_file, on flow 3
-  $self->dataflow_output_id( {'counts' => $kmer_counts},
+  $self->dataflow_output_id( {'counts' => $kmer_counts, 'sequence_file' => $self->param('sequence_file')},
   			     3);
 
   # Output each kmer and count, tagged with the name of the sequence file it was counted in,
   # as a separate event, on flow 4
   foreach my $kmer(keys(%{$kmer_counts})) {
     $self->dataflow_output_id( {'kmer_with_source' => $self->param('sequence_file') . ":" . $kmer,
-				'count' => $kmer_counts->{$kmer}
+				'count' => $kmer_counts->{$kmer},
+                                'sequence_file' => $self->param('sequence_file'),
+                                'kmer' => $kmer,
 			       }, 4);
-  }
-  
-  # Output each kmer on it's own, along with its count, as a separate event on flow 5
-  foreach my $kmer(keys(%{$kmer_counts})) {
-    $self->dataflow_output_id( {'kmer' => $kmer,
-				'count' => $kmer_counts->{$kmer}
-			       }, 5);
   }
 }
 
@@ -146,6 +141,7 @@ sub write_output {
     Arg [2] : k
 
     Return  : A hashref of k-mer counts. key = k-mer, value = count
+
 =cut
 
 sub _count_kmers {
