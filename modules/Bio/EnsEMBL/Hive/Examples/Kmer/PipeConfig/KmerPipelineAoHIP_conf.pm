@@ -2,17 +2,17 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
+Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoHIP_conf
 
 =head1 SYNOPSIS
 
-    # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf -password <mypass>
+       # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoHIP_conf -password <mypass>
 
-    # optionally also seed it with your specific values:
+        # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name split_sequence -input_id '{ "sequence_file" => "my_sequence.fa", "chunk_size" => 1000, "overlap_size" => 12 }'
 
-    # run the pipeline:
+        # run the pipeline:
     beekeeper.pl -url $EHIVE_URL -loop
 
 =head1 DESCRIPTION
@@ -20,9 +20,10 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
     This is the PipeConfig file for the Kmer counting pipeline example.
     This pipeline illustrates how to write PipeConfigs and Runnables that utilize the eHive features:
      * Factories creating a fan of jobs
-     * Accumulator hashes
+     * Array of hash Accumulators
      * Semaphores
      * Conditional pipeline flow
+     * Controlling parameter flow using INPUT_PLUS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
@@ -44,7 +45,7 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
     those individual subcounts.
 
     Selection of short- and long- sequence mode is done by setting the "seqtype" parameter. This parameter determines
-    which analyses are included in the pipeline via eHive's conditional dataflow mechanism. 
+    which analyses are included in the pipeline via eHive's conditional dataflow mechanism.
 
     Parameters:
     seqtype          => Can be 'short' or 'long' which determines whether the pipeline runs in short-sequence mode
@@ -74,17 +75,17 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates.
+    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 
-package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipeline_conf;
+package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoHIP_conf;
 
 use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 =head2 default_options
 
@@ -156,7 +157,7 @@ sub pipeline_wide_parameters {
 =head2 hive_meta_table
 
     Description: Interface method that should return a hash of meta-information about the pipeline (e.g. pipeline name or schema version).
-                 Here, we indicate that this pipeline should use the parameter stack by setting 'hive_use_param_stack' to 1.
+                 Here, there is nothing to declare, especially not the parameter stack since we are using INPUT_PLUS.
 
 =cut
 
@@ -164,8 +165,6 @@ sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-
-        'hive_use_param_stack'  => 1,           # switch on the param_stack mechanism
     };
 }
 
@@ -189,7 +188,7 @@ sub hive_meta_table {
                   * count_kmers         -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers, which
                                            identifies and tallies k-mers in the sequences in an input file. This pipeline is designed to create
                                            several count_kmers jobs in parallel, the fan of jobs being created by either split_sequence or chunk_sequence.
-                  * compile_counts -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts.
+                  * compile_counts      -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts.
                                            In this pipeline, a compile_counts job is created but it is initially blocked from running
                                            by a semaphore. When all count_kmers jobs have finished, the semaphore is cleared, allowing a worker
                                            to claim the compile_counts job and run it. This job compiles all the k-mer counts from
@@ -227,44 +226,41 @@ sub pipeline_analyses {
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::SplitSequence',
 	      # here, a template is used to perform a calculation on a parameter
 	      -parameters => { "overlap_size" => "#expr(#k#-1)expr#"},
-	      -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
 	      -analysis_capacity  =>  2,  # use per-analysis limiter
 	      -flow_into => {
-	  		     '2' => ['count_kmers'],
+	  		     '2' => { 'count_kmers' => INPUT_PLUS() },
 	  		    },
 	  },
 	  
 	  { -logic_name => 'chunk_sequence',
 	    -module => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
 	    -parameters => { "max_chunk_length" => "#chunk_size#" },
-	    -meadow_type => 'LOCAL', # do not bother the farm with such a simple task (and get it done faster)
 	    -flow_into => {			   
-	  		   '2' => ['count_kmers'],
+	  		   '2' => { 'count_kmers' => INPUT_PLUS() },
 	  		  },
 	  },
 	  
 	  {   -logic_name => 'count_kmers',
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers',
-	      # Here, templates are used to control dataflow and rename parameters
+	      # Here, we use a template to rename a parameter.
 	      -parameters => { 
 	  		       "sequence_file" => '#chunk_name#',
 	  		     },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter
 	      -flow_into => {
-			     # Flows into a hash accumulator called count. The hash key is a string with the kmer
-			     # sequence concatenated with the source sequence of the kmer: it is dataflown out
-			     # in a parameter called 'kmer_with_source', and we indicate it is to be the hash key
-			     # in the 'accu_address={kmer_with_source}' portion of the url below. The value for
-			     # each key is dataflown out in a parameter called 'count'; the
-			     # 'accu_input_variable=count' portion of the url is where it's set as the value.
-			     # The name of the Accumulator is 'count', as designated by 'accu_name=count' in the url.
-			     # It is not required to match the name of a param, but it is allowed.
-	  		     4 => [ '?accu_name=count&accu_address={kmer_with_source}&accu_input_variable=count' ],
+			     # Flows into a "pile of hashes" accumulator called 'all_counts'. This is analogous to an array of hashes in Perl:
+			     # Each job is going to create a hash table where the key is a kmer sequence, and the value is
+			     # the count of that kmer. The kmer sequence is flowed out in a param called 'kmer', and
+			     # becomes the key in the hash part of the accumulator (as directed by the 'kmer' in
+			     # the accu_address=[]{kmer} section of this url). The value for each key is dataflown out in a parameter
+			     # called 'kmer_counts'; the 'accu_input_variable=kmer_counts' portion of the url is where it's set as the value.
+			     # Each jobs hash is then stored in a separate element in the array, in arbitrary order.
+	  		     3 => [ '?accu_name=all_counts&accu_address=[]&accu_input_variable=kmer_counts' ],
 	  		    },
 	  },
 	  
 	  {   -logic_name => 'compile_counts',
-	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts',
+	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCountsAoH',
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().

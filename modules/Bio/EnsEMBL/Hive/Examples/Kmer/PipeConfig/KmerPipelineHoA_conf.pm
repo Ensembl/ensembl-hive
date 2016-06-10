@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoH_conf
+Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoA_conf
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoH_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoA_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name split_sequence -input_id '{ "sequence_file" => "my_sequence.fa", "chunk_size" => 1000, "overlap_size" => 12 }'
@@ -20,7 +20,7 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoH_conf
     This is the PipeConfig file for the Kmer counting pipeline example.
     This pipeline illustrates how to write PipeConfigs and Runnables that utilize the eHive features:
      * Factories creating a fan of jobs
-     * Array of hash Accumulators
+     * Hash of array accumulator
      * Semaphores
      * Conditional pipeline flow
 
@@ -78,7 +78,7 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoH_conf
 
 =cut
 
-package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineAoH_conf;
+package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoA_conf;
 
 use strict;
 use warnings;
@@ -249,19 +249,19 @@ sub pipeline_analyses {
 	  		     },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter
 	      -flow_into => {
-			     # Flows into a "pile of hashes" accumulator called 'all_counts'. This is analogous to an array of hashes in Perl:
-			     # Each job is going to create a hash table where the key is a kmer sequence, and the value is
-			     # the count of that kmer. The kmer sequence is flowed out in a param called 'kmer', and
-			     # becomes the key in the hash part of the accumulator (as directed by the 'kmer' in
-			     # the accu_address=[]{kmer} section of this url). The value for each key is dataflown out in a parameter
-			     # called 'kmer_counts'; the 'accu_input_variable=kmer_counts' portion of the url is where it's set as the value.
-			     # Each jobs hash is then stored in a separate element in the array, in arbitrary order.
-	  		     3 => [ '?accu_name=all_counts&accu_address=[]&accu_input_variable=kmer_counts' ],
+			     # Flows into a hash accumulator called all_counts. The hash key is a string with the kmer
+			     # sequence: it is dataflown out in a parameter called 'kmer', and we indicate it is to
+                             # be the hash key in the 'accu_address={kmer}' portion of the url below. The value for
+			     # each key is dataflown out in a parameter called 'count'; the
+			     # 'accu_input_variable=count' portion of the url is where it's set as the value.
+			     # The name of the Accumulator is 'all_counts', as designated by 'accu_name=all_counts' in the url.
+			     # It is allowed to use the same name as the input variable, in which case accu_name could be skipped
+	  		     4 => [ '?accu_name=all_counts&accu_address={kmer}[]&accu_input_variable=count' ],
 	  		    },
 	  },
 	  
 	  {   -logic_name => 'compile_counts',
-	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCountsAoH',
+	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCountsHoA',
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().

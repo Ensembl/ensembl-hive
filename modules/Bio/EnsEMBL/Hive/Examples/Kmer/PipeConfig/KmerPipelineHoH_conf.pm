@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf
+Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoH_conf
 
 =head1 SYNOPSIS
 
        # initialize the database and build the graph in it (it will also print the value of EHIVE_URL) :
-    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf -password <mypass>
+    init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoH_conf -password <mypass>
 
         # optionally also seed it with your specific values:
     seed_pipeline.pl -url $EHIVE_URL -logic_name split_sequence -input_id '{ "sequence_file" => "my_sequence.fa", "chunk_size" => 1000, "overlap_size" => 12 }'
@@ -20,10 +20,9 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf
     This is the PipeConfig file for the Kmer counting pipeline example.
     This pipeline illustrates how to write PipeConfigs and Runnables that utilize the eHive features:
      * Factories creating a fan of jobs
-     * Accumulator hashes
+     * Hash accumulator
      * Semaphores
      * Conditional pipeline flow
-     * Controlling parameter flow using INPUT_PLUS
 
     Please refer to Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf module to understand the interface implemented here.
 
@@ -79,13 +78,13 @@ Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf
 
 =cut
 
-package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineIP_conf;
+package Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::KmerPipelineHoH_conf;
 
 use strict;
 use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow and INPUT_PLUS
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;           # Allow this particular config to use conditional dataflow
 
 =head2 default_options
 
@@ -165,6 +164,8 @@ sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+
+        'hive_use_param_stack'  => 1,           # switch on the param_stack mechanism
     };
 }
 
@@ -188,7 +189,7 @@ sub hive_meta_table {
                   * count_kmers         -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers, which
                                            identifies and tallies k-mers in the sequences in an input file. This pipeline is designed to create
                                            several count_kmers jobs in parallel, the fan of jobs being created by either split_sequence or chunk_sequence.
-                  * compile_counts -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts.
+                  * compile_counts      -- This analysis uses the runnable Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts.
                                            In this pipeline, a compile_counts job is created but it is initially blocked from running
                                            by a semaphore. When all count_kmers jobs have finished, the semaphore is cleared, allowing a worker
                                            to claim the compile_counts job and run it. This job compiles all the k-mer counts from
@@ -201,7 +202,7 @@ sub pipeline_analyses {
   return [
 	  {-logic_name => 'split_strategy',
 	   -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-	   -meadow_type => 'LOCAL',  # do not bother the farm with such a simple task (and get it done faster)
+	   -meadow_type => 'LOCAL', # do not bother the farm with such a simple task (and get it done faster)
 	   -input_ids => [
 	  		  { 'seqtype' => $self->o('seqtype'),
 	  		    'input_format' => $self->o('input_format'),
@@ -214,9 +215,8 @@ sub pipeline_analyses {
 	  		 ],
 	   -flow_into => {
 			  # use conditional dataflow to determine the next analysis, based on the value of the "seqtype" parameter
-			  # using INPUT_PLUS to pass parameters through to the next analysis in the pipeline
-	  		  '1->A' => WHEN('#seqtype# eq "short"' => { 'chunk_sequence' => INPUT_PLUS() },
-			  		 ELSE { 'split_sequence' => INPUT_PLUS() } ),
+	  		  '1->A' => WHEN('#seqtype# eq "short"' => [ 'chunk_sequence' ],
+					 ELSE [ 'split_sequence' ]),
 			  # creating a semaphored funnel job to wait for the fan to complete and add the results:
 			  'A->1' => [ 'compile_counts' ],
 	  		 },
@@ -227,42 +227,58 @@ sub pipeline_analyses {
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::SplitSequence',
 	      # here, a template is used to perform a calculation on a parameter
 	      -parameters => { "overlap_size" => "#expr(#k#-1)expr#"},
-	      -meadow_type=> 'LOCAL',     # do not bother the farm with such a simple task (and get it done faster)
 	      -analysis_capacity  =>  2,  # use per-analysis limiter
 	      -flow_into => {
-			     '2' => [ 'count_kmers' ],
+	  		     '2' => ['count_kmers'],
 	  		    },
 	  },
 	  
 	  { -logic_name => 'chunk_sequence',
 	    -module => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
 	    -parameters => { "max_chunk_length" => "#chunk_size#" },
-	    -meadow_type => 'LOCAL',  # do not bother the farm with such a simple task (and get it done faster)
 	    -flow_into => {			   
-			   '2' => [ 'count_kmers' ],
+	  		   '2' => ['count_kmers'],
 	  		  },
 	  },
 	  
 	  {   -logic_name => 'count_kmers',
 	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CountKmers',
-	      # Here, templates are used to rename a parameter
-	      -parameters => { "sequence_file" => '#chunk_name#', },
+	      # Here, we use a template to rename a parameter.
+	      -parameters => { 
+	  		       "sequence_file" => '#chunk_name#',
+	  		     },
 	      -analysis_capacity  =>  4,  # use per-analysis limiter
 	      -flow_into => {
-			     # Flows into a hash accumulator called count. The hash key is a string with the kmer
-			     # sequence concatenated with the source sequence of the kmer: it is dataflown out
-			     # in a parameter called 'kmer_with_source', and we indicate it is to be the hash key
-			     # in the 'accu_address={kmer_with_source}' portion of the url below. The value for
-			     # each key is dataflown out in a parameter called 'count'; the
-			     # 'accu_input_variable=count' portion of the url is where it's set as the value.
-			     # The name of the Accumulator is 'count', as designated by 'accu_name=count' in the url.
+			     # Flows into a hash accumulator called all_counts. The hash key is the name of the chunk
+                             # file in which the kmers were counted: it is dataflown out in a parameter called
+                             # 'sequence_file', and we indicate it is to be the hash key in the 'accu_address={sequence_file}'
+                             # portion of the url below. The value for each key is dataflown out in a parameter
+                             # called 'kmer_counts'; the 'accu_input_variable=kmer_counts' portion of the url is where it's
+                             # set as the value.
+			     # The name of the Accumulator is 'all_counts', as designated by 'accu_name=all_counts' in the url.
 			     # It is not required to match the name of a param, but it is allowed.
-	  		     '4' => [ '?accu_name=count&accu_address={kmer_with_source}&accu_input_variable=count' ],
+                             3 => [ '?accu_name=all_counts&accu_address={sequence_file}&accu_input_variable=kmer_counts' ],
+                             # It is important to notice that values can be structures too: here "kmer_counts" is in fact
+                             # a hash that associate each kmer seen in the file to its count.  The funnel Runnable
+                             # CompileCountsHoH will use the "all_counts" variable to be a two-dimensional hash indexed
+                             # by the chunk filename first, and then the kmer.  The Runnable would thus work exactly
+                             # the same way if the accumulator was directly defined as a two-dimensional hash.
+                             # In this case, the accumulator would have to be connected to the branch #4 (which
+                             # triggers 1 event per kmer count) and use this syntax:
+                             #4 => [ '?accu_name=all_counts&accu_address={sequence_file}{kmer}&accu_input_variable=count' ],
+			     # The first-level hash key is still 'sequence_file', and the second level is now explicitly
+                             # 'kmer'. 'kmer' is a string with the kmer sequence: it is dataflown out in a parameter
+                             # with the same name. Together they form a two-dimensional hash accumulator defined in the
+                             # 'accu_address={sequence_file}{kmer}' portion of the url above. The value for each pair of
+                             # keys is dataflown out in a parameter called 'count', which represents the actual count for
+                             # this kmer in this chunk file; the 'accu_input_variable=count' portion of the url is where
+                             # it's set as the value.  The name of the Accumulator is still 'all_counts', as designated by
+                             # 'accu_name=all_counts' in the url.
 	  		    },
 	  },
 	  
 	  {   -logic_name => 'compile_counts',
-	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCounts',
+	      -module     => 'Bio::EnsEMBL::Hive::Examples::Kmer::RunnableDB::CompileCountsHoH',
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().
