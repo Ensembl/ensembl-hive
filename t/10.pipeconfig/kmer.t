@@ -22,6 +22,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
+use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -36,8 +37,10 @@ my $inputfastq = File::Basename::dirname( File::Basename::dirname( Cwd::realpath
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
-my $base_ehive_test_pipeline_url = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
-my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || "KmerPipeline_conf KmerPipelineAoH_conf KmerPipelineIP_conf"; 
+my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig';
+
+my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
+my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || join(' ', @$all_longmult_configs);
 
 my $kmer_pipeline_modes      = 'short long';
 my $kmer_param_configs       = {'short' => [-seqtype => "short",
@@ -57,7 +60,7 @@ my $kmer_param_configs       = {'short' => [-seqtype => "short",
 			       };
 
 
-my @pipeline_urls = split( /[\s,]+/, $base_ehive_test_pipeline_url );
+my @pipeline_urls = split( /[\s,]+/, $ehive_test_pipeline_urls );
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 my @kmer_pipeline_modes = split( /[\s,]+/, $kmer_pipeline_modes ) ;
 
@@ -71,7 +74,7 @@ foreach my $pipeline_url ( @pipeline_urls ) {
       
       my $pipeline_options = [@{$kmer_param_configs->{$kmer_pipeline_mode}}, -pipeline_url => $pipeline_url, -hive_force_init => 1,];
       
-      my $url              = init_pipeline('Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig::'.$kmer_version, $pipeline_options );
+      my $url              = init_pipeline($kmer_version, $pipeline_options );
       
       my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
 							   -url                        => $url,
