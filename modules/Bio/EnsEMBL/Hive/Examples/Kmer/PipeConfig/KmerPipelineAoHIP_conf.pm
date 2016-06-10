@@ -134,7 +134,7 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
         # additional table to store results:
-        $self->db_cmd('CREATE TABLE final_result (kmer varchar(255) NOT NULL, count INT NOT NULL, PRIMARY KEY (kmer))'),
+        $self->db_cmd('CREATE TABLE final_result (filename VARCHAR(255) NOT NULL, kmer VARCHAR(255) NOT NULL, count INT NOT NULL, PRIMARY KEY (filename, kmer))'),
     ];
 }
 

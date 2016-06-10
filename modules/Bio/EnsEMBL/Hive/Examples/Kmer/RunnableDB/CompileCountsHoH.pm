@@ -124,6 +124,7 @@ sub write_output {
 
   foreach my $kmer (keys(%{$sum_of_counts})) {
     $self->dataflow_output_id({
+			       'filename' => $self->param('inputfile'),
 			       'kmer' => $kmer,
 			       'count' => $sum_of_counts->{$kmer}
 			      }, 4);
