@@ -648,27 +648,33 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 =head2 print_status_and_return_reasons_to_exit
 
   Arg [1]    : $list_of_analyses
+  Arg [2]    : $debug
   Example    : my $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( [ $analysis_A, $analysis_B ] );
   Description: Runs through all analyses in the given list, reports failed analyses, computes some totals, prints a combined status line
                 and returns a pair of ($failed_analyses_counter, $total_jobs_to_do)
+               Unless $debug is set, the empty and done analyses will not be listed
   Exceptions : none
   Caller     : beekeeper.pl
 
 =cut
 
 sub print_status_and_return_reasons_to_exit {
-    my ($self, $list_of_analyses) = @_;
+    my ($self, $list_of_analyses, $debug) = @_;
 
     my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
+    my %skipped_analyses = ('EMPTY' => [], 'DONE' => []);
+    my @analyses_to_display;
     my $reasons_to_exit = '';
-
-    my $max_logic_name_length = max(map {length($_->logic_name)} @$list_of_analyses);
 
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
 
-        print $stats->toString($max_logic_name_length) . "\n";
+        if ($debug or !$skipped_analyses{$stats->status}) {
+            push @analyses_to_display, $analysis;
+        } else {
+            push @{$skipped_analyses{$stats->status}}, $analysis;
+        }
 
         if( $stats->status eq 'FAILED') {
             my $logic_name    = $analysis->logic_name;
@@ -688,6 +694,17 @@ sub print_status_and_return_reasons_to_exit {
                                     ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
                                     : 0.0;
 
+    my $max_logic_name_length = max(map {length($_->logic_name)} @analyses_to_display);
+    foreach my $analysis (@analyses_to_display) {
+        print $analysis->stats->toString($max_logic_name_length) . "\n";
+    }
+    print "\n";
+    if (@{$skipped_analyses{'EMPTY'}}) {
+        printf("%d analyses not shown because they don't have any jobs.\n", scalar(@{$skipped_analyses{'EMPTY'}}));
+    }
+    if (@{$skipped_analyses{'DONE'}}) {
+        printf("%d analyses not shown because all their jobs are done.\n", scalar(@{$skipped_analyses{'DONE'}}));
+    }
     printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
                 scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
 

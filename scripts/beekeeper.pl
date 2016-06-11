@@ -272,7 +272,8 @@ sub main {
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
             print "Beekeeper : the following Analyses matched your -analysis_pattern '".$self->{'analyses_pattern'}."' : "
-                .join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)."\n\n";
+                . join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)
+                . "\nBeekeeper : ", scalar($self->{'pipeline'}->collection_of('Analysis')->list())-scalar(@$list_of_analyses), " Analyses are not shown\n\n";
         } else {
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
         }
@@ -301,7 +302,7 @@ sub main {
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses );
+        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'} );
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -383,7 +384,7 @@ sub run_autonomously {
 
         $queen->check_for_dead_workers($valley, 0);
 
-        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses ) ) {
+        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'} ) ) {
             if($keep_alive) {
                 print "Beekeeper : detected exit condition, but staying alive because of -keep_alive : ".$reasons_to_exit;
             } else {
