@@ -6,10 +6,6 @@ import java.util.Map;
 
 public class TestRunnable extends BaseRunnable {
 
-	public TestRunnable(File inputFile, File outputFile) throws IOException {
-		super(inputFile, outputFile);
-	}
-
 	@Override
 	protected void fetchInput(Job job) {
 		// TODO Auto-generated method stub
