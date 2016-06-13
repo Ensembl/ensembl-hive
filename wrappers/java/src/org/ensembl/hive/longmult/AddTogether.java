@@ -6,7 +6,7 @@ import static org.ensembl.hive.longmult.DigitFactory.PARTIAL_PRODUCT;
 import static org.ensembl.hive.longmult.DigitFactory.TAKE_TIME;
 import static org.ensembl.hive.longmult.DigitFactory.sleep;
 
-import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -16,10 +16,6 @@ import org.ensembl.hive.BaseRunnable;
 import org.ensembl.hive.Job;
 
 public class AddTogether extends BaseRunnable {
-
-	public AddTogether(File inputFile, File outputFile) throws IOException {
-		super(inputFile, outputFile);
-	}
 
 	@Override
 	protected Map<String, Object> getParamDefaults() {

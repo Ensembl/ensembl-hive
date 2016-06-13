@@ -2,7 +2,7 @@ package org.ensembl.hive;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -78,9 +78,9 @@ public abstract class BaseRunnable {
 		return map;
 	}
 
-	protected final BufferedReader input;
-	protected final BufferedWriter output;
-	protected final ObjectMapper mapper;
+	private BufferedReader input;
+	private BufferedWriter output;
+	private ObjectMapper mapper;
 
 	private int debug = 0;
 	private String workerTempDirectory;
@@ -95,6 +95,7 @@ public abstract class BaseRunnable {
 		return log;
 	}
 
+/*
 	private BaseRunnable(Reader input, Writer output) throws IOException {
 		this.input = new BufferedReader(input);
 		this.output = new BufferedWriter(output);
@@ -106,9 +107,16 @@ public abstract class BaseRunnable {
 		this(new InputStreamReader(input), new OutputStreamWriter(output));
 	}
 
-	public BaseRunnable(File inputFile, File outputFile) throws IOException {
-		this(new FileInputStream(inputFile), new FileOutputStream(outputFile));
-	}
+    public BaseRunnable(FileDescriptor inputDescriptor, FileDescriptor outputDescriptor) throws IOException {
+        this(new FileInputStream(inputDescriptor), new FileOutputStream(outputDescriptor));
+    }
+*/
+
+    public void setFileDescriptors(FileDescriptor inputDescriptor, FileDescriptor outputDescriptor) throws IOException {
+		this.input = new BufferedReader(new InputStreamReader(new FileInputStream(inputDescriptor)));
+		this.output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputDescriptor)));
+		this.mapper = new ObjectMapper();
+    }
 
 	public void processLifeCycle() {
 		init();

@@ -6,7 +6,7 @@ import static org.ensembl.hive.longmult.DigitFactory.TAKE_TIME;
 import static org.ensembl.hive.longmult.DigitFactory.sleep;
 import static org.ensembl.hive.longmult.DigitFactory.numericParamToLong;
 
-import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -22,10 +22,6 @@ import org.ensembl.hive.Job;
  *
  */
 public class PartMultiply extends BaseRunnable {
-
-	public PartMultiply(File inputFile, File outputFile) throws IOException {
-		super(inputFile, outputFile);
-	}
 
 	@Override
 	protected Map<String, Object> getParamDefaults() {

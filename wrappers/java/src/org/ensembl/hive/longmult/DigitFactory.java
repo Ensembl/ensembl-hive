@@ -1,6 +1,6 @@
 package org.ensembl.hive.longmult;
 
-import java.io.File;
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -19,10 +19,6 @@ public class DigitFactory extends BaseRunnable {
 	public static final String B_MULTIPLIER = "b_multiplier";
 	public static final String DIGIT = "digit";
 	public static final String PARTIAL_PRODUCT = "partial_product";
-
-	public DigitFactory(File inputFile, File outputFile) throws IOException {
-		super(inputFile, outputFile);
-	}
 
 	@Override
 	protected Map<String, Object> getParamDefaults() {

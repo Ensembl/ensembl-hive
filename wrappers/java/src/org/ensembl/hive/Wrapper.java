@@ -1,10 +1,12 @@
 package org.ensembl.hive;
 
-import java.io.File;
+import java.io.FileDescriptor;
 import java.lang.reflect.Constructor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import sun.misc.SharedSecrets;
 
 /**
  * Main class for running a hive worker in Java
@@ -56,11 +58,17 @@ public class Wrapper {
 					+ BaseRunnable.class.getName());
 			System.exit(2);
 		}
-		Constructor<?> ctor = clazz.getConstructor(File.class, File.class);
-		log.debug("Initializing runnable module " + clazz.getName() + " from "
-				+ args[1] + " and " + args[2]);
-		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance(new File(
-				args[1]), new File(args[2])));
+		Constructor<?> ctor = clazz.getConstructor();
+//		log.debug("Initializing runnable module " + clazz.getName() + " from " + args[1] + " and " + args[2]);
+
+        FileDescriptor inputDescriptor = new FileDescriptor();
+        sun.misc.SharedSecrets.getJavaIOFileDescriptorAccess().set(inputDescriptor, Integer.parseInt(args[1]));
+
+        FileDescriptor outputDescriptor = new FileDescriptor();
+        sun.misc.SharedSecrets.getJavaIOFileDescriptorAccess().set(outputDescriptor, Integer.parseInt(args[2]));
+
+		BaseRunnable runnable = (BaseRunnable) (ctor.newInstance());
+        runnable.setFileDescriptors(inputDescriptor, outputDescriptor);
 		runnable.processLifeCycle();
 
 	}
