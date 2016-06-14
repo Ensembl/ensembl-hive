@@ -6,6 +6,7 @@
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="lib" location="lib" />
+	<property name="doc" location="doc" />
 	<property name="version" value="0.3.0" />
 
 	<path id="wrapper_classpath">
@@ -49,4 +50,11 @@
 		<echo>${version}</echo>
 	</target>
 
+	<!-- Generate javadocs for current project into ${doc} -->
+	<target name="doc" depends="init" description="generate documentation">
+		<delete dir="${doc}" />
+		<javadoc sourcepath="${src}" destdir="${doc}">
+			<classpath refid="wrapper_classpath" />
+		</javadoc>
+	</target>
 </project>

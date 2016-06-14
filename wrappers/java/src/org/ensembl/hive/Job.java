@@ -118,8 +118,8 @@ public class Job {
 	 * Returns the value of the parameter "param_name" or raises an exception if
 	 * anything wrong happens. The exception is marked as non-transient.
 	 * 
-	 * @param paramName
-	 * @return
+	 * @param paramName The name of the parameter
+	 * @return          The value of the parameter
 	 */
 	public Object paramRequired(String paramName) {
 		boolean e = isTransientError();

@@ -36,6 +36,7 @@ sub main {
     unless($no_doxygen) {
         generate_docs_doxygen_perl();
         generate_docs_doxygen_python();
+        generate_docs_javadoc_java();
     }
 }
 
@@ -189,6 +190,14 @@ sub generate_docs_doxygen_python {
     print "Running the following command:\n\t$full_cmd\n\n";
 
     system( $full_cmd );
+}
+
+
+sub generate_docs_javadoc_java {
+
+    print "Regenerating $ehrd/wrappers/java/doc ...\n\n";
+
+    system("cd $ehrd/wrappers/java; ant");
 }
 
 

@@ -63,8 +63,8 @@ public abstract class BaseRunnable {
 	/**
 	 * Utility method for building a hash from key-value pairs
 	 * 
-	 * @param o
-	 * @return
+	 * @param o  A list with an even number of elemements
+	 * @return   A hash that associates its key to its next value in the list
 	 */
 	protected static Map<String, Object> toMap(Object... o) {
 		if (o.length % 2 != 0) {
@@ -240,8 +240,8 @@ public abstract class BaseRunnable {
 	 * Store a message in the log_message table with is_error indicating whether
 	 * the warning is actually an error or not
 	 * 
-	 * @param message
-	 * @param isError
+	 * @param message The message string
+	 * @param isError Directly maps to the log_message.is_error columns
 	 */
 	protected void warning(String message, boolean isError) {
 		sendMessageAndWait(WARNING_KEY,
@@ -251,9 +251,10 @@ public abstract class BaseRunnable {
 	/**
 	 * Dataflows the output_id(s) on a given branch (default 1). Returns
 	 * whatever the Perl side returns
-	 * 
-	 * @param outputIds
-	 * @return
+	 *
+	 * @param params    The current Parameters structure of job
+	 * @param outputIds Collection of hashes representing the parameters of the new jobs
+	 * @return          Structure received from the parent
 	 */
 	protected Map<String, Object> dataflow(ParamContainer params,
 			Collection<Object> outputIds) {
@@ -264,9 +265,10 @@ public abstract class BaseRunnable {
 	 * Dataflows the output_id(s) on a given branch (default 1). Returns
 	 * whatever the Perl side returns
 	 * 
-	 * @param outputIds
-	 * @param branchNameOrCode
-	 * @return
+	 * @param params    The current Parameters structure of job
+	 * @param outputIds        Collection of hashes representing the parameters of the new jobs
+	 * @param branchNameOrCode Branch number
+	 * @return                 Structure received from the parent
 	 */
 	protected Map<String, Object> dataflow(ParamContainer params,
 			Collection<Object> outputIds, int branchNameOrCode) {
@@ -304,7 +306,7 @@ public abstract class BaseRunnable {
 	/**
 	 * Override to provide a special template for the worker temporary directory
 	 * 
-	 * @return
+	 * @return A String representing the template location for worker directories or null
 	 */
 	protected String getWorkerTemplateName() {
 		return null;
@@ -313,8 +315,8 @@ public abstract class BaseRunnable {
 	/**
 	 * Send a message and wait for OK from the parent
 	 * 
-	 * @param event
-	 * @param content
+	 * @param event   Type of the event
+	 * @param content Content of the event
 	 */
 	protected void sendMessageAndWait(String event, Object content) {
 		sendEventMessage(event, content);
@@ -328,8 +330,8 @@ public abstract class BaseRunnable {
 	/**
 	 * Send an event-based message to the parent
 	 * 
-	 * @param event
-	 * @param content
+	 * @param event   Type of the event
+	 * @param content Content of the event
 	 */
 	protected void sendEventMessage(String event, Object content) {
 		try {
@@ -344,7 +346,7 @@ public abstract class BaseRunnable {
 	/**
 	 * Send a piece of JSON to the parent
 	 * 
-	 * @param json
+	 * @param json The JSON string to send
 	 */
 	private void sendMessage(String json) {
 		getLog().trace("Writing output: " + json);
@@ -362,7 +364,7 @@ public abstract class BaseRunnable {
 	/**
 	 * Read a JSON message from the parent
 	 * 
-	 * @return
+	 * @return A Map structure representing the JSON string read from the parent
 	 */
 	protected Map<String, Object> readMessage() {
 		try {
@@ -397,9 +399,9 @@ public abstract class BaseRunnable {
 	 * Utility method to pack an event and a piece of content into a JSON
 	 * message for sending to the parent
 	 * 
-	 * @param event
-	 * @param content
-	 * @return
+	 * @param event   The name (type) of the event
+	 * @param content Its content
+	 * @return        A hash ready to be sent to the parent
 	 */
 	private Map<String, Object> wrapContent(String event, Object content) {
 		return toMap(EVENT_KEY, event, CONTENT_KEY, content);
@@ -409,8 +411,8 @@ public abstract class BaseRunnable {
 	 * Helper method for dealing with numbers that have been passed around
 	 * through JSON and may be of different types
 	 * 
-	 * @param param
-	 * @return
+	 * @param param The source object. Currently only numeric and string types are handled
+	 * @return      A Long with the same representation as @param
 	 */
 	public static Long numericParamToLong(Object param) {
 		if (Long.class.isAssignableFrom(param.getClass())) {

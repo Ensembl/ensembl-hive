@@ -31,10 +31,10 @@ public class ParamContainer {
 	}
 
 	/**
-	 * Getter. Performs the parameter substitution
+	 * Getter. Performs the parameter substitution and return the value of a parameter
 	 * 
-	 * @param paramName
-	 * @return
+	 * @param paramName The name of the parameter
+	 * @return          The (substituted) value of this parameter
 	 */
 	public Object getParam(String paramName) {
 		validateParamName(paramName);
@@ -45,8 +45,8 @@ public class ParamContainer {
 	 * Equivalent of getParam that assumes "param_name" is a valid parameter
 	 * name and hence, doesn't have to raise ParamNameException
 	 * 
-	 * @param paramName
-	 * @return
+	 * @param paramName The name of the parameter
+	 * @return          The (substituted) value of this parameter
 	 */
 	private Object getParamRecurse(String paramName) {
 		if (!params.containsKey(paramName)) {
@@ -70,8 +70,8 @@ public class ParamContainer {
 	 * Returns a boolean. It checks both substituted and unsubstituted
 	 * parameters
 	 * 
-	 * @param param_name
-	 * @return
+	 * @param paramName The name of the parameter
+	 * @return          Whether there is a parameter with this name
 	 */
 	public boolean hasParam(String paramName) {
 		validateParamName(paramName);
@@ -127,10 +127,10 @@ public class ParamContainer {
 	}
 
 	/**
-	 * Setter. Returns the new value
+	 * Setter. Set the new value of a parameter
 	 * 
-	 * @param paramName
-	 * @param value
+	 * @param paramName The name of the parameter
+	 * @param value     Its new value
 	 */
 	public void setParam(String paramName, Object value) {
 		validateParamName(paramName);
@@ -147,9 +147,9 @@ public class ParamContainer {
 	 * currently handle #param# - expr and functions require dynamic evaluation
 	 * of code
 	 * 
-	 * @param input
-	 * @param isExpr
-	 * @return
+	 * @param input     The string that has to be substituted
+	 * @param isExpr	Whether @input is an expression that has to be evaluated (currently ignored)
+	 * @return          The result of the substitution
 	 */
 	private Object substituteOneHashPair(String input, boolean isExpr) {
 

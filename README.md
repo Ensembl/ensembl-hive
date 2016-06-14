@@ -58,7 +58,11 @@ The main entry point is in [**docs/index.html**](https://rawgit.com/Ensembl/ense
 There is preliminary support for Python3, see [the Doxygen
 documentation](https://rawgit.com/Ensembl/ensembl-hive/version/2.4/wrappers/python3/doxygen/index.html) and
 [an example PipeConfig
-file](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_pyconf.pm#L139).
+file](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_pyconf.pm#L139)
+and Java, see [the JavaDoc
+documentation](https://rawgit.com/Ensembl/ensembl-hive/master/wrappers/java/doc/index.html)
+and [an example
+PipeConfigfile](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_javaconf.pm#L139).
 
 Contact us (mailing list)
 -------------------------
