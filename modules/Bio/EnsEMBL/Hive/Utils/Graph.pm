@@ -578,7 +578,7 @@ sub _twopart_arrow {
         } else {
             $condition &&= 'condition_'.$i;
         }
-        $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
+        $tablabel .= qq{<tr><td port="cond_$i">}.((defined $condition) ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
     }
     $tablabel .= '</table>>';
 
