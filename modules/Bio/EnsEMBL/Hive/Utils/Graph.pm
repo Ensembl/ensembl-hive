@@ -591,7 +591,7 @@ sub _twopart_arrow {
                        ? _protect_for_display( $condition, $display_cond_length )   # trim and protect it
                        : 'condition_'.$i;                                           # override it completely with a numbered label
         }
-        $tablabel .= qq{<tr><td port="cond_$i">}.($condition ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
+        $tablabel .= qq{<tr><td port="cond_$i">}.((defined $condition) ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
     }
     $tablabel .= '</table>>';
 

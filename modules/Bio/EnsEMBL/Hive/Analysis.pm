@@ -472,7 +472,7 @@ sub print_diagram_node {
                 print $prefix.$this_funnel_offset." │  ║\n";
 
                 if(my $fan_choice = (scalar(@$fan_df_targets)!=1) || defined($fan_target->on_condition)) {
-                    if(my $on_condition = $fan_target->on_condition) {
+                    if(defined(my $on_condition = $fan_target->on_condition)) {
                         print $prefix.$this_funnel_offset." │  ║ WHEN $on_condition\n";
                     } else {
                         print $prefix.$this_funnel_offset." │  ║ ELSE\n";
@@ -507,7 +507,7 @@ sub print_diagram_node {
             my $funnel_choice = (scalar(@$df_targets)!=1) || defined($df_target->on_condition);
 
             if($funnel_choice) {
-                if(my $on_condition = $df_target->on_condition) {
+                if(defined(my $on_condition = $df_target->on_condition)) {
                     print $prefix.$this_funnel_offset." │ WHEN $on_condition\n";
                 } else {
                     print $prefix.$this_funnel_offset." │ ELSE\n";

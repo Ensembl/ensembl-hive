@@ -102,7 +102,7 @@ sub get_my_targets_grouped_by_condition {
 
     my %my_targets_by_condition = ();
     foreach my $df_target (@$df_targets) {
-        my $this_pair = $my_targets_by_condition{ $df_target->on_condition || ''} ||= [ $df_target->on_condition, []];
+        my $this_pair = $my_targets_by_condition{ $df_target->on_condition // ''} ||= [ $df_target->on_condition, []];
         push @{$this_pair->[1]}, $df_target;
     }
 
