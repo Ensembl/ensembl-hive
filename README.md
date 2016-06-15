@@ -1,8 +1,8 @@
 eHive
 =====
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
-[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=master)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=version/2.4)](https://travis-ci.org/Ensembl/ensembl-hive)
+[![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=version/2.4&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=version/2.4)
 
 [travis]: https://travis-ci.org/Ensembl/ensembl-hive
 [coveralls]: https://coveralls.io/r/Ensembl/ensembl-hive
