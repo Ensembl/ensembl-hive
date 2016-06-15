@@ -45,6 +45,8 @@ ALTER TABLE job                     ADD CONSTRAINT  job_semaphored_job_id_fkey  
 ALTER TABLE job_file                ADD CONSTRAINT  job_file_job_id_fkey        FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id)                          ON DELETE CASCADE;
 
+ALTER TABLE parameters              ADD CONSTRAINT  parameters_origin_param_id_fkey FOREIGN KEY (origin_param_id)   REFERENCES parameters(param_id);
+
 ALTER TABLE analysis_base           ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 ALTER TABLE resource_description    ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 ALTER TABLE worker                  ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
