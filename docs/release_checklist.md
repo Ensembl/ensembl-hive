@@ -5,15 +5,15 @@ Checklist to release a new eHive version
 
 2. Update the Changelog manually using a text editor
 
-3. Review README.md, install.html and running_eHive_pipelines.html
+3. Review `README.md`, `install.html` and `running_eHive_pipelines.html`
 
-4. Regenerate docs/hive_schema.html, docs/scripts and docs/doxygen by running make_docs.pl
+4. Regenerate `docs/hive_schema.html`, `docs/scripts` and `docs/doxygen` by `running make_docs.pl`
 
 5. Check all of the above into "master" branch
 
 6. git checkout -b version/x.y
 
-7. On the "version/x.y" branch in README.md file substitute the occurences of "HEAD" in the URLs by "version/x.y" (for rawgit) and commit it.
+7. On the "version/x.y" branch in README.md file substitute the occurences of "master" in the URLs by "version/x.y" (for rawgit) and commit it.
 
 8. git checkout master
 
