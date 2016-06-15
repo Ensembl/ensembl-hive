@@ -19,3 +19,6 @@ Checklist to release a new eHive version
 
 9. On the "master" branch increment the version of Bio::EnsEMBL::Hive::Version to x.(y+1)
 
+10. Merge the "version/x.y" branch ignoring the changes made in 7). Add the
+    `-s ours` option to `git merge`
+
