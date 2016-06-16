@@ -85,7 +85,17 @@ sub fetch_param_hashrefs_for_job_ids {
 sub fetch_job_parameters_hashref {
     my ($self, $job_id) = @_;
 
-    return $self->fetch_by_job_id_HASHED_FROM_param_name_TO_param_value($job_id);
+    my $job_parameters      = $self->fetch_by_job_id_AND_origin_param_id_HASHED_FROM_param_name_TO_param_value($job_id, undef);
+
+    my $overflow_indices    = $self->fetch_all_by_job_id_AND_param_value_TO_origin_param_id($job_id, undef);
+
+    if(scalar @$overflow_indices) {
+        my $overflow_parameters = $self->fetch_all( 'param_id IN ('.join(', ', @$overflow_indices).')', 1, ['param_name'], 'param_value' );
+
+        $job_parameters = { (%$job_parameters, %$overflow_parameters) };    # merge them together
+    }
+
+    return $job_parameters;
 }
 
 
