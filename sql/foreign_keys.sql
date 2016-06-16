@@ -34,6 +34,7 @@ ALTER TABLE analysis_stats_monitor  ADD FOREIGN KEY (analysis_id)               
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id)          REFERENCES analysis_base(analysis_id);
 ALTER TABLE job                     ADD CONSTRAINT  job_analysis_id_fkey        FOREIGN KEY (analysis_id)           REFERENCES analysis_base(analysis_id);
 ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
+ALTER TABLE parameters              ADD CONSTRAINT  parameters_analysis_id_fkey FOREIGN KEY (analysis_id)   REFERENCES analysis_base(analysis_id);
 
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (funnel_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 ALTER TABLE dataflow_target         ADD FOREIGN KEY (source_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
@@ -44,6 +45,7 @@ ALTER TABLE job                     ADD CONSTRAINT  job_prev_job_id_fkey        
 ALTER TABLE job                     ADD CONSTRAINT  job_semaphored_job_id_fkey  FOREIGN KEY (semaphored_job_id)     REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE job_file                ADD CONSTRAINT  job_file_job_id_fkey        FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id)                          ON DELETE CASCADE;
+ALTER TABLE parameters              ADD CONSTRAINT  parameters_job_id_fkey      FOREIGN KEY (job_id)                REFERENCES job(job_id);
 
 ALTER TABLE parameters              ADD CONSTRAINT  parameters_origin_param_id_fkey FOREIGN KEY (origin_param_id)   REFERENCES parameters(param_id);
 
