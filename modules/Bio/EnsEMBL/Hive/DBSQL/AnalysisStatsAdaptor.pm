@@ -77,6 +77,17 @@ sub object_class {
 }
 
 
+sub objectify {     # turn the hashref into an object
+    my ($self, $hashref) = @_;
+
+    my $object = $self->SUPER::objectify( $hashref );
+
+    $object->seconds_since_last_fetch(0);
+
+    return $object;
+}
+
+
 ################
 #
 # UPDATE METHODS

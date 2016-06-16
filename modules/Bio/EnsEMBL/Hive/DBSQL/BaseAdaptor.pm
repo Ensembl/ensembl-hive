@@ -346,10 +346,6 @@ sub fetch_all {
             ? $hashref->{$value_column}
             : $self->objectify($hashref);
 
-        if(UNIVERSAL::can($object, 'seconds_since_last_fetch')) {
-            $object->seconds_since_last_fetch(0);
-        }
-
         if($one_per_key) {
             $$pptr = $object;
         } else {
