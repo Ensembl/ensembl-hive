@@ -127,8 +127,8 @@ sub to_analysis_url {
 
     Usage   : $self->to_analysis($analysis);
     Function: Get/set method for the goal analysis object of this rule.
-    Returns : Bio::EnsEMBL::Hive::Analysis
-    Args    : Bio::EnsEMBL::Hive::Analysis
+    Returns : Bio::EnsEMBL::Hive::Analysis or Bio::EnsEMBL::Hive::Accumulator or Bio::EnsEMBL::Hive::NakedTable
+    Args    : Bio::EnsEMBL::Hive::Analysis or Bio::EnsEMBL::Hive::Accumulator or Bio::EnsEMBL::Hive::NakedTable
   
 =cut
 
