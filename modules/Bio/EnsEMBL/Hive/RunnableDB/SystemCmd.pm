@@ -123,7 +123,7 @@ sub write_output {
         $return_value >>= 8;
 
         # We create a dataflow event depending on the exit code of the process.
-        if (exists $self->param('return_codes_2_branches')->{$return_value}) {
+        if (ref($self->param('return_codes_2_branches')) and exists $self->param('return_codes_2_branches')->{$return_value}) {
             my $branch_number = $self->param('return_codes_2_branches')->{$return_value};
             $self->dataflow_output_id( $self->input_id, $branch_number );
             $self->input_job->autoflow(0);
