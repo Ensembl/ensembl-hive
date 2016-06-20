@@ -258,4 +258,63 @@ BEGIN {
     is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'NakedTable', 'table_name' => 'foreign_table' }, 'query_params hash correct' );
 }
 
+
+{       # NEW style database server URL (db_name-less) with a trailing slash:
+    my $url = 'mysql://who:secret@where.co.uk:12345/';
+
+    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+
+    ok($url_hash, "parser returned something for $url");
+    isa_ok( $url_hash, 'HASH' );
+
+    is( $url_hash->{'driver'},      'mysql',                                            'driver correct' );
+    is( $url_hash->{'user'},        'who',                                              'user correct' );
+    is( $url_hash->{'pass'},        'secret',                                           'password correct' );
+    is( $url_hash->{'host'},        'where.co.uk',                                      'hostname correct' );
+    is( $url_hash->{'port'},         12345,                                             'port number correct' );
+    is( $url_hash->{'dbname'},      '',                                                 'database name correct' );
+}
+
+{       # NEW style database server URL (db_name-less) without a trailing slash:
+    my $url = 'mysql://who:secret@where.co.uk:12345';
+
+    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+
+    ok($url_hash, "parser returned something for $url");
+    isa_ok( $url_hash, 'HASH' );
+
+    is( $url_hash->{'driver'},      'mysql',                                            'driver correct' );
+    is( $url_hash->{'user'},        'who',                                              'user correct' );
+    is( $url_hash->{'pass'},        'secret',                                           'password correct' );
+    is( $url_hash->{'host'},        'where.co.uk',                                      'hostname correct' );
+    is( $url_hash->{'port'},         12345,                                             'port number correct' );
+    is( $url_hash->{'dbname'},      undef,                                              'database name correct' );
+}
+
+{       # NEW style sqlite URL with an absolute path:
+    my $url = 'sqlite:////var/folders/1k/qdbfbdls6nn98pqzbdkcsnfc0000gn/T/eR81O_qhbH/ehive_server_pipeline_db?logic_name=part_multiply';
+
+    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+
+    ok($url_hash, "parser returned something for $url");
+    isa_ok( $url_hash, 'HASH' );
+
+    is( $url_hash->{'driver'}, 'sqlite',       'driver correct' );
+    is( $url_hash->{'dbname'}, '/var/folders/1k/qdbfbdls6nn98pqzbdkcsnfc0000gn/T/eR81O_qhbH/ehive_server_pipeline_db', 'database path correct' );
+    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Analysis', 'logic_name' => 'part_multiply' }, 'query params correct' );
+}
+
+{       # NEW style sqlite URL with a relative path:
+    my $url = 'sqlite:///relative/path/to/ehive_server_pipeline_db?logic_name=part_multiply';
+
+    my $url_hash = Bio::EnsEMBL::Hive::Utils::URL::parse( $url );
+
+    ok($url_hash, "parser returned something for $url");
+    isa_ok( $url_hash, 'HASH' );
+
+    is( $url_hash->{'driver'}, 'sqlite',       'driver correct' );
+    is( $url_hash->{'dbname'}, 'relative/path/to/ehive_server_pipeline_db', 'database path correct' );
+    is_deeply( $url_hash->{'query_params'}, { 'object_type' => 'Analysis', 'logic_name' => 'part_multiply' }, 'query params correct' );
+}
+
 done_testing();

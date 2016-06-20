@@ -103,13 +103,13 @@ sub parse {
         } # /if OLD format
     
         if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =
-            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
+            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?(?:/([/~\w\-\.]*))?)?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
 
             my %conn_params  = split(/[;=]/, 'type=hive;disconnect_when_inactive=0'.($conn_param_string // '') );
             my $query_params = $query_part ? { split(/[&=]/, $query_part ) } : undef;
             my $exception_from_NEW_format;
 
-            if(!$query_params and ($driver eq 'mysql' or $driver eq 'pgsql') and $dbname=~m{/}) {   # a special case of multipart dbpath hints at the OLD format (or none at all)
+            if(!$query_params and ($driver eq 'mysql' or $driver eq 'pgsql') and $dbname and $dbname=~m{/}) {   # a special case of multipart dbpath hints at the OLD format (or none at all)
 
                 $query_params = { 'object_type' => 'NakedTable' };
                 $exception_from_NEW_format = 1;
@@ -118,7 +118,7 @@ sub parse {
 
                 if($query_params->{'logic_name'}) {
                     $object_type = 'Analysis';
-                    if($dbname=~m{^([/~\w\-\.]*)/analysis$}) {
+                    if($dbname and $dbname=~m{^([/~\w\-\.]*)/analysis$}) {
                         $exception_from_NEW_format = 1;
                     }
                 } elsif($query_params->{'accu_name'}) { # we don't require $query_params->{'accu_address'} to support scalar accu
@@ -127,7 +127,7 @@ sub parse {
                     $object_type = 'NakedTable';
                 } elsif($query_params->{'insertion_method'}) {
                     $object_type = 'NakedTable';
-                    if($dbname=~m{^([/~\w\-\.]*)/(\w+)$}) {
+                    if($dbname and $dbname=~m{^([/~\w\-\.]*)/(\w+)$}) {
                         $exception_from_NEW_format = 1;
                     }
                 }
