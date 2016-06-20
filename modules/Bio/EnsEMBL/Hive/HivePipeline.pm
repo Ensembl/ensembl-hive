@@ -383,6 +383,39 @@ sub params_as_hash {
 }
 
 
+=head2 get_cached_hive_current_load
+
+    Description: Proxy for RoleAdaptor::get_hive_current_load() that caches the last value.
+
+=cut
+
+sub get_cached_hive_current_load {
+    my $self = shift @_;
+
+    if (not exists $self->{'_cached_hive_load'}) {
+        if ($self->hive_dba) {
+            $self->{'_cached_hive_load'} = $self->hive_dba->get_RoleAdaptor->get_hive_current_load();
+        } else {
+            $self->{'_cached_hive_load'} = 0;
+        }
+    }
+    return $self->{'_cached_hive_load'};
+}
+
+
+=head2 invalidate_hive_current_load
+
+    Description: Method that forces the next get_cached_hive_current_load() call to fetch a fresh value from the database
+
+=cut
+
+sub invalidate_hive_current_load {
+    my $self = shift @_;
+
+    delete $self->{'_cached_hive_load'};
+}
+
+
 =head2 print_diagram
 
     Description: prints a "Unicode art" textual representation of the pipeline's flow diagram
