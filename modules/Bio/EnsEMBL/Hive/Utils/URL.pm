@@ -103,18 +103,18 @@ sub parse {
         } # /if OLD format
     
         if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =
-            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([/~\w\-\.]*))?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
+            $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?(?:/([/~\w\-\.]*))?)?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
 
             my %conn_params  = split(/[;=]/, 'type=hive;disconnect_when_inactive=0'.($conn_param_string // '') );
             my $query_params = $query_part ? { split(/[&=]/, $query_part ) } : undef;
             my $exception_from_NEW_format;
 
-            if(!$query_params and ($driver eq 'mysql' or $driver eq 'pgsql') and $dbname=~m{/}) {   # a special case of multipart dbpath hints at the OLD format (or none at all)
+            if(!$query_params and ($driver eq 'mysql' or $driver eq 'pgsql') and $dbname and $dbname=~m{/}) {   # a special case of multipart dbpath hints at the OLD format (or none at all)
 
                 $query_params = { 'object_type' => 'NakedTable' };
                 $exception_from_NEW_format = 1;
 
-            } elsif($query_params and not (my $object_type = $query_params->{'object_type'})) {    # do a bit of guesswork:
+            } elsif($query_params and $dbname and not (my $object_type = $query_params->{'object_type'})) {    # do a bit of guesswork:
 
                 if($query_params->{'logic_name'}) {
                     $object_type = 'Analysis';
