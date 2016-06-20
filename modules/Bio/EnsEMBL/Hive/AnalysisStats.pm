@@ -280,7 +280,7 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
 
     my $h_cap = $self->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
-        my $hive_current_load = $self->adaptor ? $self->adaptor->db->get_RoleAdaptor->get_hive_current_load() : 0;
+        my $hive_current_load = $self->hive_pipeline->get_cached_hive_current_load();
         my $h_max = $self->num_running_workers + POSIX::floor( $h_cap * ( 1.0 - $hive_current_load ) );
         if($h_max < $num_required_workers) {
             $num_required_workers = $h_max;
@@ -435,7 +435,10 @@ sub check_blocking_control_rules {
                 #the AnalysisStats object
             my $condition_analysis  = $ctrl_rule->condition_analysis;
             my $condition_stats     = $condition_analysis && $condition_analysis->stats;
-            $condition_stats->refresh();    # make sure we haven't cached an external AnalysisStats object!
+            # Make sure we use fresh properties of the AnalysisStats object
+            # (especially relevant in the case of foreign pipelines, since
+            # local objects are periodically refreshed)
+            $condition_stats->refresh();
             my $condition_status    = $condition_stats    && $condition_stats->status;
             my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
             my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;

@@ -445,6 +445,7 @@ sub run_autonomously {
             unless($run_job_id) {
                     # reset all the collections so that fresher data will be used at this iteration:
                 $pipeline->invalidate_collections();
+                $pipeline->invalidate_hive_current_load();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
             }

@@ -252,6 +252,7 @@ sub specialize_worker {
         foreach my $analysis ( @$analyses_matching_pattern ) {
             $analysis->stats->refresh();
         }
+        $self->db->hive_pipeline->invalidate_hive_current_load;
 
         $analysis = Bio::EnsEMBL::Hive::Scheduler::suggest_analysis_to_specialize_a_worker($worker, $analyses_matching_pattern, $analyses_pattern);
 
@@ -579,7 +580,7 @@ sub safe_synchronize_AnalysisStats {
         my $row_count = $self->dbc->do($sql);   # try to claim the sync_lock
 
         if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
-            $self->synchronize_AnalysisStats($stats);   
+            $self->synchronize_AnalysisStats($stats, 1);
             return 1;
         } # otherwise assume it's locked and just return un-updated
     }
@@ -601,11 +602,11 @@ sub safe_synchronize_AnalysisStats {
 =cut
 
 sub synchronize_AnalysisStats {
-    my ($self, $stats) = @_;
+    my ($self, $stats, $has_refresh_just_been_done) = @_;
 
     if( $stats and $stats->analysis_id ) {
 
-        $stats->refresh(); ## Need to get the new hive_capacity for dynamic analyses
+        $stats->refresh() unless $has_refresh_just_been_done; ## Need to get the new hive_capacity for dynamic analyses
 
         my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 

@@ -256,7 +256,7 @@ sub get_adaptor {
     unless( $self->{'_cached_adaptor'}{$signature} ) {
 
         eval "require $adaptor_package_name"
-        or throw("Could not load or compile module '$adaptor_package_name'");
+        or throw("Could not load or compile module '$adaptor_package_name' because $@");
 
         $self->{'_cached_adaptor'}{$signature} = $adaptor_package_name->new( $self, @_ );
     }

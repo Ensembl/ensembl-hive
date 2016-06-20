@@ -195,7 +195,7 @@ sub schedule_workers {
     } else {
 
         my $submit_capacity_limiter = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
-        my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->get_RoleAdaptor->get_hive_current_load() );
+        my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->hive_pipeline->get_cached_hive_current_load() );
 
         ANALYSIS: foreach my $pair (@$pairs_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {

@@ -497,6 +497,8 @@ sub run {
                     $self->cause_of_death('LIFESPAN');
 
                 } else {
+                    # No need to refresh the stats or the hive_current_load # since it's all been refreshed in
+                    # specialize_and_compile_wrapper()
                     my $stats = $current_role->analysis->stats;
                     my $desired_batch_size  = $stats->get_or_estimate_batch_size();
                     my $hit_the_limit;  # dummy at the moment
@@ -540,10 +542,12 @@ sub run {
 
             # A mechanism whereby workers can be caused to exit even if they were doing fine:
         if (!$self->cause_of_death) {
+            # We're here after having run a batch, so we need to refresh the stats
             my $analysis    = $self->current_role->analysis;
             $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
             my $stats       = $analysis->stats->refresh;
-            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($self->adaptor->db->get_RoleAdaptor->get_hive_current_load >= 1.1)
+            $stats->hive_pipeline->invalidate_hive_current_load;
+            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
              or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
             ) {
                 $self->cause_of_death('HIVE_OVERLOAD');
@@ -739,6 +743,7 @@ sub run_one_batch {
         my $remaining_jobs_in_batch = scalar(@$jobs);
         if( !$is_special_batch and $remaining_jobs_in_batch and $stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
             my $ready_job_count = $stats->ready_job_count;
+            $stats->hive_pipeline->invalidate_hive_current_load;
             my $optimal_batch_now = $stats->get_or_estimate_batch_size( $remaining_jobs_in_batch );
             my $jobs_to_unclaim = $remaining_jobs_in_batch - $optimal_batch_now;
             if($self->debug) {
