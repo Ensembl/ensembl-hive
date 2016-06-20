@@ -114,11 +114,11 @@ sub parse {
                 $query_params = { 'object_type' => 'NakedTable' };
                 $exception_from_NEW_format = 1;
 
-            } elsif($query_params and $dbname and not (my $object_type = $query_params->{'object_type'})) {    # do a bit of guesswork:
+            } elsif($query_params and not (my $object_type = $query_params->{'object_type'})) {    # do a bit of guesswork:
 
                 if($query_params->{'logic_name'}) {
                     $object_type = 'Analysis';
-                    if($dbname=~m{^([/~\w\-\.]*)/analysis$}) {
+                    if($dbname and $dbname=~m{^([/~\w\-\.]*)/analysis$}) {
                         $exception_from_NEW_format = 1;
                     }
                 } elsif($query_params->{'accu_name'}) { # we don't require $query_params->{'accu_address'} to support scalar accu
@@ -127,7 +127,7 @@ sub parse {
                     $object_type = 'NakedTable';
                 } elsif($query_params->{'insertion_method'}) {
                     $object_type = 'NakedTable';
-                    if($dbname=~m{^([/~\w\-\.]*)/(\w+)$}) {
+                    if($dbname and $dbname=~m{^([/~\w\-\.]*)/(\w+)$}) {
                         $exception_from_NEW_format = 1;
                     }
                 }
