@@ -85,14 +85,23 @@ sub fetch_param_hashrefs_for_job_ids {
 sub fetch_job_parameters_hashref {
     my ($self, $job_id) = @_;
 
-    my $job_parameters      = $self->fetch_by_job_id_AND_origin_param_id_HASHED_FROM_param_name_TO_param_value($job_id, undef);
+    my $job_parameters = $self->fetch_by_job_id_AND_origin_param_id_HASHED_FROM_param_name_TO_param_value($job_id, undef);
 
-    my $overflow_indices    = $self->fetch_all_by_job_id_AND_param_value_TO_origin_param_id($job_id, undef);
+        # overflow targets:
+    my $overflow_index_to_param_names = $self->fetch_all_by_job_id_AND_param_value_HASHED_FROM_origin_param_id_TO_param_name($job_id, undef);
 
-    if(scalar @$overflow_indices) {
-        my $overflow_parameters = $self->fetch_all( 'param_id IN ('.join(', ', @$overflow_indices).')', 1, ['param_name'], 'param_value' );
+    if(%$overflow_index_to_param_names) {
+            # overflow sources:
+        my $overflow_index_to_param_value = $self->fetch_all( 'param_id IN ('.join(', ', keys %$overflow_index_to_param_names).')', 1, ['param_id'], 'param_value' );
 
-        $job_parameters = { (%$job_parameters, %$overflow_parameters) };    # merge them together
+        while(my ($param_id, $param_names) = each %$overflow_index_to_param_names) {
+            if(exists $overflow_index_to_param_value->{$param_id}) {
+                my $param_value = $overflow_index_to_param_value->{$param_id};
+                @$job_parameters{@$param_names} = ($param_value) x scalar(@$param_names);   # Assigning an array to a hashref slice!
+            } else {
+                die "Parameter referred to by param_id='$param_id' not found";
+            }
+        }
     }
 
     return $job_parameters;
