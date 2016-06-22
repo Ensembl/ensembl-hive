@@ -64,12 +64,12 @@ my %urls_by_tech_with_results =
   );
 
 $ENV{EHIVE_TEST_PIPELINE_URLS} = 
-  join(" ", map {keys($_)} values(%urls_by_tech_with_results));
+  join(" ", map {keys(%$_)} values(%urls_by_tech_with_results));
 
 # no params
 $urls = get_test_urls();
 my @sorted_results_urls = sort {$a cmp $b} 
-  map {values($_)} values(%urls_by_tech_with_results);
+  map {values(%$_)} values(%urls_by_tech_with_results);
 is(scalar(@$urls), scalar(@sorted_results_urls), 
    "defaults with defined test_pipeline_urls returns correct number of urls");
 my @sorted_urls_returned = sort {$a cmp $b} @$urls;
@@ -98,7 +98,7 @@ is_deeply(\@sorted_urls_returned, \@sorted_results_urls,
 # choosing multiple drivers (mysql and pgsql)
 $urls = get_test_urls(-driver => 'mysql,pgsql');
 @sorted_results_urls = sort {$a cmp $b} 
-  map {values($_)} @urls_by_tech_with_results{qw(mysql pgsql)};
+  map {values(%$_)} @urls_by_tech_with_results{qw(mysql pgsql)};
 is(scalar(@$urls), scalar(@sorted_results_urls),
    "choosing multiple drivers with defined test_pipeline_urls returns correct number of urls");
 @sorted_urls_returned = sort {$a cmp $b} @$urls;
@@ -108,7 +108,7 @@ is_deeply(\@sorted_urls_returned, \@sorted_results_urls,
 # choosing multiple drivers (mysql and pgsql) with a tag
 $urls = get_test_urls(-driver => 'mysql,pgsql', -tag => 'TAP');
 @sorted_results_urls = sort {$a cmp $b}
-  map {$_ . "_TAP"} map {values($_)} @urls_by_tech_with_results{qw(mysql pgsql)};
+  map {$_ . "_TAP"} map {values(%$_)} @urls_by_tech_with_results{qw(mysql pgsql)};
 is(scalar(@$urls), scalar(@sorted_results_urls),
    "choosing multiple drivers+tag with defined test_pipeline_urls returns correct number of urls");
 @sorted_urls_returned = sort {$a cmp $b} @$urls;
@@ -118,7 +118,7 @@ is_deeply(\@sorted_urls_returned, \@sorted_results_urls,
 # all drivers with a tag
 $urls = get_test_urls(-tag => 'TAP');
 @sorted_results_urls = sort {$a cmp $b}
-  map {$_ . "_TAP"} map {values($_)} values(%urls_by_tech_with_results);
+  map {$_ . "_TAP"} map {values(%$_)} values(%urls_by_tech_with_results);
 is(scalar(@$urls), scalar(@sorted_results_urls),
    "choosing tag with defined test_pipeline_urls returns correct number of urls");
 @sorted_urls_returned = sort {$a cmp $b} @$urls;
@@ -140,11 +140,11 @@ is(scalar(@$urls), 0,
   );
 
 $ENV{EHIVE_TEST_PIPELINE_URLS} = 
-  join(" ", map {keys($_)} values(%urls_by_tech_with_results));
+  join(" ", map {keys(%$_)} values(%urls_by_tech_with_results));
 
 $urls = get_test_urls();
 @sorted_results_urls = sort {$a cmp $b} 
-  map {values($_)} values(%urls_by_tech_with_results);
+  map {values(%$_)} values(%urls_by_tech_with_results);
 is(scalar(@$urls), scalar(@sorted_results_urls), 
    "defaults with defined test_pipeline_urls with custom db returns correct number of urls");
 @sorted_urls_returned = sort {$a cmp $b} @$urls;
