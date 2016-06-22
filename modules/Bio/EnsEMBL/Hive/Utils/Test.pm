@@ -26,8 +26,6 @@ no warnings qw( redefine );
 use Exporter;
 use Carp qw{croak};
 
-use Config::Simple;
-
 use Data::Dumper;
 
 use Test::More;
