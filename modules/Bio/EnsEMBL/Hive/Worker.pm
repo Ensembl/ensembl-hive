@@ -85,6 +85,13 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
 
+    ## How often we should refresh the AnalysisStats objects
+sub refresh_tolerance_seconds {
+    return 20;
+}
+
+
+
 =head1 AUTOLOADED
 
     resource_class_id / resource_class
@@ -545,13 +552,15 @@ sub run {
         if (!$self->cause_of_death) {
             # We're here after having run a batch, so we need to refresh the stats
             my $analysis    = $self->current_role->analysis;
-            $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
-            my $stats       = $analysis->stats->refresh;
-            $stats->hive_pipeline->invalidate_hive_current_load;
-            if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
-             or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
-            ) {
-                $self->cause_of_death('HIVE_OVERLOAD');
+            my $stats       = $analysis->stats;
+            if ( $stats->refresh($self->refresh_tolerance_seconds) ) {  # if we DID refresh
+                $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
+                $stats->hive_pipeline->invalidate_hive_current_load;
+                if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
+                 or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
+                ) {
+                    $self->cause_of_death('HIVE_OVERLOAD');
+                }
             }
         }
 
@@ -741,11 +750,9 @@ sub run_one_batch {
         $self->prev_job_error( $job->died_somewhere );
         $self->enter_status('READY');
 
-        my $refresh_tolerance_seconds = 20;
-
             # UNCLAIM THE SURPLUS:
         my $remaining_jobs_in_batch = scalar(@$jobs);
-        if( !$is_special_batch and $remaining_jobs_in_batch and $stats->refresh( $refresh_tolerance_seconds ) ) { # if we DID refresh
+        if( !$is_special_batch and $remaining_jobs_in_batch and $stats->refresh( $self->refresh_tolerance_seconds ) ) { # if we DID refresh
             my $ready_job_count = $stats->ready_job_count;
             $stats->hive_pipeline->invalidate_hive_current_load;
             my $optimal_batch_now = $stats->get_or_estimate_batch_size( $remaining_jobs_in_batch );
