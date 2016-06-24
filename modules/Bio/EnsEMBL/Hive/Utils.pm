@@ -278,6 +278,13 @@ sub split_for_bash {
 }
 
 
+=head2 go_figure_dbc
+
+    Description: This function tries its best to build a DBConnection from $foo
+                 It may need $reg_type if $foo is a Registry key and there are more than 1 DBAdaptors for it
+
+=cut
+
 sub go_figure_dbc {
     my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable
 
