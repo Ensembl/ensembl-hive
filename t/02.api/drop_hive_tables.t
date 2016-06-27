@@ -18,7 +18,6 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use File::Temp qw{tempdir};
 
 use Test::More tests => 4;
 use Test::Exception;
