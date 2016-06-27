@@ -153,7 +153,7 @@ sub runWorker {
   Example     : my @urls = get_test_urls(-driver => 'sqlite')
   Example     : my @urls = get_test_urls()
   Description : Creates a listref containing db urls based on the drivers specified in
-              : the environment variable EHIVE_TEST_PIPELINE_DRIVERS.
+              : the environment variable EHIVE_TEST_PIPELINE_URLS.
               : The URLs will be standard eHive URLs, looking like driver://connection/database
               : A database name consisting of [username]_ehive_test will be created
               : and placed in the URL
