@@ -19,7 +19,7 @@ use strict;
 use warnings;
 
 use Test::More;
-use File::Temp qw{tempdir};
+use File::Temp qw{tempfile};
 use Data::Dumper;
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -29,10 +29,8 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-my $dir = tempdir CLEANUP => 1;
-my $orig = chdir $dir;
-
-my $sqlite_url = "sqlite:///${dir}/test_db";
+my ($fh, $filename) = tempfile(UNLINK => 1);
+my $sqlite_url = "sqlite:///${filename}";
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
@@ -63,6 +61,5 @@ is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2,
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
 system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
-chdir $orig;
 
 done_testing();

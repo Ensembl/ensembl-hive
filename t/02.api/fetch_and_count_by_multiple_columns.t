@@ -18,7 +18,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use File::Temp qw{tempdir};
+use File::Temp qw{tempfile};
 
 use Test::More tests => 17;
 
@@ -32,9 +32,8 @@ use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $dir = tempdir CLEANUP => 1;
-
-my $pipeline_url      = "sqlite:///${dir}/ehive_test_pipeline_db";
+my ($fh, $filename) = tempfile(UNLINK => 1);
+my $pipeline_url = "sqlite:///${filename}";
 
 my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
