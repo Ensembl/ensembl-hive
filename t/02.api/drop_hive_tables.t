@@ -32,16 +32,12 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $pipeline_url;
 
-if (defined($ENV{EHIVE_DROP_DB_TEST_URL})) {
-  $pipeline_url    = $ENV{EHIVE_DROP_DB_TEST_URL};
-} else {
   my $available_test_urls = get_test_urls(-driver => 'mysql');
   if (scalar(@$available_test_urls) > 0) {
     $pipeline_url = $$available_test_urls[0];
   } else {
     $pipeline_url = "NONE";
   }
-}
 
 SKIP: {
   skip "no MySQL test database defined", 4 if ($pipeline_url eq "NONE");
