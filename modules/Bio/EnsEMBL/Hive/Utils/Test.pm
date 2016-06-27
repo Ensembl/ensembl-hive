@@ -203,9 +203,9 @@ sub get_test_urls {
   my @driver_parses;
   if (defined($args{-driver})) {
     my @requested_drivers = split(/,/, $args{-driver});
-    map {$_ =~ s/^\s+|\s+$//g} @requested_drivers; #trim whitespace
     
     foreach my $requested_driver (@requested_drivers) {
+      $requested_driver =~ s/^\s+|\s+$//g;  #trim whitespace
       if (defined($url_parses_by_driver{$requested_driver})) {
 	push(@driver_parses, @{$url_parses_by_driver{$requested_driver}});
       }
