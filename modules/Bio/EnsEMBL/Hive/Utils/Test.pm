@@ -196,9 +196,6 @@ sub get_test_urls {
   }
 
   my $constructed_db_name = $ENV{USER} . "_ehive_test";
-  if (defined($args{-tag})) {
-    $constructed_db_name .= "_" . $args{-tag};
-  }
 
   my @driver_parses;
   if (defined($args{-driver})) {
@@ -237,6 +234,9 @@ sub get_test_urls {
       $final_url .= $parsed_url->{dbname};
     } else {
       $final_url .= $constructed_db_name;
+    }
+    if (defined($args{-tag})) {
+      $final_url .= "_" . $args{-tag};
     }
 
     push (@list_of_urls, $final_url); 
