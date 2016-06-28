@@ -58,7 +58,7 @@ SKIP: {
     my $dbc_query_sql = "SELECT SQL_NO_CACHE * FROM manyrows";
     my $find_pid_sql = "SELECT ID FROM information_schema.processlist " .
       "WHERE DB = '$dbname'";
-    my $find_pid_cmd = "db_cmd.pl " .
+    my $find_pid_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
       "-url $server_url " .
 	"-sql \"$find_pid_sql\"";
     
@@ -73,7 +73,7 @@ SKIP: {
     chomp($found_pid);
     
     my $kill_sql = "KILL $found_pid";
-    my $kill_cmd = "db_cmd.pl " .
+    my $kill_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
       "-url $server_url " .
 	"-sql \"$kill_sql\"";
     
@@ -95,15 +95,15 @@ sub prepare_db {
   my ($server_url, $dbname) = @_;
   my $full_db_url = $server_url . $dbname;
 
-  my $drop_command = "db_cmd.pl " .
+  my $drop_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
     "-url $server_url " .
       "-sql \"DROP DATABASE IF EXISTS $dbname\"";
 
-  my $create_command = "db_cmd.pl " .
+  my $create_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
     "-url $server_url " .
       "-sql \"CREATE DATABASE $dbname\""; 
 
-  my $load_command = "db_cmd.pl " .
+  my $load_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl '  .
     "-url $full_db_url " .
       "< " . $ENV{'EHIVE_ROOT_DIR'} . "/t/02.api/sql/reconnect_test.sql";
 
