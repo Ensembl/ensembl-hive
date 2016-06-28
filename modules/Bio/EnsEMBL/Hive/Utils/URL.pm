@@ -177,4 +177,19 @@ sub parse {
     }
 }
 
+sub hash_to_url {
+    my $parse = shift;
+
+    # FIXME: this does not cover all the fields of $parse
+    return join('',
+        $parse->{'driver'} // '',
+        '://',
+        $parse->{'user'} ? $parse->{'user'}.($parse->{'pass'} ? ':' . $parse->{'pass'} : '').'@' : '',
+        $parse->{'host'} ? $parse->{'host'}.($parse->{'port'} ? ':' . $parse->{'port'} : '') : '',
+        '/',
+        $parse->{'dbname'} // '',
+    );
+}
+
+
 1;

@@ -215,29 +215,12 @@ sub get_test_urls {
 
   my @list_of_urls;
   foreach my $parsed_url (@driver_parses) {
-    my $final_url = $parsed_url->{driver};
 
-    $final_url .= "://";
+    ## Use the default database name if needed, and append the tag (if given)
+    $parsed_url->{'dbname'} ||= $constructed_db_name;
+    $parsed_url->{'dbname'} .= '_'.$args{-tag} if defined $args{-tag};
 
-    if (defined($parsed_url->{user})) {
-      $final_url .= $parsed_url->{user};
-      $final_url .= ":" . $parsed_url->{pass} if (defined($parsed_url->{pass}));
-      $final_url .= "@";
-    }
-
-    $final_url .= $parsed_url->{host} if (defined($parsed_url->{host}));
-    $final_url .= ":" . $parsed_url->{port} if (defined($parsed_url->{port}));
-    $final_url .= "/";
-
-    if ((defined($parsed_url->{dbname})) &&
-	($parsed_url->{dbname} ne '')) {
-      $final_url .= $parsed_url->{dbname};
-    } else {
-      $final_url .= $constructed_db_name;
-    }
-    if (defined($args{-tag})) {
-      $final_url .= "_" . $args{-tag};
-    }
+    my $final_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
 
     push (@list_of_urls, $final_url); 
   }

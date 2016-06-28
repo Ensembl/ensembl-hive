@@ -40,14 +40,9 @@ SKIP: {
       BAIL_OUT("db url $db_url did not have a parsable dbname - check that get_test_urls.t also fails");
     }
     
-    my $server_url;
-    $server_url .= $parsed_url->{driver};
-    $server_url .= "://";
-    $server_url .= $parsed_url->{user} if (defined($parsed_url->{user}));
-    $server_url .= ":" . $parsed_url->{pass} if (defined($parsed_url->{pass}));
-    $server_url .= "@" . $parsed_url->{host} if (defined($parsed_url->{host}));
-    $server_url .= ":" . $parsed_url->{port} if (defined($parsed_url->{port}));
-    $server_url .= "/";
+    # Build a database-less URL so that we can identify the ID of the connection to the database
+    delete $parsed_url->{dbname};
+    my $server_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
     
     prepare_db($server_url, $dbname);
     
