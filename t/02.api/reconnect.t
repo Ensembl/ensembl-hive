@@ -94,7 +94,7 @@ sub prepare_db {
 }
 
 sub run_sql_on_db {
-    my ($server_url, $sql);
+    my ($server_url, $sql) = @_;
     return system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $server_url, '-sql', $sql);
 }
 
