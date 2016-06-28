@@ -261,6 +261,7 @@ standaloneJob(
 my ($fh, $filename) = tempfile(UNLINK => 1);
 my $sqlite_url = "sqlite:///${filename}";
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
+system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
 $dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
 my ($k1, $v1) = ('one_key', 34);

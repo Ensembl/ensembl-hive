@@ -34,6 +34,7 @@ my $sqlite_url = "sqlite:///${filename}";
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
+system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
 $dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 

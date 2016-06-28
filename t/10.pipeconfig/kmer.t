@@ -153,7 +153,7 @@ foreach my $pipeline_url ( @pipeline_urls ) {
 	ok ( 520 == $total_kmers,
 	     sprintf("%f kmers found in input FASTQ file", , $total_kmers));
       }
-      #    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+      system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
   }
 }
