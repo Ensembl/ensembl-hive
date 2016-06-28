@@ -68,11 +68,7 @@ SKIP: {
     chomp($found_pid);
     
     my $kill_sql = "KILL $found_pid";
-    my $kill_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
-      "-url $server_url " .
-	"-sql \"$kill_sql\"";
-    
-    my @kill_results = `$kill_cmd`;
+    run_sql_on_db($server_url, $kill_sql);
     
     $sth->execute();
     
@@ -90,19 +86,17 @@ sub prepare_db {
   my ($server_url, $dbname) = @_;
   my $full_db_url = $server_url . $dbname;
 
-  my $drop_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
-    "-url $server_url " .
-      "-sql \"DROP DATABASE IF EXISTS $dbname\"";
-
-  my $create_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
-    "-url $server_url " .
-      "-sql \"CREATE DATABASE $dbname\""; 
-
   my $load_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl '  .
     "-url $full_db_url " .
       "< " . $ENV{'EHIVE_ROOT_DIR'} . "/t/02.api/sql/reconnect_test.sql";
 
-  `$drop_command`;
-  `$create_command`;
+  run_sql_on_db($server_url, "DROP DATABASE IF EXISTS $dbname");
+  run_sql_on_db($server_url, "CREATE DATABASE $dbname");
   `$load_command`;
 }
+
+sub run_sql_on_db {
+    my ($server_url, $sql);
+    return system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $server_url, '-sql', $sql);
+}
+
