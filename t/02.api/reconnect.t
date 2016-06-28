@@ -18,7 +18,7 @@ use Test::More;
 use Cwd;
 use File::Basename;
 
-use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls);
 use Bio::EnsEMBL::Hive::Utils::URL;
@@ -46,9 +46,7 @@ SKIP: {
     
     prepare_db($server_url, $dbname);
     
-    my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $db_url,
-							-no_sql_schema_version_check => 1);
-    my $dbc = $dba->dbc();
+    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $db_url);
     
     my $dbc_query_sql = "SELECT SQL_NO_CACHE * FROM manyrows";
     my $find_pid_sql = "SELECT ID FROM information_schema.processlist " .
