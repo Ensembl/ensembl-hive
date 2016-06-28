@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Hive::Utils ('find_submodules');
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
-$ENV{'EHIVE_ROOT_DIR'} = File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 # Fasta file for calculating kmers in long sequence mode
 my $inputfasta = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
