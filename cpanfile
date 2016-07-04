@@ -5,6 +5,7 @@ requires 'DBD::Pg';
 
 requires 'Capture::Tiny';
 requires 'DateTime';
+requires 'HTML::Entities';
 requires 'JSON';
 
 on 'test' => sub {

@@ -1,0 +1,3 @@
+Autoflow
+--
+<em>Autoflow</em> is the default connection between consecutive analyses
