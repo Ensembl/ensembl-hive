@@ -325,6 +325,8 @@ sub url2dbconn_hash {
 sub go_figure_dbc {
     my ($foo, $schema_type) = @_;
 
+    require Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+
 #    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
     if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, hive-ify it and return
       return bless $foo, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
