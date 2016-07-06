@@ -305,20 +305,21 @@ sub split_for_bash {
 sub go_figure_dbc {
     my ($foo, $reg_type) = @_;      # NB: the second parameter is used by a Compara Runnable
 
+    require Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+
 #    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
-    if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, return it:
-
-        return $foo;
-
+    if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, hive-ify it and return
+      return bless $foo, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
+      
 #    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
     } elsif(UNIVERSAL::can($foo, 'dbc') and ref($foo->dbc) =~ /DBConnection$/) {
 
-        return $foo->dbc;
+        return bless $foo->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
 
 #    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
     } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and ref($foo->db->dbc) =~ /DBConnection$/) { # another data adaptor or Runnable:
 
-        return $foo->db->dbc;
+        return bless $foo->db->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
 
     } elsif(ref($foo) eq 'HASH') {
 
