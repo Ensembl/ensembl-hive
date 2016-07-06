@@ -325,20 +325,21 @@ sub url2dbconn_hash {
 sub go_figure_dbc {
     my ($foo, $schema_type) = @_;
 
+    require Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+
 #    if(UNIVERSAL::isa($foo, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # already a DBConnection, return it:
-    if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, return it:
-
-        return $foo;
-
+    if ( ref($foo) =~ /DBConnection$/ ) {   # already a DBConnection, hive-ify it and return
+      return bless $foo, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
+      
 #    } elsif(UNIVERSAL::can($foo, 'dbc') and UNIVERSAL::isa($foo->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) {
     } elsif(UNIVERSAL::can($foo, 'dbc') and ref($foo->dbc) =~ /DBConnection$/) {
 
-        return $foo->dbc;
+        return bless $foo->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
 
 #    } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and UNIVERSAL::isa($foo->db->dbc, 'Bio::EnsEMBL::DBSQL::DBConnection')) { # another data adaptor or Runnable:
     } elsif(UNIVERSAL::can($foo, 'db') and UNIVERSAL::can($foo->db, 'dbc') and ref($foo->db->dbc) =~ /DBConnection$/) { # another data adaptor or Runnable:
 
-        return $foo->db->dbc;
+        return bless $foo->db->dbc, 'Bio::EnsEMBL::Hive::DBSQL::DBConnection';
 
     } elsif(my $db_conn = (ref($foo) eq 'HASH') ? $foo : url2dbconn_hash( $foo ) ) {  # either a hash or a URL that translates into a hash
 
