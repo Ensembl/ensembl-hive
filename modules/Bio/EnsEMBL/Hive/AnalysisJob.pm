@@ -253,7 +253,7 @@ sub load_parameters {
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
         my $param_adaptor   = $job_adaptor->db->get_ParametersAdaptor;
 
-        unless($self->retry_count) {
+        unless($self->retry_count) {    # load the accu and flatten it into job's own parameters (it should only be done on the first attempt)
             my $own_params_hashref  = $self->own_params_hashref;
             my $accu_hashref        = $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id };
             if(keys %$accu_hashref) {

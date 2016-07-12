@@ -41,6 +41,8 @@ use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::NakedTableAdaptor');
 
+my $OVERFLOW_THRESHOLD = 64;    # FIXME: a temporary low threshold for testing
+
 
 sub default_table_name {
     return 'parameters';
@@ -82,12 +84,27 @@ sub fetch_param_hashrefs_for_job_ids {
 }
 
 
+sub overflow_cache {    # maintain and topup a "reverse" mapping (long_values to param_ids), local to the ParametersAdaptor instance
+    my ($self, %entries_to_be_added) = @_;
+
+    my $overflow_cache = $self->{'_overflow_cache'} ||= {};
+
+    $overflow_cache->{keys %entries_to_be_added} = values %entries_to_be_added;
+
+    return $overflow_cache;
+}
+
+
 sub fetch_job_parameters_hashref {
     my ($self, $job_id) = @_;
 
-    my $job_parameters = $self->fetch_by_job_id_AND_origin_param_id_HASHED_FROM_param_name_TO_param_value($job_id, undef);
+    my $own_parameter_entries = $self->fetch_all_by_job_id_AND_origin_param_id($job_id, undef);
+    my $job_parameters = { map { ( $_->{'param_name'} => $_->{'param_value'}) } @$own_parameter_entries };  # fish out own params first
 
-        # overflow targets:
+        # reverse mapping:  which long values originally belonged to which param DB entries
+    $self->overflow_cache( map { (length($_->{'param_value'})>$OVERFLOW_THRESHOLD) ? ( $_->{'param_value'} => $_->{'param_id'}) : () } @$own_parameter_entries );
+
+        # overflow targets ("our" parameters with missing values, linking "target" entry_ids with "our" local names for them)
     my $overflow_index_to_param_names = $self->fetch_all_by_job_id_AND_param_value_HASHED_FROM_origin_param_id_TO_param_name($job_id, undef);
 
     if(%$overflow_index_to_param_names) {
@@ -102,6 +119,8 @@ sub fetch_job_parameters_hashref {
                 die "Parameter referred to by param_id='$param_id' not found";
             }
         }
+
+        $self->overflow_cache( reverse %$overflow_index_to_param_value );
     }
 
     return $job_parameters;
