@@ -450,6 +450,7 @@ sub data_dbc {
 sub run_system_command {
     my ($self, $cmd, $options) = @_;
 
+    $options //= {};
     my ($join_needed, $flat_cmd) = join_command_args($cmd);
     # Let's use the array if possible, it saves us from running a shell
     my @cmd_to_run = $options->{'use_bash_pipefail'} ? ('bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)) : ($join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd));
