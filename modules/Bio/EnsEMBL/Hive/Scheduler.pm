@@ -214,20 +214,34 @@ sub schedule_workers {
                 next ANALYSIS;
             }
 
-                #digging deeper under the surface so need to sync:
-            if( $analysis_stats->status =~ /^(LOADING|ALL_CLAIMED|BLOCKED|SYNCHING)$/ ) {
-                push @$log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
+            # Only do this for blockable analyses
+            if (scalar(@{ $analysis->control_rules_collection() })) {
 
-                if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
-                } else {
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
+                # If the analysis is SYNCHING, just wait (at most 50 seconds) until the sync is done
+                if ($analysis_stats->status eq 'SYNCHING') {
+                    my $max_refresh_attempts = 5;
+                    do {
+                        sleep(10);
+                        $analysis_stats->refresh();
+                    } while($analysis_stats->sync_lock and $max_refresh_attempts--);   # another Worker/Beekeeper is synching this analysis right now
+
+                } elsif ($analysis_stats->status eq 'BLOCKED') {
+
+                    push @$log_buffer, "Analysis '$logic_name' is BLOCKED, safe-synching it...";
+
+                    # If the analysis is BLOCKED, do a sync to make sure it is really BLOCKED
+                    if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
+                        push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
+                    } else {
+                        push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
+                        next ANALYSIS;
+                    }
+                }
+
+                if( $analysis_stats->status =~ /^(BLOCKED|SYNCHING)$/ ) {
+                    push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
                     next ANALYSIS;
                 }
-            }
-            if( $analysis_stats->status =~ /^(BLOCKED|SYNCHING)$/ ) {
-                push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
-                next ANALYSIS;
             }
 
                 # getting the initial worker requirement for this analysis (may be off if $analysis_stats has not been sync'ed recently)
