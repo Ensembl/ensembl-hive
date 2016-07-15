@@ -30,11 +30,11 @@ sub main {
     GetOptions(
 
     # Connection parameters:
-               'url=s'                      => \$url,
-               'reg_conf|regfile=s'         => \$reg_conf,
-               'reg_type=s'                 => \$reg_type,
-               'reg_alias|regname=s'        => \$reg_alias,
-               'nosqlvc=i'                  => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
+               'url=s'                        => \$url,
+               'reg_conf|regfile|reg_file=s'  => \$reg_conf,
+               'reg_type=s'                   => \$reg_type,
+               'reg_alias|regname|reg_name=s' => \$reg_alias,
+               'nosqlvc=i'                    => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
 
     # Task specification parameters:
                'rc_id=i'                    => \$resource_class_id,
@@ -173,13 +173,16 @@ __DATA__
 
     -reg_conf <path>            : path to a Registry configuration file
     -reg_alias <string>         : species/alias name for the Hive DBAdaptor
+    -reg_type <string>          : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
     -url <url string>           : url defining where database is located
+    -nosqlvc <0|1>              : skip sql version check if 1
 
-=head2 Task specificaton parameters:
+=head2 Task specification parameters:
 
     -rc_id <id>                 : resource class id
     -rc_name <string>           : resource class name
     -analyses_pattern <string>  : restrict the specialization of the Worker to the specified subset of Analyses
+    -analysis_id <id>           : run a worker and have it specialize to an analysis with this analysis_id
     -job_id <id>                : run a specific job defined by its database id
     -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 
@@ -199,7 +202,6 @@ __DATA__
     -help                       : print this help
     -versions                   : report both Hive code version and Hive database schema version
     -debug <level>              : turn on debug messages at <level>
-    -analysis_stats             : show status of each analysis in hive
 
 =head1 LICENSE
 

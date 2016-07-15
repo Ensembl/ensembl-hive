@@ -20,6 +20,7 @@ use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 sub main {
     my $deprecated_option   = {};
     my $tweaks              = [];
+    my $help;
 
     GetOptions(
         'analysis_topup!'   => \$deprecated_option->{'analysis_topup'},     # always on
@@ -27,8 +28,10 @@ sub main {
         'tweak|SET=s@'      => \$tweaks,
         'DELETE=s'          => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
         'SHOW=s'            => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
-
+	'h|help!'           => \$help,
     );
+
+    if ($help) { script_usage(0) };
 
     if($deprecated_option->{'job_topup'}) {
         die "-job_topup mode has been discontinued. Please use seed_pipeline.pl instead.\n";
@@ -37,6 +40,7 @@ sub main {
         die "-analysis_topup has been deprecated. Please note this script now *always* runs in -analysis_topup mode.\n";
     }
 
+    
     my $file_or_module = shift @ARGV or script_usage(0);
 
     Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
@@ -74,7 +78,11 @@ __DATA__
 
 =head1 OPTIONS
 
-    -hive_force_init :   If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+    -hive_force_init <0|1> :  If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+    -tweak <string>        :  Apply tweaks to the pipeline. See tweak_pipeline.pl for details of tweaking syntax
+    -DELETE                :  Delete pipeline parameter (shortcut for tweak DELETE)
+    -SHOW                  :  Show  pipeline parameter  (shortcut for tweak SHOW)
+    -h | --help            :  Show this help message
 
 =head1 LICENSE
 

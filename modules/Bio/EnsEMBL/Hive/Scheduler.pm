@@ -215,18 +215,31 @@ sub schedule_workers {
                 next ANALYSIS;
             }
 
-                #digging deeper under the surface so need to sync:
-            if( $analysis_stats->status =~ /^(LOADING|ALL_CLAIMED|BLOCKED|SYNCHING)$/ ) {
+            # If the analysis is synching, just wait (at most 50 seconds) until the sync is done
+            if ($analysis_stats->sync_lock) {
+                my $max_refresh_attempts = 5;
+                do {
+                    sleep(10);
+                    $analysis_stats->refresh();
+                } while($analysis_stats->sync_lock and $max_refresh_attempts--);   # another Worker/Beekeeper is synching this analysis right now
+
+            } else {
+
                 push @$log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
 
+                # Do a (safe) sync to get up-to-date job-counts and status
                 if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
-                } else {
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, skipping it.";
+                } elsif (scalar(@{ $analysis->control_rules_collection() })) {
+                    # The analysis is blockable and we haven't managed to sync it, so the status is unreliable
+                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, cannot tell whether it is BLOCKED or not, skipping it.";
                     next ANALYSIS;
+                } else {
+                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, will use old stats.";
                 }
             }
-            if( $analysis_stats->status =~ /^(BLOCKED|SYNCHING)$/ ) {
+
+            if( ($analysis_stats->status eq 'BLOCKED') or (($analysis_stats->sync_lock) and scalar(@{ $analysis->control_rules_collection() }))) {
                 push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";
                 next ANALYSIS;
             }

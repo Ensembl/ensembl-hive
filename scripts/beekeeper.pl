@@ -78,11 +78,11 @@ sub main {
 
     GetOptions(
                     # connection parameters
-               'url=s'              => \$self->{'url'},
-               'reg_conf|regfile=s' => \$self->{'reg_conf'},
-               'reg_type=s'         => \$self->{'reg_type'},
-               'reg_alias|regname=s'=> \$self->{'reg_alias'},
-               'nosqlvc=i'          => \$self->{'nosqlvc'},     # can't use the binary "!" as it is a propagated option
+               'url=s'                        => \$self->{'url'},
+               'reg_conf|regfile|reg_file=s'  => \$self->{'reg_conf'},
+               'reg_type=s'                   => \$self->{'reg_type'},
+               'reg_alias|regname|reg_name=s' => \$self->{'reg_alias'},
+               'nosqlvc=i'                    => \$self->{'nosqlvc'},     # can't use the binary "!" as it is a propagated option
 
                     # json config files
                'config_file=s@'     => $self->{'config_files'},
@@ -506,9 +506,10 @@ __DATA__
 =head2 Connection parameters
 
     -reg_conf <path>       : path to a Registry configuration file
-    -reg_type <string>     : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    -reg_type <string>     : type of the registry entry ('hive', 'core', 'compara', etc. - defaults to 'hive')
     -reg_alias <string>    : species/alias name for the Hive DBAdaptor
     -url <url string>      : url defining where hive database is located
+    -nosqlvc <0|1>         : skip sql version check if 1
 
 =head2 Configs overriding
 
@@ -535,9 +536,11 @@ __DATA__
 
     -analyses_pattern <string>  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
     -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
+    -force                      : run all workers with -force (see runWorker.pl)
+    -killworker <worker_id>     : kill worker by worker_id
     -life_span <num>            : number of minutes each worker is allowed to run
     -job_limit <num>            : #jobs to run before worker can die naturally
-    -retry_throwing_jobs 0|1    : if a job dies *knowingly*, should we retry it by default?
+    -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected
     -debug <debug_level>        : set debug level of the workers
 
@@ -546,11 +549,13 @@ __DATA__
     -help                  : print this help
     -versions              : report both Hive code version and Hive database schema version
     -dead                  : detect all unaccounted dead workers and reset their jobs for resubmission
+    -sync                  : re-synchronize the hive
     -unkwn                 : detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
     -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
     -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
+    -job_output <job_id>   : print details for one job
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
     -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_all_jobs        : reset ALL jobs of -analyses_filter'ed ones back to READY so they can be rerun

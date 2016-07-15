@@ -19,20 +19,25 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 
 sub main {
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago, $help);
 
     GetOptions(
                 # connect to the database:
-            'url=s'                      => \$url,
-            'reg_conf|regfile=s'         => \$reg_conf,
-            'reg_type=s'                 => \$reg_type,
-            'reg_alias|regname=s'        => \$reg_alias,
-            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'url=s'                       => \$url,
+            'reg_conf|regfile|reg_file=s' => \$reg_conf,
+            'reg_type=s'                  => \$reg_type,
+            'reg_alias|regname|regname=s' => \$reg_alias,
+            'nosqlvc=i'                   => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
                 # specify the threshold datetime:
             'before_datetime=s'     => \$before_datetime,
             'days_ago=f'            => \$days_ago,
+
+               # other commands/options     
+	    'h|help!'               => \$help,  
     );
+
+    if ($help) { script_usage(0); };
 
     my $hive_dba;
     if($url or $reg_alias) {
@@ -121,6 +126,17 @@ __DATA__
         # delete all jobs 'DONE' before a specific datetime:
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -before_datetime "2013-02-14 15:42:50"
+
+=head1 OPTIONS
+
+    -reg_conf <path>          : path to a Registry configuration file
+    -reg_type <string>        : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    -reg_alias <string>       : species/alias name for the Hive DBAdaptor
+    -url <url string>         : url defining where hive database is located
+    -nosqlvc <0|1>            : skip sql version check if 1
+    -before_datetime <string> : delete jobs 'DONE' before a specific time
+    -days_ago <num>           : delete jobs that have been 'DONE' for at least <num> days
+    -h | -help                : show this help message
 
 =head1 LICENSE
 
