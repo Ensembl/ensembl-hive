@@ -121,7 +121,7 @@ __DATA__
 =head1 DESCRIPTION
 
     This program will generate a graphical representation of your hive pipeline.
-    This includes visalising the flow of data from the different analyses, blocking
+    This includes visualising the flow of data from the different analyses, blocking
     rules & table writers. The graph is also coloured to indicate the stage
     an analysis is at. The colours & fonts used can be configured via
     hive_config.json configuration file.
@@ -140,15 +140,32 @@ B<--reg_alias>
 
     species/alias name for the Hive DBAdaptor
 
+B<--nosqlvc>
+
+    if 1, don't check sql schema version
+
+B<--config_file>
+
+    Path to JSON hive config file
+
 B<--pipeconfig>
 
     A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
     This option can now be used multiple times for multiple top-ups.
 
+B<--format>
+
+    (Optional) specify the output format, or override the output format specified by the output file's extension
+    (e.g. png, jpeg, dot, gif, ps)
+
 B<--output>
 
     Location of the file to write to.
     The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
+
+B<--help>
+
+    Print this help message
 
 =head1 EXTERNAL DEPENDENCIES
 

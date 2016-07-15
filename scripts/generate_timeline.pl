@@ -40,15 +40,17 @@ sub main {
 
     GetOptions(
                 # connect to the database:
-            'url=s'                      => \$url,
-            'reg_conf|regfile=s'         => \$reg_conf,
-            'reg_type=s'                 => \$reg_type,
-            'reg_alias|regname=s'        => \$reg_alias,
-            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'url=s'                               => \$url,
+            'reg_conf|regfile|reg_file=s'         => \$reg_conf,
+            'reg_type=s'                          => \$reg_type,
+            'reg_alias|regname|reg_name=s'        => \$reg_alias,
+            'nosqlvc=i'                           => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+                # miscellaneous options
             'verbose!'                   => \$verbose,
             'h|help'                     => \$help,
 
+                # output control
             'start_date=s'               => \$start_date,
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
@@ -110,8 +112,8 @@ sub main {
         'svg' => 'svg',
         'jpg' => 'jpeg',
         'gif' => 'gif',
-        'ps'  => 'postscript eps enhanced color',
-        'pdf' => 'pdf color enhanced',
+        'ps'  => 'postscript eps enhanced colour',
+        'pdf' => 'pdf colour enhanced',
     );
     my $gnuplot_terminal = undef;
     if ($output and $output =~ /\.(\w+)$/) {
@@ -306,7 +308,7 @@ sub main {
 #####
 # Function to add a new Gnuplot dataset
 # It needs a list of key IDs to represent (i.e. to sum) and optionally some
-# key IDs to substract (represented as hashed)
+# key IDs to subtract (represented as hashed)
 #####
 
 sub add_dataset {
@@ -448,7 +450,7 @@ sub cumulate_events {
 #####
 # Function to translate $top (which can be an integer or a float between 0
 # and 1) to the number of keys that should be displayed in the legend.
-# This is done in accordance to the numbers of available colors in the
+# This is done in accordance to the numbers of available colours in the
 # palette, and the relative importance of each category (the most present
 # ones are selected first)
 #####
@@ -497,14 +499,14 @@ generate_timeline.pl
 
 =head1 DESCRIPTION
 
-This script is used for offline examination of the allocation of workers.
+    This script is used for offline examination of the allocation of workers.
 
-Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
-worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-of the 'worker' table for accurate timing.
-By default, the output is in CSV format, to allow extra analysis to be carried.
+    Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
+    worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
+    of the 'worker' table for accurate timing.
+    By default, the output is in CSV format, to allow extra analysis to be carried.
 
-You can optionally ask the script to generate an image with Gnuplot.
+    You can optionally ask the script to generate an image with Gnuplot.
 
 
 =head1 USAGE EXAMPLES
@@ -526,7 +528,9 @@ You can optionally ask the script to generate an image with Gnuplot.
 
     -help                   : print this help
     -url <url string>       : url defining where hive database is located
-    -reg_cong, -reg_type, -reg_alias    : alternative connection details
+    -reg_conf               : path to a Registry configuration file 
+    -reg_type               : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    -reg_alias              : species/alias name for the Hive DBAdaptor 
     -nosqlvc                : Do not restrict the usage of this script to the current version of eHive
                               Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
     -verbose                : Print some info about the data loaded from the database

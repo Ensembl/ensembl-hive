@@ -23,23 +23,39 @@ main();
 
 
 sub main {
-    my ($reg_conf, $help, $debug, $no_write, $no_cleanup, $flow_into, $input_id, $language);
+    my ($reg_conf,
+	$input_id,
+	$flow_into,
+	$no_write,
+	$no_cleanup,
+	$debug,
+	$language,
+	$help);
 
-    my $module_or_file = shift @ARGV or script_usage();
+    GetOptions (
+		   # connection parameters
+		'reg_conf|regfile|reg_file=s'    => \$reg_conf,
 
-    GetOptions(
-               'help'               => \$help,
-               'debug=i'            => \$debug,
-               'reg_conf|regfile=s' => \$reg_conf,
-               'no_write'           => \$no_write,
-               'no_cleanup'         => \$no_cleanup,
-               'flow_into|flow=s'   => \$flow_into,
-               'input_id=s'         => \$input_id,
-               'language=s'         => \$language,
-    );
+                   # flow control
+		'input_id=s'        => \$input_id,
+                'flow_into|flow=s'  => \$flow_into,
+
+                   # debugging
+		'no_write'      => \$no_write,
+		'no_cleanup'    => \$no_cleanup,
+		'debug=i'       => \$debug,
+
+                  # other commands/options
+                'language=s'    => \$language,
+		'h|help!'       => \$help,
+	       );
+
+    if ($help) { script_usage(0); }
+
+    my $module_or_file = shift @ARGV;
 
     if ($help or !$module_or_file) {
-        script_usage(0);
+        script_usage(1);
     }
 
     if($reg_conf) {
@@ -122,9 +138,11 @@ __DATA__
     -help               : print this help
     -debug <level>      : turn on debug messages at <level>
     -no_write           : skip the execution of write_output() step this time
+    -no_cleanup         : do not cleanup temporary files
     -reg_conf <path>    : load registry entries from the given file (these entries may be needed by the RunnableDB itself)
     -input_id "<hash>"  : specify the whole input_id parameter in one stringified hash
     -flow_out "<hash>"  : defines the dataflow re-direction rules in a format similar to PipeConfig's - see the last example
+    -language           : language in which the runnable is written
 
     NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
 

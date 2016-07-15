@@ -33,15 +33,24 @@ sub show_seedable_analyses {
 
 
 sub main {
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $analyses_pattern, $analysis_id, $logic_name, $input_id);
+    my ($url, 
+	$reg_conf, 
+	$reg_type, 
+	$reg_alias, 
+	$nosqlvc, 
+	$analyses_pattern, 
+	$analysis_id, 
+	$logic_name, 
+	$input_id,
+        $help);
 
     GetOptions(
                 # connect to the database:
-            'url=s'                      => \$url,
-            'reg_conf|regfile=s'         => \$reg_conf,
-            'reg_type=s'                 => \$reg_type,
-            'reg_alias|regname=s'        => \$reg_alias,
-            'nosqlvc=i'                  => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'url=s'                        => \$url,
+            'reg_conf|regfile|reg_file=s'  => \$reg_conf,
+            'reg_type=s'                   => \$reg_type,
+            'reg_alias|regname|reg_name=s' => \$reg_alias,
+            'nosqlvc=i'                    => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
 
                 # identify the analysis:
@@ -51,7 +60,12 @@ sub main {
 
                 # specify the input_id (as a string):
             'input_id=s'            => \$input_id,
+
+	        # other commands/options
+	    'h|help!'               => \$help,
     );
+
+    if ($help) { script_usage(0); }
 
     my $pipeline;
     if($url or $reg_alias) {
@@ -82,7 +96,7 @@ sub main {
 
     } else {
 
-        print "\nYou haven't specified neither -logic_name nor -analysis_id of the analysis being seeded.\n";
+        print "\nYou haven't specified -logic_name nor -analysis_id of the analysis being seeded.\n";
         print "\nSeedable analyses without incoming dataflow:\n";
         show_seedable_analyses($pipeline);
         exit(0);
@@ -147,6 +161,29 @@ __DATA__
 
     seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" \
                      -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
+
+=head1 OPTIONS
+
+=head2 Connection parameters
+
+    -reg_conf <path>            : path to a Registry configuration file
+    -reg_type <string>          : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    -reg_alias <string>         : species/alias name for the Hive DBAdaptor
+    -url <url string>           : url defining where hive database is located
+    -nosqlvc <0|1>              : skip sql version check if 1
+
+=head2 Analysis parameters
+
+    -analyses_pattern <string>  : seed job(s) for analyses whose logic_name matches the supplied pattern
+    -analysis_id <num>          : seed job for analysis with the given analysis_id
+
+=head2 Input
+
+    -input_id <string>          : specify the input_id as a stringified hash 
+
+=head2 Other commands/options
+
+    -h | -help                  : show this help message
 
 =head1 LICENSE
 
