@@ -86,20 +86,34 @@ sub runWorker {
              -job_id                => $specialization_options->{'job_id'},
              -force                 => $specialization_options->{'force'},
         } );
+        cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch);
         1;
 
     } or do {
         my $msg = $@;
-
-        $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
-
-        $worker->cause_of_death( 'SEE_MSG' );
-        $queen->register_worker_death($worker, 1);
+        eval {
+            $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
+            $worker->cause_of_death( 'SEE_MSG' );
+            $queen->register_worker_death($worker, 1);
+        };
+        $msg .= "\nAND THEN:\n".$@ if $@;
+        cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch, 'error');
 
         die $msg;
     };
+
+}
+
+        # have runnable clean up any global/process files/data it may have created
+sub cleanup_if_needed {
+    my ($worker) = @_;
+    if($worker->perform_cleanup) {
+        if(my $runnable_object = $worker->runnable_object) {    # the temp_directory is actually kept in the Process object:
+            $runnable_object->cleanup_worker_temp_directory();
+        }
+    }
 }
 
 sub _update_resource_usage {
