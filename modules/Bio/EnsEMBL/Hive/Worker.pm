@@ -567,13 +567,6 @@ sub run {
 
     }     # /Worker's lifespan loop
 
-        # have runnable clean up any global/process files/data it may have created
-    if($self->perform_cleanup) {
-        if(my $runnable_object = $self->runnable_object) {    # the temp_directory is actually kept in the Process object:
-            $runnable_object->cleanup_worker_temp_directory();
-        }
-    }
-
     # The second argument ("update_when_checked_in") is set to force an
     # update of the "when_checked_in" timestamp in the worker table
     $self->adaptor->register_worker_death($self, 1);
