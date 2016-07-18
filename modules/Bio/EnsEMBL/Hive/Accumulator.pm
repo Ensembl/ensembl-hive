@@ -61,7 +61,7 @@ sub accu_address {
     if(@_) {
         $self->{'_accu_address'} = shift @_;
     }
-    return $self->{'_accu_address'};
+    return ( $self->{'_accu_address'} // '' );
 }
 
 
@@ -92,7 +92,7 @@ sub url {
 sub display_name {
     my ($self) = @_;
     return  $self->accu_name
-            . ($self->accu_address // '')
+            . $self->accu_address
             . ':='
             . $self->accu_input_variable;
 }
