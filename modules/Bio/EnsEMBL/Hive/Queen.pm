@@ -598,11 +598,14 @@ sub safe_synchronize_AnalysisStats {
 
         if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
             $self->synchronize_AnalysisStats($stats, 1);
-            return 1;
-        } # otherwise assume it's locked and just return un-updated
+            return 'sync_done';
+        } else {
+            # otherwise assume it's locked and just return un-updated
+            return 0;
+        }
     }
 
-    return 0;
+    return 'stats_fresh_enough';
 }
 
 
