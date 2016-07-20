@@ -17,6 +17,7 @@
 
 export PERL5LIB=$PWD/bioperl-live:$PWD/modules
 export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ pgsql://postgres@127.0.0.1/ sqlite:///'
+export TEST_AUTHOR=$USER
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then

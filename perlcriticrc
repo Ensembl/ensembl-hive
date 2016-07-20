@@ -1,0 +1,18 @@
+severity  = 5
+
+# This one has to stay
+[Subroutines::ProhibitExplicitReturnUndef]
+severity=4
+
+# We can solve these ones but it may take time and some "## no critic" pragmas
+[BuiltinFunctions::ProhibitStringyEval]
+severity=4
+[InputOutput::ProhibitInteractiveTest]
+severity=4
+[ValuesAndExpressions::ProhibitLeadingZeros]
+severity=4
+[TestingAndDebugging::ProhibitNoStrict]
+severity=4
+[Subroutines::ProhibitSubroutinePrototypes]
+severity=4
+
