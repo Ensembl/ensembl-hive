@@ -537,9 +537,6 @@ sub add_objects_from_config {
                 'done_job_count'        => 0,
                 'failed_job_count'      => 0,
                 'num_running_workers'   => 0,
-                'behaviour'             => 'STATIC',
-                'input_capacity'        => 4,
-                'output_capacity'       => 4,
                 'sync_lock'             => 0,
             );
         }

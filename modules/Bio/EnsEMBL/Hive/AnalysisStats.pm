@@ -137,29 +137,7 @@ sub num_running_workers {
 }
 
 
-## dynamic hive_capacity mode attributes:
-
-
-sub behaviour {
-    my $self = shift;
-    $self->{'_behaviour'} = shift if(@_);
-    return $self->{'_behaviour'};
-}
-
-sub input_capacity {
-    my $self = shift;
-    $self->{'_input_capacity'} = shift if(@_);
-    return $self->{'_input_capacity'};
-}
-
-sub output_capacity {
-    my $self = shift;
-    $self->{'_output_capacity'} = shift if(@_);
-    return $self->{'_output_capacity'};
-}
-
-
-## dynamic hive_capacity mode counters:
+## runtime stats:
 
 
 sub avg_msec_per_job {

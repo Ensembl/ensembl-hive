@@ -143,14 +143,10 @@ CREATE TABLE analysis_base (
 
 @column num_running_workers     number of running Workers of this Analysis
 
-@column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
-@column input_capacity          used to compute hive_capacity in DYNAMIC mode
-@column output_capacity         used to compute hive_capacity in DYNAMIC mode
-
-@column avg_msec_per_job        weighted average used to compute DYNAMIC hive_capacity
-@column avg_input_msec_per_job  weighted average used to compute DYNAMIC hive_capacity
-@column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
-@column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
+@column avg_msec_per_job        weighted average
+@column avg_input_msec_per_job  weighted average
+@column avg_run_msec_per_job    weighted average
+@column avg_output_msec_per_job weighted average
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
@@ -158,7 +154,6 @@ CREATE TABLE analysis_base (
 */
 
 CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED');
-CREATE TYPE analysis_behaviour AS ENUM ('STATIC', 'DYNAMIC');
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER     NOT NULL,
     batch_size              INTEGER     NOT NULL DEFAULT 1,
@@ -172,10 +167,6 @@ CREATE TABLE analysis_stats (
     failed_job_count        INTEGER     NOT NULL DEFAULT 0,
 
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
-
-    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
-    input_capacity          INTEGER     NOT NULL DEFAULT 4,
-    output_capacity         INTEGER     NOT NULL DEFAULT 4,
 
     avg_msec_per_job        INTEGER              DEFAULT NULL,
     avg_input_msec_per_job  INTEGER              DEFAULT NULL,
@@ -688,14 +679,10 @@ CREATE INDEX ON log_message (message_class);
 
 @column num_running_workers     number of running Workers of this Analysis
 
-@column behaviour               whether hive_capacity is set or is dynamically calculated based on timers
-@column input_capacity          used to compute hive_capacity in DYNAMIC mode
-@column output_capacity         used to compute hive_capacity in DYNAMIC mode
-
-@column avg_msec_per_job        weighted average used to compute DYNAMIC hive_capacity
-@column avg_input_msec_per_job  weighted average used to compute DYNAMIC hive_capacity
-@column avg_run_msec_per_job    weighted average used to compute DYNAMIC hive_capacity
-@column avg_output_msec_per_job weighted average used to compute DYNAMIC hive_capacity
+@column avg_msec_per_job        weighted average
+@column avg_input_msec_per_job  weighted average
+@column avg_run_msec_per_job    weighted average
+@column avg_output_msec_per_job weighted average
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
@@ -717,10 +704,6 @@ CREATE TABLE analysis_stats_monitor (
     failed_job_count        INTEGER     NOT NULL DEFAULT 0,
 
     num_running_workers     INTEGER     NOT NULL DEFAULT 0,
-
-    behaviour               analysis_behaviour NOT NULL DEFAULT 'STATIC',
-    input_capacity          INTEGER     NOT NULL DEFAULT 4,
-    output_capacity         INTEGER     NOT NULL DEFAULT 4,
 
     avg_msec_per_job        INTEGER              DEFAULT NULL,
     avg_input_msec_per_job  INTEGER              DEFAULT NULL,

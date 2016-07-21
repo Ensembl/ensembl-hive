@@ -101,24 +101,6 @@ sub update_stats_and_monitor {
 
   my $sql = "UPDATE analysis_stats SET status='".$stats->status."' ";
 
-  if ($stats->behaviour eq "DYNAMIC") {
-
-    my $hive_capacity = $stats->hive_capacity;
-    my $max_hive_capacity = $stats->avg_input_msec_per_job
-        ? int($stats->input_capacity * $stats->avg_msec_per_job / $stats->avg_input_msec_per_job)
-        : $hive_capacity;
-
-    if ($stats->avg_output_msec_per_job) {
-      my $max_hive_capacity2 = int($stats->output_capacity * $stats->avg_msec_per_job / $stats->avg_output_msec_per_job);
-      if ($max_hive_capacity2 < $max_hive_capacity) {
-        $max_hive_capacity = $max_hive_capacity2;
-      }
-    }
-
-    $stats->hive_capacity( int( ($hive_capacity+$max_hive_capacity+1)/2 ) );
-    $sql .= ",hive_capacity=" . (defined($stats->hive_capacity()) ? $stats->hive_capacity() : 'NULL');
-  }
-
   $sql .= ",avg_msec_per_job=" . $stats->avg_msec_per_job();
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
