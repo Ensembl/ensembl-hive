@@ -448,8 +448,9 @@ sub data_dbc {
 =cut
 
 sub run_system_command {
-    require Capture::Tiny ':all';
     my ($self, $cmd, $options) = @_;
+
+    require Capture::Tiny;
 
     $options //= {};
     my ($join_needed, $flat_cmd) = join_command_args($cmd);
@@ -462,9 +463,12 @@ sub run_system_command {
     $self->dbc and $self->dbc->disconnect_if_idle();    # release this connection for the duration of system() call
 
     my $return_value;
-    my $stderr = tee_stderr {
+
+    # Capture:Tiny has weird behavior if 'require'd instead of 'use'd
+    # see, for example,http://www.perlmonks.org/?node_id=870439 
+    my $stderr = Capture::Tiny::tee_stderr(sub {
         $return_value = system(@cmd_to_run);
-    };
+    });
 
     return ($return_value, $stderr, $flat_cmd) if wantarray;
     return $return_value;
