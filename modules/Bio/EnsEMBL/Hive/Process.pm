@@ -101,8 +101,6 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use Capture::Tiny ':all';
-
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
@@ -448,6 +446,7 @@ sub data_dbc {
 =cut
 
 sub run_system_command {
+    require Capture::Tiny ':all';
     my ($self, $cmd, $options) = @_;
 
     $options //= {};
