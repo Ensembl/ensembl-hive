@@ -106,7 +106,7 @@ sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered b
 =cut
 
 sub store_jobs_and_adjust_counters {
-    my ($self, $jobs, $push_new_semaphore) = @_;
+    my ($self, $jobs, $push_new_semaphore, $emitting_job_id) = @_;
 
         # NB: our use patterns assume all jobs from the same storing batch share the same semaphored_job_id:
     my $semaphored_job_id                   = scalar(@$jobs) && $jobs->[0]->semaphored_job_id();
@@ -155,7 +155,12 @@ sub store_jobs_and_adjust_counters {
             push @output_job_ids, $job->dbID();
 
         } elsif( $local_job ) {
-            $self->db->get_LogMessageAdaptor->store_hive_message( "JobAdaptor failed to store the local Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision", 0 );
+            my $msg = "JobAdaptor failed to store the local Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision";
+            if ($emitting_job_id) {
+                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, $msg, 0);
+            } else {
+                $self->db->get_LogMessageAdaptor->store_hive_message($msg, 0);
+            }
 
             $failed_to_store_local_jobs++;
         }

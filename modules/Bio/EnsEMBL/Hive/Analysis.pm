@@ -387,7 +387,7 @@ sub dataflow {
                                     'semaphored_job_id' => $emitting_job->semaphored_job_id(),  # propagate parent's semaphore if any
                 );
 
-                my ($funnel_job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $funnel_job ], 0) };
+                my ($funnel_job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
 
                 unless($funnel_job_id) {    # apparently it has been created previously, trying to leech to it:
 
@@ -409,7 +409,7 @@ sub dataflow {
                 foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
                     $fan_job->semaphored_job_id( $funnel_job_id );
                 }
-                push @output_job_ids, $funnel_job_id, @{ $job_adaptor->store_jobs_and_adjust_counters( $fan_jobs, 1) };
+                push @output_job_ids, $funnel_job_id, @{ $job_adaptor->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };
 
             }
         } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
@@ -419,7 +419,7 @@ sub dataflow {
                                                 'semaphored_job_id' => $emitting_job->semaphored_job_id(),  # propagate parent's semaphore if any
             ) } @$output_ids_for_this_rule;
 
-            push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0) };
+            push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0, $emitting_job_id) };
         }
     } # /if funnel
 
