@@ -335,11 +335,11 @@ sub dataflow {
 
     my $param_id_stack  = $emitting_job->param_id_stack;
     my $accu_id_stack   = $emitting_job->accu_id_stack;
+    my $emitting_job_id = $emitting_job->dbID;
 
     if($push_emitting_job_on_stack) {
         my $input_id        = $emitting_job->input_id;
         my $accu_hash       = $emitting_job->accu_hash;
-        my $emitting_job_id = $emitting_job->dbID;
 
         if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
             $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$emitting_job_id;
