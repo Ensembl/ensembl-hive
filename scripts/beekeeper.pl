@@ -273,7 +273,7 @@ sub main {
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
             print "Beekeeper : the following Analyses matched your -analysis_pattern '".$self->{'analyses_pattern'}."' : "
-                .join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)."\n\n";
+                .join(', ', map { $_->logic_name.'('.$_->dbID.')' } sort {$a->dbID <=> $b->dbID} @$list_of_analyses)."\n\n";
         } else {
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
         }
