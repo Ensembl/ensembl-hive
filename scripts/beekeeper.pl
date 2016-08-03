@@ -272,7 +272,7 @@ sub main {
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
             print "Beekeeper : the following Analyses matched your -analysis_pattern '".$self->{'analyses_pattern'}."' : "
-                . join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)
+                . join(', ', map { $_->logic_name.'('.$_->dbID.')' } sort {$a->dbID <=> $b->dbID} @$list_of_analyses)
                 . "\nBeekeeper : ", scalar($self->{'pipeline'}->collection_of('Analysis')->list())-scalar(@$list_of_analyses), " Analyses are not shown\n\n";
         } else {
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
