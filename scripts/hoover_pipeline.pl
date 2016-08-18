@@ -19,7 +19,7 @@ use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 
 sub main {
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $before_datetime, $days_ago, $help);
 
     GetOptions(
                 # connect to the database:
@@ -32,7 +32,12 @@ sub main {
                 # specify the threshold datetime:
             'before_datetime=s'     => \$before_datetime,
             'days_ago=f'            => \$days_ago,
+
+               # other commands/options
+	    'h|help!'               => \$help,
     );
+
+    if ($help) { script_usage(0); };
 
     my $hive_dba;
     if($url or $reg_alias) {
@@ -68,6 +73,24 @@ sub main {
 
     my $dbc = $hive_dba->dbc();
     $dbc->do( $sql );
+
+    # Remove the roles that are not attached to any jobs
+    my $sql_roles = q{
+    DELETE role
+      FROM role LEFT JOIN job USING (role_id)
+     WHERE job.job_id IS NULL
+    };
+    $dbc->do( $sql_roles );
+
+    # Remove the workers that are not attached to any roles, but only the
+    # ones that should actually have a role (e.g. have been deleted by the
+    # above statement).
+    my $sql_workers = q{
+    DELETE worker
+      FROM worker LEFT JOIN role USING (worker_id)
+     WHERE role.role_id IS NULL AND work_done > 0
+    };
+    $dbc->do( $sql_workers );
 }
 
 main();
@@ -103,6 +126,17 @@ __DATA__
         # delete all jobs 'DONE' before a specific datetime:
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -before_datetime "2013-02-14 15:42:50"
+
+=head1 OPTIONS
+
+    -reg_conf <path>          : path to a Registry configuration file
+    -reg_type <string>        : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+    -reg_alias <string>       : species/alias name for the Hive DBAdaptor
+    -url <url string>         : url defining where hive database is located
+    -nosqlvc <0|1>            : skip sql version check if 1
+    -before_datetime <string> : delete jobs 'DONE' before a specific time
+    -days_ago <num>           : delete jobs that have been 'DONE' for at least <num> days
+    -h | -help                : show this help message
 
 =head1 LICENSE
 
