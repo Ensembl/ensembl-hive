@@ -233,9 +233,12 @@ sub warning {
     $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg", 1 );
 
     my $job = $self->input_job;
+    my $worker = $self->worker;
 
-    if(my $job_adaptor = $job->adaptor) {
+    if(my $job_adaptor = ($job && $job->adaptor)) {
         $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $is_error);
+    } elsif(my $worker_adaptor = ($worker && $worker->adaptor)) {
+        $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $is_error);
     }
 }
 
