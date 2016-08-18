@@ -659,6 +659,8 @@ sub run_one_batch {
 
         $self->start_job_output_redirection($job);  # switch logging into job's STDERR
         eval {  # capture any throw/die
+            my $runnable_object = $self->runnable_object();
+            $runnable_object->input_job( $job );    # "take" the job
 
             $job->incomplete(1);
             $self->adaptor->db->dbc->query_count(0);
@@ -666,12 +668,10 @@ sub run_one_batch {
 
             $job->analysis( $current_role->analysis );
 
-            my $runnable_object = $self->runnable_object();
             $job->load_parameters( $runnable_object );
 
             $self->worker_say( "Job $job_id unsubstituted_params= ".stringify($job->{'_unsubstituted_param_hash'}) ) if($self->debug());
 
-            $runnable_object->input_job( $job );    # "take" the job
             $job_partial_timing = $runnable_object->life_cycle();
         };
         if(my $msg = $@) {
