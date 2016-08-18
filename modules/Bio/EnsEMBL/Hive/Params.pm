@@ -109,7 +109,12 @@ sub param_init {
     foreach my $source (@_) {
         if(ref($source) ne 'HASH') {
             my $param_hash = eval($source) || {};
-            if($@ or (ref($param_hash) ne 'HASH')) {
+            if($@) {
+                if($self->can('transient_error')) {
+                    $self->transient_error(0);
+                }
+                die "Could not evaluate '$source': $@\n";
+            } elsif(ref($param_hash) ne 'HASH') {
                 if($self->can('transient_error')) {
                     $self->transient_error(0);
                 }
