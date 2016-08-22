@@ -52,6 +52,11 @@ use Bio::EnsEMBL::Hive::Utils ('stringify');
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
+# This variable must be kept up-to-date ! It is used in a number of queries.
+# CLAIMED is missing on purpose because not all the queries actually need it.
+my $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
+
+
 sub default_table_name {
     return 'job';
 }
@@ -212,7 +217,7 @@ sub fetch_some_by_analysis_id_limit {
 sub fetch_all_incomplete_jobs_by_role_id {
     my ($self, $role_id) = @_;
 
-    my $constraint = "status IN ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP') AND role_id='$role_id'";
+    my $constraint = "status IN ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS) AND role_id='$role_id'";
     return $self->fetch_all($constraint);
 }
 
@@ -501,7 +506,7 @@ sub release_claimed_jobs_from_role {
   Description: If a Worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
-               If jobs was 'in progress' (PRE_CLEANUP, FETCH_INPUT, RUN, WRITE_OUTPUT, POST_CLEANUP) 
+               If jobs was 'in progress' (see the $ALL_STATUSES_OF_RUNNING_JOBS variable)
                the retry_count is increased and the status set back to READY.
                If the retry_count >= $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
@@ -525,7 +530,7 @@ sub release_undone_jobs_from_role {
         SELECT job_id
           FROM job
          WHERE role_id='$role_id'
-           AND status in ('PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+           AND status in ($ALL_STATUSES_OF_RUNNING_JOBS)
     } );
     $sth->execute();
 
@@ -578,7 +583,7 @@ sub release_and_age_job {
                retry_count=retry_count+1,
                runtime_msec=$runtime_msec
          WHERE job_id=$job_id
-           AND status in ('CLAIMED','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP')
+           AND status in ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS)
     } );
 
         # FIXME: move the decision making completely to the API side and so avoid the potential race condition.

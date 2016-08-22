@@ -139,6 +139,7 @@ class BaseRunnable(object):
             steps.insert(0, 'pre_cleanup')
         if config['execute_writes']:
             steps.append('write_output')
+            steps.append('post_healthcheck')
         self.__print_debug("steps to run:", steps)
         self.__send_response('OK')
 
