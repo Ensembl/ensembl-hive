@@ -206,6 +206,8 @@ public abstract class BaseRunnable {
 		if (executeWrites) {
 			getLog().info("Executing writeOutput");
 			writeOutput(job);
+			getLog().info("Executing postHealthcheck");
+			postHealthcheck(job);
 		}
 		getLog().info("Executing postCleanUp");
 		postCleanUp(job);
@@ -230,6 +232,9 @@ public abstract class BaseRunnable {
 	protected abstract void fetchInput(Job job);
 
 	protected abstract void run(Job job);
+
+	protected void postHealthcheck(Job job) {
+	}
 
 	protected void postCleanUp(Job job) {
 	}
