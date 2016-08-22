@@ -55,7 +55,7 @@ Events are JSON objects composed of an "event" field (the name of the event) and
 response from GuestProcess):
 
     <--- JOB_STATUS_UPDATE
-         // The content is one of "PRE_CLEANUP", "FETCH_INPUT", "RUN", "WRITE_OUTPUT", "POST_CLEANUP"
+         // The content is one of "PRE_CLEANUP", "FETCH_INPUT", "RUN", "WRITE_OUTPUT", "POST_HEALTHCHECK", "POST_CLEANUP"
     ---> "OK"
 
     <--- WARNING
