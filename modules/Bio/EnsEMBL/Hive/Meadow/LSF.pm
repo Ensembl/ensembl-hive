@@ -74,7 +74,9 @@ sub get_current_worker_process_id {
 
 sub status_of_all_our_workers { # returns an arrayref
     my $self                        = shift @_;
-    my $meadow_users_of_interest    = shift @_ || [ 'all' ];
+    my $meadow_users_of_interest    = shift @_;
+
+    $meadow_users_of_interest = [ 'all' ] unless ($meadow_users_of_interest && scalar(@$meadow_users_of_interest));
 
     my $jnp = $self->job_name_prefix();
 
