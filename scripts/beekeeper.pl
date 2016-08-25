@@ -14,6 +14,8 @@ BEGIN {
 
 use Getopt::Long;
 use File::Path 'make_path';
+use Sys::Hostname;
+use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -45,10 +47,8 @@ sub main {
     my $total_running_workers_max   = undef;
     my $submission_options          = undef;
     my $run                         = 0;
-    my $max_loops                   = 0; # not running by default
     my $run_job_id                  = undef;
     my $force                       = undef;
-    my $keep_alive                  = 0; # ==1 means run even when there is nothing to do
     my $check_for_dead              = 0;
     my $bury_unkwn_workers          = 0;
     my $all_dead                    = 0;
@@ -71,10 +71,17 @@ sub main {
     $self->{'config_files'}         = [];
 
     $self->{'sleep_minutes'}        = 1;
+    $self->{'max_loops'}            = 0;
     $self->{'retry_throwing_jobs'}  = undef;
+    $self->{'loop_until'}           = 'ANALYSIS_FAILURE'; # default
     $self->{'can_respecialize'}     = undef;
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_log_dir'}       = undef;
+
+    # store all the options passed on the command line for registration
+    # we re-create this a bit later, so that we can protect any passwords
+    # that might be passed in a URL
+    my @original_argv = @ARGV;
 
     GetOptions(
                     # connection parameters
@@ -90,8 +97,8 @@ sub main {
                     # loop control
                'run'                => \$run,
                'loop'               => \$loopit,
-               'max_loops=i'        => \$max_loops,
-               'keep_alive'         => \$keep_alive,
+               'max_loops=i'        => \$self->{'max_loops'},
+               'loop_until=s'       => \$self->{'loop_until'},
                'job_id|run_job_id=i'=> \$run_job_id,
                'force=i'            => \$force,
                'sleep=f'            => \$self->{'sleep_minutes'},
@@ -143,10 +150,10 @@ sub main {
     my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@{$self->{'config_files'}});
 
     if($run or $run_job_id) {
-        $max_loops = 1;
-    } elsif ($loopit or $keep_alive) {
-        unless($max_loops) {
-            $max_loops = -1; # unlimited
+        $self->{'max_loops'} = 1;
+    } elsif ($loopit) {
+        unless($self->{'max_loops'}) {
+            $self->{'max_loops'} = -1; # unlimited
         }
     }
 
@@ -169,7 +176,15 @@ sub main {
 
     if( $self->{'url'} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:
         $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
+
+    # find the url in the original @argv, remove it, then replace with the new, protected url
+        my ($url_flag_index) = grep {$original_argv[$_] eq '-url'} (0..(scalar(@original_argv) - 1));
+        $original_argv[$url_flag_index + 1] = $self->{'dba'}->dbc->url('EHIVE_PASS');
     }
+    $self->{'options'} = join(" ", @original_argv);
+
+    # make -loop_until case insensitive
+    $self->{'loop_until'} = uc($self->{'loop_until'});
 
     my $pipeline_name = $self->{'pipeline'}->hive_pipeline_name;
 
@@ -195,6 +210,7 @@ sub main {
 
     $default_meadow_type = 'LOCAL' if($local);
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $default_meadow_type, $pipeline_name );
+    $self->{'available_meadow_list'} = $valley->get_available_meadow_list();
 
     my ($beekeeper_meadow_type, $beekeeper_meadow_name) = $valley->whereami();
     unless($beekeeper_meadow_type eq 'LOCAL') {
@@ -227,9 +243,21 @@ sub main {
         die "Deprecated option -reset_failed_jobs_for_analysis. Please use -reset_failed_jobs in combination with -analyses_pattern <pattern>";
     }
 
+    # The beekeeper starts to manipulate pipelines here, rather than just query them,
+    # so this is where we will register.
+    register_beekeeper($self);
+    $self->{'logmessage_adaptor'} = $self->{'dba'}->get_LogMessageAdaptor();
+
+    # Check other beekeepers in our meadow to see if they are still alive
+    welfare_check_other_beekeepers($self);
+
     if ($kill_worker_id) {
-        my $kill_worker = $queen->fetch_by_dbID($kill_worker_id)
-            or die "Could not fetch worker with dbID='$kill_worker_id' to kill";
+        my $kill_worker;
+        eval {$kill_worker = $queen->fetch_by_dbID($kill_worker_id) or die};
+        if ($@) {
+            update_this_beekeeper_status($self, 'TASK_FAILED');
+            die "Could not fetch worker with dbID='$kill_worker_id' to kill";
+        }
 
         unless( $kill_worker->cause_of_death() ) {
             if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $kill_worker ) ) {
@@ -241,14 +269,17 @@ sub main {
                     $meadow->kill_worker($kill_worker);
                     $kill_worker->cause_of_death('KILLED_BY_USER');
                     $queen->register_worker_death($kill_worker);
-                         # what about clean-up? Should we do it here or not?
+                    # what about clean-up? Should we do it here or not?
                 } else {
+                    update_this_beekeeper_status($self, 'TASK_FAILED');
                     die "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
                 }
             } else {
+                update_this_beekeeper_status($self, 'TASK_FAILED');
                 die "Cannot access the Meadow responsible for the Worker (dbID=$kill_worker_id), so cannot kill";
             }
         } else {
+            update_this_beekeeper_status($self, 'TASK_FAILED');
             die "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
         }
     }
@@ -260,8 +291,11 @@ sub main {
 
     my $run_job;
     if($run_job_id) {
-        $run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id )
-            or die "Could not fetch Job with dbID=$run_job_id.\n";
+        eval {$run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id ) or die};
+        if ($@) {
+            update_this_beekeeper_status($self, 'TASK_FAILED');
+            die "Could not fetch Job with dbID=$run_job_id.\n";
+        }
     }
 
     my $list_of_analyses = $run_job
@@ -274,12 +308,14 @@ sub main {
                 . join(', ', map { $_->logic_name.'('.$_->dbID.')' } sort {$a->dbID <=> $b->dbID} @$list_of_analyses)
                 . "\nBeekeeper : ", scalar($self->{'pipeline'}->collection_of('Analysis')->list())-scalar(@$list_of_analyses), " Analyses are not shown\n\n";
         } else {
-            die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
+            update_this_beekeeper_status($self, 'TASK_FAILED');
+            die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n";
         }
     }
 
     if($reset_all_jobs || $reset_failed_jobs) {
         if ($reset_all_jobs and not $self->{'analyses_pattern'}) {
+            update_this_beekeeper_status($self, 'TASK_FAILED');
             die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
         }
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
@@ -291,17 +327,17 @@ sub main {
     if($bury_unkwn_workers) { $queen->check_for_dead_workers($valley, 1, 1); }
     if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ); }
 
-    if ($max_loops) { # positive $max_loop means limited, negative means unlimited
+    if ($self->{'max_loops'}) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $self->{'pipeline'}, $max_loops, $keep_alive, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
+        run_autonomously($self, $self->{'pipeline'}, $self->{'max_loops'}, $self->{'loop_until'}, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
 
     } else {
-            # the output of several methods will look differently depending on $analysis being [un]defined
+        # the output of several methods will look differently depending on $analysis being [un]defined
 
         if($sync) {
             $queen->synchronize_hive( $list_of_analyses );
         }
-        print $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'} );
+        my $reasons_to_exit =  $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'} );
 
         if($show_worker_stats) {
             print "\n===== List of live Workers according to the Queen: ======\n";
@@ -321,8 +357,8 @@ sub main {
                 print $job->toString. "\n";
             }
         }
+        update_this_beekeeper_status($self, 'LOOP_LIMIT');
     }
-
     exit(0);
 }
 
@@ -332,6 +368,26 @@ sub main {
 #
 #######################
 
+sub find_live_beekeepers_in_my_meadow {
+    my $self = shift @_;
+
+    my $query = "SELECT beekeeper_id, process_id FROM beekeeper " .
+      "WHERE meadow_host = ? " .
+    "AND beekeeper_id != ? " .
+      "AND status = 'ALIVE'";
+
+    my $dbc = $self->{'dba'}->dbc;
+    my $sth = $dbc->prepare($query);
+    $sth->execute(hostname, $self->{'beekeeper_id'});
+
+    my @beekeepers = ();
+
+    while (my $row = $sth->fetchrow_hashref) {
+    push(@beekeepers, $row);
+    }
+
+    return \@beekeepers;
+}
 
 sub generate_worker_cmd {
     my ($self, $analyses_pattern, $run_job_id, $force) = @_;
@@ -343,7 +399,7 @@ sub generate_worker_cmd {
         exit(1);
     }
 
-    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'beekeeper_id', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
@@ -363,9 +419,53 @@ sub generate_worker_cmd {
     return $worker_cmd;
 }
 
+sub register_beekeeper {
+    my $self = shift @_;
+
+    my $meadow_host = hostname;
+    my $meadow_user = getpwuid($<);
+    my $process_id = $$;
+    my $status = 'ALIVE';
+    my $sleep_minutes = $self->{'sleep_minutes'};
+    my $analyses_pattern = undef;
+
+    # FIXME: Order is important here, because logic_name overrides analyses_pattern
+    if (defined($self->{'logic_name'})) {
+        $analyses_pattern = $self->{'logic_name'};
+    } elsif (defined($self->{'analyses_pattern'})) {
+        $analyses_pattern = $self->{'analyses_pattern'};
+    } else {
+        # leave analyses_pattern undef;
+    }
+
+    my $loop_limit = undef;
+    if ($self->{'max_loops'} > -1) {
+        $loop_limit = $self->{'max_loops'};
+    }
+
+    my $options = $self->{'options'};
+
+    my $meadow_signatures = join(",",
+        map {$_->signature} @{$self->{'available_meadow_list'}});
+
+    my $insert = "INSERT INTO beekeeper " .
+        "(meadow_host, meadow_user, process_id, status, sleep_minutes, " .
+        "analyses_pattern, loop_limit, loop_until, options, meadow_signatures) " .
+        "VALUES(?,?,?,?,?,?,?,?,?,?)";
+
+    my $dbc = $self->{'dba'}->dbc;
+    my $sth = $dbc->prepare($insert);
+    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $status, $sleep_minutes,
+        $analyses_pattern, $loop_limit, $self->{'loop_until'}, $options, $meadow_signatures);
+    if ($insert_returncode > 0) {
+        $self->{'beekeeper_id'} = $dbc->last_insert_id(undef, undef, 'beekeeper', undef);
+    } else {
+        die "There was a problem registering this beekeeper with the hive database.";
+    }
+}
 
 sub run_autonomously {
-    my ($self, $pipeline, $max_loops, $keep_alive, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
+    my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
 
     my $hive_dba = $pipeline->hive_dba;
     my $queen    = $hive_dba->get_Queen;
@@ -377,19 +477,57 @@ sub run_autonomously {
     my $iteration=0;
     my $reasons_to_exit;
 
-    BKLOOP: while( ($iteration++ != $max_loops) or $keep_alive ) {  # NB: the order of conditions is important!
+    BKLOOP: while( ($iteration++ != $max_loops) or ($loop_until eq 'FOREVER') ) {  # NB: the order of conditions is important!
 
         print("\nBeekeeper : loop #$iteration ======================================================\n");
 
         $queen->check_for_dead_workers($valley, 0);
 
-        if( $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'} ) ) {
-            if($keep_alive) {
-                print "Beekeeper : detected exit condition, but staying alive because of -keep_alive : ".$reasons_to_exit;
+        # this section is where the beekeeper decides whether or not to stop looping
+        $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'});
+        my @job_fail_statuses = grep({$_->{'exit_status'} eq 'JOB_FAILED'} @$reasons_to_exit);
+        my @analysis_fail_statuses = grep({$_->{'exit_status'} eq 'ANALYSIS_FAILED'} @$reasons_to_exit);
+        my @no_work_statuses = grep({$_->{'exit_status'} eq 'NO_WORK'} @$reasons_to_exit);
+
+        my $found_reason_to_exit = 0;
+
+        if (($loop_until eq 'JOB_FAILURE') &&
+            (scalar(@job_fail_statuses)) > 0) {
+            print "Beekeeper : last loop because at least one job failed and loop-until mode is '$loop_until'\n";
+            print "Beekeeper : details from analyses with failed jobs:\n";
+            print join("\n", map {$_->{'message'}} @job_fail_statuses) . "\n";
+            $found_reason_to_exit = 1;
+            last BKLOOP;
+        }
+
+        if (scalar(@analysis_fail_statuses > 0)) {
+            # at least one analysis has hit its fault tolerance
+            if (($loop_until eq 'FOREVER') ||
+                ($loop_until eq 'NO_WORK')) {
+                if (scalar(@no_work_statuses) == 0) {
+                    print "Beekeeper : detected the following exit condition(s), but staying alive because loop-until mode is set to '$loop_until' :\n" .
+                        join(", ", map {$_->{'message'}} @analysis_fail_statuses) . "\n";
+                }
             } else {
-                last BKLOOP;
+                # loop_until_mode is either job_failure or analysis_failure, and both of these exit on analysis failure
+                unless ($found_reason_to_exit) {
+                    print "Beekeeper : last loop because at least one analysis failed and loop-until mode is '$loop_until'\n";
+                    print "Beekeeper : details from analyses with failed jobs:\n";
+                    print join("\n", map {$_->{'message'}} @analysis_fail_statuses) . "\n";
+                    $found_reason_to_exit = 1;
+                    last BKLOOP;
+                }
             }
         }
+
+        if ((scalar(@no_work_statuses) > 0) &&
+            ($loop_until ne 'FOREVER')) {
+            print "Beekeeper : last loop because there is no more work and loop-until mode is '$loop_until'\n"
+                unless ($found_reason_to_exit);
+            last BKLOOP;
+        }
+
+        # end of testing for loop end conditions
 
         $hive_dba->get_RoleAdaptor->print_active_role_counts;
 
@@ -419,7 +557,11 @@ sub run_autonomously {
                 foreach my $rc_name (keys %{ $workers_to_submit_by_meadow_type_rc_name->{$meadow_type} }) {
                     my $this_meadow_rc_worker_count = $workers_to_submit_by_meadow_type_rc_name->{$meadow_type}{$rc_name};
 
-                    print "\nBeekeeper : submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature()."\n";
+                    my $submission_message = "submitting $this_meadow_rc_worker_count workers (rc_name=$rc_name) to ".$this_meadow->signature();
+                    print "\nBeekeeper : $submission_message\n";
+                    $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
+                        "loop iteration $iteration, $submission_message",
+                        0);
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
@@ -427,36 +569,121 @@ sub run_autonomously {
                                             . " -rc_name $rc_name"
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
+
                     $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
                                                     $rc_name, $submission_cmd_args || '', $submit_log_subdir);
                 }
             }
         } else {
             print "\nBeekeeper : not submitting any workers this iteration\n";
+            $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
+                "loop iteration $iteration, 0 workers submitted",
+                0);
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep
             $hive_dba->dbc->disconnect_if_idle;
             printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
-            sleep($self->{'sleep_minutes'}*60);  
+            sleep($self->{'sleep_minutes'}*60);
 
-                # after waking up reload Resources and Analyses to stay current:
+            # after waking up reload Resources and Analyses to stay current.
+            # this is a good time to check up on other beekeepers as well:
             unless($run_job_id) {
-                    # reset all the collections so that fresher data will be used at this iteration:
+                # reset all the collections so that fresher data will be used at this iteration:
                 $pipeline->invalidate_collections();
                 $pipeline->invalidate_hive_current_load();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
+                welfare_check_other_beekeepers($self);
             }
         }
     }
 
-    print "Beekeeper : stopped looping because ".( $reasons_to_exit || "the number of loops was limited by $max_loops and this limit expired\n");
-    if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
-        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $reasons_to_exit);
+    # in this section, the beekeeper determines why it exited, sets an appropriate exit status,
+    # and prints/logs an appropriate message
+    my @stringified_reasons_builder;
+    my $beekeeper_exit_status;
+    my $exit_reason_is_error;
+    my %exit_statuses; # keep a set of unique exit statuses seen
+    if ($reasons_to_exit) {
+        foreach my $reason_to_exit (@$reasons_to_exit) {
+            $exit_statuses{$reason_to_exit->{'exit_status'}} = 1;
+            push(@stringified_reasons_builder, $reason_to_exit->{'message'});
+        }
     }
 
+    my $stringified_reasons = join(", ", @stringified_reasons_builder);
+
+    if (($loop_until eq 'JOB_FAILURE') &&
+        (grep(/JOB_FAILED/, keys(%exit_statuses)))) {
+        $beekeeper_exit_status = 'JOB_FAILED';
+        $exit_reason_is_error = 1;
+    }
+
+    if (($loop_until eq 'ANALYSIS_FAILURE') &&
+        (grep(/ANALYSIS_FAILED/, keys(%exit_statuses)))) {
+        $beekeeper_exit_status = 'ANALYSIS_FAILED';
+        $exit_reason_is_error = 1;
+    }
+
+    if (!$beekeeper_exit_status) {
+        if (grep(/NO_WORK/, keys(%exit_statuses))) {
+            $beekeeper_exit_status = 'NO_WORK';
+        } else {
+            $beekeeper_exit_status = 'LOOP_LIMIT';
+        }
+        $exit_reason_is_error = 0;
+    }
+
+    $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
+        "stopped looping because of $stringified_reasons",
+        $exit_reason_is_error,
+        $beekeeper_exit_status);
+
+    update_this_beekeeper_status($self, $beekeeper_exit_status);
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
+}
+
+sub update_this_beekeeper_status {
+    my ($self, $status) = @_;
+
+    my $update = "UPDATE beekeeper " .
+        "SET status = ? " .
+        "WHERE beekeeper_id = ?";
+    my $dbc = $self->{'dba'}->dbc;
+    my $sth = $dbc->prepare($update);
+    $sth->execute($status, $self->{'beekeeper_id'});
+}
+
+sub update_another_beekeeper_status {
+    my ($self, $beekeeper_to_update, $status) = @_;
+
+    my $update = "UPDATE beekeeper " .
+      "SET status = ? " .
+      "WHERE beekeeper_id = ? " .
+      "AND process_id = ?";
+
+    my $dbc = $self->{'dba'}->dbc;
+    my $sth = $dbc->prepare($update);
+    $sth->execute($status,
+          $beekeeper_to_update->{'beekeeper_id'},
+          $beekeeper_to_update->{'process_id'});
+
+}
+
+sub welfare_check_other_beekeepers {
+    my $self = shift(@_);
+
+    my $allegedly_live_beekeepers_in_my_meadow = find_live_beekeepers_in_my_meadow($self);
+    foreach my $beekeeper_to_check (@$allegedly_live_beekeepers_in_my_meadow) {
+        my $pid = $beekeeper_to_check->{'process_id'};
+        my $cmd = qq{ps -p $pid -f | fgrep beekeeper.pl};
+        my $beekeeper_entry = qx{$cmd};
+
+        unless ($beekeeper_entry) {
+            update_another_beekeeper_status($self, $beekeeper_to_check, 'DISAPPEARED');
+        }
+    }
 }
 
 
@@ -516,9 +743,15 @@ __DATA__
 
 =head2 Looping control
 
-    -loop                  : run autonomously, loops and sleeps
-    -max_loops <num>       : perform max this # of loops in autonomous mode
-    -keep_alive            : do not stop when there are no more jobs to do - carry on looping
+    -loop                  : run autonomously, loops and sleeps. Equivalent to -loop_until ANALYSIS_FAILURE
+    -loop_until            : sets the level of event that will cause the beekeeper to stop looping:
+                           : JOB_FAILURE      = stop looping if any job fails
+                           : ANALYSIS_FAILURE = stop looping if any analysis has job failures exceeding
+                           :     its fault tolerance
+                           : NO_WORK          = ignore job and analysis faliures, keep looping until there is no work
+                           : FOREVER          = ignore failures and no work, keep looping
+    -max_loops <num>       : perform max this # of loops in autonomous mode. The beekeeper will stop when
+                           : it has performed max_loops loops, even in FOREVER mode
     -job_id <job_id>       : run 1 iteration for this job_id
     -run                   : run 1 iteration of automation loop
     -sleep <num>           : when looping, sleep <num> minutes (default 1 min)

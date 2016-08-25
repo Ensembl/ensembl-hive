@@ -116,9 +116,9 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name,
+    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user, $resource_class_id, $resource_class_name, $beekeeper_id,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name
+     = @flags{qw(-meadow_type -meadow_name -process_id -meadow_host -meadow_user -resource_class_id -resource_class_name -beekeeper_id
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
@@ -150,6 +150,7 @@ sub create_new_worker {
         'meadow_user'       => $meadow_user,
         'process_id'        => $process_id,
         'resource_class'    => $resource_class,
+        'beekeeper_id'      => $beekeeper_id,
     );
     $self->store( $worker );
     my $worker_id = $worker->dbID;
@@ -654,9 +655,20 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
   Arg [1]    : $list_of_analyses
   Arg [2]    : $debug
   Example    : my $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( [ $analysis_A, $analysis_B ] );
-  Description: Runs through all analyses in the given list, reports failed analyses, computes some totals, prints a combined status line
-                and returns a pair of ($failed_analyses_counter, $total_jobs_to_do)
-               Unless $debug is set, the empty and done analyses will not be listed
+             : foreach my $reason_to_exit (@$reasons_to_exit) {
+             :     my $exit_message  = $reason_to_exit->{'message'};
+             :     my $exit_status   = $reason_to_exit->{'exit_status'};
+  Description: Runs through all analyses in the given list, reports failed analyses, and computes some totals.
+             : It returns a list of exit messages and status codes. Each element of the list is a hashref,
+             : with the exit message keyed by 'message' and the status code keyed by 'exit_status'
+             :
+             : Possible status codes are:
+             :   'JOB_FAILED'
+             :   'ANALYSIS_FAILED'
+             :   'NO_WORK'
+             :
+             : If $debug is set, the list will contain all analyses. Otherwise, empty and done analyses
+             : will not be listed
   Exceptions : none
   Caller     : beekeeper.pl
 
@@ -668,7 +680,7 @@ sub print_status_and_return_reasons_to_exit {
     my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
     my %skipped_analyses = ('EMPTY' => [], 'DONE' => []);
     my @analyses_to_display;
-    my $reasons_to_exit = '';
+    my @reasons_to_exit;
 
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
@@ -680,10 +692,22 @@ sub print_status_and_return_reasons_to_exit {
             push @{$skipped_analyses{$stats->status}}, $analysis;
         }
 
-        if( $stats->status eq 'FAILED') {
-            my $logic_name    = $analysis->logic_name;
-            my $tolerance     = $analysis->failed_job_tolerance;
-            $reasons_to_exit .= "### Analysis '$logic_name' has FAILED  (failed Jobs: $failed_job_count, tolerance: $tolerance\%) ###\n";
+        if ($failed_job_count > 0) {
+           synchronize_AnalysisStats($stats);
+           $stats->determine_status();
+            my $exit_status;
+            my $failure_message;
+            my $logic_name = $analysis->logic_name;
+            my $tolerance = $analysis->failed_job_tolerance;
+            if( $stats->status eq 'FAILED') {
+                $exit_status = 'ANALYSIS_FAILED';
+                $failure_message =  "### Analysis '$logic_name' has FAILED  (failed Jobs: $failed_job_count, tolerance: $tolerance\%) ###";
+            } else {
+                $exit_status = 'JOB_FAILED';
+                $failure_message = "### Analysis '$logic_name' has $failed_job_count failed jobs ###";
+            }
+            push (@reasons_to_exit, {'message'     => $failure_message,
+                                     'exit_status' => $exit_status});
         }
 
         $total_done_jobs    += $stats->done_job_count;
@@ -710,13 +734,14 @@ sub print_status_and_return_reasons_to_exit {
         printf("%d analyses not shown because all their jobs are done.\n", scalar(@{$skipped_analyses{'DONE'}}));
     }
     printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
-                scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
+           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
 
     unless( $total_jobs_to_do ) {
-        $reasons_to_exit .= "### No jobs left to do ###\n";
+        push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
+                                 'exit_status' => 'NO_WORK'});
     }
 
-    return $reasons_to_exit;
+    return \@reasons_to_exit;
 }
 
 

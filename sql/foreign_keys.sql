@@ -57,3 +57,5 @@ ALTER TABLE log_message             ADD FOREIGN KEY (worker_id)                 
 ALTER TABLE role                    ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 ALTER TABLE worker_resource_usage   ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;
 
+ALTER TABLE log_message             ADD FOREIGN KEY (beekeeper_id)              REFERENCES beekeeper(beekeeper_id)              ON DELETE CASCADE;
+ALTER TABLE worker                  ADD FOREIGN KEY (beekeeper_id)              REFERENCES beekeeper(beekeeper_id)              ON DELETE CASCADE;

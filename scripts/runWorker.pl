@@ -23,7 +23,7 @@ main();
 
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
-    my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force);  # Task specification parameters
+    my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);  # Task specification parameters
     my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
     my ($help, $report_versions, $debug);
 
@@ -44,6 +44,7 @@ sub main {
                'logic_name=s'               => \$logic_name,
                'job_id=i'                   => \$job_id,
                'force=i'                    => \$force,
+               'beekeeper_id=i'             => \$beekeeper_id,
 
     # Worker control parameters:
                'job_limit=i'                => \$job_limit,
@@ -116,6 +117,7 @@ sub main {
         analyses_pattern    => $analyses_pattern,
         job_id              => $job_id,
         force               => $force,
+        beekeeper_id        => $beekeeper_id,
     );
     my %life_options = (
         job_limit           => $job_limit,

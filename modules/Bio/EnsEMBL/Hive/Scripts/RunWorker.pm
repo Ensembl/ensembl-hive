@@ -63,6 +63,7 @@ sub runWorker {
              -meadow_user           => $meadow_user,
              -resource_class_id     => $specialization_options->{'resource_class_id'},
              -resource_class_name   => $specialization_options->{'resource_class_name'},
+             -beekeeper_id          => $specialization_options->{'beekeeper_id'},
 
           # Worker control parameters:
              -job_limit             => $life_options->{'job_limit'},

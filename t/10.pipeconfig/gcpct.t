@@ -38,6 +38,7 @@ my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'GCPct_conf';
 
 my @pipeline_urls = @{get_test_urls()} ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
+my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 
 foreach my $gcpct_version ( @pipeline_cfgs ) {
 
@@ -63,6 +64,14 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
 
+        # Let's now try running a beekeeper
+
+        my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => $sleep_minutes, '-loop', '-local');
+
+        system(@beekeeper_cmd);
+        ok(!$?, 'beekeeper exited with the return code 0');
+        is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
+
         my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
         my $final_results = $final_result_nta->fetch_all();
 
@@ -71,6 +80,22 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         foreach ( @$final_results ) {
             is($expected_result, $_->{'result'}, 'Got the correct result');
         }
+
+        # check beekeeper registration
+
+        my $beekeeper_check_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper' );
+        my $beekeeper_entries = $beekeeper_check_nta->fetch_all();
+
+        is(scalar(@$beekeeper_entries), 1, 'Exactly 1 beekeeper registered');
+        my $beekeeper_row = $$beekeeper_entries[0];
+        is($beekeeper_row->{'beekeeper_id'}, 1, 'beekeeper has a beekeeper_id of 1');
+        is($beekeeper_row->{'status'},  'EXPECTED_EXIT', 'beekeeper finished with status EXPECTED_EXIT');
+        is($beekeeper_row->{'sleep_minutes'}, $sleep_minutes, 'beekeeper sleep_minutes recorded correctly');
+        is($beekeeper_row->{'loop_limit'}, undef, 'no loop limit recorded');
+        is($beekeeper_row->{'stop_when'}, 'NO_WORK', 'beekeeper stop_when is NO_WORK');
+
+        my $beekeeper_options_string = join(' ', @beekeeper_cmd[1..$#beekeeper_cmd]);
+        is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
