@@ -74,7 +74,7 @@ sub main {
     $self->{'sleep_minutes'}        = 1;
     $self->{'max_loops'}            = 0;
     $self->{'retry_throwing_jobs'}  = undef;
-    $self->{'loop_until'}           = 'ANALYSIS_FAILURE'; # default
+    $self->{'loop_until'}           = undef;
     $self->{'can_respecialize'}     = undef;
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_log_dir'}       = undef;
@@ -151,13 +151,6 @@ sub main {
 
     my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@{$self->{'config_files'}});
 
-    # if -loop option passed, and no loop_until set, default to the old ANALYSIS_FAILURE stop condition
-    if ($loopit) {
-        unless ($self->{'loop_until'}) {
-            $self->{'loop_until'} = 'ANALYSIS_FAILURE';
-        }
-    }
-
     # if -keep_alive passed, ensure looping is on and loop_until is forever
     if ($keep_alive) {
         $self->{'loop_until'} = 'FOREVER';
@@ -167,6 +160,12 @@ sub main {
     # if user has specified -loop_until, ensure looping is turned on
     if ($self->{'loop_until'}) {
         $loopit = 1;
+    }
+
+    # if loop_until hasn't been set by the user, or defaulted by a flag,
+    # set it to ANALYSIS_FAILURE
+    unless ($self->{'loop_until'}) {
+        $self->{'loop_until'} = 'ANALYSIS_FAILURE';
     }
 
     if($run or $run_job_id) {
