@@ -56,6 +56,7 @@ sub main {
     my $job_id_for_output           = 0;
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
+    my $keep_alive                  = 0;        # DEPRECATED
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;        # DEPRECATED
     my $reset_failed_jobs_for_analysis = 0;     # DEPRECATED
@@ -99,6 +100,7 @@ sub main {
                'loop'               => \$loopit,
                'max_loops=i'        => \$self->{'max_loops'},
                'loop_until=s'       => \$self->{'loop_until'},
+               'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'=> \$run_job_id,
                'force=i'            => \$force,
                'sleep=f'            => \$self->{'sleep_minutes'},
@@ -148,6 +150,24 @@ sub main {
     }
 
     my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@{$self->{'config_files'}});
+
+    # if -loop option passed, and no loop_until set, default to the old ANALYSIS_FAILURE stop condition
+    if ($loopit) {
+        unless ($self->{'loop_until'}) {
+            $self->{'loop_until'} = 'ANALYSIS_FAILURE';
+        }
+    }
+
+    # if -keep_alive passed, ensure looping is on and loop_until is forever
+    if ($keep_alive) {
+        $self->{'loop_until'} = 'FOREVER';
+        $loopit = 1;
+    }
+
+    # if user has specified -loop_until, ensure looping is turned on
+    if ($self->{'loop_until'}) {
+        $loopit = 1;
+    }
 
     if($run or $run_job_id) {
         $self->{'max_loops'} = 1;
@@ -750,6 +770,7 @@ __DATA__
                            :     its fault tolerance
                            : NO_WORK          = ignore job and analysis faliures, keep looping until there is no work
                            : FOREVER          = ignore failures and no work, keep looping
+    -keep_alive            : (Deprecated) alias for -loop_until FOREVER
     -max_loops <num>       : perform max this # of loops in autonomous mode. The beekeeper will stop when
                            : it has performed max_loops loops, even in FOREVER mode
     -job_id <job_id>       : run 1 iteration for this job_id
