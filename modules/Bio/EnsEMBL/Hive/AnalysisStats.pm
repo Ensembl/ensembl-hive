@@ -393,12 +393,12 @@ sub friendly_avg_job_runtime {
 
 sub toString {
     my $self = shift @_;
-    my $max_logic_name_length = shift || 40;
 
     my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
     my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
+    my $max_logic_name_length                           = shift @_ || length($analysis->logic_name);
 
     my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
         $analysis->logic_name,
