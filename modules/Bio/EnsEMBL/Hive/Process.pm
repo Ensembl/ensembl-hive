@@ -472,6 +472,7 @@ sub run_system_command {
     my $stderr = Capture::Tiny::tee_stderr(sub {
         $return_value = system(@cmd_to_run);
     });
+    die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
     return ($return_value, $stderr, $flat_cmd) if wantarray;
     return $return_value;
