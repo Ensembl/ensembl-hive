@@ -26,6 +26,7 @@ no warnings qw( redefine );
 
 use Exporter;
 use Carp qw{croak};
+use File::Temp qw{tempfile};
 
 use Data::Dumper;
 
@@ -193,7 +194,8 @@ sub get_test_urls {
       }
     }
   } else {
-    $url_parses_by_driver{'sqlite'} = [Bio::EnsEMBL::Hive::Utils::URL::parse("sqlite:///")];
+    my ($fh, $filename) = tempfile(UNLINK => 1);
+    $url_parses_by_driver{'sqlite'} = [Bio::EnsEMBL::Hive::Utils::URL::parse('sqlite:///' . $filename)];
   }
 
   my $constructed_db_name = $ENV{USER} . "_ehive_test";

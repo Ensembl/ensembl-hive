@@ -33,7 +33,7 @@ $ENV{'EHIVE_TEST_PIPELINE_URLS'} = undef;
 my $urls = get_test_urls();
 is(scalar(@$urls), 1, 
    "with no test_pipeline_urls returns one default url");
-is($$urls[0], "sqlite:///" . $ENV{USER} . "_ehive_test", 
+like($$urls[0], qr/^sqlite:\/\/\//,
    "with no test_pipeline_urls returns correct default sqlite url");
 
 $urls = get_test_urls(-driver => 'mysql');
@@ -42,13 +42,13 @@ is(scalar(@$urls), 0, "no url returned for an unavailable driver");
 $urls = get_test_urls(-tag => 'TAP');
 is(scalar(@$urls), 1, 
    "with no test_pipeline_urls returns one tagged default url");
-is($$urls[0], "sqlite:///" . $ENV{USER} . "_ehive_test_TAP",
+like($$urls[0], qr/^sqlite:\/\/\/.*_TAP/,
   "with no test_pipeline_urls returns correct tagged default url");
 
 $urls = get_test_urls(-driver => 'sqlite', -tag => 'TAP');
 is(scalar(@$urls), 1, 
    "with no test_pipeline_urls returns one tagged url from an available driver");
-is($$urls[0], "sqlite:///" . $ENV{USER} . "_ehive_test_TAP",
+like($$urls[0], qr/^sqlite:\/\/\/.*_TAP/,
   "with no test_pipeline_urls returns correct tagged url from an available driver");
 
 # set EHIVE_TEST_PIPELINE_URLS
