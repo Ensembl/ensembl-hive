@@ -21,12 +21,11 @@ use warnings;
 
 use JSON;
 use Test::More;
-use File::Temp qw{tempfile};
 
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
+use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die);
 
 plan tests => 7;
 
@@ -259,9 +258,8 @@ standaloneJob(
 );
 
 
-my ($fh, $filename) = tempfile(UNLINK => 1);
-my $sqlite_url = "sqlite:///${filename}";
-my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $sqlite_url);
+my $test_url = get_test_url_or_die();
+my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $test_url);
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
 $dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
@@ -273,7 +271,7 @@ standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
         'inputquery'    => 'SELECT * FROM params',
-        'db_conn'       => $sqlite_url,
+        'db_conn'       => $test_url,
     },
     [
         [

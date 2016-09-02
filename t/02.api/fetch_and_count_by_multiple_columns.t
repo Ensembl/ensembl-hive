@@ -19,22 +19,20 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use File::Temp qw{tempfile};
 
 use Test::More tests => 17;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my ($fh, $filename) = tempfile(UNLINK => 1);
-my $pipeline_url = "sqlite:///${filename}";
+my $pipeline_url = get_test_url_or_die();
 
 my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 

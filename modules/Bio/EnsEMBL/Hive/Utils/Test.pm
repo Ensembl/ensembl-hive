@@ -44,7 +44,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die );
 
 our $VERSION = '0.00';
 
@@ -227,6 +227,26 @@ sub get_test_urls {
   }
 
   return \@list_of_urls;
+}
+
+
+=head2 get_test_url_or_die
+
+  Arg [1]     : see get_test_urls()
+  Example     : my $url = get_test_url_or_die(-driver => 'mysql', -tag => 'longmult')
+  Example     : my $url = get_test_url_or_die(-tag => 'gcpct')
+  Example     : my $url = get_test_url_or_die(-driver => 'sqlite')
+  Example     : my $url = get_test_url_or_die()
+  Description : Wrapper around get_test_urls() that returns one of the test URLs, or
+                die if no databases are available
+  Returntype  : db connection URL as a string
+
+=cut
+
+sub get_test_url_or_die {
+    my $list_of_urls = get_test_urls(@_);
+    croak "No test databases are available" unless scalar(@$list_of_urls);
+    return $list_of_urls->[0];
 }
 
 1;

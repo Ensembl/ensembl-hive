@@ -20,7 +20,6 @@ use strict;
 use warnings;
 
 use Test::More;
-use File::Temp qw{tempfile};
 use Data::Dumper;
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -29,11 +28,11 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die);
 
-my ($fh, $filename) = tempfile(UNLINK => 1);
-my $sqlite_url = "sqlite:///${filename}";
+my $test_url = get_test_url_or_die();
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
-my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $test_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });

@@ -21,17 +21,14 @@ use warnings;
 
 use Test::More;
 use Data::Dumper;
-use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $dir = tempdir CLEANUP => 1;
-
-my $server_url  = "sqlite:///${dir}/ehive_server_pipeline_db";
-my $client_url  = "sqlite:///${dir}/ehive_client_pipeline_db";
+my $server_url  = get_test_url_or_die(-tag => 'server');
+my $client_url  = get_test_url_or_die(-tag => 'client');
 
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', [-pipeline_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', [-pipeline_url => $client_url, -server_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
