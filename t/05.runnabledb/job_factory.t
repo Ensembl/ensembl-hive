@@ -262,7 +262,7 @@ my $test_url = get_test_url_or_die();
 my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $test_url);
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE params (key VARCHAR(15), value INT)');
+$dbc->do('CREATE TABLE params (param_key VARCHAR(15), param_value INT)');
 my ($k1, $v1) = ('one_key', 34);
 my ($k2, $v2) = ('another_key', -5);
 $dbc->do("INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)");
@@ -277,8 +277,8 @@ standaloneJob(
         [
             'DATAFLOW',
             [
-                { 'key' => $k1, 'value' => $v1 },
-                { 'key' => $k2, 'value' => $v2 },
+                { 'param_key' => $k1, 'param_value' => $v1 },
+                { 'param_key' => $k2, 'param_value' => $v2 },
             ],
             2
         ]
