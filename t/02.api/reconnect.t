@@ -24,17 +24,15 @@ use File::Basename;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die);
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 # For finding the sample db dump's location, so it can be loaded.
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $db_urls = get_test_urls(-driver => 'mysql');
-
 SKIP: {
-  skip "no MySQL test database defined", 1 if (scalar(@$db_urls) < 1); 
-  foreach my $db_url (@$db_urls) {
+    my $db_url = eval { get_test_url_or_die(-driver => 'mysql') };
+    skip "no MySQL test database defined", 1 unless $db_url;
     my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse($db_url);
     
     my $dbname;
@@ -79,7 +77,6 @@ SKIP: {
       $fetched_row_count++;
     }
     is($fetched_row_count, 10, "were we able to fetch all rows after a db kill");
-  }
 }
 
 done_testing();

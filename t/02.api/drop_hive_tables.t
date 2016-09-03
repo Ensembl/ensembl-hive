@@ -23,24 +23,16 @@ use Data::Dumper;
 use Test::More tests => 4;
 use Test::Exception;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $pipeline_url;
-
-  my $available_test_urls = get_test_urls(-driver => 'mysql');
-  if (scalar(@$available_test_urls) > 0) {
-    $pipeline_url = $$available_test_urls[0];
-  } else {
-    $pipeline_url = "NONE";
-  }
-
 SKIP: {
-  skip "no MySQL test database defined", 4 if ($pipeline_url eq "NONE");
+  my $pipeline_url = eval { get_test_url_or_die(-driver => 'mysql') };
+  skip "no MySQL test database defined", 4 unless $pipeline_url;
   
   my $url             = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
   
