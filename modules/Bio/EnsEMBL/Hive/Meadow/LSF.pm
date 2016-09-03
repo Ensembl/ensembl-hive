@@ -174,7 +174,7 @@ sub parse_report_source_line {
     );
 
     local $/ = "------------------------------------------------------------------------------\n\n";
-    open(my $bacct_fh, $bacct_source_line);
+    open(my $bacct_fh, '-|', $bacct_source_line);
     my $record = <$bacct_fh>; # skip the header
 
     my %report_entry = ();
@@ -248,7 +248,7 @@ sub get_report_entries_for_process_ids {
     my %combined_report_entries = ();
 
     while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-        my $cmd = "bacct -l $pid_batch |";
+        my $cmd = "bacct -l $pid_batch";
 
 #        warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
@@ -270,7 +270,7 @@ sub get_report_entries_for_time_interval {
     my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
     $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
 
-    my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '') . ' |';
+    my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '');
 
 #        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 

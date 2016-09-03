@@ -136,8 +136,8 @@ sub run {
     my ($rows, $column_names_from_data) =
               $inputlist    ? $self->_get_rows_from_list(  $inputlist  )
             : $inputquery   ? $self->_get_rows_from_query( $inputquery )
-            : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , $delimiter, $parse_column_names )
-            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '')."$inputcmd |", $delimiter, $parse_column_names )
+            : $inputfile    ? $self->_get_rows_from_open(  $inputfile  , '<', $delimiter, $parse_column_names )
+            : $inputcmd     ? $self->_get_rows_from_open( ($self->param('use_bash_pipefail') ? 'set -o pipefail; ': '').$inputcmd, '-|', $delimiter, $parse_column_names )
             : die "range of values should be defined by setting 'inputlist', 'inputquery', 'inputfile' or 'inputcmd'";
 
     if( $column_names_from_data                                             # column data is available
@@ -238,21 +238,21 @@ sub _get_rows_from_query {
 =cut
 
 sub _get_rows_from_open {
-    my ($self, $input_file_or_pipe, $delimiter, $parse_header) = @_;
+    my ($self, $input_file_or_command, $open_mode, $delimiter, $parse_header) = @_;
 
     if($self->debug()) {
-        warn qq{input_file_or_pipe = "$input_file_or_pipe"\n};
+        warn qq{input_file_or_command = "$input_file_or_command" [$open_mode]\n};
     }
     my @rows = ();
-    open(FILE, $input_file_or_pipe) or die "Could not open '$input_file_or_pipe' because: $!";
-    while(my $line = <FILE>) {
+    open(my $fh, $open_mode, $input_file_or_command) or die "Could not open '$input_file_or_command' because: $!";
+    while(my $line = <$fh>) {
         chomp $line;
 
         push @rows, [ defined($delimiter) ? split(/$delimiter/, $line) : $line ];
     }
-    close FILE;
+    close $fh;
     my $exit = $? >> 8;
-    die "Could not read from '$input_file_or_pipe'. Received the error $exit\n" if $exit;
+    die "Could not read from '$input_file_or_command'. Received the error $exit\n" if $exit;
 
     my $column_names_from_data = $parse_header ? shift @rows : 0;
 

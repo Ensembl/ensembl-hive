@@ -192,7 +192,7 @@ sub find_submodules {
     my %seen_module_name = ();
 
     foreach my $inc (@INC) {
-        foreach my $full_module_path (<$inc/$prefix/*.pm>) {
+        foreach my $full_module_path (glob("$inc/$prefix/*.pm")) {
             my $module_name = substr($full_module_path, length($inc)+1, -3);    # remove leading "$inc/" and trailing '.pm'
             $module_name=~s{/}{::}g;                                            # transform back to module_name space
 
