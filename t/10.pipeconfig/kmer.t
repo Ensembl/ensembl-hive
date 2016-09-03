@@ -81,26 +81,12 @@ foreach my $pipeline_url ( @pipeline_urls ) {
 							   -disconnect_when_inactive   => 1,
 							  );
       
-      # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
-      
       # First run a single worker in this process
       runWorker($pipeline, { can_respecialize => 1 });
       
       my $hive_dba    = $pipeline->hive_dba;
       my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
       is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
-      
-      # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
-      {
-	# override the 'take_time' PipelineWideParameter directly in the database to make the external test Workers run quicker:
-	$hive_dba->get_PipelineWideParametersAdaptor->update( {'param_name' => 'take_time', 'param_value' => 0} );
-	
-	my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => 0.02, '-loop', '-local');
-	
-	system(@beekeeper_cmd);
-	ok(!$?, 'beekeeper exited with the return code 0');
-	is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
-      }
       
       my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
       my $final_results = $final_result_nta->fetch_all();
