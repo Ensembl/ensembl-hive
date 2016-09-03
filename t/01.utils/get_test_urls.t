@@ -28,7 +28,7 @@ BEGIN {
 
 # no EHIVE_TEST_PIPELINE_URLS set
 
-$ENV{'EHIVE_TEST_PIPELINE_URLS'} = undef;
+local $ENV{'EHIVE_TEST_PIPELINE_URLS'} = undef;
 
 my $urls = get_test_urls();
 is(scalar(@$urls), 1, 
@@ -64,7 +64,7 @@ my %urls_by_tech_with_results =
 		"sqlite:///" . $ENV{USER} . "_ehive_test"}
   );
 
-$ENV{EHIVE_TEST_PIPELINE_URLS} = 
+local $ENV{EHIVE_TEST_PIPELINE_URLS} =
   join(" ", map {keys(%$_)} values(%urls_by_tech_with_results));
 
 # no params
@@ -140,7 +140,7 @@ is(scalar(@$urls), 0,
 	       "mysql://test2:customdb@" . "someplace.edu:4444/use_this_db"}
   );
 
-$ENV{EHIVE_TEST_PIPELINE_URLS} = 
+local $ENV{EHIVE_TEST_PIPELINE_URLS} =
   join(" ", map {keys(%$_)} values(%urls_by_tech_with_results));
 
 $urls = get_test_urls();

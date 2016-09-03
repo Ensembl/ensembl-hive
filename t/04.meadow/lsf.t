@@ -37,7 +37,7 @@ my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
 
 # WARNING: the data in this script must be in sync with what the fake
 # binaries output
-$ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
+local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/fake_bin:'.$ENV{'PATH'};
 
 my $test_pipeline_name = 'tracking_homo_sapiens_funcgen_81_38_hive';
 my $test_meadow_name = 'test_clUster';
