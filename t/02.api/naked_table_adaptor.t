@@ -37,6 +37,7 @@ my $dbc = $hive_dba->dbc();
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
 $dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+$dbc->do('CREATE TABLE analysis_base (name char(40) NOT NULL)'),
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
