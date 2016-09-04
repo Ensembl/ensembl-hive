@@ -12,8 +12,11 @@ on 'test' => sub {
 	requires 'Test::Exception';
 	requires 'Test::More';
 	requires 'Test::Warn';
+	requires 'Test::Warnings';
 };
 
 recommends 'Getopt::ArgvFile';
 recommends 'BSD::Resource';
+recommends 'Chart::Gnuplot';
+recommends 'GraphViz';
 
