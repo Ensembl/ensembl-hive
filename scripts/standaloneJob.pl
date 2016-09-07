@@ -83,6 +83,9 @@ sub main {
         my ($param_hash, $param_list) = parse_cmdline_options();
         $input_id = stringify( {%{$job->{'_unsubstituted_param_hash'}}, %$param_hash} );
         $module_or_file = $job->analysis->module;
+        my $status = $job->status;
+        warn "\nTaken parameters from job_id $job_id (status $status) @ $url\n";
+        warn "Will now disconnect from it. Be aware that the original job will NOT be updated with the outcome of this standalone. Use runWorker.pl if you want to register your run.\n";
 
     } elsif (!$input_id) {
         my ($param_hash, $param_list) = parse_cmdline_options();
@@ -119,10 +122,22 @@ __DATA__
 
     standaloneJob.pl is an eHive component script that
         1. takes in a RunnableDB module,
-        2. creates a standalone job outside an eHive database by initializing parameters from command line arguments (ARRAY- and HASH- arguments can be passed+parsed too!)
-        3. and runs that job outside the database.
+        2. creates a standalone job outside an eHive database by initializing parameters from command line arguments
+        3. and runs that job outside of any eHive database. WARNING: the RunnableDB code may still access databases
+           provided as arguments and even harm them !
         4. can optionally dataflow into tables fully defined by URLs
     Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
+
+    There are several ways of initializing the job parameters:
+        1. Module::Name -input_id. The simplest one: just provide a stringified hash
+        2. Module::Name -param1 value1 -param2 value2 (...). Enumerate all the arguments on the command-line. ARRAY- and HASH-
+           arguments can be passed+parsed too!
+        3. -url $ehive_url job_id XXX. The reference to an existing job from which the parameters will be pulled. It is
+           a convenient way of gathering all the parameters (the job's input_id, the job's accu, the analysis parameters
+           and the pipeline-wide parameters).  Further parameters can be added with -param1 value1 -param2 value2 (...)
+           and they take priority over the existing job's parameters. The RunnableDB is also found in the database.
+           NOTE: the standaloneJob will *not* interact any further with this eHive database. There won't be any updates
+                 to the job, worker, log_message etc tables.
 
 =head1 USAGE EXAMPLES
 
@@ -139,6 +154,11 @@ __DATA__
 
         # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
     standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
+
+        # Run a job initialized from the parameters of an existing job topped-up with extra ones.
+        # In this particular example the RunnableDB needs a "compara_db" parameter which defaults to the eHive database.
+        # Since there is no eHive database here we need to define -compara_db on the command-line
+    standaloneJob.pl -url mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b -job_id 16781 -compara_db mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b
 
         # Run a job with given parameters, but skip the write_output() step:
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::FailureTest -no_write -time_RUN=2 -time_WRITE_OUTPUT=3 -state=WRITE_OUTPUT -value=2
