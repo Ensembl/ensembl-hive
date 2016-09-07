@@ -686,7 +686,7 @@ sub run_one_batch {
         };
         if(my $msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            $self->runnable_object->warning( $msg, $job->incomplete );
+            Bio::EnsEMBL::Hive::Process::warning($self->runnable_object, $msg, $job->incomplete);   # In case the Runnable has redefined warning()
         }
 
             # whether the job completed successfully or not:
