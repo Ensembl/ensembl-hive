@@ -14,6 +14,7 @@ BEGIN {
 
 use Getopt::Long qw(:config pass_through);
 
+use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
 use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 
@@ -23,6 +24,8 @@ main();
 
 sub main {
     my ($reg_conf,
+	$url,
+	$job_id,
 	$input_id,
 	$flow_into,
 	$no_write,
@@ -35,8 +38,12 @@ sub main {
 		   # connection parameters
 		'reg_conf|regfile|reg_file=s'    => \$reg_conf,
 
-                   # flow control
+                   # Seed options
 		'input_id=s'        => \$input_id,
+		'url=s'             => \$url,
+		'job_id=i'          => \$job_id,
+
+                   # flow control
                 'flow_into|flow=s'  => \$flow_into,
 
                    # debugging
@@ -51,9 +58,9 @@ sub main {
 
     if ($help) { script_usage(0); }
 
-    my $module_or_file = shift @ARGV;
+    my $module_or_file;
 
-    if ($help or !$module_or_file) {
+    if ($help) {
         script_usage(1);
     }
 
@@ -62,10 +69,32 @@ sub main {
         Bio::EnsEMBL::Registry->load_all($reg_conf);
     }
 
-    unless($input_id) {
+    if ($input_id && ($job_id || $url)) {
+        die "Error: -input_id cannot be given at the same time as -job_id or -url\n";
+
+    } elsif ($job_id && $url) {
+        my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $url );
+        unless($pipeline->hive_dba) {
+            die "ERROR : no database connection\n\n";
+        }
+        my $job = $pipeline->hive_dba->get_AnalysisJobAdaptor->fetch_by_dbID($job_id)
+                    || die "ERROR: No job with jo_id=$job_id\n";
+        $job->load_parameters();
+        my ($param_hash, $param_list) = parse_cmdline_options();
+        $input_id = stringify( {%{$job->{'_unsubstituted_param_hash'}}, %$param_hash} );
+        $module_or_file = $job->analysis->module;
+
+    } elsif (!$input_id) {
         my ($param_hash, $param_list) = parse_cmdline_options();
         $input_id = stringify($param_hash);
     }
+
+    $module_or_file ||= shift @ARGV;
+
+    if (!$module_or_file) {
+        script_usage(1);
+    }
+
     warn "\nRunning '$module_or_file' with input_id='$input_id' :\n";
 
     my %flags = (
