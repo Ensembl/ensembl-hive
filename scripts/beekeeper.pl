@@ -659,6 +659,10 @@ sub run_autonomously {
         $exit_reason_is_error,
         $beekeeper_exit_status);
 
+    if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
+        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $exit_reason_is_error, 1, $stringified_reasons, $loop_until);
+    }
+
     update_this_beekeeper_status($self, $beekeeper_exit_status);
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
 }

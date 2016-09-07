@@ -701,10 +701,10 @@ sub print_status_and_return_reasons_to_exit {
             my $tolerance = $analysis->failed_job_tolerance;
             if( $stats->status eq 'FAILED') {
                 $exit_status = 'ANALYSIS_FAILED';
-                $failure_message =  "### Analysis '$logic_name' has FAILED  (failed Jobs: $failed_job_count, tolerance: $tolerance\%) ###";
+                $failure_message =  "### Analysis '$logic_name' has FAILED  (failed jobs: $failed_job_count, tolerance: $tolerance\%) ###";
             } else {
                 $exit_status = 'JOB_FAILED';
-                $failure_message = "### Analysis '$logic_name' has $failed_job_count failed jobs ###";
+                $failure_message = "### Analysis '$logic_name' has failed jobs (failed jobs: $failed_job_count, tolerance: $tolerance\%) ###";
             }
             push (@reasons_to_exit, {'message'     => $failure_message,
                                      'exit_status' => $exit_status});
