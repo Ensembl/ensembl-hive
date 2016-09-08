@@ -101,6 +101,7 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 @column meadow_type             if defined, forces this Analysis to be run only on the given Meadow
 @column analysis_capacity       if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel
 @column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
+@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
 */
 
 CREATE TABLE analysis_base (
@@ -117,6 +118,7 @@ CREATE TABLE analysis_base (
     meadow_type             VARCHAR(255)          DEFAULT NULL,
     analysis_capacity       INTEGER              DEFAULT NULL,
     hive_capacity           INTEGER              DEFAULT NULL,
+    batch_size              INTEGER     NOT NULL DEFAULT 1,
 
     UNIQUE  (logic_name)
 );
@@ -133,7 +135,6 @@ CREATE TABLE analysis_base (
         when to unblock other analyses.  Also provides
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
-@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -157,7 +158,6 @@ CREATE TABLE analysis_base (
 CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED');
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER     NOT NULL,
-    batch_size              INTEGER     NOT NULL DEFAULT 1,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,
@@ -667,7 +667,6 @@ CREATE INDEX ON log_message (message_class);
 @column when_logged             when this snapshot was taken
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
-@column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -692,7 +691,6 @@ CREATE TABLE analysis_stats_monitor (
     when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     analysis_id             INTEGER     NOT NULL,
-    batch_size              INTEGER     NOT NULL DEFAULT 1,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,

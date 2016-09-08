@@ -71,13 +71,6 @@ sub dbID {
 }
 
 
-sub batch_size {
-    my $self = shift;
-    $self->{'_batch_size'} = shift if(@_);
-    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # only initialize when undefined, so if defined as 0 will stay 0
-    return $self->{'_batch_size'};
-}
-
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
@@ -217,7 +210,7 @@ sub get_or_estimate_batch_size {
     my $self                = shift @_;
     my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
-    my $batch_size = $self->batch_size;
+    my $batch_size = $self->analysis->batch_size;
 
     if( $batch_size > 0 ) {        # set to positive or not set (and auto-initialized within $self->batch_size)
 

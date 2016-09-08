@@ -18,7 +18,7 @@
 
     Each worker is linked to an analysis_id, registers its self on creation
     into the Hive, creates a RunnableDB instance of the Analysis->module,
-    gets $analysis->stats->batch_size jobs from the job table, does its work,
+    gets $analysis->batch_size jobs from the job table, does its work,
     creates the next layer of job entries by interfacing to
     the DataflowRuleAdaptor to determine the analyses it needs to pass its
     output data to and creates jobs on the next analysis database.

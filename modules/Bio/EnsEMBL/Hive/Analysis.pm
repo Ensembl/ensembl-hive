@@ -151,6 +151,12 @@ sub hive_capacity {
     return $self->{'_hive_capacity'};
 }
 
+sub batch_size {
+    my $self = shift;
+    $self->{'_batch_size'} = shift if(@_);
+    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # only initialize when undefined, so if defined as 0 will stay 0
+    return $self->{'_batch_size'};
+}
 
 sub get_compiled_module_name {
     my $self = shift;
@@ -217,12 +223,6 @@ sub status {
     my $self = shift @_;
 
     return $self->stats->status(@_);
-}
-
-sub batch_size {
-    my $self = shift @_;
-
-    return $self->stats->batch_size(@_);
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------
