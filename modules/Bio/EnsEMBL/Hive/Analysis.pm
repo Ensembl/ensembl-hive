@@ -145,6 +145,12 @@ sub analysis_capacity {
     return $self->{'_analysis_capacity'};
 }
 
+sub hive_capacity {
+    my $self = shift;
+    $self->{'_hive_capacity'} = shift if(@_);
+    return $self->{'_hive_capacity'};
+}
+
 
 sub get_compiled_module_name {
     my $self = shift;
@@ -217,12 +223,6 @@ sub batch_size {
     my $self = shift @_;
 
     return $self->stats->batch_size(@_);
-}
-
-sub hive_capacity {
-    my $self = shift @_;
-
-    return $self->stats->hive_capacity(@_);
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------

@@ -88,7 +88,7 @@ sub get_hive_current_load {
     my $sql = qq{
         SELECT sum(1/hive_capacity)
         FROM role
-        JOIN analysis_stats USING(analysis_id)
+        JOIN analysis_base USING(analysis_id)
         WHERE when_finished IS NULL
         AND hive_capacity IS NOT NULL
         AND hive_capacity>0

@@ -565,7 +565,7 @@ sub run {
             if ( $stats->refresh($self->refresh_tolerance_seconds) ) {  # if we DID refresh
                 $self->adaptor->db->get_AnalysisAdaptor->refresh( $analysis );
                 $stats->hive_pipeline->invalidate_hive_current_load;
-                if( defined($stats->hive_capacity) && (0 <= $stats->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
+                if( defined($analysis->hive_capacity) && (0 <= $analysis->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
                  or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
                 ) {
                     $self->cause_of_death('HIVE_OVERLOAD');

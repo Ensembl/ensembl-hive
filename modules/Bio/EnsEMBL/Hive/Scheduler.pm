@@ -259,7 +259,7 @@ sub schedule_workers {
             $total_extra_workers_required += $extra_workers_this_analysis;    # also keep the total number required so far (if nothing required we may need a resync later)
 
                 # setting up all negotiating limiters:
-            $queen_capacity_limiter->multiplier( $analysis_stats->hive_capacity );
+            $queen_capacity_limiter->multiplier( $analysis->hive_capacity );
             my @limiters = (
                 $submit_capacity_limiter,
                 $queen_capacity_limiter,

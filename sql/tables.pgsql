@@ -100,6 +100,7 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 @column priority                an Analysis with higher priority will be more likely chosen on Worker's specialization
 @column meadow_type             if defined, forces this Analysis to be run only on the given Meadow
 @column analysis_capacity       if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel
+@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
 */
 
 CREATE TABLE analysis_base (
@@ -115,6 +116,7 @@ CREATE TABLE analysis_base (
     priority                SMALLINT    NOT NULL DEFAULT 0,
     meadow_type             VARCHAR(255)          DEFAULT NULL,
     analysis_capacity       INTEGER              DEFAULT NULL,
+    hive_capacity           INTEGER              DEFAULT NULL,
 
     UNIQUE  (logic_name)
 );
@@ -132,7 +134,6 @@ CREATE TABLE analysis_base (
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
 @column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
-@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -157,7 +158,6 @@ CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 
 CREATE TABLE analysis_stats (
     analysis_id             INTEGER     NOT NULL,
     batch_size              INTEGER     NOT NULL DEFAULT 1,
-    hive_capacity           INTEGER              DEFAULT NULL,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,
@@ -668,7 +668,6 @@ CREATE INDEX ON log_message (message_class);
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
 @column batch_size              how many jobs are claimed in one claiming operation before Worker starts executing them
-@column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
 @column status                  cached state of the Analysis
 
 @column total_job_count         total number of Jobs of this Analysis
@@ -694,7 +693,6 @@ CREATE TABLE analysis_stats_monitor (
 
     analysis_id             INTEGER     NOT NULL,
     batch_size              INTEGER     NOT NULL DEFAULT 1,
-    hive_capacity           INTEGER              DEFAULT NULL,
     status                  analysis_status NOT NULL DEFAULT 'EMPTY',
 
     total_job_count         INTEGER     NOT NULL DEFAULT 0,

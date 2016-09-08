@@ -78,12 +78,6 @@ sub batch_size {
     return $self->{'_batch_size'};
 }
 
-sub hive_capacity {
-    my $self = shift;
-    $self->{'_hive_capacity'} = shift if(@_);
-    return $self->{'_hive_capacity'};
-}
-
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
@@ -262,7 +256,7 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
 
     my $num_required_workers = $self->ready_job_count + $remaining_job_count;   # this 'max' estimation can still be zero
 
-    my $h_cap = $self->hive_capacity;
+    my $h_cap = $self->analysis->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
         my $hive_current_load = $self->hive_pipeline->get_cached_hive_current_load();
         my $h_max = $self->num_running_workers + POSIX::floor( $h_cap * ( 1.0 - $hive_current_load ) );
@@ -401,7 +395,7 @@ sub toString {
         $self->num_running_workers,
         $self->estimate_num_required_workers,
     );
-    $output .=  '  h.cap:'    .( $self->hive_capacity // '-' )
+    $output .=  '  h.cap:'    .( $analysis->hive_capacity // '-' )
                .'  a.cap:'    .( $analysis->analysis_capacity // '-')
                ."  (sync'd "  .($self->seconds_since_when_updated // 0)." sec ago)";
 

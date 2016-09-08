@@ -523,13 +523,13 @@ sub add_objects_from_config {
                 'priority'              => $priority,
                 'meadow_type'           => $meadow_type,
                 'analysis_capacity'     => $analysis_capacity,
+                'hive_capacity'         => $hive_capacity,
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
             ($stats) = $pipeline->add_new_or_update( 'AnalysisStats',   # NB: add_new_or_update returns a list
                 'analysis'              => $analysis,
                 'batch_size'            => $batch_size,
-                'hive_capacity'         => $hive_capacity,
                 'status'                => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
                 'total_job_count'       => 0,
                 'semaphored_job_count'  => 0,

@@ -628,7 +628,7 @@ sub synchronize_AnalysisStats {
 
     if( $stats and $stats->analysis_id ) {
 
-        $stats->refresh() unless $has_refresh_just_been_done; ## Need to get the new hive_capacity for dynamic analyses
+        $stats->refresh() unless $has_refresh_just_been_done;
 
         my $job_counts = $stats->hive_pipeline->hive_use_triggers() ? undef : $self->db->get_AnalysisJobAdaptor->fetch_job_counts_hashed_by_status( $stats->analysis_id );
 
