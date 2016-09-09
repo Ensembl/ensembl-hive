@@ -94,13 +94,13 @@ sub main {
 
     ## Remove old messages not attached to any jobs
     my $sql_log_message = qq{
-    DELETE FROM log_message WHEN job_id IS NULL AND time < $threshold_datetime_expression
+    DELETE FROM log_message WHERE job_id IS NULL AND time < $threshold_datetime_expression
     };
     $dbc->do( $sql_log_message );
 
     ## Remove old analysis_stats
     my $sql_analysis_stats = qq{
-    DELETE FROM analysis_stats_monitor WHEN time < $threshold_datetime_expression
+    DELETE FROM analysis_stats_monitor WHERE time < $threshold_datetime_expression
     };
     $dbc->do( $sql_analysis_stats );
 }
