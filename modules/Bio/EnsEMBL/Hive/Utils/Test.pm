@@ -112,7 +112,7 @@ sub standaloneJob {
             my $expects = shift @$events_to_test;
             my $expected_type = shift @$expects;
             if ($triggered_type ne $expected_type) {
-                fail("Got a $triggered_type event but was expecting $expected_type");
+                fail("Got a $triggered_type event but was expecting $expected_type\nEvent payload: " . stringify(\@got));
             } elsif ($triggered_type eq 'WARNING') {
                 _compare_job_warnings(\@got, $expects);
             } else {
