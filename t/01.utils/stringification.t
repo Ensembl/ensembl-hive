@@ -37,11 +37,6 @@ my $struct_string = stringify $structure;
 ok($struct_string, 'returned a value');
 is($struct_string, q!{"bar" => "foobar","foo" => "bar"}!, 'correct representation');
 
-
-$struct_string = stringify $structure;
-ok($struct_string, 'returned a value');
-is($struct_string, q!{"bar" => "foobar","foo" => "bar"}!, 'correct representation');
-
 $structure = {
     foo => 'bar',
     latin => {
@@ -69,5 +64,13 @@ $destructure = destringify "[{ 'alpha' => 'beta' }, { 'gamma' => 'delta'}, {'ome
 isa_ok($destructure, 'ARRAY'); ## got an array
 is($destructure->[0]{'alpha'}, 'beta', 'hash entry');
 is($destructure->[2]{'omega'}, undef, 'undef values');
+
+
+my $h = {'a' => 3, 'b' => 4};
+my $all_params = { 'p1' => [$h], 'p2' => 'x', 'p3' => $h };
+
+$struct_string = stringify $all_params;
+ok($struct_string, 'returned a value');
+is($struct_string, q!{"p1" => [{"a" => 3,"b" => 4}],"p2" => "x","p3" => {"a" => 3,"b" => 4}}!, 'correct deep copy');
 
 done_testing();
