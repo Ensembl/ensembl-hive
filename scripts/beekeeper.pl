@@ -337,7 +337,8 @@ sub main {
             update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
         }
-        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
+        my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ];
+        $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
         $queen->synchronize_hive( $list_of_analyses );
     }
 
