@@ -724,11 +724,12 @@ sub gc_dataflow {
 
 =head2 reset_jobs_for_analysis_id
 
-  Arg [1]    : int $analysis_id
-  Arg [2]    : bool $all (false by default)
-  Description: Resets either all FAILED jobs of an analysis (default)
-                or ALL jobs of an analysis to 'READY' and their retry_count to 0.
-  Caller     : beekeeper.pl
+  Arg [1]    : arrayref of Analyses
+  Arg [2]    : arrayref of job statuses $input_statuses
+  Description: Resets all the jobs of the selected analyses that have one of the
+               required statuses to 'READY' and their retry_count to 0.
+               Semaphores are updated accordingly.
+  Caller     : beekeeper.pl and guiHive
 
 =cut
 
