@@ -63,7 +63,7 @@ foreach my $pipeline_url (@pipeline_urls) {
 
     is(scalar(@$beekeeper_rows), 1, 'After -sync, there is exactly 1 entry in the beekeeper table');
     my $beekeeper_row = $$beekeeper_rows[0];
-    is($beekeeper_row->{'status'}, 'LOOP_LIMIT', 'beekeeper finished with status LOOP_LIMIT');
+    is($beekeeper_row->{'cause_of_death'}, 'LOOP_LIMIT', 'beekeeper finished with cause_of_death LOOP_LIMIT');
 
     # Check that -run puts one additional in the beekeeper table, it loops once,
     # and finishes with LOOP_LIMIT
@@ -77,7 +77,7 @@ foreach my $pipeline_url (@pipeline_urls) {
     foreach my $run_beekeeper_row (@$beekeeper_rows) {
         if ($run_beekeeper_row->{'options'} =~ /-run/) {
             $found_beekeeper_dash_run = 1;
-            is($run_beekeeper_row->{'status'}, 'LOOP_LIMIT', 'beekeeper -run finished with status LOOP_LIMIT');
+            is($run_beekeeper_row->{'cause_of_death'}, 'LOOP_LIMIT', 'beekeeper -run finished with cause_of_death LOOP_LIMIT');
         }
     }
     is($found_beekeeper_dash_run, 1, 'A beekeeper with option -run was registered in the beekeeper table');
@@ -93,7 +93,7 @@ foreach my $pipeline_url (@pipeline_urls) {
     foreach my $bad_job_beekeeper_row (@$beekeeper_rows) {
         if ($bad_job_beekeeper_row->{'options'} =~ /-job_id/) {
             $found_beekeeper_bad_job = 1;
-            is($bad_job_beekeeper_row->{'status'}, 'TASK_FAILED', 'beekeeper -run -job_id 98765 finished with status TASK_FAILED');
+            is($bad_job_beekeeper_row->{'cause_of_death'}, 'TASK_FAILED', 'beekeeper -run -job_id 98765 finished with cause_of_death TASK_FAILED');
         }
     }
     is($found_beekeeper_bad_job, 1, 'A beekeeper with option -job_id was registered in the beekeeper table');
@@ -112,9 +112,9 @@ foreach my $pipeline_url (@pipeline_urls) {
     foreach my $bad_pattern_beekeeper_row (@$beekeeper_rows) {
         if ($bad_pattern_beekeeper_row->{'options'} =~ /-analyses_pattern/) {
             $found_beekeeper_bad_pattern = 1;
-            is($bad_pattern_beekeeper_row->{'status'},
+            is($bad_pattern_beekeeper_row->{'cause_of_death'},
                 'TASK_FAILED',
-                'beekeeper -loop -analyses_pattern [nonmatching] finished with status TASK_FAILED');
+                'beekeeper -loop -analyses_pattern [nonmatching] finished with cause_of_death TASK_FAILED');
         }
     }
     is($found_beekeeper_bad_pattern, 1, 'A beekeeper with option -analyses_pattern was registered in the beekeeper table');

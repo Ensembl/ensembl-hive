@@ -274,7 +274,7 @@ sub main {
         my $kill_worker;
         eval {$kill_worker = $queen->fetch_by_dbID($kill_worker_id) or die};
         if ($@) {
-            update_this_beekeeper_status($self, 'TASK_FAILED');
+            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Could not fetch worker with dbID='$kill_worker_id' to kill";
         }
 
@@ -290,15 +290,15 @@ sub main {
                     $queen->register_worker_death($kill_worker);
                     # what about clean-up? Should we do it here or not?
                 } else {
-                    update_this_beekeeper_status($self, 'TASK_FAILED');
+                    update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
                     die "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
                 }
             } else {
-                update_this_beekeeper_status($self, 'TASK_FAILED');
+                update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
                 die "Cannot access the Meadow responsible for the Worker (dbID=$kill_worker_id), so cannot kill";
             }
         } else {
-            update_this_beekeeper_status($self, 'TASK_FAILED');
+            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
         }
     }
@@ -312,7 +312,7 @@ sub main {
     if($run_job_id) {
         eval {$run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id ) or die};
         if ($@) {
-            update_this_beekeeper_status($self, 'TASK_FAILED');
+            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Could not fetch Job with dbID=$run_job_id.\n";
         }
     }
@@ -327,14 +327,14 @@ sub main {
                 . join(', ', map { $_->logic_name.'('.$_->dbID.')' } sort {$a->dbID <=> $b->dbID} @$list_of_analyses)
                 . "\nBeekeeper : ", scalar($self->{'pipeline'}->collection_of('Analysis')->list())-scalar(@$list_of_analyses), " Analyses are not shown\n\n";
         } else {
-            update_this_beekeeper_status($self, 'TASK_FAILED');
+            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n";
         }
     }
 
     if($reset_all_jobs || $reset_failed_jobs) {
         if ($reset_all_jobs and not $self->{'analyses_pattern'}) {
-            update_this_beekeeper_status($self, 'TASK_FAILED');
+            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
             die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
         }
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $reset_all_jobs ); 
@@ -376,7 +376,7 @@ sub main {
                 print $job->toString. "\n";
             }
         }
-        update_this_beekeeper_status($self, 'LOOP_LIMIT');
+        update_this_beekeeper_cause_of_death($self, 'LOOP_LIMIT');
     }
     exit(0);
 }
@@ -393,7 +393,7 @@ sub find_live_beekeepers_in_my_meadow {
     my $query = "SELECT beekeeper_id, process_id FROM beekeeper " .
       "WHERE meadow_host = ? " .
     "AND beekeeper_id != ? " .
-      "AND status = 'ALIVE'";
+      "AND cause_of_death IS NULL";
 
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($query);
@@ -444,7 +444,6 @@ sub register_beekeeper {
     my $meadow_host = hostname;
     my $meadow_user = getpwuid($<);
     my $process_id = $$;
-    my $status = 'ALIVE';
     my $sleep_minutes = $self->{'sleep_minutes'};
     my $analyses_pattern = undef;
 
@@ -468,13 +467,13 @@ sub register_beekeeper {
         map {$_->signature} @{$self->{'available_meadow_list'}});
 
     my $insert = "INSERT INTO beekeeper " .
-        "(meadow_host, meadow_user, process_id, status, sleep_minutes, " .
+        "(meadow_host, meadow_user, process_id, sleep_minutes, " .
         "analyses_pattern, loop_limit, loop_until, options, meadow_signatures) " .
-        "VALUES(?,?,?,?,?,?,?,?,?,?)";
+        "VALUES(?,?,?,?,?,?,?,?,?)";
 
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($insert);
-    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $status, $sleep_minutes,
+    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $sleep_minutes,
         $analyses_pattern, $loop_limit, $self->{'loop_until'}, $options, $meadow_signatures);
     if ($insert_returncode > 0) {
         $self->{'beekeeper_id'} = $dbc->last_insert_id(undef, undef, 'beekeeper', undef);
@@ -580,7 +579,7 @@ sub run_autonomously {
                     print "\nBeekeeper : $submission_message\n";
                     $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
                         "loop iteration $iteration, $submission_message",
-                        0);
+                        0, 'ALIVE');
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
@@ -597,7 +596,7 @@ sub run_autonomously {
             print "\nBeekeeper : not submitting any workers this iteration\n";
             $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
                 "loop iteration $iteration, 0 workers submitted",
-                0);
+                0, 'ALIVE');
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep
@@ -618,11 +617,11 @@ sub run_autonomously {
         }
     }
 
-    # in this section, the beekeeper determines why it exited, sets an appropriate exit status,
+    # in this section, the beekeeper determines why it exited, sets an appropriate cause of death,
     # and prints/logs an appropriate message
     my @stringified_reasons_builder;
-    my $beekeeper_exit_status;
-    my $exit_reason_is_error;
+    my $beekeeper_cause_of_death;
+    my $cause_of_death_is_error;
     my %exit_statuses; # keep a set of unique exit statuses seen
     if ($reasons_to_exit) {
         foreach my $reason_to_exit (@$reasons_to_exit) {
@@ -635,60 +634,60 @@ sub run_autonomously {
 
     if (($loop_until eq 'JOB_FAILURE') &&
         (grep(/JOB_FAILED/, keys(%exit_statuses)))) {
-        $beekeeper_exit_status = 'JOB_FAILED';
-        $exit_reason_is_error = 1;
+        $beekeeper_cause_of_death = 'JOB_FAILED';
+        $cause_of_death_is_error = 1;
     }
 
     if (($loop_until eq 'ANALYSIS_FAILURE') &&
         (grep(/ANALYSIS_FAILED/, keys(%exit_statuses)))) {
-        $beekeeper_exit_status = 'ANALYSIS_FAILED';
-        $exit_reason_is_error = 1;
+        $beekeeper_cause_of_death = 'ANALYSIS_FAILED';
+        $cause_of_death_is_error = 1;
     }
 
-    if (!$beekeeper_exit_status) {
+    if (!$beekeeper_cause_of_death) {
         if (grep(/NO_WORK/, keys(%exit_statuses))) {
-            $beekeeper_exit_status = 'NO_WORK';
+            $beekeeper_cause_of_death = 'NO_WORK';
         } else {
-            $beekeeper_exit_status = 'LOOP_LIMIT';
+            $beekeeper_cause_of_death = 'LOOP_LIMIT';
         }
-        $exit_reason_is_error = 0;
+        $cause_of_death_is_error = 0;
     }
 
     $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
         "stopped looping because of $stringified_reasons",
-        $exit_reason_is_error,
-        $beekeeper_exit_status);
+        $cause_of_death_is_error,
+        $beekeeper_cause_of_death);
 
     if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
-        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $exit_reason_is_error, 1, $stringified_reasons, $loop_until);
+        send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $cause_of_death_is_error, 1, $stringified_reasons, $loop_until);
     }
 
-    update_this_beekeeper_status($self, $beekeeper_exit_status);
+    update_this_beekeeper_cause_of_death($self, $beekeeper_cause_of_death);
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
 }
 
-sub update_this_beekeeper_status {
-    my ($self, $status) = @_;
+sub update_this_beekeeper_cause_of_death {
+    my ($self, $cause_of_death) = @_;
 
     my $update = "UPDATE beekeeper " .
-        "SET status = ? " .
+        "SET cause_of_death = ? " .
         "WHERE beekeeper_id = ?";
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($update);
-    $sth->execute($status, $self->{'beekeeper_id'});
+    $sth->execute($cause_of_death, $self->{'beekeeper_id'});
 }
 
-sub update_another_beekeeper_status {
-    my ($self, $beekeeper_to_update, $status) = @_;
+sub update_another_beekeeper_cause_of_death {
+    my ($self, $beekeeper_to_update, $cause_of_death) = @_;
 
     my $update = "UPDATE beekeeper " .
-      "SET status = ? " .
+      "SET cause_of_death = ? " .
       "WHERE beekeeper_id = ? " .
       "AND process_id = ?";
 
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($update);
-    $sth->execute($status,
+    $sth->execute($cause_of_death,
           $beekeeper_to_update->{'beekeeper_id'},
           $beekeeper_to_update->{'process_id'});
 
@@ -704,7 +703,7 @@ sub welfare_check_other_beekeepers {
         my $beekeeper_entry = qx{$cmd};
 
         unless ($beekeeper_entry) {
-            update_another_beekeeper_status($self, $beekeeper_to_check, 'DISAPPEARED');
+            update_another_beekeeper_cause_of_death($self, $beekeeper_to_check, 'DISAPPEARED');
         }
     }
 }

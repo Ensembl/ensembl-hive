@@ -116,24 +116,13 @@ sub store_beekeeper_message {
     my $table_name = $self->table_name();
 
     my $sql;
-    if ($status) {
-        $sql = qq {
-            INSERT INTO $table_name (beekeeper_id, msg, status, is_error)
-            VALUES (?, ?, ?, ?)
-        };
-        my $sth = $self->prepare($sql);
-        $sth->execute($beekeeper_id, $msg, $status, $is_error);
-        $sth->finish();
-    } else {
-        $sql = qq {
-            INSERT INTO $table_name (beekeeper_id, msg, status, is_error)
-            SELECT beekeeper_id, ?, status, ? FROM beekeeper
-            WHERE beekeeper_id = ?
-        };
-        my $sth = $self->prepare($sql);
-        $sth->execute($msg, $is_error, $beekeeper_id);
-        $sth->finish();
-    }
+    $sql = qq {
+        INSERT INTO $table_name (beekeeper_id, msg, status, is_error)
+        VALUES (?, ?, ?, ?)
+    };
+    my $sth = $self->prepare($sql);
+    $sth->execute($beekeeper_id, $msg, $status, $is_error);
+    $sth->finish();
 }
 
 1;

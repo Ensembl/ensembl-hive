@@ -512,7 +512,7 @@ CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
 @column meadow_host        hostname of machine where beekeeper started
 @column meadow_user        username under which this beekeeper ran or is running
 @column process_id         pid of the beekeeper
-@column status             last known status of this beekeeper
+@column cause_of_death     last known status of this beekeeper
 @column sleep_minutes      sleep interval in minutes
 @column analyses_pattern   restricting analyses_pattern, if given
 @column loop_limit         loop limit if given
@@ -521,14 +521,14 @@ CREATE INDEX ON worker (meadow_type, meadow_name, process_id);
 @column meadow_signatures  signatures for all meadows this beekeeper can submit to
 */
 
-CREATE TYPE beekeeper_stat AS ENUM ('ALIVE', 'ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED');
+CREATE TYPE beekeeper_cod  AS ENUM ('ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED');
 CREATE TYPE beekeeper_lu   AS ENUM ('ANALYSIS_FAILURE', 'FOREVER', 'JOB_FAILURE', 'NO_WORK');
 CREATE TABLE beekeeper (
        beekeeper_id             SERIAL          PRIMARY KEY,
        meadow_host              VARCHAR(255)	NOT NULL,
        meadow_user              VARCHAR(255)    NOT NULL,
        process_id               INTEGER         NOT NULL,
-       status                   beekeeper_stat  NOT NULL,
+       cause_of_death           beekeeper_cod   NULL,
        sleep_minutes            REAL            NULL,
        analyses_pattern         TEXT            NULL,
        loop_limit               INTEGER         NULL,

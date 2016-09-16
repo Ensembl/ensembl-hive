@@ -89,11 +89,14 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is(scalar(@$beekeeper_entries), 1, 'Exactly 1 beekeeper registered');
         my $beekeeper_row = $$beekeeper_entries[0];
         is($beekeeper_row->{'beekeeper_id'}, 1, 'beekeeper has a beekeeper_id of 1');
-        is($beekeeper_row->{'status'},  'NO_WORK', 'beekeeper finished with status NO_WORK');
+        is($beekeeper_row->{'cause_of_death'},  'NO_WORK', 'beekeeper finished with cause_of_death NO_WORK');
         is($beekeeper_row->{'sleep_minutes'}, $sleep_minutes, 'beekeeper sleep_minutes recorded correctly');
         is($beekeeper_row->{'loop_limit'}, undef, 'no loop limit recorded');
         is($beekeeper_row->{'loop_until'}, 'ANALYSIS_FAILURE', 'beekeeper stop_when is LOOP_UNTIL');
 
+        # substitute the password-obscured version of the url into the beeekeeper options string
+        # for checking - this is how it should be stored in the beekeeper table
+        $beekeeper_cmd[2] = $hive_dba->dbc->url('EHIVE_PASS');
         my $beekeeper_options_string = join(' ', @beekeeper_cmd[1..$#beekeeper_cmd]);
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 

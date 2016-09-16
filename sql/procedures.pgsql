@@ -101,6 +101,27 @@ CREATE OR REPLACE VIEW live_roles AS
     WHERE r.when_finished IS NULL
     GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
 
+-- show activity of beekeepers in this hive
+--
+-- Usage:
+--       select * from beekeeper_activity;
+--
+--       -- Find beekeepers that may have disappeared
+--       select * from beekeeper_activity
+--       where cause_of_death is null
+--       and is_overdue;
+
+CREATE OR REPLACE VIEW beekeeper_activity AS
+    SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit,
+           b.cause_of_death, COUNT(*) AS loops_executed,
+           MAX(lm.when_logged) AS last_heartbeat,
+           now() - max(lm.when_logged) AS time_since_last_heartbeat,
+           JUSTIFY_INTERVAL( (sleep_minutes * 60|| 'seconds')::interval) -
+               (now() - max(lm.when_logged)) < INTERVAL '0'  AS is_overdue
+    FROM beekeeper b
+    LEFT JOIN log_message lm
+    ON b.beekeeper_id = lm.beekeeper_id
+    GROUP BY b.beekeeper_id;
 
 -- time an analysis or group of analyses (given by a name pattern) ----------------------------------------
 --

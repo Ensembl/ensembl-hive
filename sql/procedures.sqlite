@@ -102,3 +102,24 @@ CREATE VIEW IF NOT EXISTS live_roles AS
     GROUP BY w.meadow_user, w.meadow_type, w.resource_class_id, rc.name, r.analysis_id, a.logic_name;
 
 
+-- show activity of beekeepers in this hive
+--
+-- Usage:
+--       select * from beekeeper_activity;
+--
+--       -- Find beekeepers that may have disappeared
+--       select * from beekeeper_activity
+--       where cause_of_death is null
+--       and is_overdue = 1;
+
+CREATE VIEW IF NOT EXISTS beekeeper_activity AS
+    SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit,
+           b.cause_of_death, COUNT(*) AS loops_executed,
+           MAX(lm.when_logged) AS last_heartbeat,
+           STRFTIME('%s', 'now') - STRFTIME('%s', MAX(lm.when_logged)) AS time_since_last_heartbeat,
+           ((sleep_minutes * 60) -
+                (STRFTIME('%s', 'now') - STRFTIME('%s', MAX(lm.when_logged)))) < 0 AS is_overdue
+    FROM beekeeper b
+    LEFT JOIN log_message lm
+    ON b.beekeeper_id = lm.beekeeper_id
+    GROUP BY b.beekeeper_id;
