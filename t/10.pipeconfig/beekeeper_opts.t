@@ -147,32 +147,24 @@ foreach my $pipeline_url (@pipeline_urls) {
 
     sleep(10); # give workers time to start
 
-    my $worker_id_query = qq (SELECT worker_id FROM worker
-        WHERE status != 'DEAD');
-    my $sth = $hive_dba->dbc->prepare($worker_id_query);
-    $sth->execute();
+    my $worker_nta = $hive_dba->get_NakedTableAdaptor('table_name' => 'worker');
+    my $live_worker_rows = $worker_nta->fetch_all('worker.status != "DEAD"');
+    is(scalar(@$live_worker_rows), 2, 'two workers are not dead');
     my @live_worker_ids;
-    while (my @row = $sth->fetchrow_array()) {
-        push(@live_worker_ids, $row[0]);
+    foreach my $row (@$live_worker_rows) {
+        push(@live_worker_ids, $row->{'worker_id'});
     }
 
-    is(scalar(@live_worker_ids), 2, 'three workers are not dead');
     foreach my $worker_id (@live_worker_ids) {
         my @kill_worker_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -killworker => $worker_id);
         system(@kill_worker_cmd);
         ok(!$?, 'beekeeper -killworker exited with a return code of 0');
     }
 
-    $sth->finish();
-
     sleep(10); # give workers a bit of time to die
-    $sth = $hive_dba->dbc->prepare($worker_id_query);
-    $sth->execute();
-    my $still_alive_workers = 0;
-    while (my @row = $sth->fetchrow_array()) {
-        $still_alive_workers++;
-    }
-    is($still_alive_workers, 0, "no workers remain alive");
+
+    my $still_alive_worker_rows = $worker_nta->count_all('status != "DEAD"');
+    is($still_alive_worker_rows, 0, "no workers remain alive");
 
     system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 }
