@@ -148,7 +148,7 @@ foreach my $pipeline_url (@pipeline_urls) {
     sleep(10); # give workers time to start
 
     my $worker_nta = $hive_dba->get_NakedTableAdaptor('table_name' => 'worker');
-    my $live_worker_rows = $worker_nta->fetch_all('worker.status != "DEAD"');
+    my $live_worker_rows = $worker_nta->fetch_all("worker.status != 'DEAD'");
     is(scalar(@$live_worker_rows), 2, 'two workers are not dead');
     my @live_worker_ids;
     foreach my $row (@$live_worker_rows) {
@@ -163,7 +163,7 @@ foreach my $pipeline_url (@pipeline_urls) {
 
     sleep(10); # give workers a bit of time to die
 
-    my $still_alive_worker_rows = $worker_nta->count_all('status != "DEAD"');
+    my $still_alive_worker_rows = $worker_nta->count_all("status != 'DEAD'");
     is($still_alive_worker_rows, 0, "no workers remain alive");
 
     system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
