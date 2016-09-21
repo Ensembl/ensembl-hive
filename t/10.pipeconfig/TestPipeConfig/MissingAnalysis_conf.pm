@@ -1,38 +1,42 @@
-#!/bin/bash
+#!/usr/bin/env perl
+
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016] EMBL-European Bioinformatics Institute
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #      http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# This is an intentionally broken PipeConfig for testing purposes.
+# It has a flow_into that goes to an analysis that is not defined
+# in the pipeline.
 
-export PERL5LIB=$PWD/bioperl-live:$PWD/modules:$PWD/t/10.pipeconfig
-export EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/ pgsql://postgres@127.0.0.1/ sqlite:///'
-export TEST_AUTHOR=$USER
+package TestPipeConfig::MissingAnalysis_conf;
 
-echo "Running test suite"
-if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,+ignore,$PWD/perl5,-db,$PWD/cover_db/" prove -rv t
-else
-  prove -r t
-fi
+use strict;
+use warnings;
 
-rt=$?
-if [ $rt -eq 0 ]; then
-  if [ "$COVERALLS" = 'true' ]; then
-    echo "Running Devel::Cover coveralls report"
-    cover --nosummary -report coveralls
-  fi
-  exit $?
-else
-  exit $rt
-fi
+use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
+sub pipeline_analyses {
+    my ($self) = @_;
+    return [
+        { -logic_name  => 'first',
+          -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+          -meadow_type => 'LOCAL',
+          -flow_into   => {
+              1 => [ 'oops_i_am_missing' ],
+          }
+        }
+    ];
+}
+1;

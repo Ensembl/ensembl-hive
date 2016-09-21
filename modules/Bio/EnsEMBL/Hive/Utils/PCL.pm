@@ -69,9 +69,9 @@ sub parse_wait_for {
 
         # create control rules:
     foreach my $condition_url (@$wait_for) {
-        if($condition_url =~ m{^\w+$/}) {
+        if($condition_url =~ m{^\w+$}) {
             my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
-                or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
+                or warn "WARNING: Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
         }
         my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
                 'condition_analysis_url'    => $condition_url,
@@ -162,9 +162,9 @@ sub parse_flow_into {
                 foreach my $heir_url (sort keys %$heirs) {
                     my $input_id_template_list = $heirs->{$heir_url};
 
-                    if($heir_url =~ m{^\w+$/}) {
+                    if($heir_url =~ m{^\w+$}) {
                         my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
-                            or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
+                            or warn "WARNING: Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
                     }
 
                     $input_id_template_list = [ $input_id_template_list ] unless(ref($input_id_template_list) eq 'ARRAY');  # allow for more than one template per analysis
