@@ -153,5 +153,12 @@ sub fetch_all_finished_roles_with_unfinished_jobs {
 }
 
 
+sub fetch_all_unfinished_roles_of_dead_workers {
+    my $self = shift;
+
+    return $self->fetch_all( "JOIN worker USING(worker_id) WHERE when_finished IS NULL AND status='DEAD'" );
+}
+
+
 1;
 
