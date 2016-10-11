@@ -53,6 +53,8 @@ sub find_one_by {
         }
         return $element;
     }
+
+    return undef;   # have to be explicit here to avoid surprises
 }
 
 
