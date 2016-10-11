@@ -44,6 +44,7 @@ foreach my $member(qw{quick brown fox}) {
     is(@ref, 1, 'no addition as it was a copy');
 }
 
+
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new([{ foo => undef}]);
 $collection->add({ foo => undef });
 $collection->add({ bar => 'foobar' });
@@ -53,9 +54,29 @@ my $listref = $collection->listref;
 is(@$listref, 4, '4 elements');
 
 my $result = $collection->find_one_by(bar => 'foobar');
-ok($result, 'found something');
-ok(exists($result->{'bar'}), 'we think it is correct');
-is($result->{'bar'}, 'foobar');
+ok(exists($result->{'bar'}), 'got a result');
+is($result->{'bar'}, 'foobar', 'we think it is correct');
+
+## The following test's result may look unexpected due to implicit autovivification,
+## so I have switched it off -- lg4
+#$result = $collection->find_all_by('foo', undef);
+#is(@$result, 3, 'sensible');
+
+$collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [
+    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 },
+    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 },
+    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 },
+    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',    'size' =>  1 },
+    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 },
+    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 },
+    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 },
+] );
+
+my $missing_element = $collection->find_one_by( 'dbID' => 10 );
+is($missing_element, undef, 'Missing element is returned as undef');
+
+my $missing_elements = $collection->find_all_by( 'colour' => 'impossible' );
+is_deeply($missing_elements, [ ], 'Missing elements are returned as an empty list');
 
 $result = $collection->find_all_by('foo', undef);
 #diag Dumper $result;
