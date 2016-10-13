@@ -33,7 +33,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
-my $pipeline_url = shift(get_test_urls(-driver => 'sqlite'));
+my $pipeline_url = shift(@{get_test_urls(-driver => 'sqlite')});
 
 my $init_stderr = capture_stderr {
     init_pipeline(
