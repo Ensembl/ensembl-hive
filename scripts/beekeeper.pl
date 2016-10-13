@@ -602,7 +602,7 @@ sub run_autonomously {
                     print "\nBeekeeper : $submission_message\n";
                     $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
                         "loop iteration $iteration, $submission_message",
-                        0, 'ALIVE');
+                        'INFO', 'ALIVE');
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
@@ -619,7 +619,7 @@ sub run_autonomously {
             print "\nBeekeeper : not submitting any workers this iteration\n";
             $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
                 "loop iteration $iteration, 0 workers submitted",
-                0, 'ALIVE');
+                'INFO', 'ALIVE');
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep
@@ -678,7 +678,7 @@ sub run_autonomously {
 
     $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
         "stopped looping because of $stringified_reasons",
-        $cause_of_death_is_error,
+        $cause_of_death_is_error ? 'PIPELINE_ERROR' : 'INFO',
         $beekeeper_cause_of_death);
 
     if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {

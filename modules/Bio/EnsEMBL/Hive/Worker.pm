@@ -524,7 +524,7 @@ sub run {
                              "Claiming: ready_job_count=".$stats->ready_job_count
                             .", num_running_workers=".$stats->num_running_workers
                             .", desired_batch_size=$desired_batch_size, actual_batch_size=".scalar(@$actual_batch),
-                        0 );
+                        'INFO' );
                     }
 
                     if(scalar(@$actual_batch)) {
@@ -617,8 +617,14 @@ sub specialize_and_compile_wrapper {
 
         $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
 
-        my $is_error = $self->cause_of_death() ne 'NO_ROLE';
-        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $is_error );
+        my $message_class;
+        if ($self->cause_of_death() eq "NO_ROLE") {
+            $message_class = 'INFO';
+        } else {
+            $message_class = 'WORKER_CAUTION'
+        }
+
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $message_class );
     };
 
     if( !$self->cause_of_death() ) {
@@ -639,7 +645,7 @@ sub specialize_and_compile_wrapper {
         } or do {
             my $msg = $@;
             $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 1 );
+            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 'WORKER_ERROR' );
 
             $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
         };
@@ -753,14 +759,14 @@ sub run_one_batch {
                 $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self,
                     "Check-point: rdy=$ready_job_count, rem=$remaining_jobs_in_batch, "
                   . "opt=$optimal_batch_now, 2unc=$jobs_to_unclaim",
-                0 );
+                'INFO' );
             }
             if( $jobs_to_unclaim > 0 ) {
                 # FIXME: a faster way would be to unclaim( splice(@$jobs, -$jobs_to_unclaim) );  # unclaim the last $jobs_to_unclaim elements
                     # currently we just dump all the remaining jobs and prepare to take a fresh batch:
                 $job->adaptor->release_claimed_jobs_from_role( $current_role );
                 $jobs = [];
-                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 0 );
+                $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "Unclaimed $jobs_to_unclaim jobs (trimming the tail)", 'INFO' );
             }
         }
 

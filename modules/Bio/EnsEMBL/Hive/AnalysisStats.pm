@@ -90,6 +90,11 @@ sub status {
     return $self->{'_status'};
 }
 
+sub is_excluded {
+    my $self = shift;
+    $self->{'_is_excluded'} = shift if (@_);
+    return $self->{'_is_excluded'};
+}
 
 ## counters of jobs in different states:
 

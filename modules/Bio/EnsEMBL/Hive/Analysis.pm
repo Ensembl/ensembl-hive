@@ -162,7 +162,14 @@ sub get_compiled_module_name {
     }
 
     eval "require $runnable_module_name";
-    die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n$@" if($@);
+#    die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n$@" if($@);
+    if ($@) {
+        if ($self->adaptor()) {
+            $self->adaptor()->db()->get_AnalysisStatsAdaptor()->update_status(
+                $self->dbID, 'EXCLUDED');
+        }
+        die "The runnable module '$runnable_module_name' cannot be loaded or compiled:\n$@";
+    }
     die "Problem accessing methods in '$runnable_module_name'. Please check that it inherits from Bio::EnsEMBL::Hive::Process and is named correctly.\n"
         unless($runnable_module_name->isa('Bio::EnsEMBL::Hive::Process'));
 

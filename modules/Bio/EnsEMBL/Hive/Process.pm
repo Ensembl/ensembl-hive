@@ -225,20 +225,20 @@ sub enter_status {
 
 
 sub warning {
-    my ($self, $msg, $is_error) = @_;
+    my ($self, $msg, $message_class) = @_;
 
-    $is_error //= 0;
+    $message_class ||= 'INFO';
     chomp $msg;
 
-    $self->say_with_header( ($is_error ? 'Fatal' : 'Warning')." : $msg", 1 );
+    $self->say_with_header( "$message_class : $msg", 1 );
 
     my $job = $self->input_job;
     my $worker = $self->worker;
 
     if(my $job_adaptor = ($job && $job->adaptor)) {
-        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $is_error);
+        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $message_class);
     } elsif(my $worker_adaptor = ($worker && $worker->adaptor)) {
-        $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $is_error);
+        $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $message_class);
     }
 }
 

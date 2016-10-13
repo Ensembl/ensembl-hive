@@ -325,7 +325,7 @@ sub register_worker_death {
             . " WHERE worker_id='$worker_id' ";
 
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "register_worker_death".$after, 'INFO' ); }
     );
 }
 
@@ -463,7 +463,7 @@ sub check_in_worker {
     my $sql = "UPDATE worker SET when_checked_in=CURRENT_TIMESTAMP, status='".$worker->status."', work_done='".$worker->work_done."' WHERE worker_id='".$worker->dbID."'";
 
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "check_in_worker".$after, 'INFO' ); }
     );
 }
 
@@ -816,7 +816,7 @@ sub store_resource_usage {
                 1;
             } or do {
                 if($@ =~ /execute failed: Duplicate entry/s) {     # ignore the collision with another parallel beekeeper
-                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 0 );
+                    $self->db->get_LogMessageAdaptor()->store_worker_message($worker_id, "Collision detected when storing resource_usage", 'WORKER_CAUTION' );
                 } else {
                     die $@;
                 }

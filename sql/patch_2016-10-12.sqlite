@@ -1,0 +1,63 @@
+
+-- ---------------------------------------------------------------------------------------------------
+
+CREATE TEMPORARY VIEW exp_ver AS SELECT "83" AS expected_version;
+
+.bail ON
+
+SELECT ('The patch only applies to schema version '
+    || expected_version
+    || ', but the current schema version is '
+    || meta_value
+    || ', skipping the rest.') AS ''
+    FROM hive_meta JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT hm.* FROM hive_meta AS hm JOIN exp_ver WHERE meta_key='hive_sql_schema_version' AND meta_value<>expected_version;
+
+SELECT ('The patch seems to be compatible with schema version '
+    || expected_version
+    || ', applying the patch...') AS '' FROM exp_ver;
+
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+ALTER TABLE analysis_stats ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
+
+ALTER TABLE log_message RENAME TO old_log_message__;
+CREATE TABLE log_message (
+    log_message_id          INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
+    job_id                  INTEGER              DEFAULT NULL,
+    role_id                 INTEGER              DEFAULT NULL,
+    worker_id               INTEGER              DEFAULT NULL,
+    beekeeper_id            INTEGER              DEFAULT NULL,
+    when_logged             TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    retry                   INTEGER              DEFAULT NULL,
+    status                  TEXT        NOT NULL DEFAULT 'UNKNOWN', /* enum('UNKNOWN','SPECIALIZATION','COMPILATION','CLAIMED','READY','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_CLEANUP','PASSED_ON') DEFAULT 'UNKNOWN' */
+    msg                     TEXT,
+    message_class           TEXT        NOT NULL DEFAULT 'INFO' /* enum('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR') */
+);
+CREATE        INDEX log_message_worker_idx ON log_message (worker_id);
+CREATE        INDEX log_message_job_idx ON log_message (job_id);
+CREATE        INDEX log_message_beekeeper_idx ON log_message (beekeeper_id);
+CREATE        INDEX message_class_idx ON log_message (message_class);
+
+INSERT INTO log_message (log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg)
+SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry_status, msg
+FROM old_log_message__
+WHERE is_error = 0;
+
+INSERT INTO log_message (log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg, message_class)
+SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry_status, msg, 'PIPELINE_ERROR'
+FROM old_log_message__
+WHERE is_error = 1;
+
+DROP TABLE old_log_message__;
+
+ALTER TABLE analysis_stats_monitor ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';

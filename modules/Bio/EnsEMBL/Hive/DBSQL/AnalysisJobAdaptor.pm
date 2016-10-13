@@ -202,9 +202,9 @@ sub store_jobs_and_adjust_counters {
                      . ($local_job ? 'local' : 'foreign')
                      . " Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision";
             if ($local_job && $emitting_job_id) {
-                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, $msg, 0);
+                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, $msg, 'PIPELINE_CAUTION');
             } else {
-                $self->db->get_LogMessageAdaptor->store_hive_message($msg, 0);
+                $self->db->get_LogMessageAdaptor->store_hive_message($msg, 'PIPELINE_CAUTION');
             }
 
             $failed_to_store_local_jobs++;
@@ -380,7 +380,7 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
     };
     
     $self->dbc->protected_prepare_execute( [ $sql, $dec, $jobid ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'decreasing semaphore_count'.$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'decreasing semaphore_count'.$after, 'INFO' ); }
     );
 }
 
@@ -396,7 +396,7 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     };
     
     $self->dbc->protected_prepare_execute( [ $sql, $inc, $jobid ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'increasing semaphore_count'.$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'increasing semaphore_count'.$after, 'INFO' ); }
     );
 }
 
@@ -446,7 +446,7 @@ sub check_in_job {
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
     $self->dbc->protected_prepare_execute( [ $sql ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "checking the job in".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "checking the job in".$after, 'INFO' ); }
     );
 }
 
@@ -576,13 +576,13 @@ sub grab_jobs_for_role {
 
         # we have to be explicitly numeric here because of '0E0' value returned by DBI if "no rows have been affected":
     if(  0 == ($claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql . $virgin_sql . $limit_sql . $offset_sql . $suffix_sql ],
-                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a virgin batch of offset jobs".$after, 0 ); }
+                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a virgin batch of offset jobs".$after, 'INFO' ); }
     ))) {
         if( 0 == ($claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql . $offset_sql . $suffix_sql ],
-                        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of offset jobs".$after, 0 ); }
+                        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of offset jobs".$after, 'INFO' ); }
         ))) {
              $claim_count = $self->dbc->protected_prepare_execute( [ $prefix_sql .               $limit_sql .               $suffix_sql ],
-                            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of non-offset jobs".$after, 0 ); }
+                            sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "grabbing a non-virgin batch of non-offset jobs".$after, 'INFO' ); }
              );
         }
     }
@@ -598,7 +598,7 @@ sub release_claimed_jobs_from_role {
 
         # previous value of role_id is not important, because that Role never had a chance to run the jobs
     my $num_released_jobs = $self->dbc->protected_prepare_execute( [ "UPDATE job SET status='READY', role_id=NULL WHERE role_id=? AND status='CLAIMED'", $role->dbID ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "releasing claimed jobs from role".$after, 0 ); }
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $role->worker, "releasing claimed jobs from role".$after, 'INFO' ); }
     );
 
     my $analysis_stats_adaptor  = $self->db->get_AnalysisStatsAdaptor;
@@ -666,7 +666,7 @@ sub release_undone_jobs_from_role {
             }
         }
 
-        $self->db()->get_LogMessageAdaptor()->store_job_message($job_id, $msg, not $passed_on );
+        $self->db()->get_LogMessageAdaptor()->store_job_message($job_id, $msg, $passed_on ? 'INFO' : 'WORKER_CAUTION');
 
         unless($passed_on) {
             $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
@@ -949,11 +949,11 @@ sub balance_semaphores {
         my $msg;
         if(0<$should and $should<$was) {    # we choose not to lower the counter if it's not time to unblock yet
             $msg = "Semaphore count may need rebalancing, but it is not critical now, so leaving it on automatic: $was -> $should";
-            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 0 );
+            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 'PIPELINE_CAUTION' );
         } else {
             $update_sth->execute($should-$was, $job_id);
             $msg = "Semaphore count needed rebalancing now, so performing: $was -> $should";
-            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 1 );
+            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 'PIPELINE_CAUTION' );
             $rebalanced_jobs_counter++;
         }
         warn "[Job $job_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general

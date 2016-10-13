@@ -152,6 +152,7 @@ CREATE TABLE analysis_base (
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TABLE analysis_stats (
@@ -179,6 +180,7 @@ CREATE TABLE analysis_stats (
 
     when_updated            TIMESTAMP                    NULL,  -- mysql's special for "TIMESTAMP DEFAULT NULL"
     sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0,
 
     PRIMARY KEY (analysis_id)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
@@ -627,7 +629,7 @@ CREATE TABLE worker_resource_usage (
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
 @column            msg  string that contains the message
-@column       is_error  binary flag
+@column  message_class  type of message
 */
 
 CREATE TABLE log_message (
@@ -640,7 +642,7 @@ CREATE TABLE log_message (
     retry                   INTEGER              DEFAULT NULL,
     status                  VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN',
     msg                     MEDIUMTEXT,
-    is_error                SMALLINT,
+    message_class           ENUM('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR') NOT NULL DEFAULT 'INFO',
 
             KEY worker_id     (worker_id),
             KEY job_id        (job_id),
@@ -681,6 +683,7 @@ CREATE TABLE log_message (
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TABLE analysis_stats_monitor (
@@ -709,7 +712,8 @@ CREATE TABLE analysis_stats_monitor (
     avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
     when_updated            TIMESTAMP                    NULL,  -- mysql's special for "TIMESTAMP DEFAULT NULL"
-    sync_lock               SMALLINT    NOT NULL DEFAULT 0
+    sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 

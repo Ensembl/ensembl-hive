@@ -94,7 +94,7 @@ sub runWorker {
     } or do {
         my $msg = $@;
         eval {
-            $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 1 );
+            $hive_dba->get_LogMessageAdaptor()->store_worker_message($worker, $msg, 'WORKER_ERROR' );
             $worker->cause_of_death( 'SEE_MSG' );
             $queen->register_worker_death($worker, 1);
         };

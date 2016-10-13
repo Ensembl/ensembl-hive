@@ -154,6 +154,7 @@ CREATE TABLE analysis_base (
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TYPE analysis_status AS ENUM ('BLOCKED', 'LOADING', 'SYNCHING', 'EMPTY', 'READY', 'WORKING', 'ALL_CLAIMED', 'DONE', 'FAILED');
@@ -183,6 +184,7 @@ CREATE TABLE analysis_stats (
 
     when_updated            TIMESTAMP            DEFAULT NULL,
     sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0,
 
     PRIMARY KEY (analysis_id)
 );
@@ -640,9 +642,10 @@ CREATE TABLE worker_resource_usage (
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
 @column            msg  string that contains the message
-@column       is_error  binary flag
+@column  message_class  type_of_message
 */
 
+CREATE TYPE msg_class AS ENUM ('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR');
 CREATE TABLE log_message (
     log_message_id          SERIAL PRIMARY KEY,
     job_id                  INTEGER              DEFAULT NULL,
@@ -653,12 +656,12 @@ CREATE TABLE log_message (
     retry                   INTEGER              DEFAULT NULL,
     status                  VARCHAR(255) NOT NULL DEFAULT 'UNKNOWN',
     msg                     TEXT,
-    is_error                SMALLINT
-
+    message_class           msg_class            NOT NULL DEFAULT 'INFO'
 );
 CREATE INDEX ON log_message (worker_id);
 CREATE INDEX ON log_message (job_id);
 CREATE INDEX ON log_message (beekeeper_id);
+CREATE INDEX ON log_message (message_class);
 
 
 /**
@@ -694,6 +697,7 @@ CREATE INDEX ON log_message (beekeeper_id);
 
 @column when_updated            when this entry was last updated
 @column sync_lock               a binary lock flag to prevent simultaneous updates
+@column is_excluded             set to exclude analysis from beekeeper scheduling
 */
 
 CREATE TABLE analysis_stats_monitor (
@@ -722,7 +726,8 @@ CREATE TABLE analysis_stats_monitor (
     avg_output_msec_per_job INTEGER              DEFAULT NULL,
 
     when_updated            TIMESTAMP            DEFAULT NULL,
-    sync_lock               SMALLINT    NOT NULL DEFAULT 0
+    sync_lock               SMALLINT    NOT NULL DEFAULT 0,
+    is_excluded             SMALLINT    NOT NULL DEFAULT 0
 
 );
 
