@@ -442,7 +442,7 @@ sub register_beekeeper {
     my $self = shift @_;
 
     my $meadow_host = hostname;
-    my $meadow_user = getpwuid($<);
+    my $meadow_user = $ENV{'USER'} || getpwuid($<);
     my $process_id = $$;
     my $sleep_minutes = $self->{'sleep_minutes'};
     my $analyses_pattern = undef;
