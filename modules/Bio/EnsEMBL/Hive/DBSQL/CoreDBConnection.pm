@@ -316,9 +316,13 @@ sub connect {
         $self->{'count'} = 0;
       }
     }
+
+    my $parameters = { 'RaiseError' => 1 };
+    $parameters->{'mysql_local_infile'} = 1 if lc($self->driver()) eq 'mysql';
+
     eval {
       $dbh = DBI->connect( $dsn, $self->username(), $self->password(),
-                           { 'RaiseError' => 1 } );
+                           $parameters );
     };
   }
   my $error = $@;
