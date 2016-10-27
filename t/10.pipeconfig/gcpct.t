@@ -36,7 +36,7 @@ my $original = chdir $dir;
 
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'GCPct_conf';
 
-my @pipeline_urls = @{get_test_urls()} ;
+my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 

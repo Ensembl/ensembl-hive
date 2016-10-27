@@ -35,7 +35,7 @@ my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath(
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
-my @pipeline_urls = @{get_test_urls()} ;
+my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
 my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 
 foreach my $pipeline_url (@pipeline_urls) {

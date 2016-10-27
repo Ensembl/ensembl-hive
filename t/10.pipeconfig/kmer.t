@@ -60,7 +60,7 @@ my $kmer_param_configs       = {'short' => [-seqtype => "short",
 			       };
 
 
-my @pipeline_urls = @{get_test_urls()};
+my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')};
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 my @kmer_pipeline_modes = split( /[\s,]+/, $kmer_pipeline_modes ) ;
 
