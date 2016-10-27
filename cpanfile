@@ -24,3 +24,6 @@ recommends 'BSD::Resource';
 recommends 'Chart::Gnuplot';
 recommends 'GraphViz';
 
+recommends 'HTTP::Daemon';
+recommends 'HTTP::Status';
+
