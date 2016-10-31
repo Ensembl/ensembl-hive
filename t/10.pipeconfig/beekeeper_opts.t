@@ -23,15 +23,13 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
-
-foreach my $pipeline_url (@pipeline_urls) {
+my $pipeline_url = get_test_url_or_die();
 
     # Starting a first set of checks with a "GCPct" pipeline
 
@@ -141,7 +139,6 @@ foreach my $pipeline_url (@pipeline_urls) {
     is($still_alive_worker_rows, 0, "no workers remain alive");
 
     system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
-}
 
 done_testing();
 

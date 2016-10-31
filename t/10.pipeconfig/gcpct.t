@@ -23,7 +23,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -36,7 +36,6 @@ my $original = chdir $dir;
 
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'GCPct_conf';
 
-my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 
@@ -44,7 +43,7 @@ foreach my $gcpct_version ( @pipeline_cfgs ) {
 
 warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
-    foreach my $pipeline_url (@pipeline_urls) {
+        my $pipeline_url = get_test_url_or_die();
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         my $url         = init_pipeline(
                             'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
@@ -101,7 +100,6 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
-    }
 }
 
 done_testing();
