@@ -248,7 +248,7 @@ sub get_test_urls {
 sub get_test_url_or_die {
     my $list_of_urls = get_test_urls(@_);
     croak "No test databases are available" unless scalar(@$list_of_urls);
-    return $list_of_urls->[0];
+    return (sort @$list_of_urls)[0];
 }
 
 1;
