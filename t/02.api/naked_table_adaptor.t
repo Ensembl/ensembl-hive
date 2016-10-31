@@ -58,7 +58,7 @@ my $second_hash = { 'b_multiplier' => '9650156169', 'a_multiplier' => '327358788
 $final_result_nta->store( $first_hash );
 $final_result_nta->store( $second_hash );
 
-my $final_results = $final_result_nta->fetch_all();
+my $final_results = [sort {$a->{'b_multiplier'} <=> $b->{'b_multiplier'}} @{ $final_result_nta->fetch_all() }];
 is_deeply( $final_results, [ $first_hash, $second_hash ], "The data stored into final_result table is as expected");
 
 my $third_hash = { 'a_multiplier' => $first_hash->{a_multiplier}, 'b_multiplier' => '1', 'result' => $first_hash->{a_multiplier} };
