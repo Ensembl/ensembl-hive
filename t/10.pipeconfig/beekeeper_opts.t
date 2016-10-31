@@ -32,11 +32,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 # Fasta file for calculating %GC
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
-my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
-
 my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
-my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 
 foreach my $pipeline_url (@pipeline_urls) {
 
@@ -171,4 +167,3 @@ foreach my $pipeline_url (@pipeline_urls) {
 
 done_testing();
 
-chdir $original;
