@@ -33,12 +33,19 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 my $dir = tempdir CLEANUP => 1;
 my $orig = chdir $dir;
 
-my $sqlite_url = "sqlite:///${dir}/test_db";
+
+my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || "sqlite:///${dir}/test_db";
+
+foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
+
+
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
-my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
+system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+$dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+$dbc->do('CREATE TABLE analysis_base (analysis_id INT NOT NULL)');
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
@@ -53,7 +60,7 @@ my $second_hash = { 'b_multiplier' => '9650156169', 'a_multiplier' => '327358788
 $final_result_nta->store( $first_hash );
 $final_result_nta->store( $second_hash );
 
-my $final_results = $final_result_nta->fetch_all();
+my $final_results = [sort {$a->{'b_multiplier'} <=> $b->{'b_multiplier'}} @{ $final_result_nta->fetch_all() }];
 is_deeply( $final_results, [ $first_hash, $second_hash ], "The data stored into final_result table is as expected");
 
 my $third_hash = { 'a_multiplier' => $first_hash->{a_multiplier}, 'b_multiplier' => '1', 'result' => $first_hash->{a_multiplier} };
@@ -64,6 +71,9 @@ is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2,
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
 system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+
+}
+
 chdir $orig;
 
 done_testing();
