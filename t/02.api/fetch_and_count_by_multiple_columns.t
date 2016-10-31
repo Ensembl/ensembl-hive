@@ -35,7 +35,9 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $dir = tempdir CLEANUP => 1;
 chdir $dir;
 
-my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
+my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
+
+foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
 
 my $hive_dba    = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 my $ana_a       = $hive_dba->get_AnalysisAdaptor;
@@ -88,6 +90,8 @@ my $another_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
 
 $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
+
+}
 
 done_testing();
 
