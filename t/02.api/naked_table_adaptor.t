@@ -28,15 +28,18 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls);
 
-my $test_url = get_test_url_or_die();
+my $ehive_test_pipeline_urls = get_test_urls();
+
+foreach my $test_url (@$ehive_test_pipeline_urls) {
+
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $test_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
 system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+$dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 $dbc->do('CREATE TABLE analysis_base (name char(40) NOT NULL)'),
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
@@ -63,5 +66,8 @@ is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2,
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
 system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+
+}
+
 
 done_testing();

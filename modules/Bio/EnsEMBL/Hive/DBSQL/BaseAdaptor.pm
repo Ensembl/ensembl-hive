@@ -265,6 +265,8 @@ sub count_all {
     my ($self, $constraint, $key_list) = @_;
 
     my $table_name      = $self->table_name();
+    my $driver          = $self->dbc->driver();
+    my $count_col_name  = $driver eq 'pgsql' ? 'count' : 'COUNT(*)';
 
     my $sql = "SELECT ".($key_list ? join(', ', @$key_list, '') : '')."COUNT(*) FROM $table_name";
 
@@ -291,7 +293,7 @@ sub count_all {
                 $pptr = \$$pptr->{$hashref->{$syll}};   # using pointer-to-pointer to enforce same-level vivification
             }
         }
-        $$pptr = $hashref->{'COUNT(*)'};
+        $$pptr = $hashref->{$count_col_name};
     }
 
     unless(defined($result_struct)) {

@@ -20,19 +20,24 @@ use warnings;
 
 use Data::Dumper;
 
-use Test::More tests => 17;
+use Test::More;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_urls);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my $pipeline_url = get_test_url_or_die();
+my $ehive_test_pipeline_urls = get_test_urls();
+
+foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
+
+subtest 'Test on '.$pipeline_url, sub {
+    plan tests => 17;
 
 my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
 
@@ -91,6 +96,9 @@ $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
 
 system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+
+}
+}
 
 done_testing();
 
