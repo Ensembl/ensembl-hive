@@ -29,9 +29,6 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-# Fasta file for calculating %GC
-my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
-
 my @pipeline_urls = @{get_test_urls(-driver => 'sqlite')} ;
 
 foreach my $pipeline_url (@pipeline_urls) {
@@ -39,9 +36,8 @@ foreach my $pipeline_url (@pipeline_urls) {
     # Starting a first set of checks with a "GCPct" pipeline
 
     my $url = init_pipeline(
-        'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::GCPct_conf',
-        [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"],
-        ['pipeline.param[take_time]=0'],
+        'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
+        [-pipeline_url => $pipeline_url, -hive_force_init => 1],
     );
 
     my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
@@ -63,7 +59,7 @@ foreach my $pipeline_url (@pipeline_urls) {
 
     # Check that -run puts one additional in the beekeeper table, it loops once,
     # and finishes with LOOP_LIMIT
-    my @run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run');
+    my @run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run', '-meadow_type' => 'LOCAL');
     system(@run_cmd);
     ok(!$?, 'beekeeper -run exited with a return code of 0');
 
@@ -115,29 +111,11 @@ foreach my $pipeline_url (@pipeline_urls) {
     }
     is($found_beekeeper_bad_pattern, 1, 'A beekeeper with option -analyses_pattern was registered in the beekeeper table');
 
-    # Starting a second set of checks with a "LongWorker" pipeline
-    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
-
-    $url = init_pipeline(
-        'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
-        [-pipeline_url => $pipeline_url, -hive_force_init => 1],
-    );
-
-    $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-        -url                      => $url,
-        -disconnect_when_inactive => 1,
-    );
-    $hive_dba = $pipeline->hive_dba;
-
-    my @setup_run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run');
-    system(@setup_run_cmd);
-    ok(!$?, 'first beekeeper -run for LongWorker exited with a return code of 0');
-
     sleep(10); # give worker a bit of time to seed longrunning jobs
 
     my @longworkers_run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl',
         -url => $hive_dba->dbc->url, '-run',
-        -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL');
+        -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1);
     system(@longworkers_run_cmd);
     ok(!$?, 'second beekeeper -run -analyses_pattern for LongWorker exited with a return code of 0');
 
