@@ -33,13 +33,20 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 my $dir = tempdir CLEANUP => 1;
 my $orig = chdir $dir;
 
-my $sqlite_url = "sqlite:///test_db";
+
+my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
+
+foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
+
+
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
-my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $sqlite_url, -no_sql_schema_version_check => 1);
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
 
-system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $sqlite_url, '-sql', 'CREATE DATABASE' );
-$dbc->do('CREATE TABLE final_result (a_multiplier char(40) NOT NULL, b_multiplier char(40) NOT NULL, result char(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' );
+system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE' );
+$dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
+$dbc->do('CREATE TABLE analysis_base (analysis_id INT NOT NULL)');
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
@@ -66,7 +73,10 @@ $final_result_nta->store( $third_hash );
 
 is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2, '2 result for this a_multiplier');
 
-system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $sqlite_url, '-sql', 'DROP DATABASE' );
+system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' );
+
+}
+
 chdir $orig;
 
 done_testing();
