@@ -43,6 +43,8 @@ sub main {
 	$analysis_id, 
 	$logic_name, 
 	@input_ids,
+    $funnel_analysis_pattern,
+    $funnel_input_id,
         $help);
 
     GetOptions(
@@ -53,14 +55,15 @@ sub main {
             'reg_alias|regname|reg_name=s' => \$reg_alias,
             'nosqlvc=i'                    => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+                # fan analysis and job(s):
+            'analyses_pattern=s'        => \$analyses_pattern,
+            'analysis_id=i'             => \$analysis_id,
+            'logic_name=s'              => \$logic_name,
+            'input_id=s'                => \@input_ids,
 
-                # identify the analysis:
-            'analyses_pattern=s'    => \$analyses_pattern,
-            'analysis_id=i'         => \$analysis_id,
-            'logic_name=s'          => \$logic_name,
-
-                # specify the input_id (as a string):
-            'input_id=s'            => \@input_ids,
+                # optional funnel analysis and job:
+            'funnel_analysis_pattern=s' => \$funnel_analysis_pattern,
+            'funnel_input_id=s'         => \$funnel_input_id,
 
 	        # other commands/options
 	    'h|help!'               => \$help,
@@ -132,15 +135,47 @@ sub main {
         push @jobs, $job;
     }
 
-    my (@job_ids) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( \@jobs ) };
+    my $funnel_job;
+
+    if($funnel_analysis_pattern and $funnel_input_id) {
+
+        my $candidate_analyses = $pipeline->collection_of( 'Analysis' )->find_all_by_pattern( $funnel_analysis_pattern );
+
+        if( scalar(@$candidate_analyses) > 1 ) {
+            die "Too many funnel analyses matching pattern '$funnel_analysis_pattern', please specify\n";
+        } elsif( !scalar(@$candidate_analyses) ) {
+            die "Funnel analysis matching the pattern '$funnel_analysis_pattern' could not be found\n";
+        }
+
+        my ($funnel_analysis) = @$candidate_analyses;
+
+        my $dinput_id = destringify($funnel_input_id);
+        if (!ref($dinput_id)) {
+            die "'$funnel_input_id' cannot be eval'ed, likely because of a syntax error\n";
+        } elsif (ref($dinput_id) ne 'HASH') {
+            die "'$funnel_input_id' is not a hash\n";
+        }
+
+        $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+            'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
+            'analysis'      => $funnel_analysis,
+            'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
+        );
+    }
+
+    my (@job_ids) = $funnel_job
+        ? $pipeline->hive_dba->get_AnalysisJobAdaptor->store_a_semaphored_group_of_jobs( $funnel_job, \@jobs )
+        : @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( \@jobs ) };
+
+    unshift @jobs, $funnel_job if($funnel_job);
 
     if(scalar(@job_ids) == scalar(@jobs)) {
 
-        my $analysis_display_name = $analysis->logic_name.'('.$analysis->dbID.')';
-
         foreach my $i (0..scalar(@jobs)-1) {
-            my $input_id    = $jobs[$i]->input_id();
-            my $job_id      = $job_ids[$i];
+            my $job_id                  = $job_ids[$i];
+            my $input_id                = $jobs[$i]->input_id();
+            my $job_analysis            = $jobs[$i]->analysis();
+            my $analysis_display_name   = $job_analysis->logic_name.'('.$job_analysis->dbID.')';
 
             print "Job $job_id [ $analysis_display_name ] : '$input_id'\n";
         }
