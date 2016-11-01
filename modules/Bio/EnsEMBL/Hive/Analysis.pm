@@ -389,36 +389,13 @@ sub dataflow {
 
             } else {
                 my $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-                                    @$common_params,
-                                    'input_id'          => $output_ids_for_this_rule->[0],
-                                    'semaphore_count'   => scalar(@$fan_jobs),          # "pre-increase" the semaphore count before creating the dependent jobs
-                                    'semaphored_job_id' => $emitting_job->semaphored_job_id(),  # propagate parent's semaphore if any
+                    @$common_params,
+                    'input_id'          => $output_ids_for_this_rule->[0],
                 );
 
-                my ($funnel_job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
+                my ($funnel_job_id, @fan_job_ids) = $job_adaptor->store_a_semaphored_group_of_jobs( $funnel_job, $fan_jobs, $emitting_job );
 
-                unless($funnel_job_id) {    # apparently it has been created previously, trying to leech to it:
-
-                    if( $funnel_job = $job_adaptor->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id) ) {
-                        $funnel_job_id = $funnel_job->dbID;
-
-                        if( $funnel_job->status eq 'SEMAPHORED' ) {
-                            $job_adaptor->increase_semaphore_count_for_jobid( $funnel_job_id, scalar(@$fan_jobs) );    # "pre-increase" the semaphore count before creating the dependent jobs
-
-                            $job_adaptor->db->get_LogMessageAdaptor->store_job_message($emitting_job->dbID, "Discovered and using an existing funnel ".$funnel_job->toString, 0);
-                        } else {
-                            die "The funnel job (id=$funnel_job_id) fetched from the database was not in SEMAPHORED status";
-                        }
-                    } else {
-                        die "The funnel job could neither be stored nor fetched";
-                    }
-                }
-
-                foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
-                    $fan_job->semaphored_job_id( $funnel_job_id );
-                }
-                push @output_job_ids, $funnel_job_id, @{ $job_adaptor->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };
-
+                push @output_job_ids, $funnel_job_id, @fan_job_ids;
             }
         } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
             my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(

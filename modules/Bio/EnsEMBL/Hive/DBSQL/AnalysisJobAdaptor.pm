@@ -180,6 +180,63 @@ sub store_jobs_and_adjust_counters {
 }
 
 
+=head2 store_a_semaphored_group_of_jobs
+
+  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisJob $funnel_job
+  Arg [2]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $fan_jobs
+  Arg [3]    : (optional) Bio::EnsEMBL::Hive::AnalysisJob $emitting_job
+  Arg [4]    : (optional) boolean $no_leeching
+  Example    : my ($funnel_job_id, @fan_job_ids) = $job_adaptor->store_a_semaphored_group_of_jobs( $funnel_job, $fan_jobs, $emitting_job );
+  Description: Attempts to store a semaphored group of jobs, returns a list of successfully stored job_ids
+  Returntype : list of job_dbIDs
+
+=cut
+
+sub store_a_semaphored_group_of_jobs {
+    my ($self, $funnel_job, $fan_jobs, $emitting_job, $no_leeching) = @_;
+
+    my $emitting_job_id;
+
+    $funnel_job->semaphore_count( scalar(@$fan_jobs) ); # "pre-increase" the semaphore count before creating the dependent jobs
+    if($emitting_job) {
+        $funnel_job->prev_job( $emitting_job );
+        $funnel_job->semaphored_job_id( $emitting_job->semaphored_job_id() );   # propagate parent's semaphore if any
+        $emitting_job_id = $emitting_job->dbID;
+    }
+
+
+    my ($funnel_job_id) = @{ $self->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
+
+    unless($funnel_job_id) {    # apparently the funnel_job has been created previously, trying to leech to it:
+        if($no_leeching) {
+            die "The funnel job could not be stored, but leeching was not allowed, so bailing out";
+
+        } elsif( $funnel_job = $self->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id) ) {
+            $funnel_job_id = $funnel_job->dbID;
+
+            if( $funnel_job->status eq 'SEMAPHORED' ) {
+                $self->increase_semaphore_count_for_jobid( $funnel_job_id, scalar(@$fan_jobs) );    # "pre-increase" the semaphore count before creating the dependent jobs
+
+                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, "Discovered and using an existing funnel ".$funnel_job->toString, 0);
+            } else {
+                die "The funnel job (id=$funnel_job_id) fetched from the database was not in SEMAPHORED status";
+            }
+        } else {
+            die "The funnel job could neither be stored nor fetched";
+        }
+    }
+
+    foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
+        $fan_job->semaphored_job_id( $funnel_job_id );
+    }
+
+    my (@fan_job_ids) = @{ $self->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };
+
+    return ($funnel_job_id, @fan_job_ids);
+}
+
+
+
 =head2 fetch_all_by_analysis_id_status
 
   Arg [1]    : (optional) listref $list_of_analyses
