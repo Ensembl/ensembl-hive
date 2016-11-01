@@ -42,7 +42,7 @@ sub main {
 	$analyses_pattern, 
 	$analysis_id, 
 	$logic_name, 
-	$input_id,
+	@input_ids,
         $help);
 
     GetOptions(
@@ -60,7 +60,7 @@ sub main {
             'logic_name=s'          => \$logic_name,
 
                 # specify the input_id (as a string):
-            'input_id=s'            => \$input_id,
+            'input_id=s'            => \@input_ids,
 
 	        # other commands/options
 	    'h|help!'               => \$help,
@@ -107,33 +107,46 @@ sub main {
         exit(0);
     }
 
-    unless($input_id) {
-        $input_id = '{}';
-        warn "Since -input_id has not been set, assuming input_id='$input_id'\n";
-    }
-    my $dinput_id = destringify($input_id);
-    if (!ref($dinput_id)) {
-        die "'$input_id' cannot be eval'ed, likely because of a syntax error\n";
-    }
-    if (ref($dinput_id) ne 'HASH') {
-        die "'$input_id' is not a hash\n";
+    unless(scalar(@input_ids)) {
+        push @input_ids, '{}';
+        warn "Since -input_id has not been set, assuming input_id='{}'\n";
     }
 
-    my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
-        'analysis'      => $analysis,
-        'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
-    );
+    my @jobs = ();
 
-    my ($job_id) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    foreach my $input_id (@input_ids) {
 
-    if($job_id) {
+        my $dinput_id = destringify($input_id);
+        if (!ref($dinput_id)) {
+            die "'$input_id' cannot be eval'ed, likely because of a syntax error\n";
+        } elsif (ref($dinput_id) ne 'HASH') {
+            die "'$input_id' is not a hash\n";
+        }
 
-        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
+        my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
+            'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
+            'analysis'      => $analysis,
+            'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
+        );
+
+        push @jobs, $job;
+    }
+
+    my (@job_ids) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( \@jobs ) };
+
+    if(scalar(@job_ids) == scalar(@jobs)) {
+
+        my $analysis_display_name = $analysis->logic_name.'('.$analysis->dbID.')';
+
+        foreach my $i (0..scalar(@jobs)-1) {
+            my $input_id    = $jobs[$i]->input_id();
+            my $job_id      = $job_ids[$i];
+
+            print "Job $job_id [ $analysis_display_name ] : '$input_id'\n";
+        }
 
     } else {
-
-        warn "Could not create job '$input_id' (it may have been created already)\n";
+        warn "Could not create some of the jobs (they may have been created already)\n";
     }
 }
 
