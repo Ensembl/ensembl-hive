@@ -284,7 +284,6 @@ sub dataflow_output_id {
     my $input_id                = $self->input_id();
     my $hive_use_param_stack    = $self->hive_pipeline->hive_use_param_stack;
 
-    $output_ids  ||= [ $hive_use_param_stack ? {} : $input_id ];            # by default replicate the parameters of the parent in the child
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
 
         # map branch names to numbers:
@@ -337,17 +336,21 @@ sub dataflow_output_id {
 
                 foreach my $df_target (@$df_targets) {
 
+                    my $extend_param_stack = $hive_use_param_stack || $df_target->extend_param_stack;   # this boolean is target-specific
+
+                        # by default replicate the parameters of the parent in the child (undef becomes {}+stack or $input_id, depending on INPUT_PLUS)
+                    my @pre_substituted_output_ids = map { $_ // ($extend_param_stack ? {} : $input_id) } @$filtered_output_ids;
+
                         # parameter substitution into input_id_template is rule-specific
                     my $output_ids_for_this_rule;
                     if(my $template_string = $df_target->input_id_template()) {
                         my $template_hash = destringify($template_string);
-                        $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @$filtered_output_ids ];
+                        $output_ids_for_this_rule = [ map { $self->param_substitute($template_hash, $_) } @pre_substituted_output_ids ];
                     } else {
-                        $output_ids_for_this_rule = $filtered_output_ids;
+                        $output_ids_for_this_rule = \@pre_substituted_output_ids;
                     }
 
-                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self,
-                                                                                $hive_use_param_stack || $df_target->extend_param_stack, $df_rule );
+                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $extend_param_stack, $df_rule );
 
                     push @output_job_ids, @$stored_listref;
 
