@@ -331,21 +331,29 @@ sub dataflow_rules_by_branch {
 
 
 sub dataflow {
-    my ( $self, $output_ids_for_this_rule, $emitting_job, $push_emitting_job_on_stack, $df_rule ) = @_;
+    my ( $self, $output_ids_for_this_rule, $emitting_job, $same_db_dataflow, $push_emitting_job_on_stack, $df_rule ) = @_;
 
-    my $param_id_stack  = $emitting_job->param_id_stack;
-    my $accu_id_stack   = $emitting_job->accu_id_stack;
-    my $emitting_job_id = $emitting_job->dbID;
+    my $param_id_stack      = '';
+    my $accu_id_stack       = '';
+    my $emitting_job_id     = undef;
+    my $semaphored_job_id   = undef;
 
-    if($push_emitting_job_on_stack) {
-        my $input_id        = $emitting_job->input_id;
-        my $accu_hash       = $emitting_job->accu_hash;
+    if($same_db_dataflow) {
+        $param_id_stack     = $emitting_job->param_id_stack;
+        $accu_id_stack      = $emitting_job->accu_id_stack;
+        $emitting_job_id    = $emitting_job->dbID;
+        $semaphored_job_id  = $emitting_job->semaphored_job_id();
 
-        if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
-            $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$emitting_job_id;
-        }
-        if(scalar(keys %$accu_hash)) {    # add the parent to the accu_id_stack if it had "own" accumulator
-            $accu_id_stack = ($accu_id_stack ? $accu_id_stack.',' : '').$emitting_job_id;
+        if($push_emitting_job_on_stack) {
+            my $input_id        = $emitting_job->input_id;
+            my $accu_hash       = $emitting_job->accu_hash;
+
+            if($input_id and ($input_id ne '{}')) {     # add the parent to the param_id_stack if it had non-trivial extra parameters
+                $param_id_stack = ($param_id_stack ? $param_id_stack.',' : '').$emitting_job_id;
+            }
+            if(scalar(keys %$accu_hash)) {    # add the parent to the accu_id_stack if it had "own" accumulator
+                $accu_id_stack = ($accu_id_stack ? $accu_id_stack.',' : '').$emitting_job_id;
+            }
         }
     }
 
@@ -416,7 +424,7 @@ sub dataflow {
             my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                 @$common_params,
                                                 'input_id'          => $_,
-                                                'semaphored_job_id' => $emitting_job->semaphored_job_id(),  # propagate parent's semaphore if any
+                                                'semaphored_job_id' => $semaphored_job_id,  # propagate parent's semaphore if any
             ) } @$output_ids_for_this_rule;
 
             push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0, $emitting_job_id) };

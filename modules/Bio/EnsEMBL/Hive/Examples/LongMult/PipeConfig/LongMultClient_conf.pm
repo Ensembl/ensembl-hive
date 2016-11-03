@@ -115,11 +115,9 @@ sub pipeline_analyses {
                 { 'a_multiplier' => '327358788', 'b_multiplier' => '9650156169' },
             ],
             -flow_into => {
-                    # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) is permitted.
+                    # A WHEN block is not a hash, so multiple occurences of each condition (including ELSE) are permitted.
                 2 => WHEN(
-                        '#digit#>1' =>  { $self->o('server_url').'?logic_name=part_multiply'        # INPUT_PLUS() doesn't work across databases, so we need to list all the parameters
-                                            => { 'a_multiplier' => '#a_multiplier#', 'digit' => '#digit#', 'take_time' => '#take_time#', 'foreign' => 1 },
-                                        },
+                        '#digit#>1' =>  { $self->o('server_url').'?logic_name=part_multiply' => INPUT_PLUS( {'digit' => '#digit#', 'take_time' => '#take_time#'} ) },
                 ),
                 1 => [ 'add_together' ],
             },

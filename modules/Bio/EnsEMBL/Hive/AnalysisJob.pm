@@ -225,34 +225,49 @@ sub died_somewhere {
 ##-----------------[/indicators to the Worker]-------------------------------
 
 
-sub load_parameters {
-    my ($self, $runnable_object) = @_;
-
-    my @params_precedence = ();
-
-    push @params_precedence, $runnable_object->param_defaults if($runnable_object);
-
-    push @params_precedence, $self->hive_pipeline->params_as_hash;
+sub load_stack_and_accu {
+    my ( $self ) = @_;
 
     if(my $job_adaptor = $self->adaptor) {
         my $job_id          = $self->dbID;
         my $accu_adaptor    = $job_adaptor->db->get_AccumulatorAdaptor;
 
-        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
-
-        push @params_precedence, $self->analysis->parameters if($self->analysis);
-
         if($self->param_id_stack or $self->accu_id_stack) {
             my $input_ids_hash      = $job_adaptor->fetch_input_ids_for_job_ids( $self->param_id_stack, 2, 0 );     # input_ids have lower precedence (FOR EACH ID)
             my $accu_hash           = $accu_adaptor->fetch_structures_for_job_ids( $self->accu_id_stack, 2, 1 );     # accus have higher precedence (FOR EACH ID)
             my %input_id_accu_hash  = ( %$input_ids_hash, %$accu_hash );
-            push @params_precedence, @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash }; # take a slice. Mmm...
+            $self->{'_unsubstituted_stack_items'} = [ @input_id_accu_hash{ sort { $a <=> $b } keys %input_id_accu_hash } ];   # take a slice. Mmm...
         }
-    }
 
-    push @params_precedence, $self->input_id, $self->accu_hash;
+        $self->accu_hash( $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id } );
+    }
+}
+
+
+sub load_parameters {
+    my ($self, $runnable_object) = @_;
+
+    $self->load_stack_and_accu();
+
+    my @params_precedence = (
+        $runnable_object ?                      $runnable_object->param_defaults : (),
+                                                $self->hive_pipeline->params_as_hash,
+        $self->analysis ?                       $self->analysis->parameters : (),
+        $self->{'_unsubstituted_stack_items'} ? @{ $self->{'_unsubstituted_stack_items'}} : (),
+                                                $self->input_id,
+                                                $self->accu_hash,
+    );
 
     $self->param_init( @params_precedence );
+}
+
+
+sub flattened_stack_and_accu {      # here we assume $self->load_stack_and_accu() has already been called by $self->load_parameters()
+    my ( $self, $overriding_hash, $extend_param_stack ) = @_;
+
+    return $self->fuse_param_hashes( $extend_param_stack ? (@{$self->{'_unsubstituted_stack_items'}}, $self->input_id) : (),
+                                $self->accu_hash,
+                                $overriding_hash );
 }
 
 
@@ -336,12 +351,12 @@ sub dataflow_output_id {
 
                 foreach my $df_target (@$df_targets) {
 
-                    my $extend_param_stack = $hive_use_param_stack || $df_target->extend_param_stack;   # this boolean is target-specific
+                    my $extend_param_stack  = $hive_use_param_stack || $df_target->extend_param_stack;   # this boolean is df_target-specific
+                    my $default_param_hash  = $extend_param_stack ? {} : $input_id;
 
-                        # by default replicate the parameters of the parent in the child (undef becomes {}+stack or $input_id, depending on INPUT_PLUS)
-                    my @pre_substituted_output_ids = map { $_ // ($extend_param_stack ? {} : $input_id) } @$filtered_output_ids;
+                    my @pre_substituted_output_ids = map { $_ // $default_param_hash } @$filtered_output_ids;
 
-                        # parameter substitution into input_id_template is rule-specific
+                        # parameter substitution into input_id_template is also df_target-specific:
                     my $output_ids_for_this_rule;
                     if(my $template_string = $df_target->input_id_template()) {
                         my $template_hash = destringify($template_string);
@@ -350,7 +365,14 @@ sub dataflow_output_id {
                         $output_ids_for_this_rule = \@pre_substituted_output_ids;
                     }
 
-                    my ($stored_listref) = $df_target->to_analysis->dataflow( $output_ids_for_this_rule, $self, $extend_param_stack, $df_rule );
+                    my $target_object       = $df_target->to_analysis;
+                    my $same_db_dataflow    = $self->analysis->hive_pipeline == $target_object->hive_pipeline;
+
+                    unless($same_db_dataflow) {
+                        @$output_ids_for_this_rule = map { $self->flattened_stack_and_accu( $_, $extend_param_stack ); } @$output_ids_for_this_rule;
+                    }
+
+                    my ($stored_listref) = $target_object->dataflow( $output_ids_for_this_rule, $self, $same_db_dataflow, $extend_param_stack, $df_rule );
 
                     push @output_job_ids, @$stored_listref;
 
