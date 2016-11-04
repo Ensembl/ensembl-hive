@@ -129,4 +129,22 @@ sub store_beekeeper_message {
     $sth->finish();
 }
 
+sub count_analysis_events {
+    my ($self, $analysis_id, $message_class) = @_;
+
+    my $table_name = $self->table_name();
+
+    my $sql;
+    $sql = qq {
+        SELECT count(*) FROM $table_name
+        JOIN role USING (role_id)
+        WHERE role.analysis_id = ?
+        AND $table_name.message_class = ?
+    };
+    my $sth = $self->prepare($sql);
+    $sth->execute($analysis_id, $message_class);
+    my @row = $sth->fetchrow_array();
+    return $row[0];
+}
+
 1;

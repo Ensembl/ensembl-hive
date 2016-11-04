@@ -123,6 +123,7 @@ sub update_stats_and_monitor {
   $sql .= ",avg_input_msec_per_job=" . $stats->avg_input_msec_per_job();
   $sql .= ",avg_run_msec_per_job=" . $stats->avg_run_msec_per_job();
   $sql .= ",avg_output_msec_per_job=" . $stats->avg_output_msec_per_job();
+  $sql .= ",is_excluded=" . $stats->is_excluded();
 
   unless( $stats->hive_pipeline->hive_use_triggers() ) {
       $sql .= ",total_job_count=" . $stats->total_job_count();

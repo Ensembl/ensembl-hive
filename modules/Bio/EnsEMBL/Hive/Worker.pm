@@ -90,6 +90,10 @@ sub refresh_tolerance_seconds {
     return 20;
 }
 
+sub worker_error_threshold {
+    return 2;
+}
+
 
 
 =head1 AUTOLOADED
@@ -643,15 +647,21 @@ sub specialize_and_compile_wrapper {
 
             1;
         } or do {
-            my $msg = $@;
-            $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
-            $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 'WORKER_ERROR' );
-
-            $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+            my $last_err = $@;
+            $self->handle_compilation_failure($last_err);
         };
     }
 }
 
+sub handle_compilation_failure {
+    my ($self, $msg) = @_;
+    $self->worker_say( "runnable '".$self->current_role->analysis->module."' compilation failed :\t$msg" );
+    $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, 'WORKER_ERROR' );
+
+    $self->cause_of_death('SEE_MSG') unless($self->cause_of_death());   # some specific causes could have been set prior to die "...";
+
+    $self->check_analysis_for_exclusion();
+}
 
 sub run_one_batch {
     my ($self, $jobs, $is_special_batch) = @_;
@@ -838,5 +848,18 @@ sub stop_job_output_redirection {
     }
 }
 
+sub check_analysis_for_exclusion {
+    my $self = shift(@_);
+    my $worker_errors_this_analysis =
+        $self->adaptor->db->get_LogMessageAdaptor()->count_analysis_events(
+            $self->current_role->analysis_id,
+            'WORKER_ERROR');
+    warn "worker errors for this analysis are $worker_errors_this_analysis\n";
+    if ($worker_errors_this_analysis > $self->worker_error_threshold) {
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "about to set analysis to excluded", 'INFO' );
+        $self->current_role->analysis->stats->is_excluded(1);
+        $self->adaptor->db->get_AnalysisStatsAdaptor->update_stats_and_monitor($self->current_role->analysis->stats);
+    }
+}
 
 1;
