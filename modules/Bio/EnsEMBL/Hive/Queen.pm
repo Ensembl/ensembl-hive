@@ -679,7 +679,7 @@ sub check_nothing_to_run_but_semaphored {   # make sure it is run after a recent
 sub print_status_and_return_reasons_to_exit {
     my ($self, $list_of_analyses, $debug) = @_;
 
-    my ($total_done_jobs, $total_failed_jobs, $total_jobs, $cpumsec_to_do) = (0) x 4;
+    my ($total_done_jobs, $total_failed_jobs, $total_jobs, $total_excluded_jobs, $cpumsec_to_do) = (0) x 5;
     my %skipped_analyses = ('EMPTY' => [], 'DONE' => []);
     my @analyses_to_display;
     my @reasons_to_exit;
@@ -687,6 +687,7 @@ sub print_status_and_return_reasons_to_exit {
     foreach my $analysis (sort {$a->dbID <=> $b->dbID} @$list_of_analyses) {
         my $stats               = $analysis->stats;
         my $failed_job_count    = $stats->failed_job_count;
+        my $is_excluded         = $stats->is_excluded;
 
         if ($debug or !$skipped_analyses{$stats->status}) {
             push @analyses_to_display, $analysis;
@@ -712,13 +713,17 @@ sub print_status_and_return_reasons_to_exit {
                                      'exit_status' => $exit_status});
         }
 
+        if ($is_excluded) {
+            my $excluded_job_count = $stats->total_job_count - $stats->done_job_count - $failed_job_count;
+            $total_excluded_jobs += $excluded_job_count;
+        }
         $total_done_jobs    += $stats->done_job_count;
         $total_failed_jobs  += $failed_job_count;
         $total_jobs         += $stats->total_job_count;
         $cpumsec_to_do      += $stats->ready_job_count * $stats->avg_msec_per_job;
     }
 
-    my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
+    my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs - $total_excluded_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS
     my $cpuhrs_to_do            = $cpumsec_to_do / (1000.0*60*60);
     my $percentage_completed    = $total_jobs
                                     ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
