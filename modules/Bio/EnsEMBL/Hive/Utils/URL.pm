@@ -122,6 +122,8 @@ sub parse {
                     if($dbname and $dbname=~m{^([/~\w\-\.]*)/analysis$}) {
                         $exception_from_NEW_format = 1;
                     }
+                } elsif($query_params->{'job_id'}) {
+                    $object_type = 'AnalysisJob';
                 } elsif($query_params->{'accu_name'}) { # we don't require $query_params->{'accu_address'} to support scalar accu
                     $object_type = 'Accumulator';
                 } elsif($query_params->{'table_name'}) {  # NB: the order is important here, in case table_name is reset for non-NakedTables

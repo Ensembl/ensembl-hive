@@ -43,7 +43,7 @@ sub collection_of {
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
 
-        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') ) {
+        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') and ($type ne 'AnalysisJob') ) {
             my $adaptor = $hive_dba->get_adaptor( $type );
             my $all_objects = $adaptor->fetch_all();
             if(@$all_objects and UNIVERSAL::can($all_objects->[0], 'hive_pipeline') ) {
@@ -75,6 +75,16 @@ sub find_by_query {
                     %$query_params,
                     $self->hive_dba ? ('adaptor' => $self->hive_dba->get_adaptor($object_type, @specific_adaptor_params)) : (),
                 );
+            }
+        } elsif($object_type eq 'AnalysisJob') {
+            my $dbID    = $query_params->{'job_id'};
+            my $coll    = $self->collection_of($object_type);
+            unless($object = $coll->find_one_by( 'dbID' => $dbID )) {
+
+                my $adaptor = $self->hive_dba->get_adaptor( $object_type );
+                if( $object = $adaptor->fetch_by_dbID( $dbID ) ) {
+                    $coll->add( $object );
+                }
             }
         } else {
             $object = $self->collection_of($object_type)->find_one_by( %$query_params );
