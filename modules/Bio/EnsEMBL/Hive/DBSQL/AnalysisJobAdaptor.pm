@@ -204,7 +204,6 @@ sub store_a_semaphored_group_of_jobs {
         $emitting_job_id = $emitting_job->dbID;
     }
 
-
     my ($funnel_job_id) = @{ $self->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
 
     unless($funnel_job_id) {    # apparently the funnel_job has been created previously, trying to leech to it:
@@ -227,7 +226,7 @@ sub store_a_semaphored_group_of_jobs {
     }
 
     foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
-        $fan_job->semaphored_job_id( $funnel_job_id );
+        $fan_job->semaphored_job( $funnel_job );
     }
 
     my (@fan_job_ids) = @{ $self->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };

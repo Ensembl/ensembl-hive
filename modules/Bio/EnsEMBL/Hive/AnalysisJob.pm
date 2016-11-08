@@ -55,6 +55,8 @@ use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() 
 
     analysis_id / analysis
 
+    semaphored_job_id / semaphored_job
+
 =cut
 
 
@@ -129,11 +131,6 @@ sub semaphore_count {
     return $self->{'_semaphore_count'};
 }
 
-sub semaphored_job_id {
-    my $self = shift;
-    $self->{'_semaphored_job_id'} = shift if(@_);
-    return $self->{'_semaphored_job_id'};
-}
 
 sub set_and_update_status {
     my ($self, $status ) = @_;
