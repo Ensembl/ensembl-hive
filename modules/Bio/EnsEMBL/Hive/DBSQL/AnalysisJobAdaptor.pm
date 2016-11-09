@@ -113,9 +113,11 @@ sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered b
 sub store_jobs_and_adjust_counters {
     my ($self, $jobs, $push_new_semaphore, $emitting_job_id) = @_;
 
-        # NB: our use patterns assume all jobs from the same storing batch share the same semaphored_job_id:
-    my $semaphored_job_id                   = scalar(@$jobs) && $jobs->[0]->semaphored_job_id();
-    my $need_to_increase_semaphore_count    = ($semaphored_job_id && !$push_new_semaphore);
+        # NB: our use patterns assume all jobs from the same storing batch share the same semaphored_job:
+    my $semaphored_job                      = scalar(@$jobs) && $jobs->[0]->semaphored_job;
+    my $semaphored_job_id                   = $semaphored_job && $semaphored_job->dbID;    # NB: it is local to its own database
+    my $semaphored_job_adaptor              = $semaphored_job && $semaphored_job->adaptor;
+    my $need_to_increase_semaphore_count    = $semaphored_job && !$push_new_semaphore;
 
     my @output_job_ids              = ();
     my $failed_to_store_local_jobs  = 0;
@@ -128,18 +130,23 @@ sub store_jobs_and_adjust_counters {
         my $local_job   = $prev_adaptor eq $job_adaptor;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
-        if($need_to_increase_semaphore_count and $local_job and ($job_adaptor->dbc->driver ne 'sqlite')) {
-            $job_adaptor->dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" );
+        if($need_to_increase_semaphore_count and ($semaphored_job_adaptor->dbc->driver ne 'sqlite')) {
+            $semaphored_job_adaptor->dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" );
         }
 
-        $job->prev_job( undef ) unless( $local_job );   # break the link with the previous job if dataflowing across databases (current schema doesn't support URLs for job_ids)
+        if( $job_adaptor ne $prev_adaptor ) {   # break the link with the previous job if dataflowing across databases
+            $job->prev_job( undef );
+        }
+        if( $semaphored_job and ($job_adaptor ne $semaphored_job_adaptor) ) {
+            $job->semaphored_job( undef );      # break the link with the semaphore_job if it happens to be across databases
+        }
 
         my ($job, $stored_this_time) = $job_adaptor->store( $job );
 
         if($stored_this_time) {
-            if($need_to_increase_semaphore_count and $local_job) {  # if we are not creating a new semaphore (where dependent jobs have already been counted),
-                                                                    # but rather propagating an existing one (same or other level), we have to up-adjust the counter
-                $self->increase_semaphore_count_for_jobid( $semaphored_job_id );
+            if($need_to_increase_semaphore_count) {     # if we are not creating a new semaphore (where dependent jobs have already been counted),
+                                                        # but rather propagating an existing one (same or other level), we have to up-adjust the counter
+                $semaphored_job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id );
             }
 
             unless($job_adaptor->db->hive_pipeline->hive_use_triggers()) {
@@ -157,11 +164,13 @@ sub store_jobs_and_adjust_counters {
                 );
             }
 
-            push @output_job_ids, $job->dbID();
+            push @output_job_ids, $job->dbID();     # FIXME: this ID may not make much cross-db sense
 
-        } elsif( $local_job ) {
-            my $msg = "JobAdaptor failed to store the local Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision";
-            if ($emitting_job_id) {
+        } else {
+            my $msg = "JobAdaptor failed to store the "
+                     . ($local_job ? 'local' : 'foreign')
+                     . " Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision";
+            if ($local_job && $emitting_job_id) {
                 $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, $msg, 0);
             } else {
                 $self->db->get_LogMessageAdaptor->store_hive_message($msg, 0);
@@ -173,7 +182,7 @@ sub store_jobs_and_adjust_counters {
 
         # adjust semaphore_count for jobs that failed to be stored (but have been pre-counted during funnel's creation):
     if($push_new_semaphore and $failed_to_store_local_jobs) {
-        $self->decrease_semaphore_count_for_jobid( $semaphored_job_id, $failed_to_store_local_jobs );
+        $semaphored_job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id, $failed_to_store_local_jobs );
     }
 
     return \@output_job_ids;
@@ -682,8 +691,8 @@ sub gc_dataflow {
         # PASSED_ON jobs are included in done_job_count
     $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'done_job_count', 1, $analysis->dbID );
 
-    if(my $semaphored_job_id = $job->semaphored_job_id) {
-        $self->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+    if(my $semaphored_job = $job->semaphored_job) {
+        $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job->dbID );    # step-unblock the semaphore
     }
     
     return 1;

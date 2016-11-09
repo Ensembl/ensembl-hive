@@ -336,13 +336,12 @@ sub dataflow {
     my $param_id_stack      = '';
     my $accu_id_stack       = '';
     my $emitting_job_id     = undef;
-    my $semaphored_job_id   = undef;
+    my $semaphored_job      = $emitting_job->semaphored_job;
 
     if($same_db_dataflow) {
         $param_id_stack     = $emitting_job->param_id_stack;
         $accu_id_stack      = $emitting_job->accu_id_stack;
         $emitting_job_id    = $emitting_job->dbID;
-        $semaphored_job_id  = $emitting_job->semaphored_job_id();
 
         if($push_emitting_job_on_stack) {
             my $input_id        = $emitting_job->input_id;
@@ -373,7 +372,7 @@ sub dataflow {
         push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                 @$common_params,
                                                 'input_id'          => $_,
-                                                # semaphored_job_id  => to be set when the $funnel_job has been stored
+                                                # semaphored_job  => to be set when the $funnel_job has been stored
                                             ) } @$output_ids_for_this_rule;
 
     } else {    # either a semaphored funnel or a non-semaphored dataflow:
@@ -401,7 +400,7 @@ sub dataflow {
             my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                 @$common_params,
                                                 'input_id'          => $_,
-                                                'semaphored_job_id' => $semaphored_job_id,  # propagate parent's semaphore if any
+                                                'semaphored_job'    => $semaphored_job,  # propagate parent's semaphore if any
             ) } @$output_ids_for_this_rule;
 
             push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0, $emitting_job_id) };

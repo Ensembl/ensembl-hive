@@ -728,11 +728,12 @@ sub run_one_batch {
             $jobs_done_here++;
             $job->set_and_update_status('DONE');
 
-            if(my $semaphored_job_id = $job->semaphored_job_id) {
-                my $dbc = $self->adaptor->db->dbc;
+            if(my $semaphored_job = $job->semaphored_job) {
+                my $dbc                 = $semaphored_job->adaptor->db->dbc;
+                my $semaphored_job_id   = $semaphored_job->dbID;
                 $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($dbc->driver ne 'sqlite');
 
-                $job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id );    # step-unblock the semaphore
+                $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id ); # step-unblock the semaphore
             }
 
             if($job->lethal_for_worker) {

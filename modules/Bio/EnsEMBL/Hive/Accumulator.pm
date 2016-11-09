@@ -101,30 +101,38 @@ sub display_name {
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    my $sending_job_id      = $emitting_job->dbID;
-    my $receiving_job_id    = $emitting_job->semaphored_job_id || die "No semaphored job, cannot perform accumulated dataflow";
+    if(my $receiving_job = $emitting_job->semaphored_job) {
 
-    my $accu_name           = $self->accu_name;
-    my $accu_address        = $self->accu_address;
-    my $accu_input_variable = $self->accu_input_variable;
+        my $receiving_job_id    = $receiving_job->dbID;
+        my $accu_adaptor        = $receiving_job->adaptor->db->get_AccumulatorAdaptor;
+        my $local_accu          = $receiving_job->adaptor == $emitting_job->adaptor;
+        my $sending_job_id      = $local_accu ? $emitting_job->dbID : undef;
 
-    my @rows = ();
+        my $accu_name           = $self->accu_name;
+        my $accu_address        = $self->accu_address;
+        my $accu_input_variable = $self->accu_input_variable;
 
-    foreach my $output_id (@$output_ids) {
+        my @rows = ();
 
-        my $key_signature = $accu_address;
-        $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
+        foreach my $output_id (@$output_ids) {
 
-        push @rows, {
-            'sending_job_id'    => $sending_job_id,
-            'receiving_job_id'  => $receiving_job_id,
-            'struct_name'       => $accu_name,
-            'key_signature'     => $key_signature,
-            'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
-        };
+            my $key_signature = $accu_address;
+            $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
+
+            push @rows, {
+                'sending_job_id'    => $sending_job_id,
+                'receiving_job_id'  => $receiving_job_id,
+                'struct_name'       => $accu_name,
+                'key_signature'     => $key_signature,
+                'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
+            };
+        }
+
+        $accu_adaptor->store( \@rows );
+
+    } else {
+        die "No semaphored job, cannot perform accumulated dataflow";
     }
-
-    $self->adaptor->store( \@rows );
 }
 
 
