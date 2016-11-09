@@ -444,6 +444,7 @@ sub add_objects_from_config {
     my $amh = Bio::EnsEMBL::Hive::Valley->new()->available_meadow_hash();
 
     my %seen_logic_name = ();
+    my %analyses_by_logic_name = map {$_->logic_name => $_} $pipeline->collection_of('Analysis')->list();
 
     warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
@@ -472,7 +473,7 @@ sub add_objects_from_config {
             die "(-rc_id => $rc_id) syntax is deprecated, please use (-rc_name => 'your_resource_class_name')";
         }
 
-        my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);  # the analysis with this logic_name may have already been stored in the db
+        my $analysis = $analyses_by_logic_name{$logic_name};  # the analysis with this logic_name may have already been stored in the db
         my $stats;
         if( $analysis ) {
 
@@ -525,6 +526,9 @@ sub add_objects_from_config {
             );
         }
 
+            # Keep a link to the analysis object to speed up the creation of control and dataflow rules
+        $analyses_by_logic_name{$logic_name} = $analysis;
+
             # now create the corresponding jobs (if there are any):
         if($input_ids) {
             push @{ $analysis->jobs_collection }, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
@@ -546,7 +550,7 @@ sub add_objects_from_config {
         my ($logic_name, $wait_for, $flow_into)
              = @{$aha}{qw(-logic_name -wait_for -flow_into)};   # slicing a hash reference
 
-        my $analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $logic_name);
+        my $analysis = $analyses_by_logic_name{$logic_name};
 
         if($wait_for) {
             Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($pipeline, $analysis, $wait_for);
