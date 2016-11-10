@@ -42,6 +42,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
+use Bio::EnsEMBL::Hive::TheApiary;
 
 use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() method
             'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
@@ -256,6 +257,10 @@ sub load_parameters {
     );
 
     $self->param_init( @params_precedence );
+
+    if(my $semaphored_job_url = $self->_param_silent('HIVE_semaphored_job_url')) {
+        $self->semaphored_job( Bio::EnsEMBL::Hive::TheApiary->find_by_url( $semaphored_job_url ) );
+    }
 }
 
 
@@ -348,8 +353,8 @@ sub dataflow_output_id {
 
                 foreach my $df_target (@$df_targets) {
 
-                    my $extend_param_stack  = $hive_use_param_stack || $df_target->extend_param_stack;   # this boolean is df_target-specific
-                    my $default_param_hash  = $extend_param_stack ? {} : $input_id;
+                    my $extend_param_stack  = $hive_use_param_stack || $df_target->extend_param_stack || !$self->prev_job;  # this boolean is df_target-specific
+                    my $default_param_hash  = $extend_param_stack ? {} : $input_id;                                         # this is what undefs will turn into
 
                     my @pre_substituted_output_ids = map { $_ // $default_param_hash } @$filtered_output_ids;
 

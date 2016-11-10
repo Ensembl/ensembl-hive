@@ -47,7 +47,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
@@ -134,11 +134,17 @@ sub store_jobs_and_adjust_counters {
             $semaphored_job_adaptor->dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" );
         }
 
-        if( $job_adaptor ne $prev_adaptor ) {   # break the link with the previous job if dataflowing across databases
-            $job->prev_job( undef );
-        }
         if( $semaphored_job and ($job_adaptor ne $semaphored_job_adaptor) ) {
-            $job->semaphored_job( undef );      # break the link with the semaphore_job if it happens to be across databases
+            $job->semaphored_job_id( undef );       # job_ids are local, so for remote jobs they have to be cleaned up before storing
+
+            if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
+                my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
+                $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->url( $job_adaptor->db );
+                $job->input_id( $input_id_hash );
+            }
+        }
+        if( $job_adaptor ne $prev_adaptor ) {
+            $job->prev_job_id( undef );             # job_ids are local, so for remote jobs they have to be cleaned up before storing
         }
 
         my ($job, $stored_this_time) = $job_adaptor->store( $job );
