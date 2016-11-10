@@ -44,7 +44,7 @@ my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 
 foreach my $long_mult_version ( @pipeline_cfgs ) {
 
-    # These have to be tested in a special way. See client_server.t
+    # These have to be tested in a special way. See client_server_wf.t
     next if $long_mult_version =~ /Server/;
     next if $long_mult_version =~ /Client/;
 
