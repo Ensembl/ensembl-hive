@@ -336,6 +336,7 @@ my %analysis_status_2_meta_status = (
     'LOADING'       => 'READY',
     'SYNCHING'      => 'READY',
     'ALL_CLAIMED'   => 'BLOCKED',
+    'EXCLUDED'      => 'FAILED',
     'WORKING'       => 'RUNNING',
 );
 
@@ -404,12 +405,16 @@ sub toString {
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
     my $max_logic_name_length                           = shift @_ || length($analysis->logic_name);
+    my $status_text                                     = $self->status;
+    if ($self->is_excluded) {
+        $status_text = 'EXCLUDED';
+    }
 
     my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
         $analysis->logic_name,
         $self->analysis_id // 0,
 
-        _text_with_status_color(11, $can_do_colour, $self->status, $analysis_status_2_meta_status{$self->status} || $self->status),
+        _text_with_status_color(11, $can_do_colour, $status_text, $analysis_status_2_meta_status{$status_text} || $status_text),
 
         $breakout_label,
 

@@ -716,6 +716,7 @@ sub print_status_and_return_reasons_to_exit {
         if ($is_excluded) {
             my $excluded_job_count = $stats->total_job_count - $stats->done_job_count - $failed_job_count;
             $total_excluded_jobs += $excluded_job_count;
+            push @{$skipped_analyses{'EXCLUDED'}}, $analysis;
         }
         $total_done_jobs    += $stats->done_job_count;
         $total_failed_jobs  += $failed_job_count;
@@ -740,10 +741,14 @@ sub print_status_and_return_reasons_to_exit {
     if (@{$skipped_analyses{'DONE'}}) {
         printf("%d analyses not shown because all their jobs are done.\n", scalar(@{$skipped_analyses{'DONE'}}));
     }
-    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed = %d total)\n",
-           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_jobs);
+    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed + %d excluded = %d total)\n",
+           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_excluded_jobs, $total_jobs);
 
     unless( $total_jobs_to_do ) {
+        if ($total_excluded_jobs > 0) {
+            push (@reasons_to_exit, {'message' => "### Some analyses are excluded ###",
+                                     'exit_status' => 'NO_WORK'});
+        }
         push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
                                  'exit_status' => 'NO_WORK'});
     }

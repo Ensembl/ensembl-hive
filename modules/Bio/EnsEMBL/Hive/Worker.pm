@@ -854,11 +854,12 @@ sub check_analysis_for_exclusion {
         $self->adaptor->db->get_LogMessageAdaptor()->count_analysis_events(
             $self->current_role->analysis_id,
             'WORKER_ERROR');
-    warn "worker errors for this analysis are $worker_errors_this_analysis\n";
+#    warn "There are $worker_errors_this_analysis worker errors for this analysis\n";
     if ($worker_errors_this_analysis > $self->worker_error_threshold) {
-        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "about to set analysis to excluded", 'INFO' );
+        my $current_logic_name = $self->current_role->analysis->logic_name;
+        $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, "setting analysis '$current_logic_name' to excluded", 'INFO' );
         $self->current_role->analysis->stats->is_excluded(1);
-        $self->adaptor->db->get_AnalysisStatsAdaptor->update_stats_and_monitor($self->current_role->analysis->stats);
+        $self->adaptor->db->get_AnalysisStatsAdaptor->update_is_excluded($self->current_role->analysis->stats);
     }
 }
 

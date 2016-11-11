@@ -144,6 +144,7 @@ sub count_analysis_events {
     my $sth = $self->prepare($sql);
     $sth->execute($analysis_id, $message_class);
     my @row = $sth->fetchrow_array();
+    $sth->finish();
     return $row[0];
 }
 

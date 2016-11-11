@@ -656,6 +656,23 @@ sub apply_tweaks {
                         $analysis->resource_class( $resource_class );
                     }
 
+                } elsif( $attrib_name eq 'is_excluded' ) {
+                    my $analysis_stats = $analysis->stats();
+                    if($operator eq '?') {
+                        print "Tweak.Show    \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
+                    } elsif($operator eq '#') {
+                        print "Tweak.Error   \tDeleting of excluded status is not supported\n";
+                    } else {
+                        if(!($new_value =~ /^[01]$/)) {
+                            print "Tweak.Error    \tis_excluded can only be 0 (no) or 1 (yes)\n";
+                        } elsif ($new_value == $analysis_stats->is_excluded()) {
+                            print "Tweak.Info    \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
+                        } else {
+                           print "Tweak.Changing\tanalysis[$analysis_name].is_excluded ::\t" .
+                               $analysis_stats->is_excluded() . " --> $new_value_str\n";
+                           $analysis_stats->is_excluded($new_value);
+                        }
+                    }
                 } elsif($analysis->can($attrib_name)) {
                     my $old_value = stringify($analysis->$attrib_name());
 
