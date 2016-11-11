@@ -53,6 +53,8 @@ sub param_defaults {
         'mode'          => 'overwrite',
         'where'         => undef,
         'filter_cmd'    => undef,
+        'renamed_table' => undef,                                       # optional argument - lets you rename the table
+        'rename_filter' => 'sed "s/\`#table#\`/\`#renamed_table#\`/"',  # NB: only change this if your data contains backticked table name AND you know how to fix it
 
         # Needed by SystemCmd
         'use_bash_pipefail'         => 1,
@@ -106,10 +108,13 @@ sub fetch_input {
         $self->_assert_same_table_schema($src_dbc, $dest_dbc, $table);
     }
 
-    my $filter_cmd  = $self->param('filter_cmd');
-
     my $mode_options = { 'overwrite' => [], 'topup' => [qw(--no-create-info --insert-ignore)], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
     die "Mode '$mode' not recognized. Should be 'overwrite', 'topup' or 'insertignore'\n" unless $mode_options;
+
+    my $filter_cmd      = $self->param('filter_cmd');
+
+    my $renamed_table   = $self->param('renamed_table');
+    my $rename_filter   = $renamed_table && $self->param('rename_filter').' | ';
 
     # Must be joined because of the pipe
     my $cmd = join(' ',
@@ -117,6 +122,7 @@ sub fetch_input {
                 $table,
                 (defined($where) ? "--where '$where' " : ''),
                 '|',
+                ($rename_filter || ''),
                 ($filter_cmd ? "$filter_cmd | " : ''),
                 @{$dest_dbc->to_cmd(undef, undef, undef, undef, 1)}
             );
@@ -140,10 +146,11 @@ sub write_output {
 
     my $mode        = $self->param('mode');
     my $table       = $self->param('table');
+    my $ren_table   = $self->param('renamed_table') || $table;
     my $where       = $self->param('where');
 
     my $src_before  = $self->param('src_before');
-    my $dest_after  = $self->get_row_count($dest_dbc, $table, $where);
+    my $dest_after  = $self->get_row_count($dest_dbc, $ren_table, $where);
 
     if($mode eq 'overwrite') {
 
@@ -155,14 +162,14 @@ sub write_output {
     } elsif ($mode eq 'topup') {
 
         if($dest_after >= $src_before) {
-            $self->warning("Cannot check success in this mode, but the number of '$table' rows in target is indeed higher than $src_before ($dest_after)");
+            $self->warning("Cannot check success in this mode, but the number of '$ren_table' rows in target is indeed higher than $src_before ($dest_after)");
         } else {
             die "Could not copy '$table' rows: $src_before rows from source copied into $dest_after rows in target\n";
         }
 
     } else {
 
-        $self->warning("Cannot check success/failure in this mode, but the number of '$table' rows in target increased by ".($dest_after-$src_before));
+        $self->warning("Cannot check success/failure in this mode, but the number of '$ren_table' rows in target increased by ".($dest_after-$src_before));
     }
 }
 
