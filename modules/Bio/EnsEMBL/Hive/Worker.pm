@@ -729,9 +729,9 @@ sub run_one_batch {
             $job->set_and_update_status('DONE');
 
             if(my $semaphored_job = $job->semaphored_job) {
-                my $dbc                 = $semaphored_job->adaptor->db->dbc;
                 my $semaphored_job_id   = $semaphored_job->dbID;
-                $dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" ) if($dbc->driver ne 'sqlite');
+
+                $semaphored_job->adaptor->prelock_semaphore_for_update( $semaphored_job_id );
 
                 $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id ); # step-unblock the semaphore
             }

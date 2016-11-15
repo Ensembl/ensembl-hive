@@ -130,8 +130,8 @@ sub store_jobs_and_adjust_counters {
         my $local_job   = $prev_adaptor eq $job_adaptor;
 
             # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
-        if($need_to_increase_semaphore_count and ($semaphored_job_adaptor->dbc->driver ne 'sqlite')) {
-            $semaphored_job_adaptor->dbc->do( "SELECT 1 FROM job WHERE job_id=$semaphored_job_id FOR UPDATE" );
+        if($need_to_increase_semaphore_count) {
+            $semaphored_job_adaptor->prelock_semaphore_for_update( $semaphored_job_id );
         }
 
         if( $semaphored_job and ($job_adaptor ne $semaphored_job_adaptor) ) {
@@ -376,6 +376,18 @@ sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
     $self->dbc->protected_prepare_execute( [ $sql, $inc, $jobid ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'increasing semaphore_count'.$after, 0 ); }
     );
+}
+
+
+sub prelock_semaphore_for_update {
+    my $self    = shift @_;
+    my $job_id  = shift @_ or return;
+
+    if(my $dbc = $self->dbc) {
+        if($dbc->driver ne 'sqlite') {
+            $dbc->do( "SELECT 1 FROM job WHERE job_id=$job_id FOR UPDATE" );
+        }
+    }
 }
 
 
