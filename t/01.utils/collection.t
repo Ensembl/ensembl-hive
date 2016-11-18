@@ -52,8 +52,10 @@ is(@$ref, $i, 'Same size - there can be only 1 fox');
 $collection->add_once('human');
 is(@$ref, ++$i, 'Addition - Someone comes in');
 
-$collection->forget('fox');
+$collection->forget_and_mark_for_deletion('fox');
 is(@$ref, --$i, 'one less element - the fox is gone: we\'re safe !');
+
+ok($collection->dark_collection->present('fox'));
 
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new([{ foo => undef}]);
 $collection->add({ foo => undef });
