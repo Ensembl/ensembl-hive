@@ -172,11 +172,18 @@ sub _cluster_name {
 }
 
 
+our %_midpoint_ref_to_temp_id;
+
 sub _midpoint_name {
     my ($df_rule) = @_;
 
-    if($df_rule and scalar($df_rule)=~/\((\w+)\)/) {     # a unique id of a df_rule assuming dbIDs are not available
-        return 'dfr_'.$1.'_mp';
+    if (UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule')) {
+        my $dfr_id = $df_rule->dbID();
+        unless ($dfr_id or ($dfr_id = $_midpoint_ref_to_temp_id{scalar($df_rule)})) {
+            $dfr_id = 'p'.(scalar(keys %_midpoint_ref_to_temp_id) + 1);   # a unique id of a df_rule when dbIDs are not available;
+            $_midpoint_ref_to_temp_id{scalar($df_rule)} = $dfr_id;
+        }
+        return 'dfr_'.$dfr_id.'_mp';
     } else {
         throw("Wrong argument to _midpoint_name");
     }
