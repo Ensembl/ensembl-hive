@@ -133,7 +133,23 @@ is(@$mix, 1, 'find_all_by_pattern - combined patterns (overlap)');
 $mix = $collection->find_all_by_pattern( 'colour==yellow' );
 is(@$mix, 2, 'find_all_by_pattern - selecting by a fields equality');
 
+$mix = $collection->find_all_by_pattern( 'size!=20' );
+is(@$mix, 6, 'find_all_by_pattern - difference');
+
+$mix = $collection->find_all_by_pattern( 'dbID>=5' );
+is(@$mix, 3, 'find_all_by_pattern - greater or equal');
+
+$mix = $collection->find_all_by_pattern( 'dbID<=4' );
+is(@$mix, 4, 'find_all_by_pattern - lower or equal');
+
+$mix = $collection->find_all_by_pattern( 'size>10' );
+is(@$mix, 2, 'find_all_by_pattern - greater than');
+
+$mix = $collection->find_all_by_pattern( 'size<5' );
+is(@$mix, 3, 'find_all_by_pattern - greater than');
+
 $mix = $collection->find_all_by_pattern( 'size<10,colour==orange' );
 is(@$mix, 5, 'find_all_by_pattern - selecting by a fields inequality');
+
 
 done_testing();
