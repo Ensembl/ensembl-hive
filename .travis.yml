@@ -17,6 +17,7 @@ addons:
     - python3
     - oracle-java8-installer
     - ant
+    - graphviz
 
 before_install:
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
