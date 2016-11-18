@@ -14,6 +14,7 @@ on 'test' => sub {
 	requires 'Test::Warn';
 	requires 'Test::Warnings';
 	requires 'Test::File::Contents';
+	requires 'GraphViz';
 };
 
 recommends 'Getopt::ArgvFile';
