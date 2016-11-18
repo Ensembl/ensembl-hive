@@ -42,6 +42,7 @@ sub main {
 
         'f|format=s'            => \$self->{'format'},
         'o|out|output=s'        => \$self->{'output'},
+        'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
 
         'h|help'                => \$self->{'help'},
     );
@@ -88,6 +89,10 @@ sub main {
             $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
         );
         my $graphviz = $graph->build();
+
+        if($self->{'dot_input'}) {
+            $graphviz->dot_input_filename( $self->{'dot_input'} );
+        }
 
         my $call = 'as_'.$self->{'format'};
 

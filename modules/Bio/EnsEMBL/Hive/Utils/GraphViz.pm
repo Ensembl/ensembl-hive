@@ -111,6 +111,15 @@ sub other_pipeline_bgcolour {
 }
 
 
+sub dot_input_filename {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_dot_input_filename} = shift @_;
+    }
+    return $self->{_dot_input_filename};
+}
+
+
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
@@ -171,8 +180,11 @@ sub _as_debug {
         #
     $text=~s/\bcomment="new_shape:(\w+)",(.*shape=)"record"/$2"$1"/mg;
 
-        # uncomment the following line to see the final input to dot
-#    print $text;
+    if(my $dot_input_filename = $self->dot_input_filename) {
+        open(my $dot_input, ">", $dot_input_filename) or die "cannot open > $dot_input_filename : $!";
+        print $dot_input $text;
+        close $dot_input;
+    }
 
     return $text;
 }
