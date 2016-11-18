@@ -279,7 +279,9 @@ sub get_grouped_dataflow_rules {
                                 # so we end up packing it as the first element of the structure,
                                 # and only returning the listref of the values.
 
-    foreach my $dfr ( sort { ($b->funnel_dataflow_rule // 0) <=> ($a->funnel_dataflow_rule // 0) } @{$self->dataflow_rules_collection}) {
+    my $all_dataflow_rules      = $self->dataflow_rules_collection;
+
+    foreach my $dfr ((grep {$_->funnel_dataflow_rule} @$all_dataflow_rules), (grep {!$_->funnel_dataflow_rule} @$all_dataflow_rules)) {
 
         my $df_targets = $dfr->get_my_targets;
 
