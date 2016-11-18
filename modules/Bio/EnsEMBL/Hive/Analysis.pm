@@ -36,6 +36,7 @@
 
 package Bio::EnsEMBL::Hive::Analysis;
 
+use sort 'stable';
 use strict;
 use warnings;
 
@@ -278,6 +279,7 @@ sub get_grouped_dataflow_rules {
     my %set_of_groups = ();     # Note that the key (being a stringified reference) is unusable,
                                 # so we end up packing it as the first element of the structure,
                                 # and only returning the listref of the values.
+    my @ordered_keys  = ();     # Perl is missing an "Ordered Hash" structure, so we need to maintain the insertion order ourselves
 
     my $all_dataflow_rules      = $self->dataflow_rules_collection;
 
@@ -293,6 +295,7 @@ sub get_grouped_dataflow_rules {
                         throw("Each conditional branch of a semaphored funnel rule must point at an Analysis");
                     }
                 }
+                push @ordered_keys, $funnel_dfr;
                 $set_of_groups{$funnel_dfr} = [$funnel_dfr, [], $funnel_targets];
             }
             my $this_group = $set_of_groups{$funnel_dfr};
@@ -303,11 +306,14 @@ sub get_grouped_dataflow_rules {
                 }
             }
             push @{$this_group->[1]}, $dfr;
-        } else {
-            $set_of_groups{$dfr} ||= [$dfr, [], $df_targets];
+
+        } elsif (!$set_of_groups{$dfr}) {
+            push @ordered_keys, $dfr;
+            $set_of_groups{$dfr} = [$dfr, [], $df_targets];
         }
     }
-    return [ sort { scalar(@{$a->[1]}) <=> scalar(@{$b->[1]}) or $a->[0]->branch_code <=> $b->[0]->branch_code } values %set_of_groups ];
+    my @sorted_rules = sort { scalar(@{$set_of_groups{$a}->[1]}) <=> scalar(@{$set_of_groups{$b}->[1]}) or $set_of_groups{$a}->[0]->branch_code <=> $set_of_groups{$b}->[0]->branch_code } @ordered_keys;
+    return [map {$set_of_groups{$_}} @sorted_rules];
 }
 
 
