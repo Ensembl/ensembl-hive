@@ -1,0 +1,33 @@
+────────────────────[ (unstored long_mult_wf) ]────────────────────
+
+take_b_apart
+ │
+ │
+ │#1
+ │
+ └─▻ add_together
+ │   │
+ │   │
+ │   │#1
+ │   │
+ │   V
+ │  [[ final_result ]]
+ │
+ │
+ │#2
+ │
+ │ WHEN #digit#>1
+ └─▻ part_multiply
+     │
+     │
+     │#1
+     │
+     V
+    {"partial_product" => "#product#"}
+     │
+     V
+    [[ intermediate_result ]]
+
+----------------------------------------------------------
+   Did you forget to specify the -output flowchart.png ?  
+----------------------------------------------------------

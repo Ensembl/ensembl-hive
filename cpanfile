@@ -13,6 +13,7 @@ on 'test' => sub {
 	requires 'Test::More';
 	requires 'Test::Warn';
 	requires 'Test::Warnings';
+	requires 'Test::File::Contents';
 };
 
 recommends 'Getopt::ArgvFile';

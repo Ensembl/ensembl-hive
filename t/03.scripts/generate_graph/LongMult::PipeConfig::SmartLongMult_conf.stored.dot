@@ -1,0 +1,47 @@
+digraph test {
+	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
+	analysis_redirect_trivial_jobs [ fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">redirect_trivial_jobs (1)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="green" width="100%">2r</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_1_mp [ fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #b_multiplier# =~ /^10*$/</td></tr><tr><td port="cond_1">WHEN #b_multiplier# =~ /^0+$/</td></tr><tr><td port="cond_2">ELSE</td></tr></table>>, shape="egg", style="filled"];
+	table_final_result [ fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">final_result</td></tr></table>>, shape="tab", style="filled"];
+	analysis_take_b_apart [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">take_b_apart (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_2_mp [fixedsize="1", height="0.01", label="dfr_2_mp", shape="point", width="0.01"];
+	analysis_add_together [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">add_together (4)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_3_mp [ fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #digit#&gt;1</td></tr></table>>, shape="egg", style="filled"];
+	analysis_part_multiply [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">part_multiply (3)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	sink_dfr_2_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	pipelabel_smart_long_mult [fontname="Helvetica", label="ehive_test_client@127.0.0.1", shape="plaintext"];
+	analysis_add_together -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+	analysis_part_multiply -> sink_dfr_2_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> partial_product{digit}:=product", style="dashed"];
+	analysis_redirect_trivial_jobs -> dfr_1_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_take_b_apart -> dfr_2_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_take_b_apart -> dfr_3_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	dfr_1_mp -> analysis_take_b_apart [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="cond_2"];
+	dfr_1_mp -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS {result}", tailport="cond_0"];
+	dfr_1_mp -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS {result}", tailport="cond_1"];
+	dfr_2_mp -> analysis_add_together [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_3_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
+	dfr_3_mp -> dfr_2_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+
+subgraph cluster_smart_long_mult {
+	style=filled;
+	colorscheme=pastel19;
+	color=3;
+	pipelabel_smart_long_mult;
+	analysis_redirect_trivial_jobs;
+	dfr_1_mp;
+	table_final_result;
+	table_final_result;
+	analysis_take_b_apart;
+	dfr_2_mp;
+	subgraph cluster_dfr_2_mp {
+		style=filled;
+		colorscheme=blues9;
+		color=2;
+		analysis_part_multiply;
+		sink_dfr_2_mp;
+	}
+	dfr_3_mp;
+	analysis_add_together;
+	table_final_result;
+}
+}

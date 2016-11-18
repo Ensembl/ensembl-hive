@@ -1,0 +1,56 @@
+digraph test {
+	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
+	analysis_take_b_apart [ fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">take_b_apart (1)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="green" width="100%">2r</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_1_mp [ fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #a_multiplier#&gt;=#b_multiplier#</td></tr><tr><td port="cond_1">ELSE</td></tr></table>>, shape="egg", style="filled"];
+	foreign_analysis_ehive_test_server__add_together [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">ehive_test_server/add_together (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	table_ehive_test_server__final_result [ fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">ehive_test_server/final_result</td></tr></table>>, shape="tab", style="filled"];
+	analysis_add_together [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">add_together (3)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	table_final_result [ fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">final_result</td></tr></table>>, shape="tab", style="filled"];
+	dfr_2_mp [ fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #digit#&gt;5</td></tr><tr><td port="cond_1">WHEN #digit#&gt;1 &amp;&amp; #digit#&lt;=5</td></tr></table>>, shape="egg", style="filled"];
+	foreign_analysis_ehive_test_server__part_multiply [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">ehive_test_server/part_multiply (1)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	sink_long_mult_server [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	analysis_part_multiply [ fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">part_multiply (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	sink_dfr_1_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	pipelabel_long_mult_client [fontname="Helvetica", label="ehive_test_client@127.0.0.1", shape="plaintext"];
+	pipelabel_long_mult_server [fontname="Helvetica", label="ehive_test_server@127.0.0.1", shape="plaintext"];
+	analysis_add_together -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+	analysis_part_multiply -> sink_dfr_1_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> partial_product{digit}:=product", style="dashed"];
+	analysis_take_b_apart -> dfr_1_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_take_b_apart -> dfr_2_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	dfr_1_mp -> analysis_add_together [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="cond_1"];
+	dfr_1_mp -> foreign_analysis_ehive_test_server__add_together [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="cond_0"];
+	dfr_2_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_1"];
+	dfr_2_mp -> dfr_1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+	dfr_2_mp -> foreign_analysis_ehive_test_server__part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS {digit,\ntake_time}", tailport="cond_0"];
+	foreign_analysis_ehive_test_server__add_together -> table_ehive_test_server__final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+	foreign_analysis_ehive_test_server__part_multiply -> sink_long_mult_server [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> ehive_test_server/partial_product{digit}:=product", style="dashed"];
+
+subgraph cluster_long_mult_client {
+	style=filled;
+	colorscheme=pastel19;
+	color=3;
+	pipelabel_long_mult_client;
+	analysis_take_b_apart;
+	dfr_1_mp;
+	subgraph cluster_dfr_1_mp {
+		style=filled;
+		colorscheme=blues9;
+		color=2;
+		analysis_part_multiply;
+		sink_dfr_1_mp;
+	}
+	dfr_2_mp;
+	analysis_add_together;
+	table_final_result;
+}
+subgraph cluster_long_mult_server {
+	style=filled;
+	colorscheme=pastel19;
+	color=8;
+	pipelabel_long_mult_server;
+	foreign_analysis_ehive_test_server__add_together;
+	table_ehive_test_server__final_result;
+	foreign_analysis_ehive_test_server__part_multiply;
+	sink_long_mult_server;
+}
+}
