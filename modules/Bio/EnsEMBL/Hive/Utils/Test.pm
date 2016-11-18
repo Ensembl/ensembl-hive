@@ -149,7 +149,7 @@ sub runWorker {
 
 =head2 get_test_urls
 
-  Arg [1]     : -driver => driver, -tag => tag
+  Arg [1]     : -driver => driver, -tag => tag, -no_user_prefix => 1
   Example     : my @urls = get_test_urls(-driver => 'mysql', -tag => 'longmult')
   Example     : my @urls = get_test_urls(-tag => 'gcpct')
   Example     : my @urls = get_test_urls(-driver => 'sqlite')
@@ -167,6 +167,9 @@ sub runWorker {
               : If -driver is specified, then the list will be restricted to urls for the
               : particular driver or comma-separated list of drivers specified (e.g. 'mysql,pgsql')
               :
+              : If -no_user_prefix is specified, then the automatically-generated database names
+              : won't be prefixed with the name of the current user
+              :
               : If no drivers are specified in EHIVE_TEST_PIPELINE_URLS, it will check
               : to see if sqlite is available in the current path, and return a sqlite url
               : in the listref. Otherwise it will return an empty listref.
@@ -179,7 +182,7 @@ sub get_test_urls {
   croak "wrong number of arguments for get_test_urls(); has to be even" if (scalar(@_) % 2);
   my %args = @_;
   my %argcheck = %args;
-  delete(@argcheck{qw(-driver -tag)});
+  delete(@argcheck{qw(-driver -tag -no_user_prefix)});
   croak "get_test_urls only accepts -driver and -tag as arguments" if (scalar(keys(%argcheck)) > 0);
  
 
@@ -198,7 +201,7 @@ sub get_test_urls {
     $url_parses_by_driver{'sqlite'} = [Bio::EnsEMBL::Hive::Utils::URL::parse('sqlite:///' . $filename)];
   }
 
-  my $constructed_db_name = $ENV{USER} . "_ehive_test";
+  my $constructed_db_name = ($args{-no_user_prefix} ? '' : $ENV{USER}.'_') . 'ehive_test';
 
   my @driver_parses;
   if (defined($args{-driver})) {
