@@ -204,6 +204,8 @@ sub build {
 
     my $main_pipeline    = $self->pipeline;
 
+    $self->{'_foreign_analyses'} = {};
+
     foreach my $source_analysis ( @{ $main_pipeline->get_source_analyses } ) {
             # run the recursion in each component that has a non-cyclic start:
         $self->_propagate_allocation( $source_analysis );
@@ -238,7 +240,8 @@ sub build {
     my %cluster_2_nodes = ();
 
     if( $self->config_get('DisplayDetails') ) {
-        foreach my $pipeline ( $main_pipeline, values %{Bio::EnsEMBL::Hive::TheApiary->pipelines_collection} ) {
+        my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
+        foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
             my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
 
             push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
@@ -246,7 +249,8 @@ sub build {
     }
 
     if($self->config_get('DisplaySemaphoreBoxes') ) {
-        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, values %{ $self->{'_foreign_analyses'} } ) {
+        my %foreign_analyses = %{ $self->{'_foreign_analyses'} };
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, @foreign_analyses{sort keys %foreign_analyses} ) {
 
             push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
