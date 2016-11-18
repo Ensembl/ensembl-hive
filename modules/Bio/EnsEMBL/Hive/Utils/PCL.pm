@@ -90,7 +90,7 @@ sub parse_flow_into {
 
     my $semaphore_sign = '->';
 
-    my @all_branch_tags = keys %$flow_into;
+    my @all_branch_tags = sort keys %$flow_into;
     foreach my $branch_tag ((grep {/^[A-Z]$semaphore_sign/} @all_branch_tags), (grep {/$semaphore_sign[A-Z]$/} @all_branch_tags), (grep {!/$semaphore_sign/} @all_branch_tags)) {
 
         my ($branch_name_or_code, $group_role, $group_tag);
@@ -159,7 +159,8 @@ sub parse_flow_into {
                 $heirs = [ $heirs ] unless(ref($heirs));
                 $heirs = { map { ($_ => undef) } @$heirs } if(ref($heirs) eq 'ARRAY');
 
-                while(my ($heir_url, $input_id_template_list) = each %$heirs) {
+                foreach my $heir_url (sort keys %$heirs) {
+                    my $input_id_template_list = $heirs->{$heir_url};
 
                     if($heir_url =~ m{^\w+$/}) {
                         my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)

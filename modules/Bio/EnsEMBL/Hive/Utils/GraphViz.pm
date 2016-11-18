@@ -60,7 +60,7 @@ sub new {
     my %all_params  = @_;
 
     my $ratio_value = delete $all_params{'ratio'} || 'compress';
-    my $injection = join('', map { '"; ' . $_ . ' = "' . $all_params{$_} } keys %all_params);
+    my $injection = join('', map { '"; ' . $_ . ' = "' . $all_params{$_} } sort keys %all_params);
 
     return $class->SUPER::new( 'ratio' => $ratio_value.$injection );
 }
@@ -168,7 +168,7 @@ sub _as_debug {
 
     $text=~s/^}$//m;
 
-    foreach my $node_name ( grep { !/^dfr_/ } keys %{ $self->cluster_2_nodes } ) {
+    foreach my $node_name ( sort grep { !/^dfr_/ } keys %{ $self->cluster_2_nodes } ) {
         $text .= $self->display_subgraph( $node_name, 0);
     }
     $text .= "}\n";
