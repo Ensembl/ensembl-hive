@@ -233,13 +233,9 @@ sub add_new_or_update {
 sub get_source_analyses {
     my $self = shift @_;
 
-    my (%refset_of_analyses) = map { ("$_" => $_) } $self->collection_of( 'Analysis' )->list;
+    my %analyses_to_discard = map {scalar($_->to_analysis) => 1} $self->collection_of( 'DataflowTarget' )->list;
 
-    foreach my $df_target ($self->collection_of( 'DataflowTarget' )->list) {
-        delete $refset_of_analyses{ $df_target->to_analysis };
-    }
-
-    return [ values %refset_of_analyses ];
+    return [grep {!$analyses_to_discard{"$_"}} $self->collection_of( 'Analysis' )->list];
 }
 
 
