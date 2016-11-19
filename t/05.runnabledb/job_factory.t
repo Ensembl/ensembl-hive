@@ -19,7 +19,6 @@
 use strict;
 use warnings;
 
-use JSON;
 use Test::More;
 use File::Temp qw{tempdir};
 
