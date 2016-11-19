@@ -49,6 +49,32 @@ By inheriting from this module you make your module able to deal with parameters
 
         (4) Module_Defaults that are hard-coded into modules have the lowest precedence. Can be overridden by (1), (2) and (3).
 
+
+    param_exists() returns 1 if the parameter is present and can be substituted,
+                           undef if the substitution failed.
+                           0 if the parameter is absent,
+    param_is_defined() returns 1 if the parameter is present and can be substituted to a defined value,
+                               undef if the substitution fails,
+                               0 otherwise.
+    param() returns the value if param_exists() returned true, undef otherwise.
+    param_required() is like param() but dies instead of returning undef.
+
+    In practice. given this hash of parameters:
+    {
+        'a' => 3,
+        'b' => undef,
+        'c' => '#other#',
+    }
+    the Params API would return:
+
+                       |  a     b       c       d
+    -------------------+----------------------------
+    param_exists()     |  1     1     undef     0
+    param_is_defined() |  1     0     undef     0
+    param()            |  3   undef   undef   undef
+    param_required()   |  3   (die)   (die)   (die)
+
+
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute

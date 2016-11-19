@@ -1,4 +1,5 @@
 #!/usr/bin/env perl
+
 # Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # Copyright [2016] EMBL-European Bioinformatics Institute
 # 
@@ -19,14 +20,28 @@ use strict;
 use warnings;
 
 use Test::More;
-use Data::Dumper;
+use Time::HiRes qw(time);
 
-eval "use Bio::EnsEMBL::Hive::Version 4.0";
-is($@ ? 0 : 1, 0, 'cannot import eHive 4.0');
+use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
-eval "use Bio::EnsEMBL::Hive::Version 2.0";
-is($@ ? 0 : 1, 1, 'can import eHive 2.0');
+my $min_overhead;
 
-is(Bio::EnsEMBL::Hive::Version::get_code_version(), $Bio::EnsEMBL::Hive::Version::VERSION, 'get_code_version() returns the code version');
+for (1..10) {
+    my $t = time();
+    standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::Dummy', {
+        'take_time' => 0,
+    });
+    my $d = time() - $t;
+    $min_overhead = $d if (not defined $min_overhead) || ($d < $min_overhead);
+}
 
-done_testing()
+my $wait = 10;
+my $t = time();
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::Dummy', {
+    'take_time' => $wait,
+});
+my $d = time() - $t;
+# We allow the runnable to be 5 times faster than the fastest attempt so far
+cmp_ok($d, '>=', $wait+$min_overhead/5, 'The "take_time" parameter made the runnable sleep a bit');
+
+done_testing();
