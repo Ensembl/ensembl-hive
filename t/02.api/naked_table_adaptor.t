@@ -67,6 +67,7 @@ is_deeply($final_result_nta->count_all_HASHED_FROM_a_multiplier(), {$first_hash-
 is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2, '2 result for this a_multiplier');
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
+$dbc->disconnect_if_idle;
 system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
 };

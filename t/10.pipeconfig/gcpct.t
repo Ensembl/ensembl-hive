@@ -99,6 +99,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $beekeeper_options_string = join(' ', @beekeeper_cmd[1..$#beekeeper_cmd]);
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
+        $hive_dba->dbc->disconnect_if_idle();
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 }
 

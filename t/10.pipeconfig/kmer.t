@@ -139,6 +139,7 @@ my $pipeline_url = get_test_url_or_die();
 	ok ( 520 == $total_kmers,
 	     sprintf("%f kmers found in input FASTQ file", , $total_kmers));
       }
+      $hive_dba->dbc->disconnect_if_idle();
       system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
     }
   }

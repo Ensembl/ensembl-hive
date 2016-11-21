@@ -75,6 +75,7 @@ foreach my $url ($client_url, $server_url) {
             sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
     }
 
+    $hive_dba->dbc->disconnect_if_idle();
     system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', -url => $url, -sql => 'DROP DATABASE');
 }
 

@@ -95,6 +95,7 @@ my $another_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
 $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
 
+$hive_dba->dbc->disconnect_if_idle();
 system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
 }

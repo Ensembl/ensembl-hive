@@ -44,6 +44,7 @@ SKIP: {
   
   is_deeply( $table_list, [], 'All the eHive tables have been removed by "drop_hive_tables"');
   
+  $dbc->disconnect_if_idle();
   system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
   
 }

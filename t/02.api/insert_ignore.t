@@ -63,6 +63,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
         ok(!$stored2, 'A copy of the job was *not* stored (as expected)');
     }, 'Can survive the insertion of a duplicated job' );
 
+    $hive_dba->dbc->disconnect_if_idle();
     system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
   }

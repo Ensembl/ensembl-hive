@@ -287,6 +287,7 @@ standaloneJob(
         ]
     ]
 );
+$dbc->disconnect_if_idle();
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
 
 done_testing();

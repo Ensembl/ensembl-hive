@@ -138,6 +138,7 @@ my $pipeline_url = get_test_url_or_die();
     my $still_alive_worker_rows = $worker_nta->count_all("status != 'DEAD'");
     is($still_alive_worker_rows, 0, "no workers remain alive");
 
+    $hive_dba->dbc->disconnect_if_idle();
     system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
 done_testing();

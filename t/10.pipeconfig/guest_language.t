@@ -95,6 +95,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
                 sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
         }
 
+        $hive_dba->dbc->disconnect_if_idle();
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 }
 
