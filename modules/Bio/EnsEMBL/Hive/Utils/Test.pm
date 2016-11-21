@@ -49,6 +49,9 @@ our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_t
 
 our $VERSION = '0.00';
 
+
+# Helper method to compare warning messages. It allows the expectation to
+# be given as a string (for exact match) or a regular expression.
 sub _compare_job_warnings {
     my ($got, $expects) = @_;
     subtest "WARNING content as expected" => sub {
@@ -63,10 +66,35 @@ sub _compare_job_warnings {
     };
 }
 
+
+## Helper method to compare dataflows. Only exact string matches are
+#allowed at the moment.
 sub _compare_job_dataflows {
     my ($got, $expects) = @_;
     is_deeply($got, $expects, 'DATAFLOW content as expected');
 }
+
+
+=head2 standaloneJob
+
+  Example     : standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                              { 'inputlist' => [ [1,2], [3,4] ], 'column_names' => ['a', 'b'] },
+                              [
+                                [ 'DATAFLOW',
+                                  [ { 'a' => 1, 'b' => 2 }, { 'a' => 3, 'b' => 4 }, ],
+                                  2
+                                ]
+                              ]
+                );
+  Description : Run a given Runnable in "standalone job" mode, i.e. with parameters but no connection to the database.
+                One can also give a list of events that the job is expected to raise. Currently, dataflows and warnings
+                are supported. Examples can be found under t/05.runnabledb/
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub standaloneJob {
     my ($module_or_file, $param_hash, $expected_events, $flags) = @_;
@@ -75,6 +103,8 @@ sub standaloneJob {
 
     my $input_id = stringify($param_hash);
 
+    # When a list of events is given, it must match exactly what the
+    # Runnable does (no missing / extra events, etc)
     my $_test_event = sub {
         my ($triggered_type, @got) = @_;
         if (@$events_to_test) {
@@ -93,12 +123,14 @@ sub standaloneJob {
         }
     };
 
+    # Local redefinition to hijack the events
     local *Bio::EnsEMBL::Hive::Process::dataflow_output_id = sub {
         shift;
         &$_test_event('DATAFLOW', @_);
         return [1];
     } if $expected_events;
 
+    # Local redefinition to hijack the events
     local *Bio::EnsEMBL::Hive::Process::warning = sub {
         shift;
         &$_test_event('WARNING', @_);
@@ -120,6 +152,21 @@ sub standaloneJob {
 }
 
 
+=head2 init_pipeline
+
+  Example     : init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
+                              [-pipeline_url => $server_url, -hive_force_init => 1],
+                              ['pipeline.param[take_time]=0']
+                );
+  Description : Initialize a new pipeline database for the given PipeConfig module name. $options simply represents
+                the command-line options one would give on the command-line. Additionally, tweaks can be defined
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub init_pipeline {
     my ($file_or_module, $options, $tweaks) = @_;
 
@@ -136,6 +183,20 @@ sub init_pipeline {
     return $url;
 }
 
+
+=head2 runWorker
+
+  Example     : runWorker($pipeline, { can_respecialize => 1 });
+  Description : Run a worker on the given pipeline in the current process.
+                The worker options have been divided in three groups: the ones affecting its specialization,
+                the ones affecting its "life" (how long it lasts), and the ones controlling its execution mode.
+                See the implementation of Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker() for more details.
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
 
 sub runWorker {
     my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
