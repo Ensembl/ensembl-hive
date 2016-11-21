@@ -790,7 +790,7 @@ sub add_table_name {
   my $colour = shift || $default_colour;
 
   my $html = qq{
-  <div id="$t_name"class="sql_schema_table_header" style="border-top-color:$colour">
+  <div id="$t_name" class="sql_schema_table_header" style="border-top-color:$colour">
     <div class="sql_schema_table_header_left"><span style="background-color:$colour"></span>$t_name</div>
     <div class="sql_schema_table_header_right">
   };
@@ -960,7 +960,7 @@ sub add_see {
   my $html = '';
 
   if (scalar @$sees) {
-    $html .= qq{    <td class="sql_schema_extra_left"">\    <p style="font-weight:bold">See also:</p>\n  <ul>\n};
+    $html .= qq{    <td class="sql_schema_extra_left">\    <p style="font-weight:bold">See also:</p>\n  <ul>\n};
     foreach my $see (@$sees) {
       $html .= qq{      <li><a href="#$see">$see</a></li>\n};
     }
