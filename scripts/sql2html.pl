@@ -720,11 +720,11 @@ sub fill_documentation {
       }
       # Header description
       elsif(!$documentation->{$header}{'tables'}) {
-        $documentation->{$header}{'desc'} = $tag_content;
+        $documentation->{$header}{'desc'} = escape_html($tag_content);
       }
       # Table description
       else {
-        $documentation->{$header}{'tables'}{$table}{$tag} = $tag_content;
+        $documentation->{$header}{'tables'}{$table}{$tag} = escape_html($tag_content);
       }
     }
     elsif ($tag eq 'colour') {
@@ -927,13 +927,12 @@ sub add_examples {
         $show_hide .= show_hide_button("e_$table$nb", "$table$nb", 'query results');
         $sql_table = get_example_table($sql,$table,$nb);
       }
-      if (defined($sql)) {
+      $sql = escape_html($sql);
              
         foreach my $word (qw(SELECT DISTINCT COUNT CONCAT GROUP_CONCAT AS FROM LEFT JOIN USING WHERE AND OR ON IN LIMIT DESC ORDER GROUP BY)) {
           my $hl_word = qq{<span class="sql_schema_sql_highlight">$word</span>};
           $sql =~ s/$word /$hl_word /ig;
         }
-      }
       $html .= qq{
       <div>
         <div class="sql_schema_table_example_query">
@@ -1217,6 +1216,17 @@ sub remove_char {
   my $text = shift;
   $text =~ s/`//g;
   return $text;
+}
+
+
+# Escape special character for the HTML output
+# Code taken from HTML::Escape::PurePerl
+sub escape_html {
+    my $str = shift;
+    return '' unless defined $str;
+    my %_escape_table = ( '&' => '&amp;', '>' => '&gt;', '<' => '&lt;', q{"} => '&quot;', q{'} => '&#39;', q{`} => '&#96;', '{' => '&#123;', '}' => '&#125;' );
+    $str =~ s/([><"'`{}])/$_escape_table{$1}/ge;
+    return $str;
 }
 
 
