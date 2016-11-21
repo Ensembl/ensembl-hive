@@ -20,10 +20,10 @@ use warnings;
 
 use Data::Dumper;
 
-use Test::More tests => 4;
+use Test::More tests => 3;
 use Test::Exception;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die make_hive_db);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
@@ -34,22 +34,15 @@ SKIP: {
   my $pipeline_url = eval { get_test_url_or_die(-driver => 'mysql') };
   skip "no MySQL test database defined", 4 unless $pipeline_url;
   
-  my $url             = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
-  
-  my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-						       -url                        => $url,
-						       -disconnect_when_inactive   => 1,
-						      );
-  
-  my $dbc = $pipeline->hive_dba->dbc;
-  
+  my $dbc = make_hive_db($pipeline_url, 'force_init');
+
   lives_ok( sub {
 	      $dbc->do('CALL drop_hive_tables;');
 	    }, 'CALL drop_hive_tables does not fail');
   
   my $table_list = $dbc->db_handle->selectcol_arrayref('SHOW TABLE STATUS', { Columns => [1] });
   
-  is_deeply( $table_list, ['final_result'], 'All the eHive tables have been removed by "drop_hive_tables"'); 
+  is_deeply( $table_list, [], 'All the eHive tables have been removed by "drop_hive_tables"');
   
   system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
   

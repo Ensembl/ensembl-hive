@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
 
 our $VERSION = '0.00';
 
@@ -290,6 +290,44 @@ sub make_new_db_from_sqls {
                 run_sql_on_db($url, $s);
             }
         }
+    };
+
+    return $dbc;
+}
+
+
+=head2 make_hive_db
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Boolean $force_init (optional, default 0). Whether we need to issue a DROP DATABASE statement first
+  Arg[3]      : Boolean $use_triggers (optional, default 0). Whether we want to load the SQL triggers
+  Example     : make_hive_db($url, 'force_init');
+  Description : Create a new (empty) eHive database using the two above functions.
+                This function follows the same step as init_pipeline
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_hive_db {
+    my ($url, $force_init, $use_triggers) = @_;
+
+    # Will insert two keys: "hive_all_base_tables" and "hive_all_views"
+    my $hive_tables_sql = 'INSERT INTO hive_meta SELECT CONCAT("hive_all_", REPLACE(LOWER(TABLE_TYPE), " ", "_"), "s"), GROUP_CONCAT(TABLE_NAME) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "%s" GROUP BY TABLE_TYPE';
+
+    my $dbc;
+    subtest 'Creation of a fresh eHive database' => sub {
+        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
+        ok($dbc, 'URL could be parsed to make a DBConnection object');
+        run_sql_on_db($url, 'DROP DATABASE IF EXISTS') if $force_init;
+        run_sql_on_db($url, 'CREATE DATABASE');
+        load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/tables.' . $dbc->driver);
+        load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/triggers.' . $dbc->driver) if $use_triggers;
+        load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/foreign_keys.sql') if $dbc->driver ne 'sqlite';
+        load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/procedures.' . $dbc->driver);
+        run_sql_on_db($url, $hive_tables_sql) if $dbc->driver eq 'mysql';
     };
 
     return $dbc;
