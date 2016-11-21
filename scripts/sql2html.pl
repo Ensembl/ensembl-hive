@@ -220,8 +220,6 @@ $css_code
 ##############
 
 my $html_footer = qq{
-    </div>
-  </div>
 </body>
 </html>};
 
