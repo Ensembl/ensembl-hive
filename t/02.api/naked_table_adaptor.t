@@ -28,19 +28,20 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls make_new_db_from_sqls);
 
 my $ehive_test_pipeline_urls = get_test_urls();
 
 foreach my $test_url (@$ehive_test_pipeline_urls) {
 
+my $sql_create_table = [
+    'CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))',
+    'CREATE TABLE analysis_base (name char(40) NOT NULL)',
+];
+my $dbc = make_new_db_from_sqls($test_url, $sql_create_table, 'force_init', 'Database with a few tables');
+
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
-my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $test_url, -no_sql_schema_version_check => 1);
-my $dbc = $hive_dba->dbc();
-system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
-system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
-$dbc->do('CREATE TABLE analysis_base (name char(40) NOT NULL)'),
+my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc, -no_sql_schema_version_check => 1);
 
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );

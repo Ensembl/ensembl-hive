@@ -24,7 +24,7 @@ use File::Basename;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die run_sql_on_db make_new_db_from_sqls);
 use Bio::EnsEMBL::Hive::Utils::URL;
 
 # For finding the sample db dump's location, so it can be loaded.
@@ -46,9 +46,7 @@ SKIP: {
     delete $parsed_url->{dbname};
     my $server_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
     
-    prepare_db($server_url, $dbname);
-    
-    my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $db_url);
+    my $dbc = make_new_db_from_sqls( $db_url, [ $ENV{'EHIVE_ROOT_DIR'} . '/t/02.api/sql/reconnect_test.sql' ], 'force_init', 'Create database with many rows');
     
     my $dbc_query_sql = "SELECT SQL_NO_CACHE * FROM manyrows";
     my $find_pid_sql = "SELECT ID FROM information_schema.processlist " .
@@ -80,22 +78,4 @@ SKIP: {
 }
 
 done_testing();
-
-sub prepare_db {
-  my ($server_url, $dbname) = @_;
-  my $full_db_url = $server_url . $dbname;
-
-  my $load_command = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl '  .
-    "-url $full_db_url " .
-      "< " . $ENV{'EHIVE_ROOT_DIR'} . "/t/02.api/sql/reconnect_test.sql";
-
-  run_sql_on_db($server_url, "DROP DATABASE IF EXISTS $dbname");
-  run_sql_on_db($server_url, "CREATE DATABASE $dbname");
-  `$load_command`;
-}
-
-sub run_sql_on_db {
-    my ($server_url, $sql) = @_;
-    return system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $server_url, '-sql', $sql);
-}
 

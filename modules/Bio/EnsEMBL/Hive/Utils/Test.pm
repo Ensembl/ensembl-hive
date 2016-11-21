@@ -33,6 +33,7 @@ use Data::Dumper;
 use Test::More;
 use Test::Exception;
 
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Process;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
 use Bio::EnsEMBL::Hive::Utils::URL ('parse');
@@ -45,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls );
 
 our $VERSION = '0.00';
 
@@ -207,6 +208,93 @@ sub runWorker {
         Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, $specialization_options, $life_options, $execution_options);
     }, sprintf('runWorker()'));
 }
+
+
+=head2 run_sql_on_db
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : String $sql. The SQL to run on the database
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : run_sql_on_db($url, 'INSERT INTO sweets (name, quantity) VALUES (3, 'Snickers')');
+  Description : Execute an SQL command on the given database and test its execution. This expects the
+                command-line client to return a non-zero code in case of a failure.
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub run_sql_on_db {
+    my ($url, $sql, $test_name) = @_;
+    my @cmd_array = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', -url => $url, -sql => $sql);
+    ok(!system(@cmd_array), $test_name // 'Can run '.$sql);
+}
+
+
+=head2 load_sql_in_db
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : String $sql_file. The location of a file to load in the database
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : load_sql_on_db($url, $file_with_sql_commands);
+  Description : Execute an SQL script on the given database and test its execution.
+                This expects the command-line client to return a non-zero code in
+                case of a failure.
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub load_sql_in_db {
+    my ($url, $sql_file, $test_name) = @_;
+    my $cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl -url ' . $url . ' < ' . $sql_file;
+    ok(!system($cmd), $test_name // 'Can load '.$sql_file);
+}
+
+
+=head2 make_new_db_from_sqls
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref of string $sqls. Each element can be a SQL command or file to load
+  Arg[3]      : Boolean $force_init (optional, default 0). Whether we need to issue a DROP DATABASE statement first
+  Arg[4]      : String $test_name (optional). The name of the test
+  Example     : make_new_db_from_sqls($url, 'CREATE TABLE sweets (name VARCHAR(40) NOT NULL, quantity INT UNSIGNED NOT NULL)');
+  Description : Create a new database and apply a list of SQL commands using the two above functions.
+                When an SQL command is a valid filename, the file is loaded rather than the command executed.
+  Returntype  : Bio::EnsEMBL::Hive::DBSQL::DBConnection $dbc
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_new_db_from_sqls {
+    my ($url, $sqls, $force_init, $test_name) = @_;
+
+    $sqls = [$sqls] unless ref($sqls);
+    $test_name //= 'Creation of a new custom database';
+    my $dbc;
+
+    subtest $test_name => sub {
+        $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
+        ok($dbc, 'URL could be parsed to make a DBConnection object');
+        run_sql_on_db($url, 'DROP DATABASE IF EXISTS', 'Drop existing database') if $force_init;
+        run_sql_on_db($url, 'CREATE DATABASE', 'Create new database');
+        foreach my $s (@$sqls) {
+            if (-e $s) {
+                load_sql_in_db($url, $s);
+            } else {
+                run_sql_on_db($url, $s);
+            }
+        }
+    };
+
+    return $dbc;
+}
+
 
 =head2 get_test_urls
 

@@ -24,9 +24,9 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls);
 
-plan tests => 7;
+plan tests => 8;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -258,13 +258,17 @@ standaloneJob(
 
 
 my $test_url = get_test_url_or_die();
-my $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new(-url => $test_url);
-system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') });
-system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
-$dbc->do('CREATE TABLE params (param_key VARCHAR(15), param_value INT)');
 my ($k1, $v1) = ('one_key', 34);
 my ($k2, $v2) = ('another_key', -5);
-$dbc->do("INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)");
+my $dbc = make_new_db_from_sqls(
+    $test_url,
+    [
+        'CREATE TABLE params (param_key VARCHAR(15), param_value INT)',
+        "INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)"
+    ],
+    'force_init',
+    'Dummy database with a single table and two rows'
+);
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
