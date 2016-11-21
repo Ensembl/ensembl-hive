@@ -609,6 +609,12 @@ sub display_tables_list {
       $html .= qq{\n      <ul class="sql_schema_table_list">\n};
       my $t_count = 0;
       foreach my $t_name (@{$tables}) {
+        if ($t_count>=$nb_by_col) {
+          $html .= qq{\n      </ul>\n      </div>};
+          $html .= qq{\n      <div style="float:left">};
+          $html .= qq{\n      <ul class="sql_schema_table_list">\n};
+          $t_count = 0;
+        }
         my $t_colour;
         if ($has_header == 0 && $show_colour) {
           $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'};
@@ -616,12 +622,6 @@ sub display_tables_list {
         }
         $html .= add_table_name_to_list($t_name,$t_colour);
         $t_count++;
-        if ($t_count>=$nb_by_col) {
-          $html .= qq{\n      </ul>\n      </div>};
-          $html .= qq{\n      <div style="float:left">};
-          $html .= qq{\n      <ul class="sql_schema_table_list">\n};
-          $t_count = 0;
-        }
       }
       $html .= qq{\n      </ul>};
       $html .= qq{\n      </div>} if ($count > $nb_by_col);
