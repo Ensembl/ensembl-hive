@@ -33,6 +33,7 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls make_new_db_from_sqls);
 my $ehive_test_pipeline_urls = get_test_urls();
 
 foreach my $test_url (@$ehive_test_pipeline_urls) {
+subtest 'Test on '.$test_url => sub {
 
 my $sql_create_table = [
     'CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))',
@@ -68,6 +69,7 @@ is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier(
 
 system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
 
+};
 }
 
 
