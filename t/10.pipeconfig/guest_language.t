@@ -26,7 +26,7 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -39,7 +39,7 @@ my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::LongMu
 
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || join(' ', @$all_longmult_configs);
 
-my @pipeline_urls = @{get_test_urls()};
+my $pipeline_url = get_test_url_or_die();
 my @pipeline_cfgs = split( /[\s,]+/, $ehive_test_pipeconfigs ) ;
 
 foreach my $long_mult_version ( @pipeline_cfgs ) {
@@ -53,7 +53,6 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
 
     warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
-    foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         my $url         = init_pipeline(
                             ($long_mult_version =~ /::/ ? $long_mult_version : 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version),
@@ -97,7 +96,6 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         }
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
-    }
 }
 
 done_testing();
