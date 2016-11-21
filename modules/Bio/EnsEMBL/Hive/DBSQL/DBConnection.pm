@@ -263,14 +263,15 @@ sub to_cmd {
     if($driver eq 'mysql') {
         $executable ||= 'mysql';
 
+        push @cmd, ('env', 'MYSQL_PWD='.$hidden_password)  if ($self->password);
         push @cmd, $executable;
-        push @cmd, @$prepend                if ($prepend && @$prepend);
-        push @cmd, '-h'.$self->host         if $self->host;
-        push @cmd, '-P'.$self->port         if $self->port;
-        push @cmd, '-u'.$self->username     if $self->username;
-        push @cmd, '-p'.$hidden_password    if $self->password;
-        push @cmd, ('-e', $sqlcmd)          if $sqlcmd;
-        push @cmd, $dbname                  if $dbname;
+        push @cmd, @$prepend                        if ($prepend && @$prepend);
+        push @cmd, '--host='.$self->host            if $self->host;
+        push @cmd, '--port='.$self->port            if $self->port;
+        push @cmd, '--user='.$self->username        if $self->username;
+#        push @cmd, '--password='.$hidden_password   if $self->password;
+        push @cmd, ('-e', $sqlcmd)                  if $sqlcmd;
+        push @cmd, $dbname                          if $dbname;
 
     } elsif($driver eq 'pgsql') {
         $executable ||= 'psql';
