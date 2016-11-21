@@ -472,9 +472,9 @@ foreach my $header_name (@header_names) {
   #----------------#  
   if ($header_flag == 1 and $header_name ne 'default') {
     $html_content .= qq{\n
-<div class="sql_schema_group_header" style="border-color:$hcolour">
-  <div id="$header_id" class="sql_schema_group_bullet" style="background-color:$hcolour"></div>
-  <h2 id="$header_id">$header_name</h2>
+<div id="header_${header_id}" class="sql_schema_group_header" style="border-color:$hcolour">
+  <div class="sql_schema_group_bullet" style="background-color:$hcolour"></div>
+  <h2>$header_name</h2>
 </div>\n};
     $header_id ++;
     my $header_desc = $documentation->{$header_name}{'desc'};    
