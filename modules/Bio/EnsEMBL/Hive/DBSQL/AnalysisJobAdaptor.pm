@@ -783,6 +783,10 @@ sub reset_jobs_for_analysis_id {
         WHERE job_id=?
     };
 
+    # Run in a transaction to ensure we see a consistent state of the job
+    # statuses and semaphore counts.
+    $self->dbc->run_in_transaction( sub {
+
     # Update all the semaphored jobs one by one
     my $sth1 = $self->prepare($sql1);
     my $sth2 = $self->prepare($sql2);
@@ -810,6 +814,8 @@ sub reset_jobs_for_analysis_id {
     } else {
         $self->db->get_AnalysisStatsAdaptor->update_status($list_of_analyses, 'LOADING');   # compatibility mode (to be deprecated)
     }
+
+    } ); # end of transaction
 }
 
 
