@@ -131,7 +131,9 @@ sub fuse_param_hashes {
 
     foreach my $source (@_) {
         if(ref($source) ne 'HASH') {
-            my $param_hash = eval($source) || {};
+            my $param_hash = eval($source) if(defined($source));
+               $param_hash = {} if(!defined($param_hash));
+
             if($@) {
                 if($self->can('transient_error')) {
                     $self->transient_error(0);
