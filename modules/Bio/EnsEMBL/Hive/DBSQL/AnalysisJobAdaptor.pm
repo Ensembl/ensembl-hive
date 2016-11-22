@@ -869,10 +869,14 @@ sub balance_semaphores {
         ." status = ".$self->job_status_cast("CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END")
         ." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
+    my $rebalanced_jobs_counter = 0;
+
+    # Run in a transaction to ensure we see a consistent state of the job
+    # statuses and semaphore counts.
+    $self->dbc->run_in_transaction( sub {
+
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);
-
-    my $rebalanced_jobs_counter = 0;
 
     $find_sth->execute();
     while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
@@ -890,6 +894,8 @@ sub balance_semaphores {
     }
     $find_sth->finish;
     $update_sth->finish;
+
+    } ); # end of transaction
 
     return $rebalanced_jobs_counter;
 }
