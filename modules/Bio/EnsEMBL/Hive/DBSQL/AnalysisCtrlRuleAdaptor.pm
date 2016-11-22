@@ -49,11 +49,6 @@ sub default_table_name {
 }
 
 
-sub default_insertion_method {
-    return 'INSERT_IGNORE';
-}
-
-
 sub object_class {
     return 'Bio::EnsEMBL::Hive::AnalysisCtrlRule';
 }
