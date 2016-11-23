@@ -98,7 +98,8 @@ sub pipeline_analyses {
                 { 'job_count'    => $self->o('job_count') },
             ],
             -flow_into => {
-                2 => [ 'failure_test' ],
+                '2->A' => [ 'failure_test' ],
+                'A->1' => [ 'funnel' ],
             },
         },
 
@@ -109,6 +110,10 @@ sub pipeline_analyses {
                 'state'         => $self->o('state'),
                 'lethal_after'  => $self->o('lethal_after'),
             }
+        },
+
+        {   -logic_name    => 'funnel',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
     ];
 }
