@@ -81,6 +81,26 @@ sub default_overflow_limit {
 }
 
 
+=head2 job_status_cast
+
+  Example     : $job_adaptor->job_status_cast();
+  Description : Returns a job-status expression that the SQL driver understands.
+                This is needed for PostgreSQL
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub job_status_cast {
+    my ($self, $status_string) = @_;
+    if ($self->dbc->driver eq 'pgsql') {
+        return "CAST($status_string AS job_status)";
+    } else {
+        return $status_string;
+    }
+}
+
+
 =head2 fetch_by_analysis_id_and_input_id
 
   Arg [1]    : Integer $analysis_id
@@ -354,10 +374,7 @@ sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or 
         #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
         #
     my $sql = "UPDATE job "
-        .( ($self->dbc->driver eq 'pgsql')
-            ? "SET status = CAST(CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END AS job_status), "
-            : "SET status =      CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END, "
-        ).qq{
+             ."SET status = ".$self->job_status_cast("CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END").q{,
             semaphore_count=semaphore_count-?
         WHERE job_id=? AND status='SEMAPHORED'
     };
@@ -797,10 +814,8 @@ sub balance_semaphores {
 
     my $update_sql  = "UPDATE job SET "
         ." semaphore_count=semaphore_count+? , "
-        .( ($self->dbc->driver eq 'pgsql')
-            ? "status = CAST(CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END AS job_status) "
-            : "status =      CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END "
-        )." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
+        ." status = ".$self->job_status_cast("CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END")
+        ." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
     my $find_sth    = $self->prepare($find_sql);
     my $update_sth  = $self->prepare($update_sql);
