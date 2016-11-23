@@ -131,7 +131,8 @@ sub fuse_param_hashes {
 
     foreach my $source (@_) {
         if(ref($source) ne 'HASH') {
-            my $param_hash = eval($source) if(defined($source));
+            my $param_hash;
+               $param_hash = eval($source) if(defined($source));
                $param_hash = {} if(!defined($param_hash));
 
             if($@) {
