@@ -838,7 +838,7 @@ sub unblock_jobs_for_analysis_id {
         WHERE $analyses_filter AND status = 'SEMAPHORED'
     };
 
-    $self->do($sql);
+    $self->dbc->do($sql);
 
     foreach my $analysis ( @$list_of_analyses ) {
         $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
