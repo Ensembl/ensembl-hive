@@ -336,6 +336,7 @@ sub main {
         }
     }
 
+    my $has_task = ($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs || $unblock_semaphored_jobs);
     if($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs) {
         if (($reset_all_jobs || $reset_done_jobs) and not $self->{'analyses_pattern'}) {
             update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
@@ -343,13 +344,13 @@ sub main {
         }
         my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
-        $queen->synchronize_hive( $list_of_analyses );
     }
 
     if ($unblock_semaphored_jobs) {
         $self->{'dba'}->get_AnalysisJobAdaptor->unblock_jobs_for_analysis_id( $list_of_analyses );
-        $queen->synchronize_hive( $list_of_analyses );
     }
+
+    $queen->synchronize_hive( $list_of_analyses ) if $has_task;
 
     if($all_dead)           { $queen->register_all_workers_dead(); }
     if($check_for_dead)     { $queen->check_for_dead_workers($valley, 1); }
