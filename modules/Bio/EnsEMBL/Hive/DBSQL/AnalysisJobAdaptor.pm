@@ -846,6 +846,64 @@ sub unblock_jobs_for_analysis_id {
 }
 
 
+=head2 discard_jobs_for_analysis_id
+
+  Arg [1]    : list-ref of int $analysis_id
+  Arg [2]    : filter status
+  Description: Resets all $staus jobs of the matching analyses to DONE.
+               Semaphores are updated accordingly.
+  Caller     : beekeeper.pl and guiHive
+
+=cut
+
+sub discard_jobs_for_analysis_id {
+    my ($self, $list_of_analyses, $input_status) = @_;
+
+    my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
+    my $status_filter = $input_status ? " AND status = '$input_status'" : "";
+
+    # Get the list of semaphored jobs, and by how much their
+    # semaphore_count should be decreased.
+    # NB: the order of the columns must match the order of the arguments of decrease_semaphore_count_for_jobid
+    #     semaphored_job_id is also used in the second query
+    my $sql1 = qq{
+        SELECT semaphored_job_id, COUNT(*) AS n_jobs
+        FROM job
+        WHERE semaphored_job_id IS NOT NULL
+              AND $analyses_filter $status_filter
+        GROUP BY semaphored_job_id
+    };
+
+    my $sql2 = qq{
+        UPDATE job
+        SET status = }.$self->job_status_cast("'DONE'").qq{
+        WHERE semaphored_job_id = ?
+              AND $analyses_filter $status_filter
+    };
+
+    # Run in a transaction to ensure we see a consistent state of the job
+    # statuses and semaphore counts.
+    $self->dbc->run_in_transaction( sub {
+
+    # Update all the semaphored jobs one-by-one
+    my $sth1 = $self->prepare($sql1);
+    my $sth2 = $self->prepare($sql2);
+    $sth1->execute();
+    while (my @cols = $sth1->fetchrow_array()) {
+        $sth2->execute($cols[0]);                           # First mark the jobs as DONE
+        $self->decrease_semaphore_count_for_jobid(@cols);   # And then decrease the counters
+    }
+    $sth1->finish;
+    $sth2->finish;
+
+    foreach my $analysis ( @$list_of_analyses ) {
+        $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
+    }
+
+    } ); # end of transaction
+}
+
+
 =head2 balance_semaphores
 
   Description: Reset all semaphore_counts to the numbers of unDONE semaphoring jobs.

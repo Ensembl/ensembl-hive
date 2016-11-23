@@ -64,6 +64,8 @@ sub main {
     my $reset_failed_jobs           = 0;    # Mark FAILED jobs to READY
     my $reset_done_jobs             = 0;    # Mark DONE and PASSED_ON jobs to READY
     my $unblock_semaphored_jobs     = 0;    # Mark SEMAPHORED jobs to READY
+    my $forgive_failed_jobs         = 0;    # Mark FAILED jobs to DONE
+    my $discard_ready_jobs          = 0;    # Mark READY jobs to DONE
 
     $self->{'url'}                  = undef;
     $self->{'reg_conf'}             = undef;
@@ -142,6 +144,8 @@ sub main {
                'reset_failed_jobs' => \$reset_failed_jobs,
                'reset_all_jobs'    => \$reset_all_jobs,
                'reset_done_jobs'   => \$reset_done_jobs,
+               'discard_ready_jobs'     => \$discard_ready_jobs,
+               'forgive_failed_jobs'    => \$forgive_failed_jobs,
                'unblock_semaphored_jobs'    => \$unblock_semaphored_jobs,
                'job_output=i'      => \$job_id_for_output,
     );
@@ -336,7 +340,7 @@ sub main {
         }
     }
 
-    my $has_task = ($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs || $unblock_semaphored_jobs);
+    my $has_task = ($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs || $unblock_semaphored_jobs || $forgive_failed_jobs || $discard_ready_jobs);
     if($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs) {
         if (($reset_all_jobs || $reset_done_jobs) and not $self->{'analyses_pattern'}) {
             update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
@@ -348,6 +352,14 @@ sub main {
 
     if ($unblock_semaphored_jobs) {
         $self->{'dba'}->get_AnalysisJobAdaptor->unblock_jobs_for_analysis_id( $list_of_analyses );
+    }
+
+    if ($discard_ready_jobs) {
+        $self->{'dba'}->get_AnalysisJobAdaptor->discard_jobs_for_analysis_id( $list_of_analyses, 'READY' );
+    }
+
+    if ($forgive_failed_jobs) {
+        $self->{'dba'}->get_AnalysisJobAdaptor->discard_jobs_for_analysis_id( $list_of_analyses, 'FAILED' );
     }
 
     $queen->synchronize_hive( $list_of_analyses ) if $has_task;
@@ -826,6 +838,8 @@ __DATA__
     -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_done_jobs       : reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
     -reset_all_jobs        : reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -forgive_failed_jobs   : mark FAILED jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
+    -discard_ready_jobs    : mark READY jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
     -unblock_semaphored_jobs : set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
 
 =head1 LICENSE
