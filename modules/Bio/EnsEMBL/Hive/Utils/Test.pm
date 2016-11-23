@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
 
 our $VERSION = '0.00';
 
@@ -207,6 +207,27 @@ sub runWorker {
     lives_ok(sub {
         Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, $specialization_options, $life_options, $execution_options);
     }, sprintf('runWorker()'));
+}
+
+
+=head2 beekeeper
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to beekeeper
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : $beekeeper($url, [$arg1, $arg2], 'Run beekeeper with two arguments');
+  Description : Very generic function to run beekeeper on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub beekeeper {
+    my ($url, $args, $test_name) = @_;
+    $test_name ||= 'Can run beekeeper'.($args ? ' with '.join(' ', @$args) : '');
+    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $url, @{$args || []}), $test_name);
 }
 
 
