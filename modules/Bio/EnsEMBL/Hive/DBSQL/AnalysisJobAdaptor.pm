@@ -160,7 +160,7 @@ sub store_jobs_and_adjust_counters {
         }
 
         if( $semaphored_job and ($job_adaptor ne $semaphored_job_adaptor) ) {
-            $job->{'semaphored_job_id'} = undef;    # job_ids are local, so for remote jobs they have to be cleaned up before storing
+            $job->semaphored_job_id( undef );       # job_ids are local, so for remote jobs they have to be cleaned up before storing
 
             if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
                 my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
@@ -169,7 +169,7 @@ sub store_jobs_and_adjust_counters {
             }
         }
         if( $job_adaptor ne $prev_adaptor ) {
-            $job->{'prev_job_id'} = undef;          # job_ids are local, so for remote jobs they have to be cleaned up before storing
+            $job->prev_job_id( undef );             # job_ids are local, so for remote jobs they have to be cleaned up before storing
         }
 
         my ($job, $stored_this_time) = $job_adaptor->store( $job );
