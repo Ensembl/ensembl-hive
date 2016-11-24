@@ -43,15 +43,17 @@ sub collection_of {
         $self->{'_cache_by_class'}->{$type} = shift @_;
     } elsif (not $self->{'_cache_by_class'}->{$type}) {
 
-        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') and ($type ne 'AnalysisJob') ) {
+        if( (my $hive_dba = $self->hive_dba) and ($type ne 'NakedTable') and ($type ne 'Accumulator') and ($type ne 'Job') and ($type ne 'AnalysisJob')) {
             my $adaptor = $hive_dba->get_adaptor( $type );
             my $all_objects = $adaptor->fetch_all();
             if(@$all_objects and UNIVERSAL::can($all_objects->[0], 'hive_pipeline') ) {
                 $_->hive_pipeline($self) for @$all_objects;
             }
             $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new( $all_objects );
+#            warn "initialized collection_of($type) by loading all ".scalar(@$all_objects)."\n";
         } else {
             $self->{'_cache_by_class'}->{$type} = Bio::EnsEMBL::Hive::Utils::Collection->new();
+#            warn "initialized collection_of($type) as an empty one\n";
         }
     }
 

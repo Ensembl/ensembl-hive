@@ -137,10 +137,8 @@ sub AUTOLOAD {
 
             if(@_) {
                 $self->{$foo_id_method_name} = shift @_;
-                if( $self->{$foo_obj_method_name} ) {
-#                    warn "setting $foo_id_method_name in an object that had $foo_obj_method_name defined";
-                    $self->{$foo_obj_method_name} = undef;
-                }
+
+                $self->{$foo_obj_method_name} = undef;  # invalidate the object itself
 
                 # attempt to lazy-load:
             } elsif( !$self->{$foo_id_method_name} and my $foo_object=$self->{$foo_obj_method_name}) {
