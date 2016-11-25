@@ -106,7 +106,6 @@ sub default_options {
         'user'                  => $ENV{'EHIVE_USER'} // $self->o('user'),
         'password'              => $ENV{'EHIVE_PASS'} // $self->o('password'),                  # people will have to make an effort NOT to insert it into config files like .bashrc etc
         'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'} || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
-        'pipeline_name'         => $self->pipeline_name(),
 
         'hive_use_triggers'                 => 0,       # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'              => 0,       # do not reconstruct the calling stack of parameters by default (yet)
@@ -120,7 +119,7 @@ sub default_options {
             -port   => $self->o('port'),
             -user   => $self->o('user'),
             -pass   => $self->o('password'),
-            -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
+            -dbname => $self->o('dbowner').'_'.$self->processed_pipeline_name(),
         },
     };
 }
@@ -239,7 +238,7 @@ sub hive_meta_table {
 
     return {
         'hive_sql_schema_version'           => Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version(),
-        'hive_pipeline_name'                => $self->o('pipeline_name'),
+        'hive_pipeline_name'                => $self->processed_pipeline_name(),
         'hive_use_param_stack'              => $self->o('hive_use_param_stack'),
         'hive_auto_rebalance_semaphores'    => $self->o('hive_auto_rebalance_semaphores'),
     };
@@ -251,6 +250,7 @@ sub pre_options {
     return {
         'help!' => '',
         'pipeline_url' => '',
+        'pipeline_name' => '',
     };
 }
 
@@ -299,19 +299,30 @@ sub db_cmd {
 }
 
 
-sub pipeline_name {
+sub processed_pipeline_name {
     my $self            = shift @_;
-    my $pipeline_name   = shift @_;
 
-    unless($pipeline_name) {    # or turn the ClassName into pipeline_name:
-        $pipeline_name = ref($self);        # get the original class name
-        $pipeline_name=~s/^.*:://;          # trim the leading classpath prefix
-        $pipeline_name=~s/_conf$//;         # trim the optional _conf from the end
+    unless($self->{'_processed_pipeline_name'}) {   # due to the way substitution works in DependentOptions, caching is essential here
+        my $ppn   = $self->root()->{'pipeline_name'} || $self->default_pipeline_name();
+           $ppn=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
+           $ppn=~s/\s/_/g;                                   # remove all spaces
+           $ppn = lc($ppn);
+
+        $self->{'_processed_pipeline_name'} = $ppn;
     }
 
-    $pipeline_name=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
+    return $self->{'_processed_pipeline_name'};
+}
 
-    return lc($pipeline_name);
+
+sub default_pipeline_name {
+    my $self            = shift @_;
+
+    my  $dpn = ref($self);        # get the original class name
+        $dpn=~s/^.*:://;          # trim the leading classpath prefix
+        $dpn=~s/_conf$//;         # trim the optional _conf from the end
+
+    return $dpn;
 }
 
 
@@ -333,7 +344,8 @@ sub process_options {
 
         # pre-patch definitely_used_options:
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
-    $self->root()->{'pipeline_url'} = $self->{'_extra_options'}{'pipeline_url'};
+    $self->root()->{'pipeline_url'}     = $self->{'_extra_options'}{'pipeline_url'};
+    $self->root()->{'pipeline_name'}    = $self->{'_extra_options'}{'pipeline_name'};
 
     my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
     if($include_pcc_use_case) {
@@ -577,7 +589,7 @@ sub useful_commands_legend {
     my $self  = shift @_;
 
     my $pipeline_url    = $self->pipeline_url();
-    my $pipeline_name   = $self->o('pipeline_name');
+    my $pipeline_name   = $self->processed_pipeline_name();
     my $extra_cmdline   = $self->beekeeper_extra_cmdline_options();
 
     my @output_lines = (
