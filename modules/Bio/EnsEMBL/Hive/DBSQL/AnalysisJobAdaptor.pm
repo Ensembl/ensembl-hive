@@ -256,7 +256,7 @@ sub store_a_semaphored_group_of_jobs {
             if( $funnel_job->status eq 'SEMAPHORED' ) {
                 $self->increase_semaphore_count_for_jobid( $funnel_job_id, scalar(@$fan_jobs) );    # "pre-increase" the semaphore count before creating the dependent jobs
 
-                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, "Discovered and using an existing funnel ".$funnel_job->toString, 0);
+                $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, "Discovered and using an existing funnel ".$funnel_job->toString, 'INFO');
             } else {
                 die "The funnel job (id=$funnel_job_id) fetched from the database was not in SEMAPHORED status";
             }

@@ -510,7 +510,7 @@ sub life_cycle {
             $self->send_response('OK');
 
         } elsif ($event eq 'WARNING') {
-            $self->warning($content->{message}, $content->{is_error});
+            $self->warning($content->{message}, $content->{is_error}?'WORKER_ERROR':'INFO');
             $self->send_response('OK');
 
         } elsif ($event eq 'DATAFLOW') {
