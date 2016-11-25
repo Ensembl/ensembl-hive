@@ -79,7 +79,8 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is(scalar(@$final_results), 1, 'There is exactly 1 final_results');
         my $expected_result = '0.4875';
         foreach ( @$final_results ) {
-            is($expected_result, $_->{'result'}, 'Got the correct result');
+            my $result_as_str = sprintf("%.4f", $_->{'result'});
+            is($expected_result, $result_as_str, 'Got the correct result');
         }
 
         system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
