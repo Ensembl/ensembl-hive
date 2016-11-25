@@ -37,7 +37,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/^Could not start '${ctdne}': Can't exec "${ctdne}": No such file or directory at/,
-            1
+            'WORKER_CAUTION'
         ],
     ],
     { 'expect_failure' => 1 },
@@ -51,7 +51,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/'ls ${ptdne}' resulted in an error code=\d+\nstderr is: ls: .+: No such file or directory/,
-            1
+            'WORKER_CAUTION'
         ],
     ],
     { 'expect_failure' => 1 },
@@ -71,7 +71,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/Java heap space is out of memory. A job has been dataflown to the -1 branch/,
-            0
+            'INFO'
         ],
     ],
 );
@@ -98,7 +98,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         ], [
             'WARNING',
             "The command exited with code 1, which is mapped to a dataflow on branch #4.\n",
-            0,
+            'INFO',
         ],
     ],
 );

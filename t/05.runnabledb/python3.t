@@ -41,15 +41,15 @@ standaloneJob(
         [
             'WARNING',
             'Fetch the world !',
-            JSON::false,
+            'INFO',
         ], [
             'WARNING',
             'Run the world !',
-            JSON::false,
+            'INFO',
         ], [
             'WARNING',
             'Write to the world !',
-            JSON::false,
+            'INFO',
         ], [
             'DATAFLOW',
             {
