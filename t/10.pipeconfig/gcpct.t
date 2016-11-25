@@ -77,7 +77,8 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is(scalar(@$final_results), 1, 'There is exactly 1 final_results');
         my $expected_result = '0.4875';
         foreach ( @$final_results ) {
-            is($expected_result, $_->{'result'}, 'Got the correct result');
+            my $result_as_str = sprintf("%.4f", $_->{'result'});
+            is($expected_result, $result_as_str, 'Got the correct result');
         }
 
         # check beekeeper registration
@@ -89,7 +90,9 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $beekeeper_row = $$beekeeper_entries[0];
         is($beekeeper_row->{'beekeeper_id'}, 1, 'beekeeper has a beekeeper_id of 1');
         is($beekeeper_row->{'cause_of_death'},  'NO_WORK', 'beekeeper finished with cause_of_death NO_WORK');
-        is($beekeeper_row->{'sleep_minutes'}, $sleep_minutes, 'beekeeper sleep_minutes recorded correctly');
+        my $stored_sleep_minutes_str = sprintf("%.3f", $beekeeper_row->{'sleep_minutes'});
+        my $given_sleep_minutes_str = sprintf("%.3f", $sleep_minutes);
+        is($stored_sleep_minutes_str, $given_sleep_minutes_str, 'beekeeper sleep_minutes recorded correctly');
         is($beekeeper_row->{'loop_limit'}, undef, 'no loop limit recorded');
         is($beekeeper_row->{'loop_until'}, 'ANALYSIS_FAILURE', 'beekeeper stop_when is LOOP_UNTIL');
 
