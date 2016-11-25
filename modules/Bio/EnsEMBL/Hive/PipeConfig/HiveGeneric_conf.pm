@@ -106,7 +106,6 @@ sub default_options {
         'user'                  => $ENV{'EHIVE_USER'} // $self->o('user'),
         'password'              => $ENV{'EHIVE_PASS'} // $self->o('password'),                  # people will have to make an effort NOT to insert it into config files like .bashrc etc
         'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'} || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
-        'pipeline_name'         => $self->pipeline_name(),
 
         'hive_use_triggers'                 => 0,       # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'              => 0,       # do not reconstruct the calling stack of parameters by default (yet)
@@ -114,13 +113,15 @@ sub default_options {
         'hive_force_init'                   => 0,       # setting it to 1 will drop the database prior to creation (use with care!)
         'hive_no_init'                      => 0,       # setting it to 1 will skip pipeline_create_commands (useful for topping up)
 
+        'pipeline_name'                     => $self->default_pipeline_name(),
+
         'pipeline_db'   => {
             -driver => $self->o('hive_driver'),
             -host   => $self->o('host'),
             -port   => $self->o('port'),
             -user   => $self->o('user'),
             -pass   => $self->o('password'),
-            -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name'),  # example of a linked definition (resolved via saturation)
+            -dbname => $self->o('dbowner').'_'.$self->o('pipeline_name'),
         },
     };
 }
@@ -139,7 +140,7 @@ sub pipeline_create_commands {
     my $pipeline_url    = $self->pipeline_url();
     my $second_pass     = $pipeline_url!~ /^#:subst/;
 
-    my $parsed_url      = $second_pass && Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url );
+    my $parsed_url      = $second_pass && (Bio::EnsEMBL::Hive::Utils::URL::parse( $pipeline_url ) || die "Could not parse the '$pipeline_url' as the database URL");
     my $driver          = $second_pass ? $parsed_url->{'driver'} : '';
     my $hive_force_init = $self->o('hive_force_init');
 
@@ -251,6 +252,7 @@ sub pre_options {
     return {
         'help!' => '',
         'pipeline_url' => '',
+        'pipeline_name' => '',
     };
 }
 
@@ -299,19 +301,25 @@ sub db_cmd {
 }
 
 
-sub pipeline_name {
+sub process_pipeline_name {
+    my ($self, $ppn) = @_;
+
+    $ppn=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
+    $ppn=~s/\s/_/g;                                   # remove all spaces
+    $ppn = lc($ppn);
+
+    return $ppn;
+}
+
+
+sub default_pipeline_name {
     my $self            = shift @_;
-    my $pipeline_name   = shift @_;
 
-    unless($pipeline_name) {    # or turn the ClassName into pipeline_name:
-        $pipeline_name = ref($self);        # get the original class name
-        $pipeline_name=~s/^.*:://;          # trim the leading classpath prefix
-        $pipeline_name=~s/_conf$//;         # trim the optional _conf from the end
-    }
+    my  $dpn = ref($self);        # get the original class name
+        $dpn=~s/^.*:://;          # trim the leading classpath prefix
+        $dpn=~s/_conf$//;         # trim the optional _conf from the end
 
-    $pipeline_name=~s/([[:lower:]])([[:upper:]])/${1}_${2}/g;   # CamelCase into Camel_Case
-
-    return lc($pipeline_name);
+    return $dpn;
 }
 
 
@@ -333,7 +341,7 @@ sub process_options {
 
         # pre-patch definitely_used_options:
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
-    $self->root()->{'pipeline_url'} = $self->{'_extra_options'}{'pipeline_url'};
+    $self->root()->{'pipeline_url'}     = $self->{'_extra_options'}{'pipeline_url'};
 
     my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
     if($include_pcc_use_case) {
@@ -342,7 +350,11 @@ sub process_options {
     }
     $self->use_cases( \@use_cases );
 
-    return $self->SUPER::process_options();
+    $self->SUPER::process_options();
+
+        # post-processing:
+    $self->root()->{'pipeline_name'}            = $self->process_pipeline_name( $self->root()->{'pipeline_name'} );
+    $self->root()->{'pipeline_db'}{'-dbname'} &&= $self->process_pipeline_name( $self->root()->{'pipeline_db'}{'-dbname'} );    # may be used to construct $self->pipeline_url()
 }
 
 
@@ -570,7 +582,7 @@ sub add_objects_from_config {
 sub useful_commands_legend {
     my $self  = shift @_;
 
-    my $pipeline_url    = $self->pipeline_url();
+    my $pipeline_url    = '"' . $self->pipeline_url() . '"';
     my $pipeline_name   = $self->o('pipeline_name');
     my $extra_cmdline   = $self->beekeeper_extra_cmdline_options();
 
