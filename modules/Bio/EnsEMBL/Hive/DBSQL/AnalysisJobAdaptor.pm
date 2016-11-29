@@ -162,6 +162,7 @@ sub class_specific_execute {
 
   Arg [1]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $jobs_to_store
   Arg [2]    : (optional) boolean $push_new_semaphore
+  Arg [3]    : (optional) Int $emitting_job_id
   Example    : my @output_job_ids = @{ $job_adaptor->store_jobs_and_adjust_counters( \@jobs_to_store ) };
   Description: Attempts to store a list of jobs, returns an arrayref of successfully stored job_ids
   Returntype : Reference to list of job_dbIDs
@@ -175,10 +176,13 @@ sub store_jobs_and_adjust_counters {
     my $semaphored_job                      = scalar(@$jobs) && $jobs->[0]->semaphored_job;
     my $semaphored_job_id                   = $semaphored_job && $semaphored_job->dbID;    # NB: it is local to its own database
     my $semaphored_job_adaptor              = $semaphored_job && $semaphored_job->adaptor;
-    my $need_to_increase_semaphore_count    = $semaphored_job && !$push_new_semaphore;
 
-    my @output_job_ids              = ();
-    my $failed_to_store_local_jobs  = 0;
+    my @output_job_ids                      = ();
+    my $adjust_the_semaphore_by             = 0;
+
+    if($semaphored_job && !$push_new_semaphore) {   # only if it has not been done yet
+        $semaphored_job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id, scalar(@$jobs) );  # "pre-increase" the semaphore count before creating the dependent jobs
+    }
 
     foreach my $job (@$jobs) {
 
@@ -187,18 +191,21 @@ sub store_jobs_and_adjust_counters {
         my $prev_adaptor= ($job->prev_job && $job->prev_job->adaptor) || '';
         my $local_job   = $prev_adaptor eq $job_adaptor;
 
-            # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
-        if($need_to_increase_semaphore_count) {
-            $semaphored_job_adaptor->prelock_semaphore_for_update( $semaphored_job_id );
-        }
+        if( $semaphored_job ) {
+            if( $job_adaptor eq $semaphored_job_adaptor ) {
 
-        if( $semaphored_job and ($job_adaptor ne $semaphored_job_adaptor) ) {
-            $job->semaphored_job_id( undef );       # job_ids are local, so for remote jobs they have to be cleaned up before storing
+                    # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
+                $semaphored_job_adaptor->prelock_semaphore_for_update( $semaphored_job_id );
 
-            if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
-                my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
-                $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->relative_url( $job->hive_pipeline );
-                $job->input_id( $input_id_hash );
+            } else {
+                $job->semaphored_job_id( undef );       # job_ids are local, so for remote jobs they have to be cleaned up before storing
+                $adjust_the_semaphore_by++;             # adjust for jobs non-local to the semaphore
+
+                if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
+                    my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
+                    $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->relative_url( $job->hive_pipeline );
+                    $job->input_id( $input_id_hash );
+                }
             }
         }
         if( $job_adaptor ne $prev_adaptor ) {
@@ -208,10 +215,6 @@ sub store_jobs_and_adjust_counters {
         my ($job, $stored_this_time) = $job_adaptor->store( $job );
 
         if($stored_this_time) {
-            if($need_to_increase_semaphore_count) {     # if we are not creating a new semaphore (where dependent jobs have already been counted),
-                                                        # but rather propagating an existing one (same or other level), we have to up-adjust the counter
-                $semaphored_job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id );
-            }
 
             unless($job_adaptor->db->hive_pipeline->hive_use_triggers()) {
                 $job_adaptor->dbc->do(qq{
@@ -240,13 +243,14 @@ sub store_jobs_and_adjust_counters {
                 $self->db->get_LogMessageAdaptor->store_hive_message($msg, 'PIPELINE_CAUTION');
             }
 
-            $failed_to_store_local_jobs++;
+            if( $semaphored_job and ($job_adaptor eq $semaphored_job_adaptor) ) {   # adjust for non-stored jobs local to the semaphore
+                $adjust_the_semaphore_by++;
+            }
         }
     }
 
-        # adjust semaphore_count for jobs that failed to be stored (but have been pre-counted during funnel's creation):
-    if($push_new_semaphore and $failed_to_store_local_jobs) {
-        $semaphored_job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id, $failed_to_store_local_jobs );
+    if($adjust_the_semaphore_by) {
+        $semaphored_job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id, $adjust_the_semaphore_by );
     }
 
     return \@output_job_ids;
@@ -287,7 +291,7 @@ sub store_a_semaphored_group_of_jobs {
             $funnel_job_id = $funnel_job->dbID;
 
             if( $funnel_job->status eq 'SEMAPHORED' ) {
-                $self->increase_semaphore_count_for_jobid( $funnel_job_id, scalar(@$fan_jobs) );    # "pre-increase" the semaphore count before creating the dependent jobs
+                $funnel_job->adaptor->increase_semaphore_count_for_jobid( $funnel_job->dbID, scalar(@$fan_jobs) );  # "pre-increase" the semaphore count before creating the dependent jobs
 
                 $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, "Discovered and using an existing funnel ".$funnel_job->toString, 'INFO');
             } else {
