@@ -407,7 +407,9 @@ sub prelock_semaphore_for_update {
 
     if(my $dbc = $self->dbc) {
         if($dbc->driver ne 'sqlite') {
-            $dbc->do( "SELECT 1 FROM job WHERE job_id=$job_id FOR UPDATE" );
+            $self->dbc->protected_prepare_execute( [ "SELECT 1 FROM job WHERE job_id=? FOR UPDATE", $job_id ],
+                sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( "prelocking semaphore job_id=$job_id".$after, 0 ); }
+            );
         }
     }
 }

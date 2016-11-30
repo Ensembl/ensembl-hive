@@ -729,11 +729,7 @@ sub run_one_batch {
             $job->set_and_update_status('DONE');
 
             if(my $semaphored_job = $job->semaphored_job) {
-                my $semaphored_job_id   = $semaphored_job->dbID;
-
-                $semaphored_job->adaptor->prelock_semaphore_for_update( $semaphored_job_id );
-
-                $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id ); # step-unblock the semaphore
+                $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job->dbID );  # step-unblock the semaphore
             }
 
             if($job->lethal_for_worker) {
