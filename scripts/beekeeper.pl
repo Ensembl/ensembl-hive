@@ -132,7 +132,11 @@ sub main {
                'reset_failed_jobs' => \$reset_failed_jobs,
                'reset_all_jobs'    => \$reset_all_jobs,
                'job_output=i'      => \$job_id_for_output,
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if ($help) { script_usage(0); }
 

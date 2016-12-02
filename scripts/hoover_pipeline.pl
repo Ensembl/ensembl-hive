@@ -35,7 +35,11 @@ sub main {
 
                # other commands/options     
 	    'h|help!'               => \$help,  
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if ($help) { script_usage(0); };
 

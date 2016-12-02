@@ -61,7 +61,11 @@ sub main {
                'h|help'                     => \$help,
                'v|versions'                 => \$report_versions,
                'debug=i'                    => \$debug,
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if ($help) { script_usage(0); }
 

@@ -63,9 +63,14 @@ sub main {
         Bio::EnsEMBL::Registry->load_all($reg_conf);
     }
 
-    unless($input_id) {
+    if(!$input_id) {
         my ($param_hash, $param_list) = parse_cmdline_options();
+        if (@$param_list) {
+            die "ERROR: There are invalid arguments on the command-line: ". join(" ", @$param_list). "\n";
+        }
         $input_id = stringify($param_hash);
+    } elsif (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
     warn "\nRunning '$module_or_file' with input_id='$input_id' :\n";
 

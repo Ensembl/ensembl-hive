@@ -41,7 +41,11 @@ sub main {
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
 
         'h|help'                => \$self->{'help'},
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if($self->{'help'}) {
         pod2usage({-exitvalue => 0, -verbose => 2});
