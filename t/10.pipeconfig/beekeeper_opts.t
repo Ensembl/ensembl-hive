@@ -23,7 +23,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -45,9 +45,7 @@ my $pipeline_url = get_test_url_or_die();
     my $hive_dba    = $pipeline->hive_dba;
 
     # Check that -sync runs, puts one entry in the beekeeper table, and finishes with LOOP_LIMIT
-    my @sync_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-sync');
-    system(@sync_cmd);
-    ok(!$?, 'beekeeper -sync exited with a return code of 0');
+    beekeeper($url, ['-sync']);
     my $beekeeper_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper');
     my $beekeeper_rows = $beekeeper_nta->fetch_all();
 
@@ -57,9 +55,7 @@ my $pipeline_url = get_test_url_or_die();
 
     # Check that -run puts one additional in the beekeeper table, it loops once,
     # and finishes with LOOP_LIMIT
-    my @run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run', '-meadow_type' => 'LOCAL');
-    system(@run_cmd);
-    ok(!$?, 'beekeeper -run exited with a return code of 0');
+    beekeeper($url, ['-run', '-meadow_type' => 'LOCAL']);
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 2, 'After -sync and -run, there are exactly 2 entries in the beekeeper table');
@@ -111,11 +107,7 @@ my $pipeline_url = get_test_url_or_die();
 
     sleep(10); # give worker a bit of time to seed longrunning jobs
 
-    my @longworkers_run_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl',
-        -url => $hive_dba->dbc->url, '-run',
-        -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1);
-    system(@longworkers_run_cmd);
-    ok(!$?, 'second beekeeper -run -analyses_pattern for LongWorker exited with a return code of 0');
+    beekeeper($url, ['-run', -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1]);
 
     sleep(10); # give workers time to start
 
@@ -128,9 +120,7 @@ my $pipeline_url = get_test_url_or_die();
     }
 
     foreach my $worker_id (@live_worker_ids) {
-        my @kill_worker_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -killworker => $worker_id);
-        system(@kill_worker_cmd);
-        ok(!$?, 'beekeeper -killworker exited with a return code of 0');
+        beekeeper($url, [-killworker => $worker_id]);
     }
 
     sleep(10); # give workers a bit of time to die

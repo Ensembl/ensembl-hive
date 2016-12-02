@@ -23,7 +23,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -64,11 +64,8 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
 
         # Let's now try running a beekeeper
-
-        my @beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, -sleep => $sleep_minutes, '-loop', '-local');
-
-        system(@beekeeper_cmd);
-        ok(!$?, 'beekeeper exited with the return code 0');
+        my @beekeeper_options = (-sleep => $sleep_minutes, '-loop', '-local');
+        beekeeper($hive_dba->dbc->url, \@beekeeper_options, 'beekeeper exited with the return code 0');
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
@@ -98,8 +95,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
         # substitute the password-obscured version of the url into the beeekeeper options string
         # for checking - this is how it should be stored in the beekeeper table
-        $beekeeper_cmd[2] = $hive_dba->dbc->url('EHIVE_PASS');
-        my $beekeeper_options_string = join(' ', @beekeeper_cmd[1..$#beekeeper_cmd]);
+        my $beekeeper_options_string = join(' ', '-url', $hive_dba->dbc->url('EHIVE_PASS'), @beekeeper_options);
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
         $hive_dba->dbc->disconnect_if_idle();

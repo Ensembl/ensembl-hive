@@ -22,7 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -34,7 +34,7 @@ init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServe
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', [-pipeline_url => $client_url, -server_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
 
 my @client_runworker_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl', -url => $client_url);       # to seed the "Server" database (to make sure its beekeeper doesn't exit immediately)
-my @client_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $client_url, -sleep => 0.1, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
+my @client_beekeeper_cmd = (-sleep => 0.1, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.1, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 
 
@@ -42,8 +42,7 @@ system( @client_runworker_cmd );
 ok(!$?, 'client runWorker exited with the return code 0');
 
 if(my $server_pid = fork) {             # "Client" branch
-    system( @client_beekeeper_cmd );
-    ok(!$?, 'client beekeeper exited with the return code 0');
+    beekeeper($client_url, \@client_beekeeper_cmd);
 
     waitpid( $server_pid, 0 ); # wait for the "Server" branch to finish
 

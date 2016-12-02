@@ -22,7 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -34,11 +34,10 @@ init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfSer
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfClient_conf', [-pipeline_url => $client_url, -server_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
 
 my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.1, '-keep_alive', '-local'); # needs to be killed
-my @client_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $client_url, -sleep => 0.1, '-loop', '-local');       # will exit when the pipeline is over
+my @client_beekeeper_cmd = (-sleep => 0.1, '-loop', '-local');       # will exit when the pipeline is over
 
 if(my $server_pid = fork) {
-    system( @client_beekeeper_cmd );
-    ok(!$?, 'client beekeeper exited with the return code 0');
+    beekeeper($client_url, \@client_beekeeper_cmd );
 
     kill('KILL', $server_pid);  # the server needs to be killed as it was running in -keep_alive mode
 
