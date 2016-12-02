@@ -450,6 +450,8 @@ sub apply_tweaks {
     my $self    = shift @_;
     my $tweaks  = shift @_;
 
+    my $need_write = 0;
+
     foreach my $tweak (@$tweaks) {
         print "\nTweak.Request\t$tweak\n";
 
@@ -463,10 +465,12 @@ sub apply_tweaks {
                 print "Tweak.Show    \tpipeline.param[$param_name] ::\t"
                      . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
+                $need_write = 1;
                 $pwp_collection->forget_and_mark_for_deletion( $hash_pair );
 
                 print "Tweak.Deleting\tpipeline.param[$param_name] ::\t".stringify($hash_pair->{'param_value'})." --> (missing value)\n";
             } else {
+                $need_write = 1;
                 my $new_value = destringify( $new_value_str );
 
                 if($hash_pair) {
@@ -495,6 +499,7 @@ sub apply_tweaks {
                     print "Tweak.Changing\tpipeline.$attrib_name ::\t$old_value --> $new_value_str\n";
 
                     $self->$attrib_name( $new_value_str );
+                    $need_write = 1;
                 }
 
             } else {
@@ -525,6 +530,7 @@ sub apply_tweaks {
 
                     delete $param_hash->{ $param_name };
                     $analysis->parameters( stringify($param_hash) );
+                    $need_write = 1;
                 } else {
                     if(exists($param_hash->{ $param_name })) {
                         print "Tweak.Changing\tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> $new_value_str\n";
@@ -534,6 +540,7 @@ sub apply_tweaks {
 
                     $param_hash->{ $param_name } = $new_value;
                     $analysis->parameters( stringify($param_hash) );
+                    $need_write = 1;
                 }
             }
 
@@ -563,6 +570,7 @@ sub apply_tweaks {
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
                         foreach my $c_rule ( @$acr_collection ) {
                             $cr_collection->forget_and_mark_for_deletion( $c_rule );
+                            $need_write = 1;
 
                             print "Tweak.Deleting\t".$c_rule->toString." --> (missing value)\n";
                         }
@@ -570,11 +578,13 @@ sub apply_tweaks {
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
+                        $need_write = 1;
                     }
 
                 } elsif( $attrib_name eq 'flow_into' ) {
 
                     if($operator eq '?') {
+                        # FIXME: should not recurse
                         $analysis->print_diagram_node($self, '', {});
                     }
 
@@ -593,6 +603,7 @@ sub apply_tweaks {
                                     print "Tweak.Deleting\t".$df_target->toString." --> (missing value)\n";
                                 }
                                 $dfr_collection->forget_and_mark_for_deletion( $df_rule );
+                                $need_write = 1;
 
                                 print "Tweak.Deleting\t".$df_rule->toString." --> (missing value)\n";
                             }
@@ -600,6 +611,7 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
+                        $need_write = 1;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
                     }
                 }
@@ -646,6 +658,7 @@ sub apply_tweaks {
                             );
                         }
                         $analysis->resource_class( $resource_class );
+                        $need_write = 1;
                     }
 
                 } elsif($analysis->can($attrib_name)) {
@@ -659,6 +672,7 @@ sub apply_tweaks {
                         print "Tweak.Changing\tanalysis[$analysis_name].$attrib_name ::\t$old_value --> ".stringify($new_value)."\n";
 
                         $analysis->$attrib_name( $new_value );
+                        $need_write = 1;
                     }
                 } else {
                     print "Tweak.Error   \tAnalysis does not support '$attrib_name' attribute\n";
@@ -710,6 +724,7 @@ sub apply_tweaks {
                             'worker_cmd_args'       => $new_worker_cmd_args,
                         );
                     }
+                    $need_write = 1;
                 }
             }
 
@@ -717,6 +732,7 @@ sub apply_tweaks {
             print "Tweak.Error   \tFailed to parse the tweak\n";
         }
     }
+    return $need_write;
 }
 
 1;

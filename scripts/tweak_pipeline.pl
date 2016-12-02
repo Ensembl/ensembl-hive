@@ -64,10 +64,12 @@ sub main {
     }
 
     if(@$tweaks) {
-        $pipeline->apply_tweaks( $tweaks );
+        my $need_write = $pipeline->apply_tweaks( $tweaks );
+        if ($need_write) {
+            $pipeline->save_collections();
+        }
     }
 
-    $pipeline->save_collections();
 }
 
 
