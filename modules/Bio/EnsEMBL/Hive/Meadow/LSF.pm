@@ -83,14 +83,18 @@ sub status_of_all_our_workers { # returns an arrayref
     my @status_list = ();
 
     foreach my $meadow_user (@$meadow_users_of_interest) {
-        my $cmd = "bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null";
+        my $cmd = "bjobs -w -u $meadow_user 2>/dev/null";
 
 #        warn "LSF::status_of_all_our_workers() running cmd:\n\t$cmd\n";
 
         foreach my $line (`$cmd`) {
             my ($group_pid, $user, $status, $queue, $submission_host, $running_host, $job_name) = split(/\s+/, $line);
 
+            # skip the header line and jobs that are done
             next if(($group_pid eq 'JOBID') or ($status eq 'DONE') or ($status eq 'EXIT'));
+
+            # skip the hive jobs that belong to another pipeline
+            next if (($job_name =~ /Hive-/) and (index($job_name, $jnp) != 0));
 
             my $worker_pid = $group_pid;
             if($job_name=~/(\[\d+\])$/ and $worker_pid!~/\[\d+\]$/) {   # account for the difference in LSF 9.1.1.1 vs LSF 9.1.2.0  bjobs' output

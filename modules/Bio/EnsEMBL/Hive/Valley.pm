@@ -216,6 +216,14 @@ sub query_worker_statuses {
         $statuses{ $meadow->type }          = {};
         foreach my $ra (@$this_status_list) {
             my ($worker_pid, $meadow_user, $status, $rc_name) = @$ra;
+            # Workers that are not properly named and are not in the
+            # database are likely not ours. Let's skip them.
+            if (($rc_name eq '__unknown_rc_name__') and !$process_ids_by_meadow_user->{$meadow_user}->{$worker_pid}) {
+                next;
+            }
+            # Workers that are in RUN state but not yet in the database probably
+            # have a hard time registering (db too busy ? registry too big ?).
+            # Let's mark them as PENDing for the time being.
             if (($status eq 'RUN') and !$process_ids_by_meadow_user->{$meadow_user}->{$worker_pid}) {
                 $status = 'PEND';
             }

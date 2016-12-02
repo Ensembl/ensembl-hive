@@ -65,11 +65,14 @@ subtest 'get_current_worker_process_id()' => sub
 is_deeply(
     $lsf_meadow->status_of_all_our_workers,
     [
+        [ '6388676', 'jt8', 'RUN', '__unknown_rc_name__' ],
+        [ '1997948', 'tc9', 'RUN', '__unknown_rc_name__' ],
         [ '2067769[9]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067769[10]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067769[11]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067769[12]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067769[13]', 'il4', 'RUN', 'normal_10gb' ],
+        [ '2037301', 'il4', 'RUN', '__unknown_rc_name__' ],
         [ '2067769[8]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067754[26]', 'il4', 'RUN', 'normal_10gb' ],
         [ '2067754[27]', 'il4', 'RUN', 'normal_10gb' ],
