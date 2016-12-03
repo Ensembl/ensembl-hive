@@ -258,7 +258,7 @@ sub run_sql_on_db {
   Arg[1]      : String $url. The location of the database
   Arg[2]      : String $sql_file. The location of a file to load in the database
   Arg[3]      : String $test_name (optional). The name of the test
-  Example     : load_sql_on_db($url, $file_with_sql_commands);
+  Example     : load_sql_in_db($url, $file_with_sql_commands);
   Description : Execute an SQL script on the given database and test its execution.
                 This expects the command-line client to return a non-zero code in
                 case of a failure.
