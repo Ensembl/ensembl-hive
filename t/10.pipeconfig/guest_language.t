@@ -26,7 +26,7 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper seed_pipeline get_test_url_or_die run_sql_on_db);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -73,12 +73,9 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
-        {
-            my @seed_pipeline_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/seed_pipeline.pl', -url => $hive_dba->dbc->url, -logic_name => 'take_b_apart', -input_id => '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
-            system(@seed_pipeline_cmd);
-            ok(!$?, 'seed_pipeline exited with the return code 0');
-            is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
-        }
+        seed_pipeline($url, 'take_b_apart', '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
+        is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
+
         beekeeper($url, [-sleep => 0.1, '-loop', '-local']);
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 

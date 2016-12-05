@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
 
 our $VERSION = '0.00';
 
@@ -210,6 +210,48 @@ sub runWorker {
 }
 
 
+=head2 _test_ehive_script
+
+  Arg[1]      : String $script_name. The name of the script (assumed to be found in
+                ensembl-hive/scripts/ once the .pl suffix added)
+  Arg[2]      : String $url. The location of the database
+  Arg[3]      : Arrayref $args. Extra arguments given to beekeeper
+  Arg[4]      : String $test_name (optional). The name of the test
+  Description : Generic method that can run any eHive script and check its return status
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : other methods in Utils::Test
+  Status      : Stable
+
+=cut
+
+sub _test_ehive_script {
+    my ($script_name, $url, $args, $test_name) = @_;
+    $test_name ||= 'Can run '.$script_name.($args ? ' with '.join(' ', @$args) : '');
+    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', -url => $url, @{$args || []}), $test_name);
+}
+
+
+=head2 seed_pipeline
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to seed_pipeline
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : $seed_pipeline($url, [$arg1, $arg2], 'Run seed_pipeline with two arguments');
+  Description : Very generic function to run seed_pipeline on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub seed_pipeline {
+    my ($url, $logic_name, $input_id, $test_name) = @_;
+    return _test_ehive_script('seed_pipeline', $url, [-logic_name => $logic_name, -input_id => $input_id], $test_name // 'Can seed '.$logic_name.' with '.$input_id);
+}
+
+
 =head2 beekeeper
 
   Arg[1]      : String $url. The location of the database
@@ -225,9 +267,7 @@ sub runWorker {
 =cut
 
 sub beekeeper {
-    my ($url, $args, $test_name) = @_;
-    $test_name ||= 'Can run beekeeper'.($args ? ' with '.join(' ', @$args) : '');
-    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $url, @{$args || []}), $test_name);
+    return _test_ehive_script('beekeeper', @_);
 }
 
 
@@ -248,8 +288,7 @@ sub beekeeper {
 
 sub run_sql_on_db {
     my ($url, $sql, $test_name) = @_;
-    my @cmd_array = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', -url => $url, -sql => $sql);
-    ok(!system(@cmd_array), $test_name // 'Can run '.$sql);
+    return _test_ehive_script('db_cmd', $url, [-sql => $sql], $test_name // 'Can run '.$sql);
 }
 
 
