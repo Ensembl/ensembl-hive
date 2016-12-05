@@ -24,13 +24,17 @@ use Test::File::Contents;
 use Test::More;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker run_sql_on_db get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(runWorker run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $server_url  = get_test_url_or_die(-tag => 'server', -no_user_prefix => 1);
-init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', [-pipeline_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
+
+# Most of the test scripts test init_pipeline() from Utils::Test but we
+# also need to test the main scripts/init_pipeline.pl !
+my @init_pipeline_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl', 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', -pipeline_url => $server_url, -hive_force_init => 1, -tweak => 'pipeline.param[take_time]=0');
+test_command(\@init_pipeline_args);
 
 my $client_url  = get_test_url_or_die(-tag => 'client', -no_user_prefix => 1);
 
@@ -67,9 +71,9 @@ foreach my $conf (@confs_to_test) {
     files_eq_or_diff($filename, $ref_output_location . $conf . '.unstored.dot');
 
     # Dot output on a database (no dBIDs)
-    my @init_pipeline_args = (-pipeline_url => $client_url, -hive_force_init => 1);
+    @init_pipeline_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl', $module_name, -pipeline_url => $client_url, -hive_force_init => 1);
     push @init_pipeline_args, (-server_url => $server_url) if $conf =~ /Client/;
-    init_pipeline($module_name, \@init_pipeline_args);
+    test_command(\@init_pipeline_args);
     #my $filename = $ref_output_location . $conf . '.stored.dot';
     @generate_graph_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/generate_graph.pl', -url => $client_url, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     test_command(\@generate_graph_args);
