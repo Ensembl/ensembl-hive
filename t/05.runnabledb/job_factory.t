@@ -24,9 +24,9 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
-use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob get_test_url_or_die make_new_db_from_sqls run_sql_on_db);
 
-plan tests => 8;
+plan tests => 9;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -288,7 +288,7 @@ standaloneJob(
     ]
 );
 $dbc->disconnect_if_idle();
-system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
+run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
 

@@ -21,7 +21,7 @@ use warnings;
 
 use Test::More;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die run_sql_on_db);
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -62,7 +62,7 @@ my $funnel_job      = shift @funnel_jobs;
 is($funnel_job->semaphore_count, $fan_job_count, 'All the fan jobs share the same funnel');
 
 $hive_dba->dbc->disconnect_if_idle();
-system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 done_testing();
 

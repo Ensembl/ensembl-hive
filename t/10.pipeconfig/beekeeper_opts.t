@@ -23,7 +23,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -129,7 +129,7 @@ my $pipeline_url = get_test_url_or_die();
     is($still_alive_worker_rows, 0, "no workers remain alive");
 
     $hive_dba->dbc->disconnect_if_idle();
-    system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+    run_sql_on_db($url, 'DROP DATABASE');
 
 done_testing();
 

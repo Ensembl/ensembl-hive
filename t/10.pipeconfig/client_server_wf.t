@@ -22,7 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -60,8 +60,8 @@ if(my $server_pid = fork) {
             sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
     }
 
-    system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', -url => $server_url, -sql => 'DROP DATABASE');
-    system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', -url => $client_url, -sql => 'DROP DATABASE');
+    run_sql_on_db($server_url, 'DROP DATABASE');
+    run_sql_on_db($client_url, 'DROP DATABASE');
 
     done_testing();
 

@@ -26,7 +26,7 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_urls run_sql_on_db);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -94,7 +94,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         }
 
         $hive_dba->dbc->disconnect_if_idle();
-        system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+        run_sql_on_db($url, 'DROP DATABASE');
     }
 }
 

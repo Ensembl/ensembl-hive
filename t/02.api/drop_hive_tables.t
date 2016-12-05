@@ -20,10 +20,10 @@ use warnings;
 
 use Data::Dumper;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::Exception;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die make_hive_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_url_or_die make_hive_db run_sql_on_db);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 use Cwd            ();
@@ -45,7 +45,7 @@ SKIP: {
   is_deeply( $table_list, [], 'All the eHive tables have been removed by "drop_hive_tables"');
   
   $dbc->disconnect_if_idle();
-  system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
+  run_sql_on_db($pipeline_url, 'DROP DATABASE');
   
 }
 

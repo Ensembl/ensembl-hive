@@ -28,7 +28,7 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls make_new_db_from_sqls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls make_new_db_from_sqls run_sql_on_db);
 
 my $ehive_test_pipeline_urls = get_test_urls();
 
@@ -68,7 +68,7 @@ is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2,
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
 $dbc->disconnect_if_idle;
-system( @{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
+run_sql_on_db($test_url, 'DROP DATABASE');
 
 };
 }
