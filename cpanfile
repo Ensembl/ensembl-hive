@@ -14,6 +14,8 @@ on 'test' => sub {
 	requires 'Test::Warn';
 	requires 'Test::Warnings';
 	requires 'Test::File::Contents';
+	requires 'Test::Perl::Critic';
+	requires 'Perl::Critic::Utils';
 	requires 'GraphViz';
 };
 
