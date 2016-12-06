@@ -31,10 +31,6 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper seed_pi
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-# To avoid overloading the main loop, the guest-language is tested in
-# guest_language.t which is in fact a symlink to the present script
-my $doing_guest_language = ($0 =~ /guest/);
-
 my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig';
 
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || join(' ', @$all_longmult_configs);
@@ -48,8 +44,8 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
     next if $long_mult_version =~ /Server/;
     next if $long_mult_version =~ /Client/;
 
-    # "Exclusive or" to filter the config files
-    next unless (($long_mult_version =~ /_conf/) xor $doing_guest_language);
+    # Exclude the guest-language config files
+    next unless $long_mult_version =~ /_conf/;
 
     warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
