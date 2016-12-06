@@ -56,7 +56,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         );
 
         # First run a single worker in this process
-        runWorker($pipeline, { can_respecialize => 1 });
+        runWorker($url, [ -can_respecialize => 1 ]);
 
         my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;

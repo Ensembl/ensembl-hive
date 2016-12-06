@@ -39,8 +39,8 @@ my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
     -disconnect_when_inactive   => 1,
 );
 
-runWorker($pipeline);   # 'start' analysis
-runWorker($pipeline);   # 'factory' analysis
+runWorker($pipeline_url);   # 'start' analysis
+runWorker($pipeline_url);   # 'factory' analysis
 
 my $analyses_coll   = $pipeline->collection_of('Analysis');
 my $fan_analysis    = $analyses_coll->find_one_by( 'logic_name' => 'fan' );

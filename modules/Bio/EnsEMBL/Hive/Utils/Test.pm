@@ -187,7 +187,10 @@ sub init_pipeline {
 
 =head2 runWorker
 
-  Example     : runWorker($pipeline, { can_respecialize => 1 });
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to runWorker
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : runWorker($url, [ -can_respecialize => 1 ]);
   Description : Run a worker on the given pipeline in the current process.
                 The worker options have been divided in three groups: the ones affecting its specialization,
                 the ones affecting its "life" (how long it lasts), and the ones controlling its execution mode.
@@ -200,13 +203,7 @@ sub init_pipeline {
 =cut
 
 sub runWorker {
-    my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
-
-    $specialization_options->{force_sync} = 1;
-
-    lives_ok(sub {
-        Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, $specialization_options, $life_options, $execution_options);
-    }, sprintf('runWorker()'));
+    return _test_ehive_script('runWorker', @_);
 }
 
 
