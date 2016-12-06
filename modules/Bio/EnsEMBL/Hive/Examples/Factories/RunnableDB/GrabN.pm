@@ -74,17 +74,14 @@ sub fetch_input {
     die "Negative values are not allowed for 'grab_n_right'\n" if $grab_n_right < 0;
 
     my @output_ids;
+    if ($grab_n_left+$grab_n_right <= scalar(@$input_id_list)) {
+        push @output_ids, splice(@$input_id_list, 0, $grab_n_left);
+        push @output_ids, splice(@$input_id_list, -$grab_n_right, $grab_n_right);
 
-    foreach my $i (1..$grab_n_left) {
-        if (@$input_id_list) {
-            push @output_ids, (shift @$input_id_list);
-        }
-    }
-
-    foreach my $i (1..$grab_n_right) {
-        if (@$input_id_list) {
-            push @output_ids, (pop @$input_id_list);
-        }
+    } else {
+        # Take the whole list
+        @output_ids = @$input_id_list;
+        @$input_id_list = ();
     }
 
     $self->param('output_ids', \@output_ids);
