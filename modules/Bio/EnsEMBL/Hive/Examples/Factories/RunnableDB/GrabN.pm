@@ -96,13 +96,12 @@ sub fetch_input {
 sub write_output {
     my $self = shift @_;
 
-    # Fan out the jobs
     my $output_ids      = $self->param_required('output_ids');
     my $input_id_list   = $self->param_required('input_id_list');
     my $fan_branch_code = $self->param_required('fan_branch_code');
-    foreach my $output_id (@$output_ids) {
-        $self->dataflow_output_id($output_id, $fan_branch_code);
-    }
+
+    # Fan out the jobs (if any)
+    $self->dataflow_output_id($output_ids, $fan_branch_code) if @$output_ids;
 
     # Collector job. This dataflow replaces the autoflow
     $self->dataflow_output_id({'_list_exhausted' => !scalar(@$input_id_list), 'input_id_list' => $input_id_list}, 1);
