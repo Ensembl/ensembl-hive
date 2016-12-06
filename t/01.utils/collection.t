@@ -20,11 +20,13 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 use Data::Dumper;
 
 BEGIN {
     ## at least it compiles
     use_ok( 'Bio::EnsEMBL::Hive::Utils::Collection' );
+    use_ok( 'Bio::EnsEMBL::Hive::ResourceDescription' );
 }
 #########################
 
@@ -54,6 +56,11 @@ is(@$ref, ++$i, 'Addition - Someone comes in');
 
 $collection->forget_and_mark_for_deletion('fox');
 is(@$ref, --$i, 'one less element - the fox is gone: we\'re safe !');
+
+# Make sure it's gone !
+# Also, we test forget when the dark-collection has already been created
+$collection->forget_and_mark_for_deletion('fox');
+is(@$ref, $i, 'No foxes around');
 
 ok($collection->dark_collection->present('fox'));
 
@@ -95,7 +102,7 @@ $result = $collection->find_all_by('foo', undef);
 
 #is(@$result, 3, 'sensible');
 
-$collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [
+my $data_list = [
     { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 },
     { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 },
     { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 },
@@ -103,10 +110,15 @@ $collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [
     { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 },
     { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 },
     { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 },
-] );
+];
+
+$collection = Bio::EnsEMBL::Hive::Utils::Collection->new( $data_list );
 
 my $odd_elements = $collection->find_all_by( 'dbID', sub { return $_[0] % 2; } );
 is(@$odd_elements, 4, '4 odd elements');
+
+my $all = $collection->find_all_by_pattern();
+is_deeply($all, $data_list, 'find_all_by_pattern() with no arguments returns the whole list');
 
 my $mix = $collection->find_all_by_pattern( '%-%ta' );
 is(@$mix, 3, 'another 3 elements');
@@ -153,5 +165,19 @@ is(@$mix, 3, 'find_all_by_pattern - greater than');
 $mix = $collection->find_all_by_pattern( 'size<10,colour==orange' );
 is(@$mix, 5, 'find_all_by_pattern - selecting by a fields inequality');
 
+throws_ok {$collection->find_all_by_pattern( 'size!' )} qr/The pattern '.*' is not recognized/, "Using an invalid pattern throws an exception";
+
+# Try a collection with objects
+my $dummy_resource = Bio::EnsEMBL::Hive::ResourceDescription->new( 'meadow_type' => 'LOCAL', 'submission_cmd_args' => '-q long', 'worker_cmd_args' => '' );
+$collection = Bio::EnsEMBL::Hive::Utils::Collection->new( [ $dummy_resource ] );
+
+$result = $collection->find_one_by( 'meadow_type' => 'LOCAL' );
+is( $result, $dummy_resource, 'Collection search on an object attribute (match)');
+
+$mix = $collection->find_all_by_pattern( 'meadow_type==LOCAL' );
+is_deeply( $mix, [$dummy_resource], 'Collection filtering on an object attribute (match)');
+
+$mix = $collection->find_all_by_pattern( 'meadow_type==LSF' );
+is_deeply( $mix, [], 'Collection filtering on an object attribute (no match)');
 
 done_testing();
