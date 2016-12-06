@@ -37,12 +37,12 @@ my $ehive_test_pipeline_urls = get_test_urls();
 foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
 subtest 'Test on '.$pipeline_url, sub {
-    plan tests => 18;
+    plan tests => 20;
 
-my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
+init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
 
 my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-    -url                        => $url,
+    -url                        => $pipeline_url,
     -disconnect_when_inactive   => 1,
 );
 
@@ -96,7 +96,7 @@ $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
 
 $hive_dba->dbc->disconnect_if_idle();
-run_sql_on_db($url, 'DROP DATABASE');
+run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 }
 }

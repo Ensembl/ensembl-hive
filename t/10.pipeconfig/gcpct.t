@@ -44,19 +44,20 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
         my $pipeline_url = get_test_url_or_die();
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
-        my $url         = init_pipeline(
-                            'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
-                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile", -output_dir => $dir],
-                            ['pipeline.param[take_time]=0'],
-                        );
+        init_pipeline(
+            'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
+            $pipeline_url,
+            [-inputfile => $inputfile, -output_dir => $dir],
+            ['pipeline.param[take_time]=0'],
+        );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-            -url                        => $url,
+            -url                        => $pipeline_url,
             -disconnect_when_inactive   => 1,
         );
 
         # First run a single worker in this process
-        runWorker($url, [ -can_respecialize => 1 ]);
+        runWorker($pipeline_url, [ -can_respecialize => 1 ]);
 
         my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
@@ -98,7 +99,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
         $hive_dba->dbc->disconnect_if_idle();
-        run_sql_on_db($url, 'DROP DATABASE');
+        run_sql_on_db($pipeline_url, 'DROP DATABASE');
 }
 
 done_testing();

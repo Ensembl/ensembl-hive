@@ -32,19 +32,16 @@ my $pipeline_url = get_test_url_or_die();
 
     # Starting a first set of checks with a "GCPct" pipeline
 
-    my $url = init_pipeline(
-        'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
-        [-pipeline_url => $pipeline_url, -hive_force_init => 1],
-    );
+    init_pipeline('Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf', $pipeline_url);
 
     my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-        -url                        => $url,
+        -url                        => $pipeline_url,
         -disconnect_when_inactive   => 1,
     );
     my $hive_dba    = $pipeline->hive_dba;
 
     # Check that -sync runs, puts one entry in the beekeeper table, and finishes with LOOP_LIMIT
-    beekeeper($url, ['-sync']);
+    beekeeper($pipeline_url, ['-sync']);
     my $beekeeper_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper');
     my $beekeeper_rows = $beekeeper_nta->fetch_all();
 
@@ -54,7 +51,7 @@ my $pipeline_url = get_test_url_or_die();
 
     # Check that -run puts one additional in the beekeeper table, it loops once,
     # and finishes with LOOP_LIMIT
-    beekeeper($url, ['-run', '-meadow_type' => 'LOCAL']);
+    beekeeper($pipeline_url, ['-run', '-meadow_type' => 'LOCAL']);
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 2, 'After -sync and -run, there are exactly 2 entries in the beekeeper table');
@@ -106,7 +103,7 @@ my $pipeline_url = get_test_url_or_die();
 
     sleep(10); # give worker a bit of time to seed longrunning jobs
 
-    beekeeper($url, ['-run', -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1]);
+    beekeeper($pipeline_url, ['-run', -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1]);
 
     sleep(10); # give workers time to start
 
@@ -119,7 +116,7 @@ my $pipeline_url = get_test_url_or_die();
     }
 
     foreach my $worker_id (@live_worker_ids) {
-        beekeeper($url, [-killworker => $worker_id]);
+        beekeeper($pipeline_url, [-killworker => $worker_id]);
     }
 
     sleep(10); # give workers a bit of time to die
@@ -128,7 +125,7 @@ my $pipeline_url = get_test_url_or_die();
     is($still_alive_worker_rows, 0, "no workers remain alive");
 
     $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($url, 'DROP DATABASE');
+    run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 done_testing();
 

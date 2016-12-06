@@ -155,12 +155,19 @@ sub standaloneJob {
 
 =head2 init_pipeline
 
-  Example     : init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
-                              [-pipeline_url => $server_url, -hive_force_init => 1],
-                              ['pipeline.param[take_time]=0']
+  Arg[1]      : String $file_or_module. The location of the PipeConfig file
+  Arg[2]      : String $url. The location of the database to be created
+  Arg[3]      : (optional) Arrayref $args. Extra parameters of the pipeline (as on the command-line)
+  Arg[4]      : (optional) Arrayref $tweaks. Tweaks to be applied to the database (as with the -tweak command-line option)
+  Example     : init_pipeline(
+                    'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf',
+                    $server_url,
+                    [],
+                    ['pipeline.param[take_time]=0']
                 );
-  Description : Initialize a new pipeline database for the given PipeConfig module name. $options simply represents
-                the command-line options one would give on the command-line. Additionally, tweaks can be defined
+  Description : Initialize a new pipeline database for the given PipeConfig module name on that URL.
+                $options simply represents the command-line options one would give on the command-line.
+                Additionally, tweaks can be defined. Note that -hive_force_init is automatically added.
   Returntype  : None
   Exceptions  : TAP-style
   Caller      : general
@@ -169,19 +176,23 @@ sub standaloneJob {
 =cut
 
 sub init_pipeline {
-    my ($file_or_module, $options, $tweaks) = @_;
+    my ($file_or_module, $url, $options, $tweaks) = @_;
 
     $options ||= [];
 
-    my $url;
-    local @ARGV = @$options;
+    local @ARGV = (@$options);
+    unshift @ARGV, (-pipeline_url => $url, -hive_force_init => 1);
 
     lives_ok(sub {
-        $url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
-        ok($url, 'pipeline initialized');
+        my $expected_url = Bio::EnsEMBL::Hive::Utils::URL::parse($url)->{unambig_url};
+        ok($expected_url, 'Given URL could be parsed');
+        my $returned_url = Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
+        ok($returned_url, 'pipeline initialized on '.$returned_url);
+        my $got_url = Bio::EnsEMBL::Hive::Utils::URL::parse($returned_url)->{unambig_url};
+        # $url has the password but may be missing the port number
+        # parse() returns the port number but is always missing the password
+        is($got_url, $expected_url, 'pipeline initialized on '.$url);
     }, sprintf('init_pipeline("%s", %s)', $file_or_module, stringify($options)));
-
-    return $url;
 }
 
 

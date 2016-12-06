@@ -72,17 +72,15 @@ my $pipeline_url = get_test_url_or_die();
       
       warn "\nInitializing the $kmer_version $kmer_pipeline_mode sequence pipeline into $pipeline_url ...\n\n";
       
-      my $pipeline_options = [@{$kmer_param_configs->{$kmer_pipeline_mode}}, -pipeline_url => $pipeline_url, -hive_force_init => 1,];
-      
-      my $url              = init_pipeline($kmer_version, $pipeline_options );
+      init_pipeline($kmer_version, $pipeline_url, $kmer_param_configs->{$kmer_pipeline_mode});
       
       my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-							   -url                        => $url,
+							   -url                        => $pipeline_url,
 							   -disconnect_when_inactive   => 1,
 							  );
       
       # First run a single worker in this process
-      runWorker($url, [ -can_respecialize => 1 ]);
+      runWorker($pipeline_url, [ -can_respecialize => 1 ]);
       
       my $hive_dba    = $pipeline->hive_dba;
       my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
@@ -141,7 +139,7 @@ my $pipeline_url = get_test_url_or_die();
 	     sprintf("%f kmers found in input FASTQ file", , $total_kmers));
       }
       $hive_dba->dbc->disconnect_if_idle();
-      run_sql_on_db($url, 'DROP DATABASE');
+      run_sql_on_db($pipeline_url, 'DROP DATABASE');
     }
   }
 

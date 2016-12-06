@@ -29,13 +29,13 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $pipeline_url = get_test_url_or_die();
 
-my $url = init_pipeline(
+init_pipeline(
     'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LeachingTest_conf',
-    [-pipeline_url => $pipeline_url, -hive_force_init => 1],
+    $pipeline_url,
 );
 
 my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-    -url                        => $url,
+    -url                        => $pipeline_url,
     -disconnect_when_inactive   => 1,
 );
 

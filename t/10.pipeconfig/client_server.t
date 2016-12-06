@@ -30,8 +30,8 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $server_url  = get_test_url_or_die(-tag => 'server');
 my $client_url  = get_test_url_or_die(-tag => 'client');
 
-init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', [-pipeline_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
-init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', [-pipeline_url => $client_url, -server_url => $server_url, -hive_force_init => 1], ['pipeline.param[take_time]=0']);
+init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
+init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
 my @client_runworker_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl', -url => $client_url);       # to seed the "Server" database (to make sure its beekeeper doesn't exit immediately)
 my @client_beekeeper_cmd = (-sleep => 0.1, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left

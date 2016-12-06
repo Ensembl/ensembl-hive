@@ -47,17 +47,17 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
   subtest 'Test on '.$pipeline_url, sub {
 
-    my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf',
-                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -job_count => 5, -failure_rate => 2],
+    init_pipeline('Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf', $pipeline_url,
+                            [-job_count => 5, -failure_rate => 2],
                             ['analysis[failure_test].max_retry_count=1']
     );
-    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $url );
+    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $pipeline_url );
     my $hive_dba    = $pipeline->hive_dba;
     my $hive_url    = $hive_dba->dbc->url;
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
     # First run a single worker in this process. It will run the factory and some FailureTest jobs.
-    runWorker($url, [ -can_respecialize => 1 ]);
+    runWorker($pipeline_url, [ -can_respecialize => 1 ]);
     # We're now in a state with a selection of DONE, READY, FAILED and SEMAPHORED jobs
 
     # Tip: SELECT CONCAT('[', GROUP_CONCAT( CONCAT('["',status,'",', retry_count, ',',semaphore_count,']') ), ']') FROM job ORDER BY job_id;
@@ -72,7 +72,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,4],["DONE",2,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
     # Run another worker to get more failures
-    runWorker($url);
+    runWorker($pipeline_url);
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,2],["DONE",2,0],["DONE",1,0],["FAILED",2,0],["DONE",1,0],["FAILED",2,0]] );
 
     # Reset FAILED jobs
@@ -96,7 +96,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     assert_jobs($job_adaptor, [["READY",1,0],["READY",0,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
     $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($url, 'DROP DATABASE');
+    run_sql_on_db($pipeline_url, 'DROP DATABASE');
   }
 }
 

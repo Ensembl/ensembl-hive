@@ -36,7 +36,7 @@ my $init_stderr = capture_stderr {
     push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/';
     init_pipeline(
         'TestPipeConfig::MissingAnalysis_conf',
-        [-pipeline_url => $pipeline_url, -hive_force_init => 1],
+        $pipeline_url,
     );
 };
 
@@ -45,7 +45,7 @@ like($init_stderr, qr/$expected_error_pattern/, 'init_pipeline generates missing
 my $gc_init_stderr = capture_stderr {
     init_pipeline(
         'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf',
-        [-pipeline_url => $pipeline_url, -hive_force_init => 1],
+        $pipeline_url,
     );
 };
 

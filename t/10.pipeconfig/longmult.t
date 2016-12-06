@@ -51,29 +51,30 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
 
     foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
-        my $url         = init_pipeline(
-                            ($long_mult_version =~ /::/ ? $long_mult_version : 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version),
-                            [-pipeline_url => $pipeline_url, -hive_force_init => 1],
-                            ['pipeline.param[take_time]=0'],
-                        );
+        init_pipeline(
+            ($long_mult_version =~ /::/ ? $long_mult_version : 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::'.$long_mult_version),
+            $pipeline_url,
+            [],
+            ['pipeline.param[take_time]=0'],
+        );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-            -url                        => $url,
+            -url                        => $pipeline_url,
             -disconnect_when_inactive   => 1,
         );
 
         # First run a single worker in this process
-        runWorker($url, [ -can_respecialize => 1 ]);
+        runWorker($pipeline_url, [ -can_respecialize => 1 ]);
 
         my $hive_dba    = $pipeline->hive_dba;
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         # Let's now try the combination of end-user scripts: seed_pipeline + beekeeper
-        seed_pipeline($url, 'take_b_apart', '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
+        seed_pipeline($pipeline_url, 'take_b_apart', '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
 
-        beekeeper($url, [-sleep => 0.1, '-loop', '-local']);
+        beekeeper($pipeline_url, [-sleep => 0.1, '-loop', '-local']);
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
@@ -86,7 +87,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         }
 
         $hive_dba->dbc->disconnect_if_idle();
-        run_sql_on_db($url, 'DROP DATABASE');
+        run_sql_on_db($pipeline_url, 'DROP DATABASE');
     }
 }
 

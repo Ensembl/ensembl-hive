@@ -39,8 +39,8 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
   subtest 'Test on '.$pipeline_url, sub {
 
-    my $url         = init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [-pipeline_url => $pipeline_url, -hive_force_init => 1]);
-    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $url );
+    init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
+    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $pipeline_url );
     my $hive_dba    = $pipeline->hive_dba;
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
     my $ref_job     = $job_adaptor->fetch_all()->[0];
@@ -64,7 +64,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     }, 'Can survive the insertion of a duplicated job' );
 
     $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($url, 'DROP DATABASE');
+    run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
   }
 }
