@@ -62,7 +62,7 @@ sub pipeline_analyses {
                 {},
             ],
             -flow_into => {
-                1 => { 'factory' => [ {'inputlist' => [ 11, 33, 55, 77 ]}, {'inputlist' => [22, 44, 66 ]} ] },
+                1 => { 'factory' => [ {'inputlist' => [ 11, 33, 55, 66, 77 ]}, {'inputlist' => [22, 44, 55, 66 ]} ] },
             },
         },
 

@@ -52,10 +52,14 @@ my @funnel_jobs     = @{ $job_adaptor->fetch_all_by_analysis_id( $funnel_analysi
 
 is(scalar(@funnel_jobs), 1, 'There has to be only one funnel job');
 
-my $funnel_job      = shift @funnel_jobs;
 my $fan_job_count   = $job_adaptor->count_all_by_analysis_id( $fan_analysis->dbID );
+my $correct_count   = 7;
 
-is($funnel_job->semaphore_count, $fan_job_count, 'All the fan jobs ('.$fan_job_count.') share the same funnel');
+is($fan_job_count, $correct_count, "The number of fan jobs is correct ($fan_job_count == $correct_count)");
+
+my $funnel_job      = shift @funnel_jobs;
+
+is($funnel_job->semaphore_count, $fan_job_count, 'All the fan jobs share the same funnel');
 
 $hive_dba->dbc->disconnect_if_idle();
 system( @{ $hive_dba->dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') } );
