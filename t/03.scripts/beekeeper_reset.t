@@ -51,8 +51,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
                             [-job_count => 5, -failure_rate => 2],
                             ['analysis[failure_test].max_retry_count=1']
     );
-    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $pipeline_url );
-    my $hive_dba    = $pipeline->hive_dba;
+    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
     my $hive_url    = $hive_dba->dbc->url;
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 

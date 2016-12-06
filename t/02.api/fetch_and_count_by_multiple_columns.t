@@ -41,12 +41,7 @@ subtest 'Test on '.$pipeline_url, sub {
 
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
 
-my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-    -url                        => $pipeline_url,
-    -disconnect_when_inactive   => 1,
-);
-
-my $hive_dba    = $pipeline->hive_dba;
+my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 my $ana_a       = $hive_dba->get_AnalysisAdaptor;
 my $job_a       = $hive_dba->get_AnalysisJobAdaptor;
 my $dfr_a       = $hive_dba->get_DataflowRuleAdaptor;

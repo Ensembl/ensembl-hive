@@ -51,15 +51,10 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
             ['pipeline.param[take_time]=0'],
         );
 
-        my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-            -url                        => $pipeline_url,
-            -disconnect_when_inactive   => 1,
-        );
-
         # First run a single worker in this process
         runWorker($pipeline_url, [ -can_respecialize => 1 ]);
 
-        my $hive_dba    = $pipeline->hive_dba;
+        my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the runWorker jobs could be run');
 

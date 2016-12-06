@@ -34,11 +34,7 @@ my $pipeline_url = get_test_url_or_die();
 
     init_pipeline('Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf', $pipeline_url);
 
-    my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-        -url                        => $pipeline_url,
-        -disconnect_when_inactive   => 1,
-    );
-    my $hive_dba    = $pipeline->hive_dba;
+    my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
     # Check that -sync runs, puts one entry in the beekeeper table, and finishes with LOOP_LIMIT
     beekeeper($pipeline_url, ['-sync']);

@@ -41,12 +41,7 @@ if(my $server_pid = fork) {
 
     kill('KILL', $server_pid);  # the server needs to be killed as it was running in -keep_alive mode
 
-    my $client_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-        -url                        => $client_url,
-        -disconnect_when_inactive   => 1,
-    );
-
-    my $hive_dba    = $client_pipeline->hive_dba;
+    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $client_url );
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
     is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');

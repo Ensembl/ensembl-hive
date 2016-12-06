@@ -40,8 +40,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
   subtest 'Test on '.$pipeline_url, sub {
 
     init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', $pipeline_url);
-    my $pipeline    = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $pipeline_url );
-    my $hive_dba    = $pipeline->hive_dba;
+    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
     my $ref_job     = $job_adaptor->fetch_all()->[0];
 

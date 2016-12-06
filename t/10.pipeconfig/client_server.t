@@ -54,12 +54,7 @@ if(my $server_pid = fork) {             # "Client" branch
 
 foreach my $url ($client_url, $server_url) {
 
-    my $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
-        -url                        => $url,
-        -disconnect_when_inactive   => 1,
-    );
-
-    my $hive_dba    = $hive_pipeline->hive_dba;
+    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $url );
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
     is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
