@@ -67,15 +67,21 @@ sub fetch_input {
     my $self = shift @_;
 
     my $input_id_list   = $self->param_required('input_id_list');
+    my $grab_n_left     = $self->param_required('grab_n_left');
+    my $grab_n_right    = $self->param_required('grab_n_right');
+
+    die "Negative values are not allowed for 'grab_n_left'\n" if $grab_n_left < 0;
+    die "Negative values are not allowed for 'grab_n_right'\n" if $grab_n_right < 0;
+
     my @output_ids;
 
-    foreach my $i (1..$self->param_required('grab_n_left')) {
+    foreach my $i (1..$grab_n_left) {
         if (@$input_id_list) {
             push @output_ids, (shift @$input_id_list);
         }
     }
 
-    foreach my $i (1..$self->param_required('grab_n_right')) {
+    foreach my $i (1..$grab_n_right) {
         if (@$input_id_list) {
             push @output_ids, (pop @$input_id_list);
         }
