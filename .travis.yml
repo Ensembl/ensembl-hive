@@ -24,7 +24,8 @@ before_install:
     - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
     - chmod +x psql
     - export PATH=$PWD:$PATH
-    - ln -s /usr/share/perl5/PgCommon.pm modules/
+    - mkdir deps
+    - ln -s /usr/share/perl5/PgCommon.pm deps/
     - export PATH=/usr/lib/jvm/java-8-oracle/jre/bin/:$PATH
     - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - java -version
