@@ -226,6 +226,17 @@ sub init_pipeline {
 =cut
 
 sub runWorker {
+    my ($pipeline, $specialization_options, $life_options, $execution_options) = @_;
+    if (ref($pipeline)) {
+        # Probably the old syntax
+        warn "The runWorker(\$pipeline, \$specialization_options, \$life_options, \$execution_options) interface is deprecated. You should now give a \$url parameter and combine all the options\n";
+        my %combined_params = (%{$specialization_options||{}}, %{$life_options||{}}, %{$execution_options||{}});
+        unless ($pipeline->hive_dba) {
+            die "The pipeline doesn't have a hive_dba(). This is required by runWorker()\n";
+        }
+        my $url = $pipeline->hive_dba->dbc->url;
+        return _test_ehive_script('runWorker', $url, [map {("-$_" => $combined_params{$_})} keys %combined_params]);
+    }
     return _test_ehive_script('runWorker', @_);
 }
 
