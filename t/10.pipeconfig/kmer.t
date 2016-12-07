@@ -30,9 +30,9 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_d
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 # Fasta file for calculating kmers in long sequence mode
-my $inputfasta = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
+my $inputfasta = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fasta.fa';
 # Fastq file for calculating kmers in short sequence mode
-my $inputfastq = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fastq.fastq';
+my $inputfastq = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fastq.fastq';
 
 
 my $dir = tempdir CLEANUP => 1;
