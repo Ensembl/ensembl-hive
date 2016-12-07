@@ -27,7 +27,7 @@ my @input_id_list = map { {'param' => $_} } 1..10;
 
 # 1. Standard cases (incl. exhaustion but within boundaries)
 
-foreach my $x ([1,0], [0,1], [1,1], [2,0], [0,2], [2,2], [0,9], [9,0], [4,5]) {
+foreach my $x ([1,0], [0,1], [1,1], [2,0], [0,2], [2,2], [0,9], [9,0], [4,5], [0,10], [10,0], [5,5]) {
     my ($l, $r) = @$x;
     my $exhausted = ($l+$r) == 10 ? 1 : '';
 
