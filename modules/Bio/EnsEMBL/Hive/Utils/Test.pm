@@ -180,7 +180,19 @@ sub init_pipeline {
 
     $options ||= [];
 
-    local @ARGV = (@$options);
+    if (ref($url) and !$tweaks) {
+        # Probably the old syntax
+        warn "The init_pipeline(\$options, \$tweaks) interface is deprecated. You should now give first a \$url parameter\n";
+        $tweaks = $options;
+        $options = $url;
+        my ($url_flag_index) = grep {$options->[$_] eq '-pipeline_url'} (0..(scalar(@$options) - 1));
+        unless (defined $url_flag_index) {
+            die "Could not find a -url parameter in init_pipeline()'s arguments\n";
+        }
+        $url = (splice(@$options, $url_flag_index, 2))[1];
+    }
+
+    local @ARGV = @$options;
     unshift @ARGV, (-pipeline_url => $url, -hive_force_init => 1);
 
     lives_ok(sub {
