@@ -17,13 +17,11 @@
 use strict;
 use warnings;
 
+use Cwd;
+use File::Spec;
+use File::Basename qw/dirname/;
 use Test::More;
 use Test::Warnings;
-
-use Cwd            ();
-use File::Basename ();
-$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
-
 
 if ( not $ENV{TEST_AUTHOR} ) {
   my $msg = 'Author test. Set $ENV{TEST_AUTHOR} to a true value to run.';
@@ -39,14 +37,22 @@ if($@) {
   note $@;
 }
 
-# Configure critic
-Test::Perl::Critic->import(-profile => File::Spec->catfile($ENV{EHIVE_ROOT_DIR}, 'perlcriticrc'), -severity => 5, -verbose => 8);
+#chdir into the file's target & request cwd() which should be fully resolved now.
+#then go back
+my $file_dir = dirname(__FILE__);
+my $original_dir = cwd();
+chdir($file_dir);
+my $cur_dir = cwd();
+chdir($original_dir);
+my $root = File::Spec->catdir($cur_dir, File::Spec->updir());
 
-# Needs to run in its own subtest because all_critic_ok defines a plan
-# based on the number of files while Test::Warnings adds its own test,
-# leading done_testing() to complain the number of tests mismatch.
-subtest 'all_critic_ok()', sub {
-    all_critic_ok($ENV{EHIVE_ROOT_DIR});
-};
+# Configure critic
+Test::Perl::Critic->import(-profile => File::Spec->catfile($root, 'perlcriticrc'), -severity => 5, -verbose => 8);
+
+#Find all files & run
+my @perl_files = map {Perl::Critic::Utils::all_perl_files(File::Spec->catfile($root, $_))} qw(modules scripts t);
+foreach my $perl (@perl_files) {
+  critic_ok($perl);
+}
 
 done_testing();
