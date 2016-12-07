@@ -21,7 +21,6 @@ use warnings;
 
 use Test::More;
 use Data::Dumper;
-use File::Temp qw{tempdir};
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
 
