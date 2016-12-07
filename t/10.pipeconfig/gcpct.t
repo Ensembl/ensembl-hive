@@ -32,7 +32,6 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
 
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'GCPct_conf';
 
@@ -47,7 +46,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         my $url         = init_pipeline(
                             'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
-                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"],
+                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile", -output_dir => $dir],
                             ['pipeline.param[take_time]=0'],
                         );
 
@@ -103,6 +102,4 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 }
 
 done_testing();
-
-chdir $original;
 

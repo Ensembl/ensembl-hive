@@ -116,6 +116,7 @@ sub default_options {
           # it in EHIVE_ROOT_DIR, if it is not already set in the shell
 	  'inputfile' => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',
 	  'chunk_size' => 40,
+	  'output_dir' => '.',
 	  'output_prefix' => 'k_split_',
 	  'output_suffix' => '.fa',
 	 };
@@ -209,6 +210,7 @@ sub pipeline_analyses {
 	  		    'input_format' => $self->o('input_format'),
 	  		    'inputfile' => $self->o('inputfile'),
 	  		    'chunk_size' => $self->o('chunk_size'),
+                            'output_dir' => $self->o('output_dir'),
 	  		    'output_prefix' => $self->o('output_prefix'),
 	  		    'output_suffix' => $self->o('output_suffix'),
 			    'k' => $self->o('k'),

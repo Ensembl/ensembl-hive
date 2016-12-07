@@ -72,6 +72,7 @@ use base ('Bio::EnsEMBL::Hive::Process');
 sub param_defaults {
 
   return {
+	  'output_dir'        => '.',
 	  'output_prefix'     => 'my_chunk_',
 	  'output_suffix'     => '.fasta',
 	  'input_format'      => 'FASTA',
@@ -159,7 +160,7 @@ sub write_output {
     my $seq_object = Bio::Seq->new(-seq => $split_sequences[$i],
 				   -id => "split_" . $i);
 
-    my $chunk_filename = $self->param('output_prefix') . $i . $self->param('output_suffix');
+    my $chunk_filename = ($self->param('output_dir') ? $self->param('output_dir') . '/' : '' ) . $self->param('output_prefix') . $i . $self->param('output_suffix');
     my $chunk_seqio = Bio::SeqIO->new(-file => '>' . $chunk_filename,
 				      -format => 'fasta');
 

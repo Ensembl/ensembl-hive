@@ -36,7 +36,6 @@ my $inputfastq = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fastq.fastq';
 
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
 
 
 my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::Kmer::PipeConfig';
@@ -46,6 +45,7 @@ my $kmer_pipeline_modes      = 'short long';
 my $kmer_param_configs       = {'short' => [-seqtype => "short",
 					    -inputfile => "$inputfastq",
 					    -chunk_size => 40,
+					    -output_dir => $dir,
 					    -output_prefix => "k_split_",
 					    -output_suffix => ".fastq",
 					    -input_format => "FASTQ",
@@ -53,6 +53,7 @@ my $kmer_param_configs       = {'short' => [-seqtype => "short",
 				'long' => [-seqtype => "long",
 					   -inputfile => "$inputfasta",
 					   -chunk_size => 40,
+					   -output_dir => $dir,
 					   -output_prefix => "k_split_",
 					   -output_suffix => ".fa",
 					   -input_format => "FASTA",
@@ -145,6 +146,4 @@ my $pipeline_url = get_test_url_or_die();
   }
 
 done_testing();
-
-chdir $original;
 
