@@ -31,6 +31,7 @@ if [ $rt -eq 0 ]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover coveralls report"
     cover --nosummary -report coveralls
+    cover --nosummary -report codecov
   fi
   exit $?
 else
