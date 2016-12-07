@@ -36,6 +36,8 @@ my $original = chdir $dir;
 my $pipeline_url = shift(@{get_test_urls(-driver => 'sqlite')});
 
 my $init_stderr = capture_stderr {
+    local @INC = @INC;
+    push @INC, $ENV{'EHIVE_ROOT_DIR'}.'/t/10.pipeconfig/';
     init_pipeline(
         'TestPipeConfig::MissingAnalysis_conf',
         [-pipeline_url => $pipeline_url, -hive_force_init => 1],
