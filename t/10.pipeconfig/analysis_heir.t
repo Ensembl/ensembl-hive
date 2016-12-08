@@ -23,7 +23,7 @@ use Data::Dumper;
 use File::Temp qw{tempdir};
 use Capture::Tiny 'capture_stderr';
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_urls);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die);
 
 my $expected_error_pattern = qq{WARNING: Could not find a local analysis named 'oops_i_am_missing' \Q(dataflow from analysis 'first')};
 
@@ -33,7 +33,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;
 
-my $pipeline_url = shift(@{get_test_urls(-driver => 'sqlite')});
+my $pipeline_url = get_test_url_or_die();
 
 my $init_stderr = capture_stderr {
     local @INC = @INC;
