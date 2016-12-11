@@ -10,8 +10,13 @@ cd $(dirname $0)
 if [ "$action" == "version" ]; then
 	ant -S -q version
 elif [ "$action" == "compile" ]; then
+	if [[ -z "$module" ]]; then
+		echo "Syntax error"
+		echo "$usage"
+		exit 1
+	fi
 	echo "compiling"
-	ant compile
+	exec ant "-Dorg.ensembl.hive.module=$module" compile_wrapper
 elif [ "$action" == "run" ]; then
 	CLASSPATH=$PWD/build:$CLASSPATH
 	if [ -z "$debug" ]; then

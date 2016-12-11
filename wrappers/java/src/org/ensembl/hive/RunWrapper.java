@@ -14,13 +14,13 @@ import sun.misc.SharedSecrets;
  * @author dstaines
  *
  */
-public class Wrapper {
+public class RunWrapper {
 
 	public static void main(String[] args) throws Exception {
 
 
 		if (args.length != 4) {
-			System.err.println("Usage: java org.ensembl.hive.Wrapper <Runnable class> <input pipe> <output pipe> <debug>");
+			System.err.println("Usage: java org.ensembl.hive.RunWrapper <Runnable class> <input pipe> <output pipe> <debug>");
 			System.exit(1);
 		}
 
@@ -50,7 +50,7 @@ public class Wrapper {
 
 		}
 
-		Logger log = LoggerFactory.getLogger(Wrapper.class);
+		Logger log = LoggerFactory.getLogger(RunWrapper.class);
 		log.info("Instantiating runnable module " + args[0]);
 		Class<?> clazz = Class.forName(args[0]);
 		if (!BaseRunnable.class.isAssignableFrom(clazz)) {

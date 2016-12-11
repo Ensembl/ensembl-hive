@@ -36,8 +36,15 @@
 		<delete file="${lib}/ehive-${version}.jar" />
 	</target>
 
+	<target name="compile_wrapper" description="checks runnable is compiled" depends="jar">
+		<java classname="org.ensembl.hive.CompileWrapper" failonerror="true">
+			<arg value="${org.ensembl.hive.module}" />
+			<classpath refid="wrapper_classpath" />
+		</java>
+	</target>
+
 	<target name="run_wrapper" description="runs runnable wrapper" depends="jar">
-		<java classname="org.ensembl.hive.Wrapper">
+		<java classname="org.ensembl.hive.RunWrapper">
 			<arg value="${org.ensembl.hive.module}" />
 			<arg value="${org.ensembl.hive.pipe_in}" />
 			<arg value="${org.ensembl.hive.pipe_out}" />
