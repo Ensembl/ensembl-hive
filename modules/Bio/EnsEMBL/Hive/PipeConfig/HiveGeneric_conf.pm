@@ -588,7 +588,7 @@ sub add_objects_from_config {
 sub useful_commands_legend {
     my $self  = shift @_;
 
-    my $pipeline_url    = $self->pipeline_url();
+    my $pipeline_url    = '"' . $self->pipeline_url() . '"';
     my $pipeline_name   = $self->processed_pipeline_name();
     my $extra_cmdline   = $self->beekeeper_extra_cmdline_options();
 
