@@ -18,7 +18,7 @@ wrapper_dir=$(dirname "$0")
 cd "$wrapper_dir"
 
 if [ "$action" == "version" ]; then
-	ant -S -q version
+	exec ant -S -q version
 elif [ "$action" == "compile" ]; then
 	if [[ -z "$module" ]]; then
 		echo "Syntax error"
