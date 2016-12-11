@@ -31,6 +31,7 @@ use strict;
 use warnings;
 
 use Scalar::Util qw(weaken);
+use Bio::EnsEMBL::Hive::Utils::URL ('hash_to_url');
 
 
 sub hive_pipeline {
@@ -58,6 +59,24 @@ sub relative_display_name {
     my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
     return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->display_name;
 }
+
+
+sub relative_url {
+     my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter url is generated
+
+    my $my_pipeline = $self->hive_pipeline;
+    my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
+    my $url_hash    = ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->to_url_hash : {};
+
+    $url_hash->{'query_params'} = $self->url_query_params;      # calling a specific method for each class that supports URLs
+
+    my $object_type = ref($self);
+    $object_type=~s/^.+:://;
+    $url_hash->{'query_params'}{'object_type'} = $object_type;
+
+    return Bio::EnsEMBL::Hive::Utils::URL::hash_to_url( $url_hash );
+}
+
 
 sub display_name {
     my ($self) = @_;

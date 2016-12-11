@@ -75,17 +75,14 @@ sub accu_input_variable {
 }
 
 
-sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
+sub url_query_params {
+     my ($self) = @_;
 
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url : '' )
-        . '?'
-        . join('&',
-            'accu_name='.$self->accu_name,
-            ( $self->accu_address ? ('accu_address='.$self->accu_address) : () ),
-            'accu_input_variable='.$self->accu_input_variable,
-        );
+     return {   # direct access to the actual (possibly missing) values
+        'accu_name'             => $self->accu_name,
+        'accu_address'          => $self->{'_accu_address'},
+        'accu_input_variable'   => $self->{'_accu_input_variable'},
+     };
 }
 
 

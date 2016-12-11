@@ -173,24 +173,12 @@ sub get_compiled_module_name {
 }
 
 
-=head2 url
+sub url_query_params {
+     my ($self) = @_;
 
-  Arg [1]    : none
-  Example    : $url = $analysis->url;
-  Description: Constructs a URL string for this database connection
-               Follows the general URL rules.
-  Returntype : string of format
-               mysql://<user>:<pass>@<host>:<port>/<dbname>/analysis?logic_name=<name>
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
-
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url.'?logic_name=' : '') . $self->logic_name;
+     return {
+        'logic_name'            => $self->logic_name,
+     };
 }
 
 

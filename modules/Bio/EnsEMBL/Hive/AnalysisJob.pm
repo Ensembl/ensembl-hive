@@ -387,11 +387,12 @@ sub dataflow_output_id {
 }
 
 
-sub url {
-    my ($self, $ref_dba) = @_;  # if reference dba is the same as 'my' dba, a shorter url is generated
+sub url_query_params {
+     my ($self) = @_;
 
-    my $my_dba = $self->adaptor && $self->adaptor->db;
-    return ( ($my_dba and $my_dba ne ($ref_dba//'') ) ? $my_dba->dbc->url.'?job_id=' : '') . $self->dbID;
+     return {
+        'job_id'                => $self->dbID,
+     };
 }
 
 

@@ -164,7 +164,7 @@ sub store_jobs_and_adjust_counters {
 
             if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
                 my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
-                $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->url( $job_adaptor->db );
+                $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->relative_url( $job->hive_pipeline );
                 $job->input_id( $input_id_hash );
             }
         }

@@ -40,7 +40,7 @@ use warnings;
 
 use Time::HiRes ('usleep');
 use Bio::EnsEMBL::Hive::Utils ('throw');
-use Bio::EnsEMBL::Hive::Utils::URL;
+use Bio::EnsEMBL::Hive::Utils::URL ('parse', 'hash_to_url');
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::CoreDBConnection');
 
@@ -69,6 +69,44 @@ sub new {
     }
 }
 
+
+sub _optional_pair {     # helper function
+    my ($key, $value) = @_;
+
+    return defined($value) ? ($key => $value) : ();
+}
+
+
+sub to_url_hash {
+    my ($self, $psw_env_var_name) = @_;
+
+    my $psw_expression;
+    if($psw_expression = $self->password) {
+        if($psw_env_var_name) {
+            $ENV{$psw_env_var_name} = $psw_expression;
+            $psw_expression = '${'.$psw_env_var_name.'}';
+        }
+    }
+
+    my $url_hash = {
+        _optional_pair('driver',    $self->driver),
+        _optional_pair('user',      $self->username),
+        _optional_pair('pass',      $psw_expression),
+        _optional_pair('host',      $self->host),
+        _optional_pair('port',      $self->port),
+        _optional_pair('dbname',    $self->dbname),
+
+        'conn_params' => {
+            _optional_pair('disconnect_when_inactive',  $self->disconnect_when_inactive),
+            _optional_pair('wait_timeout',              $self->wait_timeout),
+            _optional_pair('reconnect_when_lost',       $self->reconnect_when_lost),
+        },
+    };
+
+    return $url_hash;
+}
+
+
 =head2 url
 
     Arg [1]    : String $environment_variable_name_to_store_password_in (optional)
@@ -84,40 +122,7 @@ sub new {
 sub url {
     my ($self, $psw_env_var_name) = @_;
 
-    my $url = $self->driver . '://';
-
-    if($self->username) {
-        $url .= $self->username;
-
-        if(my $psw_expression = $self->password) {
-            if($psw_env_var_name) {
-                $ENV{$psw_env_var_name} = $psw_expression;
-                $psw_expression = '${'.$psw_env_var_name.'}';
-            }
-            $url .= ':'.$psw_expression if($psw_expression);
-        }
-
-        $url .= '@';
-    }
-
-    if($self->host) {
-        $url .= $self->host;
-
-        if($self->port) {
-            $url .= ':'.$self->port;
-        }
-    }
-    $url .= '/' . $self->dbname;
-
-    my @opt_pairs = ();
-    foreach my $option ('disconnect_when_inactive', 'wait_timeout', 'reconnect_when_lost') {
-        if( defined(my $value = $self->$option()) ) {
-            push @opt_pairs, "$option=$value";
-        }
-    }
-    $url = join(';', $url, @opt_pairs);
-
-    return $url;
+    return Bio::EnsEMBL::Hive::Utils::URL::hash_to_url( $self->to_url_hash( $psw_env_var_name ) );
 }
 
 
@@ -206,6 +211,7 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
 
     return $retval;
 }
+
 
 our $pass_internal_counter = 0;
 sub to_cmd {
