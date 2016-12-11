@@ -28,15 +28,13 @@ elif [ "$action" == "compile" ]; then
 	echo "compiling"
 	exec ant "-Dorg.ensembl.hive.module=$module" compile_wrapper
 elif [ "$action" == "run" ]; then
-	CLASSPATH=$PWD/build:$CLASSPATH
 	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
 		echo "Syntax error"
 		echo "$usage"
 		exit 1
 	fi
 	echo "Running '$module $fd_in $fd_out' in $PWD"
-	#java -cp "lib/*" org.ensembl.hive.Wrapper "$module" "$fd_in" "$fd_out" "$debug"
-    ant -Dorg.ensembl.hive.module=$module -Dorg.ensembl.hive.pipe_in=$fd_in -Dorg.ensembl.hive.pipe_out=$fd_out -Dorg.ensembl.hive.debug=$debug run_wrapper
+	exec java -cp "lib/*" org.ensembl.hive.RunWrapper "$module" "$fd_in" "$fd_out" "$debug"
 else
 	echo "Command-line error: No mode provided"
 	echo "$usage"
