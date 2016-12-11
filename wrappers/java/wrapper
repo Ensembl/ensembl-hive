@@ -14,7 +14,9 @@ Usage:
 EOF
 
 # change to java subdirectory
-cd $(dirname $0)
+wrapper_dir=$(dirname "$0")
+cd "$wrapper_dir"
+
 if [ "$action" == "version" ]; then
 	ant -S -q version
 elif [ "$action" == "compile" ]; then
