@@ -110,6 +110,7 @@ sub default_options {
         'hive_use_triggers'                 => 0,       # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'              => 0,       # do not reconstruct the calling stack of parameters by default (yet)
         'hive_auto_rebalance_semaphores'    => 0,       # do not attempt to rebalance semaphores periodically by default
+        'hive_default_max_retry_count'      => 3,       # default value for the max_retry_count parameter of each analysis
         'hive_force_init'                   => 0,       # setting it to 1 will drop the database prior to creation (use with care!)
         'hive_no_init'                      => 0,       # setting it to 1 will skip pipeline_create_commands (useful for topping up)
 
@@ -247,6 +248,7 @@ sub hive_meta_table {
         'hive_pipeline_name'                => $self->o('pipeline_name'),
         'hive_use_param_stack'              => $self->o('hive_use_param_stack'),
         'hive_auto_rebalance_semaphores'    => $self->o('hive_auto_rebalance_semaphores'),
+        'hive_default_max_retry_count'      => $self->o('hive_default_max_retry_count'),
     };
 }
 

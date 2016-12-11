@@ -325,6 +325,18 @@ sub hive_use_triggers {
     return $self->_meta_value_by_key('hive_use_triggers') // '0';
 }
 
+=head2 hive_default_max_retry_count
+
+    Description: getter/setter via MetaParameters. Defines the default value for analysis_base.max_retry_count
+
+=cut
+
+sub hive_default_max_retry_count {
+    my $self = shift @_;
+
+    return $self->_meta_value_by_key('hive_default_max_retry_count', @_) // 0;
+}
+
 
 =head2 list_all_hive_tables
 

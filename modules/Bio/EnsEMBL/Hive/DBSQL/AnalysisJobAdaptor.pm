@@ -721,8 +721,12 @@ sub release_undone_jobs_from_role {
 
 sub release_and_age_job {
     my ($self, $job_id, $max_retry_count, $may_retry, $runtime_msec) = @_;
+
+    # Default values
+    $max_retry_count //= $self->db->hive_pipeline->hive_default_max_retry_count;
     $may_retry ||= 0;
     $runtime_msec = "NULL" unless(defined $runtime_msec);
+
         # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
         #
         # FIXME: would it be possible to retain role_id for READY jobs in order to temporarily keep track of the previous (failed) worker?

@@ -112,7 +112,6 @@ sub failed_job_tolerance {
 sub max_retry_count {
     my $self = shift;
     $self->{'_max_retry_count'} = shift if(@_);
-    $self->{'_max_retry_count'} = 3 unless(defined($self->{'_max_retry_count'}));
     return $self->{'_max_retry_count'};
 }
 

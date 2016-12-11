@@ -110,7 +110,7 @@ CREATE TABLE analysis_base (
     parameters              TEXT,
     resource_class_id       INTEGER     NOT NULL,
     failed_job_tolerance    INTEGER     NOT NULL DEFAULT 0,
-    max_retry_count         INTEGER     NOT NULL DEFAULT 3,
+    max_retry_count         INTEGER,
     can_be_empty            SMALLINT    NOT NULL DEFAULT 0,
     priority                SMALLINT    NOT NULL DEFAULT 0,
     meadow_type             VARCHAR(255)          DEFAULT NULL,
