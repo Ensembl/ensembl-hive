@@ -19,8 +19,10 @@ elif [ "$action" == "compile" ]; then
 	exec ant "-Dorg.ensembl.hive.module=$module" compile_wrapper
 elif [ "$action" == "run" ]; then
 	CLASSPATH=$PWD/build:$CLASSPATH
-	if [ -z "$debug" ]; then
-		debug=0
+	if [[ -z "$module" || -z "$fd_in" || -z "$fd_out" || -z "$debug" ]]; then
+		echo "Syntax error"
+		echo "$usage"
+		exit 1
 	fi
 	echo "Running $module $fd_int $fd_out with classpath $CLASSPATH in $PWD"
 	#java -cp "lib/*" org.ensembl.hive.Wrapper "$module" "$pipe_in" "$pipe_out" "$debug"
