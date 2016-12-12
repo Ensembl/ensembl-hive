@@ -367,6 +367,7 @@ sub dataflow {
     my $common_params = [
         'prev_job'          => $emitting_job,
         'analysis'          => $self,
+        'hive_pipeline'     => $self->hive_pipeline,    # Although we may not cache jobs, make sure a new Job "belongs" to the same pipeline as its Analysis
         'param_id_stack'    => $param_id_stack,
         'accu_id_stack'     => $accu_id_stack,
     ];
