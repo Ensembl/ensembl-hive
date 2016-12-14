@@ -12,7 +12,7 @@ BEGIN {
 }
 
 
-use Getopt::Long qw(:config pass_through);
+use Getopt::Long qw(:config pass_through no_auto_abbrev);
 
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
@@ -81,6 +81,9 @@ sub main {
                     || die "ERROR: No job with jo_id=$job_id\n";
         $job->load_parameters();
         my ($param_hash, $param_list) = parse_cmdline_options();
+        if (@$param_list) {
+            die "ERROR: There are invalid arguments on the command-line: ". join(" ", @$param_list). "\n";
+        }
         $input_id = stringify( {%{$job->{'_unsubstituted_param_hash'}}, %$param_hash} );
         $module_or_file = $job->analysis->module;
         my $status = $job->status;
@@ -89,7 +92,12 @@ sub main {
 
     } elsif (!$input_id) {
         my ($param_hash, $param_list) = parse_cmdline_options();
+        if (@$param_list) {
+            die "ERROR: There are invalid arguments on the command-line: ". join(" ", @$param_list). "\n";
+        }
         $input_id = stringify($param_hash);
+    } elsif (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
     $module_or_file ||= shift @ARGV;

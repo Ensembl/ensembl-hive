@@ -12,9 +12,10 @@ BEGIN {
 }
 
 
-use Getopt::Long;
 use File::Path 'make_path';
+use Getopt::Long qw(:config no_auto_abbrev);
 use Sys::Hostname;
+
 use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
@@ -148,7 +149,11 @@ sub main {
                'forgive_failed_jobs'    => \$forgive_failed_jobs,
                'unblock_semaphored_jobs'    => \$unblock_semaphored_jobs,
                'job_output=i'      => \$job_id_for_output,
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if ($help) { script_usage(0); }
 

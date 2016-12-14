@@ -11,7 +11,8 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::Version;
 
 my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";
@@ -29,7 +30,11 @@ sub main {
             'no_schema_desc'    => \$no_schema_desc,
             'no_script_docs'    => \$no_script_docs,
             'no_doxygen'        => \$no_doxygen,
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     generate_hive_schema_desc() unless($no_schema_desc);
     generate_docs_scripts()     unless($no_script_docs);

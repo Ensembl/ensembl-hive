@@ -12,7 +12,8 @@ BEGIN {
 }
 
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage');
 use Bio::EnsEMBL::Hive::Valley;
@@ -37,7 +38,11 @@ sub main {
             'source_line=s'         => \$source_line,
             'meadow_type=s'         => \$meadow_type,
             'h|help'                => \$help,
-    );
+    ) or die "Error in command line arguments\n";
+
+    if (@ARGV) {
+        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    }
 
     if ($help) { script_usage(0); }
 
