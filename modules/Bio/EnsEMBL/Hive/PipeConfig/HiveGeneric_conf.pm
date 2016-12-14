@@ -284,7 +284,7 @@ sub db_cmd {
     $db_url //= $self->pipeline_url();
     my $db_cmd_path = $self->o('hive_root_dir').'/scripts/db_cmd.pl';
 
-    return "$db_cmd_path -url $db_url".($sql_command ? " -sql '$sql_command'" : '');
+    return "$db_cmd_path -url '$db_url'".($sql_command ? " -sql '$sql_command'" : '');
 }
 
 
