@@ -28,7 +28,7 @@ BEGIN {
 use DateTime;
 use File::Basename;
 use File::Copy;
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
 
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 

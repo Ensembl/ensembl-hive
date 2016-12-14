@@ -12,7 +12,8 @@ BEGIN {
 }
 
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;

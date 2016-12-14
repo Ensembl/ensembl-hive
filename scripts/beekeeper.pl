@@ -12,8 +12,9 @@ BEGIN {
 }
 
 
-use Getopt::Long;
 use File::Path 'make_path';
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;

@@ -11,7 +11,8 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::Version;
 
 my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";

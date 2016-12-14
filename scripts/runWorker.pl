@@ -12,7 +12,8 @@ BEGIN {
 }
 
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
+
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Queen;

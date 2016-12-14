@@ -11,7 +11,7 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-use Getopt::Long;
+use Getopt::Long qw(:config no_auto_abbrev);
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
