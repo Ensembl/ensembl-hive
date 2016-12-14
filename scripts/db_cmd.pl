@@ -30,7 +30,7 @@ sub main {
             'url=s'             => \$url,
             'prepend=s@'        => \@prepend,
             'append|extra=s@'   => \@append,
-            'sqlcmd=s'          => \$sqlcmd,
+            'sqlcmd|sql=s'      => \$sqlcmd,
 
             'verbose!'          => \$verbose,
             'help!'             => \$help,
