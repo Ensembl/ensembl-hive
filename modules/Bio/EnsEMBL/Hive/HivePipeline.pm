@@ -684,6 +684,7 @@ sub apply_tweaks {
                            print "Tweak.Changing\tanalysis[$analysis_name].is_excluded ::\t" .
                                $analysis_stats->is_excluded() . " --> $new_value_str\n";
                            $analysis_stats->is_excluded($new_value);
+                           $need_write = 1;
                         }
                     }
                 } elsif($analysis->can($attrib_name)) {
