@@ -208,16 +208,24 @@ sub hash_to_url {
   }
   
         # Query part:
-    my $qp_hash = $parse->{'query_params'};
-    my $query_params_part = join('&', map { $_.'='.$qp_hash->{$_} } keys %$qp_hash);
+    my $qp_hash = \%{ $parse->{'query_params'} };
+    my $object_type = delete $qp_hash->{'object_type'} // '';   # in most cases we don't need object_type in the URL
+    my $query_params_part =
+        (($object_type  eq 'Analysis') && !$location_part)
+            ? $qp_hash->{'logic_name'}
+            : (($object_type  eq 'AnalysisJob') && !$location_part)
+                ? $qp_hash->{'job_id'}
+                : keys %$qp_hash
+                    ? '?' . join('&', map { $_.'='.$qp_hash->{$_} } keys %$qp_hash)
+                    : '';
 
         # DBC extra arguments' part:
     my $cp_hash = $parse->{'conn_params'} || {};
-    my $conn_params_part = join(';', map { $_.'='.$cp_hash->{$_} } keys %$cp_hash);
+    my $conn_params_part = keys %$cp_hash
+        ? ';' . join(';', map { $_.'='.$cp_hash->{$_} } keys %$cp_hash)
+        : '';
 
-    my $url = $location_part
-            . ( $query_params_part && '?'.$query_params_part )
-            . ( $conn_params_part  && ';'.$conn_params_part  );
+    my $url = $location_part . $query_params_part . $conn_params_part;
 
     return $url;
 }
