@@ -67,7 +67,7 @@ sub default_options {
         'rel_suffix'            => '',                                                                  # an empty string by default, a letter otherwise
         'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
 
-        'pipeline_name'         => $self->processed_pipeline_name().'_'.$self->o('rel_with_suffix'),
+        'pipeline_name'         => $self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
 
         'user'                  => $ENV{'EHIVE_USER'} || 'ensadmin',
         'password'              => $ENV{'EHIVE_PASS'} // $ENV{'ENSADMIN_PSW'} // $self->o('password'),  # people will have to make an effort NOT to insert it into config files like .bashrc etc
