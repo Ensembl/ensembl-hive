@@ -91,16 +91,18 @@ sub main {
         warn "Will now disconnect from it. Be aware that the original job will NOT be updated with the outcome of this standalone. Use runWorker.pl if you want to register your run.\n";
 
     } elsif (!$input_id) {
+        $module_or_file = shift @ARGV;
         my ($param_hash, $param_list) = parse_cmdline_options();
         if (@$param_list) {
             die "ERROR: There are invalid arguments on the command-line: ". join(" ", @$param_list). "\n";
         }
         $input_id = stringify($param_hash);
-    } elsif (@ARGV) {
-        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+    } else {
+        $module_or_file = shift @ARGV;
+        if (@ARGV) {
+            die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+        }
     }
-
-    $module_or_file ||= shift @ARGV;
 
     if (!$module_or_file) {
         script_usage(1);
