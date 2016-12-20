@@ -55,22 +55,27 @@ sub default_table_name {
 sub store_job_message {
     my ($self, $job_id, $msg, $message_class) = @_;
 
-    chomp $msg;   # we don't want that last "\n" in the database
+    if($job_id) {
+        chomp $msg;   # we don't want that last "\n" in the database
 
-    my $table_name = $self->table_name();
+        my $table_name = $self->table_name();
 
-        # Note: the timestamp 'when_logged' column will be set automatically
-    my $sql = qq{
-        INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, message_class)
-                           SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
-                             FROM job
-                             JOIN role USING(role_id)
-                            WHERE job_id=?
-    };
+            # Note: the timestamp 'when_logged' column will be set automatically
+        my $sql = qq{
+            INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, message_class)
+                               SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
+                                 FROM job
+                                 JOIN role USING(role_id)
+                                WHERE job_id=?
+        };
 
-    my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $message_class, $job_id );
-    $sth->finish();
+        my $sth = $self->prepare( $sql );
+        $sth->execute( $msg, $message_class, $job_id );
+        $sth->finish();
+
+    } else {
+        $self->store_hive_message($msg, $message_class);
+    }
 }
 
 
