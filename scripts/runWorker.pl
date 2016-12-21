@@ -59,7 +59,7 @@ sub main {
 
     # Other commands
                'h|help'                     => \$help,
-               'v|versions'                 => \$report_versions,
+               'v|version|versions'         => \$report_versions,
                'debug=i'                    => \$debug,
     ) or die "Error in command line arguments\n";
 

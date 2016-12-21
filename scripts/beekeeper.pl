@@ -130,7 +130,7 @@ sub main {
 
                     # other commands/options
                'h|help!'           => \$help,
-               'v|versions!'       => \$report_versions,
+               'v|version|versions!'    => \$report_versions,
                'sync!'             => \$sync,
                'dead!'             => \$check_for_dead,
                'unkwn!'            => \$bury_unkwn_workers,
