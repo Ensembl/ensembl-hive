@@ -369,6 +369,7 @@ CREATE TABLE job (
 CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
 CREATE INDEX ON job (role_id, status);                  -- for fetching and releasing claimed jobs
 
+/*
 -- PostgreSQL is lacking INSERT IGNORE, so we need a RULE to silently
 -- discard the insertion of duplicated entries in the job table
 CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
@@ -378,6 +379,7 @@ CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
 	FROM job
 	WHERE job.input_id=NEW.input_id AND job.param_id_stack=NEW.param_id_stack AND job.accu_id_stack=NEW.accu_id_stack AND job.analysis_id=NEW.analysis_id)
     DO INSTEAD NOTHING;
+*/
 
 /**
 @table  job_file

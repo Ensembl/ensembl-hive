@@ -502,6 +502,15 @@ sub check_object_present_in_db_by_content {    # return autoinc_id/undef if the 
 }
 
 
+sub class_specific_execute {
+    my ($self, $object, $sth, $values) = @_;
+
+    my $return_code = $sth->execute( @$values );
+
+    return $return_code;
+}
+
+
 sub store {
     my ($self, $object_or_list) = @_;
 
@@ -546,9 +555,10 @@ sub store {
             my $values_being_stored = $self->slicer( $object, $columns_being_stored );
             # warn "STORED_VALUES: ".stringify($values_being_stored)."\n";
 
-            my $return_code = $this_sth->execute( @$values_being_stored )
+            my $return_code = $self->class_specific_execute($object, $this_sth, $values_being_stored )
                     # using $return_code in boolean context allows to skip the value '0E0' ('no rows affected') that Perl treats as zero but regards as true:
                 or throw("Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')');
+
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
                 my $liid = $autoinc_id && $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id);
                 $self->mark_stored($object, $liid );

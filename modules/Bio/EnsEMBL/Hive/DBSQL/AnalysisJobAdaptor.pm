@@ -63,7 +63,7 @@ sub default_table_name {
 
 
 sub default_insertion_method {
-    return 'INSERT_IGNORE';
+    return 'INSERT';
 }
 
 
@@ -122,6 +122,39 @@ sub fetch_by_analysis_id_and_input_id {     # It is a special case not covered b
         }
     }
     return $job;
+}
+
+
+sub class_specific_execute {
+    my ($self, $object, $sth, $values) = @_;
+
+    my $return_code;
+
+    eval {
+        $return_code = $self->SUPER::class_specific_execute($object, $sth, $values);
+        1;
+    } or do {
+        my $duplicate_regex = {
+            'mysql'     => qr/Duplicate entry.+?for key/s,
+            'sqlite'    => qr/columns.+?are not unique|UNIQUE constraint failed/s,  # versions around 3.8 spit the first msg, versions around 3.15 - the second
+            'pgsql'     => qr/duplicate key value violates unique constraint/s,
+        }->{$self->db->dbc->driver};
+
+        if( $@ =~ $duplicate_regex ) {      # implementing 'INSERT IGNORE' of Jobs on the API side
+            my $emitting_job_id = $object->prev_job_id;
+            my $analysis_id     = $object->analysis_id;
+            my $input_id        = $object->input_id;
+            my $msg             = "Attempt to insert a duplicate job (analysis_id=$analysis_id, input_id=$input_id) intercepted and ignored";
+
+            $self->db->get_LogMessageAdaptor->store_job_message( $emitting_job_id, $msg, 'INFO' );
+
+            $return_code = '0E0';
+        } else {
+            die $@;
+        }
+    };
+
+    return $return_code;
 }
 
 
