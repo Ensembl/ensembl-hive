@@ -34,7 +34,7 @@ sub main {
 
             'verbose!'          => \$verbose,
             'help!'             => \$help,
-            'v|versions!'       => \$report_versions,
+            'v|version|versions!'  => \$report_versions,
     ) or die "Error in command line arguments\n";
 
     my $dbc;
