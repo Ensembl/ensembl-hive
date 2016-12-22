@@ -69,7 +69,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         seed_pipeline($pipeline_url, 'take_b_apart', '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}');
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 1, 'There are new jobs to run');
 
-        beekeeper($pipeline_url, [-sleep => 0.1, '-loop', '-local']);
+        beekeeper($pipeline_url, [-sleep => 0.02, '-loop', '-local']);
         is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
 
         my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );

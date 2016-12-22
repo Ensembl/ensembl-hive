@@ -33,8 +33,8 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
-my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.1, '-keep_alive', '-local'); # needs to be killed
-my @client_beekeeper_cmd = (-sleep => 0.1, '-loop', '-local');       # will exit when the pipeline is over
+my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-keep_alive', '-local'); # needs to be killed
+my @client_beekeeper_cmd = (-sleep => 0.02, '-loop', '-local');       # will exit when the pipeline is over
 
 if(my $server_pid = fork) {
     beekeeper($client_url, \@client_beekeeper_cmd );
