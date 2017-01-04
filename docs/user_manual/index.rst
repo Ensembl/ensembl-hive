@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ehive_user_manual's documentation!
-=============================================
+Welcome to the eHive user manual
+================================
 
 Contents:
 
@@ -15,7 +15,6 @@ Contents:
    running_pipelines/*
    creating_pipelines/*
    creating_runnables/*
-
 
 
 
