@@ -81,7 +81,11 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
                 sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
         }
 
-        sleep(2) if $pipeline_url =~ /^pgsql:/;
+        # In case workers are still alive
+        while ($hive_dba->get_WorkerAdaptor->count_all("status != 'DEAD'")) {
+            sleep(1);
+        }
+
         $hive_dba->dbc->disconnect_if_idle();
         run_sql_on_db($pipeline_url, 'DROP DATABASE');
     }
