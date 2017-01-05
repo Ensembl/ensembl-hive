@@ -8,15 +8,39 @@ Welcome to the eHive user manual
 
 Contents:
 
+Quickstart
+----------
 .. toctree::
+   :numbered:
    :glob:
 
    quickstart/*
+
+Running pipelines
+-----------------
+.. toctree::
+   :numbered:
+   :glob:
+
    running_pipelines/*
+
+
+Creating pipelines
+==================
+.. toctree::
+   :numbered:
+   :titlesonly:
+   :glob:
+
    creating_pipelines/*
+
+Creating runnables
+==================
+.. toctree::
+   :numbered:
+   :glob:
+
    creating_runnables/*
-
-
 
 Indices and tables
 ==================

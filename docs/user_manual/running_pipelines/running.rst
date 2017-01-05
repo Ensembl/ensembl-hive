@@ -2,3 +2,7 @@
 
 Running a pipeline and running jobs
 ===================================
+
+.. index:: Pipeconfig
+
+To start a pipeline, first find a PipeConfig and init the pipeline
