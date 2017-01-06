@@ -260,7 +260,9 @@ sub pipeline_analyses {
                              # set as the value.
 			     # The name of the Accumulator is 'all_counts', as designated by 'accu_name=all_counts' in the url.
 			     # It is not required to match the name of a param, but it is allowed.
+
                              3 => [ '?accu_name=all_counts&accu_address={sequence_file}&accu_input_variable=kmer_counts' ],
+
                              # It is important to notice that values can be structures too: here "kmer_counts" is in fact
                              # a hash that associate each kmer seen in the file to its count.  The funnel Runnable
                              # CompileCountsHoH will use the "all_counts" variable to be a two-dimensional hash indexed
@@ -285,8 +287,11 @@ sub pipeline_analyses {
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().
-			     # It has two columns, 'kmer' and 'count', which are filled in by params with matching
-			     # names that are dataflown out.
+			     # It has three columns, 'filename', 'kmer' and 'count'. Each field
+                             # is filled by matching the column name to a param name, and filling in with the value
+			     # from that param. In the CompileCountsAoH runnable, there is a loop in write_output
+                             # that creates a dataflow event for each kmer seen. Each iteration of this loop
+                             # (i.e. each dataflow event generated in that loop) fills in one row of the table.
 	  		     4 => [ '?table_name=final_result' ],
 	  		    },
 	  },

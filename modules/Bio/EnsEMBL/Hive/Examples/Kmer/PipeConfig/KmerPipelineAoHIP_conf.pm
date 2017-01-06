@@ -253,12 +253,22 @@ sub pipeline_analyses {
 	      -flow_into => {
 			     # Flows into a "pile of hashes" accumulator called 'all_counts'. This is analogous to an array of hashes in Perl:
 			     # Each job is going to create a hash table where the key is a kmer sequence, and the value is
-			     # the count of that kmer. The kmer sequence is flowed out in a param called 'kmer', and
-			     # becomes the key in the hash part of the accumulator (as directed by the 'kmer' in
-			     # the accu_address=[]{kmer} section of this url). The value for each key is dataflown out in a parameter
-			     # called 'kmer_counts'; the 'accu_input_variable=kmer_counts' portion of the url is where it's set as the value.
-			     # Each jobs hash is then stored in a separate element in the array, in arbitrary order.
-	  		     3 => [ '?accu_name=all_counts&accu_address=[]&accu_input_variable=kmer_counts' ],
+			     # the count of that kmer. In a pile, unlike an array, the ordering of elements is not guaranteed.
+                             # Breaking down the URL into its individual pieces:
+                             #   ?accu_name=all_counts           : This is the name of the accu, other parts of the pipeline use this name to
+                             #                                   : access it later.
+                             #   &accu_address=[]                : The [] indicates store this in a pile (an array where the order of elements
+                             #                                   : is not important). Having no label inside the brackets (e.g. [], not [i])
+                             #                                   : is what makes this a pile. Components of the pipeline accessing the accu 
+                             #                                   : "all_counts" later will be able to enumerate over the elements, but there's
+                             #                                   : no guarantee for the order of those elements.
+                             #  &accu_input_variable=counts      : This is the name of the variable in the dataflow output that holds the
+                             #                                   : value that hive will store in the accu. Here, the accu_input_variable
+                             #                                   : "counts" matches counts flown on branch 3 in 
+                             #                                   : CountKmers::write_output
+                             # The "hash" portion of this "array of hashes" is controlled by the runnable. In this case,
+                             # CountKmers packs an entire hash into a hashref, which is flown into the accu. 
+ 	  		     3 => [ '?accu_name=all_counts&accu_address=[]&accu_input_variable=counts' ],
 	  		    },
 	  },
 	  
@@ -267,8 +277,11 @@ sub pipeline_analyses {
 	      -flow_into => {
 			     # Flows the output into a table in the hive database called 'final_result'.
 			     # We created this table earlier in this conf file during pipeline_create_commands().
-			     # It has two columns, 'kmer' and 'count', which are filled in by params with matching
-			     # names that are dataflown out.
+			     # It has three columns, 'filename', 'kmer' and 'count'. Each field
+                             # is filled by matching the column name to a param name, and filling in with the value
+			     # from that param. In the CompileCountsAoH runnable, there is a loop in write_output
+                             # that creates a dataflow event for each kmer seen. Each iteration of this loop
+                             # (i.e. each dataflow event generated in that loop) fills in one row of the table.
 	  		     4 => [ '?table_name=final_result' ],
 	  		    },
 	  },

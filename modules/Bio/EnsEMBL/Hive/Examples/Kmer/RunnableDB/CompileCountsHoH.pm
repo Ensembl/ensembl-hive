@@ -11,7 +11,7 @@
 
 =head1 DESCRIPTION
 
-     Kmer::RunnableDB::CompileCounts is the last runnable in the kmer counting pipleine (using an array of hashes Accumulator).
+     Kmer::RunnableDB::CompileCounts is the last runnable in the kmer counting pipeline (using an array of hashes Accumulator).
      This runnable fetches kmer counts that the previous jobs stored in the hash Accumulator, and combines them to determine
      the overall kmer counts from the sequences in the original input file.
 
@@ -112,9 +112,10 @@ sub run {
 
     Description : Implements write_output() interface method of Bio::EnsEMBL::Hive::Process that is used to deal with job's output after the execution.
 
-    Here, we flow out two values:
-    * kmer  -- the kmer being counted
-    * count -- count of that kmer across the entire original input
+    Here, we flow out three values:
+    * filename -- name of the sequence file given at the start of the pipeline
+    * kmer     -- the kmer being counted
+    * count    -- count of that kmer across the entire original input
 
 =cut
 
