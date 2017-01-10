@@ -222,6 +222,14 @@ sub fetch_all_incomplete_jobs_by_role_id {
 }
 
 
+sub fetch_all_unfinished_jobs_with_no_roles {
+    my $self = shift;
+
+        # the list should contain all status'es that are not "in progress":
+    return $self->fetch_all( "role_id IS NULL AND status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON', 'SEMAPHORED')" );
+}
+
+
 sub fetch_by_url_query {
     my ($self, $field_name, $field_value) = @_;
 

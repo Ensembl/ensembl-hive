@@ -452,22 +452,37 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         # the following bit is completely Meadow-agnostic and only restores database integrity:
     if($check_buried_in_haste) {
+        my $role_adaptor = $self->db->get_Roledaptor;
+        my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+
         warn "GarbageCollector:\tChecking for orphan roles...\n";
-        my $orphan_roles = $self->db->get_RoleAdaptor->fetch_all_unfinished_roles_of_dead_workers();
+        my $orphan_roles = $role_adaptor->fetch_all_unfinished_roles_of_dead_workers();
         if(my $orphan_role_number = scalar @$orphan_roles) {
             warn "GarbageCollector:\tfound $orphan_role_number orphan roles, finalizing...\n\n";
             foreach my $orphan_role (@$orphan_roles) {
-                $self->db->get_RoleAdaptor->finalize_role( $orphan_role );
+                $role_adaptor->finalize_role( $orphan_role );
             }
+        } else {
+            warn "GarbageCollector:\tfound none\n";
+        }
+
+        warn "GarbageCollector:\tChecking for roles buried in haste...\n";
+        my $buried_in_haste_roles = $role_adaptor->fetch_all_finished_roles_with_unfinished_jobs();
+        if(my $bih_number = scalar @$buried_in_haste_roles) {
+            warn "GarbageCollector:\tfound $bih_number buried roles with unfinished jobs, reclaiming.\n\n";
+            foreach my $role (@$buried_in_haste_roles) {
+                $job_adaptor->release_undone_jobs_from_role( $role );
+            }
+        } else {
+            warn "GarbageCollector:\tfound none\n";
         }
 
         warn "GarbageCollector:\tChecking for orphan jobs...\n";
-        my $buried_in_haste_roles = $self->db->get_RoleAdaptor->fetch_all_finished_roles_with_unfinished_jobs();
-        if(my $bih_number = scalar @$buried_in_haste_roles) {
-            warn "GarbageCollector:\tfound $bih_number buried roles with orphan jobs, reclaiming.\n\n";
-            my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
-            foreach my $role (@$buried_in_haste_roles) {
-                $job_adaptor->release_undone_jobs_from_role( $role );
+        my $orphan_jobs = $job_adaptor->fetch_all_unfinished_jobs_with_no_roles();
+        if(my $sj_number = scalar @$orphan_jobs) {
+            warn "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
+            foreach my $job (@$orphan_jobs) {
+                $job_adaptor->release_and_age_job($job->dbID, $job->analysis->max_retry_count, 1);
             }
         } else {
             warn "GarbageCollector:\tfound none\n";
