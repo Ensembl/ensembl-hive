@@ -45,7 +45,7 @@ sub find_all_sql_schema_patches {
     my %all_patches = ();
 
     if(my $hive_root_dir = $ENV{'EHIVE_ROOT_DIR'} ) {
-        foreach my $patch_path ( glob "'$hive_root_dir/sql/patch_20*.*sql*'" ) {
+        foreach my $patch_path ( glob "$hive_root_dir/sql/patch_20*.*sql*" ) {
             my ($patch_name, $driver) = ($patch_path=~/^(.+)\.(\w+)$/);
 
             $driver = 'mysql' if ($driver eq 'sql');    # for backwards compatibility
