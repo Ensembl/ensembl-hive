@@ -11,7 +11,7 @@
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-    Copyright [2016] EMBL-European Bioinformatics Institute
+    Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -182,11 +182,14 @@ sub _convert_to_datetime {      # a private subroutine that can recover missing 
     } else {
         my $curr_year = Time::Piece->new->year();
 
-        foreach my $candidate_year ($curr_year, $curr_year-1) {
+        my $years_back = 0;
+        while ($years_back < 28) {  # The Gregorian calendar repeats every 28 years
+            my $candidate_year = $curr_year - $years_back;
             my $datetime = Time::Piece->strptime("$yearless $candidate_year", '%b %d %T %Y');
             if($datetime->wdayname eq $weekday) {
                 return $datetime->date.' '.$datetime->hms;
             }
+            $years_back++;
         }
     }
 
