@@ -163,7 +163,11 @@ sub pipeline_create_commands {
                 # we got procedure definitions for all drivers:
             $self->db_cmd().' <'.$self->o('hive_root_dir').'/sql/procedures.'.$driver,
 
+                # list of all tables and views (MySQL only)
             ($driver eq 'mysql' ? ($self->db_cmd(sprintf($hive_tables_sql, $parsed_url->{'dbname'}))) : ()),
+
+                # when the database was created
+            $self->db_cmd(q{INSERT INTO hive_meta (meta_key, meta_value) VALUES ('creation_timestamp', CURRENT_TIMESTAMP)}),
     ];
 }
 
