@@ -27,5 +27,5 @@ SELECT ('The patch seems to be compatible with schema version '
 -- ----------------------------------</actual_patch> -------------------------------------------------
 
 
-    -- increase the schema version by one:
+    -- increase the schema version by one and register the patch:
 UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';

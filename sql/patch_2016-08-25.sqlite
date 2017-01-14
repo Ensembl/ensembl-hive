@@ -47,3 +47,4 @@ CREATE INDEX log_message_beekeeper_idx ON log_message (beekeeper_id);
 
     -- increase the schema version by one:
 UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT 'patched_to_' || meta_value, CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = 'hive_sql_schema_version';
