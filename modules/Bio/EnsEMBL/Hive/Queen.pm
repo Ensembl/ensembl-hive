@@ -452,7 +452,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         # the following bit is completely Meadow-agnostic and only restores database integrity:
     if($check_buried_in_haste) {
-        my $role_adaptor = $self->db->get_Roledaptor;
+        my $role_adaptor = $self->db->get_RoleAdaptor;
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
         warn "GarbageCollector:\tChecking for orphan roles...\n";
