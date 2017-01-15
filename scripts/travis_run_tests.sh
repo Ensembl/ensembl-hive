@@ -21,7 +21,7 @@ export TEST_AUTHOR=$USER
 
 echo "Running test suite"
 if [ "$COVERALLS" = 'true' ]; then
-  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,+ignore,$PWD/perl5,-db,$PWD/cover_db/" prove -rv t
+  PERL5OPT="-MDevel::Cover=+ignore,bioperl,+ignore,/usr/bin/psql,+ignore,$HOME/perl5,-db,$PWD/cover_db/" prove -rv t
 else
   prove -r t
 fi
