@@ -1,0 +1,28 @@
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - python
+  fixme:
+    enabled: true
+  radon:
+    enabled: true
+  pep8:
+    enabled: true
+  shellcheck:
+    enabled: true
+  markdownlint:
+    enabled: true
+ratings:
+  paths:
+  - "**.css"
+  - "**.py"
+  - "**.pl"
+  - "**.pm"
+  - "**.sh"
+  - "**.md"
+exclude_paths:
+- "docs/doxygen/"
+- "wrappers/python3/doxygen/"
+- "wrappers/java/doc/"
