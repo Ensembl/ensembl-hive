@@ -21,12 +21,14 @@ before_install:
     - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
     - chmod +x psql
     - export PATH=$PWD:$PATH
-    - ln -s /usr/share/perl5/PgCommon.pm modules/
+    - mkdir deps
+    - ln -s /usr/share/perl5/PgCommon.pm deps/
 
 
 install:
     - cpanm -v --installdeps --notest .
     - cpanm -n Devel::Cover::Report::Coveralls
+    - cpanm -n Devel::Cover::Report::Codecov
 
 script: "./scripts/travis_run_tests.sh"
 
