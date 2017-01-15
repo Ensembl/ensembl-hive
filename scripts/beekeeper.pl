@@ -248,7 +248,7 @@ sub main {
         }
     }
 
-    if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analysis_pattern quietly
+    if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analyses_pattern quietly
         warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
@@ -265,7 +265,7 @@ sub main {
 
     if( $self->{'analyses_pattern'} ) {
         if( @$list_of_analyses ) {
-            print "Beekeeper : the following Analyses matched your -analysis_pattern '".$self->{'analyses_pattern'}."' : "
+            print "Beekeeper : the following Analyses matched your -analyses_pattern '".$self->{'analyses_pattern'}."' : "
                 .join(', ', map { $_->logic_name.'('.$_->dbID.')' } @$list_of_analyses)."\n\n";
         } else {
             die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n"
