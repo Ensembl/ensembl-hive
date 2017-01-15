@@ -3,9 +3,7 @@ eHive
 
 [![Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
 [![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=master)
-
-[travis]: https://travis-ci.org/Ensembl/ensembl-hive
-[coveralls]: https://coveralls.io/r/Ensembl/ensembl-hive
+[![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master)
 
 
 eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.
