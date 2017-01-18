@@ -24,7 +24,7 @@ SELECT ('The patch seems to be compatible with schema version '
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
-ALTER TABLE analysis_base ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
+ALTER TABLE analysis_stats ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
 
 CREATE TYPE msg_class AS ENUM ('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR');
 ALTER TABLE log_message ADD COLUMN message_class msg_class NOT NULL DEFAULT 'INFO';

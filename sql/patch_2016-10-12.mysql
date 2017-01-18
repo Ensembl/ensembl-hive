@@ -27,7 +27,7 @@ SET SESSION sql_mode='';
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
-ALTER TABLE analysis_base ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0 AFTER sync_lock;
+ALTER TABLE analysis_stats ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0 AFTER sync_lock;
 
 ALTER TABLE log_message ADD COLUMN message_class ENUM('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WORKER_CAUTION', 'WORKER_ERROR') NOT NULL DEFAULT 'INFO' AFTER is_error;
 
