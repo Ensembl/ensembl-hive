@@ -139,6 +139,9 @@ sub schedule_workers {
         my $analysis            = $analysis_stats->get_analysis;    # FIXME: if it proves too expensive we may need to consider caching
         my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
+            # This meadow type is not available
+        next if( $meadow_capacity_limiter_hashed_by_type && !$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type} );
+            # This meadow type is available but has reached its full capacity
         next if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached );
 
             #digging deeper under the surface so need to sync:
