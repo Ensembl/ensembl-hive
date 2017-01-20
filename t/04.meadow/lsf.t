@@ -21,7 +21,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -34,6 +34,11 @@ BEGIN {
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
+
+throws_ok {
+    local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/deceptive_bin:'.$ENV{'PATH'};
+    my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LSF');
+} qr/Meadow 'LSF' does not seem to be available on this machine, please investigate at/, 'No LSF meadow if "lsid" is not present (or does not behave well';
 
 # WARNING: the data in this script must be in sync with what the fake
 # binaries output
