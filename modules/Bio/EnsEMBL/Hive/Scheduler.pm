@@ -214,6 +214,10 @@ sub schedule_workers {
             my $logic_name          = $analysis->logic_name;
             my $this_meadow_type    = $analysis->meadow_type || $default_meadow_type;
 
+            if( $meadow_capacity_limiter_hashed_by_type && !$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type} ) {
+                push @$log_buffer, "The Meadow '$this_meadow_type' is not reachable from here, skipping Analysis '$logic_name'.";
+                next ANALYSIS;
+            }
             if( $meadow_capacity_limiter_hashed_by_type && $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->reached ) {
                 push @$log_buffer, "Available capacity of '$this_meadow_type' Meadow (=".$meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}->original_capacity.") has been reached, skipping Analysis '$logic_name'.";
                 next ANALYSIS;
