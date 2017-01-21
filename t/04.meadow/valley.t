@@ -38,6 +38,7 @@ my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
 
 my @virtual_methods = qw(name get_current_worker_process_id status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers);
+my @optional_methods = qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval);
 
 # Check that the base Meadow class has some virtual methods
 subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
@@ -52,7 +53,7 @@ subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
     foreach my $method (@virtual_methods) {
         throws_ok {$virtual_meadow->$method()} qr/Please use a derived method/, $method.'() is virtual in Meadow';
     }
-    foreach my $method (qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval)) {
+    foreach my $method (@optional_methods) {
         warning_like {$virtual_meadow->$method()} qr/Bio::EnsEMBL::Hive::Meadow does not support resource usage logs/, $method.'() has a default (empty) implementation in Meadow';
     }
 };
