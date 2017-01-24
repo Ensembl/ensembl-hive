@@ -13,7 +13,6 @@ sudo: false
 addons:
   apt:
     packages:
-    - unzip
     - python3
     - oracle-java8-installer
     - ant
