@@ -64,6 +64,8 @@ my $pipeline_url = get_test_url_or_die();
     my @bad_job_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $hive_dba->dbc->url, '-run', -job_id => 98765);
     system(@bad_job_cmd);
     ok($?, 'beekeeper -run -job_id 98765 exited with a non-zero return code');
+    # Not doing this because we expect the command to *fail*
+    #beekeeper($hive_dba->dbc->url, ['-run', -job_id => 98765], 'beekeeper -run -job_id 98765 exited with a non-zero return code');
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 3, 'After -sync, -run, and -run -job_id, there are exactly three entries in the beekeeper table');
@@ -77,6 +79,7 @@ my $pipeline_url = get_test_url_or_die();
     is($found_beekeeper_bad_job, 1, 'A beekeeper with option -job_id was registered in the beekeeper table');
 
     # Check that -loop -analyses_pattern with a non-matching pattern fails with TASK_FAILED
+    # Not useing beekeeper() because we expect the command to *fail*
     my @bad_pattern_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl',
         -url => $hive_dba->dbc->url,
         -analyses_pattern => 'this_matches_no_analysis',
