@@ -350,11 +350,11 @@ sub load_sql_in_db {
 
   Arg[1]      : String $url. The location of the database
   Arg[2]      : Arrayref of string $sqls. Each element can be a SQL command or file to load
-  Arg[3]      : Boolean $force_init (optional, default 0). Whether we need to issue a DROP DATABASE statement first
-  Arg[4]      : String $test_name (optional). The name of the test
+  Arg[3]      : String $test_name (optional). The name of the test
   Example     : make_new_db_from_sqls($url, 'CREATE TABLE sweets (name VARCHAR(40) NOT NULL, quantity INT UNSIGNED NOT NULL)');
   Description : Create a new database and apply a list of SQL commands using the two above functions.
                 When an SQL command is a valid filename, the file is loaded rather than the command executed.
+                Note that it first issues a DROP DATABASE statement in case the database already exists
   Returntype  : Bio::EnsEMBL::Hive::DBSQL::DBConnection $dbc
   Exceptions  : TAP-style
   Caller      : general
@@ -363,7 +363,7 @@ sub load_sql_in_db {
 =cut
 
 sub make_new_db_from_sqls {
-    my ($url, $sqls, $force_init, $test_name) = @_;
+    my ($url, $sqls, $test_name) = @_;
 
     $sqls = [$sqls] unless ref($sqls);
     $test_name //= 'Creation of a new custom database';
@@ -372,7 +372,7 @@ sub make_new_db_from_sqls {
     subtest $test_name => sub {
         $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
         ok($dbc, 'URL could be parsed to make a DBConnection object');
-        run_sql_on_db($url, 'DROP DATABASE IF EXISTS', 'Drop existing database') if $force_init;
+        run_sql_on_db($url, 'DROP DATABASE IF EXISTS', 'Drop existing database');
         run_sql_on_db($url, 'CREATE DATABASE', 'Create new database');
         foreach my $s (@$sqls) {
             if (-e $s) {
@@ -390,11 +390,11 @@ sub make_new_db_from_sqls {
 =head2 make_hive_db
 
   Arg[1]      : String $url. The location of the database
-  Arg[2]      : Boolean $force_init (optional, default 0). Whether we need to issue a DROP DATABASE statement first
-  Arg[3]      : Boolean $use_triggers (optional, default 0). Whether we want to load the SQL triggers
-  Example     : make_hive_db($url, 'force_init');
+  Arg[2]      : Boolean $use_triggers (optional, default 0). Whether we want to load the SQL triggers
+  Example     : make_hive_db($url);
   Description : Create a new (empty) eHive database using the two above functions.
                 This function follows the same step as init_pipeline
+                Note that it first issues a DROP DATABASE statement in case the database already exists
   Returntype  : None
   Exceptions  : TAP-style
   Caller      : general
@@ -403,7 +403,7 @@ sub make_new_db_from_sqls {
 =cut
 
 sub make_hive_db {
-    my ($url, $force_init, $use_triggers) = @_;
+    my ($url, $use_triggers) = @_;
 
     # Will insert two keys: "hive_all_base_tables" and "hive_all_views"
     my $hive_tables_sql = 'INSERT INTO hive_meta SELECT CONCAT("hive_all_", REPLACE(LOWER(TABLE_TYPE), " ", "_"), "s"), GROUP_CONCAT(TABLE_NAME) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = "%s" GROUP BY TABLE_TYPE';
@@ -412,7 +412,7 @@ sub make_hive_db {
     subtest 'Creation of a fresh eHive database' => sub {
         $dbc = Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => $url );
         ok($dbc, 'URL could be parsed to make a DBConnection object');
-        run_sql_on_db($url, 'DROP DATABASE IF EXISTS') if $force_init;
+        run_sql_on_db($url, 'DROP DATABASE IF EXISTS');
         run_sql_on_db($url, 'CREATE DATABASE');
         load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/tables.' . $dbc->driver);
         load_sql_in_db($url, $ENV{'EHIVE_ROOT_DIR'} . '/sql/triggers.' . $dbc->driver) if $use_triggers;

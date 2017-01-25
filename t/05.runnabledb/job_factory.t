@@ -266,7 +266,6 @@ my $dbc = make_new_db_from_sqls(
         'CREATE TABLE params (param_key VARCHAR(15), param_value INT)',
         "INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)"
     ],
-    'force_init',
     'Dummy database with a single table and two rows'
 );
 

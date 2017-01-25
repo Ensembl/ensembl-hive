@@ -46,7 +46,7 @@ SKIP: {
     delete $parsed_url->{dbname};
     my $server_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
     
-    my $dbc = make_new_db_from_sqls( $db_url, [ $ENV{'EHIVE_ROOT_DIR'} . '/t/02.api/sql/reconnect_test.sql' ], 'force_init', 'Create database with many rows');
+    my $dbc = make_new_db_from_sqls( $db_url, [ $ENV{'EHIVE_ROOT_DIR'} . '/t/02.api/sql/reconnect_test.sql' ], 'Create database with many rows');
     
     my $dbc_query_sql = "SELECT SQL_NO_CACHE * FROM manyrows";
     my $find_pid_sql = "SELECT ID FROM information_schema.processlist " .

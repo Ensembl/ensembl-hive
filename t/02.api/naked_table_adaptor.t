@@ -39,7 +39,7 @@ my $sql_create_table = [
     'CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))',
     'CREATE TABLE analysis_base (name char(40) NOT NULL)',
 ];
-my $dbc = make_new_db_from_sqls($test_url, $sql_create_table, 'force_init', 'Database with a few tables');
+my $dbc = make_new_db_from_sqls($test_url, $sql_create_table, 'Database with a few tables');
 
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc, -no_sql_schema_version_check => 1);

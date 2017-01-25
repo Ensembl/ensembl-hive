@@ -34,7 +34,7 @@ SKIP: {
   my $pipeline_url = eval { get_test_url_or_die(-driver => 'mysql') };
   skip "no MySQL test database defined", 3 unless $pipeline_url;
   
-  my $dbc = make_hive_db($pipeline_url, 'force_init');
+  my $dbc = make_hive_db($pipeline_url);
 
   lives_ok( sub {
 	      $dbc->do('CALL drop_hive_tables;');
