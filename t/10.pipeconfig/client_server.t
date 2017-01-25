@@ -33,13 +33,11 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
-my @client_runworker_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl', -url => $client_url);       # to seed the "Server" database (to make sure its beekeeper doesn't exit immediately)
 my @client_beekeeper_cmd = (-sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 
 
-system( @client_runworker_cmd );
-ok(!$?, 'client runWorker exited with the return code 0');
+runWorker($client_url);
 
 if(my $server_pid = fork) {             # "Client" branch
     beekeeper($client_url, \@client_beekeeper_cmd);
