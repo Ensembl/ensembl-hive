@@ -22,7 +22,30 @@ SELECT ('The patch seems to be compatible with schema version '
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
-ALTER TABLE beekeeper ADD COLUMN is_blocked NOT NULL DEFAULT 0;
+DROP INDEX beekeeper_signature_idx;
+ALTER TABLE beekeeper RENAME TO beekeeper__;
+
+CREATE TABLE beekeeper (
+       beekeeper_id      INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
+       meadow_host       VARCHAR(255)   NOT NULL,
+       meadow_user       VARCHAR(255)   NOT NULL,
+       process_id        INTEGER        NOT NULL,
+       is_blocked        SMALLINT       NOT NULL DEFAULT 0,
+       cause_of_death    VARCHAR(255)   NULL, /* enum('ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED') NOT NULL */
+       sleep_minutes     REAL           NULL,
+       analyses_pattern  TEXT           NULL,
+       loop_limit        INTEGER        NULL,
+       loop_until        VARCHAR(255)   NOT NULL, /* enum('ANALYSIS_FAILURE', 'FOREVER', 'JOB_FAILURE', 'NO_WORK') NOT NULL */
+       options           TEXT           NULL,
+       meadow_signatures TEXT           NULL
+);
+
+CREATE INDEX beekeeper_signature_idx ON beekeeper (meadow_host, meadow_user, process_id);
+
+INSERT INTO beekeeper (beekeeper_id,meadow_host,meadow_user,process_id,cause_of_death,sleep_minutes,analyses_pattern,loop_limit,loop_until,options,meadow_signatures)
+    SELECT * FROM beekeeper__;
+
+DROP TABLE beekeeper__;
 
 DROP VIEW IF EXISTS beekeeper_activity;
 CREATE VIEW IF NOT EXISTS beekeeper_activity AS
