@@ -25,7 +25,8 @@ SELECT ('The patch seems to be compatible with schema version '
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
     -- Set the field to NOT NULL
-ALTER TABLE analysis_base ALTER COLUMN module SET DATA TYPE VARCHAR(255) NOT NULL;
+ALTER TABLE analysis_base ALTER COLUMN module SET DATA TYPE VARCHAR(255),
+                          ALTER COLUMN module SET NOT NULL;
 
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
