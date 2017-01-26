@@ -60,6 +60,10 @@ sub schema_from_url {
         }
         return \%schema;
     } elsif ($dbc->driver eq 'pgsql') {
+        # PostgreSQL language does not have a way of forcing the position
+        # of a column. This means that patches that add columns cannot
+        # produce the same new schema, so we can't use the ORDINAL position
+        # when comparing the schemas
         my $sth = $dbc->db_handle->column_info(undef, undef, '%', '%');
         my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'COLUMN_NAME']);
         foreach my $s (values %$schema) {
