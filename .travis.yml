@@ -4,6 +4,9 @@ perl:
   - "5.10"
   - "5.14"
 
+git:
+  depth: 500
+
 env:
   - COVERALLS=true
   - COVERALLS=false
