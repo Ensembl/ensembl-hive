@@ -25,7 +25,7 @@ SELECT ('The patch seems to be compatible with schema version '
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
 ALTER TABLE  worker  ALTER COLUMN  status  SET DATA TYPE  VARCHAR(255);
--- ALTER TABLE  worker  ALTER COLUMN  status  SET DEFAULT 'READY';
+ALTER TABLE  worker  ALTER COLUMN  status  SET DEFAULT 'READY';
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 

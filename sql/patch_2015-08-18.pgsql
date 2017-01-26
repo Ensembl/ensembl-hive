@@ -25,7 +25,7 @@ SELECT ('The patch seems to be compatible with schema version '
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
 ALTER TABLE  job  ALTER COLUMN  status  SET DATA TYPE  TEXT;    -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
--- ALTER TABLE  job  ALTER COLUMN  status  SET DEFAULT 'READY';
+ALTER TABLE  job  ALTER COLUMN  status  SET DEFAULT 'READY';
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 
