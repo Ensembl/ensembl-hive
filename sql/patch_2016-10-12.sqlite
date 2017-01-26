@@ -25,6 +25,9 @@ SELECT ('The patch seems to be compatible with schema version '
 ALTER TABLE analysis_stats ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
 
 ALTER TABLE log_message RENAME TO old_log_message__;
+DROP INDEX log_message_worker_idx;
+DROP INDEX log_message_job_idx;
+DROP INDEX log_message_beekeeper_idx;
 CREATE TABLE log_message (
     log_message_id          INTEGER     NOT NULL PRIMARY KEY AUTOINCREMENT,
     job_id                  INTEGER              DEFAULT NULL,

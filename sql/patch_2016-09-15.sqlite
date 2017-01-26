@@ -23,6 +23,7 @@ SELECT ('The patch seems to be compatible with schema version '
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
 ALTER TABLE beekeeper RENAME TO old_beekeeper__;
+DROP INDEX beekeeper_signature_idx;
 CREATE TABLE beekeeper (
        beekeeper_id      INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
        meadow_host       VARCHAR(255)   NOT NULL,
