@@ -39,7 +39,7 @@ DROP INDEX job_file_worker_id_idx;
 
     -- Add role_id columns:
 ALTER TABLE job ADD COLUMN role_id INTEGER DEFAULT NULL;
-ALTER TABLE job_file ADD COLUMN role_id INTEGER DEFAULT NULL;
+ALTER TABLE job_file ADD COLUMN role_id INTEGER NOT NULL;
 
     -- Pretend we had role entries from the very beginning (the data is very approximately correct!):
 UPDATE job j set role_id = (SELECT r.role_id FROM role r WHERE r.worker_id=j.worker_id AND CASE WHEN completed IS NOT NULL THEN when_started<=completed AND (when_finished IS NULL OR completed<=when_finished) ELSE when_finished IS NULL END);
