@@ -59,6 +59,14 @@ sub schema_from_url {
             $schema{$t} = $sth->fetchall_hashref('ORDINAL_POSITION');
         }
         return \%schema;
+    } elsif ($dbc->driver eq 'pgsql') {
+        my $sth = $dbc->db_handle->column_info(undef, undef, '%', '%');
+        my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'COLUMN_NAME']);
+        foreach my $s (values %$schema) {
+            delete $_->{'ORDINAL_POSITION'} for values %$s;
+        }
+        $sth->finish();
+        return $schema;
     } else {
         my $sth = $dbc->db_handle->column_info(undef, undef, '%', '%');
         my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'ORDINAL_POSITION']);
