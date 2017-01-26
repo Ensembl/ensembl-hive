@@ -24,8 +24,7 @@ SELECT ('The patch seems to be compatible with schema version '
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
-CREATE TYPE beekeeper_stat AS ENUM ('ALIVE', 'ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'T
-ASK_FAILED');
+CREATE TYPE beekeeper_stat AS ENUM ('ALIVE', 'ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED');
 CREATE TYPE beekeeper_lu   AS ENUM ('ANALYSIS_FAILURE', 'FOREVER', 'JOB_FAILURE', 'NO_WORK');
 CREATE TABLE beekeeper (
        beekeeper_id             SERIAL          PRIMARY KEY,
