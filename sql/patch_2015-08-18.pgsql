@@ -24,8 +24,27 @@ SELECT ('The patch seems to be compatible with schema version '
 
 -- ----------------------------------<actual_patch> -------------------------------------------------
 
+-- Need to drop and recreate progress because otherwise we get
+--    ERROR:  cannot alter type of a column used by a view or rule
+
+DROP VIEW progress;
+
 ALTER TABLE  job  ALTER COLUMN  status  SET DATA TYPE  TEXT;    -- expected values: 'SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON'
 ALTER TABLE  job  ALTER COLUMN  status  SET DEFAULT 'READY';
+
+CREATE OR REPLACE VIEW progress AS
+    SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
+        MIN(rc.name) resource_class,
+        j.status,
+        j.retry_count,
+        CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
+        MIN(job_id) example_job_id
+    FROM        analysis_base a
+    LEFT JOIN   job j USING (analysis_id)
+    LEFT JOIN   resource_class rc ON (a.resource_class_id=rc.resource_class_id)
+    GROUP BY a.analysis_id, j.status, j.retry_count
+    ORDER BY a.analysis_id, j.status;
+
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 
