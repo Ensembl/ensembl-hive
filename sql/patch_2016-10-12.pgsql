@@ -33,7 +33,15 @@ UPDATE log_message
 SET message_class = 'PIPELINE_ERROR'
 WHERE is_error = 1;
 
+DROP VIEW msg;
 ALTER TABLE log_message DROP COLUMN is_error;
+
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
+
 
 ALTER TABLE analysis_stats_monitor ADD COLUMN is_excluded SMALLINT NOT NULL DEFAULT 0;
 
