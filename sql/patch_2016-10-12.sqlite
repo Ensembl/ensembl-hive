@@ -46,12 +46,12 @@ CREATE        INDEX log_message_beekeeper_idx ON log_message (beekeeper_id);
 CREATE        INDEX message_class_idx ON log_message (message_class);
 
 INSERT INTO log_message (log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg)
-SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry_status, msg
+SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg
 FROM old_log_message__
 WHERE is_error = 0;
 
 INSERT INTO log_message (log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg, message_class)
-SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry_status, msg, 'PIPELINE_ERROR'
+SELECT log_message_id, job_id, role_id, worker_id, beekeeper_id, when_logged, retry, status, msg, 'PIPELINE_ERROR'
 FROM old_log_message__
 WHERE is_error = 1;
 
