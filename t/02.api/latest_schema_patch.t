@@ -75,6 +75,12 @@ sub schema_from_url {
     }
 }
 
+my %schema_files = (
+    'mysql' => ['sql/tables.mysql', 'sql/procedures.mysql', 'sql/foreign_keys.sql'],
+    'pgsql' => ['sql/tables.pgsql', 'sql/procedures.pgsql', 'sql/foreign_keys.sql'],
+    'sqlite' => ['sql/tables.sqlite', 'sql/procedures.sqlite'],
+);
+
 my $n_drivers_with_patch = 0;
 foreach my $driver (qw(mysql pgsql sqlite)) {
 
@@ -87,12 +93,14 @@ foreach my $driver (qw(mysql pgsql sqlite)) {
 
         my $url1 = get_test_urls(-driver => $driver, -tag => 'old_patched')->[0];
         ok($url1, 'Test database available') or return;
-        ok(!system("cd $ENV{'EHIVE_ROOT_DIR'}; git show ${ref_commit}:sql/tables.${driver} > $filename"), "Extracted tables.sql as it was in version $prev_version");
+        my $gitshow_command = sprintf('git show %s > %s', join(' ', map {$ref_commit.':'.$_} @{$schema_files{$driver}}), $filename);
+        ok(!system($gitshow_command), "Extracted the schema as it was in version $prev_version");
         make_new_db_from_sqls($url1, [$filename, $patches_to_apply->[0]], 'Can create a database from the previous schema and patch it');
 
         my $url2 = get_test_urls(-driver => $driver, -tag => 'new')->[0];
         ok($url2, 'Test database available2') or return;
-        make_new_db_from_sqls($url2, ["$ENV{'EHIVE_ROOT_DIR'}/sql/tables.${driver}"], 'Can create a database from the current schema');
+        my @new_files = map {$ENV{'EHIVE_ROOT_DIR'}.'/'.$_} @{$schema_files{$driver}};
+        make_new_db_from_sqls($url2, \@new_files, 'Can create a database from the current schema');
 
         my $schema1 = schema_from_url($url1);
         my $schema2 = schema_from_url($url2);
