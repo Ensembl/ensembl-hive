@@ -27,8 +27,9 @@ SELECT ('The patch seems to be compatible with schema version '
 -- have to drop the dependent view first:
 DROP VIEW msg;
 
-ALTER TABLE  log_message  ALTER COLUMN  status  SET DATA TYPE  VARCHAR(255);
--- ALTER TABLE  log_message  ALTER COLUMN  status  SET DEFAULT 'UNKNOWN';
+ALTER TABLE  log_message  ALTER COLUMN  status  SET DATA TYPE  VARCHAR(255),
+                          ALTER COLUMN  status  SET NOT NULL,
+                          ALTER COLUMN  status  SET DEFAULT 'UNKNOWN';
 
 -- recreate the view:
 CREATE OR REPLACE VIEW msg AS
