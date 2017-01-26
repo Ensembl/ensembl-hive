@@ -50,6 +50,13 @@ ALTER TABLE log_message ADD COLUMN beekeeper_id INTEGER DEFAULT NULL AFTER worke
       ADD KEY beekeeper_id (beekeeper_id),
       ADD FOREIGN KEY (beekeeper_id) REFERENCES beekeeper(beekeeper_id) ON DELETE CASCADE;
 
+-- Same SELECT but the resulting view has different columns since log_message has changed
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
+
 DROP PROCEDURE IF EXISTS drop_hive_tables;
 DELIMITER //
 CREATE PROCEDURE drop_hive_tables()
