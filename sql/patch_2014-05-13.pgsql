@@ -47,6 +47,13 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 
     -- new column in log_message to log the role_id:
 ALTER TABLE log_message ADD COLUMN role_id INTEGER DEFAULT NULL;
+    -- msg needs to be updated too
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN job j ON (j.job_id=m.job_id)
+    LEFT JOIN analysis_base a ON (a.analysis_id=j.analysis_id);
+
 
     -- add foreign keys linking the new table to the existing ones:
 ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
