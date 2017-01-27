@@ -36,3 +36,4 @@ ALTER TABLE analysis_base MODIFY COLUMN max_retry_count INTEGER;
 
     -- increase the schema version by one and register the patch:
 UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT CONCAT("patched_to_", meta_value), CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = "hive_sql_schema_version";
