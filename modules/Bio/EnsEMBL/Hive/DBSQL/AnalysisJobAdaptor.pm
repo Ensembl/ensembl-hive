@@ -796,17 +796,10 @@ sub gc_dataflow {
 sub reset_jobs_for_analysis_id {
     my ($self, $list_of_analyses, $input_statuses) = @_;
 
-    return if (ref($input_statuses) && !scalar(@$input_statuses));  # No statuses to reset
+    return if !scalar(@$input_statuses);  # No statuses to reset
 
-    my $analyses_filter = ( ref($list_of_analyses) eq 'ARRAY' )
-        ? 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')'
-        : 'analysis_id='.$list_of_analyses;     # compatibility mode (to be deprecated)
-
-    my $statuses_filter = (ref($input_statuses) eq 'ARRAY')
-        ? 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')'
-        : (!$input_statuses)
-            ? "AND status='FAILED'"             # compatibility mode (to be deprecated)
-            : "AND status IN ('FAILED','DONE','PASSED_ON')";
+    my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
+    my $statuses_filter = 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')';
 
     # Get the list of semaphored jobs, and by how much their
     # semaphore_count should be increased. Only DONE and PASSED_ON jobs of
@@ -850,13 +843,9 @@ sub reset_jobs_for_analysis_id {
     $sth->execute();
     $sth->finish;
 
-    if( ref($list_of_analyses) eq 'ARRAY' ) {
         foreach my $analysis ( @$list_of_analyses ) {
             $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
         }
-    } else {
-        $self->db->get_AnalysisStatsAdaptor->update_status($list_of_analyses, 'LOADING');   # compatibility mode (to be deprecated)
-    }
 
     } ); # end of transaction
 }
