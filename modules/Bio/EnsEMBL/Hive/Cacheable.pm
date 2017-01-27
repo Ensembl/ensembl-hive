@@ -52,6 +52,26 @@ sub is_local_to {
 }
 
 
+sub count_local_and_remote_objects {
+    my $self            = shift @_;
+    my $objects         = shift @_;
+
+    my $this_pipeline   = $self->hive_pipeline;
+    my $local_count     = 0;
+    my $remote_count    = 0;
+
+    foreach my $object (@$objects) {
+        if($object->hive_pipeline == $this_pipeline) {
+            $local_count++;
+        } else {
+            $remote_count++;
+        }
+    }
+
+    return ($local_count, $remote_count);
+}
+
+
 sub relative_display_name {
     my ($self, $ref_pipeline) = @_;  # if 'reference' hive_pipeline is the same as 'my' hive_pipeline, a shorter display_name is generated
 

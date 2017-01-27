@@ -98,7 +98,7 @@ sub display_name {
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    if(my $receiving_job = $emitting_job->semaphored_job) {
+    if(my $receiving_job = $emitting_job->controlled_semaphore->ultimate_dependent_job) {   # we need to reach all the way to the actual job
 
         my $receiving_job_id    = $receiving_job->dbID;
         my $accu_adaptor        = $receiving_job->adaptor->db->get_AccumulatorAdaptor;

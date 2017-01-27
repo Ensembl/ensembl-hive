@@ -232,9 +232,9 @@ sub specialize_worker {
             die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
         }
 
-        if(($job_status eq 'DONE') and my $semaphored_job = $job->semaphored_job) {
+        if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
             warn "Increasing the semaphore count of the dependent job";
-            $semaphored_job->adaptor->increase_semaphore_count_for_jobid( $semaphored_job->dbID );
+            $controlled_semaphore->increase_by( [ $job ] );
         }
 
         my %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');

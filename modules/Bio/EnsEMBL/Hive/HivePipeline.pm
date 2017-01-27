@@ -78,8 +78,9 @@ sub find_by_query {
                     $self->hive_dba ? ('adaptor' => $self->hive_dba->get_adaptor($object_type, @specific_adaptor_params)) : (),
                 );
             }
-        } elsif($object_type eq 'AnalysisJob') {
-            my $dbID    = $query_params->{'job_id'};
+        } elsif($object_type eq 'AnalysisJob' or $object_type eq 'Semaphore') {
+            my $id_name = { 'AnalysisJob' => 'job_id', 'Semaphore' => 'semaphore_id' }->{$object_type};
+            my $dbID    = $query_params->{$id_name};
             my $coll    = $self->collection_of($object_type);
             unless($object = $coll->find_one_by( 'dbID' => $dbID )) {
 

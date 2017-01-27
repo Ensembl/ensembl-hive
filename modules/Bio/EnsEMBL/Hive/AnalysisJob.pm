@@ -40,7 +40,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::TheApiary;
 
@@ -56,7 +56,7 @@ use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() 
 
     analysis_id / analysis
 
-    semaphored_job_id / semaphored_job
+    controlled_semaphore_id / controlled_semaphore
 
 =cut
 
@@ -94,8 +94,7 @@ sub role_id {
 sub status {
     my $self = shift;
     $self->{'_status'} = shift if(@_);
-    $self->{'_status'} = ( ($self->semaphore_count>0) ? 'SEMAPHORED' : 'READY' ) unless(defined($self->{'_status'}));
-    return $self->{'_status'};
+    return $self->{'_status'} || 'READY';
 }
 
 sub retry_count {
@@ -123,13 +122,6 @@ sub query_count {
     $self->{'_query_count'} = shift if(@_);
     $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
     return $self->{'_query_count'};
-}
-
-sub semaphore_count {
-    my $self = shift;
-    $self->{'_semaphore_count'} = shift if(@_);
-    $self->{'_semaphore_count'} = 0 unless(defined($self->{'_semaphore_count'}));
-    return $self->{'_semaphore_count'};
 }
 
 
@@ -257,10 +249,6 @@ sub load_parameters {
     );
 
     $self->param_init( @params_precedence );
-
-    if(my $semaphored_job_url = $self->_param_silent('HIVE_semaphored_job_url')) {
-        $self->semaphored_job( Bio::EnsEMBL::Hive::TheApiary->find_by_url( $semaphored_job_url ) );
-    }
 }
 
 

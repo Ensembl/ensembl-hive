@@ -331,7 +331,6 @@ sub dataflow {
     my $param_id_stack      = '';
     my $accu_id_stack       = '';
     my $emitting_job_id     = undef;
-    my $semaphored_job      = $emitting_job->semaphored_job;
 
     if($same_db_dataflow) {
         $param_id_stack     = $emitting_job->param_id_stack;
@@ -367,8 +366,8 @@ sub dataflow {
         my $fan_cache_this_branch = $emitting_job->fan_cache->{"$funnel_dataflow_rule"} ||= [];
         push @$fan_cache_this_branch, map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                 @$common_params,
-                                                'input_id'          => $_,
-                                                # semaphored_job  => to be set when the $funnel_job has been stored
+                                                'input_id'              => $_,
+                                                # controlled_semaphore  => to be set when the $controlled_semaphore has been stored
                                             ) } @$output_ids_for_this_rule;
 
     } else {    # either a semaphored funnel or a non-semaphored dataflow:
@@ -386,8 +385,10 @@ sub dataflow {
                 my $funnel_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
                     @$common_params,
                     'input_id'          => $output_ids_for_this_rule->[0],
+                    'status'            => 'SEMAPHORED',
                 );
 
+                    # NB: $job_adaptor happens to belong to the $funnel_job, but not necesarily to $fan_jobs or $emitting_job
                 my ($funnel_job_id, @fan_job_ids) = $job_adaptor->store_a_semaphored_group_of_jobs( $funnel_job, $fan_jobs, $emitting_job );
 
                 push @output_job_ids, $funnel_job_id, @fan_job_ids;
@@ -395,10 +396,11 @@ sub dataflow {
         } else {    # non-semaphored dataflow (but potentially propagating any existing semaphores)
             my @non_semaphored_jobs = map { Bio::EnsEMBL::Hive::AnalysisJob->new(
                                                 @$common_params,
-                                                'input_id'          => $_,
-                                                'semaphored_job'    => $semaphored_job,  # propagate parent's semaphore if any
+                                                'input_id'              => $_,
+                                                'controlled_semaphore'  => $emitting_job->controlled_semaphore,     # propagate parent's semaphore if any
             ) } @$output_ids_for_this_rule;
 
+                # NB: $job_adaptor happens to belong to the @non_semaphored_jobs, but not necessarily to the $emitting_job :
             push @output_job_ids, @{ $job_adaptor->store_jobs_and_adjust_counters( \@non_semaphored_jobs, 0, $emitting_job_id) };
         }
     } # /if funnel

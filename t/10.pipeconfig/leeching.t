@@ -44,22 +44,22 @@ runWorker($pipeline_url);   # 'factory' analysis
 
 my $analyses_coll   = $pipeline->collection_of('Analysis');
 my $fan_analysis    = $analyses_coll->find_one_by( 'logic_name' => 'fan' );
-my $funnel_analysis = $analyses_coll->find_one_by( 'logic_name' => 'funnel' );
 
-my $hive_dba        = $pipeline->hive_dba;
-my $job_adaptor     = $hive_dba->get_AnalysisJobAdaptor;
-my @funnel_jobs     = @{ $job_adaptor->fetch_all_by_analysis_id( $funnel_analysis->dbID ) };
+my $hive_dba            = $pipeline->hive_dba;
+my $job_adaptor         = $hive_dba->get_AnalysisJobAdaptor;
+my $semaphore_adaptor   = $hive_dba->get_SemaphoreAdaptor;
+my @semaphores          = @{ $semaphore_adaptor->fetch_all() };
 
-is(scalar(@funnel_jobs), 1, 'There has to be only one funnel job');
+is(scalar(@semaphores), 1, 'There has to be only one semaphore');
 
-my $fan_job_count   = $job_adaptor->count_all_by_analysis_id( $fan_analysis->dbID );
-my $correct_count   = 7;
+my $fan_job_count       = $job_adaptor->count_all_by_analysis_id( $fan_analysis->dbID );
+my $correct_count       = 7;
 
 is($fan_job_count, $correct_count, "The number of fan jobs is correct ($fan_job_count == $correct_count)");
 
-my $funnel_job      = shift @funnel_jobs;
+my $semaphore           = shift @semaphores;
 
-is($funnel_job->semaphore_count, $fan_job_count, 'All the fan jobs share the same funnel');
+is($semaphore->local_jobs_counter, $fan_job_count, 'All the fan jobs share the same semaphore');
 
 $hive_dba->dbc->disconnect_if_idle();
 run_sql_on_db($pipeline_url, 'DROP DATABASE');

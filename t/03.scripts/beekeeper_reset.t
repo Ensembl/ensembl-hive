@@ -35,10 +35,25 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $ehive_test_pipeline_urls = get_test_urls();
 
+
+    # a helper injection that may be promoted in future:
+sub Bio::EnsEMBL::Hive::AnalysisJob::semaphore_count {
+    my $job = shift @_;
+
+    my $semaphore_adaptor = $job->adaptor->db->get_SemaphoreAdaptor;
+
+    my $semaphore = $semaphore_adaptor->fetch_by_dependent_job_id( $job->dbID );
+
+    return $semaphore ? ( $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter ) : 0;
+}
+
+
 sub assert_jobs {
     my ($job_adaptor, $job_expected_data) = @_;
     my $all_jobs = $job_adaptor->fetch_all();
-    my @job_data = map {[$_->status, $_->retry_count, $_->semaphore_count]} sort {$a->dbID<=> $b->dbID} @$all_jobs;
+
+    my @job_data = map { [$_->status, $_->retry_count, $_->semaphore_count ] } sort {$a->dbID<=> $b->dbID} @$all_jobs;
+
     is_deeply(\@job_data, $job_expected_data, 'Job counts and statuses are correct');
 }
 
@@ -59,7 +74,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     runWorker($pipeline_url, [ -can_respecialize => 1 ]);
     # We're now in a state with a selection of DONE, READY, FAILED and SEMAPHORED jobs
 
-    # Tip: SELECT CONCAT('[', GROUP_CONCAT( CONCAT('["',status,'",', retry_count, ',',semaphore_count,']') ), ']') FROM job ORDER BY job_id;
+    # Tip: SELECT CONCAT('[', GROUP_CONCAT( CONCAT('["',status,'",', retry_count, ',',COALESCE(local_jobs_counter+remote_jobs_counter,0),']') ), ']') FROM job j LEFT JOIN semaphore s ON (j.job_id=s.dependent_job_id) ORDER BY job_id;
     assert_jobs($job_adaptor, [["DONE",0,0],["SEMAPHORED",0,3],["FAILED",2,0],["DONE",0,0],["READY",1,0],["DONE",0,0],["READY",1,0]] );
 
     # Reset DONE jobs on the fan
@@ -96,10 +111,11 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
 
     # Discard all jobs, but this time some non-fan jobs as well
     beekeeper($hive_url, ['-discard_ready_jobs'], 'beekeeper.pl -discard_ready_jobs');
-    assert_jobs($job_adaptor, [['DONE',1,0],['DONE',0,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0]] );
+    assert_jobs($job_adaptor, [['DONE',1,0],['READY',0,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0]] );
 
-    $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($pipeline_url, 'DROP DATABASE');
+   $hive_dba->dbc->disconnect_if_idle();
+   run_sql_on_db($pipeline_url, 'DROP DATABASE');
+
   }
 }
 

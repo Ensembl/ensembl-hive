@@ -206,6 +206,7 @@ our %adaptor_type_2_package_name = (
     'ResourceClass'         => 'Bio::EnsEMBL::Hive::DBSQL::ResourceClassAdaptor',
     'ResourceDescription'   => 'Bio::EnsEMBL::Hive::DBSQL::ResourceDescriptionAdaptor',
     'Role'                  => 'Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor',
+    'Semaphore'             => 'Bio::EnsEMBL::Hive::DBSQL::SemaphoreAdaptor',
     'Queen'                 => 'Bio::EnsEMBL::Hive::Queen',
 
         # aliases:

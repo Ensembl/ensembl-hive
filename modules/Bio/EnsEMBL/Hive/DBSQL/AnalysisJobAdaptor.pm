@@ -46,6 +46,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
+use Bio::EnsEMBL::Hive::Semaphore;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 
@@ -172,16 +173,14 @@ sub class_specific_execute {
 sub store_jobs_and_adjust_counters {
     my ($self, $jobs, $push_new_semaphore, $emitting_job_id) = @_;
 
-        # NB: our use patterns assume all jobs from the same storing batch share the same semaphored_job:
-    my $semaphored_job                      = scalar(@$jobs) && $jobs->[0]->semaphored_job;
-    my $semaphored_job_id                   = $semaphored_job && $semaphored_job->dbID;    # NB: it is local to its own database
-    my $semaphored_job_adaptor              = $semaphored_job && $semaphored_job->adaptor;
-
     my @output_job_ids                      = ();
-    my $adjust_the_semaphore_by             = 0;
 
-    if($semaphored_job && !$push_new_semaphore) {   # only if it has not been done yet
-        $semaphored_job_adaptor->increase_semaphore_count_for_jobid( $semaphored_job_id, scalar(@$jobs) );  # "pre-increase" the semaphore count before creating the dependent jobs
+        # NB: our use patterns assume all jobs from the same storing batch share the same controlled_semaphore:
+    my $controlled_semaphore                = scalar(@$jobs) && $jobs->[0]->controlled_semaphore;
+    my @jobs_that_failed_to_store           = ();
+
+    if( $controlled_semaphore && !$push_new_semaphore ) {   # only if it has not been done yet
+        $controlled_semaphore->increase_by( $jobs );  # "pre-increase" the semaphore counts before creating the controlling jobs
     }
 
     foreach my $job (@$jobs) {
@@ -189,25 +188,25 @@ sub store_jobs_and_adjust_counters {
         my $analysis    = $job->analysis;
         my $job_adaptor = $analysis ? $analysis->adaptor->db->get_AnalysisJobAdaptor : $self;   # if analysis object is undefined, consider the job local
         my $prev_adaptor= ($job->prev_job && $job->prev_job->adaptor) || '';
-        my $local_job   = $prev_adaptor eq $job_adaptor;
+        my $job_is_local_to_parent  = $prev_adaptor eq $job_adaptor;
 
-        if( $semaphored_job ) {
-            if( $job_adaptor eq $semaphored_job_adaptor ) {
+        if( $controlled_semaphore ) {
+            my $job_hive_pipeline = $job->hive_pipeline;
 
-                    # avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example):
-                $semaphored_job_adaptor->prelock_semaphore_for_update( $semaphored_job_id );
+            if( $controlled_semaphore->hive_pipeline ne $job_hive_pipeline ) {      # if $job happens to be remote to $controlled_semaphore,
+                                                                                    # introduce another job-local semaphore between $job and $controlled_semaphore:
+                my $job_local_semaphore = Bio::EnsEMBL::Hive::Semaphore->new(
+                    'hive_pipeline'             => $job_hive_pipeline,
+                    'dependent_semaphore_url'   => $controlled_semaphore->relative_url( $job_hive_pipeline ),
+                    'local_jobs_counter'        => 1,
+                    'remote_jobs_counter'       => 0,
+                );
+                $job_adaptor->db->get_SemaphoreAdaptor->store( $job_local_semaphore );
 
-            } else {
-                $job->semaphored_job_id( undef );       # job_ids are local, so for remote jobs they have to be cleaned up before storing
-                $adjust_the_semaphore_by++;             # adjust for jobs non-local to the semaphore
-
-                if( $push_new_semaphore ) {             # only do this for the first job on the "foreign" (non-funnel) side
-                    my $input_id_hash = destringify($job->input_id);    # re-create the link via a special parameter
-                    $input_id_hash->{'HIVE_semaphored_job_url'} = $semaphored_job->relative_url( $job->hive_pipeline );
-                    $job->input_id( $input_id_hash );
-                }
+                $job->controlled_semaphore( $job_local_semaphore );
             }
         }
+
         if( $job_adaptor ne $prev_adaptor ) {
             $job->prev_job_id( undef );             # job_ids are local, so for remote jobs they have to be cleaned up before storing
         }
@@ -234,23 +233,22 @@ sub store_jobs_and_adjust_counters {
             push @output_job_ids, $job->dbID();     # FIXME: this ID may not make much cross-db sense
 
         } else {
+            push @jobs_that_failed_to_store, $job;
+
             my $msg = "JobAdaptor failed to store the "
-                     . ($local_job ? 'local' : 'foreign')
+                     . ($job_is_local_to_parent ? 'local' : 'remote')
                      . " Job( analysis_id=".$job->analysis_id.', '.$job->input_id." ), possibly due to a collision";
-            if ($local_job && $emitting_job_id) {
+            if ($job_is_local_to_parent && $emitting_job_id) {
                 $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, $msg, 'PIPELINE_CAUTION');
             } else {
                 $self->db->get_LogMessageAdaptor->store_hive_message($msg, 'PIPELINE_CAUTION');
             }
 
-            if( $semaphored_job and ($job_adaptor eq $semaphored_job_adaptor) ) {   # adjust for non-stored jobs local to the semaphore
-                $adjust_the_semaphore_by++;
-            }
         }
     }
 
-    if($adjust_the_semaphore_by) {
-        $semaphored_job_adaptor->decrease_semaphore_count_for_jobid( $semaphored_job_id, $adjust_the_semaphore_by );
+    if( $controlled_semaphore && scalar(@jobs_that_failed_to_store) ) {
+        $controlled_semaphore->decrease_by( \@jobs_that_failed_to_store );
     }
 
     return \@output_job_ids;
@@ -274,16 +272,30 @@ sub store_a_semaphored_group_of_jobs {
 
     my $emitting_job_id;
 
-    $funnel_job->semaphore_count( scalar(@$fan_jobs) ); # "pre-increase" the semaphore count before creating the dependent jobs
     if($emitting_job) {
         $funnel_job->prev_job( $emitting_job );
-        $funnel_job->semaphored_job( $emitting_job->semaphored_job );   # propagate parent's semaphore if any
+        $funnel_job->controlled_semaphore( $emitting_job->controlled_semaphore );   # propagate parent's semaphore if any
         $emitting_job_id = $emitting_job->dbID;
     }
 
     my ($funnel_job_id) = @{ $self->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
 
-    unless($funnel_job_id) {    # apparently the funnel_job has been created previously, trying to leech to it:
+    my $funnel_semaphore;
+    my $funnel_semaphore_adaptor    = $self->db->get_SemaphoreAdaptor;  # assuming $self was $funnel_job_adaptor
+
+    if($funnel_job_id) {
+        my ($local_count, $remote_count)    = $funnel_job->count_local_and_remote_objects( $fan_jobs );
+        $funnel_semaphore = Bio::EnsEMBL::Hive::Semaphore->new(
+            'hive_pipeline'         => $funnel_job->hive_pipeline,
+            'dependent_job_id'      => $funnel_job_id,
+            'local_jobs_counter'    => $local_count,
+            'remote_jobs_counter'   => $remote_count,
+        );
+        $funnel_semaphore_adaptor->store( $funnel_semaphore );
+
+        $funnel_semaphore->release_if_ripe();
+
+    } else {    # apparently the funnel_job has been created previously, trying to leech to it:
         if($no_leeching) {
             die "The funnel job could not be stored, but leeching was not allowed, so bailing out";
 
@@ -291,7 +303,11 @@ sub store_a_semaphored_group_of_jobs {
             $funnel_job_id = $funnel_job->dbID;
 
             if( $funnel_job->status eq 'SEMAPHORED' ) {
-                $funnel_job->adaptor->increase_semaphore_count_for_jobid( $funnel_job->dbID, scalar(@$fan_jobs) );  # "pre-increase" the semaphore count before creating the dependent jobs
+
+                $funnel_semaphore = $funnel_semaphore_adaptor->fetch_by_dependent_job_id( $funnel_job_id )
+                    or die "Could not leach to a non-existent Semaphore";   # ToDo: create if it was missing?
+
+                $funnel_semaphore->increase_by( $fan_jobs );  # "pre-increase" the semaphore counts before creating the controlling jobs
 
                 $self->db->get_LogMessageAdaptor->store_job_message($emitting_job_id, "Discovered and using an existing funnel ".$funnel_job->toString, 'INFO');
             } else {
@@ -303,7 +319,7 @@ sub store_a_semaphored_group_of_jobs {
     }
 
     foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:
-        $fan_job->semaphored_job( $funnel_job );
+        $fan_job->controlled_semaphore( $funnel_semaphore );
     }
 
     my (@fan_job_ids) = @{ $self->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };
@@ -409,44 +425,30 @@ sub fetch_job_counts_hashed_by_status {
 #
 ########################
 
+sub semaphore_job_by_id {    # used in the end of reblocking a semaphore chain
+    my $self    = shift @_;
+    my $job_id  = shift @_ or return;
 
-sub decrease_semaphore_count_for_jobid {    # used in semaphore annihilation or unsuccessful creation
-    my $self  = shift @_;
-    my $jobid = shift @_ or return;
-    my $dec   = shift @_ || 1;
+    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status='READY'";
 
-        # NB: BOTH THE ORDER OF UPDATES AND EXACT WORDING IS ESSENTIAL FOR SYNCHRONOUS ATOMIC OPERATION,
-        #       otherwise the same command tends to behave differently on MySQL and SQLite (at least)
-        #
-    my $sql = "UPDATE job "
-             ."SET status = ".$self->job_status_cast("CASE WHEN semaphore_count>$dec THEN 'SEMAPHORED' ELSE 'READY' END").q{,
-            semaphore_count=semaphore_count-?
-        WHERE job_id=? AND status='SEMAPHORED'
-    };
-    
-    $self->dbc->protected_prepare_execute( [ $sql, $dec, $jobid ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'decreasing semaphore_count'.$after, 'INFO' ); }
+    $self->dbc->protected_prepare_execute( [ $sql, $job_id ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'semaphoring a job'.$after, 'INFO' ); }
     );
 }
 
-sub increase_semaphore_count_for_jobid {    # used in semaphore propagation
-    my $self  = shift @_;
-    my $jobid = shift @_ or return;
-    my $inc   = shift @_ || 1;
+sub unsemaphore_job_by_id {    # used in semaphore annihilation or unsuccessful creation
+    my $self    = shift @_;
+    my $job_id  = shift @_ or return;
 
-    my $sql = qq{
-        UPDATE job
-        SET semaphore_count=semaphore_count+?
-        WHERE job_id=?
-    };
-    
-    $self->dbc->protected_prepare_execute( [ $sql, $inc, $jobid ],
-        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'increasing semaphore_count'.$after, 'INFO' ); }
+    my $sql = "UPDATE job SET status = 'READY' WHERE job_id=? AND status='SEMAPHORED'";
+
+    $self->dbc->protected_prepare_execute( [ $sql, $job_id ],
+        sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'unsemaphoring a job'.$after, 'INFO' ); }
     );
 }
 
 
-sub prelock_semaphore_for_update {
+sub prelock_semaphore_for_update {  # currently defunct, but may be needed to resolve situations of heavy load on semaphore/job tables
     my $self    = shift @_;
     my $job_id  = shift @_ or return;
 
@@ -782,8 +784,8 @@ sub gc_dataflow {
         # PASSED_ON jobs are included in done_job_count
     $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'done_job_count', 1, $analysis->dbID );
 
-    if(my $semaphored_job = $job->semaphored_job) {
-        $semaphored_job->adaptor->decrease_semaphore_count_for_jobid( $semaphored_job->dbID );    # step-unblock the semaphore
+    if( my $controlled_semaphore = $job->controlled_semaphore ) {
+        $controlled_semaphore->decrease_by( [ $job ] );
     }
     
     return 1;
@@ -806,50 +808,75 @@ sub reset_jobs_for_analysis_id {
 
     return if !scalar(@$input_statuses);  # No statuses to reset
 
-    my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
-    my $statuses_filter = 'AND status IN ('.join(', ', map { "'$_'" } @$input_statuses).')';
+    my $analyses_filter = 'j.analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
+    my $statuses_filter = 'AND j.status IN ('.join(', ', map { "'$_'" } @$input_statuses).')';
 
-    # Get the list of semaphored jobs, and by how much their
-    # semaphore_count should be increased. Only DONE and PASSED_ON jobs of
-    # the matching analyses and statuses should be counted
-    # NB: the order of the columns must match the order of the placeholders in $sql2
+    # Get the list of semaphores, and by how much their local_jobs_counter should be increased.
+    # Only DONE and PASSED_ON jobs of the matching analyses and statuses should be counted
+    #
     my $sql1 = qq{
-        SELECT COUNT(*) AS n_jobs, semaphored_job_id
-        FROM job
-        WHERE semaphored_job_id IS NOT NULL
+        SELECT COUNT(*) AS local_delta, controlled_semaphore_id
+        FROM job j
+        WHERE controlled_semaphore_id IS NOT NULL
               AND $analyses_filter $statuses_filter AND status IN ('DONE', 'PASSED_ON')
-        GROUP BY semaphored_job_id
-    };
-
-    my $sql2 = qq{
-        UPDATE job
-        SET semaphore_count=semaphore_count+?, status = }.$self->job_status_cast("'SEMAPHORED'").q{
-        WHERE job_id=?
+        GROUP BY controlled_semaphore_id
     };
 
     # Run in a transaction to ensure we see a consistent state of the job
     # statuses and semaphore counts.
     $self->dbc->run_in_transaction( sub {
 
-    # Update all the semaphored jobs one by one
-    my $sth1 = $self->prepare($sql1);
-    my $sth2 = $self->prepare($sql2);
-    $sth1->execute();
-    while (my @cols = $sth1->fetchrow_array()) {
-        $sth2->execute(@cols);
-    }
-    $sth1->finish;
-    $sth2->finish;
+        my $semaphore_adaptor = $self->db->get_SemaphoreAdaptor;
 
-    my $sql = qq{
-            UPDATE job
-            SET retry_count = CASE WHEN status='READY' THEN 0 ELSE 1 END,
-               status = }.$self->job_status_cast("CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
-            WHERE $analyses_filter $statuses_filter};
+        # Update all the semaphored jobs one by one
+        my $sth1 = $self->prepare($sql1);
+        $sth1->execute();
+        while (my ($local_delta, $semaphore_id) = $sth1->fetchrow_array()) {
 
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    $sth->finish;
+            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
+            $semaphore->reblock_by( $local_delta );                                 # increase the local_jobs_counter, reblock recursively if needed
+        }
+        $sth1->finish;
+
+            # change fan jobs' statuses to 'READY', if they are themselves not SEMAPHORED
+        my $sql3 = ($self->dbc->driver eq 'mysql') ? qq{
+                UPDATE job j
+             LEFT JOIN semaphore s
+                    ON (j.job_id=s.dependent_job_id)
+                   SET j.retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
+                       j.status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
+                 WHERE $analyses_filter $statuses_filter
+        } : ($self->dbc->driver eq 'pgsql') ? qq{
+                UPDATE job
+                   SET retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
+                       status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
+                  FROM job j
+             LEFT JOIN semaphore s
+                    ON (j.job_id=s.dependent_job_id)
+                 WHERE job.job_id=j.job_id AND $analyses_filter $statuses_filter
+        } : qq{
+
+            REPLACE INTO job (job_id, prev_job_id, analysis_id, input_id, param_id_stack, accu_id_stack, role_id, status, retry_count, when_completed, runtime_msec, query_count, controlled_semaphore_id)
+                  SELECT j.job_id,
+                         j.prev_job_id,
+                         j.analysis_id,
+                         j.input_id,
+                         j.param_id_stack,
+                         j.accu_id_stack,
+                         j.role_id,
+                         CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END,
+                         CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
+                         j.when_completed,
+                         j.runtime_msec,
+                         j.query_count,
+                         j.controlled_semaphore_id
+                    FROM job j
+               LEFT JOIN semaphore s
+                      ON (j.job_id=s.dependent_job_id)
+                   WHERE $analyses_filter $statuses_filter
+        };
+
+        $self->dbc->do($sql3);
 
         foreach my $analysis ( @$list_of_analyses ) {
             $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
@@ -862,7 +889,7 @@ sub reset_jobs_for_analysis_id {
 =head2 unblock_jobs_for_analysis_id
 
   Arg [1]    : list-ref of int $analysis_id
-  Description: Sets all the SEMAPHORED jobs to READY regardless of their current semaphore_count
+  Description: Sets all the SEMAPHORED jobs of the given analyses to READY and also unblocks their upstream semaphores
   Caller     : beekeeper.pl and guiHive
 
 =cut
@@ -872,13 +899,59 @@ sub unblock_jobs_for_analysis_id {
 
     my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
 
-    my $sql = qq{
-        UPDATE job
-        SET semaphore_count=0, status = }.$self->job_status_cast("'READY'").qq{
-        WHERE $analyses_filter AND status = 'SEMAPHORED'
-    };
+    # Get the list of semaphored jobs together with their semaphores, and unblock both (previously semaphored jobs become 'READY')
 
-    $self->dbc->do($sql);
+    if($self->dbc->driver eq 'mysql') {     # MySQL supports updating multiple tables at once
+
+        my $sql = qq{
+          UPDATE job j
+            JOIN semaphore s
+              ON (j.job_id=s.dependent_job_id)
+             SET s.local_jobs_counter=0, s.remote_jobs_counter=0, j.status = 'READY'
+           WHERE $analyses_filter AND j.status = 'SEMAPHORED'
+        };
+        $self->dbc->do($sql);
+
+    } elsif ($self->dbc->driver eq 'pgsql') {
+
+        my $sql1 = qq{
+          UPDATE semaphore s
+             SET local_jobs_counter=0, remote_jobs_counter=0
+            FROM job j
+           WHERE $analyses_filter AND j.job_id = s.dependent_job_id AND j.status = 'SEMAPHORED'
+        };
+        $self->dbc->do($sql1);
+
+        my $sql2 = qq{
+          UPDATE job j
+             SET status=}.$self->job_status_cast("'READY'").qq{
+           WHERE $analyses_filter AND j.status = 'SEMAPHORED'
+        };
+        $self->dbc->do($sql2);
+
+    } else {
+
+        my $sql1 = qq{
+    REPLACE INTO semaphore (semaphore_id, local_jobs_counter, remote_jobs_counter, dependent_job_id, dependent_semaphore_url)
+          SELECT s.semaphore_id,
+                 0,
+                 0,
+                 s.dependent_job_id,
+                 s.dependent_semaphore_url
+            FROM semaphore s
+            JOIN job j
+              ON (j.job_id = s.dependent_job_id)
+           WHERE $analyses_filter AND j.status = 'SEMAPHORED'
+        };
+        $self->dbc->do($sql1);
+
+        my $sql2 = qq{
+          UPDATE job
+             SET status=}.$self->job_status_cast("'READY'").qq{
+           WHERE $analyses_filter AND status = 'SEMAPHORED'
+        };
+        $self->dbc->do($sql2);
+    };
 
     foreach my $analysis ( @$list_of_analyses ) {
         $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
@@ -890,7 +963,7 @@ sub unblock_jobs_for_analysis_id {
 
   Arg [1]    : list-ref of int $analysis_id
   Arg [2]    : filter status
-  Description: Resets all $staus jobs of the matching analyses to DONE.
+  Description: Resets all $input_status jobs of the matching analyses to DONE.
                Semaphores are updated accordingly.
   Caller     : beekeeper.pl and guiHive
 
@@ -899,31 +972,31 @@ sub unblock_jobs_for_analysis_id {
 sub discard_jobs_for_analysis_id {
     my ($self, $list_of_analyses, $input_status) = @_;
 
+    $self->balance_semaphores( $list_of_analyses );
+
     my $analyses_filter = 'analysis_id IN ('.join(',', map { $_->dbID } @$list_of_analyses).')';
     my $status_filter = $input_status ? " AND status = '$input_status'" : "";
 
-    # Get the list of semaphored jobs, and by how much their
-    # semaphore_count should be decreased.
-    # NB: the order of the columns must match the order of the arguments of decrease_semaphore_count_for_jobid
-    #     semaphored_job_id is also used in the second query
+    # Get the list of semaphores, and by how much their local_jobs_counter should be decreased.
     my $sql1 = qq{
-        SELECT semaphored_job_id, COUNT(*) AS n_jobs
+        SELECT controlled_semaphore_id, COUNT(*) AS local_delta
         FROM job
-        WHERE semaphored_job_id IS NOT NULL
+        WHERE controlled_semaphore_id IS NOT NULL
               AND $analyses_filter $status_filter
-        GROUP BY semaphored_job_id
+        GROUP BY controlled_semaphore_id
     };
 
     my $sql2 = qq{
         UPDATE job
         SET status = }.$self->job_status_cast("'DONE'").qq{
-        WHERE semaphored_job_id = ?
+        WHERE controlled_semaphore_id = ?
               AND $analyses_filter $status_filter
     };
+
     my $sql3 = qq{
         UPDATE job
         SET status = }.$self->job_status_cast("'DONE'").qq{
-        WHERE semaphored_job_id IS NULL
+        WHERE controlled_semaphore_id IS NULL
               AND $analyses_filter $status_filter
     };
 
@@ -931,23 +1004,30 @@ sub discard_jobs_for_analysis_id {
     # statuses and semaphore counts.
     $self->dbc->run_in_transaction( sub {
 
-    # First, let's reset work on the jobs that don't have a semaphored_job_id
-    $self->dbc->do($sql3);
+            # let's reset work on the jobs that don't have a controlled_semaphore_id
+        $self->dbc->do($sql3);
 
-    # Update all the semaphored jobs one-by-one
-    my $sth1 = $self->prepare($sql1);
-    my $sth2 = $self->prepare($sql2);
-    $sth1->execute();
-    while (my @cols = $sth1->fetchrow_array()) {
-        $sth2->execute($cols[0]);                           # First mark the jobs as DONE
-        $self->decrease_semaphore_count_for_jobid(@cols);   # And then decrease the counters
-    }
-    $sth1->finish;
-    $sth2->finish;
+        my $semaphore_adaptor = $self->db->get_SemaphoreAdaptor;
 
-    foreach my $analysis ( @$list_of_analyses ) {
-        $self->db->get_AnalysisStatsAdaptor->update_status($analysis->dbID, 'LOADING');
-    }
+        # Update all the semaphored jobs one-by-one
+        my $sth1 = $self->prepare($sql1);
+        my $sth2 = $self->prepare($sql2);
+        $sth1->execute();
+        while (my ($semaphore_id, $local_delta) = $sth1->fetchrow_array()) {
+
+            $sth2->execute( $semaphore_id );                                        # First mark the jobs as DONE
+
+            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
+            $semaphore->decrease_by( $local_delta );                                # then decrease the local_jobs_counters, recursively releasing if ripe
+        }
+        $sth1->finish;
+        $sth2->finish;
+
+        my $analysis_stats_adaptor = $self->db->get_AnalysisStatsAdaptor;
+
+        foreach my $analysis ( @$list_of_analyses ) {
+            $analysis_stats_adaptor->update_status($analysis->dbID, 'LOADING');
+        }
 
     } ); # end of transaction
 }
@@ -968,19 +1048,15 @@ sub balance_semaphores {
 
     my $find_sql    = qq{
                         SELECT * FROM (
-                            SELECT funnel.job_id, funnel.semaphore_count AS was, COALESCE(COUNT(CASE WHEN fan.status!='DONE' AND fan.status!='PASSED_ON' THEN 1 ELSE NULL END),0) AS should
-                            FROM job funnel
-                            LEFT JOIN job fan ON (funnel.job_id=fan.semaphored_job_id)
+                            SELECT s.semaphore_id, s.local_jobs_counter AS was, COALESCE(COUNT(CASE WHEN fan.status!='DONE' AND fan.status!='PASSED_ON' THEN 1 ELSE NULL END),0) AS should
+                            FROM semaphore s
+                            LEFT JOIN job fan ON (s.semaphore_id=fan.controlled_semaphore_id)
+                            LEFT JOIN job funnel ON (s.dependent_job_id=funnel.job_id)
                             WHERE $analysis_filter
                             funnel.status in ('SEMAPHORED', 'READY')
-                            GROUP BY funnel.job_id
+                            GROUP BY s.semaphore_id
                          ) AS internal WHERE was<>should OR should=0
                      };
-
-    my $update_sql  = "UPDATE job SET "
-        ." semaphore_count=semaphore_count+? , "
-        ." status = ".$self->job_status_cast("CASE WHEN semaphore_count>0 THEN 'SEMAPHORED' ELSE 'READY' END")
-        ." WHERE job_id=? AND status IN ('SEMAPHORED', 'READY')";
 
     my $rebalanced_jobs_counter = 0;
 
@@ -988,25 +1064,34 @@ sub balance_semaphores {
     # statuses and semaphore counts.
     $self->dbc->run_in_transaction( sub {
 
-    my $find_sth    = $self->prepare($find_sql);
-    my $update_sth  = $self->prepare($update_sql);
+    my $find_sth            = $self->prepare($find_sql);
+    my $semaphore_adaptor   = $self->db->get_SemaphoreAdaptor;
 
     $find_sth->execute();
-    while(my ($job_id, $was, $should) = $find_sth->fetchrow_array()) {
-        my $msg;
-        if(0<$should and $should<$was) {    # we choose not to lower the counter if it's not time to unblock yet
-            $msg = "Semaphore count may need rebalancing, but it is not critical now, so leaving it on automatic: $was -> $should";
-            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 'PIPELINE_CAUTION' );
-        } else {
-            $update_sth->execute($should-$was, $job_id);
-            $msg = "Semaphore count needed rebalancing now, so performing: $was -> $should";
-            $self->db->get_LogMessageAdaptor->store_job_message( $job_id, $msg, 'PIPELINE_CAUTION' );
+    while(my ($semaphore_id, $was, $should) = $find_sth->fetchrow_array()) {
+        my $msg = "Nothing to balance? was='$was', should='$should'";
+        if(0<$should and $should<$was) {
+
+            $msg = "Semaphore $semaphore_id local_jobs_counter has to be decreased $was -> $should, performing it now with a potential release";
+            $self->db->get_LogMessageAdaptor->store_hive_message( $msg, 'PIPELINE_CAUTION' );
+
+            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
+            $semaphore->decrease_by( $was-$should );                                # decrease the local_jobs_counter, recursively releasing if ripe
+
+            $rebalanced_jobs_counter++;
+        } elsif(0<=$was and $was<$should) {
+
+            $msg = "Semaphore $semaphore_id local_jobs_counter has to be increased $was -> $should, performing it now with a potential reblock";
+            $self->db->get_LogMessageAdaptor->store_hive_message( $msg, 'PIPELINE_CAUTION' );
+
+            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
+            $semaphore->reblock_by( $should-$was );                                 # increase the local_jobs_counter, reblock recursively if needed
+
             $rebalanced_jobs_counter++;
         }
-        warn "[Job $job_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
+        warn "[Semaphore $semaphore_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
     }
     $find_sth->finish;
-    $update_sth->finish;
 
     } ); # end of transaction
 

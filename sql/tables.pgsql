@@ -333,8 +333,7 @@ CREATE TABLE resource_description (
 @column when_completed          when the job was completed
 @column runtime_msec            how long did it take to execute the job (or until the moment it failed)
 @column query_count             how many SQL queries were run during this job
-@column semaphore_count         if this count is >0, the job is conditionally blocked (until this count drops to 0 or below). Default=0 means "nothing is blocking me by default".
-@column semaphored_job_id       the job_id of job S that is waiting for this job to decrease S's semaphore_count. Default=NULL means "I'm not blocking anything by default".
+@column controlled_semaphore_id the dbID of the semaphore that is controlled by this job (and whose counter it will decrement by 1 upon successful completion)
 */
 
 CREATE TYPE job_status AS ENUM ('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON');
@@ -352,8 +351,7 @@ CREATE TABLE job (
     runtime_msec            INTEGER              DEFAULT NULL,
     query_count             INTEGER              DEFAULT NULL,
 
-    semaphore_count         INTEGER     NOT NULL DEFAULT 0,
-    semaphored_job_id       INTEGER              DEFAULT NULL,
+    controlled_semaphore_id INTEGER              DEFAULT NULL,      -- terminology: fan jobs CONTROL semaphores; funnel jobs or remote semaphores DEPEND ON (local) semaphores
 
     UNIQUE (input_id, param_id_stack, accu_id_stack, analysis_id)   -- to avoid repeating tasks
 );
@@ -371,6 +369,36 @@ CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
 	WHERE job.input_id=NEW.input_id AND job.param_id_stack=NEW.param_id_stack AND job.accu_id_stack=NEW.accu_id_stack AND job.analysis_id=NEW.analysis_id)
     DO INSTEAD NOTHING;
 */
+
+
+/**
+@table  semaphore
+
+@colour #1D73DA
+
+@desc The semaphore table is our primary inter-job dependency relationship.
+        Any job may control up to one semaphore, but the semaphore can be controlled by many jobs.
+        This includes remote jobs, so the semaphore keeps two counters - one for local blockers, one for remote ones.
+        As soon as both counters reach zero (0 and 0), the semaphore unblocks one dependent job -
+        either a local one, or through a chain of dependent remote semaphores.
+
+@column semaphore_id            autoincrement id
+@column local_jobs_counter      the number of local jobs that control this semaphore
+@column remote_jobs_counter     the number of remote semaphores that control this one
+@column dependent_job_id        either NULL or points at a local job to be unblocked when the semaphore opens (exclusive with dependent_semaphore_url)
+@column dependent_semaphore_url either NULL or points at a remote semaphore to be decremented when this semaphore opens (exclusive with dependent_job_id)
+*/
+
+CREATE TABLE semaphore (
+    semaphore_id                SERIAL PRIMARY KEY,
+    local_jobs_counter          INTEGER             DEFAULT 0,
+    remote_jobs_counter         INTEGER             DEFAULT 0,
+    dependent_job_id            INTEGER             DEFAULT NULL,                                   -- Both should never be NULLs at the same time,
+    dependent_semaphore_url     VARCHAR(255)        DEFAULT NULL,                                   --  we expect either one or the other to be set.
+
+    UNIQUE (dependent_job_id)                                                                       -- make sure two semaphores do not block the same job
+);
+
 
 /**
 @table  job_file
