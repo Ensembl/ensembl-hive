@@ -94,6 +94,10 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     beekeeper($hive_url, ['-reset_job_id', 1], 'beekeeper.pl -reset_job_id');
     assert_jobs($job_adaptor, [["READY",1,0],["READY",0,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
 
+    # Discard all jobs, but this time some non-fan jobs as well
+    beekeeper($hive_url, ['-discard_ready_jobs'], 'beekeeper.pl -discard_ready_jobs');
+    assert_jobs($job_adaptor, [['DONE',1,0],['DONE',0,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0]] );
+
     $hive_dba->dbc->disconnect_if_idle();
     run_sql_on_db($pipeline_url, 'DROP DATABASE');
   }

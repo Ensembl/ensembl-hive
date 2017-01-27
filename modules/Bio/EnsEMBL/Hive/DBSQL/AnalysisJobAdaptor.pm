@@ -923,10 +923,19 @@ sub discard_jobs_for_analysis_id {
         WHERE semaphored_job_id = ?
               AND $analyses_filter $status_filter
     };
+    my $sql3 = qq{
+        UPDATE job
+        SET status = }.$self->job_status_cast("'DONE'").qq{
+        WHERE semaphored_job_id IS NULL
+              AND $analyses_filter $status_filter
+    };
 
     # Run in a transaction to ensure we see a consistent state of the job
     # statuses and semaphore counts.
     $self->dbc->run_in_transaction( sub {
+
+    # First, let's reset work on the jobs that don't have a semaphored_job_id
+    $self->dbc->do($sql3);
 
     # Update all the semaphored jobs one-by-one
     my $sth1 = $self->prepare($sql1);
