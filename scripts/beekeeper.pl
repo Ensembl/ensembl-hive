@@ -398,7 +398,7 @@ sub main {
 
         if($show_failed_jobs) {
             print("===== failed jobs\n");
-            my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_by_analysis_id_status( $self->{'logic_name'} and $list_of_analyses , 'FAILED');
+            my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_by_analysis_id_status( $list_of_analyses , 'FAILED');
 
             foreach my $job (@{$failed_job_list}) {
                 print $job->toString. "\n";
