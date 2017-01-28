@@ -42,12 +42,21 @@ Creating runnables
 
    creating_runnables/*
 
-Advance usage
-=============
+Advanced usage
+==============
 .. toctree::
    :glob:
 
    advanced_usage/*
+
+Appendix
+========
+.. toctree::
+   :maxdepth: 1
+   :glob:
+
+   appendix/*
+
 
 Indices and tables
 ==================
