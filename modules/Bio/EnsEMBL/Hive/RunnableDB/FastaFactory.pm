@@ -137,15 +137,23 @@ sub write_output {
     my $chunk_number = 1;   # counts the chunks
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
-    my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
+    
+    my $chunk_name   = $chunk_number;
+    
+    my $current_output_directory;    
     if ($self->param('hash_directories')) {
         my $dir_tree = dir_revhash($chunk_number);
-        if ($dir_tree ne '') {
-            mkpath($dir_tree);
-            $chunk_name = $dir_tree.'/'.$chunk_name;
+        
+        if ($dir_tree eq '') {
+	  $current_output_directory = $output_prefix;
+        } else {
+	  $current_output_directory = $output_prefix . '/' . $dir_tree;
         }
+    } else {      
+      $current_output_directory = $output_prefix;
     }
-    my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+    mkpath($current_output_directory);
+    my $chunk_seqio  = Bio::SeqIO->new(-file => '>' . $current_output_directory . '/' . $chunk_name . $output_suffix, -format => 'fasta');
     
     while (my $seq_object = $input_seqio->next_seq) {
 	$chunk_seqio->write_seq( $seq_object );
@@ -166,15 +174,22 @@ sub write_output {
             $chunk_length   = 0;
             $chunk_size     = 0;
             $chunk_number++;
-            $chunk_name     = $output_prefix.$chunk_number.$output_suffix;
+            $chunk_name     = $chunk_number;
+            
+            my $current_output_directory;
+            
             if ($self->param('hash_directories')) {
                 my $dir_tree = dir_revhash($chunk_number);
-                if ($dir_tree ne '') {
-                    mkpath($dir_tree);
-                    $chunk_name = $dir_tree.'/'.$chunk_name;
+                if ($dir_tree eq '') {                
+		  $current_output_directory = $output_prefix;
+                } else {
+                  $current_output_directory = $output_prefix . '/' . $dir_tree;
                 }
+                mkpath($current_output_directory);
+            } else {            
+	      $current_output_directory = $output_prefix;
             }
-            $chunk_seqio    = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => 'fasta');
+            $chunk_seqio = Bio::SeqIO->new(-file => '>' . $current_output_directory . '/' . $chunk_name . $output_suffix, -format => 'fasta');
         }
     }
 
