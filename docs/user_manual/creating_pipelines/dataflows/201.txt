@@ -1,0 +1,11 @@
+Factory
+--
+Analysis A fans 0, 1 or many jobs to analysis B. The convention is to use branch #2. A is called the *factory*, B the *fan*.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       2 => [ 'B' ],
+    },
+},
+{   -logic_name => 'B',
+},

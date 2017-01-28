@@ -64,6 +64,11 @@ sub main {
     open($fh, '>', 'dataflows.md') or die "Couldn't open the output file";
     generate_markdown($fh, $diagrams);
     close($fh);
+
+    # The RST file
+    open($fh, '>', 'dataflows.rst') or die "Couldn't open the output file";
+    generate_rst($fh, $diagrams);
+    close($fh);
 }
 
 sub generate_diagrams {
@@ -206,6 +211,31 @@ sub generate_markdown {
                 $record->[1],
                 $record->[2],
             ), "\n";
+        }
+    }
+}
+
+sub _rst_underline {
+    my ($str, $char) = @_;
+    return $str . "\n" . ($char x length($str)) . "\n\n";
+}
+
+sub generate_rst {
+    my ($output_fh, $data) = @_;
+
+    print $output_fh _rst_underline('Common dataflows', '=');
+    print $output_fh "\n";
+    foreach my $record (@$data) {
+        if ($record->[3]) {
+            print $output_fh _rst_underline($record->[1], '~');
+            print $output_fh $record->[2], "\n\n";
+            my $s = $record->[3];
+            $s =~ s/^/    /gms;
+            print $output_fh "::\n\n", $s, "\n\n";
+            print $output_fh ".. figure:: ", $record->[4], "\n\n";
+        } else {
+            print $output_fh _rst_underline($record->[1], '-');
+            print $output_fh $record->[2], "\n\n";
         }
     }
 }

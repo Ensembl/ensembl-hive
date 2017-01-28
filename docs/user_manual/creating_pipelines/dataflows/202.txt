@@ -1,0 +1,14 @@
+Factory with semaphored funnel
+--
+Analysis A fans 0, 1 or many jobs to analysis B. It also autoflows 1 job to C, which is initially blocked. The latter will be released once all the B jobs (and their descendants, if any) are done. C is called the *funnel*.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       '2->A' => [ 'B' ],
+       'A->1' => [ 'C' ],
+    },
+},
+{   -logic_name => 'B',
+},
+{   -logic_name => 'C',
+},

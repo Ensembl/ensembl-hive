@@ -1,0 +1,3 @@
+Factory
+--
+Autoflow can only create 1 job. To create more than 1 jobs, you can use *factory* patterns.

@@ -1,0 +1,11 @@
+Autoflow
+--
+Default dataflow pattern from A to B, also called *autoflow*. This happens on branch #1. Each A job will flow a B job.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       1 => [ 'B' ],
+    },
+},
+{   -logic_name => 'B',
+},
