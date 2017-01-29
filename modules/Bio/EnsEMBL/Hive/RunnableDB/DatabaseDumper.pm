@@ -163,7 +163,7 @@ sub fetch_input {
                 my @ref_ehive_tables = qw(hive_meta pipeline_wide_parameters worker dataflow_rule analysis_base analysis_ctrl_rule job accu log_message job_file analysis_data resource_description analysis_stats analysis_stats_monitor role msg progress resource_class worker_resource_usage);
                 # The hard-coded list is comprehensive, so some tables may not be
                 # in this database (which may be on a different version)
-                push @ehive_tables, @{$self->_get_table_list($_)} for @ref_ehive_tables;
+                push @ehive_tables, @{$self->_get_table_list($src_dbc, $_)} for @ref_ehive_tables;
             }
         }
         $meta_sth->finish();
