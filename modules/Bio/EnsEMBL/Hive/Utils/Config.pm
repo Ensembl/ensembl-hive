@@ -35,10 +35,22 @@ use strict;
 use warnings;
 use JSON;
 
-sub default_config_files {  # a class method, returns a list
 
-    my $system_config   = $ENV{'EHIVE_ROOT_DIR'}.'/hive_config.json';
-    my $user_config     = $ENV{'HOME'}.'/.hive_config.json';
+sub default_system_config {
+    return $ENV{'EHIVE_ROOT_DIR'}.'/hive_config.json';
+}
+
+
+sub default_user_config {
+    return $ENV{'HOME'}.'/.hive_config.json';
+}
+
+
+sub default_config_files {  # a class method, returns a list
+    my $self = shift @_;
+
+    my $system_config   = $self->default_system_config;
+    my $user_config     = $self->default_user_config;
 
     return ($system_config, (-r $user_config) ? ($user_config) : ());
 }
