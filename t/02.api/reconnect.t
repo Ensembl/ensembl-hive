@@ -53,22 +53,23 @@ SKIP: {
       "WHERE DB = '$dbname'";
     my $find_pid_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl ' .
       "-url $server_url " .
-	"-sql \"$find_pid_sql\"";
+	"-sql \"$find_pid_sql\" | grep -v ID";
     
     my $sth = $dbc->prepare($dbc_query_sql);
+    $sth->execute();
+
     my @find_pid_results = `$find_pid_cmd`;
+    chomp @find_pid_results;
     
-    if (scalar(@find_pid_results) != 2) {
-      BAIL_OUT("more than one process id accessing test database, bailing out");
+    if (scalar(@find_pid_results) > 1) {
+      BAIL_OUT("more than one process id accessing test database (pids: ".join(', ', @find_pid_results)."), bailing out");
     }
     
-    my $found_pid = $find_pid_results[1];
-    chomp($found_pid);
+    my ($found_pid) = @find_pid_results;
     
     my $kill_sql = "KILL $found_pid";
     run_sql_on_db($server_url, $kill_sql);
     
-    $sth->execute();
     
     my $fetched_row_count = 0;
     while (my @values = $sth->fetchrow_array()) {
