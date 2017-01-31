@@ -24,6 +24,7 @@ use Test::File::Contents;
 use Test::More;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Utils::Test qw(runWorker run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -51,13 +52,15 @@ sub test_command {
     ok(!system(@$cmd_array), 'Can run '.join(' ', @$cmd_array));
 }
 
+my @common_diagram_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/generate_graph.pl', -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config );
+
 foreach my $conf (@confs_to_test) {
   subtest $conf, sub {
     my $module_name = 'Bio::EnsEMBL::Hive::Examples::'.$conf;
 
     # Unicode-art (dbIDs are never shown, so we can use the PipeConfig directly)
     #$filename = $ref_output_location . $conf . '.txt';
-    my @generate_graph_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/generate_graph.pl', -pipeconfig => $module_name);
+    my @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command( [join(' ', @generate_graph_args).' > '.$filename] );
     files_eq_or_diff($filename, $ref_output_location . $conf . '.txt');
@@ -65,7 +68,7 @@ foreach my $conf (@confs_to_test) {
 
     # Dot output on a PipeConfig (no dBIDs)
     #$filename = $ref_output_location . $conf . '.unstored.dot';
-    @generate_graph_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/generate_graph.pl', -pipeconfig => $module_name, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
+    @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command(\@generate_graph_args);
     files_eq_or_diff($filename, $ref_output_location . $conf . '.unstored.dot');
@@ -75,7 +78,7 @@ foreach my $conf (@confs_to_test) {
     push @init_pipeline_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command(\@init_pipeline_args);
     #my $filename = $ref_output_location . $conf . '.stored.dot';
-    @generate_graph_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/generate_graph.pl', -url => $client_url, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
+    @generate_graph_args = (@common_diagram_args, -url => $client_url, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     test_command(\@generate_graph_args);
     files_eq_or_diff($filename, $ref_output_location . $conf . '.stored.dot');
   }
