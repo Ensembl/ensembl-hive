@@ -218,6 +218,11 @@ sub main {
     # make -loop_until case insensitive
     $self->{'loop_until'} = uc($self->{'loop_until'});
 
+    my @allowed_loop_until_values = qw(ANALYSIS_FAILURE FOREVER JOB_FAILURE NO_WORK);
+    unless (grep {$_ eq $self->{'loop_until'}} @allowed_loop_until_values) {
+        die sprintf('"%s" is not a recognized value for -loop_until. Use one of %s', $self->{'loop_until'}, join('/', @allowed_loop_until_values));
+    }
+
     my $pipeline_name = $self->{'pipeline'}->hive_pipeline_name;
 
     if($pipeline_name) {
