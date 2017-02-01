@@ -159,7 +159,7 @@ sub life_cycle {
 
     if(my $life_cycle_msg = $@) {
         $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-        Bio::EnsEMBL::Hive::Process::warning($self, $life_cycle_msg, $job->incomplete?'WORKER_CAUTION':'INFO');     # In case the Runnable has redefined warning()
+        Bio::EnsEMBL::Hive::Process::warning($self, $life_cycle_msg, $job->incomplete?'WORKER_ERROR':'INFO');     # In case the Runnable has redefined warning()
     }
 
     if( $self->can('post_cleanup') ) {   # may be run to clean up memory even after partially failed attempts
