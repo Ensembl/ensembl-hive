@@ -37,7 +37,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/^Could not start '${ctdne}': Can't exec "${ctdne}": No such file or directory at/,
-            'WORKER_CAUTION'
+            'WORKER_ERROR'
         ],
     ],
     { 'expect_failure' => 1 },
@@ -51,7 +51,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         [
             'WARNING',
             qr/'ls ${ptdne}' resulted in an error code=\d+\nstderr is: ls: .+: No such file or directory/,
-            'WORKER_CAUTION'
+            'WORKER_ERROR'
         ],
     ],
     { 'expect_failure' => 1 },
