@@ -32,7 +32,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 SKIP: {
   my $pipeline_url = eval { get_test_url_or_die(-driver => 'mysql') };
-  skip "no MySQL test database defined", 3 unless $pipeline_url;
+  skip "no MySQL test database defined", 4 unless $pipeline_url;
   
   my $dbc = make_hive_db($pipeline_url);
 
