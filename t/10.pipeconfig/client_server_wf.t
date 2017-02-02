@@ -33,37 +33,51 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
-my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-keep_alive', '-local'); # needs to be killed
-my @client_beekeeper_cmd = (-sleep => 0.02, '-loop', '-local');       # will exit when the pipeline is over
+my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');
+my @client_beekeeper_cmd = (-sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');       # will exit when the pipeline is over
 
-if(my $server_pid = fork) {
-    beekeeper($client_url, \@client_beekeeper_cmd );
+runWorker($client_url);         # to make sure the server can exit when all jobs are done
 
-    kill('KILL', $server_pid);  # the server needs to be killed as it was running in -keep_alive mode
+if(my $server_pid = fork) {             # "Client" branch
+    beekeeper($client_url, \@client_beekeeper_cmd);
 
-    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $client_url );
-    my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+    waitpid( $server_pid, 0 ); # wait for the "Server" branch to finish
 
-    is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
-
-    my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
-    my $final_results = $final_result_nta->fetch_all();
-
-    is(scalar(@$final_results), 2, 'There are exactly 2 final_results');
-    foreach ( @$final_results ) {
-        ok( $_->{'a_multiplier'}*$_->{'b_multiplier'} eq $_->{'result'},
-            sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
-    }
-
-    run_sql_on_db($server_url, 'DROP DATABASE');
-    run_sql_on_db($client_url, 'DROP DATABASE');
-
-    done_testing();
-
-} else {
+} else {                                # "Server" branch
     # close (STDOUT);
 
     exec( @server_beekeeper_cmd );
 }
 
+foreach my $url ($client_url, $server_url) {
+
+    my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $url );
+    my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
+
+    is(scalar(@{$job_adaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
+
+    if($url eq $client_url) {
+
+        my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
+        my $final_results       = $final_result_nta->fetch_all();
+
+        is(scalar(@$final_results), 2, 'There are exactly 2 final_results');
+
+        foreach ( @$final_results ) {
+            ok( $_->{'a_multiplier'}*$_->{'b_multiplier'} eq $_->{'result'},
+                sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
+        }
+    } else {
+
+        # In case workers are still alive
+        while ($hive_dba->get_WorkerAdaptor->count_all("status != 'DEAD'")) {
+            sleep(1);
+        }
+    }
+
+    $hive_dba->dbc->disconnect_if_idle();
+    run_sql_on_db($url, 'DROP DATABASE');
+}
+
+done_testing();
 

@@ -33,8 +33,8 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
-my @client_beekeeper_cmd = (-sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
+my @client_beekeeper_cmd = (-sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');  # will exit when there are no jobs left
 
 
 runWorker($client_url);
