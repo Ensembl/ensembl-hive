@@ -95,8 +95,7 @@ foreach my $driver (qw(mysql pgsql sqlite)) {
     subtest "$driver patch" => sub {
         is(scalar(@$patches_to_apply), 1, 'No more than 1 patch');
 
-        my $url1 = get_test_urls(-driver => $driver, -tag => 'old_patched')->[0];
-        ok($url1, 'Test database available') or return;
+        my $url1 = get_test_urls(-driver => $driver, -tag => 'old_patched')->[0] or return;
         my $gitshow_command = sprintf('cd %s; git show %s > %s', $ENV{'EHIVE_ROOT_DIR'}, join(' ', map {$ref_commit.':'.$_} @{$schema_files{$driver}}), $filename);
         ok(!system($gitshow_command), "Extracted the schema as it was in version $prev_version");
         make_new_db_from_sqls($url1, [$filename, $patches_to_apply->[0]], 'Can create a database from the previous schema and patch it');
