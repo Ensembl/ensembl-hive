@@ -22,6 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Hive::TheApiary;
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
@@ -32,6 +33,10 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
+
+foreach my $p (values %{Bio::EnsEMBL::Hive::TheApiary::pipelines_collection()}) {
+    $p->hive_dba->dbc->disconnect_if_idle;
+}
 
 my @server_beekeeper_cmd = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/beekeeper.pl', -url => $server_url, -sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');
 my @client_beekeeper_cmd = (-sleep => 0.02, '-loop_until' => 'NO_WORK', '-local');       # will exit when the pipeline is over

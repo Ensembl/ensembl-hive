@@ -89,6 +89,7 @@ sub runWorker {
         } );
         cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch);
+        $hive_dba->dbc->disconnect_if_idle;
         1;
 
     } or do {
@@ -102,6 +103,7 @@ sub runWorker {
         cleanup_if_needed($worker);
         _update_resource_usage($worker, $worker_stopwatch, 'error');
 
+        $hive_dba->dbc->disconnect_if_idle;
         die $msg;
     };
 

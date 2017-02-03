@@ -68,6 +68,7 @@ sub main {
     }
 
     my @cmd = @{ $dbc->to_cmd( $executable, \@prepend, [@append, @ARGV], $sqlcmd ) };
+    $dbc->disconnect_if_idle;
 
     if( $verbose ) {
         my $flat_cmd = join(' ', map { ($_=~/^-?\w+$/) ? $_ : "\"$_\"" } @cmd);
