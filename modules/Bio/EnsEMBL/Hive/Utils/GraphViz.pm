@@ -71,7 +71,7 @@ sub cluster_2_nodes {
     if(@_) {
         $self->{_cluster_2_nodes} = shift @_;
     }
-    return $self->{_cluster_2_nodes};
+    return $self->{_cluster_2_nodes} ||= {};
 }
 
 
@@ -120,6 +120,15 @@ sub dot_input_filename {
 }
 
 
+sub display_cluster_names {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_display_cluster_names} = shift @_;
+    }
+    return $self->{_display_cluster_names} || 0;
+}
+
+
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
@@ -134,8 +143,9 @@ sub display_subgraph {
     my  $text = '';
         $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
 
-        # uncomment the following line to see the cluster names:
-#     $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
+    if($self->display_cluster_names) {
+        $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
+    }
 
     if($colour_scheme) {
         $text .= $prefix . "\tstyle=filled;\n";
