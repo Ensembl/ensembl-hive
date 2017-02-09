@@ -449,8 +449,7 @@ sub _add_analysis_node {
     $analysis_label    .= '</table>>';
   
     $self->graph->add_node( $this_analysis_node_name,
-        shape       => 'record',
-        comment     => qq{new_shape:$analysis_shape},
+        shape       => $analysis_shape,
         style       => $analysis_style,
         fillcolor   => $analysis_status_colour,
         fontname    => $node_fontname,
@@ -609,8 +608,7 @@ sub _twopart_arrow {
 
     $graph->add_node( $midpoint_name,   # midpoint itself
         $choice ? (
-            shape       => 'record',
-            comment     => qq{new_shape:$switch_shape},
+            shape       => $switch_shape,
             style       => $switch_style,
             fillcolor   => $switch_colour,
             fontname    => $switch_font,
@@ -737,8 +735,7 @@ sub _add_table_node {
     $table_label .= '</table>>';
 
     $self->graph()->add_node( $this_table_node_name,
-        shape       => 'record',
-        comment     => qq{new_shape:$table_shape},
+        shape       => $table_shape,
         style       => $table_style,
         fillcolor   => $table_colour,
         fontname    => $table_fontname,

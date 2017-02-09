@@ -199,5 +199,16 @@ sub _as_debug {
     return $text;
 }
 
+
+sub add_node {
+    my $self        = shift @_;
+    my $node_name   = shift @_;
+    my %param_hash  = @_;
+
+    my $desired_shape   = delete $param_hash{'shape'};  # smuggle in the desired shape as a comment, to be substituted later by _as_debug() method
+
+    return $self->SUPER::add_node($node_name, %param_hash, shape => 'record', comment => qq{new_shape:$desired_shape});
+}
+
 1;
 
