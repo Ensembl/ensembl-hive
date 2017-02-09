@@ -36,6 +36,8 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
+        'job_id=s@'             => \$self->{'job_ids'},     # jobs to start the visualization from
+
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
 
@@ -71,14 +73,17 @@ sub main {
                     'pad'           => 1,
         );
 
-        my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
-
         $self->{'graph'}->cluster_2_nodes( {} );
         $self->{'graph'}->main_pipeline_name( $pipeline->hive_pipeline_name );
         $self->{'graph'}->other_pipeline_bgcolour( [ 'pastel19', 3 ] );
         $self->{'graph'}->display_cluster_names( 1 );
 
-        foreach my $seed_job ( @{$job_adaptor->fetch_all_by_analysis_id( 1 ) } ) {
+        my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
+        my $seed_jobs   = $self->{'job_ids'}
+            ? $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' )
+            : $job_adaptor->fetch_all_by_analysis_id( 1 );  # assume analysis_id=1 is the seeded analysis
+
+        foreach my $seed_job ( @$seed_jobs ) {
             my $job_node_name   = add_family_tree( $seed_job );
         }
 
