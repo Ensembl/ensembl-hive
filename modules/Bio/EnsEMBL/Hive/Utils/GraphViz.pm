@@ -188,7 +188,7 @@ sub _as_debug {
         # Since we wanted to stick with the older GraphViz, we initially ask for shape="record",
         # but put the desired shape into the comment and patch dot input after generation:
         #
-    $text=~s/\bcomment="new_shape:(\w+)",(.*shape=)"record"/$2"$1"/mg;
+    $text=~s/\bcomment="new_shape:(\w+)",\s(.*shape=)"record"/$2"$1"/mg;
 
     if(my $dot_input_filename = $self->dot_input_filename) {
         open(my $dot_input, ">", $dot_input_filename) or die "cannot open > $dot_input_filename : $!";
@@ -207,7 +207,7 @@ sub add_node {
 
     my $desired_shape   = delete $param_hash{'shape'};  # smuggle in the desired shape as a comment, to be substituted later by _as_debug() method
 
-    return $self->SUPER::add_node($node_name, %param_hash, shape => 'record', comment => qq{new_shape:$desired_shape});
+    return $self->SUPER::add_node($node_name, %param_hash, $desired_shape ? (shape => 'record', comment => qq{new_shape:$desired_shape}) : () );
 }
 
 1;
