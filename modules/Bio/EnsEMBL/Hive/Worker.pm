@@ -625,7 +625,7 @@ sub specialize_and_compile_wrapper {
         if ($self->cause_of_death() eq "NO_ROLE") {
             $message_class = 'INFO';
         } else {
-            $message_class = 'WORKER_CAUTION'
+            $message_class = 'WORKER_ERROR'
         }
 
         $self->adaptor->db->get_LogMessageAdaptor()->store_worker_message($self, $msg, $message_class );
@@ -708,7 +708,7 @@ sub run_one_batch {
         };
         if(my $msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            Bio::EnsEMBL::Hive::Process::warning($self->runnable_object, $msg, $job->incomplete?'WORKER_CAUTION':'INFO');   # In case the Runnable has redefined warning()
+            Bio::EnsEMBL::Hive::Process::warning($self->runnable_object, $msg, $job->incomplete?'WORKER_ERROR':'INFO');   # In case the Runnable has redefined warning()
         }
 
             # whether the job completed successfully or not:

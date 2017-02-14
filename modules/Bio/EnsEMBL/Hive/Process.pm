@@ -101,6 +101,8 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
+use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
@@ -170,7 +172,7 @@ sub life_cycle {
         };
         if(my $post_cleanup_msg = $@) {
             $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
-            Bio::EnsEMBL::Hive::Process::warning($self, $post_cleanup_msg, $job->incomplete?'WORKER_CAUTION':'INFO');   # In case the Runnable has redefined warning()
+            Bio::EnsEMBL::Hive::Process::warning($self, $post_cleanup_msg, $job->incomplete?'WORKER_ERROR':'INFO');   # In case the Runnable has redefined warning()
         }
     }
 
@@ -227,6 +229,7 @@ sub enter_status {
 sub warning {
     my ($self, $msg, $message_class) = @_;
 
+    $message_class = 'WORKER_ERROR' if $message_class && looks_like_number($message_class);
     $message_class ||= 'INFO';
     chomp $msg;
 
