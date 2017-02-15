@@ -56,7 +56,7 @@ sub send_message_to_slack {
     require JSON;
 
     # Fix the channel name (it *must* start with a hash)
-    $payload->{'channel'} = '#'.$payload->{'channel'} if ($payload->{'channel'} || '') =~ /^[^#]/;
+    $payload->{'channel'} = '#'.$payload->{'channel'} if ($payload->{'channel'} || '') =~ /^[^#@]/;
 
     my $req = HTTP::Request::Common::POST($slack_webhook, ['payload' => JSON::encode_json($payload)]);
 
