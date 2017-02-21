@@ -79,11 +79,11 @@ sub main {
         $self->{'graph'}->display_cluster_names( 1 );
 
         my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
-        my $seed_jobs   = $self->{'job_ids'}
+        my $start_jobs  = $self->{'job_ids'}
             ? $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' )
-            : $job_adaptor->fetch_all_by_analysis_id( 1 );  # assume analysis_id=1 is the seeded analysis
+            : $job_adaptor->fetch_all_by_prev_job_id( undef );  # by default initialize with the seed jobs
 
-        foreach my $seed_job ( @$seed_jobs ) {
+        foreach my $seed_job ( @$start_jobs ) {
             my $job_node_name   = add_family_tree( $seed_job );
         }
 
