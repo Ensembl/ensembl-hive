@@ -111,6 +111,7 @@ sub send_beekeeper_message_to_slack {
             'text' => $beekeeper_message,
         }
     } else {
+        # FIXME: this can never happen because $is_exit is always set to 1
         push @attachments, {
             'color' => 'good',
             'fallback' => 'beekeeper sent a non-error, non-exit message',
