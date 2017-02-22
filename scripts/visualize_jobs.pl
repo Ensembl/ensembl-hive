@@ -38,6 +38,7 @@ sub main {
 
         'job_id=s@'             => \$self->{'job_ids'},             # jobs to start from
         'start_analysis_name=s' => \$self->{'start_analysis_name'}, # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
+        'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},  # if given, the visualization is aborted at that analysis and doesn't go any further
 
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
@@ -93,7 +94,7 @@ sub main {
                                 );
 
         foreach my $start_job ( @$start_jobs ) {
-            my $job_node_name   = add_family_tree( $start_job );
+            my $job_node_name   = add_family_tree( $start_job, $self->{'stop_analysis_name'} );
         }
 
             ## If you need to take a look at the intermediate dot file:
@@ -225,32 +226,34 @@ sub add_semaphore_node {
 
 
 sub add_family_tree {
-    my $parent_job = shift @_;
+    my ($parent_job, $stop_analysis_name) = @_;
     
     my $parent_node_name = add_job_node( $parent_job );
+    if( !$stop_analysis_name or ($parent_job->analysis->logic_name ne $stop_analysis_name) ) {
 
-    my $children = $parent_job->adaptor->fetch_all_by_prev_job_id( $parent_job->dbID );
-    foreach my $child_job ( @$children ) {
-        my $child_node_name = add_family_tree( $child_job );
+        my $children = $parent_job->adaptor->fetch_all_by_prev_job_id( $parent_job->dbID );
+        foreach my $child_job ( @$children ) {
+            my $child_node_name = add_family_tree( $child_job, $stop_analysis_name );
 
-        $self->{'graph'}->add_edge( $parent_node_name => $child_node_name,
-            color   => 'blue',
-        );
-    }
+            $self->{'graph'}->add_edge( $parent_node_name => $child_node_name,
+                color   => 'blue',
+            );
+        }
 
-    if(my $controlled_semaphore = $parent_job->controlled_semaphore) {
-        my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
+        if(my $controlled_semaphore = $parent_job->controlled_semaphore) {
+            my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
 
-        my $parent_status               = $parent_job->status;
-        my $parent_is_blocking          = ($parent_status eq 'DONE' or $parent_status eq 'PASSED_ON') ? 0 : 1;
-        my $parent_controlling_colour   = $parent_is_blocking ? 'red' : 'darkgreen';
-        my $blocking_arrow              = $parent_is_blocking ? 'tee' : 'none';
+            my $parent_status               = $parent_job->status;
+            my $parent_is_blocking          = ($parent_status eq 'DONE' or $parent_status eq 'PASSED_ON') ? 0 : 1;
+            my $parent_controlling_colour   = $parent_is_blocking ? 'red' : 'darkgreen';
+            my $blocking_arrow              = $parent_is_blocking ? 'tee' : 'none';
 
-        $self->{'graph'}->add_edge( $parent_node_name => $semaphore_node_name,
-            color       => $parent_controlling_colour,
-            style       => 'dashed',
-            arrowhead   => $blocking_arrow,
-        );
+            $self->{'graph'}->add_edge( $parent_node_name => $semaphore_node_name,
+                color       => $parent_controlling_colour,
+                style       => 'dashed',
+                arrowhead   => $blocking_arrow,
+            );
+        }
     }
 
     return $parent_node_name;
