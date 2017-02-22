@@ -34,9 +34,10 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc=i'             => \$self->{'nosqlvc'},             # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-        'job_id=s@'             => \$self->{'job_ids'},     # jobs to start the visualization from
+        'job_id=s@'             => \$self->{'job_ids'},             # jobs to start from
+        'start_analysis_name=s' => \$self->{'start_analysis_name'}, # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
 
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
@@ -78,13 +79,21 @@ sub main {
         $self->{'graph'}->other_pipeline_bgcolour( [ 'pastel19', 3 ] );
         $self->{'graph'}->display_cluster_names( 1 );
 
-        my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
-        my $start_jobs  = $self->{'job_ids'}
-            ? $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' )
-            : $job_adaptor->fetch_all_by_prev_job_id( undef );  # by default initialize with the seed jobs
+        my $job_adaptor     = $pipeline->hive_dba->get_AnalysisJobAdaptor;
+        my $anchor_jobs     = $self->{'job_ids'} && $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' );
+        my $start_analysis  = $self->{'start_analysis_name'} && $pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
 
-        foreach my $seed_job ( @$start_jobs ) {
-            my $job_node_name   = add_family_tree( $seed_job );
+        my $start_jobs  =   $start_analysis
+                                ? ( $anchor_jobs
+                                        ? find_the_top( $anchor_jobs, $start_analysis )                     # perform a per-jobs scan to the start_analysis
+                                        : $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
+                                ) : ( $anchor_jobs
+                                        ? $anchor_jobs                                                      # just start from the given anchor_jobs
+                                        : $job_adaptor->fetch_all_by_prev_job_id( undef )                   # by default start from the seed jobs
+                                );
+
+        foreach my $start_job ( @$start_jobs ) {
+            my $job_node_name   = add_family_tree( $start_job );
         }
 
             ## If you need to take a look at the intermediate dot file:
@@ -100,6 +109,24 @@ sub main {
         die "\nERROR : -output filename has to be defined\n\n";
     }
 
+}
+
+
+sub find_the_top {
+    my ($anchor_jobs, $start_analysis) = @_;
+
+    my @starters    = ();
+
+        # first try to find the start_analysis on the way up:
+    foreach my $anchor_job ( @$anchor_jobs ) {
+        my $job;
+
+        for($job = $anchor_job; ($job->analysis != $start_analysis) and ($job->prev_job) ; $job = $job->prev_job) {}
+
+        push @starters, $job;
+    }
+
+    return \@starters;
 }
 
 
