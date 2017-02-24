@@ -75,6 +75,15 @@ sub cluster_2_nodes {
 }
 
 
+sub cluster_2_colour_pair {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_cluster_2_colour_pair} = shift @_;
+    }
+    return $self->{_cluster_2_colour_pair} ||= {};
+}
+
+
 sub main_pipeline_name {
     my $self = shift @_;
     if(@_) {
@@ -132,11 +141,13 @@ sub display_cluster_names {
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $box_colour_pair  = $depth
-        ? $self->semaphore_bgcolour
-        : ( $cluster_name eq $self->main_pipeline_name)
-            ? $self->main_pipeline_bgcolour
-            : $self->other_pipeline_bgcolour;
+    my $box_colour_pair  = $self->cluster_2_colour_pair->{$cluster_name} ||
+        ($depth
+            ? $self->semaphore_bgcolour
+            : ( $cluster_name eq $self->main_pipeline_name)
+                ? $self->main_pipeline_bgcolour
+                : $self->other_pipeline_bgcolour
+        );
     my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
 
     my $prefix = "\t" x $depth;
