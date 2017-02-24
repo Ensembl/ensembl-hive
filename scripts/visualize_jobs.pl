@@ -76,8 +76,7 @@ sub main {
         );
 
         $self->{'graph'}->cluster_2_nodes( {} );
-        $self->{'graph'}->main_pipeline_name( $pipeline->hive_pipeline_name );
-        $self->{'graph'}->other_pipeline_bgcolour( [ 'pastel19', 3 ] );
+        $self->{'graph'}->cluster_2_colour_pair( {} );
         $self->{'graph'}->display_cluster_names( 1 );
 
         my $job_adaptor     = $pipeline->hive_dba->get_AnalysisJobAdaptor;
@@ -141,7 +140,19 @@ sub add_job_node {
 
     unless($job_node_hash{$job_node_name}++) {
         my $job_shape           = 'record';
-        my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job->status} // 'blue';
+        my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job->status} // 'yellow';
+        my $analysis_status_colour = {
+            "EMPTY"       => "white",
+            "BLOCKED"     => "grey",
+            "LOADING"     => "green",
+            "ALL_CLAIMED" => "grey",
+            "SYNCHING"    => "green",
+            "READY"       => "green",
+            "WORKING"     => "yellow",
+            "DONE"        => "DeepSkyBlue",
+            "FAILED"      => "red",
+        };
+
         my $job_id              = $job->dbID;
         my $job_params          = destringify($job->input_id);
 
@@ -175,7 +186,10 @@ sub add_job_node {
         );
 
             # adding the job to the corresponding analysis' cluster:
-        push @{$self->{'graph'}->cluster_2_nodes->{ $job->analysis->logic_name }}, $job_node_name;
+        my $analysis_name   = $job->analysis->logic_name;
+        my $analysis_status = $job->analysis->status;
+        push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
+        $self->{'graph'}->cluster_2_colour_pair->{ $analysis_name } = [ $analysis_status_colour->{$analysis_status} ];
     }
 
     return $job_node_name;
