@@ -182,6 +182,25 @@ sub display_subgraph {
 }
 
 
+sub top_level_cluster_names {
+    my $self = shift @_;
+
+    my %top_level_candidate_set = map { ($_ => 1) } keys %{ $self->cluster_2_nodes };
+
+        # remove all keys that have been mentioned in the values (subclusters) :
+    foreach my $vector (values %{ $self->cluster_2_nodes }) {
+        foreach my $element (@$vector) {
+            if(exists $top_level_candidate_set{$element}) {
+                delete $top_level_candidate_set{$element};
+            }
+        }
+    }
+
+        # what remains are the top-level clusters:
+    return [ sort keys %top_level_candidate_set ];
+}
+
+
 sub _as_debug {
     my $self = shift @_;
 
@@ -189,8 +208,8 @@ sub _as_debug {
 
     $text=~s/^}$//m;
 
-    foreach my $node_name ( sort grep { !/^dfr_/ } keys %{ $self->cluster_2_nodes } ) {
-        $text .= $self->display_subgraph( $node_name, 0);
+    foreach my $top_level_cluster_name (@{ $self->top_level_cluster_names }) {
+        $text .= $self->display_subgraph( $top_level_cluster_name, 0);
     }
     $text .= "}\n";
 
