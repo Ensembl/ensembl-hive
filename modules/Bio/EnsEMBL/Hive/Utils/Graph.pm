@@ -178,8 +178,8 @@ sub _midpoint_name {
     my ($df_rule) = @_;
 
     if (UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule')) {
-        my $dfr_id = $df_rule->dbID();
-        unless ($dfr_id or ($dfr_id = $_midpoint_ref_to_temp_id{scalar($df_rule)})) {
+        my $dfr_id = $df_rule->dbID || $_midpoint_ref_to_temp_id{scalar($df_rule)};
+        unless ($dfr_id) {
             $dfr_id = 'p'.(scalar(keys %_midpoint_ref_to_temp_id) + 1);   # a unique id of a df_rule when dbIDs are not available;
             $_midpoint_ref_to_temp_id{scalar($df_rule)} = $dfr_id;
         }
@@ -238,6 +238,9 @@ sub build {
     }
 
     my %cluster_2_nodes = ();
+    my %cluster_2_colour_pair = ();
+    $self->graph->cluster_2_nodes( \%cluster_2_nodes );
+    $self->graph->cluster_2_colour_pair( \%cluster_2_colour_pair );
 
     if( $self->config_get('DisplayDetails') ) {
         my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
@@ -245,6 +248,9 @@ sub build {
             my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
 
             push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
+            $cluster_2_colour_pair{ $pipeline->hive_pipeline_name } = ($pipeline == $main_pipeline)
+                ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]
+                : [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')];
         }
     }
 
@@ -282,11 +288,7 @@ sub build {
             } # /foreach group
         }
 
-        $self->graph->cluster_2_nodes( \%cluster_2_nodes );
-        $self->graph->main_pipeline_name( $main_pipeline->hive_pipeline_name );
-        $self->graph->semaphore_bgcolour(       [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
-        $self->graph->main_pipeline_bgcolour(   [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')] );
-        $self->graph->other_pipeline_bgcolour(  [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')] );
+        $self->graph->nested_bgcolour( [$self->config_get('Box', 'Semaphore', 'ColourScheme'),     $self->config_get('Box', 'Semaphore', 'ColourOffset')] );
     }
 
     return $self->graph();

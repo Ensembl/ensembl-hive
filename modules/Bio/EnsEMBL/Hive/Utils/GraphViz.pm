@@ -84,39 +84,12 @@ sub cluster_2_colour_pair {
 }
 
 
-sub main_pipeline_name {
+sub nested_bgcolour {
     my $self = shift @_;
     if(@_) {
-        $self->{_main_pipeline_name} = shift @_;
+        $self->{_nested_bgcolour} = shift @_;
     }
-    return $self->{_main_pipeline_name};
-}
-
-
-sub semaphore_bgcolour {
-    my $self = shift @_;
-    if(@_) {
-        $self->{_semaphore_bgcolour} = shift @_;
-    }
-    return $self->{_semaphore_bgcolour};
-}
-
-
-sub main_pipeline_bgcolour {
-    my $self = shift @_;
-    if(@_) {
-        $self->{_main_pipeline_bgcolour} = shift @_;
-    }
-    return $self->{_main_pipeline_bgcolour};
-}
-
-
-sub other_pipeline_bgcolour {
-    my $self = shift @_;
-    if(@_) {
-        $self->{_other_pipeline_bgcolour} = shift @_;
-    }
-    return $self->{_other_pipeline_bgcolour};
+    return $self->{_nested_bgcolour};
 }
 
 
@@ -141,13 +114,7 @@ sub display_cluster_names {
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $box_colour_pair  = $self->cluster_2_colour_pair->{$cluster_name} ||
-        ($depth
-            ? $self->semaphore_bgcolour
-            : ( $cluster_name eq $self->main_pipeline_name)
-                ? $self->main_pipeline_bgcolour
-                : $self->other_pipeline_bgcolour
-        );
+    my $box_colour_pair  = $self->cluster_2_colour_pair->{$cluster_name} || $self->nested_bgcolour;
     my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
 
     my $prefix = "\t" x $depth;
