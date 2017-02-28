@@ -132,6 +132,7 @@ sub display_subgraph {
             $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
             $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
         } else {    # it's just a simple colour:
+            $text .= $prefix . "\tcolorscheme=X11;\n";
             $text .= $prefix . "\tcolor=${colour_scheme};\n";
         }
     } # otherwise just draw a black frame around the subgraph
