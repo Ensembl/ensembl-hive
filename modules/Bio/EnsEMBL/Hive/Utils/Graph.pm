@@ -168,7 +168,7 @@ sub _accu_sink_node_name {
 sub _cluster_name {
     my ($df_rule) = @_;
 
-    return UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '');
+    return 'cl_'. ( UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '') );
 }
 
 
@@ -245,10 +245,11 @@ sub build {
     if( $self->config_get('DisplayDetails') ) {
         my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
         foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
-            my $pipelabel_node_name = $self->_add_pipeline_label( $pipeline );
+            my $pipelabel_node_name     = $self->_add_pipeline_label( $pipeline );
+            my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
 
-            push @{$cluster_2_nodes{ $pipeline->hive_pipeline_name } }, $pipelabel_node_name;
-            $cluster_2_colour_pair{ $pipeline->hive_pipeline_name } = ($pipeline == $main_pipeline)
+            push @{$cluster_2_nodes{ $pipeline_cluster_name } }, $pipelabel_node_name;
+            $cluster_2_colour_pair{ $pipeline_cluster_name } = ($pipeline == $main_pipeline)
                 ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]
                 : [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')];
         }
@@ -267,7 +268,24 @@ sub build {
                 my $choice      = (scalar(@$df_targets)!=1) || defined($df_targets->[0]->on_condition);
 
                 if(@$fan_dfrs or $choice) {
-                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule ); # top-level funnels define clusters (top-level "boxes")
+                        # top-level funnels define clusters (top-level "boxes"):
+                    push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _midpoint_name( $df_rule );
+
+                    my $box_needed = 0;
+                    foreach my $fan_dfr (@$fan_dfrs) {
+                        my $fan_targets = $fan_dfr->get_my_targets; # FIXME: ->get_my_targets() may be too computationally-expensive to run so may times?
+                        foreach my $fan_target (@$fan_targets) {
+                            my $target_object = $fan_target->to_analysis;
+                            if( $target_object->{'_funnel_dfr'} eq $df_rule
+#                            or  $target_object->hive_pipeline ne $fan_dfr->hive_pipeline    # crossing the pipeline boundary
+                            ) {
+                                $box_needed = 1;
+                            }
+                        }
+                    }
+                    if( $box_needed ) {
+                        push @{$cluster_2_nodes{ _cluster_name( $df_rule->{'_funnel_dfr'} ) }}, _cluster_name( $df_rule );
+                    }
 
                     foreach my $fan_dfr (@$fan_dfrs) {
                         push @{$cluster_2_nodes{ _cluster_name( $fan_dfr->{'_funnel_dfr'} ) } }, _midpoint_name( $fan_dfr ); # midpoints of rules that have a funnel live inside "boxes"

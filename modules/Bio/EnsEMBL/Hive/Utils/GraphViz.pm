@@ -119,7 +119,7 @@ sub display_subgraph {
 
     my $prefix = "\t" x $depth;
     my  $text = '';
-        $text .= $prefix . "subgraph cluster_${cluster_name} {\n";
+        $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
 
     if($self->display_cluster_names) {
         $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
@@ -139,9 +139,10 @@ sub display_subgraph {
 
     foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 
-        $text .= $prefix . "\t${node_name};\n";
         if( @{ $self->cluster_2_nodes->{ $node_name } || [] } ) {
             $text .= $self->display_subgraph( $node_name, $depth+1 );
+        } else {
+            $text .= $prefix . "\t${node_name};\n";
         }
     }
     $text .= $prefix . "}\n";
