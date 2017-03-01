@@ -74,6 +74,7 @@ sub main {
         $self->{'graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
                     'name'          => 'JobDependencyGraph',
                     'pad'           => 1,
+                    'ranksep'       => '1.2 equally',
         );
 
         $self->{'graph'}->cluster_2_nodes( {} );
@@ -293,6 +294,7 @@ sub add_semaphore_node {
                 color       => $dependent_blocking_arrow_colour,
                 style       => 'dashed',
                 arrowhead   => $dependent_blocking_arrow_shape,
+                tailport    => 's',
             );
 
             my $analysis_name   = $dependent_job->analysis->relative_display_name($main_pipeline);
@@ -308,6 +310,8 @@ sub add_semaphore_node {
                 color       => $dependent_blocking_arrow_colour,
                 style       => 'dashed',
                 arrowhead   => $dependent_blocking_arrow_shape,
+                tailport    => 's',
+                headport    => 'n',
             );
 
                 # adding the semaphore node to its pipeline's cluster:
