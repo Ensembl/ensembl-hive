@@ -23,10 +23,10 @@ my $self = {};
 
 main();
 
+my $main_pipeline;
+my %analysis_name_2_pipeline;
 
 sub main {
-
-    my $pipeline;
 
     GetOptions(
             # connection parameters
@@ -47,7 +47,7 @@ sub main {
     );
 
     if($self->{'url'} or $self->{'reg_alias'}) {
-        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+        $main_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
             -url                            => $self->{'url'},
             -reg_conf                       => $self->{'reg_conf'},
             -reg_type                       => $self->{'reg_type'},
@@ -79,9 +79,9 @@ sub main {
         $self->{'graph'}->cluster_2_colour_pair( {} );
         $self->{'graph'}->display_cluster_names( 1 );
 
-        my $job_adaptor     = $pipeline->hive_dba->get_AnalysisJobAdaptor;
+        my $job_adaptor     = $main_pipeline->hive_dba->get_AnalysisJobAdaptor;
         my $anchor_jobs     = $self->{'job_ids'} && $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' );
-        my $start_analysis  = $self->{'start_analysis_name'} && $pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
+        my $start_analysis  = $self->{'start_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
 
         my $start_jobs  =   $start_analysis
                                 ? ( $anchor_jobs
@@ -94,6 +94,14 @@ sub main {
 
         foreach my $start_job ( @$start_jobs ) {
             my $job_node_name   = add_family_tree( $start_job, $self->{'stop_analysis_name'} );
+        }
+
+        foreach my $analysis_name (keys %analysis_name_2_pipeline) {
+            my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
+            push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
+            $self->{'graph'}->cluster_2_colour_pair->{ $this_pipeline->hive_pipeline_name } = ($this_pipeline == $main_pipeline)
+                ? ['pastel19', 3]
+                : ['pastel19', 8];
         }
 
             ## If you need to take a look at the intermediate dot file:
@@ -135,8 +143,9 @@ my %job_node_hash = ();
 sub add_job_node {
     my $job = shift @_;
 
-    my $job_id          = $job->dbID;
-    my $job_node_name   = 'job_'.$job_id;
+    my $job_id              = $job->dbID;
+    my $job_pipeline_name   = $job->hive_pipeline->hive_pipeline_name;
+    my $job_node_name       = 'job_'.$job_id.'__'.$job_pipeline_name;
 
     unless($job_node_hash{$job_node_name}++) {
         my $job_shape           = 'record';
@@ -186,10 +195,13 @@ sub add_job_node {
         );
 
             # adding the job to the corresponding analysis' cluster:
-        my $analysis_name   = $job->analysis->logic_name;
+        my $analysis_name   = $job->analysis->relative_display_name($main_pipeline);
+        $analysis_name=~s{/}{__};
+
         my $analysis_status = $job->analysis->status;
         push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
         $self->{'graph'}->cluster_2_colour_pair->{ $analysis_name } = [ $analysis_status_colour->{$analysis_status} ];
+        $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
     }
 
     return $job_node_name;
@@ -201,7 +213,10 @@ my %semaphore_node_hash = ();
 sub add_semaphore_node {
     my $semaphore = shift @_;
 
-    my $semaphore_node_name         = 'semaphore_'.$semaphore->dbID;
+    my $semaphore_id                = $semaphore->dbID;
+    my $semaphore_pipeline_name     = $semaphore->hive_pipeline->hive_pipeline_name;
+    my $semaphore_node_name         = 'semaphore_'.$semaphore_id.'__'.$semaphore_pipeline_name;
+
     my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
     my $semaphore_is_blocked        = $semaphore_blockers > 0;
 
@@ -228,10 +243,25 @@ sub add_semaphore_node {
                 arrowhead   => $dependent_blocking_arrow_shape,
             );
 
-                # adding the semaphore node to the dependent job's cluster:
-            push @{$self->{'graph'}->cluster_2_nodes->{ $dependent_job->analysis->logic_name }}, $semaphore_node_name;
+            my $analysis_name   = $dependent_job->analysis->relative_display_name($main_pipeline);
+            $analysis_name=~s{/}{__};
+
+                # adding the semaphore node to the cluster of the dependent job's analysis:
+            push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $semaphore_node_name;
+        } elsif(my $dependent_semaphore = $semaphore->dependent_semaphore) {
+            my $dependent_semaphore_node_name = add_semaphore_node( $dependent_semaphore );
+
+            $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_semaphore_node_name,
+                color       => $dependent_blocking_arrow_colour,
+                style       => 'dashed',
+                arrowhead   => $dependent_blocking_arrow_shape,
+            );
+
+                # adding the semaphore node to its pipeline's cluster:
+            push @{$self->{'graph'}->cluster_2_nodes->{ $semaphore->hive_pipeline->hive_pipeline_name }}, $semaphore_node_name;
+
         } else {
-            warn "Remote semaphores not yet supported";
+            die "This semaphore is not blocking anything at all";
         }
     }
 
