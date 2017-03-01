@@ -122,7 +122,8 @@ sub display_subgraph {
         $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
 
     if($self->display_cluster_names) {
-        $text .= $prefix . "\tlabel=\"$cluster_name\";\n";
+        my $cluster_label = ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name;
+        $text .= $prefix . "\tlabel=\"$cluster_label\";\n";
     }
 
     if($colour_scheme) {

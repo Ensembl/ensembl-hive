@@ -215,7 +215,7 @@ sub add_job_node {
 
             # adding the job to the corresponding analysis' cluster:
         my $analysis_name   = $job->analysis->relative_display_name($main_pipeline);
-        $analysis_name=~s{/}{__};
+        $analysis_name=~s{/}{___};
 
         my $analysis_status = $job->analysis->status;
         push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
@@ -298,7 +298,7 @@ sub add_semaphore_node {
             );
 
             my $analysis_name   = $dependent_job->analysis->relative_display_name($main_pipeline);
-            $analysis_name=~s{/}{__};
+            $analysis_name=~s{/}{___};
 
                 # adding the semaphore node to the cluster of the dependent job's analysis:
             push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $semaphore_node_name;
