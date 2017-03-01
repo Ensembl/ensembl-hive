@@ -23,7 +23,7 @@ my $self = {};
 
 main();
 
-my $main_pipeline;
+my ($main_pipeline, $start_analysis, $stop_analysis);
 my %analysis_name_2_pipeline;
 
 sub main {
@@ -81,11 +81,12 @@ sub main {
 
         my $job_adaptor     = $main_pipeline->hive_dba->get_AnalysisJobAdaptor;
         my $anchor_jobs     = $self->{'job_ids'} && $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' );
-        my $start_analysis  = $self->{'start_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
+        $start_analysis     = $self->{'start_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
+        $stop_analysis      = $self->{'stop_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'stop_analysis_name'} } );
 
         my $start_jobs  =   $start_analysis
                                 ? ( $anchor_jobs
-                                        ? find_the_top( $anchor_jobs, $start_analysis )                     # perform a per-jobs scan to the start_analysis
+                                        ? find_the_top( $anchor_jobs )                                      # perform a per-jobs scan to the start_analysis
                                         : $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
                                 ) : ( $anchor_jobs
                                         ? $anchor_jobs                                                      # just start from the given anchor_jobs
@@ -93,7 +94,7 @@ sub main {
                                 );
 
         foreach my $start_job ( @$start_jobs ) {
-            my $job_node_name   = add_family_tree( $start_job, $self->{'stop_analysis_name'} );
+            my $job_node_name   = add_job_node( $start_job );
         }
 
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
@@ -121,15 +122,16 @@ sub main {
 
 
 sub find_the_top {
-    my ($anchor_jobs, $start_analysis) = @_;
+    my ($anchor_jobs) = @_;
 
     my @starters    = ();
 
         # first try to find the start_analysis on the way up:
     foreach my $anchor_job ( @$anchor_jobs ) {
+
         my $job;
 
-        for($job = $anchor_job; ($job->analysis != $start_analysis) and ($job->prev_job) ; $job = $job->prev_job) {}
+        for($job = $anchor_job; (!$start_analysis || ($job->analysis != $start_analysis)) and ($job->prev_job) ; $job = $job->prev_job) {}
 
         push @starters, $job;
     }
@@ -149,7 +151,8 @@ sub add_job_node {
 
     unless($job_node_hash{$job_node_name}++) {
         my $job_shape           = 'record';
-        my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job->status} // 'yellow';
+        my $job_status          = $job->status;
+        my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job_status} // 'yellow';
         my $analysis_status_colour = {
             "EMPTY"       => "white",
             "BLOCKED"     => "grey",
@@ -202,6 +205,33 @@ sub add_job_node {
         push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
         $self->{'graph'}->cluster_2_colour_pair->{ $analysis_name } = [ $analysis_status_colour->{$analysis_status} ];
         $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
+
+            # recursion via child jobs:
+        if( !$stop_analysis or ($job->analysis != $stop_analysis) ) {
+
+            my $children = $job->adaptor->fetch_all_by_prev_job_id( $job_id );
+            foreach my $child_job ( @$children ) {
+                my $child_node_name = add_job_node( $child_job );
+
+                $self->{'graph'}->add_edge( $job_node_name => $child_node_name,
+                    color   => 'blue',
+                );
+            }
+
+            if(my $controlled_semaphore = $job->controlled_semaphore) {
+                my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
+
+                my $parent_is_blocking          = ($job_status eq 'DONE' or $job_status eq 'PASSED_ON') ? 0 : 1;
+                my $parent_controlling_colour   = $parent_is_blocking ? 'red' : 'darkgreen';
+                my $blocking_arrow              = $parent_is_blocking ? 'tee' : 'none';
+
+                $self->{'graph'}->add_edge( $job_node_name => $semaphore_node_name,
+                    color       => $parent_controlling_colour,
+                    style       => 'dashed',
+                    arrowhead   => $blocking_arrow,
+                );
+            }
+        }
     }
 
     return $job_node_name;
@@ -257,6 +287,7 @@ sub add_semaphore_node {
                 # adding the semaphore node to the cluster of the dependent job's analysis:
             push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $semaphore_node_name;
         } elsif(my $dependent_semaphore = $semaphore->dependent_semaphore) {
+
             my $dependent_semaphore_node_name = add_semaphore_node( $dependent_semaphore );
 
             $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_semaphore_node_name,
@@ -268,46 +299,17 @@ sub add_semaphore_node {
                 # adding the semaphore node to its pipeline's cluster:
             push @{$self->{'graph'}->cluster_2_nodes->{ $semaphore->hive_pipeline->hive_pipeline_name }}, $semaphore_node_name;
 
+                # can we trace the local blocking jobs up to their roots?
+            my $local_blocker_jobs = $dependent_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $dependent_semaphore->dbID );
+            foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
+                my $job_node_name   = add_job_node( $start_job );
+            }
+
         } else {
             die "This semaphore is not blocking anything at all";
         }
     }
 
     return $semaphore_node_name;
-}
-
-
-sub add_family_tree {
-    my ($parent_job, $stop_analysis_name) = @_;
-    
-    my $parent_node_name = add_job_node( $parent_job );
-    if( !$stop_analysis_name or ($parent_job->analysis->logic_name ne $stop_analysis_name) ) {
-
-        my $children = $parent_job->adaptor->fetch_all_by_prev_job_id( $parent_job->dbID );
-        foreach my $child_job ( @$children ) {
-            my $child_node_name = add_family_tree( $child_job, $stop_analysis_name );
-
-            $self->{'graph'}->add_edge( $parent_node_name => $child_node_name,
-                color   => 'blue',
-            );
-        }
-
-        if(my $controlled_semaphore = $parent_job->controlled_semaphore) {
-            my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
-
-            my $parent_status               = $parent_job->status;
-            my $parent_is_blocking          = ($parent_status eq 'DONE' or $parent_status eq 'PASSED_ON') ? 0 : 1;
-            my $parent_controlling_colour   = $parent_is_blocking ? 'red' : 'darkgreen';
-            my $blocking_arrow              = $parent_is_blocking ? 'tee' : 'none';
-
-            $self->{'graph'}->add_edge( $parent_node_name => $semaphore_node_name,
-                color       => $parent_controlling_colour,
-                style       => 'dashed',
-                arrowhead   => $blocking_arrow,
-            );
-        }
-    }
-
-    return $parent_node_name;
 }
 
