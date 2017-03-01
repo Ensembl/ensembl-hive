@@ -395,5 +395,11 @@ sub toString {
 }
 
 
+sub fetch_local_blocking_semaphore {    # ToDo: we may want to perform smart caching in future
+    my $self = shift @_;
+
+    return $self->adaptor->db->get_SemaphoreAdaptor->fetch_by_dependent_job_id( $self->dbID );
+}
+
 1;
 

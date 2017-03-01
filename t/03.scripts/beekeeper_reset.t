@@ -40,9 +40,7 @@ my $ehive_test_pipeline_urls = get_test_urls();
 sub Bio::EnsEMBL::Hive::AnalysisJob::semaphore_count {
     my $job = shift @_;
 
-    my $semaphore_adaptor = $job->adaptor->db->get_SemaphoreAdaptor;
-
-    my $semaphore = $semaphore_adaptor->fetch_by_dependent_job_id( $job->dbID );
+    my $semaphore = $job->fetch_local_blocking_semaphore();
 
     return $semaphore ? ( $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter ) : 0;
 }

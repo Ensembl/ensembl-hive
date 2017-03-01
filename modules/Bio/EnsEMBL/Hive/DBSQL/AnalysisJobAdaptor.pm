@@ -304,7 +304,7 @@ sub store_a_semaphored_group_of_jobs {
 
             if( $funnel_job->status eq 'SEMAPHORED' ) {
 
-                $funnel_semaphore = $funnel_semaphore_adaptor->fetch_by_dependent_job_id( $funnel_job_id )
+                $funnel_semaphore = $funnel_job->fetch_local_blocking_semaphore()
                     or die "Could not leach to a non-existent Semaphore";   # ToDo: create if it was missing?
 
                 $funnel_semaphore->increase_by( $fan_jobs );  # "pre-increase" the semaphore counts before creating the controlling jobs
