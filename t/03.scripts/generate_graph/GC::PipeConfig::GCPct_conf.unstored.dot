@@ -17,14 +17,14 @@ digraph test {
 	dfr_p2_mp -> analysis_count_atgc [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
 	dfr_p2_mp -> dfr_p1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph cluster_gcpct {
+subgraph cluster_cl_gcpct {
 	style=filled;
 	colorscheme=pastel19;
 	color=3;
 	pipelabel_gcpct;
 	analysis_chunk_sequences;
 	dfr_p1_mp;
-	subgraph cluster_dfr_p1_mp {
+	subgraph cluster_cl_dfr_p1_mp {
 		style=filled;
 		colorscheme=blues9;
 		color=2;

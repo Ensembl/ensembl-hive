@@ -63,6 +63,7 @@ foreach my $conf (@confs_to_test) {
     my @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command( [join(' ', @generate_graph_args).' > '.$filename] );
+#    system('cp', $filename, $ref_output_location . $conf . '.txt');
     files_eq_or_diff($filename, $ref_output_location . $conf . '.txt');
 
 
@@ -71,6 +72,7 @@ foreach my $conf (@confs_to_test) {
     @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command(\@generate_graph_args);
+#    system('cp', $filename, $ref_output_location . $conf . '.unstored.dot');
     files_eq_or_diff($filename, $ref_output_location . $conf . '.unstored.dot');
 
     # Dot output on a database (no dBIDs)
@@ -80,6 +82,7 @@ foreach my $conf (@confs_to_test) {
     #my $filename = $ref_output_location . $conf . '.stored.dot';
     @generate_graph_args = (@common_diagram_args, -url => $client_url, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     test_command(\@generate_graph_args);
+#    system('cp', $filename, $ref_output_location . $conf . '.stored.dot');
     files_eq_or_diff($filename, $ref_output_location . $conf . '.stored.dot');
   }
 }

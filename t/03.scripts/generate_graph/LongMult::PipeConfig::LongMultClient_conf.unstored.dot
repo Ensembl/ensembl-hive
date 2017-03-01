@@ -25,14 +25,14 @@ digraph test {
 	foreign_analysis_ehive_test_server__add_together -> table_ehive_test_server__final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	foreign_analysis_ehive_test_server__part_multiply -> sink_long_mult_server [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> ehive_test_server/partial_product{digit}:=product", style="dashed"];
 
-subgraph cluster_long_mult_client {
+subgraph cluster_cl_long_mult_client {
 	style=filled;
 	colorscheme=pastel19;
 	color=3;
 	pipelabel_long_mult_client;
 	analysis_take_b_apart;
 	dfr_p1_mp;
-	subgraph cluster_dfr_p1_mp {
+	subgraph cluster_cl_dfr_p1_mp {
 		style=filled;
 		colorscheme=blues9;
 		color=2;
@@ -43,7 +43,7 @@ subgraph cluster_long_mult_client {
 	analysis_add_together;
 	table_final_result;
 }
-subgraph cluster_long_mult_server {
+subgraph cluster_cl_long_mult_server {
 	style=filled;
 	colorscheme=pastel19;
 	color=8;
