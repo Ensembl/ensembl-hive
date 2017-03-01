@@ -217,16 +217,24 @@ sub add_semaphore_node {
     my $semaphore_pipeline_name     = $semaphore->hive_pipeline->hive_pipeline_name;
     my $semaphore_node_name         = 'semaphore_'.$semaphore_id.'__'.$semaphore_pipeline_name;
 
-    my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
-    my $semaphore_is_blocked        = $semaphore_blockers > 0;
-
-    my ($semaphore_colour, $semaphore_shape, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
-        ? ('red', 'triangle', 'red', 'tee')
-        : ('darkgreen', 'invtriangle', 'darkgreen', 'none');
-
-    my $semaphore_label = $semaphore_is_blocked ? 'blockers: '.$semaphore_blockers : 'open';
-
     unless($semaphore_node_hash{$semaphore_node_name}++) {
+
+        my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
+        my $semaphore_is_blocked        = $semaphore_blockers > 0;
+
+        my ($semaphore_colour, $semaphore_shape, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
+            ? ('red', 'triangle', 'red', 'tee')
+            : ('darkgreen', 'invtriangle', 'darkgreen', 'none');
+
+        my @semaphore_label_parts = ();
+        if($semaphore_is_blocked) {
+            if(my $local=$semaphore->local_jobs_counter) { push @semaphore_label_parts, "local: $local" }
+            if(my $remote=$semaphore->remote_jobs_counter) { push @semaphore_label_parts, "remote: $remote" }
+        } else {
+            push @semaphore_label_parts, "open";
+        }
+        my $semaphore_label = join("\n", @semaphore_label_parts);
+
         $self->{'graph'}->add_node( $semaphore_node_name,
             shape       => $semaphore_shape,
             style       => 'filled',
