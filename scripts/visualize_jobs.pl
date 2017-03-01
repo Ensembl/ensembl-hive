@@ -15,6 +15,7 @@ BEGIN {
 use Getopt::Long;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
+use Bio::EnsEMBL::Hive::TheApiary;
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::Utils::GraphViz;
 
@@ -25,6 +26,7 @@ main();
 
 my ($main_pipeline, $start_analysis, $stop_analysis);
 my %analysis_name_2_pipeline;
+my %semaphore_url_hash = ();
 
 sub main {
 
@@ -71,7 +73,6 @@ sub main {
 
         $self->{'graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
                     'name'          => 'JobDependencyGraph',
-                    'concentrate'   => 'true',
                     'pad'           => 1,
         );
 
@@ -97,6 +98,21 @@ sub main {
             my $job_node_name   = add_job_node( $start_job );
         }
 
+        my @semaphore_urls  = keys %semaphore_url_hash;
+        my @pipelines       = ($main_pipeline, sort values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection });
+        foreach my $pipeline ( @pipelines ) {
+            my $semaphore_adaptor   = $pipeline->hive_dba->get_SemaphoreAdaptor;
+            foreach my $semaphore_url ( @semaphore_urls ) {
+                foreach my $local_semaphore ( @{ $semaphore_adaptor->fetch_all_by_dependent_semaphore_url( $semaphore_url ) } ) {
+
+                    my $local_blocker_jobs = $local_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $local_semaphore->dbID );
+                    foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
+                        my $job_node_name   = add_job_node( $start_job );
+                    }
+                }
+            }
+        }
+
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
             my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
             push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
@@ -117,7 +133,6 @@ sub main {
     } else {
         die "\nERROR : -output filename has to be defined\n\n";
     }
-
 }
 
 
@@ -238,16 +253,15 @@ sub add_job_node {
 }
 
 
-my %semaphore_node_hash = ();
-
 sub add_semaphore_node {
     my $semaphore = shift @_;
 
+    my $semaphore_url               = $semaphore->relative_url( 0 );    # request for an absolute URL
     my $semaphore_id                = $semaphore->dbID;
     my $semaphore_pipeline_name     = $semaphore->hive_pipeline->hive_pipeline_name;
     my $semaphore_node_name         = 'semaphore_'.$semaphore_id.'__'.$semaphore_pipeline_name;
 
-    unless($semaphore_node_hash{$semaphore_node_name}++) {
+    unless($semaphore_url_hash{$semaphore_url}++) {
 
         my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
         my $semaphore_is_blocked        = $semaphore_blockers > 0;
