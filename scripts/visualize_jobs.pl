@@ -81,6 +81,9 @@ sub main {
         $self->{'graph'}->cluster_2_colour_pair( {} );
         $self->{'graph'}->display_cluster_names( 1 );
 
+            # preload all participating pipeline databases into TheApiary:
+        precache_participating_pipelines( $main_pipeline );
+
         my $job_adaptor     = $main_pipeline->hive_dba->get_AnalysisJobAdaptor;
         my $anchor_jobs     = $self->{'job_ids'} && $job_adaptor->fetch_all( 'job_id IN ('.join(',', @{$self->{'job_ids'}} ).')' );
         $start_analysis     = $self->{'start_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
@@ -99,16 +102,19 @@ sub main {
             my $job_node_name   = add_job_node( $start_job );
         }
 
-        my @semaphore_urls  = keys %semaphore_url_hash;
         my @pipelines       = ($main_pipeline, sort values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection });
-        foreach my $pipeline ( @pipelines ) {
-            my $semaphore_adaptor   = $pipeline->hive_dba->get_SemaphoreAdaptor;
-            foreach my $semaphore_url ( @semaphore_urls ) {
-                foreach my $local_semaphore ( @{ $semaphore_adaptor->fetch_all_by_dependent_semaphore_url( $semaphore_url ) } ) {
 
-                    my $local_blocker_jobs = $local_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $local_semaphore->dbID );
-                    foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
-                        my $job_node_name   = add_job_node( $start_job );
+        for (1..2) {    # a hacky way to get relative independence on sorting order (we don't know the ideal sorting order)
+            foreach my $pipeline ( @pipelines ) {
+                # print "Looking in pipeline: ".$pipeline->hive_pipeline_name."\n";
+                my $semaphore_adaptor   = $pipeline->hive_dba->get_SemaphoreAdaptor;
+                foreach my $semaphore_url ( keys %semaphore_url_hash ) {
+                    foreach my $local_semaphore ( @{ $semaphore_adaptor->fetch_all_by_dependent_semaphore_url( $semaphore_url ) } ) {
+
+                        my $local_blocker_jobs = $local_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $local_semaphore->dbID );
+                        foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
+                            my $job_node_name   = add_job_node( $start_job );
+                        }
                     }
                 }
             }
@@ -133,6 +139,28 @@ sub main {
 
     } else {
         die "\nERROR : -output filename has to be defined\n\n";
+    }
+}
+
+
+        # preload all participating pipeline databases into TheApiary:
+sub precache_participating_pipelines {
+    my @pipelines_to_check = @_;
+
+    my %scanned_pipeline_urls = ();
+
+    while( my $current_pipeline = shift @pipelines_to_check ) {
+        my $current_pipeline_url = $current_pipeline->hive_dba->dbc->url;
+        unless( $scanned_pipeline_urls{ $current_pipeline_url }++ ) {
+            foreach my $df_target ( $current_pipeline->collection_of('DataflowTarget')->list ) {
+                    # touching it for the side-effect of loading it to TheApiary:
+                my $target_object_pipeline  = $df_target->to_analysis->hive_pipeline;
+                my $target_pipeline_url     = $target_object_pipeline->hive_dba->dbc->url;
+                unless(exists $scanned_pipeline_urls{$target_pipeline_url}) {
+                    push @pipelines_to_check, $target_object_pipeline;
+                }
+            }
+        }
     }
 }
 
@@ -234,6 +262,12 @@ sub add_job_node {
                 );
             }
 
+                # a local semaphore potentially blocking this job:
+            if(my $blocking_semaphore = $job->fetch_local_blocking_semaphore) {
+                my $semaphore_node_name = add_semaphore_node( $blocking_semaphore );
+            }
+
+                # a local semaphore potentially blocked by this job:
             if(my $controlled_semaphore = $job->controlled_semaphore) {
                 my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
 
