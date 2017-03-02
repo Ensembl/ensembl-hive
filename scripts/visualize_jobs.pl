@@ -102,10 +102,10 @@ sub main {
             my $job_node_name   = add_job_node( $start_job );
         }
 
-        my @pipelines       = ($main_pipeline, sort values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection });
+        my @other_pipelines = sort values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
 
         for (1..2) {    # a hacky way to get relative independence on sorting order (we don't know the ideal sorting order)
-            foreach my $pipeline ( @pipelines ) {
+            foreach my $pipeline ( $main_pipeline, @other_pipelines ) {
                 # print "Looking in pipeline: ".$pipeline->hive_pipeline_name."\n";
                 my $semaphore_adaptor   = $pipeline->hive_dba->get_SemaphoreAdaptor;
                 foreach my $semaphore_url ( keys %semaphore_url_hash ) {
@@ -123,10 +123,17 @@ sub main {
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
             my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
             push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
-            $self->{'graph'}->cluster_2_colour_pair->{ $this_pipeline->hive_pipeline_name } = ($this_pipeline == $main_pipeline)
-                ? ['pastel19', 3]
-                : ['pastel19', 8];
         }
+
+        $self->{'graph'}->cluster_2_colour_pair->{ $main_pipeline->hive_pipeline_name } = ['pastel19', 3];
+        my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
+            # now rotate through the list:
+        foreach my $other_pipeline ( @other_pipelines ) {
+            my $colour_pair = shift @other_pipeline_colour_pairs;
+            $self->{'graph'}->cluster_2_colour_pair->{ $other_pipeline->hive_pipeline_name } = $colour_pair;
+            push @other_pipeline_colour_pairs, $colour_pair;
+        }
+
 
             ## If you need to take a look at the intermediate dot file:
         if( $self->{'dot_input'} ) {
