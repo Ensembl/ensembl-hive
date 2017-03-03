@@ -104,11 +104,13 @@ sub merge {
     my $from = shift @_;
     my $to   = shift @_ || $self->config_hash;  # only defined in subsequent recursion steps
 
-    while(my ($key,$value) = each %$from) {
-        if(exists $to->{$key} and ref($to->{$key})) {
-            $self->merge($from->{$key}, $to->{$key});
-        } else {
-            $to->{$key} = $from->{$key};
+    if(ref($from) eq 'HASH') {      # FIXME: currently we don't merge ARRAY references (the only example we currently have is REMARK), only the HASH references
+        while(my ($key,$value) = each %$from) {
+            if(exists $to->{$key} and ref($to->{$key})) {
+                $self->merge($from->{$key}, $to->{$key});
+            } else {
+                $to->{$key} = $from->{$key};
+            }
         }
     }
 }
