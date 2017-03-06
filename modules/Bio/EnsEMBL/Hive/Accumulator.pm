@@ -98,12 +98,11 @@ sub display_name {
 sub dataflow {
     my ( $self, $output_ids, $emitting_job ) = @_;
 
-    if(my $receiving_job = $emitting_job->controlled_semaphore->ultimate_dependent_job) {   # we need to reach all the way to the actual job
+    if(my $receiving_semaphore = $emitting_job->controlled_semaphore) {
 
-        my $receiving_job_id    = $receiving_job->dbID;
-        my $accu_adaptor        = $receiving_job->adaptor->db->get_AccumulatorAdaptor;
-        my $local_accu          = $receiving_job->adaptor == $emitting_job->adaptor;
-        my $sending_job_id      = $local_accu ? $emitting_job->dbID : undef;
+        my $sending_job_id          = $emitting_job->dbID;
+        my $receiving_semaphore_id  = $receiving_semaphore->dbID;
+        my $accu_adaptor            = $receiving_semaphore->adaptor->db->get_AccumulatorAdaptor;
 
         my $accu_name           = $self->accu_name;
         my $accu_address        = $self->accu_address;
@@ -117,18 +116,18 @@ sub dataflow {
             $key_signature=~s/(\w+)/$emitting_job->_param_possibly_overridden($1,$output_id)/eg;
 
             push @rows, {
-                'sending_job_id'    => $sending_job_id,
-                'receiving_job_id'  => $receiving_job_id,
-                'struct_name'       => $accu_name,
-                'key_signature'     => $key_signature,
-                'value'             => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
+                'sending_job_id'            => $sending_job_id,
+                'receiving_semaphore_id'    => $receiving_semaphore_id,
+                'struct_name'               => $accu_name,
+                'key_signature'             => $key_signature,
+                'value'                     => stringify( $emitting_job->_param_possibly_overridden($accu_input_variable, $output_id) ),
             };
         }
 
         $accu_adaptor->store( \@rows );
 
     } else {
-        die "No semaphored job, cannot perform accumulated dataflow";
+        die "No controlled semaphore, cannot perform accumulated dataflow";
     }
 }
 

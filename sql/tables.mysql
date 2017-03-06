@@ -421,22 +421,22 @@ CREATE TABLE job_file (
 
 @desc   Accumulator for funneled dataflow.
 
-@column sending_job_id     semaphoring job in the "box"
-@column receiving_job_id   semaphored job outside the "box"
-@column struct_name        name of the structured parameter
-@column key_signature      locates the part of the structured parameter
-@column value              value of the part
+@column sending_job_id          semaphoring job in the "box"
+@column receiving_semaphore_id  semaphore just outside the "box"
+@column struct_name             name of the structured parameter
+@column key_signature           locates the part of the structured parameter
+@column value                   value of the part
 */
 
 CREATE TABLE accu (
     sending_job_id          INTEGER,
-    receiving_job_id        INTEGER     NOT NULL,
+    receiving_semaphore_id  INTEGER      NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
     value                   MEDIUMTEXT,
 
     KEY accu_sending_idx (sending_job_id),
-    KEY accu_receiving_idx (receiving_job_id)
+    KEY accu_receiving_idx (receiving_semaphore_id)
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
 

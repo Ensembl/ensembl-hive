@@ -208,7 +208,7 @@ sub add_job_node {
     my $job_node_name       = 'job_'.$job_id.'__'.$job_pipeline_name;
 
     unless($job_node_hash{$job_node_name}++) {
-        my $job_shape           = 'record';
+        my $job_shape           = 'box3d';
         my $job_status          = $job->status;
         my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job_status} // 'yellow';
         my $analysis_status_colour = {
@@ -236,13 +236,6 @@ sub add_job_node {
         foreach my $param_key (sort keys %$job_params) {
             my $param_value = $job_params->{$param_key};
             $job_label  .= "<tr><td>$param_key:</td><td> $param_value</td></tr>";
-        }
-
-        my $accu_adaptor    = $job->adaptor->db->get_AccumulatorAdaptor;
-        my $accu            = $accu_adaptor->fetch_structures_for_job_ids( $job_id )->{ $job_id };
-
-        foreach my $accu_name (sort keys %$accu) {
-            $job_label  .=  qq{<tr><td><u><i>accumulated:</i></u></td><td><i>$accu_name</i></td></tr>};
         }
 
         $job_label  .= "</table>>";
@@ -302,6 +295,91 @@ sub add_job_node {
 }
 
 
+sub draw_semaphore_and_accu {
+    my ($semaphore, $dependent_node_name) = @_;
+
+    my $semaphore_id                = $semaphore->dbID;
+    my $semaphore_pipeline_name     = $semaphore->hive_pipeline->hive_pipeline_name;
+    my $semaphore_node_name         = 'semaphore_'.$semaphore_id.'__'.$semaphore_pipeline_name;
+
+    my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
+    my $semaphore_is_blocked        = $semaphore_blockers > 0;
+
+    my ($semaphore_colour, $semaphore_shape, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
+        ? ('red', 'triangle', 'red', 'tee')
+        : ('darkgreen', 'invtriangle', 'darkgreen', 'none');
+
+    my @semaphore_label_parts = ();
+    if($semaphore_is_blocked) {
+        if(my $local=$semaphore->local_jobs_counter) { push @semaphore_label_parts, "local: $local" }
+        if(my $remote=$semaphore->remote_jobs_counter) { push @semaphore_label_parts, "remote: $remote" }
+    } else {
+        push @semaphore_label_parts, "open";
+    }
+    my $semaphore_label = join("\n", @semaphore_label_parts);
+
+    $self->{'graph'}->add_node( $semaphore_node_name,
+        shape       => $semaphore_shape,
+        style       => 'filled',
+        fillcolor   => $semaphore_colour,
+        label       => $semaphore_label,
+    );
+
+    my $raw_accu_data   = $semaphore->fetch_my_raw_accu_data;
+    my $accu_node_name;
+
+    if(@$raw_accu_data) {
+        $accu_node_name  = 'accu_'.$semaphore_id.'__'.$semaphore_pipeline_name;
+
+        my $accu_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
+        my %struct_name_2_key_signature = ();
+        foreach my $accu_vector (@$raw_accu_data) {
+            push @{ $struct_name_2_key_signature{ $accu_vector->{'struct_name'} } }, $accu_vector->{'key_signature'};
+        }
+        foreach my $struct_name (sort keys %struct_name_2_key_signature) {
+            $accu_label  .=  qq{<tr><td><b>$struct_name</b></td><td></td></tr>};
+            foreach my $key_signature ( @{ $struct_name_2_key_signature{$struct_name} } ) {
+                $accu_label  .=  qq{<tr><td></td><td>$key_signature</td></tr>};
+            }
+        }
+        $accu_label  .= "</table>>";
+
+        $self->{'graph'}->add_node( $accu_node_name,
+            shape       => 'note',
+            style       => 'filled',
+            fillcolor   => $semaphore_colour,
+            label       => $accu_label,
+        );
+
+        $self->{'graph'}->add_edge( $semaphore_node_name => $accu_node_name,
+            color       => $dependent_blocking_arrow_colour,
+            style       => 'dashed',
+            arrowhead   => $dependent_blocking_arrow_shape,
+            tailport    => 's',
+            headport    => 'n',
+        );
+        $self->{'graph'}->add_edge( $accu_node_name => $dependent_node_name,
+            color       => $dependent_blocking_arrow_colour,
+            style       => 'dashed',
+            arrowhead   => $dependent_blocking_arrow_shape,
+            tailport    => 's',
+            headport    => 'n',
+        );
+
+    } else {
+        $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
+            color       => $dependent_blocking_arrow_colour,
+            style       => 'dashed',
+            arrowhead   => $dependent_blocking_arrow_shape,
+            tailport    => 's',
+            headport    => 'n',
+        );
+    }
+
+    return $accu_node_name;
+}
+
+
 sub add_semaphore_node {
     my $semaphore = shift @_;
 
@@ -312,58 +390,23 @@ sub add_semaphore_node {
 
     unless($semaphore_url_hash{$semaphore_url}++) {
 
-        my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
-        my $semaphore_is_blocked        = $semaphore_blockers > 0;
+        my ($accu_node_name, $target_cluster_name);
 
-        my ($semaphore_colour, $semaphore_shape, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
-            ? ('red', 'triangle', 'red', 'tee')
-            : ('darkgreen', 'invtriangle', 'darkgreen', 'none');
-
-        my @semaphore_label_parts = ();
-        if($semaphore_is_blocked) {
-            if(my $local=$semaphore->local_jobs_counter) { push @semaphore_label_parts, "local: $local" }
-            if(my $remote=$semaphore->remote_jobs_counter) { push @semaphore_label_parts, "remote: $remote" }
-        } else {
-            push @semaphore_label_parts, "open";
-        }
-        my $semaphore_label = join("\n", @semaphore_label_parts);
-
-        $self->{'graph'}->add_node( $semaphore_node_name,
-            shape       => $semaphore_shape,
-            style       => 'filled',
-            fillcolor   => $semaphore_colour,
-            label       => $semaphore_label,
-        );
-        
         if(my $dependent_job = $semaphore->dependent_job) {
             my $dependent_job_node_name = add_job_node( $dependent_job );
 
-            $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_job_node_name,
-                color       => $dependent_blocking_arrow_colour,
-                style       => 'dashed',
-                arrowhead   => $dependent_blocking_arrow_shape,
-                tailport    => 's',
-            );
+            $accu_node_name = draw_semaphore_and_accu($semaphore, $dependent_job_node_name);
 
-            my $analysis_name   = $dependent_job->analysis->relative_display_name($main_pipeline);
-            $analysis_name=~s{/}{___};
+            $target_cluster_name = $dependent_job->analysis->relative_display_name($main_pipeline);
+            $target_cluster_name =~s{/}{___};
 
-                # adding the semaphore node to the cluster of the dependent job's analysis:
-            push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $semaphore_node_name;
         } elsif(my $dependent_semaphore = $semaphore->dependent_semaphore) {
 
             my $dependent_semaphore_node_name = add_semaphore_node( $dependent_semaphore );
 
-            $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_semaphore_node_name,
-                color       => $dependent_blocking_arrow_colour,
-                style       => 'dashed',
-                arrowhead   => $dependent_blocking_arrow_shape,
-                tailport    => 's',
-                headport    => 'n',
-            );
+            $accu_node_name = draw_semaphore_and_accu($semaphore, $dependent_semaphore_node_name);
 
-                # adding the semaphore node to its pipeline's cluster:
-            push @{$self->{'graph'}->cluster_2_nodes->{ $semaphore->hive_pipeline->hive_pipeline_name }}, $semaphore_node_name;
+            $target_cluster_name = $semaphore->hive_pipeline->hive_pipeline_name;
 
                 # can we trace the local blocking jobs up to their roots?
             my $local_blocker_jobs = $dependent_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $dependent_semaphore->dbID );
@@ -373,6 +416,13 @@ sub add_semaphore_node {
 
         } else {
             die "This semaphore is not blocking anything at all";
+        }
+
+            # adding the semaphore node to the cluster of the dependent job's analysis:
+        push @{$self->{'graph'}->cluster_2_nodes->{ $target_cluster_name }}, $semaphore_node_name;
+        if($accu_node_name) {
+                # adding the accu node to the cluster of the dependent job's analysis:
+            push @{$self->{'graph'}->cluster_2_nodes->{ $target_cluster_name }}, $accu_node_name;
         }
     }
 

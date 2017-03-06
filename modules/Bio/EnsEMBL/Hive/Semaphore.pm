@@ -169,6 +169,13 @@ sub reblock_by {
 }
 
 
+sub fetch_my_raw_accu_data {
+    my $self    = shift @_;
+
+    return $self->adaptor->db->get_AccumulatorAdaptor->fetch_all_by_receiving_semaphore_id( $self->dbID );
+}
+
+
 sub release_if_ripe {
     my $self    = shift @_;
 
@@ -184,7 +191,19 @@ sub release_if_ripe {
 
         } elsif(my $dependent_semaphore = $self->dependent_semaphore) {
 
-            $dependent_semaphore->adaptor->increment_column_by_inc_and_id( 'remote_jobs_counter', -1, $dependent_semaphore->dbID );
+            my $dependent_semaphore_adaptor = $dependent_semaphore->adaptor;
+            my $ocean_separated             = $dependent_semaphore_adaptor->db ne $self->adaptor->db;
+
+                # pass the accumulated data here:
+            if(my $raw_accu_data = $self->fetch_my_raw_accu_data) {
+                foreach my $vector ( @$raw_accu_data ) {
+                    $vector->{'receiving_semaphore_id'} = $dependent_semaphore->dbID;   # set the new consumer
+                    $vector->{'sending_job_id'}         = undef if($ocean_separated);   # dissociate from the sending job as it was local
+                }
+                $dependent_semaphore_adaptor->db->get_AccumulatorAdaptor->store( $raw_accu_data );
+            }
+
+            $dependent_semaphore_adaptor->increment_column_by_inc_and_id( 'remote_jobs_counter', -1, $dependent_semaphore->dbID );
 
             $dependent_semaphore->release_if_ripe();    # recursion
 

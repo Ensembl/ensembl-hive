@@ -436,22 +436,22 @@ CREATE INDEX ON job_file (role_id);
 
 @desc   Accumulator for funneled dataflow.
 
-@column sending_job_id     semaphoring job in the "box"
-@column receiving_job_id   semaphored job outside the "box"
-@column struct_name        name of the structured parameter
-@column key_signature      locates the part of the structured parameter
-@column value              value of the part
+@column sending_job_id          semaphoring job in the "box"
+@column receiving_semaphore_id  semaphore just outside the "box"
+@column struct_name             name of the structured parameter
+@column key_signature           locates the part of the structured parameter
+@column value                   value of the part
 */
 
 CREATE TABLE accu (
     sending_job_id          INTEGER,
-    receiving_job_id        INTEGER     NOT NULL,
+    receiving_semaphore_id  INTEGER      NOT NULL,
     struct_name             VARCHAR(255) NOT NULL,
     key_signature           VARCHAR(255) NOT NULL,
     value                   TEXT
 );
 CREATE INDEX ON accu (sending_job_id);
-CREATE INDEX ON accu (receiving_job_id);
+CREATE INDEX ON accu (receiving_semaphore_id);
 
 
 /**
