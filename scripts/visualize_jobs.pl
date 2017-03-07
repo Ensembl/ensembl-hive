@@ -42,6 +42,8 @@ sub main {
         'start_analysis_name=s' => \$self->{'start_analysis_name'}, # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
         'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},  # if given, the visualization is aborted at that analysis and doesn't go any further
 
+        'include!'              => \$self->{'include'},             # if set, include other pipeline rectangles inside the main one
+
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
 
@@ -75,6 +77,7 @@ sub main {
                     'name'          => 'JobDependencyGraph',
                     'pad'           => 1,
                     'ranksep'       => '1.2 equally',
+                    'remincross'    => 'true',
         );
 
         $self->{'graph'}->cluster_2_nodes( {} );
@@ -132,6 +135,10 @@ sub main {
             my $colour_pair = shift @other_pipeline_colour_pairs;
             $self->{'graph'}->cluster_2_colour_pair->{ $other_pipeline->hive_pipeline_name } = $colour_pair;
             push @other_pipeline_colour_pairs, $colour_pair;
+
+            if($self->{'include'}) {
+                push @{ $self->{'graph'}->cluster_2_nodes->{ $main_pipeline->hive_pipeline_name } }, $other_pipeline->hive_pipeline_name;
+            }
         }
 
 
