@@ -114,7 +114,7 @@ sub display_cluster_names {
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
-    my $box_colour_pair  = $self->cluster_2_colour_pair->{$cluster_name} || $self->nested_bgcolour;
+    my ($box_colour_pair, $auto_colour) = $self->cluster_2_colour_pair->{$cluster_name} || ($self->nested_bgcolour, 1);
     my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
 
     my $prefix = "\t" x $depth;
@@ -131,7 +131,7 @@ sub display_subgraph {
 
         if(defined($colour_offset)) {
             $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
-            $text .= $prefix . "\tcolor=".($depth+$colour_offset).";\n";
+            $text .= $prefix . "\tcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
         } else {    # it's just a simple colour:
             $text .= $prefix . "\tcolorscheme=X11;\n";
             $text .= $prefix . "\tcolor=${colour_scheme};\n";
