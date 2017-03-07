@@ -327,16 +327,14 @@ CREATE TABLE resource_description (
 @column input_id                input data passed into Analysis:RunnableDB to control the work
 @column param_id_stack          a CSV of job_ids whose input_ids contribute to the stack of local variables for the job
 @column accu_id_stack           a CSV of job_ids whose accu's contribute to the stack of local variables for the job
+@column when_created		When the job was created (not when it first run !)
 @column role_id                 links to the Role that claimed this job (NULL means it has never been claimed)
+@column last_attempt_id		Reference to the attempt table. the last attempt recorded for this job (can be NULL if the job has never run)
 @column status                  state the job is in
-@column retry_count             number times job had to be reset when worker failed to run it
-@column when_completed          when the job was completed
-@column runtime_msec            how long did it take to execute the job (or until the moment it failed)
-@column query_count             how many SQL queries were run during this job
 @column controlled_semaphore_id the dbID of the semaphore that is controlled by this job (and whose counter it will decrement by 1 upon successful completion)
 */
 
-CREATE TYPE job_status AS ENUM ('SEMAPHORED','READY','CLAIMED','COMPILATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON');
+CREATE TYPE job_status AS ENUM ('SEMAPHORED','READY','CLAIMED','IN_PROGRESS','DONE','FAILED','PASSED_ON');
 CREATE TABLE job (
     job_id                  SERIAL PRIMARY KEY,
     prev_job_id             INTEGER              DEFAULT NULL,  -- the job that created this one using a dataflow rule
@@ -344,18 +342,16 @@ CREATE TABLE job (
     input_id                TEXT        NOT NULL,
     param_id_stack          TEXT        NOT NULL DEFAULT '',
     accu_id_stack           TEXT        NOT NULL DEFAULT '',
+    when_created            TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     role_id                 INTEGER              DEFAULT NULL,
+    last_attempt_id         INTEGER              DEFAULT NULL,  -- the last attempt registered for this job
     status                  job_status  NOT NULL DEFAULT 'READY',
-    retry_count             INTEGER     NOT NULL DEFAULT 0,
-    when_completed          TIMESTAMP            DEFAULT NULL,
-    runtime_msec            INTEGER              DEFAULT NULL,
-    query_count             INTEGER              DEFAULT NULL,
 
     controlled_semaphore_id INTEGER              DEFAULT NULL,      -- terminology: fan jobs CONTROL semaphores; funnel jobs or remote semaphores DEPEND ON (local) semaphores
 
     UNIQUE (input_id, param_id_stack, accu_id_stack, analysis_id)   -- to avoid repeating tasks
 );
-CREATE INDEX ON job (analysis_id, status, retry_count); -- for claiming jobs
+CREATE INDEX ON job (analysis_id, status, last_attempt_id); -- for claiming jobs
 CREATE INDEX ON job (role_id, status);                  -- for fetching and releasing claimed jobs
 
 /*
@@ -369,6 +365,42 @@ CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
 	WHERE job.input_id=NEW.input_id AND job.param_id_stack=NEW.param_id_stack AND job.accu_id_stack=NEW.accu_id_stack AND job.analysis_id=NEW.analysis_id)
     DO INSTEAD NOTHING;
 */
+
+/**
+@table  attempt
+
+@colour #1D73DA
+
+@desc The attempt table records all the attempts ever made on the jobs
+
+@column attempt_id              autoincrement id
+@column role_id                 links to the Role that claimed (run) this attempt
+@column job_id                  the job this attempt is about
+@column status                  state the job is in
+@column when_initialized        when the attempt was initialized (i.e. the job was claimed)
+@column when_updated            when the attempt status was last updated
+@column runtime_msec            how long did it take to execute the job (or until the moment it failed)
+@column query_count             how many SQL queries were run during this job
+@column stdout_file             path to the job's STDOUT log
+@column stderr_file            path to the job's STDERR log
+*/
+
+CREATE TYPE attempt_status AS ENUM ('INITIALIZATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','END');
+CREATE TABLE attempt (
+    attempt_id              SERIAL PRIMARY KEY,
+    role_id                 INTEGER     NOT NULL,
+    job_id                  INTEGER     NOT NULL,                  -- the job this attempt is about
+    status                  attempt_status NOT NULL DEFAULT 'INITIALIZATION',
+    when_initialized        TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_updated            TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
+    when_ended              TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
+    is_success              SMALLINT,
+    runtime_msec            INTEGER              DEFAULT NULL,
+    query_count             INTEGER              DEFAULT NULL,
+    stdout_file             VARCHAR(255),
+    stderr_file             VARCHAR(255)
+);
+CREATE INDEX ON attempt (job_id);                                  -- for finding the attempts linked to a job
 
 
 /**
@@ -398,35 +430,6 @@ CREATE TABLE semaphore (
 
     UNIQUE (dependent_job_id)                                                                       -- make sure two semaphores do not block the same job
 );
-
-
-/**
-@table  job_file
-
-@colour #1D73DA
-
-@desc   For testing/debugging purposes both STDOUT and STDERR streams of each Job
-        can be redirected into a separate log file.
-        This table holds filesystem paths to one or both of those files.
-        There is max one entry per job_id and retry.
-
-@column job_id             foreign key
-@column retry              copy of retry_count of job as it was run
-@column role_id            links to the Role that claimed this job
-@column stdout_file        path to the job's STDOUT log
-@column stderr_file        path to the job's STDERR log
-*/
-
-CREATE TABLE job_file (
-    job_id                  INTEGER     NOT NULL,
-    retry                   INTEGER     NOT NULL,
-    role_id                 INTEGER     NOT NULL,
-    stdout_file             VARCHAR(255),
-    stderr_file             VARCHAR(255),
-
-    PRIMARY KEY (job_id, retry)
-);
-CREATE INDEX ON job_file (role_id);
 
 
 /**
@@ -661,11 +664,11 @@ CREATE TABLE worker_resource_usage (
 
 @column log_message_id  an autoincremented primary id of the message
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
+@column     attempt_id  the id of the attempt that threw the message (or NULL if it was outside of a message)
 @column        role_id  the "current" role
 @column      worker_id  the "current" worker
 @column   beekeeper_id  beekeeper that generated this message
 @column    when_logged  when the message was thrown
-@column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
 @column            msg  string that contains the message
 @column  message_class  type of message
@@ -675,6 +678,7 @@ CREATE TYPE msg_class AS ENUM ('INFO', 'PIPELINE_CAUTION', 'PIPELINE_ERROR', 'WO
 CREATE TABLE log_message (
     log_message_id          SERIAL PRIMARY KEY,
     job_id                  INTEGER              DEFAULT NULL,
+    attempt_id              INTEGER              DEFAULT NULL,
     role_id                 INTEGER              DEFAULT NULL,
     worker_id               INTEGER              DEFAULT NULL,
     beekeeper_id            INTEGER              DEFAULT NULL,
@@ -686,6 +690,8 @@ CREATE TABLE log_message (
 );
 CREATE INDEX ON log_message (worker_id);
 CREATE INDEX ON log_message (job_id);
+CREATE INDEX ON log_message (role_id);
+CREATE INDEX ON log_message (attempt_id);
 CREATE INDEX ON log_message (beekeeper_id);
 CREATE INDEX ON log_message (message_class);
 

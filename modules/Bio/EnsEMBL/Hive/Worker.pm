@@ -733,15 +733,16 @@ sub run_one_batch {
     ONE_BATCH: while(my $job = shift @$jobs) {         # to make sure jobs go out of scope without undue delay
 
         my $job_id = $job->dbID();
-        $self->worker_say( $job->toString ) if($self->debug); 
+        my $attempt = $job->create_new_attempt($current_role);
+        $self->worker_say( $attempt->toString ) if $self->debug;
 
         my $job_stopwatch = Bio::EnsEMBL::Hive::Utils::Stopwatch->new();
         $job_partial_timing = {};
 
-        $self->start_job_output_redirection($job);  # switch logging into job's STDERR
+        $self->start_job_output_redirection($attempt);  # switch logging into job's STDERR
         eval {  # capture any throw/die
             my $runnable_object = $self->runnable_object();
-            $runnable_object->input_job( $job );    # "take" the job
+            $runnable_object->attempt( $attempt );  # "take" the job
 
             $job->incomplete(1);
             $self->adaptor->db->dbc->query_count(0);
@@ -759,14 +760,15 @@ sub run_one_batch {
         }
 
             # whether the job completed successfully or not:
-        $self->runnable_object->input_job( undef );   # release an extra reference to the job
-        $job->runtime_msec( $job_stopwatch->get_elapsed );
-        $job->query_count( $self->adaptor->db->dbc->query_count );
+        $self->runnable_object->attempt( undef );   # release an extra reference to the job
+        $attempt->runtime_msec( $job_stopwatch->get_elapsed );
+        $attempt->query_count( $self->adaptor->db->dbc->query_count );
+        $attempt->adaptor->check_in_attempt($attempt, $job->died_somewhere ? 0 : 1);
 
         my $job_completion_line = "Job $job_id : ". ($job->died_somewhere ? 'died' : 'complete' );
 
         print "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));         # one copy goes to the job's STDERR
-        $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
+        $self->stop_job_output_redirection($attempt);                                                           # and then we switch back to worker's STDERR
         $self->worker_say( $job_completion_line );                                                              # one copy goes to the worker's STDERR
 
         $self->current_role->register_attempt( ! $job->died_somewhere );
@@ -777,7 +779,7 @@ sub run_one_batch {
                 # not to retry jobs, follow their wish.
             my $may_retry = $job->transient_error && $self->retry_throwing_jobs;
 
-            $job->adaptor->release_and_age_job( $job_id, $max_retry_count, $may_retry, $job->runtime_msec );
+            $job->adaptor->release_and_age_job( $job_id, $current_role->analysis, $may_retry );
 
             if( $self->prev_job_error                # a bit of AI: if the previous job failed as well, it is LIKELY that we have contamination
              or $job->lethal_for_worker ) {          # trust the job's expert knowledge
@@ -857,41 +859,41 @@ sub enter_status {
 
 
 sub start_job_output_redirection {
-    my ($self, $job) = @_;
+    my ($self, $attempt) = @_;
 
     if(my $worker_log_dir = $self->log_dir) {
-        $self->get_stdout_redirector->push( $job->stdout_file( $worker_log_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.out' ) );
-        $self->get_stderr_redirector->push( $job->stderr_file( $worker_log_dir . '/job_id_' . $job->dbID . '_' . $job->retry_count . '.err' ) );
+        $self->get_stdout_redirector->push( $attempt->stdout_file( $worker_log_dir . '/job_id_' . $attempt->job_id . '_' . $attempt->job->attempt_count. '.out' ) );
+        $self->get_stderr_redirector->push( $attempt->stderr_file( $worker_log_dir . '/job_id_' . $attempt->job_id . '_' . $attempt->job->attempt_count . '.err' ) );
 
-        if(my $job_adaptor = $job->adaptor) {
-            $job_adaptor->store_out_files($job);
+        if(my $attempt_adaptor = $attempt->adaptor) {
+            $attempt_adaptor->store_out_files($attempt);
         }
     }
 }
 
 
 sub stop_job_output_redirection {
-    my ($self, $job) = @_;
+    my ($self, $attempt) = @_;
 
     if($self->log_dir) {
         $self->get_stdout_redirector->pop();
         $self->get_stderr_redirector->pop();
 
-        my $force_cleanup = !($self->debug || $job->died_somewhere);
+        my $force_cleanup = !($self->debug || $attempt->job->died_somewhere);
 
-        if($force_cleanup or -z $job->stdout_file) {
-            $self->worker_say( "Deleting '".$job->stdout_file."' file" );
-            unlink $job->stdout_file;
-            $job->stdout_file(undef);
+        if($force_cleanup or -z $attempt->stdout_file) {
+            $self->worker_say( "Deleting '".$attempt->stdout_file."' file" );
+            unlink $attempt->stdout_file;
+            $attempt->stdout_file(undef);
         }
-        if($force_cleanup or -z $job->stderr_file) {
-            $self->worker_say( "Deleting '".$job->stderr_file."' file" );
-            unlink $job->stderr_file;
-            $job->stderr_file(undef);
+        if($force_cleanup or -z $attempt->stderr_file) {
+            $self->worker_say( "Deleting '".$attempt->stderr_file."' file" );
+            unlink $attempt->stderr_file;
+            $attempt->stderr_file(undef);
         }
 
-        if(my $job_adaptor = $job->adaptor) {
-            $job_adaptor->store_out_files($job);
+        if(my $attempt_adaptor = $attempt->adaptor) {
+            $attempt_adaptor->store_out_files($attempt);
         }
     }
 }

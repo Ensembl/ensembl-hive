@@ -82,7 +82,8 @@ sub standaloneJob {
         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($hive_pipeline, $dummy_analysis, destringify($flow_into) );
     }
 
-    $runnable_object->input_job($job);
+    my $attempt = $job->create_new_attempt();
+    $runnable_object->attempt($attempt);
     $runnable_object->life_cycle();
 
     $runnable_object->cleanup_worker_temp_directory() unless $flags->{no_cleanup};

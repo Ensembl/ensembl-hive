@@ -40,6 +40,7 @@ package Bio::EnsEMBL::Hive::AnalysisJob;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Attempt;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::TheApiary;
@@ -54,6 +55,8 @@ use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new(
     prev_job_id / prev_job
 
     analysis_id / analysis
+
+    last_attempt_id / last_attempt
 
     controlled_semaphore_id / controlled_semaphore
 
@@ -96,33 +99,21 @@ sub status {
     return $self->{'_status'} || 'READY';
 }
 
-sub retry_count {
+sub attempt_count {
     my $self = shift;
-    $self->{'_retry_count'} = shift if(@_);
-    $self->{'_retry_count'} = 0 unless(defined($self->{'_retry_count'}));
-    return $self->{'_retry_count'};
+    # Lazy-loaded
+    if ((not exists $self->{'_attempt_count'}) and $self->adaptor) {
+        # Cached because we don't expect the same AnalysisJob instance to live across multiple attempts
+        $self->{'_attempt_count'} = $self->adaptor->db->get_AttemptAdaptor->count_all_by_job_id($self->dbID);
+    }
+    return $self->{'_attempt_count'};
 }
 
-sub when_completed {
+sub when_created {
     my $self = shift;
-    $self->{'_when_completed'} = shift if(@_);
-    return $self->{'_when_completed'};
+    $self->{'_when_created'} = shift if(@_);
+    return $self->{'_when_created'};
 }
-
-sub runtime_msec {
-    my $self = shift;
-    $self->{'_runtime_msec'} = shift if(@_);
-    $self->{'_runtime_msec'} = 0 unless(defined($self->{'_runtime_msec'}));
-    return $self->{'_runtime_msec'};
-}
-
-sub query_count {
-    my $self = shift;
-    $self->{'_query_count'} = shift if(@_);
-    $self->{'_query_count'} = 0 unless(defined($self->{'_query_count'}));
-    return $self->{'_query_count'};
-}
-
 
 sub set_and_update_status {
     my ($self, $status ) = @_;
@@ -132,18 +123,6 @@ sub set_and_update_status {
     if(my $adaptor = $self->adaptor) {
         $adaptor->check_in_job($self);
     }
-}
-
-sub stdout_file {
-  my $self = shift;
-  $self->{'_stdout_file'} = shift if(@_);
-  return $self->{'_stdout_file'};
-}
-
-sub stderr_file {
-  my $self = shift;
-  $self->{'_stderr_file'} = shift if(@_);
-  return $self->{'_stderr_file'};
 }
 
 sub accu_hash {
@@ -172,6 +151,24 @@ sub autoflow {
   $self->{'_autoflow'} = 1 unless(defined($self->{'_autoflow'}));  
 
   return $self->{'_autoflow'};
+}
+
+
+sub create_new_attempt {
+    my ($self, $role) = @_;
+
+    my $attempt = Bio::EnsEMBL::Hive::Attempt->new(
+        'role'  => $role,
+        'job'   => $self,
+    );
+
+    my $job_adaptor = $self->adaptor;
+
+    $job_adaptor->db->get_AttemptAdaptor->store($attempt)   if $job_adaptor;
+    $self->last_attempt($attempt);
+    $job_adaptor->update_last_attempt_id($self)             if $job_adaptor;
+
+    return $attempt;
 }
 
 
@@ -407,7 +404,7 @@ sub toString {
         ? ( $self->analysis->logic_name.'('.$self->analysis_id.')' )
         : '(NULL)';
 
-    return 'Job dbID='.($self->dbID || '(NULL)')." analysis=$analysis_label, input_id='".$self->input_id."', status=".$self->status.", retry_count=".$self->retry_count;
+    return 'Job dbID='.($self->dbID || '(NULL)')." analysis=$analysis_label, input_id='".$self->input_id."', status=".$self->status.", attempt_count=".$self->attempt_count;
 }
 
 

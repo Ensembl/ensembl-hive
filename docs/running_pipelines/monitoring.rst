@@ -206,14 +206,14 @@ running about 2,900 jobs.
 Finally, the "progress" view tells you how your jobs are doing::
 
     > SELECT * FROM  progress;
-    +----------------------+----------------+--------+-------------+-----+----------------+
-    | analysis_name_and_id | resource_class | status | retry_count | cnt | example_job_id |
-    +----------------------+----------------+--------+-------------+-----+----------------+
-    | chrom_sizes(1)       | default        | DONE   |           0 |   1 |              1 |
-    | base_age_factory(2)  | 100Mb          | DONE   |           0 |   1 |              2 |
-    | base_age(3)          | 3.6Gb          | DONE   |           0 |  25 |              4 |
-    | big_bed(4)           | 1.8Gb          | DONE   |           0 |   1 |              3 |
-    +----------------------+----------------+--------+-------------+-----+----------------+
+    +----------------------+----------------+--------+----------+-----+----------------+--------------------+
+    | analysis_name_and_id | resource_class | status | is_retry | cnt | example_job_id | example_attempt_id |
+    +----------------------+----------------+--------+----------+-----+----------------+--------------------+
+    | chrom_sizes(1)       | default        | DONE   |        0 |   1 |              1 |                  1 |
+    | base_age_factory(2)  | 100Mb          | DONE   |        0 |   1 |              2 |                  2 |
+    | base_age(3)          | 3.6Gb          | DONE   |        0 |  25 |              4 |                  3 |
+    | big_bed(4)           | 1.8Gb          | DONE   |        0 |   1 |              3 |                 28 |
+    +----------------------+----------------+--------+----------+-----+----------------+--------------------+
 
 If you see Jobs in :hivestatus:`<FAILED>[ FAILED ]` state or Jobs with
 retry\_count > 0 (which means they have failed at least once and had

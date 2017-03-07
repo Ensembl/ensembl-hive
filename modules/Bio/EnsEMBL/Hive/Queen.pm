@@ -588,6 +588,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     if($check_buried_in_haste) {
         my $role_adaptor = $self->db->get_RoleAdaptor;
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
+        my $attempt_adaptor = $self->db->get_AttemptAdaptor;
 
         print "GarbageCollector:\tChecking for orphan roles...\n";
         my $orphan_roles = $role_adaptor->fetch_all_unfinished_roles_of_dead_workers();
@@ -616,7 +617,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         if(my $sj_number = scalar @$orphan_jobs) {
             print "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
             foreach my $job (@$orphan_jobs) {
-                $job_adaptor->release_and_age_job($job->dbID, $job->analysis->max_retry_count, 1);
+                $attempt_adaptor->record_attempt_interruption($job->last_attempt_id);
+                $job_adaptor->release_and_age_job($job->dbID, $job->analysis, 1);
             }
         } else {
             print "GarbageCollector:\tfound none\n";

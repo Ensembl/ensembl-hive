@@ -6,6 +6,8 @@
 
 =head1 SYNOPSIS
 
+    $dba->get_LogMessageAdaptor->store_attempt_message($attempt_id, $msg, $message_class);
+
     $dba->get_LogMessageAdaptor->store_job_message($job_id, $msg, $message_class);
 
     $dba->get_LogMessageAdaptor->store_worker_message($worker, $msg, $message_class);
@@ -52,6 +54,33 @@ sub default_table_name {
 }
 
 
+sub store_attempt_message {
+    my ($self, $attempt_id, $msg, $message_class) = @_;
+
+    if($attempt_id) {
+        chomp $msg;   # we don't want that last "\n" in the database
+
+        my $table_name = $self->table_name();
+
+            # Note: the timestamp 'when_logged' column will be set automatically
+        my $sql = qq{
+            INSERT INTO $table_name (job_id, attempt_id, role_id, worker_id, status, msg, message_class)
+                               SELECT job_id, attempt_id, role_id, worker_id, attempt.status, ?, ?
+                                 FROM attempt
+                                 JOIN role USING(role_id)
+                                WHERE attempt_id=?
+        };
+
+        my $sth = $self->prepare( $sql );
+        $sth->execute( $msg, $message_class, $attempt_id );
+        $sth->finish();
+
+    } else {
+        $self->store_hive_message($msg, $message_class);
+    }
+}
+
+
 sub store_job_message {
     my ($self, $job_id, $msg, $message_class) = @_;
 
@@ -62,11 +91,12 @@ sub store_job_message {
 
             # Note: the timestamp 'when_logged' column will be set automatically
         my $sql = qq{
-            INSERT INTO $table_name (job_id, role_id, worker_id, retry, status, msg, message_class)
-                               SELECT job_id, role_id, worker_id, retry_count, status, ?, ?
+            INSERT INTO $table_name (job_id, attempt_id, role_id, worker_id, status, msg, message_class)
+                               SELECT job.job_id, last_attempt_id, job.role_id, worker_id, attempt.status, ?, ?
                                  FROM job
                                  JOIN role USING(role_id)
-                                WHERE job_id=?
+                                 JOIN attempt ON last_attempt_id=attempt_id
+                                WHERE job.job_id=?
         };
 
         my $sth = $self->prepare( $sql );

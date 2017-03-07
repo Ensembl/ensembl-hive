@@ -1,0 +1,186 @@
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [2016-2019] EMBL-European Bioinformatics Institute
+-- 
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+-- 
+--      http://www.apache.org/licenses/LICENSE-2.0
+-- 
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+
+-- ---------------------------------------------------------------------------------------------------
+
+SET @expected_version = 96;
+
+    -- make MySQL stop immediately after it encounters division by zero:
+SET SESSION sql_mode='TRADITIONAL';
+
+    -- warn that we detected the schema version mismatch:
+SELECT CONCAT(  'The patch only applies to schema version ',
+                @expected_version,
+                ', but the current schema version is ',
+                meta_value,
+                ', so skipping the rest.') AS ''
+    FROM hive_meta WHERE meta_key='hive_sql_schema_version' AND meta_value<>@expected_version;
+
+    -- cause division by zero only if current version differs from the expected one:
+INSERT INTO hive_meta (meta_key, meta_value)
+    SELECT 'this_should_never_be_inserted', 1 FROM hive_meta WHERE NOT 1/(meta_key<>'hive_sql_schema_version' OR meta_value=@expected_version);
+
+SELECT CONCAT(  'The patch seems to be compatible with schema version ',
+                @expected_version,
+                ', applying the patch...') AS '';
+
+    -- Now undo the change so that we could patch potentially non-TRADITIONAL schema:
+SET SESSION sql_mode='';
+
+-- ----------------------------------<actual_patch> -------------------------------------------------
+
+-- Create the new table and its foreign keys
+CREATE TABLE attempt (
+    attempt_id              INTEGER     NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    role_id                 INTEGER     NOT NULL,
+    job_id                  INTEGER     NOT NULL,                  -- the job this attempt is about
+    status                  ENUM('INITIALIZATION','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','END') DEFAULT 'INITIALIZATION' NOT NULL,
+    when_initialized        TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_updated            TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
+    when_ended              TIMESTAMP                    NULL,      -- mysql's special for "TIMESTAMP DEFAULT NULL"
+    is_success              TINYINT(1),
+    runtime_msec            INTEGER              DEFAULT NULL,
+    query_count             INTEGER              DEFAULT NULL,
+    stdout_file             VARCHAR(255),
+    stderr_file             VARCHAR(255),
+
+            KEY job_id                      (job_id)                                                -- for finding the attempts linked to a job
+) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
+
+ALTER TABLE attempt                 ADD CONSTRAINT  attempt_job_id_fkey         FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
+ALTER TABLE attempt                 ADD CONSTRAINT  attempt_role_id_fkey        FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
+
+-- Add the new columns / enum values to the job table
+ALTER TABLE job
+ MODIFY COLUMN status ENUM('SEMAPHORED','READY','CLAIMED','COMPILATION','IN_PROGRESS','PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP','DONE','FAILED','PASSED_ON') ,
+ ADD COLUMN last_attempt_id INTEGER DEFAULT NULL AFTER role_id,
+ ADD FOREIGN KEY (last_attempt_id) REFERENCES attempt(attempt_id);
+
+-- We can't easily reconstruct the whole list of attempts so we
+-- just record past attempts to capture the columns that will be
+-- dropped from the job table.
+-- To do this properly we would have to go through all log_messages,
+-- order them by timestamp / retry_count, and consider the current
+-- value of job.retry_count. The problem is that retry_count was
+-- reset by various AnalysisJobAdaptor methods and by users themselves
+-- so we can't trust those values..
+
+-- Populate dummy attempts
+INSERT INTO attempt
+SELECT job_id, role_id, job_id, "END", CURRENT_TIMESTAMP, NULL, when_completed, status = "DONE", runtime_msec, query_count, NULL, NULL
+  FROM job
+ WHERE (when_completed IS NOT NULL OR runtime_msec IS NOT NULL OR query_count IS NOT NULL)
+       AND role_id IS NOT NULL;
+-- Link them
+UPDATE job
+   SET last_attempt_id = job_id
+ WHERE (when_completed IS NOT NULL OR runtime_msec IS NOT NULL OR query_count IS NOT NULL)
+       AND role_id IS NOT NULL;
+-- Lump up the runtime statuses to IN_PROGRESS
+UPDATE job
+   SET status = "IN_PROGRESS"
+ WHERE status IN ('PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP');
+
+-- Remaining alterations to the job table
+ALTER TABLE job
+    ADD COLUMN when_created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER accu_id_stack,
+   DROP COLUMN retry_count,
+   DROP COLUMN when_completed,
+   DROP COLUMN runtime_msec,
+   DROP COLUMN query_count,
+ MODIFY COLUMN status ENUM('SEMAPHORED','READY','CLAIMED','IN_PROGRESS','DONE','FAILED','PASSED_ON') DEFAULT 'READY' NOT NULL,
+      DROP KEY analysis_status_retry,
+       ADD KEY analysis_status_attempted (analysis_id, status, last_attempt_id);
+
+-- Not migrated to the attempt table
+DROP TABLE job_file;
+
+-- Alter the log_message table
+ALTER TABLE log_message
+  ADD COLUMN attempt_id INTEGER DEFAULT NULL AFTER job_id,
+ DROP COLUMN retry,
+     ADD KEY role_id (role_id),
+     ADD KEY attempt_id (attempt_id);
+
+
+-- Recreate all the views
+CREATE OR REPLACE VIEW progress AS
+    SELECT CONCAT( a.logic_name, '(', a.analysis_id, ')') analysis_name_and_id,
+        MIN(rc.name) resource_class,
+        j.status,
+        j.last_attempt_id IS NOT NULL AS attempted,
+        CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
+        MIN(job_id) example_job_id
+    FROM        analysis_base a
+    LEFT JOIN   job j USING (analysis_id)
+    LEFT JOIN   resource_class rc ON (a.resource_class_id=rc.resource_class_id)
+    GROUP BY a.analysis_id, j.status, j.last_attempt_id IS NOT NULL
+    ORDER BY a.analysis_id, j.status;
+
+CREATE OR REPLACE VIEW msg AS
+    SELECT a.analysis_id, a.logic_name, m.*
+    FROM log_message m
+    LEFT JOIN role USING (role_id)
+    LEFT JOIN analysis_base a USING (analysis_id);
+
+CREATE OR REPLACE VIEW semaphore_job AS
+    SELECT
+        job.job_id AS job_id,
+        job.prev_job_id AS prev_job_id,
+        job.analysis_id AS analysis_id,
+        job.input_id AS input_id,
+        job.param_id_stack AS param_id_stack,
+        job.accu_id_stack AS accu_id_stack,
+        job.role_id AS role_id,
+        job.status AS status,
+        semaphore.local_jobs_counter AS local_jobs_counter,
+        semaphore.remote_jobs_counter AS remote_jobs_counter,
+        semaphore.dependent_semaphore_url AS dependent_semaphore_url
+    FROM job JOIN semaphore
+    ON semaphore.dependent_job_id = job.job_id;
+
+DROP PROCEDURE IF EXISTS job_search;
+CREATE PROCEDURE job_search(IN srch CHAR(40))
+READS SQL DATA
+  SELECT
+    a.analysis_id,
+    a.logic_name,
+    j.job_id AS job_id,
+    j.status,
+    IFNULL(d.data, j.input_id) input_id
+  FROM job j JOIN analysis_base a USING (analysis_id)
+    LEFT JOIN analysis_data d ON j.input_id=concat('_ext_input_analysis_data_id ',d.analysis_data_id)
+  WHERE j.input_id LIKE concat('%',srch,'%') OR d.data LIKE concat('%',srch,'%');
+
+DROP PROCEDURE IF EXISTS drop_hive_tables;
+DELIMITER //
+CREATE PROCEDURE drop_hive_tables()
+MODIFIES SQL DATA
+BEGIN
+    SET FOREIGN_KEY_CHECKS=0;
+    DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles, beekeeper_activity, semaphore_job;
+    DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, attempt, semaphore, role, worker, beekeeper, analysis_base, resource_class, hive_meta;
+    SET FOREIGN_KEY_CHECKS=1;
+END; //
+DELIMITER ;
+
+
+-- ----------------------------------</actual_patch> -------------------------------------------------
+
+
+    -- increase the schema version by one and register the patch:
+UPDATE hive_meta SET meta_value=meta_value+1 WHERE meta_key='hive_sql_schema_version';
+INSERT INTO hive_meta (meta_key, meta_value) SELECT CONCAT("patched_to_", meta_value), CURRENT_TIMESTAMP FROM hive_meta WHERE meta_key = "hive_sql_schema_version";

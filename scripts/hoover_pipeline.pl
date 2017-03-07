@@ -74,9 +74,9 @@ sub main {
     }
 
     my $sql = qq{
-    DELETE j FROM job j
+    DELETE j FROM job j JOIN attempt a ON j.last_attempt_id=a.attempt_id
      WHERE j.status='DONE'
-       AND j.when_completed < $threshold_datetime_expression
+       AND a.when_ended < $threshold_datetime_expression
     };
 
     my $dbc = $hive_dba->dbc();

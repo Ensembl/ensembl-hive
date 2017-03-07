@@ -16,7 +16,7 @@
     and several other variables. 
     From this input and configuration data, each Process can then proceed to 
     do something.  The flow of execution within a Process is:
-        pre_cleanup() if($retry_count>0);   # clean up databases/filesystem before subsequent attempts
+        pre_cleanup() if($attempt_count>1); # clean up databases/filesystem before subsequent attempts
         fetch_input();                      # fetch the data from databases/filesystems
         run();                              # perform the main computation 
         write_output();                     # record the results in databases/filesystems
@@ -133,7 +133,9 @@ sub life_cycle {
         # Catch all the "warn" calls
         #$SIG{__WARN__} = sub { $self->warning(@_) };
 
-        if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
+        $job->set_and_update_status( 'IN_PROGRESS' );
+
+        if( $self->can('pre_cleanup') and $job->attempt_count()>1 ) {
             $self->enter_status('PRE_CLEANUP');
             $self->pre_cleanup;
         }
@@ -222,9 +224,7 @@ sub say_with_header {
 sub enter_status {
     my ($self, $status) = @_;
 
-    my $job = $self->input_job();
-
-    $job->set_and_update_status( $status );
+    $self->attempt->set_and_update_status( $status );
 
     if(my $worker = $self->worker) {
         $worker->set_and_update_status( 'JOB_LIFECYCLE' );  # to ensure when_checked_in TIMESTAMP is updated
@@ -243,11 +243,11 @@ sub warning {
 
     $self->say_with_header( "$message_class : $msg", 1 );
 
-    my $job = $self->input_job;
+    my $attempt = $self->attempt;
     my $worker = $self->worker;
 
-    if(my $job_adaptor = ($job && $job->adaptor)) {
-        $job_adaptor->db->get_LogMessageAdaptor()->store_job_message($job->dbID, $msg, $message_class);
+    if(my $attempt_adaptor = ($attempt && $attempt->adaptor)) {
+        $attempt_adaptor->db->get_LogMessageAdaptor()->store_attempt_message($attempt->dbID, $msg, $message_class);
     } elsif(my $worker_adaptor = ($worker && $worker->adaptor)) {
         $worker_adaptor->db->get_LogMessageAdaptor()->store_worker_message($worker, $msg, $message_class);
     }
@@ -514,13 +514,30 @@ sub run_system_command {
 sub input_job {
     my $self = shift @_;
 
+    return $self->attempt->job if $self->attempt;
+}
+
+
+=head2 attempt
+
+    Title   :  attempt
+    Function:  Returns the job attempt to be run by this process
+               Subclasses should treat this as a read_only object.
+    Returns :  Bio::EnsEMBL::Hive::Attempt object
+
+=cut
+
+sub attempt {
+    my $self = shift @_;
+
     if(@_) {
-        if(my $job = $self->{'_input_job'} = shift) {
-            throw("Not a Bio::EnsEMBL::Hive::AnalysisJob object") unless ($job->isa("Bio::EnsEMBL::Hive::AnalysisJob"));
+        if(my $attempt = $self->{'_attempt'} = shift) {
+            throw("Not a Bio::EnsEMBL::Hive::Attempt object") unless ($attempt->isa("Bio::EnsEMBL::Hive::Attempt"));
         }
     }
-    return $self->{'_input_job'};
+    return $self->{'_attempt'};
 }
+
 
 
 # ##################### subroutines that link through to Job's methods #########################

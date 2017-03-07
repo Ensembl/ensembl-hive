@@ -35,12 +35,15 @@ ALTER TABLE dataflow_rule           ADD FOREIGN KEY (from_analysis_id)          
 ALTER TABLE job                     ADD CONSTRAINT  job_analysis_id_fkey        FOREIGN KEY (analysis_id)           REFERENCES analysis_base(analysis_id);
 ALTER TABLE role                    ADD FOREIGN KEY (analysis_id)               REFERENCES analysis_base(analysis_id);
 
+ALTER TABLE job                     ADD FOREIGN KEY (last_attempt_id)           REFERENCES attempt(attempt_id);
+ALTER TABLE log_message             ADD FOREIGN KEY (attempt_id)                REFERENCES attempt(attempt_id)                  ON DELETE CASCADE;
+
 ALTER TABLE dataflow_rule           ADD FOREIGN KEY (funnel_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 ALTER TABLE dataflow_target         ADD FOREIGN KEY (source_dataflow_rule_id)   REFERENCES dataflow_rule(dataflow_rule_id);
 
 ALTER TABLE accu                    ADD FOREIGN KEY (sending_job_id)            REFERENCES job(job_id)                          ON DELETE CASCADE;
+ALTER TABLE attempt                 ADD CONSTRAINT  attempt_job_id_fkey         FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE job                     ADD CONSTRAINT  job_prev_job_id_fkey        FOREIGN KEY (prev_job_id)           REFERENCES job(job_id)                  ON DELETE CASCADE;
-ALTER TABLE job_file                ADD CONSTRAINT  job_file_job_id_fkey        FOREIGN KEY (job_id)                REFERENCES job(job_id)                  ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (job_id)                    REFERENCES job(job_id)                          ON DELETE CASCADE;
 ALTER TABLE semaphore               ADD CONSTRAINT  semaphore_dependent_job_id_fkey     FOREIGN KEY (dependent_job_id)          REFERENCES job(job_id)              ON DELETE CASCADE;
 
@@ -48,8 +51,8 @@ ALTER TABLE analysis_base           ADD FOREIGN KEY (resource_class_id)         
 ALTER TABLE resource_description    ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 ALTER TABLE worker                  ADD FOREIGN KEY (resource_class_id)         REFERENCES resource_class(resource_class_id);
 
+ALTER TABLE attempt                 ADD CONSTRAINT  attempt_role_id_fkey        FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
 ALTER TABLE job                     ADD CONSTRAINT  job_role_id_fkey            FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
-ALTER TABLE job_file                ADD CONSTRAINT  job_file_role_id_fkey       FOREIGN KEY (role_id)               REFERENCES role(role_id)                ON DELETE CASCADE;
 ALTER TABLE log_message             ADD FOREIGN KEY (role_id)                   REFERENCES role(role_id)                        ON DELETE CASCADE;
 
 ALTER TABLE log_message             ADD FOREIGN KEY (worker_id)                 REFERENCES worker(worker_id)                    ON DELETE CASCADE;

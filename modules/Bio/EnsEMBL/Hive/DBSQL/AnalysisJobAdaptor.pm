@@ -55,10 +55,9 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 # NOTE: These lists must be kept in sync with the schema !
 # They are used in a number of queries.
-our $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
-our $ALL_STATUSES_OF_TAKEN_JOBS = qq{'CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS};
+our $ALL_STATUSES_OF_TAKEN_JOBS = qq{'CLAIMED','IN_PROGRESS'};
 our $ALL_STATUSES_OF_COMPLETE_JOBS = q{'DONE','PASSED_ON'};
-# Not in any list: SEMAPHORED, READY, COMPILATION (this one is actually not used), FAILED
+# Not in any list: SEMAPHORED, READY, FAILED
 
 sub default_table_name {
     return 'job';
@@ -360,7 +359,6 @@ sub store_a_semaphored_group_of_jobs {
 
   Arg [1]    : (optional) listref $list_of_analyses
   Arg [2]    : (optional) string $status
-  Arg [3]    : (optional) int $retry_at_least
   Example    : $all_failed_jobs = $adaptor->fetch_all_by_analysis_id_status(undef, 'FAILED');
                $analysis_done_jobs = $adaptor->fetch_all_by_analysis_id_status( $list_of_analyses, 'DONE');
   Description: Returns a list of all jobs filtered by given analysis_id (if specified) and given status (if specified).
@@ -369,7 +367,7 @@ sub store_a_semaphored_group_of_jobs {
 =cut
 
 sub fetch_all_by_analysis_id_status {
-    my ($self, $list_of_analyses, $status, $retry_count_at_least) = @_;
+    my ($self, $list_of_analyses, $status) = @_;
 
     my @constraints = ();
 
@@ -382,7 +380,6 @@ sub fetch_all_by_analysis_id_status {
     }
 
     push @constraints, "status='$status'"                     if ($status);
-    push @constraints, "retry_count >= $retry_count_at_least" if ($retry_count_at_least);
 
     return $self->fetch_all( join(" AND ", @constraints) );
 }
@@ -455,7 +452,7 @@ sub semaphore_job_by_id {    # used in the end of reblocking a semaphore chain
     my $self    = shift @_;
     my $job_id  = shift @_ or return;
 
-    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status NOT IN ('COMPILATION', $ALL_STATUSES_OF_TAKEN_JOBS)";
+    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status NOT IN ($ALL_STATUSES_OF_TAKEN_JOBS)";
 
     $self->dbc->protected_prepare_execute( [ $sql, $job_id ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'semaphoring a job'.$after, 'INFO' ); }
@@ -504,51 +501,12 @@ sub check_in_job {
 
     my $job_id = $job->dbID;
 
-    my $sql = "UPDATE job SET status='".$job->status."' ";
-
-    if($job->status eq 'DONE') {
-        $sql .= ",when_completed=CURRENT_TIMESTAMP";
-        $sql .= ",runtime_msec=".$job->runtime_msec;
-        $sql .= ",query_count=".$job->query_count;
-    } elsif($job->status eq 'PASSED_ON') {
-        $sql .= ", when_completed=CURRENT_TIMESTAMP";
-    } elsif($job->status eq 'READY') {
-    }
-
-    $sql .= " WHERE job_id='$job_id' ";
+    my $sql = "UPDATE job SET status='".$job->status."' WHERE job_id='$job_id' ";
 
         # This particular query is infamous for collisions and 'deadlock' situations; let's wait and retry:
     $self->dbc->protected_prepare_execute( [ $sql ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_job_message( $job_id, "checking the job in".$after, 'INFO' ); }
     );
-}
-
-
-=head2 store_out_files
-
-  Arg [1]    : Bio::EnsEMBL::Hive::AnalysisJob $job
-  Example    :
-  Description: update locations of log files, if present
-  Returntype : 
-  Exceptions :
-  Caller     : Bio::EnsEMBL::Hive::Worker
-
-=cut
-
-sub store_out_files {
-    my ($self, $job) = @_;
-
-    # FIXME: An UPSERT would be better here, but it is only promised in PostgreSQL starting from 9.5, which is not officially out yet.
-
-    my $delete_sql  = 'DELETE from job_file WHERE job_id=' . $job->dbID . ' AND retry='.$job->retry_count;
-    $self->dbc->do( $delete_sql );
-
-    if($job->stdout_file or $job->stderr_file) {
-        my $insert_sql = 'INSERT INTO job_file (job_id, retry, role_id, stdout_file, stderr_file) VALUES (?,?,?,?,?)';
-        my $insert_sth = $self->dbc->prepare($insert_sql);
-        $insert_sth->execute( $job->dbID, $job->retry_count, $job->role_id, $job->stdout_file, $job->stderr_file );
-        $insert_sth->finish();
-    }
 }
 
 
@@ -558,8 +516,6 @@ sub store_out_files {
   Arg [2]    : int $role_id (optional)
   Description: resets a job to to 'READY' (if no $role_id given) or directly to 'CLAIMED' so it can be run again, and fetches it.
                NB: Will also reset a previously 'SEMAPHORED' job to READY.
-               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
-               but will not change retry_count if a job has never *really* started.
   Returntype : Bio::EnsEMBL::Hive::AnalysisJob or undef
 
 =cut
@@ -572,8 +528,7 @@ sub reset_or_grab_job_by_dbID {
         # Note: the order of the fields being updated is critical!
     my $sql = qq{
         UPDATE job
-           SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
-             , status=?
+           SET status=?
              , role_id=?
          WHERE job_id=?
     };
@@ -632,7 +587,7 @@ sub grab_jobs_for_role {
                              WHERE analysis_id='$analysis_id'
                                AND status='READY'
     };
-    my $virgin_sql = qq{       AND retry_count=0 };
+    my $virgin_sql = qq{       AND last_attempt_id IS NULL };
     my $limit_sql  = qq{     LIMIT $how_many_this_batch };
     my $offset_sql = qq{    OFFSET $offset };
     my $suffix_sql = ($self->dbc->driver eq 'mysql') ? qq{
@@ -691,9 +646,9 @@ sub release_claimed_jobs_from_role {
   Description: If a Worker has died some of its jobs need to be reset back to 'READY'
                so they can be rerun.
                Jobs in state CLAIMED as simply reset back to READY.
-               If jobs was 'in progress' (see the $ALL_STATUSES_OF_RUNNING_JOBS variable)
-               the retry_count is increased and the status set back to READY.
-               If the retry_count >= $max_retry_count (3 by default) the job is set
+               If jobs was IN_PROGRESS, the attempt is marked as failed and the job
+               status set back to READY.
+               If the attempt_count > $max_retry_count (3 by default) the job is set
                to 'FAILED' and not rerun again.
   Exceptions : $role must be defined
   Caller     : Bio::EnsEMBL::Hive::Queen
@@ -705,17 +660,16 @@ sub release_undone_jobs_from_role {
 
     my $role_id         = $role->dbID;
     my $analysis        = $role->analysis;
-    my $max_retry_count = $analysis->max_retry_count;
     my $worker          = $role->worker;
 
-        #first just reset the claimed jobs, these don't need a retry_count index increment:
+        #first just reset the claimed jobs
     $self->release_claimed_jobs_from_role( $role );
 
     my $sth = $self->prepare( qq{
-        SELECT job_id
+        SELECT job_id, last_attempt_id
           FROM job
          WHERE role_id='$role_id'
-           AND status in ($ALL_STATUSES_OF_RUNNING_JOBS)
+           AND status = 'IN_PROGRESS'
     } );
     $sth->execute();
 
@@ -723,8 +677,9 @@ sub release_undone_jobs_from_role {
     $msg ||= "GarbageCollector: The worker died because of $cod";
 
     my $resource_overusage = ($cod eq 'MEMLIMIT') || ($cod eq 'RUNLIMIT' and $worker->work_done()==0);
+    my $attempt_adaptor = $self->db->get_AttemptAdaptor;
 
-    while(my ($job_id) = $sth->fetchrow_array()) {
+    while(my ($job_id, $attempt_id) = $sth->fetchrow_array()) {
 
         my $passed_on = 0;  # the flag indicating that the garbage_collection was attempted and was successful
 
@@ -739,10 +694,11 @@ sub release_undone_jobs_from_role {
             }
         }
 
-        $self->db()->get_LogMessageAdaptor()->store_job_message($job_id, $msg, $passed_on ? 'INFO' : 'WORKER_ERROR');
+        $self->db()->get_LogMessageAdaptor()->store_attempt_message($attempt_id, $msg, $passed_on ? 'INFO' : 'WORKER_ERROR');
 
         unless($passed_on) {
-            $self->release_and_age_job( $job_id, $max_retry_count, not $resource_overusage );
+            $attempt_adaptor->record_attempt_interruption($attempt_id);
+            $self->release_and_age_job( $job_id, $analysis, not $resource_overusage );
         }
 
         $role->register_attempt( 0 );
@@ -752,33 +708,19 @@ sub release_undone_jobs_from_role {
 
 
 sub release_and_age_job {
-    my ($self, $job_id, $max_retry_count, $may_retry, $runtime_msec) = @_;
+    my ($self, $job_id, $analysis, $may_retry) = @_;
 
-    # Default values
-    $max_retry_count //= $self->db->hive_pipeline->hive_default_max_retry_count;
-    $may_retry ||= 0;
-    $runtime_msec = "NULL" unless(defined $runtime_msec);
+    my $max_retry_count = $analysis->max_retry_count // $self->db->hive_pipeline->hive_default_max_retry_count;
+    my $n_attempts      = $self->db->get_AttemptAdaptor->count_all_by_job_id($job_id);
+    my $new_status      = ($may_retry && $n_attempts <= $max_retry_count) ? 'READY' : 'FAILED';
 
-        # NB: The order of updated fields IS important. Here we first find out the new status and then increment the retry_count:
-        #
-        # FIXME: would it be possible to retain role_id for READY jobs in order to temporarily keep track of the previous (failed) worker?
-        #
     $self->dbc->do( 
-        "UPDATE job "
-        .( ($self->dbc->driver eq 'pgsql')
-            ? "SET status = CAST(CASE WHEN ($may_retry != 0) AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END AS job_status), "
-            : "SET status =      CASE WHEN $may_retry AND (retry_count<$max_retry_count) THEN 'READY' ELSE 'FAILED' END, "
-         ).qq{
-               retry_count=retry_count+1,
-               runtime_msec=$runtime_msec
+     qq{UPDATE job SET status = '$new_status'
          WHERE job_id=$job_id
            AND status in ($ALL_STATUSES_OF_TAKEN_JOBS)
     } );
 
-        # FIXME: move the decision making completely to the API side and so avoid the potential race condition.
-    my $job         = $self->fetch_by_dbID( $job_id );
-
-    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( ($job->status eq 'FAILED') ? 'failed_job_count' : 'ready_job_count', 1, $job->analysis_id );
+    $self->db->get_AnalysisStatsAdaptor->increment_a_counter( ($new_status eq 'FAILED') ? 'failed_job_count' : 'ready_job_count', 1, $analysis->dbID );
 }
 
 
@@ -805,6 +747,7 @@ sub gc_dataflow {
 
     $job->dataflow_output_id( undef, $branch_name );
 
+    $self->db->get_AttemptAdaptor->record_attempt_interruption($job->last_attempt_id);
     $job->set_and_update_status('PASSED_ON');
 
         # PASSED_ON jobs are included in done_job_count
@@ -823,7 +766,7 @@ sub gc_dataflow {
   Arg [1]    : arrayref of Analyses
   Arg [2]    : arrayref of job statuses $input_statuses
   Description: Resets all the jobs of the selected analyses that have one of the
-               required statuses to 'READY' and their retry_count to 0.
+               required statuses to 'READY'
                Semaphores are updated accordingly.
   Caller     : beekeeper.pl and guiHive
 
@@ -869,12 +812,12 @@ sub reset_jobs_for_analysis_id {
                 UPDATE job j
              LEFT JOIN semaphore s
                     ON (j.job_id=s.dependent_job_id)
-                   SET j.retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
+                   SET
                        j.status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
                  WHERE $analyses_filter $statuses_filter
         } : ($self->dbc->driver eq 'pgsql') ? qq{
                 UPDATE job
-                   SET retry_count = CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
+                   SET
                        status = }.$self->job_status_cast("CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END").qq{
                   FROM job j
              LEFT JOIN semaphore s
@@ -882,7 +825,7 @@ sub reset_jobs_for_analysis_id {
                  WHERE job.job_id=j.job_id AND $analyses_filter $statuses_filter
         } : qq{
 
-            REPLACE INTO job (job_id, prev_job_id, analysis_id, input_id, param_id_stack, accu_id_stack, role_id, status, retry_count, when_completed, runtime_msec, query_count, controlled_semaphore_id)
+            REPLACE INTO job (job_id, prev_job_id, analysis_id, input_id, param_id_stack, accu_id_stack, role_id, last_attempt_id, status, controlled_semaphore_id)
                   SELECT j.job_id,
                          j.prev_job_id,
                          j.analysis_id,
@@ -890,11 +833,8 @@ sub reset_jobs_for_analysis_id {
                          j.param_id_stack,
                          j.accu_id_stack,
                          j.role_id,
+                         j.last_attempt_id,
                          CASE WHEN s.local_jobs_counter+s.remote_jobs_counter>0 THEN 'SEMAPHORED' ELSE 'READY' END,
-                         CASE WHEN j.status='READY' THEN 0 ELSE 1 END,
-                         j.when_completed,
-                         j.runtime_msec,
-                         j.query_count,
                          j.controlled_semaphore_id
                     FROM job j
                LEFT JOIN semaphore s

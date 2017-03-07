@@ -33,19 +33,19 @@ CONTACT
 -- Usage:
 --       select * from progress;                                         # the whole table (may take ages to generate, depending on the size of your pipeline)
 --       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
---       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
+--       select * from progress where attempted = 1;                     # only show jobs that have already been attempted
 
 CREATE OR REPLACE VIEW progress AS
     SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
         MIN(rc.name) resource_class,
         j.status,
-        j.retry_count,
+        j.last_attempt_id IS NOT NULL AS attempted,
         CASE WHEN j.status IS NULL THEN 0 ELSE count(*) END cnt,
         MIN(job_id) example_job_id
     FROM        analysis_base a
     LEFT JOIN   job j USING (analysis_id)
     LEFT JOIN   resource_class rc ON (a.resource_class_id=rc.resource_class_id)
-    GROUP BY a.analysis_id, j.status, j.retry_count
+    GROUP BY a.analysis_id, j.status, j.last_attempt_id IS NOT NULL
     ORDER BY a.analysis_id, j.status;
 
 
@@ -79,10 +79,6 @@ CREATE OR REPLACE VIEW semaphore_job AS
         job.accu_id_stack AS accu_id_stack,
         job.role_id AS role_id,
         job.status AS status,
-        job.retry_count AS retry_count,
-        job.when_completed AS when_completed,
-        job.runtime_msec AS runtime_msec,
-        job.query_count AS query_count,
         semaphore.local_jobs_counter AS local_jobs_counter,
         semaphore.remote_jobs_counter AS remote_jobs_counter,
         semaphore.dependent_semaphore_url AS dependent_semaphore_url
