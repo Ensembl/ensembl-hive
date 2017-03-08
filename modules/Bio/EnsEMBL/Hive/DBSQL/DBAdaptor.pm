@@ -168,6 +168,10 @@ sub species {   # a stub to please Registry code
     return @_;
 }
 
+sub group {     # a stub to please Registry code
+    return 'hive';
+}
+
 
 sub dbc {
     my $self = shift;
