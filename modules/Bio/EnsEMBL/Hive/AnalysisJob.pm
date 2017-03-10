@@ -44,8 +44,7 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::TheApiary;
 
-use base (  'Bio::EnsEMBL::Hive::Cacheable',# mainly to inherit hive_pipeline() method
-            'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Hive::Storable', # inherit dbID(), adaptor() and new() methods, but also hive_pipeline()
             'Bio::EnsEMBL::Hive::Params',   # inherit param management functionality
          );
 
