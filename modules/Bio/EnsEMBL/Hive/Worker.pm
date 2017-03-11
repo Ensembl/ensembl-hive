@@ -584,7 +584,7 @@ sub run {
             $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 0 );
             $self->current_role( undef );
             $self->cause_of_death(undef);
-            $self->specialize_and_compile_wrapper( $specialization_arghash, $old_role->analysis );
+            $self->specialize_and_compile_wrapper( $specialization_arghash );
         }
 
     }     # /Worker's lifespan loop
@@ -608,7 +608,7 @@ sub run {
 
 
 sub specialize_and_compile_wrapper {
-    my ($self, $specialization_arghash, $prev_analysis) = @_;
+    my ($self, $specialization_arghash) = @_;
 
     eval {
         $self->enter_status('SPECIALIZATION');
