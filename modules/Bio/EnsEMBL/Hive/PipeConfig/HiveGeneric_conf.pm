@@ -64,6 +64,8 @@ use warnings;
 use Exporter 'import';
 our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
 
+use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
 use Bio::EnsEMBL::Hive::Utils::Collection;
@@ -481,6 +483,8 @@ sub add_objects_from_config {
             die "'-logic_name' must be defined in every analysis";
         } elsif( $logic_name =~ /[+\-\%\.,]/ ) {
             die "Characters + - % . , are no longer allowed to be a part of an Analysis name. Please rename Analysis '$logic_name' and try again.\n";
+        } elsif( looks_like_number($logic_name) ) {
+            die "Numeric Analysis names are not allowed because they may clash with dbIDs. Please rename Analysis '$logic_name' and try again.\n";
         }
 
         if($seen_logic_name{$logic_name}++) {
