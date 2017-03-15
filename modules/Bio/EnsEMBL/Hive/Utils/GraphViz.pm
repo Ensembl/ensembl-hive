@@ -210,5 +210,27 @@ sub add_node {
     return $self->SUPER::add_node($node_name, %param_hash, $desired_shape ? (shape => 'record', comment => qq{new_shape:$desired_shape}) : () );
 }
 
+
+sub protect_string_for_display {    # NB: $self is only needed for calling, and isn't used in any other way
+
+    my ($self, $string, $length_limit, $drop_framing_curlies) = @_;
+
+    if($drop_framing_curlies) {
+        $string=~s/^\{//;       # drop leading curly
+        $string=~s/\}$//;       # drop trailing curly
+    }
+
+    if(defined( $length_limit )) {
+        $string=~s{^(.{$length_limit}).+}{$1 \.\.\.};   # shorten down to $length_limit characters
+    }
+
+    $string=~s{&}{&amp;}g;      # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
+    $string=~s{"}{&quot;}g;     # should fix a string display bug for pre-2.16 GraphViz'es
+    $string=~s{<}{&lt;}g;
+    $string=~s{>}{&gt;}g;
+
+    return $string;
+}
+
 1;
 

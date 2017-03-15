@@ -371,27 +371,6 @@ sub _add_pipeline_label {
 }
 
 
-sub _protect_for_display {
-    my ($string, $length_limit, $drop_framing_curlies) = @_;
-
-    if($drop_framing_curlies) {
-        $string=~s/^\{//;       # drop leading curly
-        $string=~s/\}$//;       # drop trailing curly
-    }
-
-    if(defined( $length_limit )) {
-        $string=~s{^(.{$length_limit}).+}{$1 \.\.\.};   # shorten down to $length_limit characters
-    }
-
-    $string=~s{&}{&amp;}g;      # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
-    $string=~s{"}{&quot;}g;     # should fix a string display bug for pre-2.16 GraphViz'es
-    $string=~s{<}{&lt;}g;
-    $string=~s{>}{&gt;}g;
-
-    return $string;
-}
-
-
 sub _add_analysis_node {
     my ($self, $analysis) = @_;
 
@@ -455,7 +434,7 @@ sub _add_analysis_node {
 
         $analysis_label    .= '<tr><td colspan="'.$colspan.'"> </td></tr>';
         foreach my $job (@jobs) {
-            my $input_id = _protect_for_display( $job->input_id, $display_job_length, 1 );
+            my $input_id = $self->graph->protect_string_for_display( $job->input_id, $display_job_length, 1 );
             my $status   = $job->status;
             my $job_id   = $job->dbID || 'unstored';
 
@@ -619,7 +598,7 @@ sub _twopart_arrow {
 
         if(defined($condition)) {
             $condition = $display_cond_length
-                       ? _protect_for_display( $condition, $display_cond_length )   # trim and protect it
+                       ? $graph->protect_string_for_display( $condition, $display_cond_length )   # trim and protect it
                        : 'condition_'.$i;                                           # override it completely with a numbered label
         }
         $tablabel .= qq{<tr><td port="cond_$i">}.((defined $condition) ? "WHEN $condition" : $choice ? 'ELSE' : '')."</td></tr>";
@@ -746,7 +725,7 @@ sub _add_table_node {
         $table_label .= '<tr><td colspan="'.$columns.'"> </td></tr>';
         $table_label .= '<tr>'.join('', map { qq{<td bgcolor="$table_header_colour" border="1">$_</td>} } @column_names).'</tr>';
         foreach my $row (@$table_data) {
-            $table_label .= '<tr>'.join('', map { '<td>'._protect_for_display($_,  $display_column_length).'</td>' } @{$row}{@column_names}).'</tr>';
+            $table_label .= '<tr>'.join('', map { '<td>'.$self->graph->protect_string_for_display($_,  $display_column_length).'</td>' } @{$row}{@column_names}).'</tr>';
         }
         if($hit_limit) {
             $table_label  .= qq{<tr><td colspan="$columns">[ more data ]</td></tr>};
