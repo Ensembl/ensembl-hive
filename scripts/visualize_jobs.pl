@@ -44,6 +44,7 @@ sub main {
 
         'include!'              => \$self->{'include'},             # if set, include other pipeline rectangles inside the main one
         'suppress_funnel_parent_link!'  => \$self->{'suppress'},    # if set, do not show the link to the parent of a funnel job (potentially less clutter)
+        'accu_values|values!'   => \$self->{'show_accu_values'},    # self-explanatory: if set, show accu values
 
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
@@ -338,14 +339,21 @@ sub draw_semaphore_and_accu {
         $accu_node_name  = 'accu_'.$semaphore_id.'__'.$semaphore_pipeline_name;
 
         my $accu_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
-        my %struct_name_2_key_signature = ();
+        my %struct_name_2_key_signature_and_value = ();
         foreach my $accu_vector (@$raw_accu_data) {
-            push @{ $struct_name_2_key_signature{ $accu_vector->{'struct_name'} } }, $accu_vector->{'key_signature'};
+            push @{ $struct_name_2_key_signature_and_value{ $accu_vector->{'struct_name'} } }, [ $accu_vector->{'key_signature'}, $accu_vector->{'value'} ];
         }
-        foreach my $struct_name (sort keys %struct_name_2_key_signature) {
-            $accu_label  .=  qq{<tr><td><b>$struct_name</b></td><td></td></tr>};
-            foreach my $key_signature ( @{ $struct_name_2_key_signature{$struct_name} } ) {
-                $accu_label  .=  qq{<tr><td></td><td>$key_signature</td></tr>};
+        foreach my $struct_name (sort keys %struct_name_2_key_signature_and_value) {
+            $accu_label  .=  $self->{'show_accu_values'}
+                ? qq{<tr><td></td><td><b>$struct_name</b></td><td></td></tr>}
+                : qq{<tr><td><b>$struct_name</b></td><td></td></tr>};
+            foreach my $pair ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                my ($key_signature, $value) = @$pair;
+                my $protected_value = $self->{'graph'}->protect_string_for_display($value);
+
+                $accu_label  .= $self->{'show_accu_values'}
+                    ? qq{<tr><td>$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
+                    : qq{<tr><td></td><td>$key_signature</td></tr>};
             }
         }
         $accu_label  .= "</table>>";
