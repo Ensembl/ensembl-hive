@@ -43,6 +43,7 @@ sub main {
         'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},  # if given, the visualization is aborted at that analysis and doesn't go any further
 
         'include!'              => \$self->{'include'},             # if set, include other pipeline rectangles inside the main one
+        'suppress_funnel_parent_link!'  => \$self->{'suppress'},    # if set, do not show the link to the parent of a funnel job (potentially less clutter)
 
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
@@ -260,13 +261,18 @@ sub add_job_node {
             # recursion via child jobs:
         if( !$stop_analysis or ($job->analysis != $stop_analysis) ) {
 
+
             my $children = $job->adaptor->fetch_all_by_prev_job_id( $job_id );
             foreach my $child_job ( @$children ) {
                 my $child_node_name = add_job_node( $child_job );
 
-                $self->{'graph'}->add_edge( $job_node_name => $child_node_name,
-                    color   => 'blue',
-                );
+                my $child_can_be_controlled = $child_job->fetch_local_blocking_semaphore;
+
+                unless( $self->{'suppress'} and $child_can_be_controlled ) {
+                    $self->{'graph'}->add_edge( $job_node_name => $child_node_name,
+                        color   => 'blue',
+                    );
+                }
             }
 
                 # a local semaphore potentially blocking this job:
