@@ -30,6 +30,8 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(runWorker run_sql_on_db get_test_url_or_d
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+my $generate_files = 0;
+
 my $server_url  = get_test_url_or_die(-tag => 'server', -no_user_prefix => 1);
 
 # Most of the test scripts test init_pipeline() from Utils::Test but we
@@ -63,8 +65,11 @@ foreach my $conf (@confs_to_test) {
     my @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command( [join(' ', @generate_graph_args).' > '.$filename] );
-#    system('cp', $filename, $ref_output_location . $conf . '.txt');
-    files_eq_or_diff($filename, $ref_output_location . $conf . '.txt');
+    if($generate_files) {
+        system('cp', $filename, $ref_output_location . $conf . '.txt');
+    } else {
+        files_eq_or_diff($filename, $ref_output_location . $conf . '.txt');
+    }
 
 
     # Dot output on a PipeConfig (no dBIDs)
@@ -72,8 +77,11 @@ foreach my $conf (@confs_to_test) {
     @generate_graph_args = (@common_diagram_args, -pipeconfig => $module_name, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     push @generate_graph_args, (-server_url => $server_url) if $conf =~ /Client/;
     test_command(\@generate_graph_args);
-#    system('cp', $filename, $ref_output_location . $conf . '.unstored.dot');
-    files_eq_or_diff($filename, $ref_output_location . $conf . '.unstored.dot');
+    if($generate_files) {
+        system('cp', $filename, $ref_output_location . $conf . '.unstored.dot');
+    } else {
+        files_eq_or_diff($filename, $ref_output_location . $conf . '.unstored.dot');
+    }
 
     # Dot output on a database (no dBIDs)
     @init_pipeline_args = ($ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl', $module_name, -pipeline_url => $client_url, -hive_force_init => 1);
@@ -82,8 +90,11 @@ foreach my $conf (@confs_to_test) {
     #my $filename = $ref_output_location . $conf . '.stored.dot';
     @generate_graph_args = (@common_diagram_args, -url => $client_url, -output => '/dev/null', -format => 'canon', -dot_input => $filename);
     test_command(\@generate_graph_args);
-#    system('cp', $filename, $ref_output_location . $conf . '.stored.dot');
-    files_eq_or_diff($filename, $ref_output_location . $conf . '.stored.dot');
+    if($generate_files) {
+        system('cp', $filename, $ref_output_location . $conf . '.stored.dot');
+    } else {
+        files_eq_or_diff($filename, $ref_output_location . $conf . '.stored.dot');
+    }
   }
 }
 
