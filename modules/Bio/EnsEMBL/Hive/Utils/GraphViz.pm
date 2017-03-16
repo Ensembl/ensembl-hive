@@ -116,15 +116,14 @@ sub display_subgraph {
 
     my ($box_colour_pair, $auto_colour) = $self->cluster_2_colour_pair->{$cluster_name} || ($self->nested_bgcolour, 1);
     my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
+    my $cluster_label                   = $self->display_cluster_names_by_level->{$depth}
+                                            ? ( ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name )
+                                            : '';
 
     my $prefix = "\t" x $depth;
     my  $text = '';
         $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
-
-    if($self->display_cluster_names_by_level->{$depth}) {
-        my $cluster_label = ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name;
-        $text .= $prefix . "\tlabel=\"$cluster_label\";\n";
-    }
+        $text .= $prefix . qq{\tlabel="$cluster_label";\n};         #   In case some levels need the labels and some don't, need to override the parent level
 
     if($colour_scheme) {
         $text .= $prefix . "\tstyle=filled;\n";
