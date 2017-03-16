@@ -101,4 +101,35 @@ sub bury_other_beekeepers {
 }
 
 
+=head2 reload_beekeeper_is_blocked
+
+  Arg[1]      : Bio::EnsEMBL::Hive::Beekeeper $beekeeper
+  Example     : my $is_blocked = $bk_adaptor->reload_beekeeper_is_blocked($beekeeper);
+  Description : Updates the object with the freshest value of is_blocked coming from the database
+                for this beekeeper, and return the new value.
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub reload_beekeeper_is_blocked {
+    my ($self, $beekeeper) = @_;
+
+    my $query = 'SELECT is_blocked FROM beekeeper WHERE beekeeper_id = ?';
+
+    my $sth = $self->dbc->prepare($query);
+    $sth->execute($beekeeper->dbID);
+
+    my ($is_blocked) = $sth->fetchrow_array();
+    $sth->finish;
+
+    $beekeeper->is_blocked( $is_blocked );
+
+    return $is_blocked;
+}
+
+
+
 1;

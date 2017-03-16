@@ -590,9 +590,18 @@ sub run_autonomously {
         }
 
         if( $iteration != $max_loops ) {    # skip the last sleep
-            $hive_dba->dbc->disconnect_if_idle;
-            printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
-            sleep($self->{'sleep_minutes'}*60);
+            while (1) {
+                $hive_dba->dbc->disconnect_if_idle;
+                printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
+                sleep($self->{'sleep_minutes'}*60);
+                if ($self->{'beekeeper'}->check_if_blocked()) {
+                    print "Beekeeper : We have been blocked !\n".
+                          "This can happen if a job has explicitly required beekeeper to stop (have a look at log_message).\n".
+                          "It may also happen if someone has set is_blocked=1 in the beekeeper table for beekeeper_id=".$self->{'beekeeper_id'}.".\n";
+                } else {
+                    last;
+                }
+            }
 
             # after waking up reload Resources and Analyses to stay current.
             # this is a good time to check up on other beekeepers as well:

@@ -159,5 +159,24 @@ sub set_cause_of_death {
     $self->adaptor->update_cause_of_death($self) if $self->adaptor;
 }
 
+
+=head2 check_if_blocked
+
+  Example     : my $check_if_blocked = $beekeeper->check_if_blocked();
+  Description : Updates the object with the freshest value of is_blocked coming from the database
+                for this beekeeper, and return the new value.
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub check_if_blocked {
+    my ($self) = @_;
+    $self->adaptor->reload_beekeeper_is_blocked($self) if $self->adaptor;
+    return $self->is_blocked;
+}
+
 1;
 
