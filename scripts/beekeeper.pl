@@ -478,14 +478,11 @@ sub register_beekeeper {
     my $meadow_host = hostname;
     my $meadow_user = $ENV{'USER'} || getpwuid($<);
     my $process_id = $$;
-    my $sleep_minutes = $self->{'sleep_minutes'};
 
     my $loop_limit = undef;
     if ($self->{'max_loops'} > -1) {
         $loop_limit = $self->{'max_loops'};
     }
-
-    my $options = $self->{'options'};
 
     my $meadow_signatures = join(",",
         map {$_->signature} @{$self->{'available_meadow_list'}});
@@ -497,8 +494,8 @@ sub register_beekeeper {
 
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($insert);
-    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $sleep_minutes,
-        $self->{'analyses_pattern'}, $loop_limit, $self->{'loop_until'}, $options, $meadow_signatures);
+    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $self->{'sleep_minutes'},
+        $self->{'analyses_pattern'}, $loop_limit, $self->{'loop_until'}, $self->{'options'}, $meadow_signatures);
     if ($insert_returncode > 0) {
         $self->{'beekeeper_id'} = $dbc->last_insert_id(undef, undef, 'beekeeper', undef);
     } else {
