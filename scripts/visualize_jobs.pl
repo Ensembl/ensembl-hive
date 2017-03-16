@@ -77,7 +77,7 @@ sub main {
 
         $self->{'graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
                     'name'          => 'JobDependencyGraph',
-                    'pad'           => 1,
+                    'pad'           => 0,
                     'ranksep'       => '1.2 equally',
                     'remincross'    => 'true',
         );
