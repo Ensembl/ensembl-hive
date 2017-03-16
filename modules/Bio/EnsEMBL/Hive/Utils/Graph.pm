@@ -168,7 +168,7 @@ sub _accu_sink_node_name {
 sub _cluster_name {
     my ($df_rule) = @_;
 
-    return 'cl_'. ( UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? _midpoint_name($df_rule) : ($df_rule || '') );
+    return ( UNIVERSAL::isa($df_rule, 'Bio::EnsEMBL::Hive::DataflowRule') ? 'cl_'._midpoint_name($df_rule) : ($df_rule || 'cl_noname') );
 }
 
 
@@ -241,14 +241,13 @@ sub build {
     my %cluster_2_colour_pair = ();
     $self->graph->cluster_2_nodes( \%cluster_2_nodes );
     $self->graph->cluster_2_colour_pair( \%cluster_2_colour_pair );
+    $self->graph->display_cluster_names_by_level( { 0 => 1, } );        # the top level corresponds to the pipeline_name
 
     if( $self->config_get('DisplayDetails') ) {
         my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
         foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
-            my $pipelabel_node_name     = $self->_add_pipeline_label( $pipeline );
             my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
 
-            push @{$cluster_2_nodes{ $pipeline_cluster_name } }, $pipelabel_node_name;
             $cluster_2_colour_pair{ $pipeline_cluster_name } = ($pipeline == $main_pipeline)
                 ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]
                 : [$self->config_get('Box', 'OtherPipeline', 'ColourScheme'), $self->config_get('Box', 'OtherPipeline', 'ColourOffset')];
@@ -351,23 +350,6 @@ sub _propagate_allocation {
             } # /foreach group
         } # if source_object isa Analysis
     }
-}
-
-
-sub _add_pipeline_label {
-    my ($self, $pipeline) = @_;
-
-    my $node_fontname       = $self->config_get('Node', 'Details', 'Font');
-    my $pipeline_label      = $pipeline->display_name;
-    my $pipelabel_node_name = 'pipelabel_'.$pipeline->hive_pipeline_name;
-
-    $self->graph()->add_node( $pipelabel_node_name,
-        shape     => 'plaintext',
-        fontname  => $node_fontname,
-        label     => $pipeline_label,
-    );
-
-    return $pipelabel_node_name;
 }
 
 

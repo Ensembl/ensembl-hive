@@ -9,7 +9,6 @@ digraph test {
 	dfr_p3_mp [fillcolor="blueviolet", fontcolor="white", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">i<tr><td></td></tr><tr><td port="cond_0">WHEN #digit#&gt;1</td></tr></table>>, shape="egg", style="filled"];
 	analysis_part_multiply [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">part_multiply (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
 	sink_dfr_p2_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
-	pipelabel_smart_long_mult [fontname="Helvetica", label="(unstored smart_long_mult)", shape="plaintext"];
 	analysis_add_together -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_part_multiply -> sink_dfr_p2_mp [arrowtail="crow", color="darkgreen", dir="both", fontcolor="darkgreen", fontname="Helvetica", label="#1\n=> partial_product{digit}:=product", style="dashed"];
 	analysis_redirect_trivial_jobs -> dfr_p1_mp [arrowhead="normal", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
@@ -22,11 +21,11 @@ digraph test {
 	dfr_p3_mp -> analysis_part_multiply [color="blue", fontcolor="blue", fontname="Helvetica", label="\nINPUT_PLUS ", tailport="cond_0"];
 	dfr_p3_mp -> dfr_p2_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph cluster_cl_smart_long_mult {
+subgraph cluster_smart_long_mult {
+	label="smart_long_mult";
 	style=filled;
 	colorscheme=pastel19;
 	color=3;
-	pipelabel_smart_long_mult;
 	analysis_redirect_trivial_jobs;
 	dfr_p1_mp;
 	table_final_result;
@@ -34,6 +33,7 @@ subgraph cluster_cl_smart_long_mult {
 	analysis_take_b_apart;
 	dfr_p2_mp;
 	subgraph cluster_cl_dfr_p2_mp {
+		label="";
 		style=filled;
 		colorscheme=blues9;
 		color=2;

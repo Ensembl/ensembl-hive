@@ -7,7 +7,6 @@ digraph test {
 	dfr_2_mp [fixedsize="1", height="0.01", label="dfr_2_mp", shape="point", width="0.01"];
 	analysis_count_atgc [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">count_atgc (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
 	sink_dfr_1_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
-	pipelabel_gcpct [fontname="Helvetica", label="ehive_test_client@127.0.0.1", shape="plaintext"];
 	analysis_calc_overall_percentage -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_chunk_sequences -> dfr_1_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
 	analysis_chunk_sequences -> dfr_2_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
@@ -17,14 +16,15 @@ digraph test {
 	dfr_2_mp -> analysis_count_atgc [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
 	dfr_2_mp -> dfr_1_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph cluster_cl_gcpct {
+subgraph cluster_gcpct {
+	label="gcpct";
 	style=filled;
 	colorscheme=pastel19;
 	color=3;
-	pipelabel_gcpct;
 	analysis_chunk_sequences;
 	dfr_1_mp;
 	subgraph cluster_cl_dfr_1_mp {
+		label="";
 		style=filled;
 		colorscheme=blues9;
 		color=2;
