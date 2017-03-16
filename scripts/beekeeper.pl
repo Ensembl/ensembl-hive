@@ -292,8 +292,7 @@ sub main {
         my $kill_worker;
         eval {$kill_worker = $queen->fetch_by_dbID($kill_worker_id) or die};
         if ($@) {
-            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-            die "Could not fetch worker with dbID='$kill_worker_id' to kill";
+            log_and_die($self, "Could not fetch worker with dbID='$kill_worker_id' to kill");
         }
 
         unless( $kill_worker->cause_of_death() ) {
@@ -308,16 +307,13 @@ sub main {
                     $queen->register_worker_death($kill_worker);
                     # what about clean-up? Should we do it here or not?
                 } else {
-                    update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-                    die "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
+                    log_and_die($self, "According to the Meadow, the Worker (dbID=$kill_worker_id) is not running, so cannot kill");
                 }
             } else {
-                update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-                die "Cannot access the Meadow responsible for the Worker (dbID=$kill_worker_id), so cannot kill";
+                log_and_die($self, "Cannot access the Meadow responsible for the Worker (dbID=$kill_worker_id), so cannot kill");
             }
         } else {
-            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-            die "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill";
+            log_and_die($self, "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill");
         }
     }
 
@@ -330,8 +326,7 @@ sub main {
     if($run_job_id) {
         eval {$run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id ) or die};
         if ($@) {
-            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-            die "Could not fetch Job with dbID=$run_job_id.\n";
+            log_and_die($self, "Could not fetch Job with dbID=$run_job_id.\n");
         }
     }
 
@@ -345,16 +340,14 @@ sub main {
                 . join(', ', map { $_->logic_name.'('.$_->dbID.')' } sort {$a->dbID <=> $b->dbID} @$list_of_analyses)
                 . "\nBeekeeper : ", scalar($self->{'pipeline'}->collection_of('Analysis')->list())-scalar(@$list_of_analyses), " Analyses are not shown\n\n";
         } else {
-            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-            die "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n";
+            log_and_die($self, "Beekeeper : the -analyses_pattern '".$self->{'analyses_pattern'}."' did not match any Analyses.\n");
         }
     }
 
     my $has_task = ($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs || $unblock_semaphored_jobs || $forgive_failed_jobs || $discard_ready_jobs);
     if($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs) {
         if (($reset_all_jobs || $reset_done_jobs) and not $self->{'analyses_pattern'}) {
-            update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
-            die "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n";
+            log_and_die($self, "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n");
         }
         my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
@@ -419,6 +412,14 @@ sub main {
 # subroutines
 #
 #######################
+
+sub log_and_die {
+    my ($self, $message) = @_;
+
+    $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'}, $message, 'PIPELINE_ERROR', 'TASK_FAILED');
+    update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
+    die $message;
+}
 
 sub find_live_beekeepers_in_my_meadow {
     my $self = shift @_;
