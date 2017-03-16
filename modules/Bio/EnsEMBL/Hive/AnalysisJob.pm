@@ -248,7 +248,10 @@ sub load_parameters {
                                                 $self->accu_hash,
     );
 
+    my $prev_transient_error = $self->transient_error(); # make a note of previously set transience status
+    $self->transient_error(0);
     $self->param_init( @params_precedence );
+    $self->transient_error($prev_transient_error);
 }
 
 
@@ -359,7 +362,10 @@ sub dataflow_output_id {
                     my $same_db_dataflow    = $self->analysis->hive_pipeline == $target_object->hive_pipeline;
 
                     unless($same_db_dataflow) {
+                        my $prev_transient_error = $self->transient_error(); # make a note of previously set transience status
+                        $self->transient_error(0);
                         @$output_ids_for_this_rule = map { $self->flattened_stack_and_accu( $_, $extend_param_stack ); } @$output_ids_for_this_rule;
+                        $self->transient_error($prev_transient_error);
                     }
 
                     my ($stored_listref) = $target_object->dataflow( $output_ids_for_this_rule, $self, $same_db_dataflow, $extend_param_stack, $df_rule );

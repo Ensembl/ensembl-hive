@@ -136,14 +136,8 @@ sub fuse_param_hashes {
                $param_hash = {} if(!defined($param_hash));
 
             if($@) {
-                if($self->can('transient_error')) {
-                    $self->transient_error(0);
-                }
                 die "Could not evaluate '$source': $@\n";
             } elsif(ref($param_hash) ne 'HASH') {
-                if($self->can('transient_error')) {
-                    $self->transient_error(0);
-                }
                 die "Expected a {'param'=>'value'} hashref, but got the following string instead: '$source'\n";
             }
             $source = $param_hash;
