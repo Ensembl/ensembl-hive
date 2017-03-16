@@ -102,12 +102,12 @@ sub dot_input_filename {
 }
 
 
-sub display_cluster_names {
+sub display_cluster_names_by_level {
     my $self = shift @_;
     if(@_) {
-        $self->{_display_cluster_names} = shift @_;
+        $self->{_display_cluster_names_by_level} = shift @_;
     }
-    return $self->{_display_cluster_names} || 0;
+    return $self->{_display_cluster_names_by_level} || {};
 }
 
 
@@ -121,7 +121,7 @@ sub display_subgraph {
     my  $text = '';
         $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
 
-    if($self->display_cluster_names) {
+    if($self->display_cluster_names_by_level->{$depth}) {
         my $cluster_label = ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name;
         $text .= $prefix . "\tlabel=\"$cluster_label\";\n";
     }
