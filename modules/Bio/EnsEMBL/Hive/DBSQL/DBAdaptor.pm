@@ -201,6 +201,7 @@ our %adaptor_type_2_package_name = (
     'AnalysisData'          => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisDataAdaptor',
     'AnalysisJob'           => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor',
     'AnalysisStats'         => 'Bio::EnsEMBL::Hive::DBSQL::AnalysisStatsAdaptor',
+    'Beekeeper'             => 'Bio::EnsEMBL::Hive::DBSQL::BeekeeperAdaptor',
     'DataflowRule'          => 'Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor',
     'DataflowTarget'        => 'Bio::EnsEMBL::Hive::DBSQL::DataflowTargetAdaptor',
     'LogMessage'            => 'Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor',

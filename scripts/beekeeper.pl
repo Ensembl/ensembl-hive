@@ -22,6 +22,7 @@ use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Valley;
+use Bio::EnsEMBL::Hive::Beekeeper;
 use Bio::EnsEMBL::Hive::Scheduler;
 
 
@@ -249,12 +250,6 @@ sub main {
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $default_meadow_type, $pipeline_name );
     $self->{'available_meadow_list'} = $valley->get_available_meadow_list();
 
-    my ($beekeeper_meadow_type, $beekeeper_meadow_name) = $valley->whereami();
-    unless($beekeeper_meadow_type eq 'LOCAL') {
-        die "beekeeper.pl detected it has been itself submitted to '$beekeeper_meadow_type/$beekeeper_meadow_name', but this mode of operation is not supported.\n"
-           ."Please just run beekeeper.pl on a farm head node, preferably from under a 'screen' session.\n";
-    }
-
     $valley->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
 
     my $default_meadow = $valley->get_default_meadow();
@@ -285,13 +280,12 @@ sub main {
         $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
-    # The beekeeper starts to manipulate pipelines here, rather than just query them,
-    # so this is where we will register.
-    register_beekeeper($self);
+    # May die if running within a non-LOCAL meadow
+    $self->{'beekeeper'} = register_beekeeper($valley, $self);
     $self->{'logmessage_adaptor'} = $self->{'dba'}->get_LogMessageAdaptor();
 
     # Check other beekeepers in our meadow to see if they are still alive
-    welfare_check_other_beekeepers($self);
+    $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
 
     if ($kill_worker_id) {
         my $kill_worker;
@@ -402,7 +396,7 @@ sub main {
                 print $job->toString. "\n";
             }
         }
-        update_this_beekeeper_cause_of_death($self, 'LOOP_LIMIT');
+        $self->{'beekeeper'}->set_cause_of_death('LOOP_LIMIT');
     }
     exit(0);
 }
@@ -416,30 +410,10 @@ sub main {
 sub log_and_die {
     my ($self, $message) = @_;
 
-    $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'}, $message, 'PIPELINE_ERROR', 'TASK_FAILED');
-    update_this_beekeeper_cause_of_death($self, 'TASK_FAILED');
+    my $beekeeper = $self->{'beekeeper'};
+    $self->{'logmessage_adaptor'}->store_beekeeper_message($beekeeper->dbID, $message, 'PIPELINE_ERROR', 'TASK_FAILED');
+    $beekeeper->set_cause_of_death('TASK_FAILED');
     die $message;
-}
-
-sub find_live_beekeepers_in_my_meadow {
-    my $self = shift @_;
-
-    my $query = "SELECT beekeeper_id, process_id FROM beekeeper " .
-      "WHERE meadow_host = ? " .
-    "AND beekeeper_id != ? " .
-      "AND cause_of_death IS NULL";
-
-    my $dbc = $self->{'dba'}->dbc;
-    my $sth = $dbc->prepare($query);
-    $sth->execute(hostname, $self->{'beekeeper_id'});
-
-    my @beekeepers = ();
-
-    while (my $row = $sth->fetchrow_hashref) {
-    push(@beekeepers, $row);
-    }
-
-    return \@beekeepers;
 }
 
 sub generate_worker_cmd {
@@ -473,11 +447,7 @@ sub generate_worker_cmd {
 }
 
 sub register_beekeeper {
-    my $self = shift @_;
-
-    my $meadow_host = hostname;
-    my $meadow_user = $ENV{'USER'} || getpwuid($<);
-    my $process_id = $$;
+    my ($valley, $self) = @_;
 
     my $loop_limit = undef;
     if ($self->{'max_loops'} > -1) {
@@ -487,20 +457,21 @@ sub register_beekeeper {
     my $meadow_signatures = join(",",
         map {$_->signature} @{$self->{'available_meadow_list'}});
 
-    my $insert = "INSERT INTO beekeeper " .
-        "(meadow_host, meadow_user, process_id, sleep_minutes, " .
-        "analyses_pattern, loop_limit, loop_until, options, meadow_signatures) " .
-        "VALUES(?,?,?,?,?,?,?,?,?)";
+    # The new instance is partly initalized with the output of Valley::whereami()
+    my $beekeeper = Bio::EnsEMBL::Hive::Beekeeper->new_from_Valley($valley,
+        'sleep_minutes'     => $self->{'sleep_minutes'},
+        'analyses_pattern'  => $self->{'analyses_pattern'},
+        'loop_limit'        => $loop_limit,
+        'loop_until'        => $self->{'loop_until'},
+        'options'           => $self->{'options'},
+        'meadow_signatures' => $meadow_signatures,
+    );
 
-    my $dbc = $self->{'dba'}->dbc;
-    my $sth = $dbc->prepare($insert);
-    my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $self->{'sleep_minutes'},
-        $self->{'analyses_pattern'}, $loop_limit, $self->{'loop_until'}, $self->{'options'}, $meadow_signatures);
-    if ($insert_returncode > 0) {
-        $self->{'beekeeper_id'} = $dbc->last_insert_id(undef, undef, 'beekeeper', undef);
-    } else {
+    $self->{'dba'}->get_BeekeeperAdaptor->store($beekeeper);
+    unless ($self->{'beekeeper_id'} = $beekeeper->dbID) {
         die "There was a problem registering this beekeeper with the hive database.";
     }
+    return $beekeeper;
 }
 
 sub run_autonomously {
@@ -631,7 +602,7 @@ sub run_autonomously {
                 $pipeline->invalidate_hive_current_load();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
-                welfare_check_other_beekeepers($self);
+                $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
             }
         }
     }
@@ -681,50 +652,8 @@ sub run_autonomously {
         send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $cause_of_death_is_error, 1, $stringified_reasons, $loop_until);
     }
 
-    update_this_beekeeper_cause_of_death($self, $beekeeper_cause_of_death);
+    $self->{'beekeeper'}->set_cause_of_death($beekeeper_cause_of_death);
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
-}
-
-sub update_this_beekeeper_cause_of_death {
-    my ($self, $cause_of_death) = @_;
-
-    my $update = "UPDATE beekeeper " .
-        "SET cause_of_death = ? " .
-        "WHERE beekeeper_id = ?";
-    my $dbc = $self->{'dba'}->dbc;
-    my $sth = $dbc->prepare($update);
-    $sth->execute($cause_of_death, $self->{'beekeeper_id'});
-}
-
-sub update_another_beekeeper_cause_of_death {
-    my ($self, $beekeeper_to_update, $cause_of_death) = @_;
-
-    my $update = "UPDATE beekeeper " .
-      "SET cause_of_death = ? " .
-      "WHERE beekeeper_id = ? " .
-      "AND process_id = ?";
-
-    my $dbc = $self->{'dba'}->dbc;
-    my $sth = $dbc->prepare($update);
-    $sth->execute($cause_of_death,
-          $beekeeper_to_update->{'beekeeper_id'},
-          $beekeeper_to_update->{'process_id'});
-
-}
-
-sub welfare_check_other_beekeepers {
-    my $self = shift(@_);
-
-    my $allegedly_live_beekeepers_in_my_meadow = find_live_beekeepers_in_my_meadow($self);
-    foreach my $beekeeper_to_check (@$allegedly_live_beekeepers_in_my_meadow) {
-        my $pid = $beekeeper_to_check->{'process_id'};
-        my $cmd = qq{ps -p $pid -f | fgrep beekeeper.pl};
-        my $beekeeper_entry = qx{$cmd};
-
-        unless ($beekeeper_entry) {
-            update_another_beekeeper_cause_of_death($self, $beekeeper_to_check, 'DISAPPEARED');
-        }
-    }
 }
 
 
