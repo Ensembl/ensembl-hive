@@ -523,8 +523,6 @@ sub run_autonomously {
 
     my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
-    my $beekeeper_pid = $$;
-
     my $iteration=0;
     my $reasons_to_exit;
 
@@ -590,7 +588,7 @@ sub run_autonomously {
             my $submit_log_subdir;
 
             if( $self->{'submit_log_dir'} ) {
-                $submit_log_subdir = $self->{'submit_log_dir'}."/submit_bk${beekeeper_pid}_iter${iteration}";
+                $submit_log_subdir = $self->{'submit_log_dir'}."/submit_bk".$self->{'beekeeper_id'}."_iter${iteration}";
                 make_path( $submit_log_subdir );
             }
 
