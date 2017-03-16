@@ -280,6 +280,11 @@ sub main {
         die "Deprecated option -reset_failed_jobs_for_analysis. Please use -reset_failed_jobs in combination with -analyses_pattern <pattern>";
     }
 
+    if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analyses_pattern quietly
+        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
+        $self->{'analyses_pattern'} = $self->{'logic_name'};
+    }
+
     # The beekeeper starts to manipulate pipelines here, rather than just query them,
     # so this is where we will register.
     register_beekeeper($self);
@@ -315,11 +320,6 @@ sub main {
         } else {
             log_and_die($self, "According to the Queen, the Worker (dbID=$kill_worker_id) is not running, so cannot kill");
         }
-    }
-
-    if( $self->{'logic_name'} ) {   # FIXME: for now, logic_name will override analyses_pattern quietly
-        warn "-logic_name is now deprecated, please use -analyses_pattern that extends the functionality of -logic_name .\n";
-        $self->{'analyses_pattern'} = $self->{'logic_name'};
     }
 
     my $run_job;
@@ -479,16 +479,6 @@ sub register_beekeeper {
     my $meadow_user = $ENV{'USER'} || getpwuid($<);
     my $process_id = $$;
     my $sleep_minutes = $self->{'sleep_minutes'};
-    my $analyses_pattern = undef;
-
-    # FIXME: Order is important here, because logic_name overrides analyses_pattern
-    if (defined($self->{'logic_name'})) {
-        $analyses_pattern = $self->{'logic_name'};
-    } elsif (defined($self->{'analyses_pattern'})) {
-        $analyses_pattern = $self->{'analyses_pattern'};
-    } else {
-        # leave analyses_pattern undef;
-    }
 
     my $loop_limit = undef;
     if ($self->{'max_loops'} > -1) {
@@ -508,7 +498,7 @@ sub register_beekeeper {
     my $dbc = $self->{'dba'}->dbc;
     my $sth = $dbc->prepare($insert);
     my $insert_returncode = $sth->execute($meadow_host, $meadow_user, $process_id, $sleep_minutes,
-        $analyses_pattern, $loop_limit, $self->{'loop_until'}, $options, $meadow_signatures);
+        $self->{'analyses_pattern'}, $loop_limit, $self->{'loop_until'}, $options, $meadow_signatures);
     if ($insert_returncode > 0) {
         $self->{'beekeeper_id'} = $dbc->last_insert_id(undef, undef, 'beekeeper', undef);
     } else {
