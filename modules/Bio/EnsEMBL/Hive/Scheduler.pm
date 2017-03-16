@@ -70,12 +70,7 @@ sub schedule_workers_resync_if_necessary {
 
     unless( $total_extra_workers_required ) {
         scheduler_say( "According to analysis_stats no workers are required... let's see if anything went out of sync." );
-
-            # FIXME: here is an (optimistic) assumption all Workers the DB knows about are reachable from the Valley:
-        if( $queen->db->get_RoleAdaptor->count_active_roles() != $valley_running_worker_count ) {
-            scheduler_say( "Mismatch between DB's active Roles and Valley's running Workers detected, checking for dead workers..." );
-            $queen->check_for_dead_workers($valley, 1);
-        }
+        $queen->check_for_dead_workers($valley, 1);
 
         scheduler_say( "re-synchronizing..." );
         $queen->synchronize_hive( $list_of_analyses );
