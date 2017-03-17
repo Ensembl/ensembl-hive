@@ -725,10 +725,10 @@ sub run_one_batch {
         $self->current_role->register_attempt( ! $job->died_somewhere );
 
         if($job->died_somewhere) {
-                # If the job specifically said what to do next, respect that last wish.
-                # Otherwise follow the default behaviour set by the beekeeper in $worker:
-                #
-            my $may_retry = defined($job->transient_error) ? $job->transient_error : $self->retry_throwing_jobs;
+                # Both flags default to 1, meaning that jobs would by default be retried.
+                # If the job specifically said not to retry, or if the worker is configured
+                # not to retry jobs, follow their wish.
+            my $may_retry = $job->transient_error && $self->retry_throwing_jobs;
 
             $job->adaptor->release_and_age_job( $job_id, $max_retry_count, $may_retry, $job->runtime_msec );
 

@@ -191,9 +191,10 @@ sub transient_error {       # Job should set this to 1 prior to dying (or before
                             # It may also set it to 0 prior to dying (or before running code that might cause death)
                             # if it believes that there is no point in re-trying (say, if the parameters are wrong).
                             # The Worker will check the flag and make necessary adjustments to the database state.
+                            # Errors are considered transient by default
     my $self = shift;
     $self->{'_transient_error'} = shift if(@_);
-    return $self->{'_transient_error'};
+    return ($self->{'_transient_error'} // 1);
 }
 
 sub incomplete {            # Job should set this to 0 prior to throwing if the job is done,
