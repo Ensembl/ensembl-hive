@@ -42,6 +42,11 @@ sub parse {
     my ($old_parse, $new_parse,
         $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string, $query_part);
 
+    # In case the whole URL is quoted (should we do this with double-quotes too ?)
+    if( $url=~/^'(.*)'$/ ) {
+        $url = $1;
+    }
+
     if( $url=~/^\w+$/ ) {
 
         $new_parse = {
