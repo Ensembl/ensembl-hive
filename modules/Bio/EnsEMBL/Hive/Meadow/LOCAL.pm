@@ -54,8 +54,10 @@ sub get_current_worker_process_id {
 sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;
 
+    my $job_name_prefix = $self->job_name_prefix();
+
         # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
-    return q{ps x -o state,user,pid,command -w -w | awk '(/runWorker.pl/ && ($4 ~ /perl$/) )'};
+    return sprintf(q{ps ex -o state,user,pid,command -w -w | grep 'EHIVE_SUBMISSION_NAME=%s' | awk '(/runWorker.pl/ && ($4 ~ /perl$/) )'}, $job_name_prefix);
 }
 
 
@@ -129,6 +131,9 @@ sub submit_workers {
         $submit_stdout_file = '/dev/null';
         $submit_stderr_file = '/dev/null';
     }
+
+    my $job_name = $self->job_array_common_name($rc_name, $iteration);
+    $ENV{EHIVE_SUBMISSION_NAME} = $job_name;
 
     my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
 
