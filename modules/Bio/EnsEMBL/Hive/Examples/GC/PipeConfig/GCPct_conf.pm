@@ -99,14 +99,15 @@ sub default_options {
 
   return {
 	  %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
+
 	  'input_format' => 'FASTA',
 	  # init_pipeline makes a best guess of the hive root directory and stores
           # it in EHIVE_ROOT_DIR, if it is not already set in the shell
 	  'inputfile' => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',
 	  'output_dir' => '.',
 	  'output_prefix' => 'gcpct_pipeline_chunk_',
-	  'output_suffix' => '.fa',
-	  'max_chunk_length' => 100
+	  'output_suffix' => '.chnk',
+	  'max_chunk_length' => 100,
 	 };
 }
 
@@ -175,15 +176,16 @@ sub pipeline_analyses {
     return [
         {   -logic_name => 'chunk_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
-            -input_ids => [
-                { 'input_format' => $self->o('input_format'),
-		  'inputfile' => $self->o('inputfile'), 
-		  'output_dir' => $self->o('output_dir'),
-		  'output_prefix' => $self->o('output_prefix'),
-		  'output_suffix' => $self->o('output_suffix'),
-		  'max_chunk_length' => $self->o('max_chunk_length'),
-		},
-            ],
+            -parameters => {
+                'max_chunk_length'  => $self->o('max_chunk_length'),
+                'output_suffix'     => $self->o('output_suffix'),
+                'output_dir'        => $self->o('output_dir'),
+                'output_prefix'     => $self->o('output_prefix'),
+            },
+            -input_ids => [ {
+                'inputfile'         => $self->o('inputfile'),
+                'input_format'      => $self->o('input_format'),
+            } ],
             -flow_into => {
                 '2->A' => [ 'count_atgc' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
                 'A->1' => [ 'calc_overall_percentage'  ],   # will create a semaphored funnel job to wait for the fan to complete
