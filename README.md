@@ -61,16 +61,23 @@ Both are extensively used by the Ensembl project and are regularly updated. The 
 
 External users have contributed other meadows:
 * **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](Ensembl/ensembl-hive-sge).
+* **HTCondor**. A meadow that supports [HTCondor](https://research.cs.wisc.edu/htcondor/). Available for download on GitHub at [muffato/ensembl-hive-htcondor](muffato/ensembl-hive-htcondor).
+
+These two have a more limited support since we can only test them via
+single-machine Docker installations.  They may be at times out of sync with
+the latest version of eHive but both are automatically tested on Travis CI
+on a daily basis. You can check the badge on the repositories' home page to
+verify they are still compatible.
 
 The table below lists the capabilities of each meadow, and whether they are available and implemented:
 
-| Capability                               | LOCAL         | LSF | SGE             |
-| :--------------------------------------- | ------------- | ----| --------------- |
-| Submit jobs                              | Yes           | Yes | Yes             |
-| Query job status                         | Yes           | Yes | Yes             |
-| Kill job                                 | Yes           | Yes | Yes             |
-| Job limiter and resource management      | Not available | Yes | Yes             |
-| Post-mortem inspection of resource usage | Not available | Yes | Not implemented |
+| Capability                               | LOCAL         | LSF | SGE             | HTCondor        |
+| :--------------------------------------- | ------------- | ----| --------------- | --------------- |
+| Submit jobs                              | Yes           | Yes | Yes             | Yes             |
+| Query job status                         | Yes           | Yes | Yes             | Yes             |
+| Kill job                                 | Yes           | Yes | Yes             | Yes             |
+| Job limiter and resource management      | Not available | Yes | Yes             | Yes             |
+| Post-mortem inspection of resource usage | Not available | Yes | Not implemented | Not implemented |
 
 
 Available documentation
