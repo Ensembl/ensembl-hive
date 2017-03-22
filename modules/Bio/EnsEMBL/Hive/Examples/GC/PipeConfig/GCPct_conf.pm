@@ -79,37 +79,6 @@ use warnings;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
-=head2 default_options
-
-    Description : Implements the default_options() interface method of  Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf
-    that sets default parameter values. These values can be overridden when running the init_pipeline.pl script.
-    Here, we set defaults for:
-    * input_format,
-    * inputfile (the name of the input file, here set to a sample file included with the eHive distribution)
-    * output_dir (directory to store the files containing portions of the original file)
-    * output_prefix (common prefix for the files containing portions of the original file)
-    * output_suffix (common suffix for the files containing portions of the original file)
-    * max_chunk_length (amount of sequence, in bases, to include in a single sub-file. 
-      See the documentation for Bio::EnsEMBL::Hive::RunnableDB::FastaFactory for more details)
-
-=cut
-
-sub default_options {
-  my ($self) = @_;
-
-  return {
-	  %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
-
-	  'input_format' => 'FASTA',
-	  # init_pipeline makes a best guess of the hive root directory and stores
-          # it in EHIVE_ROOT_DIR, if it is not already set in the shell
-	  'inputfile' => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',
-	  'output_dir' => '.',
-	  'output_prefix' => 'gcpct_pipeline_chunk_',
-	  'output_suffix' => '.chnk',
-	  'max_chunk_length' => 100,
-	 };
-}
 
 =head2 pipeline_create_commands
 
@@ -145,10 +114,10 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        # Because this is an example pipeline, we provide a way to slow down execution so
-        # that it can be more easily observed as it runs. The 'take_time' parameter,
-        # specifies how much additional time a step should take before setting itself
-        # to "DONE."
+            # Because this is an example pipeline, we provide a way to slow down execution so
+            # that it can be more easily observed as it runs. The 'take_time' parameter,
+            # specifies how much additional time a step should take before setting itself
+            # to "DONE."
         'take_time'     => 1,
     };
 }
@@ -177,15 +146,16 @@ sub pipeline_analyses {
         {   -logic_name => 'chunk_sequences',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
             -parameters => {
-                'max_chunk_length'  => $self->o('max_chunk_length'),
-                'output_suffix'     => $self->o('output_suffix'),
-                'output_dir'        => $self->o('output_dir'),
-                'output_prefix'     => $self->o('output_prefix'),
+                'max_chunk_length'  => 100,                     # amount of sequence, in bases, to include in a single chunk file
+                'output_dir'        => '.',                     # directory to store the chunk files
+                'output_prefix'     => 'gcpct_pipeline_chunk_', # common prefix for the chunk files
+                'output_suffix'     => '.chnk',                 # common suffix for the chunk files
+
+                    # init_pipeline.pl makes the best guess of the hive root directory and stores it in EHIVE_ROOT_DIR, if it wasn't already set in the shell
+                'inputfile'     => $ENV{'EHIVE_ROOT_DIR'} . '/t/input_fasta.fa',    # name of the input file, here set to a sample file included with the eHive distribution
+                'input_format'  => 'FASTA',                                         # the expected format of the input file
             },
-            -input_ids => [ {
-                'inputfile'         => $self->o('inputfile'),
-                'input_format'      => $self->o('input_format'),
-            } ],
+            -input_ids => [ { } ],  # auto-seed one job with default parameters (coming from pipeline-wide parameters or analysis parameters)
             -flow_into => {
                 '2->A' => [ 'count_atgc' ],   # will create a semaphored fan of jobs; will use param_stack mechanism to pass parameters around
                 'A->1' => [ 'calc_overall_percentage'  ],   # will create a semaphored funnel job to wait for the fan to complete

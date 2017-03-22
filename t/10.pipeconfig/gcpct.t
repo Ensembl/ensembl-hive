@@ -48,8 +48,10 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         my $url         = init_pipeline(
                             'Bio::EnsEMBL::Hive::Examples::GC::PipeConfig::'.$gcpct_version,
-                            [-pipeline_url => $pipeline_url, -hive_force_init => 1, -inputfile => "$inputfile"],
-                            ['pipeline.param[take_time]=0'],
+                            [ -pipeline_url => $pipeline_url, -hive_force_init => 1 ],
+                            [   'pipeline.param[take_time]=0',                              # tweak a pipeline-wide parameter
+                                'analysis[chunk_sequences].param[inputfile]='.$inputfile,   # tweak an analysis-wide parameter
+                            ],
                         );
 
         my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
