@@ -50,6 +50,29 @@ There are also other parameters of Analyses that control, for example:
 * what should be autimatically done with a Job if it needs more memory/time,
 etc.
 
+Grid scheduler and Meadows
+--------------------------
+
+eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive ships two meadow implementations:
+* **LOCAL**. A simple meadow that submits jobs locally via `system()` (i.e. `fork()`). It is inherently limited by the specification of the machine beekeeper is running on.
+* **LSF**. A meadow that supports [IBM Platform LSF](http://www-03.ibm.com/systems/spectrum-computing/products/lsf/)
+
+Both are extensively used by the Ensembl project and are regularly updated. The LSF meadow supports workloads reaching thousands of parallel jobs.
+
+External users have contributed other meadows:
+* **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](Ensembl/ensembl-hive-sge).
+
+The table below lists the capabilities of each meadow, and whether they are available and implemented:
+
+| Capability                               | LOCAL         | LSF | SGE             |
+| :--------------------------------------- | ------------- | ----| --------------- |
+| Submit jobs                              | Yes           | Yes | Yes             |
+| Query job status                         | Yes           | Yes | Yes             |
+| Kill job                                 | Yes           | Yes | Yes             |
+| Job limiter and resource management      | Not available | Yes | Yes             |
+| Post-mortem inspection of resource usage | Not available | Yes | Not implemented |
+
+
 Available documentation
 -----------------------
 The main entry point is in [**docs/index.html**](https://rawgit.com/Ensembl/ensembl-hive/version/2.4/docs/index.html) and can also be browsed offline.
