@@ -42,6 +42,13 @@ Creating runnables
 
    creating_runnables/*
 
+Advance usage
+=============
+.. toctree::
+   :glob:
+
+   advanced_usage/*
+
 Indices and tables
 ==================
 
