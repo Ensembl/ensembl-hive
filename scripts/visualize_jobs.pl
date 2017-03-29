@@ -13,6 +13,7 @@ BEGIN {
 
 
 use Getopt::Long;
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::TheApiary;
@@ -21,12 +22,12 @@ use Bio::EnsEMBL::Hive::Utils::GraphViz;
 
 
 my $self = {};
-
-main();
-
 my ($main_pipeline, $start_analysis, $stop_analysis);
 my %analysis_name_2_pipeline;
 my %semaphore_url_hash = ();
+
+main();
+
 
 sub main {
 
@@ -51,6 +52,10 @@ sub main {
 
         'h|help'                => \$self->{'help'},
     );
+
+    if($self->{'help'}) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     if($self->{'url'} or $self->{'reg_alias'}) {
         $main_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
@@ -442,4 +447,112 @@ sub add_semaphore_node {
 
     return $semaphore_node_name;
 }
+
+
+__DATA__
+
+=pod
+
+=head1 NAME
+
+    visualize_jobs.pl
+
+=head1 SYNOPSIS
+
+    ./visualize_jobs.pl -help
+
+    ./visualize_jobs.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_filename> -reg_alias <reg_alias> ] -output <output_image_filename>
+
+=head1 DESCRIPTION
+
+    This program generates a visualization of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
+
+    Jobs are represented by 3d-rectangles which contain parameters and are colour-coded (reflecting Job's status).
+    Semaphores are represented by triangles (upward-pointing red = closed, downward-pointing green = open) which contain the counter.
+    Accumulators are represented by rectangles with key-paths and may contain data (configurable).
+
+    Blue solid arrows show jobs' parent-child relationships (parents point at their children).
+    Dashed red lines show jobs blocking downstream semaphores.
+    Dashed green lines show jobs no longer blocking downstream semaphores (when the jobs have finished successfully).
+    Dashed red/green lines (with colour matching semaphore's) also link the semaphores to their accumulators and further to the controlled job.
+
+=head1 OPTIONS
+
+B<--url>
+
+    url defining where hive database is located
+
+B<--reg_conf>
+
+    path to a Registry configuration file
+
+B<--reg_alias>
+
+    species/alias name for the Hive DBAdaptor
+
+B<--nosqlvc>
+
+    if 1, don't check sql schema version
+
+B<--job_id>
+
+    Start with this job(s) and reach as far as possible using parent-child relationships.
+
+B<--start_analysis_name>
+
+    Trace up to this analysis and start displaying from this analysis.
+
+B<--stop_analysis_name>
+
+    Make this analysis to be the last one to be displayed.
+    As the result, the graph may not contain the initial job_id(s).
+
+B<--include>
+
+    If set, in multi-pipeline contexts include other pipeline rectangles inside the "main" one.
+    Off by default.
+
+
+B<--suppress_funnel_parent_link>
+
+    If set, do not show the link to the parent of a funnel job (potentially less clutter).
+    Off by default.
+
+B<--accu_values>
+
+    If set, show accu values in accumulator nodes.
+    Off by default.
+
+B<--output>
+
+    Location of the file to write to.
+    The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
+
+B<--help>
+
+    Print this help message
+
+=head1 EXTERNAL DEPENDENCIES
+
+    GraphViz
+
+=head1 LICENSE
+
+    Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+    Copyright [2016-2017] EMBL-European Bioinformatics Institute
+
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software distributed under the License
+    is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and limitations under the License.
+
+=head1 CONTACT
+
+    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+
+=cut
 
