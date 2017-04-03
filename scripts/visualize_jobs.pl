@@ -46,6 +46,7 @@ sub main {
         'include!'              => \$self->{'include'},             # if set, include other pipeline rectangles inside the main one
         'suppress_funnel_parent_link!'  => \$self->{'suppress'},    # if set, do not show the link to the parent of a funnel job (potentially less clutter)
         'accu_values|values!'   => \$self->{'show_accu_values'},    # self-explanatory: if set, show accu values
+        'accu_pointers|accu_ptrs!' => \$self->{'show_accu_pointers'},   # (attempt to) show which accu values come from which jobs
 
         'o|out|output=s'        => \$self->{'output'},
         'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
@@ -83,7 +84,7 @@ sub main {
         $self->{'graph'} = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
                     'name'          => 'JobDependencyGraph',
                     'pad'           => 0,
-                    'ranksep'       => '1.2 equally',
+                    'ranksep'       => '1.4',
                     'remincross'    => 'true',
         );
 
@@ -345,20 +346,29 @@ sub draw_semaphore_and_accu {
 
         my $accu_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
         my %struct_name_2_key_signature_and_value = ();
-        foreach my $accu_vector (@$raw_accu_data) {
-            push @{ $struct_name_2_key_signature_and_value{ $accu_vector->{'struct_name'} } }, [ $accu_vector->{'key_signature'}, $accu_vector->{'value'} ];
+        foreach my $accu_rowhash (@$raw_accu_data) {
+            push @{ $struct_name_2_key_signature_and_value{ $accu_rowhash->{'struct_name'} } },
+                [ $accu_rowhash->{'key_signature'}, $accu_rowhash->{'value'}, $accu_rowhash->{'sending_job_id'} ];
         }
+
+        my %accu_ptrs = ();
+        my $sending_job_pipeline_name   = $semaphore->hive_pipeline->hive_pipeline_name;    # assuming cross-database links are currently not stored
+
         foreach my $struct_name (sort keys %struct_name_2_key_signature_and_value) {
             $accu_label  .=  $self->{'show_accu_values'}
                 ? qq{<tr><td></td><td><b>$struct_name</b></td><td></td></tr>}
                 : qq{<tr><td><b>$struct_name</b></td><td></td></tr>};
-            foreach my $pair ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
-                my ($key_signature, $value) = @$pair;
+            foreach my $accu_vector ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                my ($key_signature, $value, $sending_job_id) = @$accu_vector;
                 my $protected_value = $self->{'graph'}->protect_string_for_display($value);
+                my $port_label      = "${accu_node_name}_${struct_name}_${sending_job_id}";
+
+                my $sending_job_node_name   = 'job_'.$sending_job_id.'__'.$sending_job_pipeline_name;
+                push @{ $accu_ptrs{$sending_job_node_name} }, $port_label;
 
                 $accu_label  .= $self->{'show_accu_values'}
-                    ? qq{<tr><td>$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
-                    : qq{<tr><td></td><td>$key_signature</td></tr>};
+                    ? qq{<tr><td port="$port_label">$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
+                    : qq{<tr><td port="$port_label"></td><td>$key_signature</td></tr>};
             }
         }
         $accu_label  .= "</table>>";
@@ -384,6 +394,19 @@ sub draw_semaphore_and_accu {
             tailport    => 's',
             headport    => 'n',
         );
+
+        if($self->{'show_accu_pointers'}) {
+            foreach my $sending_job_node_name (keys %accu_ptrs) {
+                foreach my $receiving_port (@{ $accu_ptrs{$sending_job_node_name} }) {
+
+                    $self->{'graph'}->add_edge( $sending_job_node_name => $accu_node_name,
+                        headport    => $receiving_port.':w',
+                        color       => 'black',
+                        style       => 'dotted',
+                    );
+                }
+            }
+        }
 
     } else {
         $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
@@ -521,6 +544,11 @@ B<--suppress_funnel_parent_link>
 B<--accu_values>
 
     If set, show accu values in accumulator nodes.
+    Off by default.
+
+B<--accu_pointers>
+
+    If set, show an extra link between an item in the accu and the local job that generated it.
     Off by default.
 
 B<--output>
