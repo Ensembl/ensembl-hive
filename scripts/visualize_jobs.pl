@@ -317,10 +317,11 @@ sub draw_semaphore_and_accu {
 
     my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
     my $semaphore_is_blocked        = $semaphore_blockers > 0;
+    my $columns_in_table            = $self->{'show_accu_values'} ? 3 : 2;
 
-    my ($semaphore_colour, $semaphore_shape, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
-        ? ('red', 'triangle', 'red', 'tee')
-        : ('darkgreen', 'invtriangle', 'darkgreen', 'none');
+    my ($semaphore_shape, $semaphore_bgcolour, $semaphore_fgcolour, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
+        ? ('house',     'grey',         'brown',   'red',          'tee')
+        : ('invhouse',  'darkgreen',    'white',        'darkgreen',    'none');
 
     my @semaphore_label_parts = ();
     if($semaphore_is_blocked) {
@@ -329,96 +330,80 @@ sub draw_semaphore_and_accu {
     } else {
         push @semaphore_label_parts, "open";
     }
-    my $semaphore_label = join("\n", @semaphore_label_parts);
+    my $semaphore_label = join(', ', @semaphore_label_parts);
 
-    $self->{'graph'}->add_node( $semaphore_node_name,
-        shape       => $semaphore_shape,
-        style       => 'filled',
-        fillcolor   => $semaphore_colour,
-        label       => $semaphore_label,
-    );
+    my $accusem_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
+       $accusem_label .= qq{<tr><td colspan="$columns_in_table"><font color="$semaphore_fgcolour"><b><i>$semaphore_label</i></b></font></td></tr>};
 
     my $raw_accu_data   = $semaphore->fetch_my_raw_accu_data;
-    my $accu_node_name;
+    my %accu_ptrs       = ();
 
     if(@$raw_accu_data) {
-        $accu_node_name  = 'accu_'.$semaphore_id.'__'.$semaphore_pipeline_name;
+        $accusem_label .= qq{<tr><td colspan="$columns_in_table">&nbsp;</td></tr>};   # skip one table row between semaphore attributes and accu data
 
-        my $accu_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
         my %struct_name_2_key_signature_and_value = ();
         foreach my $accu_rowhash (@$raw_accu_data) {
             push @{ $struct_name_2_key_signature_and_value{ $accu_rowhash->{'struct_name'} } },
                 [ $accu_rowhash->{'key_signature'}, $accu_rowhash->{'value'}, $accu_rowhash->{'sending_job_id'} ];
         }
 
-        my %accu_ptrs = ();
         my $sending_job_pipeline_name   = $semaphore->hive_pipeline->hive_pipeline_name;    # assuming cross-database links are currently not stored
 
         foreach my $struct_name (sort keys %struct_name_2_key_signature_and_value) {
-            $accu_label  .=  $self->{'show_accu_values'}
-                ? qq{<tr><td></td><td><b>$struct_name</b></td><td></td></tr>}
-                : qq{<tr><td><b>$struct_name</b></td><td></td></tr>};
+            $accusem_label  .=  $self->{'show_accu_values'}
+                ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
+                : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
+
             foreach my $accu_vector ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
                 my ($key_signature, $value, $sending_job_id) = @$accu_vector;
+                $sending_job_id //= 0;
+
                 my $protected_value = $self->{'graph'}->protect_string_for_display($value);
-                my $port_label      = "${accu_node_name}_${struct_name}_${sending_job_id}";
+                my $port_label      = "${semaphore_node_name}_${struct_name}_${sending_job_id}";
+                my $port_attribute  = $sending_job_id ? qq{port="$port_label"} : '';
 
-                my $sending_job_node_name   = 'job_'.$sending_job_id.'__'.$sending_job_pipeline_name;
-                push @{ $accu_ptrs{$sending_job_node_name} }, $port_label;
-
-                $accu_label  .= $self->{'show_accu_values'}
-                    ? qq{<tr><td port="$port_label">$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
-                    : qq{<tr><td port="$port_label"></td><td>$key_signature</td></tr>};
-            }
-        }
-        $accu_label  .= "</table>>";
-
-        $self->{'graph'}->add_node( $accu_node_name,
-            shape       => 'note',
-            style       => 'filled',
-            fillcolor   => $semaphore_colour,
-            label       => $accu_label,
-        );
-
-        $self->{'graph'}->add_edge( $semaphore_node_name => $accu_node_name,
-            color       => $dependent_blocking_arrow_colour,
-            style       => 'dashed',
-            arrowhead   => $dependent_blocking_arrow_shape,
-            tailport    => 's',
-            headport    => 'n',
-        );
-        $self->{'graph'}->add_edge( $accu_node_name => $dependent_node_name,
-            color       => $dependent_blocking_arrow_colour,
-            style       => 'dashed',
-            arrowhead   => $dependent_blocking_arrow_shape,
-            tailport    => 's',
-            headport    => 'n',
-        );
-
-        if($self->{'show_accu_pointers'}) {
-            foreach my $sending_job_node_name (keys %accu_ptrs) {
-                foreach my $receiving_port (@{ $accu_ptrs{$sending_job_node_name} }) {
-
-                    $self->{'graph'}->add_edge( $sending_job_node_name => $accu_node_name,
-                        headport    => $receiving_port.':w',
-                        color       => 'black',
-                        style       => 'dotted',
-                    );
+                if(my $sending_job_node_name = 'job_'.$sending_job_id.'__'.$sending_job_pipeline_name) {
+                    push @{ $accu_ptrs{$sending_job_node_name} }, $port_label;
                 }
+
+                $accusem_label  .= $self->{'show_accu_values'}
+                    ? qq{<tr><td $port_attribute>$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
+                    : qq{<tr><td $port_attribute></td><td>$key_signature</td></tr>};
             }
         }
+    }
+    $accusem_label  .= "</table>>";
 
-    } else {
-        $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
-            color       => $dependent_blocking_arrow_colour,
-            style       => 'dashed',
-            arrowhead   => $dependent_blocking_arrow_shape,
-            tailport    => 's',
-            headport    => 'n',
-        );
+    $self->{'graph'}->add_node( $semaphore_node_name,
+        shape       => $semaphore_shape,     # 'note',
+        margin      => '0,0',
+        style       => 'filled',
+        fillcolor   => $semaphore_bgcolour,
+        label       => $accusem_label,
+    );
+
+    $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
+        color       => $dependent_blocking_arrow_colour,
+        style       => 'dashed',
+        arrowhead   => $dependent_blocking_arrow_shape,
+        tailport    => 's',
+        headport    => 'n',
+    );
+
+    if($self->{'show_accu_pointers'}) {
+        foreach my $sending_job_node_name (keys %accu_ptrs) {
+            foreach my $receiving_port (@{ $accu_ptrs{$sending_job_node_name} }) {
+
+                $self->{'graph'}->add_edge( $sending_job_node_name => $semaphore_node_name,
+                    headport    => $receiving_port.':w',
+                    color       => 'black',
+                    style       => 'dotted',
+                );
+            }
+        }
     }
 
-    return $accu_node_name;
+    return $semaphore_node_name;
 }
 
 
@@ -462,10 +447,6 @@ sub add_semaphore_node {
 
             # adding the semaphore node to the cluster of the dependent job's analysis:
         push @{$self->{'graph'}->cluster_2_nodes->{ $target_cluster_name }}, $semaphore_node_name;
-        if($accu_node_name) {
-                # adding the accu node to the cluster of the dependent job's analysis:
-            push @{$self->{'graph'}->cluster_2_nodes->{ $target_cluster_name }}, $accu_node_name;
-        }
     }
 
     return $semaphore_node_name;
