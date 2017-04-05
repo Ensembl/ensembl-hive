@@ -37,19 +37,21 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},             # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc=i'             => \$self->{'nosqlvc'},                 # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-        'job_id=s@'             => \$self->{'job_ids'},             # jobs to start from
-        'start_analysis_name=s' => \$self->{'start_analysis_name'}, # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
-        'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},  # if given, the visualization is aborted at that analysis and doesn't go any further
+        'job_id=s@'             => \$self->{'job_ids'},                 # jobs to start from
+        'start_analysis_name=s' => \$self->{'start_analysis_name'},     # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
+        'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},      # if given, the visualization is aborted at that analysis and doesn't go any further
 
-        'include!'              => \$self->{'include'},             # if set, include other pipeline rectangles inside the main one
-        'suppress_funnel_parent_link!'  => \$self->{'suppress'},    # if set, do not show the link to the parent of a funnel job (potentially less clutter)
-        'accu_values|values!'   => \$self->{'show_accu_values'},    # self-explanatory: if set, show accu values
+        'include!'              => \$self->{'include'},                 # if set, include other pipeline rectangles inside the main one
+        'suppress_funnel_parent_link!'  => \$self->{'suppress'},        # if set, do not show the link to the parent of a funnel job (potentially less clutter)
+
+        'accu_keys|accus!'      => \$self->{'show_accu_keys'},          # show accu keys, but not necessarily values
+        'accu_values|values!'   => \$self->{'show_accu_values'},        # show accu keys & values (implies -accu_keys)
         'accu_pointers|accu_ptrs!' => \$self->{'show_accu_pointers'},   # (attempt to) show which accu values come from which jobs
 
         'o|out|output=s'        => \$self->{'output'},
-        'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
+        'dot_input=s'           => \$self->{'dot_input'},               # filename to store the intermediate dot input (valuable for debugging)
 
         'h|help'                => \$self->{'help'},
     );
@@ -57,6 +59,8 @@ sub main {
     if($self->{'help'}) {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
+
+    $self->{'show_accu_keys'} = 1 if($self->{'show_accu_values'});      # -accu_values implies -accu_keys
 
     if($self->{'url'} or $self->{'reg_alias'}) {
         $main_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
@@ -317,11 +321,14 @@ sub draw_semaphore_and_accu {
 
     my $semaphore_blockers          = $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter;
     my $semaphore_is_blocked        = $semaphore_blockers > 0;
+    my $meta_shape                  = $self->{'show_accu_keys'}
+                                        ? ['house', 'invhouse' ]            # house shape hints that accu data will be shown if present
+                                        : ['triangle', 'invtriangle'];      # triangle shape hints that no accu data will be shown even if present
     my $columns_in_table            = $self->{'show_accu_values'} ? 3 : 2;
 
     my ($semaphore_shape, $semaphore_bgcolour, $semaphore_fgcolour, $dependent_blocking_arrow_colour, $dependent_blocking_arrow_shape ) = $semaphore_is_blocked
-        ? ('house',     'grey',         'brown',   'red',          'tee')
-        : ('invhouse',  'darkgreen',    'white',        'darkgreen',    'none');
+        ? ($meta_shape->[0],    'grey',         'brown',   'red',          'tee')
+        : ($meta_shape->[1],    'darkgreen',    'white',   'darkgreen',    'none');
 
     my @semaphore_label_parts = ();
     if($semaphore_is_blocked) {
@@ -335,43 +342,47 @@ sub draw_semaphore_and_accu {
     my $accusem_label  = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">};
        $accusem_label .= qq{<tr><td colspan="$columns_in_table"><font color="$semaphore_fgcolour"><b><i>$semaphore_label</i></b></font></td></tr>};
 
-    my $raw_accu_data   = $semaphore->fetch_my_raw_accu_data;
     my %accu_ptrs       = ();
 
-    if(@$raw_accu_data) {
-        $accusem_label .= qq{<tr><td colspan="$columns_in_table">&nbsp;</td></tr>};   # skip one table row between semaphore attributes and accu data
+    if($self->{'show_accu_keys'}) {
+        my $raw_accu_data   = $semaphore->fetch_my_raw_accu_data;
 
-        my %struct_name_2_key_signature_and_value = ();
-        foreach my $accu_rowhash (@$raw_accu_data) {
-            push @{ $struct_name_2_key_signature_and_value{ $accu_rowhash->{'struct_name'} } },
-                [ $accu_rowhash->{'key_signature'}, $accu_rowhash->{'value'}, $accu_rowhash->{'sending_job_id'} ];
-        }
+        if(@$raw_accu_data) {
+            $accusem_label .= qq{<tr><td colspan="$columns_in_table">&nbsp;</td></tr>};   # skip one table row between semaphore attributes and accu data
 
-        my $sending_job_pipeline_name   = $semaphore->hive_pipeline->hive_pipeline_name;    # assuming cross-database links are currently not stored
+            my %struct_name_2_key_signature_and_value = ();
+            foreach my $accu_rowhash (@$raw_accu_data) {
+                push @{ $struct_name_2_key_signature_and_value{ $accu_rowhash->{'struct_name'} } },
+                    [ $accu_rowhash->{'key_signature'}, $accu_rowhash->{'value'}, $accu_rowhash->{'sending_job_id'} ];
+            }
 
-        foreach my $struct_name (sort keys %struct_name_2_key_signature_and_value) {
-            $accusem_label  .=  $self->{'show_accu_values'}
-                ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
-                : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
+            my $sending_job_pipeline_name   = $semaphore->hive_pipeline->hive_pipeline_name;    # assuming cross-database links are currently not stored
 
-            foreach my $accu_vector ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
-                my ($key_signature, $value, $sending_job_id) = @$accu_vector;
-                $sending_job_id //= 0;
+            foreach my $struct_name (sort keys %struct_name_2_key_signature_and_value) {
+                $accusem_label  .=  $self->{'show_accu_values'}
+                    ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
+                    : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
 
-                my $protected_value = $self->{'graph'}->protect_string_for_display($value);
-                my $port_label      = "${semaphore_node_name}_${struct_name}_${sending_job_id}";
-                my $port_attribute  = $sending_job_id ? qq{port="$port_label"} : '';
+                foreach my $accu_vector ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                    my ($key_signature, $value, $sending_job_id) = @$accu_vector;
+                    $sending_job_id //= 0;
 
-                if(my $sending_job_node_name = 'job_'.$sending_job_id.'__'.$sending_job_pipeline_name) {
-                    push @{ $accu_ptrs{$sending_job_node_name} }, $port_label;
+                    my $protected_value = $self->{'graph'}->protect_string_for_display($value);
+                    my $port_label      = "${semaphore_node_name}_${struct_name}_${sending_job_id}";
+                    my $port_attribute  = $sending_job_id ? qq{port="$port_label"} : '';
+
+                    if(my $sending_job_node_name = 'job_'.$sending_job_id.'__'.$sending_job_pipeline_name) {
+                        push @{ $accu_ptrs{$sending_job_node_name} }, $port_label;
+                    }
+
+                    $accusem_label  .= $self->{'show_accu_values'}
+                        ? qq{<tr><td $port_attribute>$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
+                        : qq{<tr><td $port_attribute></td><td>$key_signature</td></tr>};
                 }
-
-                $accusem_label  .= $self->{'show_accu_values'}
-                    ? qq{<tr><td $port_attribute>$key_signature</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>$protected_value</td></tr>}
-                    : qq{<tr><td $port_attribute></td><td>$key_signature</td></tr>};
             }
         }
     }
+
     $accusem_label  .= "</table>>";
 
     $self->{'graph'}->add_node( $semaphore_node_name,
@@ -522,9 +533,14 @@ B<--suppress_funnel_parent_link>
     If set, do not show the link to the parent of a funnel job (potentially less clutter).
     Off by default.
 
+B<--accu_keys>
+
+    If set, show accu keys in semaphore nodes.
+    Off by default.
+
 B<--accu_values>
 
-    If set, show accu values in accumulator nodes.
+    If set, show accu keys & values in semaphore nodes.
     Off by default.
 
 B<--accu_pointers>
