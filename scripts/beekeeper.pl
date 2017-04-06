@@ -594,6 +594,8 @@ sub run_autonomously {
                 $hive_dba->dbc->disconnect_if_idle;
                 printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
                 sleep($self->{'sleep_minutes'}*60);
+                # this is a good time to check up on other beekeepers as well:
+                $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
                 if ($self->{'beekeeper'}->check_if_blocked()) {
                     print "Beekeeper : We have been blocked !\n".
                           "This can happen if a job has explicitly required beekeeper to stop (have a look at log_message).\n".
@@ -604,14 +606,12 @@ sub run_autonomously {
             }
 
             # after waking up reload Resources and Analyses to stay current.
-            # this is a good time to check up on other beekeepers as well:
             unless($run_job_id) {
                 # reset all the collections so that fresher data will be used at this iteration:
                 $pipeline->invalidate_collections();
                 $pipeline->invalidate_hive_current_load();
 
                 $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $analyses_pattern );
-                $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
             }
         }
     }
