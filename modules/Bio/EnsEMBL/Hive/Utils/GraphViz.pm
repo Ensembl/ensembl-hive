@@ -75,6 +75,15 @@ sub cluster_2_nodes {
 }
 
 
+sub cluster_2_attributes {
+    my $self = shift @_;
+    if(@_) {
+        $self->{_cluster_2_attributes} = shift @_;
+    }
+    return $self->{_cluster_2_attributes} ||= {};
+}
+
+
 sub cluster_2_colour_pair {
     my $self = shift @_;
     if(@_) {
@@ -102,22 +111,14 @@ sub dot_input_filename {
 }
 
 
-sub display_cluster_names_by_level {    # FIXME: if we want to introduce "-include" equivalent for A-diagrams as well,
-                                        #        this interface will no longer be adequate, so we will need something more specific.
-    my $self = shift @_;
-    if(@_) {
-        $self->{_display_cluster_names_by_level} = shift @_;
-    }
-    return $self->{_display_cluster_names_by_level} || {};
-}
-
-
 sub display_subgraph {
     my ($self, $cluster_name, $depth) = @_;
 
+    my $cluster_attributes              = $self->cluster_2_attributes->{$cluster_name};
+
     my ($box_colour_pair, $auto_colour) = $self->cluster_2_colour_pair->{$cluster_name} || ($self->nested_bgcolour, 1);
     my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
-    my $cluster_label                   = $self->display_cluster_names_by_level->{$depth}
+    my $cluster_label                   = $cluster_attributes->{'display_cluster_name'}
                                             ? ( ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name )
                                             : '';
 
@@ -127,7 +128,7 @@ sub display_subgraph {
         $text .= $prefix . qq{\tlabel="$cluster_label";\n};         #   In case some levels need the labels and some don't, need to override the parent level
 
     if($colour_scheme) {
-        $text .= $prefix . "\tstyle=filled;\n";
+        $text .= $prefix . qq{\tstyle=filled;\n};
 
         if(defined($colour_offset)) {
             $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";

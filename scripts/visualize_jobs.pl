@@ -94,11 +94,6 @@ sub main {
 
         $self->{'graph'}->cluster_2_nodes( {} );
         $self->{'graph'}->cluster_2_colour_pair( {} );
-        $self->{'graph'}->display_cluster_names_by_level( {
-            0 => 1,     # display non-include'd pipeline names
-            1 => 1,     # display non-include'd analysis names AND  -include'd pipeline names
-            2 => 1,     # display                                   -include'd analysis names
-        } );
 
             # preload all participating pipeline databases into TheApiary:
         precache_participating_pipelines( $main_pipeline );
@@ -142,6 +137,7 @@ sub main {
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
             my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
             push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
+            $self->{'graph'}->cluster_2_attributes->{ $this_pipeline->hive_pipeline_name } = { 'display_cluster_name' => 1 };
         }
 
         $self->{'graph'}->cluster_2_colour_pair->{ $main_pipeline->hive_pipeline_name } = ['pastel19', 3];
@@ -270,6 +266,7 @@ sub add_job_node {
 
         my $analysis_status = $job->analysis->status;
         push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
+        $self->{'graph'}->cluster_2_attributes->{ $analysis_name } = { 'display_cluster_name' => 1 };
         $self->{'graph'}->cluster_2_colour_pair->{ $analysis_name } = [ $analysis_status_colour->{$analysis_status} ];
         $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
 

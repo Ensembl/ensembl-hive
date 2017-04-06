@@ -241,12 +241,12 @@ sub build {
     my %cluster_2_colour_pair = ();
     $self->graph->cluster_2_nodes( \%cluster_2_nodes );
     $self->graph->cluster_2_colour_pair( \%cluster_2_colour_pair );
-    $self->graph->display_cluster_names_by_level( { 0 => 1, } );        # the top level corresponds to the pipeline_name
 
     if( $self->config_get('DisplayDetails') ) {
         my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
         foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
             my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name } = { 'display_cluster_name' => 1 };
 
             $cluster_2_colour_pair{ $pipeline_cluster_name } = ($pipeline == $main_pipeline)
                 ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]
