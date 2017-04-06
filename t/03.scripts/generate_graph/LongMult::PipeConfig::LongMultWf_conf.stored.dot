@@ -15,9 +15,9 @@ digraph test {
 
 subgraph cluster_long_mult_wf {
 	label="long_mult_wf";
-	style=filled;
+	style="bold,filled";
 	colorscheme=pastel19;
-	color=3;
+	fillcolor=3;
 	analysis_take_b_apart;
 	dfr_2_mp;
 	analysis_part_multiply;

@@ -119,14 +119,22 @@ sub display_subgraph {
         $text .= $prefix . qq{\tlabel="$cluster_label";\n};         #   In case some levels need the labels and some don't, need to override the parent level
 
     if($colour_scheme) {
-        $text .= $prefix . qq{\tstyle=filled;\n};
+        my $cluster_style = $cluster_attributes->{ 'style' } || 'filled';
+        $text .= $prefix . qq{\tstyle="$cluster_style";\n};
 
         if(defined($colour_offset)) {
             $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
-            $text .= $prefix . "\tcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
+            $text .= $prefix . "\tfillcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
+
+            if($cluster_style eq 'filled') {  # camouflage the edge
+                $text .= $prefix . "\tcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
+            }
         } else {    # it's just a simple colour:
             $text .= $prefix . "\tcolorscheme=X11;\n";
-            $text .= $prefix . "\tcolor=${colour_scheme};\n";
+            $text .= $prefix . "\tfillcolor=${colour_scheme};\n";
+            if($cluster_style eq 'filled') {  # camouflage the edge
+                $text .= $prefix . "\tcolor=${colour_scheme};\n";
+            }
         }
     } # otherwise just draw a black frame around the subgraph
 

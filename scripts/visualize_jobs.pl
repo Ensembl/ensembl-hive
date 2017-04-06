@@ -139,11 +139,13 @@ sub main {
             $self->{'graph'}->cluster_2_attributes->{ $this_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
         }
 
+        $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = ['pastel19', 3];
         my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
             # now rotate through the list:
         foreach my $other_pipeline ( @other_pipelines ) {
             my $colour_pair = shift @other_pipeline_colour_pairs;
+            $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = $colour_pair;
             push @other_pipeline_colour_pairs, $colour_pair;
 
@@ -266,6 +268,7 @@ sub add_job_node {
         my $analysis_status = $job->analysis->status;
         push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
         $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'display_cluster_name' } = 1;
+        $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'style' } = 'rounded,filled';
         $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'fill_colour_pair' } = [ $analysis_status_colour->{$analysis_status} ];
         $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
 

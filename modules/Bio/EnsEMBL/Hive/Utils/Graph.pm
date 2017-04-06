@@ -245,6 +245,7 @@ sub build {
         foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
             my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'display_cluster_name' } = 1;
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'style' } = 'bold,filled';
 
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'fill_colour_pair' } = ($pipeline == $main_pipeline)
                 ? [$self->config_get('Box', 'MainPipeline', 'ColourScheme'),  $self->config_get('Box', 'MainPipeline', 'ColourOffset')]

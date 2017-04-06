@@ -25,15 +25,16 @@ digraph test {
 
 subgraph cluster_long_mult_client {
 	label="long_mult_client";
-	style=filled;
+	style="bold,filled";
 	colorscheme=pastel19;
-	color=3;
+	fillcolor=3;
 	analysis_take_b_apart;
 	dfr_p1_mp;
 	subgraph cluster_cl_dfr_p1_mp {
 		label="";
-		style=filled;
+		style="filled";
 		colorscheme=blues9;
+		fillcolor=2;
 		color=2;
 		analysis_part_multiply;
 		sink_dfr_p1_mp;
@@ -44,9 +45,9 @@ subgraph cluster_long_mult_client {
 }
 subgraph cluster_long_mult_server {
 	label="long_mult_server";
-	style=filled;
+	style="bold,filled";
 	colorscheme=pastel19;
-	color=8;
+	fillcolor=8;
 	foreign_analysis_ehive_test_server__add_together;
 	table_ehive_test_server__final_result;
 	foreign_analysis_ehive_test_server__part_multiply;

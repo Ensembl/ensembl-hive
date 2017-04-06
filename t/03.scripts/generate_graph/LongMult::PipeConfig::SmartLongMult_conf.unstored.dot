@@ -23,9 +23,9 @@ digraph test {
 
 subgraph cluster_smart_long_mult {
 	label="smart_long_mult";
-	style=filled;
+	style="bold,filled";
 	colorscheme=pastel19;
-	color=3;
+	fillcolor=3;
 	analysis_redirect_trivial_jobs;
 	dfr_p1_mp;
 	table_final_result;
@@ -34,8 +34,9 @@ subgraph cluster_smart_long_mult {
 	dfr_p2_mp;
 	subgraph cluster_cl_dfr_p2_mp {
 		label="";
-		style=filled;
+		style="filled";
 		colorscheme=blues9;
+		fillcolor=2;
 		color=2;
 		analysis_part_multiply;
 		sink_dfr_p2_mp;
