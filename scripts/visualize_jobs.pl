@@ -94,7 +94,11 @@ sub main {
 
         $self->{'graph'}->cluster_2_nodes( {} );
         $self->{'graph'}->cluster_2_colour_pair( {} );
-        $self->{'graph'}->display_cluster_names_by_level( { 0 => 1, 1 => 1, } );    # we only need to display two levels
+        $self->{'graph'}->display_cluster_names_by_level( {
+            0 => 1,     # display non-include'd pipeline names
+            1 => 1,     # display non-include'd analysis names AND  -include'd pipeline names
+            2 => 1,     # display                                   -include'd analysis names
+        } );
 
             # preload all participating pipeline databases into TheApiary:
         precache_participating_pipelines( $main_pipeline );

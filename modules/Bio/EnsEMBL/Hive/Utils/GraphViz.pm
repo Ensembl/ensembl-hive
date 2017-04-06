@@ -102,7 +102,8 @@ sub dot_input_filename {
 }
 
 
-sub display_cluster_names_by_level {
+sub display_cluster_names_by_level {    # FIXME: if we want to introduce "-include" equivalent for A-diagrams as well,
+                                        #        this interface will no longer be adequate, so we will need something more specific.
     my $self = shift @_;
     if(@_) {
         $self->{_display_cluster_names_by_level} = shift @_;
