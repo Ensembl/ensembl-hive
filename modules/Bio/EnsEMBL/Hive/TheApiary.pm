@@ -56,6 +56,16 @@ sub pipelines_collection {
 }
 
 
+sub pipelines_except {
+    my ($class, $except_pipeline)   = @_;
+
+    my $except_display_name = $except_pipeline->display_name;
+    my %collection_hash     = %{ $class->pipelines_collection };
+
+    return [ grep { $_->display_name ne $except_display_name } map { $collection_hash{$_} } sort keys %collection_hash ];
+}
+
+
 sub find_by_url {
     my $class            = shift @_;
     my $url              = shift @_;
@@ -98,5 +108,22 @@ sub find_by_url {
     }
 }
 
+
+sub fetch_remote_semaphores_controlling_this_one {      # NB! This method has a (potentially unwanted) side-effect of adding @extra_pipelines to TheApiary. Use with caution.
+    my ($class, $this_semaphore_or_url, @extra_pipelines) = @_;
+
+    my $this_semaphore_url = ref($this_semaphore_or_url)
+                                ? $this_semaphore_or_url->relative_url( 0 )     # turn a semaphore into its global URL
+                                : $this_semaphore_or_url;                       # just use the provided URL
+
+    my @remote_controlling_semaphores = ();
+
+    foreach my $remote_pipeline (values %{ $class->pipelines_collection }, @extra_pipelines ) {
+
+        push @remote_controlling_semaphores, @{ $remote_pipeline->hive_dba->get_SemaphoreAdaptor->fetch_all_by_dependent_semaphore_url( $this_semaphore_url ) };
+    }
+
+    return \@remote_controlling_semaphores;
+}
 
 1;

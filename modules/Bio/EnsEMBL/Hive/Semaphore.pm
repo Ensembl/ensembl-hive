@@ -176,6 +176,13 @@ sub fetch_my_raw_accu_data {
 }
 
 
+sub fetch_my_local_controlling_jobs {
+    my $self    = shift @_;
+
+    return $self->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $self->dbID );
+}
+
+
 sub release_if_ripe {
     my $self    = shift @_;
 

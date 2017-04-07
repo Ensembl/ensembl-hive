@@ -115,19 +115,12 @@ sub main {
             my $job_node_name   = add_job_node( $start_job );
         }
 
-        my @other_pipelines = sort values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
-
         for (1..2) {    # a hacky way to get relative independence on sorting order (we don't know the ideal sorting order)
-            foreach my $pipeline ( $main_pipeline, @other_pipelines ) {
-                # print "Looking in pipeline: ".$pipeline->hive_pipeline_name."\n";
-                my $semaphore_adaptor   = $pipeline->hive_dba->get_SemaphoreAdaptor;
-                foreach my $semaphore_url ( keys %semaphore_url_hash ) {
-                    foreach my $local_semaphore ( @{ $semaphore_adaptor->fetch_all_by_dependent_semaphore_url( $semaphore_url ) } ) {
+            foreach my $semaphore_url ( keys %semaphore_url_hash ) {
+                foreach my $local_semaphore( @{ Bio::EnsEMBL::Hive::TheApiary->fetch_remote_semaphores_controlling_this_one( $semaphore_url, $main_pipeline ) } ) {
 
-                        my $local_blocker_jobs = $local_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $local_semaphore->dbID );
-                        foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
-                            my $job_node_name   = add_job_node( $start_job );
-                        }
+                    foreach my $start_job ( @{ find_the_top( $local_semaphore->fetch_my_local_controlling_jobs ) } ) {
+                        my $job_node_name   = add_job_node( $start_job );
                     }
                 }
             }
@@ -142,8 +135,11 @@ sub main {
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = ['pastel19', 3];
         my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
+
             # now rotate through the list:
-        foreach my $other_pipeline ( @other_pipelines ) {
+        foreach my $other_pipeline ( @{ Bio::EnsEMBL::Hive::TheApiary->pipelines_except($main_pipeline) } ) {
+            next if($other_pipeline->display_name eq $main_pipeline->display_name);     # the main_pipeline got registered, filter it out
+
             my $colour_pair = shift @other_pipeline_colour_pairs;
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = $colour_pair;
@@ -450,8 +446,7 @@ sub add_semaphore_node {
             $target_cluster_name = $semaphore->hive_pipeline->hive_pipeline_name;
 
                 # can we trace the local blocking jobs up to their roots?
-            my $local_blocker_jobs = $dependent_semaphore->adaptor->db->get_AnalysisJobAdaptor->fetch_all_by_controlled_semaphore_id( $dependent_semaphore->dbID );
-            foreach my $start_job ( @{ find_the_top($local_blocker_jobs) } ) {
+            foreach my $start_job ( @{ find_the_top( $dependent_semaphore->fetch_my_local_controlling_jobs ) } ) {
                 my $job_node_name   = add_job_node( $start_job );
             }
 
