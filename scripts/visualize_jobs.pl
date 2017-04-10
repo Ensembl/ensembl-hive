@@ -102,29 +102,28 @@ sub main {
         $start_analysis     = $self->{'start_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'start_analysis_name'} } );
         $stop_analysis      = $self->{'stop_analysis_name'} && $main_pipeline->find_by_query( {'object_type' => 'Analysis', 'logic_name' => $self->{'stop_analysis_name'} } );
 
-        my $start_jobs  =   $start_analysis
-                                ? ( $anchor_jobs
-                                        ? find_the_top( $anchor_jobs )                                      # perform a per-jobs scan to the start_analysis
-                                        : $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
-                                ) : ( $anchor_jobs
-                                        ? $anchor_jobs                                                      # just start from the given anchor_jobs
-                                        : $job_adaptor->fetch_all_by_prev_job_id( undef )                   # by default start from the seed jobs
-                                );
+        my $start_jobs  = $anchor_jobs
+                            ? find_the_top( $anchor_jobs )                                          # scan from $anchor_jobs to start_analysis//top
+                            : $start_analysis
+                                ? $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
+                                : find_the_top( $job_adaptor->fetch_all_by_prev_job_id( undef ) );  # scan from seed_jobs to start_analysis//top
 
         foreach my $start_job ( @$start_jobs ) {
             my $job_node_name   = add_job_node( $start_job );
         }
 
+if(0) {
         for (1..2) {    # a hacky way to get relative independence on sorting order (we don't know the ideal sorting order)
             foreach my $semaphore_url ( keys %semaphore_url_hash ) {
-                foreach my $local_semaphore( @{ Bio::EnsEMBL::Hive::TheApiary->fetch_remote_semaphores_controlling_this_one( $semaphore_url, $main_pipeline ) } ) {
+                foreach my $remote_semaphore ( @{ Bio::EnsEMBL::Hive::TheApiary->fetch_remote_semaphores_controlling_this_one( $semaphore_url, $main_pipeline ) } ) {
 
-                    foreach my $start_job ( @{ find_the_top( $local_semaphore->fetch_my_local_controlling_jobs ) } ) {
+                    foreach my $start_job ( @{ find_the_top( $remote_semaphore->fetch_my_local_controlling_jobs ) } ) {
                         my $job_node_name   = add_job_node( $start_job );
                     }
                 }
             }
         }
+}
 
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
             my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
@@ -166,6 +165,8 @@ sub main {
 }
 
 
+##################### tracing:  ##############################################################################
+
         # preload all participating pipeline databases into TheApiary:
 sub precache_participating_pipelines {
     my @pipelines_to_check = @_;
@@ -188,6 +189,7 @@ sub precache_participating_pipelines {
 }
 
 
+
 sub find_the_top {
     my ($anchor_jobs) = @_;
 
@@ -196,14 +198,111 @@ sub find_the_top {
         # first try to find the start_analysis on the way up:
     foreach my $anchor_job ( @$anchor_jobs ) {
 
-        my $job;
+        push @starters, trace_job_up($anchor_job);
 
-        for($job = $anchor_job; (!$start_analysis || ($job->analysis != $start_analysis)) and ($job->prev_job) ; $job = $job->prev_job) {}
-
-        push @starters, $job;
+        my $children = $anchor_job->adaptor->fetch_all_by_prev_job_id( $anchor_job->dbID );
+        foreach my $child ( @$children ) {
+            if( my $semaphore = $child->fetch_local_blocking_semaphore ) {
+                push @starters, trace_semaphore_up( $semaphore );
+            }
+        }
     }
 
     return \@starters;
+}
+
+
+sub trace_job_up {
+    my $job = shift @_;
+
+    my @buffer = ();
+
+    if(my $local_blocking_semaphore = $job->fetch_local_blocking_semaphore) {
+        push @buffer, trace_semaphore_up( $local_blocking_semaphore );
+    }
+
+    if(my $local_parent_job = $job->prev_job) {
+        push @buffer, trace_job_up( $local_parent_job );
+    } else {
+        push @buffer, $job;
+    }
+
+    return @buffer;
+}
+
+
+sub trace_semaphore_up {
+    my $semaphore = shift @_;
+
+    my @buffer = ();
+
+    foreach my $local_controlling_job ( @{ $semaphore->fetch_my_local_controlling_jobs } ) {
+        push @buffer, trace_job_up( $local_controlling_job );
+    }
+
+    foreach my $remote_semaphore ( @{ Bio::EnsEMBL::Hive::TheApiary->fetch_remote_semaphores_controlling_this_one( $semaphore, $main_pipeline ) } ) {
+        push @buffer, trace_semaphore_up( $remote_semaphore );
+    }
+
+    return @buffer;
+}
+
+
+##################### drawing:  ##############################################################################
+
+sub draw_job_node {
+    my ($job, $job_node_name) = @_;
+
+    my $job_shape           = 'box3d';
+    my $job_status          = $job->status;
+    my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job_status} // 'yellow';
+    my $analysis_status_colour = {
+        "EMPTY"       => "white",
+        "BLOCKED"     => "grey",
+        "LOADING"     => "green",
+        "ALL_CLAIMED" => "grey",
+        "SYNCHING"    => "green",
+        "READY"       => "green",
+        "WORKING"     => "yellow",
+        "DONE"        => "DeepSkyBlue",
+        "FAILED"      => "red",
+    };
+
+    my $job_id              = $job->dbID;
+    my $job_params          = destringify($job->input_id);
+
+    my $job_label           = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">}
+                             .qq{<tr><td><u><i>job_id:</i></u></td><td><i>$job_id</i></td></tr>};
+
+    if(my $param_id_stack = $job->param_id_stack) {
+        $job_label  .=  qq{<tr><td><u><i>params from:</i></u></td><td><i>$param_id_stack</i></td></tr>};
+    }
+
+    foreach my $param_key (sort keys %$job_params) {
+        my $param_value = $job_params->{$param_key};
+        $job_label  .= "<tr><td>$param_key:</td><td> $param_value</td></tr>";
+    }
+
+    $job_label  .= "</table>>";
+
+
+    $self->{'graph'}->add_node( $job_node_name,
+        shape       => $job_shape,
+        style       => 'filled',
+        fillcolor   => $job_status_colour,
+        label       => $job_label,
+    );
+
+        # adding the job to the corresponding analysis' cluster:
+    my $analysis_name   = $job->analysis->relative_display_name($main_pipeline);
+    $analysis_name=~s{/}{___};
+
+    my $analysis_status = $job->analysis->status;
+    push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
+    $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'display_cluster_name' } = 1;
+    $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'style' } = 'rounded,filled';
+    $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'fill_colour_pair' } = [ $analysis_status_colour->{$analysis_status} ];
+    $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
 }
 
 
@@ -217,56 +316,8 @@ sub add_job_node {
     my $job_node_name       = 'job_'.$job_id.'__'.$job_pipeline_name;
 
     unless($job_node_hash{$job_node_name}++) {
-        my $job_shape           = 'box3d';
-        my $job_status          = $job->status;
-        my $job_status_colour   = {'DONE' => 'DeepSkyBlue', 'READY' => 'green', 'SEMAPHORED' => 'grey', 'FAILED' => 'red'}->{$job_status} // 'yellow';
-        my $analysis_status_colour = {
-            "EMPTY"       => "white",
-            "BLOCKED"     => "grey",
-            "LOADING"     => "green",
-            "ALL_CLAIMED" => "grey",
-            "SYNCHING"    => "green",
-            "READY"       => "green",
-            "WORKING"     => "yellow",
-            "DONE"        => "DeepSkyBlue",
-            "FAILED"      => "red",
-        };
 
-        my $job_id              = $job->dbID;
-        my $job_params          = destringify($job->input_id);
-
-        my $job_label           = qq{<<table border="0" cellborder="0" cellspacing="0" cellpadding="1">}
-                                 .qq{<tr><td><u><i>job_id:</i></u></td><td><i>$job_id</i></td></tr>};
-
-        if(my $param_id_stack = $job->param_id_stack) {
-            $job_label  .=  qq{<tr><td><u><i>params from:</i></u></td><td><i>$param_id_stack</i></td></tr>};
-        }
-
-        foreach my $param_key (sort keys %$job_params) {
-            my $param_value = $job_params->{$param_key};
-            $job_label  .= "<tr><td>$param_key:</td><td> $param_value</td></tr>";
-        }
-
-        $job_label  .= "</table>>";
-
-
-        $self->{'graph'}->add_node( $job_node_name,
-            shape       => $job_shape,
-            style       => 'filled',
-            fillcolor   => $job_status_colour,
-            label       => $job_label,
-        );
-
-            # adding the job to the corresponding analysis' cluster:
-        my $analysis_name   = $job->analysis->relative_display_name($main_pipeline);
-        $analysis_name=~s{/}{___};
-
-        my $analysis_status = $job->analysis->status;
-        push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
-        $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'display_cluster_name' } = 1;
-        $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'style' } = 'rounded,filled';
-        $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'fill_colour_pair' } = [ $analysis_status_colour->{$analysis_status} ];
-        $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;
+        draw_job_node( $job, $job_node_name);
 
             # recursion via child jobs:
         if( !$stop_analysis or ($job->analysis != $stop_analysis) ) {
@@ -294,6 +345,7 @@ sub add_job_node {
             if(my $controlled_semaphore = $job->controlled_semaphore) {
                 my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
 
+                my $job_status                  = $job->status;
                 my $parent_is_blocking          = ($job_status eq 'DONE' or $job_status eq 'PASSED_ON') ? 0 : 1;
                 my $parent_controlling_colour   = $parent_is_blocking ? 'red' : 'darkgreen';
                 my $blocking_arrow              = $parent_is_blocking ? 'tee' : 'none';
@@ -309,7 +361,6 @@ sub add_job_node {
 
     return $job_node_name;
 }
-
 
 sub draw_semaphore_and_accu {
     my ($semaphore, $dependent_node_name) = @_;
