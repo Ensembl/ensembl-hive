@@ -47,7 +47,8 @@ my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-dbconn => $dbc, -no_sq
 my $final_result_nta    = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
 my $analysis_nta        = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'analysis_base' );
 my $final_result2_nta   = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
-my $final_result3_nta   = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result', 'insertion_method' => 'REPLACE' );
+my $final_result3_nta   = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result', 'insertion_method' => 'INSERT_IGNORE' );
+my $final_result4_nta   = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result', 'insertion_method' => 'REPLACE' );
 
 is($final_result_nta, $final_result2_nta, "Adaptors with identical creation parameters are cached as expected");
 isnt($final_result_nta, $analysis_nta, "Adaptors with different creation parameters are cached separately as expected");
@@ -68,10 +69,17 @@ is_deeply($final_result_nta->count_all_HASHED_FROM_a_multiplier(), {$first_hash-
 is($final_result_nta->count_all_by_a_multiplier($first_hash->{a_multiplier}), 2, '2 result for this a_multiplier');
 is_deeply($final_result_nta->count_all_by_a_multiplier_HASHED_FROM_b_multiplier($first_hash->{a_multiplier}), {$first_hash->{b_multiplier} => 1, $third_hash->{b_multiplier} => 1}, '2 different b_multiplier for this a_multiplier');
 
-my $first_hash_plus_one = { 'a_multiplier' => $first_hash->{'a_multiplier'}, 'b_multiplier' => $first_hash->{'b_multiplier'}, 'result' => $first_hash->{'result'}+1 };
-$final_result3_nta->store( $first_hash_plus_one );
-my $last_result = $final_result3_nta->fetch_by_a_multiplier_AND_b_multiplier( $first_hash_plus_one->{'a_multiplier'}, $first_hash_plus_one->{'b_multiplier'});
-is_deeply($last_result, $first_hash_plus_one, "Replaced the value correctly");
+if($dbc->driver ne 'pgsql') {
+    my $first_hash_plus_one = { 'a_multiplier' => $first_hash->{'a_multiplier'}, 'b_multiplier' => $first_hash->{'b_multiplier'}, 'result' => $first_hash->{'result'}+1 };
+
+    $final_result3_nta->store( $first_hash_plus_one );
+    my $insert_ignore_result = $final_result3_nta->fetch_by_a_multiplier_AND_b_multiplier( $first_hash_plus_one->{'a_multiplier'}, $first_hash_plus_one->{'b_multiplier'});
+    is_deeply($insert_ignore_result, $first_hash, "Ignored a row with a key collision correctly");
+
+    $final_result4_nta->store( $first_hash_plus_one );
+    my $last_result = $final_result3_nta->fetch_by_a_multiplier_AND_b_multiplier( $first_hash_plus_one->{'a_multiplier'}, $first_hash_plus_one->{'b_multiplier'});
+    is_deeply($last_result, $first_hash_plus_one, "Replaced the value correctly");
+}
 
 $dbc->disconnect_if_idle;
 run_sql_on_db($test_url, 'DROP DATABASE');
