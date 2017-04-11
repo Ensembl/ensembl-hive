@@ -95,10 +95,14 @@ sub new {
         throw("I was given [$dbobj] for a new adaptor");
     }
 
-    my %flags = @_;
+    my %options = @_;
 
-    if(my $table_name = delete $flags{ 'table_name' }) {
-        $self->table_name( $table_name );
+    foreach my $option_name (keys %options) {
+        if( UNIVERSAL::can( $self, $option_name ) ) {
+            if(defined(my $option_value = delete $options{ $option_name })) {
+                $self->$option_name( $option_value );
+            }
+        }
     }
 
     return $self;
