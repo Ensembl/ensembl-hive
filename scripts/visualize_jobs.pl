@@ -336,11 +336,6 @@ sub add_job_node {
                 }
             }
 
-                # a local semaphore potentially blocking this job:
-            if(my $blocking_semaphore = $job->fetch_local_blocking_semaphore) {
-                my $semaphore_node_name = add_semaphore_node( $blocking_semaphore );
-            }
-
                 # a local semaphore potentially blocked by this job:
             if(my $controlled_semaphore = $job->controlled_semaphore) {
                 my $semaphore_node_name = add_semaphore_node( $controlled_semaphore );
@@ -361,6 +356,7 @@ sub add_job_node {
 
     return $job_node_name;
 }
+
 
 sub draw_semaphore_and_accu {
     my ($semaphore, $dependent_node_name) = @_;
@@ -486,7 +482,12 @@ sub add_semaphore_node {
             $accu_node_name = draw_semaphore_and_accu($semaphore, $dependent_job_node_name);
 
             $target_cluster_name = $dependent_job->analysis->relative_display_name($main_pipeline);
-            $target_cluster_name =~s{/}{___};
+
+            if($dependent_job->analysis->hive_pipeline->hive_pipeline_name eq $main_pipeline->hive_pipeline_name) {
+                $target_cluster_name =~s{^.*/}{};   # workaround since we may have added $main_pipeline into TheApiary
+            } else {
+                $target_cluster_name =~s{/}{___};
+            }
 
         } elsif(my $dependent_semaphore = $semaphore->dependent_semaphore) {
 
