@@ -3,6 +3,7 @@ package Bio::EnsEMBL::Hive::HivePipeline;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::TheApiary;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
@@ -135,6 +136,8 @@ sub new {       # construct an attached or a detached Pipeline object
     } else {
 #       warn "Created a standalone pipeline";
     }
+
+    Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->add( $self );
 
     return $self;
 }

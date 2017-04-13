@@ -92,13 +92,11 @@ sub find_by_url {
                 $no_sql_schema_version_check = 1;
             }
 
-            $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(         # calling HivePipeline->new() triggers automatic addition to TheApiary
                 -url                        => $parsed_url->{'dbconn_part'},
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,
             );
-
-            $class->pipelines_collection->add( $hive_pipeline );
         }
 
         return  $query_params

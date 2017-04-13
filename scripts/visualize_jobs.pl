@@ -135,9 +135,8 @@ if(0) {
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = ['pastel19', 3];
         my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
 
-            # now rotate through the list:
+            # now rotate through the list of the non-reference pipelines:
         foreach my $other_pipeline ( @{ Bio::EnsEMBL::Hive::TheApiary->pipelines_except($main_pipeline) } ) {
-            next if($other_pipeline->display_name eq $main_pipeline->display_name);     # the main_pipeline got registered, filter it out
 
             my $colour_pair = shift @other_pipeline_colour_pairs;
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
