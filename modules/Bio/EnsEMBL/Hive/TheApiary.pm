@@ -73,7 +73,7 @@ sub find_by_url {
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
-        my $unambig_url     = $parsed_url->{'unambig_url'};
+        my $unambig_key     = Bio::EnsEMBL::Hive::Utils::URL::hash_to_unambig_url( $parsed_url );
         my $query_params    = $parsed_url->{'query_params'};
         my $conn_params     = $parsed_url->{'conn_params'};
 
@@ -82,17 +82,17 @@ sub find_by_url {
 
         my $hive_pipeline;
 
-        if($parsed_url->{'unambig_url'} eq ':///') {
+        if($unambig_key eq ':///') {
 
             $hive_pipeline = $default_pipeline;
 
-        } elsif( not ($hive_pipeline = $class->pipelines_collection->{ $unambig_url }) ) {
+        } elsif( not ($hive_pipeline = $class->pipelines_collection->{ $unambig_key }) ) {
 
             if($query_params and ($query_params->{'object_type'} eq 'NakedTable') ) {  # do not check schema version when performing table dataflow:
                 $no_sql_schema_version_check = 1;
             }
 
-            $class->pipelines_collection->{ $unambig_url } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            $class->pipelines_collection->{ $unambig_key } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                        => $parsed_url->{'dbconn_part'},
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,

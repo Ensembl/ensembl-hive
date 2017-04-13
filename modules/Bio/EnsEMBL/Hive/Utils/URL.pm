@@ -40,7 +40,7 @@ sub parse {
     my $url = shift @_ or return;
 
     my ($old_parse, $new_parse,
-        $dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string, $query_part);
+        $dbconn_part, $url_parts_hash, $table_name, $tparam_name, $tparam_value, $conn_param_string, $query_part);
 
     # In case the whole URL is quoted (should we do this with double-quotes too ?)
     if( $url=~/^'(.*)'$/ ) {
@@ -56,7 +56,7 @@ sub parse {
 
     } else {
 
-        if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
+        if( ($dbconn_part, @$url_parts_hash{'driver', 'user', 'pass', 'host', 'port', 'dbname'}, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
             $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([\w\-\.]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]*))?)?((?:;(\w+)=(\w+))*)$} ) {
 
             my ($dummy, %conn_params) = split(/[;=]/, $conn_param_string // '' );
@@ -89,18 +89,11 @@ sub parse {
             if($exception_from_OLD_format) {
                 warn "\nOLD URL parser thinks you are using the NEW URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
-                my $unambig_port    = $port // { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
-                my $unambig_host    = ($host//'') eq 'localhost' ? '127.0.0.1' : ($host//'');
-                my $unambig_url     = ($driver//'') .'://'. ($user ? $user.'@' : '') . $unambig_host . ( $unambig_port ? ':'.$unambig_port : '') .'/'. ($dbname//'');
+                my $unambig_url     = hash_to_unambig_url( $url_parts_hash );
 
                 $old_parse = {
                     'dbconn_part'   => $dbconn_part,
-                    'driver'        => $driver,
-                    'user'          => $user,
-                    'pass'          => $pass,
-                    'host'          => $host,
-                    'port'          => $port,
-                    'dbname'        => $dbname,
+                    %$url_parts_hash,
                     'conn_params'   => \%conn_params,
                     'query_params'  => $query_params,
                     'unambig_url'   => $unambig_url,
@@ -108,12 +101,14 @@ sub parse {
             }
         } # /if OLD format
     
-        if( ($dbconn_part, $driver, $user, $pass, $host, $port, $dbname, $query_part, $conn_param_string) =
+        if( ($dbconn_part, @$url_parts_hash{'driver', 'user', 'pass', 'host', 'port', 'dbname'}, $query_part, $conn_param_string) =
             $url =~ m{^((\w+)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?(?:/([/~\w\-\.]*))?)?(?:\?(\w+=[\w\[\]\{\}]*(?:&\w+=[\w\[\]\{\}]*)*))?(;\w+=\w+(?:;\w+=\w+)*)?$} ) {
 
             my ($dummy, %conn_params) = split(/[;=]/, $conn_param_string // '' );
             my $query_params = $query_part ? { split(/[&=]/, $query_part ) } : undef;
             my $exception_from_NEW_format;
+
+            my ($driver, $dbname) = @$url_parts_hash{'driver', 'dbname'};
 
             if(!$query_params and ($driver eq 'mysql' or $driver eq 'pgsql') and $dbname and $dbname=~m{/}) {   # a special case of multipart dbpath hints at the OLD format (or none at all)
 
@@ -148,18 +143,11 @@ sub parse {
             if($exception_from_NEW_format) {
                 warn "\nNEW URL parser thinks you are using the OLD URL syntax for a remote $query_params->{'object_type'}, so skipping it (it may be wrong!)\n";
             } else {
-                my $unambig_port    = $port // { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver//''} // '';
-                my $unambig_host    = ($host//'') eq 'localhost' ? '127.0.0.1' : ($host//'');
-                my $unambig_url     = ($driver//'') .'://'. ($user ? $user.'@' : '') . $unambig_host . ( $unambig_port ? ':'.$unambig_port : '') .'/'. ($dbname//'');
+                my $unambig_url     = hash_to_unambig_url( $url_parts_hash );
 
                 $new_parse = {
                     'dbconn_part'   => $dbconn_part,
-                    'driver'        => $driver,
-                    'user'          => $user,
-                    'pass'          => $pass,
-                    'host'          => $host,
-                    'port'          => $port,
-                    'dbname'        => $dbname,
+                    %$url_parts_hash,
                     'conn_params'   => \%conn_params,
                     'query_params'  => $query_params,
                     'unambig_url'   => $unambig_url,
@@ -188,12 +176,35 @@ sub parse {
 }
 
 
+=head2 hash_to_unambig_url
+
+  Arg [1]     : a hash describing (at least) db connection parameters
+  Example     : my $unambig_url = hash_to_unambig_url( $url_parts_hash );
+  Description : Generates a degenerate URL that omits unnecessary parts (password, default port numbers)
+              : but tries to uniquely represent a connection.
+  Returntype  : a string
+
+=cut
+
+sub hash_to_unambig_url {
+    my $url_parts_hash = shift @_;      # expected to contain the parts from which to build a URL
+
+    my $driver          = $url_parts_hash->{'driver'} // '';
+    my $unambig_port    = $url_parts_hash->{'port'}   // { 'mysql' => 3306, 'pgsql' => 5432, 'sqlite' => '' }->{$driver} // '';
+    my $unambig_host    = ( $url_parts_hash->{'host'} // '' ) eq 'localhost' ? '127.0.0.1' : ( $url_parts_hash->{'host'} // '' );
+    my $unambig_url     = $driver .'://'. ($url_parts_hash->{'user'} ? $url_parts_hash->{'user'}.'@' : '')
+                                        . $unambig_host . ( $unambig_port ? ':'.$unambig_port : '') .'/'. ( $url_parts_hash->{'dbname'} // '' );
+
+    return $unambig_url;
+}
+
+
 =head2 hash_to_url
 
   Arg [1]     : a hash describing a db connection, or accumulator, as generated by parse_url
   Example     : my $parse = parse_url($url1); my $url2 = hash_to_url($parse); 
   Description : Generates a "new-style" URL from a hash containing the parse of a URL
-              : (old or new style). In cases where there a trailing slash is optional, it leaves
+              : (old or new style). In cases where a trailing slash is optional, it leaves
               : off the trailing slash
   Returntype  : a URL as a string
 
