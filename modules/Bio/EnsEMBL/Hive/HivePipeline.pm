@@ -73,7 +73,11 @@ sub find_by_query {
             unless($object = $self->collection_of($object_type)->find_one_by( %$query_params )) {
 
                 my @specific_adaptor_params = ($object_type eq 'NakedTable')
-                    ? ('table_name' => $query_params->{'table_name'}, 'insertion_method' => $query_params->{'insertion_method'})
+                    ? ('table_name' => $query_params->{'table_name'},
+                        $query_params->{'insertion_method'}
+                            ? ('insertion_method' => $query_params->{'insertion_method'})
+                            : ()
+                      )
                     : ();
                 ($object) = $self->add_new_or_update( $object_type, # NB: add_new_or_update returns a list
                     %$query_params,
