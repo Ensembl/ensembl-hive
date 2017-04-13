@@ -241,8 +241,7 @@ sub build {
     $self->graph->cluster_2_nodes( \%cluster_2_nodes );
 
     if( $self->config_get('DisplayDetails') ) {
-        my %foreign_pipelines = %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection };
-        foreach my $pipeline ( $main_pipeline, @foreign_pipelines{sort keys %foreign_pipelines} ) {
+        foreach my $pipeline ( $main_pipeline, Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->list ) {
             my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'display_cluster_name' } = 1;
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'style' } = 'bold,filled';

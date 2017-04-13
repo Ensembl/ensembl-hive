@@ -41,28 +41,28 @@ use strict;
 use warnings;
 use Data::Dumper;
 
+use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::HivePipeline;
 
 
     # global instance to cache HivePipeline objects:
-my $_global_Apiary_hash;
+my $_global_Apiary_collection;
 
 
 sub pipelines_collection {
     my $class   = shift @_;
 
-    return $_global_Apiary_hash ||= {};
+    return $_global_Apiary_collection ||= Bio::EnsEMBL::Hive::Utils::Collection->new;
 }
 
 
 sub pipelines_except {
     my ($class, $except_pipeline)   = @_;
 
-    my $except_display_name = $except_pipeline->display_name;
-    my %collection_hash     = %{ $class->pipelines_collection };
+    my $except_unambig_key  = $except_pipeline->unambig_key;
 
-    return [ grep { $_->display_name ne $except_display_name } map { $collection_hash{$_} } sort keys %collection_hash ];
+    return [ grep { $_->unambig_key ne $except_unambig_key } $class->pipelines_collection->list ];
 }
 
 
@@ -86,17 +86,19 @@ sub find_by_url {
 
             $hive_pipeline = $default_pipeline;
 
-        } elsif( not ($hive_pipeline = $class->pipelines_collection->{ $unambig_key }) ) {
+        } elsif( not ($hive_pipeline = $class->pipelines_collection->find_one_by( 'unambig_key', $unambig_key ) ) ) {
 
             if($query_params and ($query_params->{'object_type'} eq 'NakedTable') ) {  # do not check schema version when performing table dataflow:
                 $no_sql_schema_version_check = 1;
             }
 
-            $class->pipelines_collection->{ $unambig_key } = $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+            $hive_pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                        => $parsed_url->{'dbconn_part'},
                 -disconnect_when_inactive   => $disconnect_when_inactive,
                 -no_sql_schema_version_check=> $no_sql_schema_version_check,
             );
+
+            $class->pipelines_collection->add( $hive_pipeline );
         }
 
         return  $query_params
@@ -118,7 +120,7 @@ sub fetch_remote_semaphores_controlling_this_one {      # NB! This method has a 
 
     my @remote_controlling_semaphores = ();
 
-    foreach my $remote_pipeline (values %{ $class->pipelines_collection }, @extra_pipelines ) {
+    foreach my $remote_pipeline ($class->pipelines_collection->list, @extra_pipelines ) {
 
         push @remote_controlling_semaphores, @{ $remote_pipeline->hive_dba->get_SemaphoreAdaptor->fetch_all_by_dependent_semaphore_url( $this_semaphore_url ) };
     }

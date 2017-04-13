@@ -34,7 +34,7 @@ my $client_url  = get_test_url_or_die(-tag => 'client');
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfServer_conf', $server_url, [], ['pipeline.param[take_time]=0']);
 init_pipeline('Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultWfClient_conf', $client_url, [-server_url => $server_url], ['pipeline.param[take_time]=0']);
 
-foreach my $p (values %{ Bio::EnsEMBL::Hive::TheApiary->pipelines_collection } ) {
+foreach my $p ( Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->list ) {
     $p->hive_dba->dbc->disconnect_if_idle;
 }
 

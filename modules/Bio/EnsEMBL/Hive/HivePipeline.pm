@@ -7,6 +7,7 @@ use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::PCL;
+use Bio::EnsEMBL::Hive::Utils::URL;
 
     # needed for offline graph generation:
 use Bio::EnsEMBL::Hive::Accumulator;
@@ -31,6 +32,17 @@ sub display_name {
         return $dbc->dbname . '@' .($dbc->host||'');
     } else {
         return '(unstored '.$self->hive_pipeline_name.')';
+    }
+}
+
+
+sub unambig_key {   # based on DBC's URL if present, otherwise on pipeline_name
+    my $self = shift @_;
+
+    if(my $dbc = $self->hive_dba && $self->hive_dba->dbc) {
+        return Bio::EnsEMBL::Hive::Utils::URL::hash_to_unambig_url( $dbc->to_url_hash );
+    } else {
+        return 'unstored:'.$self->hive_pipeline_name;
     }
 }
 
