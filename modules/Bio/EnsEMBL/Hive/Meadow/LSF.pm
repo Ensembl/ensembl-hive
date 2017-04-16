@@ -174,11 +174,15 @@ sub parse_report_source_line {
 
     warn "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
 
+    # Conplete list of exit codes is available at
+    # https://www.ibm.com/support/knowledgecenter/SSETD4_9.1.3/lsf_admin/termination_reasons_lsf.html
     my %status_2_cod = (
         'TERM_MEMLIMIT'     => 'MEMLIMIT',
         'TERM_RUNLIMIT'     => 'RUNLIMIT',
         'TERM_OWNER'        => 'KILLED_BY_USER',    # bkill     (wait until it dies)
         'TERM_FORCE_OWNER'  => 'KILLED_BY_USER',    # bkill -r  (quick remove)
+        'TERM_BUCKET_KILL'  => 'KILLED_BY_USER',    # bkill -b  (kills large numbers of jobs as soon as possible)
+        'TERM_REQUEUE_OWNER'=> 'KILLED_BY_USER',    # Job killed and requeued by owner
     );
 
     my %units_2_megs = (
