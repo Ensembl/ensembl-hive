@@ -40,7 +40,6 @@ package Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Role;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 

@@ -43,7 +43,6 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::TheApiary;
-use Bio::EnsEMBL::Hive::DBSQL::SemaphoreAdaptor;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 

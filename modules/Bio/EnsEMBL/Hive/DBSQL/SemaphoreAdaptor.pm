@@ -40,7 +40,6 @@ package Bio::EnsEMBL::Hive::DBSQL::SemaphoreAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::Semaphore;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 

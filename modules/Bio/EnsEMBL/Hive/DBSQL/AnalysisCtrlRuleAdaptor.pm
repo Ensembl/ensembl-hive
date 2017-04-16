@@ -39,7 +39,6 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisCtrlRuleAdaptor;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 

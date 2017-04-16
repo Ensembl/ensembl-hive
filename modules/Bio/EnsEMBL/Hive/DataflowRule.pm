@@ -53,6 +53,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::TheApiary;
+use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 

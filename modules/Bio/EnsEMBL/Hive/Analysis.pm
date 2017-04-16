@@ -42,11 +42,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'throw');
 use Bio::EnsEMBL::Hive::AnalysisJob;
-use Bio::EnsEMBL::Hive::AnalysisCtrlRule;
-use Bio::EnsEMBL::Hive::DataflowRule;
 use Bio::EnsEMBL::Hive::GuestProcess;
-use Bio::EnsEMBL::Hive::Utils::Collection;
-use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
