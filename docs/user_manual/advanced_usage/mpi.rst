@@ -1,21 +1,22 @@
 How to use MPI on eHive
 =======================
 
-With this tutorial, our goal is to give insights on how to set up the
-Hive to run jobs using Shared Memory Parallelism (threads) and
-Distributed Memory Parallelism (MPI).
+        With this tutorial, our goal is to give insights on how to set up the
+        Hive to run jobs using Shared Memory Parallelism (threads) and
+        Distributed Memory Parallelism (MPI).
+
+--------------
 
 First of all, your institution / compute-farm provider may have
 documentation on this topic. Please refer to them for implementation
 details (intranet-only links:
-`EBI <http://www.ebi.ac.uk/systems-srv/public-wiki/index.php/EBI_Good_Computing_Guide>`__,
+`EBI <http://www.ebi.ac.uk/systems-srv/public-wiki/index.php/EBI_Good_Computing_Guide_new>`__,
 `Sanger
 institute <http://mediawiki.internal.sanger.ac.uk/index.php/How_to_run_MPI_jobs_on_the_farm>`__)
 
-We won't discuss the inner parts of the modules, but real examples can
-be found in the
+You can find real examples in the
 `ensembl-compara <https://github.com/Ensembl/ensembl-compara>`__
-repository. It ships modules used for phylogenetic trees inference:
+repository. It ships Runnables used for phylogenetic trees inference:
 `RAxML <https://github.com/Ensembl/ensembl-compara/blob/release/77/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/RAxML.pm>`__
 and
 `ExaML <https://github.com/Ensembl/ensembl-compara/blob/feature/update_pipeline/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__.
@@ -24,17 +25,13 @@ of the logic is in the base class (*GenericRunnable*), but nevertheless
 show the command lines used and the parametrization of multi-core and
 MPI runs.
 
---------------
-
 How to setup a module using Shared Memory Parallelism (threads)
 ---------------------------------------------------------------
 
-    If you have already compiled your code and know how to enable the
-    use of multiple threads / cores, this case should be very
-    straightforward. It basically consists in defining the proper
-    resource class in your pipeline. We also include some tips on how to
-    compile code under MPI environment, but be aware that will vary
-    across systems.
+If you have already compiled your code and know how to enable the
+use of multiple threads / cores, this case should be very
+straightforward. It basically consists in defining the proper
+resource class in your pipeline.
 
 1. You need to setup a resource class that encodes those requirements
    e.g. *16 cores and 24Gb of RAM*:
@@ -73,22 +70,23 @@ How to setup a module using Shared Memory Parallelism (threads)
 Just with this basic configuration, the Hive is able to run Thread\_app
 in 16 cores.
 
---------------
 
 How to setup a module using Distributed Memory Parallelism (MPI)
 ----------------------------------------------------------------
 
-    This case requires a bit more attention, so please be very careful
-    in including / loading the right libraries / modules.
+This case requires a bit more attention, so please be very careful
+in including / loading the right libraries / modules.
+The instructions below may not apply to your system. In doubt, contact your
+systems administrators.
 
 Tips for compiling for MPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-MPI usually comes in two implementations: OpenMPI and mpich2. One of the
+MPI usually comes in two implementations: OpenMPI and MPICH. One of the
 most common source of problems is to compile the code with one MPI
 implementation and try to run it with another. You must compile and run
 your code with the **same** MPI implementation. This can be easily taken
-care by properly setting up your .bashrc to load the right modules.
+care by properly setting up your .bashrc.
 
 If you have access to Intel compilers, we strongly recommend you to try
 compiling your code with it and checking for performance improvements.
@@ -105,11 +103,11 @@ Here is how to list the modules that your system provides:
 
         module avail
 
-And how to load one (OpenMPI in this example:
+And how to load one (mpich3 in this example):
 
 ::
 
-        module load openmpi-x86_64
+        module load mpich3/mpich3-3.1-icc
 
 Don't forget to put this line in your ``~/.bashrc`` so that it is
 automatically loaded.
@@ -136,7 +134,7 @@ define the correct resource class and comand lines in Hive.
          my ($self) = @_;
          return {
            # ...
-           '16Gb_64c_mpi' => {'LSF' => '-q mpi -a openmpi -n 64 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+           '16Gb_64c_mpi' => {'LSF' => '-q mpi-rh7 -n 64 -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
            # ...
          };
        }
@@ -144,18 +142,19 @@ define the correct resource class and comand lines in Hive.
    The resource description is specific to our LSF environment, so adapt
    it to yours, but:
 
--  ``-q mpi -a openmpi`` is needed to tell LSF you will run a job in the
-   MPI/OpenMPI environment
--  ``same[model]`` is needed to ensure that the selected compute nodes
-   all have the same hardware. You may also need something like
-   ``select[avx]`` to select the nodes that have the `AVX instruction
-   set <http://en.wikipedia.org/wiki/Advanced_Vector_Extensions>`__
--  ``span[ptile=4]``, this option specifies the granularity in which LSF
-   will split the jobs/per node. In this example we ask for at least 4
-   jobs to be executed in the same machine. This might affect queuing
-   times.
+   -  ``-q mpi-rh7`` is needed to tell LSF you will run a job in the
+      MPI environment. Note that some LSF installations will require you
+      to use an additional ``-a`` option.
+   -  ``same[model]`` is needed to ensure that the selected compute nodes
+      all have the same hardware. You may also need something like
+      ``select[avx]`` to select the nodes that have the `AVX instruction
+      set <http://en.wikipedia.org/wiki/Advanced_Vector_Extensions>`__
+   -  ``span[ptile=4]``, this option specifies the granularity in which LSF
+      will split the jobs/per node. In this example we ask for each machine
+      to be allocated a multiple of 4 cores. This might affect queuing
+      times.
 
-3. You need to add the analysis to your pipeconfig:
+2. You need to add the analysis to your pipeconfig:
 
    ::
 
@@ -168,15 +167,14 @@ define the correct resource class and comand lines in Hive.
            # ...
        },
 
---------------
 
 How to write a module that uses MPI
 -----------------------------------
 
 Here is an excerpt of Ensembl Compara's
-`ExaML <https://github.com/Ensembl/ensembl-compara/blob/feature/update_pipeline/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__
+`ExaML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__
 MPI module. Note that LSF needs the MPI command to be run through
-mpirun.lsf You can also run several single-threaded commands in the same
+mpirun. You can also run several single-threaded commands in the same
 runnable.
 
 ::
@@ -185,15 +183,18 @@ runnable.
           my $self = shift;
           return {
             %{ $self->SUPER::param_defaults },
-            'cmd' => 'cmd 1 ; cmd  2 ; mpirun.lsf -np 64 -mca btl tcp,self #examl_exe# -examl_parameter_1 value1 -examl_parameter_2 value2',
+            'cmd' => 'cmd 1 ; cmd  2 ; mpirun #examl_exe# -examl_parameter_1 value1 -examl_parameter_2 value2',
           };
         }
 
-!!!Temporary files!!!
-~~~~~~~~~~~~~~~~~~~~~
+Temporary files
+~~~~~~~~~~~~~~~
 
-Because Examl is using MPI, it has to be run in a shared directory Here
-we override the eHive method to use #examl\_dir# instead
+In our case, Examl uses MPI and wants to share data via the filesystem too.
+In this specific Runnable, Examl is set to run in eHive's managed temporary
+directory, which by default is under /tmp which is not shared across nodes on
+our compute cluster.
+We have to override the eHive method to use a shared directory (``#examl_dir#``) instead.
 
 ::
 
