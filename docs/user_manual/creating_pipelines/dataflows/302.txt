@@ -1,7 +1,7 @@
 Factory in parallel of the autoflow
 --
 In the above example, nothing was connected to the branch #1 of analysis A. The default *autoflow* event
-was thus lost. You can in fact have both branches connected.
+was thus lost.
 
 An analysis can use multiple branches at the same time and for instance produce a fan of jobs on branch #2
 *and* still a job on branch #1. Both stream of jobs (B and C) are executed in parallel.

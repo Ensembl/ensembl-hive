@@ -1,3 +1,4 @@
-Factory
+Custom, independent, dataflows
 --
-Autoflow can only create 1 job. To create more than 1 jobs, you can use *factory* patterns.
+The autoflow mechanism only triggers 1 event, and only upon completion. To create more events, or under different circumstances,
+you can use *factory* patterns.

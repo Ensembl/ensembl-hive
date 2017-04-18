@@ -1,6 +1,7 @@
 Autoflow
 --
-Default dataflow pattern from A to B, also called *autoflow*. This happens on branch #1. Each A job will flow a B job.
+Upon success, each job from A will generate a Dataflow event on branch #1, which is connected to branch B. This is called
+*autoflow* as jobs seem to automatically flow from A to B.
 --
 {   -logic_name => 'A',
     -flow_into  => {

@@ -1,0 +1,26 @@
+Factory with a funnel
+--
+There are virtually no restrictions on the number of branches that can be used.
+They however have to be integers, preferably positive integers for the sake of
+this tutorial as negative branch numbers have a special meaning (which will be
+addressed further down this document).
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       2 => [ 'B' ],
+       3 => [ 'C' ],
+       4 => [ 'D' ],
+       5 => [ 'E' ],
+       1 => [ 'F' ],
+    },
+},
+{   -logic_name => 'B',
+},
+{   -logic_name => 'C',
+},
+{   -logic_name => 'D',
+},
+{   -logic_name => 'E',
+},
+{   -logic_name => 'F',
+},

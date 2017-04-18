@@ -78,7 +78,7 @@ sub generate_diagrams {
     print STDERR "json: $json_filename\n";
     print $fh $display_config_json;
     close($fh);
-    my @confs = Bio::EnsEMBL::Hive::Utils::Config::default_config_files();
+    my @confs = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
     push @confs, $json_filename;
 
     # Creates a temporary pipe-config file
