@@ -25,6 +25,10 @@ download and install first:
    -  SQLite 3.6 `or higher <http://www.sqlite.org/download.html>`__
    -  PostgreSQL 9.2 `or higher <http://www.postgresql.org/download/>`__
 
+   The database has to be accessible from all the machines you want to
+   run pipelines on, so make sure the SQLite database is on a shared
+   filesystem or the MySQL/PostgreSQL database is on a shared network.
+
 #. Perl DBI API version 1.6 `or higher <http://dbi.perl.org/>`__ -- Perl
    database interface that has to include a driver for the database
    engine of your choice above.
@@ -86,16 +90,12 @@ run beekeeper.pl and other useful Hive scripts.
    ::
 
                export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts
-                       #
-                       # (for best results, append this line to your ~/.bashrc or ~/.bash_profile configuration file)
 
 -  *using [t]csh syntax:*
 
    ::
 
                set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )
-                       #
-                       # (for best results, append this line to your ~/.cshrc or ~/.tcshrc configuration file)
 
 Also, if you are developing the code and not just running ready
 pipelines, you may find it convenient to add "ensembl-hive/modules" to
@@ -105,18 +105,14 @@ your ``$PERL5LIB`` variable.
 
    ::
 
-               export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
                export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-                       #
-                       # (for best results, append these lines to your ~/.bashrc or ~/.bash_profile configuration file)
 
 -  *using [t]csh syntax:*
 
    ::
 
-               setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl/modules
                setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
-                       #
-                       # (for best results, append these lines to your ~/.cshrc or ~/.tcshrc configuration file)
 
+The above commands can be added to your ~/.bashrc or ~/.bash_profile, or
+~/.cshrc or ~/.tcshrc configuration file to be loaded at startup.
 
