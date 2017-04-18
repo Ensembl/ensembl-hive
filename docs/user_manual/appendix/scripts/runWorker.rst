@@ -1,12 +1,16 @@
+============
+runWorker.pl
+============
+
 NAME
-====
+----
 
 ::
 
         runWorker.pl [options]
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -17,7 +21,7 @@ DESCRIPTION
         but feel free to run the runWorker.pl if you think you know what you are doing :)
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -37,10 +41,10 @@ USAGE EXAMPLES
         runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
 
 OPTIONS
-=======
+-------
 
 Connection parameters:
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -51,7 +55,7 @@ Connection parameters:
         -nosqlvc <0|1>              : skip sql version check if 1
 
 Task specification parameters:
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -63,7 +67,7 @@ Task specification parameters:
         -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
 
 Worker control parameters:
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -77,7 +81,7 @@ Worker control parameters:
         -can_respecialize <0|1>     : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
 
 Other options:
---------------
+~~~~~~~~~~~~~~
 
 ::
 
@@ -86,12 +90,12 @@ Other options:
         -debug <level>              : turn on debug messages at <level>
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -103,9 +107,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-

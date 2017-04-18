@@ -1,26 +1,30 @@
+=================
+init\_pipeline.pl
+=================
+
 NAME
-====
+----
 
 ::
 
         init_pipeline.pl
 
 SYNOPSIS
-========
+--------
 
 ::
 
         init_pipeline.pl <config_module_or_filename> [<options_for_this_particular_pipeline>]
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
         init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -35,7 +39,7 @@ USAGE EXAMPLES
         init_pipeline.pl LongMult_conf -password <yourpassword> -first_mult 375857335 -second_mult 1111333355556666 
 
 OPTIONS
-=======
+-------
 
 ::
 
@@ -46,12 +50,12 @@ OPTIONS
         -h | --help            :  Show this help message
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -63,9 +67,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-

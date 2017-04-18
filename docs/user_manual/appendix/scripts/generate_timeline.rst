@@ -1,10 +1,14 @@
+=====================
+generate\_timeline.pl
+=====================
+
 NAME
-====
+----
 
 generate\_timeline.pl
 
 SYNOPSIS
-========
+--------
 
 ::
 
@@ -16,7 +20,7 @@ SYNOPSIS
                              [-n_core <int>] [-mem <int>]
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -30,7 +34,7 @@ DESCRIPTION
         You can optionally ask the script to generate an image with Gnuplot.
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -47,7 +51,7 @@ USAGE EXAMPLES
         generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
 
 OPTIONS
-=======
+-------
 
 ::
 
@@ -71,18 +75,18 @@ OPTIONS
         -mem <int>              : the default memory allocated to a worker (default: 100Mb)
 
 EXTERNAL DEPENDENCIES
-=====================
+---------------------
 
 ::
 
         Chart::Gnuplot
 
 LICENSE
-=======
+-------
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the
-EMBL-European Bioinformatics Institute Copyright [2016] EMBL-European
-Bioinformatics Institute
+EMBL-European Bioinformatics Institute Copyright [2016-2017]
+EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may
 not use this file except in compliance with the License. You may obtain
@@ -99,7 +103,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 CONTACT
-=======
+-------
 
 Please subscribe to the Hive mailing list:
 http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users to discuss

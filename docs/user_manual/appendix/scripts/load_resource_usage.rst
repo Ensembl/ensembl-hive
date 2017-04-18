@@ -1,12 +1,16 @@
+========================
+load\_resource\_usage.pl
+========================
+
 NAME
-====
+----
 
 ::
 
         load_resource_usage.pl
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -22,7 +26,7 @@ DESCRIPTION
         and then the data will be taken from your source and parsed from there.
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -39,7 +43,7 @@ USAGE EXAMPLES
         load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source "bacct -l -C 2012/01/25/13:33,2012/01/25/14:44 |" -meadow_type LSF
 
 OPTIONS
-=======
+-------
 
 ::
 
@@ -50,12 +54,12 @@ OPTIONS
         -meadow_type <type>     : only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -67,9 +71,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-

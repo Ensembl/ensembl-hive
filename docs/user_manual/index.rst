@@ -45,6 +45,7 @@ Creating runnables
 Advanced usage
 ==============
 .. toctree::
+   :maxdepth: 2
    :glob:
 
    advanced_usage/*

@@ -1,12 +1,16 @@
+================
+standaloneJob.pl
+================
+
 NAME
-====
+----
 
 ::
 
         standaloneJob.pl
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -30,7 +34,7 @@ DESCRIPTION
                      to the job, worker, log_message etc tables.
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -74,7 +78,7 @@ USAGE EXAMPLES
             -flow_into "{ '2->A' => 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=part_multiply', 'A->1' => 'mysql://ensadmin:${ENSADMIN_PSW}@127.0.0.1/lg4_long_mult/analysis?logic_name=add_together' }" 
 
 SCRIPT-SPECIFIC OPTIONS
-=======================
+-----------------------
 
 ::
 
@@ -90,12 +94,12 @@ SCRIPT-SPECIFIC OPTIONS
         NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -107,9 +111,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-

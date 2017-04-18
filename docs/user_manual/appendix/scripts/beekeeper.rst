@@ -1,12 +1,16 @@
+============
+beekeeper.pl
+============
+
 NAME
-====
+----
 
 ::
 
         beekeeper.pl [options]
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -18,7 +22,7 @@ DESCRIPTION
         unexpectedly so that she can free the dead workers and reclaim unfinished jobs.
 
 USAGE EXAMPLES
-==============
+--------------
 
 ::
 
@@ -44,10 +48,10 @@ USAGE EXAMPLES
         beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
 
 OPTIONS
-=======
+-------
 
 Connection parameters
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -58,14 +62,14 @@ Connection parameters
         -nosqlvc <0|1>         : skip sql version check if 1
 
 Configs overriding
-------------------
+~~~~~~~~~~~~~~~~~~
 
 ::
 
         -config_file <string>  : json file (with absolute path) to override the default configurations (could be multiple)
 
 Looping control
----------------
+~~~~~~~~~~~~~~~
 
 ::
 
@@ -84,7 +88,7 @@ Looping control
         -sleep <num>           : when looping, sleep <num> minutes (default 1 min)
 
 Current Meadow control
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -95,7 +99,7 @@ Current Meadow control
         -submit_log_dir <dir>               : record submission output+error streams into files under the given directory (to see why some workers fail after submission)
 
 Worker control
---------------
+~~~~~~~~~~~~~~
 
 ::
 
@@ -110,7 +114,7 @@ Worker control
         -debug <debug_level>        : set debug level of the workers
 
 Other commands/options
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
@@ -133,12 +137,12 @@ Other commands/options
         -unblock_semaphored_jobs : set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -150,9 +154,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-

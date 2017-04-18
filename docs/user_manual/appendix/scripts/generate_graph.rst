@@ -1,12 +1,16 @@
+==================
+generate\_graph.pl
+==================
+
 NAME
-====
+----
 
 ::
 
         generate_graph.pl
 
 SYNOPSIS
-========
+--------
 
 ::
 
@@ -15,7 +19,7 @@ SYNOPSIS
         ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
 
 DESCRIPTION
-===========
+-----------
 
 ::
 
@@ -26,7 +30,7 @@ DESCRIPTION
         hive_config.json configuration file.
 
 OPTIONS
-=======
+-------
 
 **--url**
 
@@ -86,19 +90,19 @@ OPTIONS
         Print this help message
 
 EXTERNAL DEPENDENCIES
-=====================
+---------------------
 
 ::
 
         GraphViz
 
 LICENSE
-=======
+-------
 
 ::
 
         Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-        Copyright [2016] EMBL-European Bioinformatics Institute
+        Copyright [2016-2017] EMBL-European Bioinformatics Institute
 
         Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
         You may obtain a copy of the License at
@@ -110,9 +114,8 @@ LICENSE
         See the License for the specific language governing permissions and limitations under the License.
 
 CONTACT
-=======
+-------
 
 ::
 
         Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
-
