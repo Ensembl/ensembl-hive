@@ -25,6 +25,10 @@ of the logic is in the base class (*GenericRunnable*), but nevertheless
 show the command lines used and the parametrization of multi-core and
 MPI runs.
 
+.. The default language is set to perl. Non-perl code-blocks have to define
+   their own language setting
+.. highlight:: perl
+
 How to setup a module using Shared Memory Parallelism (threads)
 ---------------------------------------------------------------
 
@@ -99,13 +103,13 @@ modification of the user’s environment.
 
 Here is how to list the modules that your system provides:
 
-::
+.. code-block:: none
 
         module avail
 
 And how to load one (mpich3 in this example):
 
-::
+.. code-block:: none
 
         module load mpich3/mpich3-3.1-icc
 
