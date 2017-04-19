@@ -47,31 +47,37 @@ my $display_config_json = q{
 }
 };
 
-main();
+die "Usage: $0 <base_filename> <title>\n" unless scalar(@ARGV)==2;
+main(@ARGV);
 
 
 
 sub main {
 
-    my $diagrams = generate_diagrams();
+    my ($base_filename, $title) = @_;
+
+    my $diagrams = generate_diagrams($base_filename);
+    my $data     = {'title' => $title, 'diagrams' => $diagrams};
 
     # The HTML file
-    open(my $fh, '>', 'dataflows.html') or die "Couldn't open the output file";
-    generate_html($fh, $diagrams);
+    open(my $fh, '>', $base_filename.'.html') or die "Couldn't open the output file";
+    generate_html($fh, $data);
     close($fh);
 
     # The Markdown file
-    open($fh, '>', 'dataflows.md') or die "Couldn't open the output file";
-    generate_markdown($fh, $diagrams);
+    open($fh, '>', $base_filename.'.md') or die "Couldn't open the output file";
+    generate_markdown($fh, $data);
     close($fh);
 
     # The RST file
-    open($fh, '>', 'dataflows.rst') or die "Couldn't open the output file";
-    generate_rst($fh, $diagrams);
+    open($fh, '>', $base_filename.'.rst') or die "Couldn't open the output file";
+    generate_rst($fh, $data);
     close($fh);
 }
 
 sub generate_diagrams {
+
+    my $base_filename = shift;
 
     # Creates a temporary JSON config file
     my ($fh, $json_filename) = tempfile(UNLINK => 1);
@@ -89,7 +95,7 @@ sub generate_diagrams {
     close($pipe_fh);
 
     # The example files
-    my @example_files = glob('dataflows/*.txt');
+    my @example_files = glob($base_filename.'/*.txt');
     my @data = sort {$a->[0] <=> $b->[0]} map {[parse_one_file($_)]} @example_files;
     my @diagrams;
 
@@ -106,7 +112,7 @@ sub generate_diagrams {
 
         # The diagram
         warn $record->[0];
-        my $img = sprintf('dataflows/%d.png', $record->[0]);
+        my $img = sprintf('%s/%d.png', $base_filename, $record->[0]);
         system($ehrd.'/scripts/generate_graph.pl', -pipeconfig => $pipe_filename, -output => $img, -pipeline_name => '', map {-config_file => $_} @confs);
         push @diagrams, [@$record, $img];
     }
@@ -140,10 +146,10 @@ sub parse_one_file {
 sub generate_html {
     my ($output_fh, $data) = @_;
 
-    print $output_fh "<html><body><h1>Common dataflows</h1>\n";
+    print $output_fh "<html><body><h1>".$data->{'title'}."</h1>\n";
     print $output_fh "<ol>\n";
     my $in_group = 0;
-    foreach my $record (@$data) {
+    foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh sprintf(q{<li><a href="#%d">%s</a></li>}, $record->[0], $record->[1]), "\n";
         } else {
@@ -159,7 +165,7 @@ sub generate_html {
     }
 
     print $output_fh "</ol><table>\n";
-    foreach my $record (@$data) {
+    foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh sprintf(q{<tr id="%d"><td><h3>%s</h3><p>%s</p><pre>%s</pre></td><td><img src='%s'></td></tr>},
                 $record->[0],
@@ -182,11 +188,11 @@ sub generate_html {
 sub generate_markdown {
     my ($output_fh, $data) = @_;
 
-    print $output_fh "# Common dataflows\n\n";
+    print $output_fh "# ".$data->{'title'}."\n\n";
     print $output_fh "## Index\n\n";
     my $i = 1;
     my $j = 1;
-    foreach my $record (@$data) {
+    foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh sprintf("  %s. [%s](#%s)  \n", chr(96+$j), $record->[1], $record->[0]);
             $j++;
@@ -197,7 +203,7 @@ sub generate_markdown {
         }
     }
     print $output_fh "\n";
-    foreach my $record (@$data) {
+    foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh sprintf("### <a name='%s'></a>%s\n\n%s\n\n```\n%s\n```\n![diagram](%s)\n", 
                 $record->[0],
@@ -224,9 +230,9 @@ sub _rst_underline {
 sub generate_rst {
     my ($output_fh, $data) = @_;
 
-    print $output_fh _rst_underline('Common dataflows', '=');
+    print $output_fh _rst_underline($data->{'title'}, '=');
     print $output_fh "\n";
-    foreach my $record (@$data) {
+    foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh _rst_underline($record->[1], '~');
             print $output_fh $record->[2], "\n\n";
