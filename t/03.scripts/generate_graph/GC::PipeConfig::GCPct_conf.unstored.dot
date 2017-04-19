@@ -21,8 +21,8 @@ subgraph cluster_gcpct {
 	style="bold,filled";
 	colorscheme=pastel19;
 	fillcolor=3;
+	analysis_calc_overall_percentage;
 	analysis_chunk_sequences;
-	dfr_p1_mp;
 	subgraph cluster_cl_dfr_p1_mp {
 		label="";
 		style="filled";
@@ -33,8 +33,8 @@ subgraph cluster_gcpct {
 		sink_dfr_p1_mp;
 		sink_dfr_p1_mp;
 	}
+	dfr_p1_mp;
 	dfr_p2_mp;
-	analysis_calc_overall_percentage;
 	table_final_result;
 }
 }

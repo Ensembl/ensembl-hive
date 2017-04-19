@@ -138,7 +138,7 @@ sub display_subgraph {
         }
     } # otherwise just draw a black frame around the subgraph
 
-    foreach my $node_name ( @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
+    foreach my $node_name ( sort @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 
         if( @{ $self->cluster_2_nodes->{ $node_name } || [] } ) {
             $text .= $self->display_subgraph( $node_name, $depth+1 );

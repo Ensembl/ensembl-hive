@@ -18,11 +18,11 @@ subgraph cluster_long_mult_wf {
 	style="bold,filled";
 	colorscheme=pastel19;
 	fillcolor=3;
+	analysis_add_together;
+	analysis_part_multiply;
 	analysis_take_b_apart;
 	dfr_2_mp;
-	analysis_part_multiply;
-	table_intermediate_result;
-	analysis_add_together;
 	table_final_result;
+	table_intermediate_result;
 }
 }

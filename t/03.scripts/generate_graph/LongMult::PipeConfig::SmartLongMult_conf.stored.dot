@@ -26,12 +26,9 @@ subgraph cluster_smart_long_mult {
 	style="bold,filled";
 	colorscheme=pastel19;
 	fillcolor=3;
+	analysis_add_together;
 	analysis_redirect_trivial_jobs;
-	dfr_1_mp;
-	table_final_result;
-	table_final_result;
 	analysis_take_b_apart;
-	dfr_2_mp;
 	subgraph cluster_cl_dfr_2_mp {
 		label="";
 		style="filled";
@@ -41,8 +38,11 @@ subgraph cluster_smart_long_mult {
 		analysis_part_multiply;
 		sink_dfr_2_mp;
 	}
+	dfr_1_mp;
+	dfr_2_mp;
 	dfr_3_mp;
-	analysis_add_together;
+	table_final_result;
+	table_final_result;
 	table_final_result;
 }
 }
