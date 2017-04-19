@@ -25,7 +25,6 @@ User documentation
 ==================
 
 .. toctree::
-   :titlesonly:
    :caption: Quickstart
 
    quickstart/install
@@ -33,7 +32,6 @@ User documentation
 
 
 .. toctree::
-   :titlesonly:
    :caption: Running pipelines
 
    running_pipelines/running
@@ -42,7 +40,6 @@ User documentation
 
 
 .. toctree::
-   :titlesonly:
    :caption: Creating pipelines
 
    creating_pipelines/events
@@ -54,14 +51,12 @@ User documentation
 
 
 .. toctree::
-   :titlesonly:
    :caption: Creating runnables
 
    creating_runnables/runnables
 
 
 .. toctree::
-   :titlesonly:
    :caption: Advanced usage
 
    advanced_usage/mpi
@@ -69,7 +64,6 @@ User documentation
 
 
 .. toctree::
-   :titlesonly:
    :caption: Appendix
    :maxdepth: 1
 
