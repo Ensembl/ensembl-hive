@@ -1,20 +1,16 @@
-Factory with a funnel
+Mixing all patterns
 --
+Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
+with the jobs created in te analysis D.
 
-Jobs created by a job that is part of a semaphore group are
-automatically added to the semaphore group.
-
-In the example below, the job in C (the _funnel_) will have to
-wait for all its controlling jobs in B to complete, but also all
-the jobs these may have created in D as well.
-
-This process is called _semaphore propagation_ .
-
+Upon success of the A job, the *autoflow* will create a job in analysis E which is *not* controlled
+by any of the B or C jobs. It can thus start immediately.
 --
 {   -logic_name => 'A',
     -flow_into  => {
-       '2->A' => [ 'B' ],
-       'A->1' => [ 'C' ],
+       '3->A' => [ 'B' ],
+       'A->2' => [ 'C' ],
+       1      => [ 'E' ],
     },
 },
 {   -logic_name => 'B',
@@ -25,4 +21,6 @@ This process is called _semaphore propagation_ .
 {   -logic_name => 'C',
 },
 {   -logic_name => 'D',
+},
+{   -logic_name => 'E',
 },

@@ -1,18 +1,28 @@
-Factory in parallel of the autoflow
+Semaphore propagation
 --
-In the above example, nothing was connected to the branch #1 of analysis A. The default *autoflow* event
-was thus lost.
 
-An analysis can use multiple branches at the same time and for instance produce a fan of jobs on branch #2
-*and* still a job on branch #1. Both stream of jobs (B and C) are executed in parallel.
+Jobs created by a job that is part of a semaphore group are
+automatically added to the semaphore group.
+
+In the example below, the job in C (the *funnel*) will have to
+wait for all its controlling jobs in B to complete, but also all
+the jobs these may have created in D as well.
+
+This process is called *semaphore propagation*.
+
 --
 {   -logic_name => 'A',
     -flow_into  => {
-       2 => [ 'B' ],
-       1 => [ 'C' ],
+       '2->A' => [ 'B' ],
+       'A->1' => [ 'C' ],
     },
 },
 {   -logic_name => 'B',
+    -flow_into  => {
+       2 => [ 'D' ],
+    },
 },
 {   -logic_name => 'C',
+},
+{   -logic_name => 'D',
 },

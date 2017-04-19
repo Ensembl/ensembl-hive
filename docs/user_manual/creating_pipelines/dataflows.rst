@@ -103,13 +103,13 @@ An analysis can use multiple branches at the same time and for instance produce 
 
 .. figure:: dataflows/202.png
 
-Factory with a funnel
-~~~~~~~~~~~~~~~~~~~~~
+Many factories and an autoflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are virtually no restrictions on the number of branches that can be used.
 They however have to be integers, preferably positive integers for the sake of
 this tutorial as negative branch numbers have a special meaning (which will be
-addressed further down this document).
+addressed in :doc:`events`).
 
 ::
 
@@ -140,50 +140,8 @@ Dependent dataflows and semaphores
 
 eHive allows to group multiple branch definitions to create job dependencies.
 
-Factory
-~~~~~~~
-
-Analysis A triggers 0, 1 or many Dataflow events on branch #2 (this is the convention for non-autoflow events).
-In this pattern, A is called the *factory*, B the *fan*.
-
-::
-
-    {   -logic_name => 'A',
-        -flow_into  => {
-           2 => [ 'B' ],
-        },
-    },
-    {   -logic_name => 'B',
-    },
-
-.. figure:: dataflows/301.png
-
-Factory in parallel of the autoflow
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In the above example, nothing was connected to the branch #1 of analysis A. The default *autoflow* event
-was thus lost.
-
-An analysis can use multiple branches at the same time and for instance produce a fan of jobs on branch #2
-*and* still a job on branch #1. Both stream of jobs (B and C) are executed in parallel.
-
-::
-
-    {   -logic_name => 'A',
-        -flow_into  => {
-           2 => [ 'B' ],
-           1 => [ 'C' ],
-        },
-    },
-    {   -logic_name => 'B',
-    },
-    {   -logic_name => 'C',
-    },
-
-.. figure:: dataflows/302.png
-
-Factory with a funnel
-~~~~~~~~~~~~~~~~~~~~~
+Semaphore blocking the autoflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dataflow events can be grouped with the ``->`` operator.
 
@@ -192,10 +150,10 @@ in a group named **A**. Note that this name **A** is not related to the name of 
 analysis. Group names are single-letter codes, meaning that eHive allows up to 26 groups
 for each analysis.
 
-``A->1`` means that the job resulting from the Dataflow event on branch #1 (the _autoflow_)
+``A->1`` means that the job resulting from the Dataflow event on branch #1 (the *autoflow*)
 has to wait for *all* the jobs in group **A** before it can start.
 
-This pattern is called a _semaphore_, and C is called the _funnel_ analysis.
+This pattern is called a *semaphore*, and C is called the *funnel* analysis.
 
 ::
 
@@ -210,19 +168,19 @@ This pattern is called a _semaphore_, and C is called the _funnel_ analysis.
     {   -logic_name => 'C',
     },
 
-.. figure:: dataflows/303.png
+.. figure:: dataflows/301.png
 
-Factory with a funnel
+Semaphore propagation
 ~~~~~~~~~~~~~~~~~~~~~
 
 Jobs created by a job that is part of a semaphore group are
 automatically added to the semaphore group.
 
-In the example below, the job in C (the _funnel_) will have to
+In the example below, the job in C (the *funnel*) will have to
 wait for all its controlling jobs in B to complete, but also all
 the jobs these may have created in D as well.
 
-This process is called _semaphore propagation_.
+This process is called *semaphore propagation*.
 
 
 ::
@@ -241,6 +199,70 @@ This process is called _semaphore propagation_.
     {   -logic_name => 'C',
     },
     {   -logic_name => 'D',
+    },
+
+.. figure:: dataflows/302.png
+
+Semaphore independent from the autoflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The autoflow event is a convenient way of grouping all the jobs created, but semaphore
+groups can be created in arbitrary manners.
+
+Here, the Dataflow events on branch #3 are iteratively grouped together (in a group named **A**)
+until a Dataflow event is produced on branch #2. This will create *one* semaphore group.
+
+Then, eHive will keep on grouping the following Dataflow events on branch #3 until there is
+another Dataflow event on branch #2, which will create *another* semaphore group.
+
+The process is repeated until exhaustion of all Dataflow events. This requires the analysis A to
+emit the events in the right order. There are as many semaphore groups as events on branch #2,
+each job created on branch #2 is the *funnel* of 0, 1 or many jobs of the *fan* that is defined
+on branch #3.
+
+::
+
+    {   -logic_name => 'A',
+        -flow_into  => {
+           '3->A' => [ 'B' ],
+           'A->2' => [ 'C' ],
+        },
+    },
+    {   -logic_name => 'B',
+    },
+    {   -logic_name => 'C',
+    },
+
+.. figure:: dataflows/303.png
+
+Mixing all patterns
+~~~~~~~~~~~~~~~~~~~
+
+Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
+with the jobs created in te analysis D.
+
+Upon success of the A job, the *autoflow* will create a job in analysis E which is *not* controlled
+by any of the B or C jobs. It can thus start immediately.
+
+::
+
+    {   -logic_name => 'A',
+        -flow_into  => {
+           '3->A' => [ 'B' ],
+           'A->2' => [ 'C' ],
+           1      => [ 'E' ],
+        },
+    },
+    {   -logic_name => 'B',
+        -flow_into  => {
+           2 => [ 'D' ],
+        },
+    },
+    {   -logic_name => 'C',
+    },
+    {   -logic_name => 'D',
+    },
+    {   -logic_name => 'E',
     },
 
 .. figure:: dataflows/304.png

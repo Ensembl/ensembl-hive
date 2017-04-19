@@ -105,6 +105,7 @@ sub generate_diagrams {
         close($pipe_fh);
 
         # The diagram
+        warn $record->[0];
         my $img = sprintf('dataflows/%d.png', $record->[0]);
         system($ehrd.'/scripts/generate_graph.pl', -pipeconfig => $pipe_filename, -output => $img, -pipeline_name => '', map {-config_file => $_} @confs);
         push @diagrams, [@$record, $img];

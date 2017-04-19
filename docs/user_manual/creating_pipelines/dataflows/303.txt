@@ -1,21 +1,23 @@
-Factory with a funnel
+Semaphore independent from the autoflow
 --
-Dataflow events can be grouped with the ``->`` operator.
+The autoflow event is a convenient way of grouping all the jobs created, but semaphore
+groups can be created in arbitrary manners.
 
-``2->A`` means that all the Dataflow events on branch #2 have to be grouped together
-in a group named **A**. Note that this name **A** is not related to the name of the
-analysis. Group names are single-letter codes, meaning that eHive allows up to 26 groups
-for each analysis.
+Here, the Dataflow events on branch #3 are iteratively grouped together (in a group named **A**)
+until a Dataflow event is produced on branch #2. This will create *one* semaphore group.
 
-``A->1`` means that the job resulting from the Dataflow event on branch #1 (the _autoflow_)
-has to wait for *all* the jobs in group **A** before it can start.
+Then, eHive will keep on grouping the following Dataflow events on branch #3 until there is
+another Dataflow event on branch #2, which will create *another* semaphore group.
 
-This pattern is called a _semaphore_, and C is called the _funnel_ analysis.
+The process is repeated until exhaustion of all Dataflow events. This requires the analysis A to
+emit the events in the right order. There are as many semaphore groups as events on branch #2,
+each job created on branch #2 is the *funnel* of 0, 1 or many jobs of the *fan* that is defined
+on branch #3.
 --
 {   -logic_name => 'A',
     -flow_into  => {
-       '2->A' => [ 'B' ],
-       'A->1' => [ 'C' ],
+       '3->A' => [ 'B' ],
+       'A->2' => [ 'C' ],
     },
 },
 {   -logic_name => 'B',
