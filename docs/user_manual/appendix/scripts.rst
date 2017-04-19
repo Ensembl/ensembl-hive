@@ -1,4 +1,3 @@
-.. Appendix
 
 Scripts options quick reference
 -------------------------------

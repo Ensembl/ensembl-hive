@@ -1,5 +1,5 @@
-Common dataflows
-================
+Dataflow patterns
+=================
 
 
 Autoflow

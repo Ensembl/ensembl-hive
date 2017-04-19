@@ -3,60 +3,85 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. Have a look at https://raw.githubusercontent.com/rtfd/readthedocs.org/master/docs/index.rst for inspiration
+
 Welcome to the eHive user manual
 ================================
 
-Contents:
+eHive is great, and the user manual is great.
 
-Quickstart
-----------
-.. toctree::
-   :numbered:
-   :glob:
+The code is open source, and `available on GitHub`_.
 
-   quickstart/*
+.. _available on GitHub: http://github.com/Ensembl/ensembl-hive
 
-Running pipelines
------------------
-.. toctree::
-   :numbered:
-   :glob:
+The main documentation for eHive is organized into a couple sections:
 
-   running_pipelines/*
+* :ref:`user-docs`
+* :ref:`dev-docs`
 
+.. _user-docs:
 
-Creating pipelines
+User documentation
 ==================
+
 .. toctree::
-   :numbered:
    :titlesonly:
-   :glob:
+   :caption: Quickstart
 
-   creating_pipelines/*
+   quickstart/install
+   quickstart/quickstart
 
-Creating runnables
-==================
+
 .. toctree::
-   :numbered:
-   :glob:
+   :titlesonly:
+   :caption: Running pipelines
 
-   creating_runnables/*
+   running_pipelines/running
+   running_pipelines/monitoring
+   running_pipelines/management
 
-Advanced usage
-==============
+
 .. toctree::
-   :maxdepth: 2
-   :glob:
+   :titlesonly:
+   :caption: Creating pipelines
 
-   advanced_usage/*
+   creating_pipelines/events
+   creating_pipelines/dataflows
+   creating_pipelines/dataflow_targets
+   creating_pipelines/pipeconfigs
+   creating_pipelines/scoping
+   creating_pipelines/semaphores
 
-Appendix
-========
+
 .. toctree::
+   :titlesonly:
+   :caption: Creating runnables
+
+   creating_runnables/runnables
+
+
+.. toctree::
+   :titlesonly:
+   :caption: Advanced usage
+
+   advanced_usage/mpi
+   advanced_usage/slack
+
+
+.. toctree::
+   :titlesonly:
+   :caption: Appendix
    :maxdepth: 1
-   :glob:
 
-   appendix/*
+   appendix/scripts
+
+
+.. _dev-docs:
+
+Developer documentation
+=======================
+
+TODO
 
 
 Indices and tables
