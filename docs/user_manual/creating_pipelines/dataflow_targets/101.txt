@@ -1,0 +1,11 @@
+Dataflow to one analysis
+--
+This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       1 => [ 'B' ],
+    },
+},
+{   -logic_name => 'B',
+},

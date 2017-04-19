@@ -1,0 +1,20 @@
+Multiple dataflows to the same analysis
+--
+Reciprocally, an analysis can be the target of several branches coming
+from the same analysis.
+Here, jobs are created in B whenever there is an event on branch #2, in C
+when there is an event on branch #2 or #3, and D when there is an event on branch #1.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       2 => [ 'B', 'C' ],
+       3 => [ 'C' ],
+       1 => [ 'D' ],
+    },
+},
+{   -logic_name => 'B',
+},
+{   -logic_name => 'C',
+},
+{   -logic_name => 'D',
+},

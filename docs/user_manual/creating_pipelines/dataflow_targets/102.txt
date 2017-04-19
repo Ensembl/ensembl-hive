@@ -1,0 +1,14 @@
+Dataflow to multiple analyses
+--
+A branch can actually be connected to multiple analyses. When a Dataflow
+event happens, it will create a job in each of them.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       1 => [ 'B', 'C' ],
+    },
+},
+{   -logic_name => 'B',
+},
+{   -logic_name => 'C',
+},

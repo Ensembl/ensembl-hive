@@ -1,0 +1,3 @@
+Dataflow to an analysis
+--
+In eHive, a job can create another job via a Dataflow event by wiring the branch to another analysis.
