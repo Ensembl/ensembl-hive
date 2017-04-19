@@ -85,7 +85,7 @@ sub fetch_input {
     }
 
         # parameter hashes of partial multiplications to be computed:
-    my @sub_tasks = map { { 'digit' => $_ } } keys %digit_hash;
+    my @sub_tasks = map { { 'digit' => $_ } } sort { $a <=> $b } keys %digit_hash;
 
         # store them for future use:
     $self->param('sub_tasks', \@sub_tasks);
