@@ -50,7 +50,8 @@ sub main {
         'accu_values|values!'   => \$self->{'show_accu_values'},        # show accu keys & values (implies -accu_keys)
         'accu_pointers|accu_ptrs!' => \$self->{'show_accu_pointers'},   # (attempt to) show which accu values come from which jobs
 
-        'o|out|output=s'        => \$self->{'output'},
+        'o|out|output=s'        => \$self->{'output'},                  # output file name
+        'f|format=s'            => \$self->{'format'},                  # output format (if not guessable from -output)
         'dot_input=s'           => \$self->{'dot_input'},               # filename to store the intermediate dot input (valuable for debugging)
 
         'h|help'                => \$self->{'help'},
