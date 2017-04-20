@@ -1,0 +1,3 @@
+Table
+--
+A job can store data in a table via the Dataflow mechanism instead of raw SQL access.

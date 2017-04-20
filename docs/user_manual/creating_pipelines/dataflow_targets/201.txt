@@ -1,0 +1,11 @@
+Dataflow to one analysis
+--
+This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``
+with a URL that contains the ``table_name`` key. URLs can be *degenerate*, i.e. skip the part before
+the question mark (like below) or *completely defined*, i.e. start with ``driver://user@host/database_name``.
+--
+{   -logic_name => 'A',
+    -flow_into  => {
+       1 => [ '?table_name=B' ],
+    },
+},
