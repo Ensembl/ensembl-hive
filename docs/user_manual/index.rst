@@ -45,9 +45,10 @@ User documentation
    creating_pipelines/events
    creating_pipelines/dataflows
    creating_pipelines/dataflow_targets
-   creating_pipelines/pipeconfigs
+   creating_pipelines/accumulators
    creating_pipelines/scoping
    creating_pipelines/semaphores
+   creating_pipelines/pipeconfigs
 
 
 .. toctree::
