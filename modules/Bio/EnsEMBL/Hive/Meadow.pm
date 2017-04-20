@@ -334,7 +334,7 @@ sub submit_workers {
 sub run_on_host {
     my ($self, $meadow_host, $meadow_user, $command) = @_;
     my @extra_args = $self->config_get('StrictHostKeyChecking') ? () : qw(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null);
-    return system('ssh', @extra_args, '-o', 'BatchMode=yes', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
+    return system('ssh', @extra_args, '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=30', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
 }
 
 1;
