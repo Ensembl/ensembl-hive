@@ -67,12 +67,6 @@ sub status_of_all_our_workers { # returns an arrayref
 
     my $cmd = $self->_command_line_to_extract_all_running_workers;
 
-        # FIXME: if we want to incorporate Meadow->pipeline_name() filtering here,
-        #        a dummy parameter to the runWorker.pl should probably be introduced
-        #        for 'ps' to be able to externally differentiate between local workers
-        #        working for different hives
-        #        (but at the moment such a feature is unlikely to be be in demand).
-
     my @status_list = ();
     foreach my $line (`$cmd`) {
         my ($pre_status, $meadow_user, $worker_pid, @job_name) = split(/\s+/, $line);
