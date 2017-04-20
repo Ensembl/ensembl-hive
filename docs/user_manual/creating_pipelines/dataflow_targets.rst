@@ -1,6 +1,7 @@
 Dataflow-target patterns
 ========================
 
+.. contents::
 
 Dataflow to an analysis
 -----------------------

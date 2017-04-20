@@ -231,7 +231,7 @@ sub generate_rst {
     my ($output_fh, $data) = @_;
 
     print $output_fh _rst_underline($data->{'title'}, '=');
-    print $output_fh "\n";
+    print $output_fh ".. contents::\n\n";
     foreach my $record (@{$data->{'diagrams'}}) {
         if ($record->[3]) {
             print $output_fh _rst_underline($record->[1], '~');

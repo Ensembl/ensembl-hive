@@ -1,6 +1,7 @@
 Dataflow patterns
 =================
 
+.. contents::
 
 Autoflow
 --------
