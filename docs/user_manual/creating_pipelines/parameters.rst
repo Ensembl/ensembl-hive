@@ -1,0 +1,145 @@
+.. eHive guide to creating pipelines: parameter scope
+
+Job parameters
+==============
+
+
+Parameter sources
+-----------------
+
+Job parameters come from various places and are all aggregated using the
+following precedence rules:
+
+#. Job-specific parameters
+
+   #. Accumulated parameters
+   #. Job's *input_id*
+   #. Inherited parameters from previous jobs, still giving priority to a
+      given job's accumulated parameters over its input_id
+#. Analysis-wide parameters
+#. Pipeline-wide parameters
+#. Default parameters hard-coded in the Runnable
+
+Jobs can access all their parameters via ``$self->param('param_name')`` regardless of their origin.
+
+Parameter substitution
+----------------------
+
+eHive detects some hash-sign-based constructs in parameter values to interpolate
+other parameters' values.
+
+Full redirection
+~~~~~~~~~~~~~~~~
+
+A *full redirection* happens when the value of a parameter ``a`` is
+defined as ``#b#``. This means that eHive will return ``b``'s value when
+``$self->param('a')`` is called, regardless of ``b``'s type (e.g. a numeric
+value, a string, a structure made of hashes and arrays, or even ``undef``).
+
+
+Interpolation
+~~~~~~~~~~~~~
+
+Parameter values can also be interpolated like in other languages (Perl,
+PHP, etc). For instance, if the value of a parameter ``a`` is defined as
+``value is #b#``, ``b``'s value will be *stringified* and appended to the
+string "value is ". This only works well for numeric and string values as
+Perl stringifies hashes and arrays in the form ``HASH(0x1760cb8)``.
+
+
+Arbitrary expressions
+~~~~~~~~~~~~~~~~~~~~~
+
+Arbitrary Perl expressions can also be used via the ``#expr()expr#``
+construct. Any valid Perl expressions can be put within the parentheses,
+and it can use other parameter's values with ``#b#``, ``#c#``, etc.
+
+For example, to add 1 to the value in parameter 'alpha', define
+``'alpha_plus_one' => '#expr( #alpha#+1 )expr#'`` and
+eHive will evaluate the expression ``$self->param('alpha')+1``.
+
+If the parameter holds a data structure (arrayref or hashref), you can
+dereference it with curly-braces like in standard Perl. You can use these
+methods from `List::Util <https://perldoc.perl.org/List/Util.html>`_: 
+first, min, max, minstr, maxstr, reduce, sum, shuffle.
+
+For example, ``'array_max' => '#expr( max @{#array#} )expr#'`` will
+dereference ``$self->param('array')`` and call ``max`` on it.
+
+
+Substitution chaining
+~~~~~~~~~~~~~~~~~~~~~
+
+Substitutions can involve more than two parameters in a chain, e.g. ``a``
+requires ``b``, which requires ``c``, which requires ``d``, etc, each of
+the substitutions being one of the patterns described above.
+
+In the example below, the ``comp_size`` parameter is a hash associating filenames to their size once compressed.
+The ``text`` parameter is a message composed of the minimum and maximum compressed sizes.
+
+::
+
+    'min_comp_size' => '#expr(min values %{#comp_size#})expr#',
+    'max_comp_size' => '#expr(max values %{#comp_size#})expr#',
+    'text' => 'compressed sizes between #min_comp_size# and #max_comp_size#',
+
+
+
+Parameter scope
+---------------
+
+Explicit propagation and templates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, parameters are passed in an *explicit* manner, i.e. they have
+to be explicitly listed at one of these two levels:
+
+#. In the code of the emitting Runnable, by listing them in the
+   ``dataflow_output_id`` call
+#. In the pipeline configuration, adding *templates* to dataflow-targets
+
+*Templates* are a way of setting the input_id of the newly created jobs
+differently from what has been flown with ``dataflow_output_id``.
+For instance, you may have to connect a runnable **R** that flows a hash composed of
+two parameters named ``name`` and ``dbID`` in a pipeline that understands
+``species_name`` and ``species_id``. We need to let eHive know about the
+mapping ``{ 'species_name' => '#name#', 'species_id' => '#dbID#' }``. The
+latter can be defined in three places:
+
+#. Pipeline-wide parameters, but only if this doesn't clash with other
+   usages of ``species_name`` and ``species_id``.
+#. Analysis-wide parameters of *every* downstream analysis. This can
+   obviously be quite tedious
+#. Template on the dataflow coming from the runnable **R**, For instance
+   ::
+
+       {   -logic_name => 'R',
+           -flow_into  => {
+               2 => { 'R_consumer' => { 'species_name' => '#name#', 'species_id' => '#dbID#' } },
+           },
+       },
+       {   -logic_name => 'R_consumer',
+       },
+
+This will tell eHive that jobs created in ``R_consumer`` must have their
+input_ids composed of two parameters ``species_name`` and ``species_id``,
+whose values respectively are ``#name#`` and ``#dbID#``.
+
+Values in template expressions are evaluated like with
+``$self->param('param_name')``, meaning they can undergo complex
+substitution patterns. These expressions are evaluated in the context of
+the runtime environment of the job ?? (check if this is true).
+
+
+Per-analysis implicit propagation using `INPUT_PLUS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+eHive has two levels of *implicit* parameter propagation. First, a 
+
+
+Global implicit propagation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
