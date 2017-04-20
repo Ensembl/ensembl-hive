@@ -84,19 +84,8 @@ The ``text`` parameter is a message composed of the minimum and maximum compress
     'text' => 'compressed sizes between #min_comp_size# and #max_comp_size#',
 
 
-
-Parameter scope
----------------
-
-Explicit propagation and templates
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-By default, parameters are passed in an *explicit* manner, i.e. they have
-to be explicitly listed at one of these two levels:
-
-#. In the code of the emitting Runnable, by listing them in the
-   ``dataflow_output_id`` call
-#. In the pipeline configuration, adding *templates* to dataflow-targets
+Dataflow templates
+------------------
 
 *Templates* are a way of setting the input_id of the newly created jobs
 differently from what has been flown with ``dataflow_output_id``.
@@ -130,6 +119,55 @@ Values in template expressions are evaluated like with
 substitution patterns. These expressions are evaluated in the context of
 the runtime environment of the job ?? (check if this is true).
 
+Expressions can also be simple *pass-through* definitions, like
+``'creation_date' => '#creation_date#'``.
+
+
+Parameter scope
+---------------
+
+Explicit propagation and templates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, parameters are passed in an *explicit* manner, i.e. they have
+to be explicitly listed at one of these two levels:
+
+#. In the code of the emitting Runnable, by listing them in the
+   ``dataflow_output_id`` call
+#. In the pipeline configuration, adding *templates* to dataflow-targets
+
+A common problem when using *Factory* dataflows is that the *fan* jobs may
+need access to some parameters of their factory, but this is not
+necessarily granted by the system.
+For instance, eHive's JobFactory Runnable emits hashes that do **not**
+include any of its input paramters. In this case, you will need to define a
+template to add the extra required parameters.
+
+In the example below, the *parse_file* analysis expects its jobs to have
+the ``inputfile`` parameter defined. *parse_file* is a JobFactory analysis
+that will read the tab-delimited file, extract the first two columns and
+flow one job per row, naming the first value ``species_name`` and the
+second one ``species_id``, to an analysis named *species_processor*. By
+default the latter will **not** know the name of the input-file the data
+comes from. If it requires the information, we can use templates to define
+the input_ids of its jobs as 1) the parameters set by the factory and 2)
+the extra ``inputfile`` parameter. Note that with the explicit propagation,
+you will need to list **all** the parameters that you want to propagate.
+
+::
+
+     {   -logic_name => 'parse_file',
+         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+         -parameters => {
+             'column_names'     => [ 'species_name', 'species_id' ],
+         },
+         -flow_into  => {
+             2 => { 'species_processor' => { 'species_name' => '#species_name#', 'species_id' => '#species_id#', 'inputfile' => '#inputfile#' } },
+         },
+     },
+     {   -logic_name => 'species_processor',
+     },
+
 
 Per-analysis implicit propagation using `INPUT_PLUS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,6 +178,6 @@ eHive has two levels of *implicit* parameter propagation. First, a
 Global implicit propagation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+In this mode, all the jobs automatically
 
 
