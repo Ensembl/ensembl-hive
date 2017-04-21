@@ -60,7 +60,7 @@ eHive will evaluate the expression ``$self->param('alpha')+1``.
 
 If the parameter holds a data structure (arrayref or hashref), you can
 dereference it with curly-braces like in standard Perl. You can use these
-methods from `List::Util <https://perldoc.perl.org/List/Util.html>`_: 
+methods from `List::Util <https://perldoc.perl.org/List/Util.html>`_:
 first, min, max, minstr, maxstr, reduce, sum, shuffle.
 
 For example, ``'array_max' => '#expr( max @{#array#} )expr#'`` will
@@ -169,15 +169,65 @@ you will need to list **all** the parameters that you want to propagate.
      },
 
 
-Per-analysis implicit propagation using `INPUT_PLUS`
+Per-analysis implicit propagation using *INPUT_PLUS*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-eHive has two levels of *implicit* parameter propagation. First, a 
+*INPUT_PLUS* is a template modifier that makes the dataflow automatically
+propagate both the dataflow output_id and the emitting job's parameters.
+The analysis above can be rewritten as:
+
+::
+
+     {   -logic_name => 'parse_file',
+         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+         -parameters => {
+             'column_names'     => [ 'species_name', 'species_id' ],
+         },
+         -flow_into  => {
+             2 => { 'species_processor' => INPUT_PLUS() },
+         },
+     },
+     {   -logic_name => 'species_processor',
+     },
+
+INPUT_PLUS is specific to a dataflow-target, and has to be repeated in
+all the analyses that require it.
+
+It can also be extended to include other templated variables, like
+``INPUT_PLUS( { 'species_key' => '#species_name#_#species_id#' } )``
 
 
 Global implicit propagation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this mode, all the jobs automatically
+In this mode, all the jobs automatically see all the parameters of their
+ascendants, without having to define any templates or INPUT_PLUS.
+Global implicit propagation is enabled by adding a ``hive_use_param_stack``
+hive-meta parameter set to 1, like in the example below:
 
+::
+
+    sub hive_meta_table {
+        my ($self) = @_;
+        return {
+            %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+            'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+        };
+    }
+
+The *parse_file* analysis then becomes:
+
+::
+
+     {   -logic_name => 'parse_file',
+         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+         -parameters => {
+             'column_names'     => [ 'species_name', 'species_id' ],
+         },
+         -flow_into  => {
+             2 => [ 'species_processor' ],
+         },
+     },
+     {   -logic_name => 'species_processor',
+     },
 
