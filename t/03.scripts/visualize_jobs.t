@@ -25,7 +25,7 @@ use Test::File::Contents;                   # import file_contents_eq_or_diff()
 use Test::More;
 
 use Bio::EnsEMBL::Hive::Utils::Config;      # for Bio::EnsEMBL::Hive::Utils::Config->default_system_config
-use Bio::EnsEMBL::Hive::Utils::Test qw(runWorker beekeeper run_sql_on_db get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visualize_jobs run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -45,12 +45,6 @@ my $ref_output_location = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/visualize_jobs';
 # A temporary file to store the output of generate_graph.pl
 my ($fh, $generated_diagram_filename) = tempfile(UNLINK => 1);
 close($fh);
-
-sub test_command {
-    my $cmd_array = shift;
-    ok(!system(@$cmd_array), 'Can run '.join(' ', @$cmd_array));
-}
-
 
 my $conf_2_plan = {
     'LongMult::PipeConfig::LongMult_conf'   => [
@@ -72,13 +66,7 @@ foreach my $conf (keys %$conf_2_plan) {
         my $module_name     = 'Bio::EnsEMBL::Hive::Examples::'.$conf;
         my $jobs_in_order   = $conf_2_plan->{$conf};
 
-        my @init_pipeline_args = (  $ENV{'EHIVE_ROOT_DIR'}.'/scripts/init_pipeline.pl',
-                                    $module_name,
-                                    -pipeline_url => $vj_url,
-                                    -hive_force_init => 1,
-                                    -tweak => 'pipeline.param[take_time]=0'
-                                 );
-        test_command(\@init_pipeline_args);
+        init_pipeline($module_name, $vj_url, [ -hive_force_init => 1 ], [ 'pipeline.param[take_time]=0' ]);
 
         my $pipeline_name   = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $vj_url )->hive_pipeline_name;
 
@@ -87,9 +75,9 @@ foreach my $conf (keys %$conf_2_plan) {
             system('mkdir', '-p', $ref_directory);
         }
 
-        foreach my $step_number (0..@$jobs_in_order-1) {
+        foreach my $step_number (1..@$jobs_in_order) {
             
-            foreach my $job_id_or_bk_args ( @{ $jobs_in_order->[$step_number] } ) {
+            foreach my $job_id_or_bk_args ( @{ $jobs_in_order->[$step_number-1] } ) {
                 if( ref($job_id_or_bk_args) ) {
                     beekeeper($vj_url, $job_id_or_bk_args );
                 } else {
@@ -97,10 +85,8 @@ foreach my $conf (keys %$conf_2_plan) {
                 }
             }
 
-            my @visualize_jobs_args = ( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/visualize_jobs.pl',
-                                        # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
-                                        -url => $vj_url,
-                                        -accu_values,
+            visualize_jobs( $vj_url, [ -accu_values,
+                                     # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
                                         ($generate_format eq 'dot')
                                             ? (
                                                 -output => '/dev/null',
@@ -110,10 +96,9 @@ foreach my $conf (keys %$conf_2_plan) {
                                                 -format => $generate_format,
                                                 -output => $generated_diagram_filename,
                                             )
-                                    );
-            test_command(\@visualize_jobs_args);
+                                     ], "Generated a PNG J-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
 
-            my $ref_filename    = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $pipeline_name, $step_number+1, $generate_format);
+            my $ref_filename    = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
 
             if($generate_files) {
                 system('cp', '-f', $generated_diagram_filename, $ref_filename);

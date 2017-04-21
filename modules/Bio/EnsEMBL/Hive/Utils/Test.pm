@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
 
 our $VERSION = '0.00';
 
@@ -209,6 +209,28 @@ sub init_pipeline {
 }
 
 
+=head2 _test_ehive_script
+
+  Arg[1]      : String $script_name. The name of the script (assumed to be found in
+                ensembl-hive/scripts/ once the .pl suffix added)
+  Arg[2]      : String $url. The location of the database
+  Arg[3]      : Arrayref $args. Extra arguments given to the script
+  Arg[4]      : String $test_name (optional). The name of the test
+  Description : Generic method that can run any eHive script and check its return status
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : other methods in Utils::Test
+  Status      : Stable
+
+=cut
+
+sub _test_ehive_script {
+    my ($script_name, $url, $args, $test_name) = @_;
+    $test_name ||= 'Can run '.$script_name.($args ? ' with '.join(' ', @$args) : '');
+    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', -url => $url, @{$args || []}), $test_name);
+}
+
+
 =head2 runWorker
 
   Arg[1]      : String $url. The location of the database
@@ -242,28 +264,6 @@ sub runWorker {
 }
 
 
-=head2 _test_ehive_script
-
-  Arg[1]      : String $script_name. The name of the script (assumed to be found in
-                ensembl-hive/scripts/ once the .pl suffix added)
-  Arg[2]      : String $url. The location of the database
-  Arg[3]      : Arrayref $args. Extra arguments given to beekeeper
-  Arg[4]      : String $test_name (optional). The name of the test
-  Description : Generic method that can run any eHive script and check its return status
-  Returntype  : None
-  Exceptions  : TAP-style
-  Caller      : other methods in Utils::Test
-  Status      : Stable
-
-=cut
-
-sub _test_ehive_script {
-    my ($script_name, $url, $args, $test_name) = @_;
-    $test_name ||= 'Can run '.$script_name.($args ? ' with '.join(' ', @$args) : '');
-    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', -url => $url, @{$args || []}), $test_name);
-}
-
-
 =head2 seed_pipeline
 
   Arg[1]      : String $url. The location of the database
@@ -287,9 +287,9 @@ sub seed_pipeline {
 =head2 beekeeper
 
   Arg[1]      : String $url. The location of the database
-  Arg[2]      : Arrayref $args. Extra arguments given to beekeeper
+  Arg[2]      : Arrayref $args. Extra arguments given to beekeeper.pl
   Arg[3]      : String $test_name (optional). The name of the test
-  Example     : $beekeeper($url, [$arg1, $arg2], 'Run beekeeper with two arguments');
+  Example     : beekeeper($url, [$arg1, $arg2], 'Run beekeeper with two arguments');
   Description : Very generic function to run beekeeper on the given database with the given arguments
   Returntype  : None
   Exceptions  : TAP-style
@@ -300,6 +300,25 @@ sub seed_pipeline {
 
 sub beekeeper {
     return _test_ehive_script('beekeeper', @_);
+}
+
+
+=head2 visualize_jobs
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to visualize_jobs.pl
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : visualize_jobs($url, [-output => 'lm_jobs.png', -accu_values], 'Generate a PNG J-diagram with accu values');
+  Description : Very generic function to run visualize_jobs.pl on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub visualize_jobs {
+    return _test_ehive_script('visualize_jobs', @_);
 }
 
 
