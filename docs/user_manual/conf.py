@@ -14,6 +14,7 @@
 
 import sys
 import os
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -338,3 +339,8 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 #epub_use_index = True
+
+# Add overriding stylesheets, searching in html_static_path
+# (see https://github.com/rtfd/sphinx_rtd_theme/issues/117)
+def setup(app):
+    app.add_stylesheet("theme_overrides.css")
