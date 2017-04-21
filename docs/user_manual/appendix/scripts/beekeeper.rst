@@ -5,21 +5,20 @@ beekeeper.pl
 NAME
 ----
 
-::
-
-        beekeeper.pl [options]
+beekeeper.pl [options]
 
 DESCRIPTION
 -----------
 
-::
+The Beekeeper is in charge of interfacing between the Queen and a
+compute resource or 'compute farm'. Its job is to initialize/sync the
+eHive database (via the Queen), query the Queen if it needs any workers
+and to send the requested number of workers to open machines via the
+runWorker.pl script.
 
-        The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
-        Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
-        and to send the requested number of workers to open machines via the runWorker.pl script.
-
-        It is also responsible for interfacing with the Queen to identify workers which died
-        unexpectedly so that she can free the dead workers and reclaim unfinished jobs.
+It is also responsible for interfacing with the Queen to identify
+workers which died unexpectedly so that she can free the dead workers
+and reclaim unfinished jobs.
 
 USAGE EXAMPLES
 --------------
@@ -53,20 +52,28 @@ OPTIONS
 Connection parameters
 ~~~~~~~~~~~~~~~~~~~~~
 
-::
+-reg\_conf <path>
+    Path to a Registry configuration file
 
-        -reg_conf <path>       : path to a Registry configuration file
-        -reg_type <string>     : type of the registry entry ('hive', 'core', 'compara', etc. - defaults to 'hive')
-        -reg_alias <string>    : species/alias name for the Hive DBAdaptor
-        -url <url string>      : url defining where hive database is located
-        -nosqlvc <0|1>         : skip sql version check if 1
+-reg\_type <string>
+    Type of the registry entry ('hive', 'core', 'compara', etc. -
+    defaults to 'hive')
+
+-reg\_alias <string>
+    Species / alias name for the Hive DBAdaptor
+
+-url <url string>
+    URL defining where hive database is located
+
+-nosqlvc <0\|1>
+    Skip sql version check if 1
 
 Configs overriding
 ~~~~~~~~~~~~~~~~~~
 
-::
-
-        -config_file <string>  : json file (with absolute path) to override the default configurations (could be multiple)
+-config\_file <string>
+    JSON file (with absolute path) to override the default
+    configurations (could be multiple)
 
 Looping control
 ~~~~~~~~~~~~~~~
