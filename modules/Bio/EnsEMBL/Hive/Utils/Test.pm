@@ -227,10 +227,10 @@ sub init_pipeline {
 sub _test_ehive_script {
     my ($script_name, $url, $args, $test_name) = @_;
     $args ||= [];
-    unshift @$args, (-url => $url) if(defined($url));
-    $test_name ||= 'Can run '.$script_name.(@$args ? ' with the following cmdline options: '.join(' ', @$args) : '');
+    my @ext_args = ( defined($url) ? (-url => $url) : (), @$args );
+    $test_name ||= 'Can run '.$script_name.(@ext_args ? ' with the following cmdline options: '.join(' ', @ext_args) : '');
 
-    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @$args), $test_name);
+    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @ext_args), $test_name);
 }
 
 
