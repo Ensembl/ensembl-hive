@@ -46,7 +46,3 @@ take_b_apart
      │
      V
     [[ final_result ]]
-
-----------------------------------------------------------
-   Did you forget to specify the -output flowchart.png ?  
-----------------------------------------------------------

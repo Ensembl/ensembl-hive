@@ -43,7 +43,3 @@ redirect_trivial_jobs
      │
      V
     [[ final_result ]]
-
-----------------------------------------------------------
-   Did you forget to specify the -output flowchart.png ?  
-----------------------------------------------------------

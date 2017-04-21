@@ -27,7 +27,3 @@ take_b_apart
      │
      V
     [[ intermediate_result ]]
-
-----------------------------------------------------------
-   Did you forget to specify the -output flowchart.png ?  
-----------------------------------------------------------

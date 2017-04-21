@@ -28,7 +28,3 @@ calc_overall_percentage
  │
  V
 [[ final_result ]]
-
-----------------------------------------------------------
-   Did you forget to specify the -output flowchart.png ?  
-----------------------------------------------------------

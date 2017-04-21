@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
 
 our $VERSION = '0.00';
 
@@ -226,8 +226,11 @@ sub init_pipeline {
 
 sub _test_ehive_script {
     my ($script_name, $url, $args, $test_name) = @_;
-    $test_name ||= 'Can run '.$script_name.($args ? ' with '.join(' ', @$args) : '');
-    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', -url => $url, @{$args || []}), $test_name);
+    $args ||= [];
+    unshift @$args, (-url => $url) if(defined($url));
+    $test_name ||= 'Can run '.$script_name.(@$args ? ' with the following cmdline options: '.join(' ', @$args) : '');
+
+    ok(!system($ENV{'EHIVE_ROOT_DIR'}.'/scripts/'.$script_name.'.pl', @$args), $test_name);
 }
 
 
@@ -300,6 +303,25 @@ sub seed_pipeline {
 
 sub beekeeper {
     return _test_ehive_script('beekeeper', @_);
+}
+
+
+=head2 generate_graph
+
+  Arg[1]      : String $url or undef. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to generate_graph.pl
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : generate_graph($url, [-output => 'lm_analyses.png'], 'Generate a PNG A-diagram');
+  Description : Very generic function to run generate_graph.pl on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub generate_graph {
+    return _test_ehive_script('generate_graph', @_);
 }
 
 
