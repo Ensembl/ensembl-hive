@@ -6,8 +6,6 @@
     white-space: normal !important;
 }
 
-.wy-table-responsive {
-    margin-bottom: 24px;
-    max-width: 100%;
-    overflow: visible !important;
+.wy-nav-content {
+    max-width: 100% !important;
 }
