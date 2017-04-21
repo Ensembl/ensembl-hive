@@ -84,19 +84,28 @@ sub main {
             }
         }
 
-        my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
-            $self->{'pipeline'},
-            $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
-        );
-        my $graphviz = $graph->build();
+        if($self->{'format'} eq 'txt') {
+            local *STDOUT;
 
-        if($self->{'dot_input'}) {
-            $graphviz->dot_input_filename( $self->{'dot_input'} );
+            open (STDOUT, '>', $self->{'output'}); # redirect STDOUT to $self->{'output'}
+
+            $self->{'pipeline'}->print_diagram;     # and capture the Unicode diagram in a text file
+
+        } else {
+            my $graph = Bio::EnsEMBL::Hive::Utils::Graph->new(
+                $self->{'pipeline'},
+                $self->{'config_files'} ? @{ $self->{'config_files'} } : ()
+            );
+            my $graphviz = $graph->build();
+
+            if($self->{'dot_input'}) {
+                $graphviz->dot_input_filename( $self->{'dot_input'} );
+            }
+
+            my $call = 'as_'.$self->{'format'};
+
+            $graphviz->$call($self->{'output'});
         }
-
-        my $call = 'as_'.$self->{'format'};
-
-        $graphviz->$call($self->{'output'});
 
     } else {
         $self->{'pipeline'}->print_diagram;
