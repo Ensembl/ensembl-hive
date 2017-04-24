@@ -30,6 +30,10 @@ User documentation
    quickstart/install
    quickstart/quickstart
 
+.. toctree::
+   :caption: Walkthrough
+
+   walkthrough/long_mult_walkthrough
 
 .. toctree::
    :caption: Running pipelines
