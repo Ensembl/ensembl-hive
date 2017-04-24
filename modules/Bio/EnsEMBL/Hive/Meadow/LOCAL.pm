@@ -50,6 +50,7 @@ sub get_current_worker_process_id {
     return $$;
 }
 
+sub deregister_local_process {}   # Nothing to do
 
 sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;

@@ -56,12 +56,14 @@ sub new_from_Valley {
     my ($class, $valley, @args) = @_;
 
     my ($meadow, $pid, $meadow_host, $meadow_user) = $valley->whereami;
-    unless($meadow->type eq 'LOCAL') {
+    unless($meadow->can('deregister_local_process')) {
         die "beekeeper.pl detected it has been itself submitted to '".$meadow->type."/".$meadow->cached_name."', but this mode of operation is not supported.\n"
            ."Please just run beekeeper.pl on a farm head node, preferably from under a 'screen' session.\n";
     }
+    $meadow->deregister_local_process();
 
     return $class->SUPER::new(
+        'meadow'        => $meadow_host,
         'meadow_host'   => $meadow_host,
         'meadow_user'   => $meadow_user,
         'process_id'    => $pid,
@@ -140,6 +142,13 @@ sub meadow_signatures {
 
 
 # --------------------------------- Convenient methods ---------------------------------------
+
+sub meadow {
+    my $self = shift;
+    $self->{'_meadow'} = shift if(@_);
+    return $self->{'_meadow'};
+}
+
 
 =head2 set_cause_of_death
 
