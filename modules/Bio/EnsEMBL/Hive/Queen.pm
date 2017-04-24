@@ -117,8 +117,10 @@ sub create_new_worker {
      = @flags{qw(-resource_class_id -resource_class_name -beekeeper_id
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
-    my ($meadow_type, $meadow_name, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
-    die "Valley is not fully defined" unless ($meadow_type && $meadow_name && $process_id && $meadow_host && $meadow_user);
+    my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    die "Valley is not fully defined" unless ($meadow && $process_id && $meadow_host && $meadow_user);
+    my $meadow_type = $meadow->type;
+    my $meadow_name = $meadow->cached_name;
 
     foreach my $prev_worker_incarnation (@{ $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) }) {
             # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100

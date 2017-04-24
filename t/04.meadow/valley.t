@@ -76,9 +76,9 @@ my $valley = Bio::EnsEMBL::Hive::Valley->new($config, 'LOCAL', $pipeline_name);
 
 ok($valley, 'Can build a Valley');
 
-my ($meadow_type, $meadow_name) = $valley->whereami();
-ok($meadow_type, 'Could find the neadow type');
-ok($meadow_name, 'Could find the neadow name');
+my ($meadow, $pid) = $valley->whereami();
+ok($meadow, 'Could find the meadow');
+ok($pid, 'Could find the process id');
 
 my $available_meadows = $valley->get_available_meadow_list();
 ok(scalar(@$available_meadows), 'At least a meadow could be found');

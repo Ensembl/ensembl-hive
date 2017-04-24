@@ -55,9 +55,9 @@ use base ( 'Bio::EnsEMBL::Hive::Storable' );    # To enable dbID() and adaptor()
 sub new_from_Valley {
     my ($class, $valley, @args) = @_;
 
-    my ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user) = $valley->whereami;
-    unless($meadow_type eq 'LOCAL') {
-        die "beekeeper.pl detected it has been itself submitted to '$meadow_type/$meadow_name', but this mode of operation is not supported.\n"
+    my ($meadow, $pid, $meadow_host, $meadow_user) = $valley->whereami;
+    unless($meadow->type eq 'LOCAL') {
+        die "beekeeper.pl detected it has been itself submitted to '".$meadow->type."/".$meadow->cached_name."', but this mode of operation is not supported.\n"
            ."Please just run beekeeper.pl on a farm head node, preferably from under a 'screen' session.\n";
     }
 

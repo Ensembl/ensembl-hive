@@ -140,25 +140,22 @@ sub find_available_meadow_responsible_for_worker {
 sub whereami {
     my $self = shift @_;
 
-    my ($meadow_type, $meadow_name, $pid);
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        eval {
-            $pid         = $meadow->get_current_worker_process_id();
-            $meadow_type = $meadow->type();
-            $meadow_name = $meadow->cached_name();
-        };
-        unless($@) {
-            last;
-        }
-    }
-    unless($pid) {
-        die "Could not determine the Meadow, please investigate";
-    }
-
     my $meadow_host = hostname();
     my $meadow_user = $ENV{'USER'} || getpwuid($<);
 
-    return ($meadow_type, $meadow_name, $pid, $meadow_host, $meadow_user);
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $pid;
+        eval {
+            # get_current_worker_process_id() is expected to die if the pid
+            # cannot be determined. With the eval{} and the unless{} it will
+            # skip the meadow and try the next one.
+            $pid = $meadow->get_current_worker_process_id();
+        };
+        unless($@) {
+            return ($meadow, $pid, $meadow_host, $meadow_user);
+        }
+    }
+    die "Could not determine the Meadow, please investigate";
 }
 
 
