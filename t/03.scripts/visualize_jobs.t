@@ -25,16 +25,17 @@ use Test::File::Contents;                   # import file_contents_eq_or_diff()
 use Test::More;
 
 use Bio::EnsEMBL::Hive::Utils::Config;      # for Bio::EnsEMBL::Hive::Utils::Config->default_system_config
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visualize_jobs run_sql_on_db get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visualize_jobs generate_graph run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my ($generate_files, $generate_format) = (0, 'dot');
+my ($generate_files, $generate_format, $gg) = (0, 'dot', 0);
 
 GetOptions(         # Example: "visualize_jobs.t -generate -format png" would yield a visualized walk-through
     'generate!' => \$generate_files,
     'format=s'  => \$generate_format,
+    'gg!'       => \$gg,
 );
 
 my $vj_url  = get_test_url_or_die(-tag => 'vj', -no_user_prefix => 1);
@@ -86,24 +87,47 @@ foreach my $conf (keys %$conf_2_plan) {
             }
 
             visualize_jobs( $vj_url, [ -accu_values,
-                                     # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
                                         ($generate_format eq 'dot')
                                             ? (
                                                 -output => '/dev/null',
                                                 -format => 'canon',
                                                 -dot_input => $generated_diagram_filename,
+                                                # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
                                             ) : (
                                                 -format => $generate_format,
                                                 -output => $generated_diagram_filename,
-                                            )
-                                     ], "Generated a PNG J-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
+                                            ),
+                                     ], "Generated a '$generate_format' J-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
 
-            my $ref_filename    = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
+            my $ref_jdiag_filename  = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
 
             if($generate_files) {
-                system('cp', '-f', $generated_diagram_filename, $ref_filename);
+                system('cp', '-f', $generated_diagram_filename, $ref_jdiag_filename);
             } else {
-                files_eq_or_diff($generated_diagram_filename, $ref_filename);
+                files_eq_or_diff($generated_diagram_filename, $ref_jdiag_filename);
+            }
+
+            if($gg) {
+                generate_graph( $vj_url, [
+                                            ($generate_format eq 'dot')
+                                                ? (
+                                                    -output => '/dev/null',
+                                                    -format => 'canon',
+                                                    -dot_input => $generated_diagram_filename,
+                                                    -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,   # to ensure JSON Config-independent reproducibility
+                                                ) : (
+                                                    -format => $generate_format,
+                                                    -output => $generated_diagram_filename,
+                                                ),
+                                         ], "Generated a '$generate_format' A-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
+
+                my $ref_adiag_filename  = sprintf("%s/%s_analyses_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
+
+                if($generate_files) {
+                    system('cp', '-f', $generated_diagram_filename, $ref_adiag_filename);
+                } else {
+                    files_eq_or_diff($generated_diagram_filename, $ref_adiag_filename);
+                }
             }
         }
     }
