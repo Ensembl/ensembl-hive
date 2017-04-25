@@ -38,8 +38,7 @@ GetOptions(         # Example: "visualize_jobs.t -generate -format png" would yi
     'gg!'       => \$gg,
 );
 
-my $vj_url  = get_test_url_or_die(-tag => 'vj', -no_user_prefix => 1);
-
+my %vj_url = ();
 
 my $ref_output_location = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/visualize_jobs';
 
@@ -47,93 +46,148 @@ my $ref_output_location = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/visualize_jobs';
 my ($fh, $generated_diagram_filename) = tempfile(UNLINK => 1);
 close($fh);
 
-my $conf_2_plan = {
-    'LongMult::PipeConfig::LongMult_conf'   => [
-            [ ],                # an empty list effectively skips running a worker (which is useful in the beginning)
-            [  1,       [ qw(-analyses_pattern add_together -sync) ] ],
-            [  2,       [ qw(-sync) ] ],
-            [  4 ],
-            [ 10, 11 ],
-            [  5,  6 ],
-            [  8, 12,   [ qw(-analyses_pattern add_together -sync) ] ],
-            [  9,       [ qw(-analyses_pattern add_together -sync) ] ],
-            [  7,       [ qw(-sync) ] ],
-            [  3,       [ qw(-sync) ] ],
+
+# -------------------------[helper subroutines to create a more flexible & readable plan:]------------------------------------
+
+sub i {
+    my ($idx, $module_name, $options, $tweaks) = @_;
+
+    return [ 'INIT', $idx, $module_name, $options, $tweaks ];
+}
+
+sub w {
+    my ($job_id, $url) = @_;
+
+    return [ 'WORKER', $url, $job_id ];
+}
+
+sub b {
+    my ($bk_options, $url) = @_;
+
+    return [ 'BEEKEEPER', $url, $bk_options ];
+}
+
+sub z {             # BEWARE: you can't call your function s() !
+    my ($url) = @_;
+
+    return [ 'SNAPSHOT', $url ];
+}
+
+# -----------------------------------------------------------------------------------------------------------------------------
+
+
+my $name_2_plan = {
+    'long_mult' => [
+            i(0, 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [ -hive_force_init => 1 ], [ 'pipeline.param[take_time]=0' ]),
+
+                                                                            z(),    # take one snapshot before running anything
+            w(1),           b([qw(-analyses_pattern add_together -sync)]),  z(),    # run one job and only sync a specific analysis
+            w(2),           b([qw(-sync)]),                                 z(),    # run another and sync the whole Hive
+            w(4),                                                           z(),    # run, but don't sync
+            w(10),  w(11),                                                  z(),
+            w(5),   w(6),                                                   z(),
+            w(8),   w(12),  b([qw(-analyses_pattern add_together -sync)]),  z(),
+            w(9),           b([qw(-analyses_pattern add_together -sync)]),  z(),
+            w(7),           b([qw(-sync)]),                                 z(),
+            w(3),           b([qw(-sync)]),                                 z(),
     ],
+#    'long_mult_client_server' => [
+#    ],
 };
 
-foreach my $conf (keys %$conf_2_plan) {
-    subtest $conf, sub {
-        my $module_name     = 'Bio::EnsEMBL::Hive::Examples::'.$conf;
-        my $jobs_in_order   = $conf_2_plan->{$conf};
 
-        init_pipeline($module_name, $vj_url, [ -hive_force_init => 1 ], [ 'pipeline.param[take_time]=0' ]);
+foreach my $test_name (keys %$name_2_plan) {
+    subtest $test_name, sub {
 
-        my $pipeline_name   = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $vj_url )->hive_pipeline_name;
-
-        my $ref_directory   = "${ref_output_location}/${pipeline_name}";
+        my $ref_directory   = "${ref_output_location}/${test_name}";
         if($generate_files) {
             system('mkdir', '-p', $ref_directory);
         }
 
-        foreach my $step_number (1..@$jobs_in_order) {
+        my $plan        = $name_2_plan->{$test_name};
+        my $step_number = 0;
+
+        %vj_url = ();
+
+        foreach my $op_vector (@$plan) {
+
+            my ($op_type, $op_url, $op_extras) = @$op_vector;
+
+            $op_url //= $vj_url{0};
             
-            foreach my $job_id_or_bk_args ( @{ $jobs_in_order->[$step_number-1] } ) {
-                if( ref($job_id_or_bk_args) ) {
-                    beekeeper($vj_url, $job_id_or_bk_args );
-                } else {
-                    runWorker($vj_url, [ -job_id => $job_id_or_bk_args ] );
-                }
-            }
+            if($op_type eq 'INIT') {
+                my ($op_type, $idx, $module_name, $options, $tweaks) = @$op_vector; # more parameters
 
-            visualize_jobs( $vj_url, [ -accu_values,
-                                        ($generate_format eq 'dot')
-                                            ? (
-                                                -output => '/dev/null',
-                                                -format => 'canon',
-                                                -dot_input => $generated_diagram_filename,
-                                                # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
-                                            ) : (
-                                                -format => $generate_format,
-                                                -output => $generated_diagram_filename,
-                                            ),
-                                     ], "Generated a '$generate_format' J-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
+                $vj_url{$idx} = get_test_url_or_die(-tag => 'vj_'.$idx, -no_user_prefix => 1);
 
-            my $ref_jdiag_filename  = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
+                init_pipeline($module_name, $vj_url{$idx}, $options, $tweaks);
 
-            if($generate_files) {
-                system('cp', '-f', $generated_diagram_filename, $ref_jdiag_filename);
-            } else {
-                files_eq_or_diff($generated_diagram_filename, $ref_jdiag_filename);
-            }
+            } elsif( $op_type eq 'WORKER' ) {
+                runWorker($op_url, [ -job_id => $op_extras ] );
 
-            if($gg) {
-                generate_graph( $vj_url, [
+            } elsif( $op_type eq 'BEEKEEPER' ) {
+                beekeeper($op_url, $op_extras);
+
+            } elsif( $op_type eq 'SNAPSHOT' ) {
+
+                ++$step_number;
+
+                visualize_jobs( $op_url, [ -accu_values,
                                             ($generate_format eq 'dot')
                                                 ? (
                                                     -output => '/dev/null',
                                                     -format => 'canon',
                                                     -dot_input => $generated_diagram_filename,
-                                                    -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,   # to ensure JSON Config-independent reproducibility
+                                                    # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
                                                 ) : (
                                                     -format => $generate_format,
                                                     -output => $generated_diagram_filename,
                                                 ),
-                                         ], "Generated a '$generate_format' A-diagram for pipeline '$pipeline_name', step $step_number, with accu values" );
+                                         ], "Generated a '$generate_format' J-diagram for pipeline '$test_name', step $step_number, with accu values" );
 
-                my $ref_adiag_filename  = sprintf("%s/%s_analyses_%02d.%s", $ref_directory, $pipeline_name, $step_number, $generate_format);
+                my $ref_jdiag_filename  = sprintf("%s/%s_jobs_%02d.%s", $ref_directory, $test_name, $step_number, $generate_format);
 
                 if($generate_files) {
-                    system('cp', '-f', $generated_diagram_filename, $ref_adiag_filename);
+                    system('cp', '-f', $generated_diagram_filename, $ref_jdiag_filename);
                 } else {
-                    files_eq_or_diff($generated_diagram_filename, $ref_adiag_filename);
+                    files_eq_or_diff($generated_diagram_filename, $ref_jdiag_filename);
                 }
+
+                if($gg) {
+                    generate_graph( $op_url, [
+                                                ($generate_format eq 'dot')
+                                                    ? (
+                                                        -output => '/dev/null',
+                                                        -format => 'canon',
+                                                        -dot_input => $generated_diagram_filename,
+                                                        -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,   # to ensure JSON Config-independent reproducibility
+                                                    ) : (
+                                                        -format => $generate_format,
+                                                        -output => $generated_diagram_filename,
+                                                    ),
+                                             ], "Generated a '$generate_format' A-diagram for pipeline '$test_name', step $step_number, with accu values" );
+
+                    my $ref_adiag_filename  = sprintf("%s/%s_analyses_%02d.%s", $ref_directory, $test_name, $step_number, $generate_format);
+
+                    if($generate_files) {
+                        system('cp', '-f', $generated_diagram_filename, $ref_adiag_filename);
+                    } else {
+                        files_eq_or_diff($generated_diagram_filename, $ref_adiag_filename);
+                    }
+                }
+
+            } else {
+                die "Cannot parse the plan: operation '$op_type' is not recognized";
             }
         }
-    }
-}
 
-run_sql_on_db($vj_url, 'DROP DATABASE');
+        foreach my $url (values %vj_url) {
+            run_sql_on_db($url, 'DROP DATABASE');
+        }
+
+    } # subtest
+} # foreach $test_name
+
 
 done_testing();
 
