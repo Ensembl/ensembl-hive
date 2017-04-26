@@ -30,9 +30,10 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visuali
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my ($generate_files, $generate_format, $gg) = (0, 'dot', 0);
+my ($generate_files, $generate_format, $gg, $test_name) = (0, 'dot', 0, 'long_mult');
 
 GetOptions(         # Example: "visualize_jobs.t -generate -format png" would yield a visualized walk-through
+    'name=s'    => \$test_name,
     'generate!' => \$generate_files,
     'format=s'  => \$generate_format,
     'gg!'       => \$gg,
@@ -50,27 +51,27 @@ close($fh);
 # -------------------------[helper subroutines to create a more flexible & readable plan:]------------------------------------
 
 sub i {
-    my ($idx, $module_name, $options, $tweaks) = @_;
+    my ($idx, $module_name, $options_cb, $tweaks_cb) = @_;
 
-    return [ 'INIT', $idx, $module_name, $options, $tweaks ];
+    return [ 'INIT', $idx, $module_name, $options_cb, $tweaks_cb ];
 }
 
 sub w {
-    my ($job_id, $url) = @_;
+    my ($job_id, $idx) = @_;
 
-    return [ 'WORKER', $url, $job_id ];
+    return [ 'WORKER', $idx, $job_id ];
 }
 
 sub b {
-    my ($bk_options, $url) = @_;
+    my ($bk_options, $idx) = @_;
 
-    return [ 'BEEKEEPER', $url, $bk_options ];
+    return [ 'BEEKEEPER', $idx, $bk_options ];
 }
 
 sub z {             # BEWARE: you can't call your function s() !
-    my ($url) = @_;
+    my ($idx) = @_;
 
-    return [ 'SNAPSHOT', $url ];
+    return [ 'SNAPSHOT', $idx ];
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------
@@ -91,12 +92,25 @@ my $name_2_plan = {
             w(7),           b([qw(-sync)]),                                 z(),
             w(3),           b([qw(-sync)]),                                 z(),
     ],
-#    'long_mult_client_server' => [
-#    ],
+    'long_mult_client_server' => [
+            i(1, 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultServer_conf', [ -hive_force_init => 1 ], [ 'pipeline.param[take_time]=0' ] ),
+            i(0, 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMultClient_conf', sub { return [ -hive_force_init => 1, -server_url => $vj_url{1} ] }, [ 'pipeline.param[take_time]=0' ] ),
+
+                                                                                    z(0),
+            w(1, 0),                                                                z(0),
+            w(3, 0), w(4, 0),                                                       z(0),
+            w(2, 0),          b([qw(-analyses_pattern take_b_apart -sync)], 0),     z(0),
+            w(2, 1), w(3, 1),                                                       z(0),
+            w(5, 0), w(4, 1),                                                       z(0),
+            w(1, 1),                                                                z(0),
+            w(5, 1), w(7, 0), b([qw(-sync)], 1), b([qw(-sync)], 0),                 z(0),
+            w(6, 0),                                                                z(0),
+    ],
 };
 
+my @test_names_to_run = ($test_name eq '*') ? keys %$name_2_plan : ( $test_name );
 
-foreach my $test_name (keys %$name_2_plan) {
+foreach my $test_name (@test_names_to_run) {
     subtest $test_name, sub {
 
         my $ref_directory   = "${ref_output_location}/${test_name}";
@@ -111,16 +125,17 @@ foreach my $test_name (keys %$name_2_plan) {
 
         foreach my $op_vector (@$plan) {
 
-            my ($op_type, $op_url, $op_extras) = @$op_vector;
+            my ($op_type, $op_idx, $op_extras) = @$op_vector;
 
-            $op_url //= $vj_url{0};
+            $op_idx //= 0;
+            my $op_url = $vj_url{$op_idx};
             
             if($op_type eq 'INIT') {
-                my ($op_type, $idx, $module_name, $options, $tweaks) = @$op_vector; # more parameters
+                my ($op_type, $idx, $module_name, $options_cb, $tweaks_cb) = @$op_vector; # more parameters
 
                 $vj_url{$idx} = get_test_url_or_die(-tag => 'vj_'.$idx, -no_user_prefix => 1);
 
-                init_pipeline($module_name, $vj_url{$idx}, $options, $tweaks);
+                init_pipeline($module_name, $vj_url{$idx}, (ref($options_cb) eq 'CODE') ? &$options_cb() : $options_cb, (ref($tweaks_cb) eq 'CODE') ? &$tweaks_cb() : $tweaks_cb);
 
             } elsif( $op_type eq 'WORKER' ) {
                 runWorker($op_url, [ -job_id => $op_extras ] );
@@ -133,6 +148,7 @@ foreach my $test_name (keys %$name_2_plan) {
                 ++$step_number;
 
                 visualize_jobs( $op_url, [ -accu_values,
+                                           -include,
                                             ($generate_format eq 'dot')
                                                 ? (
                                                     -output => '/dev/null',
