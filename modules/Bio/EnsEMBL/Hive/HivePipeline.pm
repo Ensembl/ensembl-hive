@@ -507,10 +507,13 @@ sub apply_tweaks {
                 print "Tweak.Show    \tpipeline.param[$param_name] ::\t"
                      . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
             } elsif($operator eq '#') {
-                $need_write = 1;
-                $pwp_collection->forget_and_mark_for_deletion( $hash_pair );
-
-                print "Tweak.Deleting\tpipeline.param[$param_name] ::\t".stringify($hash_pair->{'param_value'})." --> (missing value)\n";
+                if ($hash_pair) {
+                    $need_write = 1;
+                    $pwp_collection->forget_and_mark_for_deletion( $hash_pair );
+                    print "Tweak.Deleting\tpipeline.param[$param_name] ::\t".stringify($hash_pair->{'param_value'})." --> (missing value)\n";
+                } else {
+                    print "Tweak.Deleting\tpipeline.param[$param_name] skipped (does not exist)\n";
+                }
             } else {
                 $need_write = 1;
                 my $new_value = destringify( $new_value_str );
