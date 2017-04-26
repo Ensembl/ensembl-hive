@@ -140,7 +140,7 @@ sub display_subgraph {
 
     foreach my $node_name ( sort @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
 
-        if( @{ $self->cluster_2_nodes->{ $node_name } || [] } ) {
+        if( exists $self->cluster_2_nodes->{ $node_name } or exists $self->cluster_2_attributes->{$node_name} ) {
             $text .= $self->display_subgraph( $node_name, $depth+1 );
         } else {
             $text .= $prefix . "\t${node_name};\n";
