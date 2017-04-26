@@ -129,9 +129,9 @@ if(0) {
         foreach my $analysis_name (keys %analysis_name_2_pipeline) {
             my $this_pipeline = $analysis_name_2_pipeline{$analysis_name};
             push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
-            $self->{'graph'}->cluster_2_attributes->{ $this_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
         }
 
+        $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
         $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = ['pastel19', 3];
         my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
@@ -140,6 +140,7 @@ if(0) {
         foreach my $other_pipeline ( @{ Bio::EnsEMBL::Hive::TheApiary->pipelines_except($main_pipeline) } ) {
 
             my $colour_pair = shift @other_pipeline_colour_pairs;
+            $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
             $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = $colour_pair;
             push @other_pipeline_colour_pairs, $colour_pair;
