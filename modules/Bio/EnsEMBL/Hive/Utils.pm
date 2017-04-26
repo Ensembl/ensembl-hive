@@ -230,17 +230,14 @@ sub load_file_or_module {
                 $module_name = $1;
 
             } else {
-                warn "Package line format unrecognized:\n$package_line\n";
-                script_usage(1);
+                die "Package line format in '$file_or_module' unrecognized:\n$package_line\n";
             }
         } else {
-            warn "Could not find the package definition line in '$file_or_module'\n";
-            script_usage(1);
+            die "Could not find the package definition line in '$file_or_module'\n";
         }
 
     } else {
-        warn "The parameter '$file_or_module' neither seems to be a valid module nor a valid readable file\n";
-        script_usage(1);
+        die "The parameter '$file_or_module' neither seems to be a valid module nor a valid readable file\n";
     }
 
     eval "require $module_name;";
