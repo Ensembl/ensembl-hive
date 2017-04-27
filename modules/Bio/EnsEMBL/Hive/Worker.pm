@@ -888,8 +888,11 @@ sub set_log_directory_name {
 sub temp_directory_name {
     my $self = shift @_;
 
-    my $worker_id = $self->adaptor ? $self->dbID : 'standalone.'.$self->process_id;
-    return sprintf('/tmp/worker_%s_%s.%s', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $worker_id);
+    if ($self->adaptor) {
+        return sprintf('/tmp/worker_%s_%s.%s', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
+    } else {
+        return sprintf('/tmp/worker_%s.standalone.%s', $self->meadow_user, $self->process_id);
+    }
 }
 
 
