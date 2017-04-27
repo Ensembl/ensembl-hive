@@ -40,7 +40,6 @@ use Bio::EnsEMBL::Hive::Utils::URL ('parse');
 
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
-use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 
 
 our @ISA         = qw(Exporter);
@@ -243,7 +242,6 @@ sub _test_ehive_script {
   Description : Run a worker on the given pipeline in the current process.
                 The worker options have been divided in three groups: the ones affecting its specialization,
                 the ones affecting its "life" (how long it lasts), and the ones controlling its execution mode.
-                See the implementation of Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker() for more details.
   Returntype  : None
   Exceptions  : TAP-style
   Caller      : general
