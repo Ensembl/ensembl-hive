@@ -213,7 +213,7 @@ sub parse_report_source_line {
             foreach (@lines) {
                 if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
                     $when_died      = _convert_to_datetime($1, $2, $3);
-                    $cause_of_death = $5 && $status_2_cod{$5};
+                    $cause_of_death = $5 && ($status_2_cod{$5} || 'SEE_EXIT_STATUS');
                     $exit_status = $4 . ($5 ? "/$5" : '');
                 }
                 elsif(/^\s*EXCEPTION STATUS:\s*(.*?)\s*$/) {
