@@ -30,13 +30,23 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visuali
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my ($generate_files, $generate_format, $gg, $test_name) = (0, 'dot', 0, 'long_mult');
+my ($generate_files, $generate_format, $gg, $test_name, $vj_options) = (0, 'dot', 0, 'long_mult', '-accu_values -include');
+
+# Examples of usage:
+#
+#   visualize_jobs.t                            ## run the standard test (generate dot J-diagrams of long_mult pipeline and compare them to reference dot files)
+#   visualize_jobs.t -generate                  ## regenerate the reference dot-files used during the standard test
+#   visualize_jobs.t -generate -format png      ## a visualized walk-through of long_mult pipeline with J-diagrams only
+#   visualize_jobs.t -generate -format png -gg  ## a visualized walk-through of long_mult pipeline with both J-diagrams and A-diagrams
+#   visualize_jobs.t -generate -name long_mult_client_server -format png -vj_options ''                     ## for client-server 2 pipeline setup: skip the -accu_values and do not -include
+#   visualize_jobs.t -generate -name long_mult_client_server -format png -vj_options '-include -accu_keys'  ## for client-server 2 pipeline setup: do -accu_keys instead of -accu_values
 
 GetOptions(         # Example: "visualize_jobs.t -generate -format png" would yield a visualized walk-through
-    'name=s'    => \$test_name,
-    'generate!' => \$generate_files,
-    'format=s'  => \$generate_format,
-    'gg!'       => \$gg,
+    'name=s'        => \$test_name,
+    'generate!'     => \$generate_files,
+    'format=s'      => \$generate_format,
+    'gg!'           => \$gg,
+    'vj_options=s'  => \$vj_options,
 );
 
 my %vj_url = ();
@@ -147,8 +157,7 @@ foreach my $test_name (@test_names_to_run) {
 
                 ++$step_number;
 
-                visualize_jobs( $op_url, [ -accu_values,
-                                           -include,
+                visualize_jobs( $op_url, [ split(/\s+/, $vj_options),
                                             ($generate_format eq 'dot')
                                                 ? (
                                                     -output => '/dev/null',
