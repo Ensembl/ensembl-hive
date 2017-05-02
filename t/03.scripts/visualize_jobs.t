@@ -116,6 +116,23 @@ my $name_2_plan = {
             w(5, 1), w(7, 0), b([qw(-sync)], 1), b([qw(-sync)], 0),                 z(0),
             w(6, 0),                                                                z(0),
     ],
+    'quad_pipe' => [
+            i(3, 'Bio::EnsEMBL::Hive::Examples::QPT::PipeConfig::DDD_conf', [ -hive_force_init => 1 ], [ ] ),
+            i(2, 'Bio::EnsEMBL::Hive::Examples::QPT::PipeConfig::CCC_conf', [ -hive_force_init => 1 ], [ ] ),
+            i(1, 'Bio::EnsEMBL::Hive::Examples::QPT::PipeConfig::BBB_conf', sub { return [ -hive_force_init => 1, -DDD_url => $vj_url{3}, -CCC_url => $vj_url{2} ] }, [ ] ),
+            i(0, 'Bio::EnsEMBL::Hive::Examples::QPT::PipeConfig::AAA_conf', sub { return [ -hive_force_init => 1, -BBB_url => $vj_url{1} ] }, [ ] ),
+
+                                                                                    z(0),
+            w(1, 0),          b([qw(-analyses_pattern AAA_funnel -sync)], 0),       z(0),
+            w(1, 1), w(2, 0), b([qw(-sync)], 0),                                    z(0),
+            w(3, 1),          b([qw(-sync)], 0), b([qw(-sync)], 1),                 z(0),
+            w(1, 2),          b([qw(-sync)], 1),                                    z(0),
+            w(2, 1),          b([qw(-sync)], 0),                                    z(0),
+            w(3, 0), w(1, 3),                                                       z(0),
+            w(2, 3),                                                                z(0),
+            w(4, 1),          b([qw(-sync)], 0),                                    z(0),
+            w(4, 0),                                                                z(0),
+    ],
 };
 
 my @test_names_to_run = ($test_name eq '*') ? keys %$name_2_plan : ( $test_name );
