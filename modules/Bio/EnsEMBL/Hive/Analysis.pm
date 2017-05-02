@@ -97,10 +97,26 @@ sub parameters {
 }
 
 
+sub comment {
+    my $self = shift;
+    $self->{'_comment'} = shift if(@_);
+    $self->{'_comment'} //= '';
+    return $self->{'_comment'};
+}
+
+
+sub tags {
+    my $self = shift;
+    $self->{'_tags'} = shift if(@_);
+    $self->{'_tags'} //= '';
+    return $self->{'_tags'};
+}
+
+
 sub failed_job_tolerance {
     my $self = shift;
     $self->{'_failed_job_tolerance'} = shift if(@_);
-    $self->{'_failed_job_tolerance'} = 0 unless(defined($self->{'_failed_job_tolerance'}));
+    $self->{'_failed_job_tolerance'} //= 0;
     return $self->{'_failed_job_tolerance'};
 }
 
@@ -115,7 +131,7 @@ sub max_retry_count {
 sub can_be_empty {
     my $self = shift;
     $self->{'_can_be_empty'} = shift if(@_);
-    $self->{'_can_be_empty'} = 0 unless(defined($self->{'_can_be_empty'}));
+    $self->{'_can_be_empty'} //= 0;
     return $self->{'_can_be_empty'};
 }
 
@@ -123,7 +139,7 @@ sub can_be_empty {
 sub priority {
     my $self = shift;
     $self->{'_priority'} = shift if(@_);
-    $self->{'_priority'} = 0 unless(defined($self->{'_priority'}));
+    $self->{'_priority'} //= 0;
     return $self->{'_priority'};
 }
 
@@ -150,7 +166,7 @@ sub hive_capacity {
 sub batch_size {
     my $self = shift;
     $self->{'_batch_size'} = shift if(@_);
-    $self->{'_batch_size'} = 1 unless(defined($self->{'_batch_size'})); # only initialize when undefined, so if defined as 0 will stay 0
+    $self->{'_batch_size'} //= 1;   # only initialize when undefined, so if defined as 0 will stay 0
     return $self->{'_batch_size'};
 }
 

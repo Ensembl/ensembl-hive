@@ -469,9 +469,9 @@ sub add_objects_from_config {
     warn "Adding Analyses ...\n";
     foreach my $aha (@{$self->pipeline_analyses}) {
         my %aha_copy = %$aha;
-        my ($logic_name, $module, $parameters_hash, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
+        my ($logic_name, $module, $parameters_hash, $comment, $tags, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
                 $max_retry_count, $can_be_empty, $rc_id, $rc_name, $priority, $meadow_type, $analysis_capacity, $language, $wait_for, $flow_into)
-         = delete @aha_copy{qw(-logic_name -module -parameters -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
+         = delete @aha_copy{qw(-logic_name -module -parameters -comment -tags -input_ids -blocked -batch_size -hive_capacity -failed_job_tolerance
                  -max_retry_count -can_be_empty -rc_id -rc_name -priority -meadow_type -analysis_capacity -language -wait_for -flow_into)};   # slicing a hash reference
 
          my @unparsed_attribs = keys %aha_copy;
@@ -520,6 +520,8 @@ sub add_objects_from_config {
                 'module'                => $module,
                 'language'              => $language,
                 'parameters'            => $parameters_hash,
+                'comment'               => $comment,
+                'tags'                  => $tags,
                 'resource_class'        => $resource_class,
                 'failed_job_tolerance'  => $failed_job_tolerance,
                 'max_retry_count'       => $max_retry_count,
