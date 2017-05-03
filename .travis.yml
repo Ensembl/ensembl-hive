@@ -24,6 +24,7 @@ addons:
 
 before_install:
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
+    - mysql -hlocalhost -utravis -e "SET GLOBAL sql_mode = 'TRADITIONAL'"
     - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
     - chmod +x psql
     - export PATH=$PWD:$PATH
