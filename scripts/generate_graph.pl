@@ -42,7 +42,6 @@ sub main {
 
         'f|format=s'            => \$self->{'format'},
         'o|out|output=s'        => \$self->{'output'},
-        'dot_input=s'           => \$self->{'dot_input'},   # filename to store the intermediate dot input (valuable for debugging)
 
         'h|help'                => \$self->{'help'},
     );
@@ -98,13 +97,14 @@ sub main {
             );
             my $graphviz = $graph->build();
 
-            if($self->{'dot_input'}) {
-                $graphviz->dot_input_filename( $self->{'dot_input'} );
+            if( $self->{'format'} eq 'dot' ) {          # If you need to take a look at the intermediate dot file
+                $graphviz->dot_input_filename( $self->{'output'} );
+                $graphviz->as_canon( '/dev/null' );
+
+            } else {
+                my $call = 'as_'.$self->{'format'};
+                $graphviz->$call($self->{'output'});
             }
-
-            my $call = 'as_'.$self->{'format'};
-
-            $graphviz->$call($self->{'output'});
         }
 
     } else {

@@ -175,15 +175,12 @@ foreach my $test_name (@test_names_to_run) {
                 ++$step_number;
 
                 visualize_jobs( $op_url, [ split(/\s+/, $vj_options),
+                                            -format => $generate_format,
+                                            -output => $generated_diagram_filename,
                                             ($generate_format eq 'dot')
                                                 ? (
-                                                    -output => '/dev/null',
-                                                    -format => 'canon',
-                                                    -dot_input => $generated_diagram_filename,
                                                     # -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,     ## FIXME: not supported yet
                                                 ) : (
-                                                    -format => $generate_format,
-                                                    -output => $generated_diagram_filename,
                                                 ),
                                          ], "Generated a '$generate_format' J-diagram for pipeline '$test_name', step $step_number, with accu values" );
 
@@ -197,15 +194,12 @@ foreach my $test_name (@test_names_to_run) {
 
                 if($gg) {
                     generate_graph( $op_url, [
+                                                -format => $generate_format,
+                                                -output => $generated_diagram_filename,
                                                 ($generate_format eq 'dot')
                                                     ? (
-                                                        -output => '/dev/null',
-                                                        -format => 'canon',
-                                                        -dot_input => $generated_diagram_filename,
                                                         -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,   # to ensure JSON Config-independent reproducibility
                                                     ) : (
-                                                        -format => $generate_format,
-                                                        -output => $generated_diagram_filename,
                                                     ),
                                              ], "Generated a '$generate_format' A-diagram for pipeline '$test_name', step $step_number, with accu values" );
 

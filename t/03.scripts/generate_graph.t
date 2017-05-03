@@ -90,9 +90,8 @@ foreach my $conf (@confs_to_test) {
                             ? (-server_url => $server_url)
                             : ()
                         ),
-                        -output => '/dev/null',
-                        -format => 'canon',
-                        -dot_input => $tmp_filename,
+                        -format => 'dot',
+                        -output => $tmp_filename,
                     ], "Dot A-diagram for $conf",
                   );
     if($generate_files) {
@@ -112,9 +111,8 @@ foreach my $conf (@confs_to_test) {
                     [ 'pipeline.param[take_time]=0' ],
                   );
     generate_graph( $client_url, [ -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,
-                        -output => '/dev/null',
-                        -format => 'canon',
-                        -dot_input => $tmp_filename,
+                        -format => 'dot',
+                        -output => $tmp_filename,
                     ], "Dot A-diagram for a hive database created from $conf",
                   );
     if($generate_files) {

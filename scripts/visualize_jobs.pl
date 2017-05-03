@@ -52,7 +52,6 @@ sub main {
 
         'o|out|output=s'        => \$self->{'output'},                  # output file name
         'f|format=s'            => \$self->{'format'},                  # output format (if not guessable from -output)
-        'dot_input=s'           => \$self->{'dot_input'},               # filename to store the intermediate dot input (valuable for debugging)
 
         'h|help'                => \$self->{'help'},
     );
@@ -150,15 +149,14 @@ if(0) {
             }
         }
 
+        if( $self->{'format'} eq 'dot' ) {          # If you need to take a look at the intermediate dot file
+            $self->{'graph'}->dot_input_filename( $self->{'output'} );
+            $self->{'graph'}->as_canon( '/dev/null' );
 
-            ## If you need to take a look at the intermediate dot file:
-        if( $self->{'dot_input'} ) {
-            $self->{'graph'}->dot_input_filename( $self->{'dot_input'} );
+        } else {
+            my $call = 'as_'.$self->{'format'};
+            $self->{'graph'}->$call($self->{'output'});
         }
-
-        my $call = 'as_'.$self->{'format'};
-
-        $self->{'graph'}->$call($self->{'output'});
 
     } else {
         die "\nERROR : -output filename has to be defined\n\n";
