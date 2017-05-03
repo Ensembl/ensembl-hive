@@ -31,8 +31,8 @@ SET SESSION sql_mode='';
 --  one for human-readable description of the anlaysis
 --  and another one for tagging analyses into groups for easier tweaking
 
-ALTER TABLE analysis_base ADD COLUMN     comment                 TEXT  NOT NULL DEFAULT '';
-ALTER TABLE analysis_base ADD COLUMN     tags                    TEXT  NOT NULL DEFAULT '';
+ALTER TABLE analysis_base ADD COLUMN     comment                 TEXT  NOT NULL;
+ALTER TABLE analysis_base ADD COLUMN     tags                    TEXT  NOT NULL;
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 
