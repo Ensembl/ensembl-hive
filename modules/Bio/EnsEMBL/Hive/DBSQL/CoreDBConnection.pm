@@ -760,7 +760,7 @@ sub prepare {
      throw("Attempting to prepare an empty SQL query.");
    }
 
-   #warn "SQL(".$self->dbname."): " . join(' ', @args) . "\n";
+   #warn "SQL(".$self->dbname."): " . join(' ', $sql, @_) . "\n";
    if ( ($self->reconnect_when_lost()) and (!$self->db_handle()->ping()) ) { 
        $self->reconnect();
    }
