@@ -188,7 +188,9 @@ sub protected_prepare_execute {     # try to resolve certain mysql "Deadlocks" b
         } or do {
             $query_msg = "QUERY: $sql_cmd, PARAMS: (".join(', ',@$sql_params).")";
 
-            if( $@ =~ /Deadlock found when trying to get lock; try restarting transaction/ ) {
+            if( ($@ =~ /Deadlock found when trying to get lock; try restarting transaction/)                        # MySQL error
+             or ($@ =~ /Lock wait timeout exceeded; try restarting transaction/)                                    # MySQL error
+            ) {
 
                 my $this_sleep_sec = int( rand( $sleep_max_sec )*100 ) / 100.0;
 
