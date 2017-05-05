@@ -521,7 +521,7 @@ sub add_objects_from_config {
                 'language'              => $language,
                 'parameters'            => $parameters_hash,
                 'comment'               => $comment,
-                'tags'                  => $tags,
+                'tags'                  => ( (ref($tags) eq 'ARRAY') ? join(',', @$tags) : $tags ),
                 'resource_class'        => $resource_class,
                 'failed_job_tolerance'  => $failed_job_tolerance,
                 'max_retry_count'       => $max_retry_count,
