@@ -1225,7 +1225,14 @@ sub escape_html {
     my $str = shift;
     return '' unless defined $str;
     my %_escape_table = ( '&' => '&amp;', '>' => '&gt;', '<' => '&lt;', q{"} => '&quot;', q{'} => '&#39;', q{`} => '&#96;', '{' => '&#123;', '}' => '&#125;' );
-    $str =~ s/([><"'`{}])/$_escape_table{$1}/ge;
+    $str =~ s/([&><"'`{}])/$_escape_table{$1}/ge;
+    
+    # Revert escape for some HTML characters (e.g. <br> and <a> tags)
+    my %_revert_escape_table = ( '&lt;br \/&gt;' => '<br />', '&lt;br\/&gt;' => '<br />', '&lt;a href=&quot;' => '<a href="', '&quot;&gt;' => '">', '&lt;\/a&gt;' => '</a>');
+    foreach my $char (keys(%_revert_escape_table)) {
+      $str =~ s/$char/$_revert_escape_table{$char}/g;
+    }
+    
     return $str;
 }
 
