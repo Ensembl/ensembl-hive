@@ -1,3 +1,5 @@
+.. _long-multiplication-walkthrough:
+
 ========================================
 Long Multiplication pipeline walkthrough
 ========================================
@@ -53,9 +55,9 @@ Long Multiplication pipeline walkthrough
 
             beekeeper.pl -url $PIPELINE_URL -analyses_pattern $ANALYSIS_NAME -sync                                           # Force the system to recalculate job counts and determine states of analyses
 
-            visualize_jobs.pl -url $PIPELINE_URL -out long_mult_jobs_${STEP_NUMBER}.svg                                      # To make a J-diagram snapshot (it is convenient to have synchronized numbering)
+            visualize_jobs.pl -url $PIPELINE_URL -out long_mult_jobs_${STEP_NUMBER}.png                                      # To make a J-diagram snapshot (it is convenient to have synchronized numbering)
 
-            generate_graph.pl -url $PIPELINE_URL -out long_mult_analyses_${STEP_NUMBER}.svg                                  # To make an A-diagram snapshot (it is convenient to have synchronized numbering)
+            generate_graph.pl -url $PIPELINE_URL -out long_mult_analyses_${STEP_NUMBER}.png                                  # To make an A-diagram snapshot (it is convenient to have synchronized numbering)
 
 --------------
 
@@ -309,43 +311,23 @@ Long Multiplication pipeline walkthrough
     |    way around).          |                          |                          |
     +--------------------------+--------------------------+--------------------------+
 
-.. |image0| image:: walkthrough_diagrams/long_mult_jobs_01.svg
-   :target: long_mult_jobs_01.svg
-.. |image1| image:: walkthrough_diagrams/long_mult_analyses_01.svg
-   :target: long_mult_analyses_01.svg
-.. |image2| image:: walkthrough_diagrams/long_mult_jobs_02.svg
-   :target: long_mult_jobs_02.svg
-.. |image3| image:: walkthrough_diagrams/long_mult_analyses_02.svg
-   :target: long_mult_analyses_02.svg
-.. |image4| image:: walkthrough_diagrams/long_mult_jobs_03.svg
-   :target: long_mult_jobs_03.svg
-.. |image5| image:: walkthrough_diagrams/long_mult_analyses_03.svg
-   :target: long_mult_analyses_03.svg
-.. |image6| image:: walkthrough_diagrams/long_mult_jobs_04.svg
-   :target: long_mult_jobs_04.svg
-.. |image7| image:: walkthrough_diagrams/long_mult_analyses_04.svg
-   :target: long_mult_analyses_04.svg
-.. |image8| image:: walkthrough_diagrams/long_mult_jobs_05.svg
-   :target: long_mult_jobs_05.svg
-.. |image9| image:: walkthrough_diagrams/long_mult_analyses_05.svg
-   :target: long_mult_analyses_05.svg
-.. |image10| image:: walkthrough_diagrams/long_mult_jobs_06.svg
-   :target: long_mult_jobs_06.svg
-.. |image11| image:: walkthrough_diagrams/long_mult_analyses_06.svg
-   :target: long_mult_analyses_06.svg
-.. |image12| image:: walkthrough_diagrams/long_mult_jobs_07.svg
-   :target: long_mult_jobs_07.svg
-.. |image13| image:: walkthrough_diagrams/long_mult_analyses_07.svg
-   :target: long_mult_analyses_07.svg
-.. |image14| image:: walkthrough_diagrams/long_mult_jobs_08.svg
-   :target: long_mult_jobs_08.svg
-.. |image15| image:: walkthrough_diagrams/long_mult_analyses_08.svg
-   :target: long_mult_analyses_08.svg
-.. |image16| image:: walkthrough_diagrams/long_mult_jobs_09.svg
-   :target: long_mult_jobs_09.svg
-.. |image17| image:: walkthrough_diagrams/long_mult_analyses_09.svg
-   :target: long_mult_analyses_09.svg
-.. |image18| image:: walkthrough_diagrams/long_mult_jobs_10.svg
-   :target: long_mult_jobs_10.svg
-.. |image19| image:: walkthrough_diagrams/long_mult_analyses_10.svg
-   :target: long_mult_analyses_10.svg
+.. |image0| image:: walkthrough_diagrams/long_mult_jobs_01.png
+.. |image1| image:: walkthrough_diagrams/long_mult_analyses_01.png
+.. |image2| image:: walkthrough_diagrams/long_mult_jobs_02.png
+.. |image3| image:: walkthrough_diagrams/long_mult_analyses_02.png
+.. |image4| image:: walkthrough_diagrams/long_mult_jobs_03.png
+.. |image5| image:: walkthrough_diagrams/long_mult_analyses_03.png
+.. |image6| image:: walkthrough_diagrams/long_mult_jobs_04.png
+.. |image7| image:: walkthrough_diagrams/long_mult_analyses_04.png
+.. |image8| image:: walkthrough_diagrams/long_mult_jobs_05.png
+.. |image9| image:: walkthrough_diagrams/long_mult_analyses_05.png
+.. |image10| image:: walkthrough_diagrams/long_mult_jobs_06.png
+.. |image11| image:: walkthrough_diagrams/long_mult_analyses_06.png
+.. |image12| image:: walkthrough_diagrams/long_mult_jobs_07.png
+.. |image13| image:: walkthrough_diagrams/long_mult_analyses_07.png
+.. |image14| image:: walkthrough_diagrams/long_mult_jobs_08.png
+.. |image15| image:: walkthrough_diagrams/long_mult_analyses_08.png
+.. |image16| image:: walkthrough_diagrams/long_mult_jobs_09.png
+.. |image17| image:: walkthrough_diagrams/long_mult_analyses_09.png
+.. |image18| image:: walkthrough_diagrams/long_mult_jobs_10.png
+.. |image19| image:: walkthrough_diagrams/long_mult_analyses_10.png
