@@ -1,3 +1,5 @@
+.. _ehive-installation-setup:
+
 eHive installation and setup
 ============================
 
