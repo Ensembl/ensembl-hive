@@ -35,6 +35,9 @@ use strict;
 use warnings;
 use Sys::Hostname;
 
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+use Bio::EnsEMBL::Hive::Utils::RedirectStack;
+
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
@@ -117,25 +120,48 @@ sub kill_worker {
 sub submit_workers {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
-    my ($submit_stdout_file, $submit_stderr_file);
-
-    if($submit_log_subdir) {
-        $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.out";
-        $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_\$\$.err";
-    } else {
-        $submit_stdout_file = '/dev/null';
-        $submit_stderr_file = '/dev/null';
-    }
+    my @worker_cmd_components = split_for_bash($worker_cmd);  # FIXME: change the interface so that $worker_cmd itself is passed in as ARRAYref
 
     my $job_name = $self->job_array_common_name($rc_name, $iteration);
     $ENV{EHIVE_SUBMISSION_NAME} = $job_name;
 
-    my $cmd = "$worker_cmd > $submit_stdout_file 2> $submit_stderr_file &";
+    my @children_pids = ();
 
-    print "Executing [ ".$self->signature." ] x$required_worker_count \t\t$cmd\n";
-    foreach (1..$required_worker_count) {
-        system( $cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax;
+    warn "Spawning [ ".$self->signature." ] x$required_worker_count \t\t$worker_cmd\n";
+
+    foreach my $idx (1..$required_worker_count) {
+        my $child_pid = fork;
+        if(!defined( $child_pid )) {    # in the parent, fork() failed:
+            die "Parent($$): fork failed";
+        } elsif($child_pid > 0) {      # in the parent, fork() succeeded:
+            push @children_pids, $child_pid;
+        } else {    # in the child:
+            my ($rs_stdout, $rs_stderr);
+
+            if( $submit_log_subdir ) {
+                my $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.out";
+                my $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.err";
+#                warn "Child($$) #$idx, about to redirect outputs to $submit_stdout_file and $submit_stderr_file\n";
+
+                $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
+                $rs_stderr = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
+                $rs_stdout->push( $submit_stdout_file );
+                $rs_stderr->push( $submit_stderr_file );
+            }
+#            warn "Child($$) #$idx, about to exec.\n";
+
+            unless( exec(@worker_cmd_components) ) {
+
+                if( $submit_log_subdir ) {
+                    $rs_stdout->pop();
+                    $rs_stderr->pop();
+                }
+                die "Child($$) #$idx failed to exec, the error was '$!'.\n";
+            }
+        }
     }
+
+    return \@children_pids;
 }
 
 1;

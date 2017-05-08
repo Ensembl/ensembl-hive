@@ -578,8 +578,12 @@ sub run_autonomously {
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '');
 
 
-                    $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
-                                                    $rc_name, $submission_cmd_args || '', $submit_log_subdir);
+                    if( my $meadow_process_ids = $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration,
+                                                    $rc_name, $submission_cmd_args || '', $submit_log_subdir) ) {
+                        # Since the newer version of Meadow interface can parse and return $meadow_process_ids, the Workers can be pre-registered in the database
+
+                        warn "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
+                    }
                 }
             }
         } else {

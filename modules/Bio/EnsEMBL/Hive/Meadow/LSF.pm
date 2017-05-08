@@ -303,7 +303,8 @@ sub submit_workers {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     my $job_array_common_name               = $self->job_array_common_name($rc_name, $iteration);
-    my $job_array_name_with_indices         = $job_array_common_name . (($required_worker_count > 1) ? "[1-${required_worker_count}]" : '');
+    my $array_required                      = $required_worker_count > 1;
+    my $job_array_name_with_indices         = $job_array_common_name . ($array_required ? "[1-${required_worker_count}]" : '');
     my $meadow_specific_submission_cmd_args = $self->config_get('SubmissionOptions');
 
     my ($submit_stdout_file, $submit_stderr_file);
@@ -327,9 +328,25 @@ sub submit_workers {
         $worker_cmd
     );
 
-    print "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
+    warn "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
 
-    system( @cmd ) && die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    my $lsf_jobid;
+
+    open(BSUB_OUTPUT, "-|", @cmd) || die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    while(my $line = <BSUB_OUTPUT>) {
+        if($line=~/^Job \<(\d+)\> is submitted to queue/) {
+            $lsf_jobid = $1;
+        } else {
+            warn $line;     # assuming it is a temporary blockage that might resolve itself with time
+        }
+    }
+    close BSUB_OUTPUT;
+
+    if($lsf_jobid) {
+        return ($array_required ? [ map { $lsf_jobid.'['.$_.']' } (1..$required_worker_count) ] : [ $lsf_jobid ]);
+    } else {
+        die "Submission unsuccessful\n";
+    }
 }
 
 1;
