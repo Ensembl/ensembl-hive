@@ -332,15 +332,15 @@ sub submit_workers {
 
     my $lsf_jobid;
 
-    open(BSUB_OUTPUT, "-|", @cmd) || die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
-    while(my $line = <BSUB_OUTPUT>) {
+    open(my $bsub_output_fh, "-|", @cmd) || die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
+    while(my $line = <$bsub_output_fh>) {
         if($line=~/^Job \<(\d+)\> is submitted to queue/) {
             $lsf_jobid = $1;
         } else {
             warn $line;     # assuming it is a temporary blockage that might resolve itself with time
         }
     }
-    close BSUB_OUTPUT;
+    close $bsub_output_fh;
 
     if($lsf_jobid) {
         return ($array_required ? [ map { $lsf_jobid.'['.$_.']' } (1..$required_worker_count) ] : [ $lsf_jobid ]);
