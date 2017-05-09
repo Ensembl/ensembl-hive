@@ -5,10 +5,11 @@ expected="$EHIVE_EXPECTED_BSUB"
 
 if [ "$received" = "$expected" ];
 then
-  exit 0
+    echo "Job <12345> is submitted to queue <abcde>"
+    exit 0
 else
-  echo "diff: received $received"
-  echo "diff: was expecting $expected"
-  exit 1
+    echo "diff: received $received"
+    echo "diff: was expecting $expected"
+    exit 1
 fi
 
