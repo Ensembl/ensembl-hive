@@ -431,11 +431,24 @@ sub update {    # update (some or all) non_primary columns from the primary
         throw("There are no dependent columns to update, as everything seems to belong to the primary key");
     }
 
-    my $sql = "UPDATE $table_name SET ".join(', ', map { "$_=?" } @$columns_to_update)." WHERE $primary_key_constraint";
+    my @placeholders = ();
+    my @values = ();
+    foreach my $idx (0..scalar(@$columns_to_update)-1) {
+        my ($column_name, $value) = ($columns_to_update->[$idx], $values_to_update->[$idx]);
+
+        if($column_name =~ /^when_/ and defined($value) and $value eq 'CURRENT_TIMESTAMP') {
+            push @placeholders, $column_name.'=CURRENT_TIMESTAMP';
+        } else {
+            push @placeholders, $column_name.'=?';
+            push @values, $value;
+        }
+    }
+
+    my $sql = "UPDATE $table_name SET ".join(', ', @placeholders)." WHERE $primary_key_constraint";
     # warn "SQL: $sql\n";
     my $sth = $self->prepare($sql);
-    # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @$values_to_update)."\n";
-    $sth->execute( @$values_to_update);
+    # warn "VALUES_TO_UPDATE: ".join(', ', map { "'$_'" } @values)."\n";
+    $sth->execute( @values);
 
     $sth->finish();
 }

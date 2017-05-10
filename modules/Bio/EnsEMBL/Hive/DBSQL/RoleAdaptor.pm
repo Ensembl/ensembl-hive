@@ -57,10 +57,8 @@ sub object_class {
 sub finalize_role {
     my ($self, $role, $release_undone_jobs) = @_;
 
-    my $role_id         = $role->dbID;
-    my $when_finished   = $role->when_finished ? "'".$role->when_finished."'" : 'CURRENT_TIMESTAMP';
-
-    $self->dbc->do( "UPDATE role SET when_finished=$when_finished WHERE role_id=$role_id" );
+    $role->when_finished( 'CURRENT_TIMESTAMP' );
+    $self->update_when_finished( $role );
 
     $self->db->get_AnalysisStatsAdaptor->increment_a_counter( 'num_running_workers', -1, $role->analysis_id );
 
