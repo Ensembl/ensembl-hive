@@ -36,7 +36,8 @@ ALTER TABLE worker      ADD COLUMN      when_submitted  TIMESTAMP  NOT NULL DEFA
 
 -- part_2: changes to allow extra meadow-specific exit statuses to be representable in the worker table:
 
-ALTER TABLE worker      ALTER COLUMN   cause_of_death  SET DATA TYPE   VARCHAR(255);
+ALTER TABLE worker      ALTER COLUMN   cause_of_death   SET DATA TYPE   VARCHAR(255);
+ALTER TABLE worker      ALTER COLUMN   cause_of_death   SET DEFAULT NULL;
 
 -- ----------------------------------</actual_patch> -------------------------------------------------
 
