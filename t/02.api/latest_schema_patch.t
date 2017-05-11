@@ -39,7 +39,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 
 my $current_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version();
 my $prev_version = $current_version - 1;
-my $ref_commit = "sql_schema_${prev_version}_start";
+my $ref_commit = "sql_schema_${current_version}_start^1";
 
 # A temporary file to store the old schema
 my ($fh, $filename) = tempfile(UNLINK => 1);
