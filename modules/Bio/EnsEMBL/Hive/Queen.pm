@@ -112,9 +112,9 @@ sub create_new_worker {
     my $self    = shift @_;
     my %flags   = @_;
 
-    my ($resource_class_id, $resource_class_name, $beekeeper_id,
+    my ($preregistered, $resource_class_id, $resource_class_name, $beekeeper_id,
         $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
-     = @flags{qw(-resource_class_id -resource_class_name -beekeeper_id
+     = @flags{qw(-preregistered -resource_class_id -resource_class_name -beekeeper_id
             -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
 
     my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
@@ -123,7 +123,7 @@ sub create_new_worker {
     my $meadow_name = $meadow->cached_name;
 
     foreach my $prev_worker_incarnation (@{ $self->find_previous_worker_incarnations($meadow_type, $meadow_name, $process_id) }) {
-            # so far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
+            # So far 'RELOCATED events' has been detected on LSF 9.0 in response to sending signal #99 or #100
             # Since I don't know how to avoid them, I am trying to register them when they happen.
             # The following snippet buries the previous incarnation of the Worker before starting a new one.
             #
@@ -134,31 +134,55 @@ sub create_new_worker {
         $self->register_worker_death( $prev_worker_incarnation );
     }
 
-    my $resource_class;
+    my $worker;
 
-    if( defined($resource_class_name) ) {
-        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
-            or die "resource_class with name='$resource_class_name' could not be fetched from the database";
-    } elsif( defined($resource_class_id) ) {
-        $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_dbID($resource_class_id)
-            or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
-    }
+    if($preregistered) {
 
-    my $worker = Bio::EnsEMBL::Hive::Worker->new(
-        'meadow_type'       => $meadow_type,
-        'meadow_name'       => $meadow_name,
-        'meadow_host'       => $meadow_host,
-        'meadow_user'       => $meadow_user,
-        'process_id'        => $process_id,
-        'resource_class'    => $resource_class,
-        'beekeeper_id'      => $beekeeper_id,
-    );
+        my $sec = 1;
+        until( $worker = $self->fetch_preregistered_worker($meadow_type, $meadow_name, $process_id) ) {
+            $self->db->get_LogMessageAdaptor->store_hive_message("Preregistered Worker $meadow_type/$meadow_name:$process_id waiting $sec more seconds to fetch itself...", 'WORKER_CAUTION' );
+            sleep($sec);
+            $sec *= 2;
+        }
 
-    if (ref($self)) {
-        $self->store( $worker );
-        my $worker_id = $worker->dbID;
-        $worker = $self->fetch_by_dbID( $worker_id )    # refresh the object to get the fields initialized at SQL level (timestamps in this case)
-            or die "Could not fetch worker with dbID=$worker_id";
+            # only update the fields that were not available at the time of submission:
+        $worker->meadow_host( $meadow_host );
+        $worker->meadow_user( $meadow_user );
+        $worker->when_born(   'CURRENT_TIMESTAMP' );
+        $worker->status(      'READY' );
+
+        $self->update( $worker );
+
+    } else {
+        my $resource_class;
+
+        if( defined($resource_class_name) ) {
+            $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
+                or die "resource_class with name='$resource_class_name' could not be fetched from the database";
+        } elsif( defined($resource_class_id) ) {
+            $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_dbID($resource_class_id)
+                or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
+        }
+
+        $worker = Bio::EnsEMBL::Hive::Worker->new(
+            'meadow_type'       => $meadow_type,
+            'meadow_name'       => $meadow_name,
+            'process_id'        => $process_id,
+            'resource_class'    => $resource_class,
+            'beekeeper_id'      => $beekeeper_id,
+
+            'meadow_host'       => $meadow_host,
+            'meadow_user'       => $meadow_user,
+        );
+
+        if (ref($self)) {
+            $self->store( $worker );
+
+            $worker->when_born(   'CURRENT_TIMESTAMP' );
+            $self->update_when_born( $worker );
+
+            $self->refresh( $worker );
+        }
     }
 
     $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
@@ -475,7 +499,19 @@ sub find_previous_worker_incarnations {
     # This happens in standalone mode, when there is no database
     return [] unless ref($self);
 
-    return $self->fetch_all( "status!='DEAD' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" );
+    return $self->fetch_all( "status!='DEAD' AND status!='SUBMITTED' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" );
+}
+
+
+sub fetch_preregistered_worker {
+    my ($self, $meadow_type, $meadow_name, $process_id) = @_;
+
+    # This happens in standalone mode, when there is no database
+    return [] unless ref($self);
+
+    my ($worker) = @{ $self->fetch_all( "status='SUBMITTED' AND meadow_type='$meadow_type' AND meadow_name='$meadow_name' AND process_id='$process_id'" ) };
+
+    return $worker;
 }
 
 

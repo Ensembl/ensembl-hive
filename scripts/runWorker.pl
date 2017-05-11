@@ -24,7 +24,7 @@ main();
 
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
-    my ($resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);  # Task specification parameters
+    my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);  # Task specification parameters
     my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
     my ($help, $report_versions, $debug);
 
@@ -38,6 +38,7 @@ sub main {
                'nosqlvc=i'                    => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
 
     # Task specification parameters:
+               'preregistered!'             => \$preregistered,
                'rc_id=i'                    => \$resource_class_id,
                'rc_name=s'                  => \$resource_class_name,
                'analyses_pattern=s'         => \$analyses_pattern,
@@ -116,6 +117,7 @@ sub main {
     }
 
     my %specialization_options = (
+        preregistered       => $preregistered,
         resource_class_id   => $resource_class_id,
         resource_class_name => $resource_class_name,
         can_respecialize    => $can_respecialize,

@@ -506,6 +506,7 @@ CREATE INDEX ON analysis_data (md5sum);
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
 @column beekeeper_id        beekeeper that created this worker
+@column when_submitted      when the Worker was submitted by a Beekeeper
 @column when_born           when the Worker process was started
 @column when_checked_in     when the Worker last checked into the database
 @column when_seen           when the Worker was last seen by the Meadow
@@ -519,18 +520,19 @@ CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
     meadow_type             VARCHAR(255) NOT NULL,
     meadow_name             VARCHAR(255) NOT NULL,
-    meadow_host             VARCHAR(255) NOT NULL,
+    meadow_host             VARCHAR(255)         DEFAULT NULL,
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
     work_done               INTEGER      NOT NULL DEFAULT 0,
-    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
+    status                  VARCHAR(255) NOT NULL DEFAULT 'READY',  -- expected values: 'SUBMITTED','SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD'
     beekeeper_id            INTEGER      DEFAULT NULL,
-    when_born               TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_submitted          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    when_born               TIMESTAMP            DEFAULT NULL,
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
-    cause_of_death          worker_cod           DEFAULT NULL,
+    cause_of_death          VARCHAR(255)         DEFAULT NULL,      -- expected values: 'NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN'
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX ON worker (meadow_type, meadow_name, process_id);

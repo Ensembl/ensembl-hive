@@ -299,7 +299,7 @@ sub get_report_entries_for_time_interval {
 }
 
 
-sub submit_workers {
+sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     my $job_array_common_name               = $self->job_array_common_name($rc_name, $iteration);

@@ -52,6 +52,8 @@ sub runWorker {
 
     # Create the worker
     my $worker = $queen->create_new_worker(
+             -preregistered         => $specialization_options->{'preregistered'},
+
           # Resource class:
              -resource_class_id     => $specialization_options->{'resource_class_id'},
              -resource_class_name   => $specialization_options->{'resource_class_name'},

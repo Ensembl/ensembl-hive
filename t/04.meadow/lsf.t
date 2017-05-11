@@ -144,17 +144,17 @@ my $worker = Bio::EnsEMBL::Hive::Worker->new();
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
+    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
 }, 'Can submit 1 worker');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56[1-4] /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
+    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
 }, 'Can submit 4 workers');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir//log_/resource_class/_%J_%I.out -e /submit_log_dir//log_/resource_class/_%J_%I.err -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
+    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
 }, 'Can submit 1 worker with a submit_log_dir');
 
 my $expected_bacct = {

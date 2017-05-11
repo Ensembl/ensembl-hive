@@ -166,11 +166,20 @@ sub status {
     return $self->{'_status'};
 }
 
+
 sub beekeeper_id {
     my $self = shift;
     $self->{'_beekeeper_id'} = shift if(@_);
     return $self->{'_beekeeper_id'} || undef;
 }
+
+
+sub when_submitted {
+    my $self = shift;
+    $self->{'_when_submitted'} = shift if(@_);
+    return $self->{'_when_submitted'};
+}
+
 
 sub when_born {
     my $self = shift;
