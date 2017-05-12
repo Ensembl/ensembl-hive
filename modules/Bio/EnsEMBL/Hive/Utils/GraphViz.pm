@@ -221,7 +221,11 @@ sub protect_string_for_display {    # NB: $self is only needed for calling, and 
     }
 
     if(defined( $length_limit )) {
-        $string=~s{^(.{$length_limit}).+}{$1 \.\.\.};   # shorten down to $length_limit characters
+        my $replacement_string = ' ...';
+        if (length($string) > $length_limit) {
+            # shorten down to $length_limit characters
+            $string = substr($string, 0, $length_limit-length($replacement_string)).$replacement_string;
+        }
     }
 
     $string=~s{&}{&amp;}g;      # Since we are in HTML context now, ampersands should be escaped (first thing after trimming)
