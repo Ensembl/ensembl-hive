@@ -7,6 +7,7 @@
         "SubmitWorkersMax"  : 50
     },
     "Meadow" : {
+        "CleanupTempDirectoryKilledWorkers" : 0,
         "LOCAL" : {
             "TotalRunningWorkersMax"   : 2,
             "my-quadcore-desktop" : {

@@ -443,7 +443,6 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
                 if ($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
-                    warn "GarbageCollector:\tCleaning-up /tmp\n";
                     $valley->cleanup_left_temp_directory( $worker );
                 }
             }
