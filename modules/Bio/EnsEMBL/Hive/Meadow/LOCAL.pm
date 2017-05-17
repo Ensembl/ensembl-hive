@@ -138,16 +138,14 @@ sub submit_workers_return_meadow_pids {
         } else {    # in the child:
             my ($rs_stdout, $rs_stderr);
 
-            if( $submit_log_subdir ) {
-                my $submit_stdout_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.out";
-                my $submit_stderr_file = $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.err";
-#                warn "Child($$) #$idx, about to redirect outputs to $submit_stdout_file and $submit_stderr_file\n";
+            my $submit_stdout_file = $submit_log_subdir ? $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.out" : '/dev/null';
+            my $submit_stderr_file = $submit_log_subdir ? $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.err" : '/dev/null';
+#            warn "Child($$) #$idx, about to redirect outputs to $submit_stdout_file and $submit_stderr_file\n";
 
-                $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
-                $rs_stderr = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
-                $rs_stdout->push( $submit_stdout_file );
-                $rs_stderr->push( $submit_stderr_file );
-            }
+            $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
+            $rs_stderr = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
+            $rs_stdout->push( $submit_stdout_file );
+            $rs_stderr->push( $submit_stderr_file );
 #            warn "Child($$) #$idx, about to exec.\n";
 
             unless( exec(@worker_cmd_components) ) {
