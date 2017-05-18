@@ -127,7 +127,7 @@ sub write_output {
   # on flow 4. Unlike flow 3, we put the output in a loop, creating several dataflow events,
   # one for each kmer
   foreach my $kmer(keys(%{$kmer_counts})) {
-    $self->dataflow_output_id( {'kmer_with_source' => $self->param('sequence_file') . ":" . $kmer,
+    $self->dataflow_output_id( {
 				'count' => $kmer_counts->{$kmer},
                                 'sequence_file' => $self->param('sequence_file'),
                                 'kmer' => $kmer,
