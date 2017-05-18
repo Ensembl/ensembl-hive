@@ -28,6 +28,11 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_tes
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+SKIP: {
+    eval { require Bio::SeqIO; };
+
+    skip "Bioperl not installed", 2 if $@;
+
 # Fasta file for calculating %GC
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
@@ -99,6 +104,8 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
         $hive_dba->dbc->disconnect_if_idle();
         run_sql_on_db($pipeline_url, 'DROP DATABASE');
+}
+
 }
 
 done_testing();
