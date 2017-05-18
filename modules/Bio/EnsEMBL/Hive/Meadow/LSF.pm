@@ -334,7 +334,7 @@ sub submit_workers_return_meadow_pids {
 
     open(my $bsub_output_fh, "-|", @cmd) || die "Could not submit job(s): $!, $?";  # let's abort the beekeeper and let the user check the syntax
     while(my $line = <$bsub_output_fh>) {
-        if($line=~/^Job \<(\d+)\> is submitted to queue/) {
+        if($line=~/^Job \<(\d+)\> is submitted to/) {
             $lsf_jobid = $1;
         } else {
             warn $line;     # assuming it is a temporary blockage that might resolve itself with time
