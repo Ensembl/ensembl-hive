@@ -60,7 +60,7 @@ eHive has a generic interface named _Meadow_ that describes how to interact with
 Both are extensively used by the Ensembl project and are regularly updated. The LSF meadow supports workloads reaching thousands of parallel jobs.
 
 External users have contributed other meadows:
-* **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](Ensembl/ensembl-hive-sge).
+* **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](https://github.com/Ensembl/ensembl-hive-sge).
 
 The table below lists the capabilities of each meadow, and whether they are available and implemented:
 
