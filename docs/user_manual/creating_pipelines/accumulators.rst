@@ -221,4 +221,48 @@ Traversing the resulting hash can be done this way in Perl:
         }
     }
 
+K-mer pipeline
+''''''''''''''
+
+There are further examples in the Kmer example pipelines. These three
+pipelines are all doing the same thing (computing the distribution of k-mer
+in a given set of input sequences), but with various accumulator patterns.
+
+The first analyses of the pipeline will break up the input sequences in
+chunks that can be efficiently processed in parallel. The processing and
+the dataflowing of each chunk are done *exactly* the same way in all flavours, but
+because of different accumulator syntaxes, the funnel (the "compile_count"
+analysis, which does the final summation) will have to use the resulting data structure in different ways.
+
+The "count_kmers" analysis dataflows on two branches:
+
+- On branch #3 a hash that has the name of the file (*sequence_file* key) and the counts per k-mer
+  (as a hash under the *counts* key)
+- On branch #4 a series of hashes that contain the name of the file
+  (*sequence_file* key), a k-mer (*kmer* key) and its count in that file
+  (*count* key)
+
+:KmerPipelineAoH_conf -- Array of Hashes:
+
+    In this mode, the accumulator is connected to branch #3 and aggregates
+    all the *counts* field in a pile. The information about the initial
+    file name is not tracked in the accumulator.
+
+    The accumulator syntax is ``?accu_name=all_counts&accu_address=[]&accu_input_variable=counts``
+
+:KmerPipelineHoH_conf -- Hash of Hashes:
+
+    In this mode, the accumulator is connected to branch #3 and
+    aggregates all the *counts* field in a hash indexed by the name of the
+    chunk *sequence_file*.
+
+    The accumulator syntax is ``?accu_name=all_counts&accu_address={sequence_file}&accu_input_variable=counts``
+
+:KmerPipelineHoA_conf -- Hash of Arrays:
+
+    In this mode, the accumulator is connected to branch #4 and aggregates
+    all the counts in one array per k-mer.
+    The signature `{kmer}[]` indicates that the final structure is a hash
+    indexed by each *kmer*, and whose values are piles of the accumulator's input variable, i.e. *count*.
+    The accumulator syntax is ``?accu_name=all_counts&accu_address={kmer}[]&accu_input_variable=count``
 
