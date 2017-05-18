@@ -256,14 +256,14 @@ sub pipeline_analyses {
                              # file in which the kmers were counted: it is dataflown out in a parameter called
                              # 'sequence_file', and we indicate it is to be the hash key in the 'accu_address={sequence_file}'
                              # portion of the url below. The value for each key is dataflown out in a parameter
-                             # called 'kmer_counts'; the 'accu_input_variable=kmer_counts' portion of the url is where it's
+                             # called 'counts'; the 'accu_input_variable=counts' portion of the url is where it's
                              # set as the value.
 			     # The name of the Accumulator is 'all_counts', as designated by 'accu_name=all_counts' in the url.
 			     # It is not required to match the name of a param, but it is allowed.
 
-                             3 => [ '?accu_name=all_counts&accu_address={sequence_file}&accu_input_variable=kmer_counts' ],
+                             3 => [ '?accu_name=all_counts&accu_address={sequence_file}&accu_input_variable=counts' ],
 
-                             # It is important to notice that values can be structures too: here "kmer_counts" is in fact
+                             # It is important to notice that values can be structures too: here "counts" is in fact
                              # a hash that associate each kmer seen in the file to its count.  The funnel Runnable
                              # CompileCountsHoH will use the "all_counts" variable to be a two-dimensional hash indexed
                              # by the chunk filename first, and then the kmer.  The Runnable would thus work exactly
