@@ -104,4 +104,31 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 );
 
 
+# This is expected to complete succesfully since the return status of a
+# sequence is the last command's
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
+        'cmd' => 'ls /_inexistent_ ; exit 0',
+});
+
+# With "use_bash_errexit" enabled, we can catch the error with a dataflow
+$input_hash = {
+    'cmd'                       => 'ls /_inexistent_; exit 0',
+    'use_bash_errexit'          => 1,
+    'return_codes_2_branches'   => { 2 => 4 },
+};
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    $input_hash, [
+        [
+            'DATAFLOW',
+            undef,
+            4,
+        ], [
+            'WARNING',
+            "The command exited with code 2, which is mapped to a dataflow on branch #4.\n",
+            'INFO',
+        ],
+    ],
+);
+
+
 done_testing();

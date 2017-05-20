@@ -447,8 +447,18 @@ sub run_system_command {
 
     $options //= {};
     my ($join_needed, $flat_cmd) = join_command_args($cmd);
-    # Let's use the array if possible, it saves us from running a shell
-    my @cmd_to_run = $options->{'use_bash_pipefail'} ? ('bash' => ('-o' => 'pipefail', '-c' => $flat_cmd)) : ($join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd));
+    my @cmd_to_run;
+
+    my $need_bash = $options->{'use_bash_pipefail'} || $options->{'use_bash_errexit'};
+    if ($need_bash) {
+        @cmd_to_run = ('bash',
+                       $options->{'use_bash_pipefail'} ? ('-o' => 'pipefail') : (),
+                       $options->{'use_bash_errexit'} ? ('-o' => 'errexit') : (),
+                       '-c' => $flat_cmd);
+    } else {
+        # Let's use the array if possible, it saves us from running a shell
+        @cmd_to_run = $join_needed ? $flat_cmd : (ref($cmd) ? @$cmd : $cmd)
+    }
 
     $self->say_with_header("Command given: " . stringify($cmd));
     $self->say_with_header("Command to run: " . stringify(\@cmd_to_run));
