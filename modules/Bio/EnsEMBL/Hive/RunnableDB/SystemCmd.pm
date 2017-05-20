@@ -64,6 +64,7 @@ sub param_defaults {
     return {
         return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
         'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
+        'use_bash_errexit'  => 0,           # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
     }
 }
 
@@ -83,7 +84,8 @@ sub param_defaults {
 sub run {
     my $self = shift;
  
-    my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), {'use_bash_pipefail' => $self->param('use_bash_pipefail')});
+    my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit);
+    my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
