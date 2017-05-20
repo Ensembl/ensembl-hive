@@ -23,8 +23,10 @@ use Cwd            ();
 use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
+use JSON;
 use Test::More;
 use Data::Dumper;
+use File::Temp qw/tempfile/;
 
 use Bio::EnsEMBL::Hive::Utils qw(stringify);
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
@@ -133,6 +135,42 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             'WARNING',
             qr/The command exited with code \d, which is mapped to a dataflow on branch #4.\n/,
             'INFO',
+        ],
+    ],
+);
+
+
+my $json_formatter = JSON->new()->indent(0);
+my $array_of_hashes = [{'key1' => 1}, {"funny\nkey2" => [2,2]}];
+my ($fh, $filename) = tempfile(UNLINK => 1);
+print $fh $json_formatter->encode($array_of_hashes->[0]), "\n";
+print $fh '3 ', $json_formatter->encode($array_of_hashes->[0]), "\n";
+print $fh '-1 ', $json_formatter->encode($array_of_hashes->[1]), "\n";
+print $fh '1 ', $json_formatter->encode($array_of_hashes), "\n";
+close($fh);
+
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    { 'cmd' => 'sleep 0', 'dataflow_file' => $filename },
+    [
+        [
+            'DATAFLOW',
+            $array_of_hashes->[0],
+            undef,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes->[0],
+            3,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes->[1],
+            -1,
+        ],
+        [
+            'DATAFLOW',
+            $array_of_hashes,
+            1,
         ],
     ],
 );

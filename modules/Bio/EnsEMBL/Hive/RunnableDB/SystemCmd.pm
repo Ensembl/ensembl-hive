@@ -65,6 +65,8 @@ sub param_defaults {
         return_codes_2_branches => {},      # Hash that maps some of the command return codes to branch numbers
         'use_bash_pipefail' => 0,           # Boolean. When true, the command will be run with "bash -o pipefail -c $cmd". Useful to capture errors in a command that contains pipes
         'use_bash_errexit'  => 0,           # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
+        'dataflow_file'     => undef,       # The path to a file that contains 1 line per dataflow event, in the form of a JSON object
+        'dataflow_branch'   => undef,       # The default branch for JSON dataflows
     }
 }
 
@@ -105,8 +107,15 @@ sub write_output {
     my $self = shift;
 
     my $return_value = $self->param('return_value');
-    return unless $return_value;
 
+    ## Success
+    unless ($return_value) {
+        # FIXME branch number
+        $self->dataflow_output_ids_from_json($self->param('dataflow_file'), $self->param('dataflow_branch')) if $self->param('dataflow_file');
+        return;
+    }
+
+    ## Error processing
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 

@@ -101,6 +101,7 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
+use JSON;
 use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
@@ -543,6 +544,39 @@ sub dataflow_output_id {
 
     $self->say_with_header(sprintf("Dataflow on branch #%d of %s", $_[1] || 1, stringify($_[0])));
     return $self->input_job->dataflow_output_id(@_);
+}
+
+
+=head2 dataflow_output_ids_from_json
+
+    Title   :  dataflow_output_ids_from_json
+    Arg[1]  :  File name
+    Arg[2]  :  (optional) Branch number, defaults to 1 (see L<AnalysisJob::dataflow_output_id>)
+    Function:  Wrapper around L<dataflow_output_id> that takes the output_ids from a JSON file.
+               Each line in the JSON file is expected to be a complete JSON structure, which
+               may be prefixed with a branch number
+
+=cut
+
+sub dataflow_output_ids_from_json {
+    my ($self, $filename, $default_branch) = @_;
+
+    my $json_formatter = JSON->new()->indent(0);
+    my @output_job_ids;
+    open(my $fh, '<', $filename) or die "Could not open '$filename' because: $!";
+    while (my $l = $fh->getline()) {
+        chomp $l;
+        my $branch = $default_branch;
+        my $json = $l;
+        if ($l =~ /^(-?\d+)\s+(.*)$/) {
+            $branch = $1;
+            $json = $2;
+        }
+        my $hash = $json_formatter->decode($json);
+        push @output_job_ids, @{ $self->dataflow_output_id($hash, $branch) };
+    }
+    close($fh);
+    return \@output_job_ids;
 }
 
 
