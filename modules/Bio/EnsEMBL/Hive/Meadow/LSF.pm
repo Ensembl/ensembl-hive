@@ -106,7 +106,7 @@ sub count_running_workers {
 #    warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
 
     my $run_count = qx/$cmd/;
-    chomp($run_count);
+    $run_count=~s/\s+//g;       # remove both leading and trailing spaces
 
     return $run_count;
 }
