@@ -49,6 +49,19 @@ sub meadow_class_path {
 }
 
 
+our $_loaded_meadow_drivers;
+
+sub loaded_meadow_drivers {
+
+    unless( $_loaded_meadow_drivers ) {
+        foreach my $meadow_class (@{ $_loaded_meadow_drivers = Bio::EnsEMBL::Hive::Utils::find_submodules( meadow_class_path() ) }) {
+            eval "require $meadow_class";
+        }
+    }
+    return $_loaded_meadow_drivers;
+}
+
+
 sub new {
     my ($class, $config, $default_meadow_type, $pipeline_name) = @_;
 
@@ -59,10 +72,12 @@ sub new {
 
     my $amh = $self->available_meadow_hash( {} );
 
-        # make sure modules are loaded and available ones are checked prior to setting the current one
-    foreach my $meadow_class (@{ $self->get_implemented_meadow_list }) {
-        eval "require $meadow_class";
-        if( $meadow_class->name ) {
+        # make sure modules are loaded and available ones are checked prior to setting the current one:
+    foreach my $meadow_class (@{ $self->loaded_meadow_drivers }) {
+
+        if( $meadow_class->check_version_compatibility
+        and $meadow_class->name) {      # the assumption is if we can get a name, it is available
+
             my $meadow_object            = $meadow_class->new( $config );
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
@@ -93,12 +108,6 @@ sub get_available_meadow_list {     # this beautiful one-liner pushes $local to 
     my $local = $self->meadow_class_path . '::LOCAL';
 
     return [ sort { (ref($a) eq $local) or -(ref($b) eq $local) } values %{ $self->available_meadow_hash } ];
-}
-
-
-sub get_implemented_meadow_list {
-    my $self = shift @_;
-    return find_submodules( $self->meadow_class_path );
 }
 
 

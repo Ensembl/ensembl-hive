@@ -58,24 +58,26 @@ subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
 };
 
 # Check that the meadows are fully implemented
-foreach my $meadow_class ( @{ Bio::EnsEMBL::Hive::Valley->get_implemented_meadow_list() } ) {
-    subtest $meadow_class => sub
-    {
-        lives_ok( sub {
-                eval "require $meadow_class";
-            }, $meadow_class.' can be compiled and imported');
-        my $meadow_object = $meadow_class->new();
-        ok($meadow_object->isa('Bio::EnsEMBL::Hive::Meadow'), $meadow_class.' implements the eHive Meadow interface');
+foreach my $meadow_class ( @{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers() } ) {
+    if($meadow_class->check_version_compatibility) {
+        subtest $meadow_class => sub
+        {
+            lives_ok( sub {
+                    eval "require $meadow_class";
+                }, $meadow_class.' can be compiled and imported');
+            my $meadow_object = $meadow_class->new();
+            ok($meadow_object->isa('Bio::EnsEMBL::Hive::Meadow'), $meadow_class.' implements the eHive Meadow interface');
 
-        # Let's check that the virtual methods have been redefined
-        foreach my $method (@virtual_methods) {
-            eval {
-                $meadow_object->$method();
-            };
-            if ($@) {
-                unlike($@, qr/Please use a derived method/, $method.'() is implemented');
-            } else {
-                ok(1, $method.'() is implemented');
+            # Let's check that the virtual methods have been redefined
+            foreach my $method (@virtual_methods) {
+                eval {
+                    $meadow_object->$method();
+                };
+                if ($@) {
+                    unlike($@, qr/Please use a derived method/, $method.'() is implemented');
+                } else {
+                    ok(1, $method.'() is implemented');
+                }
             }
         }
     }
