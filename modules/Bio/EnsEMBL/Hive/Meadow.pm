@@ -39,6 +39,37 @@ use warnings;
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
 
+# -------------------------------------- <versioning of the Meadow interface> -------------------------------------------------------
+
+our $MEADOW_MAJOR_VERSION = '3';                # Make sure you change this number whenever an incompatible change is introduced
+
+
+sub get_meadow_major_version {
+
+    return $MEADOW_MAJOR_VERSION;               # fetch the declared $MEADOW_MAJOR_VERSION of the interface
+}
+
+
+sub get_meadow_version {
+    my $self = shift @_;
+
+    return $self->VERSION // 'unversioned';     # fetch the declared $VERSION of a specific Meadow implementation
+}
+
+
+sub check_version_compatibility {
+    my $self = shift @_;
+
+    my $mmv = $self->get_meadow_major_version();
+    my $mv  = $self->get_meadow_version();
+#    warn "$self :  MVC='$mmv', MV='$mv'\n";
+
+    return ($mv=~/^$mmv\./) ? 1 : 0;
+}
+
+# -------------------------------------- </versioning of the Meadow interface> ------------------------------------------------------
+
+
 sub new {
     my ($class, $config) = @_;
 
