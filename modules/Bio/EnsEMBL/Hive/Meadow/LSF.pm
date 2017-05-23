@@ -38,6 +38,11 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
+our $VERSION = '1.0';       # Semantic version of the Meadow interface:
+                            #   change the Major version whenever an incompatible change is introduced,
+                            #   change the Minor version whenever the interface is extended, but compatibility is retained.
+
+
 sub name {  # also called to check for availability; assume LSF is available if LSF cluster_name can be established
     my $mcni = 'My cluster name is';
     my $cmd = "lsid 2>/dev/null | grep '$mcni'";
