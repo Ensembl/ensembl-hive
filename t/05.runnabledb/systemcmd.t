@@ -114,7 +114,10 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {
 $input_hash = {
     'cmd'                       => 'ls /_inexistent_; exit 0',
     'use_bash_errexit'          => 1,
-    'return_codes_2_branches'   => { 2 => 4 },
+    'return_codes_2_branches'   => {
+                                    2 => 4,     # on Linux
+                                    1 => 4      # on OSX
+                                   },
 };
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
     $input_hash, [
@@ -124,7 +127,7 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             4,
         ], [
             'WARNING',
-            "The command exited with code 2, which is mapped to a dataflow on branch #4.\n",
+            qr/The command exited with code \d, which is mapped to a dataflow on branch #4.\n/,
             'INFO',
         ],
     ],
