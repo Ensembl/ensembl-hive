@@ -47,7 +47,10 @@ use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc', 'stringify');
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{ $self->SUPER::param_defaults() },
+
         'src_db_conn'   => '',
         'dest_db_conn'  => '',
         'mode'          => 'overwrite',
@@ -56,9 +59,8 @@ sub param_defaults {
         'renamed_table' => undef,                                       # optional argument - lets you rename the table
         'rename_filter' => 'sed "s/\`#table#\`/\`#renamed_table#\`/" | sed "s/\`#table#_ibfk/\`#renamed_table#_ibfk/"', # NB: only change this if your data contains backticked table name AND you know how to fix it
 
-        # Needed by SystemCmd
+        # Overrides default values of SystemCmd
         'use_bash_pipefail'         => 1,
-        'return_codes_2_branches'   => {},
     };
 }
 
