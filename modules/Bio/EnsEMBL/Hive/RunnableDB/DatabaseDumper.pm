@@ -118,7 +118,10 @@ use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
 use base ('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd');
 
 sub param_defaults {
+    my $self = shift;
     return {
+        %{$self->SUPER::param_defaults(@_)},
+
         # Which tables to dump. How the options are combined is explained above
         'table_list'    => undef,   # array-ref
         'exclude_ehive' => 0,       # boolean
