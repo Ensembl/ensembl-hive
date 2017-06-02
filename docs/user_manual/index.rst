@@ -41,6 +41,7 @@ User documentation
    running_pipelines/running
    running_pipelines/monitoring
    running_pipelines/management
+   running_pipelines/tweaking
 
 
 .. toctree::
