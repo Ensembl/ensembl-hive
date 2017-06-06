@@ -75,6 +75,7 @@ package Bio::EnsEMBL::Hive::Worker;
 use strict;
 use warnings;
 use POSIX;
+use File::Path 'make_path';
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Limiter;
@@ -877,7 +878,7 @@ sub check_analysis_for_exclusion {
 }
 
 sub set_log_directory_name {
-    my ($self, $hive_log_dir, $worker_log_dir);
+    my ($self, $hive_log_dir, $worker_log_dir) = @_;
 
     return unless ($hive_log_dir or $worker_log_dir);
 
