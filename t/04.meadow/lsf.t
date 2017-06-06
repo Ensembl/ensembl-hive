@@ -167,7 +167,9 @@ my $expected_bacct = {
         'mem_megs' => 28,
         'cpu_sec' => '2.74',
         'exit_status' => 'done',
-        'swap_megs' => 144
+        'swap_megs' => 144,
+        'when_born' => '2015-11-26 14:25:09',
+        'meadow_host' => 'bc-25-1-10',
     },
     '2581801[48]' => {
         'when_died' => '2015-11-26 14:25:16',
@@ -178,7 +180,9 @@ my $expected_bacct = {
         'cause_of_death' => undef,
         'cpu_sec' => '2.61',
         'exit_status' => 'done',
-        'swap_megs' => 269
+        'swap_megs' => 269,
+        'when_born' => '2015-11-26 14:24:57',
+        'meadow_host' => 'bc-27-2-07',
     },
     '3194397[75]' => {
         'cpu_sec' => '6.97',
@@ -189,7 +193,9 @@ my $expected_bacct = {
         'when_died' => '2015-12-02 13:53:29',
         'cause_of_death' => 'MEMLIMIT',
         'exit_status' => 'exit/TERM_MEMLIMIT',
-        'mem_megs' => 102
+        'mem_megs' => 102,
+        'when_born' => '2015-12-02 13:52:34',
+        'meadow_host' => 'bc-31-2-11',
     },
 };
 

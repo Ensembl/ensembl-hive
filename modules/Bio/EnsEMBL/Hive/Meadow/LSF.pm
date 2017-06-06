@@ -41,7 +41,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '4.0';       # Semantic version of the Meadow interface:
+our $VERSION = '4.2';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
@@ -212,11 +212,16 @@ sub parse_report_source_line {
         if( my ($process_id) = $lines[0]=~/^Job <(\d+(?:\[\d+\])?)>/) {
 
             my ($exit_status, $exception_status) = ('' x 2);
+            my ($when_born, $meadow_host);
             my ($when_died, $cause_of_death);
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
+                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+(?:\[\d+\]\s+)?[Dd]ispatched to\s<([\w\-]+)>/ ) {
+                    $when_born      = _convert_to_datetime($1, $2, $3);
+                    $meadow_host    = $4;
+                }
+                elsif( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+Completed\s<(\w+)>(?:\.|;\s+(\w+))/ ) {
                     $when_died      = _convert_to_datetime($1, $2, $3);
                     $cause_of_death = $5 && ($status_2_cod{$5} || 'SEE_EXIT_STATUS');
                     $exit_status = $4 . ($5 ? "/$5" : '');
@@ -244,6 +249,8 @@ sub parse_report_source_line {
 
             $report_entry{ $process_id } = {
                     # entries for 'worker' table:
+                'meadow_host'       => $meadow_host,
+                'when_born'         => $when_born,
                 'when_died'         => $when_died,
                 'cause_of_death'    => $cause_of_death,
 
