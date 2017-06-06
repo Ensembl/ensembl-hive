@@ -477,8 +477,9 @@ sub register_beekeeper {
 sub run_autonomously {
     my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
 
-    my $hive_dba = $pipeline->hive_dba;
-    my $queen    = $hive_dba->get_Queen;
+    my $hive_dba    = $pipeline->hive_dba;
+    my $queen       = $hive_dba->get_Queen;
+    my $meadow_user = $self->{'beekeeper'}->meadow_user;
 
     my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
@@ -595,6 +596,7 @@ sub run_autonomously {
                                 Bio::EnsEMBL::Hive::Worker->new(
                                     'meadow_type'       => $meadow_type,                # non-unique key components
                                     'meadow_name'       => $meadow_name,
+                                    'meadow_user'       => $meadow_user,
                                     'process_id'        => $_,
 
                                     'resource_class'    => $resource_class,             # non-key, but known at the time of pre-allocation
