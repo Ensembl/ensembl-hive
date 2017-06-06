@@ -84,7 +84,7 @@ sub main {
             warn "\nFinding out the time interval when the pipeline was run on Meadow ".$meadow->signature."\n";
 
             if(my $our_interval = $meadow_2_interval->{ $meadow->type }{ $meadow->cached_name } ) {
-                if(my $report_entries = $meadow->get_report_entries_for_time_interval( $our_interval->{'min_born'}, $our_interval->{'max_died'}, $username ) ) {
+                if(my $report_entries = $meadow->get_report_entries_for_time_interval( $our_interval->{'min_submitted'}, $our_interval->{'max_died'}, $username ) ) {
                     $queen->store_resource_usage( $report_entries, $meadow_2_pid_wid->{$meadow->type}{$meadow->cached_name} );
                 }
             } else {

@@ -844,7 +844,7 @@ sub interval_workers_with_unknown_usage {
     my %meadow_to_interval = ();
 
     my $sql_times = qq{
-        SELECT meadow_type, meadow_name, min(when_born), max(when_died), count(*)
+        SELECT meadow_type, meadow_name, min(when_submitted), ifnull(max(when_died), max(when_submitted)), count(*)
         FROM worker w
         LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL
@@ -852,9 +852,9 @@ sub interval_workers_with_unknown_usage {
     };
     my $sth_times = $self->prepare( $sql_times );
     $sth_times->execute();
-    while( my ($meadow_type, $meadow_name, $min_born, $max_died, $workers_count) = $sth_times->fetchrow_array() ) {
+    while( my ($meadow_type, $meadow_name, $min_submitted, $max_died, $workers_count) = $sth_times->fetchrow_array() ) {
         $meadow_to_interval{$meadow_type}{$meadow_name} = {
-            'min_born'      => $min_born,
+            'min_submitted' => $min_submitted,
             'max_died'      => $max_died,
             'workers_count' => $workers_count,
         };
