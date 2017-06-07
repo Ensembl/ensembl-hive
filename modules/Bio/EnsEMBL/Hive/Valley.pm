@@ -169,18 +169,18 @@ sub whereami {
 
 
 sub get_pending_worker_counts_by_meadow_type_rc_name {
-    my ($self, $statuses) = @_;
+    my ($self, $worker_statuses) = @_;
 
     my %pending_counts = ();
     my $total_pending_all_meadows = 0;
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $pending_workers_per_rc_name = $statuses->{ $meadow->type }->{ 'PEND' } || {};
+        my $pending_workers_per_rc_name = $worker_statuses->{ $meadow->type }{ 'PEND' } || {};
 
         $pending_counts{ $meadow->type } = {};
         while (my ($rc_name,$process_ids) = each %$pending_workers_per_rc_name) {
             my $n_pending = scalar(@$process_ids);
-            $pending_counts{ $meadow->type }->{ $rc_name } = $n_pending;
+            $pending_counts{ $meadow->type }{ $rc_name } = $n_pending;
             $total_pending_all_meadows += $n_pending;
         }
     }
@@ -190,13 +190,13 @@ sub get_pending_worker_counts_by_meadow_type_rc_name {
 
 
 sub generate_limiters {
-    my ($self, $statuses) = @_;
+    my ($self, $worker_statuses) = @_;
 
     my $valley_running_worker_count             = 0;
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $this_worker_count   = sum(0, (map {scalar(@$_)} values( %{ $statuses->{ $meadow->type }->{ 'RUN' } } )));
+        my $this_worker_count   = sum(0, (map {scalar(@$_)} values( %{ $worker_statuses->{ $meadow->type }{ 'RUN' } } )));
 
         $valley_running_worker_count                           += $this_worker_count;
 
@@ -211,50 +211,54 @@ sub generate_limiters {
     return ($valley_running_worker_count, \%meadow_capacity_limiter_hashed_by_type);
 }
 
-sub query_worker_statuses {
-    my ($self, $all_registered_running_workers) = @_;
 
-    my %statuses            = ();
+sub query_worker_statuses {
+    my ($self, $all_meadows_workers_deemed_alive) = @_;
+
+    my %worker_statuses            = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $process_ids_by_meadow_user      = $all_registered_running_workers->{$meadow->type}{$meadow->cached_name};
-        my $this_status_list                = $meadow->status_of_all_our_workers( [keys %$process_ids_by_meadow_user] );
-        $statuses{ $meadow->type }          = {};
-        foreach my $ra (@$this_status_list) {
-            my ($worker_pid, $meadow_user, $status, $rc_name) = @$ra;
+        my $this_meadow_workers_deemed_alive    = $all_meadows_workers_deemed_alive->{$meadow->type}{$meadow->cached_name};
+        my $this_meadow_worker_status_list      = $meadow->status_of_all_our_workers( [keys %$this_meadow_workers_deemed_alive] );
+        $worker_statuses{ $meadow->type }       = {};
+
+        foreach my $vector (@$this_meadow_worker_status_list) {
+            my ($worker_pid, $meadow_user, $status, $rc_name) = @$vector;
             # Workers that are not properly named and are not in the
             # database are likely not ours. Let's skip them.
-            if (($rc_name eq '__unknown_rc_name__') and !$process_ids_by_meadow_user->{$meadow_user}->{$worker_pid}) {
+            if (($rc_name eq '__unknown_rc_name__') and !$this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
                 next;
             }
             # Workers that are in RUN state but not yet in the database probably
             # have a hard time registering (db too busy ? registry too big ?).
             # Let's mark them as PENDing for the time being.
-            if (($status eq 'RUN') and !$process_ids_by_meadow_user->{$meadow_user}->{$worker_pid}) {
+            if (($status eq 'RUN') and !$this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
                 $status = 'PEND';
             }
-            push @{ $statuses{ $meadow->type }->{ $status }->{ $rc_name } }, $worker_pid;
-        }
-    }
-    return \%statuses;
-}
-
-sub status_of_all_our_workers_by_meadow_signature {
-    my ($self, $statuses) = @_;
-
-    my %worker_statuses = ();
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $meadow_signature = $meadow->type.'/'.$meadow->cached_name;
-        my $statuses_rc_name = $statuses->{ $meadow->type };
-        $worker_statuses{$meadow_signature} = {};
-        foreach my $status (keys %$statuses_rc_name) {
-            foreach my $pid_list (values %{ $statuses_rc_name->{$status} }) {
-                $worker_statuses{$meadow_signature}{$_} = $status for @$pid_list;
-            }
+            push @{ $worker_statuses{ $meadow->type }{ $status }{ $rc_name } }, $worker_pid;
         }
     }
     return \%worker_statuses;
 }
+
+
+sub status_of_all_our_workers_by_meadow_signature {
+    my ($self, $worker_statuses) = @_;
+
+    my %signature_and_pid_to_worker_status = ();
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {
+        my $meadow_signature = $meadow->signature;
+        my $statuses_rc_name = $worker_statuses->{ $meadow->type };
+        $signature_and_pid_to_worker_status{$meadow_signature} = {};
+        foreach my $status (keys %$statuses_rc_name) {
+            foreach my $pid_list (values %{ $statuses_rc_name->{$status} }) {
+                $signature_and_pid_to_worker_status{$meadow_signature}{$_} = $status for @$pid_list;
+            }
+        }
+    }
+    return \%signature_and_pid_to_worker_status;
+}
+
 
 sub cleanup_left_temp_directory {
     my ($self, $worker) = @_;

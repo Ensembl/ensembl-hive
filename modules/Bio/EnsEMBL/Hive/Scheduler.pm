@@ -56,13 +56,11 @@ sub scheduler_say {
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
-    my $all_registered_running_workers          = $queen->running_process_ids_hashed_by_meadow_parameters();
-    my $statuses                                = $valley->query_worker_statuses($all_registered_running_workers);
-
+    my $worker_statuses                         = $valley->query_worker_statuses( $queen->running_process_ids_hashed_by_meadow_parameters );
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
     my ($valley_running_worker_count,
-        $meadow_capacity_limiter_hashed_by_type)= $valley->generate_limiters( $statuses );
+        $meadow_capacity_limiter_hashed_by_type)= $valley->generate_limiters( $worker_statuses );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type);
@@ -100,7 +98,7 @@ sub schedule_workers_resync_if_necessary {
     }
 
         # adjustment for pending workers:
-    my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name($statuses);
+    my ($pending_worker_counts_by_meadow_type_rc_name, $total_pending_all_meadows)  = $valley->get_pending_worker_counts_by_meadow_type_rc_name( $worker_statuses );
 
     while( my ($this_meadow_type, $partial_workers_to_submit_by_rc_name) = each %$workers_to_submit_by_meadow_type_rc_name) {
         while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
