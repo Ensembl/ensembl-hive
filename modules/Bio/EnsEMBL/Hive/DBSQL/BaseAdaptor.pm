@@ -350,13 +350,16 @@ sub fetch_all {
             }
         }
         my $object = $value_column
-            ? $hashref->{$value_column}
-            : $self->objectify($hashref);
+            ? ( (ref($value_column) eq 'ARRAY')
+                    ? { map { ($_ => $hashref->{$_}) } @$value_column } # project to a subhash
+                    : $hashref->{$value_column}                         # project to just one field
+              )
+            : $self->objectify($hashref);                               # keep the whole object
 
         if($one_per_key) {
-            $$pptr = $object;
+            $$pptr = $object;                                           # just return the one value (either the key_list is unique or override)
         } else {
-            push @$$pptr, $object;
+            push @$$pptr, $object;                                      # return a list of values that potentially share the same key_list
         }
     }
     $sth->finish;  
