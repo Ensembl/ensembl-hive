@@ -354,7 +354,7 @@ sub go_figure_dbc {
                     if( scalar(@$dbas) == 1 ) {
                         $dba = $dbas->[0];
                     } elsif( @$dbas ) {
-                        warn "The registry contains multiple entries for '$foo', please prepend the reg_alias with the desired type";
+                        die "The registry contains multiple entries for '$foo', please prepend the reg_alias with the desired type";
                     }
                 }
             };
