@@ -351,10 +351,13 @@ sub register_worker_death {
 }
 
 
-sub running_process_ids_hashed_by_meadow_parameters {
+sub registered_workers_and_resource_mapping {
     my $self = shift @_;
 
-    return $self->count_all("status!='DEAD'", ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'])
+    my $all_meadows_workers_deemed_alive    = $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], ['resource_class_id', 'status'] );
+    my %resource_id_to_name                 = map { $_->dbID => $_->name } $self->db->hive_pipeline->collection_of('ResourceClass')->list;      # FIXME: collections are cached, but maybe cache the mapping as well?
+
+    return ($all_meadows_workers_deemed_alive, \%resource_id_to_name);
 }
 
 
@@ -365,7 +368,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $worker_statuses                     = $valley->query_worker_statuses( $self->running_process_ids_hashed_by_meadow_parameters );
+    my $worker_statuses                     = $valley->query_worker_statuses( $self->registered_workers_and_resource_mapping );
     my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $worker_statuses );
 
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds

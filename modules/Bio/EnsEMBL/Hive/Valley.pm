@@ -213,7 +213,7 @@ sub generate_limiters {
 
 
 sub query_worker_statuses {
-    my ($self, $all_meadows_workers_deemed_alive) = @_;
+    my ($self, $all_meadows_workers_deemed_alive, $resource_id_to_name) = @_;
 
     my %worker_statuses            = ();
 
@@ -223,19 +223,20 @@ sub query_worker_statuses {
         my $meadow_signature                    = $meadow->signature;
         $worker_statuses{ $meadow_signature }   = {};
 
-        foreach my $vector (@$this_meadow_worker_status_list) {
+        foreach my $vector (@$this_meadow_worker_status_list) {             # leaf though the Meadow-seen Workers
             my ($worker_pid, $meadow_user, $status, $rc_name) = @$vector;
-            # Workers that are not properly named and are not in the
-            # database are likely not ours. Let's skip them.
-            if (($rc_name eq '__unknown_rc_name__') and !$this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
+
+            if(my $worker_found_alive = $this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
+                my $db_resource_class_id = $worker_found_alive->{'resource_class_id'};  # In order to free the Meadow from the need to return the rc_name (not all Meadows can!),
+                $rc_name = defined( $db_resource_class_id )                             # we override the value returned by another value that we get from the database...
+                    ? $resource_id_to_name->{ $db_resource_class_id }                   # ... provided it was set there, of course.
+                    : '__undefined_rc_name__';                                          # If it was not set, we still override it with a defined constant for completeness.
+            } elsif($rc_name eq '__unknown_rc_name__') {    # not in the database and not even properly named => likely not ours
                 next;
-            }
-            # Workers that are in RUN state but not yet in the database probably
-            # have a hard time registering (db too busy ? registry too big ?).
-            # Let's mark them as PENDing for the time being.
-            if (($status eq 'RUN') and !$this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
+            } elsif($status eq 'RUN') {     # running on the Meadow but not in the database => likely having hard time registering (db too busy ? registry too big ?)
                 $status = 'PEND';
             }
+
             push @{ $worker_statuses{ $meadow_signature }{ $status }{ $rc_name } }, $worker_pid;
         }
     }
