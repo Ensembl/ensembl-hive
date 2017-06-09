@@ -13,6 +13,7 @@
     eHive system depends on the following components that you may need to download and install first:
     <ol>
         <li>Perl 5.10 <a href=http://www.perl.org/get.html>or higher</a></li>
+
         <li>A database engine of your choice. eHive keeps its state in a database, so you will need
             <ol>
                 <li>a server installed on the machine where you want to maintain the state of your pipeline(s) and</li>
@@ -27,14 +28,19 @@
                 <li>PostgreSQL 9.2 <a href=http://www.postgresql.org/download/>or higher</a></li>
             </ul>
         </li>
-        <li>Perl DBI API version 1.6 <a href=http://dbi.perl.org/>or higher</a> --
-            Perl database interface that has to include a driver for the database engine of your choice above.
+
+        <li>GraphViz visualization package (includes "dot" executable and libraries used by the Perl dependencies).
+        <ol>
+            <li>Check in your terminal that you have "dot" installed</li>
+            <li>If not, visit <a href=http://graphviz.org/>graphviz.org</a> to download it</li>
+        </ol>
         </li>
-        <li>Perl libraries for visualisation (optional but recommended). They can be found on CPAN:
-            <ul>
-                <li><a href=http://search.cpan.org/~rsavage/GraphViz/lib/GraphViz.pm>GraphViz</a> (needed for generate_graph.pl and the GUI)</li>
-                <li><a href=http://search.cpan.org/dist/Chart-Gnuplot/lib/Chart/Gnuplot.pm>Chart::Gnuplot</a> (needed for generate_timeline.pl)</li>
-            </ul>
+
+        <li>cpanm -- a handy utility to recursively install Perl dependencies.
+        <ol>
+            <li>Check in your terminal that you have "cpanm" installed</li>
+            <li>If not, visit <a href=https://cpanmin.us>cpanmin.us</a> to download it (just read and follow the instructions in the header of the script)</li>
+        </ol>
         </li>
 
     </ol>
@@ -81,7 +87,22 @@ The major directories here are:
 </dl>
 
 
-<h3>Optional configuration of the system:</h3>
+    <hr width=50% />
+
+    <center><h2>Use cpanm to recursively install the Perl dependencies declared in ensembl-hive/cpanfile</h2></center>
+
+<pre>
+    cd ensembl-hive
+    cpanm --installdeps .
+</pre>
+
+<p>
+If installation of either DBD::mysql or DBD::Pg fails, check that the corresponding database system (MySQL or PostgreSQL) was installed correctly.
+</p>
+
+    <hr width=50% />
+
+    <center><h2>Optional configuration of the system:</h2></center>
 
 <p>
 You may find it convenient (although it is not necessary) to add "ensembl-hive/scripts"
