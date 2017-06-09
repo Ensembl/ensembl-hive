@@ -30,6 +30,9 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 
+SKIP: {
+    skip "python3 not installed", 2 unless(`python3 --version 2>/dev/null`);
+
 plan tests => 1;
 
 standaloneJob(
@@ -62,6 +65,8 @@ standaloneJob(
         'language'  => 'python3',
     },
 );
+
+} # /SKIP
 
 done_testing();
 

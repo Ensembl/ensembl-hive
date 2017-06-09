@@ -47,6 +47,9 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
     # Exclude the non guest-language config files
     next if $long_mult_version =~ /_conf/;
 
+    SKIP: {
+        skip "python3 not installed", 2 if($long_mult_version =~ /_pyconf/ && !`python3 --version 2>/dev/null`);
+
     warn "\nInitializing the $long_mult_version pipeline ...\n\n";
 
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
@@ -82,6 +85,8 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
 
         $hive_dba->dbc->disconnect_if_idle();
         run_sql_on_db($pipeline_url, 'DROP DATABASE');
+
+    } # /SKIP
 }
 
 done_testing();
