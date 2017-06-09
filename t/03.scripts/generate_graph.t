@@ -49,7 +49,11 @@ my $client_url  = get_test_url_or_die(-tag => 'client', -no_user_prefix => 1);
 
 my $ref_output_location = $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/generate_graph/';
 
-my @confs_to_test = qw(LongMult::PipeConfig::SmartLongMult_conf GC::PipeConfig::GCPct_conf LongMult::PipeConfig::LongMultWf_conf LongMult::PipeConfig::LongMultClient_conf);
+my @confs_to_test = qw(LongMult::PipeConfig::SmartLongMult_conf LongMult::PipeConfig::LongMultWf_conf LongMult::PipeConfig::LongMultClient_conf);
+
+eval { require Bio::SeqIO; };
+
+push @confs_to_test, 'GC::PipeConfig::GCPct_conf' unless $@;    # SKIP it in case Bioperl is not installed
 
 # A temporary file to store the output of generate_graph.pl
 my ($fh, $tmp_filename) = tempfile(UNLINK => 1);
