@@ -37,7 +37,7 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
 my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
 
-my @virtual_methods = qw(name get_current_worker_process_id status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers);
+my @virtual_methods = qw(name get_current_worker_process_id status_of_all_our_workers check_worker_is_alive_and_mine kill_worker submit_workers_return_meadow_pids);
 my @optional_methods = qw(parse_report_source_line get_report_entries_for_process_ids get_report_entries_for_time_interval);
 
 # Check that the base Meadow class has some virtual methods

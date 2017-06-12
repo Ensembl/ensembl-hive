@@ -573,44 +573,34 @@ sub run_autonomously {
                         'INFO', 'ALIVE');
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
-                    my $meadow_can_preregister_workers          = UNIVERSAL::can($this_meadow, 'submit_workers_return_meadow_pids');
 
                     my $specific_worker_cmd = $resourceless_worker_cmd
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '')
-                                            . ( $meadow_can_preregister_workers
-                                                    ? ' -preregistered'
-                                                    : ' -beekeeper_id '.$self->{'beekeeper_id'}." -rc_name $rc_name" );
+                                            . ' -preregistered';
 
-                        # Since the newer version of Meadow interface can parse and return $meadow_process_ids, the Workers can be preregistered in the database:
-                    if($meadow_can_preregister_workers) {
+                    my $meadow_process_ids = $this_meadow->submit_workers_return_meadow_pids(
+                        $specific_worker_cmd, $this_meadow_rc_worker_count, $iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
 
-                        my $meadow_process_ids = $this_meadow->submit_workers_return_meadow_pids(
-                            $specific_worker_cmd, $this_meadow_rc_worker_count, $iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
+                    warn "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
 
-                        warn "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
+                    my $resource_class  = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name);
+                    my $meadow_name     = $this_meadow->cached_name;
 
-                        my $resource_class  = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name);
-                        my $meadow_name     = $this_meadow->cached_name;
+                    my @pre_allocated_workers = map {
+                            Bio::EnsEMBL::Hive::Worker->new(
+                                'meadow_type'       => $meadow_type,                # non-unique key components
+                                'meadow_name'       => $meadow_name,
+                                'meadow_user'       => $meadow_user,
+                                'process_id'        => $_,
 
-                        my @pre_allocated_workers = map {
-                                Bio::EnsEMBL::Hive::Worker->new(
-                                    'meadow_type'       => $meadow_type,                # non-unique key components
-                                    'meadow_name'       => $meadow_name,
-                                    'meadow_user'       => $meadow_user,
-                                    'process_id'        => $_,
+                                'resource_class'    => $resource_class,             # non-key, but known at the time of pre-allocation
+                                'beekeeper_id'      => $self->{'beekeeper_id'},
 
-                                    'resource_class'    => $resource_class,             # non-key, but known at the time of pre-allocation
-                                    'beekeeper_id'      => $self->{'beekeeper_id'},
+                                'status'            => 'SUBMITTED',
+                            )
+                    } @$meadow_process_ids;
 
-                                    'status'            => 'SUBMITTED',
-                                )
-                        } @$meadow_process_ids;
-
-                        $queen->store( \@pre_allocated_workers );
-
-                    } else {
-                        $this_meadow->submit_workers($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
-                    }
+                    $queen->store( \@pre_allocated_workers );
                 }
             }
         } else {

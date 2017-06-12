@@ -41,7 +41,7 @@ use base ('Bio::EnsEMBL::Hive::Configurable');
 
 # -------------------------------------- <versioning of the Meadow interface> -------------------------------------------------------
 
-our $MEADOW_MAJOR_VERSION = '4';                # Make sure you change this number whenever an incompatible change is introduced
+our $MEADOW_MAJOR_VERSION = '5';                # Make sure you change this number whenever an incompatible change is introduced
 
 
 sub get_meadow_major_version {
@@ -341,14 +341,14 @@ sub get_report_entries_for_time_interval {
 }
 
 
-=head2 submit_workers
+=head2 submit_workers_return_meadow_pids
 
-    Title   :  submit_workers
-    Function:  Submit $required_worker_count workers with the command $worker_cmd
+    Title   :  submit_workers_return_meadow_pids
+    Function:  Submit $required_worker_count workers with the command $worker_cmd and return the meadow-specific worker_pids
 
 =cut
 
-sub submit_workers {
+sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
     die "Please use a derived method";

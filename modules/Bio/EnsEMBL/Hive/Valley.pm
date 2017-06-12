@@ -224,15 +224,13 @@ sub query_worker_statuses {
         $worker_statuses{ $meadow_signature }   = {};
 
         foreach my $vector (@$this_meadow_worker_status_list) {             # leaf though the Meadow-seen Workers
-            my ($worker_pid, $meadow_user, $status, $rc_name) = @$vector;
+            my ($worker_pid, $meadow_user, $status) = @$vector;
+            my $rc_name = '__undefined_rc_name__';
 
             if(my $worker_found_alive = $this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
-                my $db_resource_class_id = $worker_found_alive->{'resource_class_id'};  # In order to free the Meadow from the need to return the rc_name (not all Meadows can!),
-                $rc_name = defined( $db_resource_class_id )                             # we override the value returned by another value that we get from the database...
-                    ? $resource_id_to_name->{ $db_resource_class_id }                   # ... provided it was set there, of course.
-                    : '__undefined_rc_name__';                                          # If it was not set, we still override it with a defined constant for completeness.
-            } elsif($rc_name eq '__unknown_rc_name__') {    # not in the database and not even properly named => likely not ours
-                next;
+                if( my $db_resource_class_id = $worker_found_alive->{'resource_class_id'} ) {
+                    $rc_name = $resource_id_to_name->{ $db_resource_class_id };
+                }
             } elsif($status eq 'RUN') {     # running on the Meadow but not in the database => likely having hard time registering (db too busy ? registry too big ?)
                 $status = 'PEND';
             }

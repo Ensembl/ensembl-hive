@@ -41,7 +41,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '4.2';       # Semantic version of the Meadow interface:
+our $VERSION = '5.0';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
@@ -113,11 +113,7 @@ sub status_of_all_our_workers { # returns an arrayref
             if($job_name=~/(\[\d+\])$/ and $worker_pid!~/\[\d+\]$/) {   # account for the difference in LSF 9.1.1.1 vs LSF 9.1.2.0  bjobs' output
                 $worker_pid .= $1;
             }
-            my $rc_name = '__unknown_rc_name__';
-            if ($job_name =~ /^\Q$jnp\E(\S+)\-\d+(\[\d+\])?$/) {
-                $rc_name = $1;
-            }
-            push @status_list, [$worker_pid, $user, $status, $rc_name];
+            push @status_list, [$worker_pid, $user, $status];
         }
     }
 

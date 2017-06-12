@@ -41,7 +41,7 @@ use Bio::EnsEMBL::Hive::Utils::RedirectStack;
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '4.0';       # Semantic version of the Meadow interface:
+our $VERSION = '5.0';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
@@ -93,12 +93,7 @@ sub status_of_all_our_workers { # returns an arrayref
 
         # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
 
-        my $rc_name = '__unknown_rc_name__';
-        if (join(' ', @job_name) =~ / -rc_name (\S+)/) {
-            $rc_name = $1;
-        }
-
-        push @status_list, [$worker_pid, $meadow_user, $status, $rc_name];
+        push @status_list, [$worker_pid, $meadow_user, $status];
     }
     return \@status_list;
 }
