@@ -291,13 +291,17 @@ sub script_usage {
 sub split_for_bash {
     my $cmd = pop @_;
 
-    my @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+    my @cmd = ();
 
-    foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
-        if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
-            $syll = $1 . $2 . $3;
-        } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
-            $syll = $1 . $2 . $3;
+    if( defined($cmd) ) {
+        @cmd = ($cmd =~ /((?:".*?"|'.*?'|\S)+)/g);   # split on space except for quoted strings
+
+        foreach my $syll (@cmd) {                       # remove the outer quotes or apostrophes
+            if($syll=~/^(\S*?)"(.*?)"(\S*?)$/) {
+                $syll = $1 . $2 . $3;
+            } elsif($syll=~/^(\S*?)'(.*?)'(\S*?)$/) {
+                $syll = $1 . $2 . $3;
+            }
         }
     }
 
