@@ -367,6 +367,7 @@ sub _add_analysis_node {
     my $analysis_style                                    = $analysis->can_be_empty() ? 'dashed, filled' : 'filled' ;
     my $node_fontname                                     = $self->config_get('Node', 'AnalysisStatus', $analysis_status, 'Font');
     my $display_stats                                     = $self->config_get('DisplayStats');
+    my $display_dbIDs                                     = $self->config_get('DisplayDBIDs');
     my $hive_pipeline                                     = $self->pipeline;
 
     my $colspan = 0;
@@ -386,7 +387,7 @@ sub _add_analysis_node {
     }
 
     $colspan ||= 1;
-    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).' ('.($analysis->dbID || 'unstored').')</td></tr>';
+    my $analysis_label  = '<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="'.$colspan.'">'.$analysis->relative_display_name( $hive_pipeline ).($display_dbIDs ? ' ('.($analysis->dbID || 'unstored').')' : '').'</td></tr>';
     if( $display_stats ) {
         $analysis_label    .= qq{<tr><td colspan="$colspan"> </td></tr>};
         if( $display_stats eq 'barchart') {

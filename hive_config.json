@@ -111,6 +111,7 @@
         "DisplayJobs"           : 0,
         "DisplayJobLength"      : 64,
         "DisplayData"           : 0,
+        "DisplayDBIDs"          : 1,
         "DisplayColumnLength"   : 32,
         "DisplayConditionLength": 64,
         "DisplayInputIDTemplate": 1,
