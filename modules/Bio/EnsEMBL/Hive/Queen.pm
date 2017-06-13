@@ -361,9 +361,7 @@ sub cached_resource_mapping {
 sub registered_workers_and_resource_mapping {
     my $self = shift @_;
 
-    my $all_meadows_workers_deemed_alive    = $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], ['resource_class_id', 'status'] );
-
-    return ($all_meadows_workers_deemed_alive, $self->cached_resource_mapping);
+    return $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], ['resource_class_id', 'status'] );
 }
 
 
