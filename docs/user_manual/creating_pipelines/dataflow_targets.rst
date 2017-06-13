@@ -146,8 +146,8 @@ to their *funnel*.
 Single accumulator
 ~~~~~~~~~~~~~~~~~~
 
-An accumulator is defined with a special URL that contains the ``accu_name`` key. There are four types
-of accumulators (pile, multiset, array and hash), all described in :doc:`accumulators`.
+An accumulator is defined with a special URL that contains the ``accu_name`` key. There are five types
+of accumulators (scalar, pile, multiset, array and hash), all described in :doc:`accumulators`.
 
 Accumulators can **only** be connected to *fan* analyses of a semaphore group. All the data flown into them
 is *accumulated* and passed on to the *funnel* once the latter is released.
