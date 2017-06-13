@@ -31,16 +31,27 @@ download and install first:
    run pipelines on, so make sure the SQLite database is on a shared
    filesystem or the MySQL/PostgreSQL database is on a shared network.
 
-#. Perl DBI API version 1.6 `or higher <http://dbi.perl.org/>`__ -- Perl
-   database interface that has to include a driver for the database
-   engine of your choice above.
-#. Perl libraries for visualisation (optional but recommended). They can
-   be found on CPAN:
+#. GraphViz visualization package (includes "dot" executable and
+   libraries used by the Perl dependencies).
 
-   -  `GraphViz <http://search.cpan.org/~rsavage/GraphViz/lib/GraphViz.pm>`__
-      (needed for generate\_graph.pl and the GUI)
-   -  `Chart::Gnuplot <http://search.cpan.org/dist/Chart-Gnuplot/lib/Chart/Gnuplot.pm>`__
-      (needed for generate\_timeline.pl)
+   #. Check in your terminal that you have "dot" installed
+   #. If not, visit `graphviz.org <http://graphviz.org/>`__ to download
+      it
+
+#. GnuPlot visualization package (includes "gnuplot" executable and
+   libraries used by the Perl dependencies).
+
+   #. Check in your terminal that you have "gnuplot" installed
+   #. If not, visit `gnuplot.info <http://www.gnuplot.info/>`__ to
+      download it
+
+#. cpanm -- a handy utility to recursively install Perl dependencies.
+
+   #. Check in your terminal that you have "cpanm" installed
+   #. If not, visit `cpanmin.us <https://cpanmin.us>`__ to download it
+      (just read and follow the instructions in the header of the
+      script)
+
 
 Installing eHive code
 ---------------------
@@ -79,6 +90,20 @@ The major directories here are:
     debugging the pipeline
 :sql:
     Contains sql used to build a standard pipeline database
+
+
+Use cpanm to recursively install the Perl dependencies declared in ensembl-hive/cpanfile
+----------------------------------------------------------------------------------------
+
+::
+
+        cd ensembl-hive
+        cpanm --installdeps --with-recommends .
+
+If installation of either DBD::mysql or DBD::Pg fails, check that the
+corresponding database system (MySQL or PostgreSQL) was installed
+correctly.
+
 
 Optional configuration of the system:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
