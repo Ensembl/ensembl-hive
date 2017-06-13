@@ -168,27 +168,6 @@ sub whereami {
 }
 
 
-sub get_pending_worker_counts_by_meadow_type_rc_name {
-    my ($self, $worker_statuses) = @_;
-
-    my %pending_counts = ();
-    my $total_pending_all_meadows = 0;
-
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $pending_workers_per_rc_name = $worker_statuses->{ $meadow->signature }{ 'PEND' } || {};
-
-        $pending_counts{ $meadow->type } = {};
-        while (my ($rc_name,$process_ids) = each %$pending_workers_per_rc_name) {
-            my $n_pending = scalar(@$process_ids);
-            $pending_counts{ $meadow->type }{ $rc_name } = $n_pending;
-            $total_pending_all_meadows += $n_pending;
-        }
-    }
-
-    return (\%pending_counts, $total_pending_all_meadows);
-}
-
-
 sub generate_limiters {
     my ($self, $worker_statuses) = @_;
 

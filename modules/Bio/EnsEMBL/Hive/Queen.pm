@@ -351,13 +351,38 @@ sub register_worker_death {
 }
 
 
+sub cached_resource_mapping {
+    my $self = shift;
+    $self->{'_cached_resource_mapping'} ||= { map { $_->dbID => $_->name } $self->db->hive_pipeline->collection_of('ResourceClass')->list };
+    return $self->{'_cached_resource_mapping'};
+}
+
+
 sub registered_workers_and_resource_mapping {
     my $self = shift @_;
 
     my $all_meadows_workers_deemed_alive    = $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], ['resource_class_id', 'status'] );
-    my %resource_id_to_name                 = map { $_->dbID => $_->name } $self->db->hive_pipeline->collection_of('ResourceClass')->list;      # FIXME: collections are cached, but maybe cache the mapping as well?
 
-    return ($all_meadows_workers_deemed_alive, \%resource_id_to_name);
+    return ($all_meadows_workers_deemed_alive, $self->cached_resource_mapping);
+}
+
+
+sub get_submitted_worker_counts_by_meadow_type_rc_name {
+    my $self = shift @_;
+
+    my $worker_counts_by_meadow_type_rc_id  = $self->count_all("status='SUBMITTED'", ['meadow_type', 'resource_class_id'] );
+    my $cached_resource_mapping             = $self->cached_resource_mapping;
+
+    my %counts_by_meadow_type_rc_name = ();
+
+    while(my ($meadow_type, $counts_by_rc_id) = each %$worker_counts_by_meadow_type_rc_id) {
+        while(my ($rc_id, $count) = each %$counts_by_rc_id) {
+            my $rc_name = $cached_resource_mapping->{ $rc_id } || '__undefined_rc_name__';
+            $counts_by_meadow_type_rc_name{ $meadow_type }{ $rc_name } = $count;
+        }
+    }
+
+    return \%counts_by_meadow_type_rc_name;
 }
 
 
