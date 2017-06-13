@@ -1,8 +1,10 @@
+.. _tweak-pipeline-script:
+
 ===================================================================
 Changing and Viewing pipeline configuration using tweak_pipeline.pl
 ===================================================================
 
-eHive provides a facility to modify many aspects of a pipeline that is loaded into a hive database. This is the tweak_pipeline.pl script. Using this script, users can change the values of analysis or pipeline-wide parameters. This script can also change resource classes for analyses, and it can even be used to alter the dataflow structure of a pipeline.
+eHive provides a tool to modify many aspects of a pipeline that is loaded into a hive database. This is the tweak_pipeline.pl script. Using this script, users can change the values of analysis or pipeline-wide parameters. This script can also change resource classes for analyses, and it can even be used to alter the dataflow structure of a pipeline.
 
 Basic operation
 ===============
