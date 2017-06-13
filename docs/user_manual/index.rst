@@ -42,6 +42,7 @@ User documentation
    running_pipelines/monitoring
    running_pipelines/management
    running_pipelines/tweaking
+   running_pipelines/error-recovery
 
 
 .. toctree::
