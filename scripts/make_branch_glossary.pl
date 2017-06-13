@@ -43,7 +43,7 @@ sub pipeline_analyses {
 
 my $display_config_json = q{
 {
-    "Graph": {"Pad": 0} 
+    "Graph": {"Pad": 0, "DisplayStats": 0, "DisplayDBIDs": 0, "DisplayDetails": 0 }
 }
 };
 
@@ -113,7 +113,7 @@ sub generate_diagrams {
         # The diagram
         warn $record->[0];
         my $img = sprintf('%s/%d.png', $base_filename, $record->[0]);
-        system($ehrd.'/scripts/generate_graph.pl', -pipeconfig => $pipe_filename, -output => $img, -pipeline_name => '', map {-config_file => $_} @confs);
+        system($ehrd.'/scripts/generate_graph.pl', -pipeconfig => $pipe_filename, -output => $img, map {-config_file => $_} @confs);
         push @diagrams, [@$record, $img];
     }
     return \@diagrams;
