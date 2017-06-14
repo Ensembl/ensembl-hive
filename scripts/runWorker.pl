@@ -24,8 +24,9 @@ main();
 
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
-    my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);  # Task specification parameters
-    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize, $worker_delay_startup_seconds);   # Worker control parameters
+    my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);    # Task specification parameters
+    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize,                    # Worker control parameters
+        $worker_delay_startup_seconds, $worker_crash_on_startup_prob);
     my ($help, $report_versions, $debug);
 
     GetOptions(
@@ -58,6 +59,7 @@ sub main {
                'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
                'can_respecialize=i'         => \$can_respecialize,
                'worker_delay_startup_seconds=i' => \$worker_delay_startup_seconds,
+               'worker_crash_on_startup_prob=f' => \$worker_crash_on_startup_prob,
 
     # Other commands
                'h|help'                     => \$help,
@@ -132,6 +134,7 @@ sub main {
         life_span                       => $life_span,
         retry_throwing_jobs             => $retry_throwing_jobs,
         worker_delay_startup_seconds    => $worker_delay_startup_seconds,
+        worker_crash_on_startup_prob    => $worker_crash_on_startup_prob,
     );
     my %execution_options = (
         no_cleanup          => $no_cleanup,
@@ -208,6 +211,7 @@ __DATA__
     -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
     -can_respecialize <0|1>                 : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
     -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+    -worker_crash_on_startup_prob <float>   : probability of each worker failing at startup (0 by default, useful for debugging)
 
 =head2 Other options:
 

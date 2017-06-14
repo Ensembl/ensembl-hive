@@ -85,6 +85,7 @@ sub main {
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_log_dir'}       = undef;
     $self->{'worker_delay_startup_seconds'} = undef;
+    $self->{'worker_crash_on_startup_prob'} = undef;
 
     # store all the options passed on the command line for registration
     # we re-create this a bit later, so that we can protect any passwords
@@ -130,6 +131,7 @@ sub main {
                'debug=i'                        => \$self->{'debug'},
                'submit_log_dir=s'               => \$self->{'submit_log_dir'},
                'worker_delay_startup_seconds=i' => \$self->{'worker_delay_startup_seconds'},
+               'worker_crash_on_startup_prob=f' => \$self->{'worker_crash_on_startup_prob'},
 
                     # other commands/options
                'h|help!'           => \$help,
@@ -428,7 +430,8 @@ sub generate_worker_cmd {
         exit(1);
     }
 
-    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'worker_delay_startup_seconds', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize',
+                               'worker_delay_startup_seconds', 'worker_crash_on_startup_prob', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
@@ -778,6 +781,7 @@ __DATA__
     -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
     -hive_log_dir <path>                    : directory where stdout/stderr of the hive is redirected
     -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+    -worker_crash_on_startup_prob <float>   : probability of each worker failing at startup (0 by default, useful for debugging)
     -debug <debug_level>                    : set debug level of the workers
 
 =head2 Other commands/options

@@ -69,6 +69,7 @@ sub runWorker {
              -retry_throwing_jobs   => $life_options->{'retry_throwing_jobs'},
              -can_respecialize      => $specialization_options->{'can_respecialize'},
              -worker_delay_startup_seconds  => $life_options->{'worker_delay_startup_seconds'},
+             -worker_crash_on_startup_prob  => $life_options->{'worker_crash_on_startup_prob'},
 
           # Other parameters:
              -debug                 => $execution_options->{'debug'},

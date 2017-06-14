@@ -113,11 +113,19 @@ sub create_new_worker {
     my %flags   = @_;
 
     my ($preregistered, $resource_class_id, $resource_class_name, $beekeeper_id,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize, $worker_delay_startup_seconds)
+            $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize,
+            $worker_delay_startup_seconds, $worker_crash_on_startup_prob)
      = @flags{qw(-preregistered -resource_class_id -resource_class_name -beekeeper_id
-            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize -worker_delay_startup_seconds)};
+            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize
+            -worker_delay_startup_seconds -worker_crash_on_startup_prob)};
 
     sleep( $worker_delay_startup_seconds // 0 );    # NB: undefined parameter would have caused eternal sleep!
+
+    if( defined( $worker_crash_on_startup_prob ) ) {
+        if( rand(1) < $worker_crash_on_startup_prob ) {
+            die "This is a requested crash of the Worker (with probability=$worker_crash_on_startup_prob)";
+        }
+    }
 
     my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
     die "Valley is not fully defined" unless ($meadow && $process_id && $meadow_host && $meadow_user);
