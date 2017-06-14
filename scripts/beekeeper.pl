@@ -84,6 +84,7 @@ sub main {
     $self->{'can_respecialize'}     = undef;
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_log_dir'}       = undef;
+    $self->{'worker_delay_startup_seconds'} = undef;
 
     # store all the options passed on the command line for registration
     # we re-create this a bit later, so that we can protect any passwords
@@ -119,15 +120,16 @@ sub main {
                'submission_options=s'           => \$submission_options,
 
                     # worker control
-               'job_limit=i'            => \$self->{'job_limit'},
-               'life_span|lifespan=i'   => \$self->{'life_span'},
-               'logic_name=s'           => \$self->{'logic_name'},
-               'analyses_pattern=s'     => \$self->{'analyses_pattern'},
-               'hive_log_dir|hive_output_dir=s'      => \$self->{'hive_log_dir'},
-               'retry_throwing_jobs=i'  => \$self->{'retry_throwing_jobs'},
-               'can_respecialize=i'     => \$self->{'can_respecialize'},
-               'debug=i'                => \$self->{'debug'},
-               'submit_log_dir=s'       => \$self->{'submit_log_dir'},
+               'job_limit=i'                    => \$self->{'job_limit'},
+               'life_span|lifespan=i'           => \$self->{'life_span'},
+               'logic_name=s'                   => \$self->{'logic_name'},
+               'analyses_pattern=s'             => \$self->{'analyses_pattern'},
+               'hive_log_dir|hive_output_dir=s' => \$self->{'hive_log_dir'},
+               'retry_throwing_jobs=i'          => \$self->{'retry_throwing_jobs'},
+               'can_respecialize=i'             => \$self->{'can_respecialize'},
+               'debug=i'                        => \$self->{'debug'},
+               'submit_log_dir=s'               => \$self->{'submit_log_dir'},
+               'worker_delay_startup_seconds=i' => \$self->{'worker_delay_startup_seconds'},
 
                     # other commands/options
                'h|help!'           => \$help,
@@ -426,7 +428,7 @@ sub generate_worker_cmd {
         exit(1);
     }
 
-    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'hive_log_dir', 'debug') {
+    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize', 'worker_delay_startup_seconds', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
@@ -767,15 +769,16 @@ __DATA__
 
 =head2 Worker control
 
-    -analyses_pattern <string>  : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
-    -can_respecialize <0|1>     : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
-    -force                      : run all workers with -force (see runWorker.pl)
-    -killworker <worker_id>     : kill worker by worker_id
-    -life_span <num>            : number of minutes each worker is allowed to run
-    -job_limit <num>            : #jobs to run before worker can die naturally
-    -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
-    -hive_log_dir <path>        : directory where stdout/stderr of the hive is redirected
-    -debug <debug_level>        : set debug level of the workers
+    -analyses_pattern <string>              : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
+    -can_respecialize <0|1>                 : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
+    -force                                  : run all workers with -force (see runWorker.pl)
+    -killworker <worker_id>                 : kill worker by worker_id
+    -life_span <num>                        : number of minutes each worker is allowed to run
+    -job_limit <num>                        : #jobs to run before worker can die naturally
+    -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
+    -hive_log_dir <path>                    : directory where stdout/stderr of the hive is redirected
+    -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+    -debug <debug_level>                    : set debug level of the workers
 
 =head2 Other commands/options
 

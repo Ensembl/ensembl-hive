@@ -25,7 +25,7 @@ main();
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
     my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);  # Task specification parameters
-    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize);   # Worker control parameters
+    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize, $worker_delay_startup_seconds);   # Worker control parameters
     my ($help, $report_versions, $debug);
 
     GetOptions(
@@ -57,6 +57,7 @@ sub main {
                'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
                'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
                'can_respecialize=i'         => \$can_respecialize,
+               'worker_delay_startup_seconds=i' => \$worker_delay_startup_seconds,
 
     # Other commands
                'h|help'                     => \$help,
@@ -127,9 +128,10 @@ sub main {
         beekeeper_id        => $beekeeper_id,
     );
     my %life_options = (
-        job_limit           => $job_limit,
-        life_span           => $life_span,
-        retry_throwing_jobs => $retry_throwing_jobs,
+        job_limit                       => $job_limit,
+        life_span                       => $life_span,
+        retry_throwing_jobs             => $retry_throwing_jobs,
+        worker_delay_startup_seconds    => $worker_delay_startup_seconds,
     );
     my %execution_options = (
         no_cleanup          => $no_cleanup,
@@ -197,14 +199,15 @@ __DATA__
 
 =head2 Worker control parameters:
 
-    -job_limit <num>            : #jobs to run before worker can die naturally
-    -life_span <num>            : number of minutes this worker is allowed to run
-    -no_cleanup                 : don't perform temp directory cleanup when worker exits
-    -no_write                   : don't write_output or auto_dataflow input_job
-    -hive_log_dir <path>        : directory where stdout/stderr of the whole hive of workers is redirected
-    -worker_log_dir <path>      : directory where stdout/stderr of this particular worker is redirected
-    -retry_throwing_jobs <0|1>  : if a job dies *knowingly*, should we retry it by default?
-    -can_respecialize <0|1>     : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
+    -job_limit <num>                        : #jobs to run before worker can die naturally
+    -life_span <num>                        : number of minutes this worker is allowed to run
+    -no_cleanup                             : don't perform temp directory cleanup when worker exits
+    -no_write                               : don't write_output or auto_dataflow input_job
+    -hive_log_dir <path>                    : directory where stdout/stderr of the whole hive of workers is redirected
+    -worker_log_dir <path>                  : directory where stdout/stderr of this particular worker is redirected
+    -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
+    -can_respecialize <0|1>                 : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
+    -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
 
 =head2 Other options:
 

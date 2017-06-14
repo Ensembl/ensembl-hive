@@ -113,9 +113,11 @@ sub create_new_worker {
     my %flags   = @_;
 
     my ($preregistered, $resource_class_id, $resource_class_name, $beekeeper_id,
-        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize)
+        $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize, $worker_delay_startup_seconds)
      = @flags{qw(-preregistered -resource_class_id -resource_class_name -beekeeper_id
-            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize)};
+            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize -worker_delay_startup_seconds)};
+
+    sleep( $worker_delay_startup_seconds // 0 );    # NB: undefined parameter would have caused eternal sleep!
 
     my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
     die "Valley is not fully defined" unless ($meadow && $process_id && $meadow_host && $meadow_user);

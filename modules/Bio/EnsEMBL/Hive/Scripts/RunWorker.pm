@@ -68,6 +68,7 @@ sub runWorker {
              -hive_log_dir          => $execution_options->{'hive_log_dir'},
              -retry_throwing_jobs   => $life_options->{'retry_throwing_jobs'},
              -can_respecialize      => $specialization_options->{'can_respecialize'},
+             -worker_delay_startup_seconds  => $life_options->{'worker_delay_startup_seconds'},
 
           # Other parameters:
              -debug                 => $execution_options->{'debug'},
