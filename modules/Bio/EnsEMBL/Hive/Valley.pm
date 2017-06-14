@@ -169,13 +169,13 @@ sub whereami {
 
 
 sub generate_limiters {
-    my ($self, $worker_statuses) = @_;
+    my ($self, $reconciled_worker_statuses) = @_;
 
     my $valley_running_worker_count             = 0;
     my %meadow_capacity_limiter_hashed_by_type  = ();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $this_worker_count   = scalar( @{ $worker_statuses->{ $meadow->signature }{ 'RUN' } || [] } );
+        my $this_worker_count   = scalar( @{ $reconciled_worker_statuses->{ $meadow->signature }{ 'RUN' } || [] } );
 
         $valley_running_worker_count                           += $this_worker_count;
 
@@ -192,39 +192,37 @@ sub generate_limiters {
 
 
 sub query_worker_statuses {
-    my ($self, $all_meadows_workers_deemed_alive) = @_;
+    my ($self, $db_registered_workers_from_all_meadows_deemed_alive) = @_;
 
-    my %worker_statuses            = ();
+    my %reconciled_worker_statuses  = ();
 
-    foreach my $meadow (@{ $self->get_available_meadow_list }) {
-        my $this_meadow_workers_deemed_alive    = $all_meadows_workers_deemed_alive->{$meadow->type}{$meadow->cached_name};
-        my $this_meadow_worker_status_list      = $meadow->status_of_all_our_workers( [keys %$this_meadow_workers_deemed_alive] );
-        my $meadow_signature                    = $meadow->signature;
-        $worker_statuses{ $meadow_signature }   = {};
+    foreach my $meadow (@{ $self->get_available_meadow_list }) {    # only go through the available meadows
+        my $db_registered_workers_this_meadow   = $db_registered_workers_from_all_meadows_deemed_alive->{$meadow->type}{$meadow->cached_name};
+        my $involved_users                      = [keys %$db_registered_workers_this_meadow];
+        my %meadow_seen_worker_status           = map { ( $_->[0] => $_->[2] ) } @{ $meadow->status_of_all_our_workers( $involved_users ) };
 
-        foreach my $vector (@$this_meadow_worker_status_list) {             # leaf though the Meadow-seen Workers
-            my ($worker_pid, $meadow_user, $status) = @$vector;
+        my $worker_statuses_of_this_meadow      = $reconciled_worker_statuses{ $meadow->signature } = {};   # manually vivify every Meadow's subhash
 
-            if( ($status eq 'RUN') and !$this_meadow_workers_deemed_alive->{$meadow_user}{$worker_pid}) {
-                $status = 'PEND';   # running on the Meadow but not in the database => manually scheduled & having hard time registering (db too busy ? registry too big ?)
+        while(my ($meadow_user, $db_user_subhash) = each %$db_registered_workers_this_meadow) { # start the reconciliation from the DB view and check it against Meadow view
+            while(my ($worker_pid, $db_worker_attribs) = each %$db_user_subhash) {
+                my $status = $meadow_seen_worker_status{$worker_pid} // $db_worker_attribs->{'status'};  # if the former is undef, the latter is most likely 'SUBMITTED'
+                push @{ $worker_statuses_of_this_meadow->{ $status } }, $worker_pid;
             }
-
-            push @{ $worker_statuses{ $meadow_signature }{ $status } }, $worker_pid;
         }
     }
-    return \%worker_statuses;
+    return \%reconciled_worker_statuses;
 }
 
 
 sub status_of_all_our_workers_by_meadow_signature {
-    my ($self, $worker_statuses) = @_;
+    my ($self, $reconciled_worker_statuses) = @_;
 
     my %signature_and_pid_to_worker_status = ();
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
         my $meadow_signature = $meadow->signature;
         $signature_and_pid_to_worker_status{ $meadow_signature } = {};
 
-        my $status_2_pid_list   = $worker_statuses->{ $meadow_signature };
+        my $status_2_pid_list   = $reconciled_worker_statuses->{ $meadow_signature };
         while(my ($status, $pid_list) = each %$status_2_pid_list) {
             $signature_and_pid_to_worker_status{$meadow_signature}{$_} = $status for @$pid_list;
         }

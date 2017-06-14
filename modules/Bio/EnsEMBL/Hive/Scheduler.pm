@@ -56,11 +56,11 @@ sub scheduler_say {
 sub schedule_workers_resync_if_necessary {
     my ($queen, $valley, $list_of_analyses) = @_;
 
-    my $worker_statuses                         = $valley->query_worker_statuses( $queen->registered_workers_and_resource_mapping );
+    my $reconciled_worker_statuses              = $valley->query_worker_statuses( $queen->registered_workers_attributes );
     my $submit_capacity                         = $valley->config_get('SubmitWorkersMax');
     my $default_meadow_type                     = $valley->get_default_meadow()->type;
     my ($valley_running_worker_count,
-        $meadow_capacity_limiter_hashed_by_type)= $valley->generate_limiters( $worker_statuses );
+        $meadow_capacity_limiter_hashed_by_type)= $valley->generate_limiters( $reconciled_worker_statuses );
 
     my ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
         = schedule_workers($queen, $submit_capacity, $default_meadow_type, $list_of_analyses, $meadow_capacity_limiter_hashed_by_type);

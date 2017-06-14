@@ -358,7 +358,7 @@ sub cached_resource_mapping {
 }
 
 
-sub registered_workers_and_resource_mapping {
+sub registered_workers_attributes {
     my $self = shift @_;
 
     return $self->fetch_all("status!='DEAD'", 1, ['meadow_type', 'meadow_name', 'meadow_user', 'process_id'], ['resource_class_id', 'status'] );
@@ -391,8 +391,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
-    my $worker_statuses                     = $valley->query_worker_statuses( $self->registered_workers_and_resource_mapping );
-    my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $worker_statuses );
+    my $reconciled_worker_statuses          = $valley->query_worker_statuses( $self->registered_workers_attributes );
+    my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $reconciled_worker_statuses );
 
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
