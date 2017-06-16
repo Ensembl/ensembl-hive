@@ -207,8 +207,7 @@ sub query_worker_statuses {
             while(my ($worker_pid, $db_worker_attribs) = each %$db_user_subhash) {
                 my $db_worker_status    = $db_worker_attribs->{'status'};
                 my $combined_status     = $meadow_seen_worker_status{$worker_pid}
-                                       // ( ($db_worker_status eq 'SUBMITTED' and $meadow->type eq 'LOCAL') ? 'LOST'
-                                          : ($db_worker_status=~/^(?:SUBMITTED|DEAD)$/) ? $db_worker_status : 'LOST' );
+                                       // ( ($db_worker_status=~/^(?:SUBMITTED|DEAD)$/) ? $db_worker_status : 'LOST' );
 
                 push @{ $worker_statuses_of_this_meadow->{ $combined_status } }, $worker_pid;
             }

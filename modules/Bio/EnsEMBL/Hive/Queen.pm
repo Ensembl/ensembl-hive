@@ -434,15 +434,14 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 }
             }
 
-            if($status eq 'LOST') {
-                $meadow_status_counts{$meadow_signature}{'LOST'}++;
+            $meadow_status_counts{$meadow_signature}{$status}++;
+
+            if(($status eq 'LOST') or ($status eq 'SUBMITTED')) {
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
             } else {  # can be RUN|PEND|xSUSP
-                $meadow_status_counts{$meadow_signature}{$status}++;
 
-                    # only prepare once at most:
-                $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );
+                $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );  # only prepare once at most
 
                 $update_when_seen_sth->execute( $worker->dbID );
             }
@@ -464,24 +463,37 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         if(my $lost_this_meadow = scalar(keys %$pid_to_lost_worker) ) {
             warn "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
 
-            my $report_entries = {};
+            my $report_entries;
 
             if($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
             }
 
-            warn "GarbageCollector:\tReleasing the jobs\n";
+            warn "GarbageCollector:\tRecording workers' missing attributes, registereing their death, releasing their jobs and cleaning up temp directories\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
-                $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
-                $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
-                $self->register_worker_death( $worker );
-                if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
-                    $valley->cleanup_left_temp_directory( $worker );
+                if(my $report_entry = $report_entries && $report_entries->{$process_id}) {
+                    my @updated_attribs = ();
+                    foreach my $worker_attrib ( qw(when_born meadow_host when_died cause_of_death) ) {
+                        if( defined( $report_entry->{$worker_attrib} ) ) {
+                            $worker->$worker_attrib( $report_entry->{$worker_attrib} );
+                            push @updated_attribs, $worker_attrib;
+                        }
+                    }
+                    $self->update( $worker, @updated_attribs ) if(scalar(@updated_attribs));
+                }
+
+                if( ($worker->status ne 'SUBMITTED')    # LOST
+                 || ($meadow_type eq 'LOCAL')           # SUBMITTED to LOCAL and disappeared => we consider them LOST
+                 || $worker->when_died ) {              # reported by Meadow as DEAD
+                    $self->register_worker_death( $worker );
+                    if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
+                        $valley->cleanup_left_temp_directory( $worker );
+                    }
                 }
             }
 
-            if( %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:
+            if( $report_entries && %$report_entries ) {    # use the opportunity to also store resource usage of the buried workers:
                 my $processid_2_workerid = { map { $_ => $pid_to_lost_worker->{$_}->dbID } keys %$pid_to_lost_worker };
                 $self->store_resource_usage( $report_entries, $processid_2_workerid );
             }
