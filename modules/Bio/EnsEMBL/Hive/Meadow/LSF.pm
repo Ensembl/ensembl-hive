@@ -41,7 +41,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '5.0';       # Semantic version of the Meadow interface:
+our $VERSION = '5.1';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
@@ -213,7 +213,7 @@ sub parse_report_source_line {
             my (@keys, @values);
             my $line_has_key_values = 0;
             foreach (@lines) {
-                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+(?:\[\d+\]\s+)?[Dd]ispatched to\s<([\w\-]+)>/ ) {
+                if( /^(\w+)\s+(\w+\s+\d+\s+\d+:\d+:\d+)(?:\s+(\d{4}))?:\s+(?:\[\d+\]\s+)?[Dd]ispatched to\s<([\w\-\.]+)>/ ) {
                     $when_born      = _convert_to_datetime($1, $2, $3);
                     $meadow_host    = $4;
                 }
