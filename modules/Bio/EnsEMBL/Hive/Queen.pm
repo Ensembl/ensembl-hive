@@ -428,23 +428,23 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                             warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
 
                             $meadow->kill_worker($worker, 1);
-                            $status = ''; # make it look like LOST
+                            $status = 'LOST';
                         }
                     }
                 }
             }
 
-            if($status) {  # can be RUN|PEND|xSUSP
+            if($status eq 'LOST') {
+                $meadow_status_counts{$meadow_signature}{'LOST'}++;
+
+                $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
+            } else {  # can be RUN|PEND|xSUSP
                 $meadow_status_counts{$meadow_signature}{$status}++;
 
                     # only prepare once at most:
                 $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );
 
                 $update_when_seen_sth->execute( $worker->dbID );
-            } else {
-                $meadow_status_counts{$meadow_signature}{'LOST'}++;
-
-                $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
             }
         } else {
             $meadow_status_counts{$meadow_signature}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
@@ -466,10 +466,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             my $report_entries = {};
 
-            if($this_meadow->can('find_out_causes')) {
-                die "Your Meadow::$meadow_type driver now has to support get_report_entries_for_process_ids() method instead of find_out_causes(). Please update it.\n";
-
-            } elsif ($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
+            if($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
             }
@@ -479,7 +476,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 $worker->when_died(         $report_entries->{$process_id}{'when_died'} );
                 $worker->cause_of_death(    $report_entries->{$process_id}{'cause_of_death'} );
                 $self->register_worker_death( $worker );
-                if ($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
+                if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
                     $valley->cleanup_left_temp_directory( $worker );
                 }
             }
@@ -610,11 +607,11 @@ sub fetch_overdue_workers {
 
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
-    my $constraint = "status!='DEAD' AND ".{
+    my $constraint = "status!='DEAD' AND (when_checked_in IS NULL OR ".{
             'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_checked_in)) > $overdue_secs",
             'sqlite'    =>  "(strftime('%s','now')-strftime('%s',when_checked_in)) > $overdue_secs",
             'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_checked_in) > $overdue_secs",
-        }->{ $self->dbc->driver };
+        }->{ $self->dbc->driver }.' )';
 
     return $self->fetch_all( $constraint );
 }

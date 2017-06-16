@@ -205,8 +205,12 @@ sub query_worker_statuses {
 
         while(my ($meadow_user, $db_user_subhash) = each %$db_registered_workers_this_meadow) { # start the reconciliation from the DB view and check it against Meadow view
             while(my ($worker_pid, $db_worker_attribs) = each %$db_user_subhash) {
-                my $status = $meadow_seen_worker_status{$worker_pid} // $db_worker_attribs->{'status'};  # if the former is undef, the latter is most likely 'SUBMITTED'
-                push @{ $worker_statuses_of_this_meadow->{ $status } }, $worker_pid;
+                my $db_worker_status    = $db_worker_attribs->{'status'};
+                my $combined_status     = $meadow_seen_worker_status{$worker_pid}
+                                       // ( ($db_worker_status eq 'SUBMITTED' and $meadow->type eq 'LOCAL') ? 'LOST'
+                                          : ($db_worker_status=~/^(?:SUBMITTED|DEAD)$/) ? $db_worker_status : 'LOST' );
+
+                push @{ $worker_statuses_of_this_meadow->{ $combined_status } }, $worker_pid;
             }
         }
     }
