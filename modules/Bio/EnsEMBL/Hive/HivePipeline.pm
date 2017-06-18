@@ -478,17 +478,18 @@ sub apply_tweaks {
             } else {
                 $need_write = 1;
                 my $new_value = destringify( $new_value_str );
+                $new_value_str = stringify($new_value);
 
                 if($hash_pair) {
                     print "Tweak.Changing\tpipeline.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
 
-                    $hash_pair->{'param_value'} = stringify($new_value);
+                    $hash_pair->{'param_value'} = $new_value_str;
                 } else {
                     print "Tweak.Adding  \tpipeline.param[$param_name] ::\t(missing value) --> $new_value_str\n";
 
                     $self->add_new_or_update( 'PipelineWideParameters',
                         'param_name'    => $param_name,
-                        'param_value'   => stringify($new_value),
+                        'param_value'   => $new_value_str,
                     );
                 }
             }
@@ -519,6 +520,7 @@ sub apply_tweaks {
             print "Tweak.Found   \t".scalar(@$analyses)." analyses matching the pattern '$analyses_pattern'\n";
 
             my $new_value = destringify( $new_value_str );
+            $new_value_str = stringify( $new_value );
 
             foreach my $analysis (@$analyses) {
                 my $analysis_name = $analysis->logic_name;
