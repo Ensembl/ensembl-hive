@@ -361,7 +361,7 @@ while (<SQLFILE>) {
         add_column_index("$1",$3,$2);
         next;
       }
-      elsif ($doc =~ /^\s*(key)\s+\((.+)\)/i) { # Keys
+      elsif ($doc =~ /^\s*(key|index)\s+\((.+)\)/i) { # Keys
         add_column_index("$1",$2);
         next;
       }
