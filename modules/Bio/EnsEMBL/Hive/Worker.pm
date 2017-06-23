@@ -899,9 +899,9 @@ sub temp_directory_name {
     my $self = shift @_;
 
     if ($self->adaptor) {
-        return sprintf('/tmp/worker_%s_%s.%s', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
+        return sprintf('/tmp/worker_%s_%s.%s/', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
     } else {
-        return sprintf('/tmp/worker_%s.standalone.%s', $self->meadow_user, $self->process_id);
+        return sprintf('/tmp/worker_%s.standalone.%s/', $self->meadow_user, $self->process_id);
     }
 }
 
