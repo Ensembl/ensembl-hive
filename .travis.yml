@@ -34,6 +34,9 @@ before_install:
     - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - java -version
     - ant -version
+    - mysql --version
+    - sqlite3 --version
+    - psql --version
     - env
     - cd wrappers/java
     - ant clean jar
