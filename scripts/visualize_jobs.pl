@@ -108,7 +108,7 @@ sub main {
                                 ? $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
                                 : find_the_top( $job_adaptor->fetch_all_by_prev_job_id( undef ) );  # scan from seed_jobs to start_analysis//top
 
-        foreach my $start_job ( @$start_jobs ) {
+        foreach my $start_job ( sort {$a->dbID <=> $b->dbID} @$start_jobs ) {
             my $job_node_name   = add_job_node( $start_job );
         }
 
@@ -323,7 +323,7 @@ sub add_job_node {
 
 
             my $children = $job->adaptor->fetch_all_by_prev_job_id( $job_id );
-            foreach my $child_job ( @$children ) {
+            foreach my $child_job ( sort {$a->dbID <=> $b->dbID} @$children ) {
                 my $child_node_name = add_job_node( $child_job );
 
                 my $child_can_be_controlled = $child_job->fetch_local_blocking_semaphore;
@@ -408,7 +408,7 @@ sub draw_semaphore_and_accu {
                     ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
                     : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
 
-                foreach my $accu_vector ( @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                foreach my $accu_vector ( sort {$a->[2] <=> $b->[2]} @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
                     my ($key_signature, $value, $sending_job_id) = @$accu_vector;
                     $sending_job_id //= 0;
 
