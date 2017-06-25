@@ -38,12 +38,14 @@ package Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use strict;
 use warnings;
 
+use File::Glob qw(bsd_glob);
+
 sub find_all_sql_schema_patches {
 
     my %all_patches = ();
 
     if(my $hive_root_dir = $ENV{'EHIVE_ROOT_DIR'} ) {
-        foreach my $patch_path ( split(/\n/, `ls -1 $hive_root_dir/sql/patch_20*.*`) ) {
+        foreach my $patch_path ( glob "$hive_root_dir/sql/patch_20*.*" ) {
             my ($patch_name, $driver) = ($patch_path=~/^(.+)\.(\w+)$/);
 
             $driver = 'mysql' if ($driver eq 'sql');    # for backwards compatibility
