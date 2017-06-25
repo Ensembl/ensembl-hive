@@ -94,7 +94,7 @@ sub status_of_all_our_workers { # returns an arrayref
 
         # Exclude workers from other pipelines
         if (join(' ', @job_name) =~ / EHIVE_SUBMISSION_NAME=(\S+)/) {
-            if ($1 ne $job_name_prefix) {
+            unless ($1 =~ /^$job_name_prefix/) {
                 next;
             }
         }
