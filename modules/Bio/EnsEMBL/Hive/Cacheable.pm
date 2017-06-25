@@ -77,7 +77,16 @@ sub relative_display_name {
 
     my $my_pipeline = $self->hive_pipeline;
     my $my_dba      = $my_pipeline && $my_pipeline->hive_dba;
-    return ( ($my_dba and !$self->is_local_to($ref_pipeline) ) ? $my_dba->dbc->dbname . '/' : '' ) . $self->display_name;
+
+    if ($my_dba and !$self->is_local_to($ref_pipeline)) {
+        if (($my_dba->dbc->driver eq 'sqlite') and ($my_dba->dbc->dbname =~ /([^\/]*)$/)) {
+            return $1 . '/' . $self->display_name;
+        } else {
+            return $my_dba->dbc->dbname . '/' . $self->display_name;
+        }
+    } else {
+        return $self->display_name;
+    }
 }
 
 
