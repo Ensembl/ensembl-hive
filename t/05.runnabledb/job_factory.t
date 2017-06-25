@@ -264,7 +264,8 @@ my $dbc = make_new_db_from_sqls(
     $test_url,
     [
         'CREATE TABLE params (param_key VARCHAR(15), param_value INT)',
-        "INSERT INTO params VALUES ('$k1', $v1), ('$k2', $v2)"
+        "INSERT INTO params VALUES ('$k1', $v1)",
+        "INSERT INTO params VALUES ('$k2', $v2)"
     ],
     'Dummy database with a single table and two rows'
 );
