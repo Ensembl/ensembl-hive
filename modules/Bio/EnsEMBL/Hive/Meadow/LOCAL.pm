@@ -109,8 +109,7 @@ sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
     my $wpid = $worker->process_id();
-    my $cmd = qq{ps x | grep $wpid | grep -v 'grep $wpid'};
-    my $is_alive_and_mine = qx/$cmd/;
+    my $is_alive_and_mine = kill 0, $wpid;
 
     return $is_alive_and_mine;
 }
