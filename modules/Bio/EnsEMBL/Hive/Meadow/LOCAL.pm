@@ -63,10 +63,8 @@ sub deregister_local_process {}   # Nothing to do
 sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;
 
-    my $job_name_prefix = $self->job_name_prefix();
-
         # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
-    return sprintf(q{ps ex -o state,user,pid,command -w -w | grep 'EHIVE_SUBMISSION_NAME=%s' | awk '(/runWorker.pl/ && ($4 ~ /perl$/) )'}, $job_name_prefix);
+    return q{ps ex -o state,user,pid,command -w -w | awk '(/runWorker.pl/ && ($4 ~ /perl$/) )'};
 }
 
 
@@ -74,6 +72,7 @@ sub status_of_all_our_workers { # returns an arrayref
     my ($self) = @_;
 
     my $cmd = $self->_command_line_to_extract_all_running_workers;
+    my $job_name_prefix = $self->job_name_prefix();
 
     my @status_list = ();
     foreach my $line (`$cmd`) {
@@ -92,6 +91,13 @@ sub status_of_all_our_workers { # returns an arrayref
         }->{ substr($pre_status,0,1) }; # only take the first character because of Mac's additional modifiers
 
         # Note: you can locally 'kill -19' a worker to suspend it and 'kill -18' a worker to resume it
+
+        # Exclude workers from other pipelines
+        if (join(' ', @job_name) =~ / EHIVE_SUBMISSION_NAME=(\S+)/) {
+            if ($1 ne $job_name_prefix) {
+                next;
+            }
+        }
 
         push @status_list, [$worker_pid, $meadow_user, $status];
     }
