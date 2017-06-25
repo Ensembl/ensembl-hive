@@ -542,6 +542,7 @@ sub get_test_urls {
 
     ## Use the default database name if needed, and append the tag (if given)
     $parsed_url->{'dbname'} ||= $constructed_db_name;
+    $parsed_url->{'dbname'} .= $constructed_db_name if ($parsed_url->{'driver'} eq 'sqlite') && ($parsed_url->{'dbname'} =~ /\/$/);
     $parsed_url->{'dbname'} .= '_'.$args{-tag} if defined $args{-tag};
 
     my $final_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
