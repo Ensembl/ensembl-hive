@@ -67,6 +67,11 @@ foreach my $url ($client_url, $server_url) {
             sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
     }
 
+    # In case workers are still alive
+    while ($hive_dba->get_WorkerAdaptor->count_all("status != 'DEAD'")) {
+        sleep(1);
+    }
+
     $hive_dba->dbc->disconnect_if_idle();
     run_sql_on_db($url, 'DROP DATABASE');
 }
