@@ -56,6 +56,7 @@ sub loaded_meadow_drivers {
     unless( $_loaded_meadow_drivers ) {
         foreach my $meadow_class (@{ $_loaded_meadow_drivers = Bio::EnsEMBL::Hive::Utils::find_submodules( meadow_class_path() ) }) {
             eval "require $meadow_class";
+            die $@ if($@);          # Even if the Meadow is unavailable, we still expect all the drivers that are in the path to compile correctly.
         }
     }
     return $_loaded_meadow_drivers;
