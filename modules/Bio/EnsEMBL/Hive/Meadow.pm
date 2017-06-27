@@ -364,8 +364,13 @@ sub submit_workers_return_meadow_pids {
 
 sub run_on_host {
     my ($self, $meadow_host, $meadow_user, $command) = @_;
+    # By default we trust the network, but this can be switched off in the config file
     my @extra_args = $self->config_get('StrictHostKeyChecking') ? () : qw(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null);
-    return system('ssh', @extra_args, '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=30', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
+    # Several hard-coded parameters here:
+    # - BatchMode=yes disables human interaction (no password asked)
+    # - ServerAliveInterval=30 tells ssh that the server must answer within 30 seconds
+    # - timeout 3m means that the whole command must complete within 3 minutes
+    return system('timeout', '3m', 'ssh', @extra_args, '-o', 'BatchMode=yes', '-o', 'ServerAliveInterval=30', sprintf('%s@%s', $meadow_user, $meadow_host), @$command);
 }
 
 1;
