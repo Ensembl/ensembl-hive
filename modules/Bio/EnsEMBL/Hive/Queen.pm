@@ -522,8 +522,10 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                     $worker->cause_of_death('LIMBO') if( ($worker->status eq 'SUBMITTED') and !$worker->cause_of_death);    # LIMBO cause_of_death means: found in SUBMITTED state, exceeded the timeout, Meadow did not tell us more
 
                     $self->register_worker_death( $worker );
-                    if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
-                        $valley->cleanup_left_temp_directory( $worker );
+
+                    if( ($worker->status eq 'LOST')                 # There is no worker_temp_directory before specialization
+                    and ($worker->meadow_user eq $ENV{'USER'}) ) {  # if I'm actually allowed to kill the worker...
+                            $valley->cleanup_left_temp_directory( $worker );
                     }
                 }
             }
