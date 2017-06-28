@@ -79,9 +79,6 @@ use Bio::EnsEMBL::Hive::Worker;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
-my $max_limbo_seconds   = 30;   # FIXME: should become a tunable parameter
-
-
 sub default_table_name {
     return 'worker';
 }
@@ -108,6 +105,20 @@ sub do_not_update_columns {
 
 sub object_class {
     return 'Bio::EnsEMBL::Hive::Worker';
+}
+
+
+############################
+#
+# Queen attributes
+#
+############################
+
+
+sub max_limbo_seconds {
+    my $self = shift;
+    $self->{'_max_limbo_seconds'} = shift if(@_);
+    return $self->{'_max_limbo_seconds'};
 }
 
 
@@ -505,8 +516,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 }
 
                 if( ($worker->status eq 'LOST')
-                 || $worker->when_died                                                  # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
-                 || ($worker->seconds_since_when_submitted > $max_limbo_seconds) ) {    # SUBMITTED and waited in limbo (not yet registered) for too long => we consider them LOST
+                 || $worker->when_died                                                      # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
+                 || ($worker->seconds_since_when_submitted > $self->max_limbo_seconds) ) {  # SUBMITTED and waited in limbo (not yet registered) for too long => we consider them LOST
 
                     $worker->cause_of_death('LIMBO') if( ($worker->status eq 'SUBMITTED') and !$worker->cause_of_death);    # LIMBO cause_of_death means: found in SUBMITTED state, exceeded the timeout, Meadow did not tell us more
 
