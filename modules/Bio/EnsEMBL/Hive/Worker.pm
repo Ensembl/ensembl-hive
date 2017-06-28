@@ -182,6 +182,13 @@ sub when_submitted {
 }
 
 
+sub seconds_since_when_submitted {
+    my $self = shift;
+    $self->{'_seconds_since_when_submitted'} = shift if(@_);
+    return $self->{'_seconds_since_when_submitted'};
+}
+
+
 sub when_born {
     my $self = shift;
     $self->{'_when_born'} = shift if(@_);

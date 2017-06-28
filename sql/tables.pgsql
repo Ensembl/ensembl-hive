@@ -515,7 +515,6 @@ CREATE INDEX ON analysis_data (md5sum);
 @column log_dir             if defined, a filesystem directory where this Worker's output is logged
 */
 
-CREATE TYPE worker_cod AS ENUM ('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN');
 CREATE TABLE worker (
     worker_id               SERIAL PRIMARY KEY,
     meadow_type             VARCHAR(255) NOT NULL,
@@ -532,7 +531,7 @@ CREATE TABLE worker (
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
-    cause_of_death          VARCHAR(255)         DEFAULT NULL,      -- expected values: 'NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN'
+    cause_of_death          VARCHAR(255)         DEFAULT NULL,      -- expected values: 'NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'LIMBO', 'UNKNOWN'
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX ON worker (meadow_type, meadow_name, process_id);

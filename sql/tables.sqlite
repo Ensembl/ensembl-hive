@@ -512,7 +512,7 @@ CREATE TABLE worker (
     when_checked_in         TIMESTAMP            DEFAULT NULL,
     when_seen               TIMESTAMP            DEFAULT NULL,
     when_died               TIMESTAMP            DEFAULT NULL,
-    cause_of_death          VARCHAR(255)         DEFAULT NULL, /* enum('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'UNKNOWN') DEFAULT NULL */
+    cause_of_death          VARCHAR(255)         DEFAULT NULL, /* enum('NO_ROLE', 'NO_WORK', 'JOB_LIMIT', 'HIVE_OVERLOAD', 'LIFESPAN', 'CONTAMINATED', 'RELOCATED', 'KILLED_BY_USER', 'MEMLIMIT', 'RUNLIMIT', 'SEE_MSG', 'LIMBO', 'UNKNOWN') DEFAULT NULL */
     log_dir                 VARCHAR(255)         DEFAULT NULL
 );
 CREATE INDEX worker_meadow_type_meadow_name_process_id_idx ON worker (meadow_type, meadow_name, process_id);

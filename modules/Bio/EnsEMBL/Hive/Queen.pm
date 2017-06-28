@@ -79,10 +79,31 @@ use Bio::EnsEMBL::Hive::Worker;
 
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
+my $max_limbo_seconds   = 30;   # FIXME: should become a tunable parameter
+
 
 sub default_table_name {
     return 'worker';
 }
+
+
+sub default_input_column_mapping {
+    my $self    = shift @_;
+    my $driver  = $self->dbc->driver();
+    return  {
+        'when_submitted' => {
+                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_submitted) seconds_since_when_submitted ",
+                            'sqlite'    => "strftime('%s','now')-strftime('%s',when_submitted) seconds_since_when_submitted ",
+                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_submitted) seconds_since_when_submitted ",
+        }->{$driver},
+    };
+}
+
+
+sub do_not_update_columns {
+    return ['when_submitted'];
+}
+
 
 
 sub object_class {
@@ -483,9 +504,12 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                     $self->update( $worker, @updated_attribs ) if(scalar(@updated_attribs));
                 }
 
-                if( ($worker->status ne 'SUBMITTED')    # LOST
-                 || ($meadow_type eq 'LOCAL')           # SUBMITTED to LOCAL and disappeared => we consider them LOST
-                 || $worker->when_died ) {              # reported by Meadow as DEAD
+                if( ($worker->status eq 'LOST')
+                 || $worker->when_died                                                  # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
+                 || ($worker->seconds_since_when_submitted > $max_limbo_seconds) ) {    # SUBMITTED and waited in limbo (not yet registered) for too long => we consider them LOST
+
+                    $worker->cause_of_death('LIMBO') if( ($worker->status eq 'SUBMITTED') and !$worker->cause_of_death);    # LIMBO cause_of_death means: found in SUBMITTED state, exceeded the timeout, Meadow did not tell us more
+
                     $self->register_worker_death( $worker );
                     if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
                         $valley->cleanup_left_temp_directory( $worker );
@@ -890,7 +914,7 @@ sub interval_workers_with_unknown_usage {
     my %meadow_to_interval = ();
 
     my $sql_times = qq{
-        SELECT meadow_type, meadow_name, min(when_submitted), ifnull(max(when_died), max(when_submitted)), count(*)
+        SELECT meadow_type, meadow_name, MIN(when_submitted), IFNULL(max(when_died), MAX(when_submitted)), COUNT(*)
         FROM worker w
         LEFT JOIN worker_resource_usage u USING(worker_id)
         WHERE u.worker_id IS NULL
