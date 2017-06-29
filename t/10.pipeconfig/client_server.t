@@ -22,7 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die safe_drop_database);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -67,13 +67,7 @@ foreach my $url ($client_url, $server_url) {
             sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
     }
 
-    # In case workers are still alive
-    while ($hive_dba->get_WorkerAdaptor->count_all("status != 'DEAD'")) {
-        sleep(1);
-    }
-
-    $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($url, 'DROP DATABASE');
+    safe_drop_database( $hive_dba );
 }
 
 done_testing();

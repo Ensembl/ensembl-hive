@@ -23,7 +23,7 @@ use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die safe_drop_database);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -102,8 +102,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
         my $beekeeper_options_string = join(' ', '-url', $hive_dba->dbc->url('EHIVE_PASS'), @beekeeper_options);
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
-        $hive_dba->dbc->disconnect_if_idle();
-        run_sql_on_db($pipeline_url, 'DROP DATABASE');
+        safe_drop_database( $hive_dba );
 }
 
 }

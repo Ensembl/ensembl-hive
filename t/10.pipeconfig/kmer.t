@@ -24,7 +24,7 @@ use Data::Dumper;
 use File::Temp qw{tempdir};
 
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die run_sql_on_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker get_test_url_or_die safe_drop_database);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -138,8 +138,8 @@ my $pipeline_url = get_test_url_or_die();
 	ok ( 520 == $total_kmers,
 	     sprintf("%f kmers found in input FASTQ file", , $total_kmers));
       }
-      $hive_dba->dbc->disconnect_if_idle();
-      run_sql_on_db($pipeline_url, 'DROP DATABASE');
+
+      safe_drop_database( $hive_dba );
     }
   }
 

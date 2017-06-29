@@ -26,7 +26,7 @@ use Test::More;
 use Data::Dumper;
 
 use Bio::EnsEMBL::Hive::Utils ('find_submodules');
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper seed_pipeline get_test_urls run_sql_on_db);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper seed_pipeline get_test_urls safe_drop_database);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -81,13 +81,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
                 sprintf("%s*%s=%s", $_->{'a_multiplier'}, $_->{'b_multiplier'}, $_->{'result'}) );
         }
 
-        # In case workers are still alive
-        while ($hive_dba->get_WorkerAdaptor->count_all("status != 'DEAD'")) {
-            sleep(1);
-        }
-
-        $hive_dba->dbc->disconnect_if_idle();
-        run_sql_on_db($pipeline_url, 'DROP DATABASE');
+        safe_drop_database( $hive_dba );
     }
 }
 

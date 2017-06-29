@@ -45,7 +45,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db );
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database);
 
 our $VERSION = '0.00';
 
@@ -572,5 +572,31 @@ sub get_test_url_or_die {
     croak "No test databases are available" unless scalar(@$list_of_urls);
     return (sort @$list_of_urls)[0];
 }
+
+
+=head2 safe_drop_database
+
+  Arg[1]      : DBAdaptor $hive_dba
+  Example     : safe_drop_database( $hive_dba );
+  Description : Wait for all workers to complete, disconnect from the database and drop it.
+  Returntype  : None
+  Caller      : test scripts
+
+=cut
+
+sub safe_drop_database {
+    my $hive_dba = shift;
+
+        # In case workers are still alive:
+    my $worker_adaptor = $hive_dba->get_WorkerAdaptor;
+    while( $worker_adaptor->count_all("status != 'DEAD'") ) {
+        sleep(1);
+    }
+
+    my $dbc = $hive_dba->dbc;
+    $dbc->disconnect_if_idle();
+    run_sql_on_db($dbc->url, 'DROP DATABASE');
+}
+
 
 1;
