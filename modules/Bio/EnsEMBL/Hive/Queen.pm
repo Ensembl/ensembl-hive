@@ -166,11 +166,21 @@ sub create_new_worker {
 
     if($preregistered) {
 
-        my $sec = 1;
+        my $max_registration_seconds    = $meadow->config_get('MaxRegistrationSeconds');
+        my $seconds_waited              = 0;
+        my $seconds_more                = 5;    # step increment
+
         until( $worker = $self->fetch_preregistered_worker($meadow_type, $meadow_name, $process_id) ) {
-            $self->db->get_LogMessageAdaptor->store_hive_message("Preregistered Worker $meadow_type/$meadow_name:$process_id waiting $sec more seconds to fetch itself...", 'WORKER_CAUTION' );
-            sleep($sec);
-            $sec *= 2;
+            my $log_message_adaptor = $self->db->get_LogMessageAdaptor;
+            if( defined($max_registration_seconds) and ($seconds_waited > $max_registration_seconds) ) {
+                my $msg = "Preregistered Worker $meadow_type/$meadow_name:$process_id timed out waiting to occupy its entry, bailing out";
+                $log_message_adaptor->store_hive_message($msg, 'WORKER_ERROR' );
+                die $msg;
+            } else {
+                $log_message_adaptor->store_hive_message("Preregistered Worker $meadow_type/$meadow_name:$process_id waiting $seconds_more more seconds to fetch itself...", 'WORKER_CAUTION' );
+                sleep($seconds_more);
+                $seconds_waited += $seconds_more;
+            }
         }
 
             # only update the fields that were not available at the time of submission:
