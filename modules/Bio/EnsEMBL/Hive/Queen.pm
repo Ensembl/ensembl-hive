@@ -71,6 +71,7 @@ use warnings;
 use File::Path 'make_path';
 use List::Util qw(max);
 
+use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
@@ -145,7 +146,8 @@ sub create_new_worker {
         }
     }
 
-    my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new()->whereami();
+    my $default_config = Bio::EnsEMBL::Hive::Utils::Config->new();  # FIXME: pass @config_files from beekeeper over the command line arguments and use them in Utils::Config->new(...)
+    my ($meadow, $process_id, $meadow_host, $meadow_user) = Bio::EnsEMBL::Hive::Valley->new( $default_config )->whereami();
     die "Valley is not fully defined" unless ($meadow && $process_id && $meadow_host && $meadow_user);
     my $meadow_type = $meadow->type;
     my $meadow_name = $meadow->cached_name;
