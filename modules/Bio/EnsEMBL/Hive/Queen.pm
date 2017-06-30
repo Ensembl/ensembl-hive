@@ -110,20 +110,6 @@ sub object_class {
 
 ############################
 #
-# Queen attributes
-#
-############################
-
-
-sub max_limbo_seconds {
-    my $self = shift;
-    $self->{'_max_limbo_seconds'} = shift if(@_);
-    return $self->{'_max_limbo_seconds'};
-}
-
-
-############################
-#
 # PUBLIC API
 #
 ############################
@@ -515,9 +501,12 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                     $self->update( $worker, @updated_attribs ) if(scalar(@updated_attribs));
                 }
 
+                my $max_limbo_seconds = $this_meadow->config_get('MaxLimboSeconds') // 0;   # The maximum time for a Meadow to start showing the Worker (even in PEND state) after submission.
+                                                                                            # We use it as a timeout for burying SUBMITTED and Meadow-invisible entries in the 'worker' table.
+
                 if( ($worker->status eq 'LOST')
                  || $worker->when_died                                                      # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
-                 || ($worker->seconds_since_when_submitted > $self->max_limbo_seconds) ) {  # SUBMITTED and waited in limbo (not yet registered) for too long => we consider them LOST
+                 || ($worker->seconds_since_when_submitted > $max_limbo_seconds) ) {        # SUBMITTED and Meadow-invisible for too long => we consider them LOST
 
                     $worker->cause_of_death('LIMBO') if( ($worker->status eq 'SUBMITTED') and !$worker->cause_of_death);    # LIMBO cause_of_death means: found in SUBMITTED state, exceeded the timeout, Meadow did not tell us more
 

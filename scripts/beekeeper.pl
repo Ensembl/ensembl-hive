@@ -86,7 +86,6 @@ sub main {
     $self->{'submit_log_dir'}       = undef;
     $self->{'worker_delay_startup_seconds'} = undef;
     $self->{'worker_crash_on_startup_prob'} = undef;
-    $self->{'max_limbo_seconds'}    = 30;
 
     # store all the options passed on the command line for registration
     # we re-create this a bit later, so that we can protect any passwords
@@ -133,9 +132,6 @@ sub main {
                'submit_log_dir=s'               => \$self->{'submit_log_dir'},
                'worker_delay_startup_seconds=i' => \$self->{'worker_delay_startup_seconds'},
                'worker_crash_on_startup_prob=f' => \$self->{'worker_crash_on_startup_prob'},
-
-                    # queen attributes:
-               'max_limbo_seconds=i'            => \$self->{'max_limbo_seconds'},
 
                     # other commands/options
                'h|help!'           => \$help,
@@ -267,10 +263,6 @@ sub main {
     $default_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
     my $queen = $self->{'dba'}->get_Queen;
-
-    foreach my $queen_attrib (qw(max_limbo_seconds)) {
-        $queen->$queen_attrib( $self->{$queen_attrib} ) if defined($self->{$queen_attrib});
-    }
 
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
@@ -790,7 +782,6 @@ __DATA__
     -hive_log_dir <path>                    : directory where stdout/stderr of the hive is redirected
     -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
     -worker_crash_on_startup_prob <float>   : probability of each worker failing at startup (0 by default, useful for debugging)
-    -max_limbo_seconds <number>             : timeout for dumb Meadows for burying Workers that stay in SUBMITTED state for too long and are therefore considered LOST
     -debug <debug_level>                    : set debug level of the workers
 
 =head2 Other commands/options
