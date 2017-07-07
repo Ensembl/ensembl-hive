@@ -30,7 +30,7 @@ main();
 
 
 sub main {
-    $| = 1;
+    $|=1;   # make STDOUT unbuffered (STDERR is unbuffered anyway)
 
         # ok this is a hack, but I'm going to pretend I've got an object here
         # by creating a hash ref and passing it around like an object

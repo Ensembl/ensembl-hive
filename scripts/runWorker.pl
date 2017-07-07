@@ -29,6 +29,8 @@ sub main {
         $worker_delay_startup_seconds, $worker_crash_on_startup_prob);
     my ($help, $report_versions, $debug);
 
+    $|=1;   # make STDOUT unbuffered (STDERR is unbuffered anyway)
+
     GetOptions(
 
     # Connection parameters:
