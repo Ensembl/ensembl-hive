@@ -19,7 +19,10 @@
 use strict;
 use warnings;
 
-use Cwd;
+use Cwd            ();
+use File::Basename ();
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+
 use File::Basename;
 use Test::More;
 use Data::Dumper;
@@ -33,7 +36,7 @@ SKIP: {
     skip "Bioperl not installed", 2 if $@;
 
 # Where the Fasta file should be
-my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
+my $inputfile = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
 my $original = chdir $dir;

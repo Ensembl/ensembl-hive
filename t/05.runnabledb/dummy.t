@@ -19,6 +19,10 @@
 use strict;
 use warnings;
 
+use Cwd            ();
+use File::Basename ();
+$ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+
 use Test::More;
 use Time::HiRes qw(time);
 

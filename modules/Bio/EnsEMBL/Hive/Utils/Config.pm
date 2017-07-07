@@ -34,10 +34,14 @@ package Bio::EnsEMBL::Hive::Utils::Config;
 use strict;
 use warnings;
 use JSON;
+use Bio::EnsEMBL::Hive::Utils ('throw');
 
 
 sub default_system_config {
-    return $ENV{'EHIVE_ROOT_DIR'}.'/hive_config.json';
+    my $ehive_root_dir = $ENV{'EHIVE_ROOT_DIR'}
+        or throw("ENV{EHIVE_ROOT_DIR} is not defined");
+
+    return $ehive_root_dir.'/hive_config.json';
 }
 
 
