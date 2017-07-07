@@ -33,6 +33,7 @@ package Bio::EnsEMBL::Hive::Meadow::LOCAL;
 
 use strict;
 use warnings;
+use Cwd ('cwd');
 use Sys::Hostname;
 use Proc::Daemon;
 
@@ -134,6 +135,7 @@ sub submit_workers_return_meadow_pids {
 
         my $child_pid = Proc::Daemon::Init( {
             $submit_log_subdir ? (
+                work_dir     => cwd(),
                 child_STDOUT => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.out",
                 child_STDERR => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.err",
             ) : (),     # both STD streams are sent to /dev/null by default
