@@ -125,6 +125,8 @@ sub kill_worker {
 sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
+    my @worker_cmd_components = split_for_bash($worker_cmd);  # FIXME: change the interface so that $worker_cmd itself is passed in as ARRAYref
+
     my $job_name = $self->job_array_common_name($rc_name, $iteration);
     $ENV{EHIVE_SUBMISSION_NAME} = $job_name;
 
