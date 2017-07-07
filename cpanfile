@@ -7,7 +7,6 @@ requires 'Capture::Tiny';
 requires 'DateTime';
 requires 'HTML::Entities';
 requires 'JSON';
-requires 'Proc::Daemon';
 
 on 'test' => sub {
 	requires 'Test::Exception';
