@@ -10,8 +10,6 @@
 
 FROM ubuntu:16.04
 
-RUN mkdir /repo
-
 RUN apt-get update -y \
  && apt-get install git build-essential curl sqlite3 mysql-client libmariadb-client-lgpl-dev libpq-dev libexpat1-dev graphviz -y \
  && apt-get install netcat.openbsd vim perl-doc -y \
@@ -23,9 +21,7 @@ RUN ln -s /usr/bin/mariadb_config /usr/bin/mysql_config
 
 RUN curl -L https://cpanmin.us | perl - App::cpanminus
 
-RUN cd /repo ; git clone https://github.com/Ensembl/ensembl-hive.git
-
-RUN cd /repo/ensembl-hive ; git checkout master
+RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
 
 RUN cpanm --installdeps --with-recommends /repo/ensembl-hive
 
