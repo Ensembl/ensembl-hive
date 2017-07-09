@@ -13,7 +13,7 @@ Checklist to release a new eHive version
 
 6. git checkout -b version/x.y
 
-7. On the "version/x.y" branch in README.md file substitute the occurences of "master" in the URLs by "version/x.y" (for rawgit) and commit it.
+7. On the "version/x.y" branch in README.md file substitute the occurences of "master" in the URLs by "version/x.y" (for rawgit) and commit it. Do the same in docker/Dockerfile
 
 8. git checkout master
 
