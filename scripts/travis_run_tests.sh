@@ -21,10 +21,8 @@ export TEST_AUTHOR=$USER
 COVERALLS="false"
 
 if [ "$PERLBREW_PERL" = '5.10' ]; then
-  if [[ "$EHIVE_TEST_PIPELINE_URLS" == mysql* ]]; then
     echo "Testing with Coveralls"
     COVERALLS="true"
-  fi
 fi
 
 echo "Running test suite"
@@ -37,8 +35,11 @@ fi
 rt=$?
 if [ $rt -eq 0 ]; then
   if [ "$COVERALLS" = 'true' ]; then
-    echo "Running Devel::Cover coveralls report"
-    cover --nosummary -report coveralls
+    echo "Running Devel::Cover report"
+    if [[ "$EHIVE_TEST_PIPELINE_URLS" == mysql* ]]; then
+      # Coveralls only supports 1 report
+      cover --nosummary -report coveralls
+    fi
     cover --nosummary -report codecov
   fi
   exit $?
