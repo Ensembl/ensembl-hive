@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Bio::EnsEMBL::Hive::Utils qw(whoami);
 use Bio::EnsEMBL::Hive::Utils::Test qw(get_test_urls);
 
 BEGIN {
@@ -55,13 +56,13 @@ like($$urls[0], qr/^sqlite:\/\/\/.*_TAP/,
 
 my %urls_by_tech_with_results = 
   ("mysql" => {"mysql://test1:secret@" . "anywhere.org:4321/" => 
-	       "mysql://test1:secret@" . "anywhere.org:4321/" . $ENV{USER} . "_ehive_test",
+	       "mysql://test1:secret@" . "anywhere.org:4321/" . whoami() . "_ehive_test",
 	       "mysql://test2:whatever@" . "someplace.edu:4444/" =>
-	       "mysql://test2:whatever@" . "someplace.edu:4444/" .  $ENV{USER} . "_ehive_test"},
+	       "mysql://test2:whatever@" . "someplace.edu:4444/" .  whoami() . "_ehive_test"},
    "pgsql" => {"pgsql://test3:abc123@" . "post.toastie:5555/" =>
-	       "pgsql://test3:abc123@" . "post.toastie:5555/" . $ENV{USER} . "_ehive_test"},
+	       "pgsql://test3:abc123@" . "post.toastie:5555/" . whoami() . "_ehive_test"},
    "sqlite" => {"sqlite:///" =>
-		"sqlite:///" . $ENV{USER} . "_ehive_test"}
+		"sqlite:///" . whoami() . "_ehive_test"}
   );
 
 local $ENV{EHIVE_TEST_PIPELINE_URLS} =
@@ -135,7 +136,7 @@ is(scalar(@$urls), 0,
 # Give a specific database name in EHIVE_TEST_PIPELINE_URLS
 %urls_by_tech_with_results = 
   ("mysql" => {"mysql://test1:secret@" . "anywhere.org:4321/" => 
-	       "mysql://test1:secret@" . "anywhere.org:4321/" . $ENV{USER} . "_ehive_test",
+	       "mysql://test1:secret@" . "anywhere.org:4321/" . whoami() . "_ehive_test",
 	       "mysql://test2:customdb@" . "someplace.edu:4444/use_this_db" =>
 	       "mysql://test2:customdb@" . "someplace.edu:4444/use_this_db"}
   );

@@ -67,7 +67,7 @@ our @EXPORT = qw(WHEN ELSE INPUT_PLUS);
 use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Hive;
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args', 'whoami');
 use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::PCL;
 use Bio::EnsEMBL::Hive::Utils::URL;
@@ -107,7 +107,7 @@ sub default_options {
         'port'                  => $ENV{'EHIVE_PORT'},                                          # or remain undef, which means default for the driver
         'user'                  => $ENV{'EHIVE_USER'} // $self->o('user'),
         'password'              => $ENV{'EHIVE_PASS'} // $self->o('password'),                  # people will have to make an effort NOT to insert it into config files like .bashrc etc
-        'dbowner'               => $ENV{'EHIVE_USER'} || $ENV{'USER'} || $self->o('dbowner'),   # although it is very unlikely $ENV{USER} is not set
+        'dbowner'               => $ENV{'EHIVE_USER'} || whoami() || $self->o('dbowner'),       # although it is very unlikely that the current user has no name
 
         'hive_use_triggers'                 => 0,       # there have been a few cases of big pipelines misbehaving with triggers on, let's keep the default off.
         'hive_use_param_stack'              => 0,       # do not reconstruct the calling stack of parameters by default (yet)

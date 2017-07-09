@@ -35,7 +35,7 @@ use Test::Exception;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::Process;
-use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'stringify', 'destringify', 'whoami');
 use Bio::EnsEMBL::Hive::Utils::URL ('parse');
 
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
@@ -519,7 +519,7 @@ sub get_test_urls {
     $url_parses_by_driver{'sqlite'} = [Bio::EnsEMBL::Hive::Utils::URL::parse('sqlite:///' . $filename)];
   }
 
-  my $constructed_db_name = ($args{-no_user_prefix} ? '' : $ENV{USER}.'_') . 'ehive_test';
+  my $constructed_db_name = ($args{-no_user_prefix} ? '' : whoami().'_') . 'ehive_test';
 
   my @driver_parses;
   if (defined($args{-driver})) {

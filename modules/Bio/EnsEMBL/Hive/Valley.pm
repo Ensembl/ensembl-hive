@@ -38,7 +38,7 @@ use strict;
 use warnings;
 use List::Util ('sum');
 use Sys::Hostname ('hostname');
-use Bio::EnsEMBL::Hive::Utils ('find_submodules');
+use Bio::EnsEMBL::Hive::Utils ('find_submodules', 'whoami');
 use Bio::EnsEMBL::Hive::Limiter;
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
@@ -151,7 +151,7 @@ sub whereami {
     my $self = shift @_;
 
     my $meadow_host = hostname();
-    my $meadow_user = $ENV{'USER'} || getpwuid($<);
+    my $meadow_user = Bio::EnsEMBL::Hive::Utils::whoami();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
         my $pid;

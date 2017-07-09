@@ -72,7 +72,7 @@ use File::Path 'make_path';
 use List::Util qw(max);
 
 use Bio::EnsEMBL::Hive::Utils::Config;
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash');  # NB: needed by invisible code
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
 use Bio::EnsEMBL::Hive::Valley;
@@ -440,6 +440,8 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id=?";
     my $update_when_seen_sth;
 
+    my $this_meadow_user            = whoami();
+
     my %meadow_status_counts        = ();
     my %mt_and_pid_to_lost_worker   = ();
     foreach my $worker (@$queen_overdue_workers) {
@@ -454,7 +456,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             if($bury_unkwn_workers and ($status eq 'UNKWN')) {
                 if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
                     if($meadow->can('kill_worker')) {
-                        if($worker->meadow_user eq $ENV{'USER'}) {  # if I'm actually allowed to kill the worker...
+                        if($worker->meadow_user eq $this_meadow_user) {  # if I'm actually allowed to kill the worker...
                             warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
 
                             $meadow->kill_worker($worker, 1);
@@ -525,7 +527,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                     $self->register_worker_death( $worker );
 
                     if( ($worker->status eq 'LOST')                 # There is no worker_temp_directory before specialization
-                    and ($worker->meadow_user eq $ENV{'USER'}) ) {  # if I'm actually allowed to kill the worker...
+                    and ($worker->meadow_user eq $this_meadow_user) ) {  # if I'm actually allowed to kill the worker...
                             $valley->cleanup_left_temp_directory( $worker );
                     }
                 }

@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args whoami);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -440,6 +440,18 @@ sub join_command_args {
     return ($join_needed,join(' ', @new_args));
 }
 
+
+=head2 whoami
+
+    Description: Returns the name of the user who's currently running Perl.
+                 $ENV{'USER'} is the most common source but it can be missing
+                 so we also default to a builtin method.
+
+=cut
+
+sub whoami {
+    return ($ENV{'USER'} || (getpwuid($<))[0]);
+}
 
 1;
 

@@ -36,7 +36,7 @@ use warnings;
 use Time::Piece;
 use Time::Seconds;
 
-use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+use Bio::EnsEMBL::Hive::Utils ('split_for_bash', 'whoami');
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
@@ -125,7 +125,7 @@ sub check_worker_is_alive_and_mine {
     my ($self, $worker) = @_;
 
     my $wpid = $worker->process_id();
-    my $this_user = $ENV{'USER'};
+    my $this_user = whoami();
     my $cmd = qq{bjobs $wpid -u $this_user 2>&1 | grep -v 'not found' | grep -v JOBID | grep -v EXIT};
 
 #    warn "LSF::check_worker_is_alive_and_mine() running cmd:\n\t$cmd\n";
