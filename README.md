@@ -1,10 +1,11 @@
 eHive
 =====
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
+[![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
 [![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=master)
 [![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master)
 [![Code Climate](https://codeclimate.com/github/Ensembl/ensembl-hive/badges/gpa.svg)](https://codeclimate.com/github/Ensembl/ensembl-hive)
+[![Docker Build Status](https://img.shields.io/docker/build/ensemblorg/ensembl-hive.svg)](https://hub.docker.com/r/ensemblorg/ensembl-hive)
 
 
 eHive is a system for running computation pipelines on distributed computing resources - clusters, farms or grids.
@@ -80,6 +81,25 @@ The table below lists the capabilities of each meadow, and whether they are avai
 | Job limiter and resource management      | Not available | Yes | Yes             | Yes             | Yes             |
 | Post-mortem inspection of resource usage | Not available | Yes | Not implemented | Not implemented | Not implemented |
 
+Docker image
+------------
+
+We have a Docker image available on the Docker Hub:
+[ensemblorg/ensembl-hive](https://hub.docker.com/r/ensemblorg/ensembl-hive/).
+It can be used to showcase eHive scripts (`init_pipeline.pl`,
+`beekeeper.pl`, `runWorker.pl`) in a container
+
+### Open a session in a new container (will run bash)
+```
+docker run -it ensemblorg/ensembl-hive
+```
+
+### Initialize and run a pipeline
+```
+docker run -it ensemblorg/ensembl-hive init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -pipeline_url $URL
+docker run -it ensemblorg/ensembl-hive beekeeper.pl -url $URL -loop -sleep 0.2
+docker run -it ensemblorg/ensembl-hive runWorker.pl -url $URL
+```
 
 Available documentation
 -----------------------
