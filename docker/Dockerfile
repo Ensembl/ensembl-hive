@@ -3,6 +3,9 @@
 ## Build the image
 # docker build -t ensembl-hive .
 #
+## Check that the test-suite works (guest_language.t is expected to fail
+# docker run -e EHIVE_TEST_PIPELINE_URLS=sqlite:/// ensembl-hive prove -r /repo/ensembl-hive/t
+#
 ## Open a session in a new container (will run bash)
 # docker run -it ensembl-hive
 #
