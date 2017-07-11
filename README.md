@@ -84,10 +84,10 @@ The table below lists the capabilities of each meadow, and whether they are avai
 Docker image
 ------------
 
-We have a Docker image available on the Docker Hub:
-[ensemblorg/ensembl-hive](https://hub.docker.com/r/ensemblorg/ensembl-hive/).
-It can be used to showcase eHive scripts (`init_pipeline.pl`,
-`beekeeper.pl`, `runWorker.pl`) in a container
+We have a Docker image available on the [Docker
+Hub](https://hub.docker.com/r/ensemblorg/ensembl-hive/). It can be used to
+showcase eHive scripts (`init_pipeline.pl`, `beekeeper.pl`, `runWorker.pl`) in a
+container
 
 ### Open a session in a new container (will run bash)
 ```
