@@ -35,8 +35,26 @@ use strict;
 use warnings;
 use Cwd ('cwd');
 use Sys::Hostname;
-
 use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
+
+# --------------------------------------------------------------------------------------------------------------------
+# <hack> What follows is a hack to extend the built-in exec() function that is called by Proc::Daemon .
+#        The extended version also understands an ARRAYref as valid input and turns it into a LIST.
+#        Thanks to this we can avoid calling an extra shell to interpret the command line being daemonized.
+# --------------------------------------------------------------------------------------------------------------------
+
+BEGIN {
+    *CORE::GLOBAL::exec = sub {
+        return ( ref($_[0]) eq 'ARRAY' ) ? CORE::exec( @{$_[0]} ) : CORE::exec( @_ );
+    };
+}
+
+use Proc::Daemon 0.23;   # NB: this line absolutely must come after the BEGIN block that redefines exec(), or the trick will fail.
+
+# --------------------------------------------------------------------------------------------------------------------
+# </hack>
+# --------------------------------------------------------------------------------------------------------------------
+
 
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
@@ -125,7 +143,7 @@ sub kill_worker {
 sub submit_workers_return_meadow_pids {
     my ($self, $worker_cmd, $required_worker_count, $iteration, $rc_name, $rc_specific_submission_cmd_args, $submit_log_subdir) = @_;
 
-    my @worker_cmd_components = split_for_bash($worker_cmd);  # FIXME: change the interface so that $worker_cmd itself is passed in as ARRAYref
+    my $worker_cmd_components = [ split_for_bash($worker_cmd) ];
 
     my $job_name = $self->job_array_common_name($rc_name, $iteration);
     $ENV{EHIVE_SUBMISSION_NAME} = $job_name;
@@ -135,33 +153,17 @@ sub submit_workers_return_meadow_pids {
     warn "Spawning [ ".$self->signature." ] x$required_worker_count \t\t$worker_cmd\n";
 
     foreach my $idx (1..$required_worker_count) {
-        my $child_pid = fork;
-        if(!defined( $child_pid )) {    # in the parent, fork() failed:
-            die "Parent($$): fork failed";
-        } elsif($child_pid > 0) {      # in the parent, fork() succeeded:
-            push @children_pids, $child_pid;
-        } else {    # in the child:
-            my ($rs_stdout, $rs_stderr);
 
-            my $submit_stdout_file = $submit_log_subdir ? $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.out" : '/dev/null';
-            my $submit_stderr_file = $submit_log_subdir ? $submit_log_subdir . "/log_${rc_name}_${iteration}_$$.err" : '/dev/null';
-#            warn "Child($$) #$idx, about to redirect outputs to $submit_stdout_file and $submit_stderr_file\n";
+        my $child_pid = Proc::Daemon::Init( {
+            $submit_log_subdir ? (
+                work_dir     => cwd(),
+                child_STDOUT => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.out",
+                child_STDERR => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.err",
+            ) : (),     # both STD streams are sent to /dev/null by default
+            exec_command => [ $worker_cmd_components ],     # the AoA format is supported thanks to the BEGIN hack introduced in the beginning of this module.
+        } );
 
-            $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
-            $rs_stderr = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDERR);
-            $rs_stdout->push( $submit_stdout_file );
-            $rs_stderr->push( $submit_stderr_file );
-#            warn "Child($$) #$idx, about to exec.\n";
-
-            unless( exec(@worker_cmd_components) ) {
-
-                if( $submit_log_subdir ) {
-                    $rs_stdout->pop();
-                    $rs_stderr->pop();
-                }
-                die "Child($$) #$idx failed to exec, the error was '$!'.\n";
-            }
-        }
+        push @children_pids, $child_pid;
     }
 
     return \@children_pids;
