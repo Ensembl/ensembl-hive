@@ -43,6 +43,7 @@ User documentation
    running_pipelines/management
    running_pipelines/tweaking
    running_pipelines/error-recovery
+   running_pipelines/troubleshooting
 
 
 .. toctree::
@@ -55,12 +56,14 @@ User documentation
    creating_pipelines/parameters
    creating_pipelines/semaphores
    creating_pipelines/pipeconfigs
+   creating_pipelines/included_runnables
 
 
 .. toctree::
    :caption: Creating runnables
 
-   creating_runnables/runnables
+   creating_runnables/runnables_overview
+   creating_runnables/IO_and_errors
 
 
 .. toctree::
@@ -68,6 +71,7 @@ User documentation
 
    advanced_usage/mpi
    advanced_usage/slack
+   advanced_usage/continuous_pipelines
 
 
 .. toctree::
