@@ -156,10 +156,10 @@ sub submit_workers_return_meadow_pids {
 
         my $child_pid = Proc::Daemon::Init( {
             $submit_log_subdir ? (
-                work_dir     => cwd(),
                 child_STDOUT => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.out",
                 child_STDERR => $submit_log_subdir . "/log_${iteration}_${rc_name}_${idx}_$$.err",
             ) : (),     # both STD streams are sent to /dev/null by default
+            work_dir     => cwd(),
             exec_command => [ $worker_cmd_components ],     # the AoA format is supported thanks to the BEGIN hack introduced in the beginning of this module.
         } );
 
