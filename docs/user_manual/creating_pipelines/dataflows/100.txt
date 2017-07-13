@@ -1,3 +1,0 @@
-Autoflow
---
-*Autoflow* is the default event that happens between consecutive analyses

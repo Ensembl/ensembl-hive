@@ -1,4 +1,0 @@
-Custom, independent, dataflows
---
-The autoflow mechanism only triggers 1 event, and only upon completion. To create more events, or under different circumstances,
-you can use *factory* patterns.

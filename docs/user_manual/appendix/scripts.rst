@@ -43,6 +43,5 @@ Internal scripts
    :titlesonly:
 
    scripts/create_sql_patches.rst
-   scripts/make_branch_glossary.rst
    scripts/make_docs.rst
 

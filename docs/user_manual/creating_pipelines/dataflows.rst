@@ -14,7 +14,7 @@ Autoflow
 Upon success, each job from A will generate a Dataflow event on branch #1, which is connected to branch B. This is called
 *autoflow* as jobs seem to automatically flow from A to B.
 
-::
+.. hive_diagram:: dataflows/101.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -24,14 +24,13 @@ Upon success, each job from A will generate a Dataflow event on branch #1, which
     {   -logic_name => 'B',
     },
 
-.. figure:: dataflows/101.png
 
 Autoflow v2
 ~~~~~~~~~~~
 
 Same as above, but more concise.
 
-::
+.. hive_diagram:: dataflows/102.png
 
     {   -logic_name => 'A',
         -flow_into  => [ 'B' ],
@@ -39,14 +38,13 @@ Same as above, but more concise.
     {   -logic_name => 'B',
     },
 
-.. figure:: dataflows/102.png
 
 Autoflow v3
 ~~~~~~~~~~~
 
 Same as above, but even more concise
 
-::
+.. hive_diagram:: dataflows/103.png
 
     {   -logic_name => 'A',
         -flow_into  => 'B'
@@ -54,7 +52,6 @@ Same as above, but even more concise
     {   -logic_name => 'B',
     },
 
-.. figure:: dataflows/103.png
 
 Custom, independent, dataflows
 ------------------------------
@@ -68,7 +65,7 @@ Factory
 Analysis A triggers 0, 1 or many Dataflow events on branch #2 (this is the convention for non-autoflow events).
 In this pattern, A is called the *factory*, B the *fan*.
 
-::
+.. hive_diagram:: dataflows/201.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -78,7 +75,6 @@ In this pattern, A is called the *factory*, B the *fan*.
     {   -logic_name => 'B',
     },
 
-.. figure:: dataflows/201.png
 
 Factory in parallel of the autoflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,7 +85,7 @@ was thus lost. You can in fact have both branches connected.
 An analysis can use multiple branches at the same time and for instance produce a fan of jobs on branch #2
 *and* still a job on branch #1. Both stream of jobs (B and C) are executed in parallel.
 
-::
+.. hive_diagram:: dataflows/202.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -102,7 +98,6 @@ An analysis can use multiple branches at the same time and for instance produce 
     {   -logic_name => 'C',
     },
 
-.. figure:: dataflows/202.png
 
 Many factories and an autoflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,7 +107,7 @@ They however have to be integers, preferably positive integers for the sake of
 this tutorial as negative branch numbers have a special meaning (which is
 addressed in :doc:`events`).
 
-::
+.. hive_diagram:: dataflows/203.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -134,7 +129,6 @@ addressed in :doc:`events`).
     {   -logic_name => 'F',
     },
 
-.. figure:: dataflows/203.png
 
 Dependent dataflows and semaphores
 ----------------------------------
@@ -156,7 +150,7 @@ has to wait for *all* the jobs in group **A** before it can start.
 
 This pattern is called a *semaphore*, and C is called the *funnel* analysis.
 
-::
+.. hive_diagram:: dataflows/301.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -169,7 +163,6 @@ This pattern is called a *semaphore*, and C is called the *funnel* analysis.
     {   -logic_name => 'C',
     },
 
-.. figure:: dataflows/301.png
 
 Semaphore propagation
 ~~~~~~~~~~~~~~~~~~~~~
@@ -183,8 +176,7 @@ the jobs these may have created in D as well.
 
 This process is called *semaphore propagation*.
 
-
-::
+.. hive_diagram:: dataflows/302.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -202,7 +194,6 @@ This process is called *semaphore propagation*.
     {   -logic_name => 'D',
     },
 
-.. figure:: dataflows/302.png
 
 Semaphore independent from the autoflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -221,7 +212,7 @@ emit the events in the right order. There are as many semaphore groups as events
 each job created on branch #2 is the *funnel* of 0, 1 or many jobs of the *fan* that is defined
 on branch #3.
 
-::
+.. hive_diagram:: dataflows/303.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -234,7 +225,6 @@ on branch #3.
     {   -logic_name => 'C',
     },
 
-.. figure:: dataflows/303.png
 
 Mixing all patterns
 ~~~~~~~~~~~~~~~~~~~
@@ -245,7 +235,7 @@ with the jobs created in te analysis D.
 Upon success of the A job, the *autoflow* will create a job in analysis E which is *not* controlled
 by any of the B or C jobs. It can thus start immediately.
 
-::
+.. hive_diagram:: dataflows/304.png
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -266,5 +256,4 @@ by any of the B or C jobs. It can thus start immediately.
     {   -logic_name => 'E',
     },
 
-.. figure:: dataflows/304.png
 

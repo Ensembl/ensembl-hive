@@ -1,4 +1,0 @@
-Accumulator
---
-The last type of dataflow-target is called as an *accumulator*. It is a way of passing data from *fan* jobs
-to their *funnel*.

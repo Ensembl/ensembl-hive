@@ -19,7 +19,9 @@ import sphinx_rtd_theme
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('.'))
+
+from xhive import *
 
 # -- General configuration ------------------------------------------------
 
@@ -344,3 +346,4 @@ epub_exclude_files = ['search.html']
 # (see https://github.com/rtfd/sphinx_rtd_theme/issues/117)
 def setup(app):
     app.add_stylesheet("theme_overrides.css")
+    app.add_directive('hive_diagram', HiveDiagramDirective)

@@ -1,9 +1,0 @@
-Autoflow v3
---
-Same as above, but even more concise
---
-{   -logic_name => 'A',
-    -flow_into  => 'B'
-},
-{   -logic_name => 'B',
-},
