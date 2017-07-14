@@ -15,7 +15,7 @@ by a *branch number* (see :doc:`dataflows`).
 Within a Runnable, Dataflow events are performed via the ``$self->dataflow_output_id($data,
 $branch_number)`` method.
 
-The payload ``$data`` muts be of one of these types:
+The payload ``$data`` must be of one of these types:
 
 - Hash-reference that maps parameter names (strings) to their values.
 - Array-reference of hash-references of the above type

@@ -73,8 +73,8 @@ Table
 
 A job can store data in a table via the Dataflow mechanism instead of raw SQL access.
 
-Dataflow to one analysis
-~~~~~~~~~~~~~~~~~~~~~~~~
+Dataflow to one table
+~~~~~~~~~~~~~~~~~~~~~
 
 This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``
 with a URL that contains the ``table_name`` key. URLs can be *degenerate*, i.e. skip the part before
