@@ -70,17 +70,19 @@ sub generate_hive_schema_desc {
 
 sub generate_docs_scripts {
 
-    print "Regenerating $ehrd/docs/scripts ...\n\n";
+    my $target_dir = "$ehrd/docs/user_manual/appendix/scripts";
+    print "Regenerating $target_dir...\n\n";
 
     my @cmds = (
-        "find $ehrd/docs/scripts -type f -not -name index.html | xargs rm",     # delete all but index.html
+        "rm -rf $target_dir",
+        "mkdir  $target_dir",
         "cd   $ehrd/scripts",
     );
     opendir( my $script_dir, "$ehrd/scripts") || die "Can't opendir $ehrd/scripts: $!";
     foreach my $plname ( readdir($script_dir) ) {
         if( (-f "$ehrd/scripts/$plname") && $plname=~/^(\w+)\.pl$/) {
-            my $htmlname = $1.'.html';
-            push @cmds, "pod2html --noindex --title=$plname $ehrd/scripts/$plname >$ehrd/docs/scripts/$htmlname";
+            my $rstname = $1.'.rst';
+            push @cmds, "pod2html --noindex --title=$plname $ehrd/scripts/$plname | pandoc --standalone --base-header-level=2 -f html -t rst -o $target_dir/$rstname";
         }
     }
     closedir($script_dir);
@@ -236,6 +238,7 @@ sub generate_docs_doxygen_java {
     system( $full_cmd );
 }
 
+
 __DATA__
 
 =pod
@@ -247,8 +250,6 @@ __DATA__
 =head1 DESCRIPTION
 
     An internal eHive script for regenerating the documentation both in docs/scripts (using pod2html) and docs/doxygen (using doxygen).
-
-    The script doesn't have any options at the moment.
 
 =head1 LICENSE
 
