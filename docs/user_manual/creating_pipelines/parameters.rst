@@ -196,6 +196,38 @@ all the analyses that require it.
 It can also be extended to include other templated variables, like
 ``INPUT_PLUS( { 'species_key' => '#species_name#_#species_id#' } )``
 
+Here is a diagram showing how the parameters are propagated in the absence
+/ presence of INPUT_PLUS modifiers.
+
+.. graphviz::
+
+   digraph {
+      label="Propagation without INPUT_PLUS"
+      A -> B;
+      A -> D;
+      B -> C;
+      B -> E;
+      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
+      B [label=<Job B<br/><font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
+      C [label=<Job C<br/>Pc<sub>1</sub>,Pc<sub>2</sub>>]
+      D [label=<Job D<br/>Pd<sub>1</sub>>]
+      E [label=<Job E<br/>Pe<sub>1</sub>>]
+   }
+
+.. graphviz::
+
+   digraph {
+      label="Propagation with INPUT_PLUS"
+      A -> B [label="INPUT_PLUS"];
+      A -> D;
+      B -> C;
+      B -> E [label="INPUT_PLUS"];
+      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
+      B [label=<Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
+      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>]
+      D [label=<Job D<br/>Pd<sub>1</sub>>]
+      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>]
+   }
 
 Global implicit propagation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,4 +262,22 @@ The *parse_file* analysis then becomes:
      },
      {   -logic_name => 'species_processor',
      },
+
+Reusing the same 5 jobs as in the previous section, here is how the
+parameters would be propagated when ``hive_use_param_stack`` is switched
+on.
+
+.. graphviz::
+
+   digraph {
+      A -> B;
+      A -> D;
+      B -> C;
+      B -> E;
+      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
+      B [label=<Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
+      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>]
+      D [label=<Job D<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pd<sub>1</sub>>]
+      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>]
+   }
 
