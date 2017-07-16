@@ -86,7 +86,9 @@ User documentation
 Developer documentation
 =======================
 
-TODO
+.. toctree::
+
+   dev/api
 
 
 Indices and tables
