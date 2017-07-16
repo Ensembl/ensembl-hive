@@ -135,6 +135,7 @@ sub generate_docs_doxygen_perl {
         "echo 'GENERATE_LATEX         = NO'",
         "echo 'CLASS_DIAGRAMS         = NO'",
         "echo 'HAVE_DOT               = YES'",
+        "echo 'COLLABORATION_GRAPH    = NO'",
     );
 
     my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
