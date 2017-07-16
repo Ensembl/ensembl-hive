@@ -143,7 +143,7 @@ sub generate_docs_doxygen_perl {
 
 sub generate_docs_doxygen_python {
 
-    print "Regenerating $ehrd/wrappers/python3/doxygen ...\n\n";
+    print "Regenerating $ehrd/docs/doxygen/python3 ...\n\n";
 
     my $doxy_bin    = `which doxygen`;
     chomp $doxy_bin;
@@ -155,15 +155,15 @@ sub generate_docs_doxygen_python {
     die "Cannot find the Doxygen Python filter 'doxypy' in the current PATH.\n" unless -e $doxy_filter;
 
     my @cmds = (
-        "rm -rf $ehrd/wrappers/python3/doxygen",
+        "rm -rf $ehrd/docs/doxygen/python3",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive-python3'",
         "echo 'PROJECT_NUMBER         = $code_ver'",
-        "echo 'OUTPUT_DIRECTORY       = $ehrd/wrappers/python3'",
+        "echo 'OUTPUT_DIRECTORY       = $ehrd/docs/doxygen'",
         "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/python3'",
         "echo 'INPUT                  = $ehrd/wrappers/python3'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
-        "echo 'HTML_OUTPUT            = doxygen'",
+        "echo 'HTML_OUTPUT            = python3'",
         "echo 'EXTRACT_ALL            = YES'",
         "echo 'EXTRACT_PRIVATE        = YES'",
         "echo 'EXTRACT_STATIC         = YES'",
