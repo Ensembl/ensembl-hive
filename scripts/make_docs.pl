@@ -41,7 +41,7 @@ sub main {
     unless($no_doxygen) {
         generate_docs_doxygen_perl();
         generate_docs_doxygen_python();
-        generate_docs_javadoc_java();
+        generate_docs_doxygen_java();
     }
 }
 
@@ -192,13 +192,47 @@ sub generate_docs_doxygen_python {
 }
 
 
-sub generate_docs_javadoc_java {
+sub generate_docs_doxygen_java {
 
-    print "Regenerating $ehrd/wrappers/java/doc ...\n\n";
+    print "Regenerating $ehrd/docs/doxygen/java ...\n\n";
 
-    system("cd $ehrd/wrappers/java; ant");
+    my $doxy_bin    = `which doxygen`;
+    chomp $doxy_bin;
+
+    die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
+
+    my @cmds = (
+        "rm   -rf $ehrd/docs/doxygen/java",
+        "doxygen -g -",
+        "echo 'PROJECT_NAME           = ensembl-hive-java'",
+        "echo 'PROJECT_NUMBER         = $code_ver'",
+        "echo 'OUTPUT_DIRECTORY       = $ehrd/docs/doxygen'",
+        "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/java'",
+        "echo 'INPUT                  = $ehrd/wrappers/java'",
+        "echo 'HTML_OUTPUT            = java'",
+        "echo 'EXTRACT_ALL            = YES'",
+        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
+        "echo 'ENABLE_PREPROCESSING   = NO'",
+        "echo 'RECURSIVE              = YES'",
+        "echo 'EXAMPLE_PATTERNS       = *'",
+        "echo 'HTML_TIMESTAMP         = NO'",
+        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
+        "echo 'GENERATE_TREEVIEW      = YES'",
+        "echo 'GENERATE_LATEX         = NO'",
+        "echo 'CLASS_DIAGRAMS         = YES'",
+        "echo 'HAVE_DOT               = YES'",
+        "echo 'CALL_GRAPH             = YES'",
+        "echo 'CALLER_GRAPH           = YES'",
+        "echo 'COLLABORATION_GRAPH    = YES'",
+        "echo 'SOURCE_BROWSER         = YES'",
+    );
+
+    my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
+
+    print "Running the following command:\n\t$full_cmd\n\n";
+
+    system( $full_cmd );
 }
-
 
 __DATA__
 
