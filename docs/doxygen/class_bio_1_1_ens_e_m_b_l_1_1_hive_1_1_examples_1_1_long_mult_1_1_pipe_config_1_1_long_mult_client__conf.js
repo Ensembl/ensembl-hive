@@ -1,6 +1,0 @@
-var class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_pipe_config_1_1_long_mult_client__conf =
-[
-    [ "pipeline_analyses", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_pipe_config_1_1_long_mult_client__conf.html#a48f45aa7f558f5532be2a44b05ac72fc", null ],
-    [ "pipeline_create_commands", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_pipe_config_1_1_long_mult_client__conf.html#af9ae108de8f1c98f51d7ea13583be89d", null ],
-    [ "pipeline_wide_parameters", "class_bio_1_1_ens_e_m_b_l_1_1_hive_1_1_examples_1_1_long_mult_1_1_pipe_config_1_1_long_mult_client__conf.html#a3035fcf858644195c0dc26e33ea067f6", null ]
-];

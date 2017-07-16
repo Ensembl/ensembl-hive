@@ -1,6 +1,0 @@
-<map id="eHive.Process.BaseRunnable.dataflow" name="eHive.Process.BaseRunnable.dataflow">
-<area shape="rect" id="node2" href="$classe_hive_1_1examples_1_1_long_mult_1_1_add_together_1_1_add_together.html#a27686a4b71206c4a74b6b7fcfaf7e802" title="eHive.examples.LongMult.\lAddTogether.AddTogether.write\l_output" alt="" coords="307,5,519,61"/>
-<area shape="rect" id="node3" href="$classe_hive_1_1examples_1_1_long_mult_1_1_digit_factory_1_1_digit_factory.html#ab7d62c5b790ec53ddf73fb2d4fda55b4" title="eHive.examples.LongMult.\lDigitFactory.DigitFactory.write\l_output" alt="" coords="313,85,513,141"/>
-<area shape="rect" id="node4" href="$classe_hive_1_1examples_1_1_long_mult_1_1_part_multiply_1_1_part_multiply.html#a407a6e5270fe4a55a2fca663919afc2a" title="eHive.examples.LongMult.\lPartMultiply.PartMultiply.write\l_output" alt="" coords="315,165,512,221"/>
-<area shape="rect" id="node5" href="$classe_hive_1_1examples_1_1_test_runnable_1_1_test_runnable.html#ae60d71e52723b2a82c169811065bcec0" title="eHive.examples.TestRunnable.\lTestRunnable.write_output" alt="" coords="310,246,517,287"/>
-</map>
