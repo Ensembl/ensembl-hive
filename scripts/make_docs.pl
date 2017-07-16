@@ -102,12 +102,6 @@ sub generate_docs_doxygen_perl {
 
     die "Cannot run doxygen binary, please make sure it is installed and is in the path.\n" unless(-r $doxy_bin);
 
-    my $doxy_ver    = `$doxy_bin --version`;
-    chomp $doxy_ver;
-    my $doxy_intver = sprintf("%d%03d%03d", split(/\./, $doxy_ver) );
-
-    die "The doxygen I found ($doxy_bin) being version $doxy_ver is not supported, please downgrade to at most 1.8.6 \n" if($doxy_intver > 1008006);
-
     my $doxy_filter = "$erd/ensembl/misc-scripts/doxygen_filter/ensembldoxygenfilter.pl";
 
     die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly.\n" unless(-x $doxy_filter);
@@ -122,6 +116,7 @@ sub generate_docs_doxygen_perl {
         "echo 'INPUT                  = $ehrd'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
         "echo 'HTML_OUTPUT            = doxygen'",
+        "echo 'EXTENSION_MAPPING      = pm=C pl=C'",
         "echo 'EXTRACT_ALL            = YES'",
         "echo 'FILE_PATTERNS          = *.pm *.pl README.md'",
         "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
