@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# $PWD is the user manual, which I want to keep clean
+cd "$HOME"
+
 # Exit if we have already installed the dependencies
 [ -d packages ] && exit 0;
 
@@ -19,4 +22,6 @@ echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.6
 
 mkdir packages
 for i in *.deb; do dpkg -x "$i" packages/; done
+
+git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
 

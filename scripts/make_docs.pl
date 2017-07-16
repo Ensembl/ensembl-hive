@@ -96,7 +96,7 @@ sub generate_docs_scripts {
 
 sub generate_docs_doxygen_perl {
 
-    print "Regenerating $ehrd/docs/doxygen ...\n\n";
+    print "Regenerating $ehrd/docs/doxygen/perl ...\n\n";
 
     my $doxy_bin    = `which doxygen`;
     chomp $doxy_bin;
@@ -108,15 +108,15 @@ sub generate_docs_doxygen_perl {
     die "Cannot run the Ensembl-Doxygen Perl filter at '$doxy_filter', please make sure Ensembl core API is intalled properly.\n" unless(-x $doxy_filter);
 
     my @cmds = (
-        "rm   -rf $ehrd/docs/doxygen",
+        "rm   -rf $ehrd/docs/doxygen/perl",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive'",
         "echo 'PROJECT_NUMBER         = $code_ver'",
-        "echo 'OUTPUT_DIRECTORY       = $ehrd/docs'",
+        "echo 'OUTPUT_DIRECTORY       = $ehrd/docs/doxygen'",
         "echo 'STRIP_FROM_PATH        = $ehrd'",
         "echo 'INPUT                  = $ehrd'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
-        "echo 'HTML_OUTPUT            = doxygen'",
+        "echo 'HTML_OUTPUT            = perl'",
         "echo 'EXTENSION_MAPPING      = pm=C pl=C'",
         "echo 'EXTRACT_ALL            = YES'",
         "echo 'FILE_PATTERNS          = *.pm *.pl README.md'",

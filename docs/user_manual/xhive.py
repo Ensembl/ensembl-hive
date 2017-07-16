@@ -101,5 +101,10 @@ def hive_setup_if_needed():
     if os.environ.get("READTHEDOCS", None) == "True":
         subprocess.call([os.environ["PWD"] + os.path.sep + "rtd_upgrade.sh"], stdout=sys.stdout, stderr=sys.stderr)
         os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir, os.path.pardir)
-        os.environ["PERL5LIB"] = os.path.pathsep.join(os.path.join(os.environ["PWD"], "packages", _) for _ in ["usr/share/perl5/", "usr/lib/x86_64-linux-gnu/perl5/5.22/", "usr/lib/x86_64-linux-gnu/perl5/5.22/auto/"])
+        os.environ["PERL5LIB"] = os.path.pathsep.join(os.path.join(os.environ["HOME"], "packages", _) for _ in ["usr/share/perl5/", "usr/lib/x86_64-linux-gnu/perl5/5.22/", "usr/lib/x86_64-linux-gnu/perl5/5.22/auto/"])
+        os.environ["ENSEMBL_CVS_ROOT_DIR"] = os.environ["HOME"]
+    doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen")
+    if not os.path.exists(doxygen_target):
+        mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "make_docs.pl")
+        subprocess.call([mkdoc_path, "-no_schema_desc"])
 
