@@ -2,6 +2,7 @@
 import json
 import os.path
 import subprocess
+import sys
 import tempfile
 
 from docutils import nodes
@@ -90,7 +91,7 @@ def generate_diagram(pipeconfig_content, target_image_filename):
 
     #print ["generate_graph.pl", "-pipeconfig", pipeconfig_fh.name, "-output", target_image_filename]
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
-    subprocess.call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", target_image_filename, "-config_file", default_config_file, "-config_file", json_fh.name])
+    subprocess.call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", target_image_filename, "-config_file", default_config_file, "-config_file", json_fh.name], stdout=sys.stdout, stderr=sys.stderr)
 
     os.remove(json_fh.name)
     os.remove(pipeconfig_fh.name)
@@ -98,7 +99,7 @@ def generate_diagram(pipeconfig_content, target_image_filename):
 
 def hive_setup_if_needed():
     if os.environ.get("READTHEDOCS", None) == "True":
-        subprocess.call([os.environ["PWD"] + os.path.sep + "rtd_upgrade.sh"])
+        subprocess.call([os.environ["PWD"] + os.path.sep + "rtd_upgrade.sh"], stdout=sys.stdout, stderr=sys.stderr)
         os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir, os.path.pardir)
         os.environ["PERL5LIB"] = os.path.pathsep.join(os.path.join(os.environ["PWD"], "packages", _) for _ in ["usr/share/perl5/", "usr/lib/x86_64-linux-gnu/perl5/5.22/", "usr/lib/x86_64-linux-gnu/perl5/5.22/auto/"])
 
