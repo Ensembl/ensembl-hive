@@ -67,7 +67,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'eHive user manual'
-copyright = u'2016, Ensembl'
+copyright = u'[2016-2017] EMBL-European Bioinformatics Institute'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -286,8 +286,8 @@ texinfo_documents = [
 # Bibliographic Dublin Core info.
 epub_title = u'ehive_user_manual'
 epub_author = u'Ensembl-hive'
-epub_publisher = u'Ensembl-hive'
-epub_copyright = u'2016, Ensembl-hive'
+epub_publisher = u'Ensembl'
+epub_copyright = u'[2016-2017] EMBL-European Bioinformatics Institute'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'ehive_user_manual'
