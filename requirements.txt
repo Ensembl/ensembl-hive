@@ -1,3 +1,4 @@
 sphinx-rtd-theme
 sphinx
 recommonmark
+sphinxcontrib-doxylink

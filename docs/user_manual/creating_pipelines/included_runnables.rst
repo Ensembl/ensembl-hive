@@ -6,24 +6,15 @@ Several Runnables are included in the standard eHive distribution, serving as so
 
 The included examples are:
 
-   - Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::DbCmd`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::Dummy`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::FastaFactory`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::JobFactory`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::SlackNotification`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::SqlCmd`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck`
+   - :doxehive:`Bio::EnsEMBL::Hive::RunnableDB::SystemCmd`
 
-   - Bio::EnsEMBL::Hive::RunnableDB::DbCmd
-
-   - Bio::EnsEMBL::Hive::RunnableDB::Dummy
-
-   - Bio::EnsEMBL::Hive::RunnableDB::FastaFactory
-
-   - Bio::EnsEMBL::Hive::RunnableDB::JobFactory
-
-   - Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer
-
-   - Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail
-
-   - Bio::EnsEMBL::Hive::RunnableDB::SlackNotification
-
-   - Bio::EnsEMBL::Hive::RunnableDB::SqlCmd
-
-   - Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck
-
-   - Bio::EnsEMBL::Hive::RunnableDB::SystemCmd

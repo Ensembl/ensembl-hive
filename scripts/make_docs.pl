@@ -109,6 +109,7 @@ sub generate_docs_doxygen_perl {
 
     my @cmds = (
         "rm   -rf $ehrd/docs/doxygen/perl",
+        "rm   -f $ehrd/docs/doxygen/ensembl-hive.tag",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive'",
         "echo 'PROJECT_NUMBER         = $code_ver'",
@@ -128,6 +129,7 @@ sub generate_docs_doxygen_perl {
         "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
         "echo 'GENERATE_TREEVIEW      = YES'",
         "echo 'GENERATE_LATEX         = NO'",
+        "echo 'GENERATE_TAGFILE       = $ehrd/docs/doxygen/ensembl-hive.tag'",
         "echo 'CLASS_DIAGRAMS         = NO'",
         "echo 'HAVE_DOT               = YES'",
         "echo 'COLLABORATION_GRAPH    = NO'",

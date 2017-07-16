@@ -38,10 +38,15 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.pngmath',
     'sphinx.ext.graphviz',
+    'sphinxcontrib.doxylink',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+doxylink = {
+    'doxehive': (os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen", "ensembl-hive.tag"), 'perl/'),
+}
 
 # Add markdown support
 from recommonmark.parser import CommonMarkParser
