@@ -105,7 +105,7 @@ def hive_setup_if_needed():
         os.environ["PATH"] = os.path.join(os.environ["HOME"], "packages", "usr/bin") + os.path.pathsep + os.environ["PATH"]
         os.environ["ENSEMBL_CVS_ROOT_DIR"] = os.environ["HOME"]
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen")
-    if any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
+    if True or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
         mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "make_docs.pl")
         subprocess.call([mkdoc_path, "-no_schema_desc"])
 
