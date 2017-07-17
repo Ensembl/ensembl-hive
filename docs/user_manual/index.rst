@@ -78,6 +78,7 @@ User documentation
    :caption: Appendix
    :maxdepth: 1
 
+   appendix/presentations
    appendix/scripts
 
 
