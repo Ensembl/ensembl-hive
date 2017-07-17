@@ -131,19 +131,19 @@ Making sense of the beekeeper's output
 
         - There will then be a table showing work that is pending or in progress. This section is the most important to pay attention to in day-to-day eHive operation. These lines show progress being made through the pipeline, and can also provide an early warning sign of trouble. This table has the following columns:
 
-        #. The analysis name and analysis ID number.
+          #. The analysis name and analysis ID number.
 
-        #. The status of the analysis (typically, "LOADING", "READY", "ALL_CLAIMED", possibly "FAILED"). Analyses that are done are not shown in this table.
+          #. The status of the analysis (typically, :hivestatus:`<LOADING>LOADING`, :hivestatus:`<READY>READY`, :hivestatus:`<ALL_CLAIMED>ALL_CLAIMED`, possibly :hivestatus:`<FAILED>FAILED`). Analyses that are done are not shown in this table.
 
-        #. A job summary, showing the number of [r]eady, [s]emaphored, :hivestatus:`<INPROGRESS> [i]n-progress`, and [d]one jobs in the analysis
+          #. A job summary, showing the number of :hivestatus:`<READY>[r]eady`, :hivestatus:`<SEMAPHORED>[s]emaphored`, :hivestatus:`<INPROGRESS>[i]n-progress`, and :hivestatus:`<DONE>[d]one` jobs in the analysis
 
-        #. Average runtime for jobs in the analysis,
+          #. Average runtime for jobs in the analysis,
 
-        #. Number of workers working on this analysis
+          #. Number of workers working on this analysis
 
-        #. Hive-capacity and analysis-capacity settings for this analysis
+          #. Hive-capacity and analysis-capacity settings for this analysis
 
-        #. Last time the beekeeper performed an internal-bookkeeping synchronization on this analysis.
+          #. Last time the beekeeper performed an internal-bookkeeping synchronization on this analysis.
 
         - There will then be a summary of progress through the pipeline
 
