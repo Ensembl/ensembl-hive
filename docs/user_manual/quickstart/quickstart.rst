@@ -13,7 +13,51 @@ Check that your system is set up to run eHive
 
     - In particular, confirm that $PERL5LIB includes the eHive modules directory and that $PATH includes the eHive scripts directory.
 
+    .. warning ::
+        Some pipelines may have other dependencies beyond eHive (e.g. the
+        Ensembl Core API, BioPerl, etc). Make sure you have installed them
+        and configured your environment (PATH and PERL5LIB).
+        :ref:`../appendix/scripts/init_pipeline` will
+        try to compile all the analysis modules, which ensures that most of
+        the dependencies are installed, but some others can only be found
+        at runtime.
+
 #. You should have a MySQL or PostgreSQL database with CREATE, SELECT, INSERT, and UPDATE privileges available. Alternatively, you should have SQLite available on your system.
+
+
+Quick overview
+==============
+
+Each eHive pipeline is a potentially complex computational process.
+Whether it runs locally, on the farm, or on multiple compute resources,
+this process is centred around a database where individual jobs of the
+pipeline are created, claimed by independent Workers and later recorded as
+done or failed.
+
+Running the pipeline involves the following steps:
+
+  #. Using the :ref:`../appendix/scripts/init_pipeline` script to create an
+       instance pipeline database from a "PipeConfig" file
+
+  #. (optionally) Using the :ref:`appendix/scripts/seed_pipeline` script to
+       add jobs to be run
+
+  #. Running the :ref:`appendix/scripts/beekeeper` script that will look
+       after the pipeline and maintain a population of Worker processes on
+       the compute resource that will take and perform all the jobs of the
+       pipeline
+
+  #. (optionally) Monitoring the state of the running pipeline:
+
+       - by using your local |guiHive| web interface
+
+       - by periodically running the :ref:`appendix/scripts/generate_graph`
+         script, which will produce a fresh snapshot of the pipeline
+         diagram
+
+       - by connecting to the database using the
+         :ref:`appendix/scripts/db_cmd` script and issuing SQL commands
+
 
 Initialise and run a pipeline
 =============================
@@ -117,6 +161,15 @@ Running the pipeline using the beekeeper
     - For this "long multiplication pipeline" the beekeeper should loop three or four times before stopping and returning you to the command prompt. The exact number of loops will depend on your particular system.
 
     - Many pipelines take a long time to run, so it's usually more convenient to run ``beekeeper.pl`` in some sort of detachable terminal such as `screen <https://www.gnu.org/software/screen/>`__ or `tmux <https://tmux.github.io/>`__ .
+
+    - Last note about Beekeeper: you can see it as a pump. Its task is to
+      add new workers to maintain the job flow. If you kill Beekeeper, you
+      stop the pump, but the water is still flowing, i.e. the workers are
+      not killed but still running. To actually kill the workers, you have
+      to use the specific commands of your grid engine (e.g. ``bkill`` for
+      Platform LSF).
+
+
 
 Making sense of the beekeeper's output
 --------------------------------------
