@@ -135,7 +135,7 @@ Making sense of the beekeeper's output
 
         #. The status of the analysis (typically, "LOADING", "READY", "ALL_CLAIMED", possibly "FAILED"). Analyses that are done are not shown in this table.
 
-        #. A job summary, showing the number of [r]eady, [s]emaphored, [i]n-progress, and [d]one jobs in the analysis
+        #. A job summary, showing the number of [r]eady, [s]emaphored, :hivestatus:`<INPROGRESS> [i]n-progress`, and [d]one jobs in the analysis
 
         #. Average runtime for jobs in the analysis,
 

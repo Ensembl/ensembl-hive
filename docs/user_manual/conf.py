@@ -21,7 +21,7 @@ import sphinx_rtd_theme
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('.'))
 
-from xhive import hive_setup_if_needed, HiveDiagramDirective
+from xhive import *
 
 hive_setup_if_needed()
 
@@ -355,3 +355,8 @@ epub_exclude_files = ['search.html']
 def setup(app):
     app.add_stylesheet("theme_overrides.css")
     app.add_directive('hive_diagram', HiveDiagramDirective)
+    app.add_role('hivestatus', hivestatus_role)
+    app.add_node(hivestatus,
+        html = (visit_hivestatus_html, depart_hivestatus_html),
+        latex = (visit_hivestatus_latex, depart_hivestatus_latex),
+    )
