@@ -33,11 +33,11 @@
         },
         "SGE" : {
             "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 2000,
+            "TotalRunningWorkersMax"    : 2000
         },
         "CONDOR" : {
             "SubmissionOptions"         : "",
-            "TotalRunningWorkersMax"    : 500,
+            "TotalRunningWorkersMax"    : 500
         }
     },
     "Graph" : {
@@ -95,7 +95,7 @@
                 "Colour"        : "blueviolet",
                 "Font"          : "Courier",
                 "FontColour"    : "white"
-            },
+            }
         },
         "Edge" : {
             "Font"        : "Helvetica",
