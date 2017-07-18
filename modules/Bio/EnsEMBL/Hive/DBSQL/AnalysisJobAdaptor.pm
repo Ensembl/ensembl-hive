@@ -45,6 +45,7 @@ package Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Cacheable;
 use Bio::EnsEMBL::Hive::Semaphore;
 use Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
@@ -272,29 +273,20 @@ sub store_a_semaphored_group_of_jobs {
     my $emitting_job_id;
 
     if($emitting_job) {
-        $funnel_job->prev_job( $emitting_job );
-        $funnel_job->controlled_semaphore( $emitting_job->controlled_semaphore );   # propagate parent's semaphore if any
+        if($funnel_job) {
+            $funnel_job->prev_job( $emitting_job );
+            $funnel_job->controlled_semaphore( $emitting_job->controlled_semaphore );   # propagate parent's semaphore if any
+        }
         $emitting_job_id = $emitting_job->dbID;
     }
-
-    my ($funnel_job_id) = @{ $self->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) };
 
     my $funnel_semaphore;
     my $funnel_semaphore_adaptor    = $self->db->get_SemaphoreAdaptor;  # assuming $self was $funnel_job_adaptor
 
-    if($funnel_job_id) {
-        my ($local_count, $remote_count)    = $funnel_job->count_local_and_remote_objects( $fan_jobs );
-        $funnel_semaphore = Bio::EnsEMBL::Hive::Semaphore->new(
-            'hive_pipeline'         => $funnel_job->hive_pipeline,
-            'dependent_job_id'      => $funnel_job_id,
-            'local_jobs_counter'    => $local_count,
-            'remote_jobs_counter'   => $remote_count,
-        );
-        $funnel_semaphore_adaptor->store( $funnel_semaphore );
+    my ($funnel_job_id)     = $funnel_job ? @{ $self->store_jobs_and_adjust_counters( [ $funnel_job ], 0, $emitting_job_id) } : ();
 
-        $funnel_semaphore->release_if_ripe();
+    if($funnel_job && !$funnel_job_id) {    # apparently the funnel_job has been created previously, trying to leech to it:
 
-    } else {    # apparently the funnel_job has been created previously, trying to leech to it:
         if($no_leeching) {
             die "The funnel job could not be stored, but leeching was not allowed, so bailing out";
 
@@ -315,6 +307,21 @@ sub store_a_semaphored_group_of_jobs {
         } else {
             die "The funnel job could neither be stored nor fetched";
         }
+    } else {    # Either the $funnel_job was successfully stored, or there wasn't any $funnel_job to start with:
+
+        my $whose_hive_pipeline = $funnel_job || $self->db;
+
+        my ($local_count, $remote_count)    = Bio::EnsEMBL::Hive::Cacheable::count_local_and_remote_objects( $whose_hive_pipeline, $fan_jobs );
+
+        $funnel_semaphore = Bio::EnsEMBL::Hive::Semaphore->new(
+            'hive_pipeline'         => $whose_hive_pipeline->hive_pipeline,
+            'dependent_job_id'      => $funnel_job_id,
+            'local_jobs_counter'    => $local_count,
+            'remote_jobs_counter'   => $remote_count,
+        );
+        $funnel_semaphore_adaptor->store( $funnel_semaphore );
+
+        $funnel_semaphore->release_if_ripe();
     }
 
     foreach my $fan_job (@$fan_jobs) {  # set the funnel in every fan's job:

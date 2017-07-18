@@ -438,13 +438,15 @@ sub draw_semaphore_and_accu {
         label       => $accusem_label,
     );
 
-    $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
-        color       => $dependent_blocking_arrow_colour,
-        style       => 'dashed',
-        arrowhead   => $dependent_blocking_arrow_shape,
-        tailport    => 's',
-        headport    => 'n',
-    );
+    if($dependent_node_name) {
+        $self->{'graph'}->add_edge( $semaphore_node_name => $dependent_node_name,
+            color       => $dependent_blocking_arrow_colour,
+            style       => 'dashed',
+            arrowhead   => $dependent_blocking_arrow_shape,
+            tailport    => 's',
+            headport    => 'n',
+        );
+    }
 
     if($self->{'show_accu_pointers'}) {
         foreach my $sending_job_node_name (keys %accu_ptrs) {
@@ -501,8 +503,11 @@ sub add_semaphore_node {
                 my $job_node_name   = add_job_node( $start_job );
             }
 
-        } else {
-            die "This semaphore is not blocking anything at all";
+        } else {    # The semaphore is not blocking anything, possibly the end of execution.
+
+            $accu_node_name = draw_semaphore_and_accu($semaphore, undef);
+
+            $target_cluster_name = $semaphore_pipeline_name;
         }
 
             # adding the semaphore node to the cluster of the dependent job's analysis:

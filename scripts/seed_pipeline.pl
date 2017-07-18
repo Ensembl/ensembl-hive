@@ -43,6 +43,7 @@ sub main {
 	$analysis_id, 
 	$logic_name, 
 	$input_id,
+    $wrap_in_semaphore,
         $help);
 
     GetOptions(
@@ -53,14 +54,13 @@ sub main {
             'reg_alias|regname|reg_name=s' => \$reg_alias,
             'nosqlvc=i'                    => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-
                 # identify the analysis:
             'analyses_pattern=s'    => \$analyses_pattern,
             'analysis_id=i'         => \$analysis_id,
             'logic_name=s'          => \$logic_name,
 
-                # specify the input_id (as a string):
-            'input_id=s'            => \$input_id,
+            'input_id=s'            => \$input_id,          # specify the Job's input parameters (as a stringified hash)
+            'wrap|semaphored!'      => \$wrap_in_semaphore, # wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
 
 	        # other commands/options
 	    'h|help!'               => \$help,
@@ -120,19 +120,26 @@ sub main {
     }
 
     my $job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-        'prev_job'      => undef,   # this job has been created by the initialization script, not by another job
+        'hive_pipeline' => $pipeline,
+        'prev_job'      => undef,           # This job has been created by the seed_pipeline.pl script, not by another job
         'analysis'      => $analysis,
         'input_id'      => $dinput_id,      # Make sure all job creations undergo re-stringification to avoid alternative "spellings" of the same input_id hash
     );
 
-    my ($job_id) = @{ $pipeline->hive_dba->get_AnalysisJobAdaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
+    my $job_id;
+
+    if( $wrap_in_semaphore ) {
+        my $dummy;
+        ($dummy, $job_id) = $job_adaptor->store_a_semaphored_group_of_jobs( undef, [ $job ], undef );
+    } else {
+        ($job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $job ] ) };
+    }
 
     if($job_id) {
-
         print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
 
     } else {
-
         warn "Could not create job '$input_id' (it may have been created already)\n";
     }
 }
@@ -184,7 +191,8 @@ __DATA__
 
 =head2 Input
 
-    -input_id <string>          : specify the input_id as a stringified hash 
+    -input_id <string>          : specify the job's input parameters as a stringified hash 
+    -semaphored                 : wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
 
 =head2 Other commands/options
 

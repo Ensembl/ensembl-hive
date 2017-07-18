@@ -162,7 +162,7 @@ sub reblock_by {
             $dependent_semaphore->reblock( [ $self ] ); # recursion
 
         } else {
-            die "The semaphore is not blocking anything!";
+            warn "The semaphore is not blocking anything, possibly the end of execution.\n";
         }
     }
 }
@@ -214,7 +214,7 @@ sub release_if_ripe {
             $dependent_semaphore->release_if_ripe();    # recursion
 
         } else {
-            die "The semaphore is not blocking anything!";
+            warn "The semaphore is not blocking anything, possibly the end of execution.\n";
         }
     }
 }
