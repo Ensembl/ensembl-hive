@@ -25,7 +25,7 @@ use Test::File::Contents;                   # import file_contents_eq_or_diff()
 use Test::More;
 
 use Bio::EnsEMBL::Hive::Utils::Config;      # for Bio::EnsEMBL::Hive::Utils::Config->default_system_config
-use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visualize_jobs generate_graph run_sql_on_db get_test_url_or_die);
+use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visualize_jobs generate_graph seed_pipeline run_sql_on_db get_test_url_or_die);
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
@@ -76,6 +76,12 @@ sub b {
     my ($bk_options, $idx) = @_;
 
     return [ 'BEEKEEPER', $idx, $bk_options ];
+}
+
+sub n {
+    my ($idx, $logic_name, $input_id, $semaphored_flag) = @_;
+
+    return [ 'SEED', $idx, $logic_name, $input_id, $semaphored_flag ];
 }
 
 sub z {             # BEWARE: you can't call your function s() !
@@ -133,6 +139,14 @@ my $name_2_plan = {
             w(4, 1),          b([qw(-sync)], 0),                                    z(0),
             w(4, 0),                                                                z(0),
     ],
+    'wrapped' => [
+            i(0, 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf', [ -hive_force_init => 1 ], [ 'pipeline.param[take_time]=0' ]),
+                                                                                    z(),    # take one snapshot before running anything
+            n(0, 'take_b_apart', '{"a_multiplier"=>100,"b_multiplier"=>234}', 1),   z(),    # seed a new semaphore-wrapped job
+            w(3),                                                                   z(),
+            w(5), w(6), w(7),                                                       z(),
+            w(4),                                                                   z(),
+    ],
 };
 
 my @test_names_to_run = ($test_name eq '*') ? keys %$name_2_plan : ( $test_name );
@@ -169,6 +183,12 @@ foreach my $test_name (@test_names_to_run) {
 
             } elsif( $op_type eq 'BEEKEEPER' ) {
                 beekeeper($op_url, $op_extras);
+
+            } elsif( $op_type eq 'SEED' ) {
+                my ($op_type, $idx, $logic_name, $input_id, $semaphored_flag) = @$op_vector; # more parameters
+                my @other_options = $semaphored_flag ? ('-semaphored') : ();
+
+                seed_pipeline($op_url, $logic_name, $input_id, undef, @other_options);
 
             } elsif( $op_type eq 'SNAPSHOT' ) {
 

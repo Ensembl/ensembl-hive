@@ -280,8 +280,8 @@ sub runWorker {
 =cut
 
 sub seed_pipeline {
-    my ($url, $logic_name, $input_id, $test_name) = @_;
-    return _test_ehive_script('seed_pipeline', $url, [-logic_name => $logic_name, -input_id => $input_id], $test_name // 'Can seed '.$logic_name.' with '.$input_id);
+    my ($url, $logic_name, $input_id, $test_name, @other_options) = @_;
+    return _test_ehive_script('seed_pipeline', $url, [-logic_name => $logic_name, -input_id => $input_id, @other_options], $test_name);
 }
 
 
