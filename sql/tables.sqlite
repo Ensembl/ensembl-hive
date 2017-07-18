@@ -7,13 +7,6 @@
             -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.sqlite -d Hive -intro $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.inc \
             -sort_headers 0 -sort_tables 0 -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html
 
-
-    Adding the following line into the header of the previous output will make it look prettier:
-            <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
-
-
-
-
 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -38,6 +31,7 @@ CONTACT
 /**
 @header Pipeline structure
 @colour #C70C09
+@desc   Tables to store the structure of the pipeline (i.e. the analyses and the dataflow-rules between them)
 */
 
 /**
@@ -48,8 +42,8 @@ CONTACT
 @desc This table keeps several important hive-specific pipeline-wide key-value pairs
         such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
 
-@column meta_key        the KEY of KEY-VALUE pairs (primary key)
-@column meta_value      the VALUE of KEY-VALUE pairs
+@column meta_key        the key of key-value pairs (primary key)
+@column meta_value      the value of key-value pairs
 */
 
 CREATE TABLE hive_meta (
@@ -67,8 +61,8 @@ CREATE TABLE hive_meta (
 @desc This table contains a simple hash between pipeline_wide_parameter names and their values.
       The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
 
-@column param_name      the KEY of KEY-VALUE pairs (primary key)
-@column param_value     the VALUE of KEY-VALUE pairs
+@column param_name      the key of key-value pairs (primary key)
+@column param_value     the value of key-value pairs
 */
 
 CREATE TABLE pipeline_wide_parameters (
@@ -261,6 +255,7 @@ CREATE UNIQUE INDEX condition_ctrled_idx ON analysis_ctrl_rule (condition_analys
 /**
 @header Resources
 @colour #FF7504
+@desc   Tables used to describe the resources needed by each analysis
 */
 
 /**
@@ -306,8 +301,9 @@ CREATE TABLE resource_description (
 
 
 /**
-@header Job-related
+@header Job tracking
 @colour #1D73DA
+@desc   Tables to list all the jobs of each analysis, and their dependencies
 */
 
 /**
@@ -315,7 +311,7 @@ CREATE TABLE resource_description (
 
 @colour #1D73DA
 
-@desc The job is the heart of this system.  It is the kiosk or blackboard
+@desc The job table is the heart of this system.  It is the kiosk or blackboard
     where workers find things to do and then post work for other works to do.
     These jobs are created prior to work being done, are claimed by workers,
     are updated as the work is done, with a final update on completion.
@@ -463,8 +459,9 @@ CREATE        INDEX analysis_data_idx ON analysis_data (md5sum);
 
 
 /**
-@header execution tables
+@header Execution
 @colour #24DA06
+@desc   Tables to track the agents operating the eHive system
 */
 
 /**
@@ -504,6 +501,7 @@ CREATE TABLE worker (
     meadow_user             VARCHAR(255)         DEFAULT NULL,
     process_id              VARCHAR(255) NOT NULL,
     resource_class_id       INTEGER              DEFAULT NULL,
+
     work_done               INTEGER      NOT NULL DEFAULT 0,
     status                  VARCHAR(255) NOT NULL DEFAULT 'READY', /* enum('SUBMITTED','SPECIALIZATION','COMPILATION','READY','JOB_LIFECYCLE','DEAD') DEFAULT 'READY' NOT NULL */
     beekeeper_id            INTEGER      DEFAULT NULL,
@@ -529,9 +527,9 @@ CREATE INDEX worker_meadow_type_meadow_name_process_id_idx ON worker (meadow_typ
 @column beekeeper_id       unique ID for this beekeeper
 @column meadow_host        hostname of machine where beekeeper started
 @column meadow_user        username under which this beekeeper ran or is running
-@column process_id         pid of the beekeeper
+@column process_id         process_id of the beekeeper
 @column is_blocked         beekeeper will not submit workers if this flag is set
-@column cause_of_death     last known status of this beekeeper
+@column cause_of_death     reason this beekeeper exited
 @column sleep_minutes      sleep interval in minutes
 @column analyses_pattern   restricting analyses_pattern, if given
 @column loop_limit         loop limit if given
@@ -592,6 +590,7 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 /**
 @header Logging and monitoring
 @colour #F4D20C
+@desc   Tables to store messages and feedback from the execution of the pipeline
 */
 
 /**

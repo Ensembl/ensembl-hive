@@ -7,11 +7,6 @@
             -i $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/sql/tables.mysql -d Hive -intro $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.inc \
             -sort_headers 0 -sort_tables 0 -o $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/docs/hive_schema.html
 
-
-    Adding the following line into the header of the previous output will make it look prettier:
-        <link rel="stylesheet" type="text/css" media="all" href="ehive_doc.css" />
-
-
 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -36,6 +31,7 @@ CONTACT
 /**
 @header Pipeline structure
 @colour #C70C09
+@desc   Tables to store the structure of the pipeline (i.e. the analyses and the dataflow-rules between them)
 */
 
 /**
@@ -46,8 +42,8 @@ CONTACT
 @desc This table keeps several important hive-specific pipeline-wide key-value pairs
         such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
 
-@column meta_key        the KEY of KEY-VALUE pairs (primary key)
-@column meta_value      the VALUE of KEY-VALUE pairs
+@column meta_key        the key of key-value pairs (primary key)
+@column meta_value      the value of key-value pairs
 */
 
 CREATE TABLE hive_meta (
@@ -65,8 +61,8 @@ CREATE TABLE hive_meta (
 @desc This table contains a simple hash between pipeline_wide_parameter names and their values.
       The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
 
-@column param_name      the KEY of KEY-VALUE pairs (primary key)
-@column param_value     the VALUE of KEY-VALUE pairs
+@column param_name      the key of key-value pairs (primary key)
+@column param_value     the value of key-value pairs
 */
 
 CREATE TABLE pipeline_wide_parameters (
@@ -263,6 +259,7 @@ CREATE TABLE analysis_ctrl_rule (
 /**
 @header Resources
 @colour #FF7504
+@desc   Tables used to describe the resources needed by each analysis
 */
 
 /**
@@ -308,8 +305,9 @@ CREATE TABLE resource_description (
 
 
 /**
-@header Job-related
+@header Job tracking
 @colour #1D73DA
+@desc   Tables to list all the jobs of each analysis, and their dependencies
 */
 
 /**
@@ -386,7 +384,6 @@ CREATE TABLE semaphore (
 
     UNIQUE KEY unique_dependent_job_id (dependent_job_id)                                           -- make sure two semaphores do not block the same job
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
-
 
 
 /**
@@ -469,8 +466,9 @@ CREATE TABLE analysis_data (
 
 
 /**
-@header execution tables
+@header Execution
 @colour #24DA06
+@desc   Tables to track the agents operating the eHive system
 */
 
 /**
@@ -600,6 +598,7 @@ CREATE TABLE role (
 /**
 @header Logging and monitoring
 @colour #F4D20C
+@desc   Tables to store messages and feedback from the execution of the pipeline
 */
 
 /**
@@ -650,7 +649,7 @@ CREATE TABLE worker_resource_usage (
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
 @column        role_id  the 'current' role
 @column      worker_id  the 'current' worker
-@column           beekeeper_id  beekeeper that generated this message
+@column   beekeeper_id  beekeeper that generated this message
 @column    when_logged  when the message was thrown
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
 @column         status  of the job or worker when the message was thrown
