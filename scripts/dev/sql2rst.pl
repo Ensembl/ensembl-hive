@@ -566,7 +566,6 @@ sub add_columns {
   my $table = shift;
   my $data  = shift;
   my $cols  = $data->{column};
-  my $display_style = $display_col{$display};
   
   my @data;
   my @header_row = ('Column', 'Type', 'Default value', 'Description', 'Index');
