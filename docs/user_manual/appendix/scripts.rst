@@ -36,12 +36,3 @@ Reporting
    scripts/load_resource_usage.rst
    scripts/visualize_jobs.rst
 
-Internal scripts
-~~~~~~~~~~~~~~~~
-
-.. toctree::
-   :titlesonly:
-
-   scripts/create_sql_patches.rst
-   scripts/make_docs.rst
-

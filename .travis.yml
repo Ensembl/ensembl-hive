@@ -53,7 +53,7 @@ install:
     - cpanm -n Devel::Cover::Report::Coveralls
     - cpanm -n Devel::Cover::Report::Codecov
 
-script: "./scripts/travis_run_tests.sh"
+script: "./scripts/dev/travis_run_tests.sh"
 
 notifications:
   email:
