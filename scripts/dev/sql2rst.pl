@@ -23,8 +23,12 @@
 
 
 use strict;
+#use warnings;  # commented out because this script is a repeat offender
+
 use POSIX;
 use Getopt::Long;
+use List::Util qw(max sum);
+
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 
@@ -403,8 +407,6 @@ print HTML slurp_intro($intro_file)."\n";
 print HTML $html_content."\n";
 close(HTML);
 chmod 0755, $html_file;
-
-use List::Util qw(max sum);
 
 sub rest_title {
     my ($title, $underscore_symbol) = @_;
