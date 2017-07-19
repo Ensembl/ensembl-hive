@@ -416,7 +416,7 @@ while (<SQLFILE>) {
 
       # Default value
       if (!defined($col_def) || $col_def eq '') {
-        $col_def = ($doc =~ /not\s+null/i ) ? '-' : 'NULL';
+        $col_def = ($doc =~ /not\s+null/i ) ? '*not set*' : 'NULL';
       }
 
       add_column_type_and_default_value($col_name,$col_type,$col_def);
@@ -445,6 +445,9 @@ if ($sort_tables == 1) {
   }
 }
 
+# Remove the empty headers (e.g. "default")
+@header_names = grep {scalar(@{$tables_names->{$_}})} @header_names;
+
 # Legend link
 if ($show_colour and scalar @colours > 1 and $header_flag != 1) {
   $html_content .= qq{A colour legend is available at the <a href="#legend">bottom of the page</a>.\n<br /><br />};
@@ -463,58 +466,31 @@ my $col_count = 1;
 my $header_id = 1;
 foreach my $header_name (@header_names) {
   my $tables = $tables_names->{$header_name};
-  my $hcolour = ($documentation->{$header_name}{'colour'}) ? $documentation->{$header_name}{'colour'} : $default_colour;
    
   #----------------#  
   # Header display #
   #----------------#  
-  if ($header_flag == 1 and $header_name ne 'default') {
-    $html_content .= qq{\n
-<div id="header_${header_id}" class="sql_schema_group_header" style="border-color:$hcolour">
-  <div class="sql_schema_group_bullet" style="background-color:$hcolour"></div>
-  <h2>$header_name</h2>
-</div>\n};
-    $header_id ++;
-    my $header_desc = $documentation->{$header_name}{'desc'};    
-    $html_content .= qq{<p class="sql_schema_group_header_desc">$header_desc</p>} if (defined($header_desc));
-  }
+    my $category_title = $documentation->{$header_name}->{'colour'} ? sprintf(':schema_table_header:`<%s,square>%s`', $documentation->{$header_name}->{'colour'}, $header_name) : $header_name;
+    $html_content .= rest_title($category_title, '~') . "\n";
   
   #------------------------#
   # Additional information #
   #------------------------#
-  if ($header_name eq 'default' and defined($documentation->{$header_name}{'info'})) {
-    $html_content .= qq{<h2>Additional information about the schema</h2>\n};
-  }  
-  $html_content .= add_info($documentation->{$header_name}{'info'});
+    $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
   
   #----------------#
   # Tables display #
   #----------------#
   foreach my $t_name (@{$tables}) {
     my $data = $documentation->{$header_name}{'tables'}{$t_name};
-    my $colour = ($header_flag && $hcolour) ? $hcolour : $data->{colour};
     
-    $html_content .= qq{<div class="sql_schema_table">};
-    $html_content .= add_table_name($t_name,$colour);
-    $html_content .= qq{<div class="sql_schema_table_content">};
-    $html_content .= add_description($data);
-    $html_content .= add_info($data->{info},$data);  
+    my $table_title = $documentation->{$header_name}->{'colour'} ? sprintf(':schema_table_header:`<%s,round>%s`', $documentation->{$header_name}->{'colour'}, $t_name) : $t_name;
+    $html_content .= rest_title($table_title, '+');
+    $html_content .= add_description($data) . "\n";
     $html_content .= add_columns($t_name,$data);
     $html_content .= add_examples($t_name,$data);
-
-    # See also + species list
-    my $html_table   = add_see($data->{see});
-    $html_table     .= add_species_list($t_name,$data->{see}) if ($hosts_list);
-    if ($html_table ne '') {
-      $html_content .= qq{<table class="sql_schema_extra"><tr>};
-      $html_content .= $html_table;
-      $html_content .= qq{</tr></table>};
-    }
-    $html_content .= qq{</div></div>};
   }
 }
-$html_content .= add_legend();
-
 
 
 
@@ -522,144 +498,93 @@ $html_content .= add_legend();
 ## HTML/output file ##
 ######################
 open  HTML, "> $html_file" or die "Can't open $html_file : $!";
-print HTML $html_header."\n";
 print HTML slurp_intro($intro_file)."\n";
 print HTML $html_content."\n";
-print HTML $html_footer."\n";
 close(HTML);
 chmod 0755, $html_file;
 
+use List::Util qw(max sum);
 
+sub rest_title {
+    my ($title, $underscore_symbol) = @_;
+    return $title . "\n" . ($underscore_symbol x length($title)) . "\n";
+}
 
+sub block_width {
+    my ($block) = @_;
+    my @lines = split /\n/, $block;
+    return max(map {length($_)} @lines);
+}
+
+sub column_width {
+    my ($data, $i) = @_;
+    return max(map {block_width($_->[$i])} @$data);
+}
+
+sub rest_list_table {
+    my ($data, $class) = @_;
+
+    my @widths = map {column_width($data, $_)} 0..(scalar(@{$data->[0]})-1);
+    my $w = ":widths: ".join(" ", @widths);
+
+    my $table_content = join("\n", map {rest_list_table_row($_)} @$data);
+    return ".. list-table::\n" . rest_add_indent_to_block(":header-rows: 1\n$w\n" . ($class ? ":class: $class\n" : "") . "\n" . $table_content, "   ") . "\n\n";
+}
+
+sub rest_list_table_row {
+    my ($row) = @_;
+    my $first_cell = shift @$row;
+    return rest_add_indent_to_block($first_cell, "    ", "* - ") . "\n" . join("\n", map {rest_add_indent_to_block($_, "    ", "  - ")} @$row);
+}
+
+sub rest_add_indent_to_block {
+    my ($block, $indent, $first_indent) = @_;
+    $first_indent //= $indent;
+    my @lines = split /\n/, $block;
+    my $first_line = shift @lines;
+    if (@lines) {
+        return $first_indent . $first_line . "\n" . join("\n", map {$indent . $_} @lines);
+    }
+    return $first_indent . $first_line;
+}
+
+sub rest_bullet_list {
+    my ($data, $list_symbol) = @_;
+    $list_symbol //= '-';
+    return join("\n", map {$list_symbol . " " . $_} @$data);
+}
 
 ###############
 ##  Methods  ##
 ###############
 
-# List the table names. 
-# Group them if the header option "-format_headers" is selected.
+# List the table names.  Group them if possible
 # By default there is one group, named "default" and it contains all the tables.
 sub display_tables_list {
 
-  my $html; 
   
-  $header_flag = 0 if (scalar @header_names == 1);
+    my $rest = rest_title('List of the tables', '=') . "\n";
   
-  if ($header_flag == 1) {
-    $html .= qq{\n<h3 id="top">List of the tables:</h3>\n};
-    $html .= qq{<div>\n} if ($format_headers == 1);
-  } 
-  else {
-    my $list_width;
-    if (scalar @header_names == 1) {
-      my $list_count = scalar @{$tables_names->{'default'}};
-      my $list_nb_col = ceil($list_count/$nb_by_col);
-      $list_width = length_names($tables_names->{'default'},$list_nb_col);
+    if (scalar(@header_names) == 1) {
+        return rest_bullet_list($tables_names->{$header_names[0]}) . "\n";
     }
-    $html .= qq{
-<div>      
-  <div id="top" class="sql_schema_table_list_nh" style="$list_width">
-    <div class="sql_schema_table_list_sub_nh">
-      <img src="/i/16/rev/info.png" style="vertical-align:top" />
-      <h3>List of the tables:</h3>
-    </div>};
-  }
-  
-  my $has_header = 0;
-  my $nb_col_line = 0;
-  
-  foreach my $header_name (@header_names) {
-    
-    my $tables = $tables_names->{$header_name};
-    my $count = scalar @{$tables};
-    next if ($count == 0);
-    
-    # Number of columns needed to display the tables of the group
-    my $nb_col = ceil($count/$nb_by_col);
-    my $nbc = $nb_col;
-    my $table_count = 0;
-    my $col_count = 1;
-  
-    if ($nb_col>3) { 
-      while ($nb_col>3) {
-        $nb_by_col += 5;
-        $nb_col = ceil($count/$nb_by_col);
-      }
-      $nb_col = 3;
-    }
-    
-    
-    # Header #
-    if ($header_flag == 1) {
-      if ($header_name ne 'default') {
-        if ($nb_col_line+$nbc > 4 and $format_headers == 1) {
-          $html .= qq{  <div style="clear:both"></div>\n</div>\n\n<div>};
-          $nb_col_line = 0;
-        }
-      
-        $html .= display_header($header_name,$nbc);
-        $nb_col_line += $nbc;
-        $has_header = 1;
-      }
-      
-      # List of tables #
-      $html .= qq{\n      <div style="float:left">} if ($count > $nb_by_col);
-      $html .= qq{\n      <ul class="sql_schema_table_list">\n};
-      my $t_count = 0;
-      foreach my $t_name (@{$tables}) {
-        if ($t_count>=$nb_by_col) {
-          $html .= qq{\n      </ul>\n      </div>};
-          $html .= qq{\n      <div style="float:left">};
-          $html .= qq{\n      <ul class="sql_schema_table_list">\n};
-          $t_count = 0;
-        }
-        my $t_colour;
-        if ($has_header == 0 && $show_colour) {
-          $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'};
-          $t_colour = $default_colour if (!defined($t_colour) || $t_colour eq '');
-        }
-        $html .= add_table_name_to_list($t_name,$t_colour);
-        $t_count++;
-      }
-      $html .= qq{\n      </ul>};
-      $html .= qq{\n      </div>} if ($count > $nb_by_col);
-      $html .= qq{\n    </div>\n} if ($format_headers == 1);   
-    }
-    else {
-      $html .= qq{\n    <table><tr><td>\n      <ul class="sql_schema_table_list_nh">\n};
 
-      # List of tables #
-      foreach my $t_name (@{$tables}) {
-        if ($table_count == $nb_by_col and $col_count<$nb_col and $nb_col>1){
-          $html .= qq{      </ul>\n    </td><td>\n      <ul class="sql_schema_table_list_nh">\n};
-          $table_count = 0;
-        }
-        my $t_colour = $default_colour;
-        if ($has_header == 0 && $show_colour) {
-          $t_colour = $documentation->{$header_name}{'tables'}{$t_name}{'colour'} if ($documentation->{$header_name}{'tables'}{$t_name}{'colour'});
-        }
+    # Remove the empty headers (e.g. "default")
+    my @useful_header_names = grep {scalar(@{$tables_names->{$_}})} @header_names;
 
-        $html .= add_table_name_to_list($t_name,$t_colour);
-        $table_count ++;
-      }
-      $html .= qq{      </ul>\n    </td></tr></table>\n};
+    # No more than 3 categories at a time
+    my $max_headers_per_line = 3;
+    while (scalar(@useful_header_names)) {
+        my @headers_this_time = splice(@useful_header_names, 0, $max_headers_per_line);
+
+        my @first_row = map {$documentation->{$_}->{'colour'} ? sprintf(':schema_table_header:`<%s,square>%s`', $documentation->{$_}->{'colour'}, $_) : $_} @headers_this_time;
+        my @second_row = map {rest_bullet_list($tables_names->{$_})} @headers_this_time;
+        my @data = (\@first_row, \@second_row);
+
+        $rest .= rest_list_table(\@data, 'sql-schema-table');
     }
-  }
   
-  my $input_margin;
-  if ($header_flag == 1 and $format_headers == 1){
-    $html .= qq{\n  <div style="clear:both" />\n</div>};
-  } else {
-    $input_margin = qq{ style="margin-left:10px;margin-bottom:5px"};
-  }
-  $html .= qq{
-  <input type="button" onclick="show_hide_all('$link_text')" class="fbutton" value="Show/hide all"$input_margin/>
-  <input type="hidden" id="expand" value="0" />
-  };
-  
-  $html .= qq{\n  </div>\n  <div style="clear:both" />\n</div>} if ($header_flag!=1 and $format_headers == 1);
-  
-  return $html;
+    return $rest;
 }
 
 
@@ -720,11 +645,11 @@ sub fill_documentation {
       }
       # Header description
       elsif(!$documentation->{$header}{'tables'}) {
-        $documentation->{$header}{'desc'} = escape_html($tag_content);
+        $documentation->{$header}{'desc'} = $tag_content;
       }
       # Table description
       else {
-        $documentation->{$header}{'tables'}{$table}{$tag} = escape_html($tag_content);
+        $documentation->{$header}{'tables'}{$table}{$tag} = $tag_content;
       }
     }
     elsif ($tag eq 'colour') {
@@ -809,7 +734,7 @@ sub add_description {
   # Search if there are some @link tags in the description text.
   my $desc = add_internal_link($data->{desc},$data);
   
-  return qq{  <p class="sql_schema_table_desc">$desc</p>\n};
+  return $desc . "\n";
 }
 
 
@@ -841,16 +766,9 @@ sub add_columns {
   my $cols  = $data->{column};
   my $display_style = $display_col{$display};
   
-  my $html = qq{\n  <div id="div_$table" style="display:$display_style">
-    <table class="ss sql_schema_table_column">
-      <tr class="center">
-        <th>Column</th>
-        <th>Type</th>
-        <th class="val">Default value</th>
-        <th class="desc">Description</th>
-        <th class="index">Index</th>
-      </tr>\n};
-  my $bg = 1;
+  my @data;
+  my @header_row = ('Column', 'Type', 'Default value', 'Description', 'Index');
+  push @data, \@header_row;
   
   foreach my $col (@$cols) {
     my $name    = $col->{name};
@@ -864,20 +782,11 @@ sub add_columns {
     
     $type = parse_column_type($type);
     
-    $html .= qq{
-      <tr>
-        <td class="bg$bg"><b>$name</b></td>
-        <td class="bg$bg">$type</td>
-        <td class="bg$bg">$default</td>
-        <td class="bg$bg">$desc</td>
-        <td class="bg$bg">$index</td>
-      </tr>\n};
-    if ($bg==1) { $bg=2; }
-    else { $bg=1; }
+    my @row = ("**$name**", $type, $default, $desc, $index);
+    push @data, \@row;
   }
-  $html .= qq {    </table>\n  </div>\n};
   
-  return $html;
+  return rest_list_table(\@data);
 }
 
 
@@ -1022,7 +931,7 @@ sub add_internal_link {
     if ((!grep {$link eq $_} @{$data->{see}}) and defined($link)) {
       push @{$data->{see}}, $link;
     }
-    my $table_to_link = qq{<a href="#$link" class="sql_schema_link">$link</a>};
+    my $table_to_link = $link;
     $desc =~ s/\@link\s?\w+/$table_to_link/;
   }
   return $desc;
@@ -1041,7 +950,7 @@ sub add_column_index {
     $idx_name = $idx_col;
   }
   if ($idx_type !~ /primary/i) {
-    $index .= ": <i>$idx_name</i>";
+    $index .= ": *$idx_name*";
   }
   my @idx_cols = split(',',$idx_col); # The index can involve several columns
   
@@ -1056,7 +965,7 @@ sub add_column_index {
     foreach my $col (@{$documentation->{$header}{tables}{$table}{column}}) {
       if ($col->{name} eq $i_col) {
         if ($col->{index} ne '') {
-          $col->{index} .= '<br />';
+          $col->{index} .= "\n";
         }
         $col->{index} .= lc($index);
         $is_found{$i_col} = 1;
@@ -1107,18 +1016,14 @@ sub parse_column_type {
   
   $c_data =~ s/'//g;
   $c_data =~ s/"//g;
+  $c_data =~ s/\s//g;
   $c_data =~ s/<br \/>//g;
   
   my @items_list = split(',',$c_data);
   
   return $type unless (scalar(@items_list) > 1);
   
-  my $data_list = qq{$c_type:<ul class="sql_schema_table_column_type">};
-  foreach my $item (@items_list) {
-    $data_list .= qq{  <li>$item</li>};
-  }
-  $data_list .= qq{</ul>};
-  return $data_list;
+  return $c_type . ":\n\n" . rest_bullet_list(\@items_list);
 }
 
 

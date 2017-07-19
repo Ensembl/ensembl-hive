@@ -22,6 +22,7 @@ import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath('.'))
 
 from xhive import *
+from xhive_schema import *
 
 hive_setup_if_needed()
 
@@ -354,6 +355,14 @@ epub_exclude_files = ['search.html']
 # (see https://github.com/rtfd/sphinx_rtd_theme/issues/117)
 def setup(app):
     app.add_stylesheet("theme_overrides.css")
+    app.add_stylesheet("schema_doc.css")
+
+    app.add_role('schema_table_header', schema_table_header_role)
+    app.add_node(schema_table_header,
+        html = (visit_schema_table_header_html, depart_schema_table_header_html),
+        latex = (visit_schema_table_header_latex, depart_schema_table_header_latex),
+    )
+
     app.add_directive('hive_diagram', HiveDiagramDirective)
     app.add_role('hivestatus', hivestatus_role)
     app.add_node(hivestatus,
