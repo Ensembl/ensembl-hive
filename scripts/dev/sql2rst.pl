@@ -479,7 +479,7 @@ sub display_tables_list {
         my @headers_this_time = splice(@useful_header_names, 0, $max_headers_per_line);
 
         my @first_row = map {$documentation->{$_}->{'colour'} ? sprintf(':schema_table_header:`<%s,square>%s`', $documentation->{$_}->{'colour'}, $_) : $_} @headers_this_time;
-        my @second_row = map {rest_bullet_list($tables_names->{$_})} @headers_this_time;
+        my @second_row = map {rest_bullet_list([map {$_.'_'} @{$tables_names->{$_}}])} @headers_this_time;
         my @data = (\@first_row, \@second_row);
 
         $rest .= rest_list_table(\@data, 'sql-schema-table');
