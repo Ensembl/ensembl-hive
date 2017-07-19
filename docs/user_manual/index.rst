@@ -80,6 +80,7 @@ User documentation
 
    appendix/presentations
    appendix/scripts
+   appendix/hive_schema
 
 
 .. _dev-docs:

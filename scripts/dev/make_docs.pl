@@ -48,16 +48,14 @@ sub main {
 
 sub generate_hive_schema_desc {
 
-    print "Regenerating $ehrd/docs/hive_schema.html ...\n\n";
+    print "Regenerating $ehrd/docs/user_manual/appendix/hive_schema.rst ...\n\n";
 
-    my $sql2html = "$erd/ensembl-production/scripts/sql2html.pl";
+    my $sql2rst = "$ehrd/scripts/dev/sql2rst.pl";
 
-    die "Cannot find '$sql2html', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2html);
+    die "Cannot find '$sql2rst', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2rst);
 
     my @cmds = (
-        "perl $sql2html -i $ehrd/sql/tables.mysql -d Hive -intro $ehrd/docs/hive_schema.inc -sort_headers 0 -sort_tables 0 -o $ehrd/docs/tmp_hive_schema.html",
-        "(head -n 3 $ehrd/docs/tmp_hive_schema.html ; cat $ehrd/docs/hive_schema.hdr ; tail -n +4 $ehrd/docs/tmp_hive_schema.html) | sed 's/\\/i\\/16\\//http:\\/\\/www.ensembl.org\\/i\\/16\\//' > $ehrd/docs/hive_schema.html",
-        "rm $ehrd/docs/tmp_hive_schema.html",       # remove the non-patched version
+        "perl $sql2rst -i $ehrd/sql/tables.mysql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/user_manual/appendix/hive_schema.rst",
     );
 
     foreach my $cmd (@cmds) {
@@ -76,7 +74,6 @@ sub generate_docs_scripts {
     my @cmds = (
         "rm -rf $target_dir",
         "mkdir  $target_dir",
-        "cd   $ehrd/scripts",
     );
     opendir( my $script_dir, "$ehrd/scripts") || die "Can't opendir $ehrd/scripts: $!";
     foreach my $plname ( readdir($script_dir) ) {

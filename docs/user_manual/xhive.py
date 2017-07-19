@@ -110,7 +110,7 @@ def hive_setup_if_needed():
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen")
     if True or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
         mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_docs.pl")
-        subprocess.call([mkdoc_path, "-no_schema_desc"])
+        subprocess.call([mkdoc_path])
     # eHive's default configuration file
     default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
     with open(default_config_file, "r") as fc:
