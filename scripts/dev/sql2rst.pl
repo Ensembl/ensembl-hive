@@ -28,7 +28,7 @@ use strict;
 use Getopt::Long;
 use List::Util qw(max sum);
 
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 
 
 ###############
@@ -36,7 +36,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 ###############
 
 my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
-my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle,$hosts_list);
+my ($url,$skip_conn,$db_handle);
 
 usage() if (!scalar(@ARGV));
  
@@ -49,12 +49,7 @@ GetOptions(
     'show_header=i'    => \$header_flag,
     'sort_headers=i'   => \$sort_headers,
     'sort_tables=i'    => \$sort_tables,
-    'host=s'           => \$host,
-    'port=i'           => \$port,
-    'dbname=s'         => \$dbname,
-    'user=s'           => \$user,
-    'pass=s'           => \$pass,
-    'hosts_list=s'     => \$hosts_list,
+    'url=s'            => \$url,
     'skip_connection'  => \$skip_conn,
     'intro=s'          => \$intro_file,
     'help!'            => \$help,
@@ -74,11 +69,6 @@ if (!$html_file) {
   usage();
 }
 
-if ($hosts_list && !$user) {
-  print "> Error! Please give user name using the option '-user' when you use the option -hosts_list\n";
-  usage();
-}
-
 $show_colour    = 1 if (!defined($show_colour));
 $header_flag    = 1 if (!defined($header_flag));
 $sort_headers   = 1 if (!defined($sort_headers));
@@ -86,18 +76,12 @@ $sort_tables    = 1 if (!defined($sort_tables));
 
 $skip_conn      = undef if ($skip_conn == 0);
 
-$port ||= 3306;
-
 # Dababase connection (optional)
-if (defined($host) && !defined($skip_conn)) {
-  my $db_adaptor = new Bio::EnsEMBL::DBSQL::DBAdaptor(
-    -host => $host,
-    -user => $user,
-    -pass => $pass,
-    -port => $port,
-    -dbname => $dbname
-  ) or die("DATABASE CONNECTION ERROR: Could not get a database adaptor for $dbname on $host:$port\n");
-  $db_handle = $db_adaptor->dbc->db_handle;
+if (defined($url) && !defined($skip_conn)) {
+  my $db_connection = new Bio::EnsEMBL::Hive::DBSQL::DBConnection(
+    -url => $url,
+  ) or die("DATABASE CONNECTION ERROR: Could not get a database adaptor for $url\n");
+  $db_handle = $db_connection->db_handle;
 }
 
 
@@ -649,7 +633,7 @@ sub add_examples {
     # Add a table of examples
     if (defined($sql)) {
       my $sql_table = '';
-      if (!defined($skip_conn) && defined($host)) {
+      if (!defined($skip_conn) && defined($url)) {
         $sql_table = get_example_table($sql,$table,$nb);
       }
       $sql = escape_html($sql);
@@ -886,30 +870,6 @@ sub slurp_intro {
 }
 
 
-# Connects and execute a query
-sub get_connection_and_query {
-  my $dbname = shift;
-  my $hname  = shift;
-  my $sql    = shift;
-  my $params = shift;
-
-  my ($host, $port) = split /\:/, $hname;
-
-  # DBI connection
-  my $dsn = "DBI:mysql:$dbname:$host:$port";
-  my $dbh = DBI->connect($dsn, $user, $pass) or die "Connection failed";
-
-  my $sth = $dbh->prepare($sql);
-  if ($params) {
-    $sth->execute(join(',',@$params));
-  }
-  else {
-    $sth->execute;
-  }
-  return $sth;
-}
-
-
 ##################
 ## Help methods ##
 ##################
@@ -1024,17 +984,8 @@ sub usage {
     Other optional options:
     
     # If you want to add some SQL query results as examples:
-    -host             Host name of the MySQL server
-    -port             Port of the MySQL server
-    -dbname           Database name
-    -user             MySQL user name
-    -pass             MySQL password (not always required)
+    -url              URL of the database that has some data
     -skip_connection  Avoid to run the MySQL queries contained in the "@example" tags.
-    
-    # If you want to show, for each table, the list of species where it has been populated:
-    -hosts_list       The list of host names where the databases are stored, separated by a coma,
-                      e.g. ensembldb.ensembl.org1, ensembldb.ensembl.org2
-                      You will need to provide at least the parameter -user (-port and -pass are not mandatory)
 
   } . "\n";
   exit(0);
