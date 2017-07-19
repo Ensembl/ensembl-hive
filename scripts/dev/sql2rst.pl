@@ -32,7 +32,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 ### Options ###
 ###############
 
-my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$format_headers,$sort_headers,$sort_tables,$intro_file,$html_head_file,$include_css,$help,$help_format);
+my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
 my ($host,$port,$dbname,$user,$pass,$skip_conn,$db_handle,$hosts_list);
 
 usage() if (!scalar(@ARGV));
@@ -44,7 +44,6 @@ GetOptions(
     'c=i' => \$show_colour,
     'v=i' => \$version,
     'show_header=i'    => \$header_flag,
-    'format_headers=i' => \$format_headers,
     'sort_headers=i'   => \$sort_headers,
     'sort_tables=i'    => \$sort_tables,
     'host=s'           => \$host,
@@ -55,8 +54,6 @@ GetOptions(
     'hosts_list=s'     => \$hosts_list,
     'skip_connection'  => \$skip_conn,
     'intro=s'          => \$intro_file,
-    'html_head=s'      => \$html_head_file,
-    'include_css!'     => \$include_css,
     'help!'            => \$help,
     'help_format'      => \$help_format,
 );
@@ -81,7 +78,6 @@ if ($hosts_list && !$user) {
 
 $show_colour    = 1 if (!defined($show_colour));
 $header_flag    = 1 if (!defined($header_flag));
-$format_headers = 1 if (!defined($format_headers));
 $sort_headers   = 1 if (!defined($sort_headers));
 $sort_tables    = 1 if (!defined($sort_tables));
 
@@ -110,7 +106,6 @@ if (defined($host) && !defined($skip_conn)) {
 
 my $default_colour = '#000'; # Black
 
-my %display_col = ('Show' => 'none', 'Hide' => 'inline');
 my $documentation = {};
 my $tables_names = {'default' => []};
 my @header_names = ('default');
@@ -126,104 +121,10 @@ my $nb_by_col = 15;
 my $count_sql_col = 0;
 my $tag_content = '';
 my $tag = '';
-my $display = 'Show';
 my $parenth_count = 0;
 my $header_colour;
 
 my $SQL_LIMIT = 50;
-my $img_plus  = qq{<img src="/i/16/plus-button.png" class="sql_schema_icon" alt="show"/>};
-my $img_minus = qq{<img src="/i/16/minus-button.png" class="sql_schema_icon" alt="hide"/>};
-my $link_text = 'columns';
-
-
-##############
-### Header ###
-##############
-my $title = 'Schema Documentation';
-my $extra_html_head_content = insert_text_into_html_head($html_head_file);
-
-my $css_code = ($include_css) ? get_css_code() : '';
-
-my $html_header = qq{
-<html>
-<head>
-$extra_html_head_content
-<title>$title</title>
-<meta name="order" content="2" />
-$css_code
-<script language="Javascript" type="text/javascript">
-  var img_plus   = '$img_plus';
-  var img_minus  = '$img_minus';
-
-  // Function to show/hide the columns table
-  function show_hide (param, a_text) {
-  
-    // Schema tables
-    if (a_text === 'columns') {
-      div_id   = '#div_'+param;
-      alink_id = '#a_'+param;
-    }  
-    // Species list
-    else if (a_text === 'species') {
-      div_id   = '#sp_'+param;
-      alink_id = '#s_'+param;
-    }
-    // Example tables
-    else {
-      div_id   = '#ex_'+param;
-      alink_id = '#e_'+param;
-    }
-    
-    if (\$(div_id).is(':visible')) {
-      \$(alink_id).html(img_plus+' Show '+a_text);
-    }
-    else if (\$(div_id).is(':hidden')) {
-      \$(alink_id).html(img_minus+' Hide '+a_text);
-    }
-    \$(div_id).slideToggle( 300 );
-  }
-  
-  // Function to show/hide all the tables
-  function show_hide_all (link_text) {
-    expand_div = '#expand';
-    div_prefix = 'div_';
-    \$("div[id^='"+div_prefix+"']").each(function() {
-      param = \$(this).attr('id').substring(div_prefix.length);
-      div_id   = '#'+\$(this).attr('id');
-      alink_id = '#a_'+param;
-      
-      if (\$(alink_id)) {
-        if (\$(expand_div).val()==0) {
-          \$(alink_id).html(img_minus+' Hide '+link_text);
-        }
-        else {
-          \$(alink_id).html(img_plus+' Show '+link_text);
-        }
-      }
-      \$(div_id).slideToggle( 500 );
-    });
-    if (\$(expand_div).val()==0) {
-      \$(expand_div).val(1);
-    }
-    else {
-      \$(expand_div).val(0);
-    }
-  }
-</script>
-</head>
-<body>
-};
-
-
-##############
-### Footer  ##
-##############
-
-my $html_footer = qq{
-</body>
-</html>};
-
-
 
 
 #############
@@ -588,34 +489,6 @@ sub display_tables_list {
 }
 
 
-# If the option "-show_header" is selected, the tables will be displayed by group ("Header") in the HTML page.
-# This method generates the HTML code to display the group names & descriptions.
-sub display_header {
-  my $header_name = shift;
-  my $nb_col = shift;
-  
-  my $html;
-  
-  if ($format_headers == 1) {
-  
-    my $hcolour = $default_colour;
-    if ($show_colour && $header_colour) {
-      $hcolour = $documentation->{$header_name}{colour} if ($documentation->{$header_name}{colour});
-    }
-
-    $html .= qq{
-  <div class="sql_schema_table_group">
-    <div class="sql_schema_table_group_header" style="border-color:$hcolour">
-      <div class="sql_schema_table_group_bullet" style="background-color:$hcolour"></div>
-      <h2>$header_name</h2>
-    </div>};
-  } 
-  else {
-    $html .= qq{    <h2>$header_name</h2>};
-  }
-  return $html;
-}
-
 
 # Method to pick up the documentation information contained in the SQL file.
 # If the line starts by a @<tag>, the previous tag content is added to the documentation hash.
@@ -693,40 +566,6 @@ sub fill_documentation {
 }
  
 
-# Method generating the HTML code to display the table name into the top menu.
-sub add_table_name_to_list {
-  my $t_name = shift;
-  my $t_colour = shift;
-  my $c = $t_colour;
-  if (defined($t_colour)) {
-    $t_colour = ($t_colour ne '') ? qq{ style="background-color:$t_colour"} : '';
-    $t_colour = qq{<div class="sql_schema_table_name_nh"$t_colour>&nbsp;</div> };
-  }
-  my $html = qq{        <li>$t_colour<a href="#$t_name" class="sql_schema_link" style="font-weight:bold">$t_name</a></li>\n};
-  return $html;
-}
-
-
-# Method generating the HTML code to display the title/header of the table description block
-sub add_table_name {
-  my $t_name = shift;
-  my $colour = shift || $default_colour;
-
-  my $html = qq{
-  <div id="$t_name" class="sql_schema_table_header" style="border-top-color:$colour">
-    <div class="sql_schema_table_header_left"><span style="background-color:$colour"></span>$t_name</div>
-    <div class="sql_schema_table_header_right">
-  };
-  $html .= show_hide_button("a_$t_name", $t_name, $link_text);
-  $html .= qq{
-      <span class="sql_schema_table_separator"> </span> <a href="#top" class="sql_schema_link">[Back to top]</a>
-    </div>
-    <div style="clear:both"></div>
-  </div>\n}; 
-  return $html;
-}
-
-
 # Method generating the HTML code to display the description content
 sub add_description {
   my $data = shift;
@@ -735,27 +574,6 @@ sub add_description {
   my $desc = add_internal_link($data->{desc},$data);
   
   return $desc . "\n";
-}
-
-
-# Method generating the HTML code to display additional information contained in the tags @info
-sub add_info {
-  my $infos = shift;
-  my $data  = shift;
-  my $html  = '';
-  
-  foreach my $inf (@{$infos}) {
-    my ($title,$content) = split('@info@', $inf);
-    $content = add_internal_link($content,$data) if (defined($data));
-    
-    $html .= qq{
-    <table>
-      <tr class="bg3"><th>$title</th></tr>
-      <tr class="bg1"><td>$content</td></tr>
-    </table>\n};
-  }
-  
-  return $html;
 }
 
 
@@ -830,10 +648,8 @@ sub add_examples {
     
     # Add a table of examples
     if (defined($sql)) {
-      my $show_hide = '';
       my $sql_table = '';
       if (!defined($skip_conn) && defined($host)) {
-        $show_hide .= show_hide_button("e_$table$nb", "$table$nb", 'query results');
         $sql_table = get_example_table($sql,$table,$nb);
       }
       $sql = escape_html($sql);
@@ -847,7 +663,6 @@ sub add_examples {
         <div class="sql_schema_table_example_query">
           <pre>$sql</pre>
         </div>
-        <div class="sql_schema_table_example_button">$show_hide</div>
         <div style="clear:both"></div>
       </div>
       $sql_table};
@@ -873,51 +688,6 @@ sub add_see {
     $html .= qq{      </ul>\n    </td>\n};
   }
 
-  return $html;
-}
-
-
-# Display the list of species where the given table is populated
-sub add_species_list {
-  my $table   = shift;
-  my $has_see = shift;
-
-  my $db_type = lc($db_team);
-  my $sql = qq{SELECT table_schema FROM information_schema.tables WHERE table_rows>=1 AND 
-               TABLE_SCHEMA like '%$db_type\_$version%' AND TABLE_NAME='$table'};
-
-  my @species_list;
-  foreach my $hostname (split(',',$hosts_list)) {
-    my $db_type = lc($db_team);
-    my $sth = get_connection_and_query("", $hostname, $sql);
-
-    # loop over databases
-    while (my ($dbname) = $sth->fetchrow_array) {
-      next if ($dbname =~ /^master_schema/);
-
-      $dbname =~ /^(.+)_$db_type/;
-      my $s_name = $1;
-
-      push(@species_list, $s_name);
-    }
-  }
-  return '' if (!@species_list);
-
-  my $show_hide = show_hide_button("s_$table", "$table", 'species');
-
-  my $separator = (defined($has_see) && scalar(keys(@$has_see))) ? qq{  <td class="sql_schema_extra_separator"></td>} : '';
-  my $margin = (defined($has_see) && scalar(keys(@$has_see))) ? qq{ style="padding-left:25px"} : '';
-
-  my $html = qq{$separator
-  <td class="sql_schema_extra_right"$margin><p><span>List of species with populated data:</span>$show_hide</p>
-    <div id="sp_$table" style="display:none;">};
-      
-  @species_list = map{ $_ =~ s/_/ /g; $_ } @species_list;
-  @species_list = map { qq{<li class="sql_schema_species_name">}.ucfirst($_)."</li>" } @species_list;
-  
-  $html .= qq{      <ul>\n        }.join("\n        ",@species_list).qq{\n      </ul>\n};
-  $html .= qq{    </div>\n  </td>};
-  
   return $html;
 }
 
@@ -1091,67 +861,12 @@ sub get_example_table {
 }
 
 
-# Method generating a "Colour legend" paragraph, based on the header colours.
-sub add_legend {
-  my $html = '';
-  my $default = 'Other tables';
-  
-  return $html if (scalar @colours == 1 or $header_colour);
-  
-  $html .= qq{<br />\n<hr />\n<h3 id="legend">Colour legend</h3>\n<table>};
-  
-  foreach my $c (@colours) {
-    my $desc = '';
-    if ($c eq $default_colour && !$legend{$default_colour}) {
-      $desc = $default;
-    }
-    else {
-      $desc = $legend{$c};
-    }
-    $html .= qq{  <tr><td class="sql_schema_legend" style="background-color:$c"></td><td>$desc</td></tr>\n};
-  }
-  $html .= qq{</table>};
-  
-  return $html;
-}
-
 
 # Removed the character(s) ` from the read line.
 sub remove_char {
   my $text = shift;
   $text =~ s/`//g;
   return $text;
-}
-
-
-# Escape special character for the HTML output
-# Code taken from HTML::Escape::PurePerl
-sub escape_html {
-    my $str = shift;
-    return '' unless defined $str;
-    my %_escape_table = ( '&' => '&amp;', '>' => '&gt;', '<' => '&lt;', q{"} => '&quot;', q{'} => '&#39;', q{`} => '&#96;', '{' => '&#123;', '}' => '&#125;' );
-    $str =~ s/([&><"'`{}])/$_escape_table{$1}/ge;
-    
-    # Revert escape for some HTML characters (e.g. <br> and <a> tags)
-    my %_revert_escape_table = ( '&lt;br \/&gt;' => '<br />', '&lt;br\/&gt;' => '<br />', '&lt;a href=&quot;' => '<a href="', '&quot;&gt;' => '">', '&lt;\/a&gt;' => '</a>');
-    foreach my $char (keys(%_revert_escape_table)) {
-      $str =~ s/$char/$_revert_escape_table{$char}/g;
-    }
-    
-    return $str;
-}
-
-
-# Insert text into the <head> tags
-sub insert_text_into_html_head {
-  my $header_file = shift;
-  return '' if (!defined $header_file);
-
-  local $/=undef;
-  open my $fh, "< $header_file" or die "Can't open $header_file: $!";
-  my $header_html = <$fh>;
-  close $fh;
-  return $header_html;
 }
 
 
@@ -1168,20 +883,6 @@ sub slurp_intro {
   $intro_html =~ s/####DB_VERSION####/$version/g if (defined($version));
   
   return $intro_html;
-}
-
-
-# Show/hide button
-sub show_hide_button {
-  my $a_id   = shift;
-  my $div_id = shift;
-  my $label  = shift;
-  
-  my $show_hide = qq{
-  <a id="$a_id" class="help-header sql_schema_show_hide" onclick="show_hide('$div_id','$label')">
-    $img_plus Show $label
-  </a>};
-  return $show_hide;
 }
 
 
@@ -1206,92 +907,6 @@ sub get_connection_and_query {
     $sth->execute;
   }
   return $sth;
-}
-
-
-sub get_css_code() {
-  my $css = qq{
-<style type="text/css">
-  /* Icons */
-  img.sql_schema_icon { width:12px;height:12px;position:relative;top:2px; }
-
-  /* Tables list - with header */
-  div.sql_schema_table_group           { background-color:#F4F4F4;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB;margin-bottom:15px;float:left;margin-right:20px;min-width:200px; }
-  div.sql_schema_table_group_header    { background-color:#FFF;padding:2px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
-  div.sql_schema_table_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:middle; }
-  div.sql_schema_table_group_header h2 { margin-left:8px;display:inline;color:#000;vertical-align:middle; }
-  ul.sql_schema_table_list             { padding:0px 4px 0px 22px;margin-bottom:2px; }
-  ul.sql_schema_table_list li          { margin-right:0px; }
-
-  /* Tables list - no header */
-  div.sql_schema_table_list_nh       { background-color:#F4F4F4;border-radius:5px;margin-bottom:20px;float:left; }
-  div.sql_schema_table_list_sub_nh   { padding:5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px; }
-  div.sql_schema_table_list_nh h3    { display:inline;color:#FFF; }
-  div.sql_schema_table_list_nh table { padding:0px 2px; }
-  ul.sql_schema_table_list_nh        { padding-left:20px; }
-  div.sql_schema_table_name_nh       {padding:0px;margin-left:0px;display:inline; }
-
-  /* Group header */
-  div.sql_schema_group_header    { background-color:#F4F4F4;padding:5px 4px;margin:75px 0px 5px;border-top:2px solid #000;border-bottom:1px solid #000; }
-  div.sql_schema_group_bullet    { box-shadow:1px 1px 2px #888;padding:0px 8px;display:inline;vertical-align:top; }
-  div.sql_schema_group_header h2 { display:inline;color:#000;padding-top:0px;margin-left:6px; }
-  p.sql_schema_group_header_desc { width:800px; }
-
-  /* SQL table header */
-  div.sql_schema_table                  { max-width:90%;border-left:1px dotted #BBB;border-right:1px dotted #BBB;border-bottom:1px dotted #BBB; }
-  div.sql_schema_table_header           { background-color:#F4F4F4;border-bottom:1px solid #BBB;margin-top:60px;padding:4px;border-top:1px solid #000; }
-  div.sql_schema_table_header_left      { float:left;text-align:left;font-size:11pt;font-weight:bold;color:#000;padding:2px 1px; }
-  div.sql_schema_table_header_left span { display:inline-block;height:10px;width:10px;border-radius:5px;margin-right:5px;box-shadow:1px 1px 2px #888;vertical-align:middle; }
-  div.sql_schema_table_header_right     { float:right;text-align:right;padding:2px 1px;margin-right:8px; }
-  div.sql_schema_table_content          { padding:10px; }
-  span.sql_schema_table_separator       { margin-right:8px;border-right:1px solid #000; }
-
-  /* SQL table description */
-  p.sql_schema_table_desc { padding:5px 0px;margin-bottom:0px; }
-
-  /* SQL table columns */
-  table.sql_schema_table_column          { border:1px solid #667aa6;border-spacing:2px; }
-  table.sql_schema_table_column th       { background-color:#667aa6;color:#FFF;padding:2px; }
-  table.sql_schema_table_column th.val   { min-width:80px; }
-  table.sql_schema_table_column th.desc  { min-width:250px; }
-  table.sql_schema_table_column th.index { min-width:100px; }
-  ul.sql_schema_table_column_type        { margin-bottom:0px; }
-  ul.sql_schema_table_column_type li     { line-height:12px; }
-
-  /* SQL table examples */
-  div.sql_schema_table_examples          { margin:10px 0px 15px; }
-  p.sql_schema_table_example_header      { font-weight:bold;margin-bottom:10px; }
-  div.sql_schema_table_example_content   { margin-left:10px; }
-  div.sql_schema_table_example_query     { float:left;border:1px solid #555;padding:2px 4px;margin-right:15px;overflow:auto;max-width:90%;background-color:#FAFAFA; }
-  div.sql_schema_table_example_query pre { margin-bottom:0px;color:#333; }
-  div.sql_schema_table_example_button    { float:left; }
-  table.sql_schema_table_example_result  { width:90%;margin-top:20px;border-spacing:2px; }
-  div.sql_schema_table_example_error     { padding:5px;margin:10px;width:500px;font-weight:bold;border:2px solid red;color:red; }
-  span.sql_schema_sql_highlight          { color:#00F; }
-
-  /* SQL table extra info */
-  table.sql_schema_extra         { margin-top:20px;border:1px solid #BBB; }
-  table.sql_schema_extra a       { text-decoration:none; }
-  td.sql_schema_extra_left       { padding: 4px 25px 0px 2px }
-  td.sql_schema_extra_left ul    { margin-bottom:0px; }
-  td.sql_schema_extra_right      { padding-top:4px; }
-  td.sql_schema_extra_right p    { margin-bottom:0px; }
-  td.sql_schema_extra_right span { margin-right:10px;font-weight:bold; }
-  td.sql_schema_extra_right ul   { margin-top:1em; } 
-  td.sql_schema_extra_separator  { margin:0px;padding:0px;width:1px;border-right:1px dotted #BBB; }
-  .sql_schema_species_name       { font-style:italic; }
-
-  /* Legend */
-  .sql_schema_legend { width:25px;height:15px; }
-
-  /* Links */
-  a.sql_schema_link { text-decoration:none; }
-  a.sql_schema_show_hide { cursor:pointer;font-weight:bold;border-radius:5px;background-color:#FFF;border:1px solid #667aa6;padding:1px 2px;margin-right:8px;vertical-align:middle;box-shadow:1px 1px 2px #888; }
-  .sql_schema_legend { width:25px;height:15px;}
-</style>  
-  };
-
-  return $css;
 }
 
 
@@ -1403,7 +1018,6 @@ sub usage {
     -intro            A html/text file to include in the Introduction section (Optional. If not provided a default text will be inserted)
     -html_head        A html/text file to include extra text inside the html <head></head> tags. (Optional)
     -show_header      A flag to display headers for a group of tables (1) or not (0). By default, the value is set to 1.
-    -format_headers   A flag to display formatted headers for a group of tables (1) or not (0) in the top menu list. By default, the value is set to 1.                
     -sort_headers     A flag to sort (1) or not (0) the headers by alphabetic order. By default, the value is set to 1.
     -sort_tables      A flag to sort (1) or not (0) the tables by alphabetic order. By default, the value is set to 1.
                      
