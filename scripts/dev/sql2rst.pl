@@ -25,7 +25,6 @@
 use strict;
 #use warnings;  # commented out because this script is a repeat offender
 
-use POSIX;
 use Getopt::Long;
 use List::Util qw(max sum);
 
@@ -406,7 +405,6 @@ open  HTML, "> $html_file" or die "Can't open $html_file : $!";
 print HTML slurp_intro($intro_file)."\n";
 print HTML $html_content."\n";
 close(HTML);
-chmod 0755, $html_file;
 
 sub rest_title {
     my ($title, $underscore_symbol) = @_;
