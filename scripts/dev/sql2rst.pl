@@ -873,7 +873,7 @@ sub remove_char {
 # Insert the introduction text of the web page
 sub slurp_intro {
   my $intro_file = shift;
-  return qq{<h1>Ensembl $db_team Schema Documentation</h1>\n<h2>Introduction</h2>\n<p><i>please, insert your introduction here</i><p><br />} if (!defined $intro_file);
+  return qq{This document describes the tables that make up the $db_team schema. Tables are grouped into categories, and the purpose of each table is explained.\n} if (!defined $intro_file);
 
   local $/=undef;
   open my $fh, "< $intro_file" or die "Can't open $intro_file: $!";
