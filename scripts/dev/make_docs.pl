@@ -48,14 +48,14 @@ sub main {
 
 sub generate_hive_schema_desc {
 
-    print "Regenerating $ehrd/docs/user_manual/appendix/hive_schema.rst ...\n\n";
+    print "Regenerating $ehrd/docs/appendix/hive_schema.rst ...\n\n";
 
     my $sql2rst = "$ehrd/scripts/dev/sql2rst.pl";
 
     die "Cannot find '$sql2rst', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2rst);
 
     my @cmds = (
-        "perl $sql2rst -i $ehrd/sql/tables.mysql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/user_manual/appendix/hive_schema.rst",
+        "perl $sql2rst -i $ehrd/sql/tables.mysql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/appendix/hive_schema.rst",
     );
 
     foreach my $cmd (@cmds) {
@@ -68,7 +68,7 @@ sub generate_hive_schema_desc {
 
 sub generate_docs_scripts {
 
-    my $target_dir = "$ehrd/docs/user_manual/appendix/scripts";
+    my $target_dir = "$ehrd/docs/appendix/scripts";
     print "Regenerating $target_dir...\n\n";
 
     my @cmds = (

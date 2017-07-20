@@ -108,7 +108,7 @@ def hive_setup_if_needed():
         os.environ["ENSEMBL_CVS_ROOT_DIR"] = os.environ["HOME"]
     else:
         os.environ["ENSEMBL_CVS_ROOT_DIR"]   # Will raise an error if missing
-    os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir, os.path.pardir)
+    os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir)
     os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules") + os.path.pathsep + os.environ["PERL5LIB"]
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen")
     if True or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
