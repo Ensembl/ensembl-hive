@@ -127,17 +127,17 @@ sub main {
     );
 
     my $job_adaptor = $pipeline->hive_dba->get_AnalysisJobAdaptor;
-    my $job_id;
+    my ($semaphore_id, $job_id);
 
     if( $wrap_in_semaphore ) {
         my $dummy;
-        ($dummy, $job_id) = $job_adaptor->store_a_semaphored_group_of_jobs( undef, [ $job ], undef );
+        ($semaphore_id, $dummy, $job_id) = $job_adaptor->store_a_semaphored_group_of_jobs( undef, [ $job ], undef );
     } else {
         ($job_id) = @{ $job_adaptor->store_jobs_and_adjust_counters( [ $job ] ) };
     }
 
     if($job_id) {
-        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'\n";
+        print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'".($semaphore_id ? ", wrapped in Semaphore $semaphore_id" : '')."\n";
 
     } else {
         warn "Could not create job '$input_id' (it may have been created already)\n";

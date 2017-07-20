@@ -261,9 +261,9 @@ sub store_jobs_and_adjust_counters {
   Arg [2]    : arrayref of Bio::EnsEMBL::Hive::AnalysisJob $fan_jobs
   Arg [3]    : (optional) Bio::EnsEMBL::Hive::AnalysisJob $emitting_job
   Arg [4]    : (optional) boolean $no_leeching
-  Example    : my ($funnel_job_id, @fan_job_ids) = $job_adaptor->store_a_semaphored_group_of_jobs( $funnel_job, $fan_jobs, $emitting_job );
+  Example    : my ($funnel_semaphore_id, $funnel_job_id, @fan_job_ids) = $job_adaptor->store_a_semaphored_group_of_jobs( $funnel_job, $fan_jobs, $emitting_job );
   Description: Attempts to store a semaphored group of jobs, returns a list of successfully stored job_ids
-  Returntype : list of job_dbIDs
+  Returntype : ($funnel_semaphore_id, $funnel_job_id, @fan_job_ids)
 
 =cut
 
@@ -330,7 +330,7 @@ sub store_a_semaphored_group_of_jobs {
 
     my (@fan_job_ids) = @{ $self->store_jobs_and_adjust_counters( $fan_jobs, 1, $emitting_job_id) };
 
-    return ($funnel_job_id, @fan_job_ids);
+    return ($funnel_semaphore->dbID, $funnel_job_id, @fan_job_ids);
 }
 
 
