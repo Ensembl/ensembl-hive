@@ -26,10 +26,9 @@ def depart_schema_table_header_html(self, node):
     self.body.append('</div>')
 
 def visit_schema_table_header_latex(self, node):
-    colour_spec = node['colour_spec']
-    self.body.append('\n\\colorbox[HTML]{%s}{' % colour_spec)
+    pass
 
 def depart_schema_table_header_latex(self, node):
-    self.body.append('}')
+    pass
 
 
