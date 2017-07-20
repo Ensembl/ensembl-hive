@@ -322,6 +322,8 @@ close(SQLFILE);
 
 my $html_content;
 
+$html_content .= ".. raw:: latex\n\n   \\begin{landscape}\n\n";
+
 # Sort the headers names by alphabetic order
 if ($sort_headers == 1) {
   @header_names = sort(@header_names);
@@ -380,6 +382,8 @@ foreach my $header_name (@header_names) {
   }
 }
 
+
+$html_content .= ".. raw:: latex\n\n   \\end{landscape}\n\n";
 
 
 ######################
