@@ -38,12 +38,10 @@ Long Multiplication pipeline walkthrough
     | in version/2.5)                      |                                      |
     +--------------------------------------+--------------------------------------+
 
-    |
-
-    | The main bulk of this document is a commented series of snapshots
-      of both types of diagrams during the execution of the pipeline.
-    | They can be approximately reproduced by running a sequence of
-      commands, similar to these, in a terminal:
+    The main bulk of this document is a commented series of snapshots
+    of both types of diagrams during the execution of the pipeline.
+    They can be approximately reproduced by running a sequence of
+    commands, similar to these, in a terminal:
 
     ::
 
