@@ -120,8 +120,8 @@ my $SQL_LIMIT = 50;
 
 # Create a complex hash "%$documentation" to store all the documentation content
 
-open SQLFILE, "< $sql_file" or die "Can't open $sql_file : $!";
-while (<SQLFILE>) {
+open my $sql_fh, '<', $sql_file or die "Can't open $sql_file : $!";
+while (<$sql_fh>) {
   chomp $_;
   next if ($_ eq '');
   next if ($_ =~ /^\s*(DROP|PARTITION)/i);
@@ -274,7 +274,7 @@ while (<SQLFILE>) {
         $col_type="$2$3<br />";
         my $end_type = 0;
         while ($end_type != 1){
-          my $line = <SQLFILE>;
+          my $line = <$sql_fh>;
           chomp $line;
           $line = remove_char($line);
 
@@ -311,7 +311,7 @@ while (<SQLFILE>) {
     }
   }
 }
-close(SQLFILE);
+close($sql_fh);
 
 
 
@@ -389,10 +389,10 @@ $html_content .= ".. raw:: latex\n\n   \\end{landscape}\n\n";
 ######################
 ## HTML/output file ##
 ######################
-open  HTML, "> $html_file" or die "Can't open $html_file : $!";
-print HTML slurp_intro($intro_file)."\n";
-print HTML $html_content."\n";
-close(HTML);
+open  my $output_fh, '>', $html_file or die "Can't open $html_file : $!";
+print $output_fh slurp_intro($intro_file)."\n";
+print $output_fh $html_content."\n";
+close($output_fh);
 
 sub rest_title {
     my ($title, $underscore_symbol) = @_;
@@ -863,7 +863,7 @@ sub slurp_intro {
   return qq{This document describes the tables that make up the $db_team schema. Tables are grouped into categories, and the purpose of each table is explained.\n} if (!defined $intro_file);
 
   local $/=undef;
-  open my $fh, "< $intro_file" or die "Can't open $intro_file: $!";
+  open my $fh, '<', $intro_file or die "Can't open $intro_file: $!";
   my $intro_html = <$fh>;
   close $fh;
   
