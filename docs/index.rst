@@ -81,6 +81,7 @@ User documentation
    appendix/presentations
    appendix/scripts
    appendix/hive_schema
+   appendix/api
 
 
 .. _dev-docs:
@@ -90,7 +91,6 @@ Developer documentation
 
 .. toctree::
 
-   dev/api
    dev/release_checklist
 
 
