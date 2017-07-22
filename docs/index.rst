@@ -91,6 +91,7 @@ Developer documentation
 .. toctree::
 
    dev/api
+   dev/release_checklist
 
 
 Indices and tables
