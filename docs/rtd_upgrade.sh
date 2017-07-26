@@ -19,6 +19,7 @@ echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.6
      http://archive.ubuntu.com/ubuntu/pool/main/libi/libio-pty-perl/libio-pty-perl_1.08-1.1build1_amd64.deb \
      http://archive.ubuntu.com/ubuntu/pool/universe/libg/libgraphviz-perl/libgraphviz-perl_2.20-1_all.deb \
      http://archive.ubuntu.com/ubuntu/pool/universe/d/doxypy/doxypy_0.4.2-1.1_all.deb \
+     http://archive.ubuntu.com/ubuntu/pool/universe/libp/libproc-daemon-perl/libproc-daemon-perl_0.23-1_all.deb \
 | xargs -n 1 curl -O
 
 mkdir packages
