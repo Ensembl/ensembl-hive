@@ -106,10 +106,13 @@ def hive_setup_if_needed():
         os.environ["ENSEMBL_CVS_ROOT_DIR"]   # Will raise an error if missing
     os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir)
     os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules") + os.path.pathsep + os.environ["PERL5LIB"]
+    mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_docs.pl")
+    # Only run doxygen if it's missing
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "_build", "doxygen")
-    if True or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
-        mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_docs.pl")
-        subprocess.call([mkdoc_path])
+    if (os.environ.get("READTHEDOCS", None) == "True") or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
+        subprocess.call([mkdoc_path, "-no_script_docs", "-no_schema_desc"]) # i.e. run doxygen only
+    # always run the rest
+    subprocess.call([mkdoc_path, "-no_doxygen"]) # i.e. run everything but doxygen
     # eHive's default configuration file
     default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
     with open(default_config_file, "r") as fc:
