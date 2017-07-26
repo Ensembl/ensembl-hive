@@ -3,7 +3,7 @@ eHive
 
 [![Travis Build Status](https://travis-ci.org/Ensembl/ensembl-hive.svg?branch=master)](https://travis-ci.org/Ensembl/ensembl-hive)
 [![Coverage Status](https://coveralls.io/repos/Ensembl/ensembl-hive/badge.svg?branch=master&service=github)](https://coveralls.io/github/Ensembl/ensembl-hive?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=experimental-user_manual)](http://ensembl-hive.readthedocs.io/en/experimental-user\_manual/?badge=experimental-user\_manual)
+[![Documentation Status](https://readthedocs.org/projects/ensembl-hive/badge/?version=master)](http://ensembl-hive.readthedocs.io/en/master)
 [![codecov](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master/graph/badge.svg)](https://codecov.io/gh/Ensembl/ensembl-hive/branch/master)
 [![Code Climate](https://codeclimate.com/github/Ensembl/ensembl-hive/badges/gpa.svg)](https://codeclimate.com/github/Ensembl/ensembl-hive)
 [![Docker Build Status](https://img.shields.io/docker/build/ensemblorg/ensembl-hive.svg)](https://hub.docker.com/r/ensemblorg/ensembl-hive)
