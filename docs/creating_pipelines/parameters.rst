@@ -219,8 +219,8 @@ Here is a diagram showing how the parameters are propagated in the absence
    digraph {
       label="Propagation with INPUT_PLUS"
       A -> B [label="INPUT_PLUS"];
-      A -> D;
-      B -> C;
+      A -> D [label=<<i>no INPUT_PLUS</i>>];
+      B -> C [label=<<i>no INPUT_PLUS</i>>];
       B -> E [label="INPUT_PLUS"];
       A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
       B [label=<Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
