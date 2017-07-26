@@ -17,9 +17,9 @@ institute <http://mediawiki.internal.sanger.ac.uk/index.php/How_to_run_MPI_jobs_
 You can find real examples in the
 `ensembl-compara <https://github.com/Ensembl/ensembl-compara>`__
 repository. It ships Runnables used for phylogenetic trees inference:
-`RAxML <https://github.com/Ensembl/ensembl-compara/blob/release/77/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/RAxML.pm>`__
+`RAxML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/RAxML.pm>`__
 and
-`ExaML <https://github.com/Ensembl/ensembl-compara/blob/feature/update_pipeline/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__.
+`ExaML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__.
 They look very light-weight (only command-line definitions) because most
 of the logic is in the base class (*GenericRunnable*), but nevertheless
 show the command lines used and the parametrization of multi-core and
@@ -152,7 +152,7 @@ define the correct resource class and comand lines in Hive.
    -  ``same[model]`` is needed to ensure that the selected compute nodes
       all have the same hardware. You may also need something like
       ``select[avx]`` to select the nodes that have the `AVX instruction
-      set <http://en.wikipedia.org/wiki/Advanced_Vector_Extensions>`__
+      set <https://en.wikipedia.org/wiki/Advanced_Vector_Extensions>`__
    -  ``span[ptile=4]``, this option specifies the granularity in which LSF
       will split the jobs/per node. In this example we ask for each machine
       to be allocated a multiple of 4 cores. This might affect queuing

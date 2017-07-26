@@ -12,7 +12,7 @@ eHive is great, and the user manual is great.
 
 The code is open source, and `available on GitHub`_.
 
-.. _available on GitHub: http://github.com/Ensembl/ensembl-hive
+.. _available on GitHub: https://github.com/Ensembl/ensembl-hive
 
 The main documentation for eHive is organized into a couple sections:
 

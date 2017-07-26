@@ -20,12 +20,12 @@ download and install first:
 
    At the moment, the following database options are available:
 
-   -  MySQL 5.1 `or higher <http://dev.mysql.com/downloads/>`__.
+   -  MySQL 5.1 `or higher <https://dev.mysql.com/downloads/>`__.
       **Warning:** eHive is not compatible with MysQL 5.6.20 but is
       with versions 5.6.16 and 5.6.23. We suggest avoiding the
       5.6.[17-22] interval
    -  SQLite 3.6 `or higher <http://www.sqlite.org/download.html>`__
-   -  PostgreSQL 9.2 `or higher <http://www.postgresql.org/download/>`__
+   -  PostgreSQL 9.2 `or higher <https://www.postgresql.org/download/>`__
 
    The database has to be accessible from all the machines you want to
    run pipelines on, so make sure the SQLite database is on a shared
@@ -61,7 +61,7 @@ Check out the repository by cloning it from GitHub:
 
 All eHive pipelines will require the ensembl-hive repository, which can
 be found on `GitHub <https://github.com/Ensembl/ensembl-hive>`__. As
-such it is assumed that `Git <http://git-scm.com/>`__ is installed on
+such it is assumed that `Git <https://git-scm.com/>`__ is installed on
 your system, if not follow the instructions
 `here <https://help.github.com/articles/set-up-git/>`__
 
