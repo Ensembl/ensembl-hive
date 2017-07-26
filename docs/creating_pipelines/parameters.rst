@@ -207,11 +207,11 @@ Here is a diagram showing how the parameters are propagated in the absence
       A -> D;
       B -> C;
       B -> E;
-      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
-      B [label=<Job B<br/><font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
-      C [label=<Job C<br/>Pc<sub>1</sub>,Pc<sub>2</sub>>]
-      D [label=<Job D<br/>Pd<sub>1</sub>>]
-      E [label=<Job E<br/>Pe<sub>1</sub>>]
+      A [color="red", label=<<font color='red'>Job A<br/>Pa<sub>1</sub>,Pa<sub>2</sub></font>>];
+      B [color="DodgerBlue", label=<<font color='DodgerBlue'>Job B<br/>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>];
+      C [label=<Job C<br/>Pc<sub>1</sub>,Pc<sub>2</sub>>];
+      D [label=<Job D<br/>Pd<sub>1</sub>>];
+      E [label=<Job E<br/>Pe<sub>1</sub>>];
    }
 
 .. graphviz::
@@ -222,11 +222,11 @@ Here is a diagram showing how the parameters are propagated in the absence
       A -> D [label=<<i>no INPUT_PLUS</i>>];
       B -> C [label=<<i>no INPUT_PLUS</i>>];
       B -> E [label="INPUT_PLUS"];
-      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
-      B [label=<Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
-      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>]
-      D [label=<Job D<br/>Pd<sub>1</sub>>]
-      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>]
+      A [color="red", label=<<font color='red'>Job A<br/>Pa<sub>1</sub>,Pa<sub>2</sub></font>>];
+      B [color="DodgerBlue", label=<<font color='DodgerBlue'>Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>];
+      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>];
+      D [label=<Job D<br/>Pd<sub>1</sub>>];
+      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>];
    }
 
 Global implicit propagation
@@ -274,10 +274,10 @@ on.
       A -> D;
       B -> C;
       B -> E;
-      A [label=<Job A<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>>]
-      B [label=<Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>]
-      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>]
-      D [label=<Job D<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pd<sub>1</sub>>]
-      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>]
+      A [color="red", label=<<font color='red'>Job A<br/>Pa<sub>1</sub>,Pa<sub>2</sub></font>>];
+      B [color="DodgerBlue", label=<<font color='DodgerBlue'>Job B<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>>];
+      C [label=<Job C<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pc<sub>1</sub>,Pc<sub>2</sub>>];
+      D [label=<Job D<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,Pd<sub>1</sub>>];
+      E [label=<Job E<br/><font color='red'>Pa<sub>1</sub>,Pa<sub>2</sub></font>,<font color='DodgerBlue'>Pb<sub>1</sub>,Pb<sub>2</sub>,Pb<sub>3</sub></font>,Pe<sub>1</sub>>];
    }
 
