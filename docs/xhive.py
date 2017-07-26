@@ -67,10 +67,6 @@ display_config_json = json.dumps( {
 
 def generate_diagram(pipeconfig_content, target_image_filename):
 
-    # Only rebuild the images if eHive is present
-    if "EHIVE_ROOT_DIR" not in os.environ:
-        return
-
     # A temporary file for the JSON config
     json_fh = tempfile.NamedTemporaryFile(delete = False)
     #print "json_fh:", json_fh.name
