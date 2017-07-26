@@ -46,8 +46,11 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
-clean:
+cleaner:
 	rm -rf $(BUILDDIR)/*
+
+clean:
+	rm -rf $(BUILDDIR)/html $(BUILDDIR)/latex $(BUILDDIR)/epub $(BUILDDIR)/doctrees
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

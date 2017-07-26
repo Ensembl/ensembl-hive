@@ -46,7 +46,7 @@ extensions = [
 templates_path = ['_templates']
 
 doxylink = {
-    'doxehive': (os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "doxygen", "ensembl-hive.tag"), 'perl/'),
+    'doxehive': (os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "_build", "doxygen", "ensembl-hive.tag"), 'perl/'),
 }
 
 # Add markdown support
@@ -156,7 +156,7 @@ html_static_path = ['_static']
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
-html_extra_path = ['doxygen/', 'presentations/']
+html_extra_path = ['_build/doxygen/', 'presentations/']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
