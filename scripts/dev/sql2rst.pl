@@ -319,6 +319,14 @@ while (<$sql_fh>) {
 }
 close($sql_fh);
 
+my %table_documentation;
+foreach my $c (keys %$documentation) {
+  my $h = $documentation->{$c};
+  foreach my $table_name (keys %{$h->{tables}}) {
+    $table_documentation{$table_name} = $h->{tables}->{$table_name};
+    $h->{tables}->{$table_name}->{category} = $c;
+  }
+}
 
 # Sort the headers names by alphabetic order
 if ($sort_headers == 1) {
