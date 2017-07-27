@@ -150,8 +150,10 @@ while (<$sql_fh>) {
     # Header name
     if ($doc =~ /^\@header\s*(.+)$/i and $header_flag == 1) {
       $header = $1;
-      push (@header_names,$header);
-      $tables_names->{$header} = [];
+      unless (exists $tables_names->{$header}) {
+        push (@header_names,$header);
+        $tables_names->{$header} = [];
+      }
       next;
     }    
     # Table name
