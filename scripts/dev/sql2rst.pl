@@ -236,10 +236,14 @@ while (<$sql_fh>) {
       # INDEXES #
       #---------#
       
-      # Skip the FOREIGN KEY
-      next if ($doc =~ /^\s*foreign\s+key/i || $doc =~ /^\s+$/);
-      
-      if ($doc =~ /^\s*(primary\s+key)\s*\w*\s*\((.+)\)/i or $doc =~ /^\s*(unique)\s*\((.+)\)/i){ # Primary or unique;
+      # Skip the blank lines
+      next if ($doc =~ /^\s+$/);
+
+      if ($doc =~ /FOREIGN\s+KEY\s+\((\S+)\)\s+REFERENCES\s+(\S+)\s*\((\S+)\)/i) { # foreign key
+        push @{$documentation->{$header}{'tables'}{$table}->{foreign_keys}}, [$1,$2,$3];
+        next;
+      }
+      elsif ($doc =~ /^\s*(primary\s+key)\s*\w*\s*\((.+)\)/i or $doc =~ /^\s*(unique)\s*\((.+)\)/i){ # Primary or unique;
         add_column_index($1,$2);
         next;
       }
