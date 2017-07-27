@@ -35,13 +35,14 @@ use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 ### Options ###
 ###############
 
-my ($sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
+my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
 my ($url,$skip_conn,$db_handle);
 
 usage() if (!scalar(@ARGV));
  
 GetOptions(
     'i=s' => \$sql_file,
+    'fk=s' => \$fk_sql_file,
     'o=s' => \$html_file,
     'd=s' => \$db_team,
     'c=i' => \$show_colour,
@@ -327,6 +328,20 @@ foreach my $c (keys %$documentation) {
     $h->{tables}->{$table_name}->{category} = $c;
   }
 }
+
+if ($fk_sql_file) {
+    open $sql_fh, '<', $fk_sql_file or die "Can't open $fk_sql_file : $!";
+    while (<$sql_fh>) {
+      chomp $_;
+      next if ($_ eq '');
+      my $doc = remove_char($_);
+      if ($doc =~ /ALTER\s+TABLE\s+(\S+)\s+ADD.*FOREIGN\s+KEY\s+\((\S+)\)\s+REFERENCES\s+(\S+)\((\S+)\)/i) {
+          push @{$table_documentation{$1}->{foreign_keys}}, [$2,$3,$4];
+      }
+    }
+    close($sql_fh);
+}
+
 
 # Sort the headers names by alphabetic order
 if ($sort_headers == 1) {
