@@ -25,17 +25,19 @@
 use strict;
 #use warnings;  # commented out because this script is a repeat offender
 
+use File::Path qw(make_path);
 use Getopt::Long;
 use List::Util qw(max sum);
 
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
+use Bio::EnsEMBL::Hive::Utils::GraphViz;
 
 
 ###############
 ### Options ###
 ###############
 
-my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$help,$help_format);
+my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$diagram_dir,$help,$help_format);
 my ($url,$skip_conn,$db_handle);
 
 usage() if (!scalar(@ARGV));
@@ -47,6 +49,7 @@ GetOptions(
     'd=s' => \$db_team,
     'c=i' => \$show_colour,
     'v=i' => \$version,
+    'diagram_dir=s'    => \$diagram_dir,
     'show_header=i'    => \$header_flag,
     'sort_headers=i'   => \$sort_headers,
     'sort_tables=i'    => \$sort_tables,
@@ -342,6 +345,146 @@ if ($fk_sql_file) {
     close($sql_fh);
 }
 
+sub table_box {
+    my ($graph, $table_name) = @_;
+    my $table_doc = $table_documentation{$table_name};
+    my @rows = map {sprintf('<tr><td bgcolor="white" port="port%s">%s</td></tr>', $_->{name}, $_->{name})} @{$table_doc->{column}};
+    $graph->add_node($table_name,
+        'shape' => 'box',
+        'style' => 'filled,rounded',
+        'fillcolor' => $table_doc->{colour},
+        'label' => sprintf('<<table border="0"><th><td>%s</td></th><hr/>%s</table>>', $table_name, join('', @rows)),
+    );
+}
+
+sub print_whole_diagram {
+    my ($show_clusters, $column_links, $ortho) = @_;
+    my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
+        'label' => "$db_team schema diagram",
+        'ratio' => 'compress',    # or 'expand' ?
+        'group' => 'true',
+        $ortho
+          ? ( 'splines' => 'ortho', )
+          : ( 'concentrate' => 'true', ),
+    );
+    foreach my $table_name (keys %table_documentation) {
+        table_box($graph, $table_name);
+    }
+    foreach my $table_name (keys %table_documentation) {
+        foreach my $fk (@{$table_documentation{$table_name}->{foreign_keys}}) {
+            $graph->add_edge($table_name => $fk->[1],
+                'style' => 'dashed',
+                $column_links ? (
+                    'from_port' => $fk->[0],
+                    'to_port' => $fk->[2],
+                ) : (),
+            );
+        }
+    }
+
+    if ($show_clusters) {
+        foreach my $h (keys %$documentation) {
+            my $cluster_id = clean_name($h);
+            $graph->cluster_2_attributes()->{$cluster_id} = {
+                'cluster_label' => $h,
+                'style' => 'bold',
+            };
+            my @cluster_nodes;
+            $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
+            foreach my $t (keys %{$documentation->{$h}->{tables}}) {
+                push @cluster_nodes, $t;
+            }
+        }
+    }
+    return $graph;
+}
+
+sub sub_table_box {
+    my ($graph, $table_name, $fields) = @_;
+    my $table_doc = $table_documentation{$table_name};
+    my @rows;
+    my $has_ellipsis;
+    foreach my $c (@{$table_doc->{column}}) {
+        if ($fields->{$c->{name}}) {
+            push @rows, sprintf('<tr><td bgcolor="white" port="%s">%s</td></tr>', $c->{name}, $c->{name});
+            $has_ellipsis = 0;
+        } elsif (!$has_ellipsis) {
+            push @rows, '<tr><td bgcolor="white"><i>...</i></td></tr>';
+            $has_ellipsis = 1;
+        }
+    }
+    $graph->add_node($table_name,
+        'shape' => 'box',
+        'style' => 'filled,rounded',
+        'fillcolor' => $table_doc->{colour},
+        'label' => sprintf('<<table border="0"><th><td>%s</td></th><hr/>%s</table>>', $table_name, join('', @rows)),
+    );
+}
+
+sub print_sub_diagram {
+    my ($cluster, $column_links, $ortho) = @_;
+    my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
+        'label' => "$db_team schema diagram: $cluster tables",
+        'ratio' => 'expand',    # or 'compress' ?
+        'group' => 'true',
+        $ortho
+          ? ( 'splines' => 'ortho', )
+          : ( 'concentrate' => 'true', ),
+    );
+    foreach my $table_name (keys %{$documentation->{$cluster}->{tables}}) {
+        table_box($graph, $table_name);
+    }
+    my %clusters_to_draw = ($cluster => 1);
+    my %other_table_fields;
+    my @drawn_fks;
+    foreach my $table_name (keys %table_documentation) {
+        foreach my $fk (@{$table_documentation{$table_name}->{foreign_keys}}) {
+            if ($table_documentation{$table_name}->{category} eq $cluster) {
+                $other_table_fields{$fk->[1]}->{$fk->[2]} = 1;
+                $clusters_to_draw{ $table_documentation{$fk->[1]}->{category} } = 1;
+                push @drawn_fks, [$table_name, @$fk];
+            } elsif ($table_documentation{$fk->[1]}->{category} eq $cluster) {
+                $other_table_fields{$table_name}->{$fk->[0]} = 1;
+                $clusters_to_draw{ $table_documentation{$table_name}->{category} } = 1;
+                push @drawn_fks, [$table_name, @$fk];
+            }
+        }
+    }
+    foreach my $table_name (keys %other_table_fields) {
+        sub_table_box($graph, $table_name, $other_table_fields{$table_name} || {}) if $cluster ne $table_documentation{$table_name}->{category};
+    }
+    foreach my $fk (@drawn_fks) {
+        my $table_name = shift @$fk;
+        $graph->add_edge($table_name => $fk->[1],
+            'style' => 'dashed',
+            $column_links ? (
+                'from_port' => $fk->[0],
+                'to_port' => $fk->[2],
+            ) : (),
+        );
+    }
+
+    foreach my $h (keys %clusters_to_draw) {
+        my $cluster_id = clean_name($h);
+        $graph->cluster_2_attributes()->{$cluster_id} = {
+            'cluster_label' => $h,
+            'style' => 'bold',
+        };
+        my @cluster_nodes;
+        $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
+        foreach my $t (keys %{$documentation->{$h}->{tables}}) {
+            push @cluster_nodes, $t if (($h eq $cluster) || $other_table_fields{$t});
+        }
+    }
+    return $graph;
+}
+
+sub clean_name {
+    my $n = shift;
+    $n =~ s/\s+/_/g;
+    $n =~ s/[\-\/]+/_/g;
+    return lc $n;
+}
 
 # Sort the headers names by alphabetic order
 if ($sort_headers == 1) {
@@ -356,6 +499,21 @@ if ($sort_tables == 1) {
 
 # Remove the empty headers (e.g. "default")
 @header_names = grep {scalar(@{$tables_names->{$_}})} @header_names;
+
+
+#####################
+## Schema diagrams ##
+#####################
+if ($diagram_dir) {
+    make_path($diagram_dir);
+    my $graph = print_whole_diagram('show_clusters', !'column_links', 'ortho');
+    $graph->as_png("$diagram_dir/$db_team.png");
+    foreach my $c (@header_names) {
+        my $filename = "$diagram_dir/$db_team.".clean_name($c);
+        my $graph = print_sub_diagram($c, !'column_links', 'ortho');
+        $graph->as_png("$filename.png");
+    }
+}
 
 
 ##################
