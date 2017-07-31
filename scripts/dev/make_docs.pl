@@ -56,7 +56,8 @@ sub generate_hive_schema_desc {
     die "Cannot find '$sql2rst', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2rst);
 
     my @cmds = (
-        "perl $sql2rst -i $ehrd/sql/tables.mysql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/appendix/hive_schema.rst",
+        "rm -rf $ehrd/docs/appendix/hive_schema",
+        "$sql2rst -i $ehrd/sql/tables.mysql -fk $ehrd/sql/foreign_keys.sql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/appendix/hive_schema.rst -diagram_dir hive_schema",
     );
 
     foreach my $cmd (@cmds) {

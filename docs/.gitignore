@@ -1,6 +1,7 @@
 _build
 *.pyc
 appendix/scripts
+appendix/hive_schema
 appendix/hive_schema.rst
 creating_pipelines/dataflows
 creating_pipelines/dataflow_targets

@@ -25,6 +25,7 @@
 use strict;
 #use warnings;  # commented out because this script is a repeat offender
 
+use File::Basename ();
 use File::Path qw(make_path);
 use Getopt::Long;
 use List::Util qw(max sum);
@@ -505,11 +506,12 @@ if ($sort_tables == 1) {
 ## Schema diagrams ##
 #####################
 if ($diagram_dir) {
-    make_path($diagram_dir);
+    my $full_diagram_dir = File::Basename::dirname($html_file) . "/$diagram_dir";
+    make_path($full_diagram_dir);
     my $graph = print_whole_diagram('show_clusters', !'column_links', 'ortho');
-    $graph->as_png("$diagram_dir/$db_team.png");
+    $graph->as_png("$full_diagram_dir/$db_team.png");
     foreach my $c (@header_names) {
-        my $filename = "$diagram_dir/$db_team.".clean_name($c);
+        my $filename = "$full_diagram_dir/$db_team.".clean_name($c);
         my $graph = print_sub_diagram($c, !'column_links', 'ortho');
         $graph->as_png("$filename.png");
     }
@@ -553,6 +555,10 @@ foreach my $header_name (@header_names) {
   # Additional information #
   #------------------------#
     $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
+    if ($diagram_dir) {
+        my $l = clean_name($header_name);
+        $html_content .= ".. image:: $diagram_dir/$db_team.$l.png\n   :width: 500px\n   :align: center\n\n";
+    }
   
   #----------------#
   # Tables display #
@@ -638,7 +644,16 @@ sub rest_bullet_list {
 sub display_tables_list {
 
   
-    my $rest = rest_title('List of the tables', '=') . "\n";
+    my $rest = '';
+
+    if ($diagram_dir) {
+        $rest .= rest_title('Schema diagram', '=') . "\n";
+        $rest .= "The overall schema diagram is generated as a PNG image.\n";
+        $rest .= "Link to the individual diagrams of each category are available below.\n\n";
+        $rest .= ".. image:: $diagram_dir/$db_team.png\n   :width: 500px\n   :align: center\n\n";
+    }
+
+    $rest .= rest_title('Table list', '=') . "\n";
   
     if (scalar(@header_names) == 1) {
         return rest_bullet_list($tables_names->{$header_names[0]}) . "\n";
