@@ -57,7 +57,7 @@ sub generate_hive_schema_desc {
 
     my @cmds = (
         "rm -rf $ehrd/docs/appendix/hive_schema",
-        "$sql2rst -i $ehrd/sql/tables.mysql -fk $ehrd/sql/foreign_keys.sql -d Hive -sort_headers 0 -sort_tables 0 -o $ehrd/docs/appendix/hive_schema.rst -diagram_dir hive_schema",
+        "$sql2rst -i $ehrd/sql/tables.mysql -fk $ehrd/sql/foreign_keys.sql -d Hive -sort_headers 0 -sort_tables 0 -intro /dev/null -o $ehrd/docs/appendix/hive_schema.rst -diagram_dir hive_schema",
     );
 
     foreach my $cmd (@cmds) {

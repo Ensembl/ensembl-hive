@@ -660,12 +660,13 @@ sub display_tables_list {
 
     if ($diagram_dir) {
         $rest .= rest_title('Schema diagram', '=') . "\n";
-        $rest .= "The overall schema diagram is generated as a PNG image.\n";
-        $rest .= "Link to the individual diagrams of each category are available below.\n\n";
+        $rest .= "The $db_team schema diagrams are automatically generated as PNG images with Graphviz, and show the links between columns of each table.\n";
+        $rest .= "Here follows the overall schema diagram, while the individual diagrams of each category are available below, together with the table descriptions.\n\n";
         $rest .= ".. image:: $diagram_dir/$db_team.png\n   :width: 500px\n   :align: center\n\n";
     }
 
     $rest .= rest_title('Table list', '=') . "\n";
+    $rest .= "Here is the list of all the tables found in a typical $db_team database, grouped by categories.\n\n";
   
     if (scalar(@header_names) == 1) {
         return rest_bullet_list($tables_names->{$header_names[0]}) . "\n";
