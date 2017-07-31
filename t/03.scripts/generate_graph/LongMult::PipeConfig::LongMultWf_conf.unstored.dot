@@ -18,6 +18,7 @@ subgraph cluster_long_mult_wf {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
+	color="";
 	analysis_add_together;
 	analysis_part_multiply;
 	analysis_take_b_apart;

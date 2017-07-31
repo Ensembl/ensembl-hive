@@ -26,6 +26,7 @@ subgraph cluster_smart_long_mult {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
+	color="";
 	analysis_add_together;
 	analysis_redirect_trivial_jobs;
 	analysis_take_b_apart;

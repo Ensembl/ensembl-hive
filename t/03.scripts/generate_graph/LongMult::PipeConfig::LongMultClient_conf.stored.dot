@@ -28,6 +28,7 @@ subgraph cluster_long_mult_client {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
+	color="";
 	analysis_add_together;
 	analysis_take_b_apart;
 	subgraph cluster_cl_dfr_1_mp {
@@ -48,6 +49,7 @@ subgraph cluster_long_mult_server {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="8";
+	color="";
 	foreign_analysis_ehive_test_server__add_together;
 	foreign_analysis_ehive_test_server__part_multiply;
 	sink_long_mult_server;

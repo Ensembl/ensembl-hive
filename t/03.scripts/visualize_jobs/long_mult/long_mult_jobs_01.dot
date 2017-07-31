@@ -8,11 +8,13 @@ subgraph cluster_long_mult {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
+	color="";
 	subgraph cluster_take_b_apart {
 		label="take_b_apart";
 		style="rounded,filled";
 		colorscheme="X11";
 		fillcolor="green";
+		color="";
 		job_1__long_mult;
 		job_2__long_mult;
 	}

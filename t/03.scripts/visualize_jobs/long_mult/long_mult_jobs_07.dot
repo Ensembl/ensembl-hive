@@ -40,11 +40,13 @@ subgraph cluster_long_mult {
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
+	color="";
 	subgraph cluster_add_together {
 		label="add_together";
 		style="rounded,filled";
 		colorscheme="X11";
 		fillcolor="green";
+		color="";
 		job_3__long_mult;
 		job_9__long_mult;
 		semaphore_1__long_mult;
@@ -55,6 +57,7 @@ subgraph cluster_long_mult {
 		style="rounded,filled";
 		colorscheme="X11";
 		fillcolor="yellow";
+		color="";
 		job_10__long_mult;
 		job_11__long_mult;
 		job_12__long_mult;
@@ -69,6 +72,7 @@ subgraph cluster_long_mult {
 		style="rounded,filled";
 		colorscheme="X11";
 		fillcolor="DeepSkyBlue";
+		color="";
 		job_1__long_mult;
 		job_2__long_mult;
 	}

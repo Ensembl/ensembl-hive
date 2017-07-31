@@ -122,15 +122,16 @@ sub display_subgraph {
 
         my ($colour_scheme, $colour_offset) = @$box_colour_pair;
         my $adjusted_colour                 = $auto_colour ? $colour_offset+$depth : $colour_offset;
-        my $cluster_style                   = $cluster_attributes->{ 'style' } || 'filled';
+
+        my @style_components                = split(/,/, $cluster_attributes->{ 'style' } || 'noborder,filled');
+        my $noborder                        = grep /noborder/, @style_components;
+        my $cluster_style                   = join(',', grep !/noborder/, @style_components);
 
         $text .= $prefix . qq{\tstyle="$cluster_style";\n};
         $text .= $prefix . qq{\tcolorscheme="$colour_scheme";\n};
         $text .= $prefix . qq{\tfillcolor="$adjusted_colour";\n};
+        $text .= $prefix . qq{\tcolor="} . ( $noborder ? $adjusted_colour : '') .qq{";\n};  # NB: empty string is needed to reset back to default
 
-        if($cluster_style eq 'filled') {    # camouflage the edge
-            $text .= $prefix . qq{\tcolor="$adjusted_colour";\n};
-        }
     } # otherwise just draw a black frame around the subgraph
 
     foreach my $node_name ( sort @{ $self->cluster_2_nodes->{ $cluster_name } || [] } ) {
