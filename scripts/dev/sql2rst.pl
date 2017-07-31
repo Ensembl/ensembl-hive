@@ -359,14 +359,12 @@ sub table_box {
 }
 
 sub print_whole_diagram {
-    my ($show_clusters, $column_links, $ortho) = @_;
+    my ($show_clusters, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram",
-        'ratio' => 'compress',    # or 'expand' ?
-        'group' => 'true',
-        $ortho
-          ? ( 'splines' => 'ortho', )
-          : ( 'concentrate' => 'true', ),
+        $column_links
+          ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
+          : ( 'splines' => 'ortho', ),
     );
     foreach my $table_name (sort keys %table_documentation) {
         table_box($graph, $table_name);
@@ -376,8 +374,8 @@ sub print_whole_diagram {
             $graph->add_edge($table_name => $fk->[1],
                 'style' => 'dashed',
                 $column_links ? (
-                    'from_port' => $fk->[0],
-                    'to_port' => $fk->[2],
+                    'from_port' => "$fk->[0]:e",
+                    'to_port' => "$fk->[2]:w",
                 ) : (),
             );
         }
@@ -423,14 +421,12 @@ sub sub_table_box {
 }
 
 sub print_sub_diagram {
-    my ($cluster, $column_links, $ortho) = @_;
+    my ($cluster, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram: $cluster tables",
-        'ratio' => 'expand',    # or 'compress' ?
-        'group' => 'true',
-        $ortho
-          ? ( 'splines' => 'ortho', )
-          : ( 'concentrate' => 'true', ),
+        $column_links
+          ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
+          : ( 'splines' => 'ortho', ),
     );
     foreach my $table_name (sort keys %{$documentation->{$cluster}->{tables}}) {
         table_box($graph, $table_name);
@@ -459,8 +455,8 @@ sub print_sub_diagram {
         $graph->add_edge($table_name => $fk->[1],
             'style' => 'dashed',
             $column_links ? (
-                'from_port' => $fk->[0],
-                'to_port' => $fk->[2],
+                'from_port' => $fk->[0].':e',
+                'to_port' => $fk->[2].':w',
             ) : (),
         );
     }
@@ -508,11 +504,11 @@ if ($sort_tables == 1) {
 if ($diagram_dir) {
     my $full_diagram_dir = File::Basename::dirname($html_file) . "/$diagram_dir";
     make_path($full_diagram_dir);
-    my $graph = print_whole_diagram('show_clusters', !'column_links', 'ortho');
+    my $graph = print_whole_diagram('show_clusters', 'column_links');
     $graph->as_png("$full_diagram_dir/$db_team.png");
     foreach my $c (@header_names) {
         my $filename = "$full_diagram_dir/$db_team.".clean_name($c);
-        my $graph = print_sub_diagram($c, !'column_links', 'ortho');
+        my $graph = print_sub_diagram($c, 'column_links');
         $graph->as_png("$filename.png");
     }
 }
