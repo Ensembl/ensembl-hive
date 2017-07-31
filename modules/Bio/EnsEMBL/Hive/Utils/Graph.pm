@@ -243,7 +243,7 @@ sub build {
     if( $self->config_get('DisplayDetails') ) {
         foreach my $pipeline ( Bio::EnsEMBL::Hive::TheApiary->pipelines_collection->list ) {
             my $pipeline_cluster_name   = _cluster_name( $pipeline->hive_pipeline_name );
-            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'display_cluster_name' } = 1;
+            $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'cluster_label' } = $pipeline_cluster_name;
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'style' } = 'bold,filled';
 
             $self->graph->cluster_2_attributes->{ $pipeline_cluster_name }{ 'fill_colour_pair' } = ($pipeline == $main_pipeline)

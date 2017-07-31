@@ -130,22 +130,25 @@ if(0) {
             push @{ $self->{'graph'}->cluster_2_nodes->{ $this_pipeline->hive_pipeline_name } }, $analysis_name;
         }
 
-        $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
-        $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
-        $self->{'graph'}->cluster_2_attributes->{ $main_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = ['pastel19', 3];
+        my $mcluster_name    = $main_pipeline->hive_pipeline_name;
+        $self->{'graph'}->cluster_2_attributes->{ $mcluster_name }{ 'cluster_label' } = $mcluster_name;
+        $self->{'graph'}->cluster_2_attributes->{ $mcluster_name }{ 'style' } = 'bold,filled';
+        $self->{'graph'}->cluster_2_attributes->{ $mcluster_name }{ 'fill_colour_pair' } = ['pastel19', 3];
         my @other_pipeline_colour_pairs = ( ['pastel19', 8], ['pastel19', 5], ['pastel19', 6], ['pastel19', 1] );
 
             # now rotate through the list of the non-reference pipelines:
         foreach my $other_pipeline ( @{ Bio::EnsEMBL::Hive::TheApiary->pipelines_except($main_pipeline) } ) {
 
+            my $ocluster_name    = $main_pipeline->hive_pipeline_name;
+
             my $colour_pair = shift @other_pipeline_colour_pairs;
-            $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'display_cluster_name' } = 1;
-            $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'style' } = 'bold,filled';
-            $self->{'graph'}->cluster_2_attributes->{ $other_pipeline->hive_pipeline_name }{ 'fill_colour_pair' } = $colour_pair;
+            $self->{'graph'}->cluster_2_attributes->{ $ocluster_name }{ 'cluster_label' } = $ocluster_name;
+            $self->{'graph'}->cluster_2_attributes->{ $ocluster_name }{ 'style' } = 'bold,filled';
+            $self->{'graph'}->cluster_2_attributes->{ $ocluster_name }{ 'fill_colour_pair' } = $colour_pair;
             push @other_pipeline_colour_pairs, $colour_pair;
 
             if($self->{'include'}) {
-                push @{ $self->{'graph'}->cluster_2_nodes->{ $main_pipeline->hive_pipeline_name } }, $other_pipeline->hive_pipeline_name;
+                push @{ $self->{'graph'}->cluster_2_nodes->{ $mcluster_name } }, $ocluster_name;
             }
         }
 
@@ -294,11 +297,18 @@ sub draw_job_node {
 
         # adding the job to the corresponding analysis' cluster:
     my $analysis_name   = $job->analysis->relative_display_name($main_pipeline);
-    $analysis_name=~s{/}{___};
+    my $cluster_label;
+
+    if($analysis_name =~ m{^(\w+)/(\w+)$}) {
+        $analysis_name = $1 . '___' . $2;
+        $cluster_label = $2;
+    } else {
+        $cluster_label = $analysis_name;
+    }
 
     my $analysis_status = $job->analysis->status;
     push @{$self->{'graph'}->cluster_2_nodes->{ $analysis_name }}, $job_node_name;
-    $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'display_cluster_name' } = 1;
+    $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'cluster_label' } = $cluster_label;
     $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'style' } = 'rounded,filled';
     $self->{'graph'}->cluster_2_attributes->{ $analysis_name }{ 'fill_colour_pair' } = [ $analysis_status_colour->{$analysis_status} ];
     $analysis_name_2_pipeline{ $analysis_name } = $job->hive_pipeline;

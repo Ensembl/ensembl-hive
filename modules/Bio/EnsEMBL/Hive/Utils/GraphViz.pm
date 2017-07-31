@@ -108,9 +108,7 @@ sub display_subgraph {
     my $cluster_attributes              = $self->cluster_2_attributes->{$cluster_name};
 
     my ($box_colour_pair, $auto_colour) = $cluster_attributes->{ 'fill_colour_pair' } || ($self->nested_bgcolour, 1);
-    my $cluster_label                   = $cluster_attributes->{'display_cluster_name'}
-                                            ? ( ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name )
-                                            : '';
+    my $cluster_label                   = $cluster_attributes->{'cluster_label'} || '';
 
     my $prefix = "\t" x $depth;
     my  $text = '';
