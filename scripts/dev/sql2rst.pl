@@ -384,9 +384,11 @@ sub print_whole_diagram {
     if ($show_clusters) {
         foreach my $h (sort keys %$documentation) {
             my $cluster_id = clean_name($h);
+            my $c = blend_colors($documentation->{$h}->{colour}, '#FFFFFF', 0.8);
             $graph->cluster_2_attributes()->{$cluster_id} = {
                 'cluster_label' => $h,
-                'style' => 'bold',
+                'style' => 'rounded,filled,noborder',
+                'fill_colour_pair' => ["#$c"],
             };
             my @cluster_nodes;
             $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
@@ -396,6 +398,16 @@ sub print_whole_diagram {
         }
     }
     return $graph;
+}
+
+
+sub blend_colors {
+    my ($color1, $color2, $alpha) = @_;
+    my @rgb1 = map {hex($_)} unpack("(A2)*", substr $color1, 1);
+    my @rgb2 = map {hex($_)} unpack("(A2)*", substr $color2, 1);
+    my @rgb = map {int($rgb1[$_] + $alpha * ($rgb2[$_]-$rgb1[$_]))}  0..2;
+    my $c = join('', map {sprintf('%X', $_)} @rgb);
+    return $c;
 }
 
 sub sub_table_box {
@@ -462,10 +474,14 @@ sub print_sub_diagram {
     }
 
     foreach my $h (sort keys %clusters_to_draw) {
+        #next unless $h eq $cluster;
         my $cluster_id = clean_name($h);
+        my $c = blend_colors($documentation->{$h}->{colour}, '#FFFFFF', 0.8);
         $graph->cluster_2_attributes()->{$cluster_id} = {
             'cluster_label' => $h,
-            'style' => 'bold',
+            ($h eq $cluster) ?
+                ( 'style' => 'rounded,filled,noborder', 'fill_colour_pair' => ["#$c"], )
+              : ( 'style' => 'filled,noborder', 'fill_colour_pair' => ['white'] ),
         };
         my @cluster_nodes;
         $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
