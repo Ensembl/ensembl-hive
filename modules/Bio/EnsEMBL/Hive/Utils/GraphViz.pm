@@ -108,7 +108,6 @@ sub display_subgraph {
     my $cluster_attributes              = $self->cluster_2_attributes->{$cluster_name};
 
     my ($box_colour_pair, $auto_colour) = $cluster_attributes->{ 'fill_colour_pair' } || ($self->nested_bgcolour, 1);
-    my ($colour_scheme, $colour_offset) = $box_colour_pair && @$box_colour_pair;
     my $cluster_label                   = $cluster_attributes->{'display_cluster_name'}
                                             ? ( ($cluster_name=~/\_{3}(\w+)$/) ? $1 : $cluster_name )
                                             : '';
@@ -118,23 +117,19 @@ sub display_subgraph {
         $text .= $prefix . "subgraph cluster_${cluster_name} {\n";  #   NB: the "cluster_" prefix absolutely must be present.
         $text .= $prefix . qq{\tlabel="$cluster_label";\n};         #   In case some levels need the labels and some don't, need to override the parent level
 
-    if($colour_scheme) {
-        my $cluster_style = $cluster_attributes->{ 'style' } || 'filled';
+    if($box_colour_pair && @$box_colour_pair) {
+        unshift(@$box_colour_pair, 'X11') if(scalar(@$box_colour_pair) == 1);   # if it was just a simple colour, add the default palette
+
+        my ($colour_scheme, $colour_offset) = @$box_colour_pair;
+        my $adjusted_colour                 = $auto_colour ? $colour_offset+$depth : $colour_offset;
+        my $cluster_style                   = $cluster_attributes->{ 'style' } || 'filled';
+
         $text .= $prefix . qq{\tstyle="$cluster_style";\n};
+        $text .= $prefix . qq{\tcolorscheme="$colour_scheme";\n};
+        $text .= $prefix . qq{\tfillcolor="$adjusted_colour";\n};
 
-        if(defined($colour_offset)) {
-            $text .= $prefix . qq{\tcolorscheme="$colour_scheme";\n};
-            $text .= $prefix . qq{\tfillcolor="}.($auto_colour ? $colour_offset+$depth : $colour_offset).qq{";\n};
-
-            if($cluster_style eq 'filled') {  # camouflage the edge
-                $text .= $prefix . qq{\tcolor="}.($auto_colour ? $colour_offset+$depth : $colour_offset).qq{";\n};
-            }
-        } else {    # it's just a simple colour:
-            $text .= $prefix . qq{\tcolorscheme="X11";\n};
-            $text .= $prefix . qq{\tfillcolor="${colour_scheme}";\n};
-            if($cluster_style eq 'filled') {  # camouflage the edge
-                $text .= $prefix . qq{\tcolor="${colour_scheme}";\n};
-            }
+        if($cluster_style eq 'filled') {    # camouflage the edge
+            $text .= $prefix . qq{\tcolor="$adjusted_colour";\n};
         }
     } # otherwise just draw a black frame around the subgraph
 
