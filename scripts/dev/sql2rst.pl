@@ -407,7 +407,7 @@ sub sub_table_box {
     my $has_ellipsis;
     foreach my $c (@{$table_doc->{column}}) {
         if ($fields->{$c->{name}}) {
-            push @rows, sprintf('<tr><td bgcolor="white" port="%s">%s</td></tr>', $c->{name}, $c->{name});
+            push @rows, sprintf('<tr><td bgcolor="white" port="port%s">%s</td></tr>', $c->{name}, $c->{name});
             $has_ellipsis = 0;
         } elsif (!$has_ellipsis) {
             push @rows, '<tr><td bgcolor="white"><i>...</i></td></tr>';
