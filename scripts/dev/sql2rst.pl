@@ -368,10 +368,10 @@ sub print_whole_diagram {
           ? ( 'splines' => 'ortho', )
           : ( 'concentrate' => 'true', ),
     );
-    foreach my $table_name (keys %table_documentation) {
+    foreach my $table_name (sort keys %table_documentation) {
         table_box($graph, $table_name);
     }
-    foreach my $table_name (keys %table_documentation) {
+    foreach my $table_name (sort keys %table_documentation) {
         foreach my $fk (@{$table_documentation{$table_name}->{foreign_keys}}) {
             $graph->add_edge($table_name => $fk->[1],
                 'style' => 'dashed',
@@ -384,7 +384,7 @@ sub print_whole_diagram {
     }
 
     if ($show_clusters) {
-        foreach my $h (keys %$documentation) {
+        foreach my $h (sort keys %$documentation) {
             my $cluster_id = clean_name($h);
             $graph->cluster_2_attributes()->{$cluster_id} = {
                 'cluster_label' => $h,
@@ -392,7 +392,7 @@ sub print_whole_diagram {
             };
             my @cluster_nodes;
             $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
-            foreach my $t (keys %{$documentation->{$h}->{tables}}) {
+            foreach my $t (sort keys %{$documentation->{$h}->{tables}}) {
                 push @cluster_nodes, $t;
             }
         }
@@ -432,13 +432,13 @@ sub print_sub_diagram {
           ? ( 'splines' => 'ortho', )
           : ( 'concentrate' => 'true', ),
     );
-    foreach my $table_name (keys %{$documentation->{$cluster}->{tables}}) {
+    foreach my $table_name (sort keys %{$documentation->{$cluster}->{tables}}) {
         table_box($graph, $table_name);
     }
     my %clusters_to_draw = ($cluster => 1);
     my %other_table_fields;
     my @drawn_fks;
-    foreach my $table_name (keys %table_documentation) {
+    foreach my $table_name (sort keys %table_documentation) {
         foreach my $fk (@{$table_documentation{$table_name}->{foreign_keys}}) {
             if ($table_documentation{$table_name}->{category} eq $cluster) {
                 $other_table_fields{$fk->[1]}->{$fk->[2]} = 1;
@@ -451,7 +451,7 @@ sub print_sub_diagram {
             }
         }
     }
-    foreach my $table_name (keys %other_table_fields) {
+    foreach my $table_name (sort keys %other_table_fields) {
         sub_table_box($graph, $table_name, $other_table_fields{$table_name} || {}) if $cluster ne $table_documentation{$table_name}->{category};
     }
     foreach my $fk (@drawn_fks) {
@@ -465,7 +465,7 @@ sub print_sub_diagram {
         );
     }
 
-    foreach my $h (keys %clusters_to_draw) {
+    foreach my $h (sort keys %clusters_to_draw) {
         my $cluster_id = clean_name($h);
         $graph->cluster_2_attributes()->{$cluster_id} = {
             'cluster_label' => $h,
@@ -473,7 +473,7 @@ sub print_sub_diagram {
         };
         my @cluster_nodes;
         $graph->cluster_2_nodes()->{$cluster_id} = \@cluster_nodes;
-        foreach my $t (keys %{$documentation->{$h}->{tables}}) {
+        foreach my $t (sort keys %{$documentation->{$h}->{tables}}) {
             push @cluster_nodes, $t if (($h eq $cluster) || $other_table_fields{$t});
         }
     }
