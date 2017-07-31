@@ -24,17 +24,17 @@ digraph test {
 subgraph cluster_smart_long_mult {
 	label="smart_long_mult";
 	style="bold,filled";
-	colorscheme=pastel19;
-	fillcolor=3;
+	colorscheme="pastel19";
+	fillcolor="3";
 	analysis_add_together;
 	analysis_redirect_trivial_jobs;
 	analysis_take_b_apart;
 	subgraph cluster_cl_dfr_p2_mp {
 		label="";
 		style="filled";
-		colorscheme=blues9;
-		fillcolor=2;
-		color=2;
+		colorscheme="blues9";
+		fillcolor="2";
+		color="2";
 		analysis_part_multiply;
 		sink_dfr_p2_mp;
 	}

@@ -6,13 +6,13 @@ digraph test {
 subgraph cluster_long_mult {
 	label="long_mult";
 	style="bold,filled";
-	colorscheme=pastel19;
-	fillcolor=3;
+	colorscheme="pastel19";
+	fillcolor="3";
 	subgraph cluster_take_b_apart {
 		label="take_b_apart";
 		style="rounded,filled";
-		colorscheme=X11;
-		fillcolor=green;
+		colorscheme="X11";
+		fillcolor="green";
 		job_1__long_mult;
 		job_2__long_mult;
 	}

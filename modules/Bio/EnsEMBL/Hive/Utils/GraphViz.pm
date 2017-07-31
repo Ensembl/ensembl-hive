@@ -123,17 +123,17 @@ sub display_subgraph {
         $text .= $prefix . qq{\tstyle="$cluster_style";\n};
 
         if(defined($colour_offset)) {
-            $text .= $prefix . "\tcolorscheme=$colour_scheme;\n";
-            $text .= $prefix . "\tfillcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
+            $text .= $prefix . qq{\tcolorscheme="$colour_scheme";\n};
+            $text .= $prefix . qq{\tfillcolor="}.($auto_colour ? $colour_offset+$depth : $colour_offset).qq{";\n};
 
             if($cluster_style eq 'filled') {  # camouflage the edge
-                $text .= $prefix . "\tcolor=".($auto_colour ? $colour_offset+$depth : $colour_offset).";\n";
+                $text .= $prefix . qq{\tcolor="}.($auto_colour ? $colour_offset+$depth : $colour_offset).qq{";\n};
             }
         } else {    # it's just a simple colour:
-            $text .= $prefix . "\tcolorscheme=X11;\n";
-            $text .= $prefix . "\tfillcolor=${colour_scheme};\n";
+            $text .= $prefix . qq{\tcolorscheme="X11";\n};
+            $text .= $prefix . qq{\tfillcolor="${colour_scheme}";\n};
             if($cluster_style eq 'filled') {  # camouflage the edge
-                $text .= $prefix . "\tcolor=${colour_scheme};\n";
+                $text .= $prefix . qq{\tcolor="${colour_scheme}";\n};
             }
         }
     } # otherwise just draw a black frame around the subgraph

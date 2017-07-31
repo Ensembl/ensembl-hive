@@ -38,13 +38,13 @@ digraph test {
 subgraph cluster_long_mult {
 	label="long_mult";
 	style="bold,filled";
-	colorscheme=pastel19;
-	fillcolor=3;
+	colorscheme="pastel19";
+	fillcolor="3";
 	subgraph cluster_add_together {
 		label="add_together";
 		style="rounded,filled";
-		colorscheme=X11;
-		fillcolor=green;
+		colorscheme="X11";
+		fillcolor="green";
 		job_3__long_mult;
 		job_9__long_mult;
 		semaphore_1__long_mult;
@@ -53,8 +53,8 @@ subgraph cluster_long_mult {
 	subgraph cluster_part_multiply {
 		label="part_multiply";
 		style="rounded,filled";
-		colorscheme=X11;
-		fillcolor=yellow;
+		colorscheme="X11";
+		fillcolor="yellow";
 		job_10__long_mult;
 		job_11__long_mult;
 		job_12__long_mult;
@@ -67,8 +67,8 @@ subgraph cluster_long_mult {
 	subgraph cluster_take_b_apart {
 		label="take_b_apart";
 		style="rounded,filled";
-		colorscheme=X11;
-		fillcolor=DeepSkyBlue;
+		colorscheme="X11";
+		fillcolor="DeepSkyBlue";
 		job_1__long_mult;
 		job_2__long_mult;
 	}
