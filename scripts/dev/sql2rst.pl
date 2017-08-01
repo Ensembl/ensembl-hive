@@ -528,6 +528,7 @@ if ($diagram_dir) {
         my $filename = "$full_diagram_dir/$db_team.".clean_name($c);
         my $graph = print_sub_diagram($c, 'column_links');
         $graph->as_png("$filename.png");
+        fetch_png_dimensions($c, "$filename.png");
     }
 }
 
@@ -571,7 +572,9 @@ foreach my $header_name (@header_names) {
     $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
     if ($diagram_dir) {
         my $l = clean_name($header_name);
-        $html_content .= ".. image:: $diagram_dir/$db_team.$l.png\n   :width: 500px\n   :align: center\n\n";
+        my $w = get_best_width($header_name);
+        my $wt = $w ? "   :width: ${w}px\n" : '';
+        $html_content .= ".. image:: $diagram_dir/$db_team.$l.png\n$wt   :align: center\n\n";
     }
   
   #----------------#
@@ -599,6 +602,31 @@ open  my $output_fh, '>', $html_file or die "Can't open $html_file : $!";
 print $output_fh slurp_intro($intro_file)."\n";
 print $output_fh $html_content."\n";
 close($output_fh);
+
+
+my %dimensions;
+
+sub fetch_png_dimensions {
+    my ($image_id, $filename) = @_;
+    my $ss = `file $filename`;
+    if (`file $filename` =~ /PNG image data, (\d+) x (\d+),/) {
+        $dimensions{$image_id} = [$1,$2];
+    }
+}
+
+sub get_best_width {
+    my ($image_id) = @_;
+    my $def_w = 500;
+    my $def_h = 500;
+    if (my $a = $dimensions{$image_id}) {
+        if ($a->[1] > $def_h) {
+            return int($a->[0] * $def_h / $a->[1]);
+        } elsif ($a->[0] > $def_w) {
+            return $def_w;
+        }
+    }
+    return undef;
+}
 
 sub rest_title {
     my ($title, $underscore_symbol) = @_;
