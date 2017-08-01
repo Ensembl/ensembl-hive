@@ -316,16 +316,6 @@ while (<$sql_fh>) {
 close($sql_fh);
 
 
-
-
-###########
-## Core  ##
-###########
-
-my $html_content;
-
-$html_content .= ".. raw:: latex\n\n   \\begin{landscape}\n\n";
-
 # Sort the headers names by alphabetic order
 if ($sort_headers == 1) {
   @header_names = sort(@header_names);
@@ -339,6 +329,15 @@ if ($sort_tables == 1) {
 
 # Remove the empty headers (e.g. "default")
 @header_names = grep {scalar(@{$tables_names->{$_}})} @header_names;
+
+
+##################
+## ReSt content ##
+##################
+
+my $html_content = '';
+
+$html_content .= ".. raw:: latex\n\n   \\begin{landscape}\n\n";
 
 # Legend link
 if ($show_colour and scalar @colours > 1 and $header_flag != 1) {
