@@ -13,7 +13,7 @@ Dataflow to one analysis
 
 This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``.
 
-.. hive_diagram:: dataflow_targets/101.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -30,7 +30,7 @@ Dataflow to multiple analyses
 A branch can actually be connected to multiple analyses. When a Dataflow
 event happens, it will create a job in each of them.
 
-.. hive_diagram:: dataflow_targets/102.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -51,7 +51,7 @@ from the same analysis.
 Here, jobs are created in B whenever there is an event on branch #2, in C
 when there is an event on branch #2 or #3, and D when there is an event on branch #1.
 
-.. hive_diagram:: dataflow_targets/103.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -80,7 +80,7 @@ This is what we have used in the Dataflow document. Simply name the target analy
 with a URL that contains the ``table_name`` key. URLs can be *degenerate*, i.e. skip the part before
 the question mark (like below) or *completely defined*, i.e. start with ``driver://user@host/database_name``.
 
-.. hive_diagram:: dataflow_targets/201.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -95,7 +95,7 @@ Dataflow to multiple tables
 A branch can actually be connected to multiple tables. When a Dataflow
 event happens, it will create a row in each of them.
 
-.. hive_diagram:: dataflow_targets/202.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -114,7 +114,7 @@ In the example below, a row from the table C will typically not have information
 about the analysis (job) that generated it.
 This can however be enabled by explicitly adding the job_id to the dataflow payload.
 
-.. hive_diagram:: dataflow_targets/203.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -146,7 +146,7 @@ of accumulators (scalar, pile, multiset, array and hash), all described in :doc:
 Accumulators can **only** be connected to *fan* analyses of a semaphore group. All the data flown into them
 is *accumulated* and passed on to the *funnel* once the latter is released.
 
-.. hive_diagram:: dataflow_targets/301.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {
@@ -170,7 +170,7 @@ During the semaphore propagation, more jobs are added to the current semaphore-g
 in order to block the current funnel. Similarly a funnel may receive data from multiple
 accumulators (possibly fed by different analyses) of a semaphore-group.
 
-.. hive_diagram:: dataflow_targets/302.png
+.. hive_diagram::
 
     {   -logic_name => 'A',
         -flow_into  => {

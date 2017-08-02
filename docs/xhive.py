@@ -9,12 +9,14 @@ from docutils import nodes
 from docutils.parsers.rst import directives
 from docutils.parsers.rst import Directive
 
+from sphinx.ext.graphviz import graphviz
+
 __all__ = ["HiveDiagramDirective", "hive_setup_if_needed", "hivestatus", "hivestatus_role", "visit_hivestatus_html", "depart_hivestatus_html", "visit_hivestatus_latex", "depart_hivestatus_latex"]
 
 class HiveDiagramDirective(Directive):
 
     # defines the parameter the directive expects
-    required_arguments = 1
+    required_arguments = 0
     optional_arguments = 0
     final_argument_whitespace = False
     has_content = True
@@ -26,14 +28,12 @@ class HiveDiagramDirective(Directive):
         content = '\n'.join(self.content)
         code_block_node = nodes.literal_block(text=content)
 
-        # We identify the full path of the target image file and regenerate the diagram
-        current_source = self.state.document.current_source
-        image_relpath = self.arguments[0]
-        image_path = os.path.dirname(current_source) + os.path.sep + image_relpath
-        generate_diagram(content, image_path)
-        img_node = nodes.image(uri=image_relpath)
+        # We reuse the graphviz node (from the graphviz extension) as it deals better with image formats vs builders
+        graphviz_node = graphviz()
+        graphviz_node['code'] = generate_dot_diagram(content)
+        graphviz_node['options'] = {}
 
-        return [code_block_node, img_node]
+        return [code_block_node, graphviz_node]
 
 
 
@@ -65,7 +65,7 @@ display_config_json = json.dumps( {
 } )
 
 
-def generate_diagram(pipeconfig_content, target_image_filename):
+def generate_dot_diagram(pipeconfig_content):
 
     # A temporary file for the JSON config
     json_fh = tempfile.NamedTemporaryFile(delete = False)
@@ -83,16 +83,24 @@ def generate_diagram(pipeconfig_content, target_image_filename):
     print >> pipeconfig_fh, pipeconfig_template % (package_name, pipeconfig_content)
     pipeconfig_fh.close()
 
-    # Make sure the target directory exists
-    if not os.path.exists(os.path.dirname(target_image_filename)):
-        os.makedirs(os.path.dirname(target_image_filename))
+    # A temporary file for the dot output
+    dotoutput_fh = tempfile.NamedTemporaryFile(suffix = '.dot', dir = os.getcwd(), delete = False, mode="r+")
 
-    #print ["generate_graph.pl", "-pipeconfig", pipeconfig_fh.name, "-output", target_image_filename]
+    # Run generate_graph
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
-    subprocess.call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", target_image_filename, "-config_file", default_config_file, "-config_file", json_fh.name], stdout=sys.stdout, stderr=sys.stderr)
+    subprocess.check_call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", dotoutput_fh.name, "-config_file", default_config_file, "-config_file", json_fh.name], stdout=sys.stdout, stderr=sys.stderr)
 
+    # Read the content of the dot file
+    dotcontent = dotoutput_fh.read()
+    dotoutput_fh.close()
+
+    # Remove the temporary files
     os.remove(json_fh.name)
     os.remove(pipeconfig_fh.name)
+    os.remove(dotoutput_fh.name)
+
+    return dotcontent
+
 
 hive_colours = {}
 
