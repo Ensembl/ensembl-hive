@@ -111,9 +111,13 @@ class HivePipelineDirective(Directive):
         else:
             return []
 
+def cleanup_dbs(app, exception):
+    for url in ehive_db_urls.values():
+        os.remove(url[10:])
 
 ## Register the extension
 def setup(app):
     # Register the directive
     app.add_directive('hive_pipeline', HivePipelineDirective)
+    app.connect('build-finished', cleanup_dbs)
 
