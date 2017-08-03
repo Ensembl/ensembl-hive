@@ -72,7 +72,6 @@ class HivePipelineDirective(Directive):
     def run(self):
         name = self.arguments[0]
         command = directives.choice(self.arguments[1], allowed_commands)
-        dot_fh = None
 
         if command == 'init':
             # Create a temporary file to hold the database
@@ -92,32 +91,25 @@ class HivePipelineDirective(Directive):
                     command_array.extend(['-analyses_pattern', self.options['analyses_pattern']])
 
             elif command == 'analysis_diagram':
-                dot_fh = tempfile.NamedTemporaryFile(delete = False, dir = os.getcwd(), suffix = '.dot')
                 default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
-                command_array = ['generate_graph.pl', '-url', db, '-output', dot_fh.name, '-config_file', default_config_file]
+                command_array = ['generate_graph.pl', '-url', db, '-output', '/dev/stdout', '-format', 'dot', '-config_file', default_config_file]
 
             elif command == 'job_diagram':
-                dot_fh = tempfile.NamedTemporaryFile(delete = False, dir = os.getcwd(), suffix = '.dot')
                 default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
-                command_array = ['visualize_jobs.pl', '-url', db, '-output', dot_fh.name, '-config_file', default_config_file]
+                command_array = ['visualize_jobs.pl', '-url', db, '-output', '/dev/stdout', '-format', 'dot', '-config_file', default_config_file]
 
         command_array[0] = os.path.join(os.environ["EHIVE_ROOT_DIR"], 'scripts', command_array[0])
-        subprocess.check_call(command_array, stdout=sys.stdout, stderr=sys.stderr)
+        dotcontent = subprocess.check_output(command_array, stderr=sys.stderr)
 
-        if dot_fh is None:
-            return []
-        else:
-            # Read the .dot content to initialize the graphviz directive
-            dotcontent = dot_fh.read()
-            dot_fh.close()
-            os.remove(dot_fh.name)
-
+        if command.endswith('diagram'):
             # We reuse the graphviz node (from the graphviz extension) as it deals better with image formats vs builders
             graphviz_node = graphviz()
             graphviz_node['code'] = dotcontent
             graphviz_node['options'] = {}
 
             return [graphviz_node]
+        else:
+            return []
 
 
 ## Register the extension
