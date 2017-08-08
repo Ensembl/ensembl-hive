@@ -23,7 +23,6 @@ package Bio::EnsEMBL::Hive::Scripts::RunWorker;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 sub runWorker {

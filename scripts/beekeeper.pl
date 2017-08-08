@@ -14,7 +14,6 @@ BEGIN {
 
 use File::Path 'make_path';
 use Getopt::Long qw(:config no_auto_abbrev);
-use Sys::Hostname;
 
 use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
 use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
