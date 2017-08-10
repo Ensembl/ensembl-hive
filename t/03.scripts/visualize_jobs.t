@@ -212,7 +212,7 @@ foreach my $test_name (@test_names_to_run) {
                     files_eq_or_diff($generated_diagram_filename, $ref_jdiag_filename);
                 }
 
-                if($gg) {
+                if($gg && scalar(keys %vj_url)<=2) {    # generate_graph.pl doesn't support more than 3 pipelines ?
                     generate_graph( $op_url, [
                                                 -format => $generate_format,
                                                 -output => $generated_diagram_filename,
