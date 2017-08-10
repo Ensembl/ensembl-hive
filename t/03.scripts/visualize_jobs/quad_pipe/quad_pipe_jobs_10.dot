@@ -1,0 +1,143 @@
+digraph test {
+	ratio="compress"; name = "JobDependencyGraph"; pad = "0"; ranksep = "1.4"; remincross = "true";
+	job_1__aaa [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
+	job_3__aaa [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>3</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>1</i></td></tr></table>>, shape="box3d", style="filled"];
+	job_1__bbb [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
+	job_2__bbb [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>1</i></td></tr></table>>, shape="box3d", style="filled"];
+	semaphore_1__aaa [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	semaphore_1__bbb [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	job_1__ccc [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
+	semaphore_2__bbb [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	semaphore_1__ccc [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	job_1__ddd [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
+	job_2__ddd [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>1</i></td></tr></table>>, shape="box3d", style="filled"];
+	job_4__aaa [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>4</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>2</i></td></tr></table>>, shape="box3d", style="filled"];
+	semaphore_2__aaa [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	semaphore_3__bbb [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	semaphore_1__ddd [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	job_3__bbb [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>3</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
+	job_4__bbb [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>4</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>3</i></td></tr></table>>, shape="box3d", style="filled"];
+	job_2__aaa [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
+	job_1__aaa -> job_3__aaa [color="blue"];
+	job_1__bbb -> job_2__bbb [color="blue"];
+	job_1__bbb -> semaphore_1__bbb [arrowhead="none", color="darkgreen", style="dashed"];
+	job_1__ccc -> semaphore_1__ccc [arrowhead="none", color="darkgreen", style="dashed"];
+	job_1__ddd -> job_2__ddd [color="blue"];
+	job_1__ddd -> semaphore_1__ddd [arrowhead="none", color="darkgreen", style="dashed"];
+	job_2__aaa -> job_4__aaa [color="blue"];
+	job_2__bbb -> semaphore_1__bbb [arrowhead="none", color="darkgreen", style="dashed"];
+	job_2__ddd -> semaphore_1__ddd [arrowhead="none", color="darkgreen", style="dashed"];
+	job_3__bbb -> job_4__bbb [color="blue"];
+	job_3__bbb -> semaphore_3__bbb [arrowhead="none", color="darkgreen", style="dashed"];
+	job_4__bbb -> semaphore_3__bbb [arrowhead="none", color="darkgreen", style="dashed"];
+	semaphore_1__aaa -> job_3__aaa [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_1__bbb -> semaphore_1__aaa [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_1__ccc -> semaphore_2__bbb [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_1__ddd -> semaphore_3__bbb [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_2__aaa -> job_4__aaa [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_2__bbb -> job_2__bbb [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+	semaphore_3__bbb -> semaphore_2__aaa [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+
+subgraph cluster_aaa {
+	label="aaa";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	subgraph cluster_AAA_funnel {
+		label="AAA_funnel";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="DeepSkyBlue";
+		color="";
+		job_3__aaa;
+		job_4__aaa;
+		semaphore_1__aaa;
+		semaphore_2__aaa;
+	}
+	subgraph cluster_bbb {
+		label="bbb";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="8";
+		color="";
+		subgraph cluster_ehive_test_vj_1___BBB_funnel {
+			label="BBB_funnel";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_2__bbb;
+			semaphore_2__bbb;
+		}
+		subgraph cluster_ehive_test_vj_1___call_CCC_or_DDD {
+			label="call_CCC_or_DDD";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_1__bbb;
+			job_3__bbb;
+		}
+		subgraph cluster_ehive_test_vj_1___perform_local_part {
+			label="perform_local_part";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_4__bbb;
+		}
+		semaphore_1__bbb;
+		semaphore_3__bbb;
+	}
+	subgraph cluster_call_BBB {
+		label="call_BBB";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="DeepSkyBlue";
+		color="";
+		job_1__aaa;
+		job_2__aaa;
+	}
+	subgraph cluster_ccc {
+		label="ccc";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="5";
+		color="";
+		subgraph cluster_ehive_test_vj_2___perform_task_X {
+			label="perform_task_X";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_1__ccc;
+		}
+		semaphore_1__ccc;
+	}
+	subgraph cluster_ddd {
+		label="ddd";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="6";
+		color="";
+		subgraph cluster_ehive_test_vj_3___perform_aftertask_of_Y {
+			label="perform_aftertask_of_Y";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_2__ddd;
+		}
+		subgraph cluster_ehive_test_vj_3___perform_task_Y {
+			label="perform_task_Y";
+			style="rounded,filled";
+			colorscheme="X11";
+			fillcolor="DeepSkyBlue";
+			color="";
+			job_1__ddd;
+		}
+		semaphore_1__ddd;
+	}
+}
+}

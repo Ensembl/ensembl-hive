@@ -30,7 +30,7 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper visuali
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
-my ($generate_files, $generate_format, $gg, $test_name, $vj_options) = (0, 'dot', 0, 'long_mult', '-accu_values -include');
+my ($generate_files, $generate_format, $gg, $test_name, $vj_options) = (0, 'dot', 1, '*', '-accu_values -include');
 
 # Examples of usage:
 #

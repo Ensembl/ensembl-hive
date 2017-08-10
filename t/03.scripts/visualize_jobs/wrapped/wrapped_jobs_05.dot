@@ -1,0 +1,60 @@
+digraph test {
+	ratio="compress"; name = "JobDependencyGraph"; pad = "0"; ranksep = "1.4"; remincross = "true";
+	job_1__long_mult [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
+	job_2__long_mult [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
+	job_3__long_mult [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>3</i></td></tr><tr><td>a_multiplier:</td><td> 100</td></tr><tr><td>b_multiplier:</td><td> 234</td></tr></table>>, shape="box3d", style="filled"];
+	job_4__long_mult [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>4</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>3</i></td></tr></table>>, shape="box3d", style="filled"];
+	semaphore_1__long_mult [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	job_5__long_mult [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>5</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>3</i></td></tr><tr><td>digit:</td><td> 2</td></tr></table>>, shape="box3d", style="filled"];
+	semaphore_2__long_mult [fillcolor="darkgreen", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="3"><font color="white"><b><i>open</i></b></font></td></tr><tr><td colspan="3">&nbsp;</td></tr><tr><td></td><td><b><u>partial_product</u></b></td><td></td></tr><tr><td port="semaphore_2__long_mult_partial_product_5">{2}</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>200</td></tr><tr><td port="semaphore_2__long_mult_partial_product_6">{3}</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>300</td></tr><tr><td port="semaphore_2__long_mult_partial_product_7">{4}</td><td>&nbsp;<b>--&gt;</b>&nbsp;</td><td>400</td></tr></table>>, margin="0,0", shape="invhouse", style="filled"];
+	job_6__long_mult [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>6</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>3</i></td></tr><tr><td>digit:</td><td> 3</td></tr></table>>, shape="box3d", style="filled"];
+	job_7__long_mult [fillcolor="DeepSkyBlue", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>7</i></td></tr><tr><td><u><i>params from:</i></u></td><td><i>3</i></td></tr><tr><td>digit:</td><td> 4</td></tr></table>>, shape="box3d", style="filled"];
+	job_3__long_mult -> job_4__long_mult [color="blue"];
+	job_3__long_mult -> job_5__long_mult [color="blue"];
+	job_3__long_mult -> job_6__long_mult [color="blue"];
+	job_3__long_mult -> job_7__long_mult [color="blue"];
+	job_3__long_mult -> semaphore_1__long_mult [arrowhead="none", color="darkgreen", style="dashed"];
+	job_4__long_mult -> semaphore_1__long_mult [arrowhead="none", color="darkgreen", style="dashed"];
+	job_5__long_mult -> semaphore_2__long_mult [arrowhead="none", color="darkgreen", style="dashed"];
+	job_6__long_mult -> semaphore_2__long_mult [arrowhead="none", color="darkgreen", style="dashed"];
+	job_7__long_mult -> semaphore_2__long_mult [arrowhead="none", color="darkgreen", style="dashed"];
+	semaphore_2__long_mult -> job_4__long_mult [arrowhead="none", color="darkgreen", headport="n", style="dashed", tailport="s"];
+
+subgraph cluster_long_mult {
+	label="long_mult";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	subgraph cluster_add_together {
+		label="add_together";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="DeepSkyBlue";
+		color="";
+		job_4__long_mult;
+		semaphore_2__long_mult;
+	}
+	subgraph cluster_part_multiply {
+		label="part_multiply";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="yellow";
+		color="";
+		job_5__long_mult;
+		job_6__long_mult;
+		job_7__long_mult;
+	}
+	semaphore_1__long_mult;
+	subgraph cluster_take_b_apart {
+		label="take_b_apart";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="yellow";
+		color="";
+		job_1__long_mult;
+		job_2__long_mult;
+		job_3__long_mult;
+	}
+}
+}

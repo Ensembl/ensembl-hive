@@ -1,0 +1,43 @@
+digraph test {
+	ratio="compress"; name = "JobDependencyGraph"; pad = "0"; ranksep = "1.4"; remincross = "true";
+	job_1__aaa [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>1</i></td></tr><tr><td>a_multiplier:</td><td> 9650156169</td></tr><tr><td>b_multiplier:</td><td> 327358788</td></tr></table>>, shape="box3d", style="filled"];
+	job_2__aaa [fillcolor="green", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td><u><i>job_id:</i></u></td><td><i>2</i></td></tr><tr><td>a_multiplier:</td><td> 327358788</td></tr><tr><td>b_multiplier:</td><td> 9650156169</td></tr></table>>, shape="box3d", style="filled"];
+
+subgraph cluster_aaa {
+	label="aaa";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	subgraph cluster_bbb {
+		label="bbb";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="8";
+		color="";
+	}
+	subgraph cluster_call_BBB {
+		label="call_BBB";
+		style="rounded,filled";
+		colorscheme="X11";
+		fillcolor="green";
+		color="";
+		job_1__aaa;
+		job_2__aaa;
+	}
+	subgraph cluster_ccc {
+		label="ccc";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="5";
+		color="";
+	}
+	subgraph cluster_ddd {
+		label="ddd";
+		style="bold,filled";
+		colorscheme="pastel19";
+		fillcolor="6";
+		color="";
+	}
+}
+}
