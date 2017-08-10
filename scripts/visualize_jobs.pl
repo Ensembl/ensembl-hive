@@ -418,7 +418,7 @@ sub draw_semaphore_and_accu {
                     ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
                     : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
 
-                foreach my $accu_vector ( sort {$a->[2] <=> $b->[2]} @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                foreach my $accu_vector ( sort {($a->[2]//0) <=> ($b->[2]//0)} @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
                     my ($key_signature, $value, $sending_job_id) = @$accu_vector;
                     $sending_job_id //= 0;
 
