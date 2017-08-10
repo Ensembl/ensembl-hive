@@ -35,6 +35,7 @@ package Bio::EnsEMBL::Hive::Meadow;
 
 use strict;
 use warnings;
+use Sys::Hostname ('hostname');
 
 use base ('Bio::EnsEMBL::Hive::Configurable');
 
@@ -136,6 +137,18 @@ sub type {
 }
 
 
+=head2 get_current_hostname
+
+    Title   :  get_current_hostname
+    Function:  Returns the "current" hostname (most UNIX-based Meadows will simply use this base method)
+
+=cut
+
+sub get_current_hostname {
+    return hostname();
+}
+
+
 =head2 signature
 
     Title   :  signature
@@ -150,6 +163,7 @@ sub signature {
     return $self->type.'/'.$self->cached_name;
 }
 
+
 =head2 pipeline_name
 
     Title   :  pipeline_name
@@ -158,7 +172,6 @@ sub signature {
                L<job_name_prefix()>.
 
 =cut
-
 
 sub pipeline_name {
     my $self = shift @_;

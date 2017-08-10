@@ -34,7 +34,6 @@ package Bio::EnsEMBL::Hive::Meadow::LOCAL;
 use strict;
 use warnings;
 use Cwd ('cwd');
-use Sys::Hostname;
 use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -65,8 +64,9 @@ our $VERSION = '5.0';       # Semantic version of the Meadow interface:
 
 
 sub name {  # also called to check for availability; for the moment assume LOCAL meadow is always available
+    my ($self) = @_;
 
-    return (split(/\./, hostname))[0];     # only take the first name
+    return (split(/\./, $self->get_current_hostname() ))[0];     # only take the first name
 }
 
 

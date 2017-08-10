@@ -150,16 +150,17 @@ sub find_available_meadow_responsible_for_worker {
 sub whereami {
     my $self = shift @_;
 
-    my $meadow_host = hostname();
     my $meadow_user = Bio::EnsEMBL::Hive::Utils::whoami();
 
     foreach my $meadow (@{ $self->get_available_meadow_list }) {
         my $pid;
+        my $meadow_host;
         eval {
-            # get_current_worker_process_id() is expected to die if the pid
-            # cannot be determined. With the eval{} and the unless{} it will
-            # skip the meadow and try the next one.
-            $pid = $meadow->get_current_worker_process_id();
+                # get_current_worker_process_id() is expected to die if the pid
+                # cannot be determined. With the eval{} and the unless{} it will
+                # skip the meadow and try the next one.
+            $pid            = $meadow->get_current_worker_process_id();
+            $meadow_host    = $meadow->get_current_hostname();
         };
         unless($@) {
             return ($meadow, $pid, $meadow_host, $meadow_user);
