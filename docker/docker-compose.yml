@@ -1,0 +1,81 @@
+version: '3.3'
+
+## What follows is a docker-compose file that can be used in two different ways:
+#
+# (1) to deploy a local "composition" of multiple containers (using "docker-compose up" and "docker-compose down")
+#
+# (2) to deploy a Docker Stack of services on a Docker Swarm of nodes
+#
+#
+## A loose example of how to deploy a fully Docker-containerized eHive system on a Docker Swarm:
+#
+# export DHOST_NAME="public_hostname_of_your_master_Docker_Engine"  # on all Docker Engines participating in the Swarm
+#
+# docker swarm init                         # on the master Docker Engine
+#
+# docker swarm join --token SWMTKN-...      # (with the token obtained from the previous command) on the slave Docker Engines
+#
+# docker stack deploy --compose-file docker-compose.yml dockerized_hive_example     # to deploy
+#
+## You can start connecting via DB interface or guiHive once you see that the database has been created (i.e. start_pipe stops failing and runs successfully)
+#
+# docker service scale worker=2             # use scaling to submit some workers (they are not running by default)
+
+
+services:
+    blackboard:
+        image: mysql/mysql-server:5.5
+        ports:
+            - "8306:3306"
+        environment:
+            - MYSQL_RANDOM_ROOT_PASSWORD=1
+            - MYSQL_USER=ensrw
+            - MYSQL_PASSWORD=ensrw_password
+            - 'MYSQL_DATABASE=%'
+#        restart: always
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: any
+        
+    start_pipe:
+        depends_on:
+            - blackboard
+        image: ensemblorg/ensembl-hive
+        environment:
+            - 'PIPE_CONFIG=Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf'
+            - 'MYSQL_SERVER_URL=mysql://ensrw:ensrw_password@${DHOST_NAME}:8306'
+        command: 'bash -c "db_cmd.pl -url $$MYSQL_SERVER_URL/ -exec mysqladmin -prepend ping && init_pipeline.pl $$PIPE_CONFIG -pipeline_url $$MYSQL_SERVER_URL/test_long_mult_inside -hive_force_init 1"'
+#        restart: 'on-failure:20'
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: 'on-failure'
+
+    worker:
+        depends_on:
+            - blackboard
+            - start_pipe
+        image: ensemblorg/ensembl-hive
+        environment:
+            - 'MYSQL_DB_URL=mysql://ensrw:ensrw_password@${DHOST_NAME}:8306/test_long_mult_inside'
+        command: 'bash -c "runWorker.pl -url $$MYSQL_DB_URL"'
+#        restart: 'no'
+        deploy:
+            replicas: 0
+            restart_policy:
+                condition: none
+
+    guihive_server:
+        depends_on:
+            - blackboard
+            - start_pipe
+        image: ensemblorg/guihive
+        ports:
+            - "8080:8080"
+#        restart: always
+        deploy:
+            replicas: 0
+            restart_policy:
+                condition: any
+
