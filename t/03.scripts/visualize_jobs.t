@@ -216,11 +216,8 @@ foreach my $test_name (@test_names_to_run) {
                     generate_graph( $op_url, [
                                                 -format => $generate_format,
                                                 -output => $generated_diagram_filename,
-                                                ($generate_format eq 'dot')
-                                                    ? (
-                                                        -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,   # to ensure JSON Config-independent reproducibility
-                                                    ) : (
-                                                    ),
+                                                -config_file => Bio::EnsEMBL::Hive::Utils::Config->default_system_config,                   # to ensure JSON Config-independent reproducibility (base config file)
+                                                -config_file => $ENV{'EHIVE_ROOT_DIR'}.'/t/03.scripts/visualize_jobs.generate_graph.json',  # to ensure JSON Config-independent reproducibility (specific changes for the test)
                                              ], "Generated a '$generate_format' A-diagram for pipeline '$test_name', step $step_number, with accu values" );
 
                     my $ref_adiag_filename  = sprintf("%s/%s_analyses_%02d.%s", $ref_directory, $test_name, $step_number, $generate_format);
