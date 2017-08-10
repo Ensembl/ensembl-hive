@@ -139,7 +139,7 @@ if(0) {
             # now rotate through the list of the non-reference pipelines:
         foreach my $other_pipeline ( @{ Bio::EnsEMBL::Hive::TheApiary->pipelines_except($main_pipeline) } ) {
 
-            my $ocluster_name    = $main_pipeline->hive_pipeline_name;
+            my $ocluster_name    = $other_pipeline->hive_pipeline_name;
 
             my $colour_pair = shift @other_pipeline_colour_pairs;
             $self->{'graph'}->cluster_2_attributes->{ $ocluster_name }{ 'cluster_label' } = $ocluster_name;
