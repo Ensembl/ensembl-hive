@@ -244,11 +244,11 @@ __DATA__
 
 =head1 NAME
 
-    make_docs.pl
+make_docs.pl
 
 =head1 DESCRIPTION
 
-    An internal eHive script for regenerating the documentation both in docs/scripts (using pod2html) and docs/doxygen (using doxygen).
+An internal eHive script for regenerating the documentation both in docs/scripts (using pod2html) and docs/doxygen (using doxygen).
 
 =head1 LICENSE
 
@@ -266,7 +266,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 
