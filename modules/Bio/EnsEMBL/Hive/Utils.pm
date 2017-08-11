@@ -74,6 +74,7 @@ $Carp::Internal{ (__PACKAGE__) }++;
 
     Description: This function takes in a Perl data structure and stringifies it using specific configuration
                  that allows us to store/recreate this data structure according to our specific storage/communication requirements.
+                 NOTE: Some recursive structures are not stringified in a way that allows destringification with destringify
 
     Callers    : Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor      # stringification of input_id() hash
                  Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf   # stringification of parameters() hash
