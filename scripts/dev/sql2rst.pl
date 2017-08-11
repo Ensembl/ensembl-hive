@@ -362,7 +362,6 @@ sub print_whole_diagram {
     my ($show_clusters, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram",
-        'bgcolor' => 'transparent',
         $column_links
           ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
           : ( 'splines' => 'ortho', ),
@@ -437,7 +436,6 @@ sub print_sub_diagram {
     my ($cluster, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram: $cluster tables",
-        'bgcolor' => 'transparent',
         $column_links
           ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
           : ( 'splines' => 'ortho', ),
