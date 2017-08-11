@@ -309,23 +309,23 @@ Long Multiplication pipeline walkthrough
     |    way around).          |                          |                          |
     +--------------------------+--------------------------+--------------------------+
 
-.. |image0| image:: walkthrough_diagrams/long_mult_jobs_01.png
-.. |image1| image:: walkthrough_diagrams/long_mult_analyses_01.png
-.. |image2| image:: walkthrough_diagrams/long_mult_jobs_02.png
-.. |image3| image:: walkthrough_diagrams/long_mult_analyses_02.png
-.. |image4| image:: walkthrough_diagrams/long_mult_jobs_03.png
-.. |image5| image:: walkthrough_diagrams/long_mult_analyses_03.png
-.. |image6| image:: walkthrough_diagrams/long_mult_jobs_04.png
-.. |image7| image:: walkthrough_diagrams/long_mult_analyses_04.png
-.. |image8| image:: walkthrough_diagrams/long_mult_jobs_05.png
-.. |image9| image:: walkthrough_diagrams/long_mult_analyses_05.png
-.. |image10| image:: walkthrough_diagrams/long_mult_jobs_06.png
-.. |image11| image:: walkthrough_diagrams/long_mult_analyses_06.png
-.. |image12| image:: walkthrough_diagrams/long_mult_jobs_07.png
-.. |image13| image:: walkthrough_diagrams/long_mult_analyses_07.png
-.. |image14| image:: walkthrough_diagrams/long_mult_jobs_08.png
-.. |image15| image:: walkthrough_diagrams/long_mult_analyses_08.png
-.. |image16| image:: walkthrough_diagrams/long_mult_jobs_09.png
-.. |image17| image:: walkthrough_diagrams/long_mult_analyses_09.png
-.. |image18| image:: walkthrough_diagrams/long_mult_jobs_10.png
-.. |image19| image:: walkthrough_diagrams/long_mult_analyses_10.png
+.. |image0| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_01.dot
+.. |image1| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_01.dot
+.. |image2| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_02.dot
+.. |image3| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_02.dot
+.. |image4| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_03.dot
+.. |image5| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_03.dot
+.. |image6| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_04.dot
+.. |image7| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_04.dot
+.. |image8| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_05.dot
+.. |image9| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_05.dot
+.. |image10| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_06.dot
+.. |image11| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_06.dot
+.. |image12| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_07.dot
+.. |image13| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_07.dot
+.. |image14| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_08.dot
+.. |image15| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_08.dot
+.. |image16| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_09.dot
+.. |image17| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_09.dot
+.. |image18| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_jobs_10.dot
+.. |image19| graphviz:: ../../t/03.scripts/visualize_jobs/long_mult/long_mult_analyses_10.dot
