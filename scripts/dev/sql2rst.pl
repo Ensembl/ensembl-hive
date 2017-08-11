@@ -881,7 +881,6 @@ sub add_examples {
       if (!defined($skip_conn) && defined($url)) {
         $sql_table = get_example_table($sql,$table,$nb);
       }
-      $sql = escape_html($sql);
              
         foreach my $word (qw(SELECT DISTINCT COUNT CONCAT GROUP_CONCAT AS FROM LEFT JOIN USING WHERE AND OR ON IN LIMIT DESC ORDER GROUP BY)) {
           my $hl_word = qq{<span class="sql_schema_sql_highlight">$word</span>};
