@@ -27,9 +27,10 @@
 #   .. hive_pipeline:: lm sync
 #      :analyses_pattern: add_together
 #
-# * To include a job-diagram snapshot
+# * To include a job-diagram snapshot. Add "vj_options" to pass extra command-line parameters
 #
 #   .. hive_pipeline:: lm job_diagram
+#      :vj_options: -include -accu_keys
 #
 #
 # * To include an analysis-diagram snapshot
@@ -67,6 +68,7 @@ class HivePipelineDirective(Directive):
     option_spec = {
             'tweaks': directives.unchanged,
             'analyses_pattern': directives.unchanged,
+            'vj_options': directives.unchanged,
             }
 
     def run(self):
@@ -97,6 +99,7 @@ class HivePipelineDirective(Directive):
             elif command == 'job_diagram':
                 default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
                 command_array = ['visualize_jobs.pl', '-url', db, '-output', '/dev/stdout', '-format', 'dot', '-config_file', default_config_file]
+                command_array.extend(self.options.get('vj_options', '').split())
 
         command_array[0] = os.path.join(os.environ["EHIVE_ROOT_DIR"], 'scripts', command_array[0])
         dotcontent = subprocess.check_output(command_array, stderr=sys.stderr)
