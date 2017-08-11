@@ -92,6 +92,10 @@ sub main {
                     'remincross'    => 'true',
         );
 
+        # Defined on its own because it should not be in the dot output but
+        # Bio::EnsEMBL::Hive::Utils::GraphViz->new passes all its parameters to dot
+        $self->{'graph'}->{'SORT'} = 1;
+
         $self->{'graph'}->cluster_2_nodes( {} );
 
             # preload all participating pipeline databases into TheApiary:
@@ -108,7 +112,7 @@ sub main {
                                 ? $job_adaptor->fetch_all_by_analysis_id( $start_analysis->dbID )   # take all jobs of the top analysis
                                 : find_the_top( $job_adaptor->fetch_all_by_prev_job_id( undef ) );  # scan from seed_jobs to start_analysis//top
 
-        foreach my $start_job ( sort {$a->dbID <=> $b->dbID} @$start_jobs ) {
+        foreach my $start_job ( @$start_jobs ) {
             my $job_node_name   = add_job_node( $start_job );
         }
 
@@ -333,7 +337,7 @@ sub add_job_node {
 
 
             my $children = $job->adaptor->fetch_all_by_prev_job_id( $job_id );
-            foreach my $child_job ( sort {$a->dbID <=> $b->dbID} @$children ) {
+            foreach my $child_job ( @$children ) {
                 my $child_node_name = add_job_node( $child_job );
 
                 my $child_can_be_controlled = $child_job->fetch_local_blocking_semaphore;
@@ -418,7 +422,8 @@ sub draw_semaphore_and_accu {
                     ? qq{<tr><td></td><td><b><u>$struct_name</u></b></td><td></td></tr>}
                     : qq{<tr>         <td><b><u>$struct_name</u></b></td><td></td></tr>};
 
-                foreach my $accu_vector ( sort {($a->[2]//0) <=> ($b->[2]//0)} @{ $struct_name_2_key_signature_and_value{$struct_name} } ) {
+                my @sorted_values = sort {(($a->[2]//0) <=> ($b->[2]//0)) || ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1])} @{ $struct_name_2_key_signature_and_value{$struct_name} };
+                foreach my $accu_vector ( @sorted_values ) {
                     my ($key_signature, $value, $sending_job_id) = @$accu_vector;
                     $sending_job_id //= 0;
 

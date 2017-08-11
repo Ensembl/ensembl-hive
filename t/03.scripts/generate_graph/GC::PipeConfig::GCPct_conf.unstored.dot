@@ -1,12 +1,12 @@
 digraph test {
 	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
-	analysis_chunk_sequences [fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">chunk_sequences (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="green" width="100%">1r</td></tr></table>>, shape="Mrecord", style="filled"];
-	dfr_p1_mp [fixedsize="1", height="0.01", label="dfr_p1_mp", shape="point", width="0.01"];
 	analysis_calc_overall_percentage [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">calc_overall_percentage (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
-	table_final_result [fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">final_result</td></tr></table>>, shape="tab", style="filled"];
-	dfr_p2_mp [fixedsize="1", height="0.01", label="dfr_p2_mp", shape="point", width="0.01"];
+	analysis_chunk_sequences [fillcolor="green", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">chunk_sequences (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="green" width="100%">1r</td></tr></table>>, shape="Mrecord", style="filled"];
 	analysis_count_atgc [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">count_atgc (unstored)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_p1_mp [fixedsize="1", height="0.01", label="dfr_p1_mp", shape="point", width="0.01"];
+	dfr_p2_mp [fixedsize="1", height="0.01", label="dfr_p2_mp", shape="point", width="0.01"];
 	sink_dfr_p1_mp [fillcolor="darkgreen", fontcolor="white", fontname="Courier", label="Accu", shape="invhouse", style="filled"];
+	table_final_result [fillcolor="orange", fontcolor="black", fontname="Courier", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">final_result</td></tr></table>>, shape="tab", style="filled"];
 	analysis_calc_overall_percentage -> table_final_result [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_chunk_sequences -> dfr_p1_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
 	analysis_chunk_sequences -> dfr_p2_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];

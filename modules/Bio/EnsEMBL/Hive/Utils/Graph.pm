@@ -106,6 +106,10 @@ sub graph {
             'concentrate'   => 'true',
             'pad'           => $self->config_get('Pad') || 0,
         );
+
+        # Defined on its own because it should not be in the dot output but
+        # Bio::EnsEMBL::Hive::Utils::GraphViz->new passes all its parameters to dot
+        $self->{'_graph'}->{'SORT'} = 1;
     }
     return $self->{'_graph'};
 }
@@ -253,8 +257,7 @@ sub build {
     }
 
     if($self->config_get('DisplaySemaphoreBoxes') ) {
-        my %foreign_analyses = %{ $self->{'_foreign_analyses'} };
-        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, @foreign_analyses{sort keys %foreign_analyses} ) {
+        foreach my $analysis ( $main_pipeline->collection_of('Analysis')->list, values %{ $self->{'_foreign_analyses'} } ) {
 
             push @{$cluster_2_nodes{ _cluster_name( $analysis->{'_funnel_dfr'} ) } }, $self->_analysis_node_name( $analysis );
 
