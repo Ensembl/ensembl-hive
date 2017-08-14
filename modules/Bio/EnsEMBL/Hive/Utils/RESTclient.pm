@@ -32,10 +32,30 @@ use warnings;
 use JSON;
 
 
-sub GET {
-    my ($request_url, $raw_json_output_filename)  = @_;
+sub new {
+    my $class = shift @_;
 
-    my $json_output_string  = `curl $request_url`;
+    my $self = bless {}, $class;
+
+    $self->base_url( shift @_ // '' );
+
+    return $self;
+}
+
+
+sub base_url {
+    my $self = shift @_;
+
+    $self->{'_base_url'} = shift if(@_);
+    return $self->{'_base_url'};
+}
+
+
+sub GET {
+    my ($self, $request_url, $raw_json_output_filename)  = @_;
+
+    my $base_url            = ref($self) ? $self->base_url : '';
+    my $json_output_string  = `curl ${base_url}${request_url}`;
 
     if($raw_json_output_filename) {
         open(my $fh, ">$raw_json_output_filename");
@@ -50,10 +70,11 @@ sub GET {
 
 
 sub POST {
-    my ($request_url, $request_data_struct, $raw_json_output_filename)  = @_;
+    my ($self, $request_url, $request_data_struct, $raw_json_output_filename)  = @_;
 
+    my $base_url            = ref($self) ? $self->base_url : '';
     my $request_data        = JSON->new->encode( $request_data_struct );
-    my $json_output_string  = `curl -X POST -H "Content-Type: application/json" -d '$request_data' $request_url`;
+    my $json_output_string  = `curl -X POST -H "Content-Type: application/json" -d '$request_data' ${base_url}${request_url}`;
 
     if($raw_json_output_filename) {
         open(my $fh, ">$raw_json_output_filename");
