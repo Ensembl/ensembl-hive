@@ -55,7 +55,11 @@ sub GET {
     my ($self, $request_url, $raw_json_output_filename)  = @_;
 
     my $base_url            = ref($self) ? $self->base_url : '';
-    my $json_output_string  = `curl -g ${base_url}${request_url}`;
+    my @curl_cmd            = ('curl', '-g', $base_url.$request_url);
+
+    open(my $curl_output_fh, "-|", @curl_cmd) || die "Could not run '".join(' ',@curl_cmd)."' : $!, $?";
+    my $json_output_string  = <$curl_output_fh>;
+    close $curl_output_fh;
 
     if($raw_json_output_filename) {
         open(my $fh, ">$raw_json_output_filename");
@@ -74,7 +78,11 @@ sub POST {
 
     my $base_url            = ref($self) ? $self->base_url : '';
     my $request_data        = JSON->new->encode( $request_data_struct );
-    my $json_output_string  = `curl -g -X POST -H "Content-Type: application/json" -d '$request_data' ${base_url}${request_url}`;
+    my @curl_cmd            = ('curl', '-g', '-X', 'POST', '-H', 'Content-Type: application/json', '-d', $request_data, $base_url.$request_url);
+
+    open(my $curl_output_fh, "-|", @curl_cmd) || die "Could not run '".join(' ',@curl_cmd)."' : $!, $?";
+    my $json_output_string  = <$curl_output_fh>;
+    close $curl_output_fh;
 
     if($raw_json_output_filename) {
         open(my $fh, ">$raw_json_output_filename");
