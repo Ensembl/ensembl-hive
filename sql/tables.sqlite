@@ -37,7 +37,7 @@ CONTACT
 /**
 @table  hive_meta
 
-@colour #000000
+@colour #C70C09
 
 @desc This table keeps several important hive-specific pipeline-wide key-value pairs
         such as hive_sql_schema_version, hive_use_triggers and hive_pipeline_name.
@@ -56,7 +56,7 @@ CREATE TABLE hive_meta (
 /**
 @table  pipeline_wide_parameters
 
-@colour #000000
+@colour #C70C09
 
 @desc This table contains a simple hash between pipeline_wide_parameter names and their values.
       The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
