@@ -97,7 +97,7 @@ sub GET {
     my ($self, $request_url, $raw_json_output_filename)  = @_;
 
     my $base_url        = ref($self) ? $self->base_url : '';
-    my $curl_cmd        = ['curl', '-g', $base_url.$request_url];
+    my $curl_cmd        = ['curl', '-g', '-s', $base_url.$request_url];
 
     return $self->run_curl_capture_and_parse_result( $curl_cmd, $raw_json_output_filename );
 }
@@ -108,7 +108,7 @@ sub POST {
 
     my $base_url        = ref($self) ? $self->base_url : '';
     my $request_data    = JSON->new->encode( $request_data_struct );
-    my $curl_cmd        = ['curl', '-g', '-X', 'POST', '-H', 'Content-Type: application/json', '-d', $request_data, $base_url.$request_url];
+    my $curl_cmd        = ['curl', '-g', '-s', '-X', 'POST', '-H', 'Content-Type: application/json', '-d', $request_data, $base_url.$request_url];
 
     return $self->run_curl_capture_and_parse_result( $curl_cmd, $raw_json_output_filename );
 }
