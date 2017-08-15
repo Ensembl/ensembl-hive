@@ -241,6 +241,9 @@ while (<$sql_fh>) {
       # INDEXES #
       #---------#
       
+      # Remove the comments
+      $doc =~ s/--\s.*$//;
+
       # Skip the blank lines
       next if ($doc =~ /^\s+$/);
 
