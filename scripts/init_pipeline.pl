@@ -41,7 +41,7 @@ sub main {
     }
 
     
-    my $file_or_module = shift @ARGV or script_usage(0);
+    my $file_or_module = shift @ARGV or die "ERROR: Must provide a PipeConfig name on the command-line\n";
 
     Bio::EnsEMBL::Hive::Scripts::InitPipeline::init_pipeline($file_or_module, $tweaks);
 }

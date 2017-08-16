@@ -101,7 +101,7 @@ sub main {
     }
 
     if (!$module_or_file) {
-        script_usage(1);
+        die "ERROR: need to provide a module name to run\n";
     }
 
     warn "\nRunning '$module_or_file' with input_id='$input_id' :\n";
