@@ -87,7 +87,7 @@ sub run_curl_capture_and_parse_result {
         close $fh;
     }
 
-    my $perl_struct     = JSON->new->decode( $json_output_string );
+    my $perl_struct     = $json_output_string && JSON->new->decode( $json_output_string );
 
     return $perl_struct;
 }
