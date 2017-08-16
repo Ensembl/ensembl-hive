@@ -18,8 +18,8 @@
 FROM ubuntu:16.04
 
 RUN apt-get update -y \
-                       # Needed to clone the checkout and use cpanm
- && apt-get install -y cpanminus git build-essential \
+                       # Needed to clone the checkout, to use cpanm and forbasic help
+ && apt-get install -y cpanminus git build-essential perl-doc \
 		       # Database-related dependencies
                        sqlite3 libdbd-sqlite3-perl postgresql-client libdbd-pg-perl mysql-client libdbd-mysql-perl libdbi-perl \
 		       # Required Perl modules
