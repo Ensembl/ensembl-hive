@@ -104,13 +104,11 @@ sub main {
         );
 
     } else {
-        print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     unless($pipeline->hive_dba) {
-        print "ERROR : no database connection\n\n";
-        script_usage(1);
+        die "ERROR : no database connection, the pipeline could not be accessed\n\n";
     }
 
     if( $logic_name ) {

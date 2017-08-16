@@ -206,8 +206,7 @@ sub main {
         $self->{'dba'} = $self->{'pipeline'}->hive_dba();
 
     } else {
-        print "\nERROR : Connection parameters (url or reg_conf+reg_alias) need to be specified\n\n";
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     if( $self->{'url'} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:

@@ -16,7 +16,7 @@ use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 
 
 main();
@@ -62,8 +62,7 @@ sub main {
         );
 
     } else {
-        pod2usage({-exitvalue => 0, -verbose => 2});
-
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
     if(@$tweaks) {

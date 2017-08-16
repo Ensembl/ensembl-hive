@@ -49,7 +49,7 @@ sub main {
         exit(0);
 
     } elsif( not ($url xor $reg_alias) ) {
-        script_usage(1);
+        die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
 
     } else {
         my $dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(
