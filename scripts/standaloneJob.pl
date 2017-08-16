@@ -60,10 +60,6 @@ sub main {
 
     my $module_or_file;
 
-    if ($help) {
-        script_usage(1);
-    }
-
     if($reg_conf) {
         require Bio::EnsEMBL::Registry;
         Bio::EnsEMBL::Registry->load_all($reg_conf);
