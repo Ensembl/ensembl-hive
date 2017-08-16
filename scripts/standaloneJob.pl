@@ -13,9 +13,10 @@ BEGIN {
 
 
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module', 'parse_cmdline_options', 'stringify', 'destringify');
 use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 
 
@@ -56,7 +57,9 @@ sub main {
 		'h|help!'       => \$help,
 	       );
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $module_or_file;
 

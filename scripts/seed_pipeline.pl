@@ -13,11 +13,12 @@ BEGIN {
 
 
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify', 'script_usage');
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
 
 sub show_seedable_analyses {
     my ($pipeline) = @_;
@@ -70,7 +71,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $pipeline;
     if($url or $reg_alias) {

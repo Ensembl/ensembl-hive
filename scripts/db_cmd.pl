@@ -12,9 +12,10 @@ BEGIN {
 }
 
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'report_versions');
+use Bio::EnsEMBL::Hive::Utils ('report_versions');
 
 
 sub main {
@@ -41,7 +42,7 @@ sub main {
 
     if($help) {
 
-        script_usage(0);
+        pod2usage({-exitvalue => 0, -verbose => 2});
 
     } elsif($report_versions) {
 

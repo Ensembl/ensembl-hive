@@ -14,9 +14,10 @@ BEGIN {
 
 use File::Path 'make_path';
 use Getopt::Long qw(:config no_auto_abbrev);
+use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'destringify', 'report_versions');
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'report_versions');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::HivePipeline;
@@ -159,7 +160,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     if($report_versions) {
         report_versions();

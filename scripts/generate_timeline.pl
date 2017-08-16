@@ -17,12 +17,12 @@ BEGIN {
 use Getopt::Long qw(:config no_auto_abbrev);
 use List::Util qw(sum);
 use POSIX;
+use Pod::Usage;
 use Data::Dumper;
 use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
 use Bio::EnsEMBL::Hive::HivePipeline;
-use Bio::EnsEMBL::Hive::Utils ('script_usage');
 
 no warnings qw{qw};
 
@@ -65,7 +65,9 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    if ($help) { script_usage(0); }
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     my $pipeline;
     if($url or $reg_alias) {

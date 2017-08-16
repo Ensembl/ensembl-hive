@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
-use Bio::EnsEMBL::Hive::Utils ('script_usage', 'load_file_or_module');
+use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 
 sub main {
@@ -31,7 +31,9 @@ sub main {
 	'h|help!'           => \$help,
     );
 
-    if ($help) { script_usage(0) };
+    if ($help) {
+        pod2usage({-exitvalue => 0, -verbose => 2});
+    }
 
     if($deprecated_option->{'job_topup'}) {
         die "-job_topup mode has been discontinued. Please use seed_pipeline.pl instead.\n";

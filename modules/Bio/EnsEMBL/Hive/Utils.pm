@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module script_usage split_for_bash go_figure_dbc report_versions throw join_command_args whoami);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc report_versions throw join_command_args whoami);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -249,34 +249,6 @@ sub load_file_or_module {
     die $@ if ($@);
 
     return $module_name;
-}
-
-
-=head2 script_usage
-
-    Description: This function takes one argument (return value).
-                It attempts to run perldoc on the current script, and if perldoc is not present, emulates its behaviour.
-                Then it exits with the return value given.
-
-    Callers    : scripts
-
-=cut
-
-sub script_usage {
-    my $retvalue = pop @_;
-
-    if(`which perldoc`) {
-        system('perldoc', $0);
-    } else {
-        foreach my $line (<main::DATA>) {
-            if($line!~s/\=\w+\s?//) {
-                $line = "\t$line";
-            }
-            print $line;
-        }
-        <main::DATA>;   # this is just to stop the 'used once' warnings
-    }
-    exit($retvalue);
 }
 
 
