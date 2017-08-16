@@ -82,7 +82,7 @@ sub run_curl_capture_and_parse_result {
     close $curl_output_fh;
 
     if($raw_json_output_filename) {
-        open(my $fh, '>', $raw_json_output_filename");
+        open(my $fh, '>', $raw_json_output_filename);
         print $fh $json_output_string;
         close $fh;
     }
