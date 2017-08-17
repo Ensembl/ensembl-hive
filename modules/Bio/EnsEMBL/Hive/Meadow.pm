@@ -83,10 +83,17 @@ sub new {
 
     my $self = bless {}, $class;
 
-    $self->config( $config );
-    $self->context( [ 'Meadow', $self->type, $self->cached_name ] );
+    $self->_init_meadow($config);
 
     return $self;
+}
+
+
+sub _init_meadow {
+    my ($self, $config) = @_;
+
+    $self->config( $config );
+    $self->context( [ 'Meadow', $self->type, $self->cached_name ] );
 }
 
 
