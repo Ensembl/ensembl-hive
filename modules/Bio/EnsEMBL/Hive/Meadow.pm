@@ -106,10 +106,10 @@ sub cached_name {
 
     my $name;
 
-    unless( ref($self) and $name = $self->{'_name'} ) {
+    unless( ref($self) and $name = $self->{'_name'} ) {     # unless the name was storable AND stored in the object
 
-        if($name = $self->name() and ref($self) ) {
-            $self->{'_name'} = $name;
+        if($name = $self->name() and ref($self) ) {         # ... get the not-yet-stored name and if it is storable
+            $self->{'_name'} = $name;                       # ... ... then store it in the object
         }
     }
 
