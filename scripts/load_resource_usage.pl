@@ -101,20 +101,20 @@ __DATA__
 
 =head1 NAME
 
-    load_resource_usage.pl
+load_resource_usage.pl
 
 =head1 DESCRIPTION
 
-    This script obtains resource usage data for your pipeline from the Meadow and stores it in 'worker_resource_usage' table.
-    Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
+This script obtains resource usage data for your pipeline from the Meadow and stores it in 'worker_resource_usage' table.
+Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
 
-    Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
-    it pulls the relevant data out of your Meadow (runs 'bacct' script in case of LSF), parses the report and stores in 'worker_resource_usage' table.
-    You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
-    to filter by analysis_id, do various stats, etc.
+Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
+it pulls the relevant data out of your Meadow (runs 'bacct' script in case of LSF), parses the report and stores in 'worker_resource_usage' table.
+You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
+to filter by analysis_id, do various stats, etc.
 
-    You can optionally provide an an external filename or command to get the data from it (don't forget to append a '|' to the end!)
-    and then the data will be taken from your source and parsed from there.
+You can optionally provide an an external filename or command to get the data from it (don't forget to append a '|' to the end!)
+and then the data will be taken from your source and parsed from there.
 
 =head1 USAGE EXAMPLES
 
@@ -132,11 +132,29 @@ __DATA__
 
 =head1 OPTIONS
 
-    -help                   : print this help
-    -url <url string>       : url defining where hive database is located
-    -username <username>    : if it wasn't you who ran the pipeline, the name of that user can be provided
-    -source <filename>      : alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
-    -meadow_type <type>     : only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
+=over
+
+=item --help
+
+print this help
+
+=item --url <url string>
+
+url defining where hive database is located
+
+=item --username <username>
+
+if it wasn't you who ran the pipeline, the name of that user can be provided
+
+=item --source <filename>
+
+alternative source of worker_resource_usage data. Can be a filename or a pipe-from command.
+
+=item --meadow_type <type>
+
+only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
+
+=back
 
 =head1 LICENSE
 
@@ -154,7 +172,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

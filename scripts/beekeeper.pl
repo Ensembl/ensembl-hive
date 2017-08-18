@@ -739,23 +739,23 @@ unexpectedly so that she can free the dead workers and reclaim unfinished jobs.
 
 =over
 
-=item    -reg_conf <path>
+=item --reg_conf <path>
 
 Path to a Registry configuration file
 
-=item    -reg_type <string>
+=item --reg_type <string>
 
 Type of the registry entry ('hive', 'core', 'compara', etc. - defaults to 'hive')
 
-=item    -reg_alias <string>
+=item --reg_alias <string>
 
 Species / alias name for the Hive DBAdaptor
 
-=item    -url <url string>
+=item --url <url string>
 
 URL defining where hive database is located
 
-=item    -nosqlvc <0|1>
+=item --nosqlvc <0|1>
 
 Skip sql version check if 1
 
@@ -765,7 +765,7 @@ Skip sql version check if 1
 
 =over
 
-=item    -config_file <string>
+=item --config_file <string>
 
 JSON file (with absolute path) to override the default configurations (could be multiple)
 
@@ -773,61 +773,208 @@ JSON file (with absolute path) to override the default configurations (could be 
 
 =head2 Looping control
 
-    -loop                  : run autonomously, loops and sleeps. Equivalent to -loop_until ANALYSIS_FAILURE
-    -loop_until            : sets the level of event that will cause the beekeeper to stop looping:
-                           : JOB_FAILURE      = stop looping if any job fails
-                           : ANALYSIS_FAILURE = stop looping if any analysis has job failures exceeding
-                           :     its fault tolerance
-                           : NO_WORK          = ignore job and analysis faliures, keep looping until there is no work
-                           : FOREVER          = ignore failures and no work, keep looping
-    -keep_alive            : (Deprecated) alias for -loop_until FOREVER
-    -max_loops <num>       : perform max this # of loops in autonomous mode. The beekeeper will stop when
-                           : it has performed max_loops loops, even in FOREVER mode
-    -job_id <job_id>       : run 1 iteration for this job_id
-    -run                   : run 1 iteration of automation loop
-    -sleep <num>           : when looping, sleep <num> minutes (default 1 min)
+=over
+
+=item --loop
+
+run autonomously, loops and sleeps. Equivalent to -loop_until ANALYSIS_FAILURE
+
+=item --loop_until
+
+sets the level of event that will cause the beekeeper to stop looping:
+
+=over
+
+=item JOB_FAILURE
+
+stop looping if any job fails
+
+=item ANALYSIS_FAILURE
+
+stop looping if any analysis has job failures exceeding its fault tolerance
+
+=item NO_WORK
+
+ignore job and analysis faliures, keep looping until there is no work
+
+=item FOREVER
+
+ignore failures and no work, keep looping
+
+=back
+
+=item --keep_alive
+
+(Deprecated) alias for -loop_until FOREVER
+
+=item --max_loops <num>
+
+perform max this # of loops in autonomous mode. The beekeeper will stop when
+it has performed max_loops loops, even in FOREVER mode
+
+=item --job_id <job_id>
+
+run 1 iteration for this job_id
+
+=item --run
+
+run 1 iteration of automation loop
+
+=item --sleep <num>
+
+when looping, sleep <num> minutes (default 1 min)
+
+=back
 
 =head2 Current Meadow control
 
-    -meadow_type <string>               : the desired Meadow class name, such as 'LSF' or 'LOCAL'
-    -total_running_workers_max <num>    : max # workers to be running in parallel
-    -submit_workers_max <num>           : max # workers to create per loop iteration
-    -submission_options <string>        : passes <string> to the Meadow submission command as <options> (formerly lsf_options)
-    -submit_log_dir <dir>               : record submission output+error streams into files under the given directory (to see why some workers fail after submission)
+=over
+
+=item --meadow_type <string>
+
+the desired Meadow class name, such as 'LSF' or 'LOCAL'
+
+=item --total_running_workers_max <num>
+
+max # workers to be running in parallel
+
+=item --submit_workers_max <num>
+
+max # workers to create per loop iteration
+
+=item --submission_options <string>
+
+passes <string> to the Meadow submission command as <options> (formerly lsf_options)
+
+=item --submit_log_dir <dir>
+
+record submission output+error streams into files under the given directory (to see why some workers fail after submission)
+
+=back
 
 =head2 Worker control
 
-    -analyses_pattern <string>              : restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
-    -can_respecialize <0|1>                 : allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
-    -force                                  : run all workers with -force (see runWorker.pl)
-    -killworker <worker_id>                 : kill worker by worker_id
-    -life_span <num>                        : number of minutes each worker is allowed to run
-    -job_limit <num>                        : #jobs to run before worker can die naturally
-    -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
-    -hive_log_dir <path>                    : directory where stdout/stderr of the hive is redirected
-    -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
-    -worker_crash_on_startup_prob <float>   : probability of each worker failing at startup (0 by default, useful for debugging)
-    -debug <debug_level>                    : set debug level of the workers
+=over
+
+=item --analyses_pattern <string>
+
+restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
+
+=item --can_respecialize <0|1>
+
+allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
+
+=item --force
+
+run all workers with -force (see runWorker.pl)
+
+=item --killworker <worker_id>
+
+kill worker by worker_id
+
+=item --life_span <num>
+
+number of minutes each worker is allowed to run
+
+=item --job_limit <num>
+
+#jobs to run before worker can die naturally
+
+=item --retry_throwing_jobs <0|1>
+
+if a job dies *knowingly*, should we retry it by default?
+
+=item --hive_log_dir <path>
+
+directory where stdout/stderr of the hive is redirected
+
+=item --worker_delay_startup_seconds <number>
+
+number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+
+=item --worker_crash_on_startup_prob <float>
+
+probability of each worker failing at startup (0 by default, useful for debugging)
+
+=item --debug <debug_level>
+
+set debug level of the workers
+
+=back
 
 =head2 Other commands/options
 
-    -help                  : print this help
-    -versions              : report both Hive code version and Hive database schema version
-    -dead                  : detect all unaccounted dead workers and reset their jobs for resubmission
-    -sync                  : re-synchronize the hive
-    -unkwn                 : detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
-    -alldead               : tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
-    -balance_semaphores    : set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
-    -worker_stats          : show status of each running worker
-    -failed_jobs           : show all failed jobs
-    -job_output <job_id>   : print details for one job
-    -reset_job_id <num>    : reset a job back to READY so it can be rerun
-    -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -reset_done_jobs       : reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -reset_all_jobs        : reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -forgive_failed_jobs   : mark FAILED jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
-    -discard_ready_jobs    : mark READY jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
-    -unblock_semaphored_jobs : set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
+=over
+
+=item --help
+
+print this help
+
+=item --versions
+
+report both Hive code version and Hive database schema version
+
+=item --dead
+
+detect all unaccounted dead workers and reset their jobs for resubmission
+
+=item --sync
+
+re-synchronize the hive
+
+=item --unkwn
+
+detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
+
+=item --alldead
+
+tell the database all workers are dead (no checks are performed in this mode, so be very careful!)
+
+=item --balance_semaphores
+
+set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
+
+=item --worker_stats
+
+show status of each running worker
+
+=item --failed_jobs
+
+show all failed jobs
+
+=item --job_output <job_id>
+
+print details for one job
+
+=item --reset_job_id <num>
+
+reset a job back to READY so it can be rerun
+
+=item --reset_failed_jobs
+
+reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
+
+=item --reset_done_jobs
+
+reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+
+=item --reset_all_jobs
+
+reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+
+=item --forgive_failed_jobs
+
+mark FAILED jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
+
+=item --discard_ready_jobs
+
+mark READY jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
+
+=item --unblock_semaphored_jobs
+
+set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
+
+=back
 
 =head1 LICENSE
 
@@ -845,7 +992,7 @@ JSON file (with absolute path) to override the default configurations (could be 
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

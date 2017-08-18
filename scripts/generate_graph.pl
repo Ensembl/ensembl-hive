@@ -124,66 +124,74 @@ __DATA__
 
 =head1 NAME
 
-    generate_graph.pl
+generate_graph.pl
 
 =head1 SYNOPSIS
 
-    ./generate_graph.pl -help
+    generate_graph.pl -help
 
-    ./generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
+    generate_graph.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] [-pipeconfig TopUp_conf.pm]* -output OUTPUT_LOC
 
 =head1 DESCRIPTION
 
-    This program will generate a graphical representation of your hive pipeline.
-    This includes visualising the flow of data from the different analyses, blocking
-    rules & table writers. The graph is also coloured to indicate the stage
-    an analysis is at. The colours & fonts used can be configured via
-    hive_config.json configuration file.
+This program will generate a graphical representation of your hive pipeline.
+This includes visualising the flow of data from the different analyses, blocking
+rules & table writers. The graph is also coloured to indicate the stage
+an analysis is at. The colours & fonts used can be configured via
+hive_config.json configuration file.
 
 =head1 OPTIONS
 
-B<--url>
+=over
 
-    url defining where hive database is located
+=item --url <url>
 
-B<--reg_conf>
+url defining where hive database is located
 
-    path to a Registry configuration file
+=item --reg_conf <path>
 
-B<--reg_alias>
+path to a Registry configuration file
 
-    species/alias name for the Hive DBAdaptor
+=item --reg_alias <str>
 
-B<--nosqlvc>
+species/alias name for the Hive DBAdaptor
 
-    if 1, don't check sql schema version
+=item --nosqlvc <0|1>
 
-B<--config_file>
+if 1, don't check sql schema version
 
-    Path to JSON hive config file
+=item --config_file <path>
 
-B<--pipeconfig>
+Path to JSON hive config file
 
-    A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
-    This option can now be used multiple times for multiple top-ups.
+=item --pipeconfig <path|module_name>
 
-B<--format>
+A pipeline configuration file that can function both as the initial source of pipeline structure or as a top-up config.
+This option can now be used multiple times for multiple top-ups.
 
-    (Optional) specify the output format, or override the output format specified by the output file's extension
-    (e.g. png, jpeg, dot, gif, ps)
+=item --format <str>
 
-B<--output>
+(Optional) specify the output format, or override the output format specified by the output file's extension
+(e.g. png, jpeg, dot, gif, ps)
 
-    Location of the file to write to.
-    The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
+=item --output <path>
 
-B<--help>
+Location of the file to write to.
+The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
 
-    Print this help message
+=item --help
+
+Print this help message
+
+=back
 
 =head1 EXTERNAL DEPENDENCIES
 
-    GraphViz
+=over
+
+=item GraphViz
+
+=back
 
 =head1 LICENSE
 
@@ -201,7 +209,7 @@ B<--help>
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

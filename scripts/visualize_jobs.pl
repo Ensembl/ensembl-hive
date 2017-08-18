@@ -539,96 +539,103 @@ __DATA__
 
 =head1 NAME
 
-    visualize_jobs.pl
+visualize_jobs.pl
 
 =head1 SYNOPSIS
 
-    ./visualize_jobs.pl -help
+    visualize_jobs.pl -help
 
-    ./visualize_jobs.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_filename> -reg_alias <reg_alias> ] -output <output_image_filename>
+    visualize_jobs.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_filename> -reg_alias <reg_alias> ] -output <output_image_filename
 
 =head1 DESCRIPTION
 
-    This program generates a visualization of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
+This program generates a visualization of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
 
-    Jobs are represented by 3d-rectangles which contain parameters and are colour-coded (reflecting Job's status).
-    Semaphores are represented by triangles (upward-pointing red = closed, downward-pointing green = open) which contain the counter.
-    Accumulators are represented by rectangles with key-paths and may contain data (configurable).
+Jobs are represented by 3d-rectangles which contain parameters and are colour-coded (reflecting Job's status).
+Semaphores are represented by triangles (upward-pointing red = closed, downward-pointing green = open) which contain the counter.
+Accumulators are represented by rectangles with key-paths and may contain data (configurable).
 
-    Blue solid arrows show jobs' parent-child relationships (parents point at their children).
-    Dashed red lines show jobs blocking downstream semaphores.
-    Dashed green lines show jobs no longer blocking downstream semaphores (when the jobs have finished successfully).
-    Dashed red/green lines (with colour matching semaphore's) also link the semaphores to their accumulators and further to the controlled job.
+Blue solid arrows show jobs' parent-child relationships (parents point at their children).
+Dashed red lines show jobs blocking downstream semaphores.
+Dashed green lines show jobs no longer blocking downstream semaphores (when the jobs have finished successfully).
+Dashed red/green lines (with colour matching semaphore's) also link the semaphores to their accumulators and further to the controlled job.
 
 =head1 OPTIONS
 
-B<--url>
+=over
 
-    url defining where hive database is located
+=item --url <url>
 
-B<--reg_conf>
+url defining where hive database is located
 
-    path to a Registry configuration file
+=item --reg_conf <path>
 
-B<--reg_alias>
+path to a Registry configuration file
 
-    species/alias name for the Hive DBAdaptor
+=item --reg_alias <name>
 
-B<--nosqlvc>
+species/alias name for the Hive DBAdaptor
 
-    if 1, don't check sql schema version
+=item --nosqlvc <0|1>
 
-B<--job_id>
+if 1, don't check sql schema version
 
-    Start with this job(s) and reach as far as possible using parent-child relationships.
+=item --job_id <int>
 
-B<--start_analysis_name>
+Start with this job(s) and reach as far as possible using parent-child relationships.
 
-    Trace up to this analysis and start displaying from this analysis.
+=item --start_analysis_name <logic_name>
 
-B<--stop_analysis_name>
+Trace up to this analysis and start displaying from this analysis.
 
-    Make this analysis to be the last one to be displayed.
-    As the result, the graph may not contain the initial job_id(s).
+=item --stop_analysis_name <logic_name>
 
-B<--include>
+Make this analysis to be the last one to be displayed.
+As the result, the graph may not contain the initial job_id(s).
 
-    If set, in multi-pipeline contexts include other pipeline rectangles inside the "main" one.
-    Off by default.
+=item --include
 
+If set, in multi-pipeline contexts include other pipeline rectangles inside the "main" one.
+Off by default.
 
-B<--suppress_funnel_parent_link>
+=item --suppress_funnel_parent_link
 
-    If set, do not show the link to the parent of a funnel job (potentially less clutter).
-    Off by default.
+If set, do not show the link to the parent of a funnel job (potentially less clutter).
+Off by default.
 
-B<--accu_keys>
+=item --accu_keys
 
-    If set, show accu keys in semaphore nodes.
-    Off by default.
+If set, show accu keys in semaphore nodes.
+Off by default.
 
-B<--accu_values>
+=item --accu_values
 
-    If set, show accu keys & values in semaphore nodes.
-    Off by default.
+If set, show accu keys & values in semaphore nodes.
+Off by default.
 
-B<--accu_pointers>
+=item --accu_pointers
 
-    If set, show an extra link between an item in the accu and the local job that generated it.
-    Off by default.
+If set, show an extra link between an item in the accu and the local job that generated it.
+Off by default.
 
-B<--output>
+=item --output <path>
 
-    Location of the file to write to.
-    The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
+Location of the file to write to.
+The file extension (.png , .jpeg , .dot , .gif , .ps) will define the output format.
 
-B<--help>
+=item --help
 
-    Print this help message
+Print this help message
+
+=back
 
 =head1 EXTERNAL DEPENDENCIES
 
-    GraphViz
+=over
+
+=item GraphViz
+
+=back
 
 =head1 LICENSE
 
@@ -646,7 +653,7 @@ B<--help>
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

@@ -56,7 +56,7 @@ __DATA__
 
 =head1 NAME
 
-    init_pipeline.pl
+init_pipeline.pl
 
 =head1 SYNOPSIS
 
@@ -64,7 +64,7 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
+init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
 
 =head1 USAGE EXAMPLES
 
@@ -80,12 +80,33 @@ __DATA__
 
 =head1 OPTIONS
 
-    -hive_force_init <0|1> :  If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
-    -hive_no_init <0|1>    :  If set to 1, does not run the pipeline_create_commands section of the pipeline. Useful to "top-up" an existing database.
-    -tweak <string>        :  Apply tweaks to the pipeline. See tweak_pipeline.pl for details of tweaking syntax
-    -DELETE                :  Delete pipeline parameter (shortcut for tweak DELETE)
-    -SHOW                  :  Show  pipeline parameter  (shortcut for tweak SHOW)
-    -h | --help            :  Show this help message
+=over
+
+=item --hive_force_init <0|1>
+
+If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+
+=item --hive_no_init <0|1>
+
+If set to 1, does not run the pipeline_create_commands section of the pipeline. Useful to "top-up" an existing database.
+
+=item --tweak <string>
+
+Apply tweaks to the pipeline. See tweak_pipeline.pl for details of tweaking syntax
+
+=item --DELETE
+
+Delete pipeline parameter (shortcut for tweak DELETE)
+
+=item --SHOW
+
+Show  pipeline parameter  (shortcut for tweak SHOW)
+
+=item -h, --help
+
+Show this help message
+
+=back
 
 =head1 LICENSE
 
@@ -103,7 +124,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

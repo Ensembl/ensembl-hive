@@ -504,14 +504,14 @@ generate_timeline.pl
 
 =head1 DESCRIPTION
 
-    This script is used for offline examination of the allocation of workers.
+This script is used for offline examination of the allocation of workers.
 
-    Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
-    worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-    of the 'worker' table for accurate timing.
-    By default, the output is in CSV format, to allow extra analysis to be carried.
+Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
+worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
+of the 'worker' table for accurate timing.
+By default, the output is in CSV format, to allow extra analysis to be carried.
 
-    You can optionally ask the script to generate an image with Gnuplot.
+You can optionally ask the script to generate an image with Gnuplot.
 
 
 =head1 USAGE EXAMPLES
@@ -531,28 +531,92 @@ generate_timeline.pl
 
 =head1 OPTIONS
 
-    -help                   : print this help
-    -url <url string>       : url defining where hive database is located
-    -reg_conf               : path to a Registry configuration file 
-    -reg_type               : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias              : species/alias name for the Hive DBAdaptor 
-    -nosqlvc                : Do not restrict the usage of this script to the current version of eHive
-                              Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
-    -verbose                : Print some info about the data loaded from the database
+=head2 Connection options
 
-    -start_date <date>      : minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
-    -end_date <date>        : maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
-    -top <float>            : maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
-    -output <string>        : output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
-    -mode <string>          : what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'pending_workers', or 'pending_time'
-    -key                    : 'analysis' (default) or 'resource_class': how to bin the workers
+=over
 
-    -n_core <int>           : the default number of cores allocated to a worker (default: 1)
-    -mem <int>              : the default memory allocated to a worker (default: 100Mb)
+=item --help
+
+print this help
+
+=item --url <url string>
+
+url defining where hive database is located
+
+=item --reg_conf
+
+path to a Registry configuration file
+
+=item --reg_type
+
+type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+
+=item --reg_alias
+
+species/alias name for the Hive DBAdaptor
+
+=item --nosqlvc
+
+Do not restrict the usage of this script to the current version of eHive.
+Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
+
+=item --verbose
+
+Print some info about the data loaded from the database
+
+=back
+
+=head2 Timeline configuration
+
+=over
+
+=item --start_date <date>
+
+minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+
+=item --end_date <date>
+
+maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+
+=item --top <float>
+
+maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
+
+=item --output <string>
+
+output file: its extension must match one of the Gnuplot terminals. Otherwise, the CSV output is produced on stdout
+
+=item --mode <string>
+
+what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'pending_workers', or 'pending_time'
+
+=item --key <string>
+
+'analysis' (default) or 'resource_class': how to bin the workers
+
+=back
+
+=head2 Farm configuration
+
+=over
+
+=item --n_core <int>
+
+the default number of cores allocated to a worker (default: 1)
+
+=item --mem <int>
+
+the default memory allocated to a worker (default: 100Mb)
+
+=back
 
 =head1 EXTERNAL DEPENDENCIES
 
-    Chart::Gnuplot
+=over
+
+=item Chart::Gnuplot
+
+=back
 
 =head1 LICENSE
 

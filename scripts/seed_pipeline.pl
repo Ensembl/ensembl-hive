@@ -154,7 +154,7 @@ __DATA__
 
 =head1 NAME
 
-    seed_pipeline.pl
+seed_pipeline.pl
 
 =head1 SYNOPSIS
 
@@ -162,7 +162,7 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
+seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
 
 =head1 USAGE EXAMPLES
 
@@ -180,25 +180,67 @@ __DATA__
 
 =head2 Connection parameters
 
-    -reg_conf <path>            : path to a Registry configuration file
-    -reg_type <string>          : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias <string>         : species/alias name for the Hive DBAdaptor
-    -url <url string>           : url defining where hive database is located
-    -nosqlvc <0|1>              : skip sql version check if 1
+=over
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_type <string>
+
+type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+
+=item --reg_alias <string>
+
+species/alias name for the Hive DBAdaptor
+
+=item --url <url string>
+
+url defining where hive database is located
+
+=item --nosqlvc <0|1>
+
+skip sql version check if 1
+
+=back
 
 =head2 Analysis parameters
 
-    -analyses_pattern <string>  : seed job(s) for analyses whose logic_name matches the supplied pattern
-    -analysis_id <num>          : seed job for analysis with the given analysis_id
+=over
+
+=item --analyses_pattern <string>
+
+seed job(s) for analyses whose logic_name matches the supplied pattern
+
+=item --analysis_id <num>
+
+seed job for analysis with the given analysis_id
+
+=back
 
 =head2 Input
 
-    -input_id <string>          : specify the job's input parameters as a stringified hash 
-    -semaphored                 : wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
+=over
+
+=item --input_id <string>
+
+specify the job's input parameters as a stringified hash
+
+=item --semaphored
+
+wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
+
+=back
 
 =head2 Other commands/options
 
-    -h | -help                  : show this help message
+=over
+
+=item -h, --help
+
+show this help message
+
+=back
 
 =head1 LICENSE
 
@@ -216,7 +258,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

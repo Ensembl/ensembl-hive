@@ -157,15 +157,15 @@ __DATA__
 
 =head1 NAME
 
-    runWorker.pl [options]
+runWorker.pl [options]
 
 =head1 DESCRIPTION
 
-    runWorker.pl is an eHive component script that does the work of a single Worker -
-    specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
+runWorker.pl is an eHive component script that does the work of a single Worker -
+specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
 
-    Most of the functionality of the eHive is accessible via beekeeper.pl script,
-    but feel free to run the runWorker.pl if you think you know what you are doing :)
+Most of the functionality of the eHive is accessible via beekeeper.pl script,
+but feel free to run the runWorker.pl if you think you know what you are doing :)
 
 =head1 USAGE EXAMPLES
 
@@ -188,39 +188,124 @@ __DATA__
 
 =head2 Connection parameters:
 
-    -reg_conf <path>            : path to a Registry configuration file
-    -reg_alias <string>         : species/alias name for the Hive DBAdaptor
-    -reg_type <string>          : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -url <url string>           : url defining where database is located
-    -nosqlvc <0|1>              : skip sql version check if 1
+=over
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_alias <string>
+
+species/alias name for the Hive DBAdaptor
+
+=item --reg_type <string>
+
+type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+
+=item --url <url string>
+
+url defining where database is located
+
+=item --nosqlvc <0|1>
+
+skip sql version check if 1
+
+=back
+
 
 =head2 Task specification parameters:
 
-    -rc_id <id>                 : resource class id
-    -rc_name <string>           : resource class name
-    -analyses_pattern <string>  : restrict the specialization of the Worker to the specified subset of Analyses
-    -analysis_id <id>           : run a worker and have it specialize to an analysis with this analysis_id
-    -job_id <id>                : run a specific job defined by its database id
-    -force 0|1                  : set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
+=over
+
+=item --rc_id <id>
+
+resource class id
+
+=item --rc_name <string>
+
+resource class name
+
+=item --analyses_pattern <string>
+
+restrict the specialization of the Worker to the specified subset of Analyses
+
+=item --analysis_id <id>
+
+run a worker and have it specialize to an analysis with this analysis_id
+
+=item --job_id <id>
+
+run a specific job defined by its database id
+
+=item --force <0|1>
+
+set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
+
+=back
 
 =head2 Worker control parameters:
 
-    -job_limit <num>                        : #jobs to run before worker can die naturally
-    -life_span <num>                        : number of minutes this worker is allowed to run
-    -no_cleanup                             : don't perform temp directory cleanup when worker exits
-    -no_write                               : don't write_output or auto_dataflow input_job
-    -hive_log_dir <path>                    : directory where stdout/stderr of the whole hive of workers is redirected
-    -worker_log_dir <path>                  : directory where stdout/stderr of this particular worker is redirected
-    -retry_throwing_jobs <0|1>              : if a job dies *knowingly*, should we retry it by default?
-    -can_respecialize <0|1>                 : allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
-    -worker_delay_startup_seconds <number>  : number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
-    -worker_crash_on_startup_prob <float>   : probability of each worker failing at startup (0 by default, useful for debugging)
+=over
+
+=item --job_limit <num>
+
+#jobs to run before worker can die naturally
+
+=item --life_span <num>
+
+number of minutes this worker is allowed to run
+
+=item --no_cleanup
+
+don't perform temp directory cleanup when worker exits
+
+=item --no_write
+
+don't write_output or auto_dataflow input_job
+
+=item --hive_log_dir <path>
+
+directory where stdout/stderr of the whole hive of workers is redirected
+
+=item --worker_log_dir <path>
+
+directory where stdout/stderr of this particular worker is redirected
+
+=item --retry_throwing_jobs <0|1>
+
+if a job dies *knowingly*, should we retry it by default?
+
+=item --can_respecialize <0|1>
+
+allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
+
+=item --worker_delay_startup_seconds <number>
+
+number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+
+=item --worker_crash_on_startup_prob <float>
+
+probability of each worker failing at startup (0 by default, useful for debugging)
+
+=back
 
 =head2 Other options:
 
-    -help                       : print this help
-    -versions                   : report both Hive code version and Hive database schema version
-    -debug <level>              : turn on debug messages at <level>
+=over
+
+=item --help
+
+print this help
+
+=item --versions
+
+report both Hive code version and Hive database schema version
+
+=item --debug <level>
+
+turn on debug messages at <level>
+
+=back
 
 =head1 LICENSE
 
@@ -238,7 +323,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

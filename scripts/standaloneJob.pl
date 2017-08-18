@@ -125,28 +125,61 @@ __DATA__
 
 =head1 NAME
 
-    standaloneJob.pl
+standaloneJob.pl
 
 =head1 DESCRIPTION
 
-    standaloneJob.pl is an eHive component script that
-        1. takes in a RunnableDB module,
-        2. creates a standalone job outside an eHive database by initializing parameters from command line arguments
-        3. and runs that job outside of any eHive database. WARNING: the RunnableDB code may still access databases
-           provided as arguments and even harm them !
-        4. can optionally dataflow into tables fully defined by URLs
-    Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
+standaloneJob.pl is an eHive component script that
 
-    There are several ways of initializing the job parameters:
-        1. Module::Name -input_id. The simplest one: just provide a stringified hash
-        2. Module::Name -param1 value1 -param2 value2 (...). Enumerate all the arguments on the command-line. ARRAY- and HASH-
-           arguments can be passed+parsed too!
-        3. -url $ehive_url job_id XXX. The reference to an existing job from which the parameters will be pulled. It is
-           a convenient way of gathering all the parameters (the job's input_id, the job's accu, the analysis parameters
-           and the pipeline-wide parameters).  Further parameters can be added with -param1 value1 -param2 value2 (...)
-           and they take priority over the existing job's parameters. The RunnableDB is also found in the database.
-           NOTE: the standaloneJob will *not* interact any further with this eHive database. There won't be any updates
-                 to the job, worker, log_message etc tables.
+=over
+
+=item 1.
+
+takes in a RunnableDB module,
+
+=item 2.
+
+creates a standalone job outside an eHive database by initializing parameters from command line arguments
+
+=item 3.
+
+and runs that job outside of any eHive database.
+
+I<WARNING> the RunnableDB code may still access databases provided
+as arguments and even harm them !
+
+=item 4.
+
+can optionally dataflow into tables fully defined by URLs
+
+=back
+
+Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
+
+There are several ways of initializing the job parameters:
+
+=over
+
+=item 1.
+
+C<Module::Name -input_id>. The simplest one: just provide a stringified hash
+
+=item 2.
+
+C<Module::Name -param1 value1 -param2 value2 (...)>. Enumerate all the arguments on the command-line. ARRAY- and HASH-
+arguments can be passed+parsed too!
+
+=item 3.
+
+C<-url $ehive_url job_id XXX>. The reference to an existing job from which the parameters will be pulled. It is
+a convenient way of gathering all the parameters (the job's input_id, the job's accu, the analysis parameters
+and the pipeline-wide parameters).  Further parameters can be added with -param1 value1 -param2 value2 (...)
+and they take priority over the existing job's parameters. The RunnableDB is also found in the database.
+
+<NOTE> the standaloneJob will *not* interact any further with this eHive database. There won't be any updates
+to the job, worker, log_message etc tables.
+
+=back
 
 =head1 USAGE EXAMPLES
 
@@ -192,16 +225,43 @@ __DATA__
 
 =head1 SCRIPT-SPECIFIC OPTIONS
 
-    -help               : print this help
-    -debug <level>      : turn on debug messages at <level>
-    -no_write           : skip the execution of write_output() step this time
-    -no_cleanup         : do not cleanup temporary files
-    -reg_conf <path>    : load registry entries from the given file (these entries may be needed by the RunnableDB itself)
-    -input_id "<hash>"  : specify the whole input_id parameter in one stringified hash
-    -flow_out "<hash>"  : defines the dataflow re-direction rules in a format similar to PipeConfig's - see the last example
-    -language           : language in which the runnable is written
+=over
 
-    NB: all other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
+=item --help
+
+print this help
+
+=item --debug <level>
+
+turn on debug messages at <level>
+
+=item --no_write
+
+skip the execution of write_output() step this time
+
+=item --no_cleanup
+
+do not cleanup temporary files
+
+=item --reg_conf <path>
+
+load registry entries from the given file (these entries may be needed by the RunnableDB itself)
+
+=item --input_id <hash>
+
+specify the whole input_id parameter in one stringified hash
+
+=item --flow_out <hash>
+
+defines the dataflow re-direction rules in a format similar to PipeConfig's - see the last example
+
+=item --language <name>
+
+language in which the runnable is written
+
+=back
+
+All other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
 
 =head1 LICENSE
 
@@ -219,7 +279,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

@@ -119,7 +119,7 @@ __DATA__
 
 =head1 NAME
 
-    hoover_pipeline.pl
+hoover_pipeline.pl
 
 =head1 SYNOPSIS
 
@@ -127,7 +127,7 @@ __DATA__
 
 =head1 DESCRIPTION
 
-    hoover_pipeline.pl is a script used to remove old 'DONE' jobs from a continuously running pipeline database
+hoover_pipeline.pl is a script used to remove old 'DONE' jobs from a continuously running pipeline database
 
 =head1 USAGE EXAMPLES
 
@@ -147,14 +147,41 @@ __DATA__
 
 =head1 OPTIONS
 
-    -reg_conf <path>          : path to a Registry configuration file
-    -reg_type <string>        : type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
-    -reg_alias <string>       : species/alias name for the Hive DBAdaptor
-    -url <url string>         : url defining where hive database is located
-    -nosqlvc <0|1>            : skip sql version check if 1
-    -before_datetime <string> : delete jobs 'DONE' before a specific time
-    -days_ago <num>           : delete jobs that have been 'DONE' for at least <num> days
-    -h | -help                : show this help message
+=over
+
+=item --reg_conf <path>
+
+path to a Registry configuration file
+
+=item --reg_type <string>
+
+type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+
+=item --reg_alias <string>
+
+species/alias name for the Hive DBAdaptor
+
+=item --url <url string>
+
+url defining where hive database is located
+
+=item --nosqlvc <0|1>
+
+skip sql version check if 1
+
+=item --before_datetime <string>
+
+delete jobs 'DONE' before a specific time
+
+=item --days_ago <num>
+
+delete jobs that have been 'DONE' for at least <num> days
+
+=item -h, --help
+
+show this help message
+
+=back
 
 =head1 LICENSE
 
@@ -172,7 +199,7 @@ __DATA__
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 

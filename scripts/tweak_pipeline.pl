@@ -81,58 +81,62 @@ __DATA__
 
 =head1 NAME
 
-    tweak_pipeline.pl
+tweak_pipeline.pl
 
 =head1 SYNOPSIS
 
-    ./tweak_pipeline.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] -tweak 'analysis[mafft%].analysis_capacity=undef'
+    tweak_pipeline.pl [ -url mysql://user:pass@server:port/dbname | -reg_conf <reg_conf_file> -reg_alias <reg_alias> ] -tweak 'analysis[mafft%].analysis_capacity=undef'
 
 =head1 DESCRIPTION
 
-    This is a script to "tweak" attributes or parameters of an existing Hive pipeline.
+This is a script to "tweak" attributes or parameters of an existing Hive pipeline.
 
 =head1 OPTIONS
 
-B<--url>
+=over
 
-    url defining where hive database is located
+=item --url <url>
 
-B<--reg_conf>
+url defining where hive database is located
 
-    path to a Registry configuration file
+=item --reg_conf <path>
 
-B<--reg_type>
+path to a Registry configuration file
 
-    Registry type of the Hive DBAdaptor
+=item --reg_type <name>
 
-B<--reg_alias>
+Registry type of the Hive DBAdaptor
 
-    species/alias name for the Hive DBAdaptor
+=item --reg_alias <name>
 
-B<--nosqlvc>
+species/alias name for the Hive DBAdaptor
 
-    "No SQL Version Check" - set this to one if you want to force working with a database created by a potentially schema-incompatible API (0 by default)
+=item --nosqlvc <0|1>
 
-B<--tweak>
+"No SQL Version Check" - set this to one if you want to force working with a database created by a potentially schema-incompatible API (0 by default)
 
-    An assignment command that performs one individual "tweak". You can "tweak" global/analysis parameters, analysis attributes and resource classes:
+=item --tweak <string>
 
-        -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create a non-existent parameter
-        -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create a non-existent parameter
-        -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an analysis attribute
-        -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
-        -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
-        -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+An assignment command that performs one individual "tweak". You can "tweak" global/analysis parameters, analysis attributes and resource classes:
 
-    If multiple "tweaks" are requested, they will be performed in the given order.
+    -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create a non-existent parameter
+    -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create a non-existent parameter
+    -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an analysis attribute
+    -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
+    -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
+    -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
 
-B<--DELETE>
+If multiple "tweaks" are requested, they will be performed in the given order.
 
-    Shortcut to delete a parameter
+=item --DELETE <selector>
 
-B<--SHOW>
+Shortcut to delete a parameter
 
-    Shortcut to show a parameter value
+=item --SHOW <selector>
+
+Shortcut to show a parameter value
+
+=back
 
 =head1 LICENSE
 
@@ -150,7 +154,7 @@ B<--SHOW>
 
 =head1 CONTACT
 
-    Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
 
 =cut
 
