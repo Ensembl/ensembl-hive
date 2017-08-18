@@ -156,7 +156,7 @@ is *accumulated* and passed on to the *funnel* once the latter is released.
     },
     {   -logic_name => 'B',
         -flow_into  => {
-           1 => [ '?accu_name=pile_accu&accu_input_variable=variable_name&accu_address=[]' ],
+           1 => [ '?accu_name=pile_accu&accu_input_variable=pile_content&accu_address=[]' ],
         },
     },
     {   -logic_name => 'D',
@@ -181,12 +181,12 @@ accumulators (possibly fed by different analyses) of a semaphore-group.
     {   -logic_name => 'B',
         -flow_into  => {
            2 => [ 'C' ],
-           1 => [ '?accu_name=pile_accu&accu_input_variable=variable_name&accu_address=[]' ],
+           1 => [ '?accu_name=pile_accu&accu_input_variable=pile_content&accu_address=[]' ],
         },
     },
     {   -logic_name => 'C',
         -flow_into  => {
-           1 => [ '?accu_name=multiset_accu&accu_input_variable=variable_name&accu_address={}' ],
+           1 => [ '?accu_name=multiset_accu&accu_input_variable=set_content&accu_address={}' ],
         },
     },
     {   -logic_name => 'D',
