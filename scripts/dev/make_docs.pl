@@ -81,7 +81,7 @@ sub generate_docs_scripts {
     foreach my $plname ( readdir($script_dir) ) {
         if( (-f "$ehrd/scripts/$plname") && $plname=~/^(\w+)\.pl$/) {
             my $rstname = $1.'.rst';
-            push @cmds, "pod2html --noindex --title=$plname $ehrd/scripts/$plname | pandoc --standalone --base-header-level=2 -f html -t rst -o $target_dir/$rstname";
+            push @cmds, "awk 'BEGIN{p=1} \$0 ~ /^=head/ {if ((\$2 == \"NAME\") || (\$2 == \"LICENSE\") || (\$2 == \"CONTACT\")) {p=0} else {p=1}} p {print}' $ehrd/scripts/$plname | pod2html --noindex --title=$plname | pandoc --standalone --base-header-level=2 -f html -t rst -o $target_dir/$rstname";
             push @cmds, ['sed', '-i', q{/^--/ s/\\\//g}, "$target_dir/$rstname"];
         }
     }
