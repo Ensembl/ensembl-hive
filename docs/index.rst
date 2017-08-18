@@ -79,6 +79,7 @@ User documentation
    :maxdepth: 1
 
    appendix/presentations
+   appendix/analyses_pattern
    appendix/scripts
    appendix/hive_schema
    appendix/api
