@@ -15,7 +15,8 @@
 #     {   -logic_name => 'B',
 #     },
 #
-# The directive will show the pipeconfig code and the diagram it models below
+# The directive will show side-by-side the pipeconfig code and the
+# diagram it models
 
 import json
 import os.path
@@ -50,7 +51,9 @@ class HiveDiagramDirective(tables.ListTable):
         graphviz_node['code'] = generate_dot_diagram(content)
         graphviz_node['options'] = {}
 
-        return [code_block_node, graphviz_node]
+        table = [[[code_block_node], [graphviz_node]]]
+        table_node = self.build_table_from_list(table, 'auto', [50,50], 0, 0)
+        return [table_node]
 
 
 pipeconfig_template = """
