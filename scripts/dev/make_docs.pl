@@ -82,6 +82,7 @@ sub generate_docs_scripts {
         if( (-f "$ehrd/scripts/$plname") && $plname=~/^(\w+)\.pl$/) {
             my $rstname = $1.'.rst';
             push @cmds, "pod2html --noindex --title=$plname $ehrd/scripts/$plname | pandoc --standalone --base-header-level=2 -f html -t rst -o $target_dir/$rstname";
+            push @cmds, ['sed', '-i', q{/^--/ s/\\\//g}, "$target_dir/$rstname"];
         }
     }
     closedir($script_dir);
@@ -90,7 +91,7 @@ sub generate_docs_scripts {
     foreach my $cmd (@cmds) {
         print "Running the following command:\n\t$cmd\n\n";
 
-        system( $cmd );
+        system( ref($cmd) ? @$cmd : $cmd );
     }
 }
 
