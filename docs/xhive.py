@@ -3,103 +3,10 @@ import json
 import os.path
 import subprocess
 import sys
-import tempfile
 
 from docutils import nodes
-from docutils.parsers.rst import directives
-from docutils.parsers.rst import Directive
 
-from sphinx.ext.graphviz import graphviz
-
-__all__ = ["HiveDiagramDirective", "hive_setup_if_needed", "hivestatus", "hivestatus_role", "visit_hivestatus_html", "depart_hivestatus_html", "visit_hivestatus_latex", "depart_hivestatus_latex"]
-
-class HiveDiagramDirective(Directive):
-
-    # defines the parameter the directive expects
-    required_arguments = 0
-    optional_arguments = 0
-    final_argument_whitespace = False
-    has_content = True
-    add_index = True
-
-    def run(self):
-
-        # The PipeConfig sample is shown in a literal block
-        content = '\n'.join(self.content)
-        code_block_node = nodes.literal_block(text=content)
-
-        # We reuse the graphviz node (from the graphviz extension) as it deals better with image formats vs builders
-        graphviz_node = graphviz()
-        graphviz_node['code'] = generate_dot_diagram(content)
-        graphviz_node['options'] = {}
-
-        return [code_block_node, graphviz_node]
-
-
-
-pipeconfig_template = """
-package %s;
-
-use strict;
-use warnings;
-
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
-
-sub pipeline_analyses {
-    my ($self) = @_;
-    my $all_analyses = [%s];
-    map {$_->{-module} = 'Bio::EnsEMBL::Hive::RunnableDB::Dummy'} @$all_analyses;
-    return $all_analyses;
-}
-
-1;
-"""
-
-display_config_json = json.dumps( {
-    "Graph": {
-        "Pad": 0,
-        "DisplayStats": 0,
-        "DisplayDBIDs": 0,
-        "DisplayDetails": 0,
-    }
-} )
-
-
-def generate_dot_diagram(pipeconfig_content):
-
-    # A temporary file for the JSON config
-    json_fh = tempfile.NamedTemporaryFile(delete = False)
-    #print "json_fh:", json_fh.name
-    print >> json_fh, display_config_json
-    json_fh.close()
-
-    # eHive's default configuration file
-    default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
-
-    # A temporary file for the sample PipeConfig
-    pipeconfig_fh = tempfile.NamedTemporaryFile(suffix = '.pm', dir = os.getcwd(), delete = False)
-    package_name = os.path.basename(pipeconfig_fh.name)[:-3]
-    #print "pipeconfig:", pipeconfig_fh.name, package_name
-    print >> pipeconfig_fh, pipeconfig_template % (package_name, pipeconfig_content)
-    pipeconfig_fh.close()
-
-    # A temporary file for the dot output
-    dotoutput_fh = tempfile.NamedTemporaryFile(suffix = '.dot', dir = os.getcwd(), delete = False, mode="r+")
-
-    # Run generate_graph
-    graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
-    subprocess.check_call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", dotoutput_fh.name, "-config_file", default_config_file, "-config_file", json_fh.name], stdout=sys.stdout, stderr=sys.stderr)
-
-    # Read the content of the dot file
-    dotcontent = dotoutput_fh.read()
-    dotoutput_fh.close()
-
-    # Remove the temporary files
-    os.remove(json_fh.name)
-    os.remove(pipeconfig_fh.name)
-    os.remove(dotoutput_fh.name)
-
-    return dotcontent
+__all__ = ["hive_setup_if_needed", "hivestatus", "hivestatus_role", "visit_hivestatus_html", "depart_hivestatus_html", "visit_hivestatus_latex", "depart_hivestatus_latex"]
 
 
 hive_colours = {}

@@ -39,6 +39,7 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.graphviz',
     'sphinxcontrib.doxylink',
+    'xhive_diagram',
     'xhive_pipeline',
     'xhive_schema',
 ]
@@ -357,7 +358,6 @@ epub_exclude_files = ['search.html']
 def setup(app):
     app.add_stylesheet("theme_overrides.css")
 
-    app.add_directive('hive_diagram', HiveDiagramDirective)
     app.add_role('hivestatus', hivestatus_role)
     app.add_node(hivestatus,
         html = (visit_hivestatus_html, depart_hivestatus_html),
