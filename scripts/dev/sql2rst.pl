@@ -526,12 +526,13 @@ if ($diagram_dir) {
     my $full_diagram_dir = File::Basename::dirname($html_file) . "/$diagram_dir";
     make_path($full_diagram_dir);
     my $graph = print_whole_diagram('show_clusters', 'column_links');
-    $graph->as_png("$full_diagram_dir/$db_team.png");
+    $graph->dot_input_filename("$full_diagram_dir/$db_team.dot");
+    $graph->as_canon('/dev/null');
     foreach my $c (@header_names) {
         my $filename = "$full_diagram_dir/$db_team.".clean_name($c);
         my $graph = print_sub_diagram($c, 'column_links');
-        $graph->as_png("$filename.png");
-        fetch_png_dimensions($c, "$filename.png");
+        $graph->dot_input_filename("$filename.dot");
+        $graph->as_canon('/dev/null');
     }
 }
 
@@ -575,9 +576,7 @@ foreach my $header_name (@header_names) {
     $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
     if ($diagram_dir) {
         my $l = clean_name($header_name);
-        my $w = get_best_width($header_name);
-        my $wt = $w ? "   :width: ${w}px\n" : '';
-        $html_content .= ".. image:: $diagram_dir/$db_team.$l.png\n$wt   :align: center\n\n";
+        $html_content .= ".. schema_diagram:: $diagram_dir/$db_team.$l.dot\n\n";
     }
   
   #----------------#
@@ -606,30 +605,6 @@ print $output_fh slurp_intro($intro_file)."\n";
 print $output_fh $html_content."\n";
 close($output_fh);
 
-
-my %dimensions;
-
-sub fetch_png_dimensions {
-    my ($image_id, $filename) = @_;
-    my $ss = `file $filename`;
-    if (`file $filename` =~ /PNG image data, (\d+) x (\d+),/) {
-        $dimensions{$image_id} = [$1,$2];
-    }
-}
-
-sub get_best_width {
-    my ($image_id) = @_;
-    my $def_w = 500;
-    my $def_h = 500;
-    if (my $a = $dimensions{$image_id}) {
-        if ($a->[1] > $def_h) {
-            return int($a->[0] * $def_h / $a->[1]);
-        } elsif ($a->[0] > $def_w) {
-            return $def_w;
-        }
-    }
-    return undef;
-}
 
 sub rest_title {
     my ($title, $underscore_symbol) = @_;
@@ -695,7 +670,7 @@ sub display_tables_list {
         $rest .= rest_title('Schema diagram', '=') . "\n";
         $rest .= "The $db_team schema diagrams are automatically generated as PNG images with Graphviz, and show the links between columns of each table.\n";
         $rest .= "Here follows the overall schema diagram, while the individual diagrams of each category are available below, together with the table descriptions.\n\n";
-        $rest .= ".. image:: $diagram_dir/$db_team.png\n   :width: 500px\n   :align: center\n\n";
+        $rest .= ".. schema_diagram:: $diagram_dir/$db_team.dot\n\n";
     }
 
     $rest .= rest_title('Table list', '=') . "\n";

@@ -5,6 +5,48 @@
 
 from docutils import nodes
 
+import sphinx.ext.graphviz
+
+
+class SchemaDiagramDirective(sphinx.ext.graphviz.Graphviz):
+    has_content = False
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {}
+
+    def run(self):
+        nodes = super(SchemaDiagramDirective, self).run()
+        for _ in nodes:
+            _.__class__ = versatile_graphviz
+        return nodes
+
+class versatile_graphviz(sphinx.ext.graphviz.graphviz):
+    pass
+
+
+def html_visit_graphviz(self, node):
+    code = node['code']
+    # svg files are smaller than png
+    format = 'svg'
+    try:
+        fname, outfn = sphinx.ext.graphviz.render_dot(self, code, node['options'], format, 'graphviz')
+    except sphinx.ext.graphviz.GraphvizError as exc:
+        self.builder.warn('dot code %r: ' % code + str(exc))
+        raise nodes.SkipNode
+
+    if fname is None:
+        self.body.append(self.encode(code))
+    # this svg handler does not make the images clickable
+    #elif format == 'svg':
+        #self.body.append('<a class="reference internal image-reference" href="{0}"><object data="{0}" type="image/svg+xml" class="align-center" style="max-width: 500px; max-height: 500px"><p class="warning">{0}</p></object>'.format(fname))
+    else:
+        self.body.append('<a class="reference internal image-reference" href="{0}"><img alt="{0}" class="align-center" src="{0}" style="max-width: 500px; max-height: 500px"></a>'.format(fname))
+    raise nodes.SkipNode
+
+def latex_visit_graphviz(self, node):
+    code = node['code'].replace("{", "{\nsize=\"8,5\";", 1)
+    sphinx.ext.graphviz.render_dot_latex(self, node, code, node['options'])
 
 ## A node to record in the doctree
 class schema_table_header(nodes.Element):
@@ -56,6 +98,11 @@ def depart_schema_table_header_latex(self, node):
 def setup(app):
     # Add the CSS
     app.add_stylesheet("schema_doc.css")
+    app.add_directive('schema_diagram', SchemaDiagramDirective)
+    app.add_node(versatile_graphviz,
+            html=(html_visit_graphviz, None),
+            latex=(latex_visit_graphviz, None),
+            )
     # Register the role and the node, and their handlers
     app.add_role('schema_table_header', schema_table_header_role)
     app.add_node(schema_table_header,
