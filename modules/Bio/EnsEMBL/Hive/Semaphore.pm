@@ -9,7 +9,7 @@
     A Semaphore object is our main instrument of fine-grained job control.
     It is controlled (blocked) by a group of "fan" jobs and remote semaphores and has
     either a dependent local job or a dependent remote semaphore
-    that will be unblocked when both local_job_counter and remote_job_counter reach zeros.
+    that will be unblocked when both local_jobs_counter and remote_jobs_counter reach zeros.
 
 =head1 LICENSE
 
