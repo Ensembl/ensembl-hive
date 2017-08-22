@@ -357,7 +357,7 @@ sub table_box {
         'shape' => 'box',
         'style' => 'filled,rounded',
         'fillcolor' => $table_doc->{colour},
-        'label' => sprintf('<<table border="0"><th><td>%s</td></th><hr/>%s</table>>', $table_name, join('', @rows)),
+        'label' => sprintf('<<table border="0"><th><td><font point-size="16">%s</font></td></th><hr/>%s</table>>', $table_name, join('', @rows)),
     );
 }
 
@@ -365,6 +365,7 @@ sub print_whole_diagram {
     my ($show_clusters, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram",
+        'fontsize' => 20,
         $column_links
           ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
           : ( 'splines' => 'ortho', ),
@@ -431,7 +432,7 @@ sub sub_table_box {
         'shape' => 'box',
         'style' => 'filled,rounded',
         'fillcolor' => $table_doc->{colour},
-        'label' => sprintf('<<table border="0"><th><td>%s</td></th><hr/>%s</table>>', $table_name, join('', @rows)),
+        'label' => sprintf('<<table border="0"><th><td><font point-size="16">%s</font></td></th><hr/>%s</table>>', $table_name, join('', @rows)),
     );
 }
 
@@ -439,6 +440,7 @@ sub print_sub_diagram {
     my ($cluster, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram: $cluster tables",
+        'fontsize' => 20,
         $column_links
           ? ( 'rankdir' => 'LR', 'concentrate' => 'true', )
           : ( 'splines' => 'ortho', ),
