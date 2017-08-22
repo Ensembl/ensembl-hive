@@ -1075,8 +1075,8 @@ sub balance_semaphores {
 
     $find_sth->execute();
     while(my ($semaphore_id, $was, $should) = $find_sth->fetchrow_array()) {
-        my $msg = "Nothing to balance? was='$was', should='$should'";
-        if(0<$should and $should<$was) {
+        my $msg;
+        if($should<$was) {
 
             $msg = "Semaphore $semaphore_id local_jobs_counter has to be decreased $was -> $should, performing it now with a potential release";
             $self->db->get_LogMessageAdaptor->store_hive_message( $msg, 'PIPELINE_CAUTION' );
@@ -1085,7 +1085,7 @@ sub balance_semaphores {
             $semaphore->decrease_by( $was-$should );                                # decrease the local_jobs_counter, recursively releasing if ripe
 
             $rebalanced_jobs_counter++;
-        } elsif(0<=$was and $was<$should) {
+        } elsif($was<$should) {
 
             $msg = "Semaphore $semaphore_id local_jobs_counter has to be increased $was -> $should, performing it now with a potential reblock";
             $self->db->get_LogMessageAdaptor->store_hive_message( $msg, 'PIPELINE_CAUTION' );
@@ -1094,8 +1094,17 @@ sub balance_semaphores {
             $semaphore->reblock_by( $should-$was );                                 # increase the local_jobs_counter, reblock recursively if needed
 
             $rebalanced_jobs_counter++;
+        } else {
+            my $semaphore = $semaphore_adaptor->fetch_by_dbID( $semaphore_id );
+            # check_if_ripe does the same but with an extra call to the database
+            if( $semaphore->local_jobs_counter + $semaphore->remote_jobs_counter <= 0) {
+                $msg = "Semaphore $semaphore_id is marked as blocked despite nothing blocking it, releasing it now";
+                $self->db->get_LogMessageAdaptor->store_hive_message( $msg, 'PIPELINE_CAUTION' );
+
+                $semaphore->release_if_ripe();
+            }
         }
-        warn "[Semaphore $semaphore_id] $msg\n";    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
+        warn "[Semaphore $semaphore_id] $msg\n" if $msg;    # TODO: integrate the STDERR diagnostic output with LogMessageAdaptor calls in general
     }
     $find_sth->finish;
 
