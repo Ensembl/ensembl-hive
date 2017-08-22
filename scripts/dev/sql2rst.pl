@@ -543,8 +543,6 @@ if ($diagram_dir) {
 
 my $html_content = '';
 
-$html_content .= ".. raw:: latex\n\n   \\begin{landscape}\n\n";
-
 # Legend link
 if ($show_colour and scalar @colours > 1 and $header_flag != 1) {
   $html_content .= qq{A colour legend is available at the <a href="#legend">bottom of the page</a>.\n<br /><br />};
@@ -556,6 +554,8 @@ if ($show_colour and scalar @colours > 1 and $header_flag != 1) {
 $html_content .= display_tables_list();
 my $table_count = 1;
 my $col_count = 1;
+
+$html_content .= ".. raw:: latex\n\n   \\begin{landscape}\n\n";
 
 #========================================#
 # Display the detailled tables by header #
