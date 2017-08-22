@@ -91,8 +91,10 @@ Developer documentation
 =======================
 
 .. toctree::
+   :caption: Developer documentation
 
    dev/release_checklist
+   dev/build_the_docs
 
 
 Indices and tables
