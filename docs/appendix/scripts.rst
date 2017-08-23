@@ -8,9 +8,9 @@ Execution
 .. toctree::
    :titlesonly:
 
-   scripts/beekeeper.rst
-   scripts/init_pipeline.rst
-   scripts/seed_pipeline.rst
+   scripts/beekeeper
+   scripts/init_pipeline
+   scripts/seed_pipeline
 
 Debugging
 ~~~~~~~~~
@@ -18,11 +18,11 @@ Debugging
 .. toctree::
    :titlesonly:
 
-   scripts/db_cmd.rst
-   scripts/hoover_pipeline.rst
-   scripts/runWorker.rst
-   scripts/standaloneJob.rst
-   scripts/tweak_pipeline.rst
+   scripts/db_cmd
+   scripts/hoover_pipeline
+   scripts/runWorker
+   scripts/standaloneJob
+   scripts/tweak_pipeline
 
 
 Reporting
@@ -31,8 +31,8 @@ Reporting
 .. toctree::
    :titlesonly:
 
-   scripts/generate_graph.rst
-   scripts/generate_timeline.rst
-   scripts/load_resource_usage.rst
-   scripts/visualize_jobs.rst
+   scripts/generate_graph
+   scripts/generate_timeline
+   scripts/load_resource_usage
+   scripts/visualize_jobs
 

@@ -15,11 +15,9 @@ def setup_if_needed():
         os.environ["ENSEMBL_CVS_ROOT_DIR"]   # Will raise an error if missing
     os.environ["EHIVE_ROOT_DIR"] = os.path.join(os.environ["PWD"], os.path.pardir)
     os.environ["PERL5LIB"] = os.path.join(os.environ["EHIVE_ROOT_DIR"], "modules") + os.path.pathsep + os.environ["PERL5LIB"]
-    mkdoc_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_docs.pl")
+    mkdoxygen_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "dev", "make_doxygen.pl")
     # Only run doxygen if it's missing
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "_build", "doxygen")
     if (os.environ.get("READTHEDOCS", None) == "True") or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
-        subprocess.check_call([mkdoc_path, "-no_script_docs"]) # i.e. run doxygen only
-    # always run the rest
-    subprocess.check_call([mkdoc_path, "-no_doxygen"]) # i.e. run everything but doxygen
+        subprocess.check_call([mkdoxygen_path])
 

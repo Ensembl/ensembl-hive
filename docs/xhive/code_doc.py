@@ -85,7 +85,22 @@ class SchemaDocumentation(IncludeCommand):
             command.extend( ['--intro', self.options['intro'].replace('$EHIVE_ROOT_DIR', os.environ["EHIVE_ROOT_DIR"])] )
         return command
 
+class ScriptDocumentation(IncludeCommand):
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {}
+
+    def get_command(self):
+        script_name = self.arguments[0]
+        script_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", script_name+".pl")
+        self.state.document.settings.record_dependencies.add(script_path)
+        # If the command becomes too tricky, we can still decide to implement get_content() instead
+        command = '''awk 'BEGIN{p=1} $0 ~ /^=head/ {if (($2 == "NAME") || ($2 == "LICENSE") || ($2 == "CONTACT")) {p=0} else {p=1}} p {print}' %s | pod2html --noindex --title=%s | pandoc --standalone --base-header-level=2 -f html -t rst | sed '/^--/ s/\\\//g' ''' % (script_path, script_name)
+        return command
+
 
 def setup(app):
     app.add_directive('schema_documentation', SchemaDocumentation)
+    app.add_directive('script_documentation', ScriptDocumentation)
 
