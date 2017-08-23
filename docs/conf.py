@@ -60,6 +60,7 @@ source_parsers = {
     '.md': CommonMarkParser,
 }
 
+authors = [u'Ensembl']
 
 # The suffix of source filenames.
 source_suffix = ['.rst', '.md']
@@ -72,6 +73,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'eHive user manual'
+project_lc = project.replace(' ', '_').lower()
+
 copyright = u'[2016-2017] EMBL-European Bioinformatics Institute'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -205,7 +208,7 @@ html_extra_path = ['_build/doxygen/', 'presentations/']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ehive_user_manualdoc'
+htmlhelp_basename = project_lc
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -225,8 +228,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'ehive_user_manual.tex', u'ehive\\_user\\_manual Documentation',
-   u'Ensembl-hive', 'manual'),
+  (master_doc, project_lc+'.tex', project,
+   authors[0], 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -255,8 +258,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'ehive_user_manual', u'ehive_user_manual Documentation',
-     [u'Ensembl-hive'], 1)
+    (master_doc, project_lc, project,
+     authors, 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -269,8 +272,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'ehive_user_manual', u'ehive_user_manual Documentation',
-   u'Ensembl-hive', 'ehive_user_manual', 'One line description of project.',
+  (master_doc, project_lc, project,
+   authors[0], project_lc, 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -290,13 +293,13 @@ texinfo_documents = [
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'ehive_user_manual'
-epub_author = u'Ensembl-hive'
-epub_publisher = u'Ensembl'
-epub_copyright = u'[2016-2017] EMBL-European Bioinformatics Institute'
+epub_title = project
+epub_author = authors[0]
+epub_publisher = u'EMBL-European Bioinformatics Institute'
+epub_copyright = copyright
 
 # The basename for the epub file. It defaults to the project name.
-#epub_basename = u'ehive_user_manual'
+epub_basename = project_lc
 
 # The HTML theme for the epub output. Since the default themes are not optimized
 # for small screen space, using the same theme for HTML and epub output is
