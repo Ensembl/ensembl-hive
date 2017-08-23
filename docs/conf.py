@@ -21,9 +21,9 @@ import sphinx_rtd_theme
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('.'))
 
-from xhive import *
+from xhive import setup_if_needed
 
-hive_setup_if_needed()
+setup_if_needed()
 
 # -- General configuration ------------------------------------------------
 
@@ -39,9 +39,10 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.graphviz',
     'sphinxcontrib.doxylink',
-    'xhive_diagram',
-    'xhive_pipeline',
-    'xhive_schema',
+    'xhive.analysis_diagram',
+    'xhive.misc',
+    'xhive.pipeline',
+    'xhive.sql_schema',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -358,8 +359,3 @@ epub_exclude_files = ['search.html']
 def setup(app):
     app.add_stylesheet("theme_overrides.css")
 
-    app.add_role('hivestatus', hivestatus_role)
-    app.add_node(hivestatus,
-        html = (visit_hivestatus_html, depart_hivestatus_html),
-        latex = (visit_hivestatus_latex, depart_hivestatus_latex),
-    )
