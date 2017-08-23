@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # $PWD is the user manual, which I want to keep clean
 cd "$HOME"
 

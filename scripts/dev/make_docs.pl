@@ -68,7 +68,7 @@ sub generate_docs_scripts {
     foreach my $cmd (@cmds) {
         print "Running the following command:\n\t$cmd\n\n";
 
-        system( ref($cmd) ? @$cmd : $cmd );
+        system( ref($cmd) ? @$cmd : $cmd ) && die "Command failed\n";
     }
 }
 
