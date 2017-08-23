@@ -19,7 +19,7 @@ FROM ubuntu:16.04
 
 RUN apt-get update -y \
                        # Needed to clone the checkout, to use cpanm and forbasic help
- && apt-get install -y cpanminus git build-essential perl-doc \
+ && apt-get install -y curl git perl-doc \
 		       # Database-related dependencies
                        sqlite3 libdbd-sqlite3-perl postgresql-client libdbd-pg-perl mysql-client libdbd-mysql-perl libdbi-perl \
 		       # Required Perl modules
@@ -38,7 +38,19 @@ RUN ln -s /usr/bin/mariadb_config /usr/bin/mysql_config
 RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
 
 # Install the missing dependencies (if any)
-RUN cpanm --installdeps --with-recommends /repo/ensembl-hive
+# NOTE: buildDeps may have to be extended to include some lib*-dev packages
+#       such as libmariadb-client-lgpl-dev libpq-dev libsqlite3-dev libexpat1-dev
+# The cpanm command is wrapped with apt-get install / purge to keep the
+# image small
+RUN buildDeps=' \
+      cpanminus \
+      build-essential \
+    ' \
+    && apt-get update -y \
+    && apt-get install -y $buildDeps \
+    && rm -rf /var/lib/apt/lists/* \
+    && cpanm --installdeps --with-recommends /repo/ensembl-hive \
+    && apt-get purge -y --auto-remove $buildDeps
 
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
