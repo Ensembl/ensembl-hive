@@ -6,6 +6,7 @@ import sys
 
 
 def setup_if_needed():
+
     if os.environ.get("READTHEDOCS", None) == "True":
         subprocess.check_call([os.environ["PWD"] + os.path.sep + "rtd_upgrade.sh"], stdout=sys.stdout, stderr=sys.stderr)
         os.environ["PERL5LIB"] = os.path.pathsep.join(os.path.join(os.environ["HOME"], "packages", _) for _ in ["usr/share/perl5/", "usr/lib/x86_64-linux-gnu/perl5/5.22/", "usr/lib/x86_64-linux-gnu/perl5/5.22/auto/"])
@@ -19,5 +20,7 @@ def setup_if_needed():
     # Only run doxygen if it's missing
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "_build", "doxygen")
     if (os.environ.get("READTHEDOCS", None) == "True") or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
-        subprocess.check_call([mkdoxygen_path])
+        subprocess.check_call([mkdoxygen_path, doxygen_target])
+
+    return doxygen_target
 

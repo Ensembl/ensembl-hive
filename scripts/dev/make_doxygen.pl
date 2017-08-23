@@ -3,21 +3,11 @@
 use strict;
 use warnings;
 
-    # Finding out own path in order to reference own components (including own modules):
-use Cwd            ();
-use File::Basename ();
-BEGIN {
-    $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) );
-    unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
-}
-
-use Getopt::Long qw(:config no_auto_abbrev);
-
 use Bio::EnsEMBL::Hive::Version;
 
 my $ehrd        = $ENV{'EHIVE_ROOT_DIR'}        or die "Environment variable 'EHIVE_ROOT_DIR' not defined, please check your setup";
 my $erd         = $ENV{'ENSEMBL_CVS_ROOT_DIR'}  or die "Environment variable 'ENSEMBL_CVS_ROOT_DIR' not defined, please check your setup";
-my $doxy_target = "$ehrd/docs/_build/doxygen/";
+my $doxy_target = $ARGV[0]                      or die "Command-line argument <doxygen_target_path> not defined, please check your setup";
 my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
 
 
