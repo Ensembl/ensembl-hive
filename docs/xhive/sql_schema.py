@@ -9,9 +9,9 @@ import sphinx.ext.graphviz
 
 
 class SchemaDiagramDirective(sphinx.ext.graphviz.Graphviz):
-    has_content = False
-    required_arguments = 1
-    optional_arguments = 0
+    has_content = True
+    required_arguments = 0
+    optional_arguments = 1
     final_argument_whitespace = False
     option_spec = {}
 

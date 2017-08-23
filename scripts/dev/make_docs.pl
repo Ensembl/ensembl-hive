@@ -25,10 +25,9 @@ main();
 
 
 sub main {
-    my ($no_schema_desc, $no_script_docs, $no_doxygen);
+    my ($no_script_docs, $no_doxygen);
 
     GetOptions(
-            'no_schema_desc'    => \$no_schema_desc,
             'no_script_docs'    => \$no_script_docs,
             'no_doxygen'        => \$no_doxygen,
     ) or die "Error in command line arguments\n";
@@ -37,33 +36,11 @@ sub main {
         die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
-    generate_hive_schema_desc() unless($no_schema_desc);
     generate_docs_scripts()     unless($no_script_docs);
     unless($no_doxygen) {
         generate_docs_doxygen_perl();
         generate_docs_doxygen_python();
         generate_docs_doxygen_java();
-    }
-}
-
-
-sub generate_hive_schema_desc {
-
-    print "Regenerating $ehrd/docs/appendix/hive_schema.rst ...\n\n";
-
-    my $sql2rst = "$ehrd/scripts/dev/sql2rst.pl";
-
-    die "Cannot find '$sql2rst', please make sure ensembl-production API is intalled properly.\n" unless(-r $sql2rst);
-
-    my @cmds = (
-        "rm -rf $ehrd/docs/appendix/hive_schema",
-        "$sql2rst -i $ehrd/sql/tables.mysql -fk $ehrd/sql/foreign_keys.sql -d Hive -sort_headers 0 -sort_tables 0 -intro /dev/null -o $ehrd/docs/appendix/hive_schema.rst -diagram_dir hive_schema",
-    );
-
-    foreach my $cmd (@cmds) {
-        print "Running the following command:\n\t$cmd\n\n";
-
-        system( $cmd );
     }
 }
 

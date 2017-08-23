@@ -38,7 +38,7 @@ use Bio::EnsEMBL::Hive::Utils::GraphViz;
 ### Options ###
 ###############
 
-my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$diagram_dir,$help,$help_format);
+my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$embed_diagrams,$help,$help_format);
 my ($url,$skip_conn,$db_handle);
 
 usage() if (!scalar(@ARGV));
@@ -50,7 +50,7 @@ GetOptions(
     'd=s' => \$db_team,
     'c=i' => \$show_colour,
     'v=i' => \$version,
-    'diagram_dir=s'    => \$diagram_dir,
+    'embed_diagrams!'  => \$embed_diagrams,
     'show_header!'     => \$header_flag,
     'sort_headers!'    => \$sort_headers,
     'sort_tables!'     => \$sort_tables,
@@ -67,10 +67,6 @@ sql_documentation_format() if ($help_format);
 
 if (!$sql_file) {
   print "> Error! Please give a sql file using the option '-i' \n";
-  usage();
-}
-if (!$html_file) {
-  print "> Error! Please give an output file using the option '-o'\n";
   usage();
 }
 
@@ -522,17 +518,13 @@ if ($sort_tables == 1) {
 #####################
 ## Schema diagrams ##
 #####################
-if ($diagram_dir) {
-    my $full_diagram_dir = File::Basename::dirname($html_file) . "/$diagram_dir";
-    make_path($full_diagram_dir);
+my %diagram_dotcode;
+if ($embed_diagrams) {
     my $graph = print_whole_diagram('show_clusters', 'column_links');
-    $graph->dot_input_filename("$full_diagram_dir/$db_team.dot");
-    $graph->as_canon('/dev/null');
+    $diagram_dotcode{''} = $graph->as_debug();
     foreach my $c (@header_names) {
-        my $filename = "$full_diagram_dir/$db_team.".clean_name($c);
         my $graph = print_sub_diagram($c, 'column_links');
-        $graph->dot_input_filename("$filename.dot");
-        $graph->as_canon('/dev/null');
+        $diagram_dotcode{$c} = $graph->as_debug();
     }
 }
 
@@ -574,9 +566,9 @@ foreach my $header_name (@header_names) {
   # Additional information #
   #------------------------#
     $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
-    if ($diagram_dir) {
+    if ($embed_diagrams) {
         my $l = clean_name($header_name);
-        $html_content .= ".. schema_diagram:: $diagram_dir/$db_team.$l.dot\n\n";
+        $html_content .= ".. schema_diagram::\n\n" . rest_add_indent_to_block($diagram_dotcode{$header_name}, '   ') . "\n\n";
     }
   
   #----------------#
@@ -600,7 +592,12 @@ $html_content .= ".. raw:: latex\n\n   \\end{landscape}\n\n";
 ######################
 ## HTML/output file ##
 ######################
-open  my $output_fh, '>', $html_file or die "Can't open $html_file : $!";
+my $output_fh;
+if ($html_file) {
+    open $output_fh, '>', $html_file or die "Can't open $html_file : $!";
+} else {
+    $output_fh = \*STDOUT;
+}
 print $output_fh slurp_intro($intro_file)."\n";
 print $output_fh $html_content."\n";
 close($output_fh);
@@ -666,11 +663,11 @@ sub display_tables_list {
   
     my $rest = '';
 
-    if ($diagram_dir) {
+    if ($embed_diagrams) {
         $rest .= rest_title('Schema diagram', '=') . "\n";
         $rest .= "The $db_team schema diagrams are automatically generated as PNG images with Graphviz, and show the links between columns of each table.\n";
         $rest .= "Here follows the overall schema diagram, while the individual diagrams of each category are available below, together with the table descriptions.\n\n";
-        $rest .= ".. schema_diagram:: $diagram_dir/$db_team.dot\n\n";
+        $rest .= ".. schema_diagram::\n\n" . rest_add_indent_to_block($diagram_dotcode{''}, '   ') . "\n\n";
     }
 
     $rest .= rest_title('Table list', '=') . "\n";

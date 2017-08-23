@@ -19,7 +19,7 @@ def setup_if_needed():
     # Only run doxygen if it's missing
     doxygen_target = os.path.join(os.environ["EHIVE_ROOT_DIR"], "docs", "_build", "doxygen")
     if (os.environ.get("READTHEDOCS", None) == "True") or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
-        subprocess.call([mkdoc_path, "-no_script_docs", "-no_schema_desc"]) # i.e. run doxygen only
+        subprocess.call([mkdoc_path, "-no_script_docs"]) # i.e. run doxygen only
     # always run the rest
     subprocess.call([mkdoc_path, "-no_doxygen"]) # i.e. run everything but doxygen
 

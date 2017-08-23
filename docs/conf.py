@@ -39,6 +39,7 @@ extensions = [
     'sphinx.ext.pngmath',
     'sphinx.ext.graphviz',
     'sphinxcontrib.doxylink',
+    'xhive.code_doc',
     'xhive.analysis_diagram',
     'xhive.misc',
     'xhive.pipeline',

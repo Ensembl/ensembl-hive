@@ -1,5 +1,3 @@
 _build
 *.pyc
 appendix/scripts
-appendix/hive_schema
-appendix/hive_schema.rst
