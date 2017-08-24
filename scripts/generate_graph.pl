@@ -73,7 +73,7 @@ sub main {
         $pipeconfig_object->add_objects_from_config( $self->{'pipeline'} );
     }
 
-    if($self->{'output'}) {
+    if($self->{'output'} or $self->{'format'}) {
 
         if(!$self->{'format'}) {
             if($self->{'output'}=~/\.(\w+)$/) {
@@ -98,12 +98,12 @@ sub main {
             my $graphviz = $graph->build();
 
             if( $self->{'format'} eq 'dot' ) {          # If you need to take a look at the intermediate dot file
-                $graphviz->dot_input_filename( $self->{'output'} );
+                $graphviz->dot_input_filename( $self->{'output'} || \*STDOUT);
                 $graphviz->as_canon( '/dev/null' );
 
             } else {
                 my $call = 'as_'.$self->{'format'};
-                $graphviz->$call($self->{'output'});
+                $graphviz->$call($self->{'output'} || \*STDOUT);
             }
         }
 

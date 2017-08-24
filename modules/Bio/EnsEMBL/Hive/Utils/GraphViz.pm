@@ -185,9 +185,13 @@ sub _as_debug {
     $text=~s/\bcomment="new_shape:(\w+)",\s(.*shape=)"record"/$2"$1"/mg;
 
     if(my $dot_input_filename = $self->dot_input_filename) {
-        open(my $dot_input, ">", $dot_input_filename) or die "cannot open > $dot_input_filename : $!";
-        print $dot_input $text;
-        close $dot_input;
+        if (ref($dot_input_filename)) {
+            print $dot_input_filename $text;
+        } else {
+            open(my $dot_input, ">", $dot_input_filename) or die "cannot open > $dot_input_filename : $!";
+            print $dot_input $text;
+            close $dot_input;
+        }
     }
 
     return $text;
