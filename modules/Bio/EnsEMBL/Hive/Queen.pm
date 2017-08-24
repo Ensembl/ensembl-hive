@@ -405,10 +405,10 @@ sub registered_workers_attributes {
 }
 
 
-sub get_submitted_worker_counts_by_meadow_type_rc_name {
-    my $self = shift @_;
+sub get_submitted_worker_counts_by_meadow_type_rc_name_for_meadow_user {
+    my ($self, $meadow_user) = @_;
 
-    my $worker_counts_by_meadow_type_rc_id  = $self->count_all("status='SUBMITTED'", ['meadow_type', 'resource_class_id'] );
+    my $worker_counts_by_meadow_type_rc_id  = $self->count_all("status='SUBMITTED' AND meadow_user='$meadow_user'", ['meadow_type', 'resource_class_id'] );
     my $cached_resource_mapping             = $self->cached_resource_mapping;
 
     my %counts_by_meadow_type_rc_name = ();

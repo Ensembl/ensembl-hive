@@ -40,6 +40,7 @@ use warnings;
 use List::Util ('shuffle');
 
 use Bio::EnsEMBL::Hive::Limiter;
+use Bio::EnsEMBL::Hive::Utils;
 
 
 sub scheduler_say {
@@ -98,7 +99,7 @@ sub schedule_workers_resync_if_necessary {
     }
 
         # adjustment for pending workers:
-    my $pending_worker_counts_by_meadow_type_rc_name    = $queen->get_submitted_worker_counts_by_meadow_type_rc_name;
+    my $pending_worker_counts_by_meadow_type_rc_name    = $queen->get_submitted_worker_counts_by_meadow_type_rc_name_for_meadow_user(Bio::EnsEMBL::Hive::Utils::whoami());
 
     while( my ($this_meadow_type, $partial_workers_to_submit_by_rc_name) = each %$workers_to_submit_by_meadow_type_rc_name) {
         while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
