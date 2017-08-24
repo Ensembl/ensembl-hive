@@ -84,7 +84,7 @@ version = re.sub('^(heads|remotes/origin)/', '', os.popen('git describe --all').
 release = version + '/' + os.popen('git rev-parse --short HEAD').read().strip()
 
 
-doxygen_target = setup_if_needed()
+doxygen_target = setup_if_needed(release)
 doxylink = {
     'doxehive': (os.path.join(doxygen_target, "ensembl-hive.tag"), 'perl/'),
 }

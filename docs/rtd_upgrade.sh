@@ -1,13 +1,12 @@
 #!/bin/bash
 
+# Bail out if anything goes wrong
 set -e
 
 # $PWD is the user manual, which I want to keep clean
 cd "$HOME"
 
-# Exit if we have already installed the dependencies
-[ -d packages ] && exit 0;
-
+rm -f *.deb
 # List of extra packages we need
 echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.634-1build1_amd64.deb \
      http://archive.ubuntu.com/ubuntu/pool/universe/libd/libdbd-sqlite3-perl/libdbd-sqlite3-perl_1.50-1_amd64.deb \
@@ -24,8 +23,10 @@ echo http://archive.ubuntu.com/ubuntu/pool/main/libd/libdbi-perl/libdbi-perl_1.6
      http://archive.ubuntu.com/ubuntu/pool/universe/libp/libproc-daemon-perl/libproc-daemon-perl_0.23-1_all.deb \
 | xargs -n 1 curl -O
 
+rm -rf packages
 mkdir packages
 for i in *.deb; do dpkg -x "$i" packages/; done
 
+rm -rf ensembl
 git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
 
