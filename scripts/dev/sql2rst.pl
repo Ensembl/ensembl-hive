@@ -340,6 +340,8 @@ if ($fk_sql_file) {
       my $doc = remove_char($_);
       if ($doc =~ /ALTER\s+TABLE\s+(\S+)\s+ADD.*FOREIGN\s+KEY\s+\((\S+)\)\s+REFERENCES\s+(\S+)\((\S+)\)/i) {
           push @{$table_documentation{$1}->{foreign_keys}}, [$2,$3,$4];
+      } elsif ($doc =~ /ALTER.*FOREIGN/i) {
+          die "Unrecognized: $doc";
       }
     }
     close($sql_fh);
