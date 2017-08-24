@@ -45,6 +45,7 @@ sub generate_docs_doxygen_perl {
         "echo 'STRIP_FROM_PATH        = $ehrd'",
         "echo 'INPUT                  = $ehrd'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
+        "echo 'EXCLUDE_PATTERNS       = */_build/*'",
         "echo 'HTML_OUTPUT            = perl'",
         "echo 'EXTENSION_MAPPING      = pm=C pl=C'",
         "echo 'EXTRACT_ALL            = YES'",
