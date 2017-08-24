@@ -14,6 +14,7 @@
 
 import sys
 import os
+import datetime
 import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -71,7 +72,9 @@ master_doc = 'index'
 project = u'eHive user manual'
 project_lc = project.replace(' ', '_').lower()
 
-copyright = u'[2016-2017] EMBL-European Bioinformatics Institute'
+copyright_owner = u'EMBL-European Bioinformatics Institute'
+copyright_dates = u'[2016-%d]' % datetime.datetime.now().year
+copyright = copyright_dates + ' ' + copyright_owner
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -298,7 +301,7 @@ texinfo_documents = [
 # Bibliographic Dublin Core info.
 epub_title = project
 epub_author = authors[0]
-epub_publisher = u'EMBL-European Bioinformatics Institute'
+epub_publisher = copyright_owner
 epub_copyright = copyright
 
 # The basename for the epub file. It defaults to the project name.
