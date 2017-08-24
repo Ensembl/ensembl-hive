@@ -17,7 +17,9 @@
 #
 
 
+import errno
 import json
+import os
 import os.path
 import subprocess
 import sys
@@ -101,7 +103,12 @@ class ScriptDocumentation(IncludeCommand):
 
 
 def cleanup_pod2html_tmp(app, exception):
-    os.remove("pod2htmd.tmp")
+    # Stolen from https://stackoverflow.com/questions/10840533/most-pythonic-way-to-delete-a-file-which-may-not-exist
+    try:
+        os.remove("pod2htmd.tmp")
+    except OSError as e: # this would be "except OSError, e:" before Python 2.6
+        if e.errno != errno.ENOENT: # errno.ENOENT = no such file or directory
+            raise # re-raise exception if a different error occurred
 
 
 def setup(app):
