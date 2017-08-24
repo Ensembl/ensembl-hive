@@ -100,7 +100,12 @@ class ScriptDocumentation(IncludeCommand):
         return command
 
 
+def cleanup_pod2html_tmp(app, exception):
+    os.remove("pod2htmd.tmp")
+
+
 def setup(app):
     app.add_directive('schema_documentation', SchemaDocumentation)
     app.add_directive('script_documentation', ScriptDocumentation)
+    app.connect('build-finished', cleanup_pod2html_tmp)
 
