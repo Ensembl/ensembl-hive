@@ -84,36 +84,52 @@ display_config_json = json.dumps( {
 } )
 
 
+json_filename = None
+pipeconfig_filename = None
+
 def generate_dot_diagram(pipeconfig_content):
 
     # A temporary file for the JSON config
-    json_fh = tempfile.NamedTemporaryFile(delete = False)
-    #print "json_fh:", json_fh.name
-    print >> json_fh, display_config_json
-    json_fh.close()
+    global json_filename
+    if json_filename is None:
+        json_fh = tempfile.NamedTemporaryFile(dir = "_build", delete = False)
+        #print "json_fh:", json_fh.name
+        print >> json_fh, display_config_json
+        json_fh.close()
+        json_filename = json_fh.name
 
     # eHive's default configuration file
     default_config_file = os.environ["EHIVE_ROOT_DIR"] + os.path.sep + "hive_config.json"
 
     # A temporary file for the sample PipeConfig
-    pipeconfig_fh = tempfile.NamedTemporaryFile(suffix = '.pm', dir = os.getcwd(), delete = False)
-    package_name = os.path.basename(pipeconfig_fh.name)[:-3]
+    global pipeconfig_filename
+    if pipeconfig_filename is None:
+        pipeconfig_fh = tempfile.NamedTemporaryFile(suffix = '.pm', dir = "_build", delete = False)
+        pipeconfig_filename = pipeconfig_fh.name
+    else:
+        pipeconfig_fh = open(pipeconfig_filename, "w")
+
+    package_name = "_build::" + os.path.basename(pipeconfig_fh.name)[:-3]
     #print "pipeconfig:", pipeconfig_fh.name, package_name
     print >> pipeconfig_fh, pipeconfig_template % (package_name, pipeconfig_content)
     pipeconfig_fh.close()
 
     # Run generate_graph and read the content of the dot file
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
-    dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_fh.name], stderr=sys.stderr)
-
-    # Remove the temporary files
-    os.remove(json_fh.name)
-    os.remove(pipeconfig_fh.name)
+    dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_filename], stderr=sys.stderr)
 
     return dotcontent
+
+
+def cleanup_tmp_files(app, exception):
+    if json_filename is not None:
+        os.remove(json_filename)
+    if pipeconfig_filename is not None:
+        os.remove(pipeconfig_filename)
 
 
 ## Register the extension
 def setup(app):
     app.add_directive('hive_diagram', HiveDiagramDirective)
+    app.connect('build-finished', cleanup_tmp_files)
 
