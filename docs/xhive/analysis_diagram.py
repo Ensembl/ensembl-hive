@@ -102,21 +102,13 @@ def generate_dot_diagram(pipeconfig_content):
     print >> pipeconfig_fh, pipeconfig_template % (package_name, pipeconfig_content)
     pipeconfig_fh.close()
 
-    # A temporary file for the dot output
-    dotoutput_fh = tempfile.NamedTemporaryFile(suffix = '.dot', dir = os.getcwd(), delete = False, mode="r+")
-
-    # Run generate_graph
+    # Run generate_graph and read the content of the dot file
     graph_path = os.path.join(os.environ["EHIVE_ROOT_DIR"], "scripts", "generate_graph.pl")
-    subprocess.check_call([graph_path, "-pipeconfig", pipeconfig_fh.name, "-output", dotoutput_fh.name, "-config_file", default_config_file, "-config_file", json_fh.name], stdout=sys.stdout, stderr=sys.stderr)
-
-    # Read the content of the dot file
-    dotcontent = dotoutput_fh.read()
-    dotoutput_fh.close()
+    dotcontent = subprocess.check_output([graph_path, "-pipeconfig", pipeconfig_fh.name, "--format", "dot", "-config_file", default_config_file, "-config_file", json_fh.name], stderr=sys.stderr)
 
     # Remove the temporary files
     os.remove(json_fh.name)
     os.remove(pipeconfig_fh.name)
-    os.remove(dotoutput_fh.name)
 
     return dotcontent
 
