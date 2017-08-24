@@ -10,6 +10,23 @@ my $erd         = $ENV{'ENSEMBL_CVS_ROOT_DIR'}  or die "Environment variable 'EN
 my $doxy_target = $ARGV[0]                      or die "Command-line argument <doxygen_target_path> not defined, please check your setup";
 my $code_ver    = Bio::EnsEMBL::Hive::Version->get_code_version();
 
+my @shared_params = (
+    "echo 'PROJECT_NUMBER         = $code_ver'",
+    "echo 'OUTPUT_DIRECTORY       = $doxy_target'",
+    "echo 'EXCLUDE_PATTERNS       = */_build/*'",
+    "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
+    "echo 'ENABLE_PREPROCESSING   = NO'",
+    "echo 'RECURSIVE              = YES'",
+    "echo 'EXAMPLE_PATTERNS       = *'",
+    "echo 'HTML_TIMESTAMP         = YES'",
+    "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
+    "echo 'GENERATE_TREEVIEW      = YES'",
+    "echo 'GENERATE_LATEX         = NO'",
+    "echo 'HAVE_DOT               = YES'",
+    "echo 'EXTRACT_ALL            = YES'",
+    "echo 'SOURCE_BROWSER         = YES'",
+);
+
 
 main();
 
@@ -37,31 +54,20 @@ sub generate_docs_doxygen_perl {
 
     my @cmds = (
         "rm   -rf $doxy_target/perl",
+        "mkdir -p $doxy_target/perl",
         "rm   -f $doxy_target/ensembl-hive.tag",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive'",
-        "echo 'PROJECT_NUMBER         = $code_ver'",
-        "echo 'OUTPUT_DIRECTORY       = $doxy_target'",
         "echo 'STRIP_FROM_PATH        = $ehrd'",
         "echo 'INPUT                  = $ehrd'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
-        "echo 'EXCLUDE_PATTERNS       = */_build/*'",
         "echo 'HTML_OUTPUT            = perl'",
         "echo 'EXTENSION_MAPPING      = pm=C pl=C'",
-        "echo 'EXTRACT_ALL            = YES'",
         "echo 'FILE_PATTERNS          = *.pm *.pl README.md'",
-        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
-        "echo 'ENABLE_PREPROCESSING   = NO'",
-        "echo 'RECURSIVE              = YES'",
-        "echo 'EXAMPLE_PATTERNS       = *'",
-        "echo 'HTML_TIMESTAMP         = NO'",
-        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
-        "echo 'GENERATE_TREEVIEW      = YES'",
-        "echo 'GENERATE_LATEX         = NO'",
         "echo 'GENERATE_TAGFILE       = $doxy_target/ensembl-hive.tag'",
         "echo 'CLASS_DIAGRAMS         = NO'",
-        "echo 'HAVE_DOT               = YES'",
         "echo 'COLLABORATION_GRAPH    = NO'",
+        @shared_params,
     );
 
     my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
@@ -87,6 +93,7 @@ sub generate_docs_doxygen_python {
 
     my @cmds = (
         "rm -rf $doxy_target/python3",
+        "mkdir -p $doxy_target/python3",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive-python3'",
         "echo 'PROJECT_NUMBER         = $code_ver'",
@@ -95,24 +102,14 @@ sub generate_docs_doxygen_python {
         "echo 'INPUT                  = $ehrd/wrappers/python3'",
         "echo 'INPUT_FILTER           = $doxy_filter'",
         "echo 'HTML_OUTPUT            = python3'",
-        "echo 'EXTRACT_ALL            = YES'",
+        "echo 'FILE_PATTERNS          = *.py README.md'",
         "echo 'EXTRACT_PRIVATE        = YES'",
         "echo 'EXTRACT_STATIC         = YES'",
-        "echo 'FILE_PATTERNS          = *.py README.md'",
-        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
-        "echo 'ENABLE_PREPROCESSING   = NO'",
-        "echo 'RECURSIVE              = YES'",
-        "echo 'EXAMPLE_PATTERNS       = *'",
-        "echo 'HTML_TIMESTAMP         = NO'",
-        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
-        "echo 'GENERATE_TREEVIEW      = YES'",
-        "echo 'GENERATE_LATEX         = NO'",
         "echo 'CLASS_DIAGRAMS         = YES'",
-        "echo 'HAVE_DOT               = YES'",
         "echo 'CALL_GRAPH             = YES'",
         "echo 'CALLER_GRAPH           = YES'",
         "echo 'COLLABORATION_GRAPH    = NO'",
-        "echo 'SOURCE_BROWSER         = YES'",
+        @shared_params,
     );
 
     my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
@@ -134,28 +131,20 @@ sub generate_docs_doxygen_java {
 
     my @cmds = (
         "rm   -rf $doxy_target/java",
+        "mkdir -p $doxy_target/java",
         "doxygen -g -",
         "echo 'PROJECT_NAME           = ensembl-hive-java'",
         "echo 'PROJECT_NUMBER         = $code_ver'",
         "echo 'OUTPUT_DIRECTORY       = $doxy_target'",
         "echo 'STRIP_FROM_PATH        = $ehrd/wrappers/java'",
         "echo 'INPUT                  = $ehrd/wrappers/java'",
+        "echo 'FILE_PATTERNS          = *.java README.md'",
         "echo 'HTML_OUTPUT            = java'",
-        "echo 'EXTRACT_ALL            = YES'",
-        "echo 'USE_MDFILE_AS_MAINPAGE = README.md'",
-        "echo 'ENABLE_PREPROCESSING   = NO'",
-        "echo 'RECURSIVE              = YES'",
-        "echo 'EXAMPLE_PATTERNS       = *'",
-        "echo 'HTML_TIMESTAMP         = NO'",
-        "echo 'HTML_DYNAMIC_SECTIONS  = YES'",
-        "echo 'GENERATE_TREEVIEW      = YES'",
-        "echo 'GENERATE_LATEX         = NO'",
         "echo 'CLASS_DIAGRAMS         = YES'",
-        "echo 'HAVE_DOT               = YES'",
         "echo 'CALL_GRAPH             = YES'",
         "echo 'CALLER_GRAPH           = YES'",
         "echo 'COLLABORATION_GRAPH    = YES'",
-        "echo 'SOURCE_BROWSER         = YES'",
+        @shared_params,
     );
 
     my $full_cmd = '('.join(' ; ', @cmds).") | doxygen -";
@@ -172,7 +161,7 @@ __DATA__
 
 =head1 NAME
 
-make_docs.pl
+make_doxygen.pl
 
 =head1 DESCRIPTION
 
