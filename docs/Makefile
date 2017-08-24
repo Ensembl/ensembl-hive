@@ -50,7 +50,9 @@ cleaner:
 	rm -rf $(BUILDDIR)/*
 
 clean:
-	rm -rf $(BUILDDIR)/html $(BUILDDIR)/latex $(BUILDDIR)/epub $(BUILDDIR)/doctrees
+	mv $(BUILDDIR)/doxygen $(BUILDDIR)/.doxygen
+	rm -rf $(BUILDDIR)/*
+	mv $(BUILDDIR)/.doxygen $(BUILDDIR)/doxygen
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
