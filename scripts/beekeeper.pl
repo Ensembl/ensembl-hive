@@ -592,11 +592,11 @@ sub run_autonomously {
                     my $meadow_process_ids = [];
                     if ($this_meadow_rc_worker_count > 1 and !$this_meadow->config_get('CanSubmitJobArrays')) {
                         foreach my $i (1..$this_meadow_rc_worker_count) {
-                            my $submitted_process_id = $this_meadow->submit_workers_return_meadow_pids($specific_worker_cmd, 1, "$iteration.$i", $rc_name, $submission_cmd_args || '', $submit_log_subdir);
+                            my $submitted_process_id = $this_meadow->submit_workers_return_meadow_pids($specific_worker_cmd, 1, $self->{'beekeeper_id'}.'_'."$iteration.$i", $rc_name, $submission_cmd_args || '', $submit_log_subdir);
                             push @$meadow_process_ids, $submitted_process_id->[0];
                         }
                     } else {
-                        $meadow_process_ids = $this_meadow->submit_workers_return_meadow_pids($specific_worker_cmd, $this_meadow_rc_worker_count, $iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
+                        $meadow_process_ids = $this_meadow->submit_workers_return_meadow_pids($specific_worker_cmd, $this_meadow_rc_worker_count, $self->{'beekeeper_id'}.'_'.$iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
                     }
 
                     warn "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
