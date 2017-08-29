@@ -428,11 +428,6 @@ sub generate_worker_cmd {
 
     my $worker_cmd = 'runWorker.pl';
 
-    unless(-x $worker_cmd) {
-        print("Can't run '$worker_cmd' script for some reason, please investigate.\n");
-        exit(1);
-    }
-
     foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize',
                                'worker_delay_startup_seconds', 'worker_crash_on_startup_prob', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
