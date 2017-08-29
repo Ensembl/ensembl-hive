@@ -190,6 +190,13 @@ sub pipeline_name {
 }
 
 
+sub runWorker_path {    # FIXME: can be made dependent on config options
+    my $self = shift @_;
+
+    return $ENV{'EHIVE_ROOT_DIR'}.'/scripts/';
+}
+
+
 =head2 job_name_prefix
 
     Title   :  job_name_prefix

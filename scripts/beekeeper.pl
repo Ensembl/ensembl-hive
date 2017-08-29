@@ -426,7 +426,7 @@ sub log_and_die {
 sub generate_worker_cmd {
     my ($self, $analyses_pattern, $run_job_id, $force) = @_;
 
-    my $worker_cmd = $ENV{'EHIVE_ROOT_DIR'}.'/scripts/runWorker.pl';
+    my $worker_cmd = 'runWorker.pl';
 
     unless(-x $worker_cmd) {
         print("Can't run '$worker_cmd' script for some reason, please investigate.\n");
@@ -492,7 +492,7 @@ sub run_autonomously {
     my $queen       = $hive_dba->get_Queen;
     my $meadow_user = $self->{'beekeeper'}->meadow_user;
 
-    my $resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
+    my $pathless_resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
 
     my $iteration=0;
     my $reasons_to_exit;
@@ -585,7 +585,8 @@ sub run_autonomously {
 
                     my ($submission_cmd_args, $worker_cmd_args) = @{ $meadow_type_rc_name2resource_param_list{ $meadow_type }{ $rc_name } || [] };
 
-                    my $specific_worker_cmd = $resourceless_worker_cmd
+                    my $specific_worker_cmd = $this_meadow->runWorker_path
+                                            . $pathless_resourceless_worker_cmd
                                             . (defined($worker_cmd_args) ? " $worker_cmd_args" : '')
                                             . ' -preregistered';
 
