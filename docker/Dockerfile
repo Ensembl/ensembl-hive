@@ -28,6 +28,7 @@ RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.g
 RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
     && /repo/ensembl-hive/docker/setup_cpan.Ubuntu-16.04.sh /repo/ensembl-hive
 
+ENV EHIVE_ROOT_DIR "/repo/ensembl-hive"
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
 
