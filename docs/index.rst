@@ -8,7 +8,7 @@
 Welcome to the eHive user manual
 ================================
 
-eHive is great, and the user manual is great.
+This manual describes how to run, develop, and troubleshoot eHive pipelines. It describes eHive's "swarm of autonomous agents" paradigm, shows how different components work together, and provides code examples. There are also links to API documentation for eHive classes.
 
 The code is open source, and `available on GitHub`_.
 
@@ -104,3 +104,5 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+
+..  LocalWords:  api
