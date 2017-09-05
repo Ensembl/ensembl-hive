@@ -542,7 +542,7 @@ CREATE TABLE beekeeper (
        beekeeper_id      INTEGER        NOT NULL PRIMARY KEY AUTOINCREMENT,
        meadow_host       VARCHAR(255)   NOT NULL,
        meadow_user       VARCHAR(255)   NOT NULL,
-       process_id        INTEGER        NOT NULL,
+       process_id        VARCHAR(255)   NOT NULL,
        is_blocked        SMALLINT       NOT NULL DEFAULT 0,
        cause_of_death    VARCHAR(255)   NULL, /* enum('ANALYSIS_FAILED', 'DISAPPEARED', 'JOB_FAILED', 'LOOP_LIMIT', 'NO_WORK', 'TASK_FAILED') NOT NULL */
        sleep_minutes     REAL           NULL,

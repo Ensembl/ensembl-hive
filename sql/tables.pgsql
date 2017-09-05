@@ -562,7 +562,7 @@ CREATE TABLE beekeeper (
        beekeeper_id             SERIAL          PRIMARY KEY,
        meadow_host              VARCHAR(255)	NOT NULL,
        meadow_user              VARCHAR(255)    NOT NULL,
-       process_id               INTEGER         NOT NULL,
+       process_id               VARCHAR(255)    NOT NULL,
        is_blocked               SMALLINT        NOT NULL DEFAULT 0,
        cause_of_death           beekeeper_cod   NULL,
        sleep_minutes            REAL            NULL,
