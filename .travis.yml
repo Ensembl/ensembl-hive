@@ -29,6 +29,7 @@ addons:
 
 before_install:
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
+    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
     - mysql -hlocalhost -utravis -e "SET GLOBAL sql_mode = 'TRADITIONAL'"
     - psql --version
     - echo -e '#!/bin/bash\n\nperl '`which psql`' "$@"' > psql
@@ -36,7 +37,6 @@ before_install:
     - export PATH=$PWD:$PATH
     - mkdir deps
     - ln -s /usr/share/perl5/PgCommon.pm deps/
-    - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
     - export PATH=/usr/lib/jvm/java-8-oracle/jre/bin/:$PATH
     - export JAVA_HOME=/usr/lib/jvm/java-8-oracle
     - java -version
