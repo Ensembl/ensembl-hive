@@ -14,6 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+##
+## Minimalistic init system required for Docker containers
+##
+
+# Docker doesn't come with an "init" process, meaning that when beekeeper
+# submits LOCAL workers and exits (beekeeper -run), the workers will be
+# killed by docker.
+
+# This pseudo-init script addresses this issue by waiting for all the child
+# processes (and daemons) to exit.  This is different from other
+# Docker-tailored init systems such as dumb-init
+# (https://github.com/Yelp/dumb-init) and my_init
+# (https://github.com/phusion/baseimage-docker/blob/master/image/bin/my_init)
+# because it doesn't handle signals, and doesn't kill the children
 
 import errno
 import os
