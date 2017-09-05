@@ -61,7 +61,7 @@ sub report_versions {
 
     print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
     my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
-    foreach my $meadow_class (@{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
+    foreach my $meadow_class (sort @{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
         $meadow_class=~/^${meadow_class_path}::(.+)$/;
         my $meadow_driver   = $1;
         my $meadow_version  = $meadow_class->get_meadow_version;
