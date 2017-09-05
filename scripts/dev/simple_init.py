@@ -42,7 +42,7 @@ def wait_for_all_processes():
 
 
 # Run the command
-print("Executing", sys.argv[1:])
+#print("Executing", sys.argv[1:])
 cmd_ret = subprocess.call( sys.argv[1:] )
 
 # Wait for all the processes to end
