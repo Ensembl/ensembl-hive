@@ -26,6 +26,7 @@ no warnings qw( redefine );
 
 use Exporter;
 use Carp qw{croak};
+use File::Spec;
 use File::Temp qw{tempfile};
 
 use Data::Dumper;
@@ -45,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database);
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
 
 our $VERSION = '0.00';
 
@@ -598,5 +599,38 @@ sub safe_drop_database {
     run_sql_on_db($dbc->url, 'DROP DATABASE');
 }
 
+
+=head2 all_source_files
+
+  Arg [n]    : Directories to scan.
+  Example    : my @files = all_source_files('modules');
+  Description: Scans the given directories and returns all found instances of
+               source code. This includes Perl (pl,pm,t), Java(java), C(c,h) and
+               SQL (sql) suffixed files.
+  Returntype : Array of all found files
+
+=cut
+
+sub all_source_files {
+  my @starting_dirs = @_;
+  my @files;
+  my @dirs = @starting_dirs;
+  my %excluded_dir = map {$_ => 1} qw(_build build lib .git __pycache__);
+  while ( my $file = shift @dirs ) {
+    if ( -d $file ) {
+      opendir my $dir, $file or next;
+      my @new_files =
+        grep { !$excluded_dir{$_} && $_ !~ /^\./ }
+        File::Spec->no_upwards(readdir $dir);
+      closedir $dir;
+      push(@dirs, map {File::Spec->catfile($file, $_)} @new_files);
+    }
+    if ( -f $file ) {
+      #next unless $file =~ /(?-xism:\.(?:[cht]|p[lm]|java|sql))/;
+      push(@files, $file);
+    }
+  } # while
+  return @files;
+}
 
 1;

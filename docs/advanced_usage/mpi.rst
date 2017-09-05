@@ -99,7 +99,7 @@ If your compute environment uses `Module <http://modules.sourceforge.net/>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Module* provides configuration files (module-files) for the dynamic
-modification of the user’s environment.
+modification of the user's environment.
 
 Here is how to list the modules that your system provides:
 
