@@ -32,4 +32,5 @@ ENV EHIVE_ROOT_DIR "/repo/ensembl-hive"
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
 
+ENTRYPOINT [ "/repo/ensembl-hive/scripts/dev/simple_init.py" ]
 CMD [ "/bin/bash" ]
