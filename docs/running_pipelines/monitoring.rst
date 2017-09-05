@@ -42,18 +42,18 @@ state, and these snapshots will be changing as the pipeline runs. One of
 the things changing will be the colour of the Analysis nodes. The
 default colour legend is as follows:
 
--   [ EMPTY ]  : the Analysis never had any jobs to do. Since pipelines
+-  :hivestatus:`<EMPTY>[ EMPTY ]` : the Analysis never had any jobs to do. Since pipelines
    are dynamic it may be ok for some Analyses to stay EMPTY until the
    very end.
--   [ DONE ]  : all jobs of the Analysis are DONE. Since pipelines are
+-  :hivestatus:`<DONE>[ DONE ]` : all jobs of the Analysis are DONE. Since pipelines are
    dynamic, it may be a temporary state, until new jobs are added.
--   [ READY ]  : some jobs are READY to be run, but nothing is running
+-  :hivestatus:`<READY>[ READY ]` : some jobs are READY to be run, but nothing is running
    at the moment.
--   [ IN PROGRESS ]  : some jobs of the Analysis are being processed at
+-  :hivestatus:`<INPROGRESS>[ IN PROGRESS ]` : some jobs of the Analysis are being processed at
    the moment of the snapshot.
--   [ BLOCKED ]  : none of the jobs of this Analysis can be run at the
+-  :hivestatus:`<BLOCKED>[ BLOCKED ]` : none of the jobs of this Analysis can be run at the
    moment because of job dependency rules.
--   [ FAILED ]  : the number of FAILED jobs in this Analysis has gone
+-  :hivestatus:`<FAILED>[ FAILED ]` : the number of FAILED jobs in this Analysis has gone
    over a threshold (which is 0 by default). By default **beekeeper.pl**
    will exit if it encounters a FAILED analysis.
 
@@ -62,12 +62,12 @@ Another thing that will be changing from snapshot to snapshot is the job
 how many jobs are in which state and the total number of jobs. Separate
 parts of this formula are similarly colour-coded:
 
--  grey :  s  (SEMAPHORED) - individually blocked jobs
--  green :  r  (READY) - jobs that are ready to be claimed by Workers
--  yellow :  i  (IN PROGRESS) - jobs that are currently being processed
+-  :hivestatus:`<SEMAPHORED> __s (SEMAPHORED)` - individually blocked jobs
+-  :hivestatus:`<READY> __r (READY)` - jobs that are ready to be claimed by Workers
+-  :hivestatus:`<INPROGRESS> __i (IN PROGRESS)` - jobs that are currently being processed
    by Workers
--  skyblue :  d  (DONE) - successfully completed jobs
--  red :  f  (FAILED) - unsuccessfully completed jobs
+-  :hivestatus:`<DONE> __d (DONE)` - successfully completed jobs
+-  :hivestatus:`<FAILED> __f (FAILED)` - unsuccessfully completed jobs
 
 Actually, you don't even need to generate a pipeline database to see its
 diagram, as the diagram can be generated directly from the PipeConfig
