@@ -615,7 +615,7 @@ sub all_source_files {
   my @starting_dirs = @_;
   my @files;
   my @dirs = @starting_dirs;
-  my %excluded_dir = map {$_ => 1} qw(_build build lib .git __pycache__);
+  my %excluded_dir = map {$_ => 1} qw(_build build lib .git __pycache__ bioperl-live);
   while ( my $file = shift @dirs ) {
     if ( -d $file ) {
       opendir my $dir, $file or next;
