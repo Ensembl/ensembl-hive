@@ -83,6 +83,7 @@ User documentation
    appendix/scripts
    appendix/hive_schema
    appendix/api
+   appendix/changelog
 
 
 .. _dev-docs:

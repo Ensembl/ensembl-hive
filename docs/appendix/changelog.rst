@@ -1,23 +1,31 @@
+Changelog
+*********
 
-Version 2.4     - Spring 2016 edition
+Version 2.4
 ===========
 
-Main highlights of the release:
-    Conditional dataflow on the pipeline structure level. For every dataflow rule you can set up conditions
-        that will be computed based on the parameters of the context.
-        Multiple conditions can be grouped with an optional common ELSE branch where the dataflow will happen by default.
-    INPUT_PLUS is a lightweight mechanism that allows a parent job to selectively pass its parameters to its children
-        without the need to specify which parameters are being passed. It's a significant simplification in comparison
-        with what could be achieved with templates, although templates will keep their niche for renaming and evaluating params.
-    New style URL parser that understands shorter URLs like "?table_name=foo", "?accu_name=bar&accu_address=[]" for referring to local objects.
-        It also allows to refer to the absoulte/relative SQLite filepath in full. Some compatibility sacrifices had to be made,
-        but in version/2.4 the old parsing way has priority over the new one, with a warning to encourage switching to the new format.
-NB: see these three features in action in the Long-multiplication pipelines
-All the example pipelines have been grouped together under a new directory: Bio/EnsEMBL/Hive/Examples
+   *Spring 2016 edition*
 
-New configuration mechanism to 'tweak' parameters and attributes of pipelines either during pipeline initialization or afterwards.
-    For tweaking things during initialization we have extended init_pipeline.pl to understand 'tweak' commands -SET , -SHOW and -DELETE.
-    For tweaking things after the pipeline database has been created there is a new tweak_pipeline.pl script that understands the same 'tweaks' :
+Main highlights of the release
+------------------------------
+
+* Conditional dataflow on the pipeline structure level. For every dataflow rule you can set up conditions
+  that will be computed based on the parameters of the context.
+  Multiple conditions can be grouped with an optional common *ELSE* branch where the dataflow will happen by default.
+* *INPUT_PLUS* is a lightweight mechanism that allows a parent job to selectively pass its parameters to its children
+  without the need to specify which parameters are being passed. It's a significant simplification in comparison
+  with what could be achieved with templates, although templates will keep their niche for renaming and evaluating params.
+* New style URL parser that understands shorter URLs like ``?table_name=foo``, ``?accu_name=bar&accu_address=[]`` for referring to local objects.
+  It also allows to refer to the absoulte/relative SQLite filepath in full. Some compatibility sacrifices had to be made,
+  but in version/2.4 the old parsing way has priority over the new one, with a warning to encourage switching to the new format.
+
+.. tip::
+   See these three features in action in the Long-multiplication pipelines
+
+*   New configuration mechanism to 'tweak' parameters and attributes of pipelines either during pipeline initialization or afterwards.
+    For tweaking things during initialization we have extended ``init_pipeline.pl`` to understand 'tweak' commands -SET , -SHOW and -DELETE.
+    For tweaking things after the pipeline database has been created there is a new ``tweak_pipeline.pl`` script that understands the same 'tweaks' ::
+
             -SET 'pipeline.param[take_time]=20'                     # override a value of a pipeline-wide parameter; can also create an inexistent parameter
             -SET 'pipeline.hive_pipeline_name=new_name'             # override a value of a hive_meta attribute
             -SET 'analysis[take_b_apart].param[base]=10'            # override a value of an analysis-wide parameter; can also create an inexistent parameter
@@ -25,112 +33,142 @@ New configuration mechanism to 'tweak' parameters and attributes of pipelines ei
             -SET 'analysis[blast%].batch_size=15'                   # override a value of an analysis_stats attribute for all analyses matching a pattern
             -SET 'analysis[part_multiply].resource_class=urgent'    # set the resource class of an analysis (whether a resource class with this name existed or not)
             -SET 'resource_class[urgent].LSF=-q yesteryear'         # update or create a new resource description
-    In both contexts you can print out the current value of things:
+
+    In both contexts you can print out the current value of things::
+
             -SHOW 'pipeline.hive_pipeline_name'                     # show the pipeline_name
             -SHOW 'pipeline.param[take_time]'                       # show the value of a pipeline-wide parameter
             -SHOW 'analysis[add_together].analysis_capacity'        # show the value of an analysis attribute
             -SHOW 'analysis[add_together].param[foo]'               # show the value of an analysis parameter
             -SHOW 'resource_class[urgent].LSF'                      # show the description of a particular meadow of a resource_class
-    Either pipeline-wide or analysis-wide parameters can also be deleted:
+
+    Either pipeline-wide or analysis-wide parameters can also be deleted::
+
             -DELETE 'pipeline.param[foo]'                           # delete a pipeline-wide parameter
             -DELETE 'analysis[add_together].param[bar]'             # delete an analysis-wide parameter
 
     In addition to the simple attributes analyses also have two "complex" ones: wait_for and flow_into.
-    They can either be set from scratch:
+    They can either be set from scratch::
+
             -SET 'analysis[add_together].wait_for=["analysisX","analysisY"]'                # remove all old wait_for rules, establish new ones
             -SET 'analysis[part_multiply].flow_into={1=>"?table_name=intermediate_result"}' # remove all old flow_into rules, establish new ones
-    or you can append new ones to the existing pile of rules:
+
+    or you can append new ones to the existing pile of rules::
+
             -SET 'analysis[add_together].wait_for+=["analysisZ","analysisW"]'               # append two new wait_for rules
             -SET 'analysis[part_multiply].flow_into+={1=>"another_sink"}'                   # append a new flow_into rule
-    You can only delete the whole set, not individually:
+
+    You can only delete the whole set, not individually::
+
             -DELETE 'analysis[add_together].wait_for'                                       # delete all wait_for rules of an analysis
             -DELETE 'analysis[part_multiply].flow_into'                                     # delete all flow_into rules of an analysis
-    You can also check their current content:
+
+    You can also check their current content::
+
             -SHOW 'analysis[add_together].wait_for'                                         # shows the list of wait_for rules of an analysis
             -SHOW 'analysis[part_multiply].flow_into'                                       # shows the list of flow_into rules of an analysis
 
     The 'tweak' mechanism does not require that you prepare the PipeConfig files with $self->o() references, which significantly simplifies PipeConfigs.
 
-Universal Runnables:
-* JobFactory: non-contiguous split option has been added for those who have to use minibatching
-* FastaFactory has been improved: more input file-formats -which can be compressed-, target output directory
-* SqlCmd supports transactions
-* new run_system_command() method available to all Runnables (defined in Process). It takes care of disconnecting from the eHive database and can capture stderr
-* "Bash pipefail" mode is used to catch errors on both sides of pipes in many system() calls
+Universal Runnables
+-------------------
 
-Developer tools:
-* Registry names can generally be used to refer to databases (go_figure_dbc())
-* The parameter substitution behaviour when some components are unavailable has been standardised, param_exists() has been fixed
-* An extra post_healthcheck() API method has been added to Runnables (and the POST_HEALTHCHECK status to Jobs) to stop failures in their tracks
+* ``JobFactory``: non-contiguous split option has been added for those who have to use minibatching
+* ``FastaFactory`` has been improved: more input file-formats -which can be compressed-, target output directory
+* ``SqlCmd`` supports transactions
+* new ``run_system_command()`` method available to all Runnables (defined in ``Process``). It takes care of disconnecting from the eHive database and can capture stderr
+* "Bash pipefail" mode is used to catch errors on both sides of pipes in many ``system()`` calls
+
+Developer tools
+---------------
+
+* Registry names can generally be used to refer to databases (``go_figure_dbc()``)
+* The parameter substitution behaviour when some components are unavailable has been standardised, ``param_exists()`` has been fixed
+* An extra ``post_healthcheck()`` API method has been added to Runnables (and the *POST_HEALTHCHECK* status to Jobs) to stop failures in their tracks
 * We reenabled cross-database dataflow and control rules and added a special Client/Server version of LongMult pipeline.
 * The diagram display code can now display the newly added conditions (with a length limit) and cross-database dataflow or control rules (parts of "foreign" pipelines are shown on different colour background).
-* An experimental "Unicode-art" flow diagram drawing code has been implemented (skip the -output parameter in generate_graph.pl to see)
+* An experimental *Unicode-art* flow diagram drawing code has been implemented (skip the -output parameter in ``generate_graph.pl`` to see)
 * eHive's DBAdaptor now has methods to get the list of eHive tables and views
 * standaloneJob test method: warnings can be assessed via a regular expression
 * Support for Slack WebHook integrations in beekeeper and a dedicated Runnable
 
-Under the hood:
-* HivePipeline object with its collections becomes the center of things, and TheApiary becomes the centralized way of accessing foreign objects
+Under the hood
+--------------
+
+* ``HivePipeline`` object with its collections becomes the center of things, and ``TheApiary`` becomes the centralized way of accessing foreign objects
 * A lot of work has been done on improving the test suite to run faster and cover more modules
-* A failed prepare() shows a full stack trace on error
+* A failed ``prepare()`` shows a full stack trace on error
 * Speed improvement of storing extended job parameters via adding an MD5 checksum based index
-* The parsers of both 'bjobs' and 'bacct' have been extended to also support the output format of LSF v.9.1.2.0
+* The parsers of both ``bjobs`` and ``bacct`` have been extended to also support the output format of LSF v.9.1.2.0
 
-* + numerous bug fixes, many of which have been ported to the previous version branches.
+And of course numerous bug fixes, many of which have been ported to the previous version branches.
 
-Example pipelines and runnables:
-* A new example pipeline that calculates %GC for a collection of sequences has been created. It is configured using the 'GCPct_conf' PipeConfig.
-* Example Runnables and PipeConfigs are now grouped together under Bio/EnsEMBL/Hive/Examples.
-	** DbCmd contains the TableDumperZipper_conf PipeConfig, which illustrates usage of the DbCmd Runnable
-	** FailureTest contains the FailureTest_conf and MemlimitTest_conf PipeConfigs, along with the FailureTest runnable, which illustrate eHive error handling
-	** GC contains the GCPct_conf PipeConfig and two new Runnables, CalcOverallPercentage and CountATGC, which together form a simple example pipeline illustrating the eHive fan and accumulator features.
-	** Factories contains four PipeConfigs illustrating the use of a 'factory' runnable to create fans of jobs. CompressFiles_conf, RunListOfCommandsOnFarm_conf, and ApplyToDatabases_conf use the JobFactory runnable to create the fan, whilst FastaFactory_conf illustrates the use of the more specialised FastaFactory runnable.
-	** LongMult contains the long multiplication example pipeline. There are several PipeConfigs that implement this pipeline using different eHive features, such as the parameter stack, the new Input_Plus mechanism, and client-server interactions.
-	** SystemCmd contains AnyCommand_conf, a very simple PipeConfig that runs a single command using SystemCmd.
+Example pipelines and runnables
+-------------------------------
 
-Version 2.3     - Spring 2015 edition
+* A new example pipeline that calculates %GC for a collection of sequences has been created. It is configured using the ``GCPct_conf`` PipeConfig.
+* All the example *Runnables* and *PipeConfigs* are now grouped together under ``Bio/EnsEMBL/Hive/Examples``.
+
+  * ``DbCmd/`` contains the ``TableDumperZipper_conf`` PipeConfig, which illustrates usage of the ``DbCmd`` Runnable
+  * ``FailureTest/`` contains the ``FailureTest_conf`` and ``MemlimitTest_conf`` PipeConfigs, along with the ``FailureTest`` runnable, which illustrate eHive error handling
+  * ``GC/`` contains the ``GCPct_conf`` PipeConfig and two new Runnables, ``CalcOverallPercentage`` and ``CountATGC``, which together form a simple example pipeline illustrating the eHive fan and accumulator features.
+  * ``Factories/`` contains four PipeConfigs illustrating the use of a *factory* runnable to create fans of jobs. ``CompressFiles_conf``, ``RunListOfCommandsOnFarm_conf``, and ``ApplyToDatabases_conf`` use the ``JobFactory`` runnable to create the fan, whilst ``FastaFactory_conf`` illustrates the use of the more specialised ``FastaFactory`` runnable.
+  * ``LongMult/`` contains the long multiplication example pipeline. There are several PipeConfigs that implement this pipeline using different eHive features, such as the parameter stack, the new *INPUT_PLUS* mechanism, and client-server interactions.
+  * ``SystemCmd/`` contains ``AnyCommand_conf``, a very simple PipeConfig that runs a single command using SystemCmd.
+
+Version 2.3
 ===========
 
-Main highlights of the release:
-    API for Runnables written in "guest languages" (with reference Python implementation and examples)
-    Test suite (inspired by Roy's original pull request)
-    "TailTrimmer" [ in analyses with nontrivial batch sizes ] several techniques are now used to automatically decrease the batch size 
-        towards the end of the analysis in order to speed up the execution of the whole analysis
-    Stability improvements that significantly increase efficiency of parallel execution
+    *Spring 2015 edition*
 
-[ higher level features ]
+Main highlights of the release
+------------------------------
+
+* API for Runnables written in "guest languages" (with reference Python implementation and examples)
+* Test suite (inspired by `Roy's original pull request <https://github.com/Ensembl/ensembl-hive/pull/7>`_)
+* "TailTrimmer" [ in analyses with nontrivial batch sizes ] several techniques are now used to automatically decrease the batch size 
+  towards the end of the analysis in order to speed up the execution of the whole analysis
+* Stability improvements that significantly increase efficiency of parallel execution
+
+Higher level features
+---------------------
+
 * support for Runnables written in Python3 and API for extending similar support to other languages (this API may still change)
 * coloured Beekeeper output - catches the eye!
-* SystemCmd now runs through Capture::Tiny , captures the error output from the actual command that gets stored in log_message
-* SystemCmd also knows how to capture MEMLIMIT events from the underlying Java code 
-* SystemCmd can map specific return codes to dataflow events
-* a new DbCmd runnable that mimics the behaviour of db_cmd.pl script ; you can also pipe data in or out of the connection to another system command
-* DbCmd, DatabaseDumper and MySQLTransfer runnable hide passwords in the command lines that they run
-* beekeeper.pl -unkwn option to clean up the workers found to be in UNKWN state (at the user's risk!)
+* ``SystemCmd`` now runs through ``Capture::Tiny`` , captures the error output from the actual command that gets stored in *log_message*
+* ``SystemCmd`` also knows how to capture *MEMLIMIT* events from the underlying Java code 
+* ``SystemCmd`` can map specific return codes to dataflow events
+* a new ``DbCmd`` runnable that mimics the behaviour of ``db_cmd.pl`` script ; you can also pipe data in or out of the connection to another system command
+* ``DbCmd``, ``DatabaseDumper`` and ``MySQLTransfer`` runnable hide passwords in the command lines that they run
+* ``beekeeper.pl -unkwn`` option to clean up the workers found to be in *UNKWN* state (at the user's risk!)
 
-[ lower level features ]
-* record the 'meadow_user' in each Worker entry -- these values are also used when querying the Meadow to avoid running an equivalent of "-u all" in SGE Meadow
-* record the 'when_seen' timestamp in each Worker entry -- when the Worker was last seen as running by the Beekeeper process.
-* testing: introduced a Travis-integrated test suite loosely based on Roy's original pull request
-    -- the extended version tests direct API calls, runs individual Runnables (and tests their dataflow/warning events) or whole pipelines
+Lower level features
+--------------------
+
+* record the ``meadow_user`` in each Worker entry -- these values are also used when querying the Meadow to avoid running an equivalent of ``-u all`` in SGE Meadow
+* record the ``when_seen`` timestamp in each Worker entry -- when the Worker was last seen as running by the Beekeeper process.
+* testing: introduced a Travis-integrated test suite loosely based on `Roy's original pull request <https://github.com/Ensembl/ensembl-hive/pull/7>`_.
+  The extended version tests direct API calls, runs individual Runnables (and tests their dataflow/warning events) or whole pipelines
 * testing: Travis runs tests against Hive databases stored in local MySQL, PostgreSQL and SQLite databases
 * stability [too many simultaneous queries] : detect and log deadlock collisions and retry them for a given number of times before failing
 * stability [running out of server connections] : try to resolve the "too many connections" situation by bouncing, waiting and retrying
-* stability [running out of local ports] : avoiding RELOCATED workers by applying incemental backoff-and-retry approach from Ethernet CSMA/CD protocol
+* stability [running out of local ports] : avoiding *RELOCATED* workers by applying incemental backoff-and-retry approach from Ethernet CSMA/CD protocol
 * stability [applying an incorrect patch] : schema patches now have internal SQL-based checks and should not cause much damage if applied in wrong order
-    + a new script to create such patches
+  + a new script to create such patches
 
 * the schema version changes to 73
-
 * multiple bug fixes, many of which have been ported to the previous version branches.
 
 
-Version 2.2     - 'analyses_pattern'
+Version 2.2
 ===========
 
-* Running and maintenance of pipeline subsets has been made easy with -analyses_pattern option in beekeeper.pl
-    that understands ranges and additive/subtractive merging. You can refer to analyses in many different ways.
-    Examples:
+    *Analyses patterns*
+
+* Running and maintenance of pipeline subsets has been made easy with ``-analyses_pattern`` option in ``beekeeper.pl``
+  that understands ranges and additive/subtractive merging. You can refer to analyses in many different ways.
+  Examples::
+
         -analyses_pattern 1..9                                  # show scheduling for a range of analysis_ids
         -analyses_pattern 1..9,11..15   -run                    # run a scheduling iteration for two ranges of analysis_ids
         -analyses_pattern fasta%        -sync                   # sync analyses matching a pattern
@@ -138,11 +176,11 @@ Version 2.2     - 'analyses_pattern'
         -analyses_pattern 1..9,fasta%   -reset_all_jobs         # reset all jobs belonging to a range and a pattern
         -analyses_pattern foo,bar,baz   -reset_failed_jobs      # reset failed jobs belonging to three analyses by names
 
-* The same option is available in runWorker.pl to constrain the set of analyses to specialize into (fully works with -can_respecialize 1 mode)
+* The same option is available in ``runWorker.pl`` to constrain the set of analyses to specialize into (fully works with -can_respecialize 1 mode)
 
 * Detailed log of Scheduler's decision-making process is available
 
-* db_cmd.pl and SystemCmd.pm runnable have been reworked and are now better adapted for quoted arguments
+* ``db_cmd.pl`` and ``SystemCmd.pm`` runnable have been reworked and are now better adapted for quoted arguments
 
 * Doxygen API documentation packaged with the code
 
@@ -155,28 +193,30 @@ Version 2.2     - 'analyses_pattern'
 * No schema changes since version/2.1 : the same database should continue to work with newer code without patching
 
 
-Version 2.1     - 'multirole'
+Version 2.1
 ===========
+
+   *multi-role*
 
 * Improved internal API that allows implicit lazy-loading of objects associated with other objects via their dbIDs
 
 * Objects that make up pipeline's graph can be loaded into cache, which simplifies structural topup of existing pipeline databases
 
-* Diagram-drawing engine was stripped of its' dependence on dbIDs, so diagrams can now be built directly from PipeConfig file(s) using -pipeconfig option(s)
+* Diagram-drawing engine was stripped of its' dependence on dbIDs, so diagrams can now be built directly from PipeConfig file(s) using ``-pipeconfig`` option(s)
 
-* -analysis_topup removed (became the default mode of operation), -job_topup removed in favour of seed_pipeline.pl providing same functionality
+* ``-analysis_topup`` removed (became the default mode of operation), ``-job_topup`` removed in favour of ``seed_pipeline.pl`` providing same functionality
 
-* pipeline_wide_parameters moved into a separate table, so hive-specific 'meta' table is no longer needed, and Ensembl's version can happily coexist
+* ``pipeline_wide_parameters`` moved into a separate table, so hive-specific ``meta`` table is no longer needed, and Ensembl's version can happily coexist
 
-* 'monitor' table removed in favour of offline generate_timeline.pl script (that does not require a constantly running beekeeper.pl for data generation)
+* ``monitor`` table removed in favour of offline ``generate_timeline.pl`` script (that does not require a constantly running ``beekeeper.pl`` for data generation)
 
-* pipeline_create_commands() is executed even on topup; redefine to return an empty list or use -hive_no_init if you don't need commands to be executed
+* ``pipeline_create_commands()`` is executed even on topup; redefine to return an empty list or use ``-hive_no_init`` if you don't need commands to be executed
 
-* Switched to 'worker_resource_usage' table, unified resource collection calls for other Meadows, so SGE/CONDOR/etc resources can be shown in guiHive & timeline.
+* Switched to ``worker_resource_usage`` table, unified resource collection calls for other Meadows, so SGE/CONDOR/etc resources can be shown in guiHive & timeline.
 
-* Introduced 'role' table and Role objects to better track role-switching of multirole Workers
+* Introduced ``role`` table and *Role* objects to better track role-switching of multirole Workers
 
-* Added Process::complete_early() as the blessed way to exit the code early successfully and store a log_message
+* Added ``Process::complete_early()`` as the blessed way to exit the code early successfully and store a *log_message*
 
 * More careful semaphore rebalancing strategy that can also be switched on or off during pipeline database generation
 
@@ -185,29 +225,39 @@ Version 2.1     - 'multirole'
 * Multiple bugs have been fixed
 
 
-Version 2.0     - a major 'coreless' release of Hive code
+Version 2.0
 ===========
+
+    *a major 'coreless' release of Hive code*
 
 * Removed dependencies from EnsEMBL core code. You don't need to install Ensembl core to run non-Ensembl pipelines.
 
-* Moved Ensembl-specific configuration to EnsemblGeneric_conf, from which all Ensembl pipelines should now inherit.
+* Moved Ensembl-specific configuration to ``EnsemblGeneric_conf``, from which all Ensembl pipelines should now inherit.
 
 
-Version 1.9     - largely a maintenance release + preparations for separation from Ensembl core
+Version 1.9
 ===========
+
+    *largely a maintenance release + preparations for separation from Ensembl core*
 
 * Various preparations to make the code more GitHub-friendly
 
-* A better class hierarchy with less depenencies from Ensembl core code
+* A better class hierarchy with less dependencies from Ensembl core code
 
-* At last we have a proper code version test: "use Bio::EnsEMBL::Hive::Version 1.9;" works, but "use Bio::EnsEMBL::Hive::Version 2.0" currently fails.
+* At last we have a proper code version test: ``use Bio::EnsEMBL::Hive::Version 1.9;`` works, but ``use Bio::EnsEMBL::Hive::Version 2.0`` currently fails.
 
-* "beekeeper --version", "runWorker.pl --version" and "db_cmd.pl --version" report both code version and Hive database schema version
+* ``beekeeper --version``, ``runWorker.pl --version`` and ``db_cmd.pl --version`` report both code version and Hive database schema version
 
 * Multiple bug fixes
 
 
----------------------[before EnsEMBL rel.75]---------------------------------------------------------------------------
+Legacy versions
+===============
+
+Before EnsEMBL rel.75
+---------------------
+
+::
 
 * Wed Dec 11 12:55:58 2013 +0000 | Leo Gordon | updated schema diagram (PNG) and description (HTML)
 * Mon Dec 9 14:19:48 2013 +0000 | Leo Gordon | bugfix: sqlite mode now works again
@@ -264,7 +314,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Tue Oct 8 10:58:22 2013 +0100 | Matthieu Muffato | The SqlHealthcheck runnable can now perform multiple tests
 * Fri Sep 27 18:16:11 2013 +0100 | Matthieu Muffato | -reg_conf and -reg_type can be ommitted in db_cmd.pl
 
----------------------[after Sept'2013 workshops]------------------------------------------------------------------------
+After Sept'2013 workshops
+-------------------------
+
+::
 
 * Tue Oct 1 16:30:14 2013 +0100 | Leo Gordon | newer Perl required, BioPerl no longer required, seed_pipeline.pl mentioned
 * Tue Oct 1 13:03:21 2013 +0100 | Leo Gordon | pipeline_name is now automatically computed from ClassName; simplified workshop's example files and slides
@@ -276,7 +329,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Wed Sep 25 15:43:58 2013 +0100 | Leo Gordon | bugfix: make sure the pipeline works even when b_multiplier only contains digits 0 and 1
 * Wed Sep 25 15:03:09 2013 +0100 | Leo Gordon | bugfix: properly support evaluation of complex substituted expressions that yield a hashref
 
----------------------[before Sanger workshop]---------------------------------------------------------------------------
+Before Sanger workshop
+----------------------
+
+::
 
 * Mon Sep 23 12:29:44 2013 +0100 | Leo Gordon | added "git clone" option
 * Mon Sep 23 12:22:07 2013 +0100 | Leo Gordon | some corrections to slides part2
@@ -297,7 +353,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Sat Sep 7 12:35:11 2013 +0100 | Leo Gordon | imported List::Util to be able to run max/min/sum of lists in substituted expressions
 * Sat Sep 7 11:26:18 2013 +0100 | Leo Gordon | bugfix: now correctly supports directory names with dots in them
 
----------------------[before EBI workshop]---------------------------------------------------------------------------
+Before EBI workshop
+-------------------
+
+::
 
 * Thu Sep 5 16:55:44 2013 +0100 | Leo Gordon | PDF version of the workshop slides from GoogleDocs
 * Thu Sep 5 09:37:00 2013 +0100 | Leo Gordon | adding new unit - T for terabytes (mainly to pacify EBIs LSF 8 with a reporting bug)
@@ -321,7 +380,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Wed Aug 21 10:14:00 2013 +0100 | Leo Gordon | Dataflowing minimal information out of Runnables, relying on templates in PipeConfig file to extend it if needed
 * Tue Aug 20 14:32:51 2013 +0100 | Leo Gordon | shortened connection parameters in docs
 
----------------------[after EnsEMBL rel.73]---------------------------------------------------------------------------
+After EnsEMBL rel.73
+--------------------
+
+::
 
 * Thu Aug 15 16:18:49 2013 +0100 | Leo Gordon | Bugfixes to pacify pgsql: changed a non-functional "HAVING" into a nested SELECT, and changed unsupported SUM() into COUNT(CASE ... )
 * Thu Aug 15 16:15:28 2013 +0100 | Leo Gordon | An important comment about UNIX sockets (without a port number) vs TCPIP sockets (with a port number).
@@ -378,7 +440,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Tue Jun 18 20:11:19 2013 +0100 | Leo Gordon | avoid deadlocks when dataflowing under transactional mode (used in Ortheus Runnable for example)
 * Tue Jun 18 18:38:26 2013 +0100 | Leo Gordon | print the failed query
 
----------------------[after EnsEMBL rel.72]---------------------------------------------------------------------------
+After EnsEMBL rel.72
+--------------------
+
+::
 
 * Fri Jun 14 15:17:45 2013 +0100 | Leo Gordon | PostgreSQL: connection parameters are now supplied on the command line (no need to set PG variables by hand)
 * Thu Jun 13 16:48:01 2013 +0100 | Leo Gordon | given -job_id Scheduler should take the Analysis into account and only submit a Worker for this Analysis
@@ -426,7 +491,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Mon Apr 29 17:07:56 2013 +0100 | Leo Gordon | added schema & API support for accumulated dataflow
 * Tue Apr 23 15:35:35 2013 +0100 | Leo Gordon | changed schema version to 72
 
----------------------[before EnsEMBL rel.72]---------------------------------------------------------------------------
+Before EnsEMBL rel.72
+---------------------
+
+::
 
 * Tue Apr 23 14:50:55 2013 +0100 | Leo Gordon | bugfix: only create 'default' resource_class if it was not actually stored in the database
 * Tue Apr 23 13:08:44 2013 +0100 | Leo Gordon | bugfix: check before storing rc (may be necessary in -analysis_topup mode) and warn about consequences of redefining it.
@@ -458,7 +526,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Thu Feb 28 15:41:46 2013 +0000 | Leo Gordon | cosmetic: renamed README.txt back to README to retain an unbroken history in CVS
 * Thu Feb 28 15:37:42 2013 +0000 | Leo Gordon | cosmetic:  added new commits to README and renamed it Changelog; split out the old README.txt (non-Changelog part)
 
----------------------[before and during EnsEMBL rel.71]----------------------------------------------------------------
+Before and during EnsEMBL rel.71
+--------------------------------
+
+::
 
 * Thu Feb 28 10:12:41 2013 +0000 | Leo Gordon | avoid having beekeeper run in submitted-to-the-farm state - detect it, report and quit
 * Thu Feb 28 09:47:40 2013 +0000 | Leo Gordon | param_substitution is now default everywhere, no need to call it explicitly
@@ -490,11 +561,9 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Tue Feb 12 10:22:02 2013 +0000 | Leo Gordon | hash of resources no longer depends on default_meadow (bugfix)
 * Thu Feb 7 11:42:11 2013 +0000 | Kathryn Beal | Updated to release 71
 * Wed Feb 6 17:43:21 2013 +0000 | Matthieu Muffato | Tables must be in the right order. Otherwise, the foreign key checks complain
-*   Fri Jan 25 19:42:28 2013 +0000 | Leo Gordon | resolving conflict: using mine
-|\  
-| * Tue Jan 15 11:03:26 2013 +0000 | Matthieu Muffato | Table dataflows are now included into semaphore boxes (bugfix: wrong internal name)
-* | Fri Jan 25 19:26:36 2013 +0000 | Leo Gordon | diagram improvement: (1) no more "empty boxes" and (2) tables dataflown from a box are shown in their boxes
-|/  
+* Fri Jan 25 19:42:28 2013 +0000 | Leo Gordon | resolving conflict: using mine
+* Tue Jan 15 11:03:26 2013 +0000 | Matthieu Muffato | Table dataflows are now included into semaphore boxes (bugfix: wrong internal name)
+* Fri Jan 25 19:26:36 2013 +0000 | Leo Gordon | diagram improvement: (1) no more "empty boxes" and (2) tables dataflown from a box are shown in their boxes
 * Mon Jan 14 13:23:52 2013 +0000 | Leo Gordon | Added a new presentation, moved presentations into a separate folder.
 * Fri Jan 11 11:19:11 2013 +0000 | Leo Gordon | cosmetic fix: commented back the debug output that was left uncommented by mistake
 * Fri Jan 11 11:07:47 2013 +0000 | Leo Gordon | Added coloured barchart display option and jobs/data display option (no big data checks, use with care on small examples). 'Pad' is now configurable from JSON. Beware: JSON config options have moved around!
@@ -519,7 +588,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Wed Nov 28 12:21:37 2012 +0000 | Leo Gordon | removed the "compile_module_once" option as the only way to compile modules now is once after specialization
 * Tue Nov 27 11:31:00 2012 +0000 | Leo Gordon | secutiry: make sure stringify() always produces perl-parsable structures, so that global settings of Data::Dumper do not affect its results (thanks to Uma and Matthieu for reporting)
 
----------------------[during EnsEMBL rel.70]----------------------------------------------------------------
+During EnsEMBL rel.70
+---------------------
+
+::
 
 * Fri Nov 23 14:26:53 2012 +0000 | Leo Gordon | bugifx: create meadow_capacity limiters whether or not there is a limit
 * Thu Nov 22 21:26:37 2012 +0000 | Leo Gordon | added a new per-analysis "analysis_capacity" limiter for cases where users want to limit analyses independently
@@ -529,19 +601,15 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Fri Nov 23 11:16:12 2012 +0000 | Leo Gordon | bugfix: avoid specializing in an otherwise BLOCKED analysis that is temporarily in SYNCHING state (thanks to Kathryn for reporting)
 * Wed Nov 21 12:23:11 2012 +0000 | Leo Gordon | (multi-meadow scheduler) restrict the set of analyses that a worker with a given meadow_type can specialize into
 * Tue Nov 20 15:35:44 2012 +0000 | Leo Gordon | separated the Scheduler's code into a separate module (not an object yet)
-*   Tue Nov 20 16:57:23 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
-|\  
-| * Tue Nov 20 12:35:30 2012 +0000 | Leo Gordon | bugfix: if re-running a job that creates a semaphored group, we no longer die (thanks Miguel for reporting)
-| * Mon Nov 19 16:25:14 2012 +0000 | Leo Gordon | Added API and schema support for analysis_base.meadow_type / Analysis->meadow_type(), which will be NULL/undef by default
-| * Mon Nov 19 15:22:44 2012 +0000 | Leo Gordon | proof of concept: all structures passed into calls and back are now meadow-aware
-| * Fri Nov 16 13:44:01 2012 +0000 | Leo Gordon | pass complete valley-wide stats into schedule_workers without filtering
-| * Fri Nov 16 10:36:49 2012 +0000 | Leo Gordon | aggregate meadow stats collection in the Valley
-* |   Mon Nov 19 22:16:26 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
-|\ \  
-| |/  
-| * Fri Nov 16 23:27:58 2012 +0000 | Leo Gordon | turn Utils::Graph into Configurable and use the same interface to config as Meadow and Valley
-* | Sun Nov 18 11:59:06 2012 +0000 | Matthieu Muffato | All the combinations of parameters are tested and cover all possible cases
-|/  
+* Tue Nov 20 16:57:23 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
+* Tue Nov 20 12:35:30 2012 +0000 | Leo Gordon | bugfix: if re-running a job that creates a semaphored group, we no longer die (thanks Miguel for reporting)
+* Mon Nov 19 16:25:14 2012 +0000 | Leo Gordon | Added API and schema support for analysis_base.meadow_type / Analysis->meadow_type(), which will be NULL/undef by default
+* Mon Nov 19 15:22:44 2012 +0000 | Leo Gordon | proof of concept: all structures passed into calls and back are now meadow-aware
+* Fri Nov 16 13:44:01 2012 +0000 | Leo Gordon | pass complete valley-wide stats into schedule_workers without filtering
+* Fri Nov 16 10:36:49 2012 +0000 | Leo Gordon | aggregate meadow stats collection in the Valley
+* Mon Nov 19 22:16:26 2012 +0000 | Matthieu Muffato | Merge branch 'master' of git.internal.sanger.ac.uk:/repos/git/ensembl/compara/ensembl-hive
+* Fri Nov 16 23:27:58 2012 +0000 | Leo Gordon | turn Utils::Graph into Configurable and use the same interface to config as Meadow and Valley
+* Sun Nov 18 11:59:06 2012 +0000 | Matthieu Muffato | All the combinations of parameters are tested and cover all possible cases
 * Fri Nov 16 15:03:19 2012 +0000 | Leo Gordon | bugfix: no longer leaves CLAIMED jobs after compilation error during specific -job_id execution
 * Fri Nov 16 14:29:48 2012 +0000 | Leo Gordon | bugfix: min_batch_time moved to prevent infinite loop in -compile_module_once 0 mode
 * Fri Nov 16 12:11:01 2012 +0000 | Leo Gordon | make Valley into Configurable and move SubmitWorkersMax into Valley's context, because it is more "global" than a Meadow
@@ -553,7 +621,10 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Tue Nov 13 13:07:26 2012 +0000 | Leo Gordon | bugfix: msg view should behave when analysis_id is still NULL
 * Tue Nov 13 11:06:01 2012 +0000 | Leo Gordon | feature: jobless workers will now leave module compilation errors in the job_message table (thanks, Kathryn!)
 
----------------------[before EnsEMBL rel.70]----------------------------------------------------------------
+Before EnsEMBL rel.70
+---------------------
+
+::
 
 * Mon Nov 12 14:15:40 2012 +0000 | Leo Gordon | updated the release number to 70 in the schema
 * Fri Nov 9 13:59:24 2012 +0000 | Leo Gordon | bugfix: worker.log_dir varchar(80) was too limiting, now extended to varchar(255); (thanks, Kathryn!)
@@ -566,20 +637,17 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 * Fri Nov 2 15:14:57 2012 +0000 | Leo Gordon | parametrically slow down the LongMult test pipeline using -take_time global parameter
 * Fri Nov 2 10:03:39 2012 +0000 | Leo Gordon | cosmetic: removed CVS magic $_Revision and $_Author variables that cause CVS out of sync with Git
 * Fri Nov 2 09:59:09 2012 +0000 | Leo Gordon | cosmetic: added a short summary of Git commits to Changelog for CVS-only users
-
-
 * Thu Nov 1 15:59:55 2012 +0000 | Leo Gordon | bugfix: query in Q::fetch_all_dead_workers_with_jobs() has to reference worker table by its full name
 * Thu Nov 1 15:31:36 2012 +0000 | Leo Gordon | clearer display of job_counters in beekeeper's output
 * Thu Nov 1 15:16:08 2012 +0000 | Leo Gordon | clearer display of job_counters on the graph; removed misleading and unused remaining_job_count() and cpu_minutes_remaining()
-*   Thu Nov 1 14:33:42 2012 +0000 | Leo Gordon | Merge branch 'bugfix_greedy_grep'
-|\  
-| * Thu Nov 1 12:05:35 2012 +0000 | Leo Gordon | avoid grepping out lines by patterns potentially present in job_name_prefix
-* | Thu Nov 1 12:00:00 2012 +0000 | Leo Gordon | bugfix: only limit buried-in-haste workers to really dead ones
-|/  
+* Thu Nov 1 14:33:42 2012 +0000 | Leo Gordon | Merge branch 'bugfix_greedy_grep'
+* Thu Nov 1 12:05:35 2012 +0000 | Leo Gordon | avoid grepping out lines by patterns potentially present in job_name_prefix
+* Thu Nov 1 12:00:00 2012 +0000 | Leo Gordon | bugfix: only limit buried-in-haste workers to really dead ones
 * Wed Oct 31 13:22:46 2012 +0000 | Leo Gordon | fixing permissions of all files in one go
 * Wed Oct 31 13:19:14 2012 +0000 | Leo Gordon | Do not expose the password in workers' url by storing it in an environment variable
 
----------------------[after EnsEMBL rel.69]----------------------------------------------------------------
+After EnsEMBL rel.69
+--------------------
 
 2012-10-19 15:45  lg4
 
@@ -811,7 +879,7 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 2012-10-02 14:56  lg4
 
 	* modules/Bio/EnsEMBL/Hive/DBSQL/AnalysisJobAdaptor.pm: bugfix: do
-	  not forget PRE_- and POST_CLEANUP states
+	  not forget PRE_CLEANUP and POST_CLEANUP states
 
 2012-10-02 13:00  lg4
 
@@ -1132,7 +1200,8 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 	* modules/Bio/EnsEMBL/Hive/DBSQL/JobMessageAdaptor.pm: hopefully
 	  will fix the "was not locked with LOCK TABLES" error message
 
----------------------[before EnsEMBL rel.69]----------------------------------------------------------------
+Before EnsEMBL rel.69
+---------------------
 
 2012-08-01 14:23  lg4
 
@@ -1247,7 +1316,8 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 	* sql/procedures.mysql: Added resource_class to the list of removed
 	  tables
 
----------------------[during EnsEMBL rel.68]----------------------------------------------------------------
+During EnsEMBL rel.68
+---------------------
 
 2012-06-26 12:58  lg4
 
@@ -1445,7 +1515,8 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 	* hive_config.json, modules/Bio/EnsEMBL/Hive/Utils/Config.pm: a new
 	  JSON-based configuration file and parser
 
----------------------[before EnsEMBL rel.68]----------------------------------------------------------------
+Before EnsEMBL rel.68
+---------------------
 
 2012-05-28 16:18  lg4
 
@@ -1638,8 +1709,8 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 	  scripts/generate_graph.pl: code for showing semaphores as nested
 	  boxes
 
-
----------------------[after EnsEMBL rel.67]----------------------------------------------------------------
+After EnsEMBL rel.67
+--------------------
 
 2012-03-27 12:22  lg4
 
@@ -1733,7 +1804,8 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 	* modules/Bio/EnsEMBL/Hive/DependentOptions.pm: Pipeline parameters
 	  cannot take undefined values. Warn and force into 0
 
----------------------[after EnsEMBL rel.66]----------------------------------------------------------------
+After EnsEMBL rel.66
+--------------------
 
 2012-01-31 10:58  lg4
 
@@ -2077,7 +2149,7 @@ Version 1.9     - largely a maintenance release + preparations for separation fr
 30.June, 2011 : Andy
 
 * Old implementation of store_out_files() was generating incompatible SQL for SQLite.
-Prepared statement version developed & have removed the IGNORE component due to the delete which occurs as the first task in the method.
+  Prepared statement version developed & have removed the IGNORE component due to the delete which occurs as the first task in the method.
 
 29.June, 2011 : Leo
 
@@ -2291,12 +2363,12 @@ Prepared statement version developed & have removed the IGNORE component due to 
 4-5.Jan, 2011 : Leo
 
 * fixed multiple issues that appeared after introduction of the foreign keys
-but only became visible after some testing (thanks to Gautier for extra testing!).
+  but only became visible after some testing (thanks to Gautier for extra testing!).
 
 31.Dec, 2010 : Leo Gordon
 
 * Inplemented the long-standing plan to remove the schema/code dependency on UUIDs.
-Removed the job_claim field from the schema and the code, changed the way jobs are claimed.
+  Removed the job_claim field from the schema and the code, changed the way jobs are claimed.
 
 28.Dec, 2010 : Leo Gordon
 
@@ -2305,13 +2377,13 @@ Removed the job_claim field from the schema and the code, changed the way jobs a
 21-23.Dec, 2010 : Leo Gordon
 
 * Added foreign key constraints, figured out that foreign keys ARE enforced in MySQL 5.1.47,
-so had to fix some code (and some ensembl-compara code as well, so keep yours up-to-date).
+  so had to fix some code (and some ensembl-compara code as well, so keep yours up-to-date).
 
 14.Dec, 2010 : Leo Gordon
 
 * first attempt at creating schema drawings using MySQL Workbench. Drawings added to docs/ .
-A lot of foreign key constraints were missing, which influenced the drawing.
-If they are not enforced by MySQL anyway, why not add just them?
+  A lot of foreign key constraints were missing, which influenced the drawing.
+  If they are not enforced by MySQL anyway, why not add just them?
 
 26.Nov, 2010 : Leo Gordon
 
@@ -2324,7 +2396,7 @@ If they are not enforced by MySQL anyway, why not add just them?
 19-22.Oct, 2010 : Leo Gordon
 
 * Fixed both rule adaptors and the HiveGeneric_conf to prevent them from creating duplicated rules
-when a PipeConfig is re-run.
+  when a PipeConfig is re-run.
 
 8.Oct, 2010 : Leo Gordon
 
@@ -2334,13 +2406,13 @@ Does an integrity check and fails if underlying mysqldump fails.
 1.Oct, 2010 : Leo Gordon
 
 * runWorker.pl only prints the worker once per stream.
-So if output is redirected to a file, both the file and the output will contain it.
+  So if output is redirected to a file, both the file and the output will contain it.
 
 30.Sept-19.Oct, 2010 : Leo Gordon
 
 * detected a strange behaviour of a Worker that was running a RunnableDB
-with 'runaway next' statements. Since it was not possible to fix it (seems to be Perl language issue),
-the Worker's code does its best to detect this and exit. Please check that your RunnableDBs do not have runaway nexts.
+  with 'runaway next' statements. Since it was not possible to fix it (seems to be Perl language issue),
+  the Worker's code does its best to detect this and exit. Please check that your RunnableDBs do not have runaway nexts.
 
 ------------------------------------[previous 'stable' tag]----------------------------------
 
@@ -2434,7 +2506,7 @@ the Worker's code does its best to detect this and exit. Please check that your 
 9-10 Aug, 2010 : Leo Gordon
 
 * RunnableDB::Test renamed into RunnableDB::FailureTest and extended, PipeConfig::FailureTest_conf added to drive this module.
-(this was testing ground preparation for job_error introduction)
+  (this was testing ground preparation for job_error introduction)
 
 16 July, 2010 : Leo Gordon
 
@@ -2664,6 +2736,7 @@ Merging the "Meadow" code from this March' development branch.
 Because it separates LSF-specific code from higher level, it will be easier to update.
 
 -------------------------------------------------------------------------------------------------------
+
 Albert, sorry - in the process of merging into the development branch I had to remove your HIGHMEM code.
 I hope it is a temporary measure and we will be having hive-wide queue control soon.
 If not - you can restore the pre-merger state by updating with the following command:
@@ -2671,6 +2744,7 @@ If not - you can restore the pre-merger state by updating with the following com
     cvs update -r lg4_pre_merger_20090713
 
 ('maximise_concurrency' option was carried over)
+
 -------------------------------------------------------------------------------------------------------
 
 
@@ -2689,15 +2763,15 @@ If not - you can restore the pre-merger state by updating with the following com
   runnable can check if it's the second time it's trying to run the
   job, if it's because it contains big data (e.g. gene_count > 200)
   and if it isn't already in HIGHMEM mode. Then, it will call
-  reset_highmem_job_by_dbID and quit:
+  reset_highmem_job_by_dbID and quit::
 
-  if ($self->input_job->retry_count == 1) {
-    if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200 && !defined($self->worker->{HIGHMEM})) {
-      $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
-      $self->DESTROY;
-      throw("Alignment job too big: send to highmem and quit");
-    }
-  }
+   if ($self->input_job->retry_count == 1) {
+     if ($self->{'protein_tree'}->get_tagvalue('gene_count') > 200 && !defined($self->worker->{HIGHMEM})) {
+       $self->input_job->adaptor->reset_highmem_job_by_dbID($self->input_job->dbID);
+       $self->DESTROY;
+       throw("Alignment job too big: send to highmem and quit");
+     }
+   }
 
   Assuming there is a
 
