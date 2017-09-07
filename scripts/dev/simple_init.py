@@ -35,15 +35,15 @@ import subprocess
 import sys
 
 
-def wait_for_all_processes():
+def wait_for_all_processes(ref_pid):
     child_errors = False
     while True:
         try:
             # Wait for any child
             child_pid, child_status = os.waitpid(-1, 0)
             #print("ripped a child", child_pid, child_status)
-            # Check its status
-            if child_status != 0:
+            # Check its status (the reference child is not considered here since it will be checked later on)
+            if child_pid != ref_pid and child_status != 0:
                 child_errors = True
         except OSError as e:
             if e.errno == errno.ECHILD:
@@ -57,12 +57,13 @@ def wait_for_all_processes():
 
 # Run the command
 #print("Executing", sys.argv[1:])
-cmd_ret = subprocess.call( sys.argv[1:] )
+main_cmd = subprocess.Popen( sys.argv[1:] )
 
 # Wait for all the processes to end
-child_errors = wait_for_all_processes()
+child_errors = wait_for_all_processes(main_cmd.pid)
 
 # Return an approriate exit code
+cmd_ret = main_cmd.returncode
 if cmd_ret == 0:
     cmd_ret = 1 if child_errors else 0
 sys.exit(cmd_ret)
