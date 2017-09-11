@@ -435,7 +435,7 @@ sub semaphore_job_by_id {    # used in the end of reblocking a semaphore chain
     my $self    = shift @_;
     my $job_id  = shift @_ or return;
 
-    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status='READY'";
+    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status NOT IN ('CLAIMED', 'COMPILATION', $ALL_STATUSES_OF_RUNNING_JOBS)";
 
     $self->dbc->protected_prepare_execute( [ $sql, $job_id ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'semaphoring a job'.$after, 'INFO' ); }
