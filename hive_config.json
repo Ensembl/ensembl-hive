@@ -35,7 +35,11 @@
             "SubmissionOptions"         : "",
             "TotalRunningWorkersMax"    : 2000
         },
-        "CONDOR" : {
+        "HTCondor" : {
+            "SubmissionOptions"         : "",
+            "TotalRunningWorkersMax"    : 500
+        },
+        "PBSPro" : {
             "SubmissionOptions"         : "",
             "TotalRunningWorkersMax"    : 500
         }
