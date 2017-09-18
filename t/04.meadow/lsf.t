@@ -21,7 +21,7 @@ use warnings;
 use Cwd;
 use File::Basename;
 
-use Test::More tests => 18;
+use Test::More tests => 21;
 use Test::Exception;
 
 use Bio::EnsEMBL::Hive::Utils::Config;
@@ -142,20 +142,24 @@ my $worker = Bio::EnsEMBL::Hive::Worker->new();
     ok(!$lsf_meadow->check_worker_is_alive_and_mine($worker), 'A missing process');
 }
 
+my $submitted_pids;
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
-}, 'Can submit 1 worker');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/');
+}, 'Can submit something');
+is_deeply($submitted_pids, [12345], 'Returned the correct pid');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /dev/null -e /dev/null -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56[1-4] /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
-}, 'Can submit 4 workers');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 4, 56, '/resource_class/', '/rc_args/');
+}, 'Can submit something');
+is_deeply($submitted_pids, ['12345[1]', '12345[2]', '12345[3]', '12345[4]'], 'Returned the correct pids');
 
 lives_ok( sub {
     local $ENV{EHIVE_EXPECTED_BSUB} = '-o /submit_log_dir//log_/resource_class/_%J_%I.out -e /submit_log_dir//log_/resource_class/_%J_%I.err -J tracking_homo_sapiens_funcgen_81_38_hive-Hive-/resource_class/-56 /rc_args/ /worker_cmd/';
-    $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
-}, 'Can submit 1 worker with a submit_log_dir');
+    $submitted_pids = $lsf_meadow->submit_workers_return_meadow_pids('/worker_cmd/', 1, 56, '/resource_class/', '/rc_args/', '/submit_log_dir/');
+}, 'Can submit something with a submit_log_dir');
+is_deeply($submitted_pids, [12345], 'Returned the correct pid');
 
 my $expected_bacct = {
     '2581807[1]' => {
