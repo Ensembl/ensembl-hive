@@ -371,9 +371,10 @@ sub main {
     if($bury_unkwn_workers) { $queen->check_for_dead_workers($valley, 1, 1); }
     if($balance_semaphores) { $self->{'dba'}->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ); }
 
+    my $has_error = 0;
     if ($self->{'max_loops'}) { # positive $max_loop means limited, negative means unlimited
 
-        run_autonomously($self, $self->{'pipeline'}, $self->{'max_loops'}, $self->{'loop_until'}, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
+        $has_error = run_autonomously($self, $self->{'pipeline'}, $self->{'max_loops'}, $self->{'loop_until'}, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
 
     } else {
         # the output of several methods will look differently depending on $analysis being [un]defined
@@ -403,7 +404,7 @@ sub main {
         }
         $self->{'beekeeper'}->set_cause_of_death('LOOP_LIMIT');
     }
-    exit(0);
+    exit($has_error);
 }
 
 #######################
@@ -690,6 +691,7 @@ sub run_autonomously {
 
     $self->{'beekeeper'}->set_cause_of_death($beekeeper_cause_of_death);
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
+    return $cause_of_death_is_error;
 }
 
 
