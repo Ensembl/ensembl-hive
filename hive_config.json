@@ -28,7 +28,8 @@
                 "TotalRunningWorkersMax"    : 5000
             },
             "EBI" : {
-                "SubmissionOptions"  : ""
+                "SubmissionOptions"  : "",
+                "TotalRunningWorkersMax"    : 10000
             }
         },
         "SGE" : {
