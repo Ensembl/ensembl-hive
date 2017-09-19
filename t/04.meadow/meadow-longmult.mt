@@ -49,7 +49,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
 
         beekeeper($pipeline_url, [-sleep => 0.2, '-loop']);
         is(scalar(@{$hive_dba->get_AnalysisJobAdaptor->fetch_all("status != 'DONE'")}), 0, 'All the jobs could be run');
-        is(scalar(@{$hive_dba->get_WorkerAdaptor->fetch_all("meadow_type != '$testing_meadow_type'")}), 0, 'All the workers were run under the $testing_meadow_type meadow');
+        is(scalar(@{$hive_dba->get_WorkerAdaptor->fetch_all("meadow_type != '$testing_meadow_type'")}), 0, "All the workers were run under the $testing_meadow_type meadow");
 
         my $final_result_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'final_result' );
         my $final_results = $final_result_nta->fetch_all();
