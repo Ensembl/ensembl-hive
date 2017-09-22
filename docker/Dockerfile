@@ -25,9 +25,8 @@ RUN apt-get update -y && apt-get install -y git && apt-get clean && rm -rf /var/
 RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
 
 # Install all the dependencies
-RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh
-# Install the missing dependencies (if any)
-RUN /repo/ensembl-hive/docker/setup_cpan.Ubuntu-16.04.sh /repo/ensembl-hive
+RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
+    && /repo/ensembl-hive/docker/setup_cpan.Ubuntu-16.04.sh /repo/ensembl-hive
 
 ENV PATH "/repo/ensembl-hive/scripts:$PATH"
 ENV PERL5LIB "/repo/ensembl-hive/modules:$PERL5LIB"
