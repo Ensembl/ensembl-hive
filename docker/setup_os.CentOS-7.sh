@@ -9,7 +9,7 @@ yum install -y perl-App-cpanminus perl-Test-Simple perl-Proc-ProcessTable
 tmpdir=$(mktemp -d)
 echo "requires 'Proc::Daemon', '0.23';" > "$tmpdir/cpanfile"
 cpanm --installdeps --notest --with-recommends "$tmpdir"
-rmdir "$tmpdir"
+rm -r "$tmpdir"
 
 # install required extra software
 yum install -y curl \
