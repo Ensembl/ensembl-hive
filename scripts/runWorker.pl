@@ -26,7 +26,7 @@ main();
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
     my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);    # Task specification parameters
-    my ($job_limit, $life_span, $no_cleanup, $no_write, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize,                    # Worker control parameters
+    my ($job_limit, $life_span, $no_cleanup, $no_write, $worker_cur_dir, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize,   # Worker control parameters
         $worker_delay_startup_seconds, $worker_crash_on_startup_prob);
     my ($help, $report_versions, $debug);
 
@@ -57,6 +57,7 @@ sub main {
                'life_span|lifespan=i'       => \$life_span,
                'no_cleanup'                 => \$no_cleanup,
                'no_write'                   => \$no_write,
+               'worker_cur_dir|cwd=s'       => \$worker_cur_dir,
                'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
                'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
                'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
@@ -82,6 +83,8 @@ sub main {
         report_versions();
         exit(0);
     }
+
+    chdir $worker_cur_dir if $worker_cur_dir;   # Allows using relative paths for Sqlite URLs, registry files etc
 
     my $pipeline;
 
