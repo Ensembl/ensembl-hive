@@ -117,7 +117,11 @@ sub dbc_hash_to_cmd {
             if($driver eq 'sqlite') {
                 return ['rm', '-f', $dbname];
             } elsif(!$2) {
-                $sqlcmd = "$1 \`$dbname\`";
+                if ($driver eq 'mysql') {
+                    $sqlcmd = "$1 \`$dbname\`";
+                } else {
+                    $sqlcmd = "$1 $dbname";
+                }
                 $dbc_hash->{dbname} = '';
             }
         } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
@@ -126,7 +130,11 @@ sub dbc_hash_to_cmd {
             if($driver eq 'sqlite') {
                 return ['touch', $dbname];
             } elsif(!$2) {
-                $sqlcmd = "$1 \`$dbname\`";
+                if ($driver eq 'mysql') {
+                    $sqlcmd = "$1 \`$dbname\`";
+                } else {
+                    $sqlcmd = "$1 $dbname";
+                }
                 $dbc_hash->{dbname} = '';
             }
         }
