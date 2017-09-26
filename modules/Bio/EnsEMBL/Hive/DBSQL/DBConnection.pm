@@ -224,7 +224,11 @@ sub to_cmd {
                 if (not $dbname) {
                     die "'DROP DATABASE' needs a database name\n";
                 }
-                $sqlcmd = "$1 \`$dbname\`" unless $2;
+                if ($driver eq 'mysql') {
+                    $sqlcmd = "$1 \`$dbname\`" unless $2;
+                } else {
+                    $sqlcmd = "$1 $dbname" unless $2;
+                }
                 $dbname = '';
             }
         } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
@@ -240,7 +244,11 @@ sub to_cmd {
                 if (length($dbname) > $limits{$driver}) {
                     die "Database name '$dbname' is too long (> $limits{$driver}). Cannot create the database\n";
                 }
-                $sqlcmd = "$1 \`$dbname\`" unless $2;
+                if ($driver eq 'mysql') {
+                    $sqlcmd = "$1 \`$dbname\`" unless $2;
+                } else {
+                    $sqlcmd = "$1 $dbname" unless $2;
+                }
                 $dbname = '';
             }
         }
