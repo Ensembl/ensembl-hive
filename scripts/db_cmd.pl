@@ -140,6 +140,7 @@ sub dbc_hash_to_cmd {
 
     if($driver eq 'mysql') {
 
+        $dbc_hash->{pass} //= '';
         $cmd = ($to_params ? '' : 'mysql ')
               ."--host=$dbc_hash->{host} "
               .(defined($dbc_hash->{port}) ? "--port=$dbc_hash->{port} " : '')
