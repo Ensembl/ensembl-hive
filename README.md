@@ -36,6 +36,11 @@ Jobs that share same code, common parameters and resource requirements are typic
 and generally an Analysis can be viewed as a "base class" for the Jobs that belong to it.
 However in some sense an Analysis also acts as a "container" for them.
 
+An analysis is implemented as a Runnable file which is a Perl, Python or
+Java module conforming to a special interface. eHive provides some basic
+Runnables, especially one that allows running arbitrary commands (programs
+and scripts written in other languages).
+
 PipeConfig file defines Analyses and dependency rules of the pipeline
 ---------------------------------------------------------------------
 
@@ -111,16 +116,10 @@ docker run -it ensemblorg/ensembl-hive runWorker.pl -url $URL
 Available documentation
 -----------------------
 
-The main entry point is in [**docs/index.html**](https://rawgit.com/Ensembl/ensembl-hive/master/docs/index.html) and can also be browsed offline.
+The main entry point is available online in the [user
+manual](https://ensembl-hive.readthedocs.io/en/master/), from where it can
+be downloaded for offline access.
 
-There is preliminary support for Python3, see [the Doxygen
-documentation](https://rawgit.com/Ensembl/ensembl-hive/master/wrappers/python3/doxygen/index.html) and
-[an example PipeConfig
-file](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_pyconf.pm#L139)
-and Java, see [the JavaDoc
-documentation](https://rawgit.com/Ensembl/ensembl-hive/master/wrappers/java/doc/index.html)
-and [an example
-PipeConfigfile](modules/Bio/EnsEMBL/Hive/Examples/LongMult/PipeConfig/LongMultSt_javaconf.pm#L139).
 
 Contact us (mailing list)
 -------------------------
