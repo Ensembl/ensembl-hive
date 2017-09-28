@@ -603,7 +603,7 @@ sub useful_commands_legend {
 
     my @output_lines = (
         '','',
-        "# --------------------[Useful commands]--------------------------",
+        '# ' . '-' x 22 . '[Useful commands]' . '-' x 22,
         '',
         " # It is convenient to store the pipeline url in a variable:",
         "\texport EHIVE_URL=$pipeline_url\t\t\t# bash version",
