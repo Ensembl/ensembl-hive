@@ -406,18 +406,27 @@ sub check_blocking_control_rules {
     if(scalar @$ctrl_rules) {    # there are blocking ctrl_rules to check
 
         foreach my $ctrl_rule (@$ctrl_rules) {
-                #use this method because the condition_analysis objects can be
-                #network distributed to a different database so use it's adaptor to get
-                #the AnalysisStats object
+
             my $condition_analysis  = $ctrl_rule->condition_analysis;
-            my $condition_stats     = $condition_analysis && $condition_analysis->stats;
+            unless ($condition_analysis) {
+                $all_conditions_satisfied = 0;
+                next
+            }
+
+            my $condition_stats     = $condition_analysis->stats;
+            unless ($condition_stats) {
+                $all_conditions_satisfied = 0;
+                next
+            }
+
             # Make sure we use fresh properties of the AnalysisStats object
             # (especially relevant in the case of foreign pipelines, since
             # local objects are periodically refreshed)
             $condition_stats->refresh();
-            my $condition_status    = $condition_stats    && $condition_stats->status;
-            my $condition_cbe       = $condition_analysis && $condition_analysis->can_be_empty;
-            my $condition_tjc       = $condition_stats    && $condition_stats->total_job_count;
+
+            my $condition_status    = $condition_stats->status;
+            my $condition_cbe       = $condition_analysis->can_be_empty;
+            my $condition_tjc       = $condition_stats->total_job_count;
 
             my $this_condition_satisfied = ($condition_status eq 'DONE')
                         || ($condition_cbe && !$condition_tjc);             # probably safer than saying ($condition_status eq 'EMPTY') because of the sync order
