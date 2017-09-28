@@ -70,6 +70,7 @@ sub find_by_url {
     my $class            = shift @_;
     my $url              = shift @_;
     my $default_pipeline = shift @_;
+    my $no_die           = shift @_;
 
     if(my $parsed_url = Bio::EnsEMBL::Hive::Utils::URL::parse( $url )) {
 
@@ -100,7 +101,7 @@ sub find_by_url {
         }
 
         return  $query_params
-            ? $hive_pipeline->find_by_query( $query_params )
+            ? $hive_pipeline->find_by_query( $query_params, $no_die )
             : $hive_pipeline;
 
     } else {

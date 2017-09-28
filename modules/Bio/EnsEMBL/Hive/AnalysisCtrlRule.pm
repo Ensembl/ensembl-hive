@@ -102,7 +102,7 @@ sub condition_analysis_url {
 =cut
 
 sub condition_analysis {
-    my ($self, $analysis) = @_;
+    my ($self, $analysis, $no_die) = @_;
 
     if( defined $analysis ) {
         unless ($analysis->isa('Bio::EnsEMBL::Hive::Analysis')) {
@@ -113,7 +113,7 @@ sub condition_analysis {
 
     if( !$self->{'_condition_analysis'} and my $condition_analysis_url = $self->condition_analysis_url ) {   # lazy-load through TheApiary
 
-        $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $condition_analysis_url, $self->hive_pipeline );
+        $self->{'_condition_analysis'} = Bio::EnsEMBL::Hive::TheApiary->find_by_url( $condition_analysis_url, $self->hive_pipeline, $no_die );
     }
 
     return $self->{'_condition_analysis'};

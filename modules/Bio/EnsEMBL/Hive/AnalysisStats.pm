@@ -397,7 +397,7 @@ sub toString {
 
 
 sub check_blocking_control_rules {
-    my $self = shift;
+    my ($self, $no_die) = @_;
   
     my $ctrl_rules = $self->analysis->control_rules_collection();
 
@@ -407,7 +407,7 @@ sub check_blocking_control_rules {
 
         foreach my $ctrl_rule (@$ctrl_rules) {
 
-            my $condition_analysis  = $ctrl_rule->condition_analysis;
+            my $condition_analysis  = $ctrl_rule->condition_analysis(undef, $no_die);
             unless ($condition_analysis) {
                 $all_conditions_satisfied = 0;
                 next

@@ -77,6 +77,7 @@ sub collection_of {
 sub find_by_query {
     my $self            = shift @_;
     my $query_params    = shift @_;
+    my $no_die          = shift @_;
 
     if(my $object_type = delete $query_params->{'object_type'}) {
         my $object;
@@ -112,7 +113,8 @@ sub find_by_query {
             $object = $self->collection_of($object_type)->find_one_by( %$query_params );
         }
 
-        return $object || throw("Could not find an '$object_type' object from query ".stringify($query_params)." in ".$self->display_name);
+        return $object if $object || $no_die;
+        throw("Could not find an '$object_type' object from query ".stringify($query_params)." in ".$self->display_name);
 
     } else {
         throw("Could not find or guess the object_type from the query ".stringify($query_params)." , so could not find the object");

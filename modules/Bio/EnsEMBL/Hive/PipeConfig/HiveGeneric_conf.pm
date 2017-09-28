@@ -587,7 +587,7 @@ sub add_objects_from_config {
     # Block the analyses that should be blocked
     warn "Blocking the analyses that should be ...\n";
     foreach my $stats ($pipeline->collection_of('AnalysisStats')->list()) {
-        $stats->check_blocking_control_rules();
+        $stats->check_blocking_control_rules('no_die');
         $stats->determine_status();
     }
     warn "Done.\n\n";
