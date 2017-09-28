@@ -53,6 +53,8 @@ sub init_pipeline {
         $pipeline->apply_tweaks( $tweaks );
     }
 
+    $pipeline->test_connections();
+
     $pipeline->save_collections();
 
     print $pipeconfig_object->useful_commands_legend();

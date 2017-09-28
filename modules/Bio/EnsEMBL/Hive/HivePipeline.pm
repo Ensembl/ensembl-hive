@@ -121,6 +121,34 @@ sub find_by_query {
     }
 }
 
+sub test_connections {
+    my $self = shift;
+
+    my @warnings;
+
+    foreach my $dft ($self->collection_of('DataflowTarget')->list) {
+        my $analysis_url = $dft->to_analysis_url;
+        if ($analysis_url =~ m{^\w+$}) {
+            my $heir_analysis = $self->collection_of('Analysis')->find_one_by('logic_name', $analysis_url)
+                or push @warnings, "Could not find a local analysis named '$analysis_url' (dataflow from analysis '".($dft->source_dataflow_rule->from_analysis->logic_name)."')";
+        }
+    }
+
+    foreach my $cf ($self->collection_of('AnalysisCtrlRule')->list) {
+        my $analysis_url = $cf->condition_analysis_url;
+        if ($analysis_url =~ m{^\w+$}) {
+            my $heir_analysis = $self->collection_of('Analysis')->find_one_by('logic_name', $analysis_url)
+                or push @warnings, "Could not find a local analysis named '$analysis_url' (control-flow for analysis '".($cf->ctrled_analysis->logic_name)."')";
+        }
+
+    }
+
+    if (@warnings) {
+        push @warnings, '', 'Please fix these before running the pipeline';
+        warn join("\n", '', '# ' . '-' x 26 . '[WARNINGS]' . '-' x 26, '', @warnings), "\n";
+    }
+}
+
 
 sub new {       # construct an attached or a detached Pipeline object
     my $class           = shift @_;
