@@ -293,10 +293,27 @@ sub store_a_semaphored_group_of_jobs {
         } elsif( $funnel_job = $self->fetch_by_analysis_id_and_input_id( $funnel_job->analysis->dbID, $funnel_job->input_id) ) {
             $funnel_job_id = $funnel_job->dbID;
 
+            # If the job hasn't run yet, we can still block it
+            if ($funnel_job->status eq 'READY') {
+                # Mark the job as SEMAPHORED to make sure it's not taken by any worker
+                $self->semaphore_job_by_id($funnel_job_id);
+                $self->refresh($funnel_job);
+            }
+
             if( $funnel_job->status eq 'SEMAPHORED' ) {
 
-                $funnel_semaphore = $funnel_job->fetch_local_blocking_semaphore()
-                    or die "Could not leach to a non-existent Semaphore";   # ToDo: create if it was missing?
+                $funnel_semaphore = $funnel_job->fetch_local_blocking_semaphore();
+
+                # Create if it was missing
+                unless ($funnel_semaphore) {
+                    $funnel_semaphore = Bio::EnsEMBL::Hive::Semaphore->new(
+                        'hive_pipeline'         => $funnel_job->hive_pipeline,
+                        'dependent_job_id'      => $funnel_job_id,
+                        'local_jobs_counter'    => 0,   # Will be updated below
+                        'remote_jobs_counter'   => 0,   # Will be updated below
+                    );
+                    $funnel_semaphore_adaptor->store( $funnel_semaphore );
+                }
 
                 $funnel_semaphore->increase_by( $fan_jobs );  # "pre-increase" the semaphore counts before creating the controlling jobs
 

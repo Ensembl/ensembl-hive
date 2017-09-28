@@ -39,8 +39,8 @@ my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
     -disconnect_when_inactive   => 1,
 );
 
-runWorker($pipeline_url);   # 'start' analysis
-runWorker($pipeline_url);   # 'factory' analysis
+runWorker($pipeline_url, [ -analyses_pattern => 'start' ]);
+runWorker($pipeline_url, [ -analyses_pattern => 'factory' ]);
 
 my $analyses_coll   = $pipeline->collection_of('Analysis');
 my $fan_analysis    = $analyses_coll->find_one_by( 'logic_name' => 'fan' );
@@ -60,6 +60,18 @@ is($fan_job_count, $correct_count, "The number of fan jobs is correct ($fan_job_
 my $semaphore           = shift @semaphores;
 
 is($semaphore->local_jobs_counter, $fan_job_count, 'All the fan jobs share the same semaphore');
+
+runWorker($pipeline_url, [ -analyses_pattern => 'fan' ]);
+runWorker($pipeline_url, [ -analyses_pattern => 'funnel' ]);
+
+@semaphores          = @{ $semaphore_adaptor->fetch_all() };
+is(scalar(@semaphores), 2, 'There are now two semaphores');
+
+my $jobs             = $job_adaptor->fetch_all_by_analysis_id_status([$fan_analysis], 'READY');
+is(scalar(@$jobs), 1, 'The fan has an extra job');
+$jobs                = $job_adaptor->fetch_all_by_analysis_id_status([$analyses_coll->find_one_by( 'logic_name' => 'aggregator' )]);
+is(scalar(@$jobs), 1, 'Still only one aggregator job');
+is($jobs->[0]->status, 'SEMAPHORED', 'The aggregator is now SEMAPHORED');
 
 safe_drop_database( $hive_dba );
 
