@@ -11,17 +11,17 @@ Autoflow
 Autoflow
 ~~~~~~~~
 
-Upon success, each job from A will generate a Dataflow event on branch #1, which is connected to branch B. This is called
-*autoflow* as jobs seem to automatically flow from A to B.
+Upon success, each job from Alpha will generate a Dataflow event on branch #1, which is connected to analysis Beta. This is called
+*autoflow* as jobs seem to automatically flow from Alpha to Beta.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           1 => [ 'B' ],
+           1 => [ 'Beta' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
 
 
@@ -32,10 +32,10 @@ Same as above, but more concise.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
-        -flow_into  => [ 'B' ],
+    {   -logic_name => 'Alpha',
+        -flow_into  => [ 'Beta' ],
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
 
 
@@ -46,10 +46,10 @@ Same as above, but even more concise
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
-        -flow_into  => 'B'
+    {   -logic_name => 'Alpha',
+        -flow_into  => 'Beta'
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
 
 
@@ -62,40 +62,40 @@ you can use *factory* patterns.
 Factory
 ~~~~~~~
 
-Analysis A triggers 0, 1 or many Dataflow events on branch #2 (this is the convention for non-autoflow events).
-In this pattern, A is called the *factory*, B the *fan*.
+Analysis Alpha triggers 0, 1 or many Dataflow events on branch #2 (this is the convention for non-autoflow events).
+In this pattern, Alpha is called the *factory*, Beta the *fan*.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           2 => [ 'B' ],
+           2 => [ 'Beta' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
 
 
 Factory in parallel of the autoflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the above example, nothing was connected to the branch #1 of analysis A. The default *autoflow* event
+In the above example, nothing was connected to the branch #1 of analysis Alpha. The default *autoflow* event
 was thus lost. You can in fact have both branches connected.
 
 An analysis can use multiple branches at the same time and for instance produce a fan of jobs on branch #2
-*and* still a job on branch #1. Both stream of jobs (B and C) are executed in parallel.
+*and* still a job on branch #1. Both stream of jobs (Beta and Gamma) are executed in parallel.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           2 => [ 'B' ],
-           1 => [ 'C' ],
+           2 => [ 'Beta' ],
+           1 => [ 'Gamma' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
 
 
@@ -109,24 +109,24 @@ addressed in :doc:`events`).
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           2 => [ 'B' ],
-           3 => [ 'C' ],
-           4 => [ 'D' ],
-           5 => [ 'E' ],
-           1 => [ 'F' ],
+           2 => [ 'Beta' ],
+           3 => [ 'Gamma' ],
+           4 => [ 'Delta' ],
+           5 => [ 'Epsilon' ],
+           1 => [ 'Foxtrot' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
-    {   -logic_name => 'D',
+    {   -logic_name => 'Delta',
     },
-    {   -logic_name => 'E',
+    {   -logic_name => 'Epsilon',
     },
-    {   -logic_name => 'F',
+    {   -logic_name => 'Foxtrot',
     },
 
 
@@ -148,19 +148,19 @@ for each analysis.
 ``A->1`` means that the job resulting from the Dataflow event on branch #1 (the *autoflow*)
 has to wait for *all* the jobs in group **A** before it can start.
 
-This pattern is called a *semaphore*, and C is called the *funnel* analysis.
+This pattern is called a *semaphore*, and Gamma is called the *funnel* analysis.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           '2->A' => [ 'B' ],
-           'A->1' => [ 'C' ],
+           '2->A' => [ 'Beta' ],
+           'A->1' => [ 'Gamma' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
 
 
@@ -170,28 +170,28 @@ Semaphore propagation
 Jobs created by a job that is part of a semaphore group are
 automatically added to the semaphore group.
 
-In the example below, the job in C (the *funnel*) will have to
-wait for all its controlling jobs in B to complete, but also all
-the jobs these may have created in D as well.
+In the example below, the job in Gamma (the *funnel*) will have to
+wait for all its controlling jobs in Beta to complete, but also all
+the jobs these may have created in Delta as well.
 
 This process is called *semaphore propagation*.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           '2->A' => [ 'B' ],
-           'A->1' => [ 'C' ],
+           '2->A' => [ 'Beta' ],
+           'A->1' => [ 'Gamma' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
         -flow_into  => {
-           2 => [ 'D' ],
+           2 => [ 'Delta' ],
         },
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
-    {   -logic_name => 'D',
+    {   -logic_name => 'Delta',
     },
 
 
@@ -214,15 +214,15 @@ on branch #3.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           '3->A' => [ 'B' ],
-           'A->2' => [ 'C' ],
+           '3->A' => [ 'Beta' ],
+           'A->2' => [ 'Gamma' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
 
 
@@ -232,28 +232,28 @@ Mixing all patterns
 Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
 with the jobs created in te analysis D.
 
-Upon success of the A job, the *autoflow* will create a job in analysis E which is *not* controlled
-by any of the B or C jobs. It can thus start immediately.
+Upon success of the Alpha job, the *autoflow* will create a job in analysis Epsilon which is *not* controlled
+by any of the Beta or Gamma jobs. It can thus start immediately.
 
 .. hive_diagram::
 
-    {   -logic_name => 'A',
+    {   -logic_name => 'Alpha',
         -flow_into  => {
-           '3->A' => [ 'B' ],
-           'A->2' => [ 'C' ],
-           1      => [ 'E' ],
+           '3->A' => [ 'Beta' ],
+           'A->2' => [ 'Gamma' ],
+           1      => [ 'Epsilon' ],
         },
     },
-    {   -logic_name => 'B',
+    {   -logic_name => 'Beta',
         -flow_into  => {
-           2 => [ 'D' ],
+           2 => [ 'Delta' ],
         },
     },
-    {   -logic_name => 'C',
+    {   -logic_name => 'Gamma',
     },
-    {   -logic_name => 'D',
+    {   -logic_name => 'Delta',
     },
-    {   -logic_name => 'E',
+    {   -logic_name => 'Epsilon',
     },
 
 
