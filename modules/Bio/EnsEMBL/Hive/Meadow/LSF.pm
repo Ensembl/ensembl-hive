@@ -8,6 +8,29 @@
 
     This is the 'LSF' implementation of Meadow
 
+=head1 TODO
+
+=over
+
+=item LSF being temporarily unavailable
+
+We should probably implement a method using IPC::Open3 (see Bio::EnsEMBL::Compara::Utils::RunCommand)
+that captures stderr and can parse stdout on the fly.
+Depending on the Meadow method, we should either retry say 1 minute later, or
+return something like undef to tell the caller that no operation was done.
+
+ Beekeeper : loop #15 ======================================================
+ GarbageCollector:       Checking for lost Workers...
+ GarbageCollector:       [Queen:] out of 20 Workers that haven't checked in during the last 5 seconds...
+ GarbageCollector:       [LSF/EBI Meadow:]       LOST:20
+
+ GarbageCollector:       Discovered 20 lost LSF Workers
+ LSF::parse_report_source_line( "bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]'" )
+ ls_getclustername(): Slave LIM configuration is not ready yet. Please give file name.
+ Could not read from 'bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]' '4126835[10]' '4126835[39]' '4126850[23]' '4126835[3]' '4126835[19]' '4126835[31]' '4126835[40]' '4126835[41]' '4126850[5]' '4126850[41]' '4126850[2]' '4126850[3]' '4126835[5]' '4126835[33]' '4126850[7]' '4126850[42]''. Received the error 255
+
+=back
+
 =head1 LICENSE
 
     Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
