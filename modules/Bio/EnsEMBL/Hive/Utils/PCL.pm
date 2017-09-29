@@ -62,7 +62,7 @@ sub INPUT_PLUS {
 
 
 sub parse_wait_for {
-    my ($pipeline, $ctrled_analysis, $wait_for) = @_;
+    my ($pipeline, $ctrled_analysis, $wait_for, $verbose) = @_;
 
     $wait_for ||= [];
     $wait_for   = [ $wait_for ] unless(ref($wait_for) eq 'ARRAY'); # force scalar into an arrayref
@@ -73,7 +73,7 @@ sub parse_wait_for {
             my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                 or warn "WARNING: Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
         }
-        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule',   # NB: add_new_or_update returns a list
+        my ($c_rule) = $pipeline->add_new_or_update( 'AnalysisCtrlRule', $verbose,  # NB: add_new_or_update returns a list
                 'condition_analysis_url'    => $condition_url,
                 'ctrled_analysis'           => $ctrled_analysis,
         );
@@ -82,7 +82,7 @@ sub parse_wait_for {
 
 
 sub parse_flow_into {
-    my ($pipeline, $from_analysis, $flow_into) = @_;
+    my ($pipeline, $from_analysis, $flow_into, $verbose) = @_;
 
     $flow_into   = { 1 => $flow_into } unless(ref($flow_into) eq 'HASH'); # force non-hash into a hash
 
@@ -174,7 +174,7 @@ sub parse_flow_into {
                         my $template_string = (ref($input_id_template) ? stringify($input_id_template) : $input_id_template);
                         my $extend_param_stack = ($template_string && $template_string=~s/^\+(.*)$/$1/) ? 1 : 0;
 
-                        my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget',   # NB: add_new_or_update returns a list
+                        my ($df_target) = $pipeline->add_new_or_update( 'DataflowTarget', $verbose,  # NB: add_new_or_update returns a list
                             'source_dataflow_rule'      => undef,           # NB: had to create the "suspended targets" to break the dependence circle
                             'on_condition'              => $on_condition,
                             'input_id_template'         => $template_string,
@@ -188,7 +188,7 @@ sub parse_flow_into {
 
             my $suspended_targets = $pipeline->collection_of('DataflowTarget')->find_all_by( 'source_dataflow_rule', undef );
 
-            my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule',   # NB: add_new_or_update returns a list
+            my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule', $verbose,  # NB: add_new_or_update returns a list
                 'from_analysis'             => $from_analysis,
                 'branch_code'               => $branch_name_or_code,
                 'funnel_dataflow_rule'      => $funnel_dataflow_rule,

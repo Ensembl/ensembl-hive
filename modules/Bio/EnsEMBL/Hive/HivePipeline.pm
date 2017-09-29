@@ -227,6 +227,9 @@ sub add_new_or_update {
     my $self = shift @_;
     my $type = shift @_;
 
+    # $verbose is an extra optional argument that sits between the type and the object hash
+    my $verbose = scalar(@_) % 2 ? shift : 0;
+
     my $class   = 'Bio::EnsEMBL::Hive::'.$type;
     my $coll    = $self->collection_of( $type );
 
@@ -241,7 +244,7 @@ sub add_new_or_update {
         if( $object = $coll->find_one_by( %unikey_pairs ) ) {
             my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object);
             if(keys %other_pairs) {
-                warn "Updating $found_display with (".stringify(\%other_pairs).")\n";
+                print "Updating $found_display with (".stringify(\%other_pairs).")\n" if $verbose;
                 if( ref($object) eq 'HASH' ) {
                     @$object{ keys %other_pairs } = values %other_pairs;
                 } else {
@@ -250,12 +253,13 @@ sub add_new_or_update {
                     }
                 }
             } else {
-                warn "Found a matching $found_display\n";
+                print "Found a matching $found_display\n" if $verbose;
             }
         } elsif( my $dark_coll = $coll->dark_collection) {
             if( my $shadow_object = $dark_coll->find_one_by( %unikey_pairs ) ) {
                 $dark_coll->forget( $shadow_object );
-#                warn "Found a shadow on the dark side, forgetting it\n";
+                my $found_display = UNIVERSAL::can($shadow_object, 'toString') ? $shadow_object->toString : stringify($shadow_object);
+                print "Undeleting $found_display\n" if $verbose;
             }
         }
     } else {
@@ -271,7 +275,7 @@ sub add_new_or_update {
         $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
 
         my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
-        warn "Created a new $found_display\n";
+        print "Created a new $found_display\n" if $verbose;
     }
 
     return ($object, $newly_made);

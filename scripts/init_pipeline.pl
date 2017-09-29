@@ -90,6 +90,10 @@ If set to 1, forces the (re)creation of the hive database even if a previous ver
 
 If set to 1, does not run the pipeline_create_commands section of the pipeline. Useful to "top-up" an existing database.
 
+=item --hive_debug_init <0|1>
+
+If set to 1, will show the objects (analyses, data-flow rules, etc) that are parsed from the PipeConfig file.
+
 =item --tweak <string>
 
 Apply tweaks to the pipeline. See tweak_pipeline.pl for details of tweaking syntax

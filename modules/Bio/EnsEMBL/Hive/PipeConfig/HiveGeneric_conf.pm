@@ -115,6 +115,7 @@ sub default_options {
         'hive_default_max_retry_count'      => 3,       # default value for the max_retry_count parameter of each analysis
         'hive_force_init'                   => 0,       # setting it to 1 will drop the database prior to creation (use with care!)
         'hive_no_init'                      => 0,       # setting it to 1 will skip pipeline_create_commands (useful for topping up)
+        'hive_debug_init'                   => 0,       # setting it to 1 will make init_pipeline.pl tell everything it's doing
 
         'pipeline_name'                     => $self->default_pipeline_name(),
 
@@ -309,6 +310,12 @@ sub db_cmd {
 }
 
 
+sub print_debug {
+    my $self = shift;
+    print @_ if $self->o('hive_debug_init');
+}
+
+
 sub process_pipeline_name {
     my ($self, $ppn) = @_;
 
@@ -351,7 +358,7 @@ sub process_options {
     $self->{'_extra_options'} = $self->load_cmdline_options( $self->pre_options() );
     $self->root()->{'pipeline_url'}     = $self->{'_extra_options'}{'pipeline_url'};
 
-    my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table' );
+    my @use_cases = ( 'pipeline_wide_parameters', 'resource_classes', 'pipeline_analyses', 'beekeeper_extra_cmdline_options', 'hive_meta_table', 'print_debug' );
     if($include_pcc_use_case) {
         unshift @use_cases, 'overridable_pipeline_create_commands';
         push @use_cases, 'useful_commands_legend';
@@ -388,13 +395,12 @@ sub run_pipeline_create_commands {
         # We allow commands to be given as an arrayref, but we join the
         # array elements anyway
         (my $dummy,$cmd) = join_command_args($cmd);
-        warn "Running the command:\n\t$cmd\n";
+        $self->print_debug( "$cmd\n" );
         if(my $retval = system($cmd)) {
             die "Return value = $retval, possibly an error\n";
-        } else {
-            warn "Done.\n\n";
         }
     }
+    $self->print_debug( "\n" );
 }
 
 
@@ -410,27 +416,27 @@ sub add_objects_from_config {
     my $self        = shift @_;
     my $pipeline    = shift @_;
 
-    warn "Adding hive_meta table entries ...\n";
+    $self->print_debug( "Adding hive_meta table entries ...\n" );
     my $new_meta_entries = $self->hive_meta_table();
     while( my ($meta_key, $meta_value) = each %$new_meta_entries ) {
-        $pipeline->add_new_or_update( 'MetaParameters',
+        $pipeline->add_new_or_update( 'MetaParameters', $self->o('hive_debug_init'),
             'meta_key'      => $meta_key,
             'meta_value'    => $meta_value,
         );
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 
-    warn "Adding pipeline-wide parameters ...\n";
+    $self->print_debug( "Adding pipeline-wide parameters ...\n" );
     my $new_pwp_entries = $self->pipeline_wide_parameters();
     while( my ($param_name, $param_value) = each %$new_pwp_entries ) {
-        $pipeline->add_new_or_update( 'PipelineWideParameters',
+        $pipeline->add_new_or_update( 'PipelineWideParameters', $self->o('hive_debug_init'),
             'param_name'    => $param_name,
             'param_value'   => stringify($param_value),
         );
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 
-    warn "Adding Resources ...\n";
+    $self->print_debug( "Adding Resources ...\n" );
     my $resource_classes_hash = $self->resource_classes;
     unless( exists $resource_classes_hash->{'default'} ) {
         warn "\tNB:'default' resource class is not in the database (did you forget to inherit from SUPER::resource_classes ?) - creating it for you\n";
@@ -449,7 +455,7 @@ sub add_objects_from_config {
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
 
-            my ($resource_description) = $pipeline->add_new_or_update( 'ResourceDescription',   # NB: add_new_or_update returns a list
+            my ($resource_description) = $pipeline->add_new_or_update( 'ResourceDescription', $self->o('hive_debug_init'),   # NB: add_new_or_update returns a list
                 'resource_class'        => $resource_class,
                 'meadow_type'           => $meadow_type,
                 'submission_cmd_args'   => $resource_param_list->[0],
@@ -458,7 +464,7 @@ sub add_objects_from_config {
 
         }
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 
 
     my $amh = Bio::EnsEMBL::Hive::Valley->new()->available_meadow_hash();
@@ -466,7 +472,7 @@ sub add_objects_from_config {
     my %seen_logic_name = ();
     my %analyses_by_logic_name = map {$_->logic_name => $_} $pipeline->collection_of('Analysis')->list();
 
-    warn "Adding Analyses ...\n";
+    $self->print_debug( "Adding Analyses ...\n" );
     foreach my $aha (@{$self->pipeline_analyses}) {
         my %aha_copy = %$aha;
         my ($logic_name, $module, $parameters_hash, $comment, $tags, $input_ids, $blocked, $batch_size, $hive_capacity, $failed_job_tolerance,
@@ -515,7 +521,7 @@ sub add_objects_from_config {
             $parameters_hash ||= {};    # in case nothing was given
             die "'-parameters' has to be a hash" unless(ref($parameters_hash) eq 'HASH');
 
-            ($analysis) = $pipeline->add_new_or_update( 'Analysis',   # NB: add_new_or_update returns a list
+            ($analysis) = $pipeline->add_new_or_update( 'Analysis', $self->o('hive_debug_init'),   # NB: add_new_or_update returns a list
                 'logic_name'            => $logic_name,
                 'module'                => $module,
                 'language'              => $language,
@@ -534,7 +540,7 @@ sub add_objects_from_config {
             );
             $analysis->get_compiled_module_name();  # check if it compiles and is named correctly
 
-            ($stats) = $pipeline->add_new_or_update( 'AnalysisStats',   # NB: add_new_or_update returns a list
+            ($stats) = $pipeline->add_new_or_update( 'AnalysisStats', $self->o('hive_debug_init'),   # NB: add_new_or_update returns a list
                 'analysis'              => $analysis,
                 'status'                => $blocked ? 'BLOCKED' : 'EMPTY',  # be careful, as this "soft" way of blocking may be accidentally unblocked by deep sync
                 'total_job_count'       => 0,
@@ -563,9 +569,9 @@ sub add_objects_from_config {
             }
         }
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 
-    warn "Adding Control and Dataflow Rules ...\n";
+    $self->print_debug( "Adding Control and Dataflow Rules ...\n" );
     foreach my $aha (@{$self->pipeline_analyses}) {
 
         my ($logic_name, $wait_for, $flow_into)
@@ -574,23 +580,23 @@ sub add_objects_from_config {
         my $analysis = $analyses_by_logic_name{$logic_name};
 
         if($wait_for) {
-            Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($pipeline, $analysis, $wait_for);
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($pipeline, $analysis, $wait_for, $self->o('hive_debug_init'));
         }
 
         if($flow_into) {
-            Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($pipeline, $analysis, $flow_into);
+            Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($pipeline, $analysis, $flow_into, $self->o('hive_debug_init'));
         }
 
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 
     # Block the analyses that should be blocked
-    warn "Blocking the analyses that should be ...\n";
+    $self->print_debug( "Blocking the analyses that should be ...\n" );
     foreach my $stats ($pipeline->collection_of('AnalysisStats')->list()) {
         $stats->check_blocking_control_rules('no_die');
         $stats->determine_status();
     }
-    warn "Done.\n\n";
+    $self->print_debug( "Done.\n\n" );
 }
 
 
