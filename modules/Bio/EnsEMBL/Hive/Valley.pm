@@ -193,6 +193,15 @@ sub generate_limiters {
 }
 
 
+=head2 query_worker_statuses
+
+    Arg[1] : Hashref {meadow_type}{meadow_name}{meadow_user}{process_id} => $db_status
+    Output : Hashref {meadow_signature}{meadow_status} => [process_ids]
+
+    Description : Queries the available meadows to get the (meadow) status of the given workers
+
+=cut
+
 sub query_worker_statuses {
     my ($self, $db_registered_workers_from_all_meadows_deemed_alive) = @_;
 

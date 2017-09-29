@@ -431,9 +431,11 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     warn "GarbageCollector:\tChecking for lost Workers...\n";
 
+    # all non-DEAD workers found in the database, with their meadow status
     my $reconciled_worker_statuses          = $valley->query_worker_statuses( $self->registered_workers_attributes );
+    # selects the workers available in this valley. does not query the database / meadow
     my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $reconciled_worker_statuses );
-
+    # this may pick up workers that have been created since the last fetch
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
@@ -451,7 +453,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
             my $meadow_type = $worker->meadow_type;
             my $process_id  = $worker->process_id;
-            my $status = $pid_to_worker_status->{$process_id};
+            my $status = $pid_to_worker_status->{$process_id} // 'DEFERRED_CHECK';  # Workers that have been created between registered_workers_attributes and fetch_overdue_workers
 
             if($bury_unkwn_workers and ($status eq 'UNKWN')) {
                 if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
@@ -471,7 +473,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             if(($status eq 'LOST') or ($status eq 'SUBMITTED')) {
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
-            } else {  # can be RUN|PEND|xSUSP
+            } elsif ($status ne 'DEFERRED_CHECK') {  # can be RUN|PEND|xSUSP
 
                 $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );  # only prepare once at most
 
