@@ -72,8 +72,8 @@ Both are extensively used by the Ensembl project and are regularly updated. The 
 External users have contributed other meadows:
 
 * **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](https://github.com/Ensembl/ensembl-hive-sge).
-* **HTCondor**. A meadow that supports [HTCondor](https://research.cs.wisc.edu/htcondor/). Available for download on GitHub at [muffato/ensembl-hive-htcondor](https://github.com/muffato/ensembl-hive-htcondor).
-* **PBSPro**. A meadow that supports [PBS Pro](http://www.pbspro.org). Available for download on GitHub at [ens-lg4/ensembl-hive-pbspro](https://github.com/ens-lg4/ensembl-hive-pbspro).
+* **HTCondor**. A meadow that supports [HTCondor](https://research.cs.wisc.edu/htcondor/). Available for download on GitHub at [Ensembl/ensembl-hive-htcondor](https://github.com/Ensembl/ensembl-hive-htcondor).
+* **PBSPro**. A meadow that supports [PBS Pro](http://www.pbspro.org). Available for download on GitHub at [Ensembl/ensembl-hive-pbspro](https://github.com/Ensembl/ensembl-hive-pbspro).
 
 These two have a more limited support since we can only test them via
 single-machine Docker installations.  They may be at times out of sync with
