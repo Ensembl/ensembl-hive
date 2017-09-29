@@ -15,7 +15,7 @@ BEGIN {
 use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
 
-use Bio::EnsEMBL::Hive::Utils ('report_versions');
+use Bio::EnsEMBL::Hive::Version qw(report_versions);
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Scripts::RunWorker;
 

@@ -15,7 +15,7 @@ use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Hive::Utils ('report_versions');
+use Bio::EnsEMBL::Hive::Version ('report_versions');
 
 
 sub main {

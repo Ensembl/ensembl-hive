@@ -17,9 +17,10 @@ use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
 
 use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'report_versions');
+use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Version ('report_versions');
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Beekeeper;

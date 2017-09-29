@@ -57,14 +57,10 @@ use warnings;
 use Carp ('confess');
 use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
-use Bio::EnsEMBL::Hive::Meadow;
-use Bio::EnsEMBL::Hive::Valley;
-use Bio::EnsEMBL::Hive::Version;
-use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc report_versions throw join_command_args whoami);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -338,32 +334,6 @@ sub go_figure_dbc {
             }
         }
         die "Sorry, could not figure out how to make a DBConnection object out of '$foo'";
-    }
-}
-
-
-sub report_versions {
-    require Bio::EnsEMBL::Hive::Version;
-    require Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
-    require Bio::EnsEMBL::Hive::GuestProcess;
-    print "CodeVersion\t".Bio::EnsEMBL::Hive::Version->get_code_version()."\n";
-    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
-    print "CompatibleGuestLanguageCommunicationProtocolVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
-
-    print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
-    my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
-    foreach my $meadow_class (@{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
-        $meadow_class=~/^${meadow_class_path}::(.+)$/;
-        my $meadow_driver   = $1;
-        my $meadow_version  = $meadow_class->get_meadow_version;
-        my $compatible      = $meadow_class->check_version_compatibility;
-        my $status          = $compatible
-                                ? ( $meadow_class->name
-                                    ? 'available'
-                                    : 'unavailable'
-                                   )
-                                : 'incompatible';
-        print '',join("\t", 'Meadow::'.$meadow_driver, $meadow_version, $status)."\n";
     }
 }
 

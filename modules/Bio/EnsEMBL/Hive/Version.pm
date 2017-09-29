@@ -38,11 +38,44 @@ package Bio::EnsEMBL::Hive::Version;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Meadow;
+use Bio::EnsEMBL::Hive::Valley;
+use Bio::EnsEMBL::Hive::GuestProcess;
+use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
+
+use Exporter 'import';
+our @EXPORT_OK = qw(get_code_version report_versions);
+
+
 our $VERSION = '2.5';
 
 sub get_code_version {
 
     return $VERSION;
 }
+
+
+sub report_versions {
+    print "CodeVersion\t".get_code_version()."\n";
+    print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
+    print "CompatibleGuestLanguageCommunicationProtocolVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
+
+    print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
+    my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
+    foreach my $meadow_class (@{ Bio::EnsEMBL::Hive::Valley->loaded_meadow_drivers }) {
+        $meadow_class=~/^${meadow_class_path}::(.+)$/;
+        my $meadow_driver   = $1;
+        my $meadow_version  = $meadow_class->get_meadow_version;
+        my $compatible      = $meadow_class->check_version_compatibility;
+        my $status          = $compatible
+                                ? ( $meadow_class->name
+                                    ? 'available'
+                                    : 'unavailable'
+                                   )
+                                : 'incompatible';
+        print '',join("\t", 'Meadow::'.$meadow_driver, $meadow_version, $status)."\n";
+    }
+}
+
 
 1;
