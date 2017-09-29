@@ -473,10 +473,15 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             if(($status eq 'LOST') or ($status eq 'SUBMITTED')) {
 
                 $mt_and_pid_to_lost_worker{$meadow_type}{$process_id} = $worker;
-            } elsif ($status ne 'DEFERRED_CHECK') {  # can be RUN|PEND|xSUSP
 
+            } elsif ($status eq 'DEFERRED_CHECK') {
+
+                # do nothing now, wait until the next pass to check on this worker
+
+            } else {
+
+                # RUN|PEND|xSUSP handling
                 $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );  # only prepare once at most
-
                 $update_when_seen_sth->execute( $worker->dbID );
             }
         } else {
