@@ -215,8 +215,7 @@ sub query_worker_statuses {
         my $worker_statuses_of_this_meadow      = $reconciled_worker_statuses{ $meadow->signature } = {};   # manually vivify every Meadow's subhash
 
         while(my ($meadow_user, $db_user_subhash) = each %$db_registered_workers_this_meadow) { # start the reconciliation from the DB view and check it against Meadow view
-            while(my ($worker_pid, $db_worker_attribs) = each %$db_user_subhash) {
-                my $db_worker_status    = $db_worker_attribs->{'status'};
+            while(my ($worker_pid, $db_worker_status) = each %$db_user_subhash) {
                 my $combined_status     = $meadow_seen_worker_status{$worker_pid}
                                        // ( ($db_worker_status=~/^(?:SUBMITTED|DEAD)$/) ? $db_worker_status : 'LOST' );
 
