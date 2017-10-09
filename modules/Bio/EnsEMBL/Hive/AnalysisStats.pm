@@ -410,13 +410,13 @@ sub check_blocking_control_rules {
             my $condition_analysis  = $ctrl_rule->condition_analysis(undef, $no_die);
             unless ($condition_analysis) {
                 $all_conditions_satisfied = 0;
-                next
+                last
             }
 
             my $condition_stats     = $condition_analysis->stats;
             unless ($condition_stats) {
                 $all_conditions_satisfied = 0;
-                next
+                last
             }
 
             # Make sure we use fresh properties of the AnalysisStats object
