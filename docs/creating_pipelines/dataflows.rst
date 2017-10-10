@@ -207,7 +207,7 @@ until a Dataflow event is produced on branch #2. This will create *one* semaphor
 Then, eHive will keep on grouping the following Dataflow events on branch #3 until there is
 another Dataflow event on branch #2, which will create *another* semaphore group.
 
-The process is repeated until exhaustion of all Dataflow events. This requires the analysis A to
+The process is repeated until exhaustion of all Dataflow events. This requires the analysis Alpha to
 emit the events in the right order. There are as many semaphore groups as events on branch #2,
 each job created on branch #2 is the *funnel* of 0, 1 or many jobs of the *fan* that is defined
 on branch #3.
@@ -230,7 +230,7 @@ Mixing all patterns
 ~~~~~~~~~~~~~~~~~~~
 
 Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
-with the jobs created in te analysis D.
+with the jobs created in te analysis Delta.
 
 Upon success of the Alpha job, the *autoflow* will create a job in analysis Epsilon which is *not* controlled
 by any of the Beta or Gamma jobs. It can thus start immediately.
