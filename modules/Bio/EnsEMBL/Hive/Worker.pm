@@ -601,6 +601,10 @@ sub run {
             $self->adaptor->db->get_AnalysisStatsAdaptor->update_status( $self->current_role->analysis_id, 'ALL_CLAIMED' );
         }
 
+        # Respecialize if:
+        #  1) No work to do (computed across all
+        #  2) allowed to by the command-line option
+        #  3) [heuristic] there are some possible candidates for the next analysis (i.e. no pattern set or the pattern has multiple components). This doesn't guarantee that the pattern will resolve to multiple analyses !
         if( $cod =~ /^(NO_WORK|HIVE_OVERLOAD)$/ and $self->can_respecialize and (!$specialization_arghash->{'-analyses_pattern'} or $specialization_arghash->{'-analyses_pattern'}!~/^\w+$/) ) {
             my $old_role = $self->current_role;
             $self->adaptor->db->get_RoleAdaptor->finalize_role( $old_role, 0 );

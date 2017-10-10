@@ -424,6 +424,7 @@ sub _subst_one_hashpair {
 
     my $value;
 
+    # FIXME does not allow substitution of parameters names that have non-alphanumeric characters
     if($inside_hashes=~/^\w+$/) {
 
         $value =  $self->_param_possibly_overridden($inside_hashes, $overriding_hash);
