@@ -230,7 +230,7 @@ Mixing all patterns
 ~~~~~~~~~~~~~~~~~~~
 
 Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
-with the jobs created in te analysis Delta.
+with the jobs created in the analysis Delta.
 
 Upon success of the Alpha job, the *autoflow* will create a job in analysis Epsilon which is *not* controlled
 by any of the Beta or Gamma jobs. It can thus start immediately.
