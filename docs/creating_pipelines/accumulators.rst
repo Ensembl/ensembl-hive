@@ -162,10 +162,10 @@ Hash
 ~~~~
 
 :Basic syntax:
-    ``?accu_name=hash_name&accu_address=[key_name]``
+    ``?accu_name=hash_name&accu_address={key_name}``
 
 :Extended syntax:
-    ``?accu_name=hash_name&accu_address=[key_name]&accu_input_variable=hash_item``
+    ``?accu_name=hash_name&accu_address={key_name}&accu_input_variable=hash_item``
 
 Here the emitting job must flow both the value of the hash item (either
 via the ``hash_name`` or ``hash_item`` parameter) and the key name
@@ -182,8 +182,8 @@ In Perl, this is equivalent to doing this:
 :Accumulator extension:
    ::
 
-       $hash_name[$key_name] = $hash_name;          # Basic syntax
-       $hash_name[$key_name] = $hash_item;          # Extended syntax
+       $hash_name{$key_name} = $hash_name;          # Basic syntax
+       $hash_name{$key_name} = $hash_item;          # Extended syntax
 
 :Accumulator retrieval:
    ::
