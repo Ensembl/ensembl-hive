@@ -56,6 +56,11 @@ sub parse {
 
     } else {
 
+        # Perform environment variable substitution separately with and without curly braces.
+        # Make sure expressions stay as they were if we were unable to substitute them.
+        #
+        $url =~ s/\$(?|\{(\w+)\}|(\w+))/defined($ENV{$1})?"$ENV{$1}":"\$$1"/eg;
+
         if( ($dbconn_part, @$url_parts_hash{'driver', 'user', 'pass', 'host', 'port', 'dbname'}, $table_name, $tparam_name, $tparam_value, $conn_param_string) =
             $url =~ m{^((\w*)://(?:(\w+)(?:\:([^/\@]*))?\@)?(?:([\w\-\.]+)(?:\:(\d*))?)?/([\w\-\.]*))(?:/(\w+)(?:\?(\w+)=([\w\[\]\{\}]*))?)?((?:;(\w+)=(\w+))*)$} ) {
 
