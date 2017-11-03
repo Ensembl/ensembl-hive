@@ -22,8 +22,8 @@ def find_module(module_name):
     # Import the whole module chain
     try:
         module = __import__(module_name)
-    except ImportError:
-        import_error("No module named '{0}'".format(module_name))
+    except ImportError as e:
+        import_error("Cannot import '{0}' : {1}".format(module_name, e))
 
     # Traverse the namespaces down to the module
     # e.g. If module_name is "eHive.examples.LongMult.AddTogether", module represents "LongMult" at this stage
