@@ -174,8 +174,8 @@ sub new {
     pipe($PARENT_RDR, $CHILD_WTR) or die 'Could not create a pipe to send data to the child !';
     pipe($CHILD_RDR,  $PARENT_WTR) or die 'Could not create a pipe to get data from the child !';;
 
-    $debug = ($debug && ($debug > 1));  # Only advanced levels of debug will show the GuestProcess protocol messages
-    if ($debug) {
+    my $protocol_debug = ($debug && ($debug > 1));  # Only advanced levels of debug will show the GuestProcess protocol messages
+    if ($protocol_debug) {
         print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
         print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
         print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
@@ -188,13 +188,13 @@ sub new {
         # In the parent
         close $PARENT_RDR;
         close $PARENT_WTR;
-        print STDERR "parent is PID $$\n" if $debug;
+        print STDERR "parent is PID $$\n" if $protocol_debug;
     } else {
         die "cannot fork: $!" unless defined $pid;
         # In the child
         close $CHILD_RDR;
         close $CHILD_WTR;
-        print STDERR "child is PID $$\n" if $debug;
+        print STDERR "child is PID $$\n" if $protocol_debug;
 
         # Do not close the non-standard file descriptors on exec(): the child process will need them !
         use Fcntl;
@@ -215,7 +215,7 @@ sub new {
     $self->child_in($CHILD_WTR);
     $self->child_pid($pid);
     $self->json_formatter( JSON->new()->indent(0) );
-    $self->{'_protocol_debug'} = $debug; # controls the GuestProcess protocol, not the worker
+    $self->{'_protocol_debug'} = $protocol_debug; # controls the GuestProcess protocol, not the worker
 
     $self->print_debug('CHECK VERSION NUMBER');
     my $other_version = $self->read_message()->{content};
