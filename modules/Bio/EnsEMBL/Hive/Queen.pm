@@ -274,7 +274,7 @@ sub specialize_worker {
 
     if( $job_id ) {
 
-        warn "resetting and fetching job for job_id '$job_id'\n";
+        $worker->worker_say("resetting and fetching job for job_id '$job_id'\n");
 
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
@@ -294,7 +294,7 @@ sub specialize_worker {
         }
 
         if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
-            warn "Increasing the semaphore count of the dependent job";
+            $worker->worker_say("Increasing the semaphore count of the dependent job");
             $controlled_semaphore->increase_by( [ $job ] );
         }
 
