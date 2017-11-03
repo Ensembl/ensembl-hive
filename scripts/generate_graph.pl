@@ -61,7 +61,7 @@ sub main {
 
     } else {
         $self->{'pipeline'} = Bio::EnsEMBL::Hive::HivePipeline->new();
-
+        die "A pipeline has to be given, either via -url/-reg* or via -pipeconfig" unless $self->{'pipeconfigs'};
     }
 
     foreach my $pipeconfig (@{ $self->{'pipeconfigs'} || [] }) {
