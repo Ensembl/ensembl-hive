@@ -509,7 +509,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
             }
 
-            warn "GarbageCollector:\tRecording workers' missing attributes, registereing their death, releasing their jobs and cleaning up temp directories\n";
+            warn "GarbageCollector:\tRecording workers' missing attributes, registering their death, releasing their jobs and cleaning up temp directories\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
                 if(my $report_entry = $report_entries && $report_entries->{$process_id}) {
                     my @updated_attribs = ();
