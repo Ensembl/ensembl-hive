@@ -274,11 +274,11 @@ sub process_options {
         my @incomplete_keys = grep {defined $missing_options->{$_}} (keys %$missing_options);
         if (@missing_keys) {
             warn "The following options are missing:\n";
-            print "\t$_\n" for @missing_keys;
+            print "\t$_\n" for sort @missing_keys;
         }
         if (@incomplete_keys) {
             warn "The following options are incomplete:\n";
-            print "\t$_ needs '".($missing_options->{$_})."'\n" for @incomplete_keys;
+            print "\t$_ needs '".($missing_options->{$_})."'\n" for sort @incomplete_keys;
         }
         exit(1);
     } else {
