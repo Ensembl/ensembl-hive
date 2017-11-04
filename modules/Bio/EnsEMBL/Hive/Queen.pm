@@ -274,7 +274,7 @@ sub specialize_worker {
 
     if( $job_id ) {
 
-        $worker->worker_say("resetting and fetching job for job_id '$job_id'\n");
+        $worker->worker_say("resetting and fetching job for job_id '$job_id'");
 
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
