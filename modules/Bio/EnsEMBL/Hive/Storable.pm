@@ -165,6 +165,7 @@ sub AUTOLOAD {
                 my $collection = $self->hive_pipeline && $self->hive_pipeline->collection_of($AdaptorType);
 
                 if( $collection and $self->{$foo_obj_method_name} = $collection->find_one_by('dbID', $foo_object_id) ) { # careful: $AdaptorType may not be unique (aliases)
+                    weaken($self->{$foo_obj_method_name});
 #                    warn "Lazy-loading object from $AdaptorType collection\n";
                 } elsif(my $adaptor = $self->adaptor) {
 #                    warn "Lazy-loading object from $AdaptorType adaptor\n";
