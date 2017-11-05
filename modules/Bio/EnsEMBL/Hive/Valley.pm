@@ -210,6 +210,9 @@ sub query_worker_statuses {
     foreach my $meadow (@{ $self->get_available_meadow_list }) {    # only go through the available meadows
         my $db_registered_workers_this_meadow   = $db_registered_workers_from_all_meadows_deemed_alive->{$meadow->type}{$meadow->cached_name};
         my $involved_users                      = [keys %$db_registered_workers_this_meadow];
+
+        next unless @$involved_users;
+
         my %meadow_seen_worker_status           = map { ( $_->[0] => $_->[2] ) } @{ $meadow->status_of_all_our_workers( $involved_users ) };
 
         my $worker_statuses_of_this_meadow      = $reconciled_worker_statuses{ $meadow->signature } = {};   # manually vivify every Meadow's subhash
