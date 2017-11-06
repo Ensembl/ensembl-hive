@@ -215,9 +215,9 @@ sub save_collections {
     foreach my $analysis ( $self->collection_of( 'Analysis' )->list ) {
         if(my $our_jobs = $analysis->jobs_collection ) {
             $job_adaptor->store( $our_jobs );
-            foreach my $job (@$our_jobs) {
+#            foreach my $job (@$our_jobs) {
 #                warn "Stored ".$job->toString()."\n";
-            }
+#            }
         }
     }
 }
