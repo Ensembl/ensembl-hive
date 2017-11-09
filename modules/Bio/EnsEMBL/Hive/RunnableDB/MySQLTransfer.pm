@@ -54,6 +54,7 @@ sub param_defaults {
         'table'         => '',
         'where'         => undef,
         'filter_cmd'    => undef,
+        'lock_tables'   => 0,
     };
 }
 
@@ -72,6 +73,8 @@ sub param_defaults {
     param('where'):         filter for rows to be copied/merged.
 
     param('table'):         table name to be copied/merged.
+
+    param('lock_tables'):   [boolean] when 1, lock tables when dumping the source database. Default if not set (or set to 0) is to not lock (runs mysqldump with --skip-lock-tables) 
 
 =cut
 
@@ -120,9 +123,11 @@ sub run {
     my $table       = $self->param('table');
     my $where       = $self->param('where');
     my $filter_cmd  = $self->param('filter_cmd');
+    my $lock_tables = $self->param('lock_tables');
 
     my $cmd = 'mysqldump '
                 . { 'overwrite' => '', 'topup' => '--no-create-info ', 'insertignore' => '--no-create-info --insert-ignore ' }->{$mode}
+                . ($lock_tables ? '' : '--skip-lock-tables ')
                 . $self->mysql_conn_from_dbc($src_dbc)
                 . " $table "
                 . (defined($where) ? "--where '$where' " : '')
