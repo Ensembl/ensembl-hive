@@ -61,6 +61,7 @@ sub param_defaults {
 
         # Overrides default values of SystemCmd
         'use_bash_pipefail'         => 1,
+        'lock_tables'   => 0,
     };
 }
 
@@ -79,6 +80,8 @@ sub param_defaults {
     param('where'):         filter for rows to be copied/merged.
 
     param('table'):         table name to be copied/merged.
+
+    param('lock_tables'):   [boolean] when 1, lock tables when dumping the source database. Default if not set (or set to 0) is to not lock (runs mysqldump with --skip-lock-tables) 
 
 =cut
 
@@ -112,6 +115,9 @@ sub fetch_input {
 
     my $mode_options = { 'overwrite' => [], 'topup' => [qw(--no-create-info --insert-ignore)], 'insertignore' => [qw(--no-create-info --insert-ignore)] }->{$mode};
     die "Mode '$mode' not recognized. Should be 'overwrite', 'topup' or 'insertignore'\n" unless $mode_options;
+
+    my $lock_tables = $self->param('lock_tables');
+    push(@{$mode_options}, '--skip-lock-tables') unless ($lock_tables);
 
     my $filter_cmd      = $self->param('filter_cmd');
 
