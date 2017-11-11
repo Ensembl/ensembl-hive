@@ -442,6 +442,7 @@ sub add_objects_from_config {
         $resource_classes_hash->{'default'} = {};
     }
     my @resource_classes_order = sort { ($b eq 'default') or -($a eq 'default') or ($a cmp $b) } keys %$resource_classes_hash; # put 'default' to the front
+    my %cached_resource_classes = map {$_->name => $_} $pipeline->collection_of('ResourceClass')->list();
     foreach my $rc_name (@resource_classes_order) {
         if($rc_name=~/^\d+$/) {
             die "-rc_id syntax is no longer supported, please use the new resource notation (-rc_name)";
@@ -450,6 +451,7 @@ sub add_objects_from_config {
         my ($resource_class) = $pipeline->add_new_or_update( 'ResourceClass',   # NB: add_new_or_update returns a list
             'name'  => $rc_name,
         );
+        $cached_resource_classes{$rc_name} = $resource_class;
 
         while( my($meadow_type, $resource_param_list) = each %{ $resource_classes_hash->{$rc_name} } ) {
             $resource_param_list = [ $resource_param_list ] unless(ref($resource_param_list));  # expecting either a scalar or a 2-element array
@@ -510,7 +512,7 @@ sub add_objects_from_config {
         } else {
 
             $rc_name ||= 'default';
-            my $resource_class = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name)
+            my $resource_class = $cached_resource_classes{$rc_name}
                 or die "Could not find local resource with name '$rc_name', please check that resource_classes() method of your PipeConfig either contains or inherits it from the parent class";
 
             if ($meadow_type and not exists $amh->{$meadow_type}) {
