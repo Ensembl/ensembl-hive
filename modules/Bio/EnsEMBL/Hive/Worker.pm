@@ -768,6 +768,7 @@ sub run_one_batch {
             $self->more_work_done( $job_partial_timing );
             $jobs_done_here++;
             $job->set_and_update_status('DONE');
+            $self->adaptor->db->get_AnalysisStatsAdaptor->increment_a_counter( 'done_job_count', 1, $job->analysis_id );
 
             if( my $controlled_semaphore = $job->controlled_semaphore ) {
                 $controlled_semaphore->decrease_by( [ $job ] );
