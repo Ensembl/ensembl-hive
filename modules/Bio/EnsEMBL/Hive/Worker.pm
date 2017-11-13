@@ -712,6 +712,7 @@ sub run_one_batch {
             $self->more_work_done( $job_partial_timing );
             $jobs_done_here++;
             $job->set_and_update_status('DONE');
+            $self->adaptor->db->get_AnalysisStatsAdaptor->increment_a_counter( 'done_job_count', 1, $job->analysis_id );
 
             if(my $semaphored_job_id = $job->semaphored_job_id) {
                 my $dbc = $self->adaptor->db->dbc;
