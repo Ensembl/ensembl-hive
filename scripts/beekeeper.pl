@@ -962,27 +962,27 @@ reset a job back to READY so it can be rerun
 
 =item --reset_failed_jobs
 
-reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
+reset FAILED jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --reset_done_jobs
 
-reset DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+reset DONE and PASSED_ON jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --reset_all_jobs
 
-reset FAILED, DONE and PASSED_ON jobs of -analyses_filter'ed ones back to READY so they can be rerun
+reset FAILED, DONE and PASSED_ON jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --forgive_failed_jobs
 
-mark FAILED jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
+mark FAILED jobs of analyses matching -analyses_pattern as DONE, and update their semaphores. NOTE: This does not make them dataflow
 
 =item --discard_ready_jobs
 
-mark READY jobs of -analyses_filter'ed ones as DONE, and update their semaphores. NOTE: This does not make them dataflow
+mark READY jobs of analyses matching -analyses_pattern as DONE, and update their semaphores. NOTE: This does not make them dataflow
 
 =item --unblock_semaphored_jobs
 
-set SEMAPHORED jobs of -analyses_filter'ed ones to READY so they can start
+set SEMAPHORED jobs of analyses matching -analyses_pattern to READY so they can start
 
 =back
 
