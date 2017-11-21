@@ -530,8 +530,8 @@ __DATA__
     -worker_stats          : show status of each running worker
     -failed_jobs           : show all failed jobs
     -reset_job_id <num>    : reset a job back to READY so it can be rerun
-    -reset_failed_jobs     : reset FAILED jobs of -analyses_filter'ed ones back to READY so they can be rerun
-    -reset_all_jobs        : reset ALL jobs of -analyses_filter'ed ones back to READY so they can be rerun
+    -reset_failed_jobs     : reset FAILED jobs of analyses matching -analyses_pattern back to READY so they can be rerun
+    -reset_all_jobs        : reset ALL jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =head1 LICENSE
 
