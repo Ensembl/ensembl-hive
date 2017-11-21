@@ -40,7 +40,7 @@ export PATH=$PATH:$ENSEMBL_REPO_ROOT_DIR/ensembl-hive/scripts
 cd $ENSEMBL_REPO_ROOT_DIR
 git clone https://github.com/Ensembl/guiHive.git
 
-	# deploy guiHive’s versions:
+	# deploy guiHive's versions:
 cd $ENSEMBL_REPO_ROOT_DIR/guiHive
 ./guihive-deploy.sh
 
