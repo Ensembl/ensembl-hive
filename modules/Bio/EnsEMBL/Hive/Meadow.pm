@@ -167,6 +167,19 @@ sub parse_report_source_line {
     return;
 }
 
+=head2 get_report_entries_for_process_ids
+    Title   :  get_report_entries_for_process_ids
+    Function:  A higher-level method that gets process_ids as input and
+               returns a structure like parse_report_source_line.
+=cut
+
+sub get_report_entries_for_process_ids {
+    my ($self, @process_ids) = @_;
+
+    warn "\t".ref($self)." does not support resource usage logs\n";
+
+    return;
+}
 
 sub get_report_entries_for_time_interval {
     my $self = shift @_;
