@@ -336,7 +336,6 @@ sub get_report_entries_for_process_ids {
     return;
 }
 
-
 =head2 get_report_entries_for_time_interval
 
     Title   :  get_report_entries_for_time_interval
@@ -344,6 +343,7 @@ sub get_report_entries_for_process_ids {
                returns a structure like parse_report_source_line.
 
 =cut
+
 
 sub get_report_entries_for_time_interval {
     my ($self, $from_time, $to_time, $username) = @_;

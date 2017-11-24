@@ -297,14 +297,16 @@ sub get_report_entries_for_process_ids {
 
     my %combined_report_entries = ();
 
-    while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
-        my $cmd = "bacct -l $pid_batch";
+    unless ($self->config_get('AccountingDisabled')) {
+        while (my $pid_batch = join(' ', map { "'$_'" } splice(@_, 0, 20))) {  # can't fit too many pids on one shell cmdline
+            my $cmd = "bacct -l $pid_batch";
 
-#        warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
+#           warn "LSF::get_report_entries_for_process_ids() running cmd:\n\t$cmd\n";
 
-        my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
+            my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
 
-        %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
+            %combined_report_entries = (%combined_report_entries, %$batch_of_report_entries);
+        }
     }
 
     return \%combined_report_entries;
@@ -314,17 +316,21 @@ sub get_report_entries_for_process_ids {
 sub get_report_entries_for_time_interval {
     my ($self, $from_time, $to_time, $username) = @_;
 
-    my $from_timepiece = Time::Piece->strptime($from_time, '%Y-%m-%d %H:%M:%S');
-    $from_time = $from_timepiece->strftime('%Y/%m/%d/%H:%M');
+    my $batch_of_report_entries = {};
 
-    my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
-    $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
+    unless ($self->config_get('AccountingDisabled')) {
+        my $from_timepiece = Time::Piece->strptime($from_time, '%Y-%m-%d %H:%M:%S');
+        $from_time = $from_timepiece->strftime('%Y/%m/%d/%H:%M');
 
-    my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '');
+        my $to_timepiece = Time::Piece->strptime($to_time, '%Y-%m-%d %H:%M:%S') + 2*ONE_MINUTE;
+        $to_time = $to_timepiece->strftime('%Y/%m/%d/%H:%M');
+
+        my $cmd = "bacct -l -C $from_time,$to_time ".($username ? "-u $username" : '');
 
 #        warn "LSF::get_report_entries_for_time_interval() running cmd:\n\t$cmd\n";
 
-    my $batch_of_report_entries = $self->parse_report_source_line( $cmd );
+        $batch_of_report_entries = $self->parse_report_source_line( $cmd );
+    }
 
     return $batch_of_report_entries;
 }
