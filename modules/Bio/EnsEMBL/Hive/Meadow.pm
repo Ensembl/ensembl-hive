@@ -355,7 +355,6 @@ sub get_report_entries_for_process_ids {
     return;
 }
 
-
 =head2 get_report_entries_for_time_interval
 
     Title   :  get_report_entries_for_time_interval
