@@ -64,7 +64,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash', 'whoami');
 use base ('Bio::EnsEMBL::Hive::Meadow');
 
 
-our $VERSION = '5.1';       # Semantic version of the Meadow interface:
+our $VERSION = '5.2';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
