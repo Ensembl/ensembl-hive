@@ -439,9 +439,6 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
     warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
-    my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id=?";
-    my $update_when_seen_sth;
-
     my $this_meadow_user            = whoami();
 
     my %meadow_status_counts        = ();
@@ -481,15 +478,15 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
             } else {
 
                 # RUN|PEND|xSUSP handling
-                $update_when_seen_sth ||= $self->prepare( $update_when_seen_sql );  # only prepare once at most
-                $update_when_seen_sth->execute( $worker->dbID );
+                my $update_when_seen_sql = "UPDATE worker SET when_seen=CURRENT_TIMESTAMP WHERE worker_id='".$worker->dbID."'";
+                $self->dbc->protected_prepare_execute( [ $update_when_seen_sql ],
+                    sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_worker_message( $worker, "see_worker".$after, 'INFO' ); }
+                );
             }
         } else {
             $meadow_status_counts{$meadow_signature}{'UNREACHABLE'}++;   # Worker is unreachable from this Valley
         }
     }
-
-    $update_when_seen_sth->finish() if $update_when_seen_sth;
 
         # print a quick summary report:
     while(my ($meadow_signature, $status_count) = each %meadow_status_counts) {
