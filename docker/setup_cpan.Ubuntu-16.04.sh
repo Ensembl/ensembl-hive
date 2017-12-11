@@ -13,7 +13,7 @@ apt-get install -y $buildDeps
 
 for arg
 do
-	cpanm --installdeps --with-recommends "$arg"
+	[ -f "$arg/cpanfile" ] && cpanm --installdeps --with-recommends "$arg"
 done
 # Cleanup the cache and remove the build dependencies to reduce the disk footprint
 rm -rf /var/lib/apt/lists/*
