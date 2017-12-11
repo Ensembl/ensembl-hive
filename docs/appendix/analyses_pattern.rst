@@ -7,7 +7,7 @@ It is a simple language to select some analyses in a pipeline.
 Overview
 --------
 
-The general syntax is expressed in a simplified BNF form below.
+The general syntax is expressed in a pseudo-BNF form below.
 
 .. code-block:: abnf
 
