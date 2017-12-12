@@ -17,7 +17,7 @@ Check that your system is set up to run eHive
         Some pipelines may have other dependencies beyond eHive (e.g. the
         Ensembl Core API, BioPerl, etc). Make sure you have installed them
         and configured your environment (PATH and PERL5LIB).
-        :ref:`../appendix/scripts/init_pipeline` will
+        :ref:`script-init_pipeline` will
         try to compile all the analysis modules, which ensures that most of
         the dependencies are installed, but some others can only be found
         at runtime.
@@ -36,27 +36,27 @@ done or failed.
 
 Running the pipeline involves the following steps:
 
-  #. Using the :ref:`../appendix/scripts/init_pipeline` script to create an
+  #. Using the :ref:`script-init_pipeline` script to create an
        instance pipeline database from a "PipeConfig" file
 
-  #. (optionally) Using the :ref:`appendix/scripts/seed_pipeline` script to
+  #. (optionally) Using the :ref:`script-seed_pipeline` script to
        add jobs to be run
 
-  #. Running the :ref:`appendix/scripts/beekeeper` script that will look
+  #. Running the :ref:`script-beekeeper` script that will look
        after the pipeline and maintain a population of Worker processes on
        the compute resource that will take and perform all the jobs of the
        pipeline
 
   #. (optionally) Monitoring the state of the running pipeline:
 
-       - by using your local |guiHive| web interface
+       - by using your local guiHive web interface
 
-       - by periodically running the :ref:`appendix/scripts/generate_graph`
+       - by periodically running the :ref:`script-generate_graph`
          script, which will produce a fresh snapshot of the pipeline
          diagram
 
        - by connecting to the database using the
-         :ref:`appendix/scripts/db_cmd` script and issuing SQL commands
+         :ref:`script-db_cmd` script and issuing SQL commands
 
 
 Initialise and run a pipeline
