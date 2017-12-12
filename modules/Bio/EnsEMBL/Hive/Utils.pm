@@ -365,7 +365,7 @@ sub throw {
 
 =cut
 
-my %shell_characters = map {$_ => 1} qw(< > |);
+my %shell_characters = map {$_ => 1} qw(< > >> 2> 2>&1 | && || ;);
 
 sub join_command_args {
     my $args = shift;
