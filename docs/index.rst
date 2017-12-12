@@ -94,6 +94,7 @@ Developer documentation
 .. toctree::
    :caption: Developer documentation
 
+   dev/development_guidelines
    dev/release_checklist
    dev/build_the_docs
 

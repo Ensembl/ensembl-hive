@@ -1,3 +1,5 @@
+.. _analyses-pattern-syntax:
+
 Analyses pattern syntax
 =======================
 
