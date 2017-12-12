@@ -75,9 +75,9 @@ sub schedule_workers_resync_if_necessary {
         scheduler_say( "re-synchronizing..." );
         $queen->synchronize_hive( $list_of_analyses );
 
-        if( $queen->db->hive_pipeline->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
-            if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # and double-check on our side
-                scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
+        if( $queen->check_nothing_to_run_but_semaphored( $list_of_analyses ) ) { # double-check that we are really stuck
+            scheduler_say( "looks like we may need re-balancing semaphore_counts..." );
+            if( $queen->db->hive_pipeline->hive_auto_rebalance_semaphores ) {  # make sure rebalancing only ever happens for the pipelines that asked for it
                 if( my $rebalanced_jobs_counter = $queen->db->get_AnalysisJobAdaptor->balance_semaphores( $list_of_analyses ) ) {
                     scheduler_say( "re-balanced $rebalanced_jobs_counter jobs, going through another re-synchronization..." );
                     $queen->synchronize_hive( $list_of_analyses );
@@ -85,11 +85,13 @@ sub schedule_workers_resync_if_necessary {
                     scheduler_say( "hmmm... managed to re-balance 0 jobs, you may need to investigate further." );
                 }
             } else {
-                scheduler_say( "apparently there are no semaphored jobs that may need to be re-balanced at this time." );
+                scheduler_say([ "automatic re-balancing of semaphore_counts is off by default.",
+                                "If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table.",
+                                "You can also manually rebalance semaphores this time by running beekeeper with the '--balance_semaphores' option",
+                            ]);
             }
         } else {
-            scheduler_say( [ "automatic re-balancing of semaphore_counts is off by default.",
-                            "If you think your pipeline might benefit from it, set hive_auto_rebalance_semaphores => 1 in the PipeConfig's hive_meta_table." ] );
+            scheduler_say( "some READY jobs still in the queue. No need to consider re-balancing at this time." );
         }
 
         ($workers_to_submit_by_analysis, $workers_to_submit_by_meadow_type_rc_name, $total_extra_workers_required, $log_buffer)
