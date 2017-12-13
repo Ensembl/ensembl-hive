@@ -190,10 +190,21 @@ sub pipeline_name {
 }
 
 
-sub runWorker_path {    # FIXME: can be made dependent on config options
+=head2 runWorker_path
+
+    Title   :  runWorker_path
+    Function:  Getter for the path to runWorker.pl
+               This is now set in the JSON config file. When missing or set to null,
+               defaults to $EHIVE_ROOT_DIR/scripts
+
+=cut
+
+sub runWorker_path {
     my $self = shift @_;
 
-    return $ENV{'EHIVE_ROOT_DIR'}.'/scripts/';
+    my $path = $self->config_get('RunWorkerPath') // $ENV{'EHIVE_ROOT_DIR'}.'/scripts/';
+    $path = $path . '/' unless $path =~ /\/$/;
+    return $path;
 }
 
 

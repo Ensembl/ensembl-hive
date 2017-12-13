@@ -7,6 +7,9 @@
         "SubmitWorkersMax"  : 50
     },
     "Meadow" : {
+        "REMARKS" : {
+            "RunWorkerPath" : "The path of runWorker.pl . When null or missing, beekeeper will use $EHIVE_ROOT_DIR or its own path. When RunWorkerPath is '', beekeeper assumes runWorker.pl is in $PATH"
+        },
         "CleanupTempDirectoryKilledWorkers" : 0,
         "MaxLimboSeconds"                   : 10,
         "MaxRegistrationSeconds"            : 30,
