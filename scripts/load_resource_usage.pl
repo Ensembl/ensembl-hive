@@ -64,7 +64,8 @@ sub main {
     my $queen = $hive_dba->get_Queen;
     my $meadow_2_pid_wid = $queen->fetch_HASHED_FROM_meadow_type_AND_meadow_name_AND_process_id_TO_worker_id();
 
-    my $valley = Bio::EnsEMBL::Hive::Valley->new();
+    my $config = Bio::EnsEMBL::Hive::Utils::Config->new();
+    my $valley = Bio::EnsEMBL::Hive::Valley->new($config);
 
     if( $source_line ) {
 
