@@ -38,6 +38,7 @@ User documentation
 .. toctree::
    :caption: Running pipelines
 
+   running_pipelines/initializing
    running_pipelines/running
    running_pipelines/monitoring
    running_pipelines/management
