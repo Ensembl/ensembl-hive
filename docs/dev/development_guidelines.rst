@@ -220,22 +220,25 @@ them by running ``beekeeper.pl --versions``::
     Meadow::LOCAL   5.0     available
     Meadow::LSF     5.2     unavailable
     Meadow::PBSPro  5.1     unavailable
-    Meadow::SGE     5.0     unavailable
+    Meadow::SGE     4.0     incompatible
+    GuestLanguageInterfaceVersion   3
+    GuestLanguage[java]     2.1     incompatible
+    GuestLanguage[python3]  3.0     available
+    GuestLanguage[ruby]     N/A     unavailable
 
 * *CodeVersion* is the software version (see how it is handled in the section
   below).
 * *CompatibleHiveDatabaseSchemaVersion* is the database version. This
   is the version that matters. Most of the scripts will refuse to run on a
   database that comes from a different version.
-* *CompatibleGuestLanguageCommunicationProtocolVersion* is the version used
-  to communicate with the wrappers for other languages. The versions must be
-  the same to use a given wrapper. Matthieu TODO: implement the same
-  versioning as MeadowInterfaceVersion
 * *MeadowInterfaceVersion* is the major version of the Meadow interface. It
-  follows semantic versioning, e.g. i incremented whenever an incompatible
+  follows semantic versioning, e.g. is incremented whenever an incompatible
   change is introduced. Meadows with a different major version number are
   listed as *incompatible*
-
+* The interface for guest languages is versioned in a similar manner.
+  *GuestLanguageInterfaceVersion* is the major version number, and is incremented
+  whenever an incompatible change is introduced. GuestLanguage wrappers with a
+  different major version number arelisted as *incompatible*
 
 Releases, code branching and GIT
 --------------------------------

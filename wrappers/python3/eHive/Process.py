@@ -8,7 +8,7 @@ import numbers
 import warnings
 import traceback
 
-__version__ = "0.3"
+__version__ = "3.0"
 
 __doc__ = """
 This module mainly implements python's counterpart of GuestProcess. Read

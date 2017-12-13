@@ -133,7 +133,10 @@ use Data::Dumper;
 use base ('Bio::EnsEMBL::Hive::Process');
 
 
-our $VERSION = '0.3';
+# -------------------------------------- <versioning of the GuestProcess interface> -------------------------------------------------------
+
+our $GUESTPROCESS_PROTOCOL_VERSION = '3';       # Make sure you change this number whenever an incompatible change is introduced
+
 
 =head2 get_protocol_version
 
@@ -144,9 +147,19 @@ our $VERSION = '0.3';
 =cut
 
 sub get_protocol_version {
-    return $VERSION
+    return $GUESTPROCESS_PROTOCOL_VERSION;
 }
 
+sub check_version_compatibility {
+    my ($self, $other_version) = @_;
+
+    my $gpv = $self->get_protocol_version();
+#    warn "$self :  GPV='$gpv', MV='$other_version'\n";
+
+    return ((defined $other_version) and ($other_version=~/^$gpv\./)) ? 1 : 0;
+}
+
+# -------------------------------------- </versioning of the GuestProcess interface> ------------------------------------------------------
 
 
 =head2 new
@@ -219,9 +232,9 @@ sub new {
 
     $self->print_debug('CHECK VERSION NUMBER');
     my $other_version = $self->read_message()->{content};
-    if ($other_version ne $VERSION) {
+    if (!$self->check_version_compatibility($other_version)) {
         $self->send_response('NO');
-        die "eHive's protocol version is '$VERSION' but the wrapper's is '$other_version'\n";
+        die "eHive's protocol version is '".$self->get_protocol_version."' but the wrapper's is '$other_version'\n";
     } else {
         $self->send_response('OK');
     }
@@ -258,6 +271,32 @@ sub _get_wrapper_for_language {
         die "No permissions to execute the wrapper '$wrapper'\n";
     }
     return $wrapper;
+}
+
+
+=head2 _get_all_registered_wrappers
+
+  Example     : my $all_languages = Bio::EnsEMBL::Hive::GuestProcess::_get_all_registered_wrappers()
+  Description : Lists all the languages and wrappers that are registered (either
+                under via a EHIVE_WRAPPER environment variable, or via a "wrapper"
+                file under $EHIVE_ROOT_DIR/wrappers/).
+  Returntype  : Hashref { String => String }
+  Exceptions  : None
+
+=cut
+
+sub _get_all_registered_wrappers {
+    my %all_found;
+    foreach my $variable (keys %ENV) {
+        if ($variable =~ /^EHIVE_WRAPPER_(.*)$/) {
+            $all_found{lc $1} = $ENV{$variable};
+        }
+    }
+    foreach my $wrapper (glob $ENV{'EHIVE_ROOT_DIR'}.'/wrappers/*/wrapper' ) {
+        $wrapper =~ /\/wrappers\/(.*)\/wrapper$/;
+        $all_found{$1} = $wrapper;
+    }
+    return \%all_found;
 }
 
 

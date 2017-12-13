@@ -58,7 +58,6 @@ sub get_code_version {
 sub report_versions {
     print "CodeVersion\t".get_code_version()."\n";
     print "CompatibleHiveDatabaseSchemaVersion\t".Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()."\n";
-    print "CompatibleGuestLanguageCommunicationProtocolVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
 
     print "MeadowInterfaceVersion\t".Bio::EnsEMBL::Hive::Meadow->get_meadow_major_version()."\n";
     my $meadow_class_path = Bio::EnsEMBL::Hive::Valley->meadow_class_path;
@@ -74,6 +73,20 @@ sub report_versions {
                                    )
                                 : 'incompatible';
         print '',join("\t", 'Meadow::'.$meadow_driver, $meadow_version, $status)."\n";
+    }
+
+    print "GuestLanguageInterfaceVersion\t".Bio::EnsEMBL::Hive::GuestProcess->get_protocol_version()."\n";
+    my $registered_wrappers = Bio::EnsEMBL::Hive::GuestProcess->_get_all_registered_wrappers;
+    foreach my $language (sort keys %$registered_wrappers) {
+        my $wrapper_path = $registered_wrappers->{$language};
+        my $status = 'unavailable';
+        my $language_version = 'N/A';
+        if (-s $wrapper_path and -x $wrapper_path) {
+            $language_version = `$wrapper_path version 2> /dev/null`;
+            chomp $language_version;
+            $status = Bio::EnsEMBL::Hive::GuestProcess->check_version_compatibility($language_version) ? 'available' : 'incompatible';
+        }
+        print join("\t", "GuestLanguage[$language]", $language_version, $status)."\n";
     }
 }
 
