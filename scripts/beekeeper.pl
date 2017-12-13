@@ -440,6 +440,9 @@ sub generate_worker_cmd {
         }
     }
 
+    # This option can have multiple values
+    $worker_cmd .= " -config_file $_" for @{$self->{'config_files'}};
+
         # special task:
     if ($run_job_id) {
         $worker_cmd .= " -job_id $run_job_id";

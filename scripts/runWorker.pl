@@ -27,8 +27,11 @@ sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
     my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);    # Task specification parameters
     my ($job_limit, $life_span, $no_cleanup, $no_write, $worker_cur_dir, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize,   # Worker control parameters
-        $worker_delay_startup_seconds, $worker_crash_on_startup_prob);
+        $worker_delay_startup_seconds, $worker_crash_on_startup_prob, $config_files);
     my ($help, $report_versions, $debug);
+
+    # Default values
+    $config_files   = [];
 
     $|=1;   # make STDOUT unbuffered (STDERR is unbuffered anyway)
 
@@ -40,6 +43,9 @@ sub main {
                'reg_type=s'                   => \$reg_type,
                'reg_alias|regname|reg_name=s' => \$reg_alias,
                'nosqlvc=i'                    => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
+
+    # json config files
+               'config_file=s@'             => $config_files,
 
     # Task specification parameters:
                'preregistered!'             => \$preregistered,
@@ -132,6 +138,7 @@ sub main {
         worker_crash_on_startup_prob    => $worker_crash_on_startup_prob,
     );
     my %execution_options = (
+        config_files        => $config_files,
         no_cleanup          => $no_cleanup,
         no_write            => $no_write,
         worker_log_dir      => $worker_log_dir,
@@ -204,6 +211,15 @@ skip sql version check if 1
 
 =back
 
+=head2 Configs overriding
+
+=over
+
+=item --config_file <string>
+
+JSON file (with absolute path) to override the default configurations (could be multiple)
+
+=back
 
 =head2 Task specification parameters:
 
