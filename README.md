@@ -62,12 +62,12 @@ There are also other parameters of Analyses that control, for example:
 Grid scheduler and Meadows
 --------------------------
 
-eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive ships two meadow implementations:
+eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive ships some meadow implementations:
 
 * **LOCAL**. A simple meadow that submits jobs locally via `system()` (i.e. `fork()`). It is inherently limited by the specification of the machine beekeeper is running on.
 * **LSF**. A meadow that supports [IBM Platform LSF](http://www-03.ibm.com/systems/spectrum-computing/products/lsf/)
 
-Both are extensively used by the Ensembl project and are regularly updated. The LSF meadow supports workloads reaching thousands of parallel jobs.
+LOCAL and LSF are extensively used by the Ensembl project and are regularly updated. The LSF meadow supports workloads reaching thousands of parallel jobs.
 
 External users have contributed other meadows:
 
@@ -75,7 +75,7 @@ External users have contributed other meadows:
 * **HTCondor**. A meadow that supports [HTCondor](https://research.cs.wisc.edu/htcondor/). Available for download on GitHub at [Ensembl/ensembl-hive-htcondor](https://github.com/Ensembl/ensembl-hive-htcondor).
 * **PBSPro**. A meadow that supports [PBS Pro](http://www.pbspro.org). Available for download on GitHub at [Ensembl/ensembl-hive-pbspro](https://github.com/Ensembl/ensembl-hive-pbspro).
 
-These two have a more limited support since we can only test them via
+These ones have a more limited support since we can only test them via
 single-machine Docker installations.  They may be at times out of sync with
 the latest version of eHive but both are automatically tested on Travis CI
 on a daily basis. You can check the badge on the repositories' home page to
