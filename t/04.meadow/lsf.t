@@ -32,8 +32,7 @@ BEGIN {
 
 # Need EHIVE_ROOT_DIR to access the default config file
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
-my @config_files = Bio::EnsEMBL::Hive::Utils::Config->default_config_files();
-my $config = Bio::EnsEMBL::Hive::Utils::Config->new(@config_files);
+my $config = Bio::EnsEMBL::Hive::Utils::Config->new();
 
 throws_ok {
     local $ENV{'PATH'} = $ENV{'EHIVE_ROOT_DIR'}.'/t/04.meadow/deceptive_bin:'.$ENV{'PATH'};
