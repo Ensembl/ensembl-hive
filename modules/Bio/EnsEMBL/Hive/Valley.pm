@@ -78,9 +78,9 @@ sub new {
     foreach my $meadow_class (@{ $self->loaded_meadow_drivers }) {
 
         if( $meadow_class->check_version_compatibility
-        and $meadow_class->name) {      # the assumption is if we can get a name, it is available
+        and (my $name = $meadow_class->name)) {      # the assumption is if we can get a name, it is available
 
-            my $meadow_object            = $meadow_class->new( $config );
+            my $meadow_object            = $meadow_class->new( $config, $name );
 
             $meadow_object->pipeline_name( $pipeline_name ) if($pipeline_name);
 

@@ -79,10 +79,11 @@ sub check_version_compatibility {
 =cut
 
 sub new {
-    my ($class, $config) = @_;
+    my ($class, $config, $name) = @_;
 
     my $self = bless {}, $class;
 
+    $self->{'_name'} = $name;       # Record the name given to avoid querying the meadow once more
     $self->_init_meadow($config);
 
     return $self;
