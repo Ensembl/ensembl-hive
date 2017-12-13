@@ -256,4 +256,25 @@ by any of the Beta or Gamma jobs. It can thus start immediately.
     {   -logic_name => 'Epsilon',
     },
 
+Dataflow using special error handling branches
+----------------------------------------------
+
+The eHive system implements a limited exception handling system that creates :ref:`special dataflow when jobs exceed resource limits <resource-limit-dataflow>`. These events are generated on special branch -1 (if a MEMLIMIT error is detected) or -2 (if a RUNLIMIT error is detected). Here, if job Low_mem_Alpha fails due to MEMLIMIT, a High_mem_Alpha job is seeded. Otherwise, a Beta job is seeded.
+
+.. hive_diagram::
+
+    {    -logic_name => 'Low_mem_Alpha',
+         -flow_into  => {
+            -1 => [ 'High_mem_Alpha' ],
+             1 => [ 'Beta' ],
+         },
+    },
+    {    -logic_name => 'High_mem_Alpha',
+         -flow_into  => {
+            1 => [ 'Beta' ],
+         },
+    },
+    {    -logic_name => 'Beta',
+    },
+
 

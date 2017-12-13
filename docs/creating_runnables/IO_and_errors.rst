@@ -1,4 +1,4 @@
-==================================
+
 IO and Error Handling in Runnables
 ==================================
 
@@ -10,7 +10,7 @@ Parameter Handling
 Receiving input parameters
 --------------------------
 
-In eHive, parameters are the primary method of passing messages between components in a pipeline. Due to the central role of parameters, one of eHive's paradigms is to try and make most data sources look like parameters; somewhat analogous to the UNIX philosophy of "make everything look like a file." Therefore the syntax for accessing parameters also applies to accessing accumulators and user-defined tables in the hive database.
+In eHive, parameters are the primary method of passing data and messages between components in a pipeline. Due to the central role of parameters, one of eHive's paradigms is to try to make most data sources look like parameters; somewhat analogous to the UNIX philosophy of "make everything look like a file." Therefore, the syntax for accessing parameters also applies to accessing accumulators and user-defined tables in the hive database.
 
 Within a runnable, parameter values can be set or retrieved using the param() method or one of its variants -- e.g. ``$self->param('parameter_name') #get`` or ``$self->param('parameter_name', $new_value) #set``:
 
@@ -20,12 +20,12 @@ Within a runnable, parameter values can be set or retrieved using the param() me
 
    - param_exists() - True/false test for existence of a parameter with the given name. Note that this will return true if the parameter's value is undefined. Compare to param_is_defined().
 
-   - param_is_defined() - True/false test for the existence of a parameter with the given name with a value. Note that this will return false if the parameter's value is undefined. Compare to param_exists().
+   - param_is_defined() - True/false test for the existence of a parameter with the given name, and that the parameter has a value. This will return false if the parameter's value is undefined. Compare to param_exists().
 
 Passing parameters within a runnable
 ------------------------------------
 
-It is often desirable to pass data between methods of a runnable. For example, parameter values may need to be moved from fetch_input() into run(), and the results of computation may need to be carried from run() into write_output(). The eHive parameter mechanism is intended to facilitate this kind of data handling. 
+It is often desirable to pass data between methods of a runnable. For example, parameter values may need to be moved from fetch_input() into run(), and the results of computation may need to be carried from run() into write_output(). The eHive parameter mechanism is intended to facilitate this kind of data handling. Within a runnable, new parameters can be created using $self->param() ( ``$self->param('parameter_name', $new_value)`` ) - these are immediately available throughout the runnable for the rest of the running job's life cycle. Note that these parameters do not get carried over between job runs - for example, if a job fails and is retried, all parameters set in the runnable are reset.
 
 Reading in data from external files and databases
 =================================================
@@ -36,10 +36,17 @@ At a basic level, a runnable is simply a Perl, Python, or Java module, which has
 
    - Database connections handled through eHive's DBSQL modules automatically disconnect when inactive, and reconnect if disconnected.
 
+Running external processes
+==========================
+
+   - The :doxehive:`Bio::EnsEMBL::Hive::Process` method run_system_command() is provided for convenience in spawning system processes from a runnable and capturing the result.
+
 Error Handling
 ==============
 
-eHive provides a number of mechanisms to detect and handle error conditions. These include special dataflow events triggered by certain error conditions, somewhat akin to a try-catch system.
+eHive provides a number of mechanisms to detect and handle error conditions. These include special dataflow events triggered by certain errors, similar to a try-catch system.
+
+.. _resource-limit-dataflow:
 
 Special Dataflow when Jobs Exceed Resource Limits
 -------------------------------------------------
@@ -55,7 +62,7 @@ The eHive system can react when the job scheduler notifies it that a job's memor
 Logging Messages
 ================
 
-Runnables have STDOUT and STDERR output streams available, but these are redirected and function differently than they would in a conventional script. During normal eHive operation, when jobs are run by workers submitted via a beekeeper loop, output to these streams is not sent to the shell in the conventional manner. Instead, it is either discarded to /dev/null, or is written to files specified by the -hive_log_dir option. Because of this redirection, STDERR and STDOUT should be treated as "verbose-level debug" output streams in runnables. When a job is run by a worker started with the runWorker.pl script, or by using standaloneJob.pl, then STDOUT and STDERR are handled normally (unless the -hive_log_dir option has been set, in which case output is directed to files in the directory specified by -hive_log_dir).
+Runnables have STDOUT and STDERR output streams available, but these are redirected and function differently than they would in a conventional script. During normal eHive operation, when jobs are run by workers submitted via a beekeeper loop, output to these streams is not sent to the shell in the conventional manner. Instead, it is either discarded to /dev/null, or is written to files specified by the -hive_log_dir option. Because of this redirection, STDERR and STDOUT should be treated as "verbose-level debug" output streams in Runnables. When a job is run by a worker started with the runWorker.pl script, or by using standaloneJob.pl, then STDOUT and STDERR are handled normally (unless the -hive_log_dir option has been set, in which case output is directed to files in the directory specified by -hive_log_dir).
 
 When writing a Runnable, the preferred method for sending messages to the user is via the message log. An API is provided to facilitate logging messages in the log.
 
