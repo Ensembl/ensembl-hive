@@ -80,13 +80,13 @@ sub report_versions {
     foreach my $language (sort keys %$registered_wrappers) {
         my $wrapper_path = $registered_wrappers->{$language};
         my $status = 'unavailable';
-        my $language_version = 'N/A';
+        my $language_version;
         if (-s $wrapper_path and -x $wrapper_path) {
             $language_version = `$wrapper_path version 2> /dev/null`;
             chomp $language_version;
             $status = Bio::EnsEMBL::Hive::GuestProcess->check_version_compatibility($language_version) ? 'available' : 'incompatible';
         }
-        print join("\t", "GuestLanguage[$language]", $language_version, $status)."\n";
+        print join("\t", "GuestLanguage[$language]", $language_version || 'N/A', $status)."\n";
     }
 }
 
