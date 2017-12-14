@@ -1,4 +1,6 @@
 
+.. _docker-swarm-intro:
+
 Docker Swarm
 ============
 

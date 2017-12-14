@@ -77,6 +77,7 @@ User documentation
 .. toctree::
    :caption: External plugins
 
+   contrib/alternative_meadows
    contrib/docker-swarm
 
 .. toctree::

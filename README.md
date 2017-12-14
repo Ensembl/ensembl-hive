@@ -62,35 +62,12 @@ There are also other parameters of Analyses that control, for example:
 Grid scheduler and Meadows
 --------------------------
 
-eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive ships some meadow implementations:
-
-* **LOCAL**. A simple meadow that submits jobs locally via `system()` (i.e. `fork()`). It is inherently limited by the specification of the machine beekeeper is running on.
-* **LSF**. A meadow that supports [IBM Platform LSF](http://www-03.ibm.com/systems/spectrum-computing/products/lsf/)
-
-LOCAL and LSF are extensively used by the Ensembl project and are regularly updated. The LSF meadow supports workloads reaching thousands of parallel jobs.
-
-External users have contributed other meadows:
-
-* **SGE**. A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at [Ensembl/ensembl-hive-sge](https://github.com/Ensembl/ensembl-hive-sge).
-* **HTCondor**. A meadow that supports [HTCondor](https://research.cs.wisc.edu/htcondor/). Available for download on GitHub at [Ensembl/ensembl-hive-htcondor](https://github.com/Ensembl/ensembl-hive-htcondor).
-* **PBSPro**. A meadow that supports [PBS Pro](http://www.pbspro.org). Available for download on GitHub at [Ensembl/ensembl-hive-pbspro](https://github.com/Ensembl/ensembl-hive-pbspro).
-* **DockerSwarm**. A meadow that can control and run on [Docker Swarm](https://docs.docker.com/engine/swarm/). Available for download on GitHub at [Ensembl/ensembl-hive-docker-swarm](https://github.com/Ensembl/ensembl-hive-docker-swarm).
-
-These ones have a more limited support since we can only test them via
-single-machine Docker installations.  They may be at times out of sync with
-the latest version of eHive but both are automatically tested on Travis CI
-on a daily basis. You can check the badge on the repositories' home page to
-verify they are still compatible.
-
-The table below lists the capabilities of each meadow, and whether they are available and implemented:
-
-| Capability                               | LOCAL         | LSF | SGE             | HTCondor        | PBSPro          | DockerSwarm           |
-| :--------------------------------------- | ------------- | ----| --------------- | --------------- | --------------- | --------------------- |
-| Submit jobs                              | Yes           | Yes | Yes             | Yes             | Yes             | Yes                   |
-| Query job status                         | Yes           | Yes | Yes             | Yes             | Yes             | Yes                   |
-| Kill job                                 | Yes           | Yes | Yes             | Yes             | Yes             | Not implemented       |
-| Job limiter and resource management      | Not available | Yes | Yes             | Yes             | Yes             | Partially implemented |
-| Post-mortem inspection of resource usage | Not available | Yes | Not implemented | Not implemented | Not implemented | Not implemented       |
+eHive has a generic interface named _Meadow_ that describes how to interact with an underlying grid scheduler (submit jobs, query job's status, etc). eHive is compatible with
+[IBM Platform LSF](http://www-03.ibm.com/systems/spectrum-computing/products/lsf/),
+Sun Grid Engine (now known as Oracle Grid Engine),
+[HTCondor](https://research.cs.wisc.edu/htcondor/),
+[PBS Pro](http://www.pbspro.org),
+[Docker Swarm](https://docs.docker.com/engine/swarm/) and maybe others. Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/master/contrib/alternative_meadows.html).
 
 Docker image
 ------------
