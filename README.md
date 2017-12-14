@@ -12,6 +12,13 @@ eHive is a system for running computation pipelines on distributed computing res
 
 The name comes from the way pipelines are processed by a swarm of autonomous agents.
 
+Available documentation
+-----------------------
+
+The main entry point is available online in the [user
+manual](https://ensembl-hive.readthedocs.io/en/master/), from where it can
+be downloaded for offline access.
+
 Blackboard, Jobs and Workers
 ----------------------------
 
@@ -100,14 +107,6 @@ it (e.g. [Amazon Web Services](https://docs.docker.com/docker-cloud/cloud-swarm/
 [Microsoft Azure](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-azure/)).
 
 Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/master/contrib/docker-swarm.html).
-
-Available documentation
------------------------
-
-The main entry point is available online in the [user
-manual](https://ensembl-hive.readthedocs.io/en/master/), from where it can
-be downloaded for offline access.
-
 
 Contact us (mailing list)
 -------------------------
