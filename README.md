@@ -19,8 +19,11 @@ The main entry point is available online in the [user
 manual](https://ensembl-hive.readthedocs.io/en/master/), from where it can
 be downloaded for offline access.
 
-Blackboard, Jobs and Workers
-----------------------------
+
+eHive in a nutshell
+-------------------
+
+### Blackboard, Jobs and Workers
 
 In the centre of each running pipeline is a database that acts as a blackboard with individual tasks to be run.
 These tasks (we call them Jobs) are claimed and processed by "Worker bees" or just Workers - autonomous processes
@@ -28,16 +31,14 @@ that are continuously running on the compute farm and connect to the pipeline da
 or claim some more. When a Worker discovers that its predefined time is up or that there are no more Jobs to do,
 it claims no more Jobs and exits the compute farm freeing the resources.
 
-Beekeeper
----------
+### Beekeeper
 
 A separate Beekeeper process makes sure there are always enough Workers on the farm.
 It regularly checks the states of both the blackboard and the farm and submits more Workers when needed.
 There is no direct communication between Beekeeper and Workers, which makes the system rather fault-tolerant,
 as crashing of any of the agents for whatever reason doesn't stop the rest of the system from running.
 
-Analyses
---------
+### Analyses
 
 Jobs that share same code, common parameters and resource requirements are typically grouped into Analyses,
 and generally an Analysis can be viewed as a "base class" for the Jobs that belong to it.
@@ -48,8 +49,7 @@ Java module conforming to a special interface. eHive provides some basic
 Runnables, especially one that allows running arbitrary commands (programs
 and scripts written in other languages).
 
-PipeConfig file defines Analyses and dependency rules of the pipeline
----------------------------------------------------------------------
+### PipeConfig file defines Analyses and dependency rules of the pipeline
 
 eHive pipeline databases are molded according to PipeConfig files which are Perl modules conforming to a special interface.
 A PipeConfig file defines the stucture of the pipeline, which is a graph whose nodes are Analyses
