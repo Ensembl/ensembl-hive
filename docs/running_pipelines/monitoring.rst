@@ -21,8 +21,7 @@ the output file extension.
 
 |example\_diagram|
 
-LEGEND:
-~~~~~~~
+Legend:
 
 -  The rounded nodes on the flow diagram represent Analyses (classes of
    jobs).
