@@ -116,13 +116,13 @@ run beekeeper.pl and other useful Hive scripts.
 
    ::
 
-               export PATH=$PATH:$ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts
+               export PATH=$PATH:/path/to/ensembl-hive/scripts
 
 -  *using [t]csh syntax:*
 
    ::
 
-               set path = ( $path ${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/scripts )
+               set path = ( $path /path/to/ensembl-hive/scripts )
 
 Also, if you are developing the code and not just running ready
 pipelines, you may find it convenient to add "ensembl-hive/modules" to
@@ -132,13 +132,13 @@ your ``$PERL5LIB`` variable.
 
    ::
 
-               export PERL5LIB=${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+               export PERL5LIB=${PERL5LIB}:/path/to/ensembl-hive/modules
 
 -  *using [t]csh syntax:*
 
    ::
 
-               setenv PERL5LIB  ${PERL5LIB}:${ENSEMBL_CVS_ROOT_DIR}/ensembl-hive/modules
+               setenv PERL5LIB  ${PERL5LIB}:/path/to/ensembl-hive/modules
 
 The above commands can be added to your ~/.bashrc or ~/.bash_profile, or
 ~/.cshrc or ~/.tcshrc configuration file to be loaded at startup.
