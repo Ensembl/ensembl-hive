@@ -1,6 +1,6 @@
 
 Troubleshooting
-===============
++++++++++++++++
 
 There are many reasons an eHive pipeline could encounter problems:
 

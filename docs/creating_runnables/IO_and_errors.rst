@@ -1,6 +1,6 @@
 
 IO and Error Handling in Runnables
-==================================
+++++++++++++++++++++++++++++++++++
 
 This section covers the details of programming a runnable to accept and transmit data. Because a large component of handling errors is properly signalling that an error has occurred, along with the nature of that error, it will also be covered in this section. 
 

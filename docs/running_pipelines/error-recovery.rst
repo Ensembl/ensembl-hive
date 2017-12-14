@@ -1,6 +1,6 @@
 
 Error Recovery
-==============
+++++++++++++++
 
 When an eHive workflow encounters problems, it is often possible to correct the error and resume operation without having to restart from the beginning. Often, it is also possible to isolate problematic analyses while continuing to make progress through other branches of the workflow.
 

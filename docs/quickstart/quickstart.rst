@@ -1,6 +1,6 @@
 
 eHive quick start guide
-=======================
+~~~~~~~~~~~~~~~~~~~~~~~
 
 In this section, we will take you through the basics of setting up one of the example pipelines included with eHive, followed by running that pipeline to completion.
 
