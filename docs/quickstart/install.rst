@@ -70,7 +70,7 @@ following on the command line:
 
 ::
 
-            git clone -b master https://github.com/Ensembl/ensembl-hive.git
+            git clone https://github.com/Ensembl/ensembl-hive.git
 
 This will create ensembl-hive directory with all the code and
 documentation.  If you cd into the ensembl-hive directory and do an ls you
