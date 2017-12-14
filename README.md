@@ -91,6 +91,16 @@ docker run -it ensemblorg/ensembl-hive beekeeper.pl -url $URL -loop -sleep 0.2
 docker run -it ensemblorg/ensembl-hive runWorker.pl -url $URL
 ```
 
+Docker Swarm
+------------
+
+Once packaged into Docker images, a pipeline can actually be run under the
+Docker Swarm orchestrator, and thus on any cloud infrastructure that supports
+it (e.g. [Amazon Web Services](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-aws/),
+[Microsoft Azure](https://docs.docker.com/docker-cloud/cloud-swarm/create-cloud-swarm-azure/)).
+
+Read more about this on [the user manual](http://ensembl-hive.readthedocs.io/en/master/contrib/docker-swarm.html).
+
 Available documentation
 -----------------------
 
