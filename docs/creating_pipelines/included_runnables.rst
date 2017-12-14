@@ -1,6 +1,6 @@
 
-Runnables Included in the eHive Distribution
-============================================
+Standard library of Runnables
+=============================
 
 Several Runnables are included in the standard eHive distribution, serving as something like a standard library of components that are commonly helpful when creating pipelines. All of these are located in the directory modules/Bio/EnsEMBL/Hive/RunnableDB/. In addition, there are Runnables included with the examples under modules/Bio/EnsEMBL/Hive/Examples/. Although those are written to fit into specific example pipelines to illustrate specific eHive concepts, some users may find them useful in their own pipelines.
 

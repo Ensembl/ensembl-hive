@@ -1,5 +1,5 @@
-How to use MPI on eHive
-=======================
+How to use MPI
+==============
 
         With this tutorial, our goal is to give insights on how to set up the
         Hive to run jobs using Shared Memory Parallelism (threads) and

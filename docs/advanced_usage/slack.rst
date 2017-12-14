@@ -1,5 +1,5 @@
-How to connect eHive to Slack
-=============================
+How to report to Slack
+======================
 
     With this tutorial, our goal is to explain how to configure eHive
     and Slack to be able to report messages to a Slack channel.
