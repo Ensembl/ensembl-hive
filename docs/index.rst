@@ -74,6 +74,10 @@ User documentation
    advanced_usage/slack
    advanced_usage/continuous_pipelines
 
+.. toctree::
+   :caption: External plugins
+
+   contrib/docker-swarm
 
 .. toctree::
    :caption: Appendix
