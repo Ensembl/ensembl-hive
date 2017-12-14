@@ -1,10 +1,10 @@
 .. _ehive-installation-setup:
 
-eHive installation and setup
-============================
+Installation and setup
+======================
 
-eHive dependencies
-------------------
+Prerequisites
+-------------
 
 eHive system depends on the following components that you may need to
 download and install first:
@@ -53,11 +53,8 @@ download and install first:
       script)
 
 
-Installing eHive code
----------------------
-
-Check out the repository by cloning it from GitHub:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Main repository
+---------------
 
 All eHive pipelines will require the ensembl-hive repository, which can
 be found on `GitHub <https://github.com/Ensembl/ensembl-hive>`__. As
@@ -91,9 +88,10 @@ The major directories here are:
 :sql:
     Contains sql used to build a standard pipeline database
 
+Perl dependencies
+-----------------
 
 Use cpanm to recursively install the Perl dependencies declared in ensembl-hive/cpanfile
-----------------------------------------------------------------------------------------
 
 ::
 
@@ -105,8 +103,8 @@ corresponding database system (MySQL or PostgreSQL) was installed
 correctly.
 
 
-Optional configuration of the system:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration
+-------------
 
 You may find it convenient (although it is not necessary) to add
 "ensembl-hive/scripts" to your ``$PATH`` variable to make it easier to
