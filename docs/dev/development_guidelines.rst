@@ -250,10 +250,13 @@ There are three kinds of branches in eHive (no it's not a `joke
   *stable*, i.e. are feature-frozen, and only receive bugfixes. Schema
   changes are prohibited as it would break the database versioning
   mechanism. Users on a given ``version/X.Y`` branch must be able to
-  blindly update their checkout without risking breaking anything.
+  blindly update their checkout without risking breaking anything. It is
+  forbidden to force push these branches (they are in fact marked as
+  *protected* on Github).
 * ``master`` is the staging branch for the next stable release of eHive. It
   receives new features (incl. schema changes) until we decide to create a
-  new ``version/X.Y`` branch out of it.
+  new ``version/X.Y`` branch out of it. Like ``version/X.Y``, ``master`` is
+  *protected* and cannot be force-pushed.
 * ``experimental/XXX`` are where *experimental* features are being
   developed. These branches can be created, removed or rebased at will. If
   you base your developments on someone else's experimental branch, let
