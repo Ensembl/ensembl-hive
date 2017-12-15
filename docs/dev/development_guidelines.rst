@@ -326,7 +326,9 @@ There are very few rules when writing new code:
 
 When updating code, try to keep the changes minimal, avoiding white-space
 changes when possible. You can also consider breaking the 4-spaces rule if
-you can avoid changing the indentation of a massive code block.
+you can avoid changing the indentation of a massive code block. Obviously,
+this does not apply to languages and documents where the indentation
+matters (Python, reStructuredText, etc).
 
 All the scripts should work without the user having to setup ``PATH`` or
 ``PERL5LIB``. They need to assume a default installation, with both
