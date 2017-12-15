@@ -63,7 +63,7 @@ def schema_table_header_role(name, rawtext, text, lineno, inliner, options={}, c
         params = params + ",square"
     (colour_spec, shape) = params[1:].split(",")
     schema_table_header_node = schema_table_header()
-    schema_table_header_node.children.append(nodes.Text(text))
+    schema_table_header_node.append(nodes.Text(text))
     schema_table_header_node['colour_spec'] = colour_spec
     schema_table_header_node['shape'] = shape
 

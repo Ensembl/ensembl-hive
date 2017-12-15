@@ -14,7 +14,7 @@ def hivestatus_role(name, rawtext, text, lineno, inliner, options={}, content=[]
     status = text[1:text.index('>')]
     text = (text[text.index('>')+1:]).strip()
     hivestatus_node = hivestatus()
-    hivestatus_node.children.append(nodes.Text(text))
+    hivestatus_node.append(nodes.Text(text))
     hivestatus_node['status'] = status
 
     return [hivestatus_node], []
