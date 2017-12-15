@@ -32,5 +32,5 @@ for i in *.deb; do dpkg -x "$i" ../root/; done
 git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git ../ensembl
 git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-hive-docker-swarm.git ../ensembl-hive-docker-swarm
 
-mkdir -p ../../../contrib/
+rm -f ../../../contrib/docker-swarm
 ln -s "$1/ensembl-hive-docker-swarm/docs" ../../../contrib/docker-swarm
