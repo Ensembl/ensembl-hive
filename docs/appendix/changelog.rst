@@ -251,6 +251,10 @@ Version 1.9
 * Multiple bug fixes
 
 
+.. raw:: latex
+
+   \begin{comment}
+
 Legacy versions
 ===============
 
@@ -2805,3 +2809,8 @@ If not - you can restore the pre-merger state by updating with the following com
   Watch this space for further developments
 
 11 March, 2005 : Jessica Severin
+
+.. raw:: latex
+
+   \end{comment}
+

@@ -232,6 +232,7 @@ latex_elements = {
 \usepackage{charter}
 \usepackage[defaultsans]{lato}
 \usepackage{inconsolata}
+\usepackage{verbatim}
 ''',
 }
 
