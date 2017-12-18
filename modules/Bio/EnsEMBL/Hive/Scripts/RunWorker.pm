@@ -140,6 +140,10 @@ sub _update_resource_usage {
             'cpu_sec'       => $res_self->utime + $res_self->stime + $res_child->utime + $res_child->stime,
             'lifespan_sec'  => $worker_stopwatch->get_elapsed(),
             'exception_status' => $exception_status,
+            #'file_blocks_in'   => $res_self->inblock + $res_child->inblock,     # Only blocks physically read. Blocks cached by the OS are not counted
+            #'file_blocks_out'  => $res_self->oublock + $res_child->oublock,
+            #'net_msg_sent'     => $res_self->msgsnd + $res_child->msgsnd,       # IPC messages sent: not used in the context of eHive Runnables
+            #'net_msg_rec'      => $res_self->msgrcv + $res_child->msgrcv,       # IPC messages received: not used in the context of eHive Runnables
         };
 
     } or eval {
