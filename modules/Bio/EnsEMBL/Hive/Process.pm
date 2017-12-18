@@ -128,6 +128,9 @@ sub life_cycle {
     $job->autoflow(1);
 
     eval {
+        # Catch all the "warn" calls
+        #$SIG{__WARN__} = sub { $self->warning(@_) };
+
         if( $self->can('pre_cleanup') and $job->retry_count()>0 ) {
             $self->enter_status('PRE_CLEANUP');
             $self->pre_cleanup;
@@ -157,6 +160,8 @@ sub life_cycle {
             $self->say_with_header( ": *no* WRITE_OUTPUT requested, so there will be no AUTOFLOW" );
         }
     };
+    # Restore the default handler
+    #$SIG{__WARN__} = 'DEFAULT';
 
     if(my $life_cycle_msg = $@) {
         $job->died_somewhere( $job->incomplete );  # it will be OR'd inside
