@@ -136,6 +136,8 @@ sub life_cycle {
             $self->pre_cleanup;
         }
 
+        # PRE_HEALTHCHECK can come here
+
         $self->enter_status('FETCH_INPUT');
         $partial_stopwatch->restart();
         $self->fetch_input;
