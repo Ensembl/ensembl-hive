@@ -13,6 +13,8 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
+# Hide the database passwords (URL format)
+($0 = "$0 @ARGV") =~ s/(\s\w*:\/\/\w*:)\w*/$1XXXX/g;
 
 use Getopt::Long qw(:config no_auto_abbrev);
 use List::Util qw(sum);

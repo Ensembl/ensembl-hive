@@ -13,6 +13,9 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
+# Hide the database passwords (URL format)
+($0 = "$0 @ARGV") =~ s/(\s\w*:\/\/\w*:)\w*/$1XXXX/g;
+
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
