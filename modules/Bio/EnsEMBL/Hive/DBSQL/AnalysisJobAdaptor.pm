@@ -791,7 +791,7 @@ sub gc_dataflow {
 
     my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name);
 
-    unless( $self->db->get_DataflowRuleAdaptor->count_all_by_from_analysis_id_AND_branch_code($analysis->dbID, $branch_code) ) {
+    unless( $analysis->dataflow_rules_by_branch->{$branch_code} ) {
         return 0;   # just return if no corresponding gc_dataflow rule has been defined
     }
 
