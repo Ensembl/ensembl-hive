@@ -277,4 +277,15 @@ The eHive system implements a limited exception handling system that creates :re
     {    -logic_name => 'Beta',
     },
 
+.. note::
+
+   In PipeConfig files you can use MEMLIMIT or RUNLIMIT as aliases of -1
+   and -2, or even MAIN instead of 1. They will automatically be
+   transformed to numbers in the database and on diagrams (e.g. guiHive).
+
+There is a generic event named ANYFAILURE (branch 0) that is triggered when
+the worker disappears:
+
+- because of RUNLIMIT or MEMLIMIT, but these branches are not defined
+- or for other reasons (KILLED_BY_USER, for instance)
 
