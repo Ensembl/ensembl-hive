@@ -197,10 +197,10 @@ sub create_new_worker {
         my $resource_class;
 
         if( defined($resource_class_name) ) {
-            $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_name($resource_class_name)
+            $resource_class = $self->db->hive_pipeline->collection_of('ResourceClass')->find_one_by('name' => $resource_class_name)
                 or die "resource_class with name='$resource_class_name' could not be fetched from the database";
         } elsif( defined($resource_class_id) ) {
-            $resource_class = $self->db->get_ResourceClassAdaptor->fetch_by_dbID($resource_class_id)
+            $resource_class = $self->db->hive_pipeline->collection_of('ResourceClass')->find_one_by('dbID', $resource_class_id)
                 or die "resource_class with dbID='$resource_class_id' could not be fetched from the database";
         }
 
