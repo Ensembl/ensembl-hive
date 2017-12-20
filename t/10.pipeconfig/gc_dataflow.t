@@ -62,7 +62,7 @@ beekeeper($pipeline_url, ['-dead']);
 # Assumes that job_ids are auto-incremented
 my $new_job = $hive_dba->get_AnalysisJobAdaptor->fetch_by_dbID(2);
 ok($new_job, 'Found job with dbID=2');
-is($new_job->analysis->logic_name, 'third');
+is($new_job && $new_job->analysis->logic_name, 'third');
 
 safe_drop_database( $hive_dba );
 
