@@ -11,8 +11,9 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-# Hide the database passwords (URL format)
-($0 = "$0 @ARGV") =~ s/(\s\w*:\/\/\w*:)[^\/\@]*\@/$1XXXX@/g;
+# Hide command line options in order to hide db passwords
+# Re-writing $0 to hide passwords within URLs breaks FindBin
+$0 = sprintf("%s", $0);
 
 use File::Path 'make_path';
 use Getopt::Long qw(:config no_auto_abbrev);
