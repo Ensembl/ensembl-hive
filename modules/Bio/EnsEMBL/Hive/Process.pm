@@ -549,7 +549,8 @@ sub param_substitute {
 sub dataflow_output_id {
     my $self = shift @_;
 
-    $self->say_with_header('Dataflow on branch #' . ($_[1] // 1) . (defined $_[0] ? ' of ' . stringify($_[0]) : ' (no parameters -> input parameters repeated)'));
+    # Let's not spend time stringifying a large object if it's not going to be printed anyway
+    $self->say_with_header('Dataflow on branch #' . ($_[1] // 1) . (defined $_[0] ? ' of ' . stringify($_[0]) : ' (no parameters -> input parameters repeated)')) if $self->debug;
     return $self->input_job->dataflow_output_id(@_);
 }
 
