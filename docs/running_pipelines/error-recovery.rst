@@ -30,6 +30,10 @@ In some situations it may be necessary to take more drastic action to stop the w
 
 ``db_cmd.pl -url sqlite://my_hive_db -sql 'SELECT process_id FROM worker WHERE status in ("JOB_LIFECYCLE", "SUBMITTED")'``
 
+If workers are claiming batches of jobs because an analysis has a batch_size greater than one, it is possible to keep the worker running on it's current job but 'unclaim' any other jobs in its current batch. This is done by setting the batch_size for the analysis to 1. As long as each job takes more than 20 seconds to complete, the worker will re-check the batch size after finishing a job.
+
+``tweak_pipeline.pl -url sqlite:///my_hive_db -SET analysis[logic_name].batch_size=1``
+
 Isolating problematic analyses
 ==============================
 
