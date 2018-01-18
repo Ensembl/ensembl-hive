@@ -133,14 +133,16 @@ addressed in :doc:`events`).
 Dependent dataflows and semaphores
 ----------------------------------
 
-eHive allows to group multiple branch definitions to create job dependencies.
+eHive allows grouping of multiple branch definitions to create job
+dependencies. For more detail, please see the section covering
+:ref:`semaphores <semaphores-detail>`.
 
 Semaphore blocking the autoflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dataflow events can be grouped with the ``->`` operator.
 
-``2->A`` means that all the Dataflow events on branch #2 have to be grouped together
+``2->A`` means that all the Dataflow events on branch #2 will be grouped together
 in a group named **A**. Note that this name **A** is not related to the name of the
 analysis. Group names are single-letter codes, meaning that eHive allows up to 26 groups
 for each analysis.
