@@ -53,6 +53,7 @@ User documentation
    creating_pipelines/events
    creating_pipelines/dataflows
    creating_pipelines/dataflow_targets
+   creating_pipelines/meadows_and_resources
    creating_pipelines/accumulators
    creating_pipelines/parameters
    creating_pipelines/semaphores

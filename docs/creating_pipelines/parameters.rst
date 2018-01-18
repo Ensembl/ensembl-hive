@@ -1,5 +1,7 @@
 .. eHive guide to creating pipelines: parameter scope
 
+.. _parameters-overview:
+
 Job parameters
 ==============
 

@@ -1,10 +1,13 @@
 
+.. _other-job-schedulers:
+
 Other job schedulers
 ====================
 
-eHive has a generic interface named *Meadow* that describes how to interact
-with an underlying grid scheduler (submit jobs, query job's status, etc).
-eHive ships some meadow implementations:
+eHive has a generic interface named :ref:`Meadow <meadows-overview>`
+that describes how to interact with an underlying grid scheduler
+(submit jobs, query job's status, etc.).  eHive is distributed with
+some meadow implementations:
 
 LOCAL
   A simple meadow that submits jobs locally via ``system()`` (i.e. ``fork()``).

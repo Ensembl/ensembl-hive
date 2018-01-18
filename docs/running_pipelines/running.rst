@@ -8,6 +8,7 @@ Running a pipeline and running jobs
 Several eHive scripts exist to create and execute jobs once an instance of a
 pipeline has been initialized.
 
+.. _seeding-jobs-into-the-pipeline-database:
 
 Seeding jobs into the pipeline database
 ---------------------------------------
