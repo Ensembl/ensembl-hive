@@ -6,7 +6,7 @@ The code a worker actually runs to accomplish its task is in a module called a "
 
    - Bio::EnsEMBL::Hive::Process (Perl)
 
-   - eHive.Process (Python)
+   - eHive.BaseRunnable (Python)
 
    - org.ensembl.hive.BaseRunnable (Java)
 
