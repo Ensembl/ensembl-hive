@@ -129,6 +129,27 @@ addressed in :doc:`events`).
     {   -logic_name => 'Foxtrot',
     },
 
+Events connected to multiple targets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Events on a single dataflow branch can be connected to multiple targets.
+
+.. hive_diagram::
+
+   {    -logic_name => 'Alpha',
+        -flow_into  => {
+           2 => [ 'Beta' , 'Gamma' ],
+           1 => [ 'Delta', 'Epsilon' ],
+        },
+   },
+   {   -logic_name => 'Beta',
+   },
+   {   -logic_name => 'Gamma',
+   },
+   {   -logic_name => 'Delta',
+   },
+   {   -logic_name => 'Epsilon',
+   },
 
 Dependent dataflows and semaphores
 ----------------------------------
@@ -150,20 +171,45 @@ for each analysis.
 ``A->1`` means that the job resulting from the Dataflow event on branch #1 (the *autoflow*)
 has to wait for *all* the jobs in group **A** before it can start.
 
-This pattern is called a *semaphore*, and Gamma is called the *funnel* analysis.
+This pattern is called a *semaphore*, and Delta is called the *funnel* analysis.
 
 .. hive_diagram::
 
     {   -logic_name => 'Alpha',
         -flow_into  => {
-           '2->A' => [ 'Beta' ],
-           'A->1' => [ 'Gamma' ],
+           '2->A' => [ 'Beta', 'Gamma' ],
+           'A->1' => [ 'Delta' ],
         },
     },
     {   -logic_name => 'Beta',
     },
     {   -logic_name => 'Gamma',
     },
+    {   -logic_name => 'Delta',
+    },
+
+Here is an example of a similar pattern, except here there are two
+independent fan and funnel groups. In this case, Beta and Delta form
+one fan and funnel group, while Gamma and Epsilon form another.
+
+.. hive_diagram::
+
+   {   -logic_name => 'Alpha',
+       -flow_into  => {
+          '2->A' => [ 'Beta' ],
+          '2->B' => [ 'Gamma'  ],
+          'A->1' => [ 'Delta' ],
+          'B->1' => [ 'Epsilon' ],
+       },
+   },
+   {   -logic_name => 'Beta',
+   },
+   {   -logic_name => 'Gamma',
+   },
+   {   -logic_name => 'Delta',
+   },
+   {   -logic_name => 'Epsilon',
+   },
 
 
 Semaphore propagation
@@ -261,7 +307,7 @@ by any of the Beta or Gamma jobs. It can thus start immediately.
 Dataflow using special error handling branches
 ----------------------------------------------
 
-The eHive system implements a limited exception handling system that creates :ref:`special dataflow when jobs exceed resource limits <resource-limit-dataflow>`. These events are generated on special branch -1 (if a MEMLIMIT error is detected) or -2 (if a RUNLIMIT error is detected). Here, if job Low_mem_Alpha fails due to MEMLIMIT, a High_mem_Alpha job is seeded. Otherwise, a Beta job is seeded.
+The eHive system implements a limited exception handling system that creates :ref:`special dataflow when jobs exceed resource limits <resource-limit-dataflow>`. These events are generated on special branch -1 (if a MEMLIMIT error is detected), -2 (if a RUNLIMIT error is detected), or 0 (any other failure, see the detailed description below). Here, if job Low_mem_Alpha fails due to MEMLIMIT, a High_mem_Alpha job is seeded. Otherwise, a Beta job is seeded.
 
 .. hive_diagram::
 

@@ -95,7 +95,6 @@ The following directives are available for use in an analysis definition:
    "meadow_type", "optional", "string", "Restricts jobs of this analysis to a particular meadow type. Most commonly used to restrict analyses to run jobs in the LOCAL meadow, but any valid meadow can be given. Note that if a non-local meadow is specified, this will stop automatic failover to LOCAL if LOCAL is the only meadow available."
    "parameters", "optional", "hashref", "Sets analysis-wide parameters and values."
    "priority", "optional", "integer", "Sets relative priority for jobs of this analysis. Workers will claim available jobs from higher priority analyses before claiming jobs of lower priority analyses."
-   "rc_id", "deprecated", "integer", "Resource_class ID of the :ref:`resource_class <resource-classes-overview>` for this analysis. Deprecated, but kept for backwards compatibility with existing PipeConfigs; the ``rc_name`` directive should be used instead."
    "rc_name", "optional", "string", "Name of the :ref:`resource_class <resource-classes-overview>` for this analysis."
    "tags", "optional", "arrayref or comma-delimited string", "A tag or set of tags for this analysis."
    "wait_for", "optional", "arrayref or string", "Logic_name, or list of logic_names, of analyses that jobs of this analysis will :ref:`wait for <wait-for-detail>`."

@@ -3,7 +3,7 @@ Semaphores and other tools to sequence job execution
 
 There are three main ways in eHive to control the order in which
 analyses are executed (more precisely, the order in which jobs for
-analyses are executed).  The first is the seeding mechanism that we
+analyses are executed). The first is the seeding mechanism that we
 have already seen. Simply, while a job runs, it creates events, and
 these events can be wired to create jobs:
 
@@ -21,11 +21,11 @@ This is often sufficient for simple workflows, but lacks the power and
 flexibility to handle more complex situations - such as processing the
 output of several independent jobs running in parallel. To provide
 this power and flexibility, eHive provides a semaphore system
-(sometimes called "fan and funnel" or "box and funnel"). Additionally,
-a "wait-for" directive is available to be part of an analysis
-definition, which stops all jobs for that analysis from running while
-some other specified analysis has incomplete jobs. "Wait-for" is an
-older feature of eHive and is not generally recommended, but it may
+(sometimes called "factory, fan, and funnel" or "box and
+funnel"). Additionally, a "wait-for" directive is available to be part
+of an analysis definition. This stops all jobs for that analysis from
+running while some other analysis has incomplete jobs. "Wait-for" is
+an older feature of eHive and is not generally recommended, but it may
 still be seen in older pipelines, or may be applicable in some rare
 situations.
 
@@ -43,11 +43,11 @@ which has three fundamental components:
 
   - A group of jobs the semaphored (funnel) job(s) waits for. In eHive terminology, this group is called the "fan" (or sometimes also called the "box," because eHive's graphical display tools identify the fan by drawing a shaded box around the appropriate analyses or jobs)
 
-  - A single job that seeds the funnel and fan jobs during its execution.
+  - A single job that seeds the funnel and fan jobs during its execution. In eHive terminology, this is called the "factory."
 
 .. hive_diagram::
 
-    {   -logic_name => 'Seeding',
+    {   -logic_name => 'Factory',
         -flow_into  => {
            '2->A' => [ 'Fan' ],
            'A->1' => [ 'Funnel' ],
@@ -59,7 +59,7 @@ which has three fundamental components:
     },
 
 Creating a fan-funnel relationship is a matter of wiring dataflow
-events from the seeding analysis in that analysis' flow-into block. To
+events from the factory analysis in that analysis' flow-into block. To
 indicate that jobs being seeded should be part of a fan that controls
 a semaphore, a single-letter "group identifier" is appended to the
 dataflow branch number with an arrow. This is the ``'2->A'`` in the
@@ -67,7 +67,11 @@ example above. Likewise, to wire a funnel analysis to a dataflow
 branch, the dataflow branch is prepended by a group identifier. For
 example ``'A->1'``. Note that group identifier letters are arbitrary,
 and have nothing to do with the logic names of the analyses in the
-group.
+group. Also be aware that group identifiers are unique only in the
+scope of a single factory analysis. For example, if a workflow has a
+factory 'Factory_alpha' which seeds a fan using group identifier 'A',
+this group will be completely independent from a different factory
+'Factory_beta' which also seeds a fan using group identifier 'A'.
 
 Writing it out in sentences: ``2->A`` means that all the dataflow
 events on branch #2 will be grouped together in a group
@@ -75,15 +79,18 @@ named A. ``A->1`` means that the job resulting from the dataflow event
 on branch #1 has to wait for *all* the jobs in group A before it can
 start.
 
-Multiple jobs of different analysis types can be seeded into the same
-fan, by events with the same or different dataflow branch numbers:
+Multiple analyses in the same fan
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A factory can seed multiple jobs of different analysis types into the
+same fan, by using events with the same or different dataflow branch
+numbers:
 
 .. hive_diagram::
 
-    {   -logic_name => 'Seeding',
+    {   -logic_name => 'Factory',
         -flow_into  => {
-           '2->A' => [ 'Fan_alpha' ],
-           '2->A' => [ 'Fan_beta' ],
+           '2->A' => [ 'Fan_alpha', 'Fan_beta' ],
            '3->A' => [ 'Fan_delta'  ],
            'A->1' => [ 'Funnel' ],
         },
@@ -101,17 +108,20 @@ In the above diagram, the 'Funnel' job seeded by the dataflow event on
 branch #1 will have to wait until all 'Fan_alpha', 'Fan_beta', and
 'Fan_delta' jobs are finished.
 
-The same seeding analysis can also be wired to create jobs in multiple
-fan groups, by giving each group a distinct identifier:
+Multiple fan-funnel groups from the same factory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The same factory can also be wired to create jobs in multiple fan
+groups, by giving each group a distinct identifier:
 
 .. hive_diagram::
 
-   {   -logic_name => 'Seeding',
+   {   -logic_name => 'Factory',
        -flow_into  => {
           '2->A' => [ 'Alpha_fan' ],
           '2->B' => [ 'Beta_fan'  ],
           'A->1' => [ 'Alpha_funnel' ],
-          'B->1' => [ 'Beta_funnel' ]
+          'B->1' => [ 'Beta_funnel' ],
        },
    },
    {   -logic_name => 'Alpha_fan',
@@ -123,6 +133,9 @@ fan groups, by giving each group a distinct identifier:
    {   -logic_name => 'Beta_funnel',
    },
 
+Sempahore propagation
+~~~~~~~~~~~~~~~~~~~~~
+
 Analyses in a fan can be wired so that their dataflow events generate
 jobs of child analyses. Jobs from these child analyses will be part of
 the same fan group (and will block the semaphored/funnel job from
@@ -130,7 +143,7 @@ starting) just like jobs from their parent analyses:
 
 .. hive_diagram::
 
-    {   -logic_name => 'Seeding',
+    {   -logic_name => 'Factory',
         -flow_into  => {
            '2->A'   => [ 'Fan' ],
            'A->1'   => [ 'Funnel' ],
@@ -146,30 +159,43 @@ starting) just like jobs from their parent analyses:
     {   -logic_name => 'Funnel',
     },
 
-.. warning::
-   The funnel analyses should be wired so that their jobs are seeded after 
-   all other fan jobs. If a job in a fan analysis is seeded after a job in
-   the corresponding funnel, unpredictable behaviour can result.
+Semaphore independent from the autoflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Although the overall seeding-job - fan - funnel structure is created
-via the relationships between different analyses, during workflow
-execution semaphores are controlled and released at the job
-level. This means that a funnel job, and the fan jobs that are
-blocking it from starting, are "aware" of which particular job did the
-original seeding. If there are multiple jobs belonging to the same
-seeding analysis, then -- at the job level -- there will be multiple
-fans and funnels, one for each seeding job. Please see the
-:ref:`Long-multiplication pipeline walkthrough
-<long-multiplication-walkthrough>` for a detailed example.
+A fan - funnel relationship is created the instant a funnel job is
+seeded. At that point in time, the event seeding the funnel "closes
+off" the fan, and the semaphore counter is initialized with the number
+of jobs currently in the fan. After that moment, *if the factory seeds
+more jobs into a fan, these fan jobs will constitute a new fan group,
+which will need to be closed off by a new funnel job*.
 
-Note that there is no intrinsic limit to the number of funnel analyses
-(or jobs) that can exist as part of a semaphore group. In other words,
-a seeding analysis can be wired to multiple funnel analyses with the
-same funnel identifier. It is even OK to wire a branch which will
-transmit multiple events to a funnel analysis, resulting several
-funnel jobs. If more than one funnel job is present within the same
-semaphore group, all will wait for the appropriate fan jobs to finish,
-at which point their semaphores will be released simultaneously.
+Therefore, it is possible for a factory job to create several fan -
+funnel groups during its execution. All of these groups execute
+independently; the semaphore controlling a particular funnel job will
+release upon completion of its corresponding fan jobs.
+
+.. hive_diagram::
+
+   {   -logic_name => 'Factory',
+       -flow_into  => {
+          '3->A'   => [ 'Fan' ],
+          'A->2'   => [ 'Funnel' ],
+       },
+   },
+   {   -logic_name => 'Fan',
+   },
+   {   -logic_name => 'Funnel',
+   },
+
+This also means that, if there are several factory jobs for the same
+factory analysis, the semaphore groups for those factories will all be
+independent. This is because each factory will be creating a separate
+funnel job (or set of funnel jobs).
+
+Please see the :ref:`Long-multiplication pipeline walkthrough
+<long-multiplication-walkthrough>` for a detailed illustration of how
+individual funnel jobs are independently controlled by different fan
+groups.
 
 .. _wait-for-detail:
 
@@ -194,8 +220,8 @@ completed.
    {   -logic_name => 'Blocking',
    },
 
-In the above example, the 'Blocking' job, after being seeded, will not
-run until all 'Waiting' jobs are :hivestatus:`<DONE>[DONE]` or
+In the above example, the 'Waiting' job, after being seeded, will not
+run until all 'Blocking' jobs are :hivestatus:`<DONE>[DONE]` or
 [PASSED_ON].
 
 Note that 'blocking' and 'waiting' analyses do not have to share the same parent:
@@ -222,7 +248,7 @@ Note that 'blocking' and 'waiting' analyses do not have to share the same parent
 Although superficially this may seem similar to semaphore groups,
 there are a number of important differences:
 
-  - There is no relationship between blocking and waiting jobs based on having the same parent job. If *any* jobs in the blocking analysis are incomplete then no waiting jobs can start.
+  - There is no fan-funnel style relationship between blocking and waiting jobs. If *any* jobs in the blocking analysis are incomplete then no waiting jobs can start.
 
   - Likewise, if at some moment there are no incomplete jobs in a blocking analysis, then jobs of the waiting analysis will be able to start. This can happen even if there will subsequently be new jobs seeded into the blocking analysis.
 
