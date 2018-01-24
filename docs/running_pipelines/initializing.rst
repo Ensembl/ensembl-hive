@@ -5,8 +5,9 @@
 Initializing pipelines
 ======================
 
-Before a pipeline can be run, the hive database (or "blackboard") must be created
-and populated. This is done using eHive's init_pipeline.pl script.
+Before a pipeline can be run, the hive database (or "blackboard") must
+be created and populated. This is done using eHive's
+:ref:`init_pipeline.pl <script-init_pipeline>` script.
 
 Basic operation
 ---------------

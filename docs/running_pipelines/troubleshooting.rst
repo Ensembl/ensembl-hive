@@ -83,7 +83,7 @@ In addition to the message log, eHive is equipped to produce additional debuggin
 The runWorker.pl script
 -----------------------
 
-The runWorker.pl script can be useful for observing the execution of a job or analysis within the context of a pipeline. This script directly runs a worker process in the environment (machine and environment variables) of the command line where it is run. When running a job using runWorker, STDERR and STDOUT can be viewed in the terminal, or redirected in the usual way. There are many command-line options to control the behaviour of runWorker.pl -- the following are a few that may be useful when invoking runWorker.pl to diagnose problems with a particular job or analysis:
+The :ref:`runWorker.pl script <script-runWorker>` can be useful for observing the execution of a job or analysis within the context of a pipeline. This script directly runs a worker process in the environment (machine and environment variables) of the command line where it is run. When running a job using runWorker, STDERR and STDOUT can be viewed in the terminal, or redirected in the usual way. There are many command-line options to control the behaviour of runWorker.pl -- the following are a few that may be useful when invoking runWorker.pl to diagnose problems with a particular job or analysis:
 
    - -analyses_pattern and -analysis_id can be used to restrict the worker to claiming jobs from a particular analysis or class of analyses. Note that there is no guarantee of which job out of the jobs in those analyses will be claimed. It could be any READY job (or even a non-READY job if -force 1 is also specified).
 
@@ -104,7 +104,7 @@ The runWorker.pl script can be useful for observing the execution of a job or an
 The standaloneJob.pl script
 ---------------------------
 
-The standaloneJob.pl script executes a particular runnable, and allows that execution to be partially or completely detached from any existing pipeline. This can be useful to see in detail what a particular runnable is doing, or for checking parameter values. There are many command-line options to control the behaviour of standaloneJob.pl -- the following are a few that may be useful when invoking runWorker.pl to diagnose problems with a particular job or analysis:
+The :ref:`standaloneJob.pl <script-standaloneJob>` script executes a particular runnable, and allows that execution to be partially or completely detached from any existing pipeline. This can be useful to see in detail what a particular runnable is doing, or for checking parameter values. There are many command-line options to control the behaviour of standaloneJob.pl -- the following are a few that may be useful when invoking runWorker.pl to diagnose problems with a particular job or analysis:
 
    - -url combined with -job_id allows standaloneJob.pl to "clone" a job that already exists in a hive database. When these options are given, standaloneJob.pl will copy the parameters of the "donor" job specified by -job_id from the database specified by -url, and use those parameters to create and run a new job of the "donor" job's analysis type. Note that this new job is *not* part of the pipeline. In particular
 

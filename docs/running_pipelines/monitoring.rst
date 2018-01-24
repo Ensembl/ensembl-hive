@@ -32,7 +32,7 @@ Legend:
 -  The red solid arrows with T-heads are "analysis control rules". They
    block the pointed-at Analysis until all the jobs of the pointing
    Analysis are done.
--  Light-blue shadows behind some analyses stand for "semaphore rules".
+-  Light-blue shadows behind some analyses stand for :ref:`"semaphore rules" <semaphores-detail>`.
    Together with red and green dashed lines they represent our main job
    control mechanism that will be described elsewhere.
 
