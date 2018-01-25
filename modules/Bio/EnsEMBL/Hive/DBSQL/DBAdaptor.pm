@@ -114,7 +114,10 @@ sub new {
     unless($no_sql_schema_version_check) {
 
         my $dbc = $self->dbc();
-        my $safe_url = $dbc->url('EHIVE_PASS');
+
+        # Make a safe URL without affecting EHIVE_PASS, which could have been set by the user
+        my $safe_url = $dbc->url('EHIVE_TMP_PASSWORD');
+        $safe_url =~ s/EHIVE_TMP_PASSWORD/EHIVE_PASS/;
 
         my $code_sql_schema_version = Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor->get_code_sql_schema_version()
             || die "DB($safe_url) Could not establish code_sql_schema_version, please check that 'EHIVE_ROOT_DIR' environment variable is set correctly";
