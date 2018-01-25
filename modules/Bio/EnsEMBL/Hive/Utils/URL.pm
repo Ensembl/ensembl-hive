@@ -253,4 +253,59 @@ sub hash_to_url {
     return $url;
 }
 
+
+=head2 hide_url_password
+
+  Description : Check the command-line for -url or -pipeline_url in order to
+                replace the password with an environment variable and then
+                exec on the new arguments (in which case the function doesn't
+                return)
+  Returntype  : void or no return
+
+=cut
+
+sub hide_url_password {
+    return if $ENV{EHIVE_SANIIZED_ARGS};
+    # Work on a copy of @ARGV
+    my @args = (@ARGV);
+
+    $ENV{EHIVE_SANIIZED_ARGS} = 1;
+    my @new_args;
+    # Scan the list of arguments
+    while (@args) {
+        my $a = shift @args;
+        # Search for -url and -pipeline_url (with one or two hyphens)
+        if (($a =~ /^--?(pipeline_)?url$/) and @args) {
+            my $url = shift @args;
+            # Does the next value look like a proper URL ?
+            if ($url =~ /^(.*:\/\/\w*:)([^\/\@]*)(\@.*)$/) {
+                # Recognized URL
+                my $driver_and_user    = $1;
+                my $possible_password  = $2;
+                my $url_remainder      = $3;
+                # Does the password look like an environment variable ?
+                if ($possible_password =~ /\$(?|\{(\w+)\}|(\w+))/) {
+                    # Does the variable exist ?
+                    if (defined($ENV{$1})) {
+                        # Already a substituted password -> bail out !
+                        return;
+                    }
+                }
+                # Perform the substitution
+                my $pass_variable = '_EHIVE_HIDDEN_PASS';
+                $ENV{$pass_variable} = $possible_password;
+                $url = $driver_and_user .'${'.$pass_variable . '}' . $url_remainder;
+            }
+            # Found the URL, let's push the remaining arguments and exec
+            push @new_args, $a, $url, @args;
+            exec($^X, $0, @new_args);
+        } else {
+            push @new_args, $a;
+        }
+    }
+    # If we arrive here it means we couldn't find anything to substitute,
+    # so there is nothing to do
+}
+
+
 1;
