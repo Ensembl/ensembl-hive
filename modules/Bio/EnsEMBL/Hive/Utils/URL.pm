@@ -299,6 +299,12 @@ sub hide_url_password {
             # Found the URL, let's push the remaining arguments and exec
             push @new_args, $a, $url, @args;
             exec($^X, $0, @new_args);
+
+        } elsif ($a eq '--') {
+            # We've reached the end of the parsable options without finding
+            # a password -> nothing to do
+            return;
+
         } else {
             push @new_args, $a;
         }
