@@ -63,6 +63,11 @@ sub init_pipeline {
     print "> Storing the pipeline in the database.\n\n";
     $pipeline->save_collections();
 
+    if ($pipeconfig_object->pipeline_url =~ /\$\{_EHIVE_HIDDEN_PASS\}/) {
+        my $real_password = $hive_dba->dbc->password;
+        $pipeconfig_object->root()->{'pipeline_url'} =~ s/\$\{_EHIVE_HIDDEN_PASS\}/$real_password/;
+    }
+
     print "Pipeline successfully stored at ", $pipeconfig_object->pipeline_url, " !\n\n";
 
     print $pipeconfig_object->useful_commands_legend();
