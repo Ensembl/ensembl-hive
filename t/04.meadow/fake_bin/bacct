@@ -13,7 +13,7 @@ Accounting information about jobs that are:
 Job <2581807[1]>, Job Name <protein_83_dumps-Hive-1Gb_job-240[1]>, User <cc21>,
                      Project <ensembl-compara>, Status <DONE>, Queue <normal>, 
                      Command </nfs/users/nfs_c/cc21/src/ensembl-hive/scripts/ru
-                     nWorker.pl -url mysql://ensadmin:${EHIVE_PASS}@compara3:33
+                     nWorker.pl -url mysql://ensadmin:${_EHIVE_HIDDEN_PASS}@compara3:33
                      06/cc21_protein_83_dumps -rc_name 1Gb_job --reg_conf /nfs/
                      users/nfs_c/cc21/src/ensembl-compara/scripts/pipeline/prod
                      uction_reg_conf.pl>, Share group charged </WTSI/Computatio
@@ -36,7 +36,7 @@ Accounting information about this job:
 Job <2581801[48]>, Job Name <protein_83_dumps-Hive-1Gb_job-239[48]>, User <cc21
                      >, Project <ensembl-compara>, Status <DONE>, Queue <normal
                      >, Command </nfs/users/nfs_c/cc21/src/ensembl-hive/scripts
-                     /runWorker.pl -url mysql://ensadmin:${EHIVE_PASS}@compara3
+                     /runWorker.pl -url mysql://ensadmin:${_EHIVE_HIDDEN_PASS}@compara3
                      :3306/cc21_protein_83_dumps -rc_name 1Gb_job --reg_conf /n
                      fs/users/nfs_c/cc21/src/ensembl-compara/scripts/pipeline/p
                      roduction_reg_conf.pl>, Share group charged </WTSI/Computa
@@ -60,7 +60,7 @@ Accounting information about this job:
 Job <3194397[75]>, Job Name <orth_qm_mammals-Hive-default-430[75]>, User <cc21>
                      , Project <ensembl-compara>, Status <EXIT>, Queue <normal>
                      , Command </nfs/users/nfs_c/cc21/src/ensembl-hive/scripts/
-                     runWorker.pl -url mysql://ensadmin:${EHIVE_PASS}@compara3:
+                     runWorker.pl -url mysql://ensadmin:${_EHIVE_HIDDEN_PASS}@compara3:
                      3306/cc21_orth_qm_mammals -rc_name default>, Share group c
                      harged </WTSI/ComputationalGenomics/Annotation/ensembl-grp
                      /ensembl-compara/cc21>

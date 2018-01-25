@@ -91,8 +91,7 @@ sub main {
     $self->{'worker_crash_on_startup_prob'} = undef;
 
     # store all the options passed on the command line for registration
-    # we re-create this a bit later, so that we can protect any passwords
-    # that might be passed in a URL
+    # as GetOptions modifies @ARGV
     my @original_argv = @ARGV;
 
     GetOptions(
@@ -215,13 +214,6 @@ sub main {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
-    if( $self->{'url'} ) {    # protect the URL that we pass to Workers by hiding the password in %ENV:
-        $self->{'url'} = "'". $self->{'dba'}->dbc->url('EHIVE_PASS') ."'";
-
-    # find the url in the original @argv, remove it, then replace with the new, protected url
-        my ($url_flag_index) = grep {$original_argv[$_] eq '-url'} (0..(scalar(@original_argv) - 1));
-        $original_argv[$url_flag_index + 1] = $self->{'dba'}->dbc->url('EHIVE_PASS');
-    }
     $self->{'options'} = join(" ", @original_argv);
 
     # make -loop_until case insensitive
