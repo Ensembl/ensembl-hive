@@ -265,11 +265,17 @@ sub hash_to_url {
 =cut
 
 sub hide_url_password {
+
+    # Safeguard to avoid attempting the substitution twice
+    # NOTE: the environment is propagated to the children, meaning that the
+    # variable, once set by beekeeper.pl, will extend to all its workers,
+    # which is fine as long as beekeeper protects the passwords.
     return if $ENV{EHIVE_SANIIZED_ARGS};
+    $ENV{EHIVE_SANIIZED_ARGS} = 1;
+
     # Work on a copy of @ARGV
     my @args = (@ARGV);
 
-    $ENV{EHIVE_SANIIZED_ARGS} = 1;
     my @new_args;
     # Scan the list of arguments
     while (@args) {
