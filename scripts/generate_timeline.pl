@@ -13,10 +13,6 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-# Hide command line options in order to hide db passwords
-# Re-writing $0 to hide passwords within URLs breaks FindBin
-$0 = sprintf("%s", $0);
-
 use Getopt::Long qw(:config no_auto_abbrev);
 use List::Util qw(sum);
 use POSIX;
@@ -26,8 +22,11 @@ use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
 use Bio::EnsEMBL::Hive::HivePipeline;
+use Bio::EnsEMBL::Hive::Utils::URL;
 
 no warnings qw{qw};
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 # This replaces "when_died" when a role is still active
 my $now = localtime;

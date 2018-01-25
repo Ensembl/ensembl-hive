@@ -11,10 +11,6 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-# Hide command line options in order to hide db passwords
-# Re-writing $0 to hide passwords within URLs breaks FindBin
-$0 = sprintf("%s", $0);
-
 use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
 
@@ -22,6 +18,9 @@ use Bio::EnsEMBL::Hive::AnalysisJob;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'stringify');
+use Bio::EnsEMBL::Hive::Utils::URL;
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 sub show_seedable_analyses {
     my ($pipeline) = @_;

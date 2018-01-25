@@ -11,10 +11,6 @@ BEGIN {
     unshift @INC, $ENV{'EHIVE_ROOT_DIR'}.'/modules';
 }
 
-# Hide command line options in order to hide db passwords
-# Re-writing $0 to hide passwords within URLs breaks FindBin
-$0 = sprintf("%s", $0);
-
 use File::Path 'make_path';
 use Getopt::Long qw(:config no_auto_abbrev);
 use Pod::Usage;
@@ -23,11 +19,14 @@ use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::Version ('report_versions');
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Valley;
 use Bio::EnsEMBL::Hive::Beekeeper;
 use Bio::EnsEMBL::Hive::Scheduler;
+
+Bio::EnsEMBL::Hive::Utils::URL::hide_url_password();
 
 
 main();
