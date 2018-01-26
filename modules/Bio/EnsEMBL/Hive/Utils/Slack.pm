@@ -58,7 +58,8 @@ sub send_message_to_slack {
     # Fix the channel name (it *must* start with a hash)
     $payload->{'channel'} = '#'.$payload->{'channel'} if ($payload->{'channel'} || '') =~ /^[^#@]/;
 
-    my $req = HTTP::Request::Common::POST($slack_webhook, ['payload' => JSON::encode_json($payload)]);
+    my $json_payload = JSON::encode_json($payload);
+    my $req = HTTP::Request::Common::POST($slack_webhook, ['payload' => $json_payload]);
 
     my $ua = LWP::UserAgent->new;
     $ua->timeout(15);
@@ -67,8 +68,44 @@ sub send_message_to_slack {
     if ($resp->is_success) {
         # well done
     } else {
-        die $resp->status_line;
+        # All taken from https://api.slack.com/changelog/2016-05-17-changes-to-errors-for-incoming-webhooks
+        if ($resp->code == 400) {
+            if ($resp->content eq 'invalid_payload') {
+                _pretty_die($resp, 'The data sent in your request cannot be understood as presented; verify your content body matches your content type and is structurally valid'. "\n$json_payload");
+            } elsif ($resp->content eq 'user_not_found') {
+                _pretty_die($resp, 'The user used in your request does not actually exist' . "\n$json_payload");
+            }
+        } elsif ($resp->code == 403) {
+            if ($resp->content eq 'action_prohibited') {
+                _pretty_die($resp, 'The team associated with your request has some kind of restriction on the webhook posting in this context.'. "\n$json_payload");
+            }
+        } elsif ($resp->code == 404) {
+            if ($resp->content eq 'channel_not_found') {
+                _pretty_die($resp, sprintf('The channel associated with your request (%s) does not exist', $payload->{'channel'}));
+            }
+        } elsif ($resp->code == 405) {
+            if ($resp->content eq 'channel_is_archived') {
+                _pretty_die($resp, sprintf(q{The channel '%s' has been archived and doesn't accept further messages, even from your incoming webhook.}, $payload->{'channel'}));
+            }
+        } elsif ($resp->code == 500) {
+            if ($resp->content eq 'rollup_error') {
+                _pretty_die($resp, 'Something strange and unusual happened that was likely not your fault at all.'. "\n$json_payload");
+            }
+        }
+        _pretty_die($resp, $resp->content);
     }
+}
+
+
+=head2 _pretty_die
+
+    Description: Helper method to have uniform error messages
+
+=cut
+
+sub _pretty_die {
+    my ($resp, $explanation) = @_;
+    die sprintf("Got a %d error (%s): %s\n", $resp->code, $resp->message, $explanation);
 }
 
 
