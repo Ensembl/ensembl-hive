@@ -39,6 +39,13 @@ sub init_pipeline {
     print "> Parsing the command-line options.\n\n";
     $pipeconfig_object->process_options( 1 );
 
+    # Restore the password in the URL so that pipelines that need
+    # pipeline_url() don't see _EHIVE_HIDDEN_PASS
+    if ($pipeconfig_object->pipeline_url =~ /\$\{_EHIVE_HIDDEN_PASS\}/) {
+        my $real_password = $ENV{_EHIVE_HIDDEN_PASS};
+        $pipeconfig_object->root()->{'pipeline_url'} =~ s/\$\{_EHIVE_HIDDEN_PASS\}/$real_password/;
+    }
+
     print "> Running the creation commands.\n\n";
     $pipeconfig_object->run_pipeline_create_commands();
 
@@ -62,11 +69,6 @@ sub init_pipeline {
 
     print "> Storing the pipeline in the database.\n\n";
     $pipeline->save_collections();
-
-    if ($pipeconfig_object->pipeline_url =~ /\$\{_EHIVE_HIDDEN_PASS\}/) {
-        my $real_password = $hive_dba->dbc->password;
-        $pipeconfig_object->root()->{'pipeline_url'} =~ s/\$\{_EHIVE_HIDDEN_PASS\}/$real_password/;
-    }
 
     print "Pipeline successfully stored at ", $pipeconfig_object->pipeline_url, " !\n\n";
 
