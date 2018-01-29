@@ -67,7 +67,7 @@ sub _command_line_to_extract_all_running_workers {
     my ($self) = @_;
 
         # Make sure we have excluded both 'awk' itself and commands like "less runWorker.pl" :
-    return q{ps x -o state,pid,command -w -w | awk '(/runWorker.pl/ && ($3 ~ /perl$/) )'};
+    return q{ps x -o state,pid,command -w -w | awk '(/runWorker.pl/ && ($3 ~ /perl[[:digit:].]*$/) )'};
 }
 
 
