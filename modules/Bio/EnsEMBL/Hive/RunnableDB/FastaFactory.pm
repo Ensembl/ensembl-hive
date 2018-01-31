@@ -29,6 +29,8 @@
 
         param('max_chunk_length');  # Maximum total length of sequences in a chunk: 'max_chunk_length' => '200000'
 
+        param('max_chunk_size');    # Defines the maximum allowed number of sequences to be included in each output file.
+
         param('seq_filter');        # Can be used to exclude sequences from output files. e.g. '^TF' would exclude all sequences starting with TF.
 
         param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
@@ -89,6 +91,7 @@ sub param_defaults {
 
     return {
         'max_chunk_length'  => 100000,
+        'max_chunk_size'    => 0,
         'output_prefix'     => 'my_chunk_',
         'output_suffix'     => '.#input_format#',
         'seq_filter'        => undef,
@@ -152,6 +155,7 @@ sub write_output {
 
     my $input_seqio         = $self->param('input_seqio');
     my $max_chunk_length    = $self->param('max_chunk_length');
+    my $max_chunk_size      = $self->param('max_chunk_size');
     my $output_prefix       = $self->param('output_prefix');
     my $output_suffix       = $self->param('output_suffix');
     my $output_dir          = $self->param('output_dir');
@@ -178,7 +182,7 @@ sub write_output {
         $chunk_length += $seq_object->length();
         $chunk_size   += 1;
 	
-        if ($chunk_length > $max_chunk_length) {
+        if (($max_chunk_length && ($chunk_length > $max_chunk_length)) or ($max_chunk_size && ($chunk_size > $max_chunk_size))) {
 
                 # dataflow the current chunk:
             $self->dataflow_output_id( {
