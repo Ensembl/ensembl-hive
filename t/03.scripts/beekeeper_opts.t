@@ -47,7 +47,7 @@ my $pipeline_url = get_test_url_or_die();
 
     # Check that -run puts one additional in the beekeeper table, it loops once,
     # and finishes with LOOP_LIMIT
-    beekeeper($pipeline_url, ['-run', '-meadow_type' => 'LOCAL']);
+    beekeeper($pipeline_url, ['-run', '-meadow_type' => 'LOCAL', -job_limit => 1]);
 
     $beekeeper_rows = $beekeeper_nta->fetch_all();
     is(scalar(@$beekeeper_rows), 2, 'After -sync and -run, there are exactly 2 entries in the beekeeper table');
