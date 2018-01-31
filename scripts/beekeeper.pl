@@ -84,7 +84,7 @@ sub main {
     $self->{'max_loops'}            = 0;
     $self->{'retry_throwing_jobs'}  = undef;
     $self->{'loop_until'}           = undef;
-    $self->{'can_respecialize'}     = undef;
+    $self->{'can_respecialize'}     = 1;
     $self->{'hive_log_dir'}         = undef;
     $self->{'submit_log_dir'}       = undef;
     $self->{'worker_delay_startup_seconds'} = undef;
