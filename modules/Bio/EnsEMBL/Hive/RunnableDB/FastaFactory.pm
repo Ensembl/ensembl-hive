@@ -29,6 +29,8 @@
 
         param('max_chunk_length');  # Maximum total length of sequences in a chunk: 'max_chunk_length' => '200000'
 
+        param('seq_filter');        # Can be used to exclude sequences from output files. e.g. '^TF' would exclude all sequences starting with TF.
+
         param('output_prefix');     # A common prefix for output files: 'output_prefix' => 'my_special_chunk_'
 
         param('output_suffix');     # A common suffix for output files: 'output_suffix' => '.nt'
@@ -89,6 +91,7 @@ sub param_defaults {
         'max_chunk_length'  => 100000,
         'output_prefix'     => 'my_chunk_',
         'output_suffix'     => '.#input_format#',
+        'seq_filter'        => undef,
         'hash_directories'  => 0,
         'input_format'      => 'fasta',
         'output_dir'        => '',
@@ -157,6 +160,7 @@ sub write_output {
     my $chunk_length = 0;   # total length of the current chunk
     my $chunk_size   = 0;   # number of sequences in the current chunk
     my $chunk_name   = $output_prefix.$chunk_number.$output_suffix;
+    my $seq_filter   = $self->param('seq_filter');
 
     # No need to check param('hash_directories') because even in this mode
     # the first file is in the required directory
@@ -167,6 +171,8 @@ sub write_output {
     my $chunk_seqio  = Bio::SeqIO->new(-file => '>'.$chunk_name, -format => $self->param_required('output_format'));
     
     while (my $seq_object = $input_seqio->next_seq) {
+
+        next if ( ( defined($seq_filter) ) && ( $seq_object->id =~ /$seq_filter/ ) );
 
         $chunk_seqio->write_seq( $seq_object );
         $chunk_length += $seq_object->length();
