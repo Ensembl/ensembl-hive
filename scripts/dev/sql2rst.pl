@@ -48,7 +48,7 @@ GetOptions(
     'fk=s' => \$fk_sql_file,
     'o=s' => \$html_file,
     'd=s' => \$db_team,
-    'c=i' => \$show_colour,
+    'c!'  => \$show_colour,
     'v=i' => \$version,
     'embed_diagrams!'  => \$embed_diagrams,
     'show_header!'     => \$header_flag,
