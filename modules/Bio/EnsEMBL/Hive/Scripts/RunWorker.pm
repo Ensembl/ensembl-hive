@@ -43,12 +43,6 @@ sub runWorker {
     my $queen = $hive_dba->get_Queen();
     die "No Queen, God Bless Her\n" unless $queen and $queen->isa('Bio::EnsEMBL::Hive::Queen');
 
-    if( $specialization_options->{'force_sync'} ) {       # sync the Hive in Test mode:
-        my $list_of_analyses = $pipeline->collection_of('Analysis')->find_all_by_pattern( $specialization_options->{'analyses_pattern'} );
-
-        $queen->synchronize_hive( $list_of_analyses );
-    }
-
     # Create the worker
     my $worker = $queen->create_new_worker(
              -preregistered         => $specialization_options->{'preregistered'},
