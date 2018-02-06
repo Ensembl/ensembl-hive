@@ -10,7 +10,7 @@ perl:
   - "5.26"      # Maintained -- Latest
 
 git:
-  depth: 500
+  depth: false
 
 env:
   - EHIVE_TEST_PIPELINE_URLS='mysql://travis@127.0.0.1/'
