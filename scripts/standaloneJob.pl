@@ -89,6 +89,7 @@ sub main {
         my $status = $job->status;
         warn "\nTaken parameters from job_id $job_id (status $status) @ $url\n";
         warn "Will now disconnect from it. Be aware that the original job will NOT be updated with the outcome of this standalone. Use runWorker.pl if you want to register your run.\n";
+        $pipeline->hive_dba->dbc->disconnect_if_idle;
 
     } elsif (!$input_id) {
         $module_or_file = shift @ARGV;
