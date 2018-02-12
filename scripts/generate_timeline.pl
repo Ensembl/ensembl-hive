@@ -180,6 +180,9 @@ sub main {
         foreach my $db_entry (@tmp_dates) {
             my ($when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
 
+            # Workers that are submitted but not yet born
+            next unless $when_born;
+
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
             $resource_class_id  //= $default_resource_class{$analysis_id};
