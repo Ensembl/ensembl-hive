@@ -18,6 +18,7 @@ use List::Util qw(sum);
 use POSIX;
 use Pod::Usage;
 use Data::Dumper;
+use Scalar::Util qw(looks_like_number);
 use Time::Piece;
 use Time::Seconds;  # not sure if seconds-only arithmetic also needs it
 
@@ -152,7 +153,7 @@ sub main {
     # Get the resource usage information of each worker
     my %used_res = ();
     if (($mode eq 'memory') or ($mode eq 'cores') or ($mode eq 'pending_workers') or ($mode eq 'pending_time')) {
-        my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec, pending_sec FROM worker_resource_usage';
+        my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec FROM worker_resource_usage';
         foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
             my $worker_id = shift @$db_entry;
             $used_res{$worker_id} = $db_entry;
@@ -172,13 +173,13 @@ sub main {
     my %layers = ();
     {
         my $sql = $key eq 'analysis'
-            ? 'SELECT when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
-            : 'SELECT when_born, when_died, worker_id, resource_class_id FROM worker';
+            ? 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
+            : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
         my @tmp_dates = @{$dbh->selectall_arrayref($sql)};
         warn scalar(@tmp_dates), " rows\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {
-            my ($when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
+            my ($when_submitted, $when_born, $when_died, $worker_id, $resource_class_id, $analysis_id) = @$db_entry;
 
             # Workers that are submitted but not yet born
             next unless $when_born;
@@ -204,11 +205,8 @@ sub main {
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
                 add_event(\%layers, $key_value, $when_born, $when_died, $offset);
             } else {
-                if (exists $used_res{$worker_id} and $used_res{$worker_id}->[2]) {
-                    my $pending_sec = $used_res{$worker_id}->[2];
-                    add_event(\%events, $key_value, -$pending_sec, $when_born, 1);
-                    add_event(\%layers, $key_value, -$pending_sec, $when_born, $pending_sec/60);
-                }
+                add_event(\%events, $key_value, $when_submitted, $when_born, 1);
+                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60');
             }
         }
     }
@@ -368,9 +366,8 @@ sub add_dataset {
 
 
 #####
-# Function to store add a new event to the hash.
-# Events are defined with birth and death dates (the birth can be defined
-# relatively to the death)
+# Function to add a new event to the hash.
+# Events are defined with birth and death dates.
 # NB: The dates are truncated to the minute: seconds are not recorded
 # NB: Does not add anything if birth and death are identical (after
 # truncation)
@@ -379,11 +376,15 @@ sub add_dataset {
 sub add_event {
     my ($events, $key, $when_born, $when_died, $offset) = @_;
 
-    return if $offset <= 0;
+    return if looks_like_number($offset) && ($offset <= 0);
 
         # temporary Time::Piece values
     my $death_datetime = $when_died ? Time::Piece->strptime( $when_died , '%Y-%m-%d %H:%M:%S') : $now;
-    my $birth_datetime = ($when_born =~ /^-[0-9]/) ? $death_datetime + $when_born : Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
+    my $birth_datetime = Time::Piece->strptime( $when_born , '%Y-%m-%d %H:%M:%S');
+
+    if ($offset =~ /length_by_(\d+)/) {
+        $offset = ($death_datetime - $birth_datetime) / $1;
+    }
 
     # We don't need to draw things at the resolution of 1 second; 1 minute is enough
     $death_datetime->[0] = 0;
