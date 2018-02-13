@@ -99,7 +99,7 @@ warn "\nInitializing the $gcpct_version pipeline ...\n\n";
 
         # substitute the password-obscured version of the url into the beeekeeper options string
         # for checking - this is how it should be stored in the beekeeper table
-        my $beekeeper_options_string = join(' ', '-url', $hive_dba->dbc->url('_EHIVE_HIDDEN_PASS'), @beekeeper_options);
+        my $beekeeper_options_string = join(' ', '-url', q{'} . $hive_dba->dbc->url('_EHIVE_HIDDEN_PASS') . q{'}, @beekeeper_options);
         is($beekeeper_row->{'options'}, $beekeeper_options_string, 'beekeeper options stored correctly');
 
         safe_drop_database( $hive_dba );
