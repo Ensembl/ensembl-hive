@@ -117,6 +117,7 @@ sub fetch_input {
         $self->param('input_fh', $in_fh);
     } else {
         $input_seqio = Bio::SeqIO->new(-file => $inputfile);
+        $self->param('input_fh', undef);
     }
     die "Could not open or parse '$inputfile', please investigate" unless $input_seqio;
 
