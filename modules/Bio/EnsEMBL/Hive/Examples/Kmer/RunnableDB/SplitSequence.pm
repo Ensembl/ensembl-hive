@@ -125,6 +125,7 @@ sub run {
     $self->param('input_fh', $in_fh); # storing as a param so that it can be closed by post_cleanup if necessary 
   } else {
     $input_seqio = Bio::SeqIO->new(-file => $inputfile, -format => $self->param('input_format'));
+    $self->param('input_fh', undef);
   }
   die "Could not open or parse '$inputfile', please investigate" unless $input_seqio;
 
