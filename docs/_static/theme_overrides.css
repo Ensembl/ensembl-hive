@@ -9,3 +9,8 @@
 .wy-nav-content {
     max-width: 100% !important;
 }
+
+.rst-content .highlight > pre {
+    line-height: 1.5;
+    font-family: "Source Code Pro","Lucida Console","Lucida Sans Typewriter","DejaVu Sans Mono","Bitstream Vera Sans Mono","Liberation Mono","Nimbus Mono L","Courier New",Courier,monospace;
+}
