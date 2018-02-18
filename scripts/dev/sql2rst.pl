@@ -359,7 +359,7 @@ sub table_box {
     );
 }
 
-sub print_whole_diagram {
+sub generate_whole_diagram {
     my ($show_clusters, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram",
@@ -434,7 +434,7 @@ sub sub_table_box {
     );
 }
 
-sub print_sub_diagram {
+sub generate_sub_diagram {
     my ($cluster, $column_links) = @_;
     my $graph = Bio::EnsEMBL::Hive::Utils::GraphViz->new(
         'label' => "$db_team schema diagram: $cluster tables",
@@ -522,10 +522,10 @@ if ($sort_tables == 1) {
 #####################
 my %diagram_dotcode;
 if ($embed_diagrams) {
-    my $graph = print_whole_diagram('show_clusters', 'column_links');
+    my $graph = generate_whole_diagram('show_clusters', 'column_links');
     $diagram_dotcode{''} = $graph->as_debug();
     foreach my $c (@header_names) {
-        my $graph = print_sub_diagram($c, 'column_links');
+        my $graph = generate_sub_diagram($c, 'column_links');
         $diagram_dotcode{$c} = $graph->as_debug();
     }
 }
