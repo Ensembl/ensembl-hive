@@ -531,9 +531,9 @@ if ($embed_diagrams) {
 }
 
 
-##################
-## ReSt content ##
-##################
+#################
+## RST content ##
+#################
 
 my $html_content = '';
 
@@ -562,15 +562,15 @@ foreach my $header_name (@header_names) {
   # Header display #
   #----------------#  
     my $category_title = $documentation->{$header_name}->{'colour'} ? sprintf(':schema_table_header:`<%s,square>%s`', $documentation->{$header_name}->{'colour'}, $header_name) : $header_name;
-    $html_content .= rest_title($category_title, '~') . "\n";
+    $html_content .= rst_title($category_title, '~') . "\n";
   
   #------------------------#
   # Additional information #
   #------------------------#
-    $html_content .= rest_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
+    $html_content .= rst_add_indent_to_block($documentation->{$header_name}{'desc'}, "    ") . "\n\n" if $documentation->{$header_name}{'desc'};
     if ($embed_diagrams) {
         my $l = clean_name($header_name);
-        $html_content .= ".. schema_diagram::\n\n" . rest_add_indent_to_block($diagram_dotcode{$header_name}, '   ') . "\n\n";
+        $html_content .= ".. schema_diagram::\n\n" . rst_add_indent_to_block($diagram_dotcode{$header_name}, '   ') . "\n\n";
     }
   
   #----------------#
@@ -580,7 +580,7 @@ foreach my $header_name (@header_names) {
     my $data = $documentation->{$header_name}{'tables'}{$t_name};
     
     my $table_title = $documentation->{$header_name}->{'colour'} ? sprintf(':schema_table_header:`<%s,round>%s`', $documentation->{$header_name}->{'colour'}, $t_name) : $t_name;
-    $html_content .= rest_title($table_title, '+');
+    $html_content .= rst_title($table_title, '+');
     $html_content .= add_description($data) . "\n";
     $html_content .= add_columns($t_name,$data);
     $html_content .= add_examples($t_name,$data);
@@ -605,7 +605,7 @@ print $output_fh $html_content."\n";
 close($output_fh);
 
 
-sub rest_title {
+sub rst_title {
     my ($title, $underscore_symbol) = @_;
     return $title . "\n" . ($underscore_symbol x length($title)) . "\n";
 }
@@ -621,23 +621,23 @@ sub column_width {
     return max(map {block_width($_->[$i])} @$data);
 }
 
-sub rest_list_table {
+sub rst_list_table {
     my ($data, $class) = @_;
 
     my @widths = map {column_width($data, $_)} 0..(scalar(@{$data->[0]})-1);
     my $w = ":widths: ".join(" ", @widths);
 
-    my $table_content = join("\n", map {rest_list_table_row($_)} @$data);
-    return ".. list-table::\n" . rest_add_indent_to_block(":header-rows: 1\n$w\n" . ($class ? ":class: $class\n" : "") . "\n" . $table_content, "   ") . "\n\n";
+    my $table_content = join("\n", map {rst_list_table_row($_)} @$data);
+    return ".. list-table::\n" . rst_add_indent_to_block(":header-rows: 1\n$w\n" . ($class ? ":class: $class\n" : "") . "\n" . $table_content, "   ") . "\n\n";
 }
 
-sub rest_list_table_row {
+sub rst_list_table_row {
     my ($row) = @_;
     my $first_cell = shift @$row;
-    return rest_add_indent_to_block($first_cell, "    ", "* - ") . "\n" . join("\n", map {rest_add_indent_to_block($_, "    ", "  - ")} @$row);
+    return rst_add_indent_to_block($first_cell, "    ", "* - ") . "\n" . join("\n", map {rst_add_indent_to_block($_, "    ", "  - ")} @$row);
 }
 
-sub rest_add_indent_to_block {
+sub rst_add_indent_to_block {
     my ($block, $indent, $first_indent) = @_;
     $first_indent //= $indent;
     my @lines = split /\n/, $block;
@@ -648,7 +648,7 @@ sub rest_add_indent_to_block {
     return $first_indent . $first_line;
 }
 
-sub rest_bullet_list {
+sub rst_bullet_list {
     my ($data, $list_symbol) = @_;
     $list_symbol //= '-';
     return join("\n", map {$list_symbol . " " . $_} @$data);
@@ -666,17 +666,17 @@ sub display_tables_list {
     my $rest = '';
 
     if ($embed_diagrams) {
-        $rest .= rest_title('Schema diagram', '=') . "\n";
+        $rest .= rst_title('Schema diagram', '=') . "\n";
         $rest .= "The $db_team schema diagrams are automatically generated as PNG images with Graphviz, and show the links between columns of each table.\n";
         $rest .= "Here follows the overall schema diagram, while the individual diagrams of each category are available below, together with the table descriptions.\n\n";
-        $rest .= ".. schema_diagram::\n\n" . rest_add_indent_to_block($diagram_dotcode{''}, '   ') . "\n\n";
+        $rest .= ".. schema_diagram::\n\n" . rst_add_indent_to_block($diagram_dotcode{''}, '   ') . "\n\n";
     }
 
-    $rest .= rest_title('Table list', '=') . "\n";
+    $rest .= rst_title('Table list', '=') . "\n";
     $rest .= "Here is the list of all the tables found in a typical $db_team database, grouped by categories.\n\n";
   
     if (scalar(@header_names) == 1) {
-        return rest_bullet_list($tables_names->{$header_names[0]}) . "\n";
+        return rst_bullet_list($tables_names->{$header_names[0]}) . "\n";
     }
 
     # Remove the empty headers (e.g. "default")
@@ -688,10 +688,10 @@ sub display_tables_list {
         my @headers_this_time = splice(@useful_header_names, 0, $max_headers_per_line);
 
         my @first_row = map {$documentation->{$_}->{'colour'} ? sprintf(':schema_table_header:`<%s,square>%s`', $documentation->{$_}->{'colour'}, $_) : $_} @headers_this_time;
-        my @second_row = map {rest_bullet_list([map {$_.'_'} @{$tables_names->{$_}}])} @headers_this_time;
+        my @second_row = map {rst_bullet_list([map {$_.'_'} @{$tables_names->{$_}}])} @headers_this_time;
         my @data = (\@first_row, \@second_row);
 
-        $rest .= rest_list_table(\@data, 'sql-schema-table');
+        $rest .= rst_list_table(\@data, 'sql-schema-table');
     }
   
     return $rest;
@@ -812,7 +812,7 @@ sub add_columns {
     push @data, \@row;
   }
   
-  return rest_list_table(\@data);
+  return rst_list_table(\@data);
 }
 
 
@@ -1000,7 +1000,7 @@ sub parse_column_type {
   
   return $type unless (scalar(@items_list) > 1);
   
-  return $c_type . ":\n\n" . rest_bullet_list(\@items_list);
+  return $c_type . ":\n\n" . rst_bullet_list(\@items_list);
 }
 
 
