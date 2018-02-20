@@ -359,7 +359,7 @@ if ($fk_sql_file) {
 sub table_box {
     my ($graph, $table_name) = @_;
     my $table_doc = $table_documentation{$table_name};
-    my @rows = map {sprintf('<tr><td bgcolor="white" port="port%s">%s</td></tr>', $_->{name}, $_->{name})} @{$table_doc->{column}};
+    my @rows = map {sprintf('<tr><td bgcolor="white" port="port%s">%s%s</td></tr>', $_->{name}, ($_->{index} =~ /\bprimary\b/i ? '<B>PK</B>&nbsp;&nbsp;' : ''), $_->{name})} @{$table_doc->{column}};
     $graph->add_node($table_name,
         'shape' => 'box',
         'style' => 'filled,rounded',
@@ -428,7 +428,7 @@ sub sub_table_box {
     my $has_ellipsis;
     foreach my $c (@{$table_doc->{column}}) {
         if ($fields->{$c->{name}}) {
-            push @rows, sprintf('<tr><td bgcolor="white" port="port%s">%s</td></tr>', $c->{name}, $c->{name});
+            push @rows, sprintf('<tr><td bgcolor="white" port="port%s">%s%s</td></tr>', $c->{name}, ($c->{index} =~ /\bprimary\b/i ? '<B>PK</B>&nbsp;&nbsp;' : ''), $c->{name});
             $has_ellipsis = 0;
         } elsif (!$has_ellipsis) {
             push @rows, '<tr><td bgcolor="white"><i>...</i></td></tr>';
