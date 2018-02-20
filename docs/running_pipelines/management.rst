@@ -122,7 +122,7 @@ server (the server might be unable to run someone else's pipeline at the
 same time !).
 
 +------------------+----------+-------------+-------------------+----------+------------+-----------------+-------------------+
-| Job’s duration   | Best efficiency                            | Best throughput                                             |
+| Job's duration   | Best efficiency                            | Best throughput                                             |
 +                  +----------+-------------+-------------------+----------+------------+-----------------+-------------------+
 |                  | Capacity | Batch size  | Analysis duration | Capacity | Batch size | Job overhead    | Analysis duration |
 +==================+==========+=============+===================+==========+============+=================+===================+
