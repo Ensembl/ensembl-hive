@@ -845,7 +845,7 @@ sub add_examples {
     foreach my $line (@lines) {
       chomp($line);
       
-      # Pick up the SQl query if it exists
+      # Pick up the SQL query if it exists
       if ($line =~ /(.*)\s*\@sql\s*(.+)/) {
         $html .= ($has_desc == 1) ? $1 : qq{<p>$1};
         $sql = $2;
