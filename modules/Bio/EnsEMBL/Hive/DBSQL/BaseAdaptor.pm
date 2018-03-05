@@ -266,7 +266,7 @@ sub _table_info_loader {
 
 
 sub count_all {
-    my ($self, $constraint, $key_list) = @_;
+    my ($self, $constraint, $key_list, @bind_values) = @_;
 
     my $table_name      = $self->table_name();
     my $driver          = $self->dbc->driver();
@@ -285,7 +285,7 @@ sub count_all {
     # warn "SQL: $sql\n";
 
     my $sth = $self->prepare($sql);
-    $sth->execute;
+    $sth->execute(@bind_values);
 
     my $result_struct;  # will be autovivified to the correct data structure
 
