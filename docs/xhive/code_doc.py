@@ -64,8 +64,8 @@ class SchemaDocumentation(IncludeCommand):
     option_spec = {
             'foreign_keys' : directives.unchanged,
             'title' : directives.unchanged,
-            'sort_headers' : directives.flag,
-            'sort_tables' : directives.flag,
+            'sort_headers' : directives.unchanged,
+            'sort_tables' : directives.unchanged,
             'intro' : directives.unchanged,
             'embed_diagrams' : directives.flag,
             }
@@ -80,9 +80,12 @@ class SchemaDocumentation(IncludeCommand):
             foreign_keys_path = self.options['foreign_keys'].replace('$EHIVE_ROOT_DIR', os.environ["EHIVE_ROOT_DIR"])
             self.state.document.settings.record_dependencies.add(foreign_keys_path)
             command.extend( ['--fk', foreign_keys_path] )
-        for flag in ['sort_headers', 'sort_tables', 'embed_diagrams']:
+        for flag in ['embed_diagrams']:
             if flag in self.options:
                 command.extend( ['--' + flag] )
+        for param in ['sort_headers', 'sort_tables']:
+            if param in self.options:
+                command.extend( ['--' + param, self.options[param]] )
         if 'intro' in self.options:
             command.extend( ['--intro', self.options['intro'].replace('$EHIVE_ROOT_DIR', os.environ["EHIVE_ROOT_DIR"])] )
         return command
