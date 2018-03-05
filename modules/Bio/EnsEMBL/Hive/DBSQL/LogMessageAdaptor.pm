@@ -106,15 +106,13 @@ sub store_hive_message {
 
     chomp $msg;   # we don't want that last "\n" in the database
 
-    my $table_name = $self->table_name();
-
         # Note: the timestamp 'when_logged' column will be set automatically
-    my $sql = qq{
-        INSERT INTO $table_name (status, msg, message_class) VALUES ('UNKNOWN', ?, ?)
+    my $log_message = {
+        'msg'           => $msg,
+        'message_class' => $message_class,
+        'status'        => 'UNKNOWN',
     };
-    my $sth = $self->prepare( $sql );
-    $sth->execute( $msg, $message_class );
-    $sth->finish();
+    return $self->store($log_message);
 }
 
 sub store_beekeeper_message {
@@ -122,35 +120,19 @@ sub store_beekeeper_message {
 
     chomp $msg;
 
-    my $table_name = $self->table_name();
-
-    my $sql;
-    $sql = qq {
-        INSERT INTO $table_name (beekeeper_id, msg, status, message_class)
-        VALUES (?, ?, ?, ?)
+    my $log_message = {
+        'beekeeper_id'  => $beekeeper_id,
+        'msg'           => $msg,
+        'message_class' => $message_class,
+        'status'        => $status,
     };
-    my $sth = $self->prepare($sql);
-    $sth->execute($beekeeper_id, $msg, $status, $message_class);
-    $sth->finish();
+    return $self->store($log_message);
 }
 
 sub count_analysis_events {
     my ($self, $analysis_id, $message_class) = @_;
 
-    my $table_name = $self->table_name();
-
-    my $sql;
-    $sql = qq {
-        SELECT count(*) FROM $table_name
-        JOIN role USING (role_id)
-        WHERE role.analysis_id = ?
-        AND $table_name.message_class = ?
-    };
-    my $sth = $self->prepare($sql);
-    $sth->execute($analysis_id, $message_class);
-    my @row = $sth->fetchrow_array();
-    $sth->finish();
-    return $row[0];
+    return $self->count_all("JOIN role USING (role_id) WHERE analysis_id = ? AND message_class = ?", undef, $analysis_id, $message_class);
 }
 
 1;
