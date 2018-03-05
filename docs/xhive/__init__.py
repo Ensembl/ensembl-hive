@@ -5,7 +5,7 @@ import subprocess
 import sys
 
 
-def setup_if_needed(this_release):
+def setup_if_needed(this_release, run_doxygen):
     build_path = os.path.join(os.environ["PWD"], "_build")
 
     # Check whether we are on the same version of eHive
@@ -37,7 +37,8 @@ def setup_if_needed(this_release):
     # Only run doxygen if it's missing
     doxygen_target = os.path.join(build_path, "doxygen")
     if (on_rtd and not is_same) or any(not os.path.exists(os.path.join(doxygen_target, _)) for _ in ["perl", "python3", "java"]):
-        subprocess.check_call([mkdoxygen_path, doxygen_target])
+        if run_doxygen:
+            subprocess.check_call([mkdoxygen_path, doxygen_target])
 
     with open(release_holder, "w") as fh:
         print >> fh, this_release,
