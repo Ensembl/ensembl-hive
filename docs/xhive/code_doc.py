@@ -67,6 +67,7 @@ class SchemaDocumentation(IncludeCommand):
             'sort_headers' : directives.unchanged,
             'sort_tables' : directives.unchanged,
             'intro' : directives.unchanged,
+            'url' : directives.unchanged,
             'embed_diagrams' : directives.flag,
             }
 
@@ -83,7 +84,7 @@ class SchemaDocumentation(IncludeCommand):
         for flag in ['embed_diagrams']:
             if flag in self.options:
                 command.extend( ['--' + flag] )
-        for param in ['sort_headers', 'sort_tables']:
+        for param in ['sort_headers', 'sort_tables', 'url']:
             if param in self.options:
                 command.extend( ['--' + param, self.options[param]] )
         if 'intro' in self.options:
