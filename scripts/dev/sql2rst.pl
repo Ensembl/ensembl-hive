@@ -1023,6 +1023,7 @@ sub get_example_table {
   
   $sql =~ /select\s+(.+)\s+from/i;
   my $cols = $1;
+  $cols = '*' if $cols =~ /^\*\s/;
   my @tcols;
      
   foreach my $col (split(',',$cols)) {
