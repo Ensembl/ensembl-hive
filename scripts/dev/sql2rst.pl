@@ -837,7 +837,7 @@ sub add_examples {
   foreach my $ex (@$examples) {
     my @lines = split("\n",$ex);
     my $nb_display = ($nb ne '') ? " $nb" : $nb;
-    $html .= qq{<div class="sql_schema_table_examples"><p class="sql_schema_table_example_header">Example$nb_display:</p><div class="sql_schema_table_example_content">};
+    $html .= rst_title("Example$nb_display:", '-') . "\n";
     my $has_desc = 0;
     my $sql;
     
@@ -847,10 +847,9 @@ sub add_examples {
       
       # Pick up the SQL query if it exists
       if ($line =~ /(.*)\s*\@sql\s*(.+)/) {
-        $html .= ($has_desc == 1) ? $1 : qq{<p>$1};
+        $html .= $1;
         $sql = $2;
       } elsif (!defined($sql)){
-        $html .= qq{<p>} if ($has_desc == 0);
         $html .= $line;
         $has_desc = 1;
       }
@@ -858,7 +857,7 @@ sub add_examples {
         $sql .= $line;
       }
     }
-    $html .= qq{</p>};
+    $html .= "\n\n";
     
     # Search if there are some @link tags in the example description.
     $html = add_internal_link($html,$data);
@@ -870,20 +869,8 @@ sub add_examples {
         $sql_table = get_example_table($sql,$table,$nb);
       }
              
-        foreach my $word (qw(SELECT DISTINCT COUNT CONCAT GROUP_CONCAT AS FROM LEFT JOIN USING WHERE AND OR ON IN LIMIT DESC ORDER GROUP BY)) {
-          my $hl_word = qq{<span class="sql_schema_sql_highlight">$word</span>};
-          $sql =~ s/$word /$hl_word /ig;
-        }
-      $html .= qq{
-      <div>
-        <div class="sql_schema_table_example_query">
-          <pre>$sql</pre>
-        </div>
-        <div style="clear:both"></div>
-      </div>
-      $sql_table};
+      $html .= ".. code-block:: sql\n\n" . rst_add_indent_to_block($sql, "   ") . "\n\n" . $sql_table . "\n";
     }
-    $html .= qq{</div></div>};
     $nb ++;
   }
   
@@ -1049,32 +1036,21 @@ sub get_example_table {
   
   my $results = $db_handle->selectall_arrayref($sql);
   if (scalar(@$results)) {
-    $html .= qq{
-  <div id="ex_$table$nb" style="display:none;">
-    <table class="ss sql_schema_table_example_result">\n      <tr><th>};
-    $html .= join("</th><th>",@tcols);
-    $html .= qq{</th></tr>};
-    
-    my $bg = '';
+    my @data;
+    push @data, \@tcols;
     
     my $count = 0;
     foreach my $result (@$results) {
       last if ($count >= $SQL_LIMIT);
-      $html .= qq{      <tr$bg><td>};
-      $html .= join("</td><td>", @$result);
-      $html .= qq{</td></tr>};
-      
-      $bg = ($bg eq '')  ? ' class="bg2"' : '';  
+      push @data, [map {$_ // 'NULL'} @$result];
       $count ++;
     }
-    $html .= qq{    </table>\n  </div>};
+    return rst_list_table(\@data);
   } else {
-    my $msg = qq{ERROR: the SQL query displayed above returned no results!};
-    $html .= qq{<div class="sql_schema_table_example_error">$msg</div>};
+    my $msg = qq{The SQL query displayed above returned no results!};
     print STDERR qq{SQL: $sql\n$msg\n};
+    return ".. error::\n\n   $msg\n\n";
   }
-  
-  return $html;
 }
 
 
@@ -1204,6 +1180,7 @@ sub usage {
     http://www.ebi.ac.uk/seqdb/confluence/display/EV/SQL+documentation
 
     -i                A SQL file name (Required)
+    -fk               An external SQL file name with foreign keys statements (Optional)
     -o                An HTML output file name (Required)
     -d                The name of the database (e.g Core, Variation, Functional Genomics, ...)
     -c                A flag to display the colours associated with the tables (1) or not (0). By default, the value is set to 1.
@@ -1211,6 +1188,7 @@ sub usage {
     -intro            A html/text file to include in the Introduction section (Optional. If not provided a default text will be inserted)
     -html_head        A html/text file to include extra text inside the html <head></head> tags. (Optional)
     -show_header      A flag to display headers for a group of tables (1) or not (0). By default, the value is set to 1.
+    -embed_diagrams   A flag to include schema diagrams as dot graphs
     -sort_headers     A flag to sort (1) or not (0) the headers by alphabetic order. By default, the value is set to 1.
     -sort_tables      A flag to sort (1) or not (0) the tables by alphabetic order. By default, the value is set to 1.
                      
