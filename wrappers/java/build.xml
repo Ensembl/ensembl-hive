@@ -33,7 +33,9 @@
 
 	<target name="clean" description="clean up">
 		<delete dir="${build}" />
-		<delete file="${lib}/ehive-${version}.jar" />
+		<delete>
+			<fileset dir="${lib}" includes="ehive-*.jar" />
+		</delete>
 	</target>
 
 	<target name="compile_wrapper" description="checks runnable is compiled" depends="jar">
