@@ -1,33 +1,5 @@
 .. ehive creating pipelines guide, a description of events
 
-Event paradigm
-==============
-
-Dataflows
----------
-
-eHive is an *event-driven* system whereby agents trigger events that
-are immediately reacted upon. The main event is called **Dataflow** and
-consists of sending some data somewhere. The destination of a Dataflow
-event must be defined in the pipeline graph itself, and is then referred to
-by a *branch number* (see :doc:`dataflows`).
-
-Within a Runnable, Dataflow events are performed via the ``$self->dataflow_output_id($data,
-$branch_number)`` method.
-
-The payload ``$data`` must be of one of these types:
-
-- Hash-reference that maps parameter names (strings) to their values.
-- Array-reference of hash-references of the above type
-- ``undef`` to propagate the job's input_id
-
-The branch number defaults to 1 and can be skipped. Generally speaking, it
-has to be an integer.
-
-:doc:`dataflows` explains further how to configure branch numbers within a
-pipeline. :doc:`dataflow_targets` lists the possible target types.
-
-
 Conditional dataflows
 ---------------------
 

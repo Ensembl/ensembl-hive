@@ -66,6 +66,7 @@ User documentation
    :caption: Creating runnables
 
    creating_runnables/runnables_overview
+   creating_runnables/runnable_api
    creating_runnables/IO_and_errors
 
 
