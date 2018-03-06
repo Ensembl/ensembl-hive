@@ -62,6 +62,7 @@ package %s;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # For INPUT_PLUS, WHEN and ELSE
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
 sub pipeline_analyses {
