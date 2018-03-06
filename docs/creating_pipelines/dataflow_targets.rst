@@ -1,8 +1,6 @@
 Dataflow targets
 ================
 
-.. contents::
-
 Analysis
 --------
 

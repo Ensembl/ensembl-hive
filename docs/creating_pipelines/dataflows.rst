@@ -1,3 +1,8 @@
+.. _dataflows:
+
+Dataflows
++++++++++
+
 Dataflow patterns
 =================
 
@@ -217,4 +222,7 @@ the worker disappears:
 
 - because of RUNLIMIT or MEMLIMIT, but these branches are not defined
 - or for other reasons (KILLED_BY_USER, for instance)
+
+.. include:: dataflow_targets.rst
+.. include:: dataflow_syntax.rst
 

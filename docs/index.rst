@@ -51,13 +51,11 @@ User documentation
    :caption: Creating pipelines
 
    creating_pipelines/dataflows
-   creating_pipelines/dataflow_targets
    creating_pipelines/meadows_and_resources
    creating_pipelines/accumulators
    creating_pipelines/parameters
    creating_pipelines/semaphores
    creating_pipelines/pipeconfigs
-   creating_pipelines/dataflow_syntax
    creating_pipelines/included_runnables
 
 
