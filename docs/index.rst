@@ -58,6 +58,7 @@ User documentation
    creating_pipelines/parameters
    creating_pipelines/semaphores
    creating_pipelines/pipeconfigs
+   creating_pipelines/dataflow_syntax
    creating_pipelines/included_runnables
 
 
