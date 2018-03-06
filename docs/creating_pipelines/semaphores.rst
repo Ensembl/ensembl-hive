@@ -197,6 +197,37 @@ Please see the :ref:`Long-multiplication pipeline walkthrough
 individual funnel jobs are independently controlled by different fan
 groups.
 
+Mixing all patterns
+~~~~~~~~~~~~~~~~~~~
+
+Here, the semaphore groups created on branches #2 (fan) and #3 (funnel) are automatically expanded
+with the jobs created in the analysis Delta.
+
+Upon success of the Alpha job, the *autoflow* will create a job in analysis Epsilon which is *not* controlled
+by any of the Beta or Gamma jobs. It can thus start immediately.
+
+.. hive_diagram::
+
+    {   -logic_name => 'Alpha',
+        -flow_into  => {
+           '3->A' => [ 'Beta' ],
+           'A->2' => [ 'Gamma' ],
+           1      => [ 'Epsilon' ],
+        },
+    },
+    {   -logic_name => 'Beta',
+        -flow_into  => {
+           2 => [ 'Delta' ],
+        },
+    },
+    {   -logic_name => 'Gamma',
+    },
+    {   -logic_name => 'Delta',
+    },
+    {   -logic_name => 'Epsilon',
+    },
+
+
 .. _wait-for-detail:
 
 Wait-for
