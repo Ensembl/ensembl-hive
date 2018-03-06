@@ -105,7 +105,7 @@ Many factories and an autoflow
 There are virtually no restrictions on the number of branches that can be used.
 They however have to be integers, preferably positive integers for the sake of
 this tutorial as negative branch numbers have a special meaning (which is
-addressed in :doc:`events`).
+addressed in :ref:`resource-limit-dataflow`).
 
 .. hive_diagram::
 
