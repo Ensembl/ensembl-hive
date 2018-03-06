@@ -27,6 +27,74 @@ Passing parameters within a runnable
 
 It is often desirable to pass data between methods of a runnable. For example, parameter values may need to be moved from fetch_input() into run(), and the results of computation may need to be carried from run() into write_output(). The eHive parameter mechanism is intended to facilitate this kind of data handling. Within a runnable, new parameters can be created using $self->param() ( ``$self->param('parameter_name', $new_value)`` ) - these are immediately available throughout the runnable for the rest of the running job's life cycle. Note that these parameters do not get carried over between job runs - for example, if a job fails and is retried, all parameters set in the runnable are reset.
 
+Parameter substitution
+----------------------
+
+.. note::
+
+   Parameter substitution is explained in details in :ref:`parameters-substitution`.
+
+Parameter substitution can also be called from any job using ``$self->param_substitute($string)``.
+The string will be evaluated (substituted) in the context of the job's parameters. For instance,
+assuming that the job has a parameter named ``alpha``, the string ``the
+value of alpha is #alpha#`` can be substituted.
+
+
+As the substitution of parameters may fail, the definition of the above
+param-like is expanded as follows:
+
+  - ``param_exists($param_name)`` returns:
+
+      - 1 if the parameter is present and can be substituted
+      - *undef* if the parameter is present but the substitution failed
+      - 0 if the parameter is absent
+
+  - ``param_is_defined($param_name)`` returns:
+
+      - 1 if the parameter is present and can be substituted to a
+        **defined** value,
+      - *undef* if the parameter is present but the substitution failed
+      - 0 otherwise (i.e. the parameter is present but its value is
+        *undef*, or the parameter is absent)
+
+  - ``param($param_name)`` returns:
+
+      - the value of the parameter if the parameter is present and can be substituted (i.e. if ``param_exists($param_name)`` returned 1)
+      - *undef* otherwise.
+
+  - ``param_required($param_name)`` is like ``param($param_name)`` but dies
+    instead of returning *undef*, i.e.:
+
+      - returns the parameter's value when ``param_is_defined($param_name)`` returns 1
+      - dies otherwise.
+
+Summary
+-------
+
+In practice, given this hash of parameters::
+
+    {
+        'a' => 3,
+        'b' => undef,
+        'c' => 0,
+        'd' => '#other#',
+        'aa' => '#a#',
+        'bb' => '#b#',
+        'cc' => '#c#',
+    }
+
+the API would return:
+
+================== === ===== === ===== ==== ===== ==== =====
+Parameter name      a    b    c    d    aa   bb    cc    x
+================== === ===== === ===== ==== ===== ==== =====
+param_exists()      1    1    1  undef   1   1      1    0
+param_is_defined()  1    0    1  undef   1   0      1    0
+param()             3  undef  0  undef   3  undef   0  undef
+param_required()    3  (die)  0  (die)   3  (die)   0  (die)
+================== === ===== === ===== ==== ===== ==== =====
+
+
 Reading in data from external files and databases
 =================================================
 

@@ -24,6 +24,9 @@ following precedence rules:
 
 Jobs can access all their parameters via ``$self->param('param_name')`` regardless of their origin.
 
+
+.. _parameters-substitution:
+
 Parameter substitution
 ----------------------
 
