@@ -151,6 +151,40 @@ Events on a single dataflow branch can be connected to multiple targets.
    {   -logic_name => 'Epsilon',
    },
 
+Dependent dataflows and semaphores
+----------------------------------
+
+eHive allows grouping of multiple branch definitions to create job
+dependencies. For more detail, please see the section covering
+:ref:`semaphores <semaphores-detail>`. Here follows a typical example
+of a *semaphore* on factories and autoflows.
+
+.. hive_diagram::
+
+    {   -logic_name => 'Alpha',
+        -flow_into  => {
+           '2->A' => [ 'Beta', 'Gamma' ],
+           'A->1' => [ 'Delta' ],
+        },
+    },
+    {   -logic_name => 'Beta',
+    },
+    {   -logic_name => 'Gamma',
+    },
+    {   -logic_name => 'Delta',
+    },
+
+- The ``->`` operator groups the dataflow events together.
+- ``2->A`` means that all the Dataflow events on branch #2 will be grouped
+  together in a group named **A**. Note that this name **A** is not related
+  to the names of the analyses, or the names of semaphore groups of other
+  analyses.  Group names are single-letter codes, meaning that eHive allows
+  up to 26 groups for each analysis.
+- ``A->1`` means that the job resulting from the Dataflow event on branch
+  #1 (the *autoflow*) has to wait for *all* the jobs in group **A** before
+  it can start. Delta is called the *funnel* analysis.
+
+
 Dataflow using special error handling branches
 ----------------------------------------------
 
