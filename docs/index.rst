@@ -50,12 +50,12 @@ User documentation
 .. toctree::
    :caption: Creating pipelines
 
+   creating_pipelines/pipeconfigs
    creating_pipelines/dataflows
-   creating_pipelines/meadows_and_resources
+   creating_pipelines/semaphores
    creating_pipelines/accumulators
    creating_pipelines/parameters
-   creating_pipelines/semaphores
-   creating_pipelines/pipeconfigs
+   creating_pipelines/meadows_and_resources
    creating_pipelines/included_runnables
 
 
