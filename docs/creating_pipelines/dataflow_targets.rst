@@ -193,3 +193,54 @@ accumulators (possibly fed by different analyses) of a semaphore-group.
     }
 
 
+Conditional dataflows
+=====================
+
+eHive provides a mechanism to filter Dataflow events. It allows mapping a
+given branch number to some targets on certain conditions.
+
+The filtering happens based on the values of the parameters. It uses a
+`WHEN-ELSE` syntax. It is similar to traditional `IF-THEN` conditions but
+with some important differences:
+
+#. `WHEN` happens when a condition is true.
+#. There can be multiple `WHEN` cases, and more than one `WHEN` can flow
+   (as long asa they are true).
+#. `ELSE` is the catch-all if none of the `WHEN` cases are true
+
+.. hive_diagram::
+
+    {   -logic_name => 'Alpha',
+        -flow_into  => {
+           '2->A' => WHEN(
+                        '#a# > 3' => [ 'Beta' ],
+                        '#a# > 5' => [ 'Gamma' ],
+                        ELSE         [ 'Delta' ],
+                     ),
+           'A->1' => [ 'Epsilon' ],
+        },
+    },
+    {   -logic_name => 'Beta',
+    },
+    {   -logic_name => 'Gamma',
+    },
+    {   -logic_name => 'Delta',
+    },
+    {   -logic_name => 'Epsilon',
+    }
+
+
+This examples shows how single and multiple `WHEN` cases are handled,
+together with their `ELSE` clause.
+
++----------------+----------------+
+| Value of ``a`` | Active targets |
++================+================+
+| 2              | Delta          |
++----------------+----------------+
+| 4              | Beta           |
++----------------+----------------+
+| 6              | Beta, Gamma    |
++----------------+----------------+
+
+

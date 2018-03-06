@@ -50,7 +50,6 @@ User documentation
 .. toctree::
    :caption: Creating pipelines
 
-   creating_pipelines/events
    creating_pipelines/dataflows
    creating_pipelines/dataflow_targets
    creating_pipelines/meadows_and_resources
