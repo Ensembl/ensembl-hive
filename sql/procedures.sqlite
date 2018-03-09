@@ -35,6 +35,7 @@ CONTACT
 --       select * from progress where logic_name like 'family_blast%';   # only show family_blast-related analyses
 --       select * from progress where retry_count>1;                     # only show jobs that have been tried more than once
 
+DROP VIEW IF EXISTS progress;
 CREATE VIEW IF NOT EXISTS progress AS
     SELECT a.logic_name || '(' || a.analysis_id || ')' analysis_name_and_id,
         MIN(rc.name) resource_class,
@@ -56,6 +57,7 @@ CREATE VIEW IF NOT EXISTS progress AS
 --       select * from msg where analysis_id=18;
 --       select * from msg where logic_name like 'family_blast%';
 
+DROP VIEW IF EXISTS msg;
 CREATE VIEW IF NOT EXISTS msg AS
     SELECT a.analysis_id, a.logic_name, m.*
     FROM log_message m
@@ -69,6 +71,7 @@ CREATE VIEW IF NOT EXISTS msg AS
 --       select * from resource_usage_stats;
 --       select * from resource_usage_stats where logic_name like 'family_blast%';
 
+DROP VIEW IF EXISTS resource_usage_stats;
 CREATE VIEW IF NOT EXISTS resource_usage_stats AS
     SELECT a.logic_name || '(' || a.analysis_id || ')' analysis,
            w.meadow_type,
@@ -92,6 +95,7 @@ CREATE VIEW IF NOT EXISTS resource_usage_stats AS
 --       select * from live_roles;
 --       select * from live_roles where resource_class_id=12;
 
+DROP VIEW IF EXISTS live_roles;
 CREATE VIEW IF NOT EXISTS live_roles AS
     SELECT w.meadow_user, w.meadow_type, w.resource_class_id, rc.name resource_class_name, r.analysis_id, a.logic_name, count(*)
     FROM worker w
@@ -112,6 +116,7 @@ CREATE VIEW IF NOT EXISTS live_roles AS
 --       where cause_of_death is null
 --       and is_overdue = 1;
 
+DROP VIEW IF EXISTS beekeeper_activity;
 CREATE VIEW IF NOT EXISTS beekeeper_activity AS
     SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
            b.cause_of_death, COUNT(*) AS loops_executed,
