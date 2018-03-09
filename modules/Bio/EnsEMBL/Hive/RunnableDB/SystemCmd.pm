@@ -67,6 +67,7 @@ sub param_defaults {
         'use_bash_errexit'  => 0,           # When the command is composed of multiple commands (concatenated with a semi-colon), use "bash -o errexit" so that a failure will interrupt the whole script
         'dataflow_file'     => undef,       # The path to a file that contains 1 line per dataflow event, in the form of a JSON object
         'dataflow_branch'   => undef,       # The default branch for JSON dataflows
+        'timeout'           => undef,       # Maximum runtime of the command
     }
 }
 
@@ -86,7 +87,7 @@ sub param_defaults {
 sub run {
     my $self = shift;
  
-    my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit);
+    my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit timeout);
     my ($return_value, $stderr, $flat_cmd) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
 
     # To be used in write_output()
@@ -119,9 +120,13 @@ sub write_output {
     my $stderr = $self->param('stderr');
     my $flat_cmd = $self->param('flat_cmd');
 
-    if ($return_value < 0) {
+    if ($return_value == -1) {
         # system() could not start, or wait() failed
         die sprintf( "Could not start '%s': %s\n", $flat_cmd, $stderr);
+
+    } elsif ($return_value == -2) {
+        $self->complete_early_if_branch_connected("The command was aborted because it exceeded the allowed runtime. Flowing to the -2 branch.\n", -2);
+        die "The command was aborted because it exceeded the allowed runtime, but there are no dataflow-rules on branch -2.\n";
 
     } elsif (not ($return_value >> 8)) {
         # The job has been killed. The best is to wait a bit that LSF kills

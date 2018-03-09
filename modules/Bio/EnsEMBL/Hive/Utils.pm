@@ -60,7 +60,7 @@ use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -402,6 +402,57 @@ sub join_command_args {
 sub whoami {
     return ($ENV{'USER'} || (getpwuid($<))[0]);
 }
+
+
+=head2 timeout
+
+    Argument[0]: (coderef) Callback subroutine
+    Argument[1]: (integer) Time to wait (in seconds)
+    Description: Calls the callback whilst ensuring it does not take more than the allowed time to run.
+    Returns:     The return value (scalar context) of the callback or -2 if the
+                 command had to be aborted.
+                 FIXME: may need a better mechanism that allows callbacks to return -2 too
+
+=cut
+
+sub timeout {
+    my ($callback, $timeout) = @_;
+    if (not $timeout) {
+        return $callback->();
+    }
+
+    my $ret;
+    ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
+    my $die_text = "_____RunCommandTimeLimit_____\n";
+    my $old_alarm = alarm(0);        # turn alarm off and read old value
+    {
+        local $SIG{ALRM} = 'IGNORE'; # ignore alarms in this scope
+
+        eval
+        {
+            local $SIG{__DIE__};     # turn die handler off in eval block
+            local $SIG{ALRM} = sub { die $die_text };
+            alarm($timeout);         # set alarm
+            $ret = $callback->();
+        };
+
+        # Note the alarm is still active here - however we assume that
+        # if we got here without an alarm the user's code succeeded -
+        # hence the IGNOREing of alarms in this scope
+
+        alarm 0;                     # kill off alarm
+    }
+
+    alarm $old_alarm;                # restore alarm
+
+    if ($@) {
+        # the eval returned an error
+        die $@ if $@ ne $die_text;
+        return -2;
+    }
+    return $ret;
+}
+
 
 1;
 

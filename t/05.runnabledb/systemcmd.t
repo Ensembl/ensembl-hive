@@ -88,6 +88,30 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
 );
 
 
+# Here we pretend we have a command that takes to omuch time to complete
+$input_hash = { 'cmd' => 'sleep 10', 'timeout' => 3 };
+standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+    $input_hash,
+    [
+        [
+            'DATAFLOW',
+            undef,
+            -2,
+        ],
+        [
+            'WARNING',
+            qr/The command was aborted because it exceeded the allowed runtime. Flowing to the -2 branch/,
+            'INFO'
+        ],
+    ],
+    {
+        'flow_into' => {
+                '-2' => [ 'dummy' ],
+            },
+    },
+);
+
+
 # This is expected to complete succesfully since the return status of a
 # pipe is the last command's
 standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd', {

@@ -104,7 +104,7 @@ use warnings;
 use JSON;
 use Scalar::Util qw(looks_like_number);
 
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args');
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args', 'timeout');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
 
 
@@ -441,6 +441,7 @@ sub data_dbc {
     Arg[2]  :  (hashref, optional) Options, amongst:
                  - use_bash_pipefail: when enabled, a command with pipes will require all sides to succeed
                  - use_bash_errexit: when enabled, will stop at the first failure (otherwise commands such as "do_something_that_fails; do_something_that_succeeds" would return 0)
+                 - timeout: the maximum number of seconds the command can run for. Will return the exit code -2 if the command has to be aborted
     Usage   :  my $return_code = $self->run_system_command('script.sh with many_arguments');   # Command as a single string
                my $return_code = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Command as an array-ref
                my ($return_code, $stderr, $string_command) = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Same in list-context. $string_command will be "script.sh arg1 arg2"
@@ -480,7 +481,7 @@ sub run_system_command {
     # Capture:Tiny has weird behavior if 'require'd instead of 'use'd
     # see, for example,http://www.perlmonks.org/?node_id=870439 
     my $stderr = Capture::Tiny::tee_stderr(sub {
-        $return_value = system(@cmd_to_run);
+        $return_value = timeout( sub {system(@cmd_to_run)}, $options->{'timeout'} );
     });
     die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
