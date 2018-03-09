@@ -480,12 +480,12 @@ sub run_system_command {
 
     # Capture:Tiny has weird behavior if 'require'd instead of 'use'd
     # see, for example,http://www.perlmonks.org/?node_id=870439 
-    my $stderr = Capture::Tiny::tee_stderr(sub {
+    my ($stdout, $stderr) = Capture::Tiny::tee(sub {
         $return_value = timeout( sub {system(@cmd_to_run)}, $options->{'timeout'} );
     });
     die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
-    return ($return_value, $stderr, $flat_cmd) if wantarray;
+    return ($return_value, $stderr, $flat_cmd, $stdout) if wantarray;
     return $return_value;
 }
 
