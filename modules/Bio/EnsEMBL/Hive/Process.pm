@@ -437,13 +437,15 @@ sub data_dbc {
 =head2 run_system_command
 
     Title   :  run_system_command
+    Arg[1]  :  (string or arrayref) Command to be run
+    Arg[2]  :  (hashref, optional) Options, amongst:
+                 - use_bash_pipefail: when enabled, a command with pipes will require all sides to succeed
+                 - use_bash_errexit: when enabled, will stop at the first failure (otherwise commands such as "do_something_that_fails; do_something_that_succeeds" would return 0)
     Usage   :  my $return_code = $self->run_system_command('script.sh with many_arguments');   # Command as a single string
                my $return_code = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Command as an array-ref
                my ($return_code, $stderr, $string_command) = $self->run_system_command(['script.sh', 'arg1', 'arg2']);     # Same in list-context. $string_command will be "script.sh arg1 arg2"
                my $return_code = $self->run_system_command('script1.sh with many_arguments | script2.sh', {'use_bash_pipefail' => 1});  # Command with pipes evaluated in a bash "pipefail" environment
-    Function:  Runs a command given as a single-string or an array-ref. The second argument is
-               a list of options. Currently only "use_bash_pipefail" is supported (to change the
-               way the exit-code is computed when the command contains pipes (bash-only)).
+    Function:  Runs a command given as a single-string or an array-ref. The second argument is a list of options
     Returns :  Returns the return-code in scalar context, or a triplet (return-code, standard-error, command) in list context
 
 =cut
