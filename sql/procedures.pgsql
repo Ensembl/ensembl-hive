@@ -112,7 +112,7 @@ CREATE OR REPLACE VIEW live_roles AS
 --       and is_overdue;
 
 CREATE OR REPLACE VIEW beekeeper_activity AS
-    SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
+    SELECT b.beekeeper_id, b.meadow_user, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
            b.cause_of_death, COUNT(*) AS loops_executed,
            MAX(lm.when_logged) AS last_heartbeat,
            now() - max(lm.when_logged) AS time_since_last_heartbeat,

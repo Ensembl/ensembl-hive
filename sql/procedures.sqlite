@@ -118,7 +118,7 @@ CREATE VIEW IF NOT EXISTS live_roles AS
 
 DROP VIEW IF EXISTS beekeeper_activity;
 CREATE VIEW IF NOT EXISTS beekeeper_activity AS
-    SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
+    SELECT b.beekeeper_id, b.meadow_user, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
            b.cause_of_death, COUNT(*) AS loops_executed,
            MAX(lm.when_logged) AS last_heartbeat,
            STRFTIME('%s', 'now') - STRFTIME('%s', MAX(lm.when_logged)) AS time_since_last_heartbeat,
