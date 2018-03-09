@@ -115,8 +115,8 @@ CREATE OR REPLACE VIEW beekeeper_activity AS
     SELECT b.beekeeper_id, b.meadow_host, b.sleep_minutes, b.loop_limit, b.is_blocked,
            b.cause_of_death, COUNT(*) AS loops_executed,
            MAX(lm.when_logged) AS last_heartbeat,
-           TIMEDIFF(now(), max(lm.when_logged)) AS time_since_last_heartbeat,
-           (TIMEDIFF(SEC_TO_TIME(sleep_minutes * 60), TIMEDIFF(now(), max(lm.when_logged)))) < 0 AS is_overdue
+           IF(cause_of_death IS NULL, TIMEDIFF(now(), max(lm.when_logged)), NULL) AS time_since_last_heartbeat,
+           IF(cause_of_death IS NULL, TIMEDIFF(SEC_TO_TIME(sleep_minutes * 60), TIMEDIFF(now(), max(lm.when_logged))) < 0, NULL) AS is_overdue
     FROM beekeeper b
     LEFT JOIN log_message lm
     ON b.beekeeper_id = lm.beekeeper_id
