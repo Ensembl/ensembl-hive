@@ -103,6 +103,7 @@ use warnings;
 
 use JSON;
 use Scalar::Util qw(looks_like_number);
+use Time::HiRes qw(time);
 
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'go_figure_dbc', 'join_command_args', 'timeout');
 use Bio::EnsEMBL::Hive::Utils::Stopwatch;
@@ -480,12 +481,13 @@ sub run_system_command {
 
     # Capture:Tiny has weird behavior if 'require'd instead of 'use'd
     # see, for example,http://www.perlmonks.org/?node_id=870439 
+    my $starttime = time() * 1000;
     my ($stdout, $stderr) = Capture::Tiny::tee(sub {
         $return_value = timeout( sub {system(@cmd_to_run)}, $options->{'timeout'} );
     });
     die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
-    return ($return_value, $stderr, $flat_cmd, $stdout) if wantarray;
+    return ($return_value, $stderr, $flat_cmd, $stdout, time()*1000-$starttime) if wantarray;
     return $return_value;
 }
 

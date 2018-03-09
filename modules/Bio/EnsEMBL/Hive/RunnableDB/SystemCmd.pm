@@ -88,13 +88,14 @@ sub run {
     my $self = shift;
  
     my %transferred_options = map {$_ => $self->param($_)} qw(use_bash_pipefail use_bash_errexit timeout);
-    my ($return_value, $stderr, $flat_cmd, $stdout) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
+    my ($return_value, $stderr, $flat_cmd, $stdout, $runtime_msec) = $self->run_system_command($self->param_required('cmd'), \%transferred_options);
 
     # To be used in write_output()
     $self->param('return_value', $return_value);
     $self->param('stderr', $stderr);
     $self->param('flat_cmd', $flat_cmd);
     $self->param('stdout', $stdout);
+    $self->param('runtime_msec', $runtime_msec);
 }
 
 
