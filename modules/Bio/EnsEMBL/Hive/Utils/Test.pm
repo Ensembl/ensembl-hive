@@ -140,7 +140,7 @@ sub standaloneJob {
     subtest "standalone run of $module_or_file" => sub {
         plan tests => 2 + ($expected_events ? 1+scalar(@$expected_events) : 0);
         lives_ok(sub {
-            my $is_success = Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, undef, $flags->{language});
+            my $is_success = Bio::EnsEMBL::Hive::Scripts::StandaloneJob::standaloneJob($module_or_file, $input_id, $flags, $flags->{flow_into}, $flags->{language});
             if ($flags->{expect_failure}) {
                 ok(!$is_success, 'job failed as expected');
             } else {
