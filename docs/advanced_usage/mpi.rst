@@ -183,13 +183,13 @@ runnable.
 
 ::
 
-        sub param_defaults {
-          my $self = shift;
-          return {
+    sub param_defaults {
+        my $self = shift;
+        return {
             %{ $self->SUPER::param_defaults },
-            'cmd' => 'cmd 1 ; cmd  2 ; mpirun #examl_exe# -examl_parameter_1 value1 -examl_parameter_2 value2',
-          };
-        }
+            'cmd' => 'cmd 1 ; cmd  2 ; #mpirun_exe# #examl_exe# -examl_parameter_1 value1 -examl_parameter_2 value2',
+        };
+    }
 
 Temporary files
 ~~~~~~~~~~~~~~~
@@ -202,10 +202,10 @@ We have to override the eHive method to use a shared directory (``#examl_dir#``)
 
 ::
 
-        sub worker_temp_directory_name {
+      sub worker_temp_directory_name {
           my $self = shift @_;
           my $username = $ENV{'USER'};
           my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
           return $self->param('examl_dir')."/worker_${username}.${worker_id}/";
-        }
+      }
 
