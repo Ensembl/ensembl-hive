@@ -178,7 +178,7 @@ How to write a module that uses MPI
 Here is an excerpt of Ensembl Compara's
 `ExaML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__
 MPI module. Note that LSF needs the MPI command to be run through
-mpirun. You can also run several single-threaded commands in the same
+*mpirun*. You can also run several single-threaded commands in the same
 runnable.
 
 ::
@@ -198,7 +198,7 @@ In our case, Examl uses MPI and wants to share data via the filesystem too.
 In this specific Runnable, Examl is set to run in eHive's managed temporary
 directory, which by default is under /tmp which is not shared across nodes on
 our compute cluster.
-We have to override the eHive method to use a shared directory (``#examl_dir#``) instead.
+We have to override the eHive method to use a shared directory (``$self->param('examl_dir')``) instead.
 
 ::
 
