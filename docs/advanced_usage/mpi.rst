@@ -202,10 +202,12 @@ We have to override the eHive method to use a shared directory (``$self->param('
 
 ::
 
+      use Path::Tiny;
+
       sub worker_temp_directory_name {
           my $self = shift @_;
-          my $username = $ENV{'USER'};
-          my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
-          return $self->param('examl_dir')."/worker_${username}.${worker_id}/";
+          my $default_temp_directory_name = $self->SUPER::worker_temp_directory_name(@_);
+          my $name = path($default_temp_directory_name)->basename;
+          return $self->param('examl_dir')."/$name/";
       }
 
