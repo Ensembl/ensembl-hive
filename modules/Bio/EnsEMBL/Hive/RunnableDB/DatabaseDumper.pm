@@ -175,7 +175,7 @@ sub fetch_input {
 
     # Get the table list in either "tables" or "ignores"
     my $table_list = $self->_get_table_list($src_dbc, $self->param('table_list') || '');
-    print "table_list: ", scalar(@$table_list), " ", join('/', @$table_list), "\n" if $self->debug;
+    $self->say_with_header(sprintf("table_list: %d %s\n", scalar(@$table_list), join('/', @$table_list)));
     my $nothing_to_dump = 0;
 
     if ($self->param('exclude_list')) {
@@ -205,14 +205,14 @@ sub fetch_input {
 
     $self->input_job->transient_error(1);
 
-    print "tables: ", scalar(@tables), " ", join('/', @tables), "\n" if $self->debug;
-    print "ignores: ", scalar(@ignores), " ", join('/', @ignores), "\n" if $self->debug;
+    $self->say_with_header(sprintf("tables: %d %s\n", scalar(@tables), join('/', @tables)));
+    $self->say_with_header(sprintf("ignores: %d %s\n", scalar(@ignores), join('/', @ignores)));
 
     my @options = qw(--skip-lock-tables);
     # Without any table names, mysqldump thinks that it should dump
     # everything. We need to add special arguments to handle this
     if ($nothing_to_dump) {
-        print "everything is excluded, nothing to dump !\n" if $self->debug;
+        $self->say_with_header("everything is excluded, nothing to dump !\n");
         push @options, qw(--no-create-info --no-data);
         @ignores = ();  # to clean-up the command-line
     }

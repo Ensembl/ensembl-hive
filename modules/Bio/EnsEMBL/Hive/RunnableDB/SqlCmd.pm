@@ -107,9 +107,7 @@ sub _exec_sql {
     my $counter = 0;
     foreach my $sql (@$sqls) {
 
-         if($self->debug()) {
-             warn qq{sql = "$sql"\n};
-         }
+        $self->say_with_header(qq{sql = "$sql"\n});
 
         $data_dbc->do( $sql ) or die "Could not run '$sql': ".$data_dbc->db_handle->errstr;
 
