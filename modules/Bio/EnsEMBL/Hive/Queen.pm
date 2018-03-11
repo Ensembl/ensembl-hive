@@ -429,7 +429,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
     my $last_few_seconds            = 5;    # FIXME: It is probably a good idea to expose this parameter for easier tuning.
 
-    warn "GarbageCollector:\tChecking for lost Workers...\n";
+    print "GarbageCollector:\tChecking for lost Workers...\n";
 
     # all non-DEAD workers found in the database, with their meadow status
     my $reconciled_worker_statuses          = $valley->query_worker_statuses( $self->registered_workers_attributes );
@@ -437,7 +437,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $reconciled_worker_statuses );
     # this may pick up workers that have been created since the last fetch
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
-    warn "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
+    print "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
 
     my $this_meadow_user            = whoami();
 
@@ -456,7 +456,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 if( my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker ) ) {
                     if($meadow->can('kill_worker')) {
                         if($worker->meadow_user eq $this_meadow_user) {  # if I'm actually allowed to kill the worker...
-                            warn "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
+                            print "GarbageCollector:\tKilling/forgetting the UNKWN worker by process_id $process_id";
 
                             $meadow->kill_worker($worker, 1);
                             $status = 'LOST';
@@ -490,23 +490,23 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
         # print a quick summary report:
     while(my ($meadow_signature, $status_count) = each %meadow_status_counts) {
-        warn "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
+        print "GarbageCollector:\t[$meadow_signature Meadow:]\t".join(', ', map { "$_:$status_count->{$_}" } keys %$status_count )."\n\n";
     }
 
     while(my ($meadow_type, $pid_to_lost_worker) = each %mt_and_pid_to_lost_worker) {
         my $this_meadow = $valley->available_meadow_hash->{$meadow_type};
 
         if(my $lost_this_meadow = scalar(keys %$pid_to_lost_worker) ) {
-            warn "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
+            print "GarbageCollector:\tDiscovered $lost_this_meadow lost $meadow_type Workers\n";
 
             my $report_entries;
 
             if($report_entries = $this_meadow->get_report_entries_for_process_ids( keys %$pid_to_lost_worker )) {
                 my $lost_with_known_cod = scalar( grep { $_->{'cause_of_death'} } values %$report_entries);
-                warn "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
+                print "GarbageCollector:\tFound why $lost_with_known_cod of $meadow_type Workers died\n";
             }
 
-            warn "GarbageCollector:\tRecording workers' missing attributes, registering their death, releasing their jobs and cleaning up temp directories\n";
+            print "GarbageCollector:\tRecording workers' missing attributes, registering their death, releasing their jobs and cleaning up temp directories\n";
             while(my ($process_id, $worker) = each %$pid_to_lost_worker) {
                 if(my $report_entry = $report_entries && $report_entries->{$process_id}) {
                     my @updated_attribs = ();
@@ -549,37 +549,37 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
         my $role_adaptor = $self->db->get_RoleAdaptor;
         my $job_adaptor = $self->db->get_AnalysisJobAdaptor;
 
-        warn "GarbageCollector:\tChecking for orphan roles...\n";
+        print "GarbageCollector:\tChecking for orphan roles...\n";
         my $orphan_roles = $role_adaptor->fetch_all_unfinished_roles_of_dead_workers();
         if(my $orphan_role_number = scalar @$orphan_roles) {
-            warn "GarbageCollector:\tfound $orphan_role_number orphan roles, finalizing...\n\n";
+            print "GarbageCollector:\tfound $orphan_role_number orphan roles, finalizing...\n\n";
             foreach my $orphan_role (@$orphan_roles) {
                 $role_adaptor->finalize_role( $orphan_role );
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
 
-        warn "GarbageCollector:\tChecking for roles buried in haste...\n";
+        print "GarbageCollector:\tChecking for roles buried in haste...\n";
         my $buried_in_haste_roles = $role_adaptor->fetch_all_finished_roles_with_unfinished_jobs();
         if(my $bih_number = scalar @$buried_in_haste_roles) {
-            warn "GarbageCollector:\tfound $bih_number buried roles with unfinished jobs, reclaiming.\n\n";
+            print "GarbageCollector:\tfound $bih_number buried roles with unfinished jobs, reclaiming.\n\n";
             foreach my $role (@$buried_in_haste_roles) {
                 $job_adaptor->release_undone_jobs_from_role( $role );
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
 
-        warn "GarbageCollector:\tChecking for orphan jobs...\n";
+        print "GarbageCollector:\tChecking for orphan jobs...\n";
         my $orphan_jobs = $job_adaptor->fetch_all_unfinished_jobs_with_no_roles();
         if(my $sj_number = scalar @$orphan_jobs) {
-            warn "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
+            print "GarbageCollector:\tfound $sj_number unfinished jobs with no roles, reclaiming.\n\n";
             foreach my $job (@$orphan_jobs) {
                 $job_adaptor->release_and_age_job($job->dbID, $job->analysis->max_retry_count, 1);
             }
         } else {
-            warn "GarbageCollector:\tfound none\n";
+            print "GarbageCollector:\tfound none\n";
         }
     }
 }
@@ -690,14 +690,14 @@ sub synchronize_hive {
 
     my $start_time = time();
 
-    print STDERR "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
+    print "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
     foreach my $analysis (@$list_of_analyses) {
         $self->synchronize_AnalysisStats($analysis->stats);
-        print STDERR ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
+        print ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
     }
-    print STDERR "\n";
+    print "\n";
 
-    print STDERR ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
+    print ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
 }
 
 

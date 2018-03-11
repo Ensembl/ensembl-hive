@@ -150,7 +150,7 @@ sub submit_workers_return_meadow_pids {
 
     my @children_pids = ();
 
-    warn "Spawning [ ".$self->signature." ] x$required_worker_count \t\t$worker_cmd\n";
+    print "Spawning [ ".$self->signature." ] x$required_worker_count \t\t$worker_cmd\n";
 
     foreach my $idx (1..$required_worker_count) {
 

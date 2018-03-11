@@ -189,10 +189,10 @@ sub new {
 
     my $protocol_debug = ($debug && ($debug > 1));  # Only advanced levels of debug will show the GuestProcess protocol messages
     if ($protocol_debug) {
-        print STDERR "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
-        print STDERR "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
-        print STDERR "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
-        print STDERR "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
+        print "PARENT_RDR is ", fileno($PARENT_RDR), "\n";
+        print "PARENT_WTR is ", fileno($PARENT_WTR), "\n";
+        print "CHILD_RDR is ", fileno($CHILD_RDR), "\n";
+        print "CHILD_WTR is ", fileno($CHILD_WTR), "\n";
     }
 
     my $pid;
@@ -201,13 +201,13 @@ sub new {
         # In the parent
         close $PARENT_RDR;
         close $PARENT_WTR;
-        print STDERR "parent is PID $$\n" if $protocol_debug;
+        print "parent is PID $$\n" if $protocol_debug;
     } else {
         die "cannot fork: $!" unless defined $pid;
         # In the child
         close $CHILD_RDR;
         close $CHILD_WTR;
-        print STDERR "child is PID $$\n" if $protocol_debug;
+        print "child is PID $$\n" if $protocol_debug;
 
         # Do not close the non-standard file descriptors on exec(): the child process will need them !
         use Fcntl;
@@ -325,7 +325,7 @@ sub DESTROY {
 
 sub print_debug {
     my ($self, $msg) = @_;
-    print STDERR sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->{'_protocol_debug'};
+    print sprintf("PERL %d: %s\n", $self->child_pid, $msg) if $self->{'_protocol_debug'};
 }
 
 ##############

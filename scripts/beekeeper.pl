@@ -227,7 +227,7 @@ sub main {
     my $pipeline_name = $self->{'pipeline'}->hive_pipeline_name;
 
     if($pipeline_name) {
-        warn "Pipeline name: $pipeline_name\n";
+        print "Pipeline name: $pipeline_name\n";
     } else {
         print STDERR "+---------------------------------------------------------------------+\n";
         print STDERR "!                                                                     !\n";
@@ -253,7 +253,7 @@ sub main {
     $valley->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
 
     my $default_meadow = $valley->get_default_meadow();
-    warn "Default meadow: ".$default_meadow->signature."\n\n";
+    print "Default meadow: ".$default_meadow->signature."\n\n";
 
     $default_meadow->config_set('TotalRunningWorkersMax', $total_running_workers_max) if(defined $total_running_workers_max);
     $default_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
@@ -589,7 +589,7 @@ sub run_autonomously {
                         $meadow_process_ids = $this_meadow->submit_workers_return_meadow_pids($specific_worker_cmd, $this_meadow_rc_worker_count, $self->{'beekeeper_id'}.'_'.$iteration, $rc_name, $submission_cmd_args || '', $submit_log_subdir);
                     }
 
-                    warn "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
+                    print "Submitted the following process_ids to ".$this_meadow->signature.": ".join(', ', @$meadow_process_ids)."\n";
 
                     my $resource_class  = $pipeline->collection_of('ResourceClass')->find_one_by('name', $rc_name);
                     my $meadow_name     = $this_meadow->cached_name;

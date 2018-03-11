@@ -742,7 +742,7 @@ sub run_one_batch {
 
         my $job_completion_line = "Job $job_id : ". ($job->died_somewhere ? 'died' : 'complete' );
 
-        print STDERR "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));  # one copy goes to the job's STDERR
+        print "\n$job_completion_line\n" if($self->log_dir and ($self->debug or $job->died_somewhere));         # one copy goes to the job's STDERR
         $self->stop_job_output_redirection($job);                                                               # and then we switch back to worker's STDERR
         $self->worker_say( $job_completion_line );                                                              # one copy goes to the worker's STDERR
 

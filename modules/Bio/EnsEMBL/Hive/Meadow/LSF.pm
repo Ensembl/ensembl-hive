@@ -196,7 +196,7 @@ sub _convert_to_datetime {      # a private subroutine that can recover missing 
 sub parse_report_source_line {
     my ($self, $bacct_source_line) = @_;
 
-    warn "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
+    print "LSF::parse_report_source_line( \"$bacct_source_line\" )\n";
 
     # Conplete list of exit codes is available at
     # https://www.ibm.com/support/knowledgecenter/SSETD4_9.1.3/lsf_admin/termination_reasons_lsf.html
@@ -365,7 +365,7 @@ sub submit_workers_return_meadow_pids {
         $worker_cmd
     );
 
-    warn "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
+    print "Executing [ ".$self->signature." ] \t\t".join(' ', @cmd)."\n";
 
     my $lsf_jobid;
 

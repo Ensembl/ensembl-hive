@@ -212,7 +212,7 @@ sub say_with_header {
         if(my $worker = $self->worker) {
             $worker->worker_say( $msg );
         } else {
-            print STDERR "StandaloneJob $msg\n";
+            print "StandaloneJob $msg\n";
         }
     }
 }
