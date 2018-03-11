@@ -1,3 +1,6 @@
+
+.. _howto-mpi:
+
 How to use MPI
 ==============
 
@@ -191,6 +194,8 @@ Runnable.
             'cmd' => 'cmd 1 ; cmd  2 ; #mpirun_exe# #examl_exe# -examl_parameter_1 value1 -examl_parameter_2 value2',
         };
     }
+
+.. _worker_temp_directory_name-mpi:
 
 Temporary files
 ~~~~~~~~~~~~~~~
