@@ -80,6 +80,11 @@ standaloneJob('Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             'INFO'
         ],
     ],
+    {
+        'flow_into' => {
+                '-1' => [ 'dummy' ],
+            },
+    },
 );
 
 

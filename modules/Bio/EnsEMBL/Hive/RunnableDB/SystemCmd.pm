@@ -141,17 +141,36 @@ sub write_output {
         }
 
         if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
-            my $job_ids = $self->dataflow_output_id( undef, -1 );
-            if (scalar(@$job_ids)) {
-                $self->input_job->autoflow(0);
-                $self->complete_early("Java heap space is out of memory. A job has been dataflown to the -1 branch.\n");
-            } else {
-                die $stderr;
-            }
+            $self->complete_early_if_branch_connected("Java heap space is out of memory. A job has been dataflown to the -1 branch.\n", -1);
+            die $stderr;
         }
 
         die sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\n", $flat_cmd, $return_value, $stderr);
     }
+}
+
+
+######################
+## Internal methods ##
+######################
+
+=head2 complete_early_if_branch_connected
+
+  Arg[1]      : (string) message
+  Arg[2]      : (integer) branch number
+  Description : Wrapper around complete_early that first checks that the
+                branch is connected to something.
+  Returntype  : void if the branch is not connected. Otherwise doesn't return
+
+=cut
+
+sub complete_early_if_branch_connected {
+    my ($self, $message, $branch_code) = @_;
+
+    # just return if no corresponding gc_dataflow rule has been defined
+    return unless $self->input_job->analysis->dataflow_rules_by_branch->{$branch_code};
+
+    $self->complete_early($message, $branch_code);
 }
 
 1;
