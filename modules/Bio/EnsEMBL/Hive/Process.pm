@@ -597,9 +597,24 @@ sub throw {
 }
 
 
-sub complete_early {
-    my ($self, $msg) = @_;
+=head2 complete_early
 
+  Arg[1]      : (string) message
+  Arg[2]      : (integer, optional) branch number
+  Description : Ends the job with the given message, whilst marking the job as complete
+                Dataflows to the given branch right before if a branch number if given,
+                in which case the autoflow is disabled too.
+  Returntype  : This function does not return
+
+=cut
+
+sub complete_early {
+    my ($self, $msg, $branch_code) = @_;
+
+    if (defined $branch_code) {
+        $self->dataflow_output_id(undef, $branch_code);
+        $self->input_job->autoflow(0);
+    }
     $self->input_job->incomplete(0);
     die $msg;
 }

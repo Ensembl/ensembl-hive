@@ -137,9 +137,7 @@ sub write_output {
         # We create a dataflow event depending on the exit code of the process.
         if (ref($self->param('return_codes_2_branches')) and exists $self->param('return_codes_2_branches')->{$return_value}) {
             my $branch_number = $self->param('return_codes_2_branches')->{$return_value};
-            $self->dataflow_output_id( undef, $branch_number );
-            $self->input_job->autoflow(0);
-            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number));
+            $self->complete_early(sprintf("The command exited with code %d, which is mapped to a dataflow on branch #%d.\n", $return_value, $branch_number), $branch_number);
         }
 
         if ($stderr =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
