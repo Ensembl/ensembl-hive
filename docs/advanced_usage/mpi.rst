@@ -156,7 +156,8 @@ define the correct resource class and comand lines in Hive.
    -  ``span[ptile=4]``, this option specifies the granularity in which LSF
       will split the jobs/per node. In this example we ask for each machine
       to be allocated a multiple of 4 cores. This might affect queuing
-      times.
+      times. The memory requested is allocated for each _ptile_ (so
+      64/4*16GB=256GB in total in the example).
 
 2. You need to add the analysis to your pipeconfig:
 
