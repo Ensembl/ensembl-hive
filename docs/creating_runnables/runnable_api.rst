@@ -34,6 +34,9 @@ the end of ``write_output``), you can call:
 
 - ``$self->complete_early($message)`` to mark the job as *DONE*
   (successful run). Beware that this will trigger the *autoflow*.
+- ``$self->complete_early($message, $branch_code)`` is a variation of the
+  above that will replace the autoflow (branch 1) with a dataflow on the
+  branch given
 - ``$self->throw($message)`` to log a failed attempt. The job may be given
   additional retries following the analysis' *max_retry_count* parameter,
   or is marked as *FAILED* in the database.
