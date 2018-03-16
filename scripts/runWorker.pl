@@ -43,7 +43,7 @@ sub main {
                'reg_conf|regfile|reg_file=s'  => \$reg_conf,
                'reg_type=s'                   => \$reg_type,
                'reg_alias|regname|reg_name=s' => \$reg_alias,
-               'nosqlvc=i'                    => \$nosqlvc,       # can't use the binary "!" as it is a propagated option
+               'nosqlvc'                      => \$nosqlvc,       # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
     # json config files
                'config_file=s@'             => $config_files,
@@ -56,7 +56,7 @@ sub main {
                'analysis_id=i'              => \$analysis_id,
                'logic_name=s'               => \$logic_name,
                'job_id=i'                   => \$job_id,
-               'force=i'                    => \$force,
+               'force'                      => \$force,
                'beekeeper_id=i'             => \$beekeeper_id,
 
     # Worker control parameters:
@@ -67,8 +67,8 @@ sub main {
                'worker_cur_dir|cwd=s'       => \$worker_cur_dir,
                'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
                'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
-               'retry_throwing_jobs=i'      => \$retry_throwing_jobs,
-               'can_respecialize=i'         => \$can_respecialize,
+               'retry_throwing_jobs!'       => \$retry_throwing_jobs,
+               'can_respecialize!'          => \$can_respecialize,
                'worker_delay_startup_seconds=i' => \$worker_delay_startup_seconds,
                'worker_crash_on_startup_prob=f' => \$worker_crash_on_startup_prob,
 
@@ -178,8 +178,8 @@ but feel free to run the runWorker.pl if you think you need a direct access to t
         # Run one local Worker process in ehive_dbname and constrain its initial specialisation within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -analyses_pattern '1..15,analysis_X,21'
 
-        # Run one local Worker process in ehive_dbname and allow it to respecialise within a subset of analyses
-    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize 1 -analyses_pattern 'blast%-4..6'
+        # Run one local Worker process in ehive_dbname and allow it to respecialize within a subset of Analyses
+    runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize -analyses_pattern 'blast%-4..6'
 
         # Run a specific Job in a local Worker process:
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
@@ -206,9 +206,9 @@ type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
 
 URL defining where database is located
 
-=item --nosqlvc <0|1>
+=item --nosqlvc
 
-skip sql version check if 1
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =back
 
@@ -246,9 +246,9 @@ run a Worker and have it specialise to an Analysis with this analysis_id
 
 run a specific Job defined by its database id
 
-=item --force <0|1>
+=item --force
 
-set to 1 if you want to force running a Worker over a BLOCKED Analysis or to run a specific DONE/SEMAPHORED job_id
+set if you want to force running a Worker over a BLOCKED Analysis or to run a specific DONE/SEMAPHORED job_id
 
 =back
 
@@ -280,12 +280,12 @@ directory where stdout/stderr of the whole eHive of workers is redirected
 
 directory where stdout/stderr of this particular Worker is redirected
 
-=item --retry_throwing_jobs <0|1>
+=item --retry_throwing_jobs
 
 By default, Jobs are allowed to fail a few times (up to the Analysis' max_retry_count parameter) until the systems "gives up" and considers them as FAILED.
-Set --retry_throwing_jobs to 0 to disable this behaviour and mark the Jobs as FAILED upon the first failed attempt.
+retry Jobs if the Job dies knowingly (e.g. due to encountering a die statement in the Runnable)
 
-=item --can_respecialize <0|1>
+=item --can_respecialize
 
 allow this Worker to re-specialise into another Analysis (within resource_class) after it has exhausted all Jobs of the current one
 

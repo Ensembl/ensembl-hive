@@ -34,7 +34,7 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc'               => \$self->{'nosqlvc'}, # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
             # json config files
         'config_file=s@'        => \$self->{'config_files'},
@@ -157,9 +157,9 @@ path to a Registry configuration file
 
 species/alias name for the eHive DBAdaptor
 
-=item --nosqlvc <0|1>
+=item --nosqlvc
 
-if 1, don't check sql schema version
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =item --config_file <path>
 

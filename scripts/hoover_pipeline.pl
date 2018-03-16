@@ -29,7 +29,7 @@ sub main {
             'reg_conf|regfile|reg_file=s' => \$reg_conf,
             'reg_type=s'                  => \$reg_type,
             'reg_alias|regname|regname=s' => \$reg_alias,
-            'nosqlvc=i'                   => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'                   => \$nosqlvc,      # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
                 # specify the threshold datetime:
             'before_datetime=s'     => \$before_datetime,
@@ -166,9 +166,9 @@ species/alias name for the eHive DBAdaptor
 
 URL defining where eHive database is located
 
-=item --nosqlvc <0|1>
+=item --nosqlvc
 
-skip sql version check if 1
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =item --before_datetime <string>
 

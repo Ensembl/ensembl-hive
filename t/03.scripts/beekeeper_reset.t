@@ -69,7 +69,7 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;
 
     # First run a single worker in this process. It will run the factory and some FailureTest jobs.
-    runWorker($pipeline_url, [ -can_respecialize => 1 ]);
+    runWorker($pipeline_url, [ '-can_respecialize' ]);
     # We're now in a state with a selection of DONE, READY, FAILED and SEMAPHORED jobs
 
     # Tip: SELECT CONCAT('[', GROUP_CONCAT( CONCAT('["',status,'",', retry_count, ',',COALESCE(local_jobs_counter+remote_jobs_counter,0),']') ), ']') FROM job j LEFT JOIN semaphore s ON (j.job_id=s.dependent_job_id) ORDER BY job_id;

@@ -34,7 +34,7 @@ sub main {
             'reg_conf|regfile=s'    => \$reg_conf,
             'reg_type=s'            => \$reg_type,
             'reg_alias|regname=s'   => \$reg_alias,
-            'nosqlvc=i'             => \$nosqlvc,       # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'               => \$nosqlvc,       # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
             'username=s'            => \$username,      # say "-user all" if the pipeline was run by several people
             'source_line=s'         => \$source_line,
@@ -156,6 +156,10 @@ alternative source of worker_resource_usage data. Can be a filename or a pipe-fr
 =item --meadow_type <type>
 
 only used when -source is given. Tells which meadow type the source filename relates to. Defaults to the first available meadow (LOCAL being considered as the last available)
+
+=item --nosqlvc
+
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =back
 
