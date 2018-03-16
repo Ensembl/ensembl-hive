@@ -80,7 +80,7 @@ my $pipeline_url = get_test_url_or_die();
       init_pipeline($kmer_version, $pipeline_url, $kmer_param_configs->{$kmer_pipeline_mode});
       
       # First run a single worker in this process
-      runWorker($pipeline_url, [ -can_respecialize => 1 ]);
+      runWorker($pipeline_url, [ '-can_respecialize' ]);
       
       my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
       my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;

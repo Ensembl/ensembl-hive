@@ -100,7 +100,7 @@ sub main {
                'reg_conf|regfile|reg_file=s'  => \$self->{'reg_conf'},
                'reg_type=s'                   => \$self->{'reg_type'},
                'reg_alias|regname|reg_name=s' => \$self->{'reg_alias'},
-               'nosqlvc=i'                    => \$self->{'nosqlvc'},     # can't use the binary "!" as it is a propagated option
+               'nosqlvc'                      => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for compatibility with modules where it is a propagated option
 
                     # json config files
                'config_file=s@'     => $self->{'config_files'},
@@ -112,7 +112,7 @@ sub main {
                'loop_until=s'       => \$self->{'loop_until'},
                'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'=> \$run_job_id,
-               'force=i'            => \$force,
+               'force'              => \$force,
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -128,8 +128,8 @@ sub main {
                'logic_name=s'                   => \$self->{'logic_name'},
                'analyses_pattern=s'             => \$self->{'analyses_pattern'},
                'hive_log_dir|hive_output_dir=s' => \$self->{'hive_log_dir'},
-               'retry_throwing_jobs=i'          => \$self->{'retry_throwing_jobs'},
-               'can_respecialize=i'             => \$self->{'can_respecialize'},
+               'retry_throwing_jobs!'           => \$self->{'retry_throwing_jobs'},
+               'can_respecialize!'              => \$self->{'can_respecialize'},
                'debug=i'                        => \$self->{'debug'},
                'submit_log_dir=s'               => \$self->{'submit_log_dir'},
                'worker_delay_startup_seconds=i' => \$self->{'worker_delay_startup_seconds'},
@@ -422,11 +422,27 @@ sub generate_worker_cmd {
 
     my $worker_cmd = 'runWorker.pl';
 
-    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'nosqlvc', 'job_limit', 'life_span', 'retry_throwing_jobs', 'can_respecialize',
+    foreach my $worker_option ('url', 'reg_conf', 'reg_type', 'reg_alias', 'job_limit', 'life_span',
                                'worker_delay_startup_seconds', 'worker_crash_on_startup_prob', 'hive_log_dir', 'debug') {
         if(defined(my $value = $self->{$worker_option})) {
             $worker_cmd .= " -${worker_option} $value";
         }
+    }
+
+    foreach my $worker_flag ('retry_throwing_jobs', 'can_respecialize') {
+        if(defined(my $value = $self->{$worker_flag})) {
+            if ($value == 0) {
+                $worker_cmd .= " -no${worker_flag}";
+            } else {
+                $worker_cmd .= " -${worker_flag}";
+            }
+        }
+    }
+
+    # nosqlvc is a special case for compatibility with modules where it is a propigated option
+    if ((defined($self->{nosqlvc})) &&
+        ($self->{nosqlvc} == 1)) {
+        $worker_cmd .= " -nosqlvc";
     }
 
     # This option can have multiple values
@@ -439,8 +455,14 @@ sub generate_worker_cmd {
         $worker_cmd .= " -analyses_pattern '".$analyses_pattern."'";
     }
 
+    # force is given as an argument to the sub, rather than being taken from the options hash
     if (defined($force)) {
-        $worker_cmd .= " -force $force";
+        # ensure a -noforce is passed through in the unlikely case where it is set
+        if ($force == 0) {
+            $worker_cmd .= "-noforce";
+        } else {
+            $worker_cmd .= " -force";
+        }
     }
 
     return $worker_cmd;
@@ -758,9 +780,9 @@ Species / alias name for the eHive DBAdaptor
 
 URL defining where eHive database is located
 
-=item --nosqlvc <0|1>
+=item --nosqlvc
 
-Skip sql version check if 1
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =back
 
@@ -861,11 +883,11 @@ record submission output+error streams into files under the given directory (to 
 
 =item --analyses_pattern <string>
 
-restrict the sync operation, printing of stats or looping of the Beekeeper to the specified subset of analyses
+restrict the sync operation, printing of stats or looping of the Beekeeper to the specified subset of Analyses
 
-=item --can_respecialize <0|1>
+=item --nocan_respecialize
 
-allow workers to re-specialise into another Analysis (within resource_class) after their previous Analysis was exhausted
+prevent workers from re-specializing into another Analysis (within resource_class) after their previous Analysis is exhausted
 
 =item --force
 
@@ -883,9 +905,9 @@ number of minutes each Worker is allowed to run
 
 Number of Jobs to run before Worker can die naturally
 
-=item --retry_throwing_jobs <0|1>
+=item --retry_throwing_jobs
 
-if a Job dies *knowingly*, should we retry it by default?
+if a Job dies *knowingly* (e.g. by encountering a die statement in the Runnable), should we retry it by default?
 
 =item --hive_log_dir <path>
 

@@ -34,7 +34,7 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc=i'             => \$self->{'nosqlvc'},     # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+        'nosqlvc'             => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
@@ -112,9 +112,9 @@ Registry type of the eHive DBAdaptor
 
 species/alias name for the eHive DBAdaptor
 
-=item --nosqlvc <0|1>
+=item --nosqlvc
 
-"No SQL Version Check" - set this to one if you want to force working with a database created by a potentially schema-incompatible API (0 by default)
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 
 =item --tweak <string>
 

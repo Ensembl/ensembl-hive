@@ -61,7 +61,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
         );
 
         # First run a single worker in this process
-        runWorker($pipeline_url, [ -can_respecialize => 1 ]);
+        runWorker($pipeline_url, [ '-can_respecialize' ]);
 
         my $hive_dba    = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
         my $job_adaptor = $hive_dba->get_AnalysisJobAdaptor;

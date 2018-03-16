@@ -47,7 +47,7 @@ sub main {
             'reg_conf|regfile|reg_file=s'         => \$reg_conf,
             'reg_type=s'                          => \$reg_type,
             'reg_alias|regname|reg_name=s'        => \$reg_alias,
-            'nosqlvc=i'                           => \$nosqlvc,      # using "=i" instead of "!" for consistency with scripts where it is a propagated option
+            'nosqlvc'                             => \$nosqlvc,      # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
                 # miscellaneous options
             'verbose!'                   => \$verbose,
@@ -563,7 +563,7 @@ species/alias name for the eHive DBAdaptor
 
 =item --nosqlvc
 
-Do not restrict the usage of this script to the current version of eHive.
+"No SQL Version Check" - set if you want to force working with a database created by a potentially schema-incompatible API
 Be aware that generate_timeline.pl uses raw SQL queries that may break on different schema versions
 
 =item --verbose
