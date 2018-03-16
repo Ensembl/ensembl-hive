@@ -33,7 +33,8 @@ To indicate that a job has to be terminated earlier (i.e. before reaching
 the end of ``write_output``), you can call:
 
 - ``$self->complete_early($message)`` to mark the job as *DONE*
-  (successful run). Beware that this will trigger the *autoflow*.
+  (successful run) and record the message in the database. Beware that this
+  will trigger the *autoflow*.
 - ``$self->complete_early($message, $branch_code)`` is a variation of the
   above that will replace the autoflow (branch 1) with a dataflow on the
   branch given
