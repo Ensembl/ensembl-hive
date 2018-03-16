@@ -420,7 +420,7 @@ Workers time to check-in with the eHive database between loops. The default
 parameters are safe values that generally work well for production
 pipelines.
 
-The impact of loop time on the overall time to complete a Workflow
+The impact of loop time on the overall time to complete a workflow
 will be fairly small, however. When a Worker completes a Job, it looks
 for new Jobs that it can run, and will claim and run them automatically
 - the Beekeeper is not involved in this claiming process. It's only in
