@@ -284,7 +284,17 @@ sub dataflow_output_id {
     my $input_id                = $self->input_id();
     my $hive_use_param_stack    = $self->hive_pipeline->hive_use_param_stack;
 
+    $output_ids    =  destringify($output_ids) unless ref($output_ids);     # destringify the string
     $output_ids    = [ $output_ids ] unless(ref($output_ids) eq 'ARRAY');   # force previously used single values into an arrayref
+
+    my @destringified_output_ids;
+    foreach my $output_id (@$output_ids) {
+        $output_id = destringify($output_id) unless ref($output_id);        # destringify the string
+        if ((defined $output_id) and (ref($output_id) ne 'HASH')) {         # Only undefs and hashrefs work as input_ids
+            die stringify($output_id)." is not a hashref ! Cannot dataflow";
+        }
+        push @destringified_output_ids, $output_id;
+    }
 
         # map branch names to numbers:
     my $branch_code = Bio::EnsEMBL::Hive::DBSQL::DataflowRuleAdaptor::branch_name_2_code($branch_name_or_code);
@@ -302,7 +312,7 @@ sub dataflow_output_id {
 
         my $total_output_ids_for_the_rule = 0;
 
-        foreach my $output_id (@$output_ids) {  # filter the output_ids and place them into the [2] part of $targets_grouped_by_condition
+        foreach my $output_id (@destringified_output_ids) {  # filter the output_ids and place them into the [2] part of $targets_grouped_by_condition
             my $condition_match_count = 0;
             foreach my $condition_idx (0..@conditions-1) {
                 my $unsubstituted_condition = $conditions[$condition_idx];
