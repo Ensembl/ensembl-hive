@@ -84,6 +84,8 @@ my $a_input_id              = {"a" => 58};
 my $a_input_id_str          = stringify($a_input_id);
 my $a_mult_input_id         = {"a_multiplier" => 58};
 my $a_mult_input_id_str     = stringify($a_mult_input_id);
+my $fresh_a_mult_input_id   = {"a_multiplier" => 27};
+my $fresh_a_input_id_str    = stringify({"a" => 27});
 my $missing_a_input_id_str  = stringify({"a" => undef});
 my $default_a_input_id_str  = stringify({"a" => '9650156169'});
 my $template_const          = stringify({"a" => 34});
@@ -133,6 +135,10 @@ sub test_all_dataflows_without_stack {
     # 1. the emitting job has a non-empty input_id
     # When flowing undef, a job is creating with the input_id of the emitter
     test_dataflow($job1, undef, $job1->input_id);
+    # Even if the value of a parameter has been changed at runtime
+    $different_param_hash = $fresh_a_mult_input_id;
+    test_dataflow($job1, undef, $job1->input_id);
+    undef $different_param_hash;
 
     # When flowing a hash, the hash is stringified regardless of its content
     test_dataflow($job1, {}, '{}');
@@ -141,6 +147,10 @@ sub test_all_dataflows_without_stack {
     # 2. the emitting job has an empty input_id
     # When flowing undef, a job is creating with the input_id of the emitter
     test_dataflow($job2, undef, $job2->input_id);
+    # Even if the parameter hash is not empty
+    $different_param_hash = $fresh_a_mult_input_id;
+    test_dataflow($job2, undef, $job2->input_id);
+    undef $different_param_hash;
 
     # When flowing a hash, the hash is stringified regardless of its content
     test_dataflow($job2, {}, '{}');
@@ -153,6 +163,10 @@ sub test_all_dataflows_with_stack {
     # 1. the emitting job has a non-empty input_id
     # When flowing undef, a job is creating with an empty-hash input_id and the stack populated
     test_dataflow($job1, undef, '{}', 1);
+    # Even if the value of a parameter has been changed at runtime
+    $different_param_hash = $fresh_a_mult_input_id;
+    test_dataflow($job1, undef, '{}', 1);
+    undef $different_param_hash;
 
     # When flowing a hash, the hash is stringified and the stack populated
     test_dataflow($job1, {}, '{}', 1);
@@ -161,6 +175,10 @@ sub test_all_dataflows_with_stack {
     # 2. the emitting job has an empty input_id
     # When flowing undef, a job is creating with an empty-hash input_id and no stack needs to be populated
     test_dataflow($job2, undef, '{}');
+    # Even if the parameter hash is not empty
+    $different_param_hash = $fresh_a_mult_input_id;
+    test_dataflow($job2, undef, '{}');
+    undef $different_param_hash;
 
     # When flowing a hash, the hash is stringified and no stack needs to be populated
     test_dataflow($job2, {}, '{}');
@@ -204,14 +222,13 @@ sub test_all_dataflows_with_var_template {
     test_dataflow($job1, $a_mult_input_id_str,      $a_input_id_str, $with_stack);
 
     {
-        $different_param_hash = {"a_multiplier" => 27};
-        # TODO: if a_multiplier is 9650156169 in the input_id, and 27 in
-        # the parameter hash (modified at runtime), which value to use in
-        # the dataflow ??
-        # MM: No clear opinion on this. It looks like the code is meant to
-        # be using the input_id, but is in fact using the param hash
-        #test_dataflow($job1, {},                    '{"a" => 27}');
-        #test_dataflow($job1, $a_mult_input_id,      $a_input_id_str);
+        # Templates are evaluated using the freshest values. Here we set a
+        # param hash that is different from the input_id and we expect the
+        # same value to be flown out unless overriden in the output_id
+        $different_param_hash = $fresh_a_mult_input_id;
+        test_dataflow($job1, undef,                 $fresh_a_input_id_str, $with_stack);
+        test_dataflow($job1, {},                    $fresh_a_input_id_str, $with_stack);
+        test_dataflow($job1, $a_mult_input_id,      $a_input_id_str, $with_stack);
         undef $different_param_hash;
     }
 
@@ -226,13 +243,13 @@ sub test_all_dataflows_with_var_template {
     test_dataflow($job2, $a_mult_input_id_str,      $a_input_id_str);
 
     {
-        $different_param_hash = {"a_multiplier" => 27};
-        # TODO: if a_multiplier is not in the input_id but is in the
-        # parameter hash (set at runtime), should we use the latter ?
-        # MM: No clear opinion on this, but we need to be consistent with
-        # the previous case
-        #test_dataflow($job1, {},                    '{"a" => 27}');
-        #test_dataflow($job1, $a_mult_input_id,      $a_input_id_str);
+        # Templates are evaluated using the freshest values. Here we set a
+        # param hash that is different from the input_id and we expect the
+        # same value to be flown out unless overriden in the output_id
+        $different_param_hash = $fresh_a_mult_input_id;
+        test_dataflow($job2, undef,                 $fresh_a_input_id_str);
+        test_dataflow($job2, {},                    $fresh_a_input_id_str);
+        test_dataflow($job2, $a_mult_input_id,      $a_input_id_str);
         undef $different_param_hash;
     }
 }
