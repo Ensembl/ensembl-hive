@@ -188,20 +188,14 @@ sub test_all_dataflows_with_stack {
 sub test_all_dataflows_with_const_template {
     my ($job1, $job2, $with_stack) = @_;
 
-    # 1. the emitting job has a non-empty input_id
-    # When flowing undef, a job is creating with the template
+    # Since the template does not depend on any variables, it will become
+    # the input_id regardless of what is dataflown and the original input_id
+    # The stack is only populated when the emitting job has an non-empty input_id
     test_dataflow($job1, undef,          $template_const, $with_stack);
-
-    # When flowing a string, a job is creating with that string
     test_dataflow($job1, {},             $template_const, $with_stack);
     test_dataflow($job1, $snow_input_id, $template_const, $with_stack);
     test_dataflow($job1, $a_input_id,    $template_const, $with_stack); # Trying this one because both hashes have the same key "a"
-
-    # 2. the emitting job has an empty input_id
-    # When flowing undef, a job is creating with the template
     test_dataflow($job2, undef,          $template_const);
-
-    # When flowing a string, a job is creating with that string
     test_dataflow($job2, {},             $template_const);
     test_dataflow($job2, $snow_input_id, $template_const);
     test_dataflow($job2, $a_input_id,    $template_const);  # Trying this one because both hashes have the same key "a"
