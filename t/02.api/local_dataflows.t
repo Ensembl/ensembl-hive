@@ -85,7 +85,7 @@ my $a_input_id_str          = stringify($a_input_id);
 my $a_mult_input_id         = {"a_multiplier" => 58};
 my $a_mult_input_id_str     = stringify($a_mult_input_id);
 my $missing_a_input_id_str  = stringify({"a" => undef});
-my $default_a_input_id_str  = stringify({"a" => 9650156169});
+my $default_a_input_id_str  = stringify({"a" => '9650156169'});
 my $template_const          = stringify({"a" => 34});
 my $template_var            = stringify({"a" => "#a_multiplier#"});
 
