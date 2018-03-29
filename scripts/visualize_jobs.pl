@@ -38,7 +38,7 @@ sub main {
         'reg_conf|reg_file=s'   => \$self->{'reg_conf'},
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
-        'nosqlvc'             => \$self->{'nosqlvc'},                 # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
+        'nosqlvc'               => \$self->{'nosqlvc'},                 # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
 
         'job_id=s@'             => \$self->{'job_ids'},                 # Jobs to start from
         'start_analysis_name=s' => \$self->{'start_analysis_name'},     # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualisation

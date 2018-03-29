@@ -112,7 +112,7 @@ sub main {
                'loop_until=s'       => \$self->{'loop_until'},
                'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'=> \$run_job_id,
-               'force'              => \$force,
+               'force'              => \$self->{'force'},
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
@@ -369,7 +369,7 @@ sub main {
     my $has_error = 0;
     if ($self->{'max_loops'}) { # positive $max_loop means limited, negative means unlimited
 
-        $has_error = run_autonomously($self, $self->{'pipeline'}, $self->{'max_loops'}, $self->{'loop_until'}, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id, $force);
+        $has_error = run_autonomously($self, $self->{'pipeline'}, $self->{'max_loops'}, $self->{'loop_until'}, $valley, $list_of_analyses, $self->{'analyses_pattern'}, $run_job_id);
 
     } else {
         # the output of several methods will look differently depending on $analysis being [un]defined
@@ -418,7 +418,7 @@ sub log_and_die {
 }
 
 sub generate_worker_cmd {
-    my ($self, $analyses_pattern, $run_job_id, $force) = @_;
+    my ($self, $analyses_pattern, $run_job_id) = @_;
 
     my $worker_cmd = 'runWorker.pl';
 
@@ -429,7 +429,7 @@ sub generate_worker_cmd {
         }
     }
 
-    foreach my $worker_flag ('retry_throwing_jobs', 'can_respecialize') {
+    foreach my $worker_flag ('retry_throwing_jobs', 'can_respecialize', 'force', 'nosqlvc') {
         if(defined(my $value = $self->{$worker_flag})) {
             if ($value == 0) {
                 $worker_cmd .= " -no${worker_flag}";
@@ -437,12 +437,6 @@ sub generate_worker_cmd {
                 $worker_cmd .= " -${worker_flag}";
             }
         }
-    }
-
-    # nosqlvc is a special case for compatibility with modules where it is a propigated option
-    if ((defined($self->{nosqlvc})) &&
-        ($self->{nosqlvc} == 1)) {
-        $worker_cmd .= " -nosqlvc";
     }
 
     # This option can have multiple values
@@ -453,16 +447,6 @@ sub generate_worker_cmd {
         $worker_cmd .= " -job_id $run_job_id";
     } elsif ($analyses_pattern) {
         $worker_cmd .= " -analyses_pattern '".$analyses_pattern."'";
-    }
-
-    # force is given as an argument to the sub, rather than being taken from the options hash
-    if (defined($force)) {
-        # ensure a -noforce is passed through in the unlikely case where it is set
-        if ($force == 0) {
-            $worker_cmd .= "-noforce";
-        } else {
-            $worker_cmd .= " -force";
-        }
     }
 
     return $worker_cmd;
@@ -497,13 +481,13 @@ sub register_beekeeper {
 }
 
 sub run_autonomously {
-    my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id, $force) = @_;
+    my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id) = @_;
 
     my $hive_dba    = $pipeline->hive_dba;
     my $queen       = $hive_dba->get_Queen;
     my $meadow_user = $self->{'beekeeper'}->meadow_user;
 
-    my $pathless_resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id, $force);
+    my $pathless_resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id);
 
     my $iteration=0;
     my $reasons_to_exit;
