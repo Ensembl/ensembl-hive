@@ -2,6 +2,10 @@
 Presentations & Workshop materials
 ----------------------------------
 
+We occasionally run workshops to teach how to use eHive, at the EMBL-EBI
+and in other institutes too.  If you are interested in hosting, please
+contact the Ensembl Helpdesk (http://www.ensembl.org/Help/Contact).
+
 March 2017, Roslin Institute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -11,7 +15,9 @@ March 2017, Roslin Institute
    They are only copied over by adding them to html_extra_dir, which
    changes the path.
 
-The workshop was composed of four parts
+In 2017 we ran two workshops consecutively: at the NCHC, Hsinchu, Taiwan,
+and at the Roslin Institute, Edinburgh, United Kingdom. Here are the
+materials we used at the latter. The workshop was composed of four parts:
 
 1. Introduction to eHive
 
@@ -21,7 +27,7 @@ The workshop was composed of four parts
    .. image:: ../presentations/HiveWorkshop_Mar2017/Workshop_introduction.jpg
       :target: ../HiveWorkshop_Mar2017/Workshop%20introduction.pdf
 
-2. Initializing and running eHive pipelines
+2. Initialising and running eHive pipelines
 
    This part shows how to run already-existing pipelines.
 
