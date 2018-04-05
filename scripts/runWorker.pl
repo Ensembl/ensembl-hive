@@ -121,7 +121,7 @@ sub main {
         $analyses_pattern = $analysis_id;
     }
 
-    my %specialization_options = (
+    my %specialisation_options = (
         preregistered       => $preregistered,
         resource_class_id   => $resource_class_id,
         resource_class_name => $resource_class_name,
@@ -147,7 +147,7 @@ sub main {
         debug               => $debug,
     );
 
-    Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, \%specialization_options, \%life_options, \%execution_options);
+    Bio::EnsEMBL::Hive::Scripts::RunWorker::runWorker($pipeline, \%specialisation_options, \%life_options, \%execution_options);
 }
 
 
@@ -161,11 +161,11 @@ runWorker.pl [options]
 
 =head1 DESCRIPTION
 
-runWorker.pl is an eHive component script that does the work of a single Worker -
-specializes in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
+runWorker.pl is an eHive component script that does the work of a single Worker.
+It specialises in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
 
 Most of the functionality of the eHive is accessible via beekeeper.pl script,
-but feel free to run the runWorker.pl if you think you know what you are doing :)
+but feel free to run the runWorker.pl if you think you need a direct access to the running jobs.
 
 =head1 USAGE EXAMPLES
 
@@ -175,10 +175,10 @@ but feel free to run the runWorker.pl if you think you know what you are doing :
         # Run one local worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
 
-        # Run one local worker process in ehive_dbname and constrain its initial specialization within a subset of analyses
+        # Run one local worker process in ehive_dbname and constrain its initial specialisation within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -analyses_pattern '1..15,analysis_X,21'
 
-        # Run one local worker process in ehive_dbname and allow it to respecialize within a subset of analyses
+        # Run one local worker process in ehive_dbname and allow it to respecialise within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize 1 -analyses_pattern 'blast%-4..6'
 
         # Run a specific job in a local worker process:
@@ -196,15 +196,15 @@ path to a Registry configuration file
 
 =item --reg_alias <string>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --reg_type <string>
 
-type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
 
 =item --url <url string>
 
-url defining where database is located
+URL defining where database is located
 
 =item --nosqlvc <0|1>
 
@@ -236,11 +236,11 @@ resource class name
 
 =item --analyses_pattern <string>
 
-restrict the specialization of the Worker to the specified subset of Analyses
+restrict the specialisation of the Worker to the specified subset of Analyses
 
 =item --analysis_id <id>
 
-run a worker and have it specialize to an analysis with this analysis_id
+run a worker and have it specialise to an analysis with this analysis_id
 
 =item --job_id <id>
 
@@ -258,7 +258,7 @@ set to 1 if you want to force running a Worker over a BLOCKED analysis or to run
 
 =item --job_limit <num>
 
-#jobs to run before worker can die naturally
+number of jobs to run before worker can die naturally
 
 =item --life_span <num>
 
@@ -274,7 +274,7 @@ don't write_output or auto_dataflow input_job
 
 =item --hive_log_dir <path>
 
-directory where stdout/stderr of the whole hive of workers is redirected
+directory where stdout/stderr of the whole eHive of workers is redirected
 
 =item --worker_log_dir <path>
 
@@ -282,11 +282,12 @@ directory where stdout/stderr of this particular worker is redirected
 
 =item --retry_throwing_jobs <0|1>
 
-if a job dies *knowingly*, should we retry it by default?
+By default, jobs are allowed to fail a few times (up to the analysis' max_retry_count parameter) until the systems "gives up" and considers them as FAILED.
+Set --retry_throwing_jobs to 0 to disable this behaviour and mark the jobs as FAILED upon the first failed attempt.
 
 =item --can_respecialize <0|1>
 
-allow this worker to re-specialize into another analysis (within resource_class) after it has exhausted all jobs of the current one
+allow this worker to re-specialise into another analysis (within resource_class) after it has exhausted all jobs of the current one
 
 =item --worker_delay_startup_seconds <number>
 
@@ -308,7 +309,7 @@ print this help
 
 =item --versions
 
-report both Hive code version and Hive database schema version
+report both eHive code version and eHive database schema version
 
 =item --debug <level>
 
@@ -332,7 +333,7 @@ turn on debug messages at <level>
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

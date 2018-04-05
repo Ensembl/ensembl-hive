@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Commands to run on an Ensembl VM to add Hive-specific stuff
+# Commands to run on an Ensembl VM to add eHive-specific stuff
 # Known to work on the Ensembl release 90 VM
 #
 # Just run this as a script in a terminal inside the EnsemblVM.
@@ -16,7 +16,7 @@ sudo apt-get install -y sudo
 
 	# make sure we have the environment right in the .bashrc :
 echo >> ~/.bashrc
-echo '# Adding Hive-specific configuration here' >> ~/.bashrc
+echo '# Adding eHive-specific configuration here' >> ~/.bashrc
 echo >> ~/.bashrc
 echo 'export ENSEMBL_REPO_ROOT_DIR=$HOME/ensembl-api-folder' >> ~/.bashrc
 echo 'export PATH=$PATH:$ENSEMBL_REPO_ROOT_DIR/ensembl-hive/scripts' >> ~/.bashrc
@@ -29,7 +29,7 @@ export PATH=$PATH:$ENSEMBL_REPO_ROOT_DIR/ensembl-hive/scripts
 sudo apt-get -y install sqliteman
 sudo apt-get -y install mysql-workbench
 
-	# update Hive code and check out a stable branch:
+	# update eHive code and check out a stable branch:
 cd $ENSEMBL_REPO_ROOT_DIR/ensembl-hive
 git fetch
 git checkout version/2.4

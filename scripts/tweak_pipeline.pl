@@ -90,7 +90,7 @@ tweak_pipeline.pl
 
 =head1 DESCRIPTION
 
-This is a script to "tweak" attributes or parameters of an existing Hive pipeline.
+This is a script to "tweak" attributes or parameters of an existing eHive pipeline.
 
 =head1 OPTIONS
 
@@ -98,7 +98,7 @@ This is a script to "tweak" attributes or parameters of an existing Hive pipelin
 
 =item --url <url>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --reg_conf <path>
 
@@ -106,11 +106,11 @@ path to a Registry configuration file
 
 =item --reg_type <name>
 
-Registry type of the Hive DBAdaptor
+Registry type of the eHive DBAdaptor
 
 =item --reg_alias <name>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --nosqlvc <0|1>
 
@@ -155,7 +155,7 @@ Shortcut to show a parameter value
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

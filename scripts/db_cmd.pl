@@ -105,7 +105,7 @@ db_cmd.pl is a generic script that connects you interactively to your database u
 
 =item --url <url>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --reg_conf <path>
 
@@ -113,7 +113,7 @@ path to a Registry configuration file
 
 =item --reg_alias <str>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --executable <name|path>
 
@@ -138,7 +138,7 @@ Print this help message
 =back
 
 All the remaining arguments are passed on to the command to be run.
-If some of them start with a dash, first use a double-dash to indicate the end of db_cmd.pl's options and the start of the arguments that have to be passed as-is (see the example below with --html)
+If some of them start with a dash, first use a double-dash to indicate the end of db_cmd.pl's options and the start of the arguments that have to be passed as is (see the example below with --html)
 
 =head1 USAGE EXAMPLES
 
@@ -167,7 +167,7 @@ If some of them start with a dash, first use a double-dash to indicate the end o
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

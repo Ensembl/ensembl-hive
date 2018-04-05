@@ -141,14 +141,14 @@ takes in a RunnableDB module,
 
 =item 2.
 
-creates a standalone job outside an eHive database by initializing parameters from command line arguments
+creates a standalone job outside an eHive database by initialising parameters from command line arguments
 
 =item 3.
 
 and runs that job outside of any eHive database.
 
 I<WARNING> the RunnableDB code may still access databases provided
-as arguments and even harm them !
+as arguments and even harm them!
 
 =item 4.
 
@@ -158,7 +158,7 @@ can optionally dataflow into tables fully defined by URLs
 
 Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
 
-There are several ways of initializing the job parameters:
+There are several ways of initialising the job parameters:
 
 =over
 
@@ -196,10 +196,10 @@ to the job, worker, log_message etc tables.
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -cmd 'ls -l'
     standaloneJob.pl Bio::EnsEMBL::Hive::RunnableDB::SystemCmd -input_id "{ 'cmd' => 'ls -l' }"
 
-        # Run a job and re-define its 'db_conn' parameter to allow it to perform some database-related operations:
+        # Run a job and re-define its "db_conn" parameter to allow it to perform some database-related operations:
     standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
 
-        # Run a job initialized from the parameters of an existing job topped-up with extra ones.
+        # Run a job initialised from the parameters of an existing job topped-up with extra ones.
         # In this particular example the RunnableDB needs a "compara_db" parameter which defaults to the eHive database.
         # Since there is no eHive database here we need to define -compara_db on the command-line
     standaloneJob.pl -url mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b -job_id 16781 -compara_db mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b
@@ -281,7 +281,7 @@ All other options will be passed to the runnable (leading dashes removed) and wi
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

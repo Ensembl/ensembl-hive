@@ -457,7 +457,7 @@ sub register_beekeeper {
     my $meadow_signatures = join(",",
         map {$_->signature} @{$self->{'available_meadow_list'}});
 
-    # The new instance is partly initalized with the output of Valley::whereami()
+    # The new instance is partly initalised with the output of Valley::whereami()
     my $beekeeper = Bio::EnsEMBL::Hive::Beekeeper->new_from_Valley($valley,
         'sleep_minutes'     => $self->{'sleep_minutes'},
         'analyses_pattern'  => $self->{'analyses_pattern'},
@@ -469,7 +469,7 @@ sub register_beekeeper {
 
     $self->{'dba'}->get_BeekeeperAdaptor->store($beekeeper);
     unless ($self->{'beekeeper_id'} = $beekeeper->dbID) {
-        die "There was a problem registering this beekeeper with the hive database.";
+        die "There was a problem registering this beekeeper with the eHive database.";
     }
     return $beekeeper;
 }
@@ -706,12 +706,12 @@ beekeeper.pl [options]
 
 =head1 DESCRIPTION
 
-The Beekeeper is in charge of interfacing between the Queen and a compute resource or 'compute farm'.
-Its job is to initialize/sync the eHive database (via the Queen), query the Queen if it needs any workers
+The Beekeeper is in charge of interfacing between the eHive database a compute resource or 'compute farm'.
+Its job is to synchronise both, to assess the compute requirements of the pipeline
 and to send the requested number of workers to open machines via the runWorker.pl script.
 
-It is also responsible for interfacing with the Queen to identify workers which died
-unexpectedly so that she can free the dead workers and reclaim unfinished jobs.
+It is also responsible for identifying workers which died
+unexpectedly so that dead workers can be released and unfinished jobs reclaimed.
 
 =head1 USAGE EXAMPLES
 
@@ -748,15 +748,15 @@ Path to a Registry configuration file
 
 =item --reg_type <string>
 
-Type of the registry entry ('hive', 'core', 'compara', etc. - defaults to 'hive')
+Type of the registry entry ("hive", "core", "compara", etc. - defaults to "hive")
 
 =item --reg_alias <string>
 
-Species / alias name for the Hive DBAdaptor
+Species / alias name for the eHive DBAdaptor
 
 =item --url <url string>
 
-URL defining where hive database is located
+URL defining where eHive database is located
 
 =item --nosqlvc <0|1>
 
@@ -798,7 +798,7 @@ stop looping if any analysis has job failures exceeding its fault tolerance
 
 =item NO_WORK
 
-ignore job and analysis faliures, keep looping until there is no work
+ignore job and analysis failures, keep looping until there is no work
 
 =item FOREVER
 
@@ -817,11 +817,11 @@ it has performed max_loops loops, even in FOREVER mode
 
 =item --job_id <job_id>
 
-run 1 iteration for this job_id
+run one iteration for this job_id
 
 =item --run
 
-run 1 iteration of automation loop
+run one iteration of automation loop
 
 =item --sleep <num>
 
@@ -865,7 +865,7 @@ restrict the sync operation, printing of stats or looping of the beekeeper to th
 
 =item --can_respecialize <0|1>
 
-allow workers to re-specialize into another analysis (within resource_class) after their previous analysis was exhausted
+allow workers to re-specialise into another analysis (within resource_class) after their previous analysis was exhausted
 
 =item --force
 
@@ -889,7 +889,7 @@ if a job dies *knowingly*, should we retry it by default?
 
 =item --hive_log_dir <path>
 
-directory where stdout/stderr of the hive is redirected
+directory where stdout/stderr of the eHive is redirected
 
 =item --worker_delay_startup_seconds <number>
 
@@ -915,7 +915,7 @@ print this help
 
 =item --versions
 
-report both Hive code version and Hive database schema version
+report both eHive code version and eHive database schema version
 
 =item --dead
 
@@ -923,7 +923,7 @@ detect all unaccounted dead workers and reset their jobs for resubmission
 
 =item --sync
 
-re-synchronize the hive
+re-synchronise the ehive
 
 =item --unkwn
 
@@ -995,7 +995,7 @@ set SEMAPHORED jobs of analyses matching -analyses_pattern to READY so they can 
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

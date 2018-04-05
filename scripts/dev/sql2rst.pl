@@ -773,7 +773,7 @@ sub fill_documentation {
       push(@{$documentation->{$header}{'tables'}{$table}{$tag}},$tag_content);
     }
   }
-  # New tag initialized
+  # New tag initialised
   if ($t1) {
     $tag = $t1;
     $tag_content = $t2;

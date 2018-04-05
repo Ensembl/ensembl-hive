@@ -512,9 +512,9 @@ generate_timeline.pl
 
 This script is used for offline examination of the allocation of workers.
 
-Based on the command-line parameters 'start_date' and 'end_date', or on the start time of the first
+Based on the command-line parameters "start_date" and "end_date", or on the start time of the first
 worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-of the 'worker' table for accurate timing.
+of the "worker" table for accurate timing.
 By default, the output is in CSV format, to allow extra analysis to be carried.
 
 You can optionally ask the script to generate an image with Gnuplot.
@@ -547,7 +547,7 @@ print this help
 
 =item --url <url string>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --reg_conf
 
@@ -555,11 +555,11 @@ path to a Registry configuration file
 
 =item --reg_type
 
-type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
 
 =item --reg_alias
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --nosqlvc
 
@@ -578,11 +578,11 @@ Print some info about the data loaded from the database
 
 =item --start_date <date>
 
-minimal start date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+minimal start date of a worker (the format is ISO8601, e.g. "2012-01-25T13:46")
 
 =item --end_date <date>
 
-maximal end date of a worker (the format is ISO8601, e.g. '2012-01-25T13:46')
+maximal end date of a worker (the format is ISO8601, e.g. "2012-01-25T13:46")
 
 =item --top <float>
 
@@ -594,11 +594,11 @@ output file: its extension must match one of the Gnuplot terminals. Otherwise, t
 
 =item --mode <string>
 
-what should be displayed on the y-axis. Allowed values are 'workers' (default), 'memory', 'cores', 'pending_workers', or 'pending_time'
+what should be displayed on the y-axis. Allowed values are "workers" (default), "memory", "cores", "pending_workers", or "pending_time"
 
 =item --key <string>
 
-'analysis' (default) or 'resource_class': how to bin the workers
+"analysis" (default) or "resource_class": how to bin the workers
 
 =back
 
@@ -640,7 +640,7 @@ See the License for the specific language governing permissions and limitations 
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# A generic script for creating Hive pipelines from PipeConfig module files (see below for docs)
+# A generic script for creating eHive pipelines from PipeConfig module files (see below for docs)
 
 use strict;
 use warnings;
@@ -68,17 +68,17 @@ init_pipeline.pl
 
 =head1 DESCRIPTION
 
-init_pipeline.pl is a generic script that is used to create+setup=initialize eHive pipelines from PipeConfig configuration modules.
+init_pipeline.pl is a generic script that is used to initialise eHive pipelines (i..e create and setup the database) from PipeConfig configuration modules.
 
 =head1 USAGE EXAMPLES
 
         # get this help message:
     init_pipeline.pl
 
-        # initialize a generic eHive pipeline:
+        # initialise a generic eHive pipeline:
     init_pipeline.pl Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf -password <yourpassword>
 
-        # initialize the long multiplicaton pipeline by supplying not only mandatory but also optional data:
+        # initialise the long multiplicaton pipeline by supplying not only mandatory but also optional data:
         #   (assuming your current directory is ensembl-hive/modules/Bio/EnsEMBL/Hive/PipeConfig) :
     init_pipeline.pl LongMult_conf -password <yourpassword> -first_mult 375857335 -second_mult 1111333355556666 
 
@@ -88,7 +88,7 @@ init_pipeline.pl is a generic script that is used to create+setup=initialize eHi
 
 =item --hive_force_init <0|1>
 
-If set to 1, forces the (re)creation of the hive database even if a previous version of it is present in the server.
+If set to 1, forces the (re)creation of the eHive database even if a previous version of it is present in the server.
 
 =item --hive_no_init <0|1>
 
@@ -132,7 +132,7 @@ Show this help message
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

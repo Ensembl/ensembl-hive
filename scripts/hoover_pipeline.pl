@@ -128,21 +128,21 @@ hoover_pipeline.pl
 
 =head1 DESCRIPTION
 
-hoover_pipeline.pl is a script used to remove old 'DONE' jobs from a continuously running pipeline database
+hoover_pipeline.pl is a script used to remove old "DONE" jobs from a continuously running pipeline database
 
 =head1 USAGE EXAMPLES
 
-        # delete all jobs that have been 'DONE' for at least a week (default threshold) :
+        # delete all jobs that have been "DONE" for at least a week (default threshold) :
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
 
 
-        # delete all jobs that have been 'DONE' for at least a given number of days
+        # delete all jobs that have been "DONE" for at least a given number of days
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -days_ago 3
 
 
-        # delete all jobs 'DONE' before a specific datetime:
+        # delete all jobs "DONE" before a specific datetime:
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -before_datetime "2013-02-14 15:42:50"
 
@@ -156,15 +156,15 @@ path to a Registry configuration file
 
 =item --reg_type <string>
 
-type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
 
 =item --reg_alias <string>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --url <url string>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --nosqlvc <0|1>
 
@@ -172,11 +172,11 @@ skip sql version check if 1
 
 =item --before_datetime <string>
 
-delete jobs 'DONE' before a specific time
+delete jobs "DONE" before a specific time
 
 =item --days_ago <num>
 
-delete jobs that have been 'DONE' for at least <num> days
+delete jobs that have been "DONE" for at least <num> days
 
 =item -h, --help
 
@@ -200,7 +200,7 @@ show this help message
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

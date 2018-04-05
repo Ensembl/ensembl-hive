@@ -41,8 +41,8 @@ sub main {
         'nosqlvc=i'             => \$self->{'nosqlvc'},                 # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
         'job_id=s@'             => \$self->{'job_ids'},                 # jobs to start from
-        'start_analysis_name=s' => \$self->{'start_analysis_name'},     # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualization
-        'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},      # if given, the visualization is aborted at that analysis and doesn't go any further
+        'start_analysis_name=s' => \$self->{'start_analysis_name'},     # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualisation
+        'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},      # if given, the visualisation is aborted at that analysis and doesn't go any further
 
         'include!'              => \$self->{'include'},                 # if set, include other pipeline rectangles inside the main one
         'suppress_funnel_parent_link!'  => \$self->{'suppress'},        # if set, do not show the link to the parent of a funnel job (potentially less clutter)
@@ -550,10 +550,10 @@ visualize_jobs.pl
 
 =head1 DESCRIPTION
 
-This program generates a visualization of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
+This program generates a visualisation of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
 
-Jobs are represented by 3d-rectangles which contain parameters and are colour-coded (reflecting Job's status).
-Semaphores are represented by triangles (upward-pointing red = closed, downward-pointing green = open) which contain the counter.
+Jobs are represented by 3D-rectangles which contain parameters and are colour-coded (reflecting the Job's status).
+Semaphores are represented by triangles (red upward-pointing = closed, green downward-pointing = open) which contain the counter.
 Accumulators are represented by rectangles with key-paths and may contain data (configurable).
 
 Blue solid arrows show jobs' parent-child relationships (parents point at their children).
@@ -567,7 +567,7 @@ Dashed red/green lines (with colour matching semaphore's) also link the semaphor
 
 =item --url <url>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --reg_conf <path>
 
@@ -575,7 +575,7 @@ path to a Registry configuration file
 
 =item --reg_alias <name>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --nosqlvc <0|1>
 
@@ -654,7 +654,7 @@ Print this help message
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

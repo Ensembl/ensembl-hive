@@ -164,7 +164,7 @@ seed_pipeline.pl
 
 =head1 DESCRIPTION
 
-seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for hive pipelines
+seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for eHive pipelines
 
 =head1 USAGE EXAMPLES
 
@@ -190,15 +190,15 @@ path to a Registry configuration file
 
 =item --reg_type <string>
 
-type of the registry entry ('hive', 'core', 'compara', etc - defaults to 'hive')
+type of the registry entry ("hive", "core", "compara", etc - defaults to "hive")
 
 =item --reg_alias <string>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --url <url string>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --nosqlvc <0|1>
 
@@ -260,7 +260,7 @@ show this help message
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

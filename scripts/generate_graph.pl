@@ -135,10 +135,10 @@ generate_graph.pl
 
 =head1 DESCRIPTION
 
-This program will generate a graphical representation of your hive pipeline.
+This program will generate a graphical representation of your eHive pipeline.
 This includes visualising the flow of data from the different analyses, blocking
-rules & table writers. The graph is also coloured to indicate the stage
-an analysis is at. The colours & fonts used can be configured via
+rules and table writers. The graph is also coloured to indicate the stage
+an analysis is at. The colours and fonts used can be configured via
 hive_config.json configuration file.
 
 =head1 OPTIONS
@@ -147,7 +147,7 @@ hive_config.json configuration file.
 
 =item --url <url>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --reg_conf <path>
 
@@ -155,7 +155,7 @@ path to a Registry configuration file
 
 =item --reg_alias <str>
 
-species/alias name for the Hive DBAdaptor
+species/alias name for the eHive DBAdaptor
 
 =item --nosqlvc <0|1>
 
@@ -163,7 +163,7 @@ if 1, don't check sql schema version
 
 =item --config_file <path>
 
-Path to JSON hive config file
+Path to JSON eHive config file
 
 =item --pipeconfig <path|module_name>
 
@@ -210,7 +210,7 @@ Print this help message
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 

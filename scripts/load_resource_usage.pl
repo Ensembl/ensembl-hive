@@ -108,26 +108,26 @@ load_resource_usage.pl
 
 =head1 DESCRIPTION
 
-This script obtains resource usage data for your pipeline from the Meadow and stores it in 'worker_resource_usage' table.
+This script obtains resource usage data for your pipeline from the Meadow and stores it in the "worker_resource_usage" table.
 Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
 
 Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
-it pulls the relevant data out of your Meadow (runs 'bacct' script in case of LSF), parses the report and stores in 'worker_resource_usage' table.
-You can join this table to 'worker' table USING(meadow_name,process_id) in the usual MySQL way
+it pulls the relevant data out of your Meadow (runs the "bacct" script in case of LSF), parses the report and stores in the "worker_resource_usage" table.
+You can join this table to the "worker" table USING(meadow_name,process_id) in the usual MySQL way
 to filter by analysis_id, do various stats, etc.
 
-You can optionally provide an an external filename or command to get the data from it (don't forget to append a '|' to the end!)
+You can optionally provide an an external filename or command to get the data from it (don't forget to append a "|" to the end!)
 and then the data will be taken from your source and parsed from there.
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: query and store the relevant data into 'worker_resource_usage' table:
+        # Just run it the usual way: query and store the relevant data into "worker_resource_usage" table:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test
 
-        # The same, but assuming another user 'someone_else' ran the pipeline:
+        # The same, but assuming another user "someone_else" ran the pipeline:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -username someone_else
 
-        # Assuming the dump file existed. Load the dumped bacct data into 'worker_resource_usage' table:
+        # Assuming the dump file existed. Load the dumped bacct data into "worker_resource_usage" table:
     load_resource_usage.pl -url mysql://username:secret@hostname:port/long_mult_test -source long_mult.bacct
 
         # Provide your own command to fetch and parse the worker_resource_usage data from:
@@ -143,7 +143,7 @@ print this help
 
 =item --url <url string>
 
-url defining where hive database is located
+URL defining where eHive database is located
 
 =item --username <username>
 
@@ -175,7 +175,7 @@ only used when -source is given. Tells which meadow type the source filename rel
 
 =head1 CONTACT
 
-Please subscribe to the Hive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss Hive-related questions or to be notified of our updates
+Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
 
