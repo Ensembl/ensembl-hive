@@ -5,7 +5,7 @@ Continuously running pipelines
 There are two main strategies for running different instances of a workflow
 -- i.e. running the same workflow with different starting data. One method,
 probably more commonly used, is to instantiate a new eHive database with
-init_pipeline.pl for each new run. Another method is to seed a new job into
+:ref:`init_pipeline.pl <script-init_pipeline>` for each new run. Another method is to seed a new job into
 an existing pipeline database. In the second case, the seeded job will
 start a new parallel path through the pipeline.
 
@@ -14,7 +14,7 @@ The latter method can be used to set up an eHive pipeline to provide a service f
 Beekeeper options
 -----------------
 
-A few beekeeper.pl options should be considered when operating a pipeline in continuous mode:
+A few :ref:`beekeeper.pl <script-beekeeper>` options should be considered when operating a pipeline in continuous mode:
 
    - Continuous looping is ensured by setting ``-loop_until FOREVER``
 
@@ -25,9 +25,9 @@ A few beekeeper.pl options should be considered when operating a pipeline in con
 Hoovering the pipeline
 ----------------------
 
-A continuously running pipeline has the potential to collect thousands of DONE job rows in the jobs table. As these grow, it has the potential to slow down the pipeline, as workers' queries from and updates to the job table take longer. To rectify this, the hoover_pipeline.pl script is provided to remove DONE jobs from the job table, reducing the size of the table and thereby speeding up operations involving it.
+A continuously running pipeline has the potential to collect thousands of DONE job rows in the jobs table. As these grow, it has the potential to slow down the pipeline, as workers' queries from and updates to the job table take longer. To rectify this, the :ref:`hoover_pipeline.pl <script-hoover_pipeline>` script is provided to remove DONE jobs from the job table, reducing the size of the table and thereby speeding up operations involving it.
 
-By default, hoover_pipeline.pl removes DONE jobs that finished more than one week ago. The age of DONE jobs to be deleted by hoover_pipeline.pl can be adjusted with the ``-days_ago`` and ``-before_datetime`` options:
+By default, :ref:`hoover_pipeline.pl <script-hoover_pipeline>` removes DONE jobs that finished more than one week ago. The age of DONE jobs to be deleted by :ref:`hoover_pipeline.pl <script-hoover_pipeline>` can be adjusted with the ``-days_ago`` and ``-before_datetime`` options:
 
    - ``hoover_pipeline.pl -url "sqlite:///my_hive_db" # removes DONE jobs that have been DONE for at least one week``
 

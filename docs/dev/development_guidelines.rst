@@ -154,8 +154,8 @@ HivePipeline and collections
 eHive implements a caching layer that serves two purposes:
 
 1. Objects don't always live in the database. This is the case when
-   building a pipeline from a PipeConfig (either for ``init_pipeline.pl``
-   or ``generate_graph.pl --pipeconfig``) or when running a job in
+   building a pipeline from a PipeConfig (either for :ref:`init_pipeline.pl <script-init_pipeline>`
+   or :ref:`generate_graph.pl <script-generate_graph>` with the ``--pipeconfig`` parameter) or when running a job in
    *standalone* mode (and maybe one day, whole pipelines too!)
 2. Fetching from the database has a cost, that is particularly visible when
    the database is busy.
@@ -319,7 +319,7 @@ There are very few rules when writing new code:
 1. For indentation use four spaces, not tabs
 2. Only use ASCII characters. The only exception
    at the moment are ``Analysis.pm`` and ``HivePipeline.pm`` which are used
-   for the Unicode Art output of ``generate_graph.pl``, but they are meant
+   for the Unicode Art output of :ref:`generate_graph.pl <script-generate_graph>`, but they are meant
    to be replaced with character names (resp. code points), e.g.
    ``\N{BOX DRAWINGS DOUBLE UP AND RIGHT}`` (resp. ``\N{U+255A}``).
 

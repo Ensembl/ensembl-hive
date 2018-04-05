@@ -46,7 +46,7 @@ builds from potentially several projects.
    ``PERL5LIB`` environment variables accordingly.
 
    This allows us to run all the eHive scripts directly on the ReadTheDocs
-   infrastructure, including ``init_pipeline.pl`` or ``generate_graph.pl``
+   infrastructure, including :ref:`init_pipeline.pl <script-init_pipeline>` or :ref:`generate_graph.pl <script-generate_graph>`
 
 2. ReadTheDocs runs off the main project directory
    ``$PROJECT_DIR/`` which
