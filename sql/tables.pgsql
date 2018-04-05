@@ -59,7 +59,7 @@ CREATE TABLE hive_meta (
 @colour #C70C09
 
 @desc This table contains a simple hash between pipeline_wide_parameter names and their values.
-      The same data used to live in 'meta' table until both the schema and the API were finally separated from Ensembl Core.
+      The same data used to live in "meta" table until both the schema and the API were finally separated from Ensembl Core.
 
 @column param_name      the key of key-value pairs (primary key)
 @column param_value     the value of key-value pairs
@@ -86,12 +86,12 @@ CREATE        INDEX ON pipeline_wide_parameters (param_value);
 @column logic_name              the name of the Analysis object
 @column module                  the name of the module / package that runs this Analysis
 @column language                the language of the module, if not Perl
-@column parameters              a stingified hash of parameters common to all jobs of the Analysis
+@column parameters              a stringified hash of parameters common to all jobs of the Analysis
 @column resource_class_id       link to the resource_class table
 @column failed_job_tolerance    % of tolerated failed Jobs
 @column max_retry_count         how many times a job of this Analysis will be retried (unless there is no point)
 @column can_be_empty            if TRUE, this Analysis will not be blocking if/while it doesn't have any jobs
-@column priority                an Analysis with higher priority will be more likely chosen on Worker's specialization
+@column priority                an Analysis with higher priority will be more likely chosen on Worker's specialisation
 @column meadow_type             if defined, forces this Analysis to be run only on the given Meadow
 @column analysis_capacity       if defined, limits the number of Workers of this particular Analysis that are allowed to run in parallel
 @column hive_capacity           a reciprocal limiter on the number of Workers running at the same time (dependent on Workers of other Analyses)
@@ -129,7 +129,7 @@ CREATE TABLE analysis_base (
 
 @desc   Parallel table to analysis_base which provides high level statistics on the
         state of an analysis and it's jobs.  Used to provide a fast overview, and to
-        provide final approval of 'DONE' which is used by the blocking rules to determine
+        provide final approval of "DONE" which is used by the blocking rules to determine
         when to unblock other analyses.  Also provides
 
 @column analysis_id             foreign-keyed to the corresponding analysis_base entry
@@ -237,10 +237,10 @@ CREATE TABLE dataflow_target (
 @colour #C70C09
 
 @desc   These rules define a higher level of control.
-        These rules are used to turn whole anlysis nodes on/off (READY/BLOCKED).
-        If any of the condition_analyses are not 'DONE' the ctrled_analysis is set to BLOCKED.
-        When all conditions become 'DONE' then ctrled_analysis is set to READY
-        The workers switch the analysis.status to 'WORKING' and 'DONE'.
+        These rules are used to turn whole analysis nodes on/off (READY/BLOCKED).
+        If any of the condition_analyses are not "DONE" the ctrled_analysis is set to BLOCKED.
+        When all conditions become "DONE" then ctrled_analysis is set to READY
+        The workers switch the analysis.status to "WORKING" and "DONE".
         But any moment if a condition goes false, the analysis is reset to BLOCKED.
 
 @column analysis_ctrl_rule_id  internal ID
@@ -379,7 +379,7 @@ CREATE OR REPLACE RULE job_table_ignore_duplicate_inserts AS
 @desc The semaphore table is our primary inter-job dependency relationship.
         Any job may control up to one semaphore, but the semaphore can be controlled by many jobs.
         This includes remote jobs, so the semaphore keeps two counters - one for local blockers, one for remote ones.
-        As soon as both counters reach zero (0 and 0), the semaphore unblocks one dependent job -
+        As soon as both counters reach zero, the semaphore unblocks one dependent job -
         either a local one, or through a chain of dependent remote semaphores.
 
 @column semaphore_id            autoincrement id
@@ -495,10 +495,10 @@ CREATE INDEX ON analysis_data (md5sum);
 
 @column worker_id           unique ID of the Worker
 @column meadow_type         type of the Meadow it is running on
-@column meadow_name         name of the Meadow it is running on (for meadow_type=='LOCAL' it is the same as meadow_host)
+@column meadow_name         name of the Meadow it is running on (for "LOCAL" meadows it is the same as meadow_host)
 @column meadow_host         execution host name
 @column meadow_user         scheduling/execution user name (within the Meadow)
-@column process_id          identifies the Worker process on the Meadow (for 'LOCAL' is the OS PID)
+@column process_id          identifies the Worker process on the Meadow (for "LOCAL" is the OS PID)
 @column resource_class_id   links to Worker's resource class
 @column work_done           how many jobs the Worker has completed successfully
 @column status              current status of the Worker
@@ -581,12 +581,12 @@ CREATE INDEX ON beekeeper (meadow_host, meadow_user, process_id);
 @colour #24DA06
 
 @desc Entries of this table correspond to Role objects of the API.
-        When a Worker specializes, it acquires a Role,
+        When a Worker specialises, it acquires a Role,
         which is a temporary link between the Worker and a resource-compatible Analysis.
 
 @column role_id             unique ID of the Role
-@column worker_id           the specialized Worker
-@column analysis_id         the Analysis into which the Worker specialized
+@column worker_id           the specialised Worker
+@column analysis_id         the Analysis into which the Worker specialised
 @column when_started        when this Role started
 @column when_finished       when this Role finished. NULL may either indicate it is still running or was killed by an external force.
 @column attempted_jobs      counter of the number of attempts
@@ -624,13 +624,13 @@ CREATE        INDEX role_analysis_id_idx ON role (analysis_id);
 	support post-mortem inspection of resource usage
 
 @column          worker_id  links to the worker table
-@column        exit_status  meadow-dependent, in case of LSF it's usually 'done' (normal) or 'exit' (abnormal)
+@column        exit_status  meadow-dependent, in case of LSF it's usually "done" (normal) or "exit" (abnormal)
 @column           mem_megs  how much memory the Worker process used
 @column          swap_megs  how much swap the Worker process used
 @column        pending_sec  time spent by the process in the queue before it became a Worker
 @column            cpu_sec  cpu time (in seconds) used by the Worker process. It is often lower than the walltime because of time spent in I/O waits, but it can also be higher if the process is multi-threaded
 @column       lifespan_sec  walltime (in seconds) used by the Worker process. It is often higher than the sum of its jobs' "runtime_msec" because of the overhead from the Worker itself
-@column   exception_status  meadow-specific flags, in case of LSF it can be 'underrun', 'overrun' or 'idle'
+@column   exception_status  meadow-specific flags, in case of LSF it can be "underrun", "overrun" or "idle"
 */
 
 CREATE TABLE worker_resource_usage (
@@ -659,8 +659,8 @@ CREATE TABLE worker_resource_usage (
 
 @column log_message_id  an autoincremented primary id of the message
 @column         job_id  the id of the job that threw the message (or NULL if it was outside of a message)
-@column        role_id  the 'current' role
-@column      worker_id  the 'current' worker
+@column        role_id  the "current" role
+@column      worker_id  the "current" worker
 @column   beekeeper_id  beekeeper that generated this message
 @column    when_logged  when the message was thrown
 @column          retry  retry_count of the job when the message was thrown (or NULL if no job)
