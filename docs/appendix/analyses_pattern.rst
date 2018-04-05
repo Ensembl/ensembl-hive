@@ -35,7 +35,7 @@ The general syntax is expressed in a pseudo-BNF form below.
 Overall, a pattern is a sequence of expressions separated with a comma, a
 plus sign or a minus sign. The pattern is evaluated from left to right,
 starting with the content of the first expression, and adding (comma or
-plus sign) or substracting (minus sign) the content of the next expression,
+plus sign) or subtracting (minus sign) the content of the next expression,
 until the end is reached.
 
 
@@ -63,8 +63,8 @@ Expressions that consist of a single word select content based on their
 ``<word>``
     the object with this name
 ``<word-with-%-sign>``
-    the objects matching the name, ``%`` meaning "any sequence of
-    characters"
+    the objects matching the name, ``%`` is the wildcard character and
+    means "any sequence of characters (incl. an empty string)"
 
 General filtering
 -----------------
