@@ -3,8 +3,8 @@ Presentations & Workshop materials
 ----------------------------------
 
 We occasionally run workshops to teach how to use eHive, at the EMBL-EBI
-and in other institutes too.  If you are interested in hosting, please
-contact the Ensembl Helpdesk (http://www.ensembl.org/Help/Contact).
+and in other institutes too.  If you are interested in hosting one, please
+contact the `Ensembl Helpdesk <http://www.ensembl.org/Help/Contact>`__.
 
 March 2017, Roslin Institute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -17,7 +17,8 @@ March 2017, Roslin Institute
 
 In 2017 we ran two workshops consecutively: at the NCHC, Hsinchu, Taiwan,
 and at the Roslin Institute, Edinburgh, United Kingdom. Here are the
-materials we used at the latter. The workshop was composed of four parts:
+materials we used at the latter (based on feedback from the first course).
+The workshop was composed of four parts:
 
 1. Introduction to eHive
 

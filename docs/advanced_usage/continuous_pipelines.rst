@@ -2,7 +2,12 @@
 Continuously running pipelines
 ==============================
 
-There are two main strategies for running different instances of an analysis within the same workflow -- i.e. running the same workflow with different starting data. One method, probably more commonly used, is to instantiate a new eHive database with init_pipeline.pl for each new analysis run. Another method is to seed a new job into an existing pipeline (into an already existing eHive database). In the second case, the seeded job will start a new parallel path through the pipeline.
+There are two main strategies for running different instances of a workflow
+-- i.e. running the same workflow with different starting data. One method,
+probably more commonly used, is to instantiate a new eHive database with
+init_pipeline.pl for each new run. Another method is to seed a new job into
+an existing pipeline database. In the second case, the seeded job will
+start a new parallel path through the pipeline.
 
 The latter method can be used to set up an eHive pipeline to provide a service for on-demand computation. In this arrangement, a single eHive pipeline is set up, and a beekeeper is set running continuously. When a job is seeded, the beekeeper will notice the new job during its next loop, and will create workers to take that job as appropriate.
 
