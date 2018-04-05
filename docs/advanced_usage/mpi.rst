@@ -1,8 +1,8 @@
 How to use MPI
 ==============
 
-        With this tutorial, our goal is to give insights on how to set up the
-        Hive to run jobs using Shared Memory Parallelism (threads) and
+        With this tutorial, our goal is to give insights on how to set up
+        eHive to run jobs using Shared Memory Parallelism (threads) and
         Distributed Memory Parallelism (MPI).
 
 --------------
@@ -12,7 +12,7 @@ documentation on this topic. Please refer to them for implementation
 details (intranet-only links:
 `EBI <http://www.ebi.ac.uk/systems-srv/public-wiki/index.php/EBI_Good_Computing_Guide_new>`__,
 `Sanger
-institute <http://mediawiki.internal.sanger.ac.uk/index.php/How_to_run_MPI_jobs_on_the_farm>`__)
+Institute <http://mediawiki.internal.sanger.ac.uk/index.php/How_to_run_MPI_jobs_on_the_farm>`__)
 
 You can find real examples in the
 `ensembl-compara <https://github.com/Ensembl/ensembl-compara>`__
@@ -22,7 +22,7 @@ and
 `ExaML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__.
 They look very light-weight (only command-line definitions) because most
 of the logic is in the base class (*GenericRunnable*), but nevertheless
-show the command lines used and the parametrization of multi-core and
+show the command lines used and the parametrisation of multi-core and
 MPI runs.
 
 .. The default language is set to perl. Non-perl code-blocks have to define
@@ -71,7 +71,7 @@ resource class in your pipeline.
    the documentation of the code you want to run to find out how to
    define the number of threads it will use.
 
-Just with this basic configuration, the Hive is able to run Thread\_app
+Just with this basic configuration, eHive is able to run Thread\_app
 in 16 cores.
 
 
@@ -86,8 +86,8 @@ systems administrators.
 Tips for compiling for MPI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-MPI usually comes in two implementations: OpenMPI and MPICH. One of the
-most common source of problems is to compile the code with one MPI
+MPI usually comes in two implementations: OpenMPI and MPICH. A
+common source of problems is to compile the code with one MPI
 implementation and try to run it with another. You must compile and run
 your code with the **same** MPI implementation. This can be easily taken
 care by properly setting up your .bashrc.
@@ -99,7 +99,7 @@ If your compute environment uses `Module <http://modules.sourceforge.net/>`__
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *Module* provides configuration files (module-files) for the dynamic
-modification of the user's environment.
+modification of your environment.
 
 Here is how to list the modules that your system provides:
 
@@ -121,13 +121,13 @@ Otherwise, follow the recommended usage in your institute
 
 If you don't have modules for the MPI environment available on your
 system, please make sure you include the right libraries (PATH, and any
-other environment variables)
+other environment variables).
 
-The Hive bit
-~~~~~~~~~~~~
+The eHive bit
+~~~~~~~~~~~~~
 
 Here again, once the environment is properly set up, we only have to
-define the correct resource class and comand lines in Hive.
+define the correct resource class and command lines in eHive.
 
 1. You need to setup a resource class that uses e.g. *64 cores and 16Gb
    of RAM*:
@@ -155,7 +155,7 @@ define the correct resource class and comand lines in Hive.
       set <https://en.wikipedia.org/wiki/Advanced_Vector_Extensions>`__
    -  ``span[ptile=4]``, this option specifies the granularity in which LSF
       will split the jobs/per node. In this example we ask for each machine
-      to be allocated a multiple of 4 cores. This might affect queuing
+      to be allocated a multiple of four cores. This might affect queuing
       times. The memory requested is allocated for each _ptile_ (so
       64/4*16GB=256GB in total in the example).
 
