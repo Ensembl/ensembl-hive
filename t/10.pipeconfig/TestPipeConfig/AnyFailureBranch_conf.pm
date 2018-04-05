@@ -34,7 +34,7 @@ sub pipeline_analyses {
           -input_ids   => [ {} ],
           -meadow_type => 'LOCAL',
           -flow_into   => {
-              # NOTE: this pipeconfig also tests that branch names can be used, e.g. MAIN instead of 1
+              # NOTE: this PipeConfig also tests that branch names can be used, e.g. MAIN instead of 1
               'MAIN' => [ 'second' ],
               'ANYFAILURE' => [ 'third' ],
           }
