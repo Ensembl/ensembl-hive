@@ -156,7 +156,7 @@ eHive implements a caching layer that serves two purposes:
 1. Objects don't always live in the database. This is the case when
    building a pipeline from a PipeConfig (either for ``init_pipeline.pl``
    or ``generate_graph.pl --pipeconfig``) or when running a job in
-   *standalone* mode (and maybe one day, whole pipelines too !)
+   *standalone* mode (and maybe one day, whole pipelines too!)
 2. Fetching from the database has a cost, that is particularly visible when
    the database is busy.
 
@@ -164,8 +164,8 @@ The cache is implemented with a couple of objects and concepts:
 
 1. ``Utils::Collection`` is a very crude implementation of a collection. At
    the moment it is a simple list (meaning that all operations are
-   :math:`O(n)` !), although Matthieu has started turning them into lookup
-   tables. Collections have methods to search, add and remove objects. They
+   :math:`O(n)`!), but this could be improved by using lookup tables instead.
+   Collections have methods to search, add and remove objects. They
    also implement a trash-bin (*dark-collection*) which allows buffering
    operations in memory before pushing them to the database, or even
    undeleting objects. The ``find_one_by``/``find_all_by`` methods
@@ -173,7 +173,7 @@ The cache is implemented with a couple of objects and concepts:
 2. ``HivePipeline`` is an object that glues together all the components of
    a pipeline (analyses, dataflows, etc). An instance of ``HivePipeline``
    may have an ``hive_dba`` (a ``DBAdaptor``). ``URLFactory`` and
-   ``TheApiary`` ensure that each pipeline / database is only present once
+   ``TheApiary`` ensure that each pipeline/database is only present once
    in memory. ``HivePipeline`` keeps a collection for each component type (the
    ``collection_of`` method).
 3. All objects that are intended to be used in a Collection should inherit
@@ -181,7 +181,7 @@ The cache is implemented with a couple of objects and concepts:
    ``Storable``. Especially, ``HivePipeline`` requires objects to implement
    ``unikey`` as a way of replicating on the software side SQL *UNIQUE KEY*.
 
-Both ``Storable`` and ``ObjectAdaptor`` are aware of the cacheing layer,
+Both ``Storable`` and ``ObjectAdaptor`` are aware of the caching layer,
 and all the relevant objects and adaptors are expected to be linked back to
 the pipeline with ``hive_pipeline``, which allows fetching and linking
 through collections.
@@ -202,7 +202,7 @@ things:
 
 You then need to update guiHive. This is done by registering the new
 version in the ``deploy.sh`` script. If the current guiHive code is
-compatible with the new schema, you can associate both. Othwrwise you will
+compatible with the new schema, you can associate both. Otherwise you will
 have to create a new ``db_version/NNN`` in guiHive.
 
 Internal versioning
@@ -237,17 +237,16 @@ them by running ``beekeeper.pl --versions``::
   listed as *incompatible*
 * The interface for guest languages is versioned in a similar manner.
   *GuestLanguageInterfaceVersion* is the major version number, and is incremented
-  whenever an incompatible change is introduced. GuestLanguage wrappers with a
-  different major version number arelisted as *incompatible*
+  whenever an incompatible change is introduced. *GuestLanguage* wrappers with a
+  different major version number are listed as *incompatible*
 
 Releases, code branching and GIT
 --------------------------------
 
-There are three kinds of branches in eHive (no it's not a `joke
-<https://news.ycombinator.com/item?id=7036546>`__).
+There are three kinds of branches in eHive:
 
 * ``version/X.Y`` represent released versions of eHive. They are considered
-  *stable*, i.e. are feature-frozen, and only receive bugfixes. Schema
+  *stable*, i.e. are feature-frozen, and only receive bug-fixes. Schema
   changes are prohibited as it would break the database versioning
   mechanism. Users on a given ``version/X.Y`` branch must be able to
   blindly update their checkout without risking breaking anything. It is
@@ -260,7 +259,7 @@ There are three kinds of branches in eHive (no it's not a `joke
 * ``experimental/XXX`` are where *experimental* features are being
   developed. These branches can be created, removed or rebased at will. If
   you base your developments on someone else's experimental branch, let
-  them know in order to coordinate those changes !
+  them know in order to coordinate those changes!
 
 When a bug is discovered, it should be fixed on the oldest stable branch it
 affects (and that is still actively maintained), and then *cascade-merged*
@@ -283,7 +282,7 @@ guiHive follows very similar rules:
   can release new features on existing ``db_version/NNN`` branches
 * ``server`` represent the main HTTP server. It doesn't really have to
   change unless when a new database version is registered in ``deploy.sh``.
-* ``master`` is not used any more. **Do not** touch it ! It points at a
+* ``master`` is not used any more. **Do not** touch it! It points at a
   much earlier version of guiHive where the various version-specific
   implementations were all mixed in the source tree rather than being on
   different branches.
@@ -294,16 +293,16 @@ Continuous integration
 ----------------------
 
 Regressions are controlled using the test-suite (which runs on `Travis CI`_).
-New developments should be tested (if not directly -unit tests-, at least
+New developments should be tested (if not with unit tests, at least
 by running integration tests, e.g. a beekeeper).
 Exceptions are made for situations that cannot be replicated in a test
 environment, e.g. massive parallelism, compute clusters, etc.
 
 Code coverage can be examined on `codecov.io`_, which often much better
 views than the other tool used in Ensembl: `Coveralls`_.
-Python code can be analyzed on `Code Climate`_
+Python code can be analysed on `Code Climate`_
 
-Finally, github automatically triggers new builds of the documentation
+Finally, GitHub automatically triggers new builds of the documentation
 (here, on ReadTheDocs) and the `Docker images`_.
 
 .. _Travis CI: https://travis-ci.org/Ensembl/ensembl-hive
@@ -317,15 +316,15 @@ Code guidelines
 
 There are very few rules when writing new code:
 
-1. For indentation use 4 spaces, not tabs
-2. Only use ASCII characters (no funky unicode stuff). The only exception
+1. For indentation use four spaces, not tabs
+2. Only use ASCII characters. The only exception
    at the moment are ``Analysis.pm`` and ``HivePipeline.pm`` which are used
    for the Unicode Art output of ``generate_graph.pl``, but they are meant
    to be replaced with character names (resp. code points), e.g.
    ``\N{BOX DRAWINGS DOUBLE UP AND RIGHT}`` (resp. ``\N{U+255A}``).
 
 When updating code, try to keep the changes minimal, avoiding white-space
-changes when possible. You can also consider breaking the 4-spaces rule if
+changes when possible. You can also consider breaking the four-spaces rule if
 you can avoid changing the indentation of a massive code block. Obviously,
 this does not apply to languages and documents where the indentation
 matters (Python, reStructuredText, etc).

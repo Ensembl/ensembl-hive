@@ -85,7 +85,7 @@ builds from potentially several projects.
         - experimental-user_manual
 
    The following commands are run, according to the build log, but
-   presumably other things may be run in between !
+   presumably other things may be run in between!
 
    ::
 
