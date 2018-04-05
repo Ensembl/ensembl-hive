@@ -14,9 +14,10 @@ LOCAL
   It is inherently limited by the specification of the machine beekeeper is
   running on.
   The implementation is not able to control the memory consumption of the
-  jobs vs the memory available. All jobs are supposed to be using 1 core
-  each, and the total number of jobs is limited by the analysis_capacity
-  and hive_capacity mechanisms.
+  jobs vs the memory available. All jobs are supposed to be using one core
+  each, and the total number of jobs is limited by (i) a machine-specific
+  configuration found in the ``hive_config.json`` file and (ii) the
+  *analysis_capacity* and *hive_capacity* mechanisms.
 
 LSF
   A meadow that supports `IBM Platform LSF <http://www-03.ibm.com/systems/spectrum-computing/products/lsf/>`__
@@ -64,7 +65,7 @@ The table below lists the capabilities of each meadow, and whether they are avai
      - Yes
      - Yes
      - Yes
-     - Not implemented
+     - Partially implemented
      - Not available
    * - LSF
      - Yes
