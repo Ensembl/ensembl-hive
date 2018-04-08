@@ -108,12 +108,12 @@ load_resource_usage.pl
 
 =head1 DESCRIPTION
 
-This script obtains resource usage data for your pipeline from the Meadow and stores it in the "worker_resource_usage" table.
+This script obtains resource usage data for your pipeline from the Meadow and stores it in the C<worker_resource_usage> table.
 Your Meadow class/plugin has to support offline examination of resources in order for this script to work.
 
-Based on the start time of the first Worker and end time of the last Worker (as recorded in pipeline DB),
-it pulls the relevant data out of your Meadow (runs the "bacct" script in case of LSF), parses the report and stores in the "worker_resource_usage" table.
-You can join this table to the "worker" table USING(meadow_name,process_id) in the usual MySQL way
+Based on the start time of the first Worker and end time of the last Worker (as recorded in the pipeline database),
+it pulls the relevant data out of your Meadow (runs the C<bacct> script in case of LSF), parses the report and stores in the C<worker_resource_usage> table.
+You can join this table to the C<worker> table USING(meadow_name,process_id) in the usual MySQL way
 to filter by analysis_id, do various stats, etc.
 
 You can optionally provide an an external filename or command to get the data from it (don't forget to append a "|" to the end!)

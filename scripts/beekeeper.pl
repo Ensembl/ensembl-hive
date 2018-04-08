@@ -291,7 +291,7 @@ sub main {
         my $kill_worker;
         eval {$kill_worker = $queen->fetch_by_dbID($kill_worker_id) or die};
         if ($@) {
-            log_and_die($self, "Could not fetch worker with dbID='$kill_worker_id' to kill");
+            log_and_die($self, "Could not fetch Worker with dbID='$kill_worker_id' to kill");
         }
 
         unless( $kill_worker->cause_of_death() ) {
@@ -873,15 +873,15 @@ run all workers with -force (see runWorker.pl)
 
 =item --killworker <worker_id>
 
-kill worker by worker_id
+kill Worker by worker_id
 
 =item --life_span <num>
 
-number of minutes each worker is allowed to run
+number of minutes each Worker is allowed to run
 
 =item --job_limit <num>
 
-#jobs to run before worker can die naturally
+#jobs to run before Worker can die naturally
 
 =item --retry_throwing_jobs <0|1>
 
@@ -893,11 +893,11 @@ directory where stdout/stderr of the eHive is redirected
 
 =item --worker_delay_startup_seconds <number>
 
-number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+number of seconds each Worker has to wait before first talking to the database (0 by default, useful for debugging)
 
 =item --worker_crash_on_startup_prob <float>
 
-probability of each worker failing at startup (0 by default, useful for debugging)
+probability of each Worker failing at startup (0 by default, useful for debugging)
 
 =item --debug <debug_level>
 
@@ -939,7 +939,7 @@ set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
 
 =item --worker_stats
 
-show status of each running worker
+show status of each running Worker
 
 =item --failed_jobs
 

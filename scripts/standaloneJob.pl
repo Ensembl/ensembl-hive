@@ -175,11 +175,11 @@ arguments can be passed+parsed too!
 
 C<-url $ehive_url job_id XXX>. The reference to an existing job from which the parameters will be pulled. It is
 a convenient way of gathering all the parameters (the job's input_id, the job's accu, the analysis parameters
-and the pipeline-wide parameters).  Further parameters can be added with -param1 value1 -param2 value2 (...)
+and the pipeline-wide parameters).  Further parameters can be added with C<-param1 value1 -param2 value2 (...)>
 and they take priority over the existing job's parameters. The RunnableDB is also found in the database.
 
 <NOTE> the standaloneJob will *not* interact any further with this eHive database. There won't be any updates
-to the job, worker, log_message etc tables.
+to the C<job>, C<worker>, C<log_message> etc tables.
 
 =back
 
@@ -259,11 +259,11 @@ defines the dataflow re-direction rules in a format similar to PipeConfig's - se
 
 =item --language <name>
 
-language in which the runnable is written
+language in which the Runnable is written
 
 =back
 
-All other options will be passed to the runnable (leading dashes removed) and will constitute the parameters for the job.
+All other options will be passed to the Runnable (leading dashes removed) and will constitute the parameters for the job.
 
 =head1 LICENSE
 

@@ -87,10 +87,10 @@ sub main {
 
     # Check whether $mode is valid
     my %allowed_modes = (
-        workers => 'Number of workers',
+        workers => 'Number of Workers',
         memory => 'Memory asked / unused (Gb)',
         cores => 'Number of CPU cores asked / unused',
-        pending_workers => 'Number of pending workers',
+        pending_workers => 'Number of pending Workers',
         pending_time => 'Average instantaneous pending time (min.)',
     );
     if ($mode) {
@@ -158,7 +158,7 @@ sub main {
             my $worker_id = shift @$db_entry;
             $used_res{$worker_id} = $db_entry;
         }
-        warn scalar(keys %used_res), " worker info loaded from worker_resource_usage\n" if $verbose;
+        warn scalar(keys %used_res), " Worker info loaded from worker_resource_usage\n" if $verbose;
     }
 
     # Get the info about the analysis
@@ -510,11 +510,11 @@ generate_timeline.pl
 
 =head1 DESCRIPTION
 
-This script is used for offline examination of the allocation of workers.
+This script is used for offline examination of the allocation of Workers.
 
 Based on the command-line parameters "start_date" and "end_date", or on the start time of the first
-worker and end time of the last worker (as recorded in pipeline DB), it pulls the relevant data out
-of the "worker" table for accurate timing.
+Worker and end time of the last Worker (as recorded in pipeline database), it pulls the relevant data out
+of the C<worker> table for accurate timing.
 By default, the output is in CSV format, to allow extra analysis to be carried.
 
 You can optionally ask the script to generate an image with Gnuplot.
@@ -531,7 +531,7 @@ You can optionally ask the script to generate an image with Gnuplot.
         # Assuming you are only interested in a precise interval (in a PNG file)
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -start_date 2013-06-15T10:34 -end_date 2013-06-15T16:58 -output timeline_June15.png
 
-        # Get the required memory instead of the number of workers
+        # Get the required memory instead of the number of Workers
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -mode memory -output timeline_memory.png
 
 
@@ -578,11 +578,11 @@ Print some info about the data loaded from the database
 
 =item --start_date <date>
 
-minimal start date of a worker (the format is ISO8601, e.g. "2012-01-25T13:46")
+minimal start date of a Worker (the format is ISO8601, e.g. "2012-01-25T13:46")
 
 =item --end_date <date>
 
-maximal end date of a worker (the format is ISO8601, e.g. "2012-01-25T13:46")
+maximal end date of a Worker (the format is ISO8601, e.g. "2012-01-25T13:46")
 
 =item --top <float>
 
@@ -598,7 +598,7 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 
 =item --key <string>
 
-"analysis" (default) or "resource_class": how to bin the workers
+"analysis" (default) or "resource_class": how to bin the Workers
 
 =back
 
@@ -608,11 +608,11 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 
 =item --n_core <int>
 
-the default number of cores allocated to a worker (default: 1)
+the default number of cores allocated to a Worker (default: 1)
 
 =item --mem <int>
 
-the default memory allocated to a worker (default: 100Mb)
+the default memory allocated to a Worker (default: 100Mb)
 
 =back
 

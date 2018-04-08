@@ -169,19 +169,19 @@ but feel free to run the runWorker.pl if you think you need a direct access to t
 
 =head1 USAGE EXAMPLES
 
-        # Run one local worker process in ehive_dbname and let the system pick up the analysis
+        # Run one local Worker process in ehive_dbname and let the system pick up the analysis
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-        # Run one local worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
+        # Run one local Worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
 
-        # Run one local worker process in ehive_dbname and constrain its initial specialisation within a subset of analyses
+        # Run one local Worker process in ehive_dbname and constrain its initial specialisation within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -analyses_pattern '1..15,analysis_X,21'
 
-        # Run one local worker process in ehive_dbname and allow it to respecialise within a subset of analyses
+        # Run one local Worker process in ehive_dbname and allow it to respecialise within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize 1 -analyses_pattern 'blast%-4..6'
 
-        # Run a specific job in a local worker process:
+        # Run a specific job in a local Worker process:
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
 
 =head1 OPTIONS
@@ -240,7 +240,7 @@ restrict the specialisation of the Worker to the specified subset of Analyses
 
 =item --analysis_id <id>
 
-run a worker and have it specialise to an analysis with this analysis_id
+run a Worker and have it specialise to an analysis with this analysis_id
 
 =item --job_id <id>
 
@@ -258,15 +258,15 @@ set to 1 if you want to force running a Worker over a BLOCKED analysis or to run
 
 =item --job_limit <num>
 
-number of jobs to run before worker can die naturally
+number of jobs to run before the Worker can die naturally
 
 =item --life_span <num>
 
-number of minutes this worker is allowed to run
+number of minutes this Worker is allowed to run
 
 =item --no_cleanup
 
-don't perform temp directory cleanup when worker exits
+don't perform temp directory cleanup when the Worker exits
 
 =item --no_write
 
@@ -278,7 +278,7 @@ directory where stdout/stderr of the whole eHive of workers is redirected
 
 =item --worker_log_dir <path>
 
-directory where stdout/stderr of this particular worker is redirected
+directory where stdout/stderr of this particular Worker is redirected
 
 =item --retry_throwing_jobs <0|1>
 
@@ -287,15 +287,15 @@ Set --retry_throwing_jobs to 0 to disable this behaviour and mark the jobs as FA
 
 =item --can_respecialize <0|1>
 
-allow this worker to re-specialise into another analysis (within resource_class) after it has exhausted all jobs of the current one
+allow this Worker to re-specialise into another analysis (within resource_class) after it has exhausted all jobs of the current one
 
 =item --worker_delay_startup_seconds <number>
 
-number of seconds each worker has to wait before first talking to the database (0 by default, useful for debugging)
+number of seconds each Worker has to wait before first talking to the database (0 by default, useful for debugging)
 
 =item --worker_crash_on_startup_prob <float>
 
-probability of each worker failing at startup (0 by default, useful for debugging)
+probability of each Worker failing at startup (0 by default, useful for debugging)
 
 =back
 

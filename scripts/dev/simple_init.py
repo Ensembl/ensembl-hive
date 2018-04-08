@@ -19,7 +19,7 @@
 ##
 
 # Docker doesn't come with an "init" process, meaning that when beekeeper
-# submits LOCAL workers and exits (beekeeper -run), the workers will be
+# submits LOCAL Workers and exits (beekeeper -run), the Workers will be
 # killed by docker.
 
 # This pseudo-init script addresses this issue by waiting for all the child
