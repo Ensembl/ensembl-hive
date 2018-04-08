@@ -11,7 +11,7 @@ some meadow implementations:
 
 LOCAL
   A simple meadow that submits jobs locally via ``system()`` (i.e. ``fork()``).
-  It is inherently limited by the specification of the machine beekeeper is
+  It is inherently limited by the specification of the machine Beekeeper is
   running on.
   The implementation is not able to control the memory consumption of the
   jobs vs the memory available. All jobs are supposed to be using one core

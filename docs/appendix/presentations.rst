@@ -42,9 +42,9 @@ The workshop was composed of four parts:
    .. image:: ../presentations/HiveWorkshop_Mar2017/Creating_pipelines.jpg
       :target: ../HiveWorkshop_Mar2017/Creating%20pipelines.pdf
 
-4. Writing your own runnable modules
+4. Writing your own Runnable modules
 
-   This part is about writing new components (runnables) to add to
+   This part is about writing new components (Runnables) to add to
    pipelines.
 
    .. image:: ../presentations/HiveWorkshop_Mar2017/Writing_runnables.jpg

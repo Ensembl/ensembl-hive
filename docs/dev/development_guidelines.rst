@@ -16,10 +16,10 @@ repositories (``modules``, ``DBSQL``, ``scripts``).
     |       `-- EnsEMBL
     |           `-- Hive
     |               |-- DBSQL            # Object adaptors
-    |               |-- Examples         # Example pipelines and runnables
+    |               |-- Examples         # Example PipeConfigs and Runnables
     |               |-- Meadow           # Default meadow implementations
     |               |-- PipeConfig       # Base class for PipeConfigs
-    |               |-- RunnableDB       # Default set of runnables
+    |               |-- RunnableDB       # Default set of Runnables
     |               |-- Scripts
     |               `-- Utils
     |-- scripts                          # Public scripts
@@ -155,7 +155,7 @@ eHive implements a caching layer that serves two purposes:
 
 1. Objects don't always live in the database. This is the case when
    building a pipeline from a PipeConfig (either for :ref:`init_pipeline.pl <script-init_pipeline>`
-   or :ref:`generate_graph.pl <script-generate_graph>` with the ``--pipeconfig`` parameter) or when running a job in
+   or :ref:`generate_graph.pl <script-generate_graph>` with the ``--pipeconfig`` parameter) or when running a Job in
    *standalone* mode (and maybe one day, whole pipelines too!)
 2. Fetching from the database has a cost, that is particularly visible when
    the database is busy.
@@ -294,7 +294,7 @@ Continuous integration
 
 Regressions are controlled using the test-suite (which runs on `Travis CI`_).
 New developments should be tested (if not with unit tests, at least
-by running integration tests, e.g. a beekeeper).
+by running integration tests, e.g. a Beekeeper).
 Exceptions are made for situations that cannot be replicated in a test
 environment, e.g. massive parallelism, compute clusters, etc.
 

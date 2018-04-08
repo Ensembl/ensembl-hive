@@ -1,11 +1,11 @@
 How to use MPI
 ==============
 
+.. note::
         With this tutorial, our goal is to give insights on how to set up
-        eHive to run jobs using Shared Memory Parallelism (threads) and
+        eHive to run Jobs using Shared Memory Parallelism (threads) and
         Distributed Memory Parallelism (MPI).
 
---------------
 
 First of all, your institution / compute-farm provider may have
 documentation on this topic. Please refer to them for implementation
@@ -35,9 +35,9 @@ How to setup a module using Shared Memory Parallelism (threads)
 If you have already compiled your code and know how to enable the
 use of multiple threads / cores, this case should be very
 straightforward. It basically consists in defining the proper
-resource class in your pipeline.
+Resource Class in your pipeline.
 
-1. You need to setup a resource class that encodes those requirements
+1. You need to setup a Resource Class that encodes those requirements
    e.g. *16 cores and 24Gb of RAM*:
 
    ::
@@ -127,9 +127,9 @@ The eHive bit
 ~~~~~~~~~~~~~
 
 Here again, once the environment is properly set up, we only have to
-define the correct resource class and command lines in eHive.
+define the correct Resource Class and command lines in eHive.
 
-1. You need to setup a resource class that uses e.g. *64 cores and 16Gb
+1. You need to setup a Resource Class that uses e.g. *64 cores and 16Gb
    of RAM*:
 
    ::
@@ -143,10 +143,10 @@ define the correct resource class and command lines in eHive.
          };
        }
 
-   The resource description is specific to our LSF environment, so adapt
+   The Resource description is specific to our LSF environment, so adapt
    it to yours, but:
 
-   -  ``-q mpi-rh7`` is needed to tell LSF you will run a job in the
+   -  ``-q mpi-rh7`` is needed to tell LSF you will run a job (Worker) in the
       MPI environment. Note that some LSF installations will require you
       to use an additional ``-a`` option.
    -  ``same[model]`` is needed to ensure that the selected compute nodes
@@ -180,7 +180,7 @@ Here is an excerpt of Ensembl Compara's
 `ExaML <https://github.com/Ensembl/ensembl-compara/blob/HEAD/modules/Bio/EnsEMBL/Compara/RunnableDB/ProteinTrees/ExaML.pm>`__
 MPI module. Note that LSF needs the MPI command to be run through
 *mpirun*. You can also run several single-threaded commands in the same
-runnable.
+Runnable.
 
 ::
 
