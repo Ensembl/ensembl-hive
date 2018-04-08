@@ -263,7 +263,7 @@ sub main {
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
     if($job_id_for_output) {
-        printf("===== job output\n");
+        printf("===== Job output\n");
         my $job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID($job_id_for_output);
         print $job->toString. "\n";
     }
@@ -341,7 +341,7 @@ sub main {
     my $has_task = ($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs || $unblock_semaphored_jobs || $forgive_failed_jobs || $discard_ready_jobs);
     if($reset_all_jobs || $reset_failed_jobs || $reset_done_jobs) {
         if (($reset_all_jobs || $reset_done_jobs) and not $self->{'analyses_pattern'}) {
-            log_and_die($self, "Beekeeper : do you really want to reset *all* the jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n");
+            log_and_die($self, "Beekeeper : do you really want to reset *all* the Jobs ? If yes, add \"-analyses_pattern '%'\" to the command line\n");
         }
         my $statuses_to_reset = $reset_failed_jobs ? [ 'FAILED' ] : ($reset_done_jobs ? [ 'DONE', 'PASSED_ON' ] : [ 'DONE', 'FAILED', 'PASSED_ON' ]);
         $self->{'dba'}->get_AnalysisJobAdaptor->reset_jobs_for_analysis_id( $list_of_analyses, $statuses_to_reset );
@@ -390,7 +390,7 @@ sub main {
         Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);   # show what would be submitted, but do not actually submit
 
         if($show_failed_jobs) {
-            print("===== failed jobs\n");
+            print("===== failed Jobs\n");
             my $failed_job_list = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_all_by_analysis_id_status( $list_of_analyses , 'FAILED');
 
             foreach my $job (@{$failed_job_list}) {
@@ -469,7 +469,7 @@ sub register_beekeeper {
 
     $self->{'dba'}->get_BeekeeperAdaptor->store($beekeeper);
     unless ($self->{'beekeeper_id'} = $beekeeper->dbID) {
-        die "There was a problem registering this beekeeper with the eHive database.";
+        die "There was a problem registering this Beekeeper with the eHive database.";
     }
     return $beekeeper;
 }
@@ -502,8 +502,8 @@ sub run_autonomously {
 
         if (($loop_until eq 'JOB_FAILURE') &&
             (scalar(@job_fail_statuses)) > 0) {
-            print "Beekeeper : last loop because at least one job failed and loop-until mode is '$loop_until'\n";
-            print "Beekeeper : details from analyses with failed jobs:\n";
+            print "Beekeeper : last loop because at least one Job failed and loop-until mode is '$loop_until'\n";
+            print "Beekeeper : details from analyses with failed Jobs:\n";
             print join("\n", map {$_->{'message'}} @job_fail_statuses) . "\n";
             $found_reason_to_exit = 1;
             last BKLOOP;
@@ -521,7 +521,7 @@ sub run_autonomously {
                 # loop_until_mode is either job_failure or analysis_failure, and both of these exit on analysis failure
                 unless ($found_reason_to_exit) {
                     print "Beekeeper : last loop because at least one analysis failed and loop-until mode is '$loop_until'\n";
-                    print "Beekeeper : details from analyses with failed jobs:\n";
+                    print "Beekeeper : details from analyses with failed Jobs:\n";
                     print join("\n", map {$_->{'message'}} @analysis_fail_statuses) . "\n";
                     $found_reason_to_exit = 1;
                     last BKLOOP;
@@ -627,7 +627,7 @@ sub run_autonomously {
                 $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
                 if ($self->{'beekeeper'}->check_if_blocked()) {
                     print "Beekeeper : We have been blocked !\n".
-                          "This can happen if a job has explicitly required beekeeper to stop (have a look at log_message).\n".
+                          "This can happen if a Job has explicitly required the Beekeeper to stop (have a look at log_message).\n".
                           "It may also happen if someone has set is_blocked=1 in the beekeeper table for beekeeper_id=".$self->{'beekeeper_id'}.".\n";
                 } else {
                     last;
@@ -707,11 +707,11 @@ beekeeper.pl [options]
 =head1 DESCRIPTION
 
 The Beekeeper is in charge of interfacing between the eHive database a compute resource or 'compute farm'.
-Its job is to synchronise both, to assess the compute requirements of the pipeline
+Its Job is to synchronise both, to assess the compute requirements of the pipeline
 and to send the requested number of workers to open machines via the runWorker.pl script.
 
 It is also responsible for identifying workers which died
-unexpectedly so that dead workers can be released and unfinished jobs reclaimed.
+unexpectedly so that dead workers can be released and unfinished Jobs reclaimed.
 
 =head1 USAGE EXAMPLES
 
@@ -730,10 +730,10 @@ unexpectedly so that dead workers can be released and unfinished jobs reclaimed.
         # Restrict the normal execution to one iteration only - can be used for testing a newly set up pipeline
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -run
 
-        # Reset failed 'buggy_analysis' jobs to 'READY' state, so that they can be run again
+        # Reset failed 'buggy_analysis' Jobs to 'READY' state, so that they can be run again
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -analyses_pattern buggy_analysis -reset_failed_jobs
 
-        # Do a cleanup: find and bury dead workers, reclaim their jobs
+        # Do a cleanup: find and bury dead workers, reclaim their Jobs
     beekeeper.pl -url mysql://username:secret@hostname:port/long_mult_test -dead
 
 =head1 OPTIONS
@@ -784,21 +784,21 @@ run autonomously, loops and sleeps. Equivalent to -loop_until ANALYSIS_FAILURE
 
 =item --loop_until
 
-sets the level of event that will cause the beekeeper to stop looping:
+sets the level of event that will cause the Beekeeper to stop looping:
 
 =over
 
 =item JOB_FAILURE
 
-stop looping if any job fails
+stop looping if any Job fails
 
 =item ANALYSIS_FAILURE
 
-stop looping if any analysis has job failures exceeding its fault tolerance
+stop looping if any Analysis has Job failures exceeding its fault tolerance
 
 =item NO_WORK
 
-ignore job and analysis failures, keep looping until there is no work
+ignore Job and Analysis failures, keep looping until there is no work
 
 =item FOREVER
 
@@ -812,7 +812,7 @@ ignore failures and no work, keep looping
 
 =item --max_loops <num>
 
-perform max this # of loops in autonomous mode. The beekeeper will stop when
+perform max this # of loops in autonomous mode. The Beekeeper will stop when
 it has performed max_loops loops, even in FOREVER mode
 
 =item --job_id <job_id>
@@ -861,11 +861,11 @@ record submission output+error streams into files under the given directory (to 
 
 =item --analyses_pattern <string>
 
-restrict the sync operation, printing of stats or looping of the beekeeper to the specified subset of analyses
+restrict the sync operation, printing of stats or looping of the Beekeeper to the specified subset of analyses
 
 =item --can_respecialize <0|1>
 
-allow workers to re-specialise into another analysis (within resource_class) after their previous analysis was exhausted
+allow workers to re-specialise into another Analysis (within resource_class) after their previous Analysis was exhausted
 
 =item --force
 
@@ -881,11 +881,11 @@ number of minutes each Worker is allowed to run
 
 =item --job_limit <num>
 
-#jobs to run before Worker can die naturally
+Number of Jobs to run before Worker can die naturally
 
 =item --retry_throwing_jobs <0|1>
 
-if a job dies *knowingly*, should we retry it by default?
+if a Job dies *knowingly*, should we retry it by default?
 
 =item --hive_log_dir <path>
 
@@ -919,7 +919,7 @@ report both eHive code version and eHive database schema version
 
 =item --dead
 
-detect all unaccounted dead workers and reset their jobs for resubmission
+detect all unaccounted dead workers and reset their Jobs for resubmission
 
 =item --sync
 
@@ -927,7 +927,7 @@ re-synchronise the ehive
 
 =item --unkwn
 
-detect all workers in UNKWN state and reset their jobs for resubmission (careful, they *may* reincarnate!)
+detect all workers in UNKWN state and reset their Jobs for resubmission (careful, they *may* reincarnate!)
 
 =item --alldead
 
@@ -935,7 +935,7 @@ tell the database all workers are dead (no checks are performed in this mode, so
 
 =item --balance_semaphores
 
-set all semaphore_counts to the numbers of unDONE fan jobs (emergency use only)
+set all Semaphore counters to the numbers of unDONE fan Jobs (emergency use only)
 
 =item --worker_stats
 
@@ -943,39 +943,39 @@ show status of each running Worker
 
 =item --failed_jobs
 
-show all failed jobs
+show all failed Jobs
 
 =item --job_output <job_id>
 
-print details for one job
+print details for one Job
 
 =item --reset_job_id <num>
 
-reset a job back to READY so it can be rerun
+reset a Job back to READY so it can be rerun
 
 =item --reset_failed_jobs
 
-reset FAILED jobs of analyses matching -analyses_pattern back to READY so they can be rerun
+reset FAILED Jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --reset_done_jobs
 
-reset DONE and PASSED_ON jobs of analyses matching -analyses_pattern back to READY so they can be rerun
+reset DONE and PASSED_ON Jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --reset_all_jobs
 
-reset FAILED, DONE and PASSED_ON jobs of analyses matching -analyses_pattern back to READY so they can be rerun
+reset FAILED, DONE and PASSED_ON Jobs of analyses matching -analyses_pattern back to READY so they can be rerun
 
 =item --forgive_failed_jobs
 
-mark FAILED jobs of analyses matching -analyses_pattern as DONE, and update their semaphores. NOTE: This does not make them dataflow
+mark FAILED Jobs of analyses matching -analyses_pattern as DONE, and update their Semaphores. NOTE: This does not make them dataflow
 
 =item --discard_ready_jobs
 
-mark READY jobs of analyses matching -analyses_pattern as DONE, and update their semaphores. NOTE: This does not make them dataflow
+mark READY Jobs of analyses matching -analyses_pattern as DONE, and update their Semaphores. NOTE: This does not make them dataflow
 
 =item --unblock_semaphored_jobs
 
-set SEMAPHORED jobs of analyses matching -analyses_pattern to READY so they can start
+set SEMAPHORED Jobs of analyses matching -analyses_pattern to READY so they can start
 
 =back
 

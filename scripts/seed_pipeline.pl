@@ -105,7 +105,7 @@ sub main {
 
     } else {
 
-        print "\nYou haven't specified -logic_name nor -analysis_id of the analysis being seeded.\n";
+        print "\nYou haven't specified -logic_name nor -analysis_id of the Analysis being seeded.\n";
         print "\nSeedable analyses without incoming dataflow:\n";
         show_seedable_analyses($pipeline);
         exit(0);
@@ -144,7 +144,7 @@ sub main {
         print "Job $job_id [ ".$analysis->logic_name.'('.$analysis->dbID.")] : '$input_id'".($semaphore_id ? ", wrapped in Semaphore $semaphore_id" : '')."\n";
 
     } else {
-        warn "Could not create job '$input_id' (it may have been created already)\n";
+        warn "Could not create Job '$input_id' (it may have been created already)\n";
     }
 }
 
@@ -164,7 +164,7 @@ seed_pipeline.pl
 
 =head1 DESCRIPTION
 
-seed_pipeline.pl is a generic script that is used to create {initial or top-up} jobs for eHive pipelines
+seed_pipeline.pl is a generic script that is used to create {initial or top-up} Jobs for eHive pipelines
 
 =head1 USAGE EXAMPLES
 
@@ -173,7 +173,7 @@ seed_pipeline.pl is a generic script that is used to create {initial or top-up} 
     seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
 
 
-        # seed one job into the "start" analysis:
+        # seed one Job into the "start" Analysis:
 
     seed_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" \
                      -logic_name start -input_id '{"a_multiplier" => 2222222222, "b_multiplier" => 3434343434}'
@@ -212,11 +212,11 @@ skip sql version check if 1
 
 =item --analyses_pattern <string>
 
-seed job(s) for analyses whose logic_name matches the supplied pattern
+seed Job(s) for analyses whose logic_name matches the supplied pattern
 
 =item --analysis_id <num>
 
-seed job for analysis with the given analysis_id
+seed Job for Analysis with the given analysis_id
 
 =back
 
@@ -226,11 +226,11 @@ seed job for analysis with the given analysis_id
 
 =item --input_id <string>
 
-specify the job's input parameters as a stringified hash
+specify the Job's input parameters as a stringified hash
 
 =item --semaphored
 
-wrap the job into a funnel semaphore (provide a stable_id for the whole execution stream)
+wrap the Job into a funnel Semaphore (provide a stable_id for the whole execution stream)
 
 =back
 

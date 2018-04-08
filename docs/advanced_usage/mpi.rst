@@ -51,7 +51,7 @@ Resource Class in your pipeline.
          }
        }
 
-2. You need to add the analysis to your PipeConfig:
+2. You need to add the Analysis to your PipeConfig:
 
    ::
 
@@ -159,7 +159,7 @@ define the correct Resource Class and command lines in eHive.
       times. The memory requested is allocated for each _ptile_ (so
       64/4*16GB=256GB in total in the example).
 
-2. You need to add the analysis to your PipeConfig:
+2. You need to add the Analysis to your PipeConfig:
 
    ::
 

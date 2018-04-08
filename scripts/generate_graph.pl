@@ -138,7 +138,7 @@ generate_graph.pl
 This program will generate a graphical representation of your eHive pipeline.
 This includes visualising the flow of data from the different analyses, blocking
 rules and table writers. The graph is also coloured to indicate the stage
-an analysis is at. The colours and fonts used can be configured via
+an Analysis is at. The colours and fonts used can be configured via
 hive_config.json configuration file.
 
 =head1 OPTIONS

@@ -18,7 +18,7 @@
 ## Minimalistic init system required for Docker containers
 ##
 
-# Docker doesn't come with an "init" process, meaning that when beekeeper
+# Docker doesn't come with an "init" process, meaning that when the Beekeeper
 # submits LOCAL Workers and exits (beekeeper -run), the Workers will be
 # killed by docker.
 

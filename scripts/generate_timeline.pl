@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Gets the activity of each analysis along time, in a CSV file or in an image (see list of formats supported by GNUplot)
+# Gets the activity of each Analysis along time, in a CSV file or in an image (see list of formats supported by GNUplot)
 
 use strict;
 use warnings;
@@ -103,7 +103,7 @@ sub main {
 
     my %allowed_keys = (
         analysis => 'Analysis',
-        resource_class => 'Resource class',
+        resource_class => 'Resource Class',
     );
     if ($key) {
         die "Unknown key '$key'. Allowed keys are: ".join(", ", keys %allowed_keys) unless exists $allowed_keys{$key};
@@ -515,17 +515,17 @@ This script is used for offline examination of the allocation of Workers.
 Based on the command-line parameters "start_date" and "end_date", or on the start time of the first
 Worker and end time of the last Worker (as recorded in pipeline database), it pulls the relevant data out
 of the C<worker> table for accurate timing.
-By default, the output is in CSV format, to allow extra analysis to be carried.
+By default, the output is in CSV format, to allow extra Analysis to be carried.
 
 You can optionally ask the script to generate an image with Gnuplot.
 
 
 =head1 USAGE EXAMPLES
 
-        # Just run it the usual way: only the top 20 analysis will be reported in CSV format
+        # Just run it the usual way: only the top 20 Analysis will be reported in CSV format
     generate_timeline.pl -url mysql://username:secret@hostname:port/database > timeline.csv
 
-        # The same, but getting the analysis that fill 99.5% of the global activity in a PNG file
+        # The same, but getting the Analysis that fill 99.5% of the global activity in a PNG file
     generate_timeline.pl -url mysql://username:secret@hostname:port/database -top .995 -output timeline_top995.png
 
         # Assuming you are only interested in a precise interval (in a PNG file)
@@ -586,7 +586,7 @@ maximal end date of a Worker (the format is ISO8601, e.g. "2012-01-25T13:46")
 
 =item --top <float>
 
-maximum number (> 1) or fraction (< 1) of analysis to report (default: 20)
+maximum number (> 1) or fraction (< 1) of Analysis to report (default: 20)
 
 =item --output <string>
 

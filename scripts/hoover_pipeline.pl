@@ -128,21 +128,21 @@ hoover_pipeline.pl
 
 =head1 DESCRIPTION
 
-hoover_pipeline.pl is a script used to remove old "DONE" jobs from a continuously running pipeline database
+hoover_pipeline.pl is a script used to remove old "DONE" Jobs from a continuously running pipeline database
 
 =head1 USAGE EXAMPLES
 
-        # delete all jobs that have been "DONE" for at least a week (default threshold) :
+        # delete all Jobs that have been "DONE" for at least a week (default threshold) :
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult"
 
 
-        # delete all jobs that have been "DONE" for at least a given number of days
+        # delete all Jobs that have been "DONE" for at least a given number of days
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -days_ago 3
 
 
-        # delete all jobs "DONE" before a specific datetime:
+        # delete all Jobs "DONE" before a specific datetime:
 
     hoover_pipeline.pl -url "mysql://ensadmin:${ENSADMIN_PSW}@localhost:3306/lg4_long_mult" -before_datetime "2013-02-14 15:42:50"
 
@@ -172,11 +172,11 @@ skip sql version check if 1
 
 =item --before_datetime <string>
 
-delete jobs "DONE" before a specific time
+delete Jobs "DONE" before a specific time
 
 =item --days_ago <num>
 
-delete jobs that have been "DONE" for at least <num> days
+delete Jobs that have been "DONE" for at least <num> days
 
 =item -h, --help
 

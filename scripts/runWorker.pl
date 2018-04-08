@@ -162,17 +162,17 @@ runWorker.pl [options]
 =head1 DESCRIPTION
 
 runWorker.pl is an eHive component script that does the work of a single Worker.
-It specialises in one of the analyses and starts executing jobs of that analysis one-by-one or batch-by-batch.
+It specialises in one of the analyses and starts executing Jobs of that Analysis one-by-one or batch-by-batch.
 
 Most of the functionality of the eHive is accessible via beekeeper.pl script,
-but feel free to run the runWorker.pl if you think you need a direct access to the running jobs.
+but feel free to run the runWorker.pl if you think you need a direct access to the running Jobs.
 
 =head1 USAGE EXAMPLES
 
-        # Run one local Worker process in ehive_dbname and let the system pick up the analysis
+        # Run one local Worker process in ehive_dbname and let the system pick up the Analysis
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname
 
-        # Run one local Worker process in ehive_dbname and let the system pick up the analysis from the given resource_class
+        # Run one local Worker process in ehive_dbname and let the system pick up the Analysis from the given resource_class
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -rc_name low_mem
 
         # Run one local Worker process in ehive_dbname and constrain its initial specialisation within a subset of analyses
@@ -181,7 +181,7 @@ but feel free to run the runWorker.pl if you think you need a direct access to t
         # Run one local Worker process in ehive_dbname and allow it to respecialise within a subset of analyses
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -can_respecialize 1 -analyses_pattern 'blast%-4..6'
 
-        # Run a specific job in a local Worker process:
+        # Run a specific Job in a local Worker process:
     runWorker.pl -url mysql://username:secret@hostname:port/ehive_dbname -job_id 123456
 
 =head1 OPTIONS
@@ -240,15 +240,15 @@ restrict the specialisation of the Worker to the specified subset of Analyses
 
 =item --analysis_id <id>
 
-run a Worker and have it specialise to an analysis with this analysis_id
+run a Worker and have it specialise to an Analysis with this analysis_id
 
 =item --job_id <id>
 
-run a specific job defined by its database id
+run a specific Job defined by its database id
 
 =item --force <0|1>
 
-set to 1 if you want to force running a Worker over a BLOCKED analysis or to run a specific DONE/SEMAPHORED job_id
+set to 1 if you want to force running a Worker over a BLOCKED Analysis or to run a specific DONE/SEMAPHORED job_id
 
 =back
 
@@ -258,7 +258,7 @@ set to 1 if you want to force running a Worker over a BLOCKED analysis or to run
 
 =item --job_limit <num>
 
-number of jobs to run before the Worker can die naturally
+number of Jobs to run before the Worker can die naturally
 
 =item --life_span <num>
 
@@ -282,12 +282,12 @@ directory where stdout/stderr of this particular Worker is redirected
 
 =item --retry_throwing_jobs <0|1>
 
-By default, jobs are allowed to fail a few times (up to the analysis' max_retry_count parameter) until the systems "gives up" and considers them as FAILED.
-Set --retry_throwing_jobs to 0 to disable this behaviour and mark the jobs as FAILED upon the first failed attempt.
+By default, Jobs are allowed to fail a few times (up to the Analysis' max_retry_count parameter) until the systems "gives up" and considers them as FAILED.
+Set --retry_throwing_jobs to 0 to disable this behaviour and mark the Jobs as FAILED upon the first failed attempt.
 
 =item --can_respecialize <0|1>
 
-allow this Worker to re-specialise into another analysis (within resource_class) after it has exhausted all jobs of the current one
+allow this Worker to re-specialise into another Analysis (within resource_class) after it has exhausted all Jobs of the current one
 
 =item --worker_delay_startup_seconds <number>
 

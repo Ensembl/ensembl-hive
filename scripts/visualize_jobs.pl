@@ -40,7 +40,7 @@ sub main {
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc=i'             => \$self->{'nosqlvc'},                 # using "=i" instead of "!" for consistency with scripts where it is a propagated option
 
-        'job_id=s@'             => \$self->{'job_ids'},                 # jobs to start from
+        'job_id=s@'             => \$self->{'job_ids'},                 # Jobs to start from
         'start_analysis_name=s' => \$self->{'start_analysis_name'},     # if given, first trace the graph up to the given analysis or the seed_jobs, and then start visualisation
         'stop_analysis_name=s'  => \$self->{'stop_analysis_name'},      # if given, the visualisation is aborted at that analysis and doesn't go any further
 
@@ -49,7 +49,7 @@ sub main {
 
         'accu_keys|accus!'      => \$self->{'show_accu_keys'},          # show accu keys, but not necessarily values
         'accu_values|values!'   => \$self->{'show_accu_values'},        # show accu keys & values (implies -accu_keys)
-        'accu_pointers|accu_ptrs!' => \$self->{'show_accu_pointers'},   # (attempt to) show which accu values come from which jobs
+        'accu_pointers|accu_ptrs!' => \$self->{'show_accu_pointers'},   # (attempt to) show which accu values come from which Jobs
 
         'o|out|output=s'        => \$self->{'output'},                  # output file name
         'f|format=s'            => \$self->{'format'},                  # output format (if not guessable from -output)
@@ -550,16 +550,16 @@ visualize_jobs.pl
 
 =head1 DESCRIPTION
 
-This program generates a visualisation of a subset of interrelated jobs, semaphores and accumulators from a given pipeline database.
+This program generates a visualisation of a subset of interrelated Jobs, Semaphores and Accumulators from a given pipeline database.
 
 Jobs are represented by 3D-rectangles which contain parameters and are colour-coded (reflecting the Job's status).
 Semaphores are represented by triangles (red upward-pointing = closed, green downward-pointing = open) which contain the counter.
 Accumulators are represented by rectangles with key-paths and may contain data (configurable).
 
-Blue solid arrows show jobs' parent-child relationships (parents point at their children).
-Dashed red lines show jobs blocking downstream semaphores.
-Dashed green lines show jobs no longer blocking downstream semaphores (when the jobs have finished successfully).
-Dashed red/green lines (with colour matching semaphore's) also link the semaphores to their accumulators and further to the controlled job.
+Blue solid arrows show Jobs' parent-child relationships (parents point at their children).
+Dashed red lines show Jobs blocking downstream Semaphores.
+Dashed green lines show Jobs no longer blocking downstream Semaphores (when the Jobs have finished successfully).
+Dashed red/green lines (with colour matching Semaphore's) also link the Semaphores to their Accumulators and further to the controlled Job.
 
 =head1 OPTIONS
 
@@ -587,11 +587,11 @@ Start with this job(s) and reach as far as possible using parent-child relations
 
 =item --start_analysis_name <logic_name>
 
-Trace up to this analysis and start displaying from this analysis.
+Trace up to this Analysis and start displaying from this Analysis.
 
 =item --stop_analysis_name <logic_name>
 
-Make this analysis to be the last one to be displayed.
+Make this Analysis to be the last one to be displayed.
 As the result, the graph may not contain the initial job_id(s).
 
 =item --include
@@ -601,22 +601,22 @@ Off by default.
 
 =item --suppress_funnel_parent_link
 
-If set, do not show the link to the parent of a funnel job (potentially less clutter).
+If set, do not show the link to the parent of a funnel Job (potentially less clutter).
 Off by default.
 
 =item --accu_keys
 
-If set, show accu keys in semaphore nodes.
+If set, show accu keys in Semaphore nodes.
 Off by default.
 
 =item --accu_values
 
-If set, show accu keys & values in semaphore nodes.
+If set, show accu keys & values in Semaphore nodes.
 Off by default.
 
 =item --accu_pointers
 
-If set, show an extra link between an item in the accu and the local job that generated it.
+If set, show an extra link between an item in the accu and the local Job that generated it.
 Off by default.
 
 =item --output <path>

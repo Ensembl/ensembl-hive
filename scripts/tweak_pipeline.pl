@@ -118,14 +118,14 @@ species/alias name for the eHive DBAdaptor
 
 =item --tweak <string>
 
-An assignment command that performs one individual "tweak". You can "tweak" global/analysis parameters, analysis attributes and resource classes:
+An assignment command that performs one individual "tweak". You can "tweak" global/Analysis parameters, Analysis attributes and Resource Classes:
 
     -tweak 'pipeline.param[take_time]=20'                   # override a value of a pipeline-wide parameter; can also create a non-existent parameter
-    -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an analysis-wide parameter; can also create a non-existent parameter
-    -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an analysis attribute
-    -tweak 'analysis[add_together].batch_size=15'           # override a value of an analysis_stats attribute
-    -tweak 'analysis[part_multiply].resource_class=urgent'  # set the resource class of an analysis (whether a resource class with this name existed or not)
-    -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new resource description
+    -tweak 'analysis[take_b_apart].param[base]=10'          # override a value of an Analysis-wide parameter; can also create a non-existent parameter
+    -tweak 'analysis[add_together].analysis_capacity=undef' # override a value of an Analysis attribute
+    -tweak 'analysis[add_together].batch_size=15'           # override a value of an Analysis_stats attribute
+    -tweak 'analysis[part_multiply].resource_class=urgent'  # set the Resource Class of an Analysis (whether a Resource Class with this name existed or not)
+    -tweak 'resource_class[urgent].LSF=-q yesteryear'       # update or create a new Resource Description
 
 If multiple "tweaks" are requested, they will be performed in the given order.
 
