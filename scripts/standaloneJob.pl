@@ -137,7 +137,7 @@ standaloneJob.pl is an eHive component script that
 
 =item 1.
 
-takes in a RunnableDB module,
+takes in a Runnable module,
 
 =item 2.
 
@@ -147,7 +147,7 @@ creates a standalone Job outside an eHive database by initialising parameters fr
 
 and runs that Job outside of any eHive database.
 
-I<WARNING> the RunnableDB code may still access databases provided
+I<WARNING> the Runnable code may still access databases provided
 as arguments and even harm them!
 
 =item 4.
@@ -156,7 +156,7 @@ can optionally dataflow into tables fully defined by URLs
 
 =back
 
-Naturally, only certain RunnableDB modules can be run using this script, and some database-related functionality will be lost.
+Naturally, only certain Runnable modules can be run using this script, and some database-related functionality will be lost.
 
 There are several ways of initialising the Job parameters:
 
@@ -176,7 +176,7 @@ arguments can be passed+parsed too!
 C<-url $ehive_url job_id XXX>. The reference to an existing Job from which the parameters will be pulled. It is
 a convenient way of gathering all the parameters (the Job's input_id, the Job's accu, the Analysis parameters
 and the pipeline-wide parameters).  Further parameters can be added with C<-param1 value1 -param2 value2 (...)>
-and they take priority over the existing Job's parameters. The RunnableDB is also found in the database.
+and they take priority over the existing Job's parameters. The Runnable is also found in the database.
 
 <NOTE> the standaloneJob will *not* interact any further with this eHive database. There won't be any updates
 to the C<job>, C<worker>, C<log_message> etc tables.
@@ -200,7 +200,7 @@ to the C<job>, C<worker>, C<log_message> etc tables.
     standaloneJob.pl RunnableDB/SqlCmd.pm -db_conn mysql://ensadmin:xxxxxxx@127.0.0.1:2912/lg4_compara_families_63 -sql 'INSERT INTO meta (meta_key,meta_value) VALUES ("hello", "world2")'
 
         # Run a Job initialised from the parameters of an existing Job topped-up with extra ones.
-        # In this particular example the RunnableDB needs a "compara_db" parameter which defaults to the eHive database.
+        # In this particular example the Runnable needs a "compara_db" parameter which defaults to the eHive database.
         # Since there is no eHive database here we need to define -compara_db on the command-line
     standaloneJob.pl -url mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b -job_id 16781 -compara_db mysql://ensro@compara1.internal.sanger.ac.uk:3306/mm14_pecan_24way_86b
 
@@ -247,7 +247,7 @@ do not cleanup temporary files
 
 =item --reg_conf <path>
 
-load registry entries from the given file (these entries may be needed by the RunnableDB itself)
+load registry entries from the given file (these entries may be needed by the Runnable itself)
 
 =item --input_id <hash>
 
