@@ -5,7 +5,6 @@ requires 'DBD::Pg';
 
 requires 'Capture::Tiny';
 requires 'DateTime';
-requires 'HTML::Entities';
 requires 'Time::Piece';
 requires 'JSON';
 requires 'Proc::Daemon', '0.23';
