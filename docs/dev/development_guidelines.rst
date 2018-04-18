@@ -77,11 +77,11 @@ objects.
 The basic bricks exposed by ``BaseAdaptor`` are:
 
 * ``count_all`` counts the number of rows in the table given a certain
-  constraint
-* ``fetch_all`` fetches some rows in the table given a certain constraint
-* ``fetch_by_dbID`` fetches one object by its primary key
-* ``remove_all`` removes some rows in the table given a certain constraint
-* ``remove`` removes a particular object
+  constraint.
+* ``fetch_all`` fetches some rows in the table given a certain constraint.
+* ``fetch_by_dbID`` fetches one object by its primary key.
+* ``remove_all`` removes some rows in the table given a certain constraint.
+* ``remove`` removes a particular object.
 * ``store_or_update_one`` will automatically run one of these:
 
   * ``store`` to add a new object to the database
@@ -111,10 +111,10 @@ As a result, adaptors can be very short (see ``ResourceClassAdaptor``).
 At the minimum they need to:
 
 1. Inherit from the right class (``ObjectAdaptor`` or
-   ``NakedTableAdaptor``)
-2. Define the table they deal with
+   ``NakedTableAdaptor``).
+2. Define the table they deal with.
 3. The class of objects they create (if they inherit from
-   ``ObjectAdaptor``)
+   ``ObjectAdaptor``).
 
 Then they will implement methods that cannot be expressed with the syntax
 understood by ``AUTOLOAD`` (see ``SemaphoreAdaptor`` and
@@ -146,7 +146,7 @@ come with AUTOLOAD.
 
 .. note::
 
-  It is good practice to implement ``toString`` in all objects
+  It is good practice to implement ``toString`` in every class.
 
 HivePipeline and collections
 ----------------------------
@@ -156,7 +156,7 @@ eHive implements a caching layer that serves two purposes:
 1. Objects don't always live in the database. This is the case when
    building a pipeline from a PipeConfig (either for :ref:`init_pipeline.pl <script-init_pipeline>`
    or :ref:`generate_graph.pl <script-generate_graph>` with the ``--pipeconfig`` parameter) or when running a Job in
-   *standalone* mode (and maybe one day, whole pipelines too!)
+   *standalone* mode (and maybe one day, whole pipelines too!).
 2. Fetching from the database has a cost, that is particularly visible when
    the database is busy.
 
@@ -198,7 +198,7 @@ things:
   check that the database version is *n-1* before applying the changes.
   You can use ``scripts/dev/create_sql_patches.pl`` to create template
   files.
-* the API change (adaptor and object)
+* the API change (adaptor and object).
 
 You then need to update guiHive. This is done by registering the new
 version in the ``deploy.sh`` script. If the current guiHive code is
@@ -234,11 +234,11 @@ them by running ``beekeeper.pl --versions``::
 * *MeadowInterfaceVersion* is the major version of the Meadow interface. It
   follows semantic versioning, e.g. is incremented whenever an incompatible
   change is introduced. Meadows with a different major version number are
-  listed as *incompatible*
+  listed as *incompatible*.
 * The interface for guest languages is versioned in a similar manner.
   *GuestLanguageInterfaceVersion* is the major version number, and is incremented
   whenever an incompatible change is introduced. *GuestLanguage* wrappers with a
-  different major version number are listed as *incompatible*
+  different major version number are listed as *incompatible*.
 
 Releases, code branching and GIT
 --------------------------------
@@ -300,7 +300,7 @@ environment, e.g. massive parallelism, compute clusters, etc.
 
 Code coverage can be examined on `codecov.io`_, which often much better
 views than the other tool used in Ensembl: `Coveralls`_.
-Python code can be analysed on `Code Climate`_
+Python code can be analysed on `Code Climate`_.
 
 Finally, GitHub automatically triggers new builds of the documentation
 (here, on ReadTheDocs) and the `Docker images`_.
@@ -316,7 +316,7 @@ Code guidelines
 
 There are very few rules when writing new code:
 
-1. For indentation use four spaces, not tabs
+1. For indentation use four spaces, not tabs.
 2. Only use ASCII characters. The only exception
    at the moment are ``Analysis.pm`` and ``HivePipeline.pm`` which are used
    for the Unicode Art output of :ref:`generate_graph.pl <script-generate_graph>`, but they are meant
