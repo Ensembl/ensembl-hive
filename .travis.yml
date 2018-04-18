@@ -23,7 +23,7 @@ addons:
   apt:
     packages:
     - python3
-    - oracle-java8-installer
+    #- oracle-java8-installer      # Installed by default on Trusty
     - ant
     - graphviz
 
