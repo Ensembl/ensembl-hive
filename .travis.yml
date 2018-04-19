@@ -50,7 +50,7 @@ before_install:
 
 
 install:
-    - cpanm -v --installdeps --notest .
+    - cpanm -v --installdeps --with-recommends --notest .
     - cpanm -n Devel::Cover::Report::Coveralls
     - cpanm -n Devel::Cover::Report::Codecov
 
