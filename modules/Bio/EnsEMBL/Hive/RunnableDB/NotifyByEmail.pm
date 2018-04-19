@@ -19,6 +19,11 @@
     This RunnableDB module will send you a short notification email message per each job.
     You can either dataflow into it, or simply create standalone jobs.
 
+    The main body of the email is expected in the "text" parameter. If the "is_html" parameter is set, the body
+    is expected to be in HTML.
+
+    Attachments such as diagrams, images, PDFs have to be listed in the 'attachments' parameter.
+
     Note: this module depends heavily on the implementation of your compute farm.
     Sendmail may be unsupported, or supported differently.
     Please make sure it works as intended before using this module in complex pipelines.
@@ -49,12 +54,15 @@ package Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail;
 use strict;
 use warnings;
 
+use Email::Stuffer;
+
 use base ('Bio::EnsEMBL::Hive::Process');
 
 sub param_defaults {
     return {
             'is_html'    => 0,
             'subject' => 'An automatic message from your pipeline',
+            'attachments' => [],
     };
 }
 
@@ -92,13 +100,23 @@ sub run {
     my $email   = $self->param_required('email');
     my $subject = $self->param_required('subject');
     my $text    = $self->param_required('text');
+    my $attachments = $self->param_required('attachments');
 
-    open(my $sendmail_fh, '|-', "sendmail '$email'");
-    print $sendmail_fh "Subject: $subject\n";
-    print $sendmail_fh "Content-Type: text/html;\n" if $self->param('is_html');
-    print $sendmail_fh "\n";
-    print $sendmail_fh "$text\n";
-    close $sendmail_fh;
+    my $msg = Email::Stuffer->from($email)
+                            ->to($email)
+                            ->subject($subject);
+
+    if ($self->param('is_html')) {
+        $msg->html_body($text);
+    } else {
+        $msg->text_body($text);
+    }
+
+    if ($attachments and @$attachments) {
+        $msg->attach_file($_) for @$attachments;
+    }
+
+    $msg->send();
 }
 
 =head2 write_output

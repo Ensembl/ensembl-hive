@@ -24,4 +24,5 @@ recommends 'Getopt::ArgvFile';
 recommends 'BSD::Resource';
 recommends 'Chart::Gnuplot';
 recommends 'GraphViz';
+recommends 'Email::Stuffer';
 
