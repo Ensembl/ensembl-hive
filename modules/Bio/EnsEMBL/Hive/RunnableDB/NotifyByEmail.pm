@@ -6,27 +6,34 @@
 
 =head1 SYNOPSIS
 
-    This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
-    and is ran by Workers during the execution of eHive pipelines.
-    It is not generally supposed to be instantiated and used outside of this framework.
+This is a RunnableDB module that implements Bio::EnsEMBL::Hive::Process interface
+and is ran by Workers during the execution of eHive pipelines.
+It is not generally supposed to be instantiated and used outside of this framework.
 
-    Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
+Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basics of the RunnableDB interface.
 
-    Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
+Please refer to Bio::EnsEMBL::Hive::PipeConfig::* pipeline configuration files to understand how to configure pipelines.
 
 =head1 DESCRIPTION
 
-    This RunnableDB module will send you a short notification email message per each job.
-    You can either dataflow into it, or simply create standalone jobs.
+This RunnableDB module will send you a short notification email message per
+each job.  You can either dataflow into it, or simply create standalone
+jobs.
 
-    The main body of the email is expected in the "text" parameter. If the "is_html" parameter is set, the body
-    is expected to be in HTML.
+The main body of the email is expected in the "text" parameter. If the
+"is_html" parameter is set, the body is expected to be in HTML.
 
-    Attachments such as diagrams, images, PDFs have to be listed in the 'attachments' parameter.
+Attachments such as diagrams, images, PDFs have to be listed in the
+'attachments' parameter.
 
-    Note: this module depends heavily on the implementation of your compute farm.
-    Sendmail may be unsupported, or supported differently.
-    Please make sure it works as intended before using this module in complex pipelines.
+C<format_table> provides a simple method to stringify a table of data. If
+you need more options to control the separators, the alignment, etc, have a
+look at the very comprehensive L<Text::Table>.
+
+Note: this module uses L<Email::Sender> to send the email, which by default
+uses C<sendmail> but has other backends configured. As such, it depends
+heavily on the implementation of your compute farm. Please make sure it
+works as intended before using this module in complex pipelines.
 
 =head1 LICENSE
 
@@ -136,6 +143,20 @@ sub write_output {
 ######################
 
 # Present data in a nice table, like what mySQL does.
+
+
+=head2 format_table
+
+The same type of table could be generated with L<Text::Table>:
+
+  my $first_column_name = shift @$columns;
+  my $tb = Text::Table->new(\'| ', $first_column_name, (map { +(\' | ', $_) } @$columns), \' |',);
+  $tb->load(@$results);
+  my $rule = $tb->rule('-', '+');
+  return $title . "\n" . $rule . $tb->title() . $rule .  $tb->body() . $rule;
+
+=cut
+
 sub format_table {
     my ($self, $title, $columns, $results) = @_;
 
