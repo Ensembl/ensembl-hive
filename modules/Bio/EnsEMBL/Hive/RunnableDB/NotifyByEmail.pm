@@ -128,7 +128,7 @@ sub format_table {
 
     foreach (@$results) {
         for (my $i=0; $i < scalar(@$_); $i++) {
-            my $len = length($$_[$i]) + 2;
+            my $len = length($$_[$i] // 'N/A') + 2;
             $lengths[$i] = $len if $len > $lengths[$i];
         }
     }
@@ -146,7 +146,7 @@ sub format_table {
 
     foreach (@$results) {
         for (my $i=0; $i < scalar(@lengths); $i++) {
-            my $value = $$_[$i];
+            my $value = $$_[$i] // 'N/A';
             my $padding = $lengths[$i] - length($value) - 2;
             $table .= '| '.$value.(' ' x $padding).' ';
         }
