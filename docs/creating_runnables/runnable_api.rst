@@ -96,11 +96,11 @@ Dataflows
 ---------
 
 eHive is an *event-driven* system whereby agents trigger events that
-are immediately reacted upon. The main event is called **Dataflow** (see
+are immediately reacted upon. The main event is called "Dataflow" (see
 :ref:`dataflows` for more information) and
 consists of sending some data somewhere. The destination of a Dataflow
 event must be defined in the pipeline graph itself, and is then referred to
-by a *branch number*.
+by a "branch number".
 
 Within a Runnable, Dataflow events are performed via the ``$self->dataflow_output_id($data,
 $branch_number)`` method.
