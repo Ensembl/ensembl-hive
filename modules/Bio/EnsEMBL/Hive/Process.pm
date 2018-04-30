@@ -523,6 +523,12 @@ sub param_required {
     return $value;
 }
 
+sub param_exists {
+    my $self = shift @_;
+
+    return $self->input_job->param_exists(@_);
+}
+
 sub param_is_defined {
     my $self = shift @_;
 
