@@ -75,7 +75,7 @@ my $pipeline_url = get_test_url_or_die();
 
     foreach my $kmer_pipeline_mode ( @kmer_pipeline_modes ) {
       
-      warn "\nInitializing the $kmer_version $kmer_pipeline_mode sequence pipeline into $pipeline_url ...\n\n";
+      note("\nInitializing the $kmer_version $kmer_pipeline_mode sequence pipeline into $pipeline_url ...\n\n");
       
       init_pipeline($kmer_version, $pipeline_url, $kmer_param_configs->{$kmer_pipeline_mode});
       

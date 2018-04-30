@@ -34,7 +34,7 @@ my @pipeline_cfgs = qw(LongMult_conf);
 
 foreach my $long_mult_version ( @pipeline_cfgs ) {
 
-    warn "\nInitializing the $long_mult_version pipeline ...\n\n";
+    note("\nInitializing the $long_mult_version pipeline ...\n\n");
 
     foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:

@@ -110,8 +110,8 @@ foreach my $driver (qw(mysql pgsql sqlite)) {
         is_deeply($schema1, $schema2, 'Both schemas are identical');
 
         # For debugging
-        #warn $url1;
-        #warn $url2;
+        #note($url1);
+        #note($url2);
         run_sql_on_db($url1, 'DROP DATABASE');
         run_sql_on_db($url2, 'DROP DATABASE');
     };

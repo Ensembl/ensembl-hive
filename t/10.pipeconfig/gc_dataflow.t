@@ -52,7 +52,7 @@ until ($process_id) {
 ok($process_id, 'Found a process_id');
 
 # Kill the process
-warn "got process_id $process_id";
+note("got process_id $process_id");
 system('kill', '-SIGKILL', $process_id);
 sleep 10; # must be more than MaxLimboSeconds for beekeeper to actual rip the worker
 

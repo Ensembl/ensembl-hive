@@ -45,7 +45,7 @@ my $sleep_minutes = $ENV{'EHIVE_GCPCT_SLEEP'} || 0.02;
 
 foreach my $gcpct_version ( @pipeline_cfgs ) {
 
-warn "\nInitializing the $gcpct_version pipeline ...\n\n";
+        note("\nInitializing the $gcpct_version pipeline ...\n\n");
 
         my $pipeline_url = get_test_url_or_die();
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:

@@ -50,7 +50,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
     SKIP: {
         skip "python3 not installed", 2 if($long_mult_version =~ /_pyconf/ && !`python3 --version 2>/dev/null`);
 
-    warn "\nInitializing the $long_mult_version pipeline ...\n\n";
+        note("\nInitializing the $long_mult_version pipeline ...\n\n");
 
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
         init_pipeline(

@@ -47,7 +47,7 @@ foreach my $long_mult_version ( @pipeline_cfgs ) {
     # Exclude the guest-language config files
     next unless $long_mult_version =~ /_conf/;
 
-    warn "\nInitializing the $long_mult_version pipeline ...\n\n";
+    note("\nInitializing the $long_mult_version pipeline ...\n\n");
 
     foreach my $pipeline_url (@pipeline_urls) {
             # override the 'take_time' PipelineWideParameter in the loaded HivePipeline object to make the internal test Worker run quicker:
