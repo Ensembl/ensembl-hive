@@ -2,7 +2,7 @@
 
 set -e
 
-yum groupinstall 'Development Tools'
+yum groupinstall -y 'Development Tools'
 
 for arg
 do
