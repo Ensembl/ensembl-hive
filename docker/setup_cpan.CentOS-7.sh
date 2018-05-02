@@ -2,7 +2,7 @@
 
 set -e
 
-# We should probably install some build packages
+yum groupinstall 'Development Tools'
 
 for arg
 do
