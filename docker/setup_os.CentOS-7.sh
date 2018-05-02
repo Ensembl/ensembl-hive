@@ -14,7 +14,7 @@ rm -r "$tmpdir"
 # install required extra software
 yum install -y curl \
 	       sqlite perl-DBD-SQLite postgresql perl-DBD-Pg mariadb perl-DBD-MySQL perl-DBI \
-               perl-Capture-Tiny perl-DateTime perl-Time-Piece perl-HTML-Parser perl-JSON \
-               perl-Test-Exception perl-Test-Simple perl-Test-Warn perl-Test-Warnings perl-Test-File-Contents perl-Test-Perl-Critic perl-GraphViz \
+               perl-Capture-Tiny perl-DateTime perl-Time-Piece perl-HTML-Parser perl-JSON perl-Email-Sender \
+               perl-Test-Exception perl-Test-Simple perl-Test-Warn perl-Test-Warnings perl-Test-File-Contents perl-Test-Perl-Critic perl-Test-Fatal perl-GraphViz \
                gnuplot perl-BSD-Resource
 
