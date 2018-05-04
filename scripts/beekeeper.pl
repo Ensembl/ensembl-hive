@@ -203,10 +203,6 @@ sub main {
     my $valley = Bio::EnsEMBL::Hive::Valley->new( $config, $default_meadow_type, $pipeline_name );
 
     my ($beekeeper_meadow_type, $beekeeper_meadow_name) = $valley->whereami();
-    unless($beekeeper_meadow_type eq 'LOCAL') {
-        die "beekeeper.pl detected it has been itself submitted to '$beekeeper_meadow_type/$beekeeper_meadow_name', but this mode of operation is not supported.\n"
-           ."Please just run beekeeper.pl on a farm head node, preferably from under a 'screen' session.\n";
-    }
 
     $valley->config_set('SubmitWorkersMax', $submit_workers_max) if(defined $submit_workers_max);
 
