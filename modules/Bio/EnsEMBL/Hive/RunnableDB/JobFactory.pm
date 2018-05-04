@@ -187,7 +187,7 @@ sub write_output {  # nothing to write out, but some dataflow to perform:
 
 
 =head2 _get_rows_from_list
-    
+
     Description: a private method that ensures the list is 2D
 
 =cut
@@ -202,7 +202,7 @@ sub _get_rows_from_list {
 
 
 =head2 _get_rows_from_query
-    
+
     Description: a private method that loads ids from a given sql query
 
     param('db_conn'): An optional hash to pass in connection parameters to the database upon which the query will have to be run.
@@ -230,7 +230,7 @@ sub _get_rows_from_query {
 
 
 =head2 _get_rows_from_open
-    
+
     Description: a private method that loads ids from a given file or command pipe
 
 =cut
@@ -278,7 +278,7 @@ sub _substitute_rows {
 
 
 =head2 _substitute_minibatched_rows
-    
+
     Description: a private method that minibatches a list and transforms every minibatch using param-substitution
 
 =cut
@@ -332,7 +332,7 @@ sub _substitute_minibatched_rows {
 
 
 =head2 _fisher_yates_shuffle_in_place
-    
+
     Description: a private function (not a method) that shuffles a list of ids
 
 =cut
