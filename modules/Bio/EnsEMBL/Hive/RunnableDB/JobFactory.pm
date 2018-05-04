@@ -212,7 +212,7 @@ sub _get_rows_from_list {
 sub _get_rows_from_query {
     my ($self, $inputquery) = @_;
 
-    $self->say_with_header(qq{inputquery = "$inputquery"\n});
+    $self->say_with_header(qq{inputquery = "$inputquery"});
     my @rows = ();
     my $sth = $self->data_dbc()->prepare($inputquery);
     $sth->execute();
@@ -238,7 +238,7 @@ sub _get_rows_from_query {
 sub _get_rows_from_open {
     my ($self, $input_file_or_command, $open_mode, $delimiter, $parse_header) = @_;
 
-    $self->say_with_header(qq{input_file_or_command = "$input_file_or_command" [$open_mode]\n});
+    $self->say_with_header(qq{input_file_or_command = "$input_file_or_command" [$open_mode]});
     my @rows = ();
     open(my $fh, $open_mode, $input_file_or_command) or die "Could not open '$input_file_or_command' because: $!";
     while(my $line = <$fh>) {

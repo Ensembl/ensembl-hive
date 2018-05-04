@@ -89,9 +89,9 @@ sub run {
 
     my $take_time = eval $self->param('take_time');
     if($take_time) {
-        $self->say_with_header("Sleeping for '$take_time' seconds...\n");
+        $self->say_with_header("Sleeping for '$take_time' seconds...");
         usleep( $take_time*1000000 );
-        $self->say_with_header("Done.\n");
+        $self->say_with_header("Done.");
     }
 }
 

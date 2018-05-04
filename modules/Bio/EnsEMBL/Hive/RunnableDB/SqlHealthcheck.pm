@@ -150,15 +150,15 @@ sub _run_test {
         $query =~ s/$1//;
     }
 
-    $self->say_with_header( "Test description: $description\n" );
-    $self->say_with_header( "Checking whether the number of rows $logical_test $reference_size\n" );
+    $self->say_with_header( "Test description: $description" );
+    $self->say_with_header( "Checking whether the number of rows $logical_test $reference_size" );
 
     # This could benefit from 'switch' once we move to a more recent version of Perl
     my $maxrow = $reference_size;
     $maxrow++ if grep {$_ eq $logical_test} qw(= == > <= <> !=);
 
     $query .= " LIMIT $maxrow" unless $query =~ /LIMIT/i;
-    $self->say_with_header( "Query: $query\n" );
+    $self->say_with_header( "Query: $query" );
 
     my $sth = $self->data_dbc()->prepare( $query,
                                     ($self->data_dbc->driver eq 'mysql') ? { 'mysql_use_result' => 1 } : undef );
@@ -170,7 +170,7 @@ sub _run_test {
     }
     $sth->finish;
 
-    $self->say_with_header( "$nrow rows returned".($nrow == $maxrow ? " (test aborted, there could be more rows)" : "")."\n" );
+    $self->say_with_header( "$nrow rows returned".($nrow == $maxrow ? " (test aborted, there could be more rows)" : "") );
 
     # This could benefit from 'switch' once we move to a more recent version of Perl
     my $success = 0;
@@ -189,7 +189,7 @@ sub _run_test {
     } else {
         die "This should not happen. A logical test is not checked";
     }
-    $self->say_with_header( $success ? "Success\n\n" : "Failure\n\n", 'important');
+    $self->say_with_header( $success ? "Success\n" : "Failure\n", 'important');
     return $success;
 }
 
