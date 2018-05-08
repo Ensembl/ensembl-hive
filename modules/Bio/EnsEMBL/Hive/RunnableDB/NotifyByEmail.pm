@@ -97,6 +97,8 @@ sub fetch_input {
 
     param('is_html'): Boolean. Whether the content of 'text' is in HTML
 
+    param('attachments'): Array of paths for files to attach.
+
     param('*'):       Any other parameters can be freely used for parameter substitution.
 
 =cut
@@ -107,7 +109,7 @@ sub run {
     my $email   = $self->param_required('email');
     my $subject = $self->param_required('subject');
     my $text    = $self->param_required('text');
-    my $attachments = $self->param_required('attachments');
+    my $attachments = $self->param('attachments');
 
     my $msg = Email::Stuffer->from($email)
                             ->to($email)
