@@ -101,7 +101,7 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
-use File::Path qw(remove_tree);
+use File::Path qw(make_path remove_tree);
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes qw(time);
@@ -679,7 +679,7 @@ sub worker_temp_directory {
 
     unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
         $self->{'_tmp_dir'} = $self->worker_temp_directory_name();
-        mkdir($self->{'_tmp_dir'}, 0777);
+        make_path( $self->{'_tmp_dir'}, { mode => 0777 } );
         throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
     }
     return $self->{'_tmp_dir'};

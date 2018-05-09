@@ -27,7 +27,7 @@ main();
 sub main {
     my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc);                   # Connection parameters
     my ($preregistered, $resource_class_id, $resource_class_name, $analyses_pattern, $analysis_id, $logic_name, $job_id, $force, $beekeeper_id);    # Task specification parameters
-    my ($job_limit, $life_span, $no_cleanup, $no_write, $worker_cur_dir, $hive_log_dir, $worker_log_dir, $retry_throwing_jobs, $can_respecialize,   # Worker control parameters
+    my ($job_limit, $life_span, $no_cleanup, $no_write, $worker_cur_dir, $hive_log_dir, $worker_log_dir, $worker_base_temp_dir, $retry_throwing_jobs, $can_respecialize,   # Worker control parameters
         $worker_delay_startup_seconds, $worker_crash_on_startup_prob, $config_files);
     my ($help, $report_versions, $debug);
 
@@ -67,6 +67,7 @@ sub main {
                'worker_cur_dir|cwd=s'       => \$worker_cur_dir,
                'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
                'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
+               'worker_base_temp_dir=s'     => \$worker_base_temp_dir,
                'retry_throwing_jobs!'       => \$retry_throwing_jobs,
                'can_respecialize|can_respecialise!' => \$can_respecialize,
                'worker_delay_startup_seconds=i' => \$worker_delay_startup_seconds,
@@ -143,6 +144,7 @@ sub main {
         config_files        => $config_files,
         no_cleanup          => $no_cleanup,
         no_write            => $no_write,
+        worker_base_temp_dir=> $worker_base_temp_dir,
         worker_log_dir      => $worker_log_dir,
         hive_log_dir        => $hive_log_dir,
         debug               => $debug,
@@ -272,6 +274,11 @@ don't perform temp directory cleanup when the Worker exits
 =item --no_write
 
 don't write_output or auto_dataflow input_job
+
+=item --worker_base_temp_dir <path>
+
+The base directory that this worker will use for temporary operations. This overrides the default set
+in the JSON config file and in the code (/tmp)
 
 =item --hive_log_dir <path>
 
