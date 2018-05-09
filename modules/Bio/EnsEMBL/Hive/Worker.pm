@@ -243,6 +243,23 @@ sub log_dir {
 }
 
 
+=head2 temp_directory_name
+
+  Arg [1] : (optional) string directory path
+  Title   : temp_directory_name
+  Usage   : $worker_tmp_dir = $self->temp_directory_name;
+            $self->temp_directory_name($worker_tmp_dir);
+  Description: Storable getter/setter attribute for the directory where jobs can store temporary data.
+  Returntype : string
+
+=cut
+
+sub temp_directory_name {
+    my $self = shift;
+    $self->{'_tmp_dir'} = shift if(@_);
+    return $self->{'_tmp_dir'};
+}
+
 
 ## Non-Storable attributes:
 
@@ -906,14 +923,28 @@ sub set_log_directory_name {
 }
 
 
-sub temp_directory_name {
-    my $self = shift @_;
+=head2 set_temp_directory_name
 
+  Title       : set_temp_directory_name
+  Description : Generates and sets the name of a temporary directory suitable for this worker.
+                It will be under the base directory requested by $base_temp_dir, or /tmp
+                otherwise, and includes worker attributes to make the path unique.
+
+=cut
+
+sub set_temp_directory_name {
+    my ($self, $base_temp_dir) = @_;
+
+    $base_temp_dir //= '/tmp';
+
+    my $temp_directory_name;
     if ($self->adaptor) {
-        return sprintf('/tmp/worker_%s_%s.%s/', $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
+        $temp_directory_name = sprintf('%s/worker_%s_%s.%s/', $base_temp_dir, $self->meadow_user, $self->hive_pipeline->hive_pipeline_name, $self->dbID);
     } else {
-        return sprintf('/tmp/worker_%s.standalone.%s/', $self->meadow_user, $self->process_id);
+        $temp_directory_name = sprintf('%s/worker_%s.standalone.%s/', $base_temp_dir, $self->meadow_user, $self->process_id);
     }
+
+    $self->temp_directory_name( $temp_directory_name );
 }
 
 

@@ -128,10 +128,10 @@ sub create_new_worker {
     my %flags   = @_;
 
     my ($preregistered, $resource_class_id, $resource_class_name, $beekeeper_id,
-            $no_write, $debug, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize,
+            $no_write, $debug, $worker_base_temp_dir, $worker_log_dir, $hive_log_dir, $job_limit, $life_span, $no_cleanup, $retry_throwing_jobs, $can_respecialize,
             $worker_delay_startup_seconds, $worker_crash_on_startup_prob, $config_files)
      = @flags{qw(-preregistered -resource_class_id -resource_class_name -beekeeper_id
-            -no_write -debug -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize
+            -no_write -debug -worker_base_temp_dir -worker_log_dir -hive_log_dir -job_limit -life_span -no_cleanup -retry_throwing_jobs -can_respecialize
             -worker_delay_startup_seconds -worker_crash_on_startup_prob -config_files)};
 
     sleep( $worker_delay_startup_seconds // 0 );    # NB: undefined parameter would have caused eternal sleep!
@@ -222,6 +222,7 @@ sub create_new_worker {
     }
 
     $worker->set_log_directory_name($hive_log_dir, $worker_log_dir);
+    $worker->set_temp_directory_name( $worker_base_temp_dir );
 
     $worker->init;
 

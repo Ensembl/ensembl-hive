@@ -58,6 +58,7 @@ sub runWorker {
              -life_span             => $life_options->{'life_span'},
              -no_cleanup            => $execution_options->{'no_cleanup'},
              -no_write              => $execution_options->{'no_write'},
+             -worker_base_temp_dir  => $execution_options->{'worker_base_temp_dir'},
              -worker_log_dir        => $execution_options->{'worker_log_dir'},
              -hive_log_dir          => $execution_options->{'hive_log_dir'},
              -retry_throwing_jobs   => $life_options->{'retry_throwing_jobs'},
