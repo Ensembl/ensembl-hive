@@ -101,6 +101,7 @@ package Bio::EnsEMBL::Hive::Process;
 use strict;
 use warnings;
 
+use File::Path qw(remove_tree);
 use JSON;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes qw(time);
@@ -696,7 +697,7 @@ sub cleanup_worker_temp_directory {
 
     my $tmp_dir = $self->worker_temp_directory_name();
     if(-e $tmp_dir) {
-        system('rm', '-r', $tmp_dir);
+        remove_tree($tmp_dir, {error => undef});
     }
 }
 
