@@ -104,6 +104,7 @@ sub main {
             -reg_alias                      => $reg_alias,
             -no_sql_schema_version_check    => $nosqlvc,
         );
+        $pipeline->hive_dba()->dbc->requires_write_access();
 
     } else {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
