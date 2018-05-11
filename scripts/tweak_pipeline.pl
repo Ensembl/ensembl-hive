@@ -69,6 +69,7 @@ sub main {
     if(@$tweaks) {
         my $need_write = $pipeline->apply_tweaks( $tweaks );
         if ($need_write) {
+            $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
         }
     }

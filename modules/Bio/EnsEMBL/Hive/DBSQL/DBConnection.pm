@@ -362,5 +362,46 @@ sub run_in_transaction {
 }
 
 
+=head2 has_write_access
+
+  Example     : my $can_do = $dbc->has_write_access();
+  Description : Tells whether the underlying database connection has write access to the database
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub has_write_access {
+    my $self = shift;
+    if ($self->driver eq 'mysql') {
+        my $a =  $self->db_handle->selectrow_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
+        return !scalar(grep {$_ eq 'N'} @$a);
+    } else {
+        # TODO: implement this for other drivers
+        return 1;
+    }
+}
+
+=head2 requires_write_access
+
+  Example     : $dbc->requires_write_access();
+  Description : See Exceptions
+  Returntype  : none
+  Exceptions  : Throws if the current user hasn't write access to the database
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub requires_write_access {
+    my $self = shift;
+    unless ($self->has_write_access) {
+        die sprintf("It appears that %s doesn't have INSERT/UPDATE/DELETE privileges on this database (%s). Please check the credentials\n", $self->username, $self->dbname);
+    }
+}
+
+
 1;
 

@@ -55,6 +55,7 @@ sub init_pipeline {
 
     my $hive_dba = $pipeline->hive_dba()
         or die "HivePipeline could not be created for ".$pipeconfig_object->pipeline_url();
+    $hive_dba->dbc->requires_write_access();
 
     print "> Parsing the PipeConfig file and adding objects (this may take a while).\n\n";
     $pipeconfig_object->add_objects_from_config( $pipeline );

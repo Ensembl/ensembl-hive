@@ -242,6 +242,29 @@ sub main {
         print STDERR "+---------------------------------------------------------------------+\n";
     }
 
+    unless ($self->{'dba'}->dbc->has_write_access) {
+        my $dbc = $self->{'dba'}->dbc;
+        print STDERR "\n";
+        print STDERR "*" x 70, "\n";
+        print STDERR sprintf("* It appears that %s doesn't have INSERT/UPDATE/DELETE privileges\n", $dbc->username);
+        print STDERR sprintf("* on this database (%s). Please check the credentials\n", $dbc->dbname);
+        print STDERR "*\n";
+        print STDERR "*" x 70, "\n";
+        print STDERR "\n";
+        undef $run_job_id;
+        undef $reset_job_id;
+        undef $reset_all_jobs;
+        undef $reset_failed_jobs;
+        undef $reset_done_jobs;
+        undef $unblock_semaphored_jobs;
+        undef $forgive_failed_jobs;
+        undef $discard_ready_jobs;
+        undef $kill_worker_id;
+        undef $sync;
+        $self->{'max_loops'} = 0;
+        $self->{'read_only'} = 1;
+    }
+
     if($run_job_id) {
         $submit_workers_max = 1;
     }
@@ -281,11 +304,13 @@ sub main {
     }
 
     # May die if running within a non-LOCAL meadow
-    $self->{'beekeeper'} = register_beekeeper($valley, $self);
+    unless ($self->{'read_only'}) {
+        $self->{'beekeeper'} = register_beekeeper($valley, $self);
+    }
     $self->{'logmessage_adaptor'} = $self->{'dba'}->get_LogMessageAdaptor();
 
     # Check other beekeepers in our meadow to see if they are still alive
-    $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
+    $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'}) unless $self->{'read_only'};
 
     if ($kill_worker_id) {
         my $kill_worker;
@@ -387,7 +412,7 @@ sub main {
         }
         $self->{'dba'}->get_RoleAdaptor->print_active_role_counts;
 
-        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);   # show what would be submitted, but do not actually submit
+        Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses) unless $self->{'read_only'};   # show what would be submitted, but do not actually submit
 
         if($show_failed_jobs) {
             print("===== failed Jobs\n");
@@ -397,8 +422,20 @@ sub main {
                 print $job->toString. "\n";
             }
         }
-        $self->{'beekeeper'}->set_cause_of_death('LOOP_LIMIT');
+        $self->{'beekeeper'}->set_cause_of_death('LOOP_LIMIT') unless $self->{'read_only'};
     }
+
+    if ($self->{'read_only'}) {
+        $has_error = 1;
+        print STDERR "\n";
+        print STDERR "*" x 70, "\n";
+        print STDERR "* beekeeper.pl is running in read-only mode, i.e. it only\n";
+        print STDERR "* prints the current status of the pipeline.\n";
+        print STDERR "*\n";
+        print STDERR "*" x 70, "\n";
+        print STDERR "\n";
+    }
+
     exit($has_error);
 }
 
@@ -412,8 +449,10 @@ sub log_and_die {
     my ($self, $message) = @_;
 
     my $beekeeper = $self->{'beekeeper'};
-    $self->{'logmessage_adaptor'}->store_beekeeper_message($beekeeper->dbID, $message, 'PIPELINE_ERROR', 'TASK_FAILED');
-    $beekeeper->set_cause_of_death('TASK_FAILED');
+    if ($beekeeper) {
+        $self->{'logmessage_adaptor'}->store_beekeeper_message($beekeeper->dbID, $message, 'PIPELINE_ERROR', 'TASK_FAILED');
+        $beekeeper->set_cause_of_death('TASK_FAILED');
+    }
     die $message;
 }
 
