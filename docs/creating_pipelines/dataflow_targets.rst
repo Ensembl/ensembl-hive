@@ -4,12 +4,12 @@ Dataflow targets
 Analysis
 --------
 
-In eHive, a job can create another job via a Dataflow event by wiring the branch to another analysis.
+In eHive, a Job can create another Job via a Dataflow event by wiring the branch to another Analysis.
 
-Dataflow to one analysis
+Dataflow to one Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``.
+To direct dataflow events to seed a Job for another Analysis, simply name the target Analysis after the ``=>``.
 
 .. hive_diagram::
 
@@ -22,11 +22,11 @@ This is what we have used in the Dataflow document. Simply name the target analy
     },
 
 
-Dataflow to multiple analyses
+Dataflow to multiple Analyses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A branch can actually be connected to multiple analyses. When a Dataflow
-event happens, it will create a job in each of them.
+A single branch can be connected to seed Jobs for multiple Analyses. When a dataflow
+event happens, it will create a Job for each Analysis.
 
 .. hive_diagram::
 
@@ -41,12 +41,12 @@ event happens, it will create a job in each of them.
     },
 
 
-Multiple dataflows to the same analysis
+Multiple dataflows to the same Analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Reciprocally, an analysis can be the target of several branches coming
-from the same analysis.
-Here, jobs are created in Beta whenever there is an event on branch #2, in Gamma
+Reciprocally, an Analysis can be the target of several branches coming
+from the same Analysis.
+Here, Jobs are created in Beta whenever there is an event on branch #2, in Gamma
 when there is an event on branch #2 or #3, and Delta when there is an event on branch #1.
 
 .. hive_diagram::
@@ -69,14 +69,15 @@ when there is an event on branch #2 or #3, and Delta when there is an event on b
 Table
 -----
 
-A job can store data in a table via the Dataflow mechanism instead of raw SQL access.
+A Job can store data in a table via the dataflow mechanism, without the need to use raw SQL.
 
 Dataflow to one table
 ~~~~~~~~~~~~~~~~~~~~~
 
-This is what we have used in the Dataflow document. Simply name the target analysis after the ``=>``
-with a URL that contains the ``table_name`` key. URLs can be *degenerate*, i.e. skip the part before
-the question mark (like below) or *completely defined*, i.e. start with ``driver://user@host/database_name``.
+To insert data passed in a dataflow event into a table, set the target after the ``=>``
+to a URL that contains the ``table_name`` key. URLs can be *degenerate*, i.e. skipping the part before
+the question mark (like below) or *completely defined*, i.e. starting with ``driver://user@host/database_name``.
+Degenerate urls will default to the eHive database.
 
 .. hive_diagram::
 
@@ -86,11 +87,22 @@ the question mark (like below) or *completely defined*, i.e. start with ``driver
         },
     },
 
+The parameters passed along with the dataflow event will determine how data is inserted into the table. Parameter
+values will be inserted as a row, in columns corresponding to the parameter names. For example, if the dataflow
+event on branch #1 has parameters foo = 42 and bar = "hello, world", then the above example would work like
+the following SQL:
+
+.. code-block:: sql
+
+    INSERT INTO Results_1 (foo, bar)
+    VALUES (42, "hello, world");
+
+
 
 Dataflow to multiple tables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A branch can actually be connected to multiple tables. When a Dataflow
+A branch can be connected to multiple tables. When a dataflow
 event happens, it will create a row in each of them.
 
 .. hive_diagram::
@@ -102,14 +114,14 @@ event happens, it will create a row in each of them.
     },
 
 
-Multiple dataflows to tables and analyses
+Multiple dataflows to tables and Analyses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An analysis can dataflow to multiple targets, both of analysis and table types.
+An Analysis can flow data to multiple targets, with Analysis and table types being freely mixed.
 
 Rows inserted by table-dataflows are usually not linked to the emitting job_id.
 In the example below, a row from the table Results_1 will typically not have information
-about the analysis (job) that generated it.
+about the Analysis (Job) that generated it.
 This can however be enabled by explicitly adding the job_id to the dataflow payload.
 
 .. hive_diagram::
@@ -132,17 +144,17 @@ This can however be enabled by explicitly adding the job_id to the dataflow payl
 Accumulator
 -----------
 
-The last type of dataflow-target is called as an *accumulator*. It is a way of passing data from *fan* jobs
-to their *funnel*.
+The last type of dataflow target is the "Accumulator". It is a way of passing data from fan Jobs
+to their funnel.
 
-Single accumulator
+Single Accumulator
 ~~~~~~~~~~~~~~~~~~
 
-An accumulator is defined with a special URL that contains the ``accu_name`` key. There are five types
-of accumulators (scalar, pile, multiset, array and hash), all described in :doc:`accumulators`.
+An Accumulator is defined with a special URL that contains the ``accu_name`` key. There are five types
+of Accumulators (scalar, pile, multiset, array and hash), all described in :doc:`accumulators`.
 
-Accumulators can **only** be connected to *fan* analyses of a semaphore group. All the data flown into them
-is *accumulated* and passed on to the *funnel* once the latter is released.
+Accumulators can *only* be connected to *fan* Analyses of a semaphore group. All the data flown into them
+is *accumulated* for the *funnel* to consume after it is released.
 
 .. hive_diagram::
 
@@ -161,12 +173,12 @@ is *accumulated* and passed on to the *funnel* once the latter is released.
     },
 
 
-Multiple accumulators and semaphore propagation
+Multiple Accumulators and semaphore propagation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-During the semaphore propagation, more jobs are added to the current semaphore-group
+During the semaphore propagation, more Jobs are added to the current semaphore-group
 in order to block the current funnel. Similarly a funnel may receive data from multiple
-accumulators (possibly fed by different analyses) of a semaphore-group.
+Accumulators (possibly fed by different Analyses) of a semaphore-group.
 
 .. hive_diagram::
 
@@ -194,7 +206,7 @@ accumulators (possibly fed by different analyses) of a semaphore-group.
 Conditional dataflows
 =====================
 
-eHive provides a mechanism to filter Dataflow events. It allows mapping a
+eHive provides a mechanism to filter dataflow events. It allows mapping a
 given branch number to some targets on certain conditions.
 
 The filtering happens based on the values of the parameters. It uses a
@@ -203,8 +215,8 @@ with some important differences:
 
 #. `WHEN` happens when a condition is true.
 #. There can be multiple `WHEN` cases, and more than one `WHEN` can flow
-   (as long asa they are true).
-#. `ELSE` is the catch-all if none of the `WHEN` cases are true
+   (as long as they are true).
+#. `ELSE` is the catch-all if none of the `WHEN` cases are true.
 
 .. hive_diagram::
 

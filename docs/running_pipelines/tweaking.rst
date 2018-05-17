@@ -3,12 +3,12 @@
 Changing and viewing pipeline configuration
 +++++++++++++++++++++++++++++++++++++++++++
 
-eHive provides a tool to modify many aspects of a pipeline that is loaded into a hive database. This is the tweak_pipeline.pl script. Using this script, users can change the values of analysis or pipeline-wide parameters. This script can also change resource classes for analyses, and it can even be used to alter the dataflow structure of a pipeline.
+eHive provides a tool to modify many aspects of a pipeline after it has been loaded into an eHive database. This is the ``tweak_pipeline.pl`` script. Using this script, you can change the values of Analysis or pipeline-wide parameters. This script can also change Resource Classes for Analyses, and it can even be used to alter the dataflow structure of a pipeline.
 
 Basic operation
 ===============
 
-Typically, tweak_pipeline.pl is invoked with two sets of parameters: the pipeline database (passed as a url (``-url``) or as part of a registry configuration (``-reg_conf``)), and a statement written in the tweak language (for details, see the :ref:`tweak-language-reference`). The tweak language is designed to be intuitive, consisting of a verb (``-SET``, ``-SHOW``, ``-DELETE``, or ``-tweak``) followed by the name of the attribute and the attribute's new value (if appropriate). Some examples:
+Typically, ``tweak_pipeline.pl`` is invoked with two sets of parameters: the eHive database (passed as a url (``-url``) or as part of a registry configuration (``-reg_conf``)), and a statement written in the tweak language (for details, see the :ref:`tweak-language-reference`). The tweak language is designed to be intuitive, consisting of a verb (``-SET``, ``-SHOW``, ``-DELETE``, or ``-tweak``) followed by the name of the attribute and the attribute's new value (if appropriate). Some examples:
 
 Setting or changing attributes
 ------------------------------
@@ -21,7 +21,7 @@ Setting or changing attributes
 
 ``tweak_pipeline.pl -url sqlite:///my_hive_db -SET 'pipeline.hive_pipeline_name=new_name'``
 
-    - Set or change the resource class for a group of analyses, using pattern matching to match multiple analysis names:
+    - Set or change the resource class for a group of Analyses, using pattern matching to match multiple Analysis names:
 
 ``tweak_pipeline.pl -url sqlite:///my_hive_db -SET 'analysis[blast%].resource_class=himem'``
 
@@ -32,7 +32,7 @@ Setting or changing attributes
 Viewing attributes
 ------------------
 
-    - View a hive meta-attribute:
+    - View a pipeline meta-attribute:
 
 ``tweak_pipeline.pl -url sqlite:///my_hive_db -SHOW 'pipeline.hive_pipeline_name'``
 
@@ -47,14 +47,14 @@ Deleting attributes
 
 ``tweak_pipeline.pl -url sqlite:///my_hive_db -DELETE 'analysis[add_together].param[bar]'``
 
-Remember that tweak_pipeline.pl only affects values in the hive database. In order to make tweaks permanent, the changes need to also be made in the corresponding PipeConfig file.
+Remember that ``tweak_pipeline.pl`` only affects values in the hive database. In order to make tweaks permanent, the changes need to also be made in the corresponding PipeConfig file.
 
 .. _tweak-language-reference:
 
 Tweak language reference
 ========================
 
-The tweak_pipeline.pl script uses a flexible language to specify which pipeline attributes to set, change, or show. Each tweak consists of a verb, followed by a description of the attribute. Finally, the new value for that attribute is given if required.
+The ``tweak_pipeline.pl`` script uses a flexible language to specify which pipeline attributes to set, change, or show. Each tweak consists of a verb, followed by a description of the attribute. Finally, the new value for that attribute is given if required.
 
 Verbs
 -----
@@ -79,7 +79,7 @@ The verb can be one of four values:
 
         - If tweak is followed by an attribute name and a ``#``, then the attribute is deleted. This is the same as ``-DELETE``. Example:
 
-```tweak_pipeline.pl -url sqlite:///my_hive_db -tweak 'pipeline.param[take_time]#``
+``tweak_pipeline.pl -url sqlite:///my_hive_db -tweak 'pipeline.param[take_time]#'``
 
 Attribute description
 ---------------------
@@ -88,13 +88,13 @@ The attribute being tweaked is identified using a two-part name, with the two pa
 
     - The first part identifies the "domain" of the attribute. This can be one of:
 
-        - pipeline
+        - ``pipeline``
 
-        - analysis
+        - ``analysis``
 
-        - resource_class
+        - ``resource_class``
 
-    - In the case of analysis or resource_class, the particular analysis or resource class is identified by placing the logic name in brackets like this:
+    - In the case of ``analysis`` or ``resource_class``, the particular Analysis or Resource Class is identified by placing the logic name in brackets like this:
 
 ``analysis[logic_name]`` e.g. ``analysis[dump_sequence]``
 
