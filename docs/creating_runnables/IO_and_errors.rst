@@ -112,14 +112,14 @@ within eHive. -2, -1, and 0 are special branches for
 
 .. warning::
 
-If a Runnable explicitly generates a dataflow event on branch 1, then
-no autoflow event will be generated when the Job finishes. This is
-unusual behaviour -- many pipelines expect and depend on autoflow
-coinciding with Job completion. Therefore, you should avoid explicitly
-creating dataflow on branch 1, unless no alternative exists to produce
-the correct logic in the Runnable. If you do override the autoflow by
-creating an event on branch 1, be sure to clearly indicate this in the
-Runnable's documentation.
+    If a Runnable explicitly generates a dataflow event on branch 1, then
+    no autoflow event will be generated when the Job finishes. This is
+    unusual behaviour -- many pipelines expect and depend on autoflow
+    coinciding with Job completion. Therefore, you should avoid explicitly
+    creating dataflow on branch 1, unless no alternative exists to produce
+    the correct logic in the Runnable. If you do override the autoflow by
+    creating an event on branch 1, be sure to clearly indicate this in the
+    Runnable's documentation.
 
 Within a Runnable, dataflow events are performed via the ``$self->dataflow_output_id($data,
 $branch_number)`` method.
