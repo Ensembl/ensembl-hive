@@ -14,14 +14,14 @@ download and install first:
    database, so you will need
 
    #. a server installed on the machine where you want to maintain the
-      state of your pipeline(s) and
-   #. clients installed on the machines where the jobs are to be
+      state of your pipeline(s),
+   #. clients installed on the machines where the Jobs are to be
       executed.
 
    At the moment, the following database options are available:
 
    -  MySQL 5.1 `or higher <https://dev.mysql.com/downloads/>`__.
-      **Warning:** eHive is not compatible with MysQL 5.6.20 but is
+      **Warning:** eHive is not compatible with MySQL 5.6.20 but is
       with versions 5.6.16 and 5.6.23. We suggest avoiding the
       5.6.[17-22] interval
    -  SQLite 3.6 `or higher <http://www.sqlite.org/download.html>`__
@@ -34,23 +34,23 @@ download and install first:
 #. GraphViz visualization package (includes "dot" executable and
    libraries used by the Perl dependencies).
 
-   #. Check in your terminal that you have "dot" installed
-   #. If not, visit `graphviz.org <http://graphviz.org/>`__ to download
-      it
+   #. Check in your terminal that you have "dot" installed.
+   #. If not, install using a package manager, or visit `graphviz.org <http://graphviz.org/>`__ to download
+      it.
 
 #. GnuPlot visualization package (includes "gnuplot" executable and
    libraries used by the Perl dependencies).
 
-   #. Check in your terminal that you have "gnuplot" installed
-   #. If not, visit `gnuplot.info <http://www.gnuplot.info/>`__ to
-      download it
+   #. Check in your terminal that you have "gnuplot" installed.
+   #. If not, install using a package manager, or visit `gnuplot.info <http://www.gnuplot.info/>`__ to
+      download it.
 
 #. cpanm -- a handy utility to recursively install Perl dependencies.
 
-   #. Check in your terminal that you have "cpanm" installed
+   #. Check in your terminal that you have "cpanm" installed.
    #. If not, visit `cpanmin.us <https://cpanmin.us>`__ to download it
       (just read and follow the instructions in the header of the
-      script)
+      script).
 
 
 Main repository
@@ -75,18 +75,17 @@ should see something like the following:
 
 ::
 
-            ls
             Changelog  docs  hive_config.json  modules  README.md  scripts  sql  t
 
 The major directories here are:
 
 :modules:
-    This contains all the eHive modules, which are written in Perl
+    This contains all the eHive modules, which are written in Perl.
 :scripts:
     Has various scripts that are key to initialising, running and
-    debugging the pipeline
+    debugging the pipeline.
 :sql:
-    Contains sql used to build a standard pipeline database
+    Contains sql used to build a standard pipeline database.
 
 Perl dependencies
 -----------------
@@ -108,7 +107,7 @@ Configuration
 
 You may find it convenient (although it is not necessary) to add
 "ensembl-hive/scripts" to your ``$PATH`` variable to make it easier to
-run beekeeper.pl and other useful Hive scripts.
+run ``beekeeper.pl`` and other useful Hive scripts.
 
 -  *using bash syntax:*
 

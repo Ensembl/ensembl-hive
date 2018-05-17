@@ -8,8 +8,8 @@ Dataflow syntax
 * Branch tags are branch numbers (integers, the same as you would use in
   a Runnable when calling ``dataflow_output_id``) that may be grouped into
   semaphores by adding an arrow and a letter code that identifies the group.
-* Essentially, targets are most of the time (local) analysis names, but can
-  also be remote analysis names, or accumulator URLs (local or remote).
+* Essentially, targets are most of the time (local) Analysis names, but can
+  also be remote Analysis names, or accumulator URLs (local or remote).
 * Dataflows to these targets can be further controlled in two manners:
 
   * They can be made conditional using a ``WHEN`` group and a condition. A

@@ -4,9 +4,9 @@
 Long Multiplication pipeline walkthrough
 ========================================
 
-0.  This is a walkthrough of a simple 3-analysis example pipeline.
+0.  This is a walkthrough of a simple 3-Analysis example workflow.
 
-    The goal of the pipeline is to multiply two long numbers. We pretend
+    The goal of the workflow is to multiply two long numbers. We pretend
     that it cannot be done in one operation on a single machine. So we
     decide to split the task into subtasks of multiplying the first long
     number by individual digits of the second long number for the sake
@@ -14,8 +14,8 @@ Long Multiplication pipeline walkthrough
     added together to yield the final product.
 
     We demonstrate what happens in the pipeline with the help of two
-    types of diagrams: job-level dependency (J-)diagrams and
-    analysis-rule (A-)diagrams:
+    types of diagrams: Job-level dependency (J-)diagrams and
+    Analysis-rule (A-)diagrams:
 
     .. list-table::
        :header-rows: 0
@@ -27,16 +27,16 @@ Long Multiplication pipeline walkthrough
            lot of action - the J-diagram will be growing.
 
            J-diagrams can be generated at any moment during a pipeline's
-           execution by running Hive's **visualize\_jobs.pl** script (new
+           execution by running eHive's :ref:`script-visualize_jobs` script (new
            in version/2.5).
          - An **A-diagram** is a directed graph where most of the nodes
-           represent Analyses and edges represent Rules. As a whole it
+           represent Analyses and edges represent rules. As a whole it
            represents the structure of the pipeline which is normally
-           static. The only changing elements will be job counts and
-           analysis colours.
+           static. The only changing elements will be Job counts and
+           Analysis colours.
 
            A-diagrams can be generated at any moment during a pipeline's
-           execution by running Hive's **generate\_graph.pl** script.
+           execution by running eHive's :ref:`script-generate_graph` script.
 
 
     The main bulk of this document is a commented series of snapshots
@@ -50,18 +50,18 @@ Long Multiplication pipeline walkthrough
 
             init_pipeline.pl Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig::LongMult_conf -pipeline_url $PIPELINE_URL   # Initialize the pipeline database from a PipeConfig file
 
-            runWorker.pl -url $PIPELINE_URL -job_id $JOB_ID                                                                  # Run a specific job - this allows you to force your own order of execution. Run a few of these
+            runWorker.pl -url $PIPELINE_URL -job_id $JOB_ID                                                                  # Run a specific Job - this allows you to force your own order of execution. Run a few of these
 
-            beekeeper.pl -url $PIPELINE_URL -analyses_pattern $ANALYSIS_NAME -sync                                           # Force the system to recalculate job counts and determine states of analyses
+            beekeeper.pl -url $PIPELINE_URL -analyses_pattern $ANALYSIS_NAME -sync                                           # Force the system to recalculate Job counts and determine states of Analyses
 
-            visualize_jobs.pl -url $PIPELINE_URL -out long_mult_jobs_${STEP_NUMBER}.png                                      # To make a J-diagram snapshot (it is convenient to have synchronized numbering)
+            visualize_jobs.pl -url $PIPELINE_URL -out long_mult_jobs_${STEP_NUMBER}.png                                      # To make a J-diagram snapshot (it is convenient to have synchronised numbering)
 
-            generate_graph.pl -url $PIPELINE_URL -out long_mult_analyses_${STEP_NUMBER}.png                                  # To make an A-diagram snapshot (it is convenient to have synchronized numbering)
+            generate_graph.pl -url $PIPELINE_URL -out long_mult_analyses_${STEP_NUMBER}.png                                  # To make an A-diagram snapshot (it is convenient to have synchronised numbering)
 
 --------------
 
 
-1. This is our pipeline just after the initialization:
+1. This is our pipeline just after the initialisation:
 
    .. list-table::
       :header-rows: 0
@@ -89,14 +89,14 @@ Long Multiplication pipeline walkthrough
           be changing very little.
 
           The main objects on A-diagram are rectangles with rounded corners,
-          they represent Analyses. Analyses are "types" of Jobs (Analyses
+          they represent Analyses. Analyses are types of Jobs (Analyses
           broadly define which code to run, where and how, but miss specific
           parameters which become defined in Jobs). In this pipeline we have
-          three types: 'take_b_apart', 'part_multiply' and 'add_together'.
+          three types: "take_b_apart", "part_multiply" and "add_together".
 
           The "take_b_apart" Analysis contains two Jobs, which are in
-          'READY' state (can be checked-out for execution). Our colour for
-          'READY' is green, so both the Analysis and the specific Jobs are
+          READY state (can be checked-out for execution). Our colour for
+          READY is green, so both the Analysis and the specific Jobs are
           shown in green.
 
 
@@ -108,30 +108,30 @@ Long Multiplication pipeline walkthrough
       * - |image2|
         -
         - |image3|
-      * - Job\_1 has finished running and is now in 'DONE' state
+      * - Job_1 has finished running and is now in DONE state
           (colour-coded blue). It has generated 6 more Jobs: five in Analysis
-          'part\_multiply' (splitting its own task into parts) and one in
-          Analysis 'add\_together' (which will recombine the results of the
+          "part_multiply" (splitting its own task into parts) and one in
+          Analysis "add_together" (which will recombine the results of the
           former into the final result).
 
-          The newly created 'part\_multiply' Jobs also control a Semaphore
-          which blocks the 'add\_together' Job which is in 'SEMAPHORED'
+          The newly created "part_multiply" Jobs also control a Semaphore
+          which blocks the "add_together" Job which is in SEMAPHORED
           state and cannot be executed yet (grey). The Semaphore is
           essentially a counter that gets decremented each time one of the
-          controlling Jobs becomes 'DONE'. It is our primary mechanism for
-          synchronization of control- and dataflow.
+          controlling Jobs becomes DONE. It is our primary mechanism for
+          synchronisation of control- and dataflow.
 
         -
 
         - The topology of A-diagram doesn't normally change, so pay
           attention at more subtle changes of colours and labels:
 
-          - 'take\_b\_apart' analysis is now yellow (in progress); *"1r+1d" stands for "1 READY and 1 DONE"*
-          - 'part\_multiply' analysis is now green (ready); *"5r" means "5 READY"*
-          - 'add\_together' analysis is now grey (all jobs are waiting); *"1s" means "1 SEMAPHORED" (or blocked).*
+          - "take_b_apart" Analysis is now yellow (in progress); "1r+1d" stands for "1 READY and 1 DONE".
+          - "part_multiply" Analysis is now green (READY); "5r" means "5 READY".
+          - "add_together" Analysis is now grey (all Jobs are waiting); "1s" means "1 SEMAPHORED" (or blocked).
 
 
-3. After running the second Job more jobs have been added to Analyses 'part\_multiply' and 'add\_together'.
+3. After running the second Job more Jobs have been added to Analyses "part_multiply" and "add_together".
 
    .. list-table::
       :header-rows: 0
@@ -139,17 +139,17 @@ Long Multiplication pipeline walkthrough
       * - |image4|
         -
         - |image5|
-      * - There is a new Semaphore, a new group of 'part\_multiply' Jobs to
-          control it, and a new 'add\_together' Job blocked by it.
+      * - There is a new Semaphore, a new group of "part_multiply" Jobs to
+          control it, and a new "add_together" Job blocked by it.
 
-          Note that the child jobs sometimes inherit some of their
+          Note that the child Jobs sometimes inherit some of their
           parameters from their parent Job ("params from: 1", "params from:
-          2"). This is done to save some space.
+          2").
 
         -
-        - - 'take\_b\_apart' Analysis is completed (no more Jobs to run) and turns blue ('DONE')
-          - more 'part\_multiply' jobs have been generated, all are 'READY'
-          - one more 'add\_together' job has been generated, and it is also 'SEMAPHORED'
+        - - "take_b_apart" Analysis is completed (no more Jobs to run) and turns blue (DONE)
+          - more "part_multiply" Jobs have been generated, all are READY
+          - one more "add_together" Job has been generated, and it is also SEMAPHORED
 
    *Note that the job counts of A-diagram do not provide enough
    resolution to tell which Jobs are semaphored by which. Not even the
@@ -167,9 +167,9 @@ Long Multiplication pipeline walkthrough
       * - Once it's done, two things happen:
 
           - one of the links to the Semaphore turns green and its counter
-            gets decremented by 1 (control flow)
-          - some data intended for the Job\_3 is sent from Job\_4 and
-            arrives at an Accumulator (data flow).
+            gets decremented by 1.
+          - some data intended for the Job_3 is sent from Job_4 and
+            arrives at an Accumulator.
 
         -
         -
@@ -182,9 +182,9 @@ Long Multiplication pipeline walkthrough
       * - |image8|
         -
         - |image9|
-      * - After executing these two jobs:
+      * - After executing these two Jobs:
 
-          - the Semaphore counter gets decremented by 2 (by the number of completed jobs)
+          - the Semaphore counter gets decremented by 2 (the number of completed Jobs).
           - the data that they generated gets sent to the corresponding Accumulator.
 
         -
@@ -199,7 +199,7 @@ Long Multiplication pipeline walkthrough
         -
         - |image11|
 
-7. Finally, one of the Semaphores gets completely unblocked, which turns Job\_9 into 'READY' state.
+7. Finally, one of the Semaphores gets completely unblocked, which results in Job_9 changing into "READY" state.
 
    .. list-table::
       :header-rows: 0
@@ -214,16 +214,16 @@ Long Multiplication pipeline walkthrough
           - Accumulators help to assemble multiple data sub-structures into
             one data structure.
 
-          Their operation is synchronized, so that when a Semaphore opens
+          Their operation is synchronised, so that when a Semaphore opens
           its Accumulators are ready for consumption.
         -
-        - - 'add\_together' analysis has turned green, which means it
-            finally contains something 'READY' to run
-          - the label changed to '1s+1r', which stands for "1 SEMAPHORED
+        - - The "add_together" Analysis has turned green, which means it
+            finally contains something READY to run
+          - the label changed to "1s+1r", which stands for "1 SEMAPHORED
             and 1 READY"
 
 
-8. Job\_9 gets executed.
+8. Job_9 gets executed.
 
    .. list-table::
       :header-rows: 0
@@ -231,20 +231,20 @@ Long Multiplication pipeline walkthrough
       * - |image14|
         -
         - |image15|
-      * - We can see that the stream of execution starting at Job\_2
+      * - We can see that the stream of execution starting at Job_2
           finished first. In general, there is no guarantee for the order of
-          execution of jobs that are in 'READY' state.
+          execution of Jobs that are in READY state.
         -
-        - - The results of Job\_9 are deposited into the 'final\_result'
+        - - The results of Job_9 are deposited into the "final_result"
             table.
-          - Unlike Accumulators, 'final\_result' is a pipeline-specific
-            non-Hive table, so no link is retained between the job that
+          - Unlike Accumulators, "final_result" is a pipeline-specific
+            non-eHive table, so no link is retained between the Job that
             generated the data and the data in the table.
-          - There are no more runnable jobs in 'add\_together' analysis, so
-            it turns grey again, with '1s+1d' label for "1 SEMAPHORED and 1
+          - There are no more runnable Jobs in "add_together" Analysis, so
+            it turns grey again, with "1s+1d" label for "1 SEMAPHORED and 1
             DONE"
 
-9. The last 'part\_multiply' job gets run...
+9. The last part_multiply Job gets run...
 
    .. list-table::
       :header-rows: 0
@@ -253,13 +253,13 @@ Long Multiplication pipeline walkthrough
         -
         - |image17|
 
-      * - - Once Job\_7 has run the second Semaphore gets unblocked.
+      * - - Once Job_7 has run the second Semaphore gets unblocked.
           - This makes the second Accumulator ready for consumption and
-            Job\_3 becomes 'READY'.
+            Job_3 becomes READY.
         -
         -
 
-10. Job\_3 gets executed.
+10. Job_3 gets executed.
 
     .. list-table::
        :header-rows: 0
@@ -267,11 +267,11 @@ Long Multiplication pipeline walkthrough
        * - |image18|
          -
          - |image19|
-       * - - Finally, all the jobs are 'DONE' (displayed in blue)
-           - The stream of execution starting at Job\_1 finished second (it
+       * - - Finally, all the Jobs are DONE (displayed in blue)
+           - The stream of execution starting at Job_1 finished second (it
              could easily be the other way around).
          -
-         - The result also goes into 'final\_result' table. We can verify
+         - The result also goes into the final_result table. We can verify
            that the two results are identical.
 
 
