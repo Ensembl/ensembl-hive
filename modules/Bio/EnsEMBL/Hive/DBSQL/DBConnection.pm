@@ -376,8 +376,12 @@ sub run_in_transaction {
 sub has_write_access {
     my $self = shift;
     if ($self->driver eq 'mysql') {
-        my $a =  $self->db_handle->selectrow_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
-        return !scalar(grep {$_ eq 'N'} @$a);
+        my $user_entries =  $self->db_handle->selectall_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
+        my $has_write_access_from_some_host = 0;
+        foreach my $entry (@$user_entries) {
+            $has_write_access_from_some_host ||= !scalar(grep {$_ eq 'N'} @$entry);
+        }
+        return $has_write_access_from_some_host;
     } else {
         # TODO: implement this for other drivers
         return 1;
