@@ -45,7 +45,6 @@ use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('throw');
-use Bio::EnsEMBL::Hive::Utils::Collection;
 
 use Bio::EnsEMBL::Hive::MetaParameters;
 use Bio::EnsEMBL::Hive::PipelineWideParameters;
