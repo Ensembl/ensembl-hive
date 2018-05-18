@@ -68,7 +68,6 @@ use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Hive;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'join_command_args', 'whoami');
-use Bio::EnsEMBL::Hive::Utils::Collection;
 use Bio::EnsEMBL::Hive::Utils::PCL;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::DBSQL::SqlSchemaAdaptor;
