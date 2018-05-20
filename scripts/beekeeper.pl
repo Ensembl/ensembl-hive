@@ -261,7 +261,6 @@ sub main {
         undef $discard_ready_jobs;
         undef $kill_worker_id;
         undef $sync;
-        $self->{'max_loops'} = 0;
         $self->{'read_only'} = 1;
     }
 
@@ -425,17 +424,6 @@ sub main {
         $self->{'beekeeper'}->set_cause_of_death('LOOP_LIMIT') unless $self->{'read_only'};
     }
 
-    if ($self->{'read_only'}) {
-        $has_error = 1;
-        print STDERR "\n";
-        print STDERR "*" x 70, "\n";
-        print STDERR "* beekeeper.pl is running in read-only mode, i.e. it only\n";
-        print STDERR "* prints the current status of the pipeline.\n";
-        print STDERR "*\n";
-        print STDERR "*" x 70, "\n";
-        print STDERR "\n";
-    }
-
     exit($has_error);
 }
 
@@ -524,7 +512,7 @@ sub run_autonomously {
 
     my $hive_dba    = $pipeline->hive_dba;
     my $queen       = $hive_dba->get_Queen;
-    my $meadow_user = $self->{'beekeeper'}->meadow_user;
+    my $meadow_user = $self->{'beekeeper'} && $self->{'beekeeper'}->meadow_user;
 
     my $pathless_resourceless_worker_cmd = generate_worker_cmd($self, $analyses_pattern, $run_job_id);
 
@@ -535,7 +523,7 @@ sub run_autonomously {
 
         print("\nBeekeeper : loop #$iteration ======================================================\n");
 
-        $queen->check_for_dead_workers($valley, 0);
+        $queen->check_for_dead_workers($valley, 0) unless $self->{'read_only'};
 
         # this section is where the beekeeper decides whether or not to stop looping
         $reasons_to_exit = $queen->print_status_and_return_reasons_to_exit( $list_of_analyses, $self->{'debug'});
@@ -585,8 +573,8 @@ sub run_autonomously {
 
         $hive_dba->get_RoleAdaptor->print_active_role_counts;
 
-        my $workers_to_submit_by_meadow_type_rc_name
-            = Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);
+        my $workers_to_submit_by_meadow_type_rc_name = $self->{'read_only'} ? {} :
+              Bio::EnsEMBL::Hive::Scheduler::schedule_workers_resync_if_necessary($queen, $valley, $list_of_analyses);
 
         if( keys %$workers_to_submit_by_meadow_type_rc_name ) {
 
@@ -656,6 +644,16 @@ sub run_autonomously {
                     $queen->store( \@pre_allocated_workers );
                 }
             }
+
+        } elsif ($self->{'read_only'}) {
+            print STDERR "\n";
+            print STDERR "*" x 70, "\n";
+            print STDERR "* beekeeper.pl is running in read-only mode, i.e. it only\n";
+            print STDERR "* prints the current status of the pipeline.\n";
+            print STDERR "*\n";
+            print STDERR "*" x 70, "\n";
+            print STDERR "\n";
+
         } else {
             print "\nBeekeeper : not submitting any workers this iteration\n";
             $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
@@ -668,6 +666,7 @@ sub run_autonomously {
                 $hive_dba->dbc->disconnect_if_idle;
                 printf("Beekeeper : going to sleep for %.2f minute(s). Expect next iteration at %s\n", $self->{'sleep_minutes'}, scalar localtime(time+$self->{'sleep_minutes'}*60));
                 sleep($self->{'sleep_minutes'}*60);
+                last if $self->{'read_only'};
                 # this is a good time to check up on other beekeepers as well:
                 $self->{'beekeeper'}->adaptor->bury_other_beekeepers($self->{'beekeeper'});
                 if ($self->{'beekeeper'}->check_if_blocked()) {
@@ -729,13 +728,13 @@ sub run_autonomously {
     $self->{'logmessage_adaptor'}->store_beekeeper_message($self->{'beekeeper_id'},
         "stopped looping because of $stringified_reasons",
         $cause_of_death_is_error ? 'PIPELINE_ERROR' : 'INFO',
-        $beekeeper_cause_of_death);
+        $beekeeper_cause_of_death) unless $self->{'read_only'};
 
     if ($reasons_to_exit and $ENV{EHIVE_SLACK_WEBHOOK}) {
         send_beekeeper_message_to_slack($ENV{EHIVE_SLACK_WEBHOOK}, $self->{'pipeline'}, $cause_of_death_is_error, 1, $stringified_reasons, $loop_until);
     }
 
-    $self->{'beekeeper'}->set_cause_of_death($beekeeper_cause_of_death);
+    $self->{'beekeeper'}->set_cause_of_death($beekeeper_cause_of_death) unless $self->{'read_only'};
     printf("Beekeeper: dbc %d disconnect cycles\n", $hive_dba->dbc->disconnect_count);
     return $cause_of_death_is_error;
 }
