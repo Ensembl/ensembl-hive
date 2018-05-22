@@ -100,46 +100,7 @@ param_required()    3  (die)  0  (die)   3  (die)   0  (die)
 Exporting data from a Runnable (dataflow)
 =========================================
 
-eHive is an *event-driven* system whereby agents trigger events that
-are immediately reacted upon. The main event is called "dataflow" (see
-:ref:`dataflows` for more information). A dataflow event is made up of
-two parts: An event, which is identified by a "branch number", with an
-attached data payload, consisting of parameters. A Runnable can create
-as many events as desired, whenever desired. The branch number can be
-any integer, but note that "-2", "-1", "0", and "1" have special meaning
-within eHive. -2, -1, and 0 are special branches for 
-:ref:`error handling <resource-limit-dataflow>`, and 1 is the autoflow branch. 
-
-.. warning::
-
-    If a Runnable explicitly generates a dataflow event on branch 1, then
-    no autoflow event will be generated when the Job finishes. This is
-    unusual behaviour -- many pipelines expect and depend on autoflow
-    coinciding with Job completion. Therefore, you should avoid explicitly
-    creating dataflow on branch 1, unless no alternative exists to produce
-    the correct logic in the Runnable. If you do override the autoflow by
-    creating an event on branch 1, be sure to clearly indicate this in the
-    Runnable's documentation.
-
-Within a Runnable, dataflow events are performed via the ``$self->dataflow_output_id($data,
-$branch_number)`` method.
-
-The payload ``$data`` must be of one of these types:
-
-- A hash-reference that maps parameter names (strings) to their values,
-- An array-reference of hash-references of the above type, or
-- ``undef`` to propagate the Job's input_id.
-
-If no branch number is provided, it defaults to 1.
-
-Runnables can also use ``dataflow_output_ids_from_json($filename, $default_branch)``.
-This method simply wraps ``dataflow_output_id``, allowing external programs
-to easily generate events. The method takes two arguments:
-
-#. The path to a file containing one JSON object per line. Each line can be
-   prefixed with a branch number (and some whitespace), which will override
-   the default branch number.
-#. The default branch number (defaults to 1).
+Dataflow events (:ref:`dataflows <dataflows>`) are a key part of eHive pipelines. They provide both a mechanism for signalling other pipeline components, as well as a mechanism for transmitting data. Functions are provided to allow Runnables to generate dataflow events with control over timing and data payload. These functions are covered in detail in the :ref:`runnable API documentation <runnable_api_dataflows>`.
 
 
 Reading in data from external files and databases
