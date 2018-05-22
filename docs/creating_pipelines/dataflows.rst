@@ -212,6 +212,9 @@ funnel. In eHive, this process is referred to as "semaphore propagation".
     {   -logic_name => 'Delta',
     },
 
+Here, Delta will be blocked until all Beta Jobs have completed. It will
+also be blocked until any child Gamma Jobs that may have been seeded by the
+Beta Jobs are complete.
 
 Dataflow using special error handling branches
 ----------------------------------------------

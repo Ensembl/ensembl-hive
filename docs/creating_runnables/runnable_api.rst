@@ -91,36 +91,50 @@ be used to:
 - use a network filesystem (needed for distributed applications, e.g. over
   MPI). See :ref:`worker_temp_directory_name-mpi` in the :ref:`howto-mpi` section.
 
+.. _runnable_api_dataflows:
 
 Dataflows
 ---------
 
 eHive is an *event-driven* system whereby agents trigger events that
-are immediately reacted upon. The main event is called "Dataflow" (see
-:ref:`dataflows` for more information) and
-consists of sending some data somewhere. The destination of a Dataflow
-event must be defined in the pipeline graph itself, and is then referred to
-by a "branch number".
+are immediately reacted upon. The main event is called "dataflow" (see
+:ref:`dataflows` for more information). A dataflow event is made up of
+two parts: An event, which is identified by a "branch number", with an
+attached data payload, consisting of parameters. A Runnable can create
+as many events as desired, whenever desired. The branch number can be
+any integer, but note that "-2", "-1", "0", and "1" have special meaning
+within eHive. -2, -1, and 0 are special branches for
+:ref:`error handling <resource-limit-dataflow>`, and 1 is the autoflow branch.
 
-Within a Runnable, Dataflow events are performed via the ``$self->dataflow_output_id($data,
+.. warning::
+
+    If a Runnable explicitly generates a dataflow event on branch 1, then
+    no autoflow event will be generated when the Job finishes. This is
+    unusual behaviour -- many pipelines expect and depend on autoflow
+    coinciding with Job completion. Therefore, you should avoid explicitly
+    creating dataflow on branch 1, unless no alternative exists to produce
+    the correct logic in the Runnable. If you do override the autoflow by
+    creating an event on branch 1, be sure to clearly indicate this in the
+    Runnable's documentation.
+
+Within a Runnable, dataflow events are performed via the ``$self->dataflow_output_id($data,
 $branch_number)`` method.
 
 The payload ``$data`` must be of one of these types:
 
-- hash-reference that maps parameter names (strings) to their values,
-- array-reference of hash-references of the above type,
-- ``undef`` to propagate the job's input_id.
+- A hash-reference that maps parameter names (strings) to their values,
+- An array-reference of hash-references of the above type, or
+- ``undef`` to propagate the Job's input_id.
 
-The branch number defaults to 1 and can be skipped. Generally speaking, it
-has to be an integer.
+If no branch number is provided, it defaults to 1.
 
-Runnables can also use ``$self->dataflow_output_ids_from_json($filename, $default_branch)``.
-This method simply wraps ``$self->dataflow_output_id``, allowing external programs
+Runnables can also use ``dataflow_output_ids_from_json($filename, $default_branch)``.
+This method simply wraps ``dataflow_output_id``, allowing external programs
 to easily generate events. The method takes two arguments:
 
 #. The path to a file containing one JSON object per line. Each line can be
    prefixed with a branch number (and some whitespace), which will override
    the default branch number.
-#. The default branch number (defaults to 1 too).
+#. The default branch number (defaults to 1).
 
 
