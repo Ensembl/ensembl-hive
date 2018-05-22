@@ -164,13 +164,56 @@ diagram <hive_schema.png>`__ and `eHive schema
 description <hive_schema.html>`__) for details on these tables and
 their relations.
 
-In addition to the tables, there is a "progress" view which summarizes the
-progression of work across the Analyses in a pipeline:
+In addition to the tables, there are a number of views which summarize the
+activity and progression of work across the Analyses in a pipeline.
 
-::
+First of all, ``beekeeper_activity`` shows all the registered beekeepers,
+with some information about the number of loops they executed, when they
+were last seen, etc. The example query here lists the beekeepers that are
+alive and the ones that have "disappeared" (i.e. likely interrupted with
+Ctrl+C).::
 
-            SELECT * from progress;
+    > SELECT * FROM beekeeper_activity WHERE cause_of_death IS NULL OR cause_of_death = "DISAPPEARED";
+    +--------------+-------------+-----------------------+---------------+------------+------------+----------------+----------------+---------------------+---------------------------+------------+
+    | beekeeper_id | meadow_user | meadow_host           | sleep_minutes | loop_limit | is_blocked | cause_of_death | loops_executed | last_heartbeat      | time_since_last_heartbeat | is_overdue |
+    +--------------+-------------+-----------------------+---------------+------------+------------+----------------+----------------+---------------------+---------------------------+------------+
+    |            1 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | DISAPPEARED    |              7 | 2018-05-12 22:55:05 | NULL                      |       NULL |
+    |            3 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | DISAPPEARED    |             26 | 2018-05-12 23:22:37 | NULL                      |       NULL |
+    |            4 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | DISAPPEARED    |             86 | 2018-05-13 00:48:45 | NULL                      |       NULL |
+    |           11 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | DISAPPEARED    |           2425 | 2018-05-15 14:01:24 | NULL                      |       NULL |
+    |           19 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | DISAPPEARED    |              3 | 2018-05-19 10:44:10 | NULL                      |       NULL |
+    |           20 | muffato     | ebi-cli-002.ebi.ac.uk |             1 |       NULL |          0 | NULL           |           3180 | 2018-05-21 16:00:17 | 00:00:57                  |          0 |
+    +--------------+-------------+-----------------------+---------------+------------+------------+----------------+----------------+---------------------+---------------------------+------------+
 
+Then, you can dig a bit further into the list of what is running with the
+``live_roles`` table::
+
+    > SELECT * FROM live_roles;
+    +-------------+-------------+-------------------+---------------------+-------------+---------------------------------------+----------+
+    | meadow_user | meadow_type | resource_class_id | resource_class_name | analysis_id | logic_name                            | count(*) |
+    +-------------+-------------+-------------------+---------------------+-------------+---------------------------------------+----------+
+    | mateus      | LSF         |                 7 | 2Gb_job             |          88 | hmm_thresholding_searches             |     1855 |
+    | mateus      | LSF         |                14 | 8Gb_job             |          89 | hmm_thresholding_searches_himem       |       10 |
+    | mateus      | LSF         |                18 | 64Gb_job            |          90 | hmm_thresholding_searches_super_himem |        1 |
+    | muffato     | LSF         |                 7 | 2Gb_job             |          88 | hmm_thresholding_searches             |      929 |
+    | muffato     | LSF         |                14 | 8Gb_job             |          89 | hmm_thresholding_searches_himem       |        2 |
+    | muffato     | LSF         |                18 | 64Gb_job            |          90 | hmm_thresholding_searches_super_himem |        7 |
+    +-------------+-------------+-------------------+---------------------+-------------+---------------------------------------+----------+
+
+This example shows a "collaborative" run of the pipeline, with two users
+running about 2,900 jobs.
+
+Finally, the "progress" view tells you how your jobs are doing::
+
+    > SELECT * FROM  progress;
+    +----------------------+----------------+--------+-------------+-----+----------------+
+    | analysis_name_and_id | resource_class | status | retry_count | cnt | example_job_id |
+    +----------------------+----------------+--------+-------------+-----+----------------+
+    | chrom_sizes(1)       | default        | DONE   |           0 |   1 |              1 |
+    | base_age_factory(2)  | 100Mb          | DONE   |           0 |   1 |              2 |
+    | base_age(3)          | 3.6Gb          | DONE   |           0 |  25 |              4 |
+    | big_bed(4)           | 1.8Gb          | DONE   |           0 |   1 |              3 |
+    +----------------------+----------------+--------+-------------+-----+----------------+
 
 If you see Jobs in :hivestatus:`<FAILED>[ FAILED ]` state or Jobs with
 retry\_count > 0 (which means they have failed at least once and had
