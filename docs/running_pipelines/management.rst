@@ -68,6 +68,160 @@ reconciliation and update of Worker statuses can be invoked by running
 Tips for performance tuning and load management
 -----------------------------------------------
 
+Resource optimisation
++++++++++++++++++++++
+
+eHive automaticaly gathers resource usage information about every
+workers and stores that in the ``worker_resource_usage`` table. Although it
+can be accessed directly, the ``resource_usage_stats`` view gives a nicer
+summary for each analysis::
+
+    > SELECT * FROM resource_usage_stats;
+    +---------------------------+-------------+--------------------------+-------------+---------+--------------+--------------+--------------+---------------+---------------+---------------+
+    | analysis                  | meadow_type | resource_class           | exit_status | workers | min_mem_megs | avg_mem_megs | max_mem_megs | min_swap_megs | avg_swap_megs | max_swap_megs |
+    +---------------------------+-------------+--------------------------+-------------+---------+--------------+--------------+--------------+---------------+---------------+---------------+
+    | create_tracking_tables(1) | LSF         | default(1)               | done        |       1 |      56.7109 |        56.71 |      56.7109 |          NULL |          NULL |          NULL |
+    | MLSSJobFactory(2)         | LSF         | default_with_registry(5) | done        |       1 |      67.5625 |        67.56 |      67.5625 |          NULL |          NULL |          NULL |
+    | count_blocks(3)           | LSF         | default_with_registry(5) | done        |       1 |      56.9492 |        56.95 |      56.9492 |          NULL |          NULL |          NULL |
+    | initJobs(4)               | LSF         | default_with_registry(5) | done        |       1 |      66.6445 |        66.64 |      66.6445 |          NULL |          NULL |          NULL |
+    | createChrJobs(5)          | LSF         | default_with_registry(5) | done        |       1 |      61.2188 |        61.22 |      61.2188 |          NULL |          NULL |          NULL |
+    | createSuperJobs(6)        | LSF         | default_with_registry(5) | done        |       2 |      61.1992 |        61.20 |       61.207 |          NULL |          NULL |          NULL |
+    | createOtherJobs(7)        | LSF         | crowd_with_registry(4)   | done        |       1 |      100.398 |       100.40 |      100.398 |          NULL |          NULL |          NULL |
+    | dumpMultiAlign(8)         | LSF         | crowd(2)                 | done        |      52 |      108.848 |       695.60 |      1330.91 |          NULL |          NULL |          NULL |
+    | emf2maf(9)                | LSF         | crowd(2)                 | done        |      46 |      58.3008 |       132.88 |      150.695 |          NULL |          NULL |          NULL |
+    | compress(10)              | LSF         | default(1)               | done        |      17 |      58.1758 |        58.24 |      58.2695 |          NULL |          NULL |          NULL |
+    | md5sum(11)                | LSF         | default(1)               | done        |       2 |      58.2227 |        58.23 |      58.2344 |          NULL |          NULL |          NULL |
+    | move_maf_files(12)        | LSF         | default(1)               | done        |       1 |      58.1914 |        58.19 |      58.1914 |          NULL |          NULL |          NULL |
+    | readme(13)                | LSF         | default_with_registry(5) | done        |       2 |      77.5859 |        83.13 |       88.668 |          NULL |          NULL |          NULL |
+    | targz(14)                 | NULL        | default(1)               | NULL        |       1 |         NULL |         NULL |         NULL |          NULL |          NULL |          NULL |
+    +---------------------------+-------------+--------------------------+-------------+---------+--------------+--------------+--------------+---------------+---------------+---------------+
+
+In this example you can see how much memory each analysis used and decide
+how much to allocate them, e.g. 100 Mb for most analyses, 200 Mb for
+"createOtherJobs" and "emf2maf", and 1,500 Mb for "dumpMultiAlign".
+However, it seems that the average memory usage of "dumpMultiAlign" is below
+700 Mb, meaning that more than half of the requested memory could be wasted
+each time.  You can get the actual breakdown with this query::
+
+    > SELECT 100*CEIL(mem_megs/100) AS mem_megs, COUNT(*) FROM worker_resource_usage JOIN role USING (worker_id) WHERE analysis_id = 8 GROUP BY CEIL(mem_megs/100);
+    +----------+----------+
+    | mem_megs | COUNT(*) |
+    +----------+----------+
+    |      200 |        1 |
+    |      300 |        4 |
+    |      400 |        6 |
+    |      500 |       10 |
+    |      600 |        9 |
+    |      700 |        8 |
+    |      800 |        5 |
+    |      900 |        4 |
+    |     1000 |        2 |
+    |     1200 |        2 |
+    |     1400 |        1 |
+    +----------+----------+
+
+You can see that about three quarters of the jobs used less than 700Mb, so
+another strategy is to give 700Mb to the analysis, *expect* some jobs to
+fail (i.e. to be killed by the compute farm) and wire a copy of the
+analysis with more memory on the -1 branch (MEMLIMIT), cf
+:ref:`resource-limit-dataflow`.  You can chain with MEMLIMIT as many
+analyses as required to provide the appropriate memory usage steps, e.g.
+
+.. hive_diagram::
+
+    {   -logic_name => 'Alpha',
+        -flow_into  => {
+           -1 => [ 'Alpha_moremem' ],
+        },
+    },
+    {   -logic_name => 'Alpha_moremem',
+        -flow_into  => {
+           -1 => [ 'Alpha_himem' ],
+        },
+    },
+    {   -logic_name => 'Alpha_himem',
+        -flow_into  => {
+           -1 => [ 'Alpha_hugemem' ],
+        },
+    },
+    {   -logic_name => 'Alpha_hugemem',
+    },
+
+Relying on MEMLIMIT can be inconvenient at times:
+
+* The mechanism may not be available on all job schedulers (of the ones
+  eHive support, only LSF has that functionality).
+* When LSF kills the jobs, the open file handles and database connections
+  are interrupted, potentially leading in corrupted data, and temporary
+  files hanging around.
+* Since the processes are killed in a *random* order and not atomically,
+  sometimes, the child process (e.g. an external program your Runnable is
+  running) will be killed first, and the Runnable will have enough time to
+  record this job attempt as failed (but not as MEMLIMIT), take another job
+  and *then* be killed, making eHive think it is the *second* job that has
+  exceeded the memory requirement. On LSF we advice waiting 30 seconds when
+  detecting that an external command has been killed to give LSF enough time to kill
+  the worker too.
+* This is time-expensive since a job may be tried with several memory
+  requirements before finally finding the right one.
+
+Instead of relying on MEMLIMIT, a more efficient approach is to predict the
+amount of memory the job is going to need. You would first need to
+understand what is causing the high memory usage, and try to correlate that to
+some input parameters (for instance, the length of the chromosome, the
+number of variants, etc). Then you can define several resource classes and
+add ``WHEN`` conditions to the seeding dataflow to wire each job to the right
+resource class.
+Here is an example from an Ensembl Compara pipeline::
+
+    -flow_into => {
+        "2->A" => WHEN (
+                    "(#total_residues_count# <= 3000000)                                          || (#dnafrag_count# <= 10)"                            => "pecan",
+                    "(#total_residues_count#  > 3000000)  && (#total_residues_count# <= 30000000) && (#dnafrag_count#  > 10) && (#dnafrag_count# <= 25)" => "pecan_mem1",
+                    "(#total_residues_count#  > 30000000) && (#total_residues_count# <= 60000000) && (#dnafrag_count#  > 10) && (#dnafrag_count# <= 25)" => "pecan_mem2",
+                    "(#total_residues_count#  > 3000000)  && (#total_residues_count# <= 60000000) && (#dnafrag_count#  > 25)"                            => "pecan_mem2",
+                    "(#total_residues_count#  > 60000000)                                         && (#dnafrag_count#  > 10)"                            => "pecan_mem3",
+                  ),
+        "A->1" => [ "update_max_alignment_length" ],
+    },
+
+
+Resource usage overview
++++++++++++++++++++++++
+
+The data can also be retrieved with the :ref:`generate_timeline.pl
+<script-generate_timeline>` script in the form of a graphical representation::
+
+  generate_timeline.pl --url $EHIVE_URL --mode memory -output timeline_memory_usage.png
+  generate_timeline.pl --url $EHIVE_URL --mode cores -output timeline_cpu_usage.png
+
+.. figure:: timeline_memory_usage.png
+
+    Timeline of the memory usage. The hatched areas represent the amount of
+    memory that has been requested but not used.
+
+Since eHive forces you to bin jobs into a smaller number of analyses, each
+analysis having a single resource class (a memory requirement), each job
+may not run with the exact amount of memory it needs. Some level of memory
+over-reservation **is** expected (although the plot above shows too much of
+that !).
+
+.. figure:: timeline_cpu_usage.png
+
+    Timeline of the CPU usage. The hatched areas represent the fraction of
+    the wall time spent on sleeping or waiting (for I/O, for instance).
+
+It is most of the time expected to not be fully using the CPUs, as most
+jobs will have to read some input data and write some results. both of
+which subject to I/O waits. You also need to consider that all the SQL
+queries you will be sending to a database server (either directly or via an
+Ensembl API) will shift the focus to the server and make your own Runnable
+wait for the result.
+Finally, many job schedulers (such as LSF) can
+only allocate whole CPU cores, meaning that even if you estimate you only
+need 50% of a core, you might be forced to still allocate 1 core and
+"waste" the other 50%.
+
 .. _capacity-and-batch-size:
 
 Capacity and batch size
@@ -288,12 +442,13 @@ determines more Workers are needed, and the ``-total_running_workers_max``
 value hasn't been reached, it will submit more, up to the limit of
 ``-submit_workers_max``.
 
-Database servers
-++++++++++++++++
+Database server choice and configuration
+++++++++++++++++++++++++++++++++++++++++
 
 SQLite can have issues when multiple processes are trying to access the
 database concurrently because each process acquires locks the whole
-database.
+database. As a result, it behaves poorly when the number of workers
+reaches a dozen or so.
 
 MySQL is better at those scenarios and can handle hundreds of concurrent
 active connnections. In our experience, the most important parameters of
@@ -304,3 +459,54 @@ We have only used PostgreSQL in small-scale tests. If you get the chance to
 run large pipelines on PostgreSQL, let us know ! We will be interested
 in hearing how eHive behaves.
 
+Database connections
+++++++++++++++++++++
+
+The Ensembl codebase does, by default, a very poor job at managing database
+connections, and how to solve the "MySQL server has gone away" error is a
+recurrent discussion thread.  Even though eHive's database connections
+themselves are in theory immune to this error, Runnables often use the
+Ensembl connection mechanism via various Ensembl APIs and might still get
+into trouble.  The Core API especially has two evil parameters:
+
+* ``disconnect_when_inactive`` (boolean). When set the API will
+  disconnect after every single query. This can result in exhausting the
+  pool of ports available on the worker's machine, leading to *all*
+  processes on this machine failing to open a network connection. You can
+  spot this when MySQL fails with the error code 99 (*Cannot assign
+  requested address*). Leave this one to zero unless you use other
+  mechanisms such as ``prevent_disconnect`` to prevent this from happening
+  (see below).
+
+* ``reconnect_when_lost`` (boolean). When set the API will ping the server
+  before *every* query, which is expensive.
+
+There are however some useful methods and tools in the Core API:
+
+* ``disconnect_if_idle``. This method will ask the DBConnection object to
+  disconnect from the database if possible (i.e. if the connection is not
+  used for anything). Simple, but it does the job. Use this when you're
+  done with a database.
+
+* ``prevent_disconnect``. This method will run a piece of code with
+  ``disconnect_when_inactive`` unset. Together they can form a clean way of
+  handling database connections:
+
+    1. Set ``disconnect_when_inactive`` generally to 1 -- This works as
+       long as the database is used for just one query once in a while.
+    2. Use ``prevent_disconnect`` blocks when you're going to use the
+       database for multiple, consecutive, queries.
+
+  This way, the connection is only open when it is needed, and closed the
+  rest of the time.
+
+* ``ProxyDBConnection``. In Ensembl, a database connection is bound to one
+  database only. However data can be spread across multiple databases on
+  the same server (e.g. the Ensembl live MySQL server), and the API is
+  going to create one connection for each database, potentially quickly
+  exhausting the number of connections available, and the API is going to
+  create one connection for each database, potentially quickly exhausting
+  the number of connections available. ``ProxyDBConnection`` is a way of
+  pooling multiple database connections to the same server within the same
+  object (connection). See an example in the `Ensembl-compara API
+  <https://github.com/Ensembl/ensembl-compara/blob/release/93/modules/Bio/EnsEMBL/Compara/Utils/CoreDBAdaptor.pm#L73-L109>`__.
