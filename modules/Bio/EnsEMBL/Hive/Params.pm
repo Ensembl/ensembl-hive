@@ -102,7 +102,7 @@ use strict;
 use warnings;
 
 use List::Util qw(first min max minstr maxstr reduce sum shuffle);              # make them available for substituted expressions
-use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc');    # NB: dir_revhash() is used by some substituted expressions, do not remove!
+use Bio::EnsEMBL::Hive::Utils ('stringify', 'dir_revhash', 'go_figure_dbc', 'throw');    # NB: dir_revhash() is used by some substituted expressions, do not remove!
 
 
 =head2 new
@@ -171,7 +171,7 @@ sub _param_possibly_overridden {
 sub _param_silent {
     my $self        = shift @_;
     my $param_name  = shift @_
-        or die "ParamError: calling param() without arguments\n";
+        or throw("ParamError: calling param() without arguments");
 
     if(@_) { # If there is a value (even if undef), then set it!
         my $new_val = shift @_;
@@ -308,7 +308,7 @@ sub param_is_defined {
 sub param {
     my $self        = shift @_;
     my $param_name  = shift @_
-        or die "ParamError: calling param() without arguments\n";
+        or throw("ParamError: calling param() without arguments");
 
     my $value = $self->_param_silent( $param_name, @_ );
     
