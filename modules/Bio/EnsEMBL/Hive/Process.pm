@@ -427,6 +427,13 @@ sub data_dbc {
     my $given_ref = ref( $given_db_conn );
     my $given_signature = ($given_ref eq 'ARRAY' or $given_ref eq 'HASH') ? stringify ( $given_db_conn ) : "$given_db_conn";
 
+    if (!$self->param_is_defined('db_conn') and !$self->db and !$self->dbc) {
+        # go_figure_dbc won't be able to create a DBConnection, so let's
+        # just print a nicer error message
+        $self->input_job->transient_error(0);
+        throw('In standaloneJob mode, $self->data_dbc requires the -db_conn parameter to be defined on the command-line');
+    }
+
     if( !$self->{'_cached_db_signature'} or ($self->{'_cached_db_signature'} ne $given_signature) ) {
         $self->{'_cached_db_signature'} = $given_signature;
         $self->{'_cached_data_dbc'} = go_figure_dbc( $given_db_conn );
