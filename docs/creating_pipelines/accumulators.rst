@@ -23,14 +23,14 @@ initialise them and equivalent Perl code to build the same structure.
 Scalar
 ~~~~~~
 
-:Basic syntax:
+Basic syntax:
     ``?accu_name=scalar_name``
 
-:Extended syntax:
+Extended syntax:
     ``?accu_name=scalar_name&accu_input_variable=output_parameter_name``
 
-:Retrieval:
-    ``my $scalar_value = $self->param('scalar_value');``
+Retrieval:
+    ``my $scalar_value = $self->param('scalar_name');``
 
 This is the simplest type of Accumulator. The basic syntax example passes
 he value of the ``scalar_name`` parameter from the *fan* to the
@@ -42,18 +42,18 @@ define the Accumulator.
 
 In Perl, this is equivalent to doing this:
 
-:Accumulator initialisation:
+Accumulator initialisation:
    ::
 
        my $scalar_name;
 
-:Accumulator extension:
+Accumulator extension:
    ::
 
        $scalar_name = $scalar_name;           # Basic syntax
        $scalar_name = $output_parameter_name; # Extended syntax
 
-:Accumulator retrieval:
+Accumulator retrieval:
    ::
 
        say "Value: $scalar_name";
@@ -62,13 +62,13 @@ In Perl, this is equivalent to doing this:
 Pile
 ~~~~
 
-:Basic syntax:
+Basic syntax:
     ``?accu_name=pile_name&accu_address=[]``
 
-:Extended syntax:
+Extended syntax:
     ``?accu_name=pile_name&accu_address=[]&accu_input_variable=pile_component``
 
-:Retrieval:
+Retrieval:
   ::
 
       my $pile_ref = $self->param('pile_name');
@@ -84,18 +84,18 @@ in a *random* order.
 
 In Perl, this is similar to doing this:
 
-:Accumulator initialisation:
+Accumulator initialisation:
    ::
 
        my @pile_name;
 
-:Accumulator extension:
+Accumulator extension:
    ::
 
        push @pile_name, $pile_name;             # Basic syntax
        push @pile_name, $pile_component;        # Extended syntax
 
-:Accumulator retrieval:
+Accumulator retrieval:
    ::
 
        foreach my $v (@pile_name) {
@@ -106,13 +106,13 @@ In Perl, this is similar to doing this:
 Multiset
 ~~~~~~~~
 
-:Basic syntax:
+Basic syntax:
     ``?accu_name=multiset_name&accu_address=[]``
 
-:Extended syntax:
+Extended syntax:
     ``?accu_name=multiset_name&accu_address=[]&accu_input_variable=multiset_component``
 
-:Retrieval:
+Retrieval:
    ::
 
       my $multiset_ref = $self->param('multiset_name');
@@ -130,18 +130,18 @@ named ``multiset_name``, filling it with either the ``multiset_name`` or
 
 In Perl, this is equivalent to doing this:
 
-:Accumulator initialisation:
+Accumulator initialisation:
    ::
 
        my %multiset_name;
 
-:Accumulator extension:
+Accumulator extension:
    ::
 
        $multiset_name{$multiset_name} += 1;             # Basic syntax
        $multiset_name{$multiset_component} += 1;        # Extended syntax
 
-:Accumulator retrieval:
+Accumulator retrieval:
    ::
 
        foreach my $key (keys %multiset_name) {
@@ -152,13 +152,13 @@ In Perl, this is equivalent to doing this:
 Array
 ~~~~~
 
-:Basic syntax:
+Basic syntax:
     ``?accu_name=array_name&accu_address=[index_name]``
 
-:Extended syntax:
+Extended syntax:
     ``?accu_name=array_name&accu_address=[index_name]&accu_input_variable=array_item``
 
-:Retrieval:
+Retrieval:
    ::
 
       my $array_arrayref = $self->param('array_name');
@@ -174,18 +174,18 @@ positions, filling the gaps with `undef`, in an array named ``array_name``.
 
 In Perl, this is equivalent to doing this:
 
-:Accumulator initialisation:
+Accumulator initialisation:
    ::
 
        my @array_name;
 
-:Accumulator extension:
+Accumulator extension:
    ::
 
        $array_name[$index_name] = $array_name;          # Basic syntax
        $array_name[$index_name] = $array_item;          # Extended syntax
 
-:Accumulator retrieval:
+Accumulator retrieval:
    ::
 
        foreach my $v (@array_name) {
@@ -196,13 +196,13 @@ In Perl, this is equivalent to doing this:
 Hash
 ~~~~
 
-:Basic syntax:
+Basic syntax:
     ``?accu_name=hash_name&accu_address={key_name}``
 
-:Extended syntax:
+Extended syntax:
     ``?accu_name=hash_name&accu_address={key_name}&accu_input_variable=hash_item``
 
-:Retrieval:
+Retrieval:
    ::
 
       my $hash_hashref = $self->param('hash_name');
@@ -218,18 +218,18 @@ eHive puts together the items in a hash named ``hash_name``.
 
 In Perl, this is equivalent to doing this:
 
-:Accumulator initialisation:
+Accumulator initialisation:
    ::
 
        my %hash_name;
 
-:Accumulator extension:
+Accumulator extension:
    ::
 
        $hash_name{$key_name} = $hash_name;          # Basic syntax
        $hash_name{$key_name} = $hash_item;          # Extended syntax
 
-:Accumulator retrieval:
+Accumulator retrieval:
    ::
 
        foreach my $key (keys %hash_name) {
