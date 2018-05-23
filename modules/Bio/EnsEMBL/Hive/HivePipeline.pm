@@ -242,7 +242,7 @@ sub add_new_or_update {
         @unikey_pairs{ @$unikey_keys} = delete @other_pairs{ @$unikey_keys };
 
         if( $object = $coll->find_one_by( %unikey_pairs ) ) {
-            my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object);
+            my $found_display = $verbose && (UNIVERSAL::can($object, 'toString') ? $object->toString : stringify($object));
             if(keys %other_pairs) {
                 print "Updating $found_display with (".stringify(\%other_pairs).")\n" if $verbose;
                 if( ref($object) eq 'HASH' ) {
@@ -258,7 +258,7 @@ sub add_new_or_update {
         } elsif( my $dark_coll = $coll->dark_collection) {
             if( my $shadow_object = $dark_coll->find_one_by( %unikey_pairs ) ) {
                 $dark_coll->forget( $shadow_object );
-                my $found_display = UNIVERSAL::can($shadow_object, 'toString') ? $shadow_object->toString : stringify($shadow_object);
+                my $found_display = $verbose && (UNIVERSAL::can($shadow_object, 'toString') ? $shadow_object->toString : stringify($shadow_object));
                 print "Undeleting $found_display\n" if $verbose;
             }
         }
@@ -274,7 +274,7 @@ sub add_new_or_update {
 
         $object->hive_pipeline($self) if UNIVERSAL::can($object, 'hive_pipeline');
 
-        my $found_display = UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object);
+        my $found_display = $verbose && (UNIVERSAL::can($object, 'toString') ? $object->toString : 'naked entry '.stringify($object));
         print "Created a new $found_display\n" if $verbose;
     }
 
