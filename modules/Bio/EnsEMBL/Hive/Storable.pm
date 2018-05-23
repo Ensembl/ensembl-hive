@@ -124,7 +124,7 @@ sub AUTOLOAD {
 
 #print "Storable::AUTOLOAD : attempting to run '$AUTOLOAD' (".join(', ', @_).")\n";
 
-    my $self = shift @_;
+    my $sub;
 
     if($AUTOLOAD =~ /::(\w+)$/) {
         my $name_to_parse = $1;
@@ -135,6 +135,8 @@ sub AUTOLOAD {
             throw("Storable::AUTOLOAD : could not parse '$name_to_parse'");
         } elsif ($is_an_id) {  # $name_to_parse was something like foo_dataflow_rule_id
 
+          $sub = sub {
+            my $self = shift @_;
             if(@_) {
                 $self->{$foo_id_method_name} = shift @_;
 
@@ -147,9 +149,12 @@ sub AUTOLOAD {
             }
 
             return $self->{$foo_id_method_name};
+          };
 
         } else {                # $name_to_parse was something like foo_dataflow_rule
 
+          $sub = sub {
+            my $self = shift @_;
             if(@_) {    # setter of the object itself
                 $self->{$foo_obj_method_name} = shift @_;
 
@@ -170,8 +175,14 @@ sub AUTOLOAD {
             }
 
             return $self->{$foo_obj_method_name};
+          };
 
         }   # choice of autoloadable functions
+        {
+            no strict 'refs'; ## no critic ProhibitNoStrict
+            *{$AUTOLOAD} = $sub;
+            goto &$sub;
+        }
 
     }
 }
