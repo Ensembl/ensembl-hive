@@ -112,18 +112,32 @@ sub get_my_targets_grouped_by_condition {
 }
 
 
-sub unitargets {
-    my $self    = shift @_;
-    my $targets = shift @_ || $self->get_my_targets;
-
-    if(ref($targets)) {
-        my $unitargets = join( ';', map { ($_->on_condition//'').':'.($_->input_id_template//'').':'.$_->to_analysis_url }
+sub _compute_unitargets {
+    my $targets = shift;
+    return join( ';', map { ($_->on_condition//'').':'.($_->input_id_template//'').':'.$_->to_analysis_url }
                                         sort { ($a->on_condition//'') cmp ($b->on_condition//'')
                                             or ($a->input_id_template//'') cmp ($b->input_id_template//'') }
                                             @$targets);
+}
 
-        return $unitargets;
+# NOTE: By caching the "unitargets" value, we assume that the list of
+# targets will *not* change once the object is loaded. This holds true at
+# the moment, but we need to be careful it remains the case in the future,
+# otherwise the bits that change the targets would have to invalidate the
+# cached value
+sub unitargets {
+    my $self    = shift @_;
+
+    if (@_) {
+        $self->{'_cached_unitargets'} = shift @_;
     }
+
+    unless ($self->{'_cached_unitargets'}) {
+        my $targets = $self->get_my_targets;
+        $self->{'_cached_unitargets'} = _compute_unitargets( $targets );
+    }
+
+    return $self->{'_cached_unitargets'};
 }
 
 

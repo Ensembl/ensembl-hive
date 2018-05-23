@@ -192,7 +192,7 @@ sub parse_flow_into {
                 'from_analysis'             => $from_analysis,
                 'branch_code'               => $branch_name_or_code,
                 'funnel_dataflow_rule'      => $funnel_dataflow_rule,
-                'unitargets'                => Bio::EnsEMBL::Hive::DataflowRule->unitargets($suspended_targets),
+                'unitargets'                => Bio::EnsEMBL::Hive::DataflowRule::_compute_unitargets($suspended_targets),
 #                'unitargets'                => $suspended_targets,
             );
 
