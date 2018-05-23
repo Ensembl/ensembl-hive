@@ -151,6 +151,7 @@ sub parse_flow_into {
             my $this_cond_group_marker = shift @$cond_group;
             die "Expecting $cond_group_marker, got $this_cond_group_marker" unless($this_cond_group_marker eq $cond_group_marker);
 
+            my $suspended_targets = [];
             while(@$cond_group) {
                 my $on_condition    = shift @$cond_group;
                 my $heirs           = shift @$cond_group;
@@ -181,12 +182,11 @@ sub parse_flow_into {
                             'extend_param_stack'        => $extend_param_stack,
                             'to_analysis_url'           => $heir_url,
                         );
+                        push @$suspended_targets, $df_target;
 
                     } # /for all templates
                 } # /for all heirs
             } # /for each condition and heir
-
-            my $suspended_targets = $pipeline->collection_of('DataflowTarget')->find_all_by( 'source_dataflow_rule', undef );
 
             my ($df_rule, $df_rule_is_new) = $pipeline->add_new_or_update( 'DataflowRule', $verbose,  # NB: add_new_or_update returns a list
                 'from_analysis'             => $from_analysis,
