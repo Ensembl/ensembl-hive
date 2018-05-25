@@ -56,7 +56,7 @@ sub main {
                'analysis_id=i'              => \$analysis_id,
                'logic_name=s'               => \$logic_name,
                'job_id=i'                   => \$job_id,
-               'force'                      => \$force,
+               'force!'                     => \$force,
                'beekeeper_id=i'             => \$beekeeper_id,
 
     # Worker control parameters:

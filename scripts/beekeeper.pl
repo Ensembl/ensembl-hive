@@ -112,7 +112,7 @@ sub main {
                'loop_until=s'       => \$self->{'loop_until'},
                'keep_alive'         => \$keep_alive,
                'job_id|run_job_id=i'=> \$run_job_id,
-               'force'              => \$self->{'force'},
+               'force!'             => \$self->{'force'},
                'sleep=f'            => \$self->{'sleep_minutes'},
 
                     # meadow control
