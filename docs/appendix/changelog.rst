@@ -1,6 +1,82 @@
 Changelog
 *********
 
+Version 2.5
+===========
+
+   *Spring 2018 edition*
+
+Main highlights of the release
+------------------------------
+
+Version 2.5 is a stability and usability release, with a number of
+improvements, mostly behind-the-scenes, throughout the system to make it
+more reliable and flexible. In addition, there are major updates to the
+documentation and examples, as well as improved visualisation tools to
+assist users with using eHive to its full potential.
+
+Documentation updates
+---------------------
+
+* New comprehensive user manual at <http://ensembl-hive.readthedocs.io/>.
+* Improved script help output for coverage and clarity.
+* Improved error messages.
+* New example pipelines to illustrate Accumulator strategies (under ``modules/Bio/EnsEMBL/Hive/Examples/Kmer``).
+
+Script updates
+--------------
+
+* All scripts
+    * Harmonised script options across all scripts where possible
+    * Switches (options that are either on or off, such as `--force`) no longer take a 1 or 0 argument, and can be negated with a "no" prefix. For example, ``--force 1`` is now ``--force`` or ``--can_respecialize 0`` is now ``--nocan_respecialize``.
+* beekeeper.pl
+    * Worker respecialization (``--can_respecialize``) is now turned on by default in ``beekeeper.pl`` (but remains off by default in ``runWorker.pl``).
+    * New ``--loop_until`` options "FOREVER", "ANALYSIS_FAILURE", "JOB_FAILURE", and "NO_WORK".
+    * The Beekeeper can now monitor a hive pipeline without affecting it by being given a DB URL with a read-only user.
+    * Beekeeper sessions are now tracked in the eHive database, along with their status, start and end time, cause of death, username that launched the Beekeeper, and command-line options.
+    * Beekeepers can now be passed a specific ``HiveConfig.json`` with the ``--config_file`` option.
+* runWorker.pl
+    * runWorker.pl can now be passed a specific ``HiveConfig.json`` with the ``--config_file`` option.
+* visualize_jobs.pl
+    * New visualize_jobs.pl script which shows a Job-level picture of an eHive pipeline, including parameter and Accumulator values.
+
+Database related updates
+------------------------
+
+* Database handles now protected from timed-out connections.
+* More flexible quoting rules for URL syntax.
+* Passwords are now hidden from process tables.
+
+Runnables
+---------
+
+* Improved NotifyByEmail.
+* Improvements to ``run_system_command()`` and the SystemCommand Runnable.
+* Improved logging, with ``is_error`` replaced by several available ``message_class`` options.
+
+Other improvements
+------------------
+
+* More automated tests and better test coverage.
+* New utility methods in ``Bio::EnsEMBL::Hive::Utils::Test`` to support test plans.
+* Analyses can now be excluded (so that their Jobs will not be claimed by Workers) by setting the new ``is_excluded`` property.
+    * Analyses will automatically be excluded when some error conditions are detected.
+* Meadow and Worker submission updates
+    * New AccountingDisabled configuration option for Meadows where process accounting is unavailable or unreliable.
+    * Pre-registration of workers for more reliable Worker submission and startup.
+
+Also...
+-------
+
+* Semaphores now have their own table in the eHive database, supporting future cross-database semaphore links
+* Prototype Docker and Docker Swarm support (note, this is considered Alpha software and is not yet suitable for production use)
+
+Note
+----
+
+* Support for Perl version 5.10 has been dropped for this and future releases of eHive. This version is known to work with 5.10, but it will no longer be tested against this version.
+
+
 Version 2.4
 ===========
 
