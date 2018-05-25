@@ -69,7 +69,7 @@ sub parse_wait_for {
 
         # create control rules:
     foreach my $condition_url (@$wait_for) {
-        if($condition_url =~ m{^\w+$/}) {
+        if($condition_url =~ m{^\w+$}) {
             my $condition_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $condition_url)
                 or die "Could not find a local analysis '$condition_url' to create a control rule (in '".($ctrled_analysis->logic_name)."')\n";
         }
@@ -161,7 +161,7 @@ sub parse_flow_into {
 
                 while(my ($heir_url, $input_id_template_list) = each %$heirs) {
 
-                    if($heir_url =~ m{^\w+$/}) {
+                    if($heir_url =~ m{^\w+$}) {
                         my $heir_analysis = $pipeline->collection_of('Analysis')->find_one_by('logic_name', $heir_url)
                             or die "Could not find a local analysis named '$heir_url' (dataflow from analysis '".($from_analysis->logic_name)."')\n";
                     }
