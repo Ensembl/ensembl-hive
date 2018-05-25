@@ -129,7 +129,7 @@ sub main {
                'analyses_pattern=s'             => \$self->{'analyses_pattern'},
                'hive_log_dir|hive_output_dir=s' => \$self->{'hive_log_dir'},
                'retry_throwing_jobs!'           => \$self->{'retry_throwing_jobs'},
-               'can_respecialize!'              => \$self->{'can_respecialize'},
+               'can_respecialize|can_respecialise!' => \$self->{'can_respecialize'},
                'debug=i'                        => \$self->{'debug'},
                'submit_log_dir=s'               => \$self->{'submit_log_dir'},
                'worker_delay_startup_seconds=i' => \$self->{'worker_delay_startup_seconds'},

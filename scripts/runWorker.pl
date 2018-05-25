@@ -68,7 +68,7 @@ sub main {
                'hive_log_dir|hive_output_dir=s'         => \$hive_log_dir,       # keep compatibility with the old name
                'worker_log_dir|worker_output_dir=s'     => \$worker_log_dir,     # will take precedence over hive_log_dir if set
                'retry_throwing_jobs!'       => \$retry_throwing_jobs,
-               'can_respecialize!'          => \$can_respecialize,
+               'can_respecialize|can_respecialise!' => \$can_respecialize,
                'worker_delay_startup_seconds=i' => \$worker_delay_startup_seconds,
                'worker_crash_on_startup_prob=f' => \$worker_crash_on_startup_prob,
 
