@@ -18,7 +18,7 @@ assist users with using eHive to its full potential.
 Documentation updates
 ---------------------
 
-* New comprehensive user manual at <http://ensembl-hive.readthedocs.io/>.
+* New comprehensive user manual at http://ensembl-hive.readthedocs.io/
 * Improved script help output for coverage and clarity.
 * Improved error messages.
 * New example pipelines to illustrate Accumulator strategies (under ``modules/Bio/EnsEMBL/Hive/Examples/Kmer``).
@@ -26,25 +26,32 @@ Documentation updates
 Script updates
 --------------
 
-* All scripts
-    * Harmonised script options across all scripts where possible
+* All scripts:
+
+    * Harmonised script options across all scripts where possible.
     * Switches (options that are either on or off, such as `--force`) no longer take a 1 or 0 argument, and can be negated with a "no" prefix. For example, ``--force 1`` is now ``--force`` or ``--can_respecialize 0`` is now ``--nocan_respecialize``.
-* beekeeper.pl
+
+* beekeeper.pl:
+
     * Worker respecialization (``--can_respecialize``) is now turned on by default in ``beekeeper.pl`` (but remains off by default in ``runWorker.pl``).
     * New ``--loop_until`` options "FOREVER", "ANALYSIS_FAILURE", "JOB_FAILURE", and "NO_WORK".
     * The Beekeeper can now monitor a hive pipeline without affecting it by being given a DB URL with a read-only user.
     * Beekeeper sessions are now tracked in the eHive database, along with their status, start and end time, cause of death, username that launched the Beekeeper, and command-line options.
     * Beekeepers can now be passed a specific ``HiveConfig.json`` with the ``--config_file`` option.
-* runWorker.pl
+
+* runWorker.pl:
+
     * runWorker.pl can now be passed a specific ``HiveConfig.json`` with the ``--config_file`` option.
-* visualize_jobs.pl
+
+* visualize_jobs.pl:
+
     * New visualize_jobs.pl script which shows a Job-level picture of an eHive pipeline, including parameter and Accumulator values.
 
 Database related updates
 ------------------------
 
 * Database handles now protected from timed-out connections.
-* More flexible quoting rules for URL syntax.
+* More flexible quoting rules for URL syntax, allowing extra parameters to be passed.
 * Passwords are now hidden from process tables.
 
 Runnables
@@ -57,13 +64,20 @@ Runnables
 Other improvements
 ------------------
 
-* More automated tests and better test coverage.
+* New ``hive_default_max_retry_count`` for PipeConfig files to set the retry count for all analyses in one place.
+
 * New utility methods in ``Bio::EnsEMBL::Hive::Utils::Test`` to support test plans.
+
 * Analyses can now be excluded (so that their Jobs will not be claimed by Workers) by setting the new ``is_excluded`` property.
+
     * Analyses will automatically be excluded when some error conditions are detected.
-* Meadow and Worker submission updates
+
+* Meadow and Worker submission updates:
+
     * New AccountingDisabled configuration option for Meadows where process accounting is unavailable or unreliable.
     * Pre-registration of workers for more reliable Worker submission and startup.
+
+* More automated tests and better test coverage.
 
 Also...
 -------
