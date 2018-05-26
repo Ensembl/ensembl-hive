@@ -3,4 +3,5 @@
    :foreign_keys: $EHIVE_ROOT_DIR/sql/foreign_keys.sql
    :title: Hive
    :embed_diagrams:
+   :cached:
 

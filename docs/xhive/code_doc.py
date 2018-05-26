@@ -21,6 +21,7 @@ import errno
 import json
 import os
 import os.path
+import pickle
 import subprocess
 import sys
 
@@ -69,7 +70,11 @@ class SchemaDocumentation(IncludeCommand):
             'intro' : directives.unchanged,
             'url' : directives.unchanged,
             'embed_diagrams' : directives.flag,
+            'cached' : directives.flag,
             }
+
+    # Where to keep the cached outputs
+    cache_filename = os.path.join("_build", "rtd_cache.pickle")
 
     def get_command(self):
         command = [
@@ -90,6 +95,34 @@ class SchemaDocumentation(IncludeCommand):
         if 'intro' in self.options:
             command.extend( ['--intro', self.options['intro'].replace('$EHIVE_ROOT_DIR', os.environ["EHIVE_ROOT_DIR"])] )
         return command
+
+    def get_key(self):
+        schema_file = self.arguments[0].replace('$EHIVE_ROOT_DIR', os.environ["EHIVE_ROOT_DIR"])
+        with open(schema_file, "r") as fh:
+            schema = fh.read()
+        return (schema, tuple(sorted(self.options.items())))
+
+    def get_cache(self):
+        if os.path.exists(self.cache_filename):
+            with open(self.cache_filename, "rb") as fh:
+                return pickle.load(fh)
+        return {}
+
+    def write_cache(self, content_cache):
+        with open(self.cache_filename, "wb") as fh:
+            pickle.dump(content_cache, fh)
+
+    def get_content(self):
+        if 'cached' not in self.options:
+            return super(SchemaDocumentation, self).get_content()
+        key = self.get_key()
+        content_cache = self.get_cache()
+        if key in content_cache:
+            return content_cache[key]
+        content = super(SchemaDocumentation, self).get_content()
+        content_cache[key] = content
+        self.write_cache(content_cache)
+        return content
 
 class ScriptDocumentation(IncludeCommand):
     required_arguments = 1
