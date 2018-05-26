@@ -12,7 +12,7 @@ Checklist to release a new eHive version
 5. On the "version/x.y" branch in README.md file substitute the
    occurences of "master" in the URLs by "version/x.y"  and
    commit it. Do the same in docker/Dockerfile and
-   docs/quickstart/install.rst
+   docs/rtd_upgrade.sh
 
 6. git checkout master
 
