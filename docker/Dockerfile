@@ -22,7 +22,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y && apt-get install -y git && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Clone the repo
-RUN mkdir /repo && git clone -b master https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
+RUN mkdir /repo && git clone -b version/2.5 https://github.com/Ensembl/ensembl-hive.git /repo/ensembl-hive
 
 # Install all the dependencies
 RUN /repo/ensembl-hive/docker/setup_os.Ubuntu-16.04.sh \
