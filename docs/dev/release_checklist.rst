@@ -7,6 +7,8 @@ Checklist to release a new eHive version
 
 3. Check all of the above into "master" branch
 
+In ensembl-hive and all meadows (but not guiHive):
+
 4. git checkout -b version/x.y
 
 5. On the "version/x.y" branch in README.md file substitute the
@@ -21,3 +23,5 @@ Checklist to release a new eHive version
 
 8. Merge the "version/x.y" branch ignoring the changes made in 7). Add
    the ``-s ours`` option to ``git merge``
+
+9. Update default branch on GitHub to point to version/x.y

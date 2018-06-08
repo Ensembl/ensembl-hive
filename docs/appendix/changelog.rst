@@ -85,9 +85,10 @@ Also...
 * Semaphores now have their own table in the eHive database, supporting cross-database semaphore links.
 * Prototype Docker and Docker Swarm support (note, this is considered Alpha software and is not yet suitable for production use).
 
-Note
-----
+Removed in 2.5
+--------------
 
+* Dynamic ``hive_capacity`` is no longer supported.
 * Support for Perl version 5.10 has been dropped for this and future releases of eHive. This version is known to work with 5.10, but it will no longer be tested against this version.
 
 
