@@ -35,8 +35,8 @@ Script updates
 
     * Worker respecialization (``--can_respecialize``) is now turned on by default in ``beekeeper.pl`` (but remains off by default in ``runWorker.pl``).
     * New ``--loop_until`` options "FOREVER", "ANALYSIS_FAILURE", "JOB_FAILURE", and "NO_WORK".
-    * The Beekeeper can now monitor a hive pipeline without affecting it by being given a DB URL with a read-only user.
-    * Beekeeper sessions are now tracked in the eHive database, along with their status, start and end time, cause of death, username that launched the Beekeeper, and command-line options.
+    * The Beekeeper can now monitor an eHive pipeline without affecting it by being given read-only database connection parameters.
+    * Beekeeper sessions are now tracked in the eHive database, along with their status, start and end time, cause of death, user that launched the Beekeeper, and command-line options.
     * Beekeepers can now be passed a specific ``HiveConfig.json`` with the ``--config_file`` option.
 
 * runWorker.pl:
@@ -75,15 +75,15 @@ Other improvements
 * Meadow and Worker submission updates:
 
     * New AccountingDisabled configuration option for Meadows where process accounting is unavailable or unreliable.
-    * Pre-registration of workers for more reliable Worker submission and startup.
+    * Pre-registration of Workers for more reliable Worker submission and startup.
 
 * More automated tests and better test coverage.
 
 Also...
 -------
 
-* Semaphores now have their own table in the eHive database, supporting future cross-database semaphore links
-* Prototype Docker and Docker Swarm support (note, this is considered Alpha software and is not yet suitable for production use)
+* Semaphores now have their own table in the eHive database, supporting cross-database semaphore links.
+* Prototype Docker and Docker Swarm support (note, this is considered Alpha software and is not yet suitable for production use).
 
 Note
 ----
