@@ -53,11 +53,12 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
-# NOTE: These two lists must be kept in sync with the schema !
+# NOTE: These lists must be kept in sync with the schema !
 # They are used in a number of queries.
 our $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
+our $ALL_STATUSES_OF_TAKEN_JOBS = qq{'CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS};
 our $ALL_STATUSES_OF_COMPLETE_JOBS = q{'DONE','PASSED_ON'};
-# Not in any list: SEMAPHORED, READY, CLAIMED, COMPILATION (this one is actually not used), FAILED
+# Not in any list: SEMAPHORED, READY, COMPILATION (this one is actually not used), FAILED
 
 sub default_table_name {
     return 'job';
@@ -395,7 +396,7 @@ sub fetch_some_by_analysis_id_limit {
 sub fetch_all_incomplete_jobs_by_role_id {
     my ($self, $role_id) = @_;
 
-    my $constraint = "status IN ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS) AND role_id='$role_id'";
+    my $constraint = "status IN ($ALL_STATUSES_OF_TAKEN_JOBS) AND role_id='$role_id'";
     return $self->fetch_all($constraint);
 }
 
@@ -403,8 +404,7 @@ sub fetch_all_incomplete_jobs_by_role_id {
 sub fetch_all_unfinished_jobs_with_no_roles {
     my $self = shift;
 
-        # the list should contain all status'es that are not "in progress":
-    return $self->fetch_all( "role_id IS NULL AND status IN ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS)" );
+    return $self->fetch_all( "role_id IS NULL AND status IN ($ALL_STATUSES_OF_TAKEN_JOBS)" );
 }
 
 
@@ -453,7 +453,7 @@ sub semaphore_job_by_id {    # used in the end of reblocking a semaphore chain
     my $self    = shift @_;
     my $job_id  = shift @_ or return;
 
-    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status NOT IN ('CLAIMED', 'COMPILATION', $ALL_STATUSES_OF_RUNNING_JOBS)";
+    my $sql = "UPDATE job SET status = 'SEMAPHORED' WHERE job_id=? AND status NOT IN ('COMPILATION', $ALL_STATUSES_OF_TAKEN_JOBS)";
 
     $self->dbc->protected_prepare_execute( [ $sql, $job_id ],
         sub { my ($after) = @_; $self->db->get_LogMessageAdaptor->store_hive_message( 'semaphoring a job'.$after, 'INFO' ); }
@@ -770,7 +770,7 @@ sub release_and_age_job {
                retry_count=retry_count+1,
                runtime_msec=$runtime_msec
          WHERE job_id=$job_id
-           AND status in ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS)
+           AND status in ($ALL_STATUSES_OF_TAKEN_JOBS)
     } );
 
         # FIXME: move the decision making completely to the API side and so avoid the potential race condition.
