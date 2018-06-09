@@ -53,10 +53,11 @@ use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify');
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
-# This variable must be kept up-to-date ! It is used in a number of queries.
-# CLAIMED is missing on purpose because not all the queries actually need it.
+# NOTE: These two lists must be kept in sync with the schema !
+# They are used in a number of queries.
 our $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
-
+our $ALL_STATUSES_OF_COMPLETE_JOBS = q{'DONE','PASSED_ON'};
+# Not in any list: SEMAPHORED, READY, CLAIMED, COMPILATION (this one is actually not used), FAILED
 
 sub default_table_name {
     return 'job';
@@ -841,7 +842,7 @@ sub reset_jobs_for_analysis_id {
         SELECT COUNT(*) AS local_delta, controlled_semaphore_id
         FROM job j
         WHERE controlled_semaphore_id IS NOT NULL
-              AND $analyses_filter $statuses_filter AND status IN ('DONE', 'PASSED_ON')
+              AND $analyses_filter $statuses_filter AND status IN ($ALL_STATUSES_OF_COMPLETE_JOBS)
         GROUP BY controlled_semaphore_id
     };
 
@@ -1071,7 +1072,7 @@ sub balance_semaphores {
 
     my $find_sql    = qq{
                         SELECT * FROM (
-                            SELECT s.semaphore_id, s.local_jobs_counter AS was, COALESCE(COUNT(CASE WHEN fan.status!='DONE' AND fan.status!='PASSED_ON' THEN 1 ELSE NULL END),0) AS should
+                            SELECT s.semaphore_id, s.local_jobs_counter AS was, COALESCE(COUNT(CASE WHEN fan.status NOT IN ($ALL_STATUSES_OF_COMPLETE_JOBS) THEN 1 ELSE NULL END),0) AS should
                             FROM semaphore s
                             LEFT JOIN job fan ON (s.semaphore_id=fan.controlled_semaphore_id)
                             LEFT JOIN job funnel ON (s.dependent_job_id=funnel.job_id)
