@@ -41,6 +41,8 @@ package Bio::EnsEMBL::Hive::DBSQL::RoleAdaptor;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor;
+
 use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 
@@ -141,7 +143,7 @@ sub fetch_all_finished_roles_with_unfinished_jobs {
     my $self = shift;
 
         # the list should contain all status'es that are not "in progress":
-    return $self->fetch_all( "JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON', 'SEMAPHORED') GROUP BY role_id" );
+    return $self->fetch_all( "JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status IN ('CLAIMED',$Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor::ALL_STATUSES_OF_RUNNING_JOBS) GROUP BY role_id" );
 }
 
 
