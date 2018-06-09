@@ -55,7 +55,7 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::ObjectAdaptor');
 
 # This variable must be kept up-to-date ! It is used in a number of queries.
 # CLAIMED is missing on purpose because not all the queries actually need it.
-my $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
+our $ALL_STATUSES_OF_RUNNING_JOBS = q{'PRE_CLEANUP','FETCH_INPUT','RUN','WRITE_OUTPUT','POST_HEALTHCHECK','POST_CLEANUP'};
 
 
 sub default_table_name {
@@ -403,7 +403,7 @@ sub fetch_all_unfinished_jobs_with_no_roles {
     my $self = shift;
 
         # the list should contain all status'es that are not "in progress":
-    return $self->fetch_all( "role_id IS NULL AND status NOT IN ('DONE', 'READY', 'FAILED', 'PASSED_ON', 'SEMAPHORED')" );
+    return $self->fetch_all( "role_id IS NULL AND status IN ('CLAIMED',$ALL_STATUSES_OF_RUNNING_JOBS)" );
 }
 
 
