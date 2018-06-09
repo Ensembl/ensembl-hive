@@ -71,6 +71,7 @@ use warnings;
 use File::Path 'make_path';
 use List::Util qw(max);
 
+use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Utils::Config;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami');  # NB: needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
@@ -298,8 +299,7 @@ sub specialize_worker {
             $controlled_semaphore->increase_by( [ $job ] );
         }
 
-        my %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');
-        $analysis->stats->adaptor->increment_a_counter( $status2counter{$job->status}, -1, $job->analysis_id );
+        $analysis->stats->adaptor->increment_a_counter( $Bio::EnsEMBL::Hive::AnalysisStats::status2counter{$job->status}, -1, $job->analysis_id );
 
     } else {
 

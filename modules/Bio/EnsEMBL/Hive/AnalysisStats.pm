@@ -44,6 +44,9 @@ use Term::ANSIColor;
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
 
+# How to map the job statuses to the counters
+our %status2counter = ('FAILED' => 'failed_job_count', 'READY' => 'ready_job_count', 'DONE' => 'done_job_count', 'PASSED_ON' => 'done_job_count', 'SEMAPHORED' => 'semaphored_job_count');
+
 
 sub unikey {    # override the default from Cacheable parent
     return [ 'analysis' ];
@@ -486,10 +489,10 @@ sub recalculate_from_job_counts {
 
         # only update job_counts if given the hash:
     if($job_counts) {
-        $self->semaphored_job_count( $job_counts->{'SEMAPHORED'} || 0 );
-        $self->ready_job_count(      $job_counts->{'READY'} || 0 );
-        $self->failed_job_count(     $job_counts->{'FAILED'} || 0 );
-        $self->done_job_count(       ( $job_counts->{'DONE'} // 0 ) + ($job_counts->{'PASSED_ON'} // 0 ) ); # done here or potentially done elsewhere
+        foreach my $counter ('semaphored_job_count', 'ready_job_count', 'failed_job_count', 'done_job_count') {
+            my $value = sum( map {$job_counts->{$_} // 0} grep {$status2counter{$_} eq $counter} keys %status2counter);
+            $self->$counter( $value );
+        }
         $self->total_job_count(      sum( values %$job_counts ) || 0 );
     }
 
