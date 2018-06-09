@@ -142,8 +142,7 @@ sub print_active_role_counts {
 sub fetch_all_finished_roles_with_unfinished_jobs {
     my $self = shift;
 
-        # the list should contain all status'es that are not "in progress":
-    return $self->fetch_all( "JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status IN ('CLAIMED',$Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor::ALL_STATUSES_OF_RUNNING_JOBS) GROUP BY role_id" );
+    return $self->fetch_all( "JOIN job USING(role_id) WHERE when_finished IS NOT NULL AND status IN ($Bio::EnsEMBL::Hive::DBSQL::AnalysisJobAdaptor::ALL_STATUSES_OF_TAKEN_JOBS) GROUP BY role_id" );
 }
 
 
