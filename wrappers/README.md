@@ -42,8 +42,8 @@ use to communicate with the Perl side. The protocol is explained in
 GuestProcess itself and consists in passing JSON messages.
 
 > NB: int he future, We may have to add extra arguments to the `run` mode to pass
-> resource-specific parameters. This will probably be needed for JAVA,
-> where -Xmx (and alike parameters) must be set.
+> resource-specific parameters. For example, passing -Xmx (or similar parameters)
+> to Java.
 
 # Guidelines
 
@@ -121,7 +121,6 @@ some aspects of the API might be difficult -or impossible- to implement (like
 Languages that could be implemented:
 * C
 * C++
-* JAVA
 * GO
 * Ruby
 

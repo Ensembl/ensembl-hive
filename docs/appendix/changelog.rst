@@ -57,6 +57,7 @@ Database related updates
 Runnables
 ---------
 
+* Runnables written in Java are now supported.
 * Improved NotifyByEmail.
 * Improvements to ``run_system_command()`` and the SystemCommand Runnable.
 * Improved logging, with ``is_error`` replaced by several available ``message_class`` options.
