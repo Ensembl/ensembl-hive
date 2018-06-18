@@ -66,6 +66,8 @@ sub is_ascii {
 my @source_files = all_source_files($root);
 #Find all files & run
 foreach my $f (@source_files) {
+    # Docker-swarm tutorial
+    next if $f =~ /docs\/contrib\/docker-swarm\/tutorial\.rst$/;
     # Binary files
     next if $f =~ /\.(png|jpg|pdf|pyc|tgz)$/;
     # Unicode-art
