@@ -44,6 +44,7 @@ subtest 'Bio::EnsEMBL::Hive::Meadow' => sub {
     my $virtual_meadow = eval {
         # Meadow's constructor calls cached_name(), which needs name()
         # name() will revert to its original implementation at the end of the scope
+        no warnings qw(redefine);
         local *Bio::EnsEMBL::Hive::Meadow::name = sub {
             return 'this_is_me';
         };
