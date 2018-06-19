@@ -554,7 +554,7 @@ After EnsEMBL rel.72
 * Mon Jun 10 09:54:38 2013 +0100 | Leo Gordon | report job_id of a created job (STDOUT) or warn that it had been created before (STDERR)
 * Thu Jun 6 17:18:11 2013 +0100 | Leo Gordon | sqlite mode now also supports "-hive_force_init 1" flag
 * Thu Jun 6 11:50:40 2013 +0100 | Leo Gordon | bugfix: correct destringification of a single undef on a line
-* Wed Jun 5 17:11:18 2013 +0100 | Leo Gordon | Slow the example down a bit and allow 2 Workers. In "-can_specialize 1" mode the two Workers will complete the whole pipeline.
+* Wed Jun 5 17:11:18 2013 +0100 | Leo Gordon | Slow the example down a bit and allow 2 Workers. In "-can_respecialize 1" mode the two Workers will complete the whole pipeline.
 * Wed Jun 5 17:08:33 2013 +0100 | Leo Gordon | Improved output to distinguish multiple Workers' output in the same stream
 * Wed Jun 5 11:31:17 2013 +0100 | Leo Gordon | setting "-hive_force_init 1" will cause init_pipeline.pl to drop the database prior to creation (use with care!)
 * Tue Jun 4 17:03:05 2013 +0100 | Leo Gordon | added support for stringification/destringification of accumulated values (an element is allowed to be a complex structure)
