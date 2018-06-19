@@ -10,7 +10,7 @@ Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::FoldLeft_conf
     init_pipeline.pl Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::FoldLeft_conf -pipeline_url $EHIVE_URL
 
     # Run all the jobs except the final one
-    runWorker.pl -url $EHIVE_URL -can_respecialize 1 -analyses_pattern '%-report'
+    runWorker.pl -url $EHIVE_URL -can_respecialize -analyses_pattern '%-report'
 
     # Run it in debug mode to see its parameters and find the values that have been folded
     runWorker.pl -url $EHIVE_URL -analyses_pattern 'report' -debug
