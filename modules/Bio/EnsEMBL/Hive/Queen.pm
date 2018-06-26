@@ -286,12 +286,12 @@ sub specialize_worker {
         if($job_status =~/(CLAIMED|PRE_CLEANUP|FETCH_INPUT|RUN|WRITE_OUTPUT|POST_HEALTHCHECK|POST_CLEANUP)/ ) {
             die "Job with dbID='$job_id' is already in progress, cannot run";   # FIXME: try GC first, then complain
         } elsif($job_status =~/(DONE|SEMAPHORED)/ and !$force) {
-            die "Job with dbID='$job_id' is $job_status, please use -force 1 to override";
+            die "Job with dbID='$job_id' is $job_status, please use --force to override";
         }
 
         $analysis = $job->analysis;
         if(($analysis->stats->status eq 'BLOCKED') and !$force) {
-            die "Analysis is BLOCKED, can't specialize a worker. Please use -force 1 to override";
+            die "Analysis is BLOCKED, can't specialize a worker. Please use --force to override";
         }
 
         if(($job_status eq 'DONE') and my $controlled_semaphore = $job->controlled_semaphore) {
