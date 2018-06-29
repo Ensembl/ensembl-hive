@@ -45,16 +45,22 @@ our $VERSION = '2.1';       # Semantic version of the Meadow interface:
                             #   change the Major version whenever an incompatible change is introduced,
                             #   change the Minor version whenever the interface is extended, but compatibility is retained.
 
+=head2 name
 
-sub name {  # also called to check for availability; assume LSF is available if LSF cluster_name can be established
+   Args:       : None
+   Description : Determine the LSF cluster_name, if an LSF meadow is available.
+   Returntype  : String
+
+=cut
+
+sub name {
     my $mcni = 'My cluster name is';
-    my $cmd = "lsid 2>/dev/null | grep '$mcni'";
+    my @lsid_out = `lsid 2>/dev/null`;
 
-#    warn "LSF::name() running cmd:\n\t$cmd\n";
-
-    if(my $name = `$cmd`) {
-        $name=~/^$mcni\s+(\S+)/;
-        return $1;
+    foreach my $lsid_line (@lsid_out) {
+        if ($lsid_line =~ /^$mcni\s+(\S+)/) {
+            return $1;
+        }
     }
 }
 
