@@ -87,18 +87,20 @@ sub count_pending_workers_by_rc_name {
     my ($self) = @_;
 
     my $jnp = $self->job_name_prefix();
-    my $cmd = "bjobs -w -J '${jnp}*' 2>/dev/null | grep PEND";  # "-u all" has been removed to ensure one user's PEND processes
-                                                                #   do not affect another user helping to run the same pipeline.
+    my @bjobs_out = qx{bjobs -w -J '${jnp}*' 2>/dev/null};  # "-u all" has been removed to ensure one user's PEND processes
+                                                          #   do not affect another user helping to run the same pipeline.
 
 #    warn "LSF::count_pending_workers_by_rc_name() running cmd:\n\t$cmd\n";
 
     my %pending_this_meadow_by_rc_name = ();
     my $total_pending_this_meadow = 0;
 
-    foreach my $line (qx/$cmd/) {
-        if($line=~/\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
-            $pending_this_meadow_by_rc_name{$1}++;
-            $total_pending_this_meadow++;
+    foreach my $line (@bjobs_out) {
+        if ($line=~/PEND/) {
+            if($line=~/\b\Q$jnp\E(\S+)\-\d+(\[\d+\])?\b/) {
+                $pending_this_meadow_by_rc_name{$1}++;
+                $total_pending_this_meadow++;
+            }
         }
     }
 
@@ -115,12 +117,11 @@ sub count_running_workers {
     my $total_running_worker_count = 0;
 
     foreach my $meadow_user (@$meadow_users_of_interest) {
-        my $cmd = "bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null | grep RUN | wc -l";
+        my @bjobs_out = qx{bjobs -w -J '${jnp}*' -u $meadow_user 2>/dev/null};
 
 #        warn "LSF::count_running_workers() running cmd:\n\t$cmd\n";
 
-        my $meadow_user_worker_count = qx/$cmd/;
-        $meadow_user_worker_count=~s/\s+//g;       # remove both leading and trailing spaces
+        my $meadow_user_worker_count = scalar(grep {/RUN/} @bjobs_out);
 
         $total_running_worker_count += $meadow_user_worker_count;
     }
