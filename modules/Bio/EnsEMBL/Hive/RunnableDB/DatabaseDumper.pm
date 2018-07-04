@@ -176,6 +176,7 @@ sub fetch_input {
         push @ehive_tables, @{$self->_get_table_list($_)} for @ref_ehive_tables;
     }
     $meta_sth->finish();
+    $self->param('nb_ehive_tables', scalar(@ehive_tables));
 
     # eHive tables are ignored if exclude_ehive is set
     if ($self->param('exclude_ehive')) {
@@ -270,6 +271,9 @@ sub run {
     if(my $return_value = system(bash => (-o => 'pipefail', -c => $cmd))) {
         die "system( $cmd ) failed: $return_value";
     }
+
+    # Only continue if the database is an eHive one
+    return unless $self->param('nb_ehive_tables');
 
     # We add the signature to the dump, so that the job won't rerun on a
     # restored database
