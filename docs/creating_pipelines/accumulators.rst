@@ -107,10 +107,10 @@ Multiset
 ~~~~~~~~
 
 Basic syntax:
-    ``?accu_name=multiset_name&accu_address=[]``
+    ``?accu_name=multiset_name&accu_address={}``
 
 Extended syntax:
-    ``?accu_name=multiset_name&accu_address=[]&accu_input_variable=multiset_component``
+    ``?accu_name=multiset_name&accu_address={}&accu_input_variable=multiset_component``
 
 Retrieval:
    ::
