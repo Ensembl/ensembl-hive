@@ -134,9 +134,11 @@ sub param_defaults {
 
         # Other options
         'skip_dump'     => 0,       # boolean
+        'dump_options'  => undef,   # Extra options to pass to the dump program
 
-        # SystemCmd's options
-        'use_bash_pipefail' => 1,   # We need to make sure the whole command succeeded
+        # SystemCmd's options to make sure the whole command succeeded
+        'use_bash_pipefail' => 1,
+        'use_bash_errexit'  => 1,
     }
 }
 
@@ -229,11 +231,15 @@ sub fetch_input {
         $output = join(' ', '|', @{ $self->param('real_output_db')->to_cmd(undef, undef, undef, undef, 1) } );
     };
 
+    # Extra parameter to add to the command-line
+    my $dump_options = $self->param('dump_options') // [];
+
     # Must be joined because of the redirection / the pipe
     my $cmd = join(' ', 
         @{ $src_dbc->to_cmd('mysqldump', undef, undef, undef, 1) },
         @options,
         @tables,
+        ref($dump_options) ? @$dump_options : ($dump_options,),
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @ignores),
         $output
     );
@@ -251,14 +257,18 @@ sub fetch_input {
         } else {
             $self->warning("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
         }
-    } else {
-        # OK, we can dump. We add the signature to the dump, so that the
+    } elsif ($self->param('nb_ehive_tables')) {
+        # OK, we can dump and this is an eHive database.
+        # We add the signature to the dump, so that the
         # job won't rerun on a restored database
         # We're very lucky that gzipped streams can be concatenated and the
         # output is still valid !
         my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
         $extra_sql =~ s/>/>>/;
         $self->param('cmd', "$cmd; $extra_sql");
+    } else {
+        # Direct dump on a non-eHive database
+        $self->param('cmd', $cmd);
     }
 }
 
