@@ -248,14 +248,18 @@ sub fetch_input {
         } else {
             $self->warning("Skipping the dump because this database has been restored from the target dump. We don't want to overwrite it");
         }
-    } else {
-        # OK, we can dump. We add the signature to the dump, so that the
+    } elsif ($self->param('nb_ehive_tables')) {
+        # OK, we can dump and this is an eHive database.
+        # We add the signature to the dump, so that the
         # job won't rerun on a restored database
         # We're very lucky that gzipped streams can be concatenated and the
         # output is still valid !
         my $extra_sql = qq{echo "INSERT INTO pipeline_wide_parameters VALUES ('$completion_signature', 1);\n" $output};
         $extra_sql =~ s/>/>>/;
         $self->param('cmd', "$cmd; $extra_sql");
+    } else {
+        # Direct dump on a non-eHive database
+        $self->param('cmd', $cmd);
     }
 }
 
