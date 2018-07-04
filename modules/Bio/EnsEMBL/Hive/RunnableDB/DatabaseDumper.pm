@@ -132,8 +132,9 @@ sub param_defaults {
         # Other options
         'skip_dump'     => 0,       # boolean
 
-        # SystemCmd's options
-        'use_bash_pipefail' => 1,   # We need to make sure the whole command succeeded
+        # SystemCmd's options to make sure the whole command succeeded
+        'use_bash_pipefail' => 1,
+        'use_bash_errexit'  => 1,
     }
 }
 
