@@ -155,11 +155,21 @@ sub check_worker_is_alive_and_mine {
 
     my $wpid = $worker->process_id();
     my $this_user = whoami();
-    my $cmd = qq{bjobs $wpid -u $this_user 2>&1 | grep -v 'not found' | grep -v JOBID | grep -v EXIT};
+    my $cmd = qq{bjobs -u $this_user $wpid 2>&1};
 
+    my @bjobs_out = qx/$cmd/;
 #    warn "LSF::check_worker_is_alive_and_mine() running cmd:\n\t$cmd\n";
 
-    my $is_alive_and_mine = qx/$cmd/;
+    my $is_alive_and_mine = 0;
+    foreach my $bjobs_line (@bjobs_out) {
+        unless ($bjobs_line =~ /JOBID|DONE|EXIT/) { # *SUSP, UNKWN, and ZOMBI are "alive" for the purposes of this call
+                                                    # which is typically used to see if the process can be killed.
+                                                    # Can't search for line containing the job id, since it may be
+                                                    # formatted differently in bjob output than in $worker->process_id()
+                                                    # (e.g. for array jobs), so we exclude the header by excluding "JOBID"
+            $is_alive_and_mine = 1;
+        }
+    }
     return $is_alive_and_mine;
 }
 
