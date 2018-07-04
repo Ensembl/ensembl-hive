@@ -131,6 +131,7 @@ sub param_defaults {
 
         # Other options
         'skip_dump'     => 0,       # boolean
+        'dump_options'  => undef,   # Extra options to pass to the dump program
 
         # SystemCmd's options to make sure the whole command succeeded
         'use_bash_pipefail' => 1,
@@ -227,11 +228,15 @@ sub fetch_input {
         $output = join(' ', '|', @{ $self->param('real_output_db')->to_cmd(undef, undef, undef, undef, 1) } );
     };
 
+    # Extra parameter to add to the command-line
+    my $dump_options = $self->param('dump_options') // [];
+
     # Must be joined because of the redirection / the pipe
     my $cmd = join(' ', 
         @{ $src_dbc->to_cmd('mysqldump', undef, undef, undef, 1) },
         @options,
         @tables,
+        ref($dump_options) ? @$dump_options : ($dump_options,),
         (map {sprintf('--ignore-table=%s.%s', $src_dbc->dbname, $_)} @ignores),
         $output
     );
