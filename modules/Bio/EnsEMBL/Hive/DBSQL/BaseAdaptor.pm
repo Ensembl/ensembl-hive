@@ -530,6 +530,31 @@ sub store {
 }
 
 
+=head2 check_and_dereference_analysis_data
+
+   Arg [1]     : string data that may reference an analysis_data_id
+   Usage       : my $value = $self->check_and_dereference_analysis_data($$fetched_row[0])
+   Description : Checks to see if the passed value matches the regular expression
+               : /^_ext(?:\w+)_data_id (\d+)$/ (e.g. "external_data_id 3", pointer to an analysis_data_id).
+               : If so, it returns the entry from the "data" column in analysis_data from the
+               : row containing the given analysis_data_id.
+               : If not, it returns the passed parameter unchanged.
+   Returntype  : string
+
+=cut
+
+sub check_and_dereference_analysis_data {
+    my $self = shift @_;
+    my $possible_analysis_data_id_ref = shift @_;
+
+    if ($possible_analysis_data_id_ref  =~ /^_ext(?:\w+)_data_id (\d+)$/) {
+        return $self->db->get_AnalysisDataAdaptor->fetch_by_analysis_data_id_TO_data($1);
+    } else {
+        return $possible_analysis_data_id_ref;
+    }
+}
+
+
 sub DESTROY { }   # to simplify AUTOLOAD
 
 sub AUTOLOAD {

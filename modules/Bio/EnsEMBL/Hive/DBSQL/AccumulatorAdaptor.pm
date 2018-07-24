@@ -48,6 +48,32 @@ sub default_table_name {
 }
 
 
+sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
+    my ($self, $hashref, $fields) = @_;
+
+    my $overflow_limit = $self->overflow_limit();
+
+    return [ map { eval { my $value = $hashref->{$_};
+                          my $ol = $overflow_limit->{$_};
+                          if (defined($ol) and defined($value) and  (length($value) > $ol)) {
+                              $self->db->get_AnalysisDataAdaptor()->store_if_needed($value);
+                          } else {
+                              $value;
+                          }
+                   }
+
+
+             } @$fields ];
+}
+
+sub overflow_limit {
+    return {
+        'key_signature' => 255,
+        'struct_name'   => 255,
+    };
+}
+
+
 sub fetch_structures_for_job_ids {
     my ($self, $job_ids_csv, $id_scale, $id_offset) = @_;
     $id_scale   ||= 1;
@@ -62,6 +88,9 @@ sub fetch_structures_for_job_ids {
         $sth->execute();
 
         ROW: while(my ($receiving_job_id, $struct_name, $key_signature, $stringified_value) = $sth->fetchrow_array() ) {
+
+            ($key_signature, $struct_name) = map {$self->check_and_dereference_analysis_data($_)}
+                ($key_signature, $struct_name);
 
             my $value = destringify($stringified_value);
 

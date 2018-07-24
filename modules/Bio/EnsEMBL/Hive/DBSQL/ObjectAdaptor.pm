@@ -58,7 +58,7 @@ sub slicer {    # take a slice of the object (if only we could inline in Perl!)
                     ? $object->dbID()
                     : eval { my $value  = $object->$_();
                              my $ol     = $overflow_limit->{$_};
-                             (defined($ol) and length($value)>$ol)
+                             (defined($ol) and defined($value) and length($value)>$ol)
                                 ? $self->db->get_AnalysisDataAdaptor()->store_if_needed( $value )
                                 : $value
                       }

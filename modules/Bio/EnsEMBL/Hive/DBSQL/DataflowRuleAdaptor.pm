@@ -55,6 +55,13 @@ sub default_insertion_method {
 }
 
 
+sub overflow_limit {
+    return {
+        'to_analysis_url' => 255,
+    };
+}
+
+
 sub object_class {
     return 'Bio::EnsEMBL::Hive::DataflowRule';
 }
