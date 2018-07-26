@@ -59,6 +59,11 @@ sub min_batch_time {
     return 2*60*1000;
 }
 
+sub desired_claim_interval_msec {
+    # That's 5 per second
+    return 200;
+}
+
 
 =head1 AUTOLOADED
 
@@ -221,9 +226,7 @@ sub get_or_estimate_batch_size {
                                                         # otherwise it is a request for dynamic estimation:
     } elsif( my $avg_msec_per_job = $self->avg_msec_per_job ) {           # further estimations from collected stats
 
-        $avg_msec_per_job = 100 if($avg_msec_per_job<100);
-
-        $batch_size = POSIX::ceil( $self->min_batch_time / $avg_msec_per_job );
+        $batch_size = POSIX::ceil( $self->num_running_workers * $self->desired_claim_interval_msec / $avg_msec_per_job ) || 1;
 
     } else {        # first estimation when no stats are available (take -$batch_size as first guess, if not zero)
         $batch_size = -$batch_size || 1;
