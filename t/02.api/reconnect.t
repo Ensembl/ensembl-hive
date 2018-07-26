@@ -56,7 +56,11 @@ SKIP: {
 	"-sql \"$find_pid_sql\" | grep -v ID";
     
     my $sth = $dbc->prepare($dbc_query_sql);
+    ok(!$sth->{Active}, 'Statement handle not yet active');
     $sth->execute();
+    ok($sth->{Active}, 'Statement handle now active');
+
+    is_deeply($sth->{NAME}, ['id', 'avalue'], 'Got the correct column names');
 
     my @find_pid_results = `$find_pid_cmd`;
     chomp @find_pid_results;
@@ -75,6 +79,7 @@ SKIP: {
     while (my @values = $sth->fetchrow_array()) {
       $fetched_row_count++;
     }
+    ok(!$sth->{Active}, 'Statement handle not active any more');
     is($fetched_row_count, 10, "were we able to fetch all rows after a db kill");
 }
 

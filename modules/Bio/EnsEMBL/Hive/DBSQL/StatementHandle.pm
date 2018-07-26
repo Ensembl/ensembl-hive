@@ -58,6 +58,12 @@ sub new {
 
     my $self = bless {}, $class;
 
+    my $real_self = {};
+    # $self will remain empty whereas $real_self will actually have all the data
+    # It's only purpose is to offer a hash-reference on which perl allows
+    # calling hash accessors, e.g. $sth->{Active}
+    tie %$self, 'DBIstHashProxy', $real_self;
+
     $self->dbc( $dbc );
     $self->sql( $sql );
     $self->attr( $attr );
@@ -67,9 +73,19 @@ sub new {
     return $self;
 }
 
+## Since $self is a tied hash and doesn't have any data,
+## real_self returns the real underlying hash and is used
+## in all the function calls below
+
+sub real_self {
+    my $self = shift;
+    return tied %$self;
+}
+
 
 sub dbc {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_dbc'} = shift if(@_);
     return $self->{'_dbc'};
 }
@@ -77,6 +93,7 @@ sub dbc {
 
 sub sql {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_sql'} = shift if(@_);
     return $self->{'_sql'};
 }
@@ -84,6 +101,7 @@ sub sql {
 
 sub attr {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_attr'} = shift if(@_);
     return $self->{'_attr'};
 }
@@ -91,6 +109,7 @@ sub attr {
 
 sub dbi_sth {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_dbi_sth'} = shift if(@_);
     return $self->{'_dbi_sth'};
 }
@@ -178,5 +197,30 @@ sub DESTROY {   # note AUTOLOAD/DESTROY interdependence!
         }
     }
 }
+
+
+## Just like AUTOLOAD for function calls, we need to redirect
+## the HASH methods to the DBI::st instance
+
+package DBIstHashProxy;
+
+use base ('Tie::Hash');
+
+sub TIEHASH {
+    my $class = shift;
+    my $self = $_[0];
+    bless $self, $class;
+    return $self;
+}
+
+sub STORE    { $_[0]->{'_dbi_sth'}->{$_[1]} = $_[2] }
+sub FETCH    { $_[0]->{'_dbi_sth'}->{$_[1]} }
+sub FIRSTKEY { my $a = scalar keys %{$_[0]->{'_dbi_sth'}}; each %{$_[0]->{'_dbi_sth'}} }
+sub NEXTKEY  { each %{$_[0]->{'_dbi_sth'}} }
+sub EXISTS   { exists $_[0]->{'_dbi_sth'}->{$_[1]} }
+sub DELETE   { delete $_[0]->{'_dbi_sth'}->{$_[1]} }
+sub CLEAR    { %{$_[0]->{'_dbi_sth'}} = () }
+sub SCALAR   { scalar %{$_[0]->{'_dbi_sth'}} }
+
 
 1;
