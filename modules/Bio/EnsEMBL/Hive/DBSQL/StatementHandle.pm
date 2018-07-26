@@ -58,6 +58,12 @@ sub new {
 
     my $self = bless {}, $class;
 
+    my $real_self = {};
+    # $self will remain empty whereas $real_self will actually have all the data
+    # It's only purpose is to offer a hash-reference on which perl allows
+    # calling hash accessors, e.g. $sth->{Active}
+    tie %$self, 'DBIstHashProxy', $dbi_sth, $real_self;
+
     $self->dbc( $dbc );
     $self->sql( $sql );
     $self->attr( $attr );
@@ -67,9 +73,19 @@ sub new {
     return $self;
 }
 
+## Since $self is a tied hash and doesn't have any data,
+## real_self returns the real underlying hash and is used
+## in most of the function calls below
+
+sub real_self {
+    my $self = shift;
+    return (tied %$self)->[1];
+}
+
 
 sub dbc {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_dbc'} = shift if(@_);
     return $self->{'_dbc'};
 }
@@ -77,6 +93,7 @@ sub dbc {
 
 sub sql {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_sql'} = shift if(@_);
     return $self->{'_sql'};
 }
@@ -84,15 +101,19 @@ sub sql {
 
 sub attr {
     my $self = shift;
+    $self = $self->real_self;
     $self->{'_attr'} = shift if(@_);
     return $self->{'_attr'};
 }
 
 
+## dbi_sth is the exception since it has to be in the first position
+## of the tied structure for Tie::ExtraHash to work.
 sub dbi_sth {
     my $self = shift;
-    $self->{'_dbi_sth'} = shift if(@_);
-    return $self->{'_dbi_sth'};
+    my $self_array = tied %$self;
+    $self_array->[0] = shift if(@_);
+    return $self_array->[0];
 }
 
 
@@ -178,5 +199,26 @@ sub DESTROY {   # note AUTOLOAD/DESTROY interdependence!
         }
     }
 }
+
+
+## Just like AUTOLOAD for function calls, we need to redirect
+## the HASH methods to the DBI::st instance
+## We can conveniently use Tie::ExtraHash, which maps the methods
+## to the first element of the array, allowing us to store
+## other things in the other elements.
+
+package DBIstHashProxy;
+
+use Tie::Hash;
+use base ('Tie::ExtraHash');
+
+# Pass the target hash as the first argument
+sub TIEHASH {
+    my $class = shift;
+    my $self = [@_];
+    bless $self, $class;
+    return $self;
+}
+
 
 1;
