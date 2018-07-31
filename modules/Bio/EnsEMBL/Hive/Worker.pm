@@ -607,6 +607,7 @@ sub run {
                 $stats->hive_pipeline->invalidate_hive_current_load;
                 if( defined($analysis->hive_capacity) && (0 <= $analysis->hive_capacity) && ($stats->hive_pipeline->get_cached_hive_current_load >= 1.1)
                  or defined($analysis->analysis_capacity) && (0 <= $analysis->analysis_capacity) && ($analysis->analysis_capacity < $stats->num_running_workers)
+                 or $stats->hive_pipeline->get_total_job_throughput >= 1.1 * $stats->max_jobs_per_msec
                 ) {
                     $self->cause_of_death('HIVE_OVERLOAD');
                 }

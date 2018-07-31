@@ -192,6 +192,7 @@ sub schedule_workers {
 
         my $submit_capacity_limiter = Bio::EnsEMBL::Hive::Limiter->new( 'Max number of Workers scheduled this time', $submit_capacity );
         my $queen_capacity_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total reciprocal capacity of the Hive', 1.0 - $queen->db->hive_pipeline->get_cached_hive_current_load() );
+        my $job_throughput_limiter  = Bio::EnsEMBL::Hive::Limiter->new( 'Total job throughput of the Hive', $list_of_analyses->[0]->stats->max_jobs_per_msec - $queen->db->hive_pipeline->get_total_job_throughput);
 
         ANALYSIS: foreach my $pair (@$pairs_sorted_by_suitability) {
             if( $submit_capacity_limiter->reached ) {
@@ -246,9 +247,12 @@ sub schedule_workers {
 
                 # setting up all negotiating limiters:
             $queen_capacity_limiter->multiplier( $analysis->hive_capacity );
+            $job_throughput_limiter->multiplier( $analysis->stats->avg_msec_per_job || $analysis->stats->min_job_runtime_msec );
+
             my @limiters = (
                 $submit_capacity_limiter,
                 $queen_capacity_limiter,
+                $job_throughput_limiter,
                 $meadow_capacity_limiter_hashed_by_type
                     ? $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}
                     : (),

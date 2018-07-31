@@ -64,6 +64,19 @@ sub desired_claim_interval_msec {
     return 200;
 }
 
+# This is the maximum we've seen pipelines reach. In effect, it mostly limits
+# the analyses that are fast (i.e. 250 msec per job -> 500 workers at most)
+sub max_jobs_per_msec {
+    # That's 2000 per second
+    return 2;
+}
+
+# This is the fastest jobs can be due to the eHive overhead
+# It results in eHive scheduling 20 workers to satisfy $self->max_jobs_per_msec
+sub min_job_runtime_msec {
+    return 10;
+}
+
 
 =head1 AUTOLOADED
 
@@ -274,6 +287,14 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
     }
 
     return $num_required_workers;
+}
+
+
+sub get_job_throughput {
+    my $self = shift;
+
+    my $throughput = $self->num_running_workers / ($self->avg_msec_per_job || $self->min_job_runtime_msec);
+    return $throughput;
 }
 
 

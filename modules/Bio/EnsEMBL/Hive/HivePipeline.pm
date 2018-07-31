@@ -22,6 +22,8 @@ package Bio::EnsEMBL::Hive::HivePipeline;
 use strict;
 use warnings;
 
+use List::Util qw(sum);
+
 use Bio::EnsEMBL::Hive::TheApiary;
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Hive::Utils ('stringify', 'destringify', 'throw');
@@ -515,6 +517,13 @@ sub get_cached_hive_current_load {
         }
     }
     return $self->{'_cached_hive_load'};
+}
+
+
+sub get_total_job_throughput {
+    my $self = shift @_;
+    my $collection = $self->collection_of( 'AnalysisStats' );
+    return sum(map { $_->get_job_throughput } $collection->list() );
 }
 
 
