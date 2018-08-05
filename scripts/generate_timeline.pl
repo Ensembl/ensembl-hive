@@ -182,7 +182,7 @@ sub main {
     my %layers = ();
     {
         my $sql = $key eq 'analysis'
-            ? 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
+            ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
             : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
         my @tmp_dates = @{$dbh->selectall_arrayref($sql)};
         warn scalar(@tmp_dates), " rows\n" if $verbose;
