@@ -101,12 +101,21 @@ sub main {
         $mode = 'workers';
     }
 
+    # Check whether $key is valid
     my %allowed_keys = (
         analysis => 'Analysis',
         resource_class => 'Resource Class',
     );
     if ($key) {
         die "Unknown key '$key'. Allowed keys are: ".join(", ", keys %allowed_keys) unless exists $allowed_keys{$key};
+        # Check whether the pair ($mode,$key) makes sense
+        if (($mode =~ /^pending/) and ($key eq 'analysis')) {
+            die "Timeline of pending workers can only be represented by resource-class, not analysis";
+        }
+
+    } elsif ($mode =~ /^pending/) {
+        $key = 'resource_class';
+
     } else {
         $key = 'analysis';
     }
