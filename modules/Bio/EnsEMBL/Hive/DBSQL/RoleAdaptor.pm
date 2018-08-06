@@ -50,6 +50,13 @@ sub default_table_name {
     return 'role';
 }
 
+sub default_input_column_mapping {
+    my $self    = shift @_;
+    return  {
+        # Add another column based on when_started
+        'when_started' => 'when_started, ' . $self->dbc->_interval_seconds_sql('when_started') . ' seconds_since_when_started',
+    };
+}
 
 sub object_class {
     return 'Bio::EnsEMBL::Hive::Role';

@@ -290,10 +290,43 @@ sub estimate_num_required_workers {     # this 'max allowed' total includes the 
 }
 
 
+# avg_msec_per_job, or _estimate_avg_msec_per_job, or min_job_runtime_msec
+sub get_or_estimate_avg_msec_per_job {
+    my $self = shift;
+
+    unless ($self->avg_msec_per_job) {
+        unless (exists $self->{'_estimated_avg_msec_per_job'}) {
+            $self->{'_estimated_avg_msec_per_job'} = $self->_estimate_avg_msec_per_job;
+        }
+        return $self->{'_estimated_avg_msec_per_job'} // $self->min_job_runtime_msec;
+    }
+    return $self->avg_msec_per_job;
+}
+
+sub _estimate_avg_msec_per_job {
+    my $self = shift;
+
+    return unless $self->num_running_workers;
+
+    # No role has yet been finalized otherwise avg_msec_per_job would be set
+    my $active_roles = $self->adaptor->db->get_RoleAdaptor->fetch_all( 'when_finished IS NULL AND analysis_id=' . $self->analysis_id );
+    return unless @$active_roles;
+
+    my $tot_lifespan_secs = sum( map {$_->seconds_since_when_started} @$active_roles );
+    return unless $tot_lifespan_secs;;
+
+    # Active roles are currently doing a job, which is not yet counted in attempted_jobs
+    my $tot_job_attempts = sum( map {$_->attempted_jobs+1} @$active_roles );
+
+    return 1000 * $tot_lifespan_secs / $tot_job_attempts;
+}
+
+
 sub get_job_throughput {
     my $self = shift;
 
-    my $throughput = $self->num_running_workers / ($self->avg_msec_per_job || $self->min_job_runtime_msec);
+    # Denominator is guaranteed to be non zero
+    my $throughput = $self->num_running_workers / $self->get_or_estimate_avg_msec_per_job;
     return $throughput;
 }
 
@@ -374,8 +407,8 @@ sub job_count_breakout {
 
 sub friendly_avg_job_runtime {
     my $self = shift;
+    my $avg  = shift;
 
-    my $avg = $self->avg_msec_per_job;
     my @units = ([24*3600*1000, 'day'], [3600*1000, 'hr'], [60*1000, 'min'], [1000, 'sec']);
 
     while (my $unit_description = shift @units) {
@@ -412,10 +445,17 @@ sub _toString_fields {
     my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
     my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout($can_do_colour);
     my $analysis                                        = $self->analysis;
-    my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
     my $status_text                                     = $self->status;
     if ($self->is_excluded) {
         $status_text = 'EXCLUDED';
+    }
+
+    # We don't want to default to min_job_runtime_msec
+    my ($avg_runtime, $avg_runtime_unit);
+    if ($self->avg_msec_per_job) {
+        ($avg_runtime, $avg_runtime_unit) = $self->friendly_avg_job_runtime($self->avg_msec_per_job);
+    } elsif ($self->{'_estimated_avg_msec_per_job'}) {
+        ($avg_runtime, $avg_runtime_unit) = $self->friendly_avg_job_runtime($self->{'_estimated_avg_msec_per_job'});
     }
 
     return {

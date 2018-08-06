@@ -924,7 +924,7 @@ sub print_status_and_return_reasons_to_exit {
         $total_done_jobs    += $stats->done_job_count;
         $total_failed_jobs  += $failed_job_count;
         $total_jobs         += $stats->total_job_count;
-        $cpumsec_to_do      += $stats->ready_job_count * $stats->avg_msec_per_job;
+        $cpumsec_to_do      += $stats->ready_job_count * $stats->get_or_estimate_avg_msec_per_job;
     }
 
     my $total_jobs_to_do        = $total_jobs - $total_done_jobs - $total_failed_jobs - $total_excluded_jobs;         # includes SEMAPHORED, READY, CLAIMED, INPROGRESS

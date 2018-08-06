@@ -57,6 +57,13 @@ sub when_started {
 }
 
 
+sub seconds_since_when_started {
+    my $self = shift;
+    $self->{'_seconds_since_when_started'} = shift if(@_);
+    return $self->{'_seconds_since_when_started'};
+}
+
+
 sub when_finished {
     my $self = shift;
     $self->{'_when_finished'} = shift if(@_);

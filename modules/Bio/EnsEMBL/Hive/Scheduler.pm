@@ -247,7 +247,7 @@ sub schedule_workers {
 
                 # setting up all negotiating limiters:
             $queen_capacity_limiter->multiplier( $analysis->hive_capacity );
-            $job_throughput_limiter->multiplier( $analysis->stats->avg_msec_per_job || $analysis->stats->min_job_runtime_msec );
+            $job_throughput_limiter->multiplier( $analysis->stats->get_or_estimate_avg_msec_per_job );
 
             my @limiters = (
                 $submit_capacity_limiter,
