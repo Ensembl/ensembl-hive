@@ -229,14 +229,14 @@ sub schedule_workers {
 
                 # Do a (safe) sync to get up-to-date job-counts and status
                 if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
+                    $log_buffer->[-1] .= " succeeded";
                     push @$log_buffer, $analysis_stats->toString;
                 } elsif (scalar(@{ $analysis->control_rules_collection() })) {
                     # The analysis is blockable and we haven't managed to sync it, so the status is unreliable
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, cannot tell whether it is BLOCKED or not, skipping it.";
+                    $log_buffer->[-1] .= " failed: cannot tell whether it is BLOCKED or not, skipping it.";
                     next ANALYSIS;
                 } else {
-                    push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, will use old stats.";
+                    $log_buffer->[-1] .= " failed: will use old stats.";
                 }
             }
 
