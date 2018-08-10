@@ -107,14 +107,14 @@ sub schedule_workers_resync_if_necessary {
         while( my ($this_rc_name, $workers_to_submit_this_group) = each %$partial_workers_to_submit_by_rc_name) {
             if(my $pending_this_group = $pending_worker_counts_by_meadow_type_rc_name->{ $this_meadow_type }{ $this_rc_name }) {
 
-                scheduler_say( "The plan was to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when the Scheduler detected $pending_this_group pending in this group, " );
+                my $msg_intro = "The plan was to submit $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers when the Scheduler detected $pending_this_group pending in this group, ";
 
                 if( $workers_to_submit_this_group > $pending_this_group) {
                     $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}   -= $pending_this_group; # adjust the hashed value
-                    scheduler_say( "so I recommend submitting only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra" );
+                    scheduler_say( $msg_intro . "so I recommend submitting only ".$workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name}." extra" );
                 } else {
                     delete $workers_to_submit_by_meadow_type_rc_name->{$this_meadow_type}{$this_rc_name};                   # avoid leaving an empty group in the hash
-                    scheduler_say( "so I don't recommend submitting any extra" );
+                    scheduler_say( $msg_intro . "so I don't recommend submitting any extra" );
                 }
             } else {
                 scheduler_say( "I recommend submitting $workers_to_submit_this_group x $this_meadow_type:$this_rc_name workers" );
