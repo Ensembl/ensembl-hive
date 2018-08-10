@@ -230,6 +230,7 @@ sub schedule_workers {
                 # Do a (safe) sync to get up-to-date job-counts and status
                 if( $queen->safe_synchronize_AnalysisStats($analysis_stats) ) {
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' succeeded.";
+                    push @$log_buffer, $analysis_stats->toString;
                 } elsif (scalar(@{ $analysis->control_rules_collection() })) {
                     # The analysis is blockable and we haven't managed to sync it, so the status is unreliable
                     push @$log_buffer, "Safe-sync of Analysis '$logic_name' could not be run at this moment, cannot tell whether it is BLOCKED or not, skipping it.";
@@ -290,7 +291,6 @@ sub schedule_workers {
             }
 
             push @workers_to_submit_by_analysis, [ $analysis, $extra_workers_this_analysis];
-            push @$log_buffer, $analysis_stats->toString;
 
             if($meadow_capacity_limiter_hashed_by_type) {
                 my $this_rc_name    = $analysis->resource_class->name;
