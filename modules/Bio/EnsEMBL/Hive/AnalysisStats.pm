@@ -209,6 +209,7 @@ sub update {
 }
 
 
+# Only used by workers
 sub get_or_estimate_batch_size {
     my $self                = shift @_;
     my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
@@ -235,8 +236,10 @@ sub get_or_estimate_batch_size {
 
         my $tt_batch_size = POSIX::floor( $jobs_to_do / $num_of_workers );
         if( (0 < $tt_batch_size) && ($tt_batch_size < $batch_size) ) {
+            # More jobs to do than workers and default batch size too large
             $batch_size = $tt_batch_size;
         } elsif(!$tt_batch_size) {
+            # Fewer jobs than workers
             $batch_size = POSIX::ceil( $jobs_to_do / $num_of_workers ); # essentially, 0 or 1
         }
     }
