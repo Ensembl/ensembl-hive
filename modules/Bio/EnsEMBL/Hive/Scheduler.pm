@@ -295,7 +295,7 @@ sub schedule_workers {
             if($meadow_capacity_limiter_hashed_by_type) {
                 my $this_rc_name    = $analysis->resource_class->name;
                 $workers_to_submit_by_meadow_type_rc_name{ $this_meadow_type }{ $this_rc_name } += $extra_workers_this_analysis;
-                push @$log_buffer, sprintf("Before checking the Valley for pending jobs, the Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
+                push @$log_buffer, sprintf("The Scheduler allocated $extra_workers_this_analysis x $this_meadow_type:$this_rc_name extra workers for '%s' [%.4f hive_load remaining]",
                                     $logic_name,
                                     $queen_capacity_limiter->available_capacity,
                                 );
