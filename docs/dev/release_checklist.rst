@@ -25,3 +25,13 @@ In ensembl-hive and all meadows (but not guiHive):
    the ``-s ours`` option to ``git merge``
 
 9. Update default branch on GitHub to point to version/x.y
+
+10. Protect the new version/x.y branch on GitHub (to prevent accidental
+    force push)
+
+Other repos
+===========
+
+Do the same for all the other repos (meadow plugins):
+https://github.com/search?q=topic%3Aehive+org%3AEnsembl&type=Repositories
+
