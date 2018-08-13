@@ -68,7 +68,6 @@ package Bio::EnsEMBL::Hive::Queen;
 
 use strict;
 use warnings;
-use File::Path 'make_path';
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Utils::Config;

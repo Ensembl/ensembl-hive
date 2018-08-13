@@ -26,7 +26,6 @@ use strict;
 #use warnings;  # commented out because this script is a repeat offender
 
 use File::Basename ();
-use File::Path qw(make_path);
 use Getopt::Long;
 use List::Util qw(max sum);
 
