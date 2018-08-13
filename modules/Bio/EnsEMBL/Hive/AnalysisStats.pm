@@ -53,9 +53,9 @@ sub unikey {    # override the default from Cacheable parent
 }
 
 
-    ## Minimum amount of time in msec that a worker should run before reporting
-    ## back to the hive. This is used when setting the batch_size automatically.
-sub min_batch_time {
+# Minimum amount of time in msec that a worker should run before reporting
+# back to the hive. This is also used when deciding how many workers to submit
+sub min_worker_runtime {
     return 2*60*1000;
 }
 

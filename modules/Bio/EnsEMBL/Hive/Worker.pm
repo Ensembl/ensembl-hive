@@ -517,7 +517,7 @@ sub run {
         $self->get_stderr_redirector->push( $worker_log_dir.'/worker.err' );
     }
 
-    my $min_batch_time  = Bio::EnsEMBL::Hive::AnalysisStats::min_batch_time();
+    my $min_runtime     = Bio::EnsEMBL::Hive::AnalysisStats::min_worker_runtime();
     my $job_adaptor     = $self->adaptor->db->get_AnalysisJobAdaptor;
 
     print "\n"; # to clear beekeeper's prompt in case output is not logged
@@ -536,7 +536,7 @@ sub run {
             $self->cause_of_death( $jobs_done_by_batches_loop == $special_batch_length ? 'JOB_LIMIT' : 'CONTAMINATED');
         } else {    # a proper "BATCHES" loop
 
-            while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_batch_time) {
+            while (!$self->cause_of_death and $batches_stopwatch->get_elapsed < $min_runtime) {
                 my $current_role        = $self->current_role;
 
                 if( scalar(@{ $job_adaptor->fetch_all_incomplete_jobs_by_role_id( $current_role->dbID ) }) ) {
@@ -583,7 +583,7 @@ sub run {
         }
 
         # The following two database-updating operations are resource-expensive (all workers hammering the same database+tables),
-        # so they are not allowed to happen too frequently (not before $min_batch_time of work has been done)
+        # so they are not allowed to happen too frequently (not before $min_runtime of work has been done)
         #
         if($jobs_done_by_batches_loop) {
 
