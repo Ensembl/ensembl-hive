@@ -256,10 +256,6 @@ sub schedule_workers {
                 $meadow_capacity_limiter_hashed_by_type
                     ? $meadow_capacity_limiter_hashed_by_type->{$this_meadow_type}
                     : (),
-                defined($analysis->analysis_capacity)
-                    ? Bio::EnsEMBL::Hive::Limiter->new( "Number of Workers working at '$logic_name' analysis",
-                                                        $analysis->analysis_capacity - $analysis_stats->num_running_workers )
-                    : (),
             );
 
             my $hit_the_limit;
@@ -314,7 +310,7 @@ sub sort_pairs_by_suitability {
         my ($analysis, $stats) = @$pair;
 
             # assuming sync() is expensive, so first trying analyses that have already been sunk:
-        if( ($stats->estimate_num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
+        if( ($stats->num_running_workers+$stats->estimate_num_required_workers > 0) and ($stats->status =~/^(READY|WORKING)$/) ) {
 
             push @primary_candidates, $pair;
 
