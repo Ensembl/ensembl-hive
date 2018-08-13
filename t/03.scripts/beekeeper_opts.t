@@ -108,7 +108,7 @@ my $pipeline_url = get_test_url_or_die();
 
     my $worker_nta = $hive_dba->get_NakedTableAdaptor('table_name' => 'worker');
     my $live_worker_rows = $worker_nta->fetch_all("worker.status != 'DEAD'");
-    is(scalar(@$live_worker_rows), 2, 'two workers are not dead');
+    is(scalar(@$live_worker_rows), 1, 'one active worker');
     my @live_worker_ids;
     foreach my $row (@$live_worker_rows) {
         push(@live_worker_ids, $row->{'worker_id'});

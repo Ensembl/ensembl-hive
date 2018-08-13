@@ -269,8 +269,38 @@ sub estimate_num_required_workers {     # this doesn't count the workers that ar
     my $self                = shift @_;
     my $remaining_job_count = shift @_ || 0;    # FIXME: a better estimate would be $self->claimed_job_count when it is introduced
 
-    my $num_required_workers = $self->ready_job_count + $remaining_job_count;   # this 'max' estimation can still be zero
+    # Work left to do
+    my $jobs_to_do = $self->ready_job_count + $remaining_job_count;
 
+    # We can assume jobs_to_do>0 i the rest of the function
+    return 0 unless $jobs_to_do;
+
+    # Guaranteed to be non-zero
+    my $avg_msec_per_job = $self->get_or_estimate_avg_msec_per_job;
+    # Number of jobs earmarked for each worker, existing or new. (cannot be zero)
+    # NOTE: With the current defaults, this is 12,000 when the analysis has never run
+    my $num_jobs_per_worker = POSIX::ceil($self->min_worker_runtime / $avg_msec_per_job );
+
+    # Total number of jobs earmarked for the running workers (knowing they are already running 1 job each)
+    # NOTE: This is only greater than zero when jobs are quicker than $self->min_worker_runtime
+    my $jobs_for_running_workers = $self->num_running_workers * ($num_jobs_per_worker - 1);
+
+    # NOTE: This means 1 worker per job when jobs_for_running_workers = 0 (no running workers or jobs take more than min_worker_runtime)
+    my $num_required_workers = POSIX::ceil( ($jobs_to_do - $jobs_for_running_workers) / $num_jobs_per_worker);
+    # NOTE: Since it can be negative when there are fewer jobs to do than what we have earmarked for running workers,
+    #       we apply a correction and always submit at least 1 worker (since jobs_to_do is > 0)
+    $num_required_workers = 1 if $num_required_workers < 1;
+
+    ## Alternatively
+    #if ($jobs_to_do > $jobs_for_running_workers) {
+    #    # More jobs than what the existing workers can achieve
+    #    $num_required_workers = POSIX::ceil( ($jobs_to_do - $jobs_for_running_workers / 2) / $num_jobs_per_worker);
+    #} else {
+    #    # In principle all jobs could be done by existing workers, but we still submit some workers in case some workers are stuck
+    #    $num_required_workers = POSIX::ceil( ($jobs_to_do / 2) / $num_jobs_per_worker);
+    #}
+
+    # 1) hive_capacity
     my $h_cap = $self->analysis->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
         my $hive_current_load = $self->hive_pipeline->get_cached_hive_current_load();
@@ -279,6 +309,8 @@ sub estimate_num_required_workers {     # this doesn't count the workers that ar
             $num_required_workers = $h_max;
         }
     }
+
+    # 2) analysis_capacity
     my $a_max = $self->analysis->analysis_capacity;
     if( defined($a_max) and $a_max>=0 ) {   # what is the currently attainable maximum defined via analysis_capacity?
         # Correction for running workers
