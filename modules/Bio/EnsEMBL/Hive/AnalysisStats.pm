@@ -283,6 +283,9 @@ sub inprogress_job_count {      # includes CLAIMED
             - $self->failed_job_count;
 }
 
+
+##---------------------------- [stringification] -----------------------------
+
 my %meta_status_2_color = (
     'DONE'      => 'bright_cyan',
     'RUNNING'   => 'bright_yellow',
@@ -320,35 +323,27 @@ my %count_method_2_meta_status = (
 );
 
 sub _text_with_status_color {
-    my $field_size = shift;
     my $color_enabled = shift;
 
-    my $padding = ($field_size and length($_[0]) < $field_size) ? ' ' x ($field_size - length($_[0])) : '';
-    return $padding . ($color_enabled ? color($meta_status_2_color{$_[1]}).$_[0].color('reset') : $_[0]);
+    return ($color_enabled ? color($meta_status_2_color{$_[1]}).$_[0].color('reset') : $_[0]);
 }
 
 
 sub job_count_breakout {
     my $self = shift;
-    my $field_size = shift;
     my $color_enabled = shift;
 
-    my $this_length = 0;
     my @count_list = ();
     my %count_hash = ();
     my $total_job_count = $self->total_job_count();
     foreach my $count_method (qw(semaphored_job_count ready_job_count inprogress_job_count done_job_count failed_job_count)) {
         if( my $count = $count_hash{$count_method} = $self->$count_method() ) {
-            $this_length += length("$count") + 1;
-            push @count_list, _text_with_status_color(undef, $color_enabled, $count, $count_method_2_meta_status{$count_method}).substr($count_method,0,1);
+            push @count_list, _text_with_status_color($color_enabled, $count, $count_method_2_meta_status{$count_method}).substr($count_method,0,1);
         }
     }
     my $breakout_label = join('+', @count_list);
-    $this_length += scalar(@count_list)-1 if @count_list;
-    $breakout_label .= '='.$total_job_count if(scalar(@count_list)!=1); # only provide a total if multiple or no categories available
-    $this_length += 1+length("$total_job_count") if(scalar(@count_list)!=1);
-
-    $breakout_label = ' ' x ($field_size - $this_length) . $breakout_label if $field_size and $this_length<$field_size;
+    $breakout_label .= '='.$total_job_count if(scalar(@count_list)>1); # only provide a total if multiple categories available
+    $breakout_label = '0' if(scalar(@count_list)==0);
 
     return ($breakout_label, $total_job_count, \%count_hash);
 }
@@ -368,38 +363,60 @@ sub friendly_avg_job_runtime {
     return ($avg, 'ms');
 }
 
+
+# Very simple interpolation that doesn't need to align the fields
 sub toString {
     my $self = shift @_;
 
+    my $fields = $self->_toString_fields;
+    my $s = $self->_toString_template;
+    # Replace each named field with its value
+    $s =~ s/%\((-?)([a-zA-Z_]\w*)\)/$fields->{$2}/ge;
+    return $s;
+}
+
+sub _toString_template {
+    my $self = shift @_;
+
+    return q{%(-logic_name)(%(analysis_id))  %(status),  %(breakout_label) jobs,  avg: %(avg_runtime)%(avg_runtime_unit)  %(num_running_workers) worker%(worker_plural) (%(num_estimated_workers) required),  h.cap:%(hive_capacity) a.cap:%(analysis_capacity)  (sync'd %(seconds_since_when_updated) sec ago)};
+}
+
+
+sub _toString_fields {
+    my $self = shift @_;
+
     my $can_do_colour                                   = (-t STDOUT ? 1 : 0);
-    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout(24, $can_do_colour);
+    my ($breakout_label, $total_job_count, $count_hash) = $self->job_count_breakout($can_do_colour);
     my $analysis                                        = $self->analysis;
     my ($avg_runtime, $avg_runtime_unit)                = $self->friendly_avg_job_runtime;
-    my $max_logic_name_length                           = shift @_ || length($analysis->logic_name);
     my $status_text                                     = $self->status;
     if ($self->is_excluded) {
         $status_text = 'EXCLUDED';
     }
 
-    my $output .= sprintf("%-${max_logic_name_length}s(%3d) %s, jobs( %s ), avg:%5.1f %-3s, workers(Running:%d, Est.Required:%d) ",
-        $analysis->logic_name,
-        $self->analysis_id // 0,
-
-        _text_with_status_color(11, $can_do_colour, $status_text, $analysis_status_2_meta_status{$status_text} || $status_text),
-
-        $breakout_label,
-
-        $avg_runtime, $avg_runtime_unit,
-
-        $self->num_running_workers,
-        $self->estimate_num_required_workers,
-    );
-    $output .=  '  h.cap:'    .( $analysis->hive_capacity // '-' )
-               .'  a.cap:'    .( $analysis->analysis_capacity // '-')
-               ."  (sync'd "  .($self->seconds_since_when_updated // 0)." sec ago)";
-
-    return $output;
+    return {
+        'logic_name'                    => $analysis->logic_name,
+        'analysis_id'                   => $self->analysis_id // 0,
+        'status'                        => _text_with_status_color($can_do_colour, $status_text, $analysis_status_2_meta_status{$status_text} || $status_text),
+        'breakout_label'                => $breakout_label,
+        $avg_runtime_unit ? (                                               ## With trailing characters to have everything look nicely aligned
+            'avg_runtime'               => sprintf('%.1f ', $avg_runtime),  # Notice the trailing space
+            'avg_runtime_unit'          => $avg_runtime_unit . ',',         # Notice the trailing comma
+        ) : (
+            'avg_runtime'               => 'N/A,',                          # Notice the trailing commma
+            'avg_runtime_unit'          => '',
+        ),
+        'num_running_workers'           => $self->num_running_workers,
+        'worker_plural'                 => $self->num_running_workers != 1 ? 's' : ' ',
+        'num_estimated_workers'         => $self->estimate_num_required_workers,
+        'hive_capacity'                 => $analysis->hive_capacity // '-',
+        'analysis_capacity'             => $analysis->analysis_capacity // '-',
+        'seconds_since_when_updated'    => $self->seconds_since_when_updated // 0,
+    };
 }
+
+
+##------------------------- [status synchronization] --------------------------
 
 
 sub check_blocking_control_rules {

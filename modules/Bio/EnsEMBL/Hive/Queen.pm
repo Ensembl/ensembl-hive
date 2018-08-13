@@ -69,11 +69,10 @@ package Bio::EnsEMBL::Hive::Queen;
 use strict;
 use warnings;
 use File::Path 'make_path';
-use List::Util qw(max);
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Utils::Config;
-use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami');  # NB: needed by invisible code
+use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami', 'print_aligned_fields');  # NB: some are needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
 use Bio::EnsEMBL::Hive::Valley;
@@ -882,11 +881,15 @@ sub print_status_and_return_reasons_to_exit {
                                     ? (($total_done_jobs+$total_failed_jobs)*100.0/$total_jobs)
                                     : 0.0;
 
-    my $max_logic_name_length = max(map {length($_->logic_name)} @analyses_to_display);
-    foreach my $analysis (@analyses_to_display) {
-        print $analysis->stats->toString($max_logic_name_length) . "\n";
+    # We use print_aligned_fields instead of printing each AnalysisStats' toString(),
+    # so that the fields are all vertically aligned.
+    if (@analyses_to_display) {
+        my $template = $analyses_to_display[0]->stats->_toString_template;
+        my @all_fields = map {$_->stats->_toString_fields} @analyses_to_display;
+        print_aligned_fields(\@all_fields, $template);
     }
     print "\n";
+
     if (@{$skipped_analyses{'EMPTY'}}) {
         printf("%d analyses not shown because they don't have any jobs.\n", scalar(@{$skipped_analyses{'EMPTY'}}));
     }
