@@ -56,11 +56,12 @@ use strict;
 use warnings;
 use Carp ('confess');
 use Data::Dumper;
+use List::Util 'max';
 use Scalar::Util qw(looks_like_number);
 #use Bio::EnsEMBL::Hive::DBSQL::DBConnection;   # causes warnings that all exported functions have been redefined
 
 use Exporter 'import';
-our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout);
+our @EXPORT_OK = qw(stringify destringify dir_revhash parse_cmdline_options find_submodules load_file_or_module split_for_bash go_figure_dbc throw join_command_args whoami timeout print_aligned_fields);
 
 no warnings ('once');   # otherwise the next line complains about $Carp::Internal being used just once
 $Carp::Internal{ (__PACKAGE__) }++;
@@ -451,6 +452,56 @@ sub timeout {
         return -2;
     }
     return $ret;
+}
+
+
+=head2 print_aligned_fields
+
+    Argument[0]: Arrayref of key-value Hashrefs
+    Argument[1]: Template string
+    Description: For each hashref the template string will be interpolated (replacing
+                 each key with its value) and printed, but making sure the same fields
+                 are (right) aligned across all lines.
+                 The interpolator searches for C<%(key)> patterns and replaces them
+                 with the value found in the hashref. The key name can be prefixed with
+                 a dash to require a left alignment instead.
+
+=cut
+
+sub print_aligned_fields {
+    my $all_fields  = shift;
+    my $template    = shift;
+
+    return unless @$all_fields;
+
+    my @field_names = keys %{$all_fields->[0]};
+    my @all_widths;
+    my %col_width;
+
+    # Get the width of each element
+    foreach my $line_fields (@$all_fields) {
+        # Remove the ANSI colour codes before getting the length
+        my %row_width = map {my $s = $line_fields->{$_}; $s =~ s/\x1b\[[0-9;]*m//g; $_ => length($s)} @field_names;
+        push @all_widths, \%row_width;
+    }
+
+    # Get the width of each field (across all lines)
+    foreach my $field_name (@field_names) {
+        $col_width{$field_name} = max(map {$_->{$field_name}} @all_widths);
+    }
+
+    # Interpolate and print each line
+    foreach my $line_fields (@$all_fields) {
+        my $row_width = shift @all_widths;
+        my $line = $template;
+        $line =~ s/%\((-?)([a-zA-Z_]\w*)\)/
+        $1 ?
+            $line_fields->{$2} . (' ' x ($col_width{$2}-$row_width->{$2}))
+        :
+            (' ' x ($col_width{$2}-$row_width->{$2})) . $line_fields->{$2};
+        /ge;
+        print $line, "\n";
+    }
 }
 
 
