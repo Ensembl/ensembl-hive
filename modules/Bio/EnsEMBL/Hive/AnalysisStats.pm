@@ -304,7 +304,8 @@ sub estimate_num_required_workers {     # this doesn't count the workers that ar
     my $h_cap = $self->analysis->hive_capacity;
     if( defined($h_cap) and $h_cap>=0) {  # what is the currently attainable maximum defined via hive_capacity?
         my $hive_current_load = $self->hive_pipeline->get_cached_hive_current_load();
-        my $h_max = POSIX::floor( $h_cap * ( 1.0 - $hive_current_load ) );
+        # Round to 3 places before taking the integral part
+        my $h_max = POSIX::floor( sprintf('%.3f', $h_cap * ( 1.0 - $hive_current_load )) );
         if($h_max < $num_required_workers) {
             $num_required_workers = $h_max;
         }

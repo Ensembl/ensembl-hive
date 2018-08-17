@@ -109,7 +109,7 @@ sub preliminary_offer {
         $available_capacity = 0 if($available_capacity<0);
 
         my $product = $available_capacity * $multiplier;
-        my $slots_available = int( "$product" );            # stringification helps to round up things like 0.1*10 (instead of leaving them at 0.99999999)
+        my $slots_available = sprintf('%.f', $product );            # sprintf-ication helps to round up things like 0.1*10 (instead of leaving them at 0.99999999)
 
         my $hit_the_limit = $slots_available<$slots_asked;
 
