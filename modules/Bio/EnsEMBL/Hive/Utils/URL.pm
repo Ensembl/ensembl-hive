@@ -266,6 +266,10 @@ sub hash_to_url {
 
 sub hide_url_password {
 
+    # avoid calling exec whilst in the Perl debugger not to confuse the latter
+    # Detect the presence of the debugger with https://www.nntp.perl.org/group/perl.debugger/2004/11/msg55.html
+    return if defined &DB::DB;
+
     # Safeguard to avoid attempting the substitution twice
     # NOTE: the environment is propagated to the children, meaning that the
     # variable, once set by beekeeper.pl, will extend to all its workers,
