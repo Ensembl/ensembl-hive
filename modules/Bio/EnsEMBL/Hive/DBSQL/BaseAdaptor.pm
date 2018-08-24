@@ -303,9 +303,7 @@ sub fetch_all {
     while(my $hashref = $sth->fetchrow_hashref) {
 
         foreach my $overflow_key (@overflow_columns) {
-            if($hashref->{$overflow_key} =~ /^_ext(?:\w+)_data_id (\d+)$/) {
-                $hashref->{$overflow_key} = $overflow_adaptor->fetch_by_analysis_data_id_TO_data($1);
-            }
+            $hashref->{$overflow_key} = $self->check_and_dereference_analysis_data($hashref->{$overflow_key});
         }
 
         my $pptr = \$result_struct;

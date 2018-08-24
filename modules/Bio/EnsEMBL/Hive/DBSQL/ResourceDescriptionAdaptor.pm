@@ -58,6 +58,7 @@ sub default_insertion_method {
 sub overflow_limit {
     return {
         'submission_cmd_args' => 255,
+        'worker_cmd_args'     => 255,
     };
 }
 

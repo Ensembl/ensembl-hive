@@ -53,6 +53,11 @@ sub default_insertion_method {
     return 'INSERT_IGNORE';
 }
 
+sub overflow_limit {
+    return {
+        'condition_analysis_url' => 255,
+    };
+}
 
 sub object_class {
     return 'Bio::EnsEMBL::Hive::AnalysisCtrlRule';

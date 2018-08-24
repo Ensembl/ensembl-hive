@@ -21,7 +21,7 @@ use warnings;
 use Data::Dumper;
 use File::Temp qw{tempdir};
 
-use Test::More tests => 16;
+use Test::More tests => 11;
 
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
@@ -40,9 +40,7 @@ my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
 
 my $hive_dba    = init_pipeline('Bio::EnsEMBL::Hive::PipeConfig::LongMult_conf', $pipeline_url, [-hive_force_init => 1]);
 my $ana_a       = $hive_dba->get_AnalysisAdaptor;
-my $job_a       = $hive_dba->get_AnalysisJobAdaptor;
 my $dfr_a       = $hive_dba->get_DataflowRuleAdaptor;
-my $ada_a       = $hive_dba->get_AnalysisDataAdaptor;
 
 is($ana_a->count_all(), 3, 'There are 3 analyses in the pipeline');
 is($ana_a->count_all_by_logic_name('take_b_apart'), 1, 'But only 1 "take_b_apart"');
@@ -61,30 +59,6 @@ is(scalar(@$matching_analyses), 1, '1 dataflow-rule starting from this analysis_
 is($matching_analyses->[0]->to_analysis_url, 'part_multiply', 'Correct target logic_name');
 
 is($dfr_a->count_all_by_branch_code(1), 3, 'There are 2 #1 branches in the pipeline');
-
-my $long_input_id = sprintf('{ "long_param" => "%s" }', 'tmp' x 1000);
-my $new_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-    'input_id'      => $long_input_id,
-    'analysis_id'   => 1,
-);
-
-# Test the overflow to the analysis_data table
-is($ada_a->count_all(), 0, "Nothing in the analysis_data table (yet)");
-
-$job_a->store($new_job);
-is($ada_a->count_all(), 1, "1 entry in the analysis_data table");
-
-is($ada_a->fetch_by_data_TO_analysis_data_id('unmatched input_id'), undef, 'fetch_by_data_to_analysis_data_id() returns undef when it cannot find the input_id');
-my $ext_data_id = $ada_a->fetch_by_data_TO_analysis_data_id($long_input_id);
-is($ext_data_id, 1, 'analysis_data_id starts at 1');
-
-my $another_job = Bio::EnsEMBL::Hive::AnalysisJob->new(
-    'input_id'      => $long_input_id,
-    'analysis_id'   => 2,
-);
-
-$job_a->store($another_job);
-is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
 
 done_testing();
 

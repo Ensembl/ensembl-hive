@@ -47,7 +47,18 @@ use base ('Bio::EnsEMBL::Hive::DBSQL::BaseAdaptor');
 sub slicer {    # take a slice of the hashref (if only we could inline in Perl!)
     my ($self, $hashref, $fields) = @_;
 
-    return [ @$hashref{@$fields} ];
+    my $overflow_limit = $self->overflow_limit();
+
+    return [ map { eval { my $value = $hashref->{$_};
+                          my $ol = $overflow_limit->{$_};
+                          if (defined($ol) and defined($value) and  (length($value) > $ol)) {
+                              $self->db->get_AnalysisDataAdaptor()->store_if_needed($value);
+                          } else {
+                              $value;
+                          }
+                        }
+
+                 } @$fields ];
 }
 
 
