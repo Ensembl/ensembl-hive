@@ -40,6 +40,14 @@ use warnings;
 
 use base ('Bio::EnsEMBL::DBSQL::DBConnection');
 
+BEGIN {
+    use Bio::EnsEMBL::ApiVersion;
+    my $ev = software_version();
+    if ($ev > 73) {
+        die "eHive 1.9 is not compatible with the Ensembl Core API post version 73.\n".
+             "Please downgrade your Ensembl Core API, or upgrade eHive (which in fact then does not need the Ensembl Core API any more).\n";
+    }
+}
 
 =head2 url
 
