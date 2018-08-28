@@ -21,6 +21,7 @@ use warnings;
 
 use Test::More tests => 8;
 
+use Cwd 'getcwd';
 use Capture::Tiny ':all';
 use File::Temp qw{tempdir};
 
@@ -30,7 +31,8 @@ BEGIN {
 #########################
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = getcwd;
+chdir $dir;
 
 my $rs_stdout = Bio::EnsEMBL::Hive::Utils::RedirectStack->new(\*STDOUT);
 my $stdout = capture_stdout {
