@@ -33,6 +33,7 @@ use File::Basename ();
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
+my $original = Cwd::getcwd;
 chdir $dir;
 
 my $pipeline_url      = 'sqlite:///ehive_test_pipeline_db';
@@ -86,4 +87,6 @@ $job_a->store($another_job);
 is($ada_a->count_all(), 1, "still 1 entry in the analysis_data table");
 
 done_testing();
+
+chdir $original;
 
