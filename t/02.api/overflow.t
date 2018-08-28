@@ -175,7 +175,7 @@ is ($fetched_acr->condition_analysis_url, $long_cau, "Retrieved long condition_a
 my $fetched_accu_structures = $acu_a->fetch_structures_for_job_ids($accu_funnel_job->dbID);
 my $fetched_accu_hash = $fetched_accu_structures->{$accu_funnel_job->dbID};
 my $fetched_struct_name = (keys(%$fetched_accu_hash))[0];
-my $fetched_key_signature = (keys(%$fetched_accu_hash->{$fetched_struct_name}))[0];
+my $fetched_key_signature = (keys(%{$fetched_accu_hash->{$fetched_struct_name}}))[0];
 
 is ($fetched_struct_name, $long_struct_name, "fetched long struct_name from accu");
 is ($fetched_key_signature, $long_key_signature, "fetched long key_signature from accu");
