@@ -31,7 +31,8 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 my $dir = tempdir CLEANUP => 1;
-my $orig = chdir $dir;
+my $orig = Cwd::getcwd;
+chdir $dir;
 
 my $sqlite_url = "sqlite:///test_db";
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
