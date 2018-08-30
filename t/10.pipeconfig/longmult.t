@@ -32,7 +32,8 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = Cwd::getcwd;
+chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'LongMult_conf LongMultSt_conf LongMultWf_conf LongMultSt_pyconf';
