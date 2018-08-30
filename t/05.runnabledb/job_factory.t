@@ -19,6 +19,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use Test::More;
 
 use Data::Dumper;
@@ -200,7 +201,9 @@ standaloneJob(
 );
 
 
-my $original = chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
+my $original = Cwd::getcwd;
+chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
+
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
@@ -291,4 +294,6 @@ $dbc->disconnect_if_idle();
 run_sql_on_db($test_url, 'DROP DATABASE');
 
 done_testing();
+
+chdir $original;
 

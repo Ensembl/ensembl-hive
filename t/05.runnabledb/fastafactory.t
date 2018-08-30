@@ -39,7 +39,8 @@ SKIP: {
 my $inputfile = $ENV{'EHIVE_ROOT_DIR'}.'/t/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = Cwd::getcwd;
+chdir $dir;
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
