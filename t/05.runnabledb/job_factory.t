@@ -19,6 +19,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use Test::More;
 use File::Temp qw{tempdir};
 
@@ -203,7 +204,9 @@ standaloneJob(
 );
 
 
-my $original = chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
+my $original = Cwd::getcwd;
+chdir $ENV{EHIVE_ROOT_DIR}.'/sql';
+
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {

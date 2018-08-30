@@ -19,6 +19,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
@@ -32,7 +33,8 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = Cwd::getcwd;
+chdir $dir;
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || 'sqlite:///ehive_test_pipeline_db';
 my $ehive_test_pipeconfigs   = $ENV{'EHIVE_TEST_PIPECONFIGS'} || 'GCPct_conf';

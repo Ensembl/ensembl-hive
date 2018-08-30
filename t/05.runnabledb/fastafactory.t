@@ -31,7 +31,8 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = Cwd::getcwd;
+chdir $dir;
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::FastaFactory',
