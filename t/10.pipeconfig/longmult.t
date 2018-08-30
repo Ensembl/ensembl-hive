@@ -33,7 +33,8 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker);
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
 
 my $dir = tempdir CLEANUP => 1;
-my $original = chdir $dir;
+my $original = Cwd::getcwd;
+chdir $dir;
 
 my $all_longmult_configs = find_submodules 'Bio::EnsEMBL::Hive::Examples::LongMult::PipeConfig';
 

@@ -31,7 +31,8 @@ $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( Fil
 use Bio::EnsEMBL::Hive::DBSQL::DBAdaptor;
 
 my $dir = tempdir CLEANUP => 1;
-my $orig = chdir $dir;
+my $orig = Cwd::getcwd;
+chdir $dir;
 
 
 my $ehive_test_pipeline_urls = $ENV{'EHIVE_TEST_PIPELINE_URLS'} || "sqlite:///${dir}/test_db";
