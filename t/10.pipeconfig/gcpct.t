@@ -19,6 +19,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use Test::More;
 use Data::Dumper;
 use File::Temp qw{tempdir};
