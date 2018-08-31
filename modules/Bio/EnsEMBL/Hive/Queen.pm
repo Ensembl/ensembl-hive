@@ -770,7 +770,7 @@ sub safe_synchronize_AnalysisStats {
     }
 
     unless( ($stats->status eq 'DONE')
-         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < 3*60) ) ) {
+         or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < $stats->stats_expiration_date_sec) ) ) {
 
         # In case $stats->sync_lock is set, this is basically giving it one last chance
         my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".

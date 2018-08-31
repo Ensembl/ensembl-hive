@@ -77,6 +77,11 @@ sub min_job_runtime_msec {
     return 10;
 }
 
+# How long the stats are valid or. Used in synchronize_AnalysisStats
+sub stats_expiration_date_sec {
+    return 3*60;
+}
+
 
 =head1 AUTOLOADED
 
