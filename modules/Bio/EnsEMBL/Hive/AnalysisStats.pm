@@ -337,7 +337,9 @@ sub estimate_num_required_workers {     # this doesn't count the workers that ar
 
     # 3) job throughput
     my $t_max = POSIX::floor( $avg_msec_per_job * ($self->max_jobs_per_msec - $self->hive_pipeline->get_total_job_throughput) );
-    if($t_max < $num_required_workers) {
+    if ($t_max < 0) {
+        $num_required_workers = 0;
+    } elsif ($t_max < $num_required_workers) {
         $num_required_workers = $t_max;
     }
 
