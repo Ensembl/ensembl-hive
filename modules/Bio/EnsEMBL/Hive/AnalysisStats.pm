@@ -507,6 +507,7 @@ sub _toString_fields {
 
     # We don't want to default to min_job_runtime_msec
     my ($avg_runtime, $avg_runtime_unit);
+    $self->get_or_estimate_avg_msec_per_job;
     if ($self->avg_msec_per_job) {
         ($avg_runtime, $avg_runtime_unit) = $self->friendly_avg_job_runtime($self->avg_msec_per_job);
     } elsif ($self->{'_estimated_avg_msec_per_job'}) {
