@@ -759,7 +759,7 @@ sub safe_synchronize_AnalysisStats {
         }
     }
 
-    return 'stats_fresh_enough';
+    return $stats->sync_lock ? 0 : 'stats_fresh_enough';
 }
 
 
