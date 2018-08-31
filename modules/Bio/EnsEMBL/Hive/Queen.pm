@@ -736,12 +736,21 @@ sub safe_synchronize_AnalysisStats {
     unless( ($stats->status eq 'DONE')
          or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < 3*60) ) ) {
 
+        # In case $stats->sync_lock is set, this is basically giving it one last chance
         my $sql = "UPDATE analysis_stats SET status='SYNCHING', sync_lock=1 ".
                   "WHERE sync_lock=0 and analysis_id=" . $stats->analysis_id;
 
         my $row_count = $self->dbc->do($sql);   # try to claim the sync_lock
 
         if( $row_count == 1 ) {     # if we managed to obtain the lock, let's go and perform the sync:
+            if ($stats->sync_lock) {
+                # Actually the sync has just been completed by another agent. Save time and load the stats it computed
+                $stats->refresh();
+                # And release the lock
+                $stats->sync_lock(0);
+                $stats->adaptor->update_sync_lock($stats);
+                return 'sync_done_by_friend';
+            }
             $self->synchronize_AnalysisStats($stats, 1);
             return 'sync_done';
         } else {
