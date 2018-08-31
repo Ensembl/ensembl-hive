@@ -719,12 +719,18 @@ sub safe_synchronize_AnalysisStats {
     my ($self, $stats) = @_;
 
     $stats->refresh();
+    my $was_synching = $stats->sync_lock;
 
     my $max_refresh_attempts = 5;
     while($stats->sync_lock and $max_refresh_attempts--) {   # another Worker/Beekeeper is synching this analysis right now
             # ToDo: it would be nice to report the detected collision
         sleep(1);
         $stats->refresh();  # just try to avoid collision
+    }
+
+    # The sync has just completed and we have the freshest stats
+    if ($was_synching && !$stats->sync_lock) {
+        return 'sync_done_by_friend';
     }
 
     unless( ($stats->status eq 'DONE')
