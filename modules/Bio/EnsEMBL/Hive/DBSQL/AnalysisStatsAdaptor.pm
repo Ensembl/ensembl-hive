@@ -55,13 +55,8 @@ sub default_table_name {
 
 sub default_input_column_mapping {
     my $self    = shift @_;
-    my $driver  = $self->dbc->driver();
     return  {
-        'when_updated' => {
-                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_updated) seconds_since_when_updated ",
-                            'sqlite'    => "strftime('%s','now')-strftime('%s',when_updated) seconds_since_when_updated ",
-                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_updated) seconds_since_when_updated ",
-        }->{$driver},
+        'when_updated' => $self->dbc->_interval_seconds_sql('when_updated') . ' seconds_since_when_updated',
     };
 }
 

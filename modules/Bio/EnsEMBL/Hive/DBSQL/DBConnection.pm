@@ -407,5 +407,38 @@ sub requires_write_access {
 }
 
 
+=head2 _interval_seconds_sql
+
+  Argument[1] : String. Name of the column for the start of the interval
+  Argument[2] : String, optional. Name of the column for the end of the interval
+  Example     : $self->dbc->_interval_seconds_sql();
+  Description : Returns an SQL expression to compute the number of seconds betwen both columns.
+                If the second column name is missing, compute the number of seconds until now instead.
+  Returntype  : String
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _interval_seconds_sql {
+    my ($self, $column_from, $column_to) = @_;
+
+    my $driver = $self->driver();
+
+    $column_to ||= {
+        'mysql'     => '',
+        'sqlite'    => q{'now'},
+        'pgsql'     => 'CURRENT_TIMESTAMP',
+    }->{$driver};
+
+    return  {
+        'mysql'     => "UNIX_TIMESTAMP($column_to)-UNIX_TIMESTAMP($column_from)",
+        'sqlite'    => "strftime('%s',$column_to)-strftime('%s',$column_from)",
+        'pgsql'     => "EXTRACT(EPOCH FROM $column_to - $column_from)",
+    }->{$driver};
+}
+
+
 1;
 

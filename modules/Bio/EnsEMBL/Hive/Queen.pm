@@ -86,13 +86,8 @@ sub default_table_name {
 
 sub default_input_column_mapping {
     my $self    = shift @_;
-    my $driver  = $self->dbc->driver();
     return  {
-        'when_submitted' => {
-                            'mysql'     => "UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_submitted) seconds_since_when_submitted ",
-                            'sqlite'    => "strftime('%s','now')-strftime('%s',when_submitted) seconds_since_when_submitted ",
-                            'pgsql'     => "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_submitted) seconds_since_when_submitted ",
-        }->{$driver},
+        'when_submitted' => $self->dbc->_interval_seconds_sql('when_submitted') . ' seconds_since_when_submitted',
     };
 }
 
@@ -661,11 +656,7 @@ sub fetch_overdue_workers {
 
     $overdue_secs = 3600 unless(defined($overdue_secs));
 
-    my $constraint = "status!='DEAD' AND (when_checked_in IS NULL OR ".{
-            'mysql'     =>  "(UNIX_TIMESTAMP()-UNIX_TIMESTAMP(when_checked_in)) > $overdue_secs",
-            'sqlite'    =>  "(strftime('%s','now')-strftime('%s',when_checked_in)) > $overdue_secs",
-            'pgsql'     =>  "EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - when_checked_in) > $overdue_secs",
-        }->{ $self->dbc->driver }.' )';
+    my $constraint = "status!='DEAD' AND (when_checked_in IS NULL OR ". $self->dbc->_interval_seconds_sql('when_checked_in') . " > $overdue_secs)";
 
     return $self->fetch_all( $constraint );
 }
