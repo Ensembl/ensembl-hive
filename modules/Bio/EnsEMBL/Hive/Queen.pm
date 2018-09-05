@@ -520,7 +520,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
                 my $max_limbo_seconds = $this_meadow->config_get('MaxLimboSeconds') // 0;   # The maximum time for a Meadow to start showing the Worker (even in PEND state) after submission.
                                                                                             # We use it as a timeout for burying SUBMITTED and Meadow-invisible entries in the 'worker' table.
 
-                if( ($worker->status eq 'LOST')
+                if( ($worker->status ne 'SUBMITTED')
                  || $worker->when_died                                                      # reported by Meadow as DEAD (only if Meadow supports get_report_entries_for_process_ids)
                  || ($worker->seconds_since_when_submitted > $max_limbo_seconds) ) {        # SUBMITTED and Meadow-invisible for too long => we consider them LOST
 
@@ -528,7 +528,7 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
 
                     $self->register_worker_death( $worker );
 
-                    if( ($worker->status eq 'LOST')                 # There is no worker_temp_directory before specialization
+                    if( ($worker->status ne 'SUBMITTED')                 # There is no worker_temp_directory before specialization
                     and ($worker->meadow_user eq $this_meadow_user) ) {  # if I'm actually allowed to kill the worker...
                             $valley->cleanup_left_temp_directory( $worker );
                     }
