@@ -44,8 +44,21 @@ foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
 
+# To ensure we start with the database being absent
 system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' );
-system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE' );
+
+is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE IF EXISTS' ), 0, "Don't complain if asked to drop a database that doesn't exist");
+is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 256, "Cannot drop a database that doesn't exist");
+is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE' ), 0, 'Can create a database');
+is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE IF NOT EXISTS' ), 0, 'Further CREATE DATABASE statements are ignored') unless $dbc->driver eq 'pgsql';
+is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 0, "Can drop a database that exists");
+if ($dbc->driver eq 'pgsql') {
+    # PostgreSQL doesn't understand the IF NOT EXISTS version, so we fallback to a regular CREATE DATABASE
+    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE' ), 0, 'Can create a database');
+} else {
+    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE IF NOT EXISTS' ), 0, 'Can create a database');
+}
+
 $dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 $dbc->do('CREATE TABLE analysis_base (analysis_id INT NOT NULL)');
 

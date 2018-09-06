@@ -228,7 +228,7 @@ sub to_cmd {
                 }
                 $dbname = '';
             }
-        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
+        } elsif($sqlcmd =~ /(CREATE\s+DATABASE(?:\s+IF\s+NOT\s+EXISTS)?\s*?)(?:\s+(\w+))?/i ) {
             $dbname = $2 if $2;
 
             if($driver eq 'sqlite') {
