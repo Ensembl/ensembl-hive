@@ -121,7 +121,7 @@ sub dbc_hash_to_cmd {
                 }
                 $dbc_hash->{dbname} = '';
             }
-        } elsif($sqlcmd =~ /(CREATE\s+DATABASE\s*?)(?:\s+(\w+))?/i ) {
+        } elsif($sqlcmd =~ /(CREATE\s+DATABASE(?:\s+IF\s+NOT\s+EXISTS)?\s*?)(?:\s+(\w+))?/i ) {
             my $dbname = $2 || $dbc_hash->{dbname};
 
             if($driver eq 'sqlite') {
