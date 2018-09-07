@@ -17,6 +17,7 @@
 use strict;
 use warnings;
 
+use Cwd;
 use Test::More tests => 4;
 use Data::Dumper;
 use File::Temp qw{tempdir};
@@ -27,6 +28,7 @@ BEGIN {
 #########################
 
 my $dir = tempdir CLEANUP => 1;
+my $orig = Cwd::getcwd;
 chdir $dir;
 
 subtest 'The command line is given as a string' => sub
@@ -52,5 +54,7 @@ subtest 'The command line is given as an arrayref and contains redirections / pi
     is_deeply([join_command_args(["ls", "|", "cat"])], [1, "ls | cat"], "Array with a pipe");
     is_deeply([join_command_args(["ls", "|", "cat", ">", "file space"])], [1, "ls | cat > 'file space'"], "Array with a pipe and a redirection");
 };
+
+chdir $orig;
 
 done_testing();

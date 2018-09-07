@@ -29,6 +29,7 @@ use Bio::EnsEMBL::Hive::Utils::Test qw(standaloneJob);
 my $inputfile = File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ).'/input_fasta.fa';
 
 my $dir = tempdir CLEANUP => 1;
+my $orig = Cwd::getcwd;
 chdir $dir;
 
 standaloneJob(
@@ -217,5 +218,6 @@ foreach my $file(@all_files) {
     is((stat($file))[7], $exp_size, "file '$file' has expected file size ($exp_size)");
 }
 
+chdir $orig;
 
 done_testing();
