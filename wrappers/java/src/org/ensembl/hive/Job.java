@@ -125,6 +125,9 @@ public class Job {
 		boolean e = isTransientError();
 		setTransientError(false);
 		Object v = getParameters().getParam(paramName);
+		if (v == null) {
+			throw new NullParamException(paramName);
+		}
 		setTransientError(e);
 		return v;
 	}
