@@ -39,7 +39,7 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key);
+    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
 
     GetOptions(
                 # connect to the database:
@@ -58,6 +58,7 @@ sub main {
             'end_date=s'                 => \$end_date,
             'mode=s'                     => \$mode,
             'key=s'                      => \$key,
+            'resolution=i'               => \$resolution,
             'top=f'                      => \$top,
             'mem=i'                      => \$default_memory,
             'n_core=i'                   => \$default_cores,
@@ -119,6 +120,9 @@ sub main {
     } else {
         $key = 'analysis';
     }
+
+    # Durations are rounded up to a multiple of this (number of minutes)
+    $resolution ||= 1;
 
     # Palette generated with R: c(brewer.pal(9, "Set1"), brewer.pal(12, "Set3")). #FFFFB3 is removed because it is too close to white
     my @palette = qw(#E41A1C #377EB8 #4DAF4A #984EA3 #FF7F00 #FFFF33 #A65628 #F781BF #999999     #8DD3C7 #BEBADA #FB8072 #80B1D3 #FDB462 #B3DE69 #FCCDE5 #D9D9D9 #BC80BD #CCEBC5 #FFED6F    #2F4F4F);
@@ -200,22 +204,22 @@ sub main {
             $key_value = -1 if not defined $key_value;
 
             if ($mode eq 'workers') {
-                add_event(\%events, $key_value, $when_born, $when_died, 1);
+                add_event(\%events, $key_value, $when_born, $when_died, 1, $resolution);
 
             } elsif ($mode eq 'memory') {
                 my $offset = ($mem_resources{$resource_class_id} || $default_memory) / 1024.;
-                add_event(\%events, $key_value, $when_born, $when_died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
                 $offset = ($used_res{$worker_id}->[0]) / 1024. if exists $used_res{$worker_id} and $used_res{$worker_id}->[0];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
 
             } elsif ($mode eq 'cores') {
                 my $offset = ($cpu_resources{$resource_class_id} || $default_cores);
-                add_event(\%events, $key_value, $when_born, $when_died, $offset);
+                add_event(\%events, $key_value, $when_born, $when_died, $offset, $resolution);
                 $offset = $used_res{$worker_id}->[1] if exists $used_res{$worker_id} and $used_res{$worker_id}->[1];
-                add_event(\%layers, $key_value, $when_born, $when_died, $offset);
+                add_event(\%layers, $key_value, $when_born, $when_died, $offset, $resolution);
             } else {
-                add_event(\%events, $key_value, $when_submitted, $when_born, 1);
-                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60');
+                add_event(\%events, $key_value, $when_submitted, $when_born, 1, $resolution);
+                add_event(\%layers, $key_value, $when_submitted, $when_born, 'length_by_60', $resolution);
             }
         }
     }
@@ -396,7 +400,7 @@ sub add_dataset {
 #####
 
 sub add_event {
-    my ($events, $key, $when_born, $when_died, $offset) = @_;
+    my ($events, $key, $when_born, $when_died, $offset, $resolution) = @_;
 
     return if looks_like_number($offset) && ($offset <= 0);
 
@@ -408,9 +412,11 @@ sub add_event {
         $offset = ($death_datetime - $birth_datetime) / $1;
     }
 
-    # We don't need to draw things at the resolution of 1 second; 1 minute is enough
+    # We don't need to draw things at the resolution of 1 second; round up to $resolution minutes
     $death_datetime->[0] = 0;
     $birth_datetime->[0] = 0;
+    $birth_datetime->[1] = $resolution*int($birth_datetime->[1] / $resolution);
+    $death_datetime->[1] = $resolution*int($death_datetime->[1] / $resolution);
 
         # string values:
     my $birth_date = $birth_datetime->date . 'T' . $birth_datetime->hms;
@@ -621,6 +627,11 @@ what should be displayed on the y-axis. Allowed values are "workers" (default), 
 =item --key <string>
 
 "analysis" (default) or "resource_class": how to bin the Workers
+
+=item --resolution <integer>
+
+Timestamps are rounded up to multiples of this amount of minutes (default: 1).
+Increase this value when displaying timelines of very large pipelines.
 
 =back
 
