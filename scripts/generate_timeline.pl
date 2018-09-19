@@ -291,7 +291,7 @@ sub main {
             $plotted_analyses_desc = "the top $n_relevant_analysis analyses of ";
         }
     }
-    my $title = "Profile of ${plotted_analyses_desc}${safe_database_location}";
+    my $title = "Timeline of ${plotted_analyses_desc}${safe_database_location}";
     $title .= " from $start_date" if $start_date;
     $title .= " to $end_date" if $end_date;
 
