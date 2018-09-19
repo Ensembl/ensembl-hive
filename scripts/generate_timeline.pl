@@ -194,6 +194,12 @@ sub main {
         $key_name{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
         $key_name{"$pipeline..-1"} = 'UNSPECIALIZED';
     }
+    if (scalar(@pipelines) > 1) {
+        # Add a pseudo category for each display name
+        foreach my $display_name (values %key_name) {
+            $key_name{$display_name} = $display_name;
+        }
+    }
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
     # Get the events from the database
@@ -221,6 +227,7 @@ sub main {
             $key_value = -1 if not defined $key_value;
 
             $key_value = "$pipeline..$key_value";
+            $key_value = $key_name{$key_value} if scalar(@pipelines) > 1;
             $resource_class_id = "$pipeline..$resource_class_id";
             $worker_id = "$pipeline..$worker_id";
 
