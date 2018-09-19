@@ -39,11 +39,11 @@ exit(0);
 
 sub main {
 
-    my ($url, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
+    my (@urls, $reg_conf, $reg_type, $reg_alias, $nosqlvc, $help, $verbose, $mode, $start_date, $end_date, $output, $top, $default_memory, $default_cores, $key, $resolution);
 
     GetOptions(
                 # connect to the database:
-            'url=s'                               => \$url,
+            'url=s@'                              => \@urls,
             'reg_conf|regfile|reg_file=s'         => \$reg_conf,
             'reg_type=s'                          => \$reg_type,
             'reg_alias|regname|reg_name=s'        => \$reg_alias,
@@ -73,16 +73,22 @@ sub main {
         pod2usage({-exitvalue => 0, -verbose => 2});
     }
 
-    my $pipeline;
-    if($url or $reg_alias) {
-        $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new(
+    my @pipelines;
+    foreach my $url (@urls) {
+        push @pipelines, Bio::EnsEMBL::Hive::HivePipeline->new(
                 -url                            => $url,
+                -no_sql_schema_version_check    => $nosqlvc,
+        );
+    }
+    if ($reg_alias) {
+        push @pipelines, Bio::EnsEMBL::Hive::HivePipeline->new(
                 -reg_conf                       => $reg_conf,
                 -reg_type                       => $reg_type,
                 -reg_alias                      => $reg_alias,
                 -no_sql_schema_version_check    => $nosqlvc,
         );
-    } else {
+    }
+    unless (@pipelines) {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
 
@@ -144,17 +150,16 @@ sub main {
 
     }
 
-    my $hive_dbc = $pipeline->hive_dba->dbc;
-    my $dbh = $hive_dbc->db_handle();
-
     # Get the memory usage from each resource_class
     my %mem_resources = ();
     my %cpu_resources = ();
-    {
+    foreach my $pipeline (@pipelines) {
+        my $hive_dbc = $pipeline->hive_dba->dbc;
+        my $dbh = $hive_dbc->db_handle();
         foreach my $rd ($pipeline->collection_of('ResourceDescription')->list) {
             if ($rd->meadow_type eq 'LSF') {
-                $mem_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
-                $cpu_resources{$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/-n\s*(\d+)/;
+                $mem_resources{"$pipeline..".$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
+                $cpu_resources{"$pipeline..".$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/-n\s*(\d+)/;
             }
         }
     }
@@ -166,25 +171,37 @@ sub main {
     # Get the resource usage information of each worker
     my %used_res = ();
     if (($mode eq 'memory') or ($mode eq 'cores') or ($mode eq 'pending_workers') or ($mode eq 'pending_time')) {
+      foreach my $pipeline (@pipelines) {
+        my $hive_dbc = $pipeline->hive_dba->dbc;
+        my $dbh = $hive_dbc->db_handle();
         my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec FROM worker_resource_usage';
         foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
             my $worker_id = shift @$db_entry;
-            $used_res{$worker_id} = $db_entry;
+            $used_res{"$pipeline..$worker_id"} = $db_entry;
         }
         warn scalar(keys %used_res), " Worker info loaded from worker_resource_usage\n" if $verbose;
+      }
     }
 
     # Get the info about the analysis
-    my %default_resource_class  = map {$_->dbID => $_->resource_class_id} $pipeline->collection_of('Analysis')->list;
+    my %default_resource_class;
+    foreach my $pipeline (@pipelines) {
+        $default_resource_class{"$pipeline..".$_->dbID} = $_->resource_class_id for $pipeline->collection_of('Analysis')->list;
+    }
     warn "default_resource_class: ", Dumper \%default_resource_class if $verbose;
-    my %key_name = map {$_->dbID => $_->display_name} $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
-    $key_name{-1} = 'UNSPECIALIZED';
+    my %key_name;
+    foreach my $pipeline (@pipelines) {
+        $key_name{"$pipeline..".$_->dbID} = $_->display_name for $pipeline->collection_of($key eq 'analysis' ? 'Analysis' : 'ResourceClass')->list;
+        $key_name{"$pipeline..-1"} = 'UNSPECIALIZED';
+    }
     warn scalar(keys %key_name), " keys: ", Dumper \%key_name if $verbose;
 
     # Get the events from the database
     my %events = ();
     my %layers = ();
-    {
+    foreach my $pipeline (@pipelines) {
+        my $hive_dbc = $pipeline->hive_dba->dbc;
+        my $dbh = $hive_dbc->db_handle();
         my $sql = $key eq 'analysis'
             ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
             : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
@@ -199,9 +216,13 @@ sub main {
 
             # In case $resource_class_id is undef
             next unless $resource_class_id or $analysis_id;
-            $resource_class_id  //= $default_resource_class{$analysis_id};
+            $resource_class_id  //= $default_resource_class{"$pipeline..$analysis_id"};
             my $key_value = $key eq 'analysis' ? $analysis_id : $resource_class_id;
             $key_value = -1 if not defined $key_value;
+
+            $key_value = "$pipeline..$key_value";
+            $resource_class_id = "$pipeline..$resource_class_id";
+            $worker_id = "$pipeline..$worker_id";
 
             if ($mode eq 'workers') {
                 add_event(\%events, $key_value, $when_born, $when_died, 1, $resolution);
@@ -282,7 +303,7 @@ sub main {
             [@sorted_key_ids[0..($i-1)]], $key_name{$sorted_key_ids[$i-1]}, $palette[$i-1], $pseudo_zero_value, $additive_layer ? [$sorted_key_ids[$i-1]] : undef);
     }
 
-    my $safe_database_location = sprintf('%s@%s', $hive_dbc->dbname, $hive_dbc->host || '-');
+    my $safe_database_location = scalar(@pipelines) > 1 ? scalar(@pipelines) . ' pipelines' : $pipelines[0]->display_name;
     my $plotted_analyses_desc = '';
     if ($n_relevant_analysis < scalar(@sorted_key_ids)) {
         if ($real_top) {
