@@ -295,6 +295,14 @@ sub main {
     $title .= " from $start_date" if $start_date;
     $title .= " to $end_date" if $end_date;
 
+    unless (@xdata) {
+        if ($start_date || $end_date) {
+            die "No data to display in this time interval !";
+        } else {
+            die "No data to display !";
+        }
+    }
+
     # The main Gnuplot object
     my $chart = Chart::Gnuplot->new(
         title => $title,
