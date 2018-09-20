@@ -48,10 +48,10 @@ my $dbc = $hive_dba->dbc();
 system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' );
 
 is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE IF EXISTS' ), 0, "Don't complain if asked to drop a database that doesn't exist");
-if ($dbc->driver ne 'sqlite') {
-    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 256, "Cannot drop a database that doesn't exist");
+if ($dbc->driver eq 'sqlite') {
+    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 0, "'rm -f' doesn't care about missing files");
 } else {
-    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 0, "Cannot drop a database that doesn't exist");
+    is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'DROP DATABASE' ), 256, "Cannot drop a database that doesn't exist");
 }
 is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE' ), 0, 'Can create a database');
 is(system( $ENV{'EHIVE_ROOT_DIR'}.'/scripts/db_cmd.pl', '-url', $pipeline_url, '-sql', 'CREATE DATABASE IF NOT EXISTS' ), 0, 'Further CREATE DATABASE statements are ignored') unless $dbc->driver eq 'pgsql';
