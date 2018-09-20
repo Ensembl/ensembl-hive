@@ -43,8 +43,26 @@ foreach my $pipeline_url (split( /[\s,]+/, $ehive_test_pipeline_urls )) {
 # -no_sql_schema_version_check is needed because the database does not have the eHive schema
 my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new(-url => $pipeline_url, -no_sql_schema_version_check => 1);
 my $dbc = $hive_dba->dbc();
+
+# To ensure we start with the database being absent
 system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') });
-system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') });
+
+is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE IF EXISTS') }), 0, "Don't complain if asked to drop a database that doesn't exist");
+if ($dbc->driver eq 'sqlite') {
+    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 0, "'rm -f' doesn't care about missing files");
+} else {
+    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 256, "Cannot drop a database that doesn't exist");
+}
+is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') }), 0, 'Can create a database');
+is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE IF NOT EXISTS') }), 0, 'Further CREATE DATABASE statements are ignored') unless $dbc->driver eq 'pgsql';
+is(system(@{ $dbc->to_cmd(undef, undef, undef, 'DROP DATABASE') }), 0, "Can drop a database that exists");
+if ($dbc->driver eq 'pgsql') {
+    # PostgreSQL doesn't understand the IF NOT EXISTS version, so we fallback to a regular CREATE DATABASE
+    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE') }), 0, 'Can create a database');
+} else {
+    is(system(@{ $dbc->to_cmd(undef, undef, undef, 'CREATE DATABASE IF NOT EXISTS') }), 0, 'Can create a database');
+}
+
 $dbc->do('CREATE TABLE final_result (a_multiplier varchar(40) NOT NULL, b_multiplier varchar(40) NOT NULL, result varchar(80) NOT NULL, PRIMARY KEY (a_multiplier, b_multiplier))'),
 $dbc->do('CREATE TABLE analysis_base (analysis_id INT NOT NULL)');
 
