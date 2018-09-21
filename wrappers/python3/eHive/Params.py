@@ -32,6 +32,10 @@ class ParamInfiniteLoopException(ParamException):
     """Raised when parameters depend on each other, forming a loop"""
     def __str__(self):
         return "Substitution loop has been detected on {0}. Parameter-substitution stack: {1}".format(self.args[0], list(self.args[1].keys()))
+class NullParamException(ParamException):
+    """Raised when a parameter cannot be required because it is null (None)"""
+    def __str__(self):
+        return "{0} is None".format(self.args[0])
 
 
 class ParamContainer(object):

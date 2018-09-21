@@ -31,9 +31,12 @@ if [ "$COVERALLS" = 'true' ]; then
 else
   prove -r t
 fi
-
 rt=$?
-if [ $rt -eq 0 ]; then
+
+(cd wrappers/python3; python3 -m unittest -v eHive.Process)
+rtp=$?
+
+if [[ ($rt -eq 0) && ($rtp -eq 0) ]]; then
   if [ "$COVERALLS" = 'true' ]; then
     echo "Running Devel::Cover report"
     if [[ "$EHIVE_TEST_PIPELINE_URLS" == mysql* ]]; then
@@ -44,5 +47,5 @@ if [ $rt -eq 0 ]; then
   fi
   exit $?
 else
-  exit $rt
+  exit 255
 fi
