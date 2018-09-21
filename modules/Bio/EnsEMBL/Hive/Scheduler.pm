@@ -215,16 +215,6 @@ sub schedule_workers {
                 next ANALYSIS;
             }
 
-            # If the analysis is synching, just wait (at most 50 seconds) until the sync is done
-            if ($analysis_stats->sync_lock) {
-                my $max_refresh_attempts = 5;
-                do {
-                    sleep(10);
-                    $analysis_stats->refresh();
-                } while($analysis_stats->sync_lock and $max_refresh_attempts--);   # another Worker/Beekeeper is synching this analysis right now
-
-            } else {
-
                 push @$log_buffer, "Analysis '$logic_name' is ".$analysis_stats->status.", safe-synching it...";
 
                 # Do a (safe) sync to get up-to-date job-counts and status
@@ -238,7 +228,6 @@ sub schedule_workers {
                 } else {
                     $log_buffer->[-1] .= " failed: will use old stats.";
                 }
-            }
 
             if( ($analysis_stats->status eq 'BLOCKED') or (($analysis_stats->sync_lock) and scalar(@{ $analysis->control_rules_collection() }))) {
                 push @$log_buffer, "Analysis '$logic_name' is still ".$analysis_stats->status.", skipping it.";

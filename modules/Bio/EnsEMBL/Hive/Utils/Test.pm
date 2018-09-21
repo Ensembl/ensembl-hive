@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
 
 our $VERSION = '0.00';
 
@@ -340,6 +340,25 @@ sub generate_graph {
 
 sub visualize_jobs {
     return _test_ehive_script('visualize_jobs', @_);
+}
+
+
+=head2 db_cmd
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to db_cmd.pl
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : db_cmd($url, [-sql => 'DROP DATABASE'], 'Drop the database');
+  Description : Very generic function to run db_cmd.pl on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub db_cmd {
+    return _test_ehive_script('db_cmd', @_);
 }
 
 

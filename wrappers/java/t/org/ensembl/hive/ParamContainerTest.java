@@ -1,4 +1,4 @@
-package org.ensembl.hive.longmult;
+package org.ensembl.hive;
 
 import static org.junit.Assert.*;
 

@@ -73,7 +73,7 @@ sub main {
         die "Error: -input_id cannot be given at the same time as -job_id or -url\n";
 
     } elsif ($job_id && $url) {
-        my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $url );
+        my $pipeline = Bio::EnsEMBL::Hive::HivePipeline->new( -url => $url, -no_sql_schema_version_check => 1 );
         unless($pipeline->hive_dba) {
             die "ERROR : no database connection\n\n";
         }

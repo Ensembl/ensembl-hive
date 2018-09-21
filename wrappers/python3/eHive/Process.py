@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import numbers
+import unittest
 import warnings
 import traceback
 
@@ -120,7 +121,7 @@ class BaseRunnable(object):
         self.__print_debug("__life_cycle")
 
         # Params
-        self.__params = eHive.Params.ParamContainer(config['input_job']['parameters'])
+        self.__params = eHive.Params.ParamContainer(config['input_job']['parameters'], self.debug > 1)
 
         # Job attributes
         self.input_job = Job()
@@ -221,10 +222,13 @@ class BaseRunnable(object):
 
     def param_required(self, param_name):
         """Returns the value of the parameter "param_name" or raises an exception
-        if anything wrong happens. The exception is marked as non-transient."""
+        if anything wrong happens or the value is None. The exception is
+        marked as non-transient."""
         t = self.input_job.transient_error
         self.input_job.transient_error = False
         v = self.__params.get_param(param_name)
+        if v is None:
+            raise eHive.Params.NullParamException(param_name)
         self.input_job.transient_error = t
         return v
 
@@ -241,19 +245,81 @@ class BaseRunnable(object):
         try:
             return self.__params.get_param(param_name)
         except KeyError as e:
-            warnings.warn("parameter '{0}' cannot be initialized because {1} is not defined !".format(param_name, e), eHive.Params.ParamWarning, 2)
+            warnings.warn("parameter '{0}' cannot be initialized because {1} is missing !".format(param_name, e), eHive.Params.ParamWarning, 2)
             return None
 
     def param_exists(self, param_name):
-        """Returns True or False, whether the parameter exists (it doesn't mean it can be successfully substituted)"""
-        return self.__params.has_param(param_name)
+        """Returns True if the parameter exists and can be successfully
+        substituted, None if the substitution fails, False if it is missing"""
+        if not self.__params.has_param(param_name):
+            return False
+        try:
+            self.__params.get_param(param_name)
+            return True
+        except KeyError:
+            return None
 
     def param_is_defined(self, param_name):
-        """Returns True or False, whether the parameter exists, can be successfully substituted, and is not None"""
-        if not self.param_exists(param_name):
-            return False
+        """Returns True if the parameter exists and can be successfully
+        substituted to a defined value, None if the substitution fails,
+        False if it is missing or evaluates as None"""
+        e = self.param_exists(param_name)
+        if not e:
+            # False or None
+            return e
         try:
             return self.__params.get_param(param_name) is not None
         except KeyError:
             return False
+
+class RunnableTest(unittest.TestCase):
+    def test_job_param(self):
+        class FakeRunnableWithParams(BaseRunnable):
+            def __init__(self, d):
+                self._BaseRunnable__params = eHive.Params.ParamContainer(d)
+                self.input_job = Job()
+                self.input_job.transient_error = True
+        j = FakeRunnableWithParams({
+            'a': 3,
+            'b': None,
+            'c': '#other#',
+            'e': '#e#'
+        })
+
+        # param_exists
+        self.assertIs( j.param_exists('a'), True, '"a" exists' )
+        self.assertIs( j.param_exists('b'), True, '"b" exists' )
+        self.assertIs( j.param_exists('c'), None, '"c"\'s existence is unclear' )
+        self.assertIs( j.param_exists('d'), False, '"d" doesn\'t exist' )
+        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+            j.param_exists('e')
+
+        # param_is_defined
+        self.assertIs( j.param_is_defined('a'), True, '"a" is defined' )
+        self.assertIs( j.param_is_defined('b'), False, '"b" is not defined' )
+        self.assertIs( j.param_is_defined('c'), None, '"c"\'s defined-ness is unclear' )
+        self.assertIs( j.param_is_defined('d'), False, '"d" is not defined (it doesn\'t exist)' )
+        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+            j.param_is_defined('e')
+
+        # param
+        self.assertIs( j.param('a'), 3, '"a" is 3' )
+        self.assertIs( j.param('b'), None, '"b" is None' )
+        with self.assertWarns(eHive.Params.ParamWarning):
+            self.assertIs( j.param('c'), None, '"c"\'s value is unclear' )
+        with self.assertWarns(eHive.Params.ParamWarning):
+            self.assertIs( j.param('d'), None, '"d" is not defined (it doesn\'t exist)' )
+        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+            j.param('e')
+
+        # param_required
+        self.assertIs( j.param_required('a'), 3, '"a" is 3' )
+        with self.assertRaises(eHive.Params.NullParamException):
+            j.param_required('b')
+        with self.assertRaises(KeyError):
+            j.param_required('c')
+        with self.assertRaises(KeyError):
+            j.param_required('d')
+        with self.assertRaises(eHive.Params.ParamInfiniteLoopException):
+            j.param_required('e')
 
