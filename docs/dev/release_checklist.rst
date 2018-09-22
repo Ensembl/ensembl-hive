@@ -27,25 +27,21 @@ In ensembl-hive and all meadows (but not guiHive):
 9. Update default branch on GitHub to point to version/x.y at
    https://github.com/Ensembl/ensembl-hive/settings/branches
 
-10. Protect the new version/x.y branch on GitHub (to prevent accidental
-    force push) at
-    https://github.com/Ensembl/ensembl-hive/settings/branches
-
-11. On Travis https://travis-ci.org/Ensembl/ensembl-hive/settings add a
+10. On Travis https://travis-ci.org/Ensembl/ensembl-hive/settings add a
     daily build of the new branch
 
-12. On the Docker hub
+11. On the Docker hub
     https://hub.docker.com/r/ensemblorg/ensembl-hive/~/settings/automated-builds/
     add an automatic build of the new branch
 
-13. On ReadTheDocs https://readthedocs.org/dashboard/ensembl-hive/versions/
+12. On ReadTheDocs https://readthedocs.org/dashboard/ensembl-hive/versions/
     add the new version and set it as default
 
-14. On Coveralls https://coveralls.io/github/Ensembl/ensembl-hive/settings
+13. On Coveralls https://coveralls.io/github/Ensembl/ensembl-hive/settings
     click on "sync" to synchronize the list of branches (and the default
     one) with Github.
 
-15. On Codecov https://codecov.io/gh/Ensembl/ensembl-hive/settings set the
+14. On Codecov https://codecov.io/gh/Ensembl/ensembl-hive/settings set the
     new default branch.
 
 Other repos
