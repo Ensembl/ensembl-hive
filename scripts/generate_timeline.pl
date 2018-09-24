@@ -309,7 +309,7 @@ sub main {
 
     my $data_start = Time::Piece->strptime( $xdata[0] , '%Y-%m-%dT%H:%M:%S');
     my $data_end   = Time::Piece->strptime( $xdata[-1], '%Y-%m-%dT%H:%M:%S');
-    my $xlabelfmt  = $data_end-$data_start >= 3*24*3600 ? '%b %d' : '%b %d\n %H:%M';
+    my $xlabelfmt  = $data_end-$data_start >= 6*24*3600 ? '%b %d' : '%b %d\n %H:%M';
 
     # The main Gnuplot object
     my $chart = Chart::Gnuplot->new(
