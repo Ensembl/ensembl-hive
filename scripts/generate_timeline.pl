@@ -332,7 +332,7 @@ sub main {
         terminal => $terminal_mapping{$gnuplot_terminal},
         ylabel => $allowed_modes{$mode},
         yrange => [$pseudo_zero_value, undef],
-        ($start_date || $end_date) ? (xrange => [$start_date, $end_date]) : (),
+        ($start_date && $end_date) ? (xrange => [$start_date, $end_date]) : (),
     );
     $chart->plot2d(@datasets);
 
