@@ -14,6 +14,7 @@ BEGIN {
 }
 
 use Getopt::Long qw(:config pass_through no_auto_abbrev);
+use Pod::Usage;
 use Bio::EnsEMBL::Hive::Utils ('load_file_or_module');
 use Bio::EnsEMBL::Hive::Scripts::InitPipeline;
 
