@@ -376,10 +376,15 @@ sub run_in_transaction {
 sub has_write_access {
     my $self = shift;
     if ($self->driver eq 'mysql') {
-        my $user_entries =  $self->db_handle->selectall_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
+        my $access_sql =
+            q{SELECT COUNT(*)
+                FROM information_schema.schema_privileges
+               WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+                 AND DATABASE() LIKE TABLE_SCHEMA};
+        my $user_entries = $self->db_handle->selectall_arrayref($access_sql, undef);
         my $has_write_access_from_some_host = 0;
         foreach my $entry (@$user_entries) {
-            $has_write_access_from_some_host ||= !scalar(grep {$_ eq 'N'} @$entry);
+            $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
         }
         return $has_write_access_from_some_host;
     } else {
