@@ -376,14 +376,28 @@ sub run_in_transaction {
 sub has_write_access {
     my $self = shift;
     if ($self->driver eq 'mysql') {
+        my $current_user = $self->db_handle->selectrow_arrayref('SELECT CURRENT_USER()');
+        # munge grantee - user and host specification need single quoting
+        my $grantee = join '@', map { qq{'$_'} } split /@/, @$current_user[0];
+        # instance wide privileges
         my $access_sql =
+            q{SELECT COUNT(*)
+                FROM information_schema.user_privileges
+               WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+                 AND GRANTEE = ?};
+        my $user_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
+        # schema specific privileges
+        $access_sql =
             q{SELECT COUNT(*)
                 FROM information_schema.schema_privileges
                WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
-                 AND DATABASE() LIKE TABLE_SCHEMA};
-        my $user_entries = $self->db_handle->selectall_arrayref($access_sql, undef);
+                 AND DATABASE() LIKE TABLE_SCHEMA
+                 AND GRANTEE = ?};
+        my $schema_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
         my $has_write_access_from_some_host = 0;
-        foreach my $entry (@$user_entries) {
+        foreach my $entry (@$user_entries, @$schema_entries) {
             $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
         }
         return $has_write_access_from_some_host;
