@@ -401,6 +401,21 @@ sub has_write_access {
             $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
         }
         return $has_write_access_from_some_host;
+    } elsif ($self->driver eq 'pgsql') {
+        my $access_sql =
+            q{SELECT COUNT(*)
+                FROM (SELECT DISTINCT PRIVILEGE_TYPE
+                        FROM information_schema.table_privileges
+                       WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+                         AND GRANTEE = current_user
+                         AND TABLE_CATALOG = current_database()) AS temp};
+        my $user_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef);
+        my $has_write_access_from_some_host = 0;
+        foreach my $entry (@$user_entries) {
+            $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
+        }
+        return $has_write_access_from_some_host;
     } else {
         # TODO: implement this for other drivers
         return 1;
