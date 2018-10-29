@@ -383,7 +383,7 @@ sub has_write_access {
         my $access_sql =
             q{SELECT COUNT(*)
                 FROM information_schema.user_privileges
-               WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+               WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
                  AND GRANTEE = ?};
         my $user_entries =
             $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
@@ -391,7 +391,7 @@ sub has_write_access {
         $access_sql =
             q{SELECT COUNT(*)
                 FROM information_schema.schema_privileges
-               WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+               WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
                  AND DATABASE() LIKE TABLE_SCHEMA
                  AND GRANTEE = ?};
         my $schema_entries =
@@ -406,7 +406,7 @@ sub has_write_access {
             q{SELECT COUNT(*)
                 FROM (SELECT DISTINCT PRIVILEGE_TYPE
                         FROM information_schema.table_privileges
-                       WHERE PRIVILEGE_TYPE IN ('SELECT', 'INSERT', 'DELETE')
+                       WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
                          AND GRANTEE = current_user
                          AND TABLE_CATALOG = current_database()) AS temp};
         my $user_entries =
