@@ -376,10 +376,44 @@ sub run_in_transaction {
 sub has_write_access {
     my $self = shift;
     if ($self->driver eq 'mysql') {
-        my $user_entries =  $self->db_handle->selectall_arrayref('SELECT Insert_priv, Update_priv, Delete_priv FROM mysql.user WHERE user = ?', undef, $self->username);
+        my $current_user = $self->db_handle->selectrow_arrayref('SELECT CURRENT_USER()');
+        # munge grantee - user and host specification need single quoting
+        my $grantee = join '@', map { qq{'$_'} } split /@/, @$current_user[0];
+        # instance wide privileges
+        my $access_sql =
+            q{SELECT COUNT(*)
+                FROM information_schema.user_privileges
+               WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
+                 AND GRANTEE = ?};
+        my $user_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
+        # schema specific privileges
+        $access_sql =
+            q{SELECT COUNT(*)
+                FROM information_schema.schema_privileges
+               WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
+                 AND DATABASE() LIKE TABLE_SCHEMA
+                 AND GRANTEE = ?};
+        my $schema_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
+        my $has_write_access_from_some_host = 0;
+        foreach my $entry (@$user_entries, @$schema_entries) {
+            $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
+        }
+        return $has_write_access_from_some_host;
+    } elsif ($self->driver eq 'pgsql') {
+        my $access_sql =
+            q{SELECT COUNT(*)
+                FROM (SELECT DISTINCT PRIVILEGE_TYPE
+                        FROM information_schema.table_privileges
+                       WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
+                         AND GRANTEE = current_user
+                         AND TABLE_CATALOG = current_database()) AS temp};
+        my $user_entries =
+            $self->db_handle->selectall_arrayref($access_sql, undef);
         my $has_write_access_from_some_host = 0;
         foreach my $entry (@$user_entries) {
-            $has_write_access_from_some_host ||= !scalar(grep {$_ eq 'N'} @$entry);
+            $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
         }
         return $has_write_access_from_some_host;
     } else {
