@@ -27,7 +27,13 @@ addons:
     - ant
     - graphviz
 
+cache:
+  directories:
+    - $HOME/deps
+
 before_install:
+    - cpanm -nq local::lib
+    - eval "$(perl -Mlocal::lib=${HOME}/deps)"
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
     - mysql -u root -h localhost -e 'GRANT ALL PRIVILEGES ON *.* TO "travis"@"%"'
     - mysql -hlocalhost -utravis -e "SET GLOBAL sql_mode = 'TRADITIONAL'"
