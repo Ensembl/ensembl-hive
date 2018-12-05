@@ -43,7 +43,7 @@ PBSPro
   A meadow that supports `PBS Pro <http://www.pbspro.org>`__. Available for download on GitHub at `Ensembl/ensembl-hive-pbspro <https://github.com/Ensembl/ensembl-hive-pbspro>`__.
 
 SLURM
-  A meadow that supports `Slurm <https://slurm.schedmd.com/`__. Available for download on GitHub at `tweep/ensembl-hive-slurm <https://github.com/tweep/ensembl-hive-slurm>`__.
+  A meadow that supports `Slurm <https://slurm.schedmd.com/>`__. Available for download on GitHub at `tweep/ensembl-hive-slurm <https://github.com/tweep/ensembl-hive-slurm>`__.
 
 DockerSwarm
   A meadow that can control and run on `Docker Swarm <https://docs.docker.com/engine/swarm/>`__.
