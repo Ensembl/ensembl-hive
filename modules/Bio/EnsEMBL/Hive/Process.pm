@@ -493,6 +493,8 @@ sub run_system_command {
     my ($stdout, $stderr) = Capture::Tiny::tee(sub {
         $return_value = timeout( sub {system(@cmd_to_run)}, $options->{'timeout'} );
     });
+    # FIXME: on LSF we could perhaps wait a little bit for the MEM/RUNLIMIT
+    # to really kick in, so that we don't return the wrong diagnostic
     die sprintf("Could not run '%s', got %s\nSTDERR %s\n", $flat_cmd, $return_value, $stderr) if $return_value && $options->{die_on_failure};
 
     return ($return_value, $stderr, $flat_cmd, $stdout, time()*1000-$starttime) if wantarray;
