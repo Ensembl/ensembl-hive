@@ -97,6 +97,7 @@ foreach my $f (@source_files) {
     next if $f =~ /\/cpanfile$/;
     next if $f =~ /\/perlcriticrc$/;
     next if $f =~ /\/psql$/;
+    next if $f =~ /\/input_job_factory\.sql$/;
     has_apache2_licence($f);
 }
 
