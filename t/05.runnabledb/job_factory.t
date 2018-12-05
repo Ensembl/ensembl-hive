@@ -31,6 +31,7 @@ plan tests => 9;
 
 # Need EHIVE_ROOT_DIR to be able to point at specific files
 $ENV{'EHIVE_ROOT_DIR'} ||= File::Basename::dirname( File::Basename::dirname( File::Basename::dirname( Cwd::realpath($0) ) ) );
+my $input_job_factory = File::Basename::dirname( Cwd::realpath($0) ) . '/input_job_factory.sql';
 
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -242,7 +243,7 @@ my $l2 = q{ALTER TABLE analysis_stats ADD COLUMN failed_job_tolerance int(10) DE
 standaloneJob(
     'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     {
-        'inputfile'     => 'patch_2007-11-16.sql',  # We're still in the $EHIVE_ROOT_DIR/sql/ directory
+        'inputfile'     => $input_job_factory,
         'column_names'  => [ 'line' ],
     },
     # The files contains 3 lines but the last one is empty. JobFactory only

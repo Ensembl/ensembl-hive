@@ -7,7 +7,7 @@ Other job schedulers
 eHive has a generic interface named :ref:`Meadow <meadows-overview>`
 that describes how to interact with an underlying grid scheduler
 (submit jobs, query job's status, etc.).  eHive is distributed with
-some meadow implementations:
+two meadow implementations:
 
 LOCAL
   A simple meadow that submits jobs locally via ``system()`` (i.e. ``fork()``).
@@ -25,14 +25,13 @@ LSF
   updated. It is fully implemented and supports workloads reaching
   thousands of parallel jobs.
 
-Other meadows have been contributed to the project but their support is
-more limited. Not all the features may be implemented (by lack of
-experience of the job scheduler at scale). They may be at times out of sync
-with the latest version of eHive.
-They are nevertheless usually continuously tested on `Travis CI
+Other meadows have been contributed to the project, though sometimes not
+all the features are implemented.  Being developed outside of the main
+codebase, they may be at times out of sync with the latest version of
+eHive.  Nevertheless, several are continuously tested on `Travis CI
 <https://travis-ci.org/Ensembl>`__ using single-machine Docker
-installations.  You can check the badge on the repositories' home page to
-verify they are still compatible.
+installations. Refer to the documentation or README in each of those
+repositories to know more about their compatibility and support.
 
 SGE
   A meadow that supports Sun Grid Engine (now known as Oracle Grid Engine). Available for download on GitHub at `Ensembl/ensembl-hive-sge <https://github.com/Ensembl/ensembl-hive-sge>`__.
@@ -42,6 +41,9 @@ HTCondor
 
 PBSPro
   A meadow that supports `PBS Pro <http://www.pbspro.org>`__. Available for download on GitHub at `Ensembl/ensembl-hive-pbspro <https://github.com/Ensembl/ensembl-hive-pbspro>`__.
+
+SLURM
+  A meadow that supports `Slurm <https://slurm.schedmd.com/>`__. Available for download on GitHub at `tweep/ensembl-hive-slurm <https://github.com/tweep/ensembl-hive-slurm>`__.
 
 DockerSwarm
   A meadow that can control and run on `Docker Swarm <https://docs.docker.com/engine/swarm/>`__.
@@ -91,6 +93,12 @@ The table below lists the capabilities of each meadow, and whether they are avai
      - Yes
      - Yes
      - Not implemented
+   * - SLURM
+     - Yes
+     - Yes
+     - Yes
+     - Yes
+     - Yes
    * - DockerSwarm
      - Yes
      - Yes
