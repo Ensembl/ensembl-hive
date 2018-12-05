@@ -971,6 +971,7 @@ sub AUTOLOAD {
 
         my @retval;
         eval {
+            #warn "SQL(".$self->dbname."): " . $_[0] . "\n" if ($method_name eq 'do') || ($method_name =~ /^select/);
             if( $wantarray ) {
                 @retval = $db_handle->$method_name( @_ );
             } else {
