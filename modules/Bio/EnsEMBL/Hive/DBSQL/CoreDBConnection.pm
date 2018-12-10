@@ -960,6 +960,12 @@ sub AUTOLOAD {
     $AUTOLOAD=~/^.+::(\w+)$/;
     my $method_name = $1;
 
+    # Mechanism to call on the dbc a db_handle method
+    # Used for "prepare" because the latter also exists on dbc
+    if ($method_name =~ /^protected_(.*)/) {
+        $method_name = $1;
+    }
+
 #    warn "[AUTOLOAD instantiating '$method_name'] ($AUTOLOAD)\n";
 
     *$AUTOLOAD = sub {
@@ -997,7 +1003,7 @@ sub AUTOLOAD {
             }
         };
 
-        if($self->disconnect_when_inactive()) {
+        if($self->disconnect_when_inactive() && ($method_name !~ /^prepare/)) { # we shouldn't disconnect right after prepare() otherwise the statement handle would be linked to a closed connection
             $self->disconnect_if_idle();
         }
 
