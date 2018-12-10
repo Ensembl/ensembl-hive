@@ -234,16 +234,15 @@ sub _table_info_loader {
     my $self = shift @_;
 
     my $dbc         = $self->dbc();
-    my $dbh         = $dbc->db_handle();
     my $driver      = $dbc->driver();
     my $dbname      = $dbc->dbname();
     my $table_name  = $self->table_name();
 
     my %column_set  = ();
     my $autoinc_id  = '';
-    my @primary_key = $dbh->primary_key(undef, undef, $table_name);
+    my @primary_key = $dbc->primary_key(undef, undef, $table_name);
 
-    my $sth = $dbh->column_info(undef, undef, $table_name, '%');
+    my $sth = $dbc->column_info(undef, undef, $table_name, '%');
     $sth->execute();
     while (my $row = $sth->fetchrow_hashref()) {
         my ( $column_name, $column_type ) = @$row{'COLUMN_NAME', 'TYPE_NAME'};

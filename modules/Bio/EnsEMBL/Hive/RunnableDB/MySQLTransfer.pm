@@ -201,11 +201,11 @@ sub get_row_count {
 sub _assert_same_table_schema {
     my ($self, $src_dbc, $dest_dbc, $table) = @_;
 
-    my $src_sth = $src_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $src_sth = $src_dbc->column_info(undef, undef, $table, '%');
     my $src_schema = $src_sth->fetchall_arrayref;
     $src_sth->finish();
 
-    my $dest_sth = $dest_dbc->db_handle->column_info(undef, undef, $table, '%');
+    my $dest_sth = $dest_dbc->column_info(undef, undef, $table, '%');
     my $dest_schema = $dest_sth->fetchall_arrayref;
     $dest_sth->finish();
 
