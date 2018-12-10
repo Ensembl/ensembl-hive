@@ -153,6 +153,7 @@ sub AUTOLOAD {
                 $dbc->reconnect();
 
                 warn "trying to re-prepare [$sql". ($attr ? (', '.stringify($attr)) : '') ."]...";
+                # NOTE: parameters set via the hash interface of $sth will be lost
                 $dbi_sth = $dbc->db_handle->prepare( $sql, $attr );
                 $self->dbi_sth( $dbi_sth );
 

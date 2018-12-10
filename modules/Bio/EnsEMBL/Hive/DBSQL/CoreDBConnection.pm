@@ -989,6 +989,7 @@ sub AUTOLOAD {
              or $error =~ /server closed the connection unexpectedly/ ) {   # pgsql version
 
                 warn "trying to reconnect...";
+                # NOTE: parameters set via the hash interface of $dbh will be lost
                 $self->reconnect();
                 my $db_handle = $self->db_handle() or throw( "db_handle returns false" );
 
