@@ -112,6 +112,7 @@ sub _exec_sql {
         $data_dbc->do( $sql ) or die "Could not run '$sql': ".$data_dbc->db_handle->errstr;
 
         my $insert_id_name  = '_insert_id_'.$counter++;
+        # FIXME: does this work if the "MySQL server has gone away" ?
         my $insert_id_value = $data_dbc->db_handle->last_insert_id(undef, undef, undef, undef);
 
         $output_id{$insert_id_name} = $insert_id_value;

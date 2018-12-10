@@ -344,6 +344,7 @@ sub run_in_transaction {
     my $result;
     eval {
         $result = $callback->();
+        # FIXME: does this work if the "MySQL server has gone away" ?
         $self->db_handle()->commit();
     };
     my $error = $@;

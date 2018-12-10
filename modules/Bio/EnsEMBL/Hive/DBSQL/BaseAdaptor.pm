@@ -579,6 +579,7 @@ sub store {
                 or throw("Could not store fields\n\t{$column_key}\nwith data:\n\t(".join(',', @$values_being_stored).')');
 
             if($return_code > 0) {     # <--- for the same reason we have to be explicitly numeric here
+                # FIXME: does this work if the "MySQL server has gone away" ?
                 my $liid = $autoinc_id && $self->dbc->db_handle->last_insert_id(undef, undef, $table_name, $autoinc_id);
                 $self->mark_stored($object, $liid );
                 ++$stored_this_time;
