@@ -51,11 +51,11 @@ sub schema_from_url {
     if ($dbc->driver eq 'mysql') {
         # For some reasons, column_info(undef, undef, '%', '%') doesn't
         # work on MySQL ... We need to call it on each table explicitly
-        my $sth = $dbc->db_handle->table_info(undef, undef, '%');
+        my $sth = $dbc->table_info(undef, undef, '%');
         my @table_names = keys %{ $sth->fetchall_hashref('TABLE_NAME') };
         my %schema;
         foreach my $t (@table_names) {
-            $sth = $dbc->db_handle->column_info(undef, undef, $t, '%');
+            $sth = $dbc->column_info(undef, undef, $t, '%');
             $schema{$t} = $sth->fetchall_hashref('ORDINAL_POSITION');
         }
         return \%schema;
@@ -64,7 +64,7 @@ sub schema_from_url {
         # of a column. This means that patches that add columns cannot
         # produce the same new schema, so we can't use the ORDINAL position
         # when comparing the schemas
-        my $sth = $dbc->db_handle->column_info(undef, undef, '%', '%');
+        my $sth = $dbc->column_info(undef, undef, '%', '%');
         my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'COLUMN_NAME']);
         foreach my $s (values %$schema) {
             delete $_->{'ORDINAL_POSITION'} for values %$s;
@@ -72,7 +72,7 @@ sub schema_from_url {
         $sth->finish();
         return $schema;
     } else {
-        my $sth = $dbc->db_handle->column_info(undef, undef, '%', '%');
+        my $sth = $dbc->column_info(undef, undef, '%', '%');
         my $schema = $sth->fetchall_hashref(['TABLE_NAME', 'ORDINAL_POSITION']);
         $sth->finish();
         return $schema;
