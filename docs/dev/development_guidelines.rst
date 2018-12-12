@@ -57,6 +57,28 @@ Core type. eHive has developed new functionalities in its own
 ``DBSQL::DBConnection``, and has reimplemented ``DBSQL::StatementHandle``
 to allow catching connection errors and automatically reconnecting.
 
+In summary, eHive connections are protected against:
+
+* "MySQL server has gone away" errors through:
+
+  * a reimplementation of ``DBSQL::StatementHandle`` (which allows code to be
+    entirely compatible with the Core API)
+  * allowing to call *dbh* methods on the connection object itself (whilst
+    capturing the error), though this requires the calling code to be updated.
+    In hindsight, it would have been better to implement a new class
+    ``DBSQL::DatabaseHandle`` that would wrap and protect *db_handle* calls the
+    same way ``DBSQL::StatementHandle`` wraps and protects *sth* calls.
+
+    .. note::
+       ``$dbc->db_handle->prepare`` is protected by calling ``$dbc->protected_prepare``
+       because ``DBConnection::prepare()`` already exists.
+
+* Deadlocks and "Lock wait timeout" errors through a new ``protected_prepare_execute``
+  method that combines ``prepare`` and ``execute``. ``protected_prepare_execute`` has
+  to be explicitly called, and is currently only used in critical statements (usually
+  revolving around job semaphores, statuses and log messages.
+
+
 Custom ORM
 ----------
 
