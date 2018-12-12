@@ -49,6 +49,8 @@ update semaphores by running ``beekeeper.pl`` with the -balance_semaphores optio
 
            beekeeper.pl -url sqlite:///my_pipeline_database -balance_semaphores
 
+.. _garbage-collection:
+
 Garbage collection of dead Workers
 ----------------------------------
 

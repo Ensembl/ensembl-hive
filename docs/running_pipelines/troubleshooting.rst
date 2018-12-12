@@ -57,7 +57,7 @@ The message log stores messages sent from the Beekeeper and from Workers. Messag
 
    - WORKER_ERROR
 
-      - WORKER_ERROR messages are sent when a Worker encounters an abnormal condition related to its particular lifecycle of Job execution, and that condition causes it to end prematurely. Examples of conditions that can generate WORKER_ERROR messages include failure to compile a Runnable, or a Runnable generating a failure message.
+      - WORKER_ERROR messages are sent when a Worker encounters an abnormal condition related to its particular lifecycle of Job execution, and that condition causes it to end prematurely. Examples of conditions that can generate WORKER_ERROR messages include failure to compile a Runnable, reasons why Workers disappeared (as detected in the :ref:`Garbage collection<garbage-collection>` phase, or a Runnable generating a failure message.
 
 The log can be viewed in guiHive's log tab, or by directly querying the eHive database. In the database, the log is stored in the log_message table. To aid with discovery of relevant messages, eHive also provides via a view called msg, which includes Analysis logic_names. For example, to find all non-INFO messages for an Analysis with a logic_name of "align_sequences" one could run:
 
