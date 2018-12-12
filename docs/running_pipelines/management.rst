@@ -56,7 +56,36 @@ On occasion, Worker processes will end without having an opportunity to update
 their status in the eHive database. The Beekeeper will attempt to find these
 Workers and update their status itself. It does this by reconciling the list of
 Worker statuses in the eHive database with information on Workers gleaned from
-the meadow's process tables (e.g. ``ps``, ``bacct``, ``bjobs``). A manual
+the meadow's process tables (e.g. ``ps``, ``bacct``, ``bjobs``). This
+process is called "garbage collection". A typical output is like this::
+
+    Beekeeper : loop #12 ======================================================
+    GarbageCollector:       Checking for lost Workers...
+    GarbageCollector:       [Queen:] out of 66 Workers that haven't checked in during the last 5 seconds...
+    GarbageCollector:       [LSF/EBI Meadow:]       RUN:66
+
+In this case, 66 LSF workers had not updated their status within the last 5
+seconds but they were in fact all running and listed by ``bjobs``. The
+Garbage collection process ends there, then.
+
+In another case, Beekeeper could find so called ``LOST`` Workers::
+
+    Beekeeper : loop #15 ======================================================
+    GarbageCollector:       Checking for lost Workers...
+    GarbageCollector:       [Queen:] out of 45 Workers that haven't checked in during the last 5 seconds...
+    GarbageCollector:       [LSF/EBI Meadow:]       LOST:4, RUN:41
+
+    GarbageCollector:       Discovered 4 lost LSF Workers
+    LSF::parse_report_source_line( "bacct -l '4126850[15]' '4126850[6]' '4126835[24]' '4126850[33]'" )
+    GarbageCollector:       Found why 4 of LSF Workers died
+
+In this case, ``bjobs`` only listed 41 of the 45 LSF workers that had not
+updated their status within the last 5 seconds. Beekeeper then had to
+resort to ``bacct`` to find out what happened to 4 ``LOST`` Workers.
+``LOST`` Workers are most of the time Workers that have been killed by LSF
+due to exceeding their allocated resources (MEMLIMIT or RUNLIMIT).
+
+The Garbage collection happens at every Beekeeper loop, but a manual
 reconciliation and update of Worker statuses can be invoked by running
 ``beekeeper.pl`` with the -dead option:
 
