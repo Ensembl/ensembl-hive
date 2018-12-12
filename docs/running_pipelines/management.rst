@@ -87,6 +87,13 @@ resort to ``bacct`` to find out what happened to 4 ``LOST`` Workers.
 ``LOST`` Workers are most of the time Workers that have been killed by LSF
 due to exceeding their allocated resources (MEMLIMIT or RUNLIMIT).
 
+When no reason could be found, the cause of death recorded in the
+``log_message`` table will be UNKNOWN. This is known to happen when
+``bacct`` was executed too long after the Worker exited: LSF's journal only
+knows about the most recent jobs. It seems to be happening in other
+circumstances that are not clearly understood. If you face this UNKNOWN
+error, re-run the job locally in debug mode.
+
 The Garbage collection happens at every Beekeeper loop, but a manual
 reconciliation and update of Worker statuses can be invoked by running
 ``beekeeper.pl`` with the -dead option:
