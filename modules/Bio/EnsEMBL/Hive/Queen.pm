@@ -437,7 +437,12 @@ sub check_for_dead_workers {    # scans the whole Valley for lost Workers (but i
     my $signature_and_pid_to_worker_status  = $valley->status_of_all_our_workers_by_meadow_signature( $reconciled_worker_statuses );
     # this may pick up workers that have been created since the last fetch
     my $queen_overdue_workers               = $self->fetch_overdue_workers( $last_few_seconds );    # check the workers we have not seen active during the $last_few_seconds
-    print "GarbageCollector:\t[Queen:] out of ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
+
+    if (@$queen_overdue_workers) {
+        print "GarbageCollector:\tOut of the ".scalar(@$queen_overdue_workers)." Workers that haven't checked in during the last $last_few_seconds seconds...\n";
+    } else {
+        print "GarbageCollector:\tfound none (all have checked in during the last $last_few_seconds seconds)\n";
+    }
 
     my $this_meadow_user            = whoami();
 
