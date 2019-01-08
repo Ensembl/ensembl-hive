@@ -38,7 +38,7 @@ use Bio::EnsEMBL::Hive::Utils::GraphViz;
 ###############
 
 my ($sql_file,$fk_sql_file,$html_file,$db_team,$show_colour,$version,$header_flag,$sort_headers,$sort_tables,$intro_file,$embed_diagrams,$help,$help_format);
-my ($url,$skip_conn,$db_handle);
+my ($url,$skip_conn,$db_connection);
 
 usage() if (!scalar(@ARGV));
  
@@ -78,10 +78,9 @@ $skip_conn      = undef if ($skip_conn == 0);
 
 # Dababase connection (optional)
 if (defined($url) && !defined($skip_conn)) {
-  my $db_connection = new Bio::EnsEMBL::Hive::DBSQL::DBConnection(
+  $db_connection = new Bio::EnsEMBL::Hive::DBSQL::DBConnection(
     -url => $url,
   ) or die("DATABASE CONNECTION ERROR: Could not get a database adaptor for $url\n");
-  $db_handle = $db_connection->db_handle;
 }
 
 
@@ -1019,7 +1018,7 @@ sub get_example_table {
     $table_name = $table if ($cols eq '*');
     $table_name = $1 if ($col =~ /(\S+)\.\*/ and !defined($table_name));
     if (defined($table_name)) {
-      my $table_cols = $db_handle->selectall_arrayref(qq{SHOW COLUMNS FROM $table_name});
+      my $table_cols = $db_connection->selectall_arrayref(qq{SHOW COLUMNS FROM $table_name});
       foreach my $col (@$table_cols) {
         push(@tcols,$col->[0]);
       }
@@ -1033,7 +1032,7 @@ sub get_example_table {
     push(@tcols,$col);
   }
   
-  my $results = $db_handle->selectall_arrayref($sql);
+  my $results = $db_connection->selectall_arrayref($sql);
   if (scalar(@$results)) {
     my @data;
     push @data, \@tcols;

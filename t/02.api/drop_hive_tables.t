@@ -40,7 +40,7 @@ SKIP: {
 	      $dbc->do('CALL drop_hive_tables;');
 	    }, 'CALL drop_hive_tables does not fail');
   
-  my $table_list = $dbc->db_handle->selectcol_arrayref('SHOW TABLE STATUS', { Columns => [1] });
+  my $table_list = $dbc->selectcol_arrayref('SHOW TABLE STATUS', { Columns => [1] });
   
   is_deeply( $table_list, [], 'All the eHive tables have been removed by "drop_hive_tables"');
   

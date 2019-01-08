@@ -344,6 +344,7 @@ sub run_in_transaction {
     my $result;
     eval {
         $result = $callback->();
+        # FIXME: does this work if the "MySQL server has gone away" ?
         $self->db_handle()->commit();
     };
     my $error = $@;
@@ -376,7 +377,7 @@ sub run_in_transaction {
 sub has_write_access {
     my $self = shift;
     if ($self->driver eq 'mysql') {
-        my $current_user = $self->db_handle->selectrow_arrayref('SELECT CURRENT_USER()');
+        my $current_user = $self->selectrow_arrayref('SELECT CURRENT_USER()');
         # munge grantee - user and host specification need single quoting
         my $grantee = join '@', map { qq{'$_'} } split /@/, @$current_user[0];
         # instance wide privileges
@@ -386,7 +387,7 @@ sub has_write_access {
                WHERE PRIVILEGE_TYPE IN ('INSERT', 'DELETE', 'UPDATE')
                  AND GRANTEE = ?};
         my $user_entries =
-            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
+            $self->selectall_arrayref($access_sql, undef, $grantee);
         # schema specific privileges
         $access_sql =
             q{SELECT COUNT(*)
@@ -395,7 +396,7 @@ sub has_write_access {
                  AND DATABASE() LIKE TABLE_SCHEMA
                  AND GRANTEE = ?};
         my $schema_entries =
-            $self->db_handle->selectall_arrayref($access_sql, undef, $grantee);
+            $self->selectall_arrayref($access_sql, undef, $grantee);
         my $has_write_access_from_some_host = 0;
         foreach my $entry (@$user_entries, @$schema_entries) {
             $has_write_access_from_some_host ||= !!(3 == @$entry[0]);
@@ -410,7 +411,7 @@ sub has_write_access {
                          AND GRANTEE = current_user
                          AND TABLE_CATALOG = current_database()) AS temp};
         my $user_entries =
-            $self->db_handle->selectall_arrayref($access_sql, undef);
+            $self->selectall_arrayref($access_sql, undef);
         my $has_write_access_from_some_host = 0;
         foreach my $entry (@$user_entries) {
             $has_write_access_from_some_host ||= !!(3 == @$entry[0]);

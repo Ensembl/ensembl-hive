@@ -155,7 +155,6 @@ sub main {
     my %cpu_resources = ();
     foreach my $pipeline (@pipelines) {
         my $hive_dbc = $pipeline->hive_dba->dbc;
-        my $dbh = $hive_dbc->db_handle();
         foreach my $rd ($pipeline->collection_of('ResourceDescription')->list) {
             if ($rd->meadow_type eq 'LSF') {
                 $mem_resources{"$pipeline..".$rd->resource_class_id} = $1 if $rd->submission_cmd_args =~ m/mem=(\d+)/;
@@ -173,9 +172,8 @@ sub main {
     if (($mode eq 'memory') or ($mode eq 'cores') or ($mode eq 'pending_workers') or ($mode eq 'pending_time')) {
       foreach my $pipeline (@pipelines) {
         my $hive_dbc = $pipeline->hive_dba->dbc;
-        my $dbh = $hive_dbc->db_handle();
         my $sql_used_res = 'SELECT worker_id, mem_megs, cpu_sec/lifespan_sec FROM worker_resource_usage';
-        foreach my $db_entry (@{$dbh->selectall_arrayref($sql_used_res)}) {
+        foreach my $db_entry (@{$hive_dbc->selectall_arrayref($sql_used_res)}) {
             my $worker_id = shift @$db_entry;
             $used_res{"$pipeline..$worker_id"} = $db_entry;
         }
@@ -207,11 +205,10 @@ sub main {
     my %layers = ();
     foreach my $pipeline (@pipelines) {
         my $hive_dbc = $pipeline->hive_dba->dbc;
-        my $dbh = $hive_dbc->db_handle();
         my $sql = $key eq 'analysis'
             ? 'SELECT when_submitted, when_started, when_finished, worker_id, resource_class_id, analysis_id FROM worker LEFT JOIN role USING (worker_id)'
             : 'SELECT when_submitted, when_born, when_died, worker_id, resource_class_id FROM worker';
-        my @tmp_dates = @{$dbh->selectall_arrayref($sql)};
+        my @tmp_dates = @{$hive_dbc->selectall_arrayref($sql)};
         warn scalar(@tmp_dates), " rows\n" if $verbose;
 
         foreach my $db_entry (@tmp_dates) {

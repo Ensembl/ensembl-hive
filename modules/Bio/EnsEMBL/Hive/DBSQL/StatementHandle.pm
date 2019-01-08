@@ -50,7 +50,7 @@ sub new {
 
     my $dbi_sth;
     eval {
-        $dbi_sth = $dbc->db_handle->prepare( $sql, $attr );
+        $dbi_sth = $dbc->protected_prepare( $sql, $attr );
         1;
     } or do {
         throw( "FAILED_SQL(".$dbc->dbname."): " . join(' ', $sql, stringify($attr)) . "\nGot: ".$@."\n" );
@@ -153,6 +153,7 @@ sub AUTOLOAD {
                 $dbc->reconnect();
 
                 warn "trying to re-prepare [$sql". ($attr ? (', '.stringify($attr)) : '') ."]...";
+                # NOTE: parameters set via the hash interface of $sth will be lost
                 $dbi_sth = $dbc->db_handle->prepare( $sql, $attr );
                 $self->dbi_sth( $dbi_sth );
 
