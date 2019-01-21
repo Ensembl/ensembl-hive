@@ -518,7 +518,18 @@ sub register_beekeeper {
 sub big_red_button {
   my ( $self ) = @_;
 
-  # FIXME: actually do something
+  # Begin by blocking all registered beekeepers so that none of them
+  # start spawning new workers just as this one tries to kill all
+  # workers. FIXME: some message might be in order, possibly showing
+  # the number of blocked beekeepers.
+  # FIXME: temporary, this should go into e.g. BeekeeperAdaptor
+  my $dbc = $self->{dba}->dbc();
+  my $block_sth = $dbc->prepare('UPDATE beekeeper SET is_blocked = 1');
+  $block_sth->execute();
+
+  # FIXME:
+  #  - abort possible pending spawning of workers
+  #  - kill all workers which have already spawned
 
   return 0;
 }
