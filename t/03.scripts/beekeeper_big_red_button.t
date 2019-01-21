@@ -41,8 +41,27 @@ init_pipeline(
 my $hive_dba =
   Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
-# Check that the -big_red_button is recognised
-beekeeper( $pipeline_url, ['-big_red_button'], "beekeper.pl recognises option '-big_red_button'" );
+# Check that the -big_red_button is recognised. Of course if it is it
+# will trigger the shutdown - but all it does at this point is
+# Beekeeper blocking itself, which has no effect because it doesn't
+# actually try to run anything.
+beekeeper( $pipeline_url, [ '-big_red_button' ], "beekeper.pl recognises option '-big_red_button'" );
+
+# This will both spawn a worker to claim a job and register another
+# beekeeper with the pipeline. Ideally we would run this one in loop
+# mode so that we can confirm blocking works, then again having it run
+# in the background so that the test suite can continue would be a bit
+# messy and given it is quicker to block *all* beekeepers than just
+# the active ones, a single-shot run doesn't make that much of a
+# difference.
+beekeeper( $pipeline_url, [ '-run' ] );
+# Give the worker(s) some time to start
+sleep(10);
+
+# Now trigger the shutdown for real
+beekeeper( $pipeline_url, [ '-big_red_button' ], 'Pipeline shutdown triggered without errors' );
+# Give the worker(s) some time to die
+sleep(10);
 
 $hive_dba->dbc->disconnect_if_idle();
 run_sql_on_db( $pipeline_url, 'DROP DATABASE' );
