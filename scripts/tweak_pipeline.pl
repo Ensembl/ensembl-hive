@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+use JSON::MaybeXS qw(encode_json decode_json);
 
     # Finding out own path in order to reference own components (including own modules):
 use Cwd            ();
@@ -41,10 +42,10 @@ sub main {
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
 
         'h|help'                => \$self->{'help'},
-    ) or die "Error in command line arguments\n";
+    ) or die "\nERROR: in command line arguments\n";
 
     if (@ARGV) {
-        die "ERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
+        die "\nERROR: There are invalid arguments on the command-line: ". join(" ", @ARGV). "\n";
     }
 
     if($self->{'help'}) {
@@ -65,9 +66,17 @@ sub main {
     } else {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
-
     if(@$tweaks) {
-        my $need_write = $pipeline->apply_tweaks( $tweaks );
+        my ($need_write, $listRef) = $pipeline->apply_tweaks( $tweaks );
+
+        my %responceStructure;
+        foreach  (@$listRef) {
+          my ($rawKey, $value) = split(/ {2,}/, $_);
+          my ($temp, $key) = split(/\./, $rawKey);
+          $value =~ s/[\n\r\t]//g;
+          $responceStructure{$key} = $value;
+        }
+        print encode_json \%responceStructure;
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
@@ -159,4 +168,3 @@ Shortcut to show a parameter value
 Please subscribe to the eHive mailing list:  http://listserver.ebi.ac.uk/mailman/listinfo/ehive-users  to discuss eHive-related questions or to be notified of our updates
 
 =cut
-
