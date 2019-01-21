@@ -42,7 +42,7 @@ my $hive_dba =
   Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
 # Check that the -big_red_button is recognised
-beekeeper( $pipeline_url, ['-big_red_button'] );
+beekeeper( $pipeline_url, ['-big_red_button'], "beekeper.pl recognises option '-big_red_button'" );
 
 $hive_dba->dbc->disconnect_if_idle();
 run_sql_on_db( $pipeline_url, 'DROP DATABASE' );

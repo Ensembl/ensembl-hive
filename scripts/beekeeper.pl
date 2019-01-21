@@ -61,6 +61,7 @@ sub main {
     my $job_id_for_output           = 0;
     my $show_worker_stats           = 0;
     my $kill_worker_id              = 0;
+    my $big_red_button              = 0;
     my $keep_alive                  = 0;        # DEPRECATED
     my $reset_job_id                = 0;
     my $reset_all_jobs_for_analysis = 0;        # DEPRECATED
@@ -142,6 +143,7 @@ sub main {
                'dead!'             => \$check_for_dead,
                'unkwn!'            => \$bury_unkwn_workers,
                'killworker=i'      => \$kill_worker_id,
+               'big_red_button'    => \$big_red_button,
                'alldead!'          => \$all_dead,
                'balance_semaphores'=> \$balance_semaphores,
                'worker_stats'      => \$show_worker_stats,
@@ -340,6 +342,11 @@ sub main {
         }
     }
 
+    # FIXME: maybe we should check this earlier
+    if ( $big_red_button ) {
+      return big_red_button( $self );
+    }
+
     my $run_job;
     if($run_job_id) {
         eval {$run_job = $self->{'dba'}->get_AnalysisJobAdaptor->fetch_by_dbID( $run_job_id ) or die};
@@ -506,6 +513,16 @@ sub register_beekeeper {
     }
     return $beekeeper;
 }
+
+
+sub big_red_button {
+  my ( $self ) = @_;
+
+  # FIXME: actually do something
+
+  return 0;
+}
+
 
 sub run_autonomously {
     my ($self, $pipeline, $max_loops, $loop_until, $valley, $list_of_analyses, $analyses_pattern, $run_job_id) = @_;
@@ -972,6 +989,10 @@ re-synchronise the ehive
 =item --unkwn
 
 detect all workers in UNKWN state and reset their Jobs for resubmission (careful, they *may* reincarnate!)
+
+=item --big_red_button
+
+shut everything down: block all beekeepers connected to the pipeline and terminate workers
 
 =item --alldead
 
