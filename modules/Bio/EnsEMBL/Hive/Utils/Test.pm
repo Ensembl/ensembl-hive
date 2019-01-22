@@ -585,7 +585,7 @@ sub get_test_urls {
 
     my $final_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
 
-    push (@list_of_urls, $final_url);
+    push (@list_of_urls, $final_url); 
   }
 
   return \@list_of_urls;
