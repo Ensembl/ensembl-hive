@@ -522,10 +522,8 @@ sub big_red_button {
   # start spawning new workers just as this one tries to kill all
   # workers. FIXME: some message might be in order, possibly showing
   # the number of blocked beekeepers.
-  # FIXME: temporary, this should go into e.g. BeekeeperAdaptor
-  my $dbc = $self->{dba}->dbc();
-  my $block_sth = $dbc->prepare('UPDATE beekeeper SET is_blocked = 1 WHERE cause_of_death IS NULL');
-  $block_sth->execute();
+  my $bk_a = $self->{dba}->get_Beekeeper();
+  $bk_a->block_all_alive_beekeepers();
 
   # Next, kill all workers which are still alive.
   # FIXME: add some reporting
