@@ -67,6 +67,10 @@ my $bk_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper' );
 my $unblocked_beekeeper_rows = $bk_nta->fetch_all( 'is_blocked != 1' );
 is( scalar @{ $unblocked_beekeeper_rows }, 0, 'All connected beekeepers have been blocked' );
 
+my $w_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'worker' );
+my $alive_worker_rows = $w_nta->fetch_all( "status != 'DEAD'" );
+is( scalar @{ $alive_worker_rows }, 0, 'No non-dead workers remaining' );
+
 $hive_dba->dbc->disconnect_if_idle();
 run_sql_on_db( $pipeline_url, 'DROP DATABASE' );
 
