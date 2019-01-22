@@ -520,7 +520,7 @@ sub make_hive_db {
               : and placed in the URL
               : For example - mysql://me@127.0.0.1/ghopper_ehive_test
               :
-              : If -tag is specified, then the list will have db names appended with '_tag'
+              : If -tag is specified, then the list will have db names appended with '_tag' 
               : For example - (-tag => 'longmult') giving mysql://me@127.0.0.1/ghopper_ehive_test_longmult
               :
               : If -driver is specified, then the list will be restricted to urls for the
