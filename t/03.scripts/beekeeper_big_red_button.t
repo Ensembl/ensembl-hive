@@ -64,8 +64,8 @@ beekeeper( $pipeline_url, [ '-big_red_button' ], 'Pipeline shutdown triggered wi
 sleep(10);
 
 my $bk_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'beekeeper' );
-my $unblocked_beekeeper_rows = $bk_nta->fetch_all( 'is_blocked != 1' );
-is( scalar @{ $unblocked_beekeeper_rows }, 0, 'All connected beekeepers have been blocked' );
+my $unblocked_beekeeper_rows = $bk_nta->fetch_all( 'cause_of_death IS NULL AND is_blocked != 1' );
+is( scalar @{ $unblocked_beekeeper_rows }, 0, 'All non-dead beekeepers have been blocked' );
 
 my $w_nta = $hive_dba->get_NakedTableAdaptor( 'table_name' => 'worker' );
 my $alive_worker_rows = $w_nta->fetch_all( "status != 'DEAD'" );
