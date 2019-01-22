@@ -384,6 +384,36 @@ sub register_worker_death {
 }
 
 
+sub kill_all_workers {
+  my ( $self, $valley ) = @_;
+
+  my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
+  foreach my $worker ( @{ $all_workers_considered_alive } ) {
+    my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker );
+    if ( ! defined $meadow ) {
+      # Most likely a meadow not reachable for the current beekeeper,
+      # e.g. a LOCAL one started on a different host.
+      # FIXME: print a warning
+    }
+    elsif ( ! $meadow->can('kill_worker') ) {
+      # FIXME: print a warning
+    }
+    else {
+      # FIXME: the actual termination of a worker might well be
+      # asynchronous but at least we should check for obvious
+      # problems, e.g. insufficient permissions to execute a
+      # kill. This will require changes to kill_worker()
+      # implementations so that one way or another they return some
+      # information about this.
+      $meadow->kill_worker( $worker, 1 );
+      $self->register_worker_death( $worker );
+    }
+  }
+
+  return;
+}
+
+
 sub cached_resource_mapping {
     my $self = shift;
     $self->{'_cached_resource_mapping'} ||= { map { $_->dbID => $_->name } $self->db->hive_pipeline->collection_of('ResourceClass')->list };

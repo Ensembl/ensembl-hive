@@ -344,7 +344,7 @@ sub main {
 
     # FIXME: maybe we should check this earlier
     if ( $big_red_button ) {
-      return big_red_button( $self );
+      return big_red_button( $self, $valley );
     }
 
     my $run_job;
@@ -516,20 +516,25 @@ sub register_beekeeper {
 
 
 sub big_red_button {
-  my ( $self ) = @_;
+  my ( $self, $valley ) = @_;
 
   # Begin by blocking all registered beekeepers so that none of them
   # start spawning new workers just as this one tries to kill all
   # workers. FIXME: some message might be in order, possibly showing
   # the number of blocked beekeepers.
   # FIXME: temporary, this should go into e.g. BeekeeperAdaptor
+
   my $dbc = $self->{dba}->dbc();
   my $block_sth = $dbc->prepare('UPDATE beekeeper SET is_blocked = 1');
   $block_sth->execute();
 
-  # FIXME:
-  #  - abort possible pending spawning of workers
-  #  - kill all workers which have already spawned
+  # Next, kill all workers which are still alive.
+  # FIXME: add some reporting
+  # FIXME: double-check correct job status:
+  #  - running ones should be marked as 'failed'
+  #  - claimed but unstarted ones should get back to 'unclaimed'
+  my $queen = $self->{'dba'}->get_Queen();
+  $queen->kill_all_workers( $valley );
 
   return 0;
 }
