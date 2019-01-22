@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::Scripts::StandaloneJob;
 our @ISA         = qw(Exporter);
 our @EXPORT      = ();
 our %EXPORT_TAGS = ();
-our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
+our @EXPORT_OK   = qw( standaloneJob init_pipeline runWorker beekeeper generate_graph visualize_jobs db_cmd seed_pipeline tweak_pipeline get_test_urls get_test_url_or_die run_sql_on_db load_sql_in_db make_new_db_from_sqls make_hive_db safe_drop_database all_source_files);
 
 our $VERSION = '0.00';
 
@@ -304,6 +304,24 @@ sub beekeeper {
     return _test_ehive_script('beekeeper', @_);
 }
 
+=head2 tweak_pipeline
+
+  Arg[1]      : String $url. The location of the database
+  Arg[2]      : Arrayref $args. Extra arguments given to beekeeper.pl
+  Arg[3]      : String $test_name (optional). The name of the test
+  Example     : tweak_pipeline($url, [$arg1, $arg2], 'Run tweak_pipeline with two arguments');
+  Description : Very generic function to run tweak_pipeline on the given database with the given arguments
+  Returntype  : None
+  Exceptions  : TAP-style
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub tweak_pipeline {
+    return _test_ehive_script('tweak_pipeline', @_);
+}
+
 
 =head2 generate_graph
 
@@ -499,7 +517,7 @@ sub make_hive_db {
               : and placed in the URL
               : For example - mysql://me@127.0.0.1/ghopper_ehive_test
               :
-              : If -tag is specified, then the list will have db names appended with '_tag' 
+              : If -tag is specified, then the list will have db names appended with '_tag'
               : For example - (-tag => 'longmult') giving mysql://me@127.0.0.1/ghopper_ehive_test_longmult
               :
               : If -driver is specified, then the list will be restricted to urls for the
@@ -567,7 +585,7 @@ sub get_test_urls {
 
     my $final_url = Bio::EnsEMBL::Hive::Utils::URL::hash_to_url($parsed_url);
 
-    push (@list_of_urls, $final_url); 
+    push (@list_of_urls, $final_url);
   }
 
   return \@list_of_urls;
