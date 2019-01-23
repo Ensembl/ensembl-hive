@@ -153,6 +153,9 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
     my $filtered_elements = [];
     $pattern //= '';
 
+
+    # dbID specific patterns
+
     if( $pattern=~/^\d+$/ ) {
 
         $filtered_elements = $self->find_all_by( 'dbID', $pattern );
@@ -169,14 +172,28 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
 
         $filtered_elements = $self->find_all_by( 'dbID', sub { return $_[0]<=$1; } );
 
+
+    # name/tag specific patterns
+
     } elsif( $pattern=~/^\w+$/) {
 
         $filtered_elements = $self->find_all_by( 'name', $pattern );
+
+        if (!scalar @{$filtered_elements}) {
+            $filtered_elements = $self->find_all_by( 'tag', $pattern );
+        }
 
     } elsif( $pattern=~/^[\w\%]+$/) {
 
         $pattern=~s/\%/.*/g;
         $filtered_elements = $self->find_all_by( 'name', sub { return $_[0]=~/^${pattern}$/; } );
+
+        if (!scalar @{$filtered_elements}) {
+            $filtered_elements = $self->find_all_by( 'tag', $pattern );
+        }
+
+
+    # other patterns
 
     } elsif( $pattern=~/^(\w+)==(.*)$/) {
 

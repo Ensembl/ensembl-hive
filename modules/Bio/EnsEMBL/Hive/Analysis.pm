@@ -46,7 +46,7 @@ use Bio::EnsEMBL::Hive::GuestProcess;
 
 
 use base ( 'Bio::EnsEMBL::Hive::Storable' );
- 
+
 
 sub unikey {    # override the default from Cacheable parent
     return [ 'logic_name' ];
@@ -112,6 +112,24 @@ sub tags {
     return $self->{'_tags'};
 }
 
+=head2 tag
+
+  Arg [1]    : String (tag regex to search)
+  Example    : $tag_exists = $analysis->tag('blah');
+  Description: provided a tag (which can be a regex) returns the input string if tag exists, returns null if not
+  Returntype : String (the input), or null
+
+=cut
+
+sub tag {
+    my ($self, $tag_regex) = @_;
+
+    if ( grep( /^${tag_regex}$/, @{$self->tags} ) ) {
+        return $tag_regex;
+    }
+
+    return;
+}
 
 sub failed_job_tolerance {
     my $self = shift;
@@ -539,4 +557,3 @@ sub print_diagram_node {
 }
 
 1;
-
