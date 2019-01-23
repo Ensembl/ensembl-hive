@@ -50,19 +50,5 @@ my $pipeline_url = get_test_url_or_die();
         tweak_pipeline($pipeline_url, ["-SHOW" => "analysis[perform_cmd].resource_class"])
     };
     is_valid_json $stdout;
-  #  is($stdout, qq{Message 1\nMessage 7\n}, 'init_pipeline output');
-
-    sleep(10); # give worker a bit of time to seed longrunning jobs
-
-    beekeeper($pipeline_url, ['-run', -analyses_pattern => 'longrunning', -meadow_type => 'LOCAL', -job_limit => 1]);
-
-    sleep(10); # give workers time to start
-
-    my $worker_nta = $hive_dba->get_NakedTableAdaptor('table_name' => 'worker');
-
-    sleep(10); # give workers a bit of time to die
-
-    $hive_dba->dbc->disconnect_if_idle();
-    run_sql_on_db($pipeline_url, 'DROP DATABASE');
 
 done_testing();
