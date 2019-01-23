@@ -21,14 +21,12 @@ use warnings;
 
 use Test::More;
 use Test::Exception;
-use Data::Dumper;
 
 BEGIN {
     ## at least it compiles
     use_ok( 'Bio::EnsEMBL::Hive::Utils::Collection' );
     use_ok( 'Bio::EnsEMBL::Hive::ResourceDescription' );
 }
-#########################
 
 my $collection = Bio::EnsEMBL::Hive::Utils::Collection->new(['the']);
 ok($collection, 'and creates objects');
@@ -103,13 +101,13 @@ $result = $collection->find_all_by('foo', undef);
 #is(@$result, 3, 'sensible');
 
 my $data_list = [
-    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 },
-    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 },
-    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 },
-    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',    'size' =>  1 },
-    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 },
-    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 },
-    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 },
+    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 , 'tag' => 'red'    },
+    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 , 'tag' => ''       },
+    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 , 'tag' => 'yellow' },
+    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',    'size' =>  1                     },
+    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 , 'tag' => 'yellow' },
+    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 , 'tag' => 'orange' },
+    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 , 'tag' => 'red'    },
 ];
 
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new( $data_list );
@@ -164,6 +162,12 @@ is(@$mix, 3, 'find_all_by_pattern - greater than');
 
 $mix = $collection->find_all_by_pattern( 'size<10,colour==orange' );
 is(@$mix, 5, 'find_all_by_pattern - selecting by a fields inequality');
+
+$mix = $collection->find_all_by_pattern( 'tag==orange' );
+is(@$mix, 1, 'find_all_by_pattern - selecting by tag field equality');
+
+$mix = $collection->find_all_by_pattern( 'red' );
+is(@$mix, 2, 'find_all_by_pattern - single tag (no %)');
 
 throws_ok {$collection->find_all_by_pattern( 'size!' )} qr/The pattern '.*' is not recognized/, "Using an invalid pattern throws an exception";
 
