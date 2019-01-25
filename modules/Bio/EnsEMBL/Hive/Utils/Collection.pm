@@ -206,7 +206,7 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
         my $field = $1;
         $pattern = $2;
         $pattern =~ s/\%/.*/g;
-        $filtered_elements = $self->find_all_by( $field, sub { return $_[0 ]=~ /^.*,?${pattern},?.*$/; } );
+        $filtered_elements = $self->find_all_by( $field, sub { return $_[0 ]=~ /^(.*,)?${pattern}(,.*)?$/; } );
 
     } else {
         die "The pattern '$pattern' is not recognized\n";
