@@ -102,13 +102,13 @@ $result = $collection->find_all_by('foo', undef);
 #is(@$result, 3, 'sensible');
 
 my $data_list = [
-    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',             'size' => 10 },
-    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',          'size' =>  5 },
-    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',          'size' =>  2 },
-    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',           'size' =>  1 },
-    { 'dbID' => 4, 'name' => 'delta',   'colour' => ['yellow', 'red'], 'size' => 20 },
-    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',          'size' => 25 },
-    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'redish',          'size' =>  0 },
+    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',        'size' => 10 },
+    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',     'size' =>  5 },
+    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',     'size' =>  2 },
+    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',      'size' =>  1 },
+    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow,red', 'size' => 20 },
+    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',     'size' => 25 },
+    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'redish',     'size' =>  0 },
 ];
 
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new( $data_list );
