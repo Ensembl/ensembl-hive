@@ -21,14 +21,13 @@ use warnings;
 
 use Test::More;
 use Test::Exception;
-use Data::Dumper;
+
 
 BEGIN {
     ## at least it compiles
     use_ok( 'Bio::EnsEMBL::Hive::Utils::Collection' );
     use_ok( 'Bio::EnsEMBL::Hive::ResourceDescription' );
 }
-#########################
 
 my $collection = Bio::EnsEMBL::Hive::Utils::Collection->new(['the']);
 ok($collection, 'and creates objects');
@@ -40,7 +39,7 @@ my @ref = $collection->list;
 is(@ref, 1, 'still correct size');
 
 my $i = 1;
-foreach my $member(qw{quick brown fox}) { 
+foreach my $member(qw{quick brown fox}) {
     $collection->add($member);
     is(@$ref, ++$i, 'addition - same object');
     is(@ref, 1, 'no addition as it was a copy');
@@ -103,13 +102,13 @@ $result = $collection->find_all_by('foo', undef);
 #is(@$result, 3, 'sensible');
 
 my $data_list = [
-    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',      'size' => 10 },
-    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',   'size' =>  5 },
-    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',   'size' =>  2 },
-    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',    'size' =>  1 },
-    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow',   'size' => 20 },
-    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',   'size' => 25 },
-    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'red',      'size' =>  0 },
+    { 'dbID' => 2, 'name' => 'beta',    'colour' => 'red',        'size' => 10 },
+    { 'dbID' => 1, 'name' => 'alpha',   'colour' => 'orange',     'size' =>  5 },
+    { 'dbID' => 7, 'name' => 'eta',     'colour' => 'yellow',     'size' =>  2 },
+    { 'dbID' => 3, 'name' => 'gamma',   'colour' => 'green',      'size' =>  1 },
+    { 'dbID' => 4, 'name' => 'delta',   'colour' => 'yellow,red', 'size' => 20 },
+    { 'dbID' => 5, 'name' => 'epsilon', 'colour' => 'orange',     'size' => 25 },
+    { 'dbID' => 6, 'name' => 'zeta',    'colour' => 'redish',     'size' =>  0 },
 ];
 
 $collection = Bio::EnsEMBL::Hive::Utils::Collection->new( $data_list );
@@ -138,14 +137,20 @@ is(@$mix, 3, 'find_all_by_pattern - open range (left)');
 $mix = $collection->find_all_by_pattern( 'gamma' );
 is(@$mix, 1, 'find_all_by_pattern - single name (no %)');
 
+$mix = $collection->find_all_by_pattern( '%eta' );
+is(@$mix, 3, 'find_all_by_pattern - regex name (with %)');
+
 $mix = $collection->find_all_by_pattern( 'gamma+5' );
 is(@$mix, 2, 'find_all_by_pattern - combined patterns (no overlap)');
 
 $mix = $collection->find_all_by_pattern( 'gamma+3' );
 is(@$mix, 1, 'find_all_by_pattern - combined patterns (overlap)');
 
-$mix = $collection->find_all_by_pattern( 'colour==yellow' );
+$mix = $collection->find_all_by_pattern( 'colour==orange' );
 is(@$mix, 2, 'find_all_by_pattern - selecting by a fields equality');
+
+$mix = $collection->find_all_by_pattern( 'colour~red%' );
+is(@$mix, 3, 'find_all_by_pattern - selecting by a fields regex');
 
 $mix = $collection->find_all_by_pattern( 'size!=20' );
 is(@$mix, 6, 'find_all_by_pattern - difference');

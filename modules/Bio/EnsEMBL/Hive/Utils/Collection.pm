@@ -30,7 +30,6 @@ package Bio::EnsEMBL::Hive::Utils::Collection;
 use strict;
 use warnings;
 
-
 sub new {
     my $class = shift @_;
 
@@ -201,6 +200,13 @@ sub _find_all_by_subpattern {    # subpatterns can be combined into full pattern
     } elsif( $pattern=~/^(\w+)>(.*)$/) {
 
         $filtered_elements = $self->find_all_by( $1, sub { return $_[0] > $2; } );
+
+    } elsif( $pattern=~/^(\w+)~(.*)$/) {
+
+        my $field = $1;
+        $pattern = $2;
+        $pattern =~ s/\%/.*/g;
+        $filtered_elements = $self->find_all_by( $field, sub { return $_[0 ]=~ /^(.*,)?${pattern}(,.*)?$/; } );
 
     } else {
         die "The pattern '$pattern' is not recognized\n";
