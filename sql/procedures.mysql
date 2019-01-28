@@ -63,6 +63,31 @@ CREATE OR REPLACE VIEW msg AS
     LEFT JOIN analysis_base a USING (analysis_id);
 
 
+    -- show the jobs with related semaphores -------
+    --
+    -- Usage:
+    --       select * from semaphore_job;
+
+    CREATE OR REPLACE VIEW semaphore_job AS
+      SELECT
+        job.job_id AS job_id,
+        job.prev_job_id AS prev_job_id,
+        job.analysis_id AS analysis_id,
+        job.input_id AS input_id,
+        job.param_id_stack AS param_id_stack,
+        job.accu_id_stack AS accu_id_stack,
+        job.role_id AS role_id,
+        job.status AS status,
+        job.retry_count AS retry_count,
+        job.when_completed AS when_completed,
+        job.runtime_msec AS runtime_msec,
+        job.query_count AS query_count,
+        semaphore.local_jobs_counter AS local_jobs_counter,
+        semaphore.remote_jobs_counter AS remote_jobs_counter,
+        semaphore.dependent_semaphore_url AS dependent_semaphore_url
+      FROM (job JOIN semaphore)
+      WHERE (semaphore.dependent_job_id = job.job_id);
+
 -- show statistics of Workers' real resource usage by analysis -------------------------------------------
 --
 -- Usage:
@@ -188,9 +213,8 @@ CREATE PROCEDURE drop_hive_tables()
 MODIFIES SQL DATA
 BEGIN
     SET FOREIGN_KEY_CHECKS=0;
-    DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles, beekeeper_activity;
+    DROP VIEW IF EXISTS msg, progress, resource_usage_stats, live_roles, beekeeper_activity, semaphore_job;
     DROP TABLE IF EXISTS pipeline_wide_parameters, analysis_stats_monitor, worker_resource_usage, resource_description, analysis_data, job_file, dataflow_target, dataflow_rule, analysis_ctrl_rule, analysis_stats, log_message, accu, job, semaphore, role, worker, beekeeper, analysis_base, resource_class, hive_meta;
     SET FOREIGN_KEY_CHECKS=1;
 END; //
 DELIMITER ;
-

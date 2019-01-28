@@ -65,6 +65,33 @@ CREATE VIEW IF NOT EXISTS msg AS
     LEFT JOIN analysis_base a USING (analysis_id);
 
 
+-- show the jobs with related semaphores -------
+--
+-- Usage:
+--       select * from semaphore_job;
+
+DROP VIEW IF EXISTS semaphore_job;
+CREATE VIEW IF NOT EXISTS semaphore_job AS
+  SELECT
+    job.job_id AS job_id,
+    job.prev_job_id AS prev_job_id,
+    job.analysis_id AS analysis_id,
+    job.input_id AS input_id,
+    job.param_id_stack AS param_id_stack,
+    job.accu_id_stack AS accu_id_stack,
+    job.role_id AS role_id,
+    job.status AS status,
+    job.retry_count AS retry_count,
+    job.when_completed AS when_completed,
+    job.runtime_msec AS runtime_msec,
+    job.query_count AS query_count,
+    semaphore.local_jobs_counter AS local_jobs_counter,
+    semaphore.remote_jobs_counter AS remote_jobs_counter,
+    semaphore.dependent_semaphore_url AS dependent_semaphore_url
+  FROM (job JOIN semaphore)
+  WHERE (semaphore.dependent_job_id = job.job_id);
+
+
 -- show statistics of Workers' real resource usage by analysis -------------------------------------------
 --
 -- Usage:
