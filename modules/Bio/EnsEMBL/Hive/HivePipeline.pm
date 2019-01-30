@@ -545,21 +545,31 @@ sub apply_tweaks {
     my $self    = shift @_;
     my $tweaks  = shift @_;
     my @responce;
+    my $responceStructure;
     my $need_write = 0;
-
+    $responceStructure->{Tweaks} = [];
     foreach my $tweak (@$tweaks) {
         push @responce, "Tweak.Request  \t$tweak\n";
 
         if($tweak=~/^pipeline\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($param_name, $operator, $new_value_str) = ($1, $2, $3);
-
+            my $tweakStructure;
+            $tweakStructure->{Object}->{Type} = 'Pipeline';
+            $tweakStructure->{Object}->{Id} = '';
+            $tweakStructure->{Return}->{Field} = $param_name;
             my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
             my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
-
             if($operator eq '?') {
+                my $value = $hash_pair ? $hash_pair->{'param_value'} : '(missing_value)';
+                $tweakStructure->{Action} = 'SHOW';
+                $tweakStructure->{Return}->{OldValue} = $value;
+                $tweakStructure->{Return}->{NewValue} = $value;
                 push @responce, "Tweak.Show  \tpipeline.param[$param_name] ::\t"
-                     . ($hash_pair ? $hash_pair->{'param_value'} : '(missing_value)') . "\n";
+                     . ($value) . "\n";
             } elsif($operator eq '#') {
+                $tweakStructure->{Action} = 'DELETE';
+                $tweakStructure->{Return}->{OldValue} = $hash_pair->{'param_value'};
+                $tweakStructure->{Return}->{NewValue} = '';
                 if ($hash_pair) {
                     $need_write = 1;
                     $pwp_collection->forget_and_mark_for_deletion( $hash_pair );
@@ -571,30 +581,42 @@ sub apply_tweaks {
                 $need_write = 1;
                 my $new_value = destringify( $new_value_str );
                 $new_value_str = stringify($new_value);
-
+                $tweakStructure->{Action} = 'SET';
+                $tweakStructure->{Return}->{NewValue} = $new_value_str;
                 if($hash_pair) {
+                    $tweakStructure->{Return}->{OldValue} = $hash_pair->{'param_value'};
                     push @responce, "Tweak.Changing  \tpipeline.param[$param_name] ::\t$hash_pair->{'param_value'} --> $new_value_str\n";
 
                     $hash_pair->{'param_value'} = $new_value_str;
                 } else {
+                    $tweakStructure->{Return}->{OldValue} = '';
                     push @responce, "Tweak.Adding  \tpipeline.param[$param_name] ::\t(missing value) --> $new_value_str\n";
-
                     $self->add_new_or_update( 'PipelineWideParameters',
                         'param_name'    => $param_name,
                         'param_value'   => $new_value_str,
                     );
                 }
             }
-
+          push @{$responceStructure->{Tweaks}}, $tweakStructure;
         } elsif($tweak=~/^pipeline\.(\w+)(\?|=(.+))$/) {
+            my $tweakStructure;
             my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
+            $tweakStructure->{Object}->{Type} = 'Pipeline';
+            $tweakStructure->{Object}->{Id} = '';
+            $tweakStructure->{Return}->{Field} = $attrib_name;
 
             if($self->can($attrib_name)) {
                 my $old_value = stringify( $self->$attrib_name() );
 
                 if($operator eq '?') {
+                    $tweakStructure->{Action} = 'SHOW';
+                    $tweakStructure->{Return}->{OldValue} = $old_value;
+                    $tweakStructure->{Return}->{NewValue} = $old_value;
                     push @responce, "Tweak.Show  \tpipeline.$attrib_name ::\t$old_value\n";
                 } else {
+                    $tweakStructure->{Action} = 'SET';
+                    $tweakStructure->{Return}->{OldValue} = $old_value;
+                    $tweakStructure->{Return}->{NewValue} = $new_value_str;
                     push @responce, "Tweak.Changing  \tpipeline.$attrib_name ::\t$old_value --> $new_value_str\n";
 
                     $self->$attrib_name( $new_value_str );
@@ -602,9 +624,11 @@ sub apply_tweaks {
                 }
 
             } else {
-                push @responce, "Tweak.Error  \tCould not find the pipeline-wide '$attrib_name' method\n";
+                my $error_msg = "Tweak.Error  \tCould not find the pipeline-wide '$attrib_name' method\n";
+                $tweakStructure->{Error} = $error_msg;
+                push @responce, $error_msg;
             }
-
+            push @{$responceStructure->{Tweaks}}, $tweakStructure;
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.param\[(\w+)\](\?|#|=(.+))$/) {
             my ($analyses_pattern, $param_name, $operator, $new_value_str) = ($1, $2, $3, $4);
 
@@ -615,23 +639,35 @@ sub apply_tweaks {
             $new_value_str = stringify( $new_value );
 
             foreach my $analysis (@$analyses) {
-                my $analysis_name = $analysis->logic_name;
+                my $tweakStructure;
+                $tweakStructure->{Object}->{Type} = 'Analysis';
 
+                my $analysis_name = $analysis->logic_name;
                 my $old_value = $analysis->parameters;
 
+                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis_name;
+                $tweakStructure->{Return}->{Field} = $param_name;
                 my $param_hash  = destringify( $old_value );
+                $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '';
 
                 if($operator eq '?') {
+                    my $value = exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)';
+                    $tweakStructure->{Action} = 'SHOW';
+                    $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
+
                     push @responce, "Tweak.Show  \tanalysis[$analysis_name].param[$param_name] ::\t"
-                        . (exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)')
-                        ."\n";
+                        . ($value) ."\n";
                 } elsif($operator eq '#') {
+                    $tweakStructure->{Action} = 'DELETE';
+                    $tweakStructure->{Return}->{NewValue} = '';
                     push @responce, "Tweak.Deleting  \tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> (missing value)\n";
 
                     delete $param_hash->{ $param_name };
                     $analysis->parameters( stringify($param_hash) );
                     $need_write = 1;
                 } else {
+                    $tweakStructure->{Action} = 'SET';
+                    $tweakStructure->{Return}->{NewValue} = $new_value_str;
                     if(exists($param_hash->{ $param_name })) {
                         push @responce, "Tweak.Changing  \tanalysis[$analysis_name].param[$param_name] ::\t".stringify($param_hash->{ $param_name })." --> $new_value_str\n";
                     } else {
@@ -642,9 +678,12 @@ sub apply_tweaks {
                     $analysis->parameters( stringify($param_hash) );
                     $need_write = 1;
                 }
+                push @{$responceStructure->{Tweaks}}, $tweakStructure;
             }
 
+
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.(wait_for|flow_into)(\?|#|\+?=(.+))$/) {
+
             my ($analyses_pattern, $attrib_name, $operation, $new_value_str) = ($1, $2, $3, $4);
             $operation=~/^(\?|#|\+?=)/;
             my $operator = $1;
@@ -655,19 +694,25 @@ sub apply_tweaks {
             my $new_value = destringify( $new_value_str );
 
             foreach my $analysis (@$analyses) {
-
+                my $tweakStructure;
+                $tweakStructure->{Object}->{Type} = "Analysis";
                 my $analysis_name = $analysis->logic_name;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis->logic_name;
 
                 if( $attrib_name eq 'wait_for' ) {
-
+                    $tweakStructure->{Return}->{Field} = 'wait_for';
                     my $cr_collection   = $self->collection_of( 'AnalysisCtrlRule' );
                     my $acr_collection  = $analysis->control_rules_collection;
-
+                    $tweakStructure->{Return}->{OldValue} = join(', ', map { $_->condition_analysis_url } @$acr_collection );
                     if($operator eq '?') {
+                        $tweakStructure->{Action} = "SHOW";
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @responce, "Tweak.Show  \tanalysis[$analysis_name].wait_for ::\t[".join(', ', map { $_->condition_analysis_url } @$acr_collection )."]\n";
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
+                        $tweakStructure->{Action} = "DELETE";
+                        $tweakStructure->{Return}->{NewValue} = '';
                         foreach my $c_rule ( @$acr_collection ) {
                             $cr_collection->forget_and_mark_for_deletion( $c_rule );
                             $need_write = 1;
@@ -677,18 +722,25 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
+                        $tweakStructure->{Action} = "SET";
+                        $tweakStructure->{Return}->{NewValue} = $new_value;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_wait_for($self, $analysis, $new_value);
                         $need_write = 1;
                     }
 
                 } elsif( $attrib_name eq 'flow_into' ) {
-
+                    $tweakStructure->{Return}->{Field} = 'flow_into';
+                    $tweakStructure->{Return}->{OldValue} = $analysis->logic_name;
                     if($operator eq '?') {
                         # FIXME: should not recurse
-                        $analysis->print_diagram_node($self, '', {});
+                        $tweakStructure->{Action} = 'SHOW';
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
+                        #$analysis->print_diagram_node($self, '', {});
                     }
 
                     if($operator eq '#' or $operator eq '=') {     # delete the existing rules
+                        $tweakStructure->{Action} = 'DELETE';
+                        $tweakStructure->{Return}->{NewValue} = '';
                         my $dfr_collection = $self->collection_of( 'DataflowRule' );
                         my $dft_collection = $self->collection_of( 'DataflowTarget' );
 
@@ -711,13 +763,18 @@ sub apply_tweaks {
                     }
 
                     if($operator eq '=' or $operator eq '+=') {     # create new rules
+                        $tweakStructure->{Action} = 'SET';
+                        $tweakStructure->{Return}->{NewValue} = $new_value;
+
                         $need_write = 1;
                         Bio::EnsEMBL::Hive::Utils::PCL::parse_flow_into($self, $analysis, $new_value );
                     }
                 }
+                push @{$responceStructure->{Tweaks}}, $tweakStructure;
             }
 
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.(\w+)(\?|#|=(.+))$/) {
+
             my ($analyses_pattern, $attrib_name, $operator, $new_value_str) = ($1, $2, $3, $4);
 
             my $analyses = $self->collection_of( 'Analysis' )->find_all_by_pattern( $analyses_pattern );
@@ -728,19 +785,29 @@ sub apply_tweaks {
             foreach my $analysis (@$analyses) {
 
                 my $analysis_name = $analysis->logic_name;
+                my $tweakStructure;
+                $tweakStructure->{Object}->{Type} = 'Analysis';
+                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis_name;
 
                 if( $attrib_name eq 'resource_class' ) {
+                  $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : '';
+                  $tweakStructure->{Return}->{Field} = 'resource_class';
 
                     if($operator eq '?') {
+                      $tweakStructure->{Action} = "SHOW";
+                      $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         if(my $old_value = $analysis->resource_class) {
                             push @responce, "Tweak.Show  \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
                         } else {
                             push @responce, "Tweak.Show  \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
                         }
                     } elsif($operator eq '#') {
-                        push @responce, "Tweak.Error  \tDeleting of ResourceClasses is not supported\n";
+                        my $errorMsg = 'Tweak.Error  \tDeleting of ResourceClasses is not supported\n';
+                        $tweakStructure->{Error} = $errorMsg;
+                        push @responce, $errorMsg;
                     } else {
-
+                        $tweakStructure->{Action} = "SET";
+                        $tweakStructure->{Return}->{NewValue} = $new_value_str;
                         if(my $old_value = $analysis->resource_class) {
                             push @responce, "Tweak.Changing  \tanalysis[$analysis_name].resource_class ::\t".$old_value->name." --> $new_value_str\n";
                         } else {
@@ -762,14 +829,25 @@ sub apply_tweaks {
                     }
 
                 } elsif( $attrib_name eq 'is_excluded' ) {
+                    $tweakStructure->{Return}->{Field} = 'is_excluded';
+
                     my $analysis_stats = $analysis->stats();
+                    $tweakStructure->{Return}->{OldValue} = $analysis_stats->is_excluded();
                     if($operator eq '?') {
+                        $tweakStructure->{Action} = "SHOW";
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @responce, "Tweak.Show  \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
                     } elsif($operator eq '#') {
-                        push @responce, "Tweak.Error  \tDeleting of excluded status is not supported\n";
+                        my $errorMsg = "Tweak.Error  \tDeleting of excluded status is not supported\n";
+                        $tweakStructure->{Error} = $errorMsg;
+                        push @responce, $errorMsg;
                     } else {
+                        $tweakStructure->{Action} = "SET";
+                        $tweakStructure->{Return}->{NewValue} = $new_value_str;
                         if(!($new_value =~ /^[01]$/)) {
-                            push @responce, "Tweak.Error  \tis_excluded can only be 0 (no) or 1 (yes)\n";
+                            my $errorMsg = "Tweak.Error  \tis_excluded can only be 0 (no) or 1 (yes)\n";
+                            $tweakStructure->{Error} = $errorMsg;
+                            push @responce, $errorMsg;
                         } elsif ($new_value == $analysis_stats->is_excluded()) {
                             push @responce, "Tweak.Info  \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
                         } else {
@@ -780,39 +858,57 @@ sub apply_tweaks {
                         }
                     }
                 } elsif($analysis->can($attrib_name)) {
+                    $tweakStructure->{Return}->{Field} = $attrib_name;
                     my $old_value = stringify($analysis->$attrib_name());
-
+                      $tweakStructure->{Return}->{OldValue} = $old_value;
                     if($operator eq '?') {
+                        $tweakStructure->{Action} = "SHOW";
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @responce, "Tweak.Show  \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } elsif($operator eq '#') {
-                        push @responce, "Tweak.Error  \tDeleting of Analysis attributes is not supported\n";
+                        my $errorMsg = "Tweak.Error  \tDeleting of Analysis attributes is not supported\n";
+                        $tweakStructure->{Action} = "DELETE";
+                        $tweakStructure->{Error} = $errorMsg;
+                        push @responce, $errorMsg;
                     } else {
+                        $tweakStructure->{Action} = "SET";
+                        $tweakStructure->{Return}->{NewValue} = stringify($new_value);
                         push @responce, "Tweak.Changing  \tanalysis[$analysis_name].$attrib_name ::\t$old_value --> ".stringify($new_value)."\n";
-
                         $analysis->$attrib_name( $new_value );
                         $need_write = 1;
                     }
                 } else {
-                    push @responce, "Tweak.Error  \tAnalysis does not support '$attrib_name' attribute\n";
+                    my $errorMsg = "Tweak.Error  \tAnalysis does not support '$attrib_name' attribute\n";
+                    $tweakStructure->{Error} = $errorMsg;
+                    push @responce, $errorMsg;
                 }
+
+                push @{$responceStructure->{Tweaks}}, $tweakStructure;
             }
 
         } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)(\?|=(.+))$/) {
+            my $tweakStructure;
             my ($rc_pattern, $meadow_type, $operator, $new_value_str) = ($1, $2, $3, $4);
-
+            $tweakStructure->{Object}->{Type} = "Resource class";
             my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
             push @responce, "Tweak.Found  \t".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
 
             if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
                     my $rc_name = $rc->name;
+                    $tweakStructure->{Object}->{Id} = $rc_name;
+                    $tweakStructure->{Action} = "SHOW";
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
                         push @responce, "Tweak.Show  \tresource_class[$rc_name].$meadow_type ::\t".stringify([$submission_cmd_args, $worker_cmd_args])."\n";
+                          $tweakStructure->{Return}->{OldValue} = stringify([$submission_cmd_args, $worker_cmd_args]);
                     } else {
                         push @responce, "Tweak.Show  \tresource_class[$rc_name].$meadow_type ::\t(missing values)\n";
+                        $tweakStructure->{Return}->{OldValue} = "";
                     }
+                    $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].$meadow_type";
+                    $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                 }
 
             } else {
@@ -822,6 +918,8 @@ sub apply_tweaks {
 
                 foreach my $rc (@$resource_classes) {
                     my $rc_name = $rc->name;
+                    $tweakStructure->{Object}->{Id} = $rc_name;
+                    $tweakStructure->{Action} = "SET";
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
                         my ($submission_cmd_args, $worker_cmd_args) = ($rd->submission_cmd_args, $rd->worker_cmd_args);
@@ -831,6 +929,8 @@ sub apply_tweaks {
 
                         $rd->submission_cmd_args(   $new_submission_cmd_args );
                         $rd->worker_cmd_args(       $new_worker_cmd_args     );
+                        $tweakStructure->{Return}->{OldValue} = stringify([$submission_cmd_args, $worker_cmd_args]);
+
                     } else {
                         push @responce, "Tweak.Adding  \tresource_class[$rc_name].$meadow_type :: (missing values) --> "
                                 .stringify([$new_submission_cmd_args, $new_worker_cmd_args])."\n";
@@ -841,16 +941,25 @@ sub apply_tweaks {
                             'submission_cmd_args'   => $new_submission_cmd_args,
                             'worker_cmd_args'       => $new_worker_cmd_args,
                         );
+                        $tweakStructure->{Return}->{OldValue} = '';
                     }
+                    $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].meadow";
+                      $tweakStructure->{Return}->{NewValue} = stringify([$new_submission_cmd_args, $new_worker_cmd_args]);
                     $need_write = 1;
                 }
             }
+            push @{$responceStructure->{Tweaks}}, $tweakStructure;
 
         } else {
-            push @responce, "Tweak.Error   \tFailed to parse the tweak\n";
+            my $tweakStructure;
+            my $errorMsg = "Tweak.Error   \tFailed to parse the tweak\n";
+            $tweakStructure->{Error} = $errorMsg;
+            push @responce, $errorMsg;
+            push @{$responceStructure->{Tweaks}}, $tweakStructure;
         }
+
     }
-    return $need_write, \@responce;
+    return $need_write, \@responce, $responceStructure;
 }
 
 1;

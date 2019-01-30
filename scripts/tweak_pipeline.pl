@@ -67,16 +67,11 @@ sub main {
         die "\nERROR: Connection parameters (url or reg_conf+reg_alias) need to be specified\n";
     }
     if(@$tweaks) {
-        my ($need_write, $listRef) = $pipeline->apply_tweaks( $tweaks );
+        my ($need_write, $listRef, $responceStructure) = $pipeline->apply_tweaks( $tweaks );
 
-        my %responceStructure;
-        foreach  (@$listRef) {
-          my ($rawKey, $value) = split(/ {2,}/, $_);
-          my ($temp, $key) = split(/\./, $rawKey);
-          $value =~ s/[\n\r\t]//g;
-          $responceStructure{$key} = $value;
-        }
-        print encode_json \%responceStructure;
+        $responceStructure->{Url} = $self->{'url'};
+        my $json = JSON::XS->new->allow_nonref;
+        print $json->encode($responceStructure);
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
