@@ -589,6 +589,61 @@ sub reset_or_grab_job_by_dbID {
     return $job;
 }
 
+=head2 reset_or_grab_job_by_inputID
+
+  Arg [1]    : int $analysis_id
+  Arg [2]    : string $input_id
+  Arg [3]    : int $role_id (optional)
+  Description: resets a job to to 'READY' (if no $role_id given) or directly to 'CLAIMED' so it can be run again, and fetches it.
+               NB: Will also reset a previously 'SEMAPHORED' job to READY.
+               The retry_count will be set to 1 for previously run jobs (partially or wholly) to trigger PRE_CLEANUP for them,
+               but will not change retry_count if a job has never *really* started. $input_id can be a wildcard entry.
+  Returntype : Bio::EnsEMBL::Hive::AnalysisJob or undef
+
+=cut
+
+sub reset_or_grab_job_by_inputID {
+    my ($self, $analysis_id, $input_id, $role_id) = @_;
+
+    my $new_status  = $role_id ? 'CLAIMED' : 'READY';
+
+        # Note: the order of the fields being updated is critical!
+    my $sql = qq{
+        UPDATE job
+           SET retry_count = CASE WHEN (status='READY' OR status='CLAIMED') THEN retry_count ELSE 1 END
+             , status=?
+             , role_id=?
+         WHERE input_id LIKE ? AND analysis_id=?
+    };
+    my @values = ($new_status, $role_id, $input_id, $analysis_id);
+
+    my $sth = $self->prepare( $sql );
+    my $return_code = $sth->execute( @values )
+        or die "Could not run\n\t$sql\nwith data:\n\t(".join(',', @values).')';
+    $sth->finish;
+
+
+    # Get list of input_id for given wildcard argument
+    my $sql_get_input_id = qq{
+        SELECT input_id FROM job
+         WHERE input_id LIKE ? AND analysis_id=?
+    };
+
+    my @values_get_input_id = ($input_id, $analysis_id);
+
+    my $sth_get_input_id = $self->prepare( $sql_get_input_id ) or die "Unable to prepare" . $self->errstr;
+    my $return_code_input_id = $sth_get_input_id->execute(@values_get_input_id)
+        or die "Could not run\n\t$sql\nwith data:\n\t(".join(',', @values_get_input_id).')';
+    my $data_get_input_id = $sth_get_input_id->fetchrow_array();
+    if (! $data_get_input_id) {
+        die "Could not find input_id for given input_id and analysis_pattern";
+    }
+    my $job = $self->fetch_by_analysis_id_and_input_id($analysis_id, $data_get_input_id);
+    $sth_get_input_id->finish;
+
+    return $job;
+}
+
 
 =head2 grab_jobs_for_role
 

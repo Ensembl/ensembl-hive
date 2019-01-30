@@ -145,6 +145,10 @@ foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
     beekeeper($hive_url, ['-discard_ready_jobs'], 'beekeeper.pl -discard_ready_jobs');
     assert_jobs($job_adaptor, [['DONE',1,0],['READY',0,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0],['DONE',1,0]] );
 
+    # Reset a job with specific input_id and analysis_pattern
+    beekeeper($hive_url, ['-reset_job_for_input_id', {%, '-analyses_pattern', %], 'beekeeper.pl -reset_job_for_input_id -analyses_pattern');
+    assert_jobs($job_adaptor, [["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0],["READY",1,0]] );
+
    $hive_dba->dbc->disconnect_if_idle();
    run_sql_on_db($pipeline_url, 'DROP DATABASE');
 

@@ -694,6 +694,30 @@ sub reset_job_by_dbID_and_sync {
     $self->synchronize_AnalysisStats($stats);
 }
 
+=head2 reset_job_by_inputID_and_sync
+
+  Arg [1]: string $input_id
+  Arg [2]: $list_of_analyses
+  Example:
+    my $job = $queen->reset_job_by_inputID_and_sync($input_id, $list_of_analyses);
+  Description:
+   Reset jobs for the specified $input_id and analyses list. $input_id can be a wildcard argument.
+  Returntype : none
+  Exceptions :
+  Caller     : beekeeper.pl
+
+=cut
+
+sub reset_job_by_inputID_and_sync {
+    my ($self, $input_id, $list_of_analyses ) = @_;
+    my $analysis;
+    foreach $analysis (@$list_of_analyses) {
+        my $job     = $self->db->get_AnalysisJobAdaptor->reset_or_grab_job_by_inputID($analysis->dbID, $input_id);
+        my $stats   = $job->analysis->stats;
+        $self->synchronize_AnalysisStats($stats);
+    }
+}
+
 
 ######################################
 #
