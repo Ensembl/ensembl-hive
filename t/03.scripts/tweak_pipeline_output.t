@@ -22,6 +22,7 @@ use warnings;
 use Test::More;
 use Data::Dumper;
 use Test::JSON;
+use JSON::MaybeXS qw(encode_json decode_json);
 
 use Capture::Tiny ':all';
 use Bio::EnsEMBL::Hive::Utils::Test qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db tweak_pipeline);
@@ -34,7 +35,7 @@ my $pipeline_url = get_test_url_or_die();
 
     # Starting a first set of checks with a "GCPct" pipeline
 
-    init_pipeline('Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf', $pipeline_url);
+    init_pipeline('Bio::EnsEMBL::Hive::Examples::SystemCmd::PipeConfig::AnyCommands_conf', $pipeline_url);
 
     my $hive_dba = Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
@@ -46,9 +47,76 @@ my $pipeline_url = get_test_url_or_die();
     # and finishes with LOOP_LIMIT
     beekeeper($pipeline_url, ['-run', '-meadow_type' => 'LOCAL', -job_limit => 1]);
 
-    my $stdout = capture_stdout {
-        tweak_pipeline($pipeline_url, ["-SHOW" => "analysis[perform_cmd].resource_class"])
-    };
-    is_valid_json $stdout;
+
+
+    my @tweak_requests = ();
+
+    #Check pipeline.param (show, delete, set)
+    push @tweak_requests,  ["-SET" => "pipeline.param[take_time]=20"];
+    push @tweak_requests,  ["-SHOW" => "pipeline.param[take_time]"];
+    push @tweak_requests,  ["-DELETE" => "pipeline.param[take_time]"];
+
+    #Check pipeline (show, set, error)
+    push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack=20"];
+    push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stack?"];
+    push @tweak_requests,  ["-tweak" => "pipeline.hive_use_param_stac?"];
+
+    #Check analysis (show, delete, set) / (resource_class / is_excluded / error)
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class=20"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].resource_class#"];
+
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded=20"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].is_excluded#"];
+
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr=20"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].some_wrong_attr#"];
+
+    #Check analysis.wait_for (show, delete, set)
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for=perform_cmd"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].wait_for#"];
+
+    #Check analysis.flow_into (show, delete, set)
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into=perform_cmd"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].flow_into#"];
+
+    #Check analysis.param (show, delete, set)
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]=10"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]?"];
+    push @tweak_requests,  ["-tweak" => "analysis[perform_cmd].param[base]#"];
+
+    #Check resource_class (show, set, error)
+    push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF=-q yesteryear"];
+    push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF?"];
+
+    foreach my $request (@tweak_requests) {
+      my $stdout = capture_stdout {
+          tweak_pipeline($pipeline_url, $request);
+      };
+      is_valid_json $stdout;
+      my $stdoutJson = decode_json($stdout);
+      use Data::Dumper;
+      ok(scalar @{$stdoutJson->{Tweaks}} > 0, "Tweaks responce recieved for " . join (' ', @{$request}) . Dumper($stdoutJson->{Tweaks}));
+      foreach my $tweakJson (@{$stdoutJson->{Tweaks}}) {
+        ok($tweakJson->{Object}->{Type} ~~ ["Pipeline", "Analysis", "Resource class"]
+        && $tweakJson->{Action} ~~ ["SET", "SHOW", "DELETE"]
+        && defined $tweakJson->{Object}->{Id}
+        && defined $tweakJson->{Return}->{OldValue}
+
+
+
+
+
+
+        && defined $tweakJson->{Return}->{NewValue}
+        && $tweakJson->{Return}->{Field}
+        || $tweakJson->{Error}, 'All fields exists and correct in responce for ' . join (' ', @{$request}));
+
+      };
+    }
 
 done_testing();
