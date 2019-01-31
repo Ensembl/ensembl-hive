@@ -710,8 +710,7 @@ sub reset_job_by_dbID_and_sync {
 
 sub reset_job_by_inputID_and_sync {
     my ($self, $input_id, $list_of_analyses ) = @_;
-    my $analysis;
-    foreach $analysis (@$list_of_analyses) {
+    foreach my $analysis (@$list_of_analyses) {
         my $job     = $self->db->get_AnalysisJobAdaptor->reset_or_grab_job_by_inputID($analysis->dbID, $input_id);
         my $stats   = $job->analysis->stats;
         $self->synchronize_AnalysisStats($stats);
