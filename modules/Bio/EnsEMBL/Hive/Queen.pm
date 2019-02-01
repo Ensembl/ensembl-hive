@@ -769,6 +769,14 @@ sub safe_synchronize_AnalysisStats {
         return 'sync_done_by_friend';
     }
 
+    if ($stats->sync_lock and $stats->adaptor) {
+        if ($stats->adaptor->get_seconds_since_locked($stats->analysis_id) > $stats->max_lock_sec) {
+            printf("Analysis %s has been locked too long. Unlocking it now.\n", $stats->analysis->logic_name);
+            $stats->sync_lock(0);
+            $stats->adaptor->update_sync_lock($stats);
+        }
+    }
+
     unless( ($stats->status eq 'DONE')
          or ( ($stats->status eq 'WORKING') and defined($stats->seconds_since_when_updated) and ($stats->seconds_since_when_updated < $stats->stats_expiration_date_sec) ) ) {
 

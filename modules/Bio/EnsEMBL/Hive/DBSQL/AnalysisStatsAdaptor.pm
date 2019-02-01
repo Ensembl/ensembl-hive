@@ -193,5 +193,18 @@ sub increment_a_counter {
     }
 }
 
+
+sub get_seconds_since_locked {
+    my ($self, $analysis_id) = @_;
+
+    my $sql = 'SELECT '  . $self->dbc->_interval_seconds_sql('MAX(when_logged)') . ' FROM analysis_stats_monitor WHERE analysis_id = ? AND sync_lock = 0';
+    my $sth = $self->prepare($sql);
+    $sth->execute($analysis_id);
+    my ($seconds_since_locked) = $sth->fetchrow_array();
+    $sth->finish;
+    return $seconds_since_locked;
+}
+
+
 1;
 

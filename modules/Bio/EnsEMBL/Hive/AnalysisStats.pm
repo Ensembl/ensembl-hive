@@ -82,6 +82,12 @@ sub stats_expiration_date_sec {
     return 3*60;
 }
 
+# Maximum amount of time in seconds it takes to synchronise the stats
+# of an analysis
+sub max_lock_sec {
+    return 3600;
+}
+
 
 =head1 AUTOLOADED
 
