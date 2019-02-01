@@ -63,7 +63,7 @@ sub fetch_job_completion_date {
 }
 
 foreach my $pipeline_url (@$ehive_test_pipeline_urls) {
-### $pipeline_url
+
   subtest 'Test on '.$pipeline_url, sub {
 
     init_pipeline('Bio::EnsEMBL::Hive::Examples::FailureTest::PipeConfig::FailureTest_conf', $pipeline_url,
