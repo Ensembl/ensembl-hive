@@ -518,15 +518,35 @@ sub register_beekeeper {
 sub big_red_button {
   my ( $self, $valley ) = @_;
 
-  # Begin by blocking all registered beekeepers so that none of them
-  # start spawning new workers just as this one tries to kill all
-  # workers. FIXME: some message might be in order, possibly showing
-  # the number of blocked beekeepers.
   my $bk_a = $self->{dba}->get_Beekeeper();
+  my $blocked_beekeepers;
+
+  # Save a list of IDs of beekeepers which were blocked earlier so
+  # that we can not mention them while reporting the current blocking.
+  $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
+  my %previously_blocked_ids;
+  while ( my $blocked_bk = shift @{ $blocked_beekeepers } ) {
+    $previously_blocked_ids{ $blocked_bk->dbID() } = 1;
+  }
+
+  # Begin the shutdown by blocking all registered beekeepers so that
+  # none of them start spawning new workers just as this one tries to
+  # kill all workers.
   $bk_a->block_all_alive_beekeepers();
 
+  # Report which beekeepers we have just blocked
+  $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
+  my @currently_blocked = grep {
+    ! exists $previously_blocked_ids{ $_->dbID() }
+  } @{ $blocked_beekeepers };
+  while ( my $blocked_bk = shift @currently_blocked ) {
+    # FIXME: decide what else to print
+    printf( "Blocked beekeeper: %10d %35s %35s %15s\n",
+            $blocked_bk->dbID(), $blocked_bk->meadow_host(),
+            $blocked_bk->meadow_user(), $blocked_bk->process_id() );
+  }
+
   # Next, kill all workers which are still alive.
-  # FIXME: add some reporting
   # FIXME: double-check correct job status:
   #  - running ones should be marked as 'failed'
   #  - claimed but unstarted ones should get back to 'unclaimed'
