@@ -62,9 +62,9 @@ sub init_pipeline {
 
     if($tweaks and @$tweaks) {
         print "> Applying tweaks.\n";
-          my ($need_write, $listRef, $json) = $pipeline->apply_tweaks( $tweaks );
-         print join("\n", @$listRef);
-         print "\n";
+        my ($need_write, $listRef, $json) = $pipeline->apply_tweaks( $tweaks );
+        print join("\n", @$listRef);
+        print "\n";
     }
 
     $pipeline->test_connections();
