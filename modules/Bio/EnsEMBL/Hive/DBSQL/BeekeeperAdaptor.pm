@@ -150,15 +150,14 @@ sub reload_beekeeper_is_blocked {
 =cut
 
 sub block_all_alive_beekeepers {
-  my ( $self ) = @_;
+    my ( $self ) = @_;
 
-  my $statement =
-    'UPDATE beekeeper SET is_blocked = 1 WHERE cause_of_death IS NULL';
-  my $sth = $self->dbc()->prepare( $statement );
-  $sth->execute();
-  $sth->finish();
+    my $statement = 'UPDATE beekeeper SET is_blocked = 1 WHERE cause_of_death IS NULL';
+    my $sth = $self->dbc()->prepare( $statement );
+    $sth->execute();
+    $sth->finish();
 
-  return;
+    return;
 }
 
 

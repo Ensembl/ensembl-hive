@@ -385,42 +385,42 @@ sub register_worker_death {
 
 
 sub kill_all_workers {
-  my ( $self, $valley ) = @_;
+    my ( $self, $valley ) = @_;
 
-  my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
-  foreach my $worker ( @{ $all_workers_considered_alive } ) {
-    my $kill_status;
+    my $all_workers_considered_alive = $self->fetch_all( "status!='DEAD'" );
+    foreach my $worker ( @{ $all_workers_considered_alive } ) {
+        my $kill_status;
 
-    my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker );
-    if ( ! defined $meadow ) {
-      # Most likely a meadow not reachable for the current beekeeper,
-      # e.g. a LOCAL one started on a different host.
-      $kill_status = 'meadow not reachable';
+        my $meadow = $valley->find_available_meadow_responsible_for_worker( $worker );
+        if ( ! defined $meadow ) {
+            # Most likely a meadow not reachable for the current beekeeper,
+            # e.g. a LOCAL one started on a different host.
+            $kill_status = 'meadow not reachable';
+        }
+        elsif ( ! $meadow->can('kill_worker') ) {
+            $kill_status = 'killing workers not supported by the meadow';
+        }
+        else {
+            # The actual termination of a worker might well be asynchronous
+            # but at least we check for obvious problems, e.g. insufficient
+            # permissions to execute a kill.
+            my $kill_return_value = $meadow->kill_worker( $worker, 1 );
+            if ( $kill_return_value != 0 ) {
+                $kill_status = "request failure (return code: ${kill_return_value})";
+            }
+            else {
+                $kill_status = 'requested successfully';
+                $worker->cause_of_death( 'KILLED_BY_USER' );
+                $self->register_worker_death( $worker );
+            }
+        }
+
+        printf( "Killing worker: %10d %35s %15s : %s\n", $worker->dbID(),
+                $worker->meadow_host(), $worker->process_id(),
+                $kill_status );
     }
-    elsif ( ! $meadow->can('kill_worker') ) {
-      $kill_status = 'killing workers not supported by the meadow';
-    }
-    else {
-      # The actual termination of a worker might well be asynchronous
-      # but at least we check for obvious problems, e.g. insufficient
-      # permissions to execute a kill.
-      my $kill_return_value = $meadow->kill_worker( $worker, 1 );
-      if ( $kill_return_value != 0 ) {
-        $kill_status = "request failure (return code: ${kill_return_value})";
-      }
-      else {
-        $kill_status = 'requested successfully';
-        $worker->cause_of_death( 'KILLED_BY_USER' );
-        $self->register_worker_death( $worker );
-      }
-    }
 
-    printf( "Killing worker: %10d %35s %15s : %s\n", $worker->dbID(),
-            $worker->meadow_host(), $worker->process_id(),
-            $kill_status );
-  }
-
-  return;
+    return;
 }
 
 

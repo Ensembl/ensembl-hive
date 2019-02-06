@@ -20,27 +20,27 @@ package BeekeeperBigRedButtonTests;
 use strict;
 use warnings;
 
-use English qw(-no_match_vars);
+use English qw( -no_match_vars );
 use Test::More;
 
 use Bio::EnsEMBL::Hive::Utils::Test
-  qw(init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db);
+    qw( init_pipeline runWorker beekeeper get_test_url_or_die run_sql_on_db );
 
 
 # eHive needs this to initialize the pipeline (and run db_cmd.pl)
 $ENV{'EHIVE_ROOT_DIR'} //=
-  File::Basename::dirname(File::Basename::dirname(
-    File::Basename::dirname( Cwd::realpath($PROGRAM_NAME) )
-    ) );
+  File::Basename::dirname( File::Basename::dirname(
+      File::Basename::dirname( Cwd::realpath($PROGRAM_NAME) )
+  ) );
 
 my $pipeline_url = get_test_url_or_die();
 
 init_pipeline(
-  'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
-  $pipeline_url );
+    'Bio::EnsEMBL::Hive::Examples::Factories::PipeConfig::LongWorker_conf',
+    $pipeline_url );
 
 my $hive_dba =
-  Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
+    Bio::EnsEMBL::Hive::DBSQL::DBAdaptor->new( -url => $pipeline_url );
 
 # Check that the -big_red_button is recognised. Of course if it is it
 # will trigger the shutdown - but all it does at this point is
