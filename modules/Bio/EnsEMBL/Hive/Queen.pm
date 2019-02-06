@@ -415,9 +415,8 @@ sub kill_all_workers {
             }
         }
 
-        printf( "Killing worker: %10d %35s %15s : %s\n", $worker->dbID(),
-                $worker->meadow_host(), $worker->process_id(),
-                $kill_status );
+        print 'Killing worker ' . $worker->dbID() . ': '
+            . $worker->toString( 1 ) . "\n";
     }
 
     return;
