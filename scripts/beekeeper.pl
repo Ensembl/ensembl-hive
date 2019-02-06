@@ -518,7 +518,7 @@ sub register_beekeeper {
 sub big_red_button {
     my ( $self, $valley ) = @_;
 
-    my $bk_a = $self->{dba}->get_Beekeeper();
+    my $bk_a = $self->{dba}->get_BeekeeperAdaptor();
     my $blocked_beekeepers;
 
     # Save a list of IDs of beekeepers which were blocked earlier so
