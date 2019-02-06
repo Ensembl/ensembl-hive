@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use JSON::MaybeXS qw(encode_json decode_json);
+use JSON qw(encode_json);
 
     # Finding out own path in order to reference own components (including own modules):
 use Cwd            ();
@@ -36,7 +36,7 @@ sub main {
         'reg_type=s'            => \$self->{'reg_type'},
         'reg_alias|reg_name=s'  => \$self->{'reg_alias'},
         'nosqlvc'             => \$self->{'nosqlvc'},     # using "nosqlvc" instead of "sqlvc!" for consistency with scripts where it is a propagated option
-
+        'json'                  => \$self->{'json'},
         'tweak|SET=s@'          => \$tweaks,
         'DELETE=s'              => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'#'; },
         'SHOW=s'                => sub { my ($opt_name, $opt_value) = @_; push @$tweaks, $opt_value.'?'; },
@@ -69,9 +69,10 @@ sub main {
     if(@$tweaks) {
         my ($need_write, $listRef, $responceStructure) = $pipeline->apply_tweaks( $tweaks );
 
-        $responceStructure->{Url} = $self->{'url'};
-        my $json = JSON::XS->new->allow_nonref;
-        print $json->encode($responceStructure);
+        $responceStructure->{URL} = $self->{'url'};
+        my $json = JSON->new->allow_nonref;
+
+        print $self->{'json'} ? $json->encode($responceStructure) : join(', ', @$listRef);
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
