@@ -540,10 +540,8 @@ sub big_red_button {
         ! exists $previously_blocked_ids{ $_->dbID() }
     } @{ $blocked_beekeepers };
     while ( my $blocked_bk = shift @currently_blocked ) {
-        # FIXME: decide what else to print
-        printf( "Blocked beekeeper: %10d %35s %35s %15s\n",
-                $blocked_bk->dbID(), $blocked_bk->meadow_host(),
-                $blocked_bk->meadow_user(), $blocked_bk->process_id() );
+        print 'Blocked beekeeper ' . $blocked_bk->dbID() . ': '
+            . $blocked_bk->toString() . "\n";
     }
 
     # Next, kill all workers which are still alive.
