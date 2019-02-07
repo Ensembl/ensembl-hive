@@ -202,9 +202,9 @@ sub check_if_blocked {
 sub toString {
     my ( $self ) = @_;
 
-    # FIXME: decide what else to add here
     return join( ', ',
             'process=' . $self->meadow_user() . '@' . $self->meadow_host() . '#' . $self->process_id(),
+            "options='" . $self->options() . "'",
     );
 }
 
