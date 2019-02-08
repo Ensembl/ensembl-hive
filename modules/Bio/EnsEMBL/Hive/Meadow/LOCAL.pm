@@ -43,6 +43,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 # --------------------------------------------------------------------------------------------------------------------
 
 BEGIN {
+    eval { require IPC::Run };
     *CORE::GLOBAL::exec = sub {
         return ( ref($_[0]) eq 'ARRAY' ) ? CORE::exec( @{$_[0]} ) : CORE::exec( @_ );
     };
