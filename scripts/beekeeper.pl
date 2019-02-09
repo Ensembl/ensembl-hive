@@ -19,6 +19,7 @@ use Bio::EnsEMBL::Hive::DBSQL::LogMessageAdaptor ('store_beekeeper_message');
 use Bio::EnsEMBL::Hive::Utils ('destringify');
 use Bio::EnsEMBL::Hive::Utils::Slack ('send_beekeeper_message_to_slack');
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Utils::Formatter;
 use Bio::EnsEMBL::Hive::Utils::URL;
 use Bio::EnsEMBL::Hive::Version ('report_versions');
 use Bio::EnsEMBL::Hive::HivePipeline;
@@ -283,7 +284,10 @@ sub main {
     $default_meadow->config_set('SubmissionOptions', $submission_options) if(defined $submission_options);
 
     my $queen = $self->{'dba'}->get_Queen;
-
+    my $formatter = Bio::EnsEMBL::Hive::Utils::Formatter->new();
+    $formatter->set_mode('onfly', 1);
+    $formatter->set_mode('text', 1);
+    $queen->formatter($formatter);
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 
     if($job_id_for_output) {

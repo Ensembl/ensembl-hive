@@ -71,6 +71,7 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::AnalysisStats;
 use Bio::EnsEMBL::Hive::Utils::Config;
+use Bio::EnsEMBL::Hive::Utils::Formatter;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'dir_revhash', 'whoami', 'print_aligned_fields');  # NB: some are needed by invisible code
 use Bio::EnsEMBL::Hive::Role;
 use Bio::EnsEMBL::Hive::Scheduler;
@@ -83,6 +84,13 @@ sub default_table_name {
     return 'worker';
 }
 
+sub formatter {
+  my ($self, $formatter)  = @_;
+  if ($formatter && $formatter->isa("Bio::EnsEMBL::Hive::Utils::Formatter")) {
+    $self->{formatter} = $formatter;
+  }
+  return $self->{formatter};
+}
 
 sub default_input_column_mapping {
     my $self    = shift @_;
@@ -726,11 +734,9 @@ sub synchronize_hive {
     print "\nSynchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):\n";
     foreach my $analysis (@$list_of_analyses) {
         $self->synchronize_AnalysisStats($analysis->stats);
-        print ( ($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
+        $self->formatter->add_info(($analysis->stats()->status eq 'BLOCKED') ? 'x' : 'o');
     }
-    print "\n";
-
-    print ''.((time() - $start_time))." seconds to synchronize_hive\n\n";
+    $self->formatter->add_info(''.((time() - $start_time))." seconds to synchronize_hive\n\n");
 }
 
 
@@ -935,29 +941,32 @@ sub print_status_and_return_reasons_to_exit {
     if (@analyses_to_display) {
         my $template = $analyses_to_display[0]->stats->_toString_template;
         my @all_fields = map {$_->stats->_toString_fields} @analyses_to_display;
-        print_aligned_fields(\@all_fields, $template);
+        $self->formatter->add_custom_output([\@all_fields, $template], 'info', \&print_aligned_fields);
     }
-    print "\n";
 
     if (@{$skipped_analyses{'EMPTY'}}) {
-        printf("%d analyses not shown because they don't have any jobs.\n", scalar(@{$skipped_analyses{'EMPTY'}}));
+        $self->formatter->add_info(sprintf("%d analyses not shown because they don't have any jobs.", scalar(@{$skipped_analyses{'EMPTY'}})))
+
     }
     if (@{$skipped_analyses{'DONE'}}) {
-        printf("%d analyses not shown because all their jobs are done.\n", scalar(@{$skipped_analyses{'DONE'}}));
+      $self->formatter->add_info(sprintf("%d analyses not shown because all their jobs are done.", scalar(@{$skipped_analyses{'DONE'}})));
     }
-    printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed + %d excluded = %d total)\n",
-           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_excluded_jobs, $total_jobs);
+    $self->formatter->add_info(printf("total over %d analyses : %6.2f%% complete (< %.2f CPU_hrs) (%d to_do + %d done + %d failed + %d excluded = %d total)",
+           scalar(@$list_of_analyses), $percentage_completed, $cpuhrs_to_do, $total_jobs_to_do, $total_done_jobs, $total_failed_jobs, $total_excluded_jobs, $total_jobs));
 
-    unless( $total_jobs_to_do ) {
-        if ($total_excluded_jobs > 0) {
-            push (@reasons_to_exit, {'message' => "### Some analyses are excluded ###",
-                                     'exit_status' => 'NO_WORK'});
-        }
-        push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
-                                 'exit_status' => 'NO_WORK'});
-    }
 
-    return \@reasons_to_exit;
+     unless( $total_jobs_to_do ) {
+         if ($total_excluded_jobs > 0) {
+             push (@reasons_to_exit, {'message' => "### Some analyses are excluded ###",
+                                      'exit_status' => 'NO_WORK'});
+               $self->formatter->add_info("Reasons to exit ### Some analyses are excluded ### exit_status: NO_WORK");
+         }
+         push (@reasons_to_exit, {'message' => "### No jobs left to do ###",
+                                  'exit_status' => 'NO_WORK'});
+         $self->formatter->add_info ("Reasons to exit ### No jobs left to do ### exit_status: NO_WORK");
+     }
+
+     return \@reasons_to_exit;
 }
 
 
