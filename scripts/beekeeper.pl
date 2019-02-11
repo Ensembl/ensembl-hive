@@ -536,10 +536,10 @@ sub big_red_button {
 
     # Report which beekeepers we have just blocked
     $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
-    my @currently_blocked = grep {
+    my @newly_blocked = grep {
         ! exists $previously_blocked_ids{ $_->dbID() }
     } @{ $blocked_beekeepers };
-    while ( my $blocked_bk = shift @currently_blocked ) {
+    while ( my $blocked_bk = shift @newly_blocked ) {
         print 'Blocked beekeeper ' . $blocked_bk->dbID() . ': '
             . $blocked_bk->toString() . "\n";
     }
