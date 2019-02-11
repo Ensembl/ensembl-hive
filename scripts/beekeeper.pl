@@ -342,7 +342,6 @@ sub main {
         }
     }
 
-    # FIXME: maybe we should check this earlier
     if ( $big_red_button ) {
       return big_red_button( $self, $valley );
     }
@@ -534,10 +533,12 @@ sub big_red_button {
     # kill all workers.
     $bk_a->block_all_alive_beekeepers();
 
-    # Report which beekeepers we have just blocked
+    # Report which beekeepers, self excluded, we have just blocked
     $blocked_beekeepers = $bk_a->fetch_all( 'is_blocked = 1' );
+    my $my_dbid = $self->{'beekeeper'}->dbID();
     my @newly_blocked = grep {
-        ! exists $previously_blocked_ids{ $_->dbID() }
+        ( ! exists $previously_blocked_ids{ $_->dbID() } )
+          && ( $_->dbID() != $my_dbid )
     } @{ $blocked_beekeepers };
     while ( my $blocked_bk = shift @newly_blocked ) {
         print 'Blocked beekeeper ' . $blocked_bk->dbID() . ': '
