@@ -43,7 +43,7 @@ use Bio::EnsEMBL::Hive::Utils ('split_for_bash');
 # --------------------------------------------------------------------------------------------------------------------
 
 BEGIN {
-    *CORE::GLOBAL::exec = sub {
+    *Proc::Daemon::exec = sub {
         return ( ref($_[0]) eq 'ARRAY' ) ? CORE::exec( @{$_[0]} ) : CORE::exec( @_ );
     };
 }
