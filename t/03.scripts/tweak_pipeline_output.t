@@ -84,31 +84,31 @@ push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF=-q yesteryear", 
 push @tweak_requests,  ["-tweak" => "resource_class[urgent].LSF?", "-json"];
 
 foreach my $request (@tweak_requests) {
-  my $stdout = capture_stdout {
-    tweak_pipeline($pipeline_url, $request);
-  };
-  is_valid_json $stdout;
-  my $stdoutJson = decode_json($stdout);
-  use Data::Dumper;
-  ok(scalar @{$stdoutJson->{Tweaks}} > 0, "Tweaks responce recieved for " . join (' ', @{$request}) . Dumper($stdoutJson->{Tweaks}));
-  foreach my $tweakJson (@{$stdoutJson->{Tweaks}}) {
-    ok($tweakJson->{Object}->{Type} eq "Pipeline" ||
-      $tweakJson->{Object}->{Type} eq "Analysis" ||
-      $tweakJson->{Object}->{Type} eq "Resource class",
-      'Object type is correct for ' . join (' ', @{$request}));
+    my $stdout = capture_stdout {
+        tweak_pipeline($pipeline_url, $request);
+    };
+    is_valid_json $stdout;
+    my $stdoutJson = decode_json($stdout);
+    use Data::Dumper;
+    ok(scalar @{$stdoutJson->{Tweaks}} > 0, "Tweaks responce recieved for " . join (' ', @{$request}) . Dumper($stdoutJson->{Tweaks}));
+    foreach my $tweakJson (@{$stdoutJson->{Tweaks}}) {
+        ok($tweakJson->{Object}->{Type} eq "Pipeline" ||
+            $tweakJson->{Object}->{Type} eq "Analysis" ||
+            $tweakJson->{Object}->{Type} eq "Resource class",
+            'Object type is correct for ' . join (' ', @{$request}));
 
-    ok( $tweakJson->{Error} ||
-      $tweakJson->{Action} eq "SET" ||
-      $tweakJson->{Action} eq "SHOW" ||
-      $tweakJson->{Action} eq "DELETE",
-      'Action field is correct for ' . join (' ', @{$request}));
+        ok($tweakJson->{Error} ||
+            $tweakJson->{Action} eq "SET" ||
+            $tweakJson->{Action} eq "SHOW" ||
+            $tweakJson->{Action} eq "DELETE",
+            'Action field is correct for ' . join (' ', @{$request}));
 
-    ok(exists ($tweakJson->{Object}->{Id}) || $tweakJson->{Error}, 'Id field exists for' . join (' ', @{$request}));
-    ok(exists ($tweakJson->{Object}->{Name}) || $tweakJson->{Error}, 'Name field exists for' . join (' ', @{$request}));
-    ok(exists ($tweakJson->{Return}->{OldValue}) || $tweakJson->{Error}, 'Old value exists for ' . join (' ', @{$request}));
-    ok(exists($tweakJson->{Return}->{NewValue}) || $tweakJson->{Error}, 'New value exists for ' . join (' ', @{$request}));
-    ok($tweakJson->{Return}->{Field} || $tweakJson->{Error}, 'Field exists for ' . join (' ', @{$request}));
-  };
+        ok(exists ($tweakJson->{Object}->{Id}), 'Id field exists for' . join (' ', @{$request}));
+        ok(exists ($tweakJson->{Object}->{Name}), 'Name field exists for' . join (' ', @{$request}));
+        ok(exists ($tweakJson->{Return}->{OldValue}) || $tweakJson->{Error}, 'Old value exists for ' . join (' ', @{$request}));
+        ok(exists($tweakJson->{Return}->{NewValue}) || $tweakJson->{Error}, 'New value exists for ' . join (' ', @{$request}));
+        ok($tweakJson->{Return}->{Field} || $tweakJson->{Error}, 'Field exists for ' . join (' ', @{$request}));
+    };
 }
 
 done_testing();

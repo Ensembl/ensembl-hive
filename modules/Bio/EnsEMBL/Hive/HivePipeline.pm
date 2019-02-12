@@ -561,14 +561,14 @@ sub apply_tweaks {
             my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
             my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
             if($operator eq '?') {
-                my $value = $hash_pair ? $hash_pair->{'param_value'} : '(missing_value)';
+                my $value = $hash_pair ? $hash_pair->{'param_value'} : undef;
                 $tweakStructure->{Action} = 'SHOW';
                 $tweakStructure->{Return}->{OldValue} = $value;
                 $tweakStructure->{Return}->{NewValue} = $value;
-                push @response, "Tweak.Show  \tpipeline.param[$param_name] ::\t" . ($value) . "\n";
+                push @response, "Tweak.Show  \tpipeline.param[$param_name] ::\t" . $value ? $value : '--> (missing value)' . "\n";
             } elsif($operator eq '#') {
                 $tweakStructure->{Action} = 'DELETE';
-                $tweakStructure->{Return}->{OldValue} = $hash_pair->{'param_value'};
+                $tweakStructure->{Return}->{OldValue} = $hash_pair ? $hash_pair->{'param_value'} : undef;
                 $tweakStructure->{Return}->{NewValue} = undef;
                 if ($hash_pair) {
                     $need_write = 1;
@@ -650,7 +650,7 @@ sub apply_tweaks {
                 $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $param_name;
                 my $param_hash  = destringify( $old_value );
-                $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '';
+                $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : undef;
 
                 if($operator eq '?') {
                     my $value = exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '(missing value)';
@@ -794,19 +794,19 @@ sub apply_tweaks {
                 $tweakStructure->{Object}->{Name} = $analysis_name;
 
                 if( $attrib_name eq 'resource_class' ) {
-                  $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : '';
-                  $tweakStructure->{Return}->{Field} = 'resource_class';
+                    $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : undef;
+                    $tweakStructure->{Return}->{Field} = 'resource_class';
 
                     if($operator eq '?') {
-                      $tweakStructure->{Action} = "SHOW";
-                      $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
+                        $tweakStructure->{Action} = "SHOW";
+                        $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         if(my $old_value = $analysis->resource_class) {
                             push @response, "Tweak.Show  \tanalysis[$analysis_name].resource_class ::\t".$old_value->name."\n";
                         } else {
                             push @response, "Tweak.Show  \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
                         }
                     } elsif($operator eq '#') {
-                        my $errorMsg = 'Tweak.Error  \tDeleting of ResourceClasses is not supported\n';
+                        my $errorMsg = "Tweak.Error  \tDeleting of ResourceClasses is not supported\n";
                         $tweakStructure->{Error} = $errorMsg;
                         push @response, $errorMsg;
                     } else {
@@ -891,14 +891,15 @@ sub apply_tweaks {
             }
 
         } elsif($tweak=~/^resource_class\[([^\]]+)\]\.(\w+)(\?|=(.+))$/) {
-            my $tweakStructure;
             my ($rc_pattern, $meadow_type, $operator, $new_value_str) = ($1, $2, $3, $4);
-            $tweakStructure->{Object}->{Type} = "Resource class";
+
             my $resource_classes = $self->collection_of( 'ResourceClass' )->find_all_by_pattern( $rc_pattern );
             push @response, "Tweak.Found  \t".scalar(@$resource_classes)." resource_classes matching the pattern '$rc_pattern'\n";
 
             if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
+                    my $tweakStructure;
+                    $tweakStructure->{Object}->{Type} = "Resource class";
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID;
                     $tweakStructure->{Object}->{Name} = $rc_name;
@@ -914,6 +915,7 @@ sub apply_tweaks {
                     }
                     $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].$meadow_type";
                     $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
+                    push @{$responseStructure->{Tweaks}}, $tweakStructure;
                 }
 
             } else {
@@ -922,6 +924,8 @@ sub apply_tweaks {
                 my ($new_submission_cmd_args, $new_worker_cmd_args) = (ref($new_value) eq 'ARRAY') ? @$new_value : ($new_value, '');
 
                 foreach my $rc (@$resource_classes) {
+                    my $tweakStructure;
+                    $tweakStructure->{Object}->{Type} = "Resource class";
                     my $rc_name = $rc->name;
                     $tweakStructure->{Object}->{Id} = $rc->dbID;
                     $tweakStructure->{Object}->{Name} = $rc_name;
@@ -952,9 +956,10 @@ sub apply_tweaks {
                     $tweakStructure->{Return}->{Field} = "resource_class[$rc_name].meadow";
                     $tweakStructure->{Return}->{NewValue} = stringify([$new_submission_cmd_args, $new_worker_cmd_args]);
                     $need_write = 1;
+                    push @{$responseStructure->{Tweaks}}, $tweakStructure;
                 }
             }
-            push @{$responseStructure->{Tweaks}}, $tweakStructure;
+
 
         } else {
             my $tweakStructure;
