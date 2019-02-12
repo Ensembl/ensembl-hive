@@ -8,8 +8,8 @@
 
     An output printer and formatter
     Modes:
-    onfly - immediate print of data
-    json - prints only json passed to function, no any debug-level control
+    onfly - immediate print of data, no storage
+    json - prints only json passed to function, no any debug-level control, text print also skipped
     custom_output - uses custom function to print formatted text
 
 
@@ -63,7 +63,8 @@ sub set_mode {
 sub stack_output {
   my ($self, $output) = @_;
   if ($self->{mode}->{onfly} == 1) {
-    $self->{output} = $output;
+    $self->{output} = [];
+    push @{$self->{output}},$output;
     $self->print_data();
   } else {
     push @{$self->{output}},$output;

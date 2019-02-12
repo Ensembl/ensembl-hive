@@ -941,7 +941,7 @@ sub print_status_and_return_reasons_to_exit {
     if (@analyses_to_display) {
         my $template = $analyses_to_display[0]->stats->_toString_template;
         my @all_fields = map {$_->stats->_toString_fields} @analyses_to_display;
-        $self->formatter->add_custom_output([\@all_fields, $template], 'info', \&print_aligned_fields);
+      #  $self->formatter->add_custom_output([\@all_fields, $template], 'info', \&print_aligned_fields);
     }
 
     if (@{$skipped_analyses{'EMPTY'}}) {
