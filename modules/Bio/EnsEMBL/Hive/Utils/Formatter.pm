@@ -114,7 +114,8 @@ sub print_data {
       my $type = $text->{type};
       if ($self->{mode}->{$type} == 1) {
         if ($text->{function}){
-          $text->{function}->($text->{msg});
+          my @params = @{ $text->{msg} };
+          $text->{function}->(@params);
         } else {
           print $text->{msg};
           print "\n";

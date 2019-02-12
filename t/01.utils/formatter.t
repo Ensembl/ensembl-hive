@@ -25,6 +25,7 @@ use Test::Warn;
 use Test::JSON;
 use Capture::Tiny ':all';
 use Bio::EnsEMBL::Hive::Utils::Formatter;
+use Bio::EnsEMBL::Hive::Utils ('print_aligned_fields');
 
 BEGIN {
     use_ok( 'Bio::EnsEMBL::Hive::Utils::Formatter' );
@@ -77,6 +78,17 @@ $stdout = capture_stdout {
 ok(index($stdout, 'warning') == -1, 'Warning switch off works correctly');
 
 #Check custom output function
+$formatter->add_custom_output([
+    [{test => 'field', test2 =>'outtest'}],
+       'field',
+    ],
+    'info',
+    \&print_aligned_fields);
 
+$stdout = capture_stdout {
+  $formatter->print_data();
+};
+
+ok(index($stdout, 'field') != -1, 'Custom function works correctly');
 
 done_testing();
