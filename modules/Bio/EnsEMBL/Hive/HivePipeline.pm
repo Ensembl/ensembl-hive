@@ -556,6 +556,7 @@ sub apply_tweaks {
             my $tweakStructure;
             $tweakStructure->{Object}->{Type} = 'Pipeline';
             $tweakStructure->{Object}->{Id} = undef;
+            $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $param_name;
             my $pwp_collection  = $self->collection_of( 'PipelineWideParameters' );
             my $hash_pair       = $pwp_collection->find_one_by('param_name', $param_name);
@@ -602,6 +603,7 @@ sub apply_tweaks {
             my ($attrib_name, $operator, $new_value_str) = ($1, $2, $3);
             $tweakStructure->{Object}->{Type} = 'Pipeline';
             $tweakStructure->{Object}->{Id} = undef;
+            $tweakStructure->{Object}->{Name} = undef;
             $tweakStructure->{Return}->{Field} = $attrib_name;
 
             if($self->can($attrib_name)) {
@@ -644,7 +646,8 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 my $old_value = $analysis->parameters;
 
-                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis_name;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Name} = $analysis_name;
                 $tweakStructure->{Return}->{Field} = $param_name;
                 my $param_hash  = destringify( $old_value );
                 $tweakStructure->{Return}->{OldValue} =  exists($param_hash->{ $param_name }) ? stringify($param_hash->{ $param_name }) : '';
@@ -696,7 +699,8 @@ sub apply_tweaks {
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = "Analysis";
                 my $analysis_name = $analysis->logic_name;
-                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis->logic_name;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Name} = $analysis->logic_name;
 
                 if( $attrib_name eq 'wait_for' ) {
                     $tweakStructure->{Return}->{Field} = 'wait_for';
@@ -786,7 +790,8 @@ sub apply_tweaks {
                 my $analysis_name = $analysis->logic_name;
                 my $tweakStructure;
                 $tweakStructure->{Object}->{Type} = 'Analysis';
-                $tweakStructure->{Object}->{Id} = $analysis->dbID . " " . $analysis_name;
+                $tweakStructure->{Object}->{Id} = $analysis->dbID;
+                $tweakStructure->{Object}->{Name} = $analysis_name;
 
                 if( $attrib_name eq 'resource_class' ) {
                   $tweakStructure->{Return}->{OldValue} = $analysis->resource_class ? $analysis->resource_class->name : '';
@@ -895,7 +900,8 @@ sub apply_tweaks {
             if($operator eq '?') {
                 foreach my $rc (@$resource_classes) {
                     my $rc_name = $rc->name;
-                    $tweakStructure->{Object}->{Id} = $rc_name;
+                    $tweakStructure->{Object}->{Id} = $rc->dbID;
+                    $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = "SHOW";
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {
@@ -917,7 +923,8 @@ sub apply_tweaks {
 
                 foreach my $rc (@$resource_classes) {
                     my $rc_name = $rc->name;
-                    $tweakStructure->{Object}->{Id} = $rc_name;
+                    $tweakStructure->{Object}->{Id} = $rc->dbID;
+                    $tweakStructure->{Object}->{Name} = $rc_name;
                     $tweakStructure->{Action} = "SET";
 
                     if(my $rd = $self->collection_of( 'ResourceDescription' )->find_one_by('resource_class', $rc, 'meadow_type', $meadow_type)) {

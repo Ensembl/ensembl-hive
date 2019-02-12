@@ -72,7 +72,7 @@ sub main {
         $responceStructure->{URL} = $self->{'url'};
         my $json = JSON->new->allow_nonref;
 
-        print $self->{'json'} ? $json->encode($responceStructure) : join(', ', @$listRef);
+        print $self->{'json'} ? $json->encode($responceStructure) : join('', @$listRef);
         if ($need_write) {
             $pipeline->hive_dba()->dbc->requires_write_access();
             $pipeline->save_collections();
