@@ -344,6 +344,8 @@ There are very few rules when writing new code:
    for the Unicode Art output of :ref:`generate_graph.pl <script-generate_graph>`, but they are meant
    to be replaced with character names (resp. code points), e.g.
    ``\N{BOX DRAWINGS DOUBLE UP AND RIGHT}`` (resp. ``\N{U+255A}``).
+3. Use snake_case for subroutine and variable names, CamelCase for class
+   names.
 
 When updating code, try to keep the changes minimal, avoiding white-space
 changes when possible. You can also consider breaking the four-spaces rule if
