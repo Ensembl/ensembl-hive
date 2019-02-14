@@ -97,8 +97,7 @@ foreach my $request (@tweak_requests) {
             $tweakJson->{Object}->{Type} eq "Resource class",
             'Object type is correct for ' . join (' ', @{$request}));
 
-        ok($tweakJson->{Error} ||
-            $tweakJson->{Action} eq "SET" ||
+        ok( $tweakJson->{Action} eq "SET" ||
             $tweakJson->{Action} eq "SHOW" ||
             $tweakJson->{Action} eq "DELETE",
             'Action field is correct for ' . join (' ', @{$request}));

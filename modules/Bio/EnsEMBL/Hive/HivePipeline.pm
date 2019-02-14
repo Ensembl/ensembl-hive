@@ -625,9 +625,13 @@ sub apply_tweaks {
                 }
 
             } else {
-                my $error_msg = "Tweak.Error  \tCould not find the pipeline-wide '$attrib_name' method\n";
-                $tweakStructure->{Error} = $error_msg;
-                push @response, $error_msg;
+                if($operator eq '?') {
+                    $tweakStructure->{Action} = 'SHOW';
+                } else {
+                    $tweakStructure->{Action} = 'SET';
+                }
+                $tweakStructure->{Error} = 'Field not recognized';
+                push @response, "Tweak.Error  \tCould not find the pipeline-wide '$attrib_name' method\n";
             }
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
         } elsif($tweak=~/^analysis\[([^\]]+)\]\.param\[(\w+)\](\?|#|=(.+))$/) {
@@ -806,9 +810,9 @@ sub apply_tweaks {
                             push @response, "Tweak.Show  \tanalysis[$analysis_name].resource_class ::\t(missing value)\n";
                         }
                     } elsif($operator eq '#') {
-                        my $errorMsg = "Tweak.Error  \tDeleting of ResourceClasses is not supported\n";
-                        $tweakStructure->{Error} = $errorMsg;
-                        push @response, $errorMsg;
+                        $tweakStructure->{Action} = "DELETE";
+                        $tweakStructure->{Error} = "Action is not supported";
+                        push @response, "Tweak.Error  \tDeleting of ResourceClasses is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
                         $tweakStructure->{Return}->{NewValue} = $new_value_str;
@@ -842,16 +846,15 @@ sub apply_tweaks {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show  \tanalysis[$analysis_name].is_excluded ::\t".$analysis_stats->is_excluded()."\n";
                     } elsif($operator eq '#') {
-                        my $errorMsg = "Tweak.Error  \tDeleting of excluded status is not supported\n";
-                        $tweakStructure->{Error} = $errorMsg;
-                        push @response, $errorMsg;
+                        $tweakStructure->{Action} = "DELETE";
+                        $tweakStructure->{Error} = "Action is not supported";
+                        push @response, "Tweak.Error  \tDeleting of excluded status is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
                         $tweakStructure->{Return}->{NewValue} = $new_value_str;
                         if(!($new_value =~ /^[01]$/)) {
-                            my $errorMsg = "Tweak.Error  \tis_excluded can only be 0 (no) or 1 (yes)\n";
-                            $tweakStructure->{Error} = $errorMsg;
-                            push @response, $errorMsg;
+                            $tweakStructure->{Error} = "Invalid value";
+                            push @response, "Tweak.Error  \tis_excluded can only be 0 (no) or 1 (yes)\n";
                         } elsif ($new_value == $analysis_stats->is_excluded()) {
                             push @response, "Tweak.Info  \tanalysis[$analysis_name].is_excluded is already $new_value, leaving as is\n";
                         } else {
@@ -870,10 +873,9 @@ sub apply_tweaks {
                         $tweakStructure->{Return}->{NewValue} = $tweakStructure->{Return}->{OldValue};
                         push @response, "Tweak.Show  \tanalysis[$analysis_name].$attrib_name ::\t$old_value\n";
                     } elsif($operator eq '#') {
-                        my $errorMsg = "Tweak.Error  \tDeleting of Analysis attributes is not supported\n";
                         $tweakStructure->{Action} = "DELETE";
-                        $tweakStructure->{Error} = $errorMsg;
-                        push @response, $errorMsg;
+                        $tweakStructure->{Error} = "Action is not supported";
+                        push @response, "Tweak.Error  \tDeleting of Analysis attributes is not supported\n";
                     } else {
                         $tweakStructure->{Action} = "SET";
                         $tweakStructure->{Return}->{NewValue} = stringify($new_value);
@@ -882,9 +884,15 @@ sub apply_tweaks {
                         $need_write = 1;
                     }
                 } else {
-                    my $errorMsg = "Tweak.Error  \tAnalysis does not support '$attrib_name' attribute\n";
-                    $tweakStructure->{Error} = $errorMsg;
-                    push @response, $errorMsg;
+                    if($operator eq '?') {
+                        $tweakStructure->{Action} = "SHOW";
+                    } elsif($operator eq '#') {
+                          $tweakStructure->{Action} = "DELETE";
+                    } else {
+                        $tweakStructure->{Action} = "SET";
+                    }
+                    $tweakStructure->{Error} = 'Field not recognized';
+                    push @response, "Tweak.Error  \tAnalysis does not support '$attrib_name' attribute\n";
                 }
 
                 push @{$responseStructure->{Tweaks}}, $tweakStructure;
@@ -963,9 +971,9 @@ sub apply_tweaks {
 
         } else {
             my $tweakStructure;
-            my $errorMsg = "Tweak.Error   \tFailed to parse the tweak\n";
-            $tweakStructure->{Error} = $errorMsg;
-            push @response, $errorMsg;
+            my $errorMsg =
+            $tweakStructure->{Error} = "Tweak cannot be parsed";
+            push @response, "Tweak.Error   \tFailed to parse the tweak\n";;
             push @{$responseStructure->{Tweaks}}, $tweakStructure;
         }
 
