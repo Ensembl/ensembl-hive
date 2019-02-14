@@ -92,6 +92,14 @@ sub formatter {
   return $self->{formatter};
 }
 
+sub check_formatter {
+  my ($self)  = @_;
+  if ($self->formatter) {
+    return;
+  }
+  $self->formatter(Bio::EnsEMBL::Hive::Utils::Formatter->new());
+}
+
 sub default_input_column_mapping {
     my $self    = shift @_;
     return  {
@@ -730,7 +738,7 @@ sub synchronize_hive {
     my ($self, $list_of_analyses) = @_;
 
     my $start_time = time();
-
+    $self->check_formatter();
     $self->formatter->add_info("Synchronizing the hive (".scalar(@$list_of_analyses)." analyses this time):");
     foreach my $analysis (@$list_of_analyses) {
         $self->synchronize_AnalysisStats($analysis->stats);
@@ -938,10 +946,11 @@ sub print_status_and_return_reasons_to_exit {
 
     # We use print_aligned_fields instead of printing each AnalysisStats' toString(),
     # so that the fields are all vertically aligned.
+    $self->check_formatter;
     if (@analyses_to_display) {
         my $template = $analyses_to_display[0]->stats->_toString_template;
         my @all_fields = map {$_->stats->_toString_fields} @analyses_to_display;
-      #  $self->formatter->add_custom_output([\@all_fields, $template], 'info', \&print_aligned_fields);
+        $self->formatter->add_custom_output([\@all_fields, $template], 'info', \&print_aligned_fields);
     }
 
     if (@{$skipped_analyses{'EMPTY'}}) {

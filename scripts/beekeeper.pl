@@ -286,7 +286,6 @@ sub main {
     my $queen = $self->{'dba'}->get_Queen;
     my $formatter = Bio::EnsEMBL::Hive::Utils::Formatter->new();
     $formatter->set_mode('onfly', 1);
-    $formatter->set_mode('text', 1);
     $queen->formatter($formatter);
     if($reset_job_id) { $queen->reset_job_by_dbID_and_sync($reset_job_id); }
 

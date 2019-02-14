@@ -46,7 +46,7 @@ sub new {
   my $class = shift @_;
   my $self = bless {}, $class;
   $self->{mode}->{onfly} = 0;
-  $self->{mode}->{text} = 0;
+  $self->{mode}->{text} = 1;
   $self->{mode}->{json} = 0;
   $self->{mode}->{error} = 1;
   $self->{mode}->{warning} = 1;
